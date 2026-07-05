@@ -14,12 +14,25 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
+    private const AUTH_TABLE = 'users';
+    private const AUTH_ID = 'id';
+    private const AUTH_LOGIN = 'email';
+    private const AUTH_PASSWORD = 'password';
+    private const AUTH_ROLE = 'role';
+    private const AUTH_STATUS = 'status';
+    private const AUTH_ACTIVE_STATUS = 'active';
+    private const AUTH_SESSION = 'auth_user_id';
+    private const AUTH_REMEMBER = 'tinycat_remember';
+    private const SETTINGS_TABLE = 'settings';
+
     private static array $config = [];
     private static ?PDO $pdo = null;
     private static ?string $locale = null;
     private static array $translations = [];
     private static ?array $payload = null;
     private static array $routes = [];
+    private static ?array $settings = null;
+    private static bool $settingsLoading = false;
 
     private function __construct()
     {
@@ -33,6 +46,8 @@ final class Core
             self::$locale = null;
             self::$translations = [];
             self::$payload = null;
+            self::$settings = null;
+            self::$settingsLoading = false;
             return;
         }
 
@@ -53,6 +68,8 @@ final class Core
         self::$locale = null;
         self::$translations = [];
         self::$payload = null;
+        self::$settings = null;
+        self::$settingsLoading = false;
     }
 
     public static function config(?string $key = null, mixed $default = null): mixed
@@ -67,21 +84,110 @@ final class Core
 
         foreach (explode('.', $key) as $segment) {
             if (!is_array($value) || !array_key_exists($segment, $value)) {
-                return $default;
+                return self::configSetting($key, $default);
             }
 
             $value = $value[$segment];
         }
 
-        return $value;
+        return self::configSetting($key, $value);
+    }
+
+    public static function setting(?string $key = null, mixed $default = null): mixed
+    {
+        $settings = self::settings();
+
+        if ($key === null || $key === '') {
+            return $settings;
+        }
+
+        return array_key_exists($key, $settings) ? $settings[$key] : $default;
+    }
+
+    public static function settings(): array
+    {
+        if (self::$settings !== null) {
+            return self::$settings;
+        }
+
+        self::$settings = [];
+
+        if (self::$settingsLoading || !self::settingsTableReady()) {
+            return self::$settings;
+        }
+
+        self::$settingsLoading = true;
+
+        try {
+            $rows = self::all(
+                sprintf(
+                    'SELECT setting_key, setting_value, setting_type FROM %s WHERE autoload = 1 ORDER BY setting_key',
+                    self::identifier(self::settingsTable())
+                )
+            );
+
+            foreach ($rows as $row) {
+                self::$settings[(string) $row['setting_key']] = self::castSettingValue(
+                    $row['setting_value'] ?? null,
+                    (string) ($row['setting_type'] ?? 'string')
+                );
+            }
+        } catch (Throwable) {
+            self::$settings = [];
+        } finally {
+            self::$settingsLoading = false;
+        }
+
+        return self::$settings;
+    }
+
+    public static function setSetting(string $key, mixed $value, string $type = 'string', string $group = 'general'): void
+    {
+        self::assertSettingKey($key);
+
+        if (!self::settingsTableReady()) {
+            throw new RuntimeException('Settings table is not ready.');
+        }
+
+        $type = self::normalizeSettingType($type);
+        $group = self::settingGroup($group);
+        $stored = self::serializeSettingValue($value, $type);
+        $table = self::settingsTable();
+        $existing = self::find($table, ['setting_key' => $key], ['id']);
+        $data = [
+            'setting_key' => $key,
+            'setting_group' => $group,
+            'setting_value' => $stored,
+            'setting_type' => $type,
+            'autoload' => 1,
+        ];
+
+        if ($existing === null) {
+            self::insert($table, $data);
+        } else {
+            self::update($table, $data, ['id' => $existing['id']]);
+        }
+
+        self::$settings = null;
+
+        if ($key === 'i18n.locale') {
+            self::$locale = null;
+            self::$translations = [];
+        }
+    }
+
+    public static function basePath(string $path = ''): string
+    {
+        $path = trim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+
+        return dirname(__DIR__) . ($path === '' ? '' : DIRECTORY_SEPARATOR . $path);
     }
 
     public static function publicPath(string $path = ''): string
     {
-        $directory = (string) self::config('directory.public', dirname(__DIR__) . DIRECTORY_SEPARATOR . 'Public');
         $path = trim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
 
-        return rtrim($directory, DIRECTORY_SEPARATOR) . ($path === '' ? '' : DIRECTORY_SEPARATOR . $path);
+        return self::basePath($path === '' ? 'Public' : 'Public' . DIRECTORY_SEPARATOR . $path);
     }
 
     public static function db(): PDO
@@ -310,26 +416,35 @@ final class Core
         ?string $orderBy = null,
         string $direction = 'ASC'
     ): array {
+        $total = self::count($table, $where);
+        $pagination = self::paginationMeta($total, $page, $perPage);
+        $items = $total > 0
+            ? self::get($table, $where, $columns, (int) $pagination['per_page'], (int) $pagination['offset'], $orderBy, $direction)
+            : [];
+
+        return ['items' => $items] + $pagination + [
+            'to' => $total === 0 ? 0 : (int) $pagination['offset'] + count($items),
+        ];
+    }
+
+    public static function paginationMeta(int $total, ?int $page = null, int $perPage = 15): array
+    {
         $page ??= max(1, (int) ($_GET['page'] ?? 1));
         $page = max(1, $page);
         $perPage = min(200, max(1, $perPage));
-        $total = self::count($table, $where);
+        $total = max(0, $total);
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = min($page, $lastPage);
         $offset = ($page - 1) * $perPage;
-        $items = $total > 0
-            ? self::get($table, $where, $columns, $perPage, $offset, $orderBy, $direction)
-            : [];
-        $count = count($items);
 
         return [
-            'items' => $items,
             'total' => $total,
             'page' => $page,
             'per_page' => $perPage,
+            'offset' => $offset,
             'last_page' => $lastPage,
             'from' => $total === 0 ? 0 : $offset + 1,
-            'to' => $total === 0 ? 0 : $offset + $count,
+            'to' => $total === 0 ? 0 : min($total, $offset + $perPage),
             'has_prev' => $page > 1,
             'has_next' => $page < $lastPage,
             'prev_page' => $page > 1 ? $page - 1 : null,
@@ -350,10 +465,14 @@ final class Core
             return '';
         }
 
-        $html = '<nav class="pagination" aria-label="Pagination">';
-        $html .= '<div class="pagination-summary">' . self::e($from . '-' . $to . ' / ' . $total) . '</div>';
+        $html = '<nav class="pagination" aria-label="' . self::e(self::t('common.pagination', [], null, 'Pagination')) . '">';
+        $html .= '<div class="pagination-summary">' . self::e(self::t('common.pagination_summary', [
+            'from' => (string) $from,
+            'to' => (string) $to,
+            'total' => (string) $total,
+        ], null, $from . '-' . $to . ' / ' . $total)) . '</div>';
         $html .= '<div class="pagination-list">';
-        $html .= self::paginationItem('Previous', $pagination['prev_page'] ?? null, $baseUrl, $pageName, 'pagination-prev', $page <= 1);
+        $html .= self::paginationItem(self::t('common.previous', [], null, 'Previous'), $pagination['prev_page'] ?? null, $baseUrl, $pageName, 'pagination-prev', $page <= 1);
 
         $previous = null;
 
@@ -366,7 +485,7 @@ final class Core
             $previous = $item;
         }
 
-        $html .= self::paginationItem('Next', $pagination['next_page'] ?? null, $baseUrl, $pageName, 'pagination-next', $page >= $lastPage);
+        $html .= self::paginationItem(self::t('common.next', [], null, 'Next'), $pagination['next_page'] ?? null, $baseUrl, $pageName, 'pagination-next', $page >= $lastPage);
         $html .= '</div>';
         $html .= '</nav>';
 
@@ -397,7 +516,7 @@ final class Core
             return $url;
         }
 
-        $directory = self::config('assets.directory', self::config('directory.assets'));
+        $directory = self::config('assets.directory', self::basePath('assets'));
 
         if (!is_string($directory) || $directory === '') {
             return $url;
@@ -454,7 +573,7 @@ final class Core
             return self::$locale;
         }
 
-        $configured = self::config('i18n.locale', self::config('app.locale', 'en'));
+        $configured = self::config('i18n.locale', self::config('install.locale', self::config('app.locale', 'en')));
         $configured = is_string($configured) && $configured !== '' ? $configured : 'en';
         self::assertLocale($configured);
 
@@ -469,14 +588,6 @@ final class Core
         self::assertLocale($locale);
 
         $value = self::translation($key, $locale);
-
-        if ($value === null) {
-            $fallback = self::fallbackLocale();
-
-            if ($fallback !== null && $fallback !== $locale) {
-                $value = self::translation($key, $fallback);
-            }
-        }
 
         if ($value === null) {
             $value = $default ?? $key;
@@ -540,7 +651,7 @@ final class Core
         ];
         $configured = self::uploadOptions($options['profile'] ?? null, $options);
         $options = $configured + $defaults;
-        $directory = $directory !== '' ? $directory : (string) ($options['directory'] ?? self::config('upload.directory', self::config('directory.uploads', 'uploads')));
+        $directory = $directory !== '' ? $directory : (string) ($options['directory'] ?? self::config('upload.directory', self::basePath('uploads')));
         $folder = self::uploadSubfolder($options['subfolder'] ?? null);
 
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
@@ -622,11 +733,17 @@ final class Core
         $profiles = isset($base['profiles']) && is_array($base['profiles']) ? $base['profiles'] : [];
         unset($base['profiles']);
 
+        $base['max_size'] = (int) self::config('upload.max_size', $base['max_size'] ?? 5 * 1024 * 1024);
+
         $profileOptions = [];
 
         if ($profile !== null && $profile !== '') {
             $profileOptions = $profiles[$profile] ?? [];
             $profileOptions = is_array($profileOptions) ? $profileOptions : [];
+            $profileOptions['max_size'] = (int) self::config(
+                'upload.profiles.' . $profile . '.max_size',
+                $profileOptions['max_size'] ?? $base['max_size']
+            );
         }
 
         $options = array_replace($base, $profileOptions, $overrides);
@@ -1040,6 +1157,163 @@ final class Core
         return null;
     }
 
+    public static function clientIp(): string
+    {
+        $remote = trim((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+        $trusted = (array) self::config('security.trusted_proxies', []);
+
+        if ($remote !== '' && in_array($remote, array_map('strval', $trusted), true)) {
+            $forwarded = trim((string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''));
+
+            if ($forwarded === '') {
+                $forwarded = trim(explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''))[0] ?? '');
+            }
+
+            if (filter_var($forwarded, FILTER_VALIDATE_IP)) {
+                return $forwarded;
+            }
+        }
+
+        return filter_var($remote, FILTER_VALIDATE_IP) ? $remote : '0.0.0.0';
+    }
+
+    public static function rateLimit(
+        string $key,
+        ?int $max = null,
+        ?int $window = null,
+        ?string $identity = null
+    ): array {
+        $max = max(1, $max ?? (int) self::config('security.rate_limit.max', 240));
+        $window = max(1, $window ?? (int) self::config('security.rate_limit.window', 60));
+        $identity = $identity !== null && $identity !== '' ? $identity : self::clientIp();
+        $now = time();
+        $hash = hash('sha256', $key . '|' . $identity);
+        $data = self::rateLimitRead($hash);
+
+        if (($data['reset'] ?? 0) <= $now) {
+            $data = [
+                'count' => 0,
+                'reset' => $now + $window,
+            ];
+        }
+
+        $data['count'] = (int) ($data['count'] ?? 0) + 1;
+        self::rateLimitWrite($hash, $data);
+
+        $retryAfter = max(0, (int) $data['reset'] - $now);
+        $allowed = (int) $data['count'] <= $max;
+
+        return [
+            'allowed' => $allowed,
+            'key' => $key,
+            'identity' => $identity,
+            'limit' => $max,
+            'count' => (int) $data['count'],
+            'remaining' => max(0, $max - (int) $data['count']),
+            'retry_after' => $allowed ? 0 : $retryAfter,
+            'reset_at' => date(DATE_ATOM, (int) $data['reset']),
+        ];
+    }
+
+    public static function guardRequestSecurity(): void
+    {
+        if (!(bool) self::config('security.enabled', true)) {
+            return;
+        }
+
+        if (!(bool) self::config('security.rate_limit.enabled', true)) {
+            return;
+        }
+
+        $state = self::rateLimit(
+            'request',
+            (int) self::config('security.rate_limit.max', 240),
+            (int) self::config('security.rate_limit.window', 60)
+        );
+
+        if ($state['allowed']) {
+            return;
+        }
+
+        if (self::isApiPath(self::path()) || self::wantsJson() || isset($_GET['api'])) {
+            self::apiError('Too many requests.', 429, 'rate_limited', ['retry_after' => $state['retry_after']]);
+        }
+
+        http_response_code(429);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Too many requests.';
+        exit;
+    }
+
+    public static function captchaField(string $context = 'form'): string
+    {
+        if (!(bool) self::config('security.captcha.enabled', true)) {
+            return '';
+        }
+
+        $name = (string) self::config('security.captcha.field', 'tc_captcha');
+        $challenge = self::captchaChallenge($context, true);
+        $target = (int) ($challenge['target'] ?? 50);
+        $pieceTop = (int) ($challenge['piece_top'] ?? 42);
+        $token = (string) ($challenge['token'] ?? '');
+        $tolerance = max(1, min(12, (int) self::config('security.captcha.tolerance', 4)));
+
+        return '<div class="field captcha-puzzle" data-captcha data-captcha-token="' . self::e($token) . '" data-captcha-tolerance="' . self::e($tolerance) . '" data-captcha-hint="' . self::e(self::t('security.captcha_hint')) . '" data-captcha-solved="' . self::e(self::t('security.captcha_solved')) . '" style="--captcha-target: ' . self::e($target) . '%; --captcha-y: ' . self::e($pieceTop) . '%;">'
+            . '<span class="label">' . self::e(self::t('security.captcha_label')) . '</span>'
+            . '<input type="hidden" name="' . self::e($name) . '" value="" data-captcha-answer required>'
+            . '<div class="captcha-board" aria-hidden="true">'
+            . '<span class="captcha-slot"></span>'
+            . '<span class="captcha-piece" data-captcha-piece></span>'
+            . '</div>'
+            . '<label class="captcha-slider-label">'
+            . '<span class="sr-only">' . self::e(self::t('security.captcha_slider')) . '</span>'
+            . '<input class="captcha-slider" type="range" min="8" max="92" step="1" value="8" data-captcha-slider>'
+            . '</label>'
+            . '<span class="captcha-hint" data-captcha-status>' . self::e(self::t('security.captcha_hint')) . '</span>'
+            . '</div>';
+    }
+
+    public static function captchaCheck(string $context = 'form'): bool
+    {
+        if (!(bool) self::config('security.captcha.enabled', true)) {
+            return true;
+        }
+
+        $name = (string) self::config('security.captcha.field', 'tc_captcha');
+        $answer = trim((string) self::payload($name, ''));
+        $challenge = self::captchaChallenge($context);
+
+        if ($challenge === [] || $answer === '') {
+            return false;
+        }
+
+        [$token, $position] = array_pad(explode(':', $answer, 2), 2, '');
+        $target = (int) ($challenge['target'] ?? -1);
+        $expires = (int) ($challenge['expires'] ?? 0);
+        $tolerance = max(1, min(12, (int) self::config('security.captcha.tolerance', 4)));
+        $valid = hash_equals((string) ($challenge['token'] ?? ''), (string) $token)
+            && $expires >= time()
+            && is_numeric($position)
+            && abs((int) $position - $target) <= $tolerance;
+
+        if ($valid) {
+            unset($_SESSION[self::captchaSessionKey($context)]);
+        }
+
+        return $valid;
+    }
+
+    public static function captchaRefresh(string $context = 'form'): string
+    {
+        if (!(bool) self::config('security.captcha.enabled', true)) {
+            return '';
+        }
+
+        $challenge = self::captchaChallenge($context, true);
+
+        return (string) ($challenge['token'] ?? '');
+    }
+
     public static function validate(array $data, array $rules, array $messages = []): array
     {
         $errors = [];
@@ -1162,17 +1436,22 @@ final class Core
     {
         self::session();
 
-        $sessionKey = self::authConfig('session', 'auth_user_id');
-        $id = $_SESSION[$sessionKey] ?? null;
+        $id = $_SESSION[self::AUTH_SESSION] ?? null;
 
         if ($id === null || $id === '') {
+            $remembered = self::authRememberUser();
+
+            if ($remembered !== null) {
+                return $key === null ? $remembered : self::dataGet($remembered, $key, $default);
+            }
+
             return $key === null ? null : $default;
         }
 
         $user = self::authUserById($id);
 
         if ($user === null || !self::authUserIsActive($user)) {
-            unset($_SESSION[$sessionKey]);
+            unset($_SESSION[self::AUTH_SESSION]);
             return $key === null ? null : $default;
         }
 
@@ -1181,9 +1460,7 @@ final class Core
 
     public static function authId(): mixed
     {
-        $idColumn = self::authConfig('id', 'id');
-
-        return self::auth($idColumn);
+        return self::auth(self::AUTH_ID);
     }
 
     public static function authCheck(): bool
@@ -1193,10 +1470,9 @@ final class Core
 
     public static function authAttempt(array $credentials): bool
     {
-        $loginColumn = self::authConfig('login', 'email');
-        $passwordColumn = self::authConfig('password', 'password');
-        $login = $credentials[$loginColumn] ?? $credentials['login'] ?? $credentials['email'] ?? $credentials['username'] ?? null;
-        $password = $credentials[$passwordColumn] ?? $credentials['password'] ?? null;
+        $login = $credentials[self::AUTH_LOGIN] ?? $credentials['login'] ?? $credentials['email'] ?? $credentials['username'] ?? null;
+        $password = $credentials[self::AUTH_PASSWORD] ?? $credentials['password'] ?? null;
+        $remember = in_array($credentials['remember'] ?? false, [true, 1, '1', 'true', 'on', 'yes'], true);
 
         if (!is_string($login) || trim($login) === '' || !is_string($password) || $password === '') {
             return false;
@@ -1208,35 +1484,46 @@ final class Core
             return false;
         }
 
-        $hash = (string) ($user[$passwordColumn] ?? '');
+        $hash = (string) ($user[self::AUTH_PASSWORD] ?? '');
 
         if ($hash === '' || !password_verify($password, $hash)) {
             return false;
         }
 
         if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
+            $hash = self::authPassword($password);
             self::update(
-                self::authConfig('table', 'users'),
-                [$passwordColumn => self::authPassword($password)],
-                [self::authConfig('id', 'id') => $user[self::authConfig('id', 'id')]]
+                self::AUTH_TABLE,
+                [self::AUTH_PASSWORD => $hash],
+                [self::AUTH_ID => $user[self::AUTH_ID]]
             );
+            $user[self::AUTH_PASSWORD] = $hash;
         }
 
-        return self::authLogin($user);
+        return self::authLogin($user, $remember);
     }
 
-    public static function authLogin(array|int|string $user): bool
+    public static function authLogin(array|int|string $user, bool $remember = false): bool
     {
-        $idColumn = self::authConfig('id', 'id');
-        $id = is_array($user) ? ($user[$idColumn] ?? null) : $user;
+        $id = is_array($user) ? ($user[self::AUTH_ID] ?? null) : $user;
 
         if ($id === null || $id === '') {
             return false;
         }
 
         self::session();
-        $_SESSION[self::authConfig('session', 'auth_user_id')] = $id;
+        $_SESSION[self::AUTH_SESSION] = $id;
         session_regenerate_id(true);
+
+        if ($remember) {
+            $user = is_array($user) ? $user : self::authUserById($id);
+
+            if (is_array($user)) {
+                self::authRemember($user);
+            }
+        } else {
+            self::authForget();
+        }
 
         return true;
     }
@@ -1244,7 +1531,8 @@ final class Core
     public static function authLogout(): void
     {
         self::session();
-        unset($_SESSION[self::authConfig('session', 'auth_user_id')]);
+        unset($_SESSION[self::AUTH_SESSION]);
+        self::authForget();
         session_regenerate_id(true);
     }
 
@@ -1260,20 +1548,19 @@ final class Core
             self::apiError('Unauthenticated.', 401, 'unauthenticated');
         }
 
-        self::redirect(self::authRedirectUrl($redirect ?? self::authConfig('login_url', '/login')));
+        self::redirect(self::authRedirectUrl($redirect ?? self::authUrl('login_url', '/login')));
     }
 
     public static function guestOnly(?string $redirect = null): void
     {
         if (self::authCheck()) {
-            self::redirect($redirect ?? self::authConfig('home_url', '/'));
+            self::redirect($redirect ?? self::authUrl('home_url', '/'));
         }
     }
 
     public static function authIs(array|string $roles): bool
     {
-        $roleColumn = self::authConfig('role', 'role');
-        $role = self::auth($roleColumn);
+        $role = self::auth(self::AUTH_ROLE);
 
         if ($role === null || $role === '') {
             return false;
@@ -1614,15 +1901,168 @@ final class Core
         return true;
     }
 
-    private static function authConfig(string $key, mixed $default = null): mixed
+    private static function authUrl(string $key, string $default): string
     {
-        return self::config('auth.' . $key, $default);
+        $url = self::config('auth.' . $key, $default);
+
+        return is_string($url) && $url !== '' ? $url : $default;
+    }
+
+    private static function authRememberUser(): ?array
+    {
+        $name = self::authRememberCookieName();
+        $value = (string) ($_COOKIE[$name] ?? '');
+
+        if ($value === '') {
+            return null;
+        }
+
+        $payload = self::authRememberDecode($value);
+
+        if ($payload === null) {
+            self::authForget();
+            return null;
+        }
+
+        $id = $payload['id'] ?? null;
+        $expires = (int) ($payload['expires'] ?? 0);
+        $mac = (string) ($payload['mac'] ?? '');
+
+        if ($id === null || $id === '' || $expires < time() || $mac === '') {
+            self::authForget();
+            return null;
+        }
+
+        $user = self::authUserById($id);
+
+        if ($user === null || !self::authUserIsActive($user) || (string) ($user[self::AUTH_PASSWORD] ?? '') === '') {
+            self::authForget();
+            return null;
+        }
+
+        if (!hash_equals(self::authRememberSignature($user, $expires), $mac)) {
+            self::authForget();
+            return null;
+        }
+
+        self::session();
+        $_SESSION[self::AUTH_SESSION] = $user[self::AUTH_ID] ?? $id;
+        session_regenerate_id(true);
+        self::authRemember($user);
+
+        return $user;
+    }
+
+    private static function authRemember(array $user): void
+    {
+        $id = $user[self::AUTH_ID] ?? null;
+        $hash = (string) ($user[self::AUTH_PASSWORD] ?? '');
+
+        if ($id === null || $id === '' || $hash === '') {
+            return;
+        }
+
+        $days = max(1, (int) self::config('auth.remember_days', 30));
+        $expires = time() + ($days * 86400);
+        $payload = [
+            'id' => (string) $id,
+            'expires' => $expires,
+            'mac' => self::authRememberSignature($user, $expires),
+        ];
+        $json = json_encode($payload, JSON_UNESCAPED_SLASHES);
+
+        if (!is_string($json)) {
+            return;
+        }
+
+        $name = self::authRememberCookieName();
+        $value = self::base64UrlEncode($json);
+        setcookie($name, $value, self::authRememberCookieOptions($expires));
+        $_COOKIE[$name] = $value;
+    }
+
+    private static function authForget(): void
+    {
+        $name = self::authRememberCookieName();
+        unset($_COOKIE[$name]);
+        setcookie($name, '', self::authRememberCookieOptions(time() - 3600));
+    }
+
+    private static function authRememberDecode(string $value): ?array
+    {
+        $json = self::base64UrlDecode($value);
+
+        if ($json === null) {
+            return null;
+        }
+
+        $payload = json_decode($json, true);
+
+        return is_array($payload) ? $payload : null;
+    }
+
+    private static function authRememberSignature(array $user, int $expires): string
+    {
+        $id = (string) ($user[self::AUTH_ID] ?? '');
+        $hash = (string) ($user[self::AUTH_PASSWORD] ?? '');
+        $appSecret = (string) self::config('app.key', self::config('app.name', 'TinyCat'));
+        $key = hash('sha256', $appSecret . '|' . $hash, true);
+
+        return hash_hmac('sha256', $id . '|' . $expires, $key);
+    }
+
+    private static function authRememberCookieName(): string
+    {
+        $name = (string) self::config('auth.remember_cookie', self::AUTH_REMEMBER);
+
+        return preg_match('/^[A-Za-z0-9_-]+$/', $name) === 1 ? $name : self::AUTH_REMEMBER;
+    }
+
+    private static function authRememberCookieOptions(int $expires): array
+    {
+        $path = (string) self::config('auth.remember_path', '/');
+
+        return [
+            'expires' => $expires,
+            'path' => $path !== '' ? $path : '/',
+            'secure' => self::isHttpsRequest(),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+    }
+
+    private static function base64UrlEncode(string $value): string
+    {
+        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
+    }
+
+    private static function base64UrlDecode(string $value): ?string
+    {
+        $value = strtr($value, '-_', '+/');
+        $padding = strlen($value) % 4;
+
+        if ($padding > 0) {
+            $value .= str_repeat('=', 4 - $padding);
+        }
+
+        $decoded = base64_decode($value, true);
+
+        return is_string($decoded) ? $decoded : null;
+    }
+
+    private static function isHttpsRequest(): bool
+    {
+        $https = strtolower((string) ($_SERVER['HTTPS'] ?? ''));
+
+        return in_array($https, ['on', '1'], true)
+            || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443
+            || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
     }
 
     private static function authUserById(mixed $id): ?array
     {
         try {
-            return self::find(self::authConfig('table', 'users'), [self::authConfig('id', 'id') => $id]);
+            return self::find(self::AUTH_TABLE, [self::AUTH_ID => $id]);
         } catch (Throwable) {
             return null;
         }
@@ -1631,7 +2071,7 @@ final class Core
     private static function authUserByLogin(string $login): ?array
     {
         try {
-            return self::find(self::authConfig('table', 'users'), [self::authConfig('login', 'email') => $login]);
+            return self::find(self::AUTH_TABLE, [self::AUTH_LOGIN => $login]);
         } catch (Throwable) {
             return null;
         }
@@ -1639,27 +2079,11 @@ final class Core
 
     private static function authUserIsActive(array $user): bool
     {
-        $statusColumn = (string) self::authConfig('status', 'status');
-
-        if ($statusColumn === '' || !array_key_exists($statusColumn, $user)) {
+        if (!array_key_exists(self::AUTH_STATUS, $user)) {
             return true;
         }
 
-        $active = self::authConfig('active', 'active');
-
-        if ($active === null || $active === '') {
-            return true;
-        }
-
-        $allowed = is_array($active) ? $active : [$active];
-
-        foreach ($allowed as $value) {
-            if ((string) $user[$statusColumn] === (string) $value) {
-                return true;
-            }
-        }
-
-        return false;
+        return (string) $user[self::AUTH_STATUS] === self::AUTH_ACTIVE_STATUS;
     }
 
     private static function authRedirectUrl(string $target): string
@@ -1804,6 +2228,212 @@ final class Core
         };
     }
 
+    private static function rateLimitRead(string $hash): array
+    {
+        $path = self::rateLimitPath($hash);
+
+        if ($path === null || !is_file($path)) {
+            self::session();
+            $data = $_SESSION['_rate_limits'][$hash] ?? [];
+
+            return is_array($data) ? $data : [];
+        }
+
+        $data = json_decode((string) @file_get_contents($path), true);
+
+        return is_array($data) ? $data : [];
+    }
+
+    private static function rateLimitWrite(string $hash, array $data): void
+    {
+        $path = self::rateLimitPath($hash);
+
+        if ($path === null) {
+            self::session();
+            $_SESSION['_rate_limits'][$hash] = $data;
+            return;
+        }
+
+        @file_put_contents($path, json_encode($data, JSON_UNESCAPED_SLASHES), LOCK_EX);
+    }
+
+    private static function rateLimitPath(string $hash): ?string
+    {
+        $directory = (string) self::config('security.rate_limit.storage', self::basePath('storage/rate-limit'));
+
+        if ($directory === '') {
+            return null;
+        }
+
+        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
+            return null;
+        }
+
+        if (!is_writable($directory)) {
+            return null;
+        }
+
+        return rtrim($directory, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . $hash . '.json';
+    }
+
+    private static function captchaChallenge(string $context, bool $refresh = false): array
+    {
+        self::session();
+
+        $key = self::captchaSessionKey($context);
+        $challenge = $_SESSION[$key] ?? null;
+
+        if (
+            !$refresh
+            && is_array($challenge)
+            && (int) ($challenge['expires'] ?? 0) >= time()
+            && is_string($challenge['token'] ?? null)
+        ) {
+            return $challenge;
+        }
+
+        $challenge = [
+            'token' => bin2hex(random_bytes(16)),
+            'target' => random_int(28, 72),
+            'piece_top' => random_int(24, 62),
+            'expires' => time() + max(60, (int) self::config('security.captcha.ttl', 600)),
+        ];
+
+        $_SESSION[$key] = $challenge;
+
+        return $challenge;
+    }
+
+    private static function captchaSessionKey(string $context): string
+    {
+        $context = preg_replace('/[^A-Za-z0-9_-]+/', '_', $context) ?? 'form';
+        $context = trim($context, '_-');
+
+        return '_captcha_' . ($context !== '' ? $context : 'form');
+    }
+
+    private static function limitString(string $value, int $limit): string
+    {
+        $value = trim($value);
+
+        if ($limit < 1) {
+            return '';
+        }
+
+        return function_exists('mb_substr') ? mb_substr($value, 0, $limit) : substr($value, 0, $limit);
+    }
+
+    private static function configSetting(string $key, mixed $default): mixed
+    {
+        if (self::$settingsLoading || !self::settingCanOverrideConfig($key)) {
+            return $default;
+        }
+
+        return self::setting($key, $default);
+    }
+
+    private static function settingCanOverrideConfig(string $key): bool
+    {
+        static $keys = [
+            'app.name' => true,
+            'site.name' => true,
+            'site.logo_media_id' => true,
+            'site.favicon_media_id' => true,
+            'site.footer_html' => true,
+            'i18n.locale' => true,
+            'datetime.timezone' => true,
+            'datetime.date' => true,
+            'datetime.time' => true,
+            'datetime.datetime' => true,
+            'datetime.relative' => true,
+            'security.enabled' => true,
+            'security.rate_limit.enabled' => true,
+            'security.rate_limit.max' => true,
+            'security.rate_limit.window' => true,
+            'security.rate_limit.login.max' => true,
+            'security.rate_limit.login.window' => true,
+            'security.captcha.enabled' => true,
+            'security.captcha.tolerance' => true,
+            'upload.max_size' => true,
+            'upload.profiles.image.max_size' => true,
+            'upload.profiles.document.max_size' => true,
+        ];
+
+        return isset($keys[$key]);
+    }
+
+    private static function settingsTable(): string
+    {
+        return self::SETTINGS_TABLE;
+    }
+
+    private static function settingsTableReady(): bool
+    {
+        static $ready = [];
+
+        $table = self::settingsTable();
+
+        if (($ready[$table] ?? false) === true) {
+            return true;
+        }
+
+        try {
+            self::query(sprintf('SELECT setting_key FROM %s LIMIT 1', self::identifier($table)));
+            $ready[$table] = true;
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    private static function assertSettingKey(string $key): void
+    {
+        if (!preg_match('/^[A-Za-z0-9_.-]+$/', $key)) {
+            throw new InvalidArgumentException('Invalid setting key: ' . $key);
+        }
+    }
+
+    private static function settingGroup(string $group): string
+    {
+        $group = strtolower(trim($group));
+        $group = preg_replace('/[^a-z0-9_-]+/', '_', $group) ?? 'general';
+
+        return self::limitString($group !== '' ? $group : 'general', 60);
+    }
+
+    private static function normalizeSettingType(string $type): string
+    {
+        $type = strtolower(trim($type));
+
+        return in_array($type, ['string', 'int', 'float', 'bool', 'json'], true) ? $type : 'string';
+    }
+
+    private static function castSettingValue(mixed $value, string $type): mixed
+    {
+        $type = self::normalizeSettingType($type);
+
+        return match ($type) {
+            'bool' => in_array((string) $value, ['1', 'true', 'on', 'yes'], true),
+            'int' => (int) $value,
+            'float' => (float) $value,
+            'json' => json_decode((string) $value, true) ?? null,
+            default => (string) $value,
+        };
+    }
+
+    private static function serializeSettingValue(mixed $value, string $type): string
+    {
+        $type = self::normalizeSettingType($type);
+
+        return match ($type) {
+            'bool' => in_array($value, [true, 1, '1', 'true', 'on', 'yes'], true) ? '1' : '0',
+            'int' => (string) (int) $value,
+            'float' => (string) (float) $value,
+            'json' => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+            default => self::stringValue($value),
+        };
+    }
+
     private static function ensureBooted(): void
     {
         if (self::$config === []) {
@@ -1816,19 +2446,6 @@ final class Core
         if ($data === []) {
             throw new InvalidArgumentException('Data array cannot be empty.');
         }
-    }
-
-    private static function fallbackLocale(): ?string
-    {
-        $fallback = self::config('i18n.fallback');
-
-        if (!is_string($fallback) || $fallback === '') {
-            return null;
-        }
-
-        self::assertLocale($fallback);
-
-        return $fallback;
     }
 
     private static function translation(string $key, string $locale): mixed
@@ -1856,7 +2473,7 @@ final class Core
     {
         self::assertLocale($locale);
 
-        $directory = self::config('i18n.directory', self::config('directory.lang'));
+        $directory = self::config('i18n.directory', self::basePath('lang'));
 
         if (!is_string($directory) || $directory === '') {
             $directory = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'lang';

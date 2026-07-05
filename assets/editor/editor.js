@@ -6,6 +6,8 @@
   var dictionaries = {};
   var loadedLocales = {};
   var loadingLocales = {};
+  var editorCounter = 0;
+  var mediaTargets = {};
   var fallbackLocale = "en";
   var editorScriptElement = editorScript();
   var langBase = editorLangBase(editorScriptElement);
@@ -185,6 +187,76 @@
     return element;
   }
 
+  function selectOption(value, label) {
+    var option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+
+    return option;
+  }
+
+  function imageToolButton(locale, align, iconName, labelKey) {
+    var element = document.createElement("button");
+    element.type = "button";
+    element.className = "btn btn-sm btn-ghost tc-editor-image-button";
+    element.dataset.editorImageAlign = align;
+    element.title = t(locale, labelKey);
+    element.setAttribute("aria-label", t(locale, labelKey));
+    element.appendChild(icon(iconName));
+
+    return element;
+  }
+
+  function imageTools(locale) {
+    var element = document.createElement("div");
+    var meta = document.createElement("span");
+    var align = document.createElement("div");
+    var size = document.createElement("select");
+    var alt = document.createElement("input");
+    var remove = document.createElement("button");
+
+    element.className = "tc-editor-image-tools";
+    element.dataset.editorImageTools = "true";
+    element.hidden = true;
+
+    meta.className = "tc-editor-image-meta";
+    meta.dataset.editorImageMeta = "true";
+    meta.textContent = t(locale, "imageSelected");
+    element.appendChild(meta);
+
+    align.className = "btn-group tc-editor-image-align";
+    align.setAttribute("aria-label", t(locale, "imageAlign"));
+    align.appendChild(imageToolButton(locale, "left", "align-left", "imageAlignLeft"));
+    align.appendChild(imageToolButton(locale, "center", "align-center", "imageAlignCenter"));
+    align.appendChild(imageToolButton(locale, "right", "align-right", "imageAlignRight"));
+    element.appendChild(align);
+
+    size.className = "select tc-editor-image-size";
+    size.dataset.editorImageSize = "true";
+    size.setAttribute("aria-label", t(locale, "imageSize"));
+    size.appendChild(selectOption("auto", t(locale, "imageSizeAuto")));
+    size.appendChild(selectOption("small", t(locale, "imageSizeSmall")));
+    size.appendChild(selectOption("medium", t(locale, "imageSizeMedium")));
+    size.appendChild(selectOption("full", t(locale, "imageSizeFull")));
+    element.appendChild(size);
+
+    alt.className = "input tc-editor-image-alt";
+    alt.dataset.editorImageAlt = "true";
+    alt.placeholder = t(locale, "imageAlt");
+    alt.setAttribute("aria-label", t(locale, "imageAlt"));
+    element.appendChild(alt);
+
+    remove.type = "button";
+    remove.className = "btn btn-sm btn-ghost btn-icon text-danger tc-editor-image-remove";
+    remove.dataset.editorImageRemove = "true";
+    remove.title = t(locale, "imageRemove");
+    remove.setAttribute("aria-label", t(locale, "imageRemove"));
+    remove.appendChild(icon("trash"));
+    element.appendChild(remove);
+
+    return element;
+  }
+
   function formatSelect(locale) {
     var select = document.createElement("select");
     var formats = [
@@ -225,6 +297,8 @@
     element.appendChild(separator());
     element.appendChild(button(t(locale, "link"), "createLink", "link"));
     element.appendChild(button(t(locale, "unlink"), "unlink", "unlink"));
+    element.appendChild(button(t(locale, "image"), "insertImage", "image"));
+    element.appendChild(button(t(locale, "file"), "insertFile", "file"));
     element.appendChild(separator());
     element.appendChild(button(t(locale, "undo"), "undo", "undo"));
     element.appendChild(button(t(locale, "redo"), "redo", "redo"));
@@ -247,6 +321,7 @@
       H2: true,
       H3: true,
       I: true,
+      IMG: true,
       LI: true,
       OL: true,
       P: true,
@@ -271,11 +346,54 @@
           return;
         }
 
+        if (node.tagName === "A" && name === "data-media-id" && /^[1-9][0-9]*$/.test(value)) {
+          return;
+        }
+
+        if (node.tagName === "A" && name === "data-file-link" && value === "true") {
+          return;
+        }
+
+        if (node.tagName === "A" && name === "data-file-extension" && /^[a-z0-9]{1,20}$/i.test(value)) {
+          return;
+        }
+
+        if (node.tagName === "IMG" && name === "src" && /^(https?:|\/)/i.test(value)) {
+          return;
+        }
+
+        if (node.tagName === "IMG" && (name === "alt" || name === "loading")) {
+          return;
+        }
+
+        if (node.tagName === "IMG" && name === "data-media-id" && /^[1-9][0-9]*$/.test(value)) {
+          return;
+        }
+
+        if (node.tagName === "IMG" && name === "data-align" && normalizeImageAlign(value) !== "") {
+          node.setAttribute("data-align", normalizeImageAlign(value));
+          return;
+        }
+
+        if (node.tagName === "IMG" && name === "data-size" && normalizeImageSize(value) !== "auto") {
+          node.setAttribute("data-size", normalizeImageSize(value));
+          return;
+        }
+
         node.removeAttribute(attribute.name);
       });
 
       if (node.tagName === "A") {
         node.setAttribute("rel", "noopener");
+      }
+
+      if (node.tagName === "IMG") {
+        if (!node.getAttribute("src")) {
+          node.remove();
+          return;
+        }
+
+        node.setAttribute("loading", "lazy");
       }
     });
 
@@ -294,6 +412,18 @@
     }
 
     return "https://" + url;
+  }
+
+  function normalizeImageAlign(value) {
+    value = String(value || "").trim().toLowerCase();
+
+    return ["left", "center", "right"].indexOf(value) !== -1 ? value : "";
+  }
+
+  function normalizeImageSize(value) {
+    value = String(value || "").trim().toLowerCase();
+
+    return ["small", "medium", "full"].indexOf(value) !== -1 ? value : "auto";
   }
 
   function saveSelection(root) {
@@ -337,6 +467,206 @@
     link = node && node.closest ? node.closest("a") : null;
 
     return link ? link.getAttribute("href") || "https://" : "https://";
+  }
+
+  function imageHtml(media) {
+    var data = media || {};
+    var image = document.createElement("img");
+    var paragraph = document.createElement("p");
+    var id = String(data.id || data.media_id || "");
+
+    if (!data.url) {
+      return "";
+    }
+
+    image.src = String(data.url || "");
+    image.alt = String(data.alt || data.title || "");
+    image.loading = "lazy";
+    image.dataset.align = "center";
+    image.dataset.size = "full";
+
+    if (/^[1-9][0-9]*$/.test(id)) {
+      image.dataset.mediaId = id;
+    }
+
+    paragraph.appendChild(image);
+
+    return paragraph.outerHTML;
+  }
+
+  function isImageMedia(media) {
+    var data = media || {};
+    var mime = String(data.mimeType || data.mime_type || "").toLowerCase();
+    var extension = String(data.extension || "").toLowerCase();
+    var url = String(data.url || "").split(/[?#]/)[0].toLowerCase();
+
+    return data.type === "image"
+      || mime.indexOf("image/") === 0
+      || ["jpg", "jpeg", "png", "gif", "webp", "svg"].indexOf(extension) !== -1
+      || /\.(jpe?g|png|gif|webp|svg)$/.test(url);
+  }
+
+  function fileHtml(media) {
+    var data = media || {};
+    var paragraph = document.createElement("p");
+    var link = document.createElement("a");
+    var id = String(data.id || data.media_id || "");
+    var title = String(data.title || data.original_name || data.filename || data.url || t(fallbackLocale, "file"));
+    var extension = String(data.extension || "").toLowerCase();
+
+    if (!data.url) {
+      return "";
+    }
+
+    link.href = String(data.url || "");
+    link.textContent = title;
+    link.dataset.fileLink = "true";
+
+    if (/^[1-9][0-9]*$/.test(id)) {
+      link.dataset.mediaId = id;
+    }
+
+    if (/^[a-z0-9]{1,20}$/i.test(extension)) {
+      link.dataset.fileExtension = extension;
+    }
+
+    paragraph.appendChild(link);
+
+    return paragraph.outerHTML;
+  }
+
+  function imageFromEventTarget(target, root) {
+    var image = target && target.closest ? target.closest("img") : null;
+
+    return image && root.contains(image) ? image : null;
+  }
+
+  function selectedImage(instance) {
+    if (!instance.selectedImage || !instance.surface.contains(instance.selectedImage)) {
+      instance.selectedImage = null;
+    }
+
+    return instance.selectedImage;
+  }
+
+  function setSelectedImage(instance, image) {
+    if (instance.selectedImage && instance.selectedImage !== image) {
+      instance.selectedImage.removeAttribute("data-editor-selected");
+    }
+
+    instance.selectedImage = image && instance.surface.contains(image) ? image : null;
+
+    if (instance.selectedImage) {
+      instance.selectedImage.dataset.editorSelected = "true";
+    }
+
+    updateImageTools(instance);
+  }
+
+  function updateImageTools(instance) {
+    var image = selectedImage(instance);
+    var tools = instance.imageTools;
+    var meta;
+    var size;
+    var alt;
+    var align;
+    var mediaId;
+
+    if (!tools) {
+      return;
+    }
+
+    if (!image || instance.mode === "source") {
+      tools.hidden = true;
+      return;
+    }
+
+    tools.hidden = false;
+    mediaId = image.getAttribute("data-media-id") || "";
+    meta = qs("[data-editor-image-meta]", tools);
+    size = qs("[data-editor-image-size]", tools);
+    alt = qs("[data-editor-image-alt]", tools);
+    align = normalizeImageAlign(image.getAttribute("data-align"));
+
+    if (meta) {
+      meta.textContent = mediaId ? t(instance.locale, "imageMediaId") + " #" + mediaId : t(instance.locale, "imageSelected");
+    }
+
+    if (size) {
+      size.value = normalizeImageSize(image.getAttribute("data-size"));
+    }
+
+    if (alt && document.activeElement !== alt) {
+      alt.value = image.getAttribute("alt") || "";
+    }
+
+    qsa("[data-editor-image-align]", tools).forEach(function (button) {
+      button.setAttribute("aria-pressed", align === button.dataset.editorImageAlign ? "true" : "false");
+    });
+  }
+
+  function applyImageAlign(instance, align) {
+    var image = selectedImage(instance);
+
+    if (!image) {
+      return;
+    }
+
+    align = normalizeImageAlign(align) || "center";
+    image.dataset.align = align;
+    sync(instance);
+    updateImageTools(instance);
+  }
+
+  function applyImageSize(instance, size) {
+    var image = selectedImage(instance);
+
+    if (!image) {
+      return;
+    }
+
+    size = normalizeImageSize(size);
+
+    if (size === "auto") {
+      image.removeAttribute("data-size");
+    } else {
+      image.dataset.size = size;
+    }
+
+    sync(instance);
+    updateImageTools(instance);
+  }
+
+  function applyImageAlt(instance, value) {
+    var image = selectedImage(instance);
+
+    if (!image) {
+      return;
+    }
+
+    image.setAttribute("alt", String(value || ""));
+    sync(instance);
+  }
+
+  function removeSelectedImage(instance) {
+    var image = selectedImage(instance);
+    var parent;
+
+    if (!image) {
+      return;
+    }
+
+    parent = image.parentElement;
+
+    if (parent && parent.tagName === "P" && parent.textContent.trim() === "" && qsa("img", parent).length === 1) {
+      parent.remove();
+    } else {
+      image.remove();
+    }
+
+    setSelectedImage(instance, null);
+    sync(instance);
+    updateToolbar(instance);
   }
 
   function stats(text) {
@@ -392,7 +722,7 @@
   }
 
   async function exec(instance, command, value) {
-    var range = command === "createLink" ? saveSelection(instance.surface) : null;
+    var range = command === "createLink" || command === "insertImage" || command === "insertFile" ? saveSelection(instance.surface) : null;
 
     if (command === "toggleSource") {
       toggleSource(instance);
@@ -400,6 +730,48 @@
     }
 
     if (instance.mode === "source") {
+      return;
+    }
+
+    if (command === "insertImage") {
+      instance.savedRange = range;
+      mediaTargets[instance.id] = {
+        instance: instance,
+        type: "image"
+      };
+
+      if (TinyCat.openFilePicker || TinyCat.openMediaPicker) {
+        (TinyCat.openFilePicker || TinyCat.openMediaPicker)({
+          dataset: {
+            filePickerMode: "editor",
+            filePickerOpen: instance.filePickerOpen,
+            filePickerTarget: instance.id,
+            filePickerType: "image"
+          }
+        });
+      }
+
+      return;
+    }
+
+    if (command === "insertFile") {
+      instance.savedRange = range;
+      mediaTargets[instance.id] = {
+        instance: instance,
+        type: "file"
+      };
+
+      if (TinyCat.openFilePicker || TinyCat.openMediaPicker) {
+        (TinyCat.openFilePicker || TinyCat.openMediaPicker)({
+          dataset: {
+            filePickerMode: "editor",
+            filePickerOpen: instance.filePickerOpen,
+            filePickerTarget: instance.id,
+            filePickerType: "file"
+          }
+        });
+      }
+
       return;
     }
 
@@ -433,6 +805,29 @@
     updateToolbar(instance);
   }
 
+  function insertMedia(target, media) {
+    var targetData = mediaTargets[target];
+    var instance = targetData && targetData.instance ? targetData.instance : targetData;
+    var type = targetData && targetData.type ? targetData.type : "";
+    var html;
+
+    if (!instance || instance.mode === "source") {
+      return;
+    }
+
+    html = type === "file" || !isImageMedia(media) ? fileHtml(media) : imageHtml(media);
+
+    if (!html) {
+      return;
+    }
+
+    instance.surface.focus();
+    restoreSelection(instance.savedRange);
+    document.execCommand("insertHTML", false, html);
+    sync(instance);
+    updateToolbar(instance);
+  }
+
   function updateToolbar(instance) {
     var active = ["bold", "italic", "underline", "insertUnorderedList", "insertOrderedList"];
     var sourceMode = instance.mode === "source";
@@ -455,6 +850,8 @@
     qsa("[data-editor-format]", instance.root).forEach(function (item) {
       item.disabled = sourceMode;
     });
+
+    updateImageTools(instance);
   }
 
   function bind(instance) {
@@ -466,6 +863,20 @@
 
     instance.root.addEventListener("click", function (event) {
       var control = event.target.closest("[data-editor-command]");
+      var imageAlign = event.target.closest("[data-editor-image-align]");
+      var imageRemove = event.target.closest("[data-editor-image-remove]");
+
+      if (imageAlign) {
+        event.preventDefault();
+        applyImageAlign(instance, imageAlign.dataset.editorImageAlign);
+        return;
+      }
+
+      if (imageRemove) {
+        event.preventDefault();
+        removeSelectedImage(instance);
+        return;
+      }
 
       if (!control) {
         return;
@@ -477,6 +888,13 @@
 
     instance.root.addEventListener("change", function (event) {
       var select = event.target.closest("[data-editor-format]");
+      var imageSize = event.target.closest("[data-editor-image-size]");
+
+      if (imageSize) {
+        event.preventDefault();
+        applyImageSize(instance, imageSize.value);
+        return;
+      }
 
       if (!select) {
         return;
@@ -486,7 +904,25 @@
       exec(instance, "formatBlock", select.value);
     });
 
+    instance.root.addEventListener("input", function (event) {
+      var alt = event.target.closest("[data-editor-image-alt]");
+
+      if (!alt) {
+        return;
+      }
+
+      applyImageAlt(instance, alt.value);
+    });
+
+    instance.surface.addEventListener("click", function (event) {
+      setSelectedImage(instance, imageFromEventTarget(event.target, instance.surface));
+    });
+
     instance.surface.addEventListener("input", function () {
+      if (instance.selectedImage && !instance.surface.contains(instance.selectedImage)) {
+        setSelectedImage(instance, null);
+      }
+
       sync(instance);
     });
 
@@ -505,6 +941,10 @@
     });
 
     instance.surface.addEventListener("mouseup", function () {
+      if (!imageFromEventTarget(document.activeElement, instance.surface)) {
+        updateImageTools(instance);
+      }
+
       updateToolbar(instance);
     });
 
@@ -533,6 +973,7 @@
     var surface = document.createElement("div");
     var source = document.createElement("textarea");
     var footer = document.createElement("div");
+    var tools = imageTools(locale);
     var instance;
 
     if (textarea.dataset.editorReady === "true") {
@@ -565,6 +1006,7 @@
     footer.className = "tc-editor-footer";
 
     root.appendChild(toolbar(locale));
+    root.appendChild(tools);
     root.appendChild(surface);
     root.appendChild(source);
     root.appendChild(footer);
@@ -572,17 +1014,26 @@
 
     instance = {
       footer: footer,
+      filePickerOpen: textarea.dataset.editorFilePicker || "content-file-picker",
+      id: "tc-editor-" + (++editorCounter),
       locale: locale,
       mode: "visual",
       root: root,
+      imageTools: tools,
       source: source,
       surface: surface,
+      selectedImage: null,
       textarea: textarea
     };
 
+    root.dataset.editorId = instance.id;
     textarea.__tinycatEditor = instance;
     bind(instance);
     sync(instance);
+
+    if (textarea.form && TinyCat.markFormClean) {
+      TinyCat.markFormClean(textarea.form);
+    }
 
     return instance;
   }
@@ -613,6 +1064,14 @@
   };
 
   TinyCat.Editor = Editor;
+  Editor.insertMedia = insertMedia;
+  document.addEventListener("tinycat:file-select", function (event) {
+    var detail = event.detail || {};
+
+    if (detail.mode === "editor") {
+      insertMedia(detail.target, detail.file || detail.media);
+    }
+  });
   window.TinyCat = TinyCat;
   ready(Editor.initAll);
 }());

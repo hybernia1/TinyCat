@@ -6,19 +6,14 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-tc_admin_users_schema();
+if (!(bool) config('install.installed', false)) {
+    redirect('/install');
+}
+
 require_auth();
 
 if (get('api') === 'list') {
     api_ok(tc_admin_users_response_payload());
-}
-
-if (get('api') === 'seed') {
-    api_endpoint('POST', static function (): never {
-        csrf_require();
-        tc_admin_users_seed();
-        api_ok(tc_admin_users_response_payload(), t('users.messages.seeded'));
-    });
 }
 
 if (get('api') === 'create') {
@@ -57,108 +52,21 @@ if (get('api') === 'delete') {
     });
 }
 
-$stats = tc_admin_users_stats();
 $csrfToken = csrf_token();
 
 layout('layout', [
     'title' => t('users.meta_title'),
     'current' => '/admin/users',
     'csrfToken' => $csrfToken,
-], static function () use ($stats): void {
+    'actions' => tc_admin_users_actions(),
+], static function (): void {
     ?>
-    <div class="split">
-        <div class="stack" style="--stack-gap: 8px;">
-            <span class="badge badge-primary"><?= icon('link') ?> /admin/users</span>
-            <h1 class="text-2xl m-0"><?= et('users.title') ?></h1>
-            <p class="text-muted mb-0"><?= et('users.intro') ?></p>
-        </div>
-        <div class="btn-group">
-            <a class="btn btn-secondary" href="/admin/users?api=list&view=html" data-ajax data-ajax-target="#users-list"><?= icon('refresh') ?> <span><?= et('common.refresh') ?></span></a>
-            <form action="/admin/users?api=seed&view=html" method="post" data-ajax-form data-ajax-target="#users-list">
-                <?= csrf_field() ?>
-                <button class="btn btn-primary" type="submit"><?= icon('plus') ?> <span><?= et('users.seed_data') ?></span></button>
-            </form>
-        </div>
-    </div>
-
-    <section class="grid md:grid-3" id="users-stats">
-        <?= tc_admin_users_stats_html($stats) ?>
-    </section>
-
-    <section class="grid md:grid-2" style="--grid-gap: 24px;">
-        <article class="card">
-            <div class="card-header">
-                <h2 class="text-lg m-0 cluster gap-2"><?= icon('user-plus') ?> <?= et('users.new_user') ?></h2>
-            </div>
-            <div class="card-body">
-                <form class="stack" action="/admin/users?api=create&view=html" method="post" data-ajax-form data-ajax-target="#users-list" data-reset="true">
-                    <?= csrf_field() ?>
-                    <label class="field">
-                        <span class="label"><?= et('common.name') ?></span>
-                        <input class="input" name="name" autocomplete="name" required>
-                    </label>
-                    <label class="field">
-                        <span class="label"><?= et('common.email') ?></span>
-                        <input class="input" type="email" name="email" autocomplete="email" required>
-                    </label>
-                    <label class="field">
-                        <span class="label"><?= et('common.password') ?></span>
-                        <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" required>
-                    </label>
-                    <div class="grid sm:grid-2">
-                        <label class="field">
-                            <span class="label"><?= et('common.role') ?></span>
-                            <select class="select" name="role">
-                                <?= tc_admin_options(tc_admin_roles(), 'user') ?>
-                            </select>
-                        </label>
-                        <label class="field">
-                            <span class="label"><?= et('common.status') ?></span>
-                            <select class="select" name="status">
-                                <?= tc_admin_options(tc_admin_statuses(), 'active') ?>
-                            </select>
-                        </label>
-                    </div>
-                    <label class="field">
-                        <span class="label"><?= et('common.tags') ?></span>
-                        <?= tc_admin_tagifier('tags', '', 'client,vip,lead,team,external,billing') ?>
-                    </label>
-                    <label class="field">
-                        <span class="label"><?= et('common.note') ?></span>
-                        <textarea class="textarea" name="note" rows="3" placeholder="<?= et('users.note_placeholder') ?>"></textarea>
-                    </label>
-                    <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('common.create') ?></span></button>
-                </form>
-            </div>
-        </article>
-
-        <article class="card">
-            <div class="card-header">
-                <h2 class="text-lg m-0 cluster gap-2"><?= icon('code') ?> <?= et('users.contract_title') ?></h2>
-            </div>
-            <div class="card-body stack">
-                <div class="alert alert-info"><?= et('users.contract_hint') ?></div>
-                <div class="table-wrap">
-                    <table class="table">
-                        <tbody>
-                            <tr><th><?= et('common.route') ?></th><td><code>/admin/users</code></td></tr>
-                            <tr><th><?= et('common.file') ?></th><td><code>Public/admin/users.php</code></td></tr>
-                            <tr><th><?= et('common.clean_api') ?></th><td><code>/admin/users?api=list</code></td></tr>
-                            <tr><th><?= et('common.ui_api') ?></th><td><code>/admin/users?api=list&view=html</code></td></tr>
-                            <tr><th><?= et('common.ui') ?></th><td><?= et('users.ui_stack') ?></td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </article>
-    </section>
-
     <section class="card">
         <div class="card-header split">
-            <div class="stack" style="--stack-gap: 4px;">
-                <h2 class="text-lg m-0 cluster gap-2"><?= icon('users') ?> <?= et('users.list_title') ?></h2>
-                <p class="text-muted mb-0"><?= et('users.list_hint') ?></p>
-            </div>
+            <h2 class="text-lg m-0 cluster gap-2"><?= icon('users') ?> <?= et('users.list_title') ?></h2>
+            <button class="btn btn-secondary btn-sm" type="button" data-modal-open="users-filter-modal">
+                <?= icon('filter') ?> <span><?= et('common.filters') ?></span>
+            </button>
         </div>
         <div class="card-body" id="users-list">
             <?= tc_admin_users_html() ?>
@@ -166,30 +74,6 @@ layout('layout', [
     </section>
     <?php
 });
-
-function tc_admin_users_schema(): void
-{
-    run(
-        "CREATE TABLE IF NOT EXISTS users (
-            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-            name VARCHAR(120) NOT NULL,
-            email VARCHAR(190) NOT NULL,
-            password VARCHAR(255) NULL,
-            role VARCHAR(40) NOT NULL DEFAULT 'user',
-            status VARCHAR(20) NOT NULL DEFAULT 'active',
-            tags VARCHAR(255) NULL,
-            note TEXT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY users_email_unique (email)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    if (!tc_admin_users_column_exists('password')) {
-        run('ALTER TABLE users ADD password VARCHAR(255) NULL AFTER email');
-    }
-}
 
 function tc_admin_roles(): array
 {
@@ -201,6 +85,45 @@ function tc_admin_roles(): array
     ];
 }
 
+function tc_admin_users_actions(): string
+{
+    return '<button class="btn btn-primary btn-sm" type="button" data-modal-open="user-create-modal">' . icon('user-plus') . ' <span>' . et('users.new_user') . '</span></button>';
+}
+
+function tc_admin_users_api_url(string $api, array $params = [], bool $withFilters = true): string
+{
+    $query = [
+        'api' => $api,
+        'view' => 'html',
+    ];
+
+    if ($withFilters) {
+        foreach (tc_admin_users_list_params(tc_admin_users_filters()) as $key => $value) {
+            if ($value !== '' && !array_key_exists($key, $params)) {
+                $query[$key] = $value;
+            }
+        }
+    }
+
+    foreach ($params as $key => $value) {
+        if ($value !== '' && $value !== null) {
+            $query[$key] = $value;
+        }
+    }
+
+    return '/admin/users?' . http_build_query($query);
+}
+
+function tc_admin_users_list_params(?array $filters = null, ?array $pagination = null): array
+{
+    $filters ??= tc_admin_users_filters();
+    $params = $filters;
+    $params['per_page'] = (int) ($pagination['per_page'] ?? admin_per_page());
+    $params['page'] = (int) ($pagination['page'] ?? admin_page());
+
+    return $params;
+}
+
 function tc_admin_statuses(): array
 {
     return [
@@ -210,9 +133,117 @@ function tc_admin_statuses(): array
     ];
 }
 
-function tc_admin_users(): array
+function tc_admin_users_filters(): array
 {
-    return all('SELECT * FROM users ORDER BY id DESC');
+    $role = (string) get('role', '');
+    $status = (string) get('status', '');
+
+    if (!array_key_exists($role, tc_admin_roles())) {
+        $role = '';
+    }
+
+    if (!array_key_exists($status, tc_admin_statuses())) {
+        $status = '';
+    }
+
+    return [
+        'q' => tc_admin_user_filter_text((string) get('q', ''), 120),
+        'role' => $role,
+        'status' => $status,
+        'updated_from' => tc_admin_user_filter_date((string) get('updated_from', '')),
+        'updated_to' => tc_admin_user_filter_date((string) get('updated_to', '')),
+    ];
+}
+
+function tc_admin_user_filter_text(string $value, int $limit): string
+{
+    $value = trim(preg_replace('/\s+/', ' ', $value) ?? '');
+
+    if ($value === '') {
+        return '';
+    }
+
+    return function_exists('mb_substr') ? mb_substr($value, 0, $limit) : substr($value, 0, $limit);
+}
+
+function tc_admin_user_filter_date(string $value): string
+{
+    $value = trim($value);
+
+    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 ? $value : '';
+}
+
+function tc_admin_user_like(string $value): string
+{
+    return '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value) . '%';
+}
+
+function tc_admin_users_active_filters(array $filters, bool $includeSearch = true): array
+{
+    return array_filter($filters, static function (string $value, string $key) use ($includeSearch): bool {
+        return $value !== '' && ($includeSearch || $key !== 'q');
+    }, ARRAY_FILTER_USE_BOTH);
+}
+
+function tc_admin_users_filter_sql(array $filters): array
+{
+    $clauses = [];
+    $params = [];
+
+    if ($filters['q'] !== '') {
+        $like = tc_admin_user_like($filters['q']);
+        $clauses[] = '(name LIKE ? ESCAPE \'\\\\\' OR email LIKE ? ESCAPE \'\\\\\' OR note LIKE ? ESCAPE \'\\\\\')';
+        array_push($params, $like, $like, $like);
+    }
+
+    if ($filters['role'] !== '') {
+        $clauses[] = 'role = ?';
+        $params[] = $filters['role'];
+    }
+
+    if ($filters['status'] !== '') {
+        $clauses[] = 'status = ?';
+        $params[] = $filters['status'];
+    }
+
+    if ($filters['updated_from'] !== '') {
+        $clauses[] = 'updated_at >= ?';
+        $params[] = $filters['updated_from'] . ' 00:00:00';
+    }
+
+    if ($filters['updated_to'] !== '') {
+        $clauses[] = 'updated_at <= ?';
+        $params[] = $filters['updated_to'] . ' 23:59:59';
+    }
+
+    return [
+        $clauses === [] ? '' : ' WHERE ' . implode(' AND ', $clauses),
+        $params,
+    ];
+}
+
+function tc_admin_users(?array $filters = null): array
+{
+    return tc_admin_users_page($filters)['items'];
+}
+
+function tc_admin_users_page(?array $filters = null): array
+{
+    $filters ??= tc_admin_users_filters();
+    [$where, $params] = tc_admin_users_filter_sql($filters);
+    $pagination = pagination_meta(
+        (int) val('SELECT COUNT(*) FROM users' . $where, $params),
+        admin_page(),
+        admin_per_page()
+    );
+    $items = all('SELECT * FROM users' . $where . ' ORDER BY id DESC' . pagination_sql($pagination), $params);
+
+    return [
+        'items' => $items,
+        'pagination' => $pagination + [
+            'to' => $pagination['total'] === 0 ? 0 : $pagination['offset'] + count($items),
+        ],
+    ];
 }
 
 function tc_admin_users_stats(): array
@@ -225,14 +256,6 @@ function tc_admin_users_stats(): array
     ];
 }
 
-function tc_admin_users_column_exists(string $column): bool
-{
-    return (int) val(
-        'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
-        ['users', $column]
-    ) > 0;
-}
-
 function tc_admin_users_response_payload(?int $id = null): array
 {
     return wants_partial()
@@ -242,12 +265,16 @@ function tc_admin_users_response_payload(?int $id = null): array
 
 function tc_admin_users_api_payload(?int $id = null): array
 {
-    $users = array_map('tc_admin_user_resource', tc_admin_users());
+    $filters = tc_admin_users_filters();
+    $page = tc_admin_users_page($filters);
+    $users = array_map('tc_admin_user_resource', $page['items']);
     $payload = [
         'items' => $users,
+        'pagination' => $page['pagination'],
         'stats' => tc_admin_users_stats(),
         'roles' => tc_admin_roles(),
         'statuses' => tc_admin_statuses(),
+        'filters' => $filters,
     ];
 
     if ($id !== null) {
@@ -260,13 +287,8 @@ function tc_admin_users_api_payload(?int $id = null): array
 
 function tc_admin_users_view_payload(?int $id = null): array
 {
-    $stats = tc_admin_users_stats();
     $payload = [
         'html' => tc_admin_users_html(),
-        'stats' => $stats,
-        'targets' => [
-            '#users-stats' => tc_admin_users_stats_html($stats),
-        ],
     ];
 
     if ($id !== null) {
@@ -287,15 +309,12 @@ function tc_admin_user_resource(array $user): array
         return [];
     }
 
-    $tags = array_values(array_filter(array_map('trim', explode(',', (string) ($user['tags'] ?? '')))));
-
     return [
         'id' => (int) ($user['id'] ?? 0),
         'name' => (string) ($user['name'] ?? ''),
         'email' => (string) ($user['email'] ?? ''),
         'role' => (string) ($user['role'] ?? ''),
         'status' => (string) ($user['status'] ?? ''),
-        'tags' => $tags,
         'note' => (string) ($user['note'] ?? ''),
         'created_at' => (string) ($user['created_at'] ?? ''),
         'updated_at' => (string) ($user['updated_at'] ?? ''),
@@ -333,7 +352,6 @@ function tc_admin_user_payload(?int $id = null): array
         'password' => $passwordRule,
         'role' => 'required|string|in:' . implode(',', array_keys(tc_admin_roles())),
         'status' => 'required|string|in:' . implode(',', array_keys(tc_admin_statuses())),
-        'tags' => 'nullable|string|max:255',
         'note' => 'nullable|string|max:2000',
     ]);
 
@@ -348,7 +366,6 @@ function tc_admin_user_payload(?int $id = null): array
         'email' => $email,
         'role' => (string) $data['role'],
         'status' => (string) $data['status'],
-        'tags' => tc_admin_clean_tags((string) ($data['tags'] ?? '')),
         'note' => trim((string) ($data['note'] ?? '')),
     ];
 
@@ -359,36 +376,6 @@ function tc_admin_user_payload(?int $id = null): array
     }
 
     return $payload;
-}
-
-function tc_admin_clean_tags(string $tags): string
-{
-    $items = array_filter(array_map(
-        static fn (string $tag): string => trim(preg_replace('/\s+/', ' ', $tag) ?? ''),
-        explode(',', $tags)
-    ));
-
-    $items = array_slice(array_values(array_unique($items)), 0, 12);
-
-    return implode(', ', $items);
-}
-
-function tc_admin_users_seed(): void
-{
-    if (total('users') > 0) {
-        return;
-    }
-
-    $users = [
-        ['name' => 'Ada Lovelace', 'email' => 'ada@example.test', 'role' => 'admin', 'status' => 'active', 'tags' => 'team, billing', 'note' => t('users.seed.ada_note')],
-        ['name' => 'Grace Hopper', 'email' => 'grace@example.test', 'role' => 'manager', 'status' => 'active', 'tags' => 'vip, team', 'note' => t('users.seed.grace_note')],
-        ['name' => 'Alan Turing', 'email' => 'alan@example.test', 'role' => 'editor', 'status' => 'invited', 'tags' => 'lead, external', 'note' => t('users.seed.alan_note')],
-    ];
-
-    foreach ($users as $user) {
-        $user['password'] = auth_password((string) config('auth.seed.password', 'tinycat123'));
-        insert('users', $user);
-    }
 }
 
 function tc_admin_options(array $options, ?string $selected = null): string
@@ -402,23 +389,6 @@ function tc_admin_options(array $options, ?string $selected = null): string
     return $html;
 }
 
-function tc_admin_tagifier(string $name, string $value = '', string $suggestions = ''): string
-{
-    ob_start();
-    ?>
-    <div class="tagifier" data-tagifier data-suggestions="<?= e($suggestions) ?>">
-        <input type="hidden" name="<?= e($name) ?>" value="<?= e($value) ?>" data-tag-value>
-        <div class="tag-box">
-            <span class="tag-list" data-tag-list></span>
-            <input class="tag-input" type="text" data-tag-input placeholder="<?= et('users.tag_placeholder') ?>">
-        </div>
-        <div class="tag-suggestions" data-tag-suggestions hidden></div>
-    </div>
-    <?php
-
-    return trim((string) ob_get_clean());
-}
-
 function tc_admin_status_badge(string $status): string
 {
     $labels = tc_admin_statuses();
@@ -429,20 +399,6 @@ function tc_admin_status_badge(string $status): string
     }
 
     return '<span class="' . e($class) . '">' . e($labels[$status] ?? $status) . '</span>';
-}
-
-function tc_admin_tag_badges(string $tags): string
-{
-    $items = array_filter(array_map('trim', explode(',', $tags)));
-
-    if ($items === []) {
-        return '<span class="table-meta">' . et('users.no_tags') . '</span>';
-    }
-
-    return implode('', array_map(
-        static fn (string $tag): string => '<span class="badge">' . e($tag) . '</span> ',
-        $items
-    ));
 }
 
 function tc_admin_datetime(string $value): string
@@ -484,15 +440,21 @@ function tc_admin_users_stats_html(array $stats): string
 
 function tc_admin_users_html(): string
 {
-    $users = tc_admin_users();
+    $filters = tc_admin_users_filters();
+    $page = tc_admin_users_page($filters);
+    $users = $page['items'];
+    $pagination = $page['pagination'];
+    $params = tc_admin_users_list_params($filters, $pagination);
     $roles = tc_admin_roles();
     $statuses = tc_admin_statuses();
+    $hasFilters = tc_admin_users_active_filters($filters) !== [];
 
     ob_start();
     ?>
     <div class="stack" style="--stack-gap: 14px;">
+        <?= tc_admin_users_filter_toolbar($filters, $pagination) ?>
         <?php if ($users === []): ?>
-            <div class="alert alert-info"><?= et('users.empty') ?></div>
+            <div class="alert alert-info"><?= $hasFilters ? et('users.empty_filtered') : et('users.empty') ?></div>
         <?php else: ?>
             <div class="table-wrap">
                 <table class="table">
@@ -501,12 +463,13 @@ function tc_admin_users_html(): string
                             <th><?= et('users.table_user') ?></th>
                             <th><?= et('common.role') ?></th>
                             <th><?= et('common.status') ?></th>
-                            <th><?= et('common.tags') ?></th>
                             <th><?= et('common.updated') ?></th>
+                            <th><?= et('common.actions') ?></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($users as $user): ?>
+                            <?php $id = (int) $user['id']; ?>
                             <tr>
                                 <td>
                                     <strong><?= e($user['name']) ?></strong>
@@ -514,85 +477,199 @@ function tc_admin_users_html(): string
                                 </td>
                                 <td><?= e($roles[$user['role']] ?? $user['role']) ?></td>
                                 <td><?= tc_admin_status_badge((string) $user['status']) ?></td>
-                                <td><?= tc_admin_tag_badges((string) $user['tags']) ?></td>
                                 <td>
                                     <time class="table-meta" datetime="<?= e(tc_admin_datetime_iso((string) $user['updated_at'])) ?>">
                                         <?= e(tc_admin_datetime((string) $user['updated_at'])) ?>
                                     </time>
                                 </td>
-                            </tr>
-                            <tr>
-                                <td colspan="5">
-                                    <?= tc_admin_user_editor($user, $roles, $statuses) ?>
+                                <td>
+                                    <div class="table-actions">
+                                        <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-open="user-edit-<?= e($id) ?>" aria-label="<?= et('users.edit_user', ['name' => (string) $user['name']]) ?>" title="<?= et('common.edit') ?>">
+                                            <?= icon('edit') ?>
+                                        </button>
+                                        <form class="inline-flex" action="<?= e(tc_admin_users_api_url('delete', ['id' => $id])) ?>" method="post" data-ajax-form data-ajax-target="#users-list" data-confirm="<?= et('users.delete_confirm', ['name' => (string) $user['name']]) ?>" data-confirm-title="<?= et('users.delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="_method" value="DELETE">
+                                            <button class="btn btn-sm btn-ghost btn-icon text-danger" type="submit" aria-label="<?= et('common.delete') ?>" title="<?= et('common.delete') ?>">
+                                                <?= icon('trash') ?>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
+            <?= admin_pagination($pagination, '/admin/users', '#users-list', $params) ?>
+            <?php foreach ($users as $user): ?>
+                <?= tc_admin_user_modal($user, $roles, $statuses) ?>
+            <?php endforeach; ?>
         <?php endif; ?>
+        <?= tc_admin_user_create_modal() ?>
+        <?= tc_admin_users_filter_modal() ?>
     </div>
     <?php
 
     return trim((string) ob_get_clean());
 }
 
-function tc_admin_user_editor(array $user, array $roles, array $statuses): string
+function tc_admin_users_filter_toolbar(array $filters, ?array $pagination = null): string
 {
-    $id = (int) $user['id'];
+    $hasFilters = tc_admin_users_active_filters($filters) !== [];
+    $params = tc_admin_users_list_params($filters, $pagination);
 
     ob_start();
     ?>
-    <details class="expand">
-        <summary><?= icon('edit') ?> <?= et('users.edit_user', ['name' => (string) $user['name']]) ?></summary>
-        <div class="expand-body stack">
-            <div class="cluster gap-2 table-meta">
-                <span><?= et('common.created') ?> <time datetime="<?= e(tc_admin_datetime_iso((string) $user['created_at'])) ?>"><?= e(tc_admin_datetime((string) $user['created_at'])) ?></time></span>
-                <span><?= et('common.updated') ?> <time datetime="<?= e(tc_admin_datetime_iso((string) $user['updated_at'])) ?>"><?= e(tc_admin_datetime((string) $user['updated_at'])) ?></time></span>
+    <div class="admin-list-toolbar">
+        <form class="admin-search-form" action="/admin/users" method="get" data-ajax-form data-ajax-target="#users-list" data-history="/admin/users">
+            <input type="hidden" name="api" value="list">
+            <input type="hidden" name="view" value="html">
+            <?= tc_admin_users_filter_hidden($filters, ['q']) ?>
+            <input type="hidden" name="per_page" value="<?= e((string) admin_per_page()) ?>">
+            <label class="sr-only" for="users-search"><?= et('common.search') ?></label>
+            <span class="input-icon">
+                <?= icon('search') ?>
+                <input class="input" id="users-search" type="search" name="q" value="<?= e($filters['q']) ?>" placeholder="<?= et('users.search_placeholder') ?>">
+            </span>
+            <button class="btn btn-secondary admin-search-submit" type="submit"><?= icon('search') ?> <span><?= et('common.search') ?></span></button>
+        </form>
+        <?php if ($hasFilters): ?>
+            <div class="admin-filter-actions">
+                <a class="btn btn-ghost" href="<?= e(tc_admin_users_api_url('list', ['per_page' => admin_per_page(), 'page' => 1], false)) ?>" data-ajax data-ajax-target="#users-list" data-history="<?= e(admin_list_url('/admin/users', ['per_page' => admin_per_page(), 'page' => 1], false)) ?>">
+                    <?= icon('close') ?> <span><?= et('common.clear_filters') ?></span>
+                </a>
             </div>
-            <form class="grid md:grid-2" action="/admin/users?api=update&view=html&id=<?= e($id) ?>" method="post" data-ajax-form data-ajax-target="#users-list">
-                <?= csrf_field() ?>
-                <input type="hidden" name="_method" value="PATCH">
-                <label class="field">
-                    <span class="label"><?= et('common.name') ?></span>
-                    <input class="input" name="name" value="<?= e($user['name']) ?>" required>
-                </label>
-                <label class="field">
-                    <span class="label"><?= et('common.email') ?></span>
-                    <input class="input" type="email" name="email" value="<?= e($user['email']) ?>" required>
-                </label>
-                <label class="field">
-                    <span class="label"><?= et('common.new_password') ?></span>
-                    <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" placeholder="<?= et('users.password_keep') ?>">
-                </label>
-                <label class="field">
-                    <span class="label"><?= et('common.role') ?></span>
-                    <select class="select" name="role"><?= tc_admin_options($roles, (string) $user['role']) ?></select>
-                </label>
-                <label class="field">
-                    <span class="label"><?= et('common.status') ?></span>
-                    <select class="select" name="status"><?= tc_admin_options($statuses, (string) $user['status']) ?></select>
-                </label>
-                <label class="field">
-                    <span class="label"><?= et('common.tags') ?></span>
-                    <?= tc_admin_tagifier('tags', (string) $user['tags'], 'client,vip,lead,team,external,billing') ?>
-                </label>
-                <label class="field">
-                    <span class="label"><?= et('common.note') ?></span>
-                    <textarea class="textarea" name="note" rows="3"><?= e($user['note']) ?></textarea>
-                </label>
-                <div class="cluster gap-2">
-                    <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('common.save') ?></span></button>
-                </div>
-            </form>
+        <?php endif; ?>
+        <?= admin_per_page_control('/admin/users', '#users-list', $params, (int) ($pagination['per_page'] ?? admin_per_page())) ?>
+    </div>
+    <?php
 
-            <form action="/admin/users?api=delete&view=html&id=<?= e($id) ?>" method="post" data-ajax-form data-ajax-target="#users-list" data-confirm="<?= et('users.delete_confirm', ['name' => (string) $user['name']]) ?>" data-confirm-title="<?= et('users.delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
-                <?= csrf_field() ?>
-                <input type="hidden" name="_method" value="DELETE">
-                <button class="btn btn-danger" type="submit"><?= icon('trash') ?> <span><?= et('common.delete') ?></span></button>
-            </form>
+    return trim((string) ob_get_clean());
+}
+
+function tc_admin_users_filter_hidden(array $filters, array $except = []): string
+{
+    $html = '';
+
+    foreach ($filters as $key => $value) {
+        if ($value === '' || in_array($key, $except, true)) {
+            continue;
+        }
+
+        $html .= '<input type="hidden" name="' . e($key) . '" value="' . e($value) . '">';
+    }
+
+    return $html;
+}
+
+function tc_admin_users_filter_modal(): string
+{
+    return render('modals/user-filter');
+}
+
+function tc_admin_users_filter_fields(array $filters, array $roles, array $statuses): string
+{
+    ob_start();
+    ?>
+    <div class="filter-modal-grid">
+        <input type="hidden" name="q" value="<?= e($filters['q']) ?>">
+        <input type="hidden" name="per_page" value="<?= e((string) admin_per_page()) ?>">
+        <input type="hidden" name="page" value="1">
+        <label class="field">
+            <span class="label"><?= et('common.role') ?></span>
+            <select class="select" name="role">
+                <?= tc_admin_options(['' => t('common.all')] + $roles, $filters['role']) ?>
+            </select>
+        </label>
+        <label class="field">
+            <span class="label"><?= et('common.status') ?></span>
+            <select class="select" name="status">
+                <?= tc_admin_options(['' => t('common.all')] + $statuses, $filters['status']) ?>
+            </select>
+        </label>
+        <div class="grid sm:grid-2">
+            <label class="field">
+                <span class="label"><?= et('common.updated_from') ?></span>
+                <input class="input" type="date" name="updated_from" value="<?= e($filters['updated_from']) ?>">
+            </label>
+            <label class="field">
+                <span class="label"><?= et('common.updated_to') ?></span>
+                <input class="input" type="date" name="updated_to" value="<?= e($filters['updated_to']) ?>">
+            </label>
         </div>
-    </details>
+    </div>
+    <?php
+
+    return trim((string) ob_get_clean());
+}
+
+function tc_admin_user_create_modal(): string
+{
+    return render('modals/user-create');
+}
+
+function tc_admin_user_modal(array $user, array $roles, array $statuses): string
+{
+    return render('modals/user-edit', [
+        'user' => $user,
+        'roles' => $roles,
+        'statuses' => $statuses,
+    ]);
+}
+
+function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, bool $create): string
+{
+    $role = (string) ($user['role'] ?? 'user');
+    $status = (string) ($user['status'] ?? 'active');
+
+    ob_start();
+    ?>
+    <div class="user-editor-layout">
+        <main class="user-editor-main stack">
+            <section class="user-editor-panel">
+                <div class="grid sm:grid-2">
+                    <label class="field">
+                        <span class="label"><?= et('common.name') ?></span>
+                        <input class="input input-lg" name="name" autocomplete="name" value="<?= e($user['name'] ?? '') ?>" required>
+                    </label>
+                    <label class="field">
+                        <span class="label"><?= et('common.email') ?></span>
+                        <input class="input input-lg" type="email" name="email" autocomplete="email" value="<?= e($user['email'] ?? '') ?>" required>
+                    </label>
+                </div>
+            </section>
+
+            <section class="user-editor-panel">
+                <label class="field">
+                    <span class="label"><?= $create ? et('common.password') : et('common.new_password') ?></span>
+                    <input class="input" type="password" name="password" autocomplete="new-password" minlength="8"<?= $create ? ' required' : '' ?> placeholder="<?= $create ? '' : et('users.password_keep') ?>">
+                </label>
+            </section>
+
+            <section class="user-editor-panel">
+                <label class="field user-editor-note">
+                    <span class="label"><?= et('common.note') ?></span>
+                    <textarea class="textarea" name="note" rows="8" placeholder="<?= et('users.note_placeholder') ?>"><?= e($user['note'] ?? '') ?></textarea>
+                </label>
+            </section>
+        </main>
+
+        <aside class="user-editor-sidebar">
+            <section class="user-editor-panel">
+                <div class="user-editor-settings-grid">
+                    <label class="field">
+                        <span class="label"><?= et('common.role') ?></span>
+                        <select class="select" name="role"><?= tc_admin_options($roles, $role) ?></select>
+                    </label>
+                    <label class="field">
+                        <span class="label"><?= et('common.status') ?></span>
+                        <select class="select" name="status"><?= tc_admin_options($statuses, $status) ?></select>
+                    </label>
+                </div>
+            </section>
+        </aside>
+    </div>
     <?php
 
     return trim((string) ob_get_clean());

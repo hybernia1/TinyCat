@@ -9,26 +9,26 @@ if (!defined('TINYCAT')) {
 if (is_post()) {
     csrf_require();
     auth_logout();
-    flash('success', 'Byla jsi odhlášena.');
+    flash('success', t('auth.logged_out'));
     redirect((string) config('auth.login_url', '/login'));
 }
 
 require_auth();
 
 layout('layout', [
-    'title' => 'Logout',
+    'title' => t('auth.logout_title'),
     'current' => '/logout',
 ], static function (): void {
     ?>
     <article class="card">
         <div class="card-header">
-            <h1 class="text-lg m-0 cluster gap-2"><?= icon('logout') ?> Odhlášení</h1>
+            <h1 class="text-lg m-0 cluster gap-2"><?= icon('logout') ?> <?= et('auth.logout_title') ?></h1>
         </div>
         <div class="card-body stack">
-            <p class="text-muted mb-0">Potvrď odhlášení z aktuální session.</p>
+            <p class="text-muted mb-0"><?= et('auth.logout_intro') ?></p>
             <form method="post" action="/logout">
                 <?= csrf_field() ?>
-                <button class="btn btn-danger" type="submit"><?= icon('logout') ?> <span>Odhlásit</span></button>
+                <button class="btn btn-danger" type="submit"><?= icon('logout') ?> <span><?= et('common.logout') ?></span></button>
             </form>
         </div>
     </article>
