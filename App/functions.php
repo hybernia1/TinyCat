@@ -130,6 +130,34 @@ if (!function_exists('total')) {
     }
 }
 
+if (!function_exists('paginate')) {
+    function paginate(
+        string $table,
+        array $where = [],
+        array|string $columns = '*',
+        ?int $page = null,
+        int $perPage = 15,
+        ?string $orderBy = null,
+        string $direction = 'ASC'
+    ): array {
+        return Core::paginate($table, $where, $columns, $page, $perPage, $orderBy, $direction);
+    }
+}
+
+if (!function_exists('pagination')) {
+    function pagination(array $pagination, ?string $baseUrl = null, string $pageName = 'page', int $window = 2): string
+    {
+        return Core::pagination($pagination, $baseUrl, $pageName, $window);
+    }
+}
+
+if (!function_exists('pager')) {
+    function pager(array $pagination, ?string $baseUrl = null, string $pageName = 'page', int $window = 2): string
+    {
+        return Core::pagination($pagination, $baseUrl, $pageName, $window);
+    }
+}
+
 if (!function_exists('e')) {
     function e(mixed $value): string
     {

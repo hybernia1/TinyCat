@@ -237,7 +237,15 @@ final class Core
         );
     }
 
-    public static function get(string $table, array $where = [], array|string $columns = '*', ?int $limit = null, ?int $offset = null): array
+    public static function get(
+        string $table,
+        array $where = [],
+        array|string $columns = '*',
+        ?int $limit = null,
+        ?int $offset = null,
+        ?string $orderBy = null,
+        string $direction = 'ASC'
+    ): array
     {
         $params = [];
         $select = self::selectColumns($columns);
@@ -246,6 +254,10 @@ final class Core
         if ($where !== []) {
             [$whereSql, $params] = self::where($where);
             $sql .= ' WHERE ' . $whereSql;
+        }
+
+        if ($orderBy !== null) {
+            $sql .= ' ORDER BY ' . self::column($orderBy) . ' ' . self::direction($direction);
         }
 
         if ($limit !== null || $offset !== null) {
@@ -270,6 +282,78 @@ final class Core
         }
 
         return (int) self::value($sql, $params);
+    }
+
+    public static function paginate(
+        string $table,
+        array $where = [],
+        array|string $columns = '*',
+        ?int $page = null,
+        int $perPage = 15,
+        ?string $orderBy = null,
+        string $direction = 'ASC'
+    ): array {
+        $page ??= max(1, (int) ($_GET['page'] ?? 1));
+        $page = max(1, $page);
+        $perPage = min(200, max(1, $perPage));
+        $total = self::count($table, $where);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min($page, $lastPage);
+        $offset = ($page - 1) * $perPage;
+        $items = $total > 0
+            ? self::get($table, $where, $columns, $perPage, $offset, $orderBy, $direction)
+            : [];
+        $count = count($items);
+
+        return [
+            'items' => $items,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'last_page' => $lastPage,
+            'from' => $total === 0 ? 0 : $offset + 1,
+            'to' => $total === 0 ? 0 : $offset + $count,
+            'has_prev' => $page > 1,
+            'has_next' => $page < $lastPage,
+            'prev_page' => $page > 1 ? $page - 1 : null,
+            'next_page' => $page < $lastPage ? $page + 1 : null,
+        ];
+    }
+
+    public static function pagination(array $pagination, ?string $baseUrl = null, string $pageName = 'page', int $window = 2): string
+    {
+        $page = max(1, (int) ($pagination['page'] ?? 1));
+        $lastPage = max(1, (int) ($pagination['last_page'] ?? 1));
+        $total = max(0, (int) ($pagination['total'] ?? 0));
+        $from = max(0, (int) ($pagination['from'] ?? 0));
+        $to = max(0, (int) ($pagination['to'] ?? 0));
+        $window = max(1, $window);
+
+        if ($lastPage <= 1) {
+            return '';
+        }
+
+        $html = '<nav class="pagination" aria-label="Pagination">';
+        $html .= '<div class="pagination-summary">' . self::e($from . '-' . $to . ' / ' . $total) . '</div>';
+        $html .= '<div class="pagination-list">';
+        $html .= self::paginationItem('Previous', $pagination['prev_page'] ?? null, $baseUrl, $pageName, 'pagination-prev', $page <= 1);
+
+        $previous = null;
+
+        foreach (self::paginationPages($page, $lastPage, $window) as $item) {
+            if ($previous !== null && $item > $previous + 1) {
+                $html .= '<span class="pagination-ellipsis" aria-hidden="true">...</span>';
+            }
+
+            $html .= self::paginationItem((string) $item, $item, $baseUrl, $pageName, '', false, $item === $page);
+            $previous = $item;
+        }
+
+        $html .= self::paginationItem('Next', $pagination['next_page'] ?? null, $baseUrl, $pageName, 'pagination-next', $page >= $lastPage);
+        $html .= '</div>';
+        $html .= '</nav>';
+
+        return $html;
     }
 
     public static function asset(string $path, ?bool $version = null): string
@@ -739,6 +823,88 @@ final class Core
         }
 
         return $html;
+    }
+
+    private static function direction(string $direction): string
+    {
+        $direction = strtoupper($direction);
+
+        if (!in_array($direction, ['ASC', 'DESC'], true)) {
+            throw new InvalidArgumentException('Invalid SQL direction: ' . $direction);
+        }
+
+        return $direction;
+    }
+
+    private static function paginationPages(int $page, int $lastPage, int $window): array
+    {
+        $pages = [1, $lastPage];
+        $start = max(1, $page - $window);
+        $end = min($lastPage, $page + $window);
+
+        for ($i = $start; $i <= $end; $i++) {
+            $pages[] = $i;
+        }
+
+        $pages = array_values(array_unique($pages));
+        sort($pages);
+
+        return $pages;
+    }
+
+    private static function paginationItem(
+        string $label,
+        int|string|null $page,
+        ?string $baseUrl,
+        string $pageName,
+        string $class = '',
+        bool $disabled = false,
+        bool $current = false
+    ): string {
+        $classes = trim('pagination-link ' . $class . ($current ? ' is-active' : ''));
+
+        if ($disabled || $page === null) {
+            return '<span class="' . self::e($classes) . '" aria-disabled="true">' . self::e($label) . '</span>';
+        }
+
+        if ($current) {
+            return '<span class="' . self::e($classes) . '" aria-current="page">' . self::e($label) . '</span>';
+        }
+
+        return '<a class="' . self::e($classes) . '" href="' . self::e(self::paginationUrl((int) $page, $baseUrl, $pageName)) . '">' . self::e($label) . '</a>';
+    }
+
+    private static function paginationUrl(int $page, ?string $baseUrl, string $pageName): string
+    {
+        if (!preg_match('/^[A-Za-z0-9_-]+$/', $pageName)) {
+            throw new InvalidArgumentException('Invalid pagination parameter: ' . $pageName);
+        }
+
+        $baseUrl = $baseUrl !== null && $baseUrl !== ''
+            ? $baseUrl
+            : (string) ($_SERVER['REQUEST_URI'] ?? '');
+
+        $fragment = '';
+        $hashPosition = strpos($baseUrl, '#');
+
+        if ($hashPosition !== false) {
+            $fragment = substr($baseUrl, $hashPosition);
+            $baseUrl = substr($baseUrl, 0, $hashPosition);
+        }
+
+        $query = [];
+        $queryPosition = strpos($baseUrl, '?');
+        $path = $baseUrl;
+
+        if ($queryPosition !== false) {
+            $path = substr($baseUrl, 0, $queryPosition);
+            parse_str(substr($baseUrl, $queryPosition + 1), $query);
+        }
+
+        $query[$pageName] = $page;
+        $queryString = http_build_query($query);
+
+        return $path . ($queryString !== '' ? '?' . $queryString : '') . $fragment;
     }
 
     private static function selectColumns(array|string $columns): string

@@ -4,6 +4,19 @@ declare(strict_types=1);
 define('TINYCAT', true);
 
 require __DIR__ . '/App/functions.php';
+
+$demoPagination = [
+    'total' => 42,
+    'page' => 2,
+    'per_page' => 10,
+    'last_page' => 5,
+    'from' => 11,
+    'to' => 20,
+    'has_prev' => true,
+    'has_next' => true,
+    'prev_page' => 1,
+    'next_page' => 3,
+];
 ?>
 <!doctype html>
 <html lang="<?= e(locale()) ?>">
@@ -149,6 +162,8 @@ require __DIR__ . '/App/functions.php';
                                 </tbody>
                             </table>
                         </div>
+
+                        <?= pagination($demoPagination, '#panel-records') ?>
                     </div>
 
                     <div class="tab-panel stack" id="panel-users" role="tabpanel" aria-labelledby="tab-users" data-tab-panel="users" hidden>
