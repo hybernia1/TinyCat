@@ -272,6 +272,74 @@ final class Core
         return (int) self::value($sql, $params);
     }
 
+    public static function asset(string $path, ?bool $version = null): string
+    {
+        self::ensureBooted();
+
+        if (preg_match('/^(https?:)?\/\//', $path) || str_starts_with($path, 'data:')) {
+            return $path;
+        }
+
+        $path = ltrim(str_replace('\\', '/', $path), '/');
+
+        if (str_starts_with($path, 'assets/')) {
+            $path = substr($path, 7);
+        }
+
+        $baseUrl = (string) self::config('assets.url', '/assets');
+        $baseUrl = $baseUrl === '' ? '/assets' : $baseUrl;
+        $url = rtrim($baseUrl, '/') . '/' . $path;
+
+        $version ??= (bool) self::config('assets.version', true);
+
+        if (!$version) {
+            return $url;
+        }
+
+        $directory = self::config('assets.directory', self::config('directory.assets'));
+
+        if (!is_string($directory) || $directory === '') {
+            return $url;
+        }
+
+        $file = rtrim($directory, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+
+        if (!is_file($file)) {
+            return $url;
+        }
+
+        $separator = str_contains($url, '?') ? '&' : '?';
+
+        return $url . $separator . 'v=' . filemtime($file);
+    }
+
+    public static function icon(string $name, string $class = 'icon', ?string $label = null, array $attributes = []): string
+    {
+        self::assertIconName($name);
+
+        $sprite = self::config('assets.icons', 'icons.svg');
+        $sprite = is_string($sprite) && $sprite !== '' ? $sprite : 'icons.svg';
+        $href = self::asset($sprite) . '#' . $name;
+        $extraClass = isset($attributes['class']) ? (string) $attributes['class'] : '';
+        unset($attributes['class']);
+
+        $svgAttributes = [
+            'class' => trim($class . ' ' . $extraClass),
+            'width' => '1em',
+            'height' => '1em',
+        ] + $attributes;
+
+        if ($label === null || $label === '') {
+            $svgAttributes['aria-hidden'] = 'true';
+            $svgAttributes['focusable'] = 'false';
+        } else {
+            $svgAttributes['role'] = 'img';
+            $svgAttributes['aria-label'] = $label;
+        }
+
+        return '<svg' . self::htmlAttributes($svgAttributes) . '><use href="' . self::e($href) . '"></use></svg>';
+    }
+
     public static function locale(?string $locale = null): string
     {
         self::ensureBooted();
@@ -638,6 +706,39 @@ final class Core
         if (!preg_match('/^[A-Za-z0-9_-]+$/', $locale)) {
             throw new InvalidArgumentException('Invalid locale: ' . $locale);
         }
+    }
+
+    private static function assertIconName(string $name): void
+    {
+        if (!preg_match('/^[A-Za-z0-9_-]+$/', $name)) {
+            throw new InvalidArgumentException('Invalid icon name: ' . $name);
+        }
+    }
+
+    private static function htmlAttributes(array $attributes): string
+    {
+        $html = '';
+
+        foreach ($attributes as $name => $value) {
+            $name = (string) $name;
+
+            if ($value === false || $value === null || $name === '') {
+                continue;
+            }
+
+            if (!preg_match('/^[A-Za-z_:][A-Za-z0-9_:\-\.]*$/', $name)) {
+                throw new InvalidArgumentException('Invalid HTML attribute: ' . $name);
+            }
+
+            if ($value === true) {
+                $html .= ' ' . $name;
+                continue;
+            }
+
+            $html .= ' ' . $name . '="' . self::e($value) . '"';
+        }
+
+        return $html;
     }
 
     private static function selectColumns(array|string $columns): string

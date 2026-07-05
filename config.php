@@ -12,7 +12,7 @@ return [
     'database' => [
         'driver' => 'mysql',
         'host' => 'localhost',
-        'name' => 'tinycat_db',
+        'name' => 'micro',
         'user' => 'root',
         'password' => '',
         'charset' => 'utf8mb4',
@@ -22,9 +22,18 @@ return [
         'fallback' => 'en',
         'directory' => __DIR__ . '/lang',
     ],
+    'assets' => [
+        'url' => '/assets',
+        'directory' => __DIR__ . '/assets',
+        'icons' => 'icons.svg',
+        'version' => true,
+    ],
     'directory' => [
         'base' => __DIR__,
         'app' => __DIR__ . '/App',
         'lang' => __DIR__ . '/lang',
+        'assets' => __DIR__ . '/assets',
+        'css' => __DIR__ . '/assets/css',
+        'js' => __DIR__ . '/assets/js',
     ],
 ];

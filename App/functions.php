@@ -1,7 +1,22 @@
 <?php
 declare(strict_types=1);
 
+if (!defined('TINYCAT')) {
+    http_response_code(403);
+    exit('Forbidden');
+}
+
 require_once __DIR__ . '/Core.php';
+
+if (!function_exists('guard')) {
+    function guard(): void
+    {
+        if (!defined('TINYCAT')) {
+            http_response_code(403);
+            exit('Forbidden');
+        }
+    }
+}
 
 if (!function_exists('config')) {
     function config(?string $key = null, mixed $default = null): mixed
@@ -14,6 +29,20 @@ if (!function_exists('db')) {
     function db(): PDO
     {
         return Core::db();
+    }
+}
+
+if (!function_exists('asset')) {
+    function asset(string $path, ?bool $version = null): string
+    {
+        return Core::asset($path, $version);
+    }
+}
+
+if (!function_exists('icon')) {
+    function icon(string $name, string $class = 'icon', ?string $label = null, array $attributes = []): string
+    {
+        return Core::icon($name, $class, $label, $attributes);
     }
 }
 
