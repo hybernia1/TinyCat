@@ -10,7 +10,7 @@ if (!defined('TINYCAT')) {
     define('TINYCAT', true);
 }
 
-require_once __DIR__ . '/App/functions.php';
+require_once __DIR__ . '/functions.php';
 
 $routesFile = __DIR__ . '/routes.php';
 
