@@ -1,0 +1,160 @@
+.tc-editor {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.tc-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+  padding: 8px;
+}
+
+.tc-editor-toolbar .btn {
+  min-width: 36px;
+  flex: 0 0 auto;
+}
+
+.tc-editor-toolbar .icon {
+  width: 1.05em;
+  height: 1.05em;
+}
+
+.tc-editor-toolbar .select {
+  width: auto;
+  min-width: 132px;
+  min-height: 36px;
+  flex: 0 0 auto;
+  padding-block: 6px;
+}
+
+.tc-editor-separator {
+  width: 1px;
+  height: 26px;
+  flex: 0 0 auto;
+  background: var(--border);
+}
+
+.tc-editor-button[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.tc-editor-surface {
+  min-height: var(--editor-min-height, 220px);
+  max-height: var(--editor-max-height, none);
+  overflow: auto;
+  background: var(--surface);
+  color: var(--text);
+  padding: 16px;
+  outline: 0;
+}
+
+.tc-editor-code {
+  display: none;
+  min-height: var(--editor-min-height, 220px);
+  border: 0;
+  border-radius: 0;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.tc-editor[data-editor-mode="source"] .tc-editor-surface {
+  display: none;
+}
+
+.tc-editor[data-editor-mode="source"] .tc-editor-code {
+  display: block;
+}
+
+.tc-editor-surface:focus {
+  box-shadow: inset 0 0 0 3px rgba(79, 70, 229, 0.16);
+}
+
+.tc-editor-surface:empty::before {
+  color: var(--muted);
+  content: attr(data-placeholder);
+  pointer-events: none;
+}
+
+.tc-editor-surface > *:first-child {
+  margin-block-start: 0;
+}
+
+.tc-editor-surface > *:last-child {
+  margin-block-end: 0;
+}
+
+.tc-editor-surface h2,
+.tc-editor-surface h3 {
+  line-height: 1.22;
+}
+
+.tc-editor-surface blockquote {
+  margin-inline: 0;
+  border-left: 4px solid var(--primary);
+  background: var(--primary-soft);
+  padding: 10px 14px;
+  color: var(--primary-strong);
+}
+
+.tc-editor-surface ul,
+.tc-editor-surface ol {
+  padding-inline-start: 1.4rem;
+}
+
+.tc-editor-source {
+  display: none;
+}
+
+.tc-editor-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-soft);
+  padding: 8px 10px;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.tc-editor-modal {
+  z-index: 65;
+}
+
+.tc-editor-modal-panel {
+  width: min(100%, 420px);
+}
+
+.tc-editor-modal-title {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.tc-editor-modal .modal-footer .btn {
+  flex: 1 1 120px;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .tc-editor-footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .tc-editor-modal .modal-footer .btn {
+    flex: 0 0 auto;
+  }
+}

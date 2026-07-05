@@ -33,6 +33,7 @@ return [
         'app' => __DIR__ . '/App',
         'lang' => __DIR__ . '/lang',
         'assets' => __DIR__ . '/assets',
+        'editor' => __DIR__ . '/assets/editor',
         'css' => __DIR__ . '/assets/css',
         'js' => __DIR__ . '/assets/js',
     ],

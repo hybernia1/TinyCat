@@ -13,6 +13,8 @@ final class Core
     private static ?PDO $pdo = null;
     private static ?string $locale = null;
     private static array $translations = [];
+    private static ?array $payload = null;
+    private static array $routes = [];
 
     private function __construct()
     {
@@ -25,6 +27,7 @@ final class Core
             self::$pdo = null;
             self::$locale = null;
             self::$translations = [];
+            self::$payload = null;
             return;
         }
 
@@ -44,6 +47,7 @@ final class Core
         self::$pdo = null;
         self::$locale = null;
         self::$translations = [];
+        self::$payload = null;
     }
 
     public static function config(?string $key = null, mixed $default = null): mixed
@@ -622,17 +626,300 @@ final class Core
         exit;
     }
 
-    public static function json(mixed $data, int $status = 200): never
+    public static function json(mixed $data, int $status = 200, array $headers = []): never
     {
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
+        header('X-Content-Type-Options: nosniff');
+
+        foreach ($headers as $name => $value) {
+            if (!preg_match('/^[A-Za-z0-9-]+$/', (string) $name)) {
+                throw new InvalidArgumentException('Invalid response header: ' . $name);
+            }
+
+            header((string) $name . ': ' . (string) $value);
+        }
+
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         exit;
     }
 
-    public static function request(string $key, mixed $default = null): mixed
+    public static function apiOk(mixed $data = null, ?string $message = null, int $status = 200, array $meta = []): never
     {
-        return $_POST[$key] ?? $_GET[$key] ?? $default;
+        self::json(self::apiEnvelope(true, $status, $message, $data, $meta), $status);
+    }
+
+    public static function apiCreated(mixed $data = null, ?string $message = 'Created.', array $meta = []): never
+    {
+        self::apiOk($data, $message, 201, $meta);
+    }
+
+    public static function apiNoContent(): never
+    {
+        http_response_code(204);
+        exit;
+    }
+
+    public static function apiError(string $message = 'Request failed.', int $status = 400, string $code = 'error', array $details = []): never
+    {
+        self::json(self::apiEnvelope(false, $status, $message, null, [], [
+            'code' => $code,
+            'details' => $details,
+        ]), $status);
+    }
+
+    public static function apiValidation(array $errors, string $message = 'Validation failed.'): never
+    {
+        $payload = self::apiEnvelope(false, 422, $message, null, [], [
+            'code' => 'validation_error',
+            'details' => $errors,
+        ]);
+        $payload['errors'] = $errors;
+
+        self::json($payload, 422);
+    }
+
+    public static function apiException(Throwable $exception): never
+    {
+        $status = (int) $exception->getCode();
+
+        if ($status < 400 || $status > 599) {
+            $status = $exception instanceof InvalidArgumentException ? 400 : 500;
+        }
+
+        $debug = (bool) self::config('app.debug', false);
+        $message = $status >= 500 && !$debug ? 'Server error.' : $exception->getMessage();
+        $code = $status >= 500 ? 'server_error' : 'bad_request';
+        $details = [];
+
+        if ($debug) {
+            $details = [
+                'exception' => get_class($exception),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+            ];
+        }
+
+        self::apiError($message, $status, $code, $details);
+    }
+
+    public static function apiEndpoint(array|string $methods, callable $handler): never
+    {
+        try {
+            self::requireMethod($methods);
+            $result = $handler();
+
+            if ($result === null) {
+                self::apiOk();
+            }
+
+            self::apiOk($result);
+        } catch (Throwable $exception) {
+            self::apiException($exception);
+        }
+    }
+
+    public static function route(array|string $methods, string $path, callable $handler): void
+    {
+        self::$routes[] = [
+            'methods' => self::normalizeMethods($methods),
+            'path' => self::path($path),
+            'handler' => $handler,
+        ];
+    }
+
+    public static function apiRoute(array|string $methods, string $path, callable $handler): void
+    {
+        $path = self::path($path);
+
+        if ($path !== '/api' && !str_starts_with($path, '/api/')) {
+            $path = '/api' . ($path === '/' ? '' : $path);
+        }
+
+        self::route($methods, $path, $handler);
+    }
+
+    public static function dispatch(?string $path = null, ?string $method = null): bool
+    {
+        $path = self::path($path);
+        $method = strtoupper($method ?? self::method());
+        $allowed = [];
+
+        foreach (self::$routes as $route) {
+            $params = self::routeMatch((string) $route['path'], $path);
+
+            if ($params === null) {
+                continue;
+            }
+
+            if (!in_array('ANY', $route['methods'], true) && !in_array($method, $route['methods'], true)) {
+                $allowed = array_merge($allowed, $route['methods']);
+                continue;
+            }
+
+            self::runRoute($route, $params, $path);
+
+            return true;
+        }
+
+        $allowed = array_values(array_unique(array_filter($allowed, static fn (string $item): bool => $item !== 'ANY')));
+
+        if ($allowed !== []) {
+            header('Allow: ' . implode(', ', $allowed));
+
+            if (self::isApiPath($path) || self::wantsJson()) {
+                self::apiError('Method not allowed.', 405, 'method_not_allowed', ['allowed' => $allowed]);
+            }
+
+            http_response_code(405);
+            echo 'Method not allowed.';
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function path(?string $path = null): string
+    {
+        if ($path === null || $path === '') {
+            $uri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
+            $path = (string) (parse_url($uri, PHP_URL_PATH) ?: '/');
+        }
+
+        $path = str_replace('\\', '/', rawurldecode($path));
+        $path = '/' . trim($path, '/');
+
+        return $path === '/' ? '/' : rtrim($path, '/');
+    }
+
+    public static function requireMethod(array|string $methods): void
+    {
+        $allowed = self::normalizeMethods($methods);
+
+        if (!in_array('ANY', $allowed, true) && !in_array(self::method(), $allowed, true)) {
+            header('Allow: ' . implode(', ', $allowed));
+            self::apiError('Method not allowed.', 405, 'method_not_allowed', ['allowed' => $allowed]);
+        }
+    }
+
+    public static function payload(?string $key = null, mixed $default = null): mixed
+    {
+        if (self::$payload === null) {
+            self::$payload = self::parsePayload();
+        }
+
+        if ($key === null || $key === '') {
+            return self::$payload;
+        }
+
+        return self::dataGet(self::$payload, $key, $default);
+    }
+
+    public static function input(?string $key = null, mixed $default = null): mixed
+    {
+        $input = array_replace_recursive($_GET, self::payload());
+
+        if ($key === null || $key === '') {
+            return $input;
+        }
+
+        return self::dataGet($input, $key, $default);
+    }
+
+    public static function request(?string $key = null, mixed $default = null): mixed
+    {
+        return self::input($key, $default);
+    }
+
+    public static function wantsJson(): bool
+    {
+        $accept = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
+        $requestedWith = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
+
+        return str_contains($accept, 'application/json') || $requestedWith === 'xmlhttprequest';
+    }
+
+    public static function isJson(): bool
+    {
+        $contentType = strtolower((string) ($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? ''));
+
+        return str_contains($contentType, 'application/json');
+    }
+
+    public static function bearerToken(): ?string
+    {
+        $header = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
+
+        if (preg_match('/^Bearer\s+(.+)$/i', trim($header), $matches)) {
+            return trim($matches[1]);
+        }
+
+        return null;
+    }
+
+    public static function validate(array $data, array $rules, array $messages = []): array
+    {
+        $errors = [];
+
+        foreach ($rules as $field => $fieldRules) {
+            $field = (string) $field;
+            $fieldRules = self::normalizeRules($fieldRules);
+            $exists = self::dataHas($data, $field);
+            $value = self::dataGet($data, $field);
+            $required = self::hasAnyRule($fieldRules, ['required']);
+            $nullable = self::hasAnyRule($fieldRules, ['nullable']);
+
+            if ($required && self::blank($value, $exists)) {
+                $errors[$field][] = self::validationMessage($messages, $field, 'required', 'The ' . $field . ' field is required.');
+                continue;
+            }
+
+            if (!$exists || (($value === null || $value === '') && $nullable)) {
+                continue;
+            }
+
+            foreach ($fieldRules as $rule) {
+                [$name, $params] = self::parseRule($rule);
+
+                if (in_array($name, ['required', 'nullable'], true)) {
+                    continue;
+                }
+
+                if (!self::passesRule($value, $name, $params, $fieldRules)) {
+                    $errors[$field][] = self::validationMessage(
+                        $messages,
+                        $field,
+                        $name,
+                        self::defaultValidationMessage($field, $name, $params)
+                    );
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    public static function validated(array $rules, ?array $data = null, array $messages = []): array
+    {
+        $data ??= self::input();
+        $errors = self::validate($data, $rules, $messages);
+
+        if ($errors !== []) {
+            self::apiValidation($errors);
+        }
+
+        $validated = [];
+
+        foreach (array_keys($rules) as $field) {
+            $field = (string) $field;
+
+            if (self::dataHas($data, $field)) {
+                $validated[$field] = self::dataGet($data, $field);
+            }
+        }
+
+        return $validated;
     }
 
     public static function method(): string
@@ -687,9 +974,321 @@ final class Core
     {
         self::session();
 
-        $token ??= (string) ($_POST['_csrf'] ?? '');
+        $token ??= (string) ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['_csrf'] ?? self::payload('_csrf', ''));
 
         return isset($_SESSION['_csrf']) && hash_equals((string) $_SESSION['_csrf'], $token);
+    }
+
+    public static function requireCsrf(?string $token = null): void
+    {
+        if (!self::verifyCsrf($token)) {
+            self::apiError('Invalid CSRF token.', 419, 'csrf_token_mismatch');
+        }
+    }
+
+    private static function apiEnvelope(
+        bool $ok,
+        int $status,
+        ?string $message,
+        mixed $data,
+        array $meta,
+        ?array $error = null
+    ): array {
+        $payload = [
+            'ok' => $ok,
+            'status' => $status,
+            'message' => $message,
+            'data' => $data,
+            'meta' => $meta === [] ? (object) [] : $meta,
+        ];
+
+        if ($error !== null) {
+            if (($error['details'] ?? null) === []) {
+                $error['details'] = (object) [];
+            }
+
+            $payload['error'] = $error;
+        }
+
+        return $payload;
+    }
+
+    private static function parsePayload(): array
+    {
+        if ($_POST !== []) {
+            return $_POST;
+        }
+
+        $raw = file_get_contents('php://input');
+        $raw = $raw === false ? '' : trim($raw);
+
+        if ($raw === '') {
+            return [];
+        }
+
+        if (self::isJson()) {
+            try {
+                $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            } catch (JsonException $exception) {
+                throw new InvalidArgumentException('Invalid JSON request body.', 400, $exception);
+            }
+
+            if (!is_array($data)) {
+                throw new InvalidArgumentException('JSON request body must be an object or array.', 400);
+            }
+
+            return $data;
+        }
+
+        $contentType = strtolower((string) ($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? ''));
+
+        if (str_contains($contentType, 'application/x-www-form-urlencoded')) {
+            parse_str($raw, $data);
+
+            return is_array($data) ? $data : [];
+        }
+
+        return [];
+    }
+
+    private static function normalizeMethods(array|string $methods): array
+    {
+        $methods = is_array($methods) ? $methods : preg_split('/[,\|]/', $methods);
+        $methods = array_values(array_unique(array_map(
+            static fn (mixed $method): string => strtoupper(trim((string) $method)),
+            (array) $methods
+        )));
+        $methods = array_values(array_filter($methods, static fn (string $method): bool => $method !== ''));
+
+        if ($methods === []) {
+            throw new InvalidArgumentException('At least one HTTP method must be allowed.');
+        }
+
+        if (in_array('*', $methods, true) || in_array('ANY', $methods, true)) {
+            return ['ANY'];
+        }
+
+        foreach ($methods as $method) {
+            if (!preg_match('/^[A-Z]+$/', $method)) {
+                throw new InvalidArgumentException('Invalid HTTP method: ' . $method);
+            }
+        }
+
+        return $methods;
+    }
+
+    private static function routeMatch(string $routePath, string $path): ?array
+    {
+        if ($routePath === $path) {
+            return [];
+        }
+
+        if (!preg_match(self::routeRegex($routePath), $path, $matches)) {
+            return null;
+        }
+
+        $params = [];
+
+        foreach ($matches as $key => $value) {
+            if (is_string($key)) {
+                $params[$key] = rawurldecode((string) $value);
+            }
+        }
+
+        return $params;
+    }
+
+    private static function routeRegex(string $path): string
+    {
+        $path = self::path($path);
+
+        if ($path === '/') {
+            return '#^/$#u';
+        }
+
+        $segments = explode('/', trim($path, '/'));
+        $parts = [];
+
+        foreach ($segments as $segment) {
+            if (preg_match('/^\{([A-Za-z_][A-Za-z0-9_]*)(?::(.+))?\}$/', $segment, $matches)) {
+                $parts[] = '(?P<' . $matches[1] . '>' . ($matches[2] ?? '[^/]+') . ')';
+                continue;
+            }
+
+            $parts[] = preg_quote($segment, '#');
+        }
+
+        return '#^/' . implode('/', $parts) . '$#u';
+    }
+
+    private static function runRoute(array $route, array $params, string $path): void
+    {
+        try {
+            $result = call_user_func_array($route['handler'], $params);
+
+            if ($result === null) {
+                return;
+            }
+
+            if (is_array($result) || is_object($result)) {
+                self::apiOk($result);
+            }
+
+            echo self::stringValue($result);
+        } catch (Throwable $exception) {
+            if (self::isApiPath($path) || self::wantsJson()) {
+                self::apiException($exception);
+            }
+
+            throw $exception;
+        }
+    }
+
+    private static function isApiPath(string $path): bool
+    {
+        $path = self::path($path);
+
+        return $path === '/api' || str_starts_with($path, '/api/');
+    }
+
+    private static function dataGet(array $data, string $key, mixed $default = null): mixed
+    {
+        if (array_key_exists($key, $data)) {
+            return $data[$key];
+        }
+
+        $value = $data;
+
+        foreach (explode('.', $key) as $segment) {
+            if (!is_array($value) || !array_key_exists($segment, $value)) {
+                return $default;
+            }
+
+            $value = $value[$segment];
+        }
+
+        return $value;
+    }
+
+    private static function dataHas(array $data, string $key): bool
+    {
+        if (array_key_exists($key, $data)) {
+            return true;
+        }
+
+        $value = $data;
+
+        foreach (explode('.', $key) as $segment) {
+            if (!is_array($value) || !array_key_exists($segment, $value)) {
+                return false;
+            }
+
+            $value = $value[$segment];
+        }
+
+        return true;
+    }
+
+    private static function normalizeRules(array|string $rules): array
+    {
+        $rules = is_string($rules) ? explode('|', $rules) : $rules;
+
+        return array_values(array_filter(array_map(
+            static fn (mixed $rule): string => trim((string) $rule),
+            $rules
+        ), static fn (string $rule): bool => $rule !== ''));
+    }
+
+    private static function parseRule(string $rule): array
+    {
+        [$name, $params] = array_pad(explode(':', $rule, 2), 2, '');
+
+        return [strtolower($name), $params === '' ? [] : array_map('trim', explode(',', $params))];
+    }
+
+    private static function passesRule(mixed $value, string $rule, array $params, array $rules): bool
+    {
+        $numericRule = self::hasAnyRule($rules, ['int', 'integer', 'float', 'number', 'numeric']);
+
+        return match ($rule) {
+            'accepted' => in_array($value, [true, 1, '1', 'yes', 'on', 'true'], true),
+            'array' => is_array($value),
+            'bool', 'boolean' => is_bool($value) || in_array($value, [0, 1, '0', '1', 'true', 'false', 'on', 'off', 'yes', 'no'], true),
+            'date' => is_string($value) && strtotime($value) !== false,
+            'email' => is_string($value) && filter_var($value, FILTER_VALIDATE_EMAIL) !== false,
+            'float', 'number', 'numeric' => is_numeric($value),
+            'in' => in_array((string) $value, array_map('strval', $params), true),
+            'int', 'integer' => filter_var($value, FILTER_VALIDATE_INT) !== false,
+            'max' => self::valueSize($value, $numericRule) <= (float) ($params[0] ?? 0),
+            'min' => self::valueSize($value, $numericRule) >= (float) ($params[0] ?? 0),
+            'between' => self::valueSize($value, $numericRule) >= (float) ($params[0] ?? 0)
+                && self::valueSize($value, $numericRule) <= (float) ($params[1] ?? INF),
+            'string' => is_string($value),
+            'url' => is_string($value) && filter_var($value, FILTER_VALIDATE_URL) !== false,
+            default => throw new InvalidArgumentException('Unknown validation rule: ' . $rule),
+        };
+    }
+
+    private static function hasAnyRule(array $rules, array $needles): bool
+    {
+        foreach ($rules as $rule) {
+            [$name] = self::parseRule($rule);
+
+            if (in_array($name, $needles, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function valueSize(mixed $value, bool $numeric): float
+    {
+        if ($numeric && is_numeric($value)) {
+            return (float) $value;
+        }
+
+        if (is_array($value)) {
+            return (float) count($value);
+        }
+
+        $value = self::stringValue($value);
+
+        return (float) (function_exists('mb_strlen') ? mb_strlen($value) : strlen($value));
+    }
+
+    private static function blank(mixed $value, bool $exists): bool
+    {
+        return !$exists || $value === null || $value === '' || $value === [];
+    }
+
+    private static function validationMessage(array $messages, string $field, string $rule, string $default): string
+    {
+        if (isset($messages[$field]) && is_array($messages[$field]) && isset($messages[$field][$rule])) {
+            return (string) $messages[$field][$rule];
+        }
+
+        return (string) ($messages[$field . '.' . $rule] ?? $messages[$rule] ?? $default);
+    }
+
+    private static function defaultValidationMessage(string $field, string $rule, array $params): string
+    {
+        return match ($rule) {
+            'accepted' => 'The ' . $field . ' field must be accepted.',
+            'array' => 'The ' . $field . ' field must be an array.',
+            'bool', 'boolean' => 'The ' . $field . ' field must be true or false.',
+            'date' => 'The ' . $field . ' field must be a valid date.',
+            'email' => 'The ' . $field . ' field must be a valid email address.',
+            'float', 'number', 'numeric' => 'The ' . $field . ' field must be numeric.',
+            'in' => 'The ' . $field . ' field has an invalid value.',
+            'int', 'integer' => 'The ' . $field . ' field must be an integer.',
+            'max' => 'The ' . $field . ' field must not be greater than ' . ($params[0] ?? 'the maximum') . '.',
+            'min' => 'The ' . $field . ' field must be at least ' . ($params[0] ?? 'the minimum') . '.',
+            'between' => 'The ' . $field . ' field must be between ' . ($params[0] ?? 'the minimum') . ' and ' . ($params[1] ?? 'the maximum') . '.',
+            'string' => 'The ' . $field . ' field must be a string.',
+            'url' => 'The ' . $field . ' field must be a valid URL.',
+            default => 'The ' . $field . ' field is invalid.',
+        };
     }
 
     private static function ensureBooted(): void

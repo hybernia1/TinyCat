@@ -221,10 +221,185 @@ if (!function_exists('json')) {
     }
 }
 
+if (!function_exists('api')) {
+    function api(mixed $data = null, ?string $message = null, int $status = 200, array $meta = []): never
+    {
+        Core::apiOk($data, $message, $status, $meta);
+    }
+}
+
+if (!function_exists('api_ok')) {
+    function api_ok(mixed $data = null, ?string $message = null, int $status = 200, array $meta = []): never
+    {
+        Core::apiOk($data, $message, $status, $meta);
+    }
+}
+
+if (!function_exists('api_created')) {
+    function api_created(mixed $data = null, ?string $message = 'Created.', array $meta = []): never
+    {
+        Core::apiCreated($data, $message, $meta);
+    }
+}
+
+if (!function_exists('api_no_content')) {
+    function api_no_content(): never
+    {
+        Core::apiNoContent();
+    }
+}
+
+if (!function_exists('api_error')) {
+    function api_error(string $message = 'Request failed.', int $status = 400, string $code = 'error', array $details = []): never
+    {
+        Core::apiError($message, $status, $code, $details);
+    }
+}
+
+if (!function_exists('api_validation')) {
+    function api_validation(array $errors, string $message = 'Validation failed.'): never
+    {
+        Core::apiValidation($errors, $message);
+    }
+}
+
+if (!function_exists('api_endpoint')) {
+    function api_endpoint(array|string $methods, callable $handler): never
+    {
+        Core::apiEndpoint($methods, $handler);
+    }
+}
+
+if (!function_exists('route')) {
+    function route(array|string $methods, string $path, callable $handler): void
+    {
+        Core::route($methods, $path, $handler);
+    }
+}
+
+if (!function_exists('api_route')) {
+    function api_route(array|string $methods, string $path, callable $handler): void
+    {
+        Core::apiRoute($methods, $path, $handler);
+    }
+}
+
+if (!function_exists('route_get')) {
+    function route_get(string $path, callable $handler): void
+    {
+        Core::route('GET', $path, $handler);
+    }
+}
+
+if (!function_exists('route_post')) {
+    function route_post(string $path, callable $handler): void
+    {
+        Core::route('POST', $path, $handler);
+    }
+}
+
+if (!function_exists('route_put')) {
+    function route_put(string $path, callable $handler): void
+    {
+        Core::route('PUT', $path, $handler);
+    }
+}
+
+if (!function_exists('route_patch')) {
+    function route_patch(string $path, callable $handler): void
+    {
+        Core::route('PATCH', $path, $handler);
+    }
+}
+
+if (!function_exists('route_delete')) {
+    function route_delete(string $path, callable $handler): void
+    {
+        Core::route('DELETE', $path, $handler);
+    }
+}
+
+if (!function_exists('dispatch_routes')) {
+    function dispatch_routes(?string $path = null, ?string $method = null): bool
+    {
+        return Core::dispatch($path, $method);
+    }
+}
+
+if (!function_exists('route_path')) {
+    function route_path(?string $path = null): string
+    {
+        return Core::path($path);
+    }
+}
+
+if (!function_exists('require_method')) {
+    function require_method(array|string $methods): void
+    {
+        Core::requireMethod($methods);
+    }
+}
+
+if (!function_exists('body')) {
+    function body(?string $key = null, mixed $default = null): mixed
+    {
+        return Core::payload($key, $default);
+    }
+}
+
+if (!function_exists('payload')) {
+    function payload(?string $key = null, mixed $default = null): mixed
+    {
+        return Core::payload($key, $default);
+    }
+}
+
+if (!function_exists('input')) {
+    function input(?string $key = null, mixed $default = null): mixed
+    {
+        return Core::input($key, $default);
+    }
+}
+
 if (!function_exists('request')) {
-    function request(string $key, mixed $default = null): mixed
+    function request(?string $key = null, mixed $default = null): mixed
     {
         return Core::request($key, $default);
+    }
+}
+
+if (!function_exists('validate')) {
+    function validate(array $data, array $rules, array $messages = []): array
+    {
+        return Core::validate($data, $rules, $messages);
+    }
+}
+
+if (!function_exists('api_validated')) {
+    function api_validated(array $rules, ?array $data = null, array $messages = []): array
+    {
+        return Core::validated($rules, $data, $messages);
+    }
+}
+
+if (!function_exists('wants_json')) {
+    function wants_json(): bool
+    {
+        return Core::wantsJson();
+    }
+}
+
+if (!function_exists('is_json')) {
+    function is_json(): bool
+    {
+        return Core::isJson();
+    }
+}
+
+if (!function_exists('bearer_token')) {
+    function bearer_token(): ?string
+    {
+        return Core::bearerToken();
     }
 }
 
@@ -293,5 +468,12 @@ if (!function_exists('csrf_check')) {
     function csrf_check(?string $token = null): bool
     {
         return Core::verifyCsrf($token);
+    }
+}
+
+if (!function_exists('csrf_require')) {
+    function csrf_require(?string $token = null): void
+    {
+        Core::requireCsrf($token);
     }
 }

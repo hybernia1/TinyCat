@@ -1,9 +1,7 @@
 <?php
 declare(strict_types=1);
 
-define('TINYCAT', true);
-
-require __DIR__ . '/App/functions.php';
+require __DIR__ . '/bootstrap.php';
 
 $demoPagination = [
     'total' => 42,
@@ -26,7 +24,10 @@ $demoPagination = [
     <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
     <title><?= e(config('app.name', 'TinyCat')) ?></title>
     <link rel="stylesheet" href="<?= e(asset('css/tinycat.css')) ?>">
+    <link rel="stylesheet" href="<?= e(asset('editor/editor.css')) ?>">
     <script src="<?= e(asset('js/tinycat.js')) ?>" defer></script>
+    <script src="<?= e(asset('editor/modal.js')) ?>" defer></script>
+    <script src="<?= e(asset('editor/editor.js')) ?>" defer></script>
 </head>
 <body>
     <header class="navbar">
@@ -276,6 +277,25 @@ $demoPagination = [
                         </label>
                     </div>
                 </article>
+            </section>
+
+            <section class="card">
+                <div class="card-header split">
+                    <div class="stack" style="--stack-gap: 4px;">
+                        <h2 class="text-lg m-0 cluster gap-2"><?= icon('edit') ?> Editor obsahu</h2>
+                        <p class="text-muted mb-0">Čisté psaní pro články, stránky a poznámky.</p>
+                    </div>
+                    <button class="btn btn-sm btn-primary" type="button"><?= icon('save') ?> <span>Uložit</span></button>
+                </div>
+                <div class="card-body">
+                    <textarea class="textarea" name="content" data-editor data-editor-min-height="260px"><h2>TinyCat editor</h2>
+<p>Jednoduchý obsahový blok připravený pro malou administraci.</p>
+<ul>
+  <li>Krátké články a stránky</li>
+  <li>Formátování textu</li>
+  <li>Odkazy a seznamy</li>
+</ul></textarea>
+                </div>
             </section>
         </div>
     </main>

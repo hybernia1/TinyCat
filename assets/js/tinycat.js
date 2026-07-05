@@ -106,15 +106,39 @@
     });
   }
 
+  function unwrapResult(data) {
+    if (data && typeof data === "object" && Object.prototype.hasOwnProperty.call(data, "ok") && Object.prototype.hasOwnProperty.call(data, "data")) {
+      return data.data;
+    }
+
+    return data;
+  }
+
+  function resultErrors(data) {
+    if (!data || typeof data !== "object") {
+      return null;
+    }
+
+    if (data.errors) {
+      return data.errors;
+    }
+
+    if (data.error && data.error.code === "validation_error" && data.error.details) {
+      return data.error.details;
+    }
+
+    return null;
+  }
+
   function renderTarget(target, data) {
     if (!target) {
       return;
     }
 
-    var html = data;
+    var html = unwrapResult(data);
 
-    if (data && typeof data === "object") {
-      html = data.html || data.content || data.view || "";
+    if (html && typeof html === "object") {
+      html = html.html || html.content || html.view || "";
     }
 
     if (typeof html === "string") {
@@ -159,19 +183,23 @@
   }
 
   function handleResult(source, data, target) {
+    var payload = unwrapResult(data);
+
     if (data && typeof data === "object") {
-      if (data.redirect) {
-        window.location.assign(data.redirect);
+      var redirect = data.redirect || (payload && typeof payload === "object" ? payload.redirect : "");
+
+      if (redirect) {
+        window.location.assign(redirect);
         return;
       }
 
       if (data.message) {
-        TinyCat.toast(data.message, data.type || "info");
+        TinyCat.toast(data.message, data.type || (data.ok === false ? "danger" : "info"));
       }
     }
 
-    renderTarget(target, data);
-    emit(source, "tinycat:success", { data: data, target: target });
+    renderTarget(target, payload);
+    emit(source, "tinycat:success", { data: data, payload: payload, target: target });
   }
 
   function parseList(value) {
@@ -374,8 +402,10 @@
         });
         handleResult(form, data, target);
       } catch (error) {
-        if (error.data && error.data.errors) {
-          applyErrors(form, error.data.errors);
+        var errors = resultErrors(error.data);
+
+        if (errors) {
+          applyErrors(form, errors);
         }
 
         TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
