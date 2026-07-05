@@ -1,0 +1,13 @@
+{
+  "app": {
+    "name": "TinyCat"
+  },
+  "action": {
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "delete": "Smazat"
+  },
+  "message": {
+    "welcome": "Vítej v {app}."
+  }
+}
