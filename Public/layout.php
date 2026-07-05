@@ -21,8 +21,8 @@ $scripts = $scripts ?? ['js/tinycat.js'];
 $nav = $nav ?? [
     ['href' => '/admin/users', 'icon' => 'users', 'label' => 'Users'],
     ['href' => '/example.php', 'icon' => 'dashboard', 'label' => 'Example'],
-    ['href' => '/api/ping', 'icon' => 'database', 'label' => 'API'],
 ];
+$authUser = auth();
 $pageTitle = $title === $appName ? $title : $title . ' | ' . $appName;
 ?>
 <!doctype html>
@@ -56,6 +56,20 @@ $pageTitle = $title === $appName ? $title : $title . ' | ' . $appName;
                         <span><?= e((string) ($item['label'] ?? $href)) ?></span>
                     </a>
                 <?php endforeach; ?>
+                <?php if ($authUser !== null): ?>
+                    <form action="/logout" method="post" class="inline-flex">
+                        <?= csrf_field() ?>
+                        <button class="nav-link inline-flex items-center gap-2" type="submit" title="<?= e((string) ($authUser[config('auth.login', 'email')] ?? '')) ?>">
+                            <?= icon('logout') ?>
+                            <span>Logout</span>
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <a class="nav-link inline-flex items-center gap-2" href="/login"<?= $current === '/login' ? ' aria-current="page"' : '' ?>>
+                        <?= icon('login') ?>
+                        <span>Login</span>
+                    </a>
+                <?php endif; ?>
             </nav>
         </div>
     </header>

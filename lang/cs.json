@@ -2,6 +2,80 @@
   "app": {
     "name": "TinyCat"
   },
+  "common": {
+    "refresh": "Obnovit",
+    "save": "Uložit",
+    "create": "Vytvořit",
+    "delete": "Smazat",
+    "cancel": "Zrušit",
+    "edit": "Upravit",
+    "email": "E-mail",
+    "password": "Heslo",
+    "new_password": "Nové heslo",
+    "name": "Jméno",
+    "role": "Role",
+    "status": "Stav",
+    "tags": "Štítky",
+    "note": "Poznámka",
+    "created": "Vytvořeno",
+    "updated": "Upraveno",
+    "route": "Route",
+    "file": "Soubor",
+    "table": "Tabulka",
+    "clean_api": "Clean API",
+    "ui_api": "UI API",
+    "ui": "UI"
+  },
+  "users": {
+    "meta_title": "Správa uživatelů",
+    "title": "Správa uživatelů",
+    "intro": "Kompletní CRUD modul běží z Public/admin/users.php, core zůstává v App.",
+    "seed_data": "Seed data",
+    "new_user": "Nový uživatel",
+    "contract_title": "Kontrakt modulu",
+    "contract_hint": "Stejná URL umí čisté API pro externí klienty i HTML partialy pro TinyCat UI.",
+    "ui_stack": "cards, table, expand, tagifier, modal confirm, toast",
+    "list_title": "Uživatelé",
+    "list_hint": "Rozbal řádek pro inline editaci. Mazání používá TinyCat modal confirm.",
+    "note_placeholder": "Krátká interní poznámka",
+    "tag_placeholder": "Přidat štítek",
+    "no_tags": "Bez štítků",
+    "empty": "Tabulka je prázdná. Vytvoř prvního uživatele nebo použij Seed data.",
+    "table_user": "Uživatel",
+    "edit_user": "Upravit {name}",
+    "password_keep": "Nechat prázdné beze změny",
+    "delete_title": "Smazat uživatele",
+    "delete_confirm": "Opravdu smazat uživatele {name}?",
+    "stats": {
+      "total": "Celkem",
+      "active": "Aktivní",
+      "table": "Tabulka"
+    },
+    "roles": {
+      "admin": "Admin",
+      "manager": "Manager",
+      "editor": "Editor",
+      "user": "Uživatel"
+    },
+    "statuses": {
+      "active": "Aktivní",
+      "invited": "Pozván",
+      "disabled": "Vypnutý"
+    },
+    "messages": {
+      "seeded": "Testovací uživatelé byli doplněni.",
+      "created": "Uživatel byl vytvořen.",
+      "saved": "Uživatel byl uložen.",
+      "deleted": "Uživatel byl smazán.",
+      "not_found": "Uživatel nebyl nalezen.",
+      "email_taken": "E-mail už používá jiný uživatel."
+    },
+    "seed": {
+      "ada_note": "Primární administrátor testu.",
+      "grace_note": "Spravuje workflow a schvalování.",
+      "alan_note": "Pozvánka čeká na potvrzení."
+    }
+  },
   "action": {
     "save": "Uložit",
     "cancel": "Zrušit",

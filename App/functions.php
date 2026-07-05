@@ -200,6 +200,55 @@ if (!function_exists('locale')) {
     }
 }
 
+if (!function_exists('timezone')) {
+    function timezone(): DateTimeZone
+    {
+        return Core::timezone();
+    }
+}
+
+if (!function_exists('now')) {
+    function now(?string $format = null): DateTimeImmutable|string
+    {
+        return Core::now($format);
+    }
+}
+
+if (!function_exists('datetime')) {
+    function datetime(mixed $value = null, ?string $format = null): string
+    {
+        return Core::dateTime($value, $format);
+    }
+}
+
+if (!function_exists('date_value')) {
+    function date_value(mixed $value = null, ?string $format = null): string
+    {
+        return Core::dateValue($value, $format);
+    }
+}
+
+if (!function_exists('time_value')) {
+    function time_value(mixed $value = null, ?string $format = null): string
+    {
+        return Core::timeValue($value, $format);
+    }
+}
+
+if (!function_exists('date_iso')) {
+    function date_iso(mixed $value = null): string
+    {
+        return Core::dateIso($value);
+    }
+}
+
+if (!function_exists('date_db')) {
+    function date_db(mixed $value = null): string
+    {
+        return Core::dateDb($value);
+    }
+}
+
 if (!function_exists('slug')) {
     function slug(string $text, string $separator = '-'): string
     {
@@ -208,9 +257,16 @@ if (!function_exists('slug')) {
 }
 
 if (!function_exists('upload')) {
-    function upload(array $file, string $directory, array $options = []): array
+    function upload(array $file, string $directory = '', array $options = []): array
     {
         return Core::upload($file, $directory, $options);
+    }
+}
+
+if (!function_exists('upload_options')) {
+    function upload_options(?string $profile = null, array $overrides = []): array
+    {
+        return Core::uploadOptions($profile, $overrides);
     }
 }
 
@@ -503,6 +559,76 @@ if (!function_exists('flash')) {
         }
 
         return Core::flash($key);
+    }
+}
+
+if (!function_exists('auth')) {
+    function auth(?string $key = null, mixed $default = null): mixed
+    {
+        return Core::auth($key, $default);
+    }
+}
+
+if (!function_exists('auth_id')) {
+    function auth_id(): mixed
+    {
+        return Core::authId();
+    }
+}
+
+if (!function_exists('auth_check')) {
+    function auth_check(): bool
+    {
+        return Core::authCheck();
+    }
+}
+
+if (!function_exists('auth_attempt')) {
+    function auth_attempt(array $credentials): bool
+    {
+        return Core::authAttempt($credentials);
+    }
+}
+
+if (!function_exists('auth_login')) {
+    function auth_login(array|int|string $user): bool
+    {
+        return Core::authLogin($user);
+    }
+}
+
+if (!function_exists('auth_logout')) {
+    function auth_logout(): void
+    {
+        Core::authLogout();
+    }
+}
+
+if (!function_exists('require_auth')) {
+    function require_auth(?string $redirect = null): array
+    {
+        return Core::requireAuth($redirect);
+    }
+}
+
+if (!function_exists('guest_only')) {
+    function guest_only(?string $redirect = null): void
+    {
+        Core::guestOnly($redirect);
+    }
+}
+
+if (!function_exists('auth_is')) {
+    function auth_is(array|string $roles): bool
+    {
+        return Core::authIs($roles);
+    }
+}
+
+if (!function_exists('auth_password')) {
+    function auth_password(string $password): string
+    {
+        return Core::authPassword($password);
     }
 }
 

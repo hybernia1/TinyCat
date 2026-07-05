@@ -1,0 +1,87 @@
+{
+  "app": {
+    "name": "TinyCat"
+  },
+  "common": {
+    "refresh": "Refresh",
+    "save": "Save",
+    "create": "Create",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "email": "E-mail",
+    "password": "Password",
+    "new_password": "New password",
+    "name": "Name",
+    "role": "Role",
+    "status": "Status",
+    "tags": "Tags",
+    "note": "Note",
+    "created": "Created",
+    "updated": "Updated",
+    "route": "Route",
+    "file": "File",
+    "table": "Table",
+    "clean_api": "Clean API",
+    "ui_api": "UI API",
+    "ui": "UI"
+  },
+  "users": {
+    "meta_title": "Admin users",
+    "title": "User management",
+    "intro": "The complete CRUD module runs from Public/admin/users.php, while the core stays in App.",
+    "seed_data": "Seed data",
+    "new_user": "New user",
+    "contract_title": "Module contract",
+    "contract_hint": "The same URL can serve clean API responses for external clients and HTML partials for the TinyCat UI.",
+    "ui_stack": "cards, table, expand, tagifier, modal confirm, toast",
+    "list_title": "Users",
+    "list_hint": "Expand a row for inline editing. Deleting uses the TinyCat modal confirm.",
+    "note_placeholder": "Short internal note",
+    "tag_placeholder": "Add tag",
+    "no_tags": "No tags",
+    "empty": "The table is empty. Create the first user or use Seed data.",
+    "table_user": "User",
+    "edit_user": "Edit {name}",
+    "password_keep": "Leave empty to keep unchanged",
+    "delete_title": "Delete user",
+    "delete_confirm": "Really delete user {name}?",
+    "stats": {
+      "total": "Total",
+      "active": "Active",
+      "table": "Table"
+    },
+    "roles": {
+      "admin": "Admin",
+      "manager": "Manager",
+      "editor": "Editor",
+      "user": "User"
+    },
+    "statuses": {
+      "active": "Active",
+      "invited": "Invited",
+      "disabled": "Disabled"
+    },
+    "messages": {
+      "seeded": "Test users were added.",
+      "created": "The user was created.",
+      "saved": "The user was saved.",
+      "deleted": "The user was deleted.",
+      "not_found": "The user was not found.",
+      "email_taken": "This e-mail is already used by another user."
+    },
+    "seed": {
+      "ada_note": "Primary test administrator.",
+      "grace_note": "Manages workflow and approvals.",
+      "alan_note": "Invitation is waiting for confirmation."
+    }
+  },
+  "action": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "message": {
+    "welcome": "Welcome to {app}."
+  }
+}

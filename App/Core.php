@@ -530,13 +530,18 @@ final class Core
     public static function upload(array $file, string $directory, array $options = []): array
     {
         $defaults = [
-            'max_size' => 5 * 1024 * 1024,
+            'url' => null,
+            'subfolder' => self::config('upload.subfolder', 'Y/m'),
+            'max_size' => (int) self::config('upload.max_size', 5 * 1024 * 1024),
             'extensions' => [],
             'mime_types' => [],
             'name' => null,
             'overwrite' => false,
         ];
-        $options = $options + $defaults;
+        $configured = self::uploadOptions($options['profile'] ?? null, $options);
+        $options = $configured + $defaults;
+        $directory = $directory !== '' ? $directory : (string) ($options['directory'] ?? self::config('upload.directory', self::config('directory.uploads', 'uploads')));
+        $folder = self::uploadSubfolder($options['subfolder'] ?? null);
 
         if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
             throw new RuntimeException(self::uploadError((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE)));
@@ -572,6 +577,10 @@ final class Core
             $mime = self::mime($tmpName);
         }
 
+        if ($folder !== '') {
+            $directory = rtrim($directory, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $folder);
+        }
+
         self::ensureDirectory($directory);
 
         $base = $options['name'] !== null
@@ -598,10 +607,32 @@ final class Core
             'name' => $filename,
             'original' => $original,
             'path' => $target,
+            'folder' => $folder,
+            'url' => self::uploadedUrl($filename, $options, $folder),
             'size' => $size,
             'mime' => $mime,
             'extension' => $extension,
         ];
+    }
+
+    public static function uploadOptions(?string $profile = null, array $overrides = []): array
+    {
+        $base = self::config('upload', []);
+        $base = is_array($base) ? $base : [];
+        $profiles = isset($base['profiles']) && is_array($base['profiles']) ? $base['profiles'] : [];
+        unset($base['profiles']);
+
+        $profileOptions = [];
+
+        if ($profile !== null && $profile !== '') {
+            $profileOptions = $profiles[$profile] ?? [];
+            $profileOptions = is_array($profileOptions) ? $profileOptions : [];
+        }
+
+        $options = array_replace($base, $profileOptions, $overrides);
+        unset($options['profile']);
+
+        return $options;
     }
 
     public static function slug(string $text, string $separator = '-'): string
@@ -625,6 +656,49 @@ final class Core
         $text = preg_replace('/' . $quoted . '+/', $separator, $text) ?? '';
 
         return trim($text, $separator);
+    }
+
+    public static function timezone(): DateTimeZone
+    {
+        return new DateTimeZone((string) self::config('datetime.timezone', date_default_timezone_get()));
+    }
+
+    public static function now(?string $format = null): DateTimeImmutable|string
+    {
+        $date = new DateTimeImmutable('now', self::timezone());
+
+        return $format === null ? $date : $date->format($format);
+    }
+
+    public static function dateTime(mixed $value = null, ?string $format = null): string
+    {
+        $format ??= (string) self::config('datetime.datetime', 'Y-m-d H:i:s');
+
+        return self::toDateTime($value)->format($format);
+    }
+
+    public static function dateValue(mixed $value = null, ?string $format = null): string
+    {
+        $format ??= (string) self::config('datetime.date', 'Y-m-d');
+
+        return self::toDateTime($value)->format($format);
+    }
+
+    public static function timeValue(mixed $value = null, ?string $format = null): string
+    {
+        $format ??= (string) self::config('datetime.time', 'H:i:s');
+
+        return self::toDateTime($value)->format($format);
+    }
+
+    public static function dateIso(mixed $value = null): string
+    {
+        return self::toDateTime($value)->format((string) self::config('datetime.iso', DATE_ATOM));
+    }
+
+    public static function dateDb(mixed $value = null): string
+    {
+        return self::toDateTime($value)->format((string) self::config('datetime.database', 'Y-m-d H:i:s'));
     }
 
     public static function e(mixed $value): string
@@ -1084,6 +1158,138 @@ final class Core
         return $value;
     }
 
+    public static function auth(?string $key = null, mixed $default = null): mixed
+    {
+        self::session();
+
+        $sessionKey = self::authConfig('session', 'auth_user_id');
+        $id = $_SESSION[$sessionKey] ?? null;
+
+        if ($id === null || $id === '') {
+            return $key === null ? null : $default;
+        }
+
+        $user = self::authUserById($id);
+
+        if ($user === null || !self::authUserIsActive($user)) {
+            unset($_SESSION[$sessionKey]);
+            return $key === null ? null : $default;
+        }
+
+        return $key === null ? $user : self::dataGet($user, $key, $default);
+    }
+
+    public static function authId(): mixed
+    {
+        $idColumn = self::authConfig('id', 'id');
+
+        return self::auth($idColumn);
+    }
+
+    public static function authCheck(): bool
+    {
+        return self::auth() !== null;
+    }
+
+    public static function authAttempt(array $credentials): bool
+    {
+        $loginColumn = self::authConfig('login', 'email');
+        $passwordColumn = self::authConfig('password', 'password');
+        $login = $credentials[$loginColumn] ?? $credentials['login'] ?? $credentials['email'] ?? $credentials['username'] ?? null;
+        $password = $credentials[$passwordColumn] ?? $credentials['password'] ?? null;
+
+        if (!is_string($login) || trim($login) === '' || !is_string($password) || $password === '') {
+            return false;
+        }
+
+        $user = self::authUserByLogin(trim($login));
+
+        if ($user === null || !self::authUserIsActive($user)) {
+            return false;
+        }
+
+        $hash = (string) ($user[$passwordColumn] ?? '');
+
+        if ($hash === '' || !password_verify($password, $hash)) {
+            return false;
+        }
+
+        if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
+            self::update(
+                self::authConfig('table', 'users'),
+                [$passwordColumn => self::authPassword($password)],
+                [self::authConfig('id', 'id') => $user[self::authConfig('id', 'id')]]
+            );
+        }
+
+        return self::authLogin($user);
+    }
+
+    public static function authLogin(array|int|string $user): bool
+    {
+        $idColumn = self::authConfig('id', 'id');
+        $id = is_array($user) ? ($user[$idColumn] ?? null) : $user;
+
+        if ($id === null || $id === '') {
+            return false;
+        }
+
+        self::session();
+        $_SESSION[self::authConfig('session', 'auth_user_id')] = $id;
+        session_regenerate_id(true);
+
+        return true;
+    }
+
+    public static function authLogout(): void
+    {
+        self::session();
+        unset($_SESSION[self::authConfig('session', 'auth_user_id')]);
+        session_regenerate_id(true);
+    }
+
+    public static function requireAuth(?string $redirect = null): array
+    {
+        $user = self::auth();
+
+        if ($user !== null) {
+            return $user;
+        }
+
+        if (self::isApiPath(self::path()) || self::wantsJson() || isset($_GET['api'])) {
+            self::apiError('Unauthenticated.', 401, 'unauthenticated');
+        }
+
+        self::redirect(self::authRedirectUrl($redirect ?? self::authConfig('login_url', '/login')));
+    }
+
+    public static function guestOnly(?string $redirect = null): void
+    {
+        if (self::authCheck()) {
+            self::redirect($redirect ?? self::authConfig('home_url', '/'));
+        }
+    }
+
+    public static function authIs(array|string $roles): bool
+    {
+        $roleColumn = self::authConfig('role', 'role');
+        $role = self::auth($roleColumn);
+
+        if ($role === null || $role === '') {
+            return false;
+        }
+
+        $roles = is_array($roles) ? $roles : preg_split('/[,\|]/', $roles);
+        $roles = array_map(static fn (mixed $item): string => trim((string) $item), (array) $roles);
+
+        return in_array((string) $role, $roles, true);
+    }
+
+    public static function authPassword(string $password): string
+    {
+        return password_hash($password, PASSWORD_DEFAULT);
+    }
+
     public static function csrfToken(): string
     {
         self::session();
@@ -1408,6 +1614,71 @@ final class Core
         return true;
     }
 
+    private static function authConfig(string $key, mixed $default = null): mixed
+    {
+        return self::config('auth.' . $key, $default);
+    }
+
+    private static function authUserById(mixed $id): ?array
+    {
+        try {
+            return self::find(self::authConfig('table', 'users'), [self::authConfig('id', 'id') => $id]);
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private static function authUserByLogin(string $login): ?array
+    {
+        try {
+            return self::find(self::authConfig('table', 'users'), [self::authConfig('login', 'email') => $login]);
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private static function authUserIsActive(array $user): bool
+    {
+        $statusColumn = (string) self::authConfig('status', 'status');
+
+        if ($statusColumn === '' || !array_key_exists($statusColumn, $user)) {
+            return true;
+        }
+
+        $active = self::authConfig('active', 'active');
+
+        if ($active === null || $active === '') {
+            return true;
+        }
+
+        $allowed = is_array($active) ? $active : [$active];
+
+        foreach ($allowed as $value) {
+            if ((string) $user[$statusColumn] === (string) $value) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function authRedirectUrl(string $target): string
+    {
+        $current = (string) ($_SERVER['REQUEST_URI'] ?? self::path());
+
+        if (
+            $current !== ''
+            && str_starts_with($current, '/')
+            && !str_starts_with($current, '//')
+            && !str_contains($target, 'next=')
+            && self::path($current) !== self::path($target)
+        ) {
+            $target .= (str_contains($target, '?') ? '&' : '?') . 'next=' . rawurlencode($current);
+        }
+
+        return $target;
+    }
+
     private static function normalizeRules(array|string $rules): array
     {
         $rules = is_string($rules) ? explode('|', $rules) : $rules;
@@ -1474,6 +1745,29 @@ final class Core
         $value = self::stringValue($value);
 
         return (float) (function_exists('mb_strlen') ? mb_strlen($value) : strlen($value));
+    }
+
+    private static function toDateTime(mixed $value = null): DateTimeImmutable
+    {
+        $timezone = self::timezone();
+
+        if ($value instanceof DateTimeImmutable) {
+            return $value->setTimezone($timezone);
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return DateTimeImmutable::createFromInterface($value)->setTimezone($timezone);
+        }
+
+        if ($value === null || $value === '') {
+            return new DateTimeImmutable('now', $timezone);
+        }
+
+        if (is_int($value) || (is_string($value) && preg_match('/^-?\d+$/', $value))) {
+            return (new DateTimeImmutable('@' . (int) $value))->setTimezone($timezone);
+        }
+
+        return new DateTimeImmutable((string) $value, $timezone);
     }
 
     private static function blank(mixed $value, bool $exists): bool
@@ -1854,6 +2148,51 @@ final class Core
             UPLOAD_ERR_EXTENSION => 'Upload was stopped by a PHP extension.',
             default => 'Unknown upload error.',
         };
+    }
+
+    private static function uploadSubfolder(mixed $format): string
+    {
+        if ($format === null || $format === false || $format === '') {
+            $format = self::config('upload.subfolder', 'Y/m');
+        }
+
+        $folder = self::now((string) $format);
+        $folder = str_replace('\\', '/', $folder);
+        $segments = array_filter(explode('/', $folder), static fn (string $segment): bool => $segment !== '');
+        $clean = [];
+
+        foreach ($segments as $segment) {
+            $segment = trim($segment);
+
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                continue;
+            }
+
+            $segment = preg_replace('/[^A-Za-z0-9._-]+/', '-', $segment) ?? '';
+            $segment = trim($segment, '.-');
+
+            if ($segment !== '') {
+                $clean[] = $segment;
+            }
+        }
+
+        $folder = implode('/', $clean);
+
+        return $folder !== '' ? $folder : self::now('Y/m');
+    }
+
+    private static function uploadedUrl(string $filename, array $options, string $folder = ''): ?string
+    {
+        $baseUrl = $options['url'] ?? self::config('upload.url');
+
+        if ($baseUrl === null || $baseUrl === '') {
+            return null;
+        }
+
+        $path = $folder !== '' ? trim($folder, '/') . '/' . $filename : $filename;
+        $segments = array_map('rawurlencode', explode('/', $path));
+
+        return rtrim((string) $baseUrl, '/') . '/' . implode('/', $segments);
     }
 }
 

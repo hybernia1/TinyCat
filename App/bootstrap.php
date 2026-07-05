@@ -12,12 +12,6 @@ if (!defined('TINYCAT')) {
 
 require_once __DIR__ . '/functions.php';
 
-$routesFile = __DIR__ . '/routes.php';
-
-if (is_file($routesFile)) {
-    require $routesFile;
-}
-
 $path = route_path();
 $handled = dispatch_routes($path);
 $frontController = basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === 'index.php';

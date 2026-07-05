@@ -818,9 +818,13 @@ a:hover {
 }
 
 .nav-link {
+  border: 0;
   border-radius: var(--radius-sm);
   padding: 7px 10px;
+  background: transparent;
   color: var(--muted);
+  cursor: pointer;
+  font: inherit;
   font-weight: 650;
   text-decoration: none;
 }
