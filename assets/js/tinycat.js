@@ -146,6 +146,29 @@
     }
   }
 
+  function renderTargets(data) {
+    var payload = unwrapResult(data);
+    var targets = null;
+
+    if (payload && typeof payload === "object" && payload.targets) {
+      targets = payload.targets;
+    } else if (data && typeof data === "object" && data.targets) {
+      targets = data.targets;
+    }
+
+    if (!targets || typeof targets !== "object") {
+      return;
+    }
+
+    Object.keys(targets).forEach(function (selector) {
+      var target = qs(selector);
+
+      if (target) {
+        target.innerHTML = String(targets[selector] || "");
+      }
+    });
+  }
+
   function clearErrors(form) {
     qsa('[aria-invalid="true"]', form).forEach(function (field) {
       field.removeAttribute("aria-invalid");
@@ -182,6 +205,19 @@
     });
   }
 
+  function resetForm(form) {
+    if (!form || form.dataset.reset !== "true") {
+      return;
+    }
+
+    form.reset();
+
+    qsa("[data-tagifier]", form).forEach(function (root) {
+      root.__tinycatTags = parseList(root.dataset.tags || "");
+      TinyCat.renderTagifier(root);
+    });
+  }
+
   function handleResult(source, data, target) {
     var payload = unwrapResult(data);
 
@@ -199,6 +235,8 @@
     }
 
     renderTarget(target, payload);
+    renderTargets(data);
+    resetForm(source);
     emit(source, "tinycat:success", { data: data, payload: payload, target: target });
   }
 
@@ -237,6 +275,38 @@
     }
 
     return (index === 0 ? size : size.toFixed(1)) + " " + units[index];
+  }
+
+  function createElement(tag, className, text) {
+    var element = document.createElement(tag);
+
+    if (className) {
+      element.className = className;
+    }
+
+    if (text !== undefined && text !== null) {
+      element.textContent = String(text);
+    }
+
+    return element;
+  }
+
+  function confirmOptions(trigger) {
+    return {
+      title: trigger.dataset.confirmTitle || "Confirm action",
+      message: trigger.dataset.confirm || "",
+      confirmLabel: trigger.dataset.confirmOk || "Confirm",
+      cancelLabel: trigger.dataset.confirmCancel || "Cancel",
+      variant: trigger.dataset.confirmVariant || (trigger.classList.contains("btn-danger") ? "danger" : "")
+    };
+  }
+
+  function confirmAction(trigger) {
+    if (!trigger || !trigger.dataset.confirm) {
+      return Promise.resolve(true);
+    }
+
+    return TinyCat.confirm(confirmOptions(trigger));
   }
 
   TinyCat.qs = qs;
@@ -348,6 +418,72 @@
     return toast;
   };
 
+  TinyCat.confirm = function (options) {
+    var settings = typeof options === "string" ? { message: options } : (options || {});
+    var modal = createElement("div", "modal");
+    var backdrop = createElement("div", "modal-backdrop");
+    var panel = createElement("div", "modal-panel modal-confirm-panel");
+    var header = createElement("div", "modal-header");
+    var title = createElement("h2", "modal-title text-lg m-0", settings.title || "Confirm action");
+    var close = createElement("button", "btn btn-ghost btn-icon", "x");
+    var body = createElement("div", "modal-body");
+    var message = createElement("p", "modal-confirm-message", settings.message || "");
+    var footer = createElement("div", "modal-footer");
+    var cancel = createElement("button", "btn btn-secondary", settings.cancelLabel || "Cancel");
+    var confirm = createElement("button", "btn " + (settings.variant === "danger" ? "btn-danger" : "btn-primary"), settings.confirmLabel || "Confirm");
+
+    return new Promise(function (resolve) {
+      function finish(value) {
+        document.removeEventListener("keydown", onKeydown, true);
+        TinyCat.closeModal(modal);
+        modal.remove();
+        resolve(value);
+      }
+
+      function onKeydown(event) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          finish(false);
+        }
+      }
+
+      modal.setAttribute("aria-hidden", "true");
+      modal.setAttribute("role", "dialog");
+      modal.setAttribute("aria-modal", "true");
+
+      close.type = "button";
+      close.setAttribute("aria-label", "Close");
+      cancel.type = "button";
+      confirm.type = "button";
+
+      header.appendChild(title);
+      header.appendChild(close);
+      body.appendChild(message);
+      footer.appendChild(cancel);
+      footer.appendChild(confirm);
+      panel.appendChild(header);
+      panel.appendChild(body);
+      panel.appendChild(footer);
+      modal.appendChild(backdrop);
+      modal.appendChild(panel);
+      document.body.appendChild(modal);
+
+      backdrop.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        finish(false);
+      });
+      close.addEventListener("click", function () { finish(false); });
+      cancel.addEventListener("click", function () { finish(false); });
+      confirm.addEventListener("click", function () { finish(true); });
+      document.addEventListener("keydown", onKeydown, true);
+
+      TinyCat.openModal(modal);
+      confirm.focus();
+    });
+  };
+
   TinyCat.initModals = function () {
     document.addEventListener("click", function (event) {
       var target = event.target;
@@ -381,24 +517,36 @@
         return;
       }
 
-      if (form.dataset.confirm && !window.confirm(form.dataset.confirm)) {
-        event.preventDefault();
+      event.preventDefault();
+
+      if (form.dataset.confirm && !await confirmAction(form)) {
         return;
       }
 
-      event.preventDefault();
       clearErrors(form);
 
       var target = form.dataset.ajaxTarget ? qs(form.dataset.ajaxTarget) : null;
       var method = (form.getAttribute("method") || "POST").toUpperCase();
       var action = form.getAttribute("action") || window.location.href;
+      var body = new FormData(form);
+      var headers = {};
+      var override = body.get("_method");
+
+      if (target) {
+        headers["X-TinyCat-View"] = "partial";
+      }
+
+      if (override) {
+        headers["X-HTTP-Method-Override"] = String(override).toUpperCase();
+      }
 
       try {
         setLoading(form, true);
         emit(form, "tinycat:before", { target: target });
         var data = await TinyCat.request(action, {
           method: method,
-          body: new FormData(form)
+          body: body,
+          headers: headers
         });
         handleResult(form, data, target);
       } catch (error) {
@@ -422,21 +570,25 @@
         return;
       }
 
-      if (link.dataset.confirm && !window.confirm(link.dataset.confirm)) {
-        event.preventDefault();
+      event.preventDefault();
+
+      if (link.dataset.confirm && !await confirmAction(link)) {
         return;
       }
-
-      event.preventDefault();
 
       var url = link.dataset.url || link.getAttribute("href");
       var target = link.dataset.ajaxTarget ? qs(link.dataset.ajaxTarget) : null;
       var method = (link.dataset.method || "GET").toUpperCase();
+      var headers = {};
+
+      if (target) {
+        headers["X-TinyCat-View"] = "partial";
+      }
 
       try {
         setLoading(link, true);
         emit(link, "tinycat:before", { target: target });
-        var data = await TinyCat.request(url, { method: method });
+        var data = await TinyCat.request(url, { method: method, headers: headers });
         handleResult(link, data, target);
       } catch (error) {
         TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
@@ -448,11 +600,57 @@
   };
 
   TinyCat.initConfirm = function () {
-    document.addEventListener("click", function (event) {
+    document.addEventListener("click", async function (event) {
       var trigger = event.target.closest && event.target.closest("[data-confirm]:not(form):not([data-ajax])");
 
-      if (trigger && !window.confirm(trigger.dataset.confirm)) {
-        event.preventDefault();
+      if (!trigger || trigger.closest("form[data-ajax-form]")) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (!await confirmAction(trigger)) {
+        return;
+      }
+
+      if (trigger.tagName === "A" && trigger.href) {
+        window.location.assign(trigger.href);
+        return;
+      }
+
+      if (trigger.type === "submit" && trigger.form) {
+        trigger.form.__tinycatConfirmPass = true;
+
+        if (trigger.form.requestSubmit) {
+          trigger.form.requestSubmit(trigger);
+        } else {
+          trigger.form.submit();
+        }
+      }
+    });
+
+    document.addEventListener("submit", async function (event) {
+      var form = event.target.closest && event.target.closest("form[data-confirm]:not([data-ajax-form])");
+
+      if (!form) {
+        return;
+      }
+
+      if (form.__tinycatConfirmPass) {
+        delete form.__tinycatConfirmPass;
+        return;
+      }
+
+      event.preventDefault();
+
+      if (await confirmAction(form)) {
+        form.__tinycatConfirmPass = true;
+
+        if (form.requestSubmit) {
+          form.requestSubmit();
+        } else {
+          form.submit();
+        }
       }
     });
   };

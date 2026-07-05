@@ -18,6 +18,19 @@ if (is_file($routesFile)) {
     require $routesFile;
 }
 
-if (!dispatch_routes() && str_starts_with(route_path(), '/api')) {
+$path = route_path();
+$handled = dispatch_routes($path);
+$frontController = basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === 'index.php';
+
+if (!$handled && $frontController) {
+    $handled = autoroute($path);
+}
+
+if (!$handled && str_starts_with($path, '/api')) {
     api_error('API endpoint not found.', 404, 'not_found');
+}
+
+if (!$handled && $frontController) {
+    http_response_code(404);
+    echo 'Not found.';
 }

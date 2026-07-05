@@ -31,6 +31,7 @@ return [
     'directory' => [
         'base' => __DIR__,
         'app' => __DIR__ . '/App',
+        'public' => __DIR__ . '/Public',
         'lang' => __DIR__ . '/lang',
         'assets' => __DIR__ . '/assets',
         'editor' => __DIR__ . '/assets/editor',

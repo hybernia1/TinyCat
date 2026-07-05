@@ -1132,6 +1132,25 @@ a:hover {
   border-top: 1px solid var(--border);
 }
 
+.modal-confirm-panel {
+  width: min(100%, 420px);
+}
+
+.modal-confirm-message {
+  margin: 0;
+  color: var(--text);
+}
+
+.modal-confirm-panel .modal-footer .btn {
+  flex: 1 1 120px;
+}
+
+@media (min-width: 640px) {
+  .modal-confirm-panel .modal-footer .btn {
+    flex: 0 0 auto;
+  }
+}
+
 .toast-stack {
   position: fixed;
   right: 16px;

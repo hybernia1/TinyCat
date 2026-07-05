@@ -25,6 +25,13 @@ if (!function_exists('config')) {
     }
 }
 
+if (!function_exists('public_path')) {
+    function public_path(string $path = ''): string
+    {
+        return Core::publicPath($path);
+    }
+}
+
 if (!function_exists('db')) {
     function db(): PDO
     {
@@ -214,6 +221,34 @@ if (!function_exists('redirect')) {
     }
 }
 
+if (!function_exists('capture')) {
+    function capture(callable $callback): string
+    {
+        return Core::capture($callback);
+    }
+}
+
+if (!function_exists('render')) {
+    function render(string $template, array $data = [], ?string $directory = null): string
+    {
+        return Core::render($template, $data, $directory);
+    }
+}
+
+if (!function_exists('view')) {
+    function view(string $template, array $data = [], ?string $directory = null): string
+    {
+        return Core::render($template, $data, $directory);
+    }
+}
+
+if (!function_exists('layout')) {
+    function layout(string $template, array $data = [], mixed $content = null, ?string $directory = null): void
+    {
+        Core::layout($template, $data, $content, $directory);
+    }
+}
+
 if (!function_exists('json')) {
     function json(mixed $data, int $status = 200): never
     {
@@ -326,6 +361,13 @@ if (!function_exists('dispatch_routes')) {
     }
 }
 
+if (!function_exists('autoroute')) {
+    function autoroute(?string $path = null, ?string $directory = null): bool
+    {
+        return Core::autoroute($path, $directory);
+    }
+}
+
 if (!function_exists('route_path')) {
     function route_path(?string $path = null): string
     {
@@ -386,6 +428,20 @@ if (!function_exists('wants_json')) {
     function wants_json(): bool
     {
         return Core::wantsJson();
+    }
+}
+
+if (!function_exists('wants_partial')) {
+    function wants_partial(): bool
+    {
+        return Core::wantsPartial();
+    }
+}
+
+if (!function_exists('wants_view')) {
+    function wants_view(): bool
+    {
+        return Core::wantsPartial();
     }
 }
 

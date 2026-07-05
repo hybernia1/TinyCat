@@ -2,5 +2,3 @@
 declare(strict_types=1);
 
 require __DIR__ . '/App/bootstrap.php';
-
-redirect('/example.php');

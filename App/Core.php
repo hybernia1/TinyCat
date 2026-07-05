@@ -76,6 +76,14 @@ final class Core
         return $value;
     }
 
+    public static function publicPath(string $path = ''): string
+    {
+        $directory = (string) self::config('directory.public', dirname(__DIR__) . DIRECTORY_SEPARATOR . 'Public');
+        $path = trim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+
+        return rtrim($directory, DIRECTORY_SEPARATOR) . ($path === '' ? '' : DIRECTORY_SEPARATOR . $path);
+    }
+
     public static function db(): PDO
     {
         if (self::$pdo instanceof PDO) {
@@ -631,6 +639,60 @@ final class Core
         exit;
     }
 
+    public static function capture(callable $callback): string
+    {
+        ob_start();
+
+        try {
+            $result = $callback();
+            $output = (string) ob_get_clean();
+        } catch (Throwable $exception) {
+            ob_end_clean();
+            throw $exception;
+        }
+
+        if ($result !== null) {
+            $output .= self::stringValue($result);
+        }
+
+        return $output;
+    }
+
+    public static function render(string $template, array $data = [], ?string $directory = null): string
+    {
+        $file = self::templateFile($template, $directory ?? self::publicPath());
+
+        if ($file === null) {
+            throw new RuntimeException('Template was not found: ' . $template);
+        }
+
+        ob_start();
+
+        try {
+            extract($data, EXTR_SKIP);
+            $result = require $file;
+            $output = (string) ob_get_clean();
+        } catch (Throwable $exception) {
+            ob_end_clean();
+            throw $exception;
+        }
+
+        if ($result !== 1 && $result !== null) {
+            $output .= self::stringValue($result);
+        }
+
+        return $output;
+    }
+
+    public static function layout(string $template, array $data = [], mixed $content = null, ?string $directory = null): void
+    {
+        if ($content !== null) {
+            $data['content'] = is_callable($content) ? self::capture($content) : self::stringValue($content);
+        }
+
+        echo self::render($template, $data, $directory);
+    }
+
     public static function json(mixed $data, int $status = 200, array $headers = []): never
     {
         http_response_code($status);
@@ -785,6 +847,38 @@ final class Core
         return false;
     }
 
+    public static function autoroute(?string $path = null, ?string $directory = null): bool
+    {
+        $path = self::path($path);
+        $file = self::autorouteFile($path, $directory ?? self::publicPath());
+
+        if ($file === null) {
+            return false;
+        }
+
+        try {
+            $result = require $file;
+
+            if ($result === 1 || $result === null) {
+                return true;
+            }
+
+            if (is_array($result) || is_object($result)) {
+                self::apiOk($result);
+            }
+
+            echo self::stringValue($result);
+
+            return true;
+        } catch (Throwable $exception) {
+            if (self::isApiPath($path) || self::wantsJson()) {
+                self::apiException($exception);
+            }
+
+            throw $exception;
+        }
+    }
+
     public static function path(?string $path = null): string
     {
         if ($path === null || $path === '') {
@@ -843,6 +937,15 @@ final class Core
         $requestedWith = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
 
         return str_contains($accept, 'application/json') || $requestedWith === 'xmlhttprequest';
+    }
+
+    public static function wantsPartial(): bool
+    {
+        $view = strtolower((string) ($_GET['view'] ?? $_GET['format'] ?? ''));
+        $header = strtolower((string) ($_SERVER['HTTP_X_TINYCAT_VIEW'] ?? ''));
+        $values = ['html', 'ui', 'view', 'partial'];
+
+        return in_array($view, $values, true) || in_array($header, $values, true);
     }
 
     public static function isJson(): bool
@@ -929,7 +1032,29 @@ final class Core
 
     public static function method(): string
     {
-        return strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+        $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+
+        if ($method !== 'POST') {
+            return $method;
+        }
+
+        $override = '';
+
+        foreach ([
+            $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? null,
+            $_POST['_method'] ?? null,
+            $_REQUEST['_method'] ?? null,
+            self::payload('_method', null),
+        ] as $candidate) {
+            $candidate = strtoupper(trim((string) $candidate));
+
+            if ($candidate !== '') {
+                $override = $candidate;
+                break;
+            }
+        }
+
+        return in_array($override, ['PUT', 'PATCH', 'DELETE'], true) ? $override : $method;
     }
 
     public static function isPost(): bool
@@ -1124,6 +1249,95 @@ final class Core
         }
 
         return '#^/' . implode('/', $parts) . '$#u';
+    }
+
+    private static function autorouteFile(string $path, string $directory): ?string
+    {
+        $public = realpath($directory);
+
+        if ($public === false || !is_dir($public)) {
+            return null;
+        }
+
+        $segments = $path === '/' ? [] : explode('/', trim($path, '/'));
+
+        foreach ($segments as $segment) {
+            if (
+                $segment === ''
+                || $segment === '.'
+                || $segment === '..'
+                || str_starts_with($segment, '.')
+                || str_contains($segment, "\0")
+            ) {
+                return null;
+            }
+        }
+
+        $relative = $segments === [] ? 'index.php' : implode(DIRECTORY_SEPARATOR, $segments);
+        $candidates = str_ends_with($relative, '.php')
+            ? [$relative]
+            : [$relative . '.php', $relative . DIRECTORY_SEPARATOR . 'index.php'];
+
+        $publicPrefix = strtolower(rtrim($public, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
+
+        foreach ($candidates as $candidate) {
+            $file = realpath($public . DIRECTORY_SEPARATOR . $candidate);
+
+            if ($file === false || !is_file($file) || pathinfo($file, PATHINFO_EXTENSION) !== 'php') {
+                continue;
+            }
+
+            if (!str_starts_with(strtolower($file), $publicPrefix)) {
+                continue;
+            }
+
+            return $file;
+        }
+
+        return null;
+    }
+
+    private static function templateFile(string $template, string $directory): ?string
+    {
+        $public = realpath($directory);
+
+        if ($public === false || !is_dir($public)) {
+            return null;
+        }
+
+        $template = trim(str_replace('\\', '/', $template), '/');
+
+        if ($template === '' || str_contains($template, "\0")) {
+            return null;
+        }
+
+        $segments = explode('/', $template);
+
+        foreach ($segments as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..' || str_starts_with($segment, '.')) {
+                return null;
+            }
+        }
+
+        $relative = implode(DIRECTORY_SEPARATOR, $segments);
+
+        if (!str_ends_with($relative, '.php')) {
+            $relative .= '.php';
+        }
+
+        $file = realpath($public . DIRECTORY_SEPARATOR . $relative);
+        $publicPrefix = strtolower(rtrim($public, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
+
+        if (
+            $file === false
+            || !is_file($file)
+            || pathinfo($file, PATHINFO_EXTENSION) !== 'php'
+            || !str_starts_with(strtolower($file), $publicPrefix)
+        ) {
+            return null;
+        }
+
+        return $file;
     }
 
     private static function runRoute(array $route, array $params, string $path): void
