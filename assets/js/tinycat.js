@@ -2558,7 +2558,56 @@
     });
   }
 
-  function syncStatusResponse(form, doc, action) {
+  function statusCardId(card) {
+    var match = card && card.id ? /^status-(\d+)$/.exec(card.id) : null;
+
+    return match ? match[1] : "";
+  }
+
+  function statusCardAction(form) {
+    var url = new URL(form.getAttribute("action") || window.location.href, window.location.href);
+
+    return url.pathname + url.search;
+  }
+
+  async function refreshStatusCard(form, currentCard) {
+    var id = statusCardId(currentCard);
+    var action = statusCardAction(form);
+    var url;
+    var data;
+    var payload;
+    var html;
+    var template;
+    var nextCard;
+
+    if (!id) {
+      return null;
+    }
+
+    url = "/api/status-card?id=" + encodeURIComponent(id) + "&action=" + encodeURIComponent(action);
+    data = await TinyCat.request(url, { method: "GET" });
+    payload = unwrapResult(data);
+    html = payload && typeof payload === "object" ? (payload.html || "") : "";
+
+    if (!html) {
+      return null;
+    }
+
+    template = document.createElement("template");
+    template.innerHTML = String(html);
+    nextCard = qs(".status-card", template.content);
+
+    if (!nextCard) {
+      return null;
+    }
+
+    currentCard.replaceWith(nextCard);
+    hydrateDynamic(nextCard);
+
+    return nextCard;
+  }
+
+  async function syncStatusResponse(form, doc, action) {
     var currentCard = form.closest(".status-card");
     var openedModal = form.closest(".modal");
     var reopenModalId = openedModal && openedModal.dataset.open === "true" ? openedModal.id : "";
@@ -2585,6 +2634,33 @@
         hydrateDynamic(imported);
 
         if (reopenModalId && action !== "update" && action !== "delete" && action !== "share" && action !== "report") {
+          if (reopenModalUrl) {
+            loadRemoteModal(reopenModalId, reopenModalUrl, imported, true)
+              .then(function (modal) {
+                reopenedModal = TinyCat.openModal(modal);
+                restoreModalScroll(reopenedModal, modalScroll);
+              })
+              .catch(function (error) {
+                TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+              });
+          } else {
+            reopenedModal = TinyCat.openModal(reopenModalId);
+            restoreModalScroll(reopenedModal, modalScroll);
+          }
+        }
+
+        return true;
+      }
+
+      if (action === "delete") {
+        currentCard.remove();
+        return true;
+      }
+
+      imported = await refreshStatusCard(form, currentCard);
+
+      if (imported) {
+        if (reopenModalId && action !== "update" && action !== "share" && action !== "report") {
           if (reopenModalUrl) {
             loadRemoteModal(reopenModalId, reopenModalUrl, imported, true)
               .then(function (modal) {
@@ -2691,7 +2767,7 @@
         doc = new DOMParser().parseFromString(html, "text/html");
         renderFetchedFlashes(doc);
 
-        if (!syncStatusResponse(form, doc, action)) {
+        if (!await syncStatusResponse(form, doc, action)) {
           window.location.assign(responseUrl || url);
         }
       } catch (error) {

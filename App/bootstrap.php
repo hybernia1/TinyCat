@@ -95,6 +95,25 @@ api_route('GET', '/status-feed', static function (): array {
     ];
 });
 
+api_route('GET', '/status-card', static function (): array {
+    $contentId = max(0, (int) get('id', 0));
+    $item = public_status_item($contentId);
+
+    if ($item === null) {
+        api_error(t('account.messages.status_not_found'), 404, 'not_found');
+    }
+
+    $action = trim((string) get('action', ''));
+
+    if ($action === '' || !str_starts_with($action, '/')) {
+        $action = status_url($contentId);
+    }
+
+    return [
+        'html' => status_card($item, $action, auth()),
+    ];
+});
+
 api_route('GET', '/status-modal', static function (): array {
     $contentId = max(0, (int) get('id', 0));
     $item = public_status_item($contentId);
