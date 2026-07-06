@@ -91,7 +91,6 @@ layout('layout', [
                     <?= status_actions($item, auth(), $current, false) ?>
                     <?= status_comment_thread_section($item, auth(), $current, 'status-' . $contentId) ?>
                 </div>
-                <?= status_share_modal($item, auth(), $current) ?>
             </article>
         </main>
         <?= public_sidebar() ?>

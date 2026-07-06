@@ -95,6 +95,101 @@ api_route('GET', '/status-feed', static function (): array {
     ];
 });
 
+api_route('GET', '/status-modal', static function (): array {
+    $contentId = max(0, (int) get('id', 0));
+    $item = public_status_item($contentId);
+
+    if ($item === null) {
+        api_error(t('account.messages.status_not_found'), 404, 'not_found');
+    }
+
+    $action = trim((string) get('action', ''));
+
+    if ($action === '' || !str_starts_with($action, '/')) {
+        $action = status_url($contentId);
+    }
+
+    return [
+        'html' => status_post_modal($item, auth(), $action),
+    ];
+});
+
+api_route('GET', '/status-share-modal', static function (): array {
+    $user = auth();
+    $contentId = max(0, (int) get('id', 0));
+    $item = public_status_item($contentId);
+
+    if ($user === null) {
+        api_error(t('auth.login_required', [], null, 'Login required.'), 401, 'unauthorized', ['redirect' => '/login']);
+    }
+
+    if ($item === null) {
+        api_error(t('account.messages.status_not_found'), 404, 'not_found');
+    }
+
+    $action = trim((string) get('action', ''));
+
+    if ($action === '' || !str_starts_with($action, '/')) {
+        $action = status_url($contentId);
+    }
+
+    return [
+        'html' => status_share_modal($item, $user, $action),
+    ];
+});
+
+api_route('GET', '/status-report-modal', static function (): array {
+    $user = auth();
+    $contentId = max(0, (int) get('id', 0));
+    $item = public_status_item($contentId);
+
+    if ($user === null) {
+        api_error(t('auth.login_required', [], null, 'Login required.'), 401, 'unauthorized', ['redirect' => '/login']);
+    }
+
+    if ($item === null) {
+        api_error(t('account.messages.status_not_found'), 404, 'not_found');
+    }
+
+    if ((int) ($item['author_id'] ?? $item['user_id'] ?? 0) === (int) ($user['id'] ?? 0)) {
+        api_error(t('account.messages.status_forbidden'), 403, 'forbidden');
+    }
+
+    $action = trim((string) get('action', ''));
+
+    if ($action === '' || !str_starts_with($action, '/')) {
+        $action = status_url($contentId);
+    }
+
+    return [
+        'html' => status_report_modal($item, $user, $action),
+    ];
+});
+
+api_route('GET', '/status-edit-modal', static function (): array {
+    $user = auth();
+    $contentId = max(0, (int) get('id', 0));
+    $item = public_status_item($contentId);
+
+    if ($user === null) {
+        api_error(t('auth.login_required', [], null, 'Login required.'), 401, 'unauthorized', ['redirect' => '/login']);
+    }
+
+    if (!status_can_edit($item, $user)) {
+        api_error(t('account.messages.status_forbidden'), 403, 'forbidden');
+    }
+
+    $action = trim((string) get('action', ''));
+
+    if ($action === '' || !str_starts_with($action, '/')) {
+        $action = status_url($contentId);
+    }
+
+    return [
+        'html' => status_edit_modal((array) $item, $action),
+    ];
+});
+
 if (!$installPath && !app_db_ready()) {
     if (str_starts_with($path, '/api') || wants_json() || isset($_GET['api'])) {
         api_error(t('install.messages.db_not_ready'), 503, 'database_not_ready', ['redirect' => '/install']);

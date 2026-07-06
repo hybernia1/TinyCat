@@ -664,6 +664,71 @@
     return TinyCat.openModal(modal);
   };
 
+  async function loadRemoteModal(target, url, host, force) {
+    var modal = getModal(target);
+    var data;
+    var payload;
+    var html;
+    var template;
+
+    if (!url) {
+      return modal;
+    }
+
+    if (modal && modal.dataset.remoteLoaded === "true" && force !== true) {
+      return modal;
+    }
+
+    if (modal) {
+      modal.remove();
+    }
+
+    data = await TinyCat.request(url, { method: "GET" });
+    payload = unwrapResult(data);
+    html = payload && typeof payload === "object" ? (payload.html || "") : "";
+
+    if (!html) {
+      throw new Error("Modal content is empty.");
+    }
+
+    template = document.createElement("template");
+    template.innerHTML = String(html);
+    (host || document.body).appendChild(template.content);
+    modal = getModal(target);
+
+    if (!modal) {
+      throw new Error("Modal was not found.");
+    }
+
+    modal.dataset.remoteLoaded = "true";
+    modal.dataset.modalUrl = url;
+    hydrateDynamic(modal);
+
+    return modal;
+  }
+
+  async function openRemoteModal(trigger, force) {
+    var target = trigger ? trigger.dataset.modalOpen : "";
+    var url = trigger ? trigger.dataset.modalUrl : "";
+    var host = trigger && trigger.closest ? trigger.closest(".status-card") : null;
+    var modal;
+
+    if (!url) {
+      return TinyCat.openModal(target);
+    }
+
+    trigger.dataset.modalBusy = "true";
+    setLoading(trigger, true);
+
+    try {
+      modal = await loadRemoteModal(target, url, host, force);
+      return TinyCat.openModal(modal);
+    } finally {
+      delete trigger.dataset.modalBusy;
+      setLoading(trigger, false);
+    }
+  }
+
   TinyCat.toast = function (message, type, timeout) {
     var stack = qs(".toast-stack");
 
@@ -803,7 +868,9 @@
 
       if (open) {
         event.preventDefault();
-        TinyCat.openModal(open.dataset.modalOpen);
+        openRemoteModal(open).catch(function (error) {
+          TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+        });
         return;
       }
 
@@ -2495,6 +2562,7 @@
     var currentCard = form.closest(".status-card");
     var openedModal = form.closest(".modal");
     var reopenModalId = openedModal && openedModal.dataset.open === "true" ? openedModal.id : "";
+    var reopenModalUrl = openedModal && openedModal.dataset.modalUrl ? openedModal.dataset.modalUrl : "";
     var modalScroll = captureModalScroll(openedModal);
     var nextCard;
     var imported;
@@ -2517,8 +2585,19 @@
         hydrateDynamic(imported);
 
         if (reopenModalId && action !== "update" && action !== "delete" && action !== "share" && action !== "report") {
-          reopenedModal = TinyCat.openModal(reopenModalId);
-          restoreModalScroll(reopenedModal, modalScroll);
+          if (reopenModalUrl) {
+            loadRemoteModal(reopenModalId, reopenModalUrl, imported, true)
+              .then(function (modal) {
+                reopenedModal = TinyCat.openModal(modal);
+                restoreModalScroll(reopenedModal, modalScroll);
+              })
+              .catch(function (error) {
+                TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+              });
+          } else {
+            reopenedModal = TinyCat.openModal(reopenModalId);
+            restoreModalScroll(reopenedModal, modalScroll);
+          }
         }
 
         return true;

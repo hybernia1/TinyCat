@@ -368,6 +368,7 @@ function tc_install_create_tables(): void
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY content_status_index (status),
+            KEY content_feed_index (status, published_at, id),
             KEY content_author_index (author_id),
             KEY content_edit_lock_index (edit_locked_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"

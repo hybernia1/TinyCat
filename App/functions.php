@@ -2918,14 +2918,23 @@ if (!function_exists('status_link_data')) {
     }
 }
 
-if (!function_exists('status_links')) {
-    function status_links(int $contentId): array
+if (!function_exists('status_links_cache')) {
+    function &status_links_cache(): array
     {
         static $cache = [];
 
+        return $cache;
+    }
+}
+
+if (!function_exists('status_links')) {
+    function status_links(int $contentId): array
+    {
         if ($contentId < 1) {
             return [];
         }
+
+        $cache =& status_links_cache();
 
         if (!array_key_exists($contentId, $cache)) {
             $cache[$contentId] = all(
@@ -2939,6 +2948,48 @@ if (!function_exists('status_links')) {
         }
 
         return $cache[$contentId];
+    }
+}
+
+if (!function_exists('status_preload_links')) {
+    function status_preload_links(array $contentIds): void
+    {
+        $contentIds = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
+
+        if ($contentIds === []) {
+            return;
+        }
+
+        $cache =& status_links_cache();
+        $missing = [];
+
+        foreach ($contentIds as $contentId) {
+            if (!array_key_exists($contentId, $cache)) {
+                $cache[$contentId] = [];
+                $missing[] = $contentId;
+            }
+        }
+
+        if ($missing === []) {
+            return;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($missing), '?'));
+
+        foreach (all(
+            'SELECT cl.content_id, l.*, cl.position
+            FROM content_links cl
+            INNER JOIN links l ON l.id = cl.link_id
+            WHERE cl.content_id IN (' . $placeholders . ')
+            ORDER BY cl.content_id ASC, cl.position ASC, l.id ASC',
+            $missing
+        ) as $row) {
+            $contentId = (int) ($row['content_id'] ?? 0);
+
+            if ($contentId > 0) {
+                $cache[$contentId][] = $row;
+            }
+        }
     }
 }
 
@@ -3016,14 +3067,23 @@ if (!function_exists('status_link_cards')) {
     }
 }
 
-if (!function_exists('status_shared_id')) {
-    function status_shared_id(int $contentId): int
+if (!function_exists('status_shared_id_cache')) {
+    function &status_shared_id_cache(): array
     {
         static $cache = [];
 
+        return $cache;
+    }
+}
+
+if (!function_exists('status_shared_id')) {
+    function status_shared_id(int $contentId): int
+    {
         if ($contentId < 1) {
             return 0;
         }
+
+        $cache =& status_shared_id_cache();
 
         if (!array_key_exists($contentId, $cache)) {
             $cache[$contentId] = (int) val(
@@ -3033,6 +3093,46 @@ if (!function_exists('status_shared_id')) {
         }
 
         return (int) $cache[$contentId];
+    }
+}
+
+if (!function_exists('status_preload_shared_ids')) {
+    function status_preload_shared_ids(array $contentIds): void
+    {
+        $contentIds = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
+
+        if ($contentIds === []) {
+            return;
+        }
+
+        $cache =& status_shared_id_cache();
+        $missing = [];
+
+        foreach ($contentIds as $contentId) {
+            if (!array_key_exists($contentId, $cache)) {
+                $cache[$contentId] = 0;
+                $missing[] = $contentId;
+            }
+        }
+
+        if ($missing === []) {
+            return;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($missing), '?'));
+
+        foreach (all(
+            'SELECT content_id, shared_content_id
+            FROM content_shares
+            WHERE content_id IN (' . $placeholders . ')',
+            $missing
+        ) as $row) {
+            $contentId = (int) ($row['content_id'] ?? 0);
+
+            if ($contentId > 0) {
+                $cache[$contentId] = (int) ($row['shared_content_id'] ?? 0);
+            }
+        }
     }
 }
 
@@ -3086,11 +3186,18 @@ if (!function_exists('status_sync_share')) {
     }
 }
 
-if (!function_exists('status_shared_item')) {
-    function status_shared_item(array|int $item): ?array
+if (!function_exists('status_shared_item_cache')) {
+    function &status_shared_item_cache(): array
     {
         static $cache = [];
 
+        return $cache;
+    }
+}
+
+if (!function_exists('status_shared_item')) {
+    function status_shared_item(array|int $item): ?array
+    {
         $contentId = is_array($item) ? (int) ($item['id'] ?? 0) : (int) $item;
         $sharedContentId = is_array($item) && array_key_exists('shared_content_id', $item)
             ? (int) ($item['shared_content_id'] ?? 0)
@@ -3099,6 +3206,8 @@ if (!function_exists('status_shared_item')) {
         if ($sharedContentId < 1) {
             return null;
         }
+
+        $cache =& status_shared_item_cache();
 
         if (!array_key_exists($sharedContentId, $cache)) {
             $cache[$sharedContentId] = public_status_item($sharedContentId);
@@ -3244,6 +3353,24 @@ if (!function_exists('public_status_select_sql')) {
     }
 }
 
+if (!function_exists('public_status_id_query')) {
+    function public_status_id_query(): CoreQuery
+    {
+        $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
+            ? ' FORCE INDEX (content_feed_index)'
+            : '';
+
+        return db_select(
+            'SELECT c.id
+            FROM content c' . $feedIndex . '
+            INNER JOIN users u ON u.id = c.author_id'
+        )
+            ->where('c.status = ?', 'published')
+            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+            ->where('u.status = ?', 'active');
+    }
+}
+
 if (!function_exists('public_status_query')) {
     function public_status_query(): CoreQuery
     {
@@ -3260,17 +3387,38 @@ if (!function_exists('public_status_page')) {
         $limit = max(1, min(100, $limit));
         $offset = max(0, $offset);
 
-        return $query
-            ->order('COALESCE(c.published_at, c.created_at) DESC, c.id DESC')
+        $ids = array_map(
+            static fn (array $row): int => (int) ($row['id'] ?? 0),
+            $query
+                ->order('c.published_at DESC, c.id DESC')
+                ->limit($limit, $offset)
+                ->all()
+        );
+
+        return public_status_items_by_ids($ids);
+    }
+}
+
+if (!function_exists('public_status_hydrate_page')) {
+    function public_status_hydrate_page(CoreQuery $query, int $limit = 24, int $offset = 0): array
+    {
+        $limit = max(1, min(100, $limit));
+        $offset = max(0, $offset);
+        $items = $query
+            ->order('c.published_at DESC, c.id DESC')
             ->limit($limit, $offset)
             ->all();
+
+        status_preload_feed($items);
+
+        return $items;
     }
 }
 
 if (!function_exists('public_status_items')) {
     function public_status_items(int $limit = 24, int $offset = 0): array
     {
-        return public_status_page(public_status_query(), $limit, $offset);
+        return public_status_page(public_status_id_query(), $limit, $offset);
     }
 }
 
@@ -3282,7 +3430,7 @@ if (!function_exists('public_status_items_for_user')) {
         }
 
         return public_status_page(
-            public_status_query()->where(
+            public_status_id_query()->where(
                 '(
                     c.author_id = ?
                     OR EXISTS (
@@ -3309,7 +3457,7 @@ if (!function_exists('public_status_items_by_author')) {
         }
 
         return public_status_page(
-            public_status_query()->where('c.author_id = ?', $authorId),
+            public_status_id_query()->where('c.author_id = ?', $authorId),
             $limit,
             $offset
         );
@@ -3332,7 +3480,7 @@ if (!function_exists('public_status_items_by_tag')) {
         }
 
         return public_status_page(
-            public_status_query()
+            public_status_id_query()
                 ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
                 ->where('ct.term_id = ?', $termId),
             $limit,
@@ -3356,7 +3504,7 @@ if (!function_exists('public_status_item')) {
 }
 
 if (!function_exists('public_status_items_by_ids')) {
-    function public_status_items_by_ids(array $ids): array
+    function public_status_items_by_ids(array $ids, bool $preload = true): array
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)));
 
@@ -3382,7 +3530,64 @@ if (!function_exists('public_status_items_by_ids')) {
             }
         }
 
+        if ($preload) {
+            status_preload_feed($ordered);
+        }
+
         return $ordered;
+    }
+}
+
+if (!function_exists('status_preload_feed')) {
+    function status_preload_feed(array $items): void
+    {
+        $ids = array_values(array_unique(array_filter(array_map(
+            static fn (array $item): int => (int) ($item['id'] ?? 0),
+            $items
+        ), static fn (int $id): bool => $id > 0)));
+
+        if ($ids === []) {
+            return;
+        }
+
+        status_preload_links($ids);
+        status_preload_latest_parent_comments($ids);
+        status_preload_shared_ids($ids);
+
+        $sharedIds = [];
+        $sharedIdCache =& status_shared_id_cache();
+
+        foreach ($items as $item) {
+            $contentId = (int) ($item['id'] ?? 0);
+            $sharedId = (int) ($item['shared_content_id'] ?? 0);
+
+            if ($sharedId < 1 && $contentId > 0) {
+                $sharedId = (int) ($sharedIdCache[$contentId] ?? 0);
+            }
+
+            if ($sharedId > 0) {
+                $sharedIds[] = $sharedId;
+            }
+        }
+
+        $sharedIds = array_values(array_unique($sharedIds));
+
+        if ($sharedIds === []) {
+            return;
+        }
+
+        $sharedItems = public_status_items_by_ids($sharedIds, false);
+        $sharedItemCache =& status_shared_item_cache();
+
+        foreach ($sharedItems as $sharedItem) {
+            $sharedItemId = (int) ($sharedItem['id'] ?? 0);
+
+            if ($sharedItemId > 0) {
+                $sharedItemCache[$sharedItemId] = $sharedItem;
+            }
+        }
+
+        status_preload_links($sharedIds);
     }
 }
 
@@ -3886,34 +4091,18 @@ if (!function_exists('status_user_reaction')) {
     }
 }
 
-if (!function_exists('status_comments')) {
-    function status_comments(int $contentId): array
+if (!function_exists('status_comments_cache')) {
+    function &status_comments_cache(): array
     {
-        if ($contentId < 1) {
-            return [];
-        }
+        static $cache = [];
 
-        $rows = db_select(
-            'SELECT cc.id,
-                cc.content_id,
-                cc.parent_id,
-                cc.user_id,
-                cc.body,
-                cc.created_at,
-                u.username AS author_name,
-                u.avatar_url AS avatar_url,
-                (
-                    SELECT COUNT(*)
-                    FROM comment_likes cl
-                    WHERE cl.comment_id = cc.id
-                ) AS likes_count
-            FROM content_comments cc
-            INNER JOIN users u ON u.id = cc.user_id'
-        )
-            ->where('cc.content_id = ?', $contentId)
-            ->where('u.status = ?', 'active')
-            ->order('cc.created_at ASC, cc.id ASC')
-            ->all();
+        return $cache;
+    }
+}
+
+if (!function_exists('status_comment_rows_to_tree')) {
+    function status_comment_rows_to_tree(array $rows): array
+    {
         $parents = [];
         $children = [];
 
@@ -3947,6 +4136,94 @@ if (!function_exists('status_comments')) {
     }
 }
 
+if (!function_exists('status_comments_query')) {
+    function status_comments_query(): CoreQuery
+    {
+        return db_select(
+            'SELECT cc.id,
+                cc.content_id,
+                cc.parent_id,
+                cc.user_id,
+                cc.body,
+                cc.created_at,
+                u.username AS author_name,
+                u.avatar_url AS avatar_url,
+                (
+                    SELECT COUNT(*)
+                    FROM comment_likes cl
+                    WHERE cl.comment_id = cc.id
+                ) AS likes_count
+            FROM content_comments cc
+            INNER JOIN users u ON u.id = cc.user_id'
+        )
+            ->where('u.status = ?', 'active');
+    }
+}
+
+if (!function_exists('status_comments')) {
+    function status_comments(int $contentId): array
+    {
+        if ($contentId < 1) {
+            return [];
+        }
+
+        $cache =& status_comments_cache();
+
+        if (!array_key_exists($contentId, $cache)) {
+            $cache[$contentId] = status_comment_rows_to_tree(
+                status_comments_query()
+                    ->where('cc.content_id = ?', $contentId)
+                    ->order('cc.created_at ASC, cc.id ASC')
+                    ->all()
+            );
+        }
+
+        return $cache[$contentId];
+    }
+}
+
+if (!function_exists('status_preload_comments')) {
+    function status_preload_comments(array $contentIds): void
+    {
+        $contentIds = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
+
+        if ($contentIds === []) {
+            return;
+        }
+
+        $cache =& status_comments_cache();
+        $missing = [];
+
+        foreach ($contentIds as $contentId) {
+            if (!array_key_exists($contentId, $cache)) {
+                $cache[$contentId] = [];
+                $missing[] = $contentId;
+            }
+        }
+
+        if ($missing === []) {
+            return;
+        }
+
+        $rowsByContent = [];
+
+        foreach (status_comments_query()
+            ->whereIn('cc.content_id', $missing)
+            ->order('cc.content_id ASC, cc.created_at ASC, cc.id ASC')
+            ->all() as $row) {
+            $contentId = (int) ($row['content_id'] ?? 0);
+
+            if ($contentId > 0) {
+                $rowsByContent[$contentId][] = $row;
+            }
+        }
+
+        foreach ($missing as $contentId) {
+            $cache[$contentId] = status_comment_rows_to_tree($rowsByContent[$contentId] ?? []);
+        }
+    }
+}
+
 if (!function_exists('status_comment_find')) {
     function status_comment_find(int $id): ?array
     {
@@ -3974,19 +4251,80 @@ if (!function_exists('status_comment_count')) {
     }
 }
 
+if (!function_exists('status_latest_parent_comment_cache')) {
+    function &status_latest_parent_comment_cache(): array
+    {
+        static $cache = [];
+
+        return $cache;
+    }
+}
+
 if (!function_exists('status_latest_parent_comment')) {
     function status_latest_parent_comment(int $contentId): ?array
     {
-        $comments = status_comments($contentId);
-
-        if ($comments === []) {
+        if ($contentId < 1) {
             return null;
         }
 
-        $comment = $comments[array_key_last($comments)];
-        $comment['replies'] = [];
+        $cache =& status_latest_parent_comment_cache();
 
-        return $comment;
+        if (!array_key_exists($contentId, $cache)) {
+            $comment = status_comments_query()
+                ->where('cc.content_id = ?', $contentId)
+                ->where('cc.parent_id IS NULL')
+                ->order('cc.created_at DESC, cc.id DESC')
+                ->limit(1)
+                ->one();
+
+            if ($comment !== null) {
+                $comment['replies'] = [];
+            }
+
+            $cache[$contentId] = $comment;
+        }
+
+        return $cache[$contentId];
+    }
+}
+
+if (!function_exists('status_preload_latest_parent_comments')) {
+    function status_preload_latest_parent_comments(array $contentIds): void
+    {
+        $contentIds = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
+
+        if ($contentIds === []) {
+            return;
+        }
+
+        $cache =& status_latest_parent_comment_cache();
+        $missing = [];
+
+        foreach ($contentIds as $contentId) {
+            if (!array_key_exists($contentId, $cache)) {
+                $cache[$contentId] = null;
+                $missing[] = $contentId;
+            }
+        }
+
+        if ($missing === []) {
+            return;
+        }
+
+        foreach (status_comments_query()
+            ->whereIn('cc.content_id', $missing)
+            ->where('cc.parent_id IS NULL')
+            ->order('cc.content_id ASC, cc.created_at DESC, cc.id DESC')
+            ->all() as $comment) {
+            $contentId = (int) ($comment['content_id'] ?? 0);
+
+            if ($contentId < 1 || $cache[$contentId] !== null) {
+                continue;
+            }
+
+            $comment['replies'] = [];
+            $cache[$contentId] = $comment;
+        }
     }
 }
 
@@ -4230,6 +4568,40 @@ if (!function_exists('status_share_modal_id')) {
     }
 }
 
+if (!function_exists('status_edit_modal_id')) {
+    function status_edit_modal_id(int $contentId): string
+    {
+        return 'status-edit-modal-' . max(0, $contentId);
+    }
+}
+
+if (!function_exists('status_post_modal_url')) {
+    function status_post_modal_url(int $contentId, string $action = ''): string
+    {
+        $query = ['id' => max(0, $contentId)];
+
+        if ($action !== '') {
+            $query['action'] = $action;
+        }
+
+        return '/api/status-modal?' . http_build_query($query);
+    }
+}
+
+if (!function_exists('status_action_modal_url')) {
+    function status_action_modal_url(string $type, int $contentId, string $action = ''): string
+    {
+        $type = in_array($type, ['share', 'report', 'edit'], true) ? $type : 'share';
+        $query = ['id' => max(0, $contentId)];
+
+        if ($action !== '') {
+            $query['action'] = $action;
+        }
+
+        return '/api/status-' . $type . '-modal?' . http_build_query($query);
+    }
+}
+
 if (!function_exists('status_report_modal_id')) {
     function status_report_modal_id(int $contentId): string
     {
@@ -4238,7 +4610,7 @@ if (!function_exists('status_report_modal_id')) {
 }
 
 if (!function_exists('status_time_button')) {
-    function status_time_button(string $createdAt, int $contentId, bool $openModal = true): string
+    function status_time_button(string $createdAt, int $contentId, bool $openModal = true, string $action = ''): string
     {
         if ($createdAt === '') {
             return '';
@@ -4247,7 +4619,7 @@ if (!function_exists('status_time_button')) {
         ob_start();
         ?>
         <?php if ($openModal): ?>
-            <button class="link-button public-content-meta status-time-button" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>">
+            <button class="link-button public-content-meta status-time-button" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>" data-modal-url="<?= e(status_post_modal_url($contentId, $action)) ?>">
                 <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
             </button>
         <?php else: ?>
@@ -5174,7 +5546,7 @@ if (!function_exists('status_actions')) {
                     </a>
                 <?php endif; ?>
                 <?php if ($openCommentsModal): ?>
-                    <button class="btn btn-ghost btn-sm status-reaction" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>" aria-label="<?= et('account.status_comments') ?>">
+                    <button class="btn btn-ghost btn-sm status-reaction" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>" data-modal-url="<?= e(status_post_modal_url($contentId, $action)) ?>" aria-label="<?= et('account.status_comments') ?>">
                         <?= icon('message-circle') ?> <span><?= e($commentsCount) ?></span>
                     </button>
                 <?php else: ?>
@@ -5183,7 +5555,7 @@ if (!function_exists('status_actions')) {
                     </a>
                 <?php endif; ?>
                 <?php if ($user !== null): ?>
-                    <button class="btn btn-ghost btn-sm status-reaction" type="button" data-modal-open="<?= e(status_share_modal_id($contentId)) ?>" aria-label="<?= et('account.status_share') ?>" title="<?= et('account.status_share') ?>">
+                    <button class="btn btn-ghost btn-sm status-reaction" type="button" data-modal-open="<?= e(status_share_modal_id($contentId)) ?>" data-modal-url="<?= e(status_action_modal_url('share', $contentId, $action)) ?>" aria-label="<?= et('account.status_share') ?>" title="<?= et('account.status_share') ?>">
                         <?= icon('share') ?> <span><?= e($sharesCount) ?></span>
                     </button>
                 <?php else: ?>
@@ -5225,12 +5597,12 @@ if (!function_exists('status_manage_actions')) {
                 </span>
             <?php endif; ?>
             <?php if ($canReport): ?>
-                <button class="btn btn-ghost btn-icon btn-sm status-manage-icon" type="button" data-modal-open="<?= e(status_report_modal_id($contentId)) ?>" title="<?= et('moderation.report_status') ?>" aria-label="<?= et('moderation.report_status') ?>">
+                <button class="btn btn-ghost btn-icon btn-sm status-manage-icon" type="button" data-modal-open="<?= e(status_report_modal_id($contentId)) ?>" data-modal-url="<?= e(status_action_modal_url('report', $contentId, $action)) ?>" title="<?= et('moderation.report_status') ?>" aria-label="<?= et('moderation.report_status') ?>">
                     <?= icon('flag') ?>
                 </button>
             <?php endif; ?>
             <?php if ($canEdit): ?>
-                <button class="btn btn-ghost btn-icon btn-sm status-manage-icon" type="button" data-modal-open="status-edit-modal-<?= e($contentId) ?>" title="<?= et('account.status_edit') ?>" aria-label="<?= et('account.status_edit') ?>">
+                <button class="btn btn-ghost btn-icon btn-sm status-manage-icon" type="button" data-modal-open="<?= e(status_edit_modal_id($contentId)) ?>" data-modal-url="<?= e(status_action_modal_url('edit', $contentId, $action)) ?>" title="<?= et('account.status_edit') ?>" aria-label="<?= et('account.status_edit') ?>">
                     <?= icon('edit') ?>
                 </button>
             <?php endif; ?>
@@ -5245,12 +5617,6 @@ if (!function_exists('status_manage_actions')) {
                 </form>
             <?php endif; ?>
         </div>
-        <?php if ($canReport): ?>
-            <?= status_report_modal($item, $user, $action) ?>
-        <?php endif; ?>
-        <?php if ($canEdit): ?>
-            <?= status_edit_modal($item, $action) ?>
-        <?php endif; ?>
         <?php
 
         return trim((string) ob_get_clean());
@@ -5289,7 +5655,7 @@ if (!function_exists('status_card')) {
                             <a href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
                         <?php endif; ?>
                         <?php if ($createdAt !== ''): ?>
-                            <?= status_time_button($createdAt, $contentId) ?>
+                            <?= status_time_button($createdAt, $contentId, true, $action) ?>
                         <?php endif; ?>
                     </div>
                     <?= status_manage_actions($item, $user, $action) ?>
@@ -5303,8 +5669,6 @@ if (!function_exists('status_card')) {
                 <?= status_actions($item, $user, $action) ?>
                 <?= status_comments_section($item, $user, $action) ?>
             </div>
-            <?= status_post_modal($item, $user, $action) ?>
-            <?= status_share_modal($item, $user, $action) ?>
         </article>
         <?php
 
@@ -5491,7 +5855,7 @@ if (!function_exists('status_comments_section')) {
         ?>
         <section class="status-comments status-comments-preview" id="status-comments-<?= e($contentId) ?>">
             <?php if ($latestComment !== null): ?>
-                <button class="link-button status-comments-open" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>">
+                <button class="link-button status-comments-open" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>" data-modal-url="<?= e(status_post_modal_url($contentId, $action)) ?>">
                     <?= et('account.status_view_comments', ['count' => $commentsCount]) ?>
                 </button>
                 <div class="status-comment-list">

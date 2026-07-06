@@ -15,7 +15,7 @@ if ($contentId < 1) {
     return;
 }
 
-$modalId = 'status-edit-modal-' . $contentId;
+$modalId = status_edit_modal_id($contentId);
 
 ob_start();
 ?>
