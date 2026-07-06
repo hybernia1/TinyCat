@@ -1673,6 +1673,20 @@ a:hover {
     font-size: 0.5625rem;
   }
 
+  .notification-popover {
+    position: fixed;
+    top: 58px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100vh - 78px);
+    overflow-y: auto;
+  }
+
+  .notification-popover::before {
+    display: none;
+  }
+
   .global-search-input {
     min-height: 38px;
     padding-block: 7px;
@@ -2702,6 +2716,13 @@ a:hover {
 .account-form-footer {
   display: flex;
   justify-content: flex-end;
+}
+
+.account-recovery-code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (min-width: 980px) {

@@ -2516,7 +2516,7 @@
         currentCard.replaceWith(imported);
         hydrateDynamic(imported);
 
-        if (reopenModalId && action !== "update" && action !== "delete" && action !== "share") {
+        if (reopenModalId && action !== "update" && action !== "delete" && action !== "share" && action !== "report") {
           reopenedModal = TinyCat.openModal(reopenModalId);
           restoreModalScroll(reopenedModal, modalScroll);
         }

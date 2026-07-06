@@ -42,7 +42,7 @@ $config = array (
   array (
     'driver' => 'mysql',
     'host' => 'localhost',
-    'name' => 'micro',
+    'name' => 'tinycat',
     'user' => 'root',
     'password' => '',
     'charset' => 'utf8mb4',
@@ -92,9 +92,9 @@ $config = array (
   ),
   'install' => 
   array (
-    'installed' => true,
-    'installed_at' => '2026-07-06T15:22:12+00:00',
-    'locale' => 'en',
+    'installed' => false,
+    'installed_at' => '',
+    'locale' => '',
     'version' => '1.0.0',
   ),
 );

@@ -226,18 +226,17 @@ function tc_install_store_admin(): never
         redirect('/install?step=tables');
     }
 
-    $name = trim((string) post('name', ''));
-    $email = strtolower(trim((string) post('email', '')));
+    $username = username_normalize((string) post('username', ''));
     $password = (string) post('password', '');
     $confirm = (string) post('password_confirm', '');
 
-    if ($name === '' || $email === '' || $password === '') {
+    if ($username === '' || $password === '') {
         flash('error', t('install.messages.required_fields'));
         redirect('/install?step=admin');
     }
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        flash('error', t('install.messages.invalid_email'));
+    if (!username_valid($username)) {
+        flash('error', t('install.messages.invalid_username'));
         redirect('/install?step=admin');
     }
 
@@ -252,7 +251,7 @@ function tc_install_store_admin(): never
     }
 
     try {
-        $adminId = tc_install_create_admin_account($name, $email, $password, (string) ($state['locale'] ?? locale()));
+        $adminId = tc_install_create_admin_account($username, $password, (string) ($state['locale'] ?? locale()));
         tc_install_default_settings($state);
         tc_install_write_config($state);
         unset($_SESSION['tc_install']);
@@ -328,9 +327,9 @@ function tc_install_create_tables(): void
     run(
         "CREATE TABLE IF NOT EXISTS users (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-            name VARCHAR(120) NOT NULL,
-            email VARCHAR(190) NOT NULL,
+            username VARCHAR(32) NOT NULL,
             password VARCHAR(255) NULL,
+            recovery_hash VARCHAR(128) NOT NULL,
             role VARCHAR(40) NOT NULL DEFAULT 'user',
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             locale VARCHAR(12) NULL,
@@ -339,14 +338,19 @@ function tc_install_create_tables(): void
             bio TEXT NULL,
             avatar_path VARCHAR(255) NULL,
             avatar_url VARCHAR(255) NULL,
+            muted_until DATETIME NULL,
+            muted_by INT UNSIGNED NULL,
+            muted_reason VARCHAR(80) NULL,
             last_login_at DATETIME NULL,
             last_seen_at DATETIME NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            UNIQUE KEY users_email_unique (email),
+            UNIQUE KEY users_username_unique (username),
+            UNIQUE KEY users_recovery_hash_unique (recovery_hash),
             KEY users_role_status_index (role, status),
             KEY users_avatar_index (avatar_url),
+            KEY users_mute_index (muted_until),
             KEY users_activity_index (last_seen_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
@@ -358,10 +362,14 @@ function tc_install_create_tables(): void
             body LONGTEXT NULL,
             author_id INT UNSIGNED NULL,
             published_at DATETIME NULL,
+            edit_locked_at DATETIME NULL,
+            edit_locked_by INT UNSIGNED NULL,
+            edit_lock_reason VARCHAR(80) NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY content_status_index (status),
-            KEY content_author_index (author_id)
+            KEY content_author_index (author_id),
+            KEY content_edit_lock_index (edit_locked_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -499,6 +507,52 @@ function tc_install_create_tables(): void
     );
 
     run(
+        "CREATE TABLE IF NOT EXISTS content_reports (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            content_id BIGINT UNSIGNED NOT NULL,
+            reporter_id INT UNSIGNED NOT NULL,
+            reason VARCHAR(40) NOT NULL DEFAULT 'other',
+            note TEXT NULL,
+            status VARCHAR(20) NOT NULL DEFAULT 'open',
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            reviewed_at DATETIME NULL,
+            reviewed_by INT UNSIGNED NULL,
+            action_note TEXT NULL,
+            PRIMARY KEY (id),
+            UNIQUE KEY content_reports_unique (content_id, reporter_id),
+            KEY content_reports_status_index (status, created_at),
+            KEY content_reports_content_index (content_id),
+            KEY content_reports_reporter_index (reporter_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS blocked_domains (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            domain VARCHAR(190) NOT NULL,
+            reason TEXT NULL,
+            created_by INT UNSIGNED NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY blocked_domains_domain_unique (domain)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS user_action_limits (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            user_id INT UNSIGNED NOT NULL,
+            action_name VARCHAR(40) NOT NULL,
+            bucket_start DATETIME NOT NULL,
+            action_count INT UNSIGNED NOT NULL DEFAULT 0,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY user_action_limits_unique (user_id, action_name, bucket_start),
+            KEY user_action_limits_user_index (user_id, bucket_start)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
         "CREATE TABLE IF NOT EXISTS settings (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             setting_key VARCHAR(120) NOT NULL,
@@ -542,13 +596,14 @@ function tc_install_default_settings(array $state): void
     }
 }
 
-function tc_install_create_admin_account(string $name, string $email, string $password, string $locale): int
+function tc_install_create_admin_account(string $username, string $password, string $locale): int
 {
-    $existing = one('SELECT id FROM users WHERE email = ?', [$email]);
+    $username = username_normalize($username);
+    $existing = one('SELECT id FROM users WHERE username = ?', [$username]);
     $data = [
-        'name' => $name,
-        'email' => $email,
+        'username' => $username,
         'password' => auth_password($password),
+        'recovery_hash' => user_recovery_hash_generate(),
         'role' => 'admin',
         'status' => 'active',
         'locale' => $locale,
@@ -645,6 +700,9 @@ function tc_install_schema_tables(): array
         'comment_likes' => 'install.purpose_comment_likes',
         'user_followers' => 'install.purpose_user_followers',
         'notifications' => 'install.purpose_notifications',
+        'content_reports' => 'install.purpose_content_reports',
+        'blocked_domains' => 'install.purpose_blocked_domains',
+        'user_action_limits' => 'install.purpose_user_action_limits',
         'settings' => 'install.purpose_settings',
     ];
 }
@@ -912,12 +970,9 @@ function tc_install_admin_view(): void
                 <?= csrf_field() ?>
                 <input type="hidden" name="_install_step" value="admin">
                 <label class="field">
-                    <span class="label"><?= et('install.admin_name') ?></span>
-                    <input class="input" name="name" autocomplete="name" required>
-                </label>
-                <label class="field">
-                    <span class="label"><?= et('common.email') ?></span>
-                    <input class="input" type="email" name="email" autocomplete="email" required>
+                    <span class="label"><?= et('common.username') ?></span>
+                    <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_]{2,31}" maxlength="32" required>
+                    <span class="help"><?= e(username_hint()) ?></span>
                 </label>
                 <div class="grid sm:grid-2">
                     <label class="field">
@@ -953,7 +1008,7 @@ function tc_install_done_view(): void
             <p class="text-muted mb-0"><?= et('install.done_intro') ?></p>
             <ul class="result-list">
                 <li class="result-item"><?= icon('globe') ?> <span><?= et('common.language') ?>: <strong><?= e(locale()) ?></strong></span></li>
-                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, links, content_links, content_shares, content_reactions, content_comments, comment_likes, user_followers, notifications, settings</strong></span></li>
+                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, links, content_links, content_shares, content_reactions, content_comments, comment_likes, user_followers, notifications, content_reports, blocked_domains, user_action_limits, settings</strong></span></li>
                 <li class="result-item"><?= icon('shield') ?> <span><?= et('common.account') ?>: <strong><?= et('common.done') ?></strong></span></li>
             </ul>
             <div class="btn-group">

@@ -16,7 +16,7 @@ final class Core
 {
     private const AUTH_TABLE = 'users';
     private const AUTH_ID = 'id';
-    private const AUTH_LOGIN = 'email';
+    private const AUTH_LOGIN = 'username';
     private const AUTH_PASSWORD = 'password';
     private const AUTH_ROLE = 'role';
     private const AUTH_STATUS = 'status';
@@ -1938,7 +1938,7 @@ final class Core
     private static function authUserByLogin(string $login): ?array
     {
         try {
-            return self::find(self::AUTH_TABLE, [self::AUTH_LOGIN => $login]);
+            return self::find(self::AUTH_TABLE, [self::AUTH_LOGIN => strtolower(trim($login))]);
         } catch (Throwable) {
             return null;
         }

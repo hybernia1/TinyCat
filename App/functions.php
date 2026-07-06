@@ -63,7 +63,7 @@ if (!function_exists('db')) {
 if (!function_exists('app_required_tables')) {
     function app_required_tables(): array
     {
-        return ['users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_shares', 'content_reactions', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'settings'];
+        return ['users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_shares', 'content_reactions', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'blocked_domains', 'user_action_limits', 'settings'];
     }
 }
 
@@ -264,6 +264,17 @@ if (!function_exists('user_avatar_url')) {
     function user_avatar_url(?array $user): string
     {
         return trim((string) ($user['avatar_url'] ?? ''));
+    }
+}
+
+if (!function_exists('user_display_name')) {
+    function user_display_name(?array $user): string
+    {
+        if ($user === null) {
+            return '';
+        }
+
+        return trim((string) ($user['username'] ?? ''));
     }
 }
 
@@ -644,17 +655,38 @@ if (!function_exists('registration_auto_approve')) {
     }
 }
 
-if (!function_exists('user_email_taken')) {
-    function user_email_taken(string $email, ?int $ignoreId = null): bool
+if (!function_exists('username_normalize')) {
+    function username_normalize(string $username): string
     {
-        $email = strtolower(trim($email));
+        return strtolower(trim($username));
+    }
+}
 
-        if ($email === '') {
+if (!function_exists('username_valid')) {
+    function username_valid(string $username): bool
+    {
+        return preg_match('/^[a-z][a-z0-9_]{2,31}$/', username_normalize($username)) === 1;
+    }
+}
+
+if (!function_exists('username_hint')) {
+    function username_hint(): string
+    {
+        return t('account.username_hint');
+    }
+}
+
+if (!function_exists('user_username_taken')) {
+    function user_username_taken(string $username, ?int $ignoreId = null): bool
+    {
+        $username = username_normalize($username);
+
+        if ($username === '') {
             return false;
         }
 
-        $params = ['email' => $email];
-        $sql = 'SELECT COUNT(*) FROM users WHERE email = :email';
+        $params = ['username' => $username];
+        $sql = 'SELECT COUNT(*) FROM users WHERE username = :username';
 
         if ($ignoreId !== null) {
             $sql .= ' AND id <> :id';
@@ -665,6 +697,439 @@ if (!function_exists('user_email_taken')) {
             return (int) val($sql, $params) > 0;
         } catch (Throwable) {
             return false;
+        }
+    }
+}
+
+if (!function_exists('user_recovery_hash_generate')) {
+    function user_recovery_hash_generate(): string
+    {
+        return bin2hex(random_bytes(32));
+    }
+}
+
+if (!function_exists('user_recovery_hash_ensure')) {
+    function user_recovery_hash_ensure(array $user): string
+    {
+        $id = (int) ($user['id'] ?? 0);
+        $hash = trim((string) ($user['recovery_hash'] ?? ''));
+
+        if ($hash !== '' || $id < 1 || !app_column_exists('users', 'recovery_hash')) {
+            return $hash;
+        }
+
+        $hash = user_recovery_hash_generate();
+        update('users', ['recovery_hash' => $hash], ['id' => $id]);
+
+        return $hash;
+    }
+}
+
+if (!function_exists('user_recovery_hash_rotate')) {
+    function user_recovery_hash_rotate(int $id): string
+    {
+        if ($id < 1 || !app_column_exists('users', 'recovery_hash')) {
+            return '';
+        }
+
+        $hash = user_recovery_hash_generate();
+        update('users', ['recovery_hash' => $hash], ['id' => $id]);
+
+        return $hash;
+    }
+}
+
+if (!function_exists('user_recovery_hash_normalize')) {
+    function user_recovery_hash_normalize(string $hash): string
+    {
+        $hash = strtolower(trim($hash));
+
+        return preg_match('/^[a-f0-9]{64,128}$/', $hash) === 1 ? $hash : '';
+    }
+}
+
+if (!function_exists('user_find_by_recovery_hash')) {
+    function user_find_by_recovery_hash(string $hash): ?array
+    {
+        $hash = user_recovery_hash_normalize($hash);
+
+        if ($hash === '' || !app_column_exists('users', 'recovery_hash')) {
+            return null;
+        }
+
+        return one(
+            'SELECT *
+            FROM users
+            WHERE recovery_hash = ? AND status = ?
+            LIMIT 1',
+            [$hash, 'active']
+        );
+    }
+}
+
+if (!function_exists('moderation_domain_normalize')) {
+    function moderation_domain_normalize(string $domain): string
+    {
+        $domain = strtolower(trim($domain));
+        $domain = preg_replace('~^https?://~', '', $domain) ?? $domain;
+        $domain = strtok($domain, "/?# \t\r\n") ?: $domain;
+        $domain = trim($domain, ". \t\r\n");
+        $domain = preg_replace('/^www\./', '', $domain) ?? $domain;
+
+        return preg_match('/^[a-z0-9.-]{1,190}$/', $domain) === 1 && str_contains($domain, '.')
+            ? $domain
+            : '';
+    }
+}
+
+if (!function_exists('moderation_domain_from_url')) {
+    function moderation_domain_from_url(string $url): string
+    {
+        $host = (string) (parse_url($url, PHP_URL_HOST) ?: '');
+
+        return moderation_domain_normalize($host);
+    }
+}
+
+if (!function_exists('moderation_blocked_domains')) {
+    function moderation_blocked_domains(): array
+    {
+        static $items = null;
+
+        if ($items !== null) {
+            return $items;
+        }
+
+        if (!app_table_exists('blocked_domains')) {
+            return $items = [];
+        }
+
+        try {
+            return $items = all('SELECT * FROM blocked_domains ORDER BY domain ASC');
+        } catch (Throwable) {
+            return $items = [];
+        }
+    }
+}
+
+if (!function_exists('moderation_blocked_domain_for_url')) {
+    function moderation_blocked_domain_for_url(string $url): ?array
+    {
+        $host = moderation_domain_from_url($url);
+
+        if ($host === '') {
+            return null;
+        }
+
+        foreach (moderation_blocked_domains() as $row) {
+            $domain = moderation_domain_normalize((string) ($row['domain'] ?? ''));
+
+            if ($domain !== '' && ($host === $domain || str_ends_with($host, '.' . $domain))) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('moderation_blocked_link')) {
+    function moderation_blocked_link(string $body): ?array
+    {
+        foreach (status_preview_links_from_text($body, 10) as $url) {
+            $blocked = moderation_blocked_domain_for_url((string) $url);
+
+            if ($blocked !== null) {
+                return [
+                    'url' => (string) $url,
+                    'domain' => (string) ($blocked['domain'] ?? moderation_domain_from_url((string) $url)),
+                    'reason' => (string) ($blocked['reason'] ?? ''),
+                ];
+            }
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('moderation_require_links_allowed')) {
+    function moderation_require_links_allowed(string $body, string $redirect): void
+    {
+        $blocked = moderation_blocked_link($body);
+
+        if ($blocked === null) {
+            return;
+        }
+
+        flash('error', t('moderation.messages.blocked_domain', ['domain' => (string) ($blocked['domain'] ?? '')]));
+        redirect($redirect);
+    }
+}
+
+if (!function_exists('moderation_user_post_count')) {
+    function moderation_user_post_count(int $userId): int
+    {
+        if ($userId < 1 || !app_table_exists('content')) {
+            return 0;
+        }
+
+        try {
+            return (int) val('SELECT COUNT(*) FROM content WHERE author_id = ? AND status = ?', [$userId, 'published']);
+        } catch (Throwable) {
+            return 0;
+        }
+    }
+}
+
+if (!function_exists('moderation_user_reputation')) {
+    function moderation_user_reputation(array $user): string
+    {
+        $userId = (int) ($user['id'] ?? 0);
+
+        if ((string) ($user['role'] ?? '') === 'admin') {
+            return 'trusted';
+        }
+
+        $createdAt = strtotime((string) ($user['created_at'] ?? '')) ?: time();
+        $age = max(0, time() - $createdAt);
+        $posts = moderation_user_post_count($userId);
+
+        if ($age >= 7 * 86400 && $posts >= 10) {
+            return 'trusted';
+        }
+
+        if ($age >= 86400 || $posts >= 3) {
+            return 'normal';
+        }
+
+        return 'new';
+    }
+}
+
+if (!function_exists('moderation_action_rules')) {
+    function moderation_action_rules(): array
+    {
+        return [
+            'new' => [
+                'post' => [3600, 5],
+                'share' => [3600, 3],
+                'comment' => [3600, 20],
+                'like' => [3600, 60],
+                'report' => [3600, 10],
+            ],
+            'normal' => [
+                'post' => [3600, 20],
+                'share' => [3600, 15],
+                'comment' => [3600, 80],
+                'like' => [3600, 180],
+                'report' => [3600, 30],
+            ],
+            'trusted' => [
+                'post' => [3600, 60],
+                'share' => [3600, 50],
+                'comment' => [3600, 240],
+                'like' => [3600, 600],
+                'report' => [3600, 80],
+            ],
+        ];
+    }
+}
+
+if (!function_exists('moderation_action_rule')) {
+    function moderation_action_rule(array $user, string $action): array
+    {
+        $rules = moderation_action_rules();
+        $level = moderation_user_reputation($user);
+
+        return $rules[$level][$action] ?? $rules['normal'][$action] ?? [3600, 60];
+    }
+}
+
+if (!function_exists('moderation_bucket_start')) {
+    function moderation_bucket_start(int $window): string
+    {
+        $window = max(60, $window);
+        $bucket = intdiv(time(), $window) * $window;
+
+        return date_db($bucket);
+    }
+}
+
+if (!function_exists('moderation_action_count')) {
+    function moderation_action_count(array $user, string $action): int
+    {
+        if (!app_table_exists('user_action_limits')) {
+            return 0;
+        }
+
+        [$window] = moderation_action_rule($user, $action);
+
+        try {
+            return (int) val(
+                'SELECT action_count FROM user_action_limits WHERE user_id = ? AND action_name = ? AND bucket_start = ? LIMIT 1',
+                [(int) ($user['id'] ?? 0), $action, moderation_bucket_start((int) $window)]
+            );
+        } catch (Throwable) {
+            return 0;
+        }
+    }
+}
+
+if (!function_exists('moderation_require_action')) {
+    function moderation_require_action(array $user, string $action, string $redirect): void
+    {
+        if ((string) ($user['role'] ?? '') === 'admin' || !app_table_exists('user_action_limits')) {
+            return;
+        }
+
+        [, $limit] = moderation_action_rule($user, $action);
+
+        if (moderation_action_count($user, $action) < (int) $limit) {
+            return;
+        }
+
+        flash('error', t('moderation.messages.action_limited'));
+        redirect($redirect);
+    }
+}
+
+if (!function_exists('user_muted_until')) {
+    function user_muted_until(array $user): string
+    {
+        $mutedUntil = trim((string) ($user['muted_until'] ?? ''));
+
+        if ($mutedUntil === '') {
+            return '';
+        }
+
+        $timestamp = strtotime($mutedUntil);
+
+        return $timestamp !== false && $timestamp > time() ? $mutedUntil : '';
+    }
+}
+
+if (!function_exists('user_is_muted')) {
+    function user_is_muted(array $user): bool
+    {
+        return user_muted_until($user) !== '';
+    }
+}
+
+if (!function_exists('user_mute')) {
+    function user_mute(int $userId, array $actor, string $until, string $reason = ''): void
+    {
+        if ($userId < 1 || !app_column_exists('users', 'muted_until')) {
+            return;
+        }
+
+        $target = one('SELECT id, role, muted_until FROM users WHERE id = ? LIMIT 1', [$userId]);
+
+        if ($target === null || (string) ($target['role'] ?? '') === 'admin') {
+            return;
+        }
+
+        $untilValue = date_db($until);
+        $currentMutedUntil = trim((string) ($target['muted_until'] ?? ''));
+        $currentTimestamp = $currentMutedUntil !== '' ? (strtotime($currentMutedUntil) ?: 0) : 0;
+        $newTimestamp = strtotime($untilValue) ?: 0;
+
+        if ($currentTimestamp > $newTimestamp) {
+            $untilValue = $currentMutedUntil;
+        }
+
+        $data = [
+            'muted_until' => $untilValue,
+        ];
+
+        if (app_column_exists('users', 'muted_by')) {
+            $actorId = (int) ($actor['id'] ?? 0);
+            $data['muted_by'] = $actorId > 0 ? $actorId : null;
+        }
+
+        if (app_column_exists('users', 'muted_reason')) {
+            $data['muted_reason'] = plain_text_limit($reason, 80);
+        }
+
+        update('users', $data, ['id' => $userId]);
+    }
+}
+
+if (!function_exists('moderation_require_not_muted')) {
+    function moderation_require_not_muted(array $user, string $redirect): void
+    {
+        $mutedUntil = user_muted_until($user);
+
+        if ($mutedUntil === '') {
+            return;
+        }
+
+        flash('error', t('moderation.messages.account_muted', ['until' => datetime($mutedUntil)]));
+        redirect($redirect);
+    }
+}
+
+if (!function_exists('moderation_record_action')) {
+    function moderation_record_action(array $user, string $action): void
+    {
+        $userId = (int) ($user['id'] ?? 0);
+
+        if ($userId < 1 || !app_table_exists('user_action_limits')) {
+            return;
+        }
+
+        [$window] = moderation_action_rule($user, $action);
+        $bucket = moderation_bucket_start((int) $window);
+
+        try {
+            run(
+                'INSERT INTO user_action_limits (user_id, action_name, bucket_start, action_count, updated_at)
+                VALUES (?, ?, ?, 1, ?)
+                ON DUPLICATE KEY UPDATE action_count = action_count + 1, updated_at = VALUES(updated_at)',
+                [$userId, $action, $bucket, date_db()]
+            );
+        } catch (Throwable) {
+            // Moderation limits must never break the primary action.
+        }
+    }
+}
+
+if (!function_exists('moderation_body_fingerprint')) {
+    function moderation_body_fingerprint(string $body): string
+    {
+        $body = strtolower(trim((string) preg_replace('/\s+/', ' ', $body)));
+
+        return $body !== '' ? hash('sha256', $body) : '';
+    }
+}
+
+if (!function_exists('moderation_require_unique_body')) {
+    function moderation_require_unique_body(array $user, string $body, string $redirect, int $ignoreId = 0): void
+    {
+        $userId = (int) ($user['id'] ?? 0);
+        $fingerprint = moderation_body_fingerprint($body);
+
+        if ($userId < 1 || strlen(trim($body)) < 12 || $fingerprint === '' || !app_table_exists('content')) {
+            return;
+        }
+
+        try {
+            $rows = all(
+                'SELECT id, body FROM content WHERE author_id = ? AND created_at >= ? ORDER BY id DESC LIMIT 30',
+                [$userId, date_db('-1 day')]
+            );
+        } catch (Throwable) {
+            return;
+        }
+
+        foreach ($rows as $row) {
+            if ((int) ($row['id'] ?? 0) === $ignoreId) {
+                continue;
+            }
+
+            if (moderation_body_fingerprint((string) ($row['body'] ?? '')) === $fingerprint) {
+                flash('error', t('moderation.messages.duplicate_body'));
+                redirect($redirect);
+            }
         }
     }
 }
@@ -734,22 +1199,10 @@ if (!function_exists('user_profile_update')) {
     function user_profile_update(array $user, string $redirect): void
     {
         $id = (int) ($user['id'] ?? 0);
-        $name = trim((string) post('name', ''));
-        $email = strtolower(trim((string) post('email', '')));
         $website = user_profile_normalize_website((string) post('website', ''));
         $bio = plain_text_limit((string) post('bio', ''), 500);
         $locale = language_code((string) post('locale', ''));
         $errors = [];
-
-        if ($name === '') {
-            $errors[] = t('account.messages.name_required');
-        }
-
-        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            $errors[] = t('account.messages.email_invalid');
-        } elseif (user_email_taken($email, $id)) {
-            $errors[] = t('account.messages.email_taken');
-        }
 
         if ($website !== '' && !user_profile_valid_url($website)) {
             $errors[] = t('account.messages.website_invalid');
@@ -765,8 +1218,6 @@ if (!function_exists('user_profile_update')) {
         }
 
         $data = [
-            'name' => $name,
-            'email' => $email,
             'website' => $website,
             'bio' => $bio,
             'locale' => $locale,
@@ -785,7 +1236,7 @@ if (!function_exists('user_avatar_update')) {
     function user_avatar_update(array $user, string $redirect): void
     {
         $id = (int) ($user['id'] ?? 0);
-        $name = trim((string) ($user['name'] ?? ''));
+        $name = user_display_name($user);
         $oldAvatarPath = (string) ($user['avatar_path'] ?? '');
         $oldAvatarUrl = (string) ($user['avatar_url'] ?? '');
         $avatar = $_FILES['avatar'] ?? null;
@@ -928,7 +1379,8 @@ if (!function_exists('author_following_profiles')) {
 
         return all(
             'SELECT u.id,
-                u.name,
+                u.username,
+                u.username AS name,
                 ' . $avatarSelect . ',
                 uf.created_at AS followed_at,
                 (
@@ -940,7 +1392,7 @@ if (!function_exists('author_following_profiles')) {
             INNER JOIN users u ON u.id = uf.user_id
             WHERE uf.follower_id = ?
                 AND u.status = ?
-            ORDER BY uf.created_at DESC, u.name ASC
+            ORDER BY uf.created_at DESC, u.username ASC
             LIMIT ' . $limit,
             ['published', $authorId, 'active']
         );
@@ -1182,8 +1634,8 @@ if (!function_exists('author_mention_map')) {
 
         $map = [];
 
-        foreach (all('SELECT id, name FROM users WHERE status = ? ORDER BY id ASC', ['active']) as $user) {
-            $handle = slug((string) ($user['name'] ?? ''));
+        foreach (all('SELECT id, username FROM users WHERE status = ? ORDER BY id ASC', ['active']) as $user) {
+            $handle = username_normalize((string) ($user['username'] ?? ''));
             $id = (int) ($user['id'] ?? 0);
 
             if ($handle !== '' && $id > 0 && !isset($map[$handle])) {
@@ -1206,15 +1658,16 @@ if (!function_exists('author_mention_users')) {
 
         $users = [];
 
-        foreach (all('SELECT id, name FROM users WHERE status = ? ORDER BY id ASC', ['active']) as $user) {
+        foreach (all('SELECT id, username FROM users WHERE status = ? ORDER BY id ASC', ['active']) as $user) {
             $id = (int) ($user['id'] ?? 0);
-            $name = (string) ($user['name'] ?? '');
+            $name = (string) ($user['username'] ?? '');
+            $handle = username_normalize($name);
 
             if ($id > 0) {
                 $users[$id] = [
                     'id' => $id,
                     'name' => $name,
-                    'handle' => slug($name),
+                    'handle' => $handle,
                 ];
             }
         }
@@ -1952,6 +2405,10 @@ if (!function_exists('status_link_url_allowed')) {
             return false;
         }
 
+        if (moderation_blocked_domain_for_url($url) !== null) {
+            return false;
+        }
+
         $ips = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : (gethostbynamel($host) ?: []);
 
         if ($ips === []) {
@@ -2351,6 +2808,10 @@ if (!function_exists('status_sync_links')) {
         $linkIds = [];
 
         foreach ($urls as $position => $url) {
+            if (moderation_blocked_domain_for_url($url) !== null) {
+                continue;
+            }
+
             $linkId = status_link_id($url);
 
             if ($linkId < 1) {
@@ -2803,9 +3264,11 @@ if (!function_exists('public_author_find')) {
         $avatarSelect = app_column_exists('users', 'avatar_url') ? 'u.avatar_url' : "'' AS avatar_url";
         $lastLoginSelect = app_column_exists('users', 'last_login_at') ? 'u.last_login_at' : 'NULL AS last_login_at';
         $lastSeenSelect = app_column_exists('users', 'last_seen_at') ? 'u.last_seen_at' : 'NULL AS last_seen_at';
+        $mutedUntilSelect = app_column_exists('users', 'muted_until') ? 'u.muted_until' : 'NULL AS muted_until';
+        $mutedReasonSelect = app_column_exists('users', 'muted_reason') ? 'u.muted_reason' : 'NULL AS muted_reason';
 
         return one(
-            'SELECT u.id, u.name, u.website, u.bio, u.created_at, ' . $avatarSelect . ', ' . $lastLoginSelect . ', ' . $lastSeenSelect . '
+            'SELECT u.id, u.username, u.username AS name, u.website, u.bio, u.created_at, ' . $avatarSelect . ', ' . $lastLoginSelect . ', ' . $lastSeenSelect . ', ' . $mutedUntilSelect . ', ' . $mutedReasonSelect . '
             FROM users u
             WHERE u.id = ? AND u.status = ?
             LIMIT 1',
@@ -2818,6 +3281,9 @@ if (!function_exists('public_status_select_sql')) {
     function public_status_select_sql(): string
     {
         $avatarSelect = app_column_exists('users', 'avatar_url') ? 'u.avatar_url AS avatar_url' : "'' AS avatar_url";
+        $editLockedAtSelect = app_column_exists('content', 'edit_locked_at') ? 'c.edit_locked_at' : 'NULL AS edit_locked_at';
+        $editLockedBySelect = app_column_exists('content', 'edit_locked_by') ? 'c.edit_locked_by' : 'NULL AS edit_locked_by';
+        $editLockReasonSelect = app_column_exists('content', 'edit_lock_reason') ? 'c.edit_lock_reason' : 'NULL AS edit_lock_reason';
 
         return "SELECT c.id,
                 c.body,
@@ -2825,7 +3291,11 @@ if (!function_exists('public_status_select_sql')) {
                 c.author_id,
                 c.published_at,
                 c.created_at,
-                u.name AS author_name,
+                " . $editLockedAtSelect . ",
+                " . $editLockedBySelect . ",
+                " . $editLockReasonSelect . ",
+                u.username AS author_username,
+                u.username AS author_name,
                 u.website AS author_website,
                 u.bio AS author_bio,
                 " . $avatarSelect . ",
@@ -3071,11 +3541,12 @@ if (!function_exists('public_top_authors')) {
         $days = max(1, min(365, $days));
         $hasAvatar = app_column_exists('users', 'avatar_url');
         $avatarSelect = $hasAvatar ? 'u.avatar_url AS avatar_url' : "'' AS avatar_url";
-        $groupBy = 'u.id, u.name, u.bio' . ($hasAvatar ? ', u.avatar_url' : '');
+        $groupBy = 'u.id, u.username, u.bio' . ($hasAvatar ? ', u.avatar_url' : '');
 
         return all(
             'SELECT u.id,
-                u.name,
+                u.username,
+                u.username AS name,
                 u.bio,
                 ' . $avatarSelect . ',
                 COUNT(c.id) AS posts_count
@@ -3086,7 +3557,7 @@ if (!function_exists('public_top_authors')) {
                 AND (c.published_at IS NULL OR c.published_at <= ?)
                 AND u.status = ?
             GROUP BY ' . $groupBy . '
-            ORDER BY posts_count DESC, MAX(COALESCE(c.published_at, c.created_at)) DESC, u.name ASC
+            ORDER BY posts_count DESC, MAX(COALESCE(c.published_at, c.created_at)) DESC, u.username ASC
             LIMIT ' . $limit,
             [date_db('-' . $days . ' days'), 'published', date_db(), 'active']
         );
@@ -3331,15 +3802,15 @@ if (!function_exists('public_search_results')) {
         }
 
         foreach (all(
-            'SELECT u.id, u.name, u.bio, ' . $avatarSelect . '
+            'SELECT u.id, u.username, u.username AS name, u.bio, ' . $avatarSelect . '
             FROM users u
             WHERE u.status = ?
                 AND (
-                    u.name LIKE ?
+                    u.username LIKE ?
                     OR u.bio LIKE ?
                     OR u.website LIKE ?
                 )
-            ORDER BY u.name ASC, u.id ASC
+            ORDER BY u.username ASC, u.id ASC
             LIMIT ' . $limit,
             ['active', $like, $like, $like]
         ) as $user) {
@@ -3401,7 +3872,7 @@ if (!function_exists('public_search_results')) {
                     c.body,
                     c.author_id,
                     c.created_at,
-                    u.name AS author_name,
+                    u.username AS author_name,
                     ' . $avatarSelect . ',
                     l.url AS link_url,
                     l.final_url AS link_final_url,
@@ -3478,11 +3949,43 @@ if (!function_exists('status_find')) {
     }
 }
 
+if (!function_exists('status_edit_locked')) {
+    function status_edit_locked(?array $item): bool
+    {
+        return $item !== null && trim((string) ($item['edit_locked_at'] ?? '')) !== '';
+    }
+}
+
+if (!function_exists('status_edit_lock')) {
+    function status_edit_lock(int $contentId, array $actor, string $reason = ''): void
+    {
+        if ($contentId < 1 || !app_column_exists('content', 'edit_locked_at')) {
+            return;
+        }
+
+        $data = [
+            'edit_locked_at' => date_db(),
+        ];
+
+        if (app_column_exists('content', 'edit_locked_by')) {
+            $actorId = (int) ($actor['id'] ?? 0);
+            $data['edit_locked_by'] = $actorId > 0 ? $actorId : null;
+        }
+
+        if (app_column_exists('content', 'edit_lock_reason')) {
+            $data['edit_lock_reason'] = plain_text_limit($reason, 80);
+        }
+
+        update('content', $data, ['id' => $contentId]);
+    }
+}
+
 if (!function_exists('status_can_edit')) {
     function status_can_edit(?array $item, ?array $user): bool
     {
         return $item !== null
             && $user !== null
+            && !status_edit_locked($item)
             && (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0);
     }
 }
@@ -3552,7 +4055,7 @@ if (!function_exists('status_comments')) {
                 cc.user_id,
                 cc.body,
                 cc.created_at,
-                u.name AS author_name,
+                u.username AS author_name,
                 ' . $avatarSelect . ',
                 (
                     SELECT COUNT(*)
@@ -3871,6 +4374,13 @@ if (!function_exists('status_share_modal_id')) {
     }
 }
 
+if (!function_exists('status_report_modal_id')) {
+    function status_report_modal_id(int $contentId): string
+    {
+        return 'status-report-modal-' . max(0, $contentId);
+    }
+}
+
 if (!function_exists('status_time_button')) {
     function status_time_button(string $createdAt, int $contentId, bool $openModal = true): string
     {
@@ -3929,7 +4439,7 @@ if (!function_exists('status_composer')) {
                     <div class="status-compose-row">
                         <div class="avatar">
                             <?php if ($avatarUrl !== ''): ?>
-                                <img src="<?= e($avatarUrl) ?>" alt="<?= e((string) ($user['name'] ?? '')) ?>" loading="lazy">
+                                <img src="<?= e($avatarUrl) ?>" alt="<?= e(user_display_name($user)) ?>" loading="lazy">
                             <?php else: ?>
                                 <?= icon('user') ?>
                             <?php endif; ?>
@@ -3965,6 +4475,8 @@ if (!function_exists('notification_icon')) {
             'comment_like' => 'thumb-up',
             'content_comment' => 'message-circle',
             'content_share' => 'share',
+            'report_resolved' => 'check',
+            'report_dismissed' => 'flag',
             default => 'bell',
         };
     }
@@ -3982,6 +4494,8 @@ if (!function_exists('notification_message')) {
             'comment_like' => t('notifications.messages.comment_like', ['actor' => $actor]),
             'content_comment' => t('notifications.messages.content_comment', ['actor' => $actor]),
             'content_share' => t('notifications.messages.content_share', ['actor' => $actor]),
+            'report_resolved' => t('notifications.messages.report_resolved', ['actor' => $actor]),
+            'report_dismissed' => t('notifications.messages.report_dismissed', ['actor' => $actor]),
             default => t('notifications.messages.generic', ['actor' => $actor]),
         };
     }
@@ -4090,6 +4604,46 @@ if (!function_exists('notification_create_for_comment_owner')) {
     }
 }
 
+if (!function_exists('notification_create_for_reporters')) {
+    function notification_create_for_reporters(int $contentId, string $type, array $actor, string $reportStatus = ''): void
+    {
+        if ($contentId < 1 || !notification_table_ready() || !app_table_exists('content_reports')) {
+            return;
+        }
+
+        $actorId = (int) ($actor['id'] ?? 0);
+
+        if ($actorId < 1) {
+            return;
+        }
+
+        $params = [$contentId];
+        $where = 'content_id = ?';
+
+        if ($reportStatus !== '') {
+            $where .= ' AND status = ?';
+            $params[] = $reportStatus;
+        }
+
+        foreach (all('SELECT DISTINCT reporter_id FROM content_reports WHERE ' . $where, $params) as $row) {
+            $reporterId = (int) ($row['reporter_id'] ?? 0);
+
+            if ($reporterId < 1 || $reporterId === $actorId) {
+                continue;
+            }
+
+            notification_create(
+                $reporterId,
+                $type,
+                $actorId,
+                $contentId,
+                0,
+                $type . ':' . $contentId . ':' . $reporterId
+            );
+        }
+    }
+}
+
 if (!function_exists('notification_unread_count')) {
     function notification_unread_count(int $userId): int
     {
@@ -4124,7 +4678,7 @@ if (!function_exists('notifications_for_user')) {
 
         return all(
             'SELECT n.*,
-                u.name AS actor_name,
+                u.username AS actor_name,
                 ' . $avatarSelect . ',
                 c.body AS content_body
             FROM notifications n
@@ -4290,6 +4844,10 @@ if (!function_exists('status_handle_post')) {
             status_share_for_user($id, $user, $redirect);
         }
 
+        if ($action === 'report') {
+            status_report_for_user($id, $user, $redirect);
+        }
+
         if ($action === 'comment_delete') {
             status_comment_delete_for_user(max(0, (int) post('comment_id', 0)), $user, $redirect);
         }
@@ -4342,6 +4900,11 @@ if (!function_exists('status_react_for_user')) {
 
         $current = status_user_reaction($contentId, $userId);
 
+        if ($current !== $reaction) {
+            moderation_require_not_muted($user, $redirect);
+            moderation_require_action($user, 'like', $redirect);
+        }
+
         if ($current === $reaction) {
             delete('content_reactions', ['content_id' => $contentId, 'user_id' => $userId]);
         } elseif ($current !== '') {
@@ -4349,6 +4912,7 @@ if (!function_exists('status_react_for_user')) {
                 'reaction' => $reaction,
                 'updated_at' => date_db(),
             ], ['content_id' => $contentId, 'user_id' => $userId]);
+            moderation_record_action($user, 'like');
             notification_create_for_content_owner('content_like', $contentId, $user);
         } else {
             insert('content_reactions', [
@@ -4356,6 +4920,7 @@ if (!function_exists('status_react_for_user')) {
                 'user_id' => $userId,
                 'reaction' => $reaction,
             ]);
+            moderation_record_action($user, 'like');
             notification_create_for_content_owner('content_like', $contentId, $user);
         }
 
@@ -4382,6 +4947,9 @@ if (!function_exists('status_comment_for_user')) {
             redirect($redirect . '#' . status_anchor($contentId));
         }
 
+        moderation_require_not_muted($user, $redirect . '#' . status_anchor($contentId));
+        moderation_require_action($user, 'comment', $redirect . '#' . status_anchor($contentId));
+
         if ($parentId > 0) {
             $parent = status_comment_find($parentId);
 
@@ -4402,6 +4970,7 @@ if (!function_exists('status_comment_for_user')) {
             'body' => $body,
             'created_at' => date_db(),
         ]);
+        moderation_record_action($user, 'comment');
         notification_create_for_content_owner('content_comment', $contentId, $user, $commentId);
 
         flash('success', t('account.messages.comment_created'));
@@ -4422,7 +4991,14 @@ if (!function_exists('status_comment_like_for_user')) {
 
         $contentId = (int) ($comment['content_id'] ?? 0);
 
-        if (status_comment_user_liked($commentId, $userId)) {
+        $liked = status_comment_user_liked($commentId, $userId);
+
+        if (!$liked) {
+            moderation_require_not_muted($user, $redirect . '#' . status_anchor($contentId));
+            moderation_require_action($user, 'like', $redirect . '#' . status_anchor($contentId));
+        }
+
+        if ($liked) {
             delete('comment_likes', ['comment_id' => $commentId, 'user_id' => $userId]);
         } else {
             insert('comment_likes', [
@@ -4430,9 +5006,137 @@ if (!function_exists('status_comment_like_for_user')) {
                 'user_id' => $userId,
                 'created_at' => date_db(),
             ]);
+            moderation_record_action($user, 'like');
             notification_create_for_comment_owner($commentId, $user);
         }
 
+        redirect($redirect . '#' . status_anchor($contentId));
+    }
+}
+
+if (!function_exists('status_report_reasons')) {
+    function status_report_reasons(): array
+    {
+        return [
+            'spam' => t('moderation.report_reasons.spam'),
+            'illegal' => t('moderation.report_reasons.illegal'),
+            'malware' => t('moderation.report_reasons.malware'),
+            'abuse' => t('moderation.report_reasons.abuse'),
+            'other' => t('moderation.report_reasons.other'),
+        ];
+    }
+}
+
+if (!function_exists('status_report_dismissal_lock')) {
+    function status_report_dismissal_lock(int $contentId): ?array
+    {
+        if ($contentId < 1 || !app_table_exists('content_reports')) {
+            return null;
+        }
+
+        $openCount = (int) val(
+            'SELECT COUNT(*) FROM content_reports WHERE content_id = ? AND status = ?',
+            [$contentId, 'open']
+        );
+
+        if ($openCount > 0) {
+            return null;
+        }
+
+        return one(
+            'SELECT *
+            FROM content_reports
+            WHERE content_id = ? AND status = ? AND reviewed_at IS NOT NULL
+            ORDER BY reviewed_at DESC, id DESC
+            LIMIT 1',
+            [$contentId, 'dismissed']
+        );
+    }
+}
+
+if (!function_exists('status_report_for_user')) {
+    function status_report_for_user(int $contentId, array $user, string $redirect = '/'): void
+    {
+        $userId = (int) ($user['id'] ?? 0);
+        $item = status_find($contentId);
+
+        if ($contentId < 1 || $userId < 1 || $item === null || (string) ($item['status'] ?? '') !== 'published') {
+            flash('error', t('account.messages.status_not_found'));
+            redirect($redirect);
+        }
+
+        if ((int) ($item['author_id'] ?? 0) === $userId) {
+            flash('error', t('moderation.messages.report_own_content'));
+            redirect($redirect . '#' . status_anchor($contentId));
+        }
+
+        if (!app_table_exists('content_reports')) {
+            flash('error', t('moderation.messages.reports_unavailable'));
+            redirect($redirect . '#' . status_anchor($contentId));
+        }
+
+        $reasons = array_keys(status_report_reasons());
+        $reason = (string) post('reason', 'other');
+        $reason = in_array($reason, $reasons, true) ? $reason : 'other';
+        $note = plain_text_limit((string) post('note', ''), 1000);
+        $now = date_db();
+        $existing = one(
+            'SELECT *
+            FROM content_reports
+            WHERE content_id = ? AND reporter_id = ?
+            LIMIT 1',
+            [$contentId, $userId]
+        );
+
+        if ($existing !== null && (string) ($existing['status'] ?? '') !== 'open') {
+            flash('info', t('moderation.messages.report_already_reviewed'));
+            redirect($redirect . '#' . status_anchor($contentId));
+        }
+
+        $dismissed = status_report_dismissal_lock($contentId);
+
+        if ($dismissed !== null && $existing === null) {
+            try {
+                insert('content_reports', [
+                    'content_id' => $contentId,
+                    'reporter_id' => $userId,
+                    'reason' => $reason,
+                    'note' => $note,
+                    'status' => 'dismissed',
+                    'created_at' => $now,
+                    'reviewed_at' => $now,
+                    'reviewed_by' => (int) ($dismissed['reviewed_by'] ?? 0) ?: null,
+                    'action_note' => 'already_dismissed',
+                ]);
+            } catch (Throwable) {
+                // A race on the unique report key should behave like an already reviewed report.
+            }
+
+            flash('info', t('moderation.messages.report_already_reviewed'));
+            redirect($redirect . '#' . status_anchor($contentId));
+        }
+
+        moderation_require_action($user, 'report', $redirect . '#' . status_anchor($contentId));
+
+        if ($existing !== null) {
+            update('content_reports', [
+                'reason' => $reason,
+                'note' => $note,
+                'created_at' => $now,
+            ], ['content_id' => $contentId, 'reporter_id' => $userId]);
+        } else {
+            insert('content_reports', [
+                'content_id' => $contentId,
+                'reporter_id' => $userId,
+                'reason' => $reason,
+                'note' => $note,
+                'status' => 'open',
+                'created_at' => $now,
+            ]);
+        }
+
+        moderation_record_action($user, 'report');
+        flash('success', t('moderation.messages.report_created'));
         redirect($redirect . '#' . status_anchor($contentId));
     }
 }
@@ -4450,6 +5154,11 @@ if (!function_exists('status_share_for_user')) {
             redirect($redirect);
         }
 
+        moderation_require_not_muted($user, $redirect);
+        moderation_require_action($user, 'share', $redirect);
+        moderation_require_links_allowed($body, $redirect);
+        moderation_require_unique_body($user, $body, $redirect);
+
         $now = date_db();
         $contentId = (int) insert('content', [
             'status' => 'published',
@@ -4462,6 +5171,7 @@ if (!function_exists('status_share_for_user')) {
         status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
         status_sync_links($contentId, $body);
         status_sync_share($contentId, $sharedContentId);
+        moderation_record_action($user, 'share');
         notification_create_for_content_owner('content_share', $sharedContentId, $user, 0, $contentId);
 
         flash('success', t('account.messages.status_shared'));
@@ -4507,10 +5217,17 @@ if (!function_exists('status_update_for_user')) {
     {
         $item = status_find($contentId);
 
+        if (status_edit_locked($item)) {
+            flash('error', t('account.messages.status_edit_locked'));
+            redirect($redirect . '#' . status_anchor($contentId));
+        }
+
         if (!status_can_edit($item, $user)) {
             flash('error', t('account.messages.status_forbidden'));
             redirect($redirect);
         }
+
+        moderation_require_not_muted($user, $redirect . '#' . status_anchor($contentId));
 
         $payload = status_payload();
         $body = (string) ($payload['body'] ?? '');
@@ -4526,6 +5243,9 @@ if (!function_exists('status_update_for_user')) {
             flash('error', t('account.messages.status_required'));
             redirect($redirect . '#' . status_anchor($contentId));
         }
+
+        moderation_require_links_allowed($body, $redirect . '#' . status_anchor($contentId));
+        moderation_require_unique_body($user, $body, $redirect . '#' . status_anchor($contentId), $contentId);
 
         update('content', [
             'body' => $body,
@@ -4564,6 +5284,9 @@ if (!function_exists('status_delete_for_user')) {
         }
         if (app_table_exists('content_shares')) {
             delete('content_shares', ['content_id' => $contentId]);
+        }
+        if (app_table_exists('content_reports')) {
+            delete('content_reports', ['content_id' => $contentId]);
         }
         status_cleanup_unused_terms();
         delete('content', ['id' => $contentId]);
@@ -4639,8 +5362,11 @@ if (!function_exists('status_manage_actions')) {
     function status_manage_actions(array $item, ?array $user, string $action): string
     {
         $contentId = (int) ($item['id'] ?? 0);
+        $isLocked = status_edit_locked($item);
         $canEdit = status_can_edit($item, $user);
         $canDelete = status_can_delete($item, $user);
+        $canReport = $user !== null
+            && (int) ($item['author_id'] ?? $item['user_id'] ?? 0) !== (int) ($user['id'] ?? 0);
 
         if ($contentId < 1) {
             return '';
@@ -4652,6 +5378,16 @@ if (!function_exists('status_manage_actions')) {
             <a class="btn btn-ghost btn-icon btn-sm status-manage-icon" href="<?= e(status_url($contentId)) ?>" title="<?= et('account.status_permalink') ?>" aria-label="<?= et('account.status_permalink') ?>">
                 <?= icon('link') ?>
             </a>
+            <?php if ($isLocked): ?>
+                <span class="btn btn-ghost btn-icon btn-sm status-manage-icon" title="<?= et('account.status_edit_locked') ?>" aria-label="<?= et('account.status_edit_locked') ?>">
+                    <?= icon('lock') ?>
+                </span>
+            <?php endif; ?>
+            <?php if ($canReport): ?>
+                <button class="btn btn-ghost btn-icon btn-sm status-manage-icon" type="button" data-modal-open="<?= e(status_report_modal_id($contentId)) ?>" title="<?= et('moderation.report_status') ?>" aria-label="<?= et('moderation.report_status') ?>">
+                    <?= icon('flag') ?>
+                </button>
+            <?php endif; ?>
             <?php if ($canEdit): ?>
                 <button class="btn btn-ghost btn-icon btn-sm status-manage-icon" type="button" data-modal-open="status-edit-modal-<?= e($contentId) ?>" title="<?= et('account.status_edit') ?>" aria-label="<?= et('account.status_edit') ?>">
                     <?= icon('edit') ?>
@@ -4668,6 +5404,9 @@ if (!function_exists('status_manage_actions')) {
                 </form>
             <?php endif; ?>
         </div>
+        <?php if ($canReport): ?>
+            <?= status_report_modal($item, $user, $action) ?>
+        <?php endif; ?>
         <?php if ($canEdit): ?>
             <?= status_edit_modal($item, $action) ?>
         <?php endif; ?>
@@ -4812,7 +5551,11 @@ if (!function_exists('public_home_feed_html')) {
             </nav>
         </header>
 
-        <?php if ($user !== null): ?>
+        <?php if ($user !== null && user_is_muted($user)): ?>
+            <div class="alert alert-warning">
+                <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime(user_muted_until($user))]) ?></span>
+            </div>
+        <?php elseif ($user !== null): ?>
             <?= status_composer($currentFeedUrl, $user) ?>
         <?php endif; ?>
 
@@ -4986,7 +5729,7 @@ if (!function_exists('status_comment_form')) {
             <input type="hidden" name="parent_id" value="<?= e($parentId) ?>">
             <div class="avatar avatar-sm">
                 <?php if ($avatarUrl !== ''): ?>
-                    <img src="<?= e($avatarUrl) ?>" alt="<?= e((string) ($user['name'] ?? '')) ?>" loading="lazy">
+                    <img src="<?= e($avatarUrl) ?>" alt="<?= e(user_display_name($user)) ?>" loading="lazy">
                 <?php else: ?>
                     <?= icon('user') ?>
                 <?php endif; ?>
@@ -5158,6 +5901,24 @@ if (!function_exists('status_share_modal')) {
     }
 }
 
+if (!function_exists('status_report_modal')) {
+    function status_report_modal(array $item, ?array $user, string $action): string
+    {
+        $contentId = (int) ($item['id'] ?? 0);
+        $authorId = (int) ($item['author_id'] ?? $item['user_id'] ?? 0);
+
+        if ($contentId < 1 || $user === null || $authorId === (int) ($user['id'] ?? 0)) {
+            return '';
+        }
+
+        return render('modals/status-report', [
+            'item' => $item,
+            'user' => $user,
+            'action' => $action,
+        ]);
+    }
+}
+
 if (!function_exists('status_login_url')) {
     function status_login_url(string $fragment = ''): string
     {
@@ -5209,6 +5970,11 @@ if (!function_exists('status_create_for_user')) {
             redirect($redirect);
         }
 
+        moderation_require_not_muted($user, $redirect);
+        moderation_require_action($user, 'post', $redirect);
+        moderation_require_links_allowed($body, $redirect);
+        moderation_require_unique_body($user, $body, $redirect);
+
         $now = date_db();
         $contentId = (int) insert('content', [
             'status' => 'published',
@@ -5220,6 +5986,7 @@ if (!function_exists('status_create_for_user')) {
         status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
         status_sync_links($contentId, $body);
         status_sync_share($contentId, $sharedContentId);
+        moderation_record_action($user, 'post');
 
         flash('success', t('account.messages.status_created'));
         redirect($redirect);

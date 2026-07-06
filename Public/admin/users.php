@@ -192,8 +192,8 @@ function tc_admin_users_filter_sql(array $filters): array
 
     if ($filters['q'] !== '') {
         $like = tc_admin_user_like($filters['q']);
-        $clauses[] = '(name LIKE ? ESCAPE \'\\\\\' OR email LIKE ? ESCAPE \'\\\\\' OR note LIKE ? ESCAPE \'\\\\\')';
-        array_push($params, $like, $like, $like);
+        $clauses[] = '(username LIKE ? ESCAPE \'\\\\\' OR note LIKE ? ESCAPE \'\\\\\')';
+        array_push($params, $like, $like);
     }
 
     if ($filters['role'] !== '') {
@@ -341,8 +341,7 @@ function tc_admin_user_resource(array $user): array
 
     return [
         'id' => (int) ($user['id'] ?? 0),
-        'name' => (string) ($user['name'] ?? ''),
-        'email' => (string) ($user['email'] ?? ''),
+        'username' => (string) ($user['username'] ?? ''),
         'role' => (string) ($user['role'] ?? ''),
         'status' => (string) ($user['status'] ?? ''),
         'note' => (string) ($user['note'] ?? ''),
@@ -360,10 +359,11 @@ function tc_admin_user_exists(int $id): bool
     return total('users', ['id' => $id]) > 0;
 }
 
-function tc_admin_email_taken(string $email, ?int $ignoreId = null): bool
+function tc_admin_username_taken(string $username, ?int $ignoreId = null): bool
 {
-    $params = ['email' => $email];
-    $sql = 'SELECT COUNT(*) FROM users WHERE email = :email';
+    $username = username_normalize($username);
+    $params = ['username' => $username];
+    $sql = 'SELECT COUNT(*) FROM users WHERE username = :username';
 
     if ($ignoreId !== null) {
         $sql .= ' AND id <> :id';
@@ -377,19 +377,29 @@ function tc_admin_user_payload(?int $id = null): array
 {
     $existing = $id === null ? null : tc_admin_user_by_id($id);
     $passwordRule = $id === null ? 'required|string|min:8|max:200' : 'nullable|string|min:8|max:200';
-    $data = api_validated([
-        'name' => 'required|string|max:120',
-        'email' => 'required|email|max:190',
+    $rules = [
         'password' => $passwordRule,
         'role' => 'required|string|in:' . implode(',', array_keys(tc_admin_roles())),
         'status' => 'required|string|in:' . implode(',', array_keys(tc_admin_statuses())),
         'note' => 'nullable|string|max:2000',
-    ]);
+    ];
 
-    $email = strtolower(trim((string) $data['email']));
+    if ($id === null) {
+        $rules = ['username' => 'required|string|max:32'] + $rules;
+    }
 
-    if (tc_admin_email_taken($email, $id)) {
-        api_validation(['email' => [t('users.messages.email_taken')]]);
+    $data = api_validated($rules);
+
+    $username = $existing !== null ? (string) ($existing['username'] ?? '') : username_normalize((string) ($data['username'] ?? ''));
+
+    if ($id === null) {
+        if (!username_valid($username)) {
+            api_validation(['username' => [t('users.messages.username_invalid')]]);
+        }
+
+        if (tc_admin_username_taken($username)) {
+            api_validation(['username' => [t('users.messages.username_taken')]]);
+        }
     }
 
     $role = (string) $data['role'];
@@ -403,17 +413,23 @@ function tc_admin_user_payload(?int $id = null): array
     }
 
     $payload = [
-        'name' => trim((string) $data['name']),
-        'email' => $email,
         'role' => $role,
         'status' => $status,
         'note' => trim((string) ($data['note'] ?? '')),
     ];
 
+    if ($id === null) {
+        $payload['username'] = $username;
+    }
+
     $password = (string) ($data['password'] ?? '');
 
     if ($password !== '') {
         $payload['password'] = auth_password($password);
+    }
+
+    if ($id === null && app_column_exists('users', 'recovery_hash')) {
+        $payload['recovery_hash'] = user_recovery_hash_generate();
     }
 
     return $payload;
@@ -514,8 +530,7 @@ function tc_admin_users_html(): string
                             <?php $isSuperAdmin = tc_admin_user_is_super_admin($user); ?>
                             <tr>
                                 <td>
-                                    <strong><?= e($user['name']) ?></strong>
-                                    <div class="table-meta"><?= e($user['email']) ?></div>
+                                    <strong>@<?= e((string) ($user['username'] ?? '')) ?></strong>
                                 </td>
                                 <td><?= e($roles[$user['role']] ?? $user['role']) ?></td>
                                 <td><?= tc_admin_status_badge((string) $user['status']) ?></td>
@@ -526,11 +541,11 @@ function tc_admin_users_html(): string
                                 </td>
                                 <td>
                                     <div class="table-actions">
-                                        <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-open="user-edit-<?= e($id) ?>" aria-label="<?= et('users.edit_user', ['name' => (string) $user['name']]) ?>" title="<?= et('common.edit') ?>">
+                                        <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-open="user-edit-<?= e($id) ?>" aria-label="<?= et('users.edit_user', ['username' => (string) ($user['username'] ?? '')]) ?>" title="<?= et('common.edit') ?>">
                                             <?= icon('edit') ?>
                                         </button>
                                         <?php if (!$isSuperAdmin): ?>
-                                            <form class="inline-flex" action="<?= e(tc_admin_users_api_url('delete', ['id' => $id])) ?>" method="post" data-ajax-form data-ajax-target="#users-list" data-confirm="<?= et('users.delete_confirm', ['name' => (string) $user['name']]) ?>" data-confirm-title="<?= et('users.delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
+                                            <form class="inline-flex" action="<?= e(tc_admin_users_api_url('delete', ['id' => $id])) ?>" method="post" data-ajax-form data-ajax-target="#users-list" data-confirm="<?= et('users.delete_confirm', ['username' => (string) ($user['username'] ?? '')]) ?>" data-confirm-title="<?= et('users.delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
                                                 <?= csrf_field() ?>
                                                 <input type="hidden" name="_method" value="DELETE">
                                                 <button class="btn btn-sm btn-ghost btn-icon text-danger" type="submit" aria-label="<?= et('common.delete') ?>" title="<?= et('common.delete') ?>">
@@ -675,12 +690,14 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
             <section class="user-editor-panel">
                 <div class="grid sm:grid-2">
                     <label class="field">
-                        <span class="label"><?= et('common.name') ?></span>
-                        <input class="input input-lg" name="name" autocomplete="name" value="<?= e($user['name'] ?? '') ?>" required>
-                    </label>
-                    <label class="field">
-                        <span class="label"><?= et('common.email') ?></span>
-                        <input class="input input-lg" type="email" name="email" autocomplete="email" value="<?= e($user['email'] ?? '') ?>" required>
+                        <span class="label"><?= et('common.username') ?></span>
+                        <?php if ($create): ?>
+                            <input class="input input-lg" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_]{2,31}" maxlength="32" value="" required>
+                            <span class="help"><?= e(username_hint()) ?></span>
+                        <?php else: ?>
+                            <input class="input input-lg" value="<?= e((string) ($user['username'] ?? '')) ?>" disabled>
+                            <span class="help"><?= et('users.username_locked') ?></span>
+                        <?php endif; ?>
                     </label>
                 </div>
             </section>

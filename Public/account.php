@@ -14,8 +14,16 @@ $user = require_auth('/login');
 
 if (is_post()) {
     csrf_require();
+    $action = (string) post('action', 'password');
+
+    if ($action === 'recovery_hash') {
+        tc_account_rotate_recovery_hash($user);
+    }
+
     tc_account_update_password($user);
 }
+
+$recoveryHash = user_recovery_hash_ensure($user);
 
 layout('layout', [
     'title' => t('account.password_title'),
@@ -25,10 +33,34 @@ layout('layout', [
         'url' => '/account',
         'robots' => 'noindex,nofollow',
     ],
-], static function () use ($user): void {
+], static function () use ($user, $recoveryHash): void {
     $profileUrl = author_url((int) ($user['id'] ?? 0));
     ?>
-    <section class="account-security-page">
+    <section class="account-security-page stack">
+        <article class="card account-card">
+            <div class="card-header">
+                <h1 class="text-lg m-0 cluster gap-2"><?= icon('hash') ?> <?= et('account.recovery_hash_title') ?></h1>
+            </div>
+            <div class="card-body stack">
+                <p class="text-muted mb-0"><?= et('account.recovery_hash_help') ?></p>
+                <?php if ($recoveryHash !== ''): ?>
+                    <label class="field">
+                        <span class="label"><?= et('account.recovery_hash') ?></span>
+                        <input class="input account-recovery-code" value="<?= e($recoveryHash) ?>" readonly spellcheck="false" autocomplete="off">
+                    </label>
+                <?php else: ?>
+                    <div class="alert alert-warning"><?= et('account.recovery_hash_unavailable') ?></div>
+                <?php endif; ?>
+            </div>
+            <form method="post" action="/account" data-confirm="<?= et('account.recovery_hash_regenerate_confirm') ?>" data-confirm-title="<?= et('account.recovery_hash_regenerate') ?>" data-confirm-ok="<?= et('account.recovery_hash_regenerate') ?>" data-confirm-cancel="<?= et('common.cancel') ?>">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="recovery_hash">
+                <div class="card-footer account-form-footer">
+                    <button class="btn btn-secondary" type="submit"><?= icon('refresh') ?> <span><?= et('account.recovery_hash_regenerate') ?></span></button>
+                </div>
+            </form>
+        </article>
+
         <article class="card account-card account-security-card">
             <div class="card-header split">
                 <h1 class="text-lg m-0 cluster gap-2"><?= icon('key') ?> <?= et('account.security_settings') ?></h1>
@@ -59,6 +91,20 @@ layout('layout', [
     </section>
     <?php
 });
+
+function tc_account_rotate_recovery_hash(array $user): void
+{
+    $id = (int) ($user['id'] ?? 0);
+    $hash = user_recovery_hash_rotate($id);
+
+    if ($hash === '') {
+        flash('error', t('account.messages.recovery_hash_unavailable'));
+        redirect('/account');
+    }
+
+    flash('success', t('account.messages.recovery_hash_rotated'));
+    redirect('/account');
+}
 
 function tc_account_update_password(array $user): void
 {

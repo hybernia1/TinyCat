@@ -20,7 +20,7 @@ if (is_post()) {
     }
 
     if (auth_attempt([
-        'email' => (string) post('email', ''),
+        'username' => username_normalize((string) post('username', '')),
         'password' => (string) post('password', ''),
         'remember' => post('remember', ''),
     ])) {
@@ -68,8 +68,8 @@ layout('layout', [
                 <form class="stack" method="post" action="/login?next=<?= e(rawurlencode(tc_login_next())) ?>">
                     <?= csrf_field() ?>
                     <label class="field">
-                        <span class="label"><?= et('common.email') ?></span>
-                        <input class="input" type="email" name="email" autocomplete="email" required>
+                        <span class="label"><?= et('common.username') ?></span>
+                        <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
                     </label>
                     <label class="field">
                         <span class="label"><?= et('common.password') ?></span>
@@ -82,6 +82,10 @@ layout('layout', [
                     <?= captcha_field('login') ?>
                     <button class="btn btn-primary" type="submit"><?= icon('login') ?> <span><?= et('common.login') ?></span></button>
                 </form>
+                <div class="cluster gap-2">
+                    <a class="btn btn-ghost btn-sm" href="/recovery"><?= icon('key') ?> <span><?= et('auth.recovery_link') ?></span></a>
+                    <a class="btn btn-ghost btn-sm" href="/privacy"><?= icon('shield') ?> <span><?= et('privacy.title') ?></span></a>
+                </div>
                 <?php if (registration_enabled()): ?>
                     <div class="cluster gap-2">
                         <span class="text-muted"><?= et('auth.no_account') ?></span>

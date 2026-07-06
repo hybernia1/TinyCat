@@ -1,1 +1,25 @@
-storage/
+# Local environment
+/config.local.php
+/.env
+/.env.*
+!/.env.example
+
+# Runtime data
+/storage/*
+!/storage/.gitkeep
+/uploads/*
+!/uploads/.gitkeep
+
+# Dependencies and tooling
+/vendor/
+/node_modules/
+/.idea/
+/.vscode/
+/.agents/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+Thumbs.db
+.DS_Store

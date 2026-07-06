@@ -28,20 +28,15 @@ if (is_post()) {
         redirect('/register');
     }
 
-    $name = trim((string) post('name', ''));
-    $email = strtolower(trim((string) post('email', '')));
+    $username = username_normalize((string) post('username', ''));
     $password = (string) post('password', '');
     $passwordConfirm = (string) post('password_confirm', '');
     $errors = [];
 
-    if ($name === '') {
-        $errors[] = t('account.messages.name_required');
-    }
-
-    if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-        $errors[] = t('account.messages.email_invalid');
-    } elseif (user_email_taken($email)) {
-        $errors[] = t('account.messages.email_taken');
+    if (!username_valid($username)) {
+        $errors[] = t('account.messages.username_invalid');
+    } elseif (user_username_taken($username)) {
+        $errors[] = t('account.messages.username_taken');
     }
 
     if (strlen($password) < 8) {
@@ -57,9 +52,8 @@ if (is_post()) {
     }
 
     $status = registration_auto_approve() ? 'active' : 'waiting';
-    $id = (int) insert('users', [
-        'name' => $name,
-        'email' => $email,
+    $userData = [
+        'username' => $username,
         'password' => auth_password($password),
         'role' => 'user',
         'status' => $status,
@@ -67,7 +61,13 @@ if (is_post()) {
         'note' => '',
         'website' => '',
         'bio' => '',
-    ]);
+    ];
+
+    if (app_column_exists('users', 'recovery_hash')) {
+        $userData['recovery_hash'] = user_recovery_hash_generate();
+    }
+
+    $id = (int) insert('users', $userData);
 
     captcha_refresh('register');
 
@@ -105,12 +105,9 @@ layout('layout', [
                     <form class="stack" method="post" action="/register">
                         <?= csrf_field() ?>
                         <label class="field">
-                            <span class="label"><?= et('common.name') ?></span>
-                            <input class="input" name="name" autocomplete="name" required>
-                        </label>
-                        <label class="field">
-                            <span class="label"><?= et('common.email') ?></span>
-                            <input class="input" type="email" name="email" autocomplete="email" required>
+                            <span class="label"><?= et('common.username') ?></span>
+                            <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_]{2,31}" maxlength="32" required>
+                            <span class="help"><?= e(username_hint()) ?></span>
                         </label>
                         <label class="field">
                             <span class="label"><?= et('common.password') ?></span>

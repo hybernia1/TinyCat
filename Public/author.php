@@ -80,7 +80,7 @@ if ($author === null) {
 }
 
 $authorId = (int) $author['id'];
-$authorName = (string) ($author['name'] ?? '');
+$authorName = user_display_name($author);
 $website = trim((string) ($author['website'] ?? ''));
 $bio = trim((string) ($author['bio'] ?? ''));
 $avatarUrl = (string) ($author['avatar_url'] ?? '');
@@ -90,6 +90,8 @@ $statusItems = public_status_items_by_author($authorId, $statusLimit);
 $current = author_url($authorId);
 $authUser = auth();
 $canPost = $authUser !== null && (int) ($authUser['id'] ?? 0) === $authorId;
+$canSeeMute = $authUser !== null && ($canPost || (string) ($authUser['role'] ?? '') === 'admin');
+$mutedUntil = user_muted_until($author);
 $canFollow = $authUser !== null && (int) ($authUser['id'] ?? 0) !== $authorId;
 $isFollowing = $canFollow && author_is_followed((int) ($authUser['id'] ?? 0), $authorId);
 $followCounts = author_follow_counts($authorId);
@@ -108,7 +110,7 @@ layout('layout', [
         'image' => $avatarUrl ?: site_meta_image_url(),
         'type' => 'profile',
     ],
-], static function () use ($authorId, $authorName, $website, $bio, $avatarUrl, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles): void {
+], static function () use ($authorId, $authorName, $website, $bio, $avatarUrl, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -152,6 +154,12 @@ layout('layout', [
                                     <span><?= e((string) ($presence['label'] ?? '')) ?></span>
                                 <?php endif; ?>
                             </div>
+                            <?php if ($canSeeMute && $mutedUntil !== ''): ?>
+                                <div class="alert alert-warning profile-mute-alert">
+                                    <?= icon('lock') ?>
+                                    <span><?= et('moderation.profile_muted_until', ['until' => datetime($mutedUntil)]) ?></span>
+                                </div>
+                            <?php endif; ?>
                             <?php if ($canPost): ?>
                                 <button class="profile-editable-text" type="button" data-profile-edit-open data-profile-edit-focus="bio">
                                     <?php if ($bio !== ''): ?>
@@ -208,7 +216,7 @@ layout('layout', [
                         </div>
                         <?php if ($canPost && $authUser !== null): ?>
                             <details class="profile-inline-editor" data-profile-editor-panel>
-                                <summary class="btn btn-secondary btn-sm btn-icon profile-edit-toggle" title="<?= et('common.edit') ?>" data-profile-edit-open data-profile-edit-focus="name">
+                                <summary class="btn btn-secondary btn-sm btn-icon profile-edit-toggle" title="<?= et('common.edit') ?>" data-profile-edit-open data-profile-edit-focus="bio">
                                     <?= icon('edit') ?>
                                     <span class="sr-only"><?= et('common.edit') ?></span>
                                 </summary>
@@ -230,7 +238,7 @@ layout('layout', [
                                 <?php foreach ($followingProfiles as $profile): ?>
                                     <?php
                                     $profileId = (int) ($profile['id'] ?? 0);
-                                    $profileName = trim((string) ($profile['name'] ?? ''));
+                                    $profileName = user_display_name($profile);
                                     $profileAvatar = trim((string) ($profile['avatar_url'] ?? ''));
                                     ?>
                                     <a class="sidebar-user-link" href="<?= e(author_url($profileId)) ?>">
@@ -260,7 +268,11 @@ layout('layout', [
                 <h2 class="text-xl m-0"><?= et('account.posts_title') ?></h2>
             </header>
 
-            <?php if ($canPost && $authUser !== null): ?>
+            <?php if ($canPost && $authUser !== null && $mutedUntil !== ''): ?>
+                <div class="alert alert-warning">
+                    <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime($mutedUntil)]) ?></span>
+                </div>
+            <?php elseif ($canPost && $authUser !== null): ?>
                 <?= status_composer(author_url($authorId), $authUser) ?>
             <?php endif; ?>
 
@@ -282,8 +294,6 @@ layout('layout', [
 
 function tc_author_profile_editor(array $user, int $authorId): string
 {
-    $name = trim((string) ($user['name'] ?? ''));
-    $email = trim((string) ($user['email'] ?? ''));
     $website = trim((string) ($user['website'] ?? ''));
     $bio = trim((string) ($user['bio'] ?? ''));
     $selectedLocale = language_code((string) ($user['locale'] ?? '')) ?: locale();
@@ -295,14 +305,6 @@ function tc_author_profile_editor(array $user, int $authorId): string
         <?= csrf_field() ?>
         <input type="hidden" name="action" value="profile">
         <div class="profile-inline-grid">
-            <label class="field">
-                <span class="label"><?= et('common.name') ?></span>
-                <input class="input" name="name" autocomplete="name" value="<?= e($name) ?>" required>
-            </label>
-            <label class="field">
-                <span class="label"><?= et('common.email') ?></span>
-                <input class="input" type="email" name="email" autocomplete="email" value="<?= e($email) ?>" required>
-            </label>
             <label class="field">
                 <span class="label"><?= et('account.website') ?></span>
                 <input class="input" type="url" name="website" autocomplete="url" value="<?= e($website) ?>">

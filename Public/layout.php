@@ -39,6 +39,7 @@ foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', '
 $defaultAdminNav = [
     ['href' => '/admin', 'icon' => 'dashboard', 'label' => t('common.dashboard')],
     ['href' => '/admin/users', 'icon' => 'users', 'label' => t('users.list_title')],
+    ['href' => '/admin/moderation', 'icon' => 'shield', 'label' => t('moderation.title')],
     ['href' => '/admin/settings', 'icon' => 'settings', 'label' => t('settings.title')],
 ];
 $authUser = auth();
@@ -150,11 +151,15 @@ $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
                 </nav>
 
                 <div class="admin-sidebar-footer">
+                    <?php
+                    $adminIdentity = user_display_name($authUser);
+                    $adminIdentity = $adminIdentity !== '' ? '@' . $adminIdentity : $appName;
+                    ?>
                     <div class="admin-user">
                         <?= icon('user') ?>
                         <span>
-                            <strong><?= e((string) ($authUser['name'] ?? $appName)) ?></strong>
-                            <small><?= e((string) ($authUser['email'] ?? '')) ?></small>
+                            <strong><?= e($adminIdentity) ?></strong>
+                            <small><?= e($adminIdentity) ?></small>
                         </span>
                     </div>
                     <form action="/logout" method="post">
@@ -222,6 +227,11 @@ $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
                     <?php endforeach; ?>
                     <?php if ($authUser !== null): ?>
                         <?php $profileUrl = author_url((int) ($authUser['id'] ?? 0)); ?>
+                        <?php if ((string) ($authUser['role'] ?? '') === 'admin'): ?>
+                            <a class="nav-link nav-link-icon" href="/admin" aria-label="<?= et('common.admin') ?>" title="<?= et('common.admin') ?>">
+                                <?= icon('dashboard') ?>
+                            </a>
+                        <?php endif; ?>
                         <?php
                         $notificationUserId = (int) ($authUser['id'] ?? 0);
                         $notificationUnread = notification_unread_count($notificationUserId);
