@@ -3244,21 +3244,33 @@ if (!function_exists('public_status_select_sql')) {
     }
 }
 
-if (!function_exists('public_status_items')) {
-    function public_status_items(int $limit = 24, int $offset = 0): array
+if (!function_exists('public_status_query')) {
+    function public_status_query(): CoreQuery
+    {
+        return db_select(public_status_select_sql())
+            ->where('c.status = ?', 'published')
+            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+            ->where('u.status = ?', 'active');
+    }
+}
+
+if (!function_exists('public_status_page')) {
+    function public_status_page(CoreQuery $query, int $limit = 24, int $offset = 0): array
     {
         $limit = max(1, min(100, $limit));
         $offset = max(0, $offset);
 
-        return all(
-            public_status_select_sql()
-            . ' WHERE c.status = ?
-                AND (c.published_at IS NULL OR c.published_at <= ?)
-                AND u.status = ?
-            ORDER BY COALESCE(c.published_at, c.created_at) DESC, c.id DESC
-            LIMIT ' . $limit . ' OFFSET ' . $offset,
-            ['published', date_db(), 'active']
-        );
+        return $query
+            ->order('COALESCE(c.published_at, c.created_at) DESC, c.id DESC')
+            ->limit($limit, $offset)
+            ->all();
+    }
+}
+
+if (!function_exists('public_status_items')) {
+    function public_status_items(int $limit = 24, int $offset = 0): array
+    {
+        return public_status_page(public_status_query(), $limit, $offset);
     }
 }
 
@@ -3269,15 +3281,9 @@ if (!function_exists('public_status_items_for_user')) {
             return public_status_items($limit, $offset);
         }
 
-        $limit = max(1, min(100, $limit));
-        $offset = max(0, $offset);
-
-        return all(
-            public_status_select_sql()
-            . ' WHERE c.status = ?
-                AND (c.published_at IS NULL OR c.published_at <= ?)
-                AND u.status = ?
-                AND (
+        return public_status_page(
+            public_status_query()->where(
+                '(
                     c.author_id = ?
                     OR EXISTS (
                         SELECT 1
@@ -3285,10 +3291,12 @@ if (!function_exists('public_status_items_for_user')) {
                         WHERE uf.follower_id = ?
                             AND uf.user_id = c.author_id
                     )
-                )
-            ORDER BY COALESCE(c.published_at, c.created_at) DESC, c.id DESC
-            LIMIT ' . $limit . ' OFFSET ' . $offset,
-            ['published', date_db(), 'active', $userId, $userId]
+                )',
+                $userId,
+                $userId
+            ),
+            $limit,
+            $offset
         );
     }
 }
@@ -3300,18 +3308,10 @@ if (!function_exists('public_status_items_by_author')) {
             return [];
         }
 
-        $limit = max(1, min(100, $limit));
-        $offset = max(0, $offset);
-
-        return all(
-            public_status_select_sql()
-            . ' WHERE c.author_id = ?
-                AND c.status = ?
-                AND (c.published_at IS NULL OR c.published_at <= ?)
-                AND u.status = ?
-            ORDER BY COALESCE(c.published_at, c.created_at) DESC, c.id DESC
-            LIMIT ' . $limit . ' OFFSET ' . $offset,
-            [$authorId, 'published', date_db(), 'active']
+        return public_status_page(
+            public_status_query()->where('c.author_id = ?', $authorId),
+            $limit,
+            $offset
         );
     }
 }
@@ -3331,19 +3331,12 @@ if (!function_exists('public_status_items_by_tag')) {
             return [];
         }
 
-        $limit = max(1, min(100, $limit));
-        $offset = max(0, $offset);
-
-        return all(
-            public_status_select_sql()
-            . ' INNER JOIN content_tags ct ON ct.content_id = c.id
-            WHERE ct.term_id = ?
-                AND c.status = ?
-                AND (c.published_at IS NULL OR c.published_at <= ?)
-                AND u.status = ?
-            ORDER BY COALESCE(c.published_at, c.created_at) DESC, c.id DESC
-            LIMIT ' . $limit . ' OFFSET ' . $offset,
-            [$termId, 'published', date_db(), 'active']
+        return public_status_page(
+            public_status_query()
+                ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
+                ->where('ct.term_id = ?', $termId),
+            $limit,
+            $offset
         );
     }
 }
@@ -3355,15 +3348,10 @@ if (!function_exists('public_status_item')) {
             return null;
         }
 
-        return one(
-            public_status_select_sql()
-            . ' WHERE c.id = ?
-                AND c.status = ?
-                AND (c.published_at IS NULL OR c.published_at <= ?)
-                AND u.status = ?
-            LIMIT 1',
-            [$id, 'published', date_db(), 'active']
-        );
+        return public_status_query()
+            ->where('c.id = ?', $id)
+            ->limit(1)
+            ->one();
     }
 }
 
@@ -3377,15 +3365,9 @@ if (!function_exists('public_status_items_by_ids')) {
         }
 
         $ids = array_slice($ids, 0, 100);
-        $placeholders = implode(', ', array_fill(0, count($ids), '?'));
-        $rows = all(
-            public_status_select_sql()
-            . ' WHERE c.id IN (' . $placeholders . ')
-                AND c.status = ?
-                AND (c.published_at IS NULL OR c.published_at <= ?)
-                AND u.status = ?',
-            array_merge($ids, ['published', date_db(), 'active'])
-        );
+        $rows = public_status_query()
+            ->whereIn('c.id', $ids)
+            ->all();
         $byId = [];
 
         foreach ($rows as $row) {
@@ -3410,26 +3392,24 @@ if (!function_exists('public_trending_tags')) {
         $limit = max(1, min(30, $limit));
         $days = max(1, min(365, $days));
         $since = date_db('-' . $days . ' days');
-        $params = [$since, 'published', date_db(), 'active'];
-        $where = 'COALESCE(c.published_at, c.created_at) >= ?
-            AND c.status = ?
-            AND (c.published_at IS NULL OR c.published_at <= ?)
-            AND u.status = ?';
 
-        $rows = all(
+        $rows = db_select(
             'SELECT t.id,
                 t.name,
                 COUNT(DISTINCT ct.content_id) AS posts_count
             FROM terms t
             INNER JOIN content_tags ct ON ct.term_id = t.id
             INNER JOIN content c ON c.id = ct.content_id
-            INNER JOIN users u ON u.id = c.author_id
-            WHERE ' . $where . '
-            GROUP BY t.id, t.name
-            ORDER BY posts_count DESC, MAX(COALESCE(c.published_at, c.created_at)) DESC, t.name ASC
-            LIMIT ' . $limit,
-            $params
-        );
+            INNER JOIN users u ON u.id = c.author_id'
+        )
+            ->where('COALESCE(c.published_at, c.created_at) >= ?', $since)
+            ->where('c.status = ?', 'published')
+            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+            ->where('u.status = ?', 'active')
+            ->group('t.id, t.name')
+            ->order('posts_count DESC, MAX(COALESCE(c.published_at, c.created_at)) DESC, t.name ASC')
+            ->limit($limit)
+            ->all();
 
         $tags = [];
 
@@ -3458,7 +3438,7 @@ if (!function_exists('public_top_authors')) {
         $limit = max(1, min(20, $limit));
         $days = max(1, min(365, $days));
 
-        return all(
+        return db_select(
             'SELECT u.id,
                 u.username,
                 u.username AS name,
@@ -3466,16 +3446,16 @@ if (!function_exists('public_top_authors')) {
                 u.avatar_url AS avatar_url,
                 COUNT(c.id) AS posts_count
             FROM users u
-            INNER JOIN content c ON c.author_id = u.id
-            WHERE COALESCE(c.published_at, c.created_at) >= ?
-                AND c.status = ?
-                AND (c.published_at IS NULL OR c.published_at <= ?)
-                AND u.status = ?
-            GROUP BY u.id, u.username, u.bio, u.avatar_url
-            ORDER BY posts_count DESC, MAX(COALESCE(c.published_at, c.created_at)) DESC, u.username ASC
-            LIMIT ' . $limit,
-            [date_db('-' . $days . ' days'), 'published', date_db(), 'active']
-        );
+            INNER JOIN content c ON c.author_id = u.id'
+        )
+            ->where('COALESCE(c.published_at, c.created_at) >= ?', date_db('-' . $days . ' days'))
+            ->where('c.status = ?', 'published')
+            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+            ->where('u.status = ?', 'active')
+            ->group('u.id, u.username, u.bio, u.avatar_url')
+            ->order('posts_count DESC, MAX(COALESCE(c.published_at, c.created_at)) DESC, u.username ASC')
+            ->limit($limit)
+            ->all();
     }
 }
 
@@ -3617,16 +3597,16 @@ if (!function_exists('public_search_content_link_excerpt')) {
         }
 
         $like = '%' . $query . '%';
-        $link = one(
+        $link = db_select(
             'SELECT l.url, l.final_url, l.title, l.description, l.site_name, l.source, l.external_id
             FROM content_links cl
-            INNER JOIN links l ON l.id = cl.link_id
-            WHERE cl.content_id = ?
-                AND (' . status_link_search_condition('l') . ')
-            ORDER BY cl.position ASC, l.id ASC
-            LIMIT 1',
-            array_merge([$contentId], status_link_search_params($like, 'l'))
-        );
+            INNER JOIN links l ON l.id = cl.link_id'
+        )
+            ->where('cl.content_id = ?', $contentId)
+            ->where(status_link_search_condition('l'), status_link_search_params($like, 'l'))
+            ->order('cl.position ASC, l.id ASC')
+            ->limit(1)
+            ->one();
 
         if ($link === null) {
             return '';
@@ -3669,16 +3649,16 @@ if (!function_exists('public_search_results')) {
         $content = [];
         $contentIds = [];
 
-        foreach (all(
+        foreach (db_select(
             'SELECT t.id, t.name, COUNT(ct.content_id) AS posts_count
             FROM terms t
-            LEFT JOIN content_tags ct ON ct.term_id = t.id
-            WHERE t.name LIKE ?
-            GROUP BY t.id, t.name
-            ORDER BY posts_count DESC, t.name ASC
-            LIMIT ' . $limit,
-            [$tagLike]
-        ) as $tag) {
+            LEFT JOIN content_tags ct ON ct.term_id = t.id'
+        )
+            ->where('t.name LIKE ?', $tagLike)
+            ->group('t.id, t.name')
+            ->order('posts_count DESC, t.name ASC')
+            ->limit($limit)
+            ->all() as $tag) {
             $name = status_tag_normalize((string) ($tag['name'] ?? ''));
 
             if ($name === '') {
@@ -3695,19 +3675,24 @@ if (!function_exists('public_search_results')) {
             ];
         }
 
-        foreach (all(
+        foreach (db_select(
             'SELECT u.id, u.username, u.username AS name, u.bio, u.avatar_url AS avatar_url
-            FROM users u
-            WHERE u.status = ?
-                AND (
+            FROM users u'
+        )
+            ->where('u.status = ?', 'active')
+            ->where(
+                '(
                     u.username LIKE ?
                     OR u.bio LIKE ?
                     OR u.website LIKE ?
-                )
-            ORDER BY u.username ASC, u.id ASC
-            LIMIT ' . $limit,
-            ['active', $like, $like, $like]
-        ) as $user) {
+                )',
+                $like,
+                $like,
+                $like
+            )
+            ->order('u.username ASC, u.id ASC')
+            ->limit($limit)
+            ->all() as $user) {
             $id = (int) ($user['id'] ?? 0);
 
             if ($id < 1) {
@@ -3724,16 +3709,11 @@ if (!function_exists('public_search_results')) {
             ];
         }
 
-        foreach (all(
-            public_status_select_sql()
-            . ' WHERE c.body LIKE ?
-                AND c.status = ?
-                AND (c.published_at IS NULL OR c.published_at <= ?)
-                AND u.status = ?
-            ORDER BY COALESCE(c.published_at, c.created_at) DESC, c.id DESC
-            LIMIT ' . $limit,
-            [$like, 'published', date_db(), 'active']
-        ) as $item) {
+        foreach (public_status_query()
+            ->where('c.body LIKE ?', $like)
+            ->order('COALESCE(c.published_at, c.created_at) DESC, c.id DESC')
+            ->limit($limit)
+            ->all() as $item) {
             $id = (int) ($item['id'] ?? 0);
             $authorId = (int) ($item['author_id'] ?? 0);
 
@@ -3759,7 +3739,7 @@ if (!function_exists('public_search_results')) {
         if (count($content) < $limit) {
             $linkLimit = $limit * 4;
 
-            foreach (all(
+            foreach (db_select(
                 'SELECT c.id,
                     c.body,
                     c.author_id,
@@ -3776,15 +3756,15 @@ if (!function_exists('public_search_results')) {
                 FROM content c
                 INNER JOIN users u ON u.id = c.author_id
                 INNER JOIN content_links cl ON cl.content_id = c.id
-                INNER JOIN links l ON l.id = cl.link_id
-                WHERE (' . status_link_search_condition('l') . ')
-                    AND c.status = ?
-                    AND (c.published_at IS NULL OR c.published_at <= ?)
-                    AND u.status = ?
-                ORDER BY COALESCE(c.published_at, c.created_at) DESC, c.id DESC, cl.position ASC
-                LIMIT ' . $linkLimit,
-                array_merge(status_link_search_params($like, 'l'), ['published', date_db(), 'active'])
-            ) as $item) {
+                INNER JOIN links l ON l.id = cl.link_id'
+            )
+                ->where(status_link_search_condition('l'), status_link_search_params($like, 'l'))
+                ->where('c.status = ?', 'published')
+                ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+                ->where('u.status = ?', 'active')
+                ->order('COALESCE(c.published_at, c.created_at) DESC, c.id DESC, cl.position ASC')
+                ->limit($linkLimit)
+                ->all() as $item) {
                 $id = (int) ($item['id'] ?? 0);
                 $authorId = (int) ($item['author_id'] ?? 0);
 
@@ -3837,7 +3817,10 @@ if (!function_exists('status_find')) {
             return null;
         }
 
-        return one('SELECT * FROM content WHERE id = ? LIMIT 1', [$id]);
+        return db_select('SELECT * FROM content')
+            ->where('id = ?', $id)
+            ->limit(1)
+            ->one();
     }
 }
 
@@ -3895,13 +3878,11 @@ if (!function_exists('status_user_reaction')) {
             return '';
         }
 
-        return (string) val(
-            'SELECT reaction
-            FROM content_reactions
-            WHERE content_id = ? AND user_id = ?
-            LIMIT 1',
-            [$contentId, $userId]
-        );
+        return (string) db_select('SELECT reaction FROM content_reactions')
+            ->where('content_id = ?', $contentId)
+            ->where('user_id = ?', $userId)
+            ->limit(1)
+            ->value();
     }
 }
 
@@ -3912,7 +3893,7 @@ if (!function_exists('status_comments')) {
             return [];
         }
 
-        $rows = all(
+        $rows = db_select(
             'SELECT cc.id,
                 cc.content_id,
                 cc.parent_id,
@@ -3927,12 +3908,12 @@ if (!function_exists('status_comments')) {
                     WHERE cl.comment_id = cc.id
                 ) AS likes_count
             FROM content_comments cc
-            INNER JOIN users u ON u.id = cc.user_id
-            WHERE cc.content_id = ?
-                AND u.status = ?
-            ORDER BY cc.created_at ASC, cc.id ASC',
-            [$contentId, 'active']
-        );
+            INNER JOIN users u ON u.id = cc.user_id'
+        )
+            ->where('cc.content_id = ?', $contentId)
+            ->where('u.status = ?', 'active')
+            ->order('cc.created_at ASC, cc.id ASC')
+            ->all();
         $parents = [];
         $children = [];
 
@@ -3973,7 +3954,10 @@ if (!function_exists('status_comment_find')) {
             return null;
         }
 
-        return one('SELECT * FROM content_comments WHERE id = ? LIMIT 1', [$id]);
+        return db_select('SELECT * FROM content_comments')
+            ->where('id = ?', $id)
+            ->limit(1)
+            ->one();
     }
 }
 
@@ -3984,7 +3968,9 @@ if (!function_exists('status_comment_count')) {
             return 0;
         }
 
-        return (int) val('SELECT COUNT(*) FROM content_comments WHERE content_id = ?', [$contentId]);
+        return db_select('SELECT id FROM content_comments')
+            ->where('content_id = ?', $contentId)
+            ->count();
     }
 }
 
@@ -4034,12 +4020,10 @@ if (!function_exists('status_comment_user_liked')) {
             return false;
         }
 
-        return (int) val(
-            'SELECT COUNT(*)
-            FROM comment_likes
-            WHERE comment_id = ? AND user_id = ?',
-            [$commentId, $userId]
-        ) > 0;
+        return db_select('SELECT comment_id FROM comment_likes')
+            ->where('comment_id = ?', $commentId)
+            ->where('user_id = ?', $userId)
+            ->exists();
     }
 }
 
@@ -4050,7 +4034,9 @@ if (!function_exists('status_comment_like_count')) {
             return 0;
         }
 
-        return (int) val('SELECT COUNT(*) FROM comment_likes WHERE comment_id = ?', [$commentId]);
+        return db_select('SELECT comment_id FROM comment_likes')
+            ->where('comment_id = ?', $commentId)
+            ->count();
     }
 }
 
@@ -4113,7 +4099,7 @@ if (!function_exists('status_tag_suggestions')) {
         $tags = [];
 
         try {
-            foreach (all('SELECT name FROM terms ORDER BY name ASC LIMIT 300') as $row) {
+            foreach (db_select('SELECT name FROM terms')->order('name ASC')->limit(300)->all() as $row) {
                 $tag = status_tag_normalize((string) ($row['name'] ?? ''));
 
                 if ($tag !== '') {
@@ -4137,7 +4123,10 @@ if (!function_exists('status_term_id')) {
             return 0;
         }
 
-        $term = one('SELECT id, name FROM terms WHERE name = ? LIMIT 1', [$tag]);
+        $term = db_select('SELECT id, name FROM terms')
+            ->where('name = ?', $tag)
+            ->limit(1)
+            ->one();
         $id = (int) ($term['id'] ?? 0);
 
         if ($id > 0) {
@@ -4151,7 +4140,10 @@ if (!function_exists('status_term_id')) {
         try {
             return (int) insert('terms', ['name' => $tag]);
         } catch (Throwable) {
-            $term = one('SELECT id, name FROM terms WHERE name = ? LIMIT 1', [$tag]);
+            $term = db_select('SELECT id, name FROM terms')
+                ->where('name = ?', $tag)
+                ->limit(1)
+                ->one();
             $id = (int) ($term['id'] ?? 0);
 
             if ($id > 0 && (string) ($term['name'] ?? '') !== $tag) {
@@ -4172,7 +4164,7 @@ if (!function_exists('status_term_id_exact')) {
             return 0;
         }
 
-        foreach (all('SELECT id, name FROM terms WHERE name = ?', [$tag]) as $term) {
+        foreach (db_select('SELECT id, name FROM terms')->where('name = ?', $tag)->all() as $term) {
             if ((string) ($term['name'] ?? '') === $tag) {
                 return (int) ($term['id'] ?? 0);
             }
@@ -4474,15 +4466,14 @@ if (!function_exists('notification_create_for_reporters')) {
             return;
         }
 
-        $params = [$contentId];
-        $where = 'content_id = ?';
+        $query = db_select('SELECT DISTINCT reporter_id FROM content_reports')
+            ->where('content_id = ?', $contentId);
 
         if ($reportStatus !== '') {
-            $where .= ' AND status = ?';
-            $params[] = $reportStatus;
+            $query->where('status = ?', $reportStatus);
         }
 
-        foreach (all('SELECT DISTINCT reporter_id FROM content_reports WHERE ' . $where, $params) as $row) {
+        foreach ($query->all() as $row) {
             $reporterId = (int) ($row['reporter_id'] ?? 0);
 
             if ($reporterId < 1 || $reporterId === $actorId) {
@@ -4508,7 +4499,10 @@ if (!function_exists('notification_unread_count')) {
             return 0;
         }
 
-        return (int) val('SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read_at IS NULL', [$userId]);
+        return db_select('SELECT id FROM notifications')
+            ->where('user_id = ?', $userId)
+            ->where('read_at IS NULL')
+            ->count();
     }
 }
 
@@ -4519,7 +4513,9 @@ if (!function_exists('notification_latest_id')) {
             return 0;
         }
 
-        return (int) val('SELECT COALESCE(MAX(id), 0) FROM notifications WHERE user_id = ?', [$userId]);
+        return (int) db_select('SELECT COALESCE(MAX(id), 0) FROM notifications')
+            ->where('user_id = ?', $userId)
+            ->value();
     }
 }
 
@@ -4531,19 +4527,20 @@ if (!function_exists('notifications_for_user')) {
         }
 
         $limit = max(1, min(200, $limit));
-        return all(
+
+        return db_select(
             'SELECT n.*,
                 u.username AS actor_name,
                 u.avatar_url AS actor_avatar_url,
                 c.body AS content_body
             FROM notifications n
             LEFT JOIN users u ON u.id = n.actor_id
-            LEFT JOIN content c ON c.id = n.content_id
-            WHERE n.user_id = ?
-            ORDER BY n.created_at DESC, n.id DESC
-            LIMIT ' . $limit,
-            [$userId]
-        );
+            LEFT JOIN content c ON c.id = n.content_id'
+        )
+            ->where('n.user_id = ?', $userId)
+            ->order('n.created_at DESC, n.id DESC')
+            ->limit($limit)
+            ->all();
     }
 }
 
@@ -5046,7 +5043,7 @@ if (!function_exists('status_comment_delete_for_user')) {
             redirect($redirect . '#' . status_anchor($contentId));
         }
 
-        foreach (all('SELECT id FROM content_comments WHERE parent_id = ?', [$commentId]) as $child) {
+        foreach (db_select('SELECT id FROM content_comments')->where('parent_id = ?', $commentId)->all() as $child) {
             $childId = (int) ($child['id'] ?? 0);
             delete('comment_likes', ['comment_id' => $childId]);
             notification_delete_for_comment($childId);
@@ -5123,7 +5120,7 @@ if (!function_exists('status_delete_for_user')) {
         }
 
         delete('content_reactions', ['content_id' => $contentId]);
-        foreach (all('SELECT id FROM content_comments WHERE content_id = ?', [$contentId]) as $comment) {
+        foreach (db_select('SELECT id FROM content_comments')->where('content_id = ?', $contentId)->all() as $comment) {
             delete('comment_likes', ['comment_id' => (int) ($comment['id'] ?? 0)]);
         }
         notification_delete_for_content($contentId);
@@ -6050,6 +6047,13 @@ if (!function_exists('val')) {
     function val(string $sql, array $params = []): mixed
     {
         return Core::value($sql, $params);
+    }
+}
+
+if (!function_exists('db_select')) {
+    function db_select(string $sql): CoreQuery
+    {
+        return Core::select($sql);
     }
 }
 
