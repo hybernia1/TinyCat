@@ -19,26 +19,13 @@ if (is_post()) {
         redirect('/login?next=' . rawurlencode(tc_login_next()));
     }
 
-    $loginLimit = rate_limit(
-        'login',
-        (int) config('security.rate_limit.login.max', 8),
-        (int) config('security.rate_limit.login.window', 900),
-        client_ip()
-    );
-
-    if (!$loginLimit['allowed']) {
-        captcha_refresh('login');
-        flash('error', t('auth.temporarily_blocked'));
-        redirect('/login?next=' . rawurlencode(tc_login_next()));
-    }
-
     if (auth_attempt([
         'email' => (string) post('email', ''),
         'password' => (string) post('password', ''),
         'remember' => post('remember', ''),
     ])) {
         captcha_refresh('login');
-        redirect(tc_login_next());
+        redirect(tc_login_redirect(auth()));
     }
 
     captcha_refresh('login');
@@ -46,7 +33,9 @@ if (is_post()) {
     redirect('/login?next=' . rawurlencode(tc_login_next()));
 }
 
-guest_only();
+if (auth_check()) {
+    redirect(tc_login_redirect(auth()));
+}
 
 $error = flash('error');
 $message = flash('success');
@@ -55,6 +44,12 @@ layout('layout', [
     'title' => t('auth.login_title'),
     'current' => '/login',
     'nav' => [],
+    'meta' => [
+        'description' => t('auth.login_intro'),
+        'url' => '/login',
+        'image' => site_meta_image_url(),
+        'robots' => 'noindex,follow',
+    ],
 ], static function () use ($error, $message): void {
     ?>
     <section style="max-width: 520px; margin-inline: auto;">
@@ -87,6 +82,12 @@ layout('layout', [
                     <?= captcha_field('login') ?>
                     <button class="btn btn-primary" type="submit"><?= icon('login') ?> <span><?= et('common.login') ?></span></button>
                 </form>
+                <?php if (registration_enabled()): ?>
+                    <div class="cluster gap-2">
+                        <span class="text-muted"><?= et('auth.no_account') ?></span>
+                        <a class="btn btn-secondary btn-sm" href="/register"><?= icon('user-plus') ?> <span><?= et('auth.register_link') ?></span></a>
+                    </div>
+                <?php endif; ?>
             </div>
         </article>
     </section>
@@ -95,11 +96,27 @@ layout('layout', [
 
 function tc_login_next(): string
 {
-    $next = (string) get('next', config('auth.home_url', '/'));
+    $next = (string) get('next', '');
 
     if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')) {
-        return (string) config('auth.home_url', '/');
+        return '';
     }
 
-    return route_path($next) === '/login' ? (string) config('auth.home_url', '/') : $next;
+    return in_array(route_path($next), ['/login', '/register'], true) ? '' : $next;
+}
+
+function tc_login_redirect(?array $user): string
+{
+    $fallback = auth_landing_url($user);
+    $next = tc_login_next();
+
+    if ($next === '') {
+        return $fallback;
+    }
+
+    if (str_starts_with(route_path($next), '/admin') && (string) ($user['role'] ?? '') !== 'admin') {
+        return auth_landing_url($user);
+    }
+
+    return $next;
 }

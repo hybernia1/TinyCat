@@ -15,14 +15,28 @@ $config = array (
   array (
     'name' => 'TinyCat',
     'version' => '1.0.0',
-    'debug' => true,
+    'debug' => false,
   ),
   'site' => 
   array (
     'name' => 'TinyCat',
-    'logo_media_id' => 0,
-    'favicon_media_id' => 0,
+    'logo_url' => '',
+    'logo_path' => '',
+    'favicon_url' => '',
+    'favicon_path' => '',
     'footer_html' => '',
+    'image_url' => '/uploads/site',
+    'image_subfolder' => 'Y/m',
+    'image_quality' => 86,
+    'image_max_size' => 67108864,
+  ),
+  'avatar' => 
+  array (
+    'url' => '/uploads/avatars',
+    'subfolder' => 'Y/m',
+    'size' => 200,
+    'quality' => 86,
+    'max_size' => 67108864,
   ),
   'database' => 
   array (
@@ -40,7 +54,15 @@ $config = array (
   array (
     'login_url' => '/login',
     'home_url' => '/admin',
+    'account_url' => '/account',
     'remember_days' => 30,
+    'online_window' => 300,
+    'online_touch_interval' => 60,
+    'registration' => 
+    array (
+      'enabled' => false,
+      'auto_approve' => false,
+    ),
   ),
   'admin' => 
   array (
@@ -55,12 +77,6 @@ $config = array (
   ),
   'security' => 
   array (
-    'trusted_proxies' => 
-    array (
-    ),
-    'rate_limit' => 
-    array (
-    ),
     'captcha' => 
     array (
       'field' => 'tc_captcha',
@@ -74,108 +90,17 @@ $config = array (
     'icons' => 'icons.svg',
     'version' => true,
   ),
-  'upload' => 
-  array (
-    'url' => '/uploads',
-    'subfolder' => 'Y/m',
-    'extensions' => 
-    array (
-      0 => 'jpg',
-      1 => 'jpeg',
-      2 => 'png',
-      3 => 'gif',
-      4 => 'webp',
-      5 => 'svg',
-      6 => 'ico',
-      7 => 'pdf',
-      8 => 'txt',
-      9 => 'csv',
-      10 => 'doc',
-      11 => 'docx',
-      12 => 'xls',
-      13 => 'xlsx',
-      14 => 'zip',
-    ),
-    'mime_types' => 
-    array (
-      0 => 'image/jpeg',
-      1 => 'image/png',
-      2 => 'image/gif',
-      3 => 'image/webp',
-      4 => 'image/svg+xml',
-      5 => 'image/x-icon',
-      6 => 'image/vnd.microsoft.icon',
-      7 => 'application/pdf',
-      8 => 'text/plain',
-      9 => 'text/csv',
-      10 => 'application/msword',
-      11 => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      12 => 'application/vnd.ms-excel',
-      13 => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      14 => 'application/zip',
-    ),
-    'overwrite' => false,
-    'profiles' => 
-    array (
-      'image' => 
-      array (
-        'extensions' => 
-        array (
-          0 => 'jpg',
-          1 => 'jpeg',
-          2 => 'png',
-          3 => 'gif',
-          4 => 'webp',
-          5 => 'svg',
-          6 => 'ico',
-        ),
-        'mime_types' => 
-        array (
-          0 => 'image/jpeg',
-          1 => 'image/png',
-          2 => 'image/gif',
-          3 => 'image/webp',
-          4 => 'image/svg+xml',
-          5 => 'image/x-icon',
-          6 => 'image/vnd.microsoft.icon',
-        ),
-      ),
-      'document' => 
-      array (
-        'extensions' => 
-        array (
-          0 => 'pdf',
-          1 => 'txt',
-          2 => 'csv',
-          3 => 'doc',
-          4 => 'docx',
-          5 => 'xls',
-          6 => 'xlsx',
-        ),
-        'mime_types' => 
-        array (
-          0 => 'application/pdf',
-          1 => 'text/plain',
-          2 => 'text/csv',
-          3 => 'application/msword',
-          4 => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          5 => 'application/vnd.ms-excel',
-          6 => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ),
-      ),
-    ),
-  ),
   'install' => 
   array (
-    'installed' => false,
-    'installed_at' => NULL,
-    'locale' => 'cs',
+    'installed' => true,
+    'installed_at' => '2026-07-06T15:22:12+00:00',
+    'locale' => 'en',
     'version' => '1.0.0',
   ),
 );
 
 $config['i18n']['directory'] = $path('lang');
 $config['assets']['directory'] = $path('assets');
-$config['upload']['directory'] = $path('uploads');
-$config['security']['rate_limit']['storage'] = $path('storage/rate-limit');
+$config['avatar']['directory'] = $path('uploads/avatars');
+$config['site']['image_directory'] = $path('uploads/site');
 return $config;

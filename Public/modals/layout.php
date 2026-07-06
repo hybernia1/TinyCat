@@ -11,6 +11,7 @@ $title = (string) ($title ?? '');
 $iconName = (string) ($icon ?? '');
 $size = trim((string) ($size ?? ''));
 $modalClass = trim('modal ' . (string) ($modalClass ?? ''));
+$bodyClass = trim('modal-body ' . (string) ($bodyClass ?? 'stack'));
 $body = (string) ($body ?? '');
 $footer = (string) ($footer ?? '');
 $action = (string) ($action ?? '');
@@ -72,7 +73,7 @@ $attributes = static function (array $items): string {
                 </h2>
                 <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-close aria-label="<?= et('common.close') ?>"><?= icon('close') ?></button>
             </div>
-            <div class="modal-body stack">
+            <div class="<?= e($bodyClass) ?>">
                 <?= $body ?>
             </div>
             <?php if ($footer !== ''): ?>

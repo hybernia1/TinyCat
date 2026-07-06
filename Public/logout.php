@@ -18,6 +18,11 @@ require_auth();
 layout('layout', [
     'title' => t('auth.logout_title'),
     'current' => '/logout',
+    'meta' => [
+        'description' => t('auth.logout_intro'),
+        'url' => '/logout',
+        'robots' => 'noindex,nofollow',
+    ],
 ], static function (): void {
     ?>
     <article class="card">

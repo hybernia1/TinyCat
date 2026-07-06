@@ -6,7 +6,7 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-require_auth();
+require_admin();
 
 layout('layout', [
     'title' => t('admin.dashboard_title'),
@@ -15,9 +15,6 @@ layout('layout', [
     $stats = [
         ['icon' => 'users', 'label' => t('admin.stats.users'), 'table' => 'users'],
         ['icon' => 'file', 'label' => t('admin.stats.content'), 'table' => 'content'],
-        ['icon' => 'menu', 'label' => t('admin.stats.menu'), 'table' => 'menu_items'],
-        ['icon' => 'image', 'label' => t('admin.stats.media'), 'table' => 'media'],
-        ['icon' => 'folder', 'label' => t('admin.stats.terms'), 'table' => 'terms'],
     ];
     ?>
     <section class="grid md:grid-4">

@@ -10,7 +10,7 @@ if (!defined('TINYCAT')) {
  * TinyCat core.
  *
  * Keep this file focused on portable application infrastructure:
- * config, database, simple CRUD, uploads, slugs, sessions and responses.
+ * config, database, simple CRUD, slugs, sessions and responses.
  */
 final class Core
 {
@@ -638,120 +638,6 @@ final class Core
         return self::$translations[$locale];
     }
 
-    public static function upload(array $file, string $directory, array $options = []): array
-    {
-        $defaults = [
-            'url' => null,
-            'subfolder' => self::config('upload.subfolder', 'Y/m'),
-            'max_size' => (int) self::config('upload.max_size', 5 * 1024 * 1024),
-            'extensions' => [],
-            'mime_types' => [],
-            'name' => null,
-            'overwrite' => false,
-        ];
-        $configured = self::uploadOptions($options['profile'] ?? null, $options);
-        $options = $configured + $defaults;
-        $directory = $directory !== '' ? $directory : (string) ($options['directory'] ?? self::config('upload.directory', self::basePath('uploads')));
-        $folder = self::uploadSubfolder($options['subfolder'] ?? null);
-
-        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            throw new RuntimeException(self::uploadError((int) ($file['error'] ?? UPLOAD_ERR_NO_FILE)));
-        }
-
-        $tmpName = (string) ($file['tmp_name'] ?? '');
-
-        if ($tmpName === '' || !is_uploaded_file($tmpName)) {
-            throw new RuntimeException('Uploaded file is not valid.');
-        }
-
-        $size = (int) ($file['size'] ?? 0);
-
-        if ($size > (int) $options['max_size']) {
-            throw new RuntimeException('Uploaded file is too large.');
-        }
-
-        $original = (string) ($file['name'] ?? 'file');
-        $extension = strtolower(pathinfo($original, PATHINFO_EXTENSION));
-        $allowedExtensions = array_map('strtolower', (array) $options['extensions']);
-
-        if ($allowedExtensions !== [] && !in_array($extension, $allowedExtensions, true)) {
-            throw new RuntimeException('Uploaded file extension is not allowed.');
-        }
-
-        if ((array) $options['mime_types'] !== []) {
-            $mime = self::mime($tmpName);
-
-            if (!in_array($mime, (array) $options['mime_types'], true)) {
-                throw new RuntimeException('Uploaded file MIME type is not allowed.');
-            }
-        } else {
-            $mime = self::mime($tmpName);
-        }
-
-        if ($folder !== '') {
-            $directory = rtrim($directory, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $folder);
-        }
-
-        self::ensureDirectory($directory);
-
-        $base = $options['name'] !== null
-            ? self::slug((string) $options['name'])
-            : self::slug(pathinfo($original, PATHINFO_FILENAME));
-
-        if ($base === '') {
-            $base = 'file';
-        }
-
-        $filename = $extension !== '' ? $base . '.' . $extension : $base;
-        $target = rtrim($directory, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . $filename;
-
-        if (!$options['overwrite']) {
-            $target = self::uniquePath($target);
-            $filename = basename($target);
-        }
-
-        if (!move_uploaded_file($tmpName, $target)) {
-            throw new RuntimeException('Could not move uploaded file.');
-        }
-
-        return [
-            'name' => $filename,
-            'original' => $original,
-            'path' => $target,
-            'folder' => $folder,
-            'url' => self::uploadedUrl($filename, $options, $folder),
-            'size' => $size,
-            'mime' => $mime,
-            'extension' => $extension,
-        ];
-    }
-
-    public static function uploadOptions(?string $profile = null, array $overrides = []): array
-    {
-        $base = self::config('upload', []);
-        $base = is_array($base) ? $base : [];
-        $profiles = isset($base['profiles']) && is_array($base['profiles']) ? $base['profiles'] : [];
-        unset($base['profiles']);
-
-        $base['max_size'] = (int) self::config('upload.max_size', $base['max_size'] ?? 5 * 1024 * 1024);
-
-        $profileOptions = [];
-
-        if ($profile !== null && $profile !== '') {
-            $profileOptions = $profiles[$profile] ?? [];
-            $profileOptions = is_array($profileOptions) ? $profileOptions : [];
-            $profileOptions['max_size'] = (int) self::config(
-                'upload.profiles.' . $profile . '.max_size',
-                $profileOptions['max_size'] ?? $base['max_size']
-            );
-        }
-
-        $options = array_replace($base, $profileOptions, $overrides);
-        unset($options['profile']);
-
-        return $options;
-    }
-
     public static function slug(string $text, string $separator = '-'): string
     {
         if ($separator === '') {
@@ -1157,94 +1043,6 @@ final class Core
         return null;
     }
 
-    public static function clientIp(): string
-    {
-        $remote = trim((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
-        $trusted = (array) self::config('security.trusted_proxies', []);
-
-        if ($remote !== '' && in_array($remote, array_map('strval', $trusted), true)) {
-            $forwarded = trim((string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''));
-
-            if ($forwarded === '') {
-                $forwarded = trim(explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''))[0] ?? '');
-            }
-
-            if (filter_var($forwarded, FILTER_VALIDATE_IP)) {
-                return $forwarded;
-            }
-        }
-
-        return filter_var($remote, FILTER_VALIDATE_IP) ? $remote : '0.0.0.0';
-    }
-
-    public static function rateLimit(
-        string $key,
-        ?int $max = null,
-        ?int $window = null,
-        ?string $identity = null
-    ): array {
-        $max = max(1, $max ?? (int) self::config('security.rate_limit.max', 240));
-        $window = max(1, $window ?? (int) self::config('security.rate_limit.window', 60));
-        $identity = $identity !== null && $identity !== '' ? $identity : self::clientIp();
-        $now = time();
-        $hash = hash('sha256', $key . '|' . $identity);
-        $data = self::rateLimitRead($hash);
-
-        if (($data['reset'] ?? 0) <= $now) {
-            $data = [
-                'count' => 0,
-                'reset' => $now + $window,
-            ];
-        }
-
-        $data['count'] = (int) ($data['count'] ?? 0) + 1;
-        self::rateLimitWrite($hash, $data);
-
-        $retryAfter = max(0, (int) $data['reset'] - $now);
-        $allowed = (int) $data['count'] <= $max;
-
-        return [
-            'allowed' => $allowed,
-            'key' => $key,
-            'identity' => $identity,
-            'limit' => $max,
-            'count' => (int) $data['count'],
-            'remaining' => max(0, $max - (int) $data['count']),
-            'retry_after' => $allowed ? 0 : $retryAfter,
-            'reset_at' => date(DATE_ATOM, (int) $data['reset']),
-        ];
-    }
-
-    public static function guardRequestSecurity(): void
-    {
-        if (!(bool) self::config('security.enabled', true)) {
-            return;
-        }
-
-        if (!(bool) self::config('security.rate_limit.enabled', true)) {
-            return;
-        }
-
-        $state = self::rateLimit(
-            'request',
-            (int) self::config('security.rate_limit.max', 240),
-            (int) self::config('security.rate_limit.window', 60)
-        );
-
-        if ($state['allowed']) {
-            return;
-        }
-
-        if (self::isApiPath(self::path()) || self::wantsJson() || isset($_GET['api'])) {
-            self::apiError('Too many requests.', 429, 'rate_limited', ['retry_after' => $state['retry_after']]);
-        }
-
-        http_response_code(429);
-        header('Content-Type: text/plain; charset=utf-8');
-        echo 'Too many requests.';
-        exit;
-    }
-
     public static function captchaField(string $context = 'form'): string
     {
         if (!(bool) self::config('security.captcha.enabled', true)) {
@@ -1473,6 +1271,7 @@ final class Core
         $login = $credentials[self::AUTH_LOGIN] ?? $credentials['login'] ?? $credentials['email'] ?? $credentials['username'] ?? null;
         $password = $credentials[self::AUTH_PASSWORD] ?? $credentials['password'] ?? null;
         $remember = in_array($credentials['remember'] ?? false, [true, 1, '1', 'true', 'on', 'yes'], true);
+        $roles = $credentials['roles'] ?? $credentials['role'] ?? null;
 
         if (!is_string($login) || trim($login) === '' || !is_string($password) || $password === '') {
             return false;
@@ -1487,6 +1286,10 @@ final class Core
         $hash = (string) ($user[self::AUTH_PASSWORD] ?? '');
 
         if ($hash === '' || !password_verify($password, $hash)) {
+            return false;
+        }
+
+        if ($roles !== null && !self::authUserHasRole($user, $roles)) {
             return false;
         }
 
@@ -1524,6 +1327,8 @@ final class Core
         } else {
             self::authForget();
         }
+
+        self::authTouchUser($id, true);
 
         return true;
     }
@@ -1908,6 +1713,68 @@ final class Core
         return is_string($url) && $url !== '' ? $url : $default;
     }
 
+    private static function authTouchUser(mixed $id, bool $login = false): void
+    {
+        if ($id === null || $id === '') {
+            return;
+        }
+
+        $now = self::dateDb();
+        $data = [];
+
+        if ($login && self::tableHasColumn(self::AUTH_TABLE, 'last_login_at')) {
+            $data['last_login_at'] = $now;
+        }
+
+        if (self::tableHasColumn(self::AUTH_TABLE, 'last_seen_at')) {
+            $data['last_seen_at'] = $now;
+        }
+
+        if ($data === []) {
+            return;
+        }
+
+        try {
+            self::update(self::AUTH_TABLE, $data, [self::AUTH_ID => $id]);
+        } catch (Throwable) {
+            // Login must not fail because an optional activity column is unavailable.
+        }
+    }
+
+    private static function tableHasColumn(string $table, string $column): bool
+    {
+        static $cache = [];
+
+        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $column)) {
+            return false;
+        }
+
+        $key = $table . '.' . $column;
+
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        try {
+            if ((string) self::config('database.driver', 'mysql') === 'sqlite') {
+                foreach (self::all('PRAGMA table_info(' . self::identifier($table) . ')') as $row) {
+                    if ((string) ($row['name'] ?? '') === $column) {
+                        return $cache[$key] = true;
+                    }
+                }
+
+                return $cache[$key] = false;
+            }
+
+            return $cache[$key] = (int) self::value(
+                'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
+                [$table, $column]
+            ) > 0;
+        } catch (Throwable) {
+            return $cache[$key] = false;
+        }
+    }
+
     private static function authRememberUser(): ?array
     {
         $name = self::authRememberCookieName();
@@ -2086,6 +1953,20 @@ final class Core
         return (string) $user[self::AUTH_STATUS] === self::AUTH_ACTIVE_STATUS;
     }
 
+    private static function authUserHasRole(array $user, array|string $roles): bool
+    {
+        $role = (string) ($user[self::AUTH_ROLE] ?? '');
+
+        if ($role === '') {
+            return false;
+        }
+
+        $roles = is_array($roles) ? $roles : preg_split('/[,\|]/', $roles);
+        $roles = array_filter(array_map(static fn (mixed $item): string => trim((string) $item), (array) $roles));
+
+        return in_array($role, $roles, true);
+    }
+
     private static function authRedirectUrl(string $target): string
     {
         $current = (string) ($_SERVER['REQUEST_URI'] ?? self::path());
@@ -2228,54 +2109,6 @@ final class Core
         };
     }
 
-    private static function rateLimitRead(string $hash): array
-    {
-        $path = self::rateLimitPath($hash);
-
-        if ($path === null || !is_file($path)) {
-            self::session();
-            $data = $_SESSION['_rate_limits'][$hash] ?? [];
-
-            return is_array($data) ? $data : [];
-        }
-
-        $data = json_decode((string) @file_get_contents($path), true);
-
-        return is_array($data) ? $data : [];
-    }
-
-    private static function rateLimitWrite(string $hash, array $data): void
-    {
-        $path = self::rateLimitPath($hash);
-
-        if ($path === null) {
-            self::session();
-            $_SESSION['_rate_limits'][$hash] = $data;
-            return;
-        }
-
-        @file_put_contents($path, json_encode($data, JSON_UNESCAPED_SLASHES), LOCK_EX);
-    }
-
-    private static function rateLimitPath(string $hash): ?string
-    {
-        $directory = (string) self::config('security.rate_limit.storage', self::basePath('storage/rate-limit'));
-
-        if ($directory === '') {
-            return null;
-        }
-
-        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
-            return null;
-        }
-
-        if (!is_writable($directory)) {
-            return null;
-        }
-
-        return rtrim($directory, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . $hash . '.json';
-    }
-
     private static function captchaChallenge(string $context, bool $refresh = false): array
     {
         self::session();
@@ -2335,10 +2168,11 @@ final class Core
     private static function settingCanOverrideConfig(string $key): bool
     {
         static $keys = [
-            'app.name' => true,
             'site.name' => true,
-            'site.logo_media_id' => true,
-            'site.favicon_media_id' => true,
+            'site.logo_url' => true,
+            'site.logo_path' => true,
+            'site.favicon_url' => true,
+            'site.favicon_path' => true,
             'site.footer_html' => true,
             'i18n.locale' => true,
             'datetime.timezone' => true,
@@ -2346,17 +2180,9 @@ final class Core
             'datetime.time' => true,
             'datetime.datetime' => true,
             'datetime.relative' => true,
-            'security.enabled' => true,
-            'security.rate_limit.enabled' => true,
-            'security.rate_limit.max' => true,
-            'security.rate_limit.window' => true,
-            'security.rate_limit.login.max' => true,
-            'security.rate_limit.login.window' => true,
             'security.captcha.enabled' => true,
-            'security.captcha.tolerance' => true,
-            'upload.max_size' => true,
-            'upload.profiles.image.max_size' => true,
-            'upload.profiles.document.max_size' => true,
+            'auth.registration.enabled' => true,
+            'auth.registration.auto_approve' => true,
         ];
 
         return isset($keys[$key]);
@@ -2709,107 +2535,5 @@ final class Core
         return [implode(' AND ', $clauses), $params];
     }
 
-    private static function ensureDirectory(string $directory): void
-    {
-        if (is_dir($directory)) {
-            return;
-        }
-
-        if (!mkdir($directory, 0775, true) && !is_dir($directory)) {
-            throw new RuntimeException('Could not create directory: ' . $directory);
-        }
-    }
-
-    private static function uniquePath(string $path): string
-    {
-        if (!file_exists($path)) {
-            return $path;
-        }
-
-        $directory = dirname($path);
-        $name = pathinfo($path, PATHINFO_FILENAME);
-        $extension = pathinfo($path, PATHINFO_EXTENSION);
-        $suffix = $extension !== '' ? '.' . $extension : '';
-        $i = 2;
-
-        do {
-            $candidate = $directory . DIRECTORY_SEPARATOR . $name . '-' . $i . $suffix;
-            $i++;
-        } while (file_exists($candidate));
-
-        return $candidate;
-    }
-
-    private static function mime(string $path): string
-    {
-        $info = finfo_open(FILEINFO_MIME_TYPE);
-
-        if ($info === false) {
-            return 'application/octet-stream';
-        }
-
-        $mime = finfo_file($info, $path);
-        finfo_close($info);
-
-        return $mime === false ? 'application/octet-stream' : $mime;
-    }
-
-    private static function uploadError(int $error): string
-    {
-        return match ($error) {
-            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Uploaded file is too large.',
-            UPLOAD_ERR_PARTIAL => 'Uploaded file was only partially uploaded.',
-            UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
-            UPLOAD_ERR_NO_TMP_DIR => 'Temporary upload directory is missing.',
-            UPLOAD_ERR_CANT_WRITE => 'Could not write uploaded file.',
-            UPLOAD_ERR_EXTENSION => 'Upload was stopped by a PHP extension.',
-            default => 'Unknown upload error.',
-        };
-    }
-
-    private static function uploadSubfolder(mixed $format): string
-    {
-        if ($format === null || $format === false || $format === '') {
-            $format = self::config('upload.subfolder', 'Y/m');
-        }
-
-        $folder = self::now((string) $format);
-        $folder = str_replace('\\', '/', $folder);
-        $segments = array_filter(explode('/', $folder), static fn (string $segment): bool => $segment !== '');
-        $clean = [];
-
-        foreach ($segments as $segment) {
-            $segment = trim($segment);
-
-            if ($segment === '' || $segment === '.' || $segment === '..') {
-                continue;
-            }
-
-            $segment = preg_replace('/[^A-Za-z0-9._-]+/', '-', $segment) ?? '';
-            $segment = trim($segment, '.-');
-
-            if ($segment !== '') {
-                $clean[] = $segment;
-            }
-        }
-
-        $folder = implode('/', $clean);
-
-        return $folder !== '' ? $folder : self::now('Y/m');
-    }
-
-    private static function uploadedUrl(string $filename, array $options, string $folder = ''): ?string
-    {
-        $baseUrl = $options['url'] ?? self::config('upload.url');
-
-        if ($baseUrl === null || $baseUrl === '') {
-            return null;
-        }
-
-        $path = $folder !== '' ? trim($folder, '/') . '/' . $filename : $filename;
-        $segments = array_map('rawurlencode', explode('/', $path));
-
-        return rtrim((string) $baseUrl, '/') . '/' . implode('/', $segments);
-    }
 }
 

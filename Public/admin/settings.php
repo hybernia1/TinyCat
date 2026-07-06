@@ -10,52 +10,7 @@ if (!(bool) config('install.installed', false)) {
     redirect('/install');
 }
 
-require_auth();
-
-if (get('api') === 'file-upload') {
-    api_endpoint('POST', static function (): never {
-        csrf_require();
-        $type = tc_admin_settings_file_picker_type();
-        $file = $_FILES['file'] ?? null;
-
-        if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
-            api_validation(['file' => [t('media.messages.file_required')]]);
-        }
-
-        try {
-            $id = tc_admin_settings_store_file($file, trim((string) input('title', '')), $type);
-        } catch (RuntimeException $exception) {
-            api_validation(['file' => [$exception->getMessage()]]);
-        }
-
-        $media = find('media', ['id' => $id]) ?? [];
-
-        api_created([
-            'html' => tc_admin_settings_file_library_html($type, (int) $id),
-            'file' => tc_admin_settings_media_resource($media),
-            'media' => tc_admin_settings_media_resource($media),
-        ], t('media.messages.uploaded'));
-    });
-}
-
-if (get('api') === 'file-delete') {
-    api_endpoint('DELETE', static function (): never {
-        csrf_require();
-        $type = tc_admin_settings_file_picker_type();
-        $id = max(1, (int) get('id'));
-
-        if (!tc_admin_settings_media_exists($id)) {
-            api_error(t('media.messages.not_found'), 404, 'media_not_found');
-        }
-
-        tc_admin_settings_delete_media($id);
-
-        api_ok([
-            'html' => tc_admin_settings_file_library_html($type),
-            'deleted_id' => $id,
-        ], t('media.messages.deleted'));
-    });
-}
+require_admin();
 
 if (is_post()) {
     csrf_require();
@@ -83,8 +38,8 @@ if (is_post()) {
 layout('layout', [
     'title' => t('settings.meta_title'),
     'current' => '/admin/settings',
-    'styles' => ['css/tinycat.css', 'editor/editor.css'],
-    'scripts' => ['js/tinycat.js', 'editor/modal.js', 'editor/editor.js'],
+    'styles' => ['css/tinycat.css'],
+    'scripts' => ['js/tinycat.js'],
 ], static function (): void {
     $sections = tc_admin_settings_sections();
     $active = array_key_first($sections) ?: 'general';
@@ -103,7 +58,7 @@ layout('layout', [
             <?php endforeach; ?>
         </div>
 
-        <form method="post" action="/admin/settings" data-ajax-form>
+        <form method="post" action="/admin/settings" enctype="multipart/form-data" data-ajax-form>
             <?= csrf_field() ?>
             <div class="card-body stack">
                 <?php foreach ($sections as $key => $section): ?>
@@ -122,8 +77,6 @@ layout('layout', [
                 <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('common.save') ?></span></button>
             </div>
         </form>
-
-        <?= tc_admin_settings_file_picker() ?>
     </section>
     <?php
 });
@@ -131,21 +84,14 @@ layout('layout', [
 function tc_admin_settings_sections(): array
 {
     return [
-        'general' => [
-            'label' => t('settings.sections.general'),
-            'icon' => 'settings',
-            'fields' => [
-                ['key' => 'app.name', 'label' => t('settings.fields.app_name'), 'type' => 'text', 'default' => 'TinyCat', 'max' => 80],
-            ],
-        ],
         'site' => [
             'label' => t('settings.sections.site'),
             'icon' => 'home',
             'fields' => [
                 ['key' => 'site.name', 'label' => t('settings.fields.site_name'), 'type' => 'text', 'default' => config('app.name', 'TinyCat'), 'max' => 120, 'span' => true],
-                ['key' => 'site.logo_media_id', 'label' => t('settings.fields.site_logo'), 'type' => 'media', 'default' => 0, 'compact' => true],
-                ['key' => 'site.favicon_media_id', 'label' => t('settings.fields.site_favicon'), 'type' => 'media', 'default' => 0, 'compact' => true],
-                ['key' => 'site.footer_html', 'label' => t('settings.fields.site_footer'), 'type' => 'editor', 'default' => '', 'span' => true],
+                ['key' => 'site.logo_url', 'path_key' => 'site.logo_path', 'label' => t('settings.fields.site_logo'), 'type' => 'site_image', 'variant' => 'logo', 'default' => '', 'compact' => true],
+                ['key' => 'site.favicon_url', 'path_key' => 'site.favicon_path', 'label' => t('settings.fields.site_favicon'), 'type' => 'site_image', 'variant' => 'favicon', 'default' => '', 'compact' => true],
+                ['key' => 'site.footer_html', 'label' => t('settings.fields.site_footer'), 'type' => 'textarea', 'default' => '', 'span' => true],
             ],
         ],
         'localization' => [
@@ -164,23 +110,9 @@ function tc_admin_settings_sections(): array
             'label' => t('settings.sections.security'),
             'icon' => 'shield',
             'fields' => [
-                ['key' => 'security.enabled', 'label' => t('settings.fields.security_enabled'), 'type' => 'bool', 'default' => true],
-                ['key' => 'security.rate_limit.enabled', 'label' => t('settings.fields.rate_limit_enabled'), 'type' => 'bool', 'default' => true],
-                ['key' => 'security.rate_limit.max', 'label' => t('settings.fields.rate_limit_max'), 'type' => 'int', 'default' => 240, 'min' => 10, 'max' => 10000],
-                ['key' => 'security.rate_limit.window', 'label' => t('settings.fields.rate_limit_window'), 'type' => 'int', 'default' => 60, 'min' => 10, 'max' => 86400],
-                ['key' => 'security.rate_limit.login.max', 'label' => t('settings.fields.login_limit_max'), 'type' => 'int', 'default' => 8, 'min' => 2, 'max' => 100],
-                ['key' => 'security.rate_limit.login.window', 'label' => t('settings.fields.login_limit_window'), 'type' => 'int', 'default' => 900, 'min' => 60, 'max' => 86400],
                 ['key' => 'security.captcha.enabled', 'label' => t('settings.fields.captcha_enabled'), 'type' => 'bool', 'default' => true],
-                ['key' => 'security.captcha.tolerance', 'label' => t('settings.fields.captcha_tolerance'), 'type' => 'int', 'default' => 4, 'min' => 1, 'max' => 12],
-            ],
-        ],
-        'uploads' => [
-            'label' => t('settings.sections.uploads'),
-            'icon' => 'upload',
-            'fields' => [
-                ['key' => 'upload.max_size', 'label' => t('settings.fields.upload_max'), 'type' => 'mb', 'default' => 5242880, 'min' => 1, 'max' => 256],
-                ['key' => 'upload.profiles.image.max_size', 'label' => t('settings.fields.upload_image_max'), 'type' => 'mb', 'default' => 3145728, 'min' => 1, 'max' => 128],
-                ['key' => 'upload.profiles.document.max_size', 'label' => t('settings.fields.upload_document_max'), 'type' => 'mb', 'default' => 10485760, 'min' => 1, 'max' => 512],
+                ['key' => 'auth.registration.enabled', 'label' => t('settings.fields.registration_enabled'), 'type' => 'bool', 'default' => false],
+                ['key' => 'auth.registration.auto_approve', 'label' => t('settings.fields.registration_auto_approve'), 'type' => 'bool', 'default' => false],
             ],
         ],
     ];
@@ -192,14 +124,14 @@ function tc_admin_settings_field(array $field, string $group): string
     $type = (string) ($field['type'] ?? 'text');
     $value = config($key, $field['default'] ?? '');
     $name = 'settings[' . $key . ']';
-    $tag = in_array($type, ['media', 'editor'], true) ? 'div' : 'label';
+    $tag = $type === 'site_image' ? 'div' : 'label';
     $classes = ['field', 'settings-field'];
 
-    if ($type === 'media') {
-        $classes[] = 'settings-media-field';
+    if ($type === 'site_image') {
+        $classes[] = 'settings-image-field';
     }
 
-    if ($type === 'editor') {
+    if ($type === 'textarea') {
         $classes[] = 'settings-editor-field';
     }
 
@@ -244,10 +176,10 @@ function tc_admin_settings_field(array $field, string $group): string
             <input class="input" type="number" name="<?= e($name) ?>" value="<?= e((int) $value) ?>" min="<?= e((int) ($field['min'] ?? 0)) ?>" max="<?= e((int) ($field['max'] ?? PHP_INT_MAX)) ?>" required>
         <?php elseif ($type === 'mb'): ?>
             <input class="input" type="number" name="<?= e($name) ?>" value="<?= e(tc_admin_settings_bytes_to_mb((int) $value)) ?>" min="<?= e((float) ($field['min'] ?? 0)) ?>" max="<?= e((float) ($field['max'] ?? 1024)) ?>" step="0.1" required>
-        <?php elseif ($type === 'media'): ?>
-            <?= tc_admin_settings_media_field($name, (int) $value, tc_admin_settings_field_target($key)) ?>
-        <?php elseif ($type === 'editor'): ?>
-            <textarea class="textarea" name="<?= e($name) ?>" rows="8" data-editor data-editor-file-picker="settings-file-picker" data-editor-min-height="240px" data-editor-placeholder="<?= et('settings.footer_placeholder') ?>"><?= e((string) $value) ?></textarea>
+        <?php elseif ($type === 'site_image'): ?>
+            <?= tc_admin_settings_site_image_field($name, (string) $value, (string) ($field['variant'] ?? 'logo')) ?>
+        <?php elseif ($type === 'textarea'): ?>
+            <textarea class="textarea" name="<?= e($name) ?>" rows="8" placeholder="<?= et('settings.footer_placeholder') ?>"><?= e((string) $value) ?></textarea>
         <?php else: ?>
             <input class="input" name="<?= e($name) ?>" value="<?= e((string) $value) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>" required>
         <?php endif; ?>
@@ -332,17 +264,11 @@ function tc_admin_settings_value_from_post(array $field, array $posted): array
         return [(int) round($value * 1024 * 1024), 'int'];
     }
 
-    if ($type === 'media') {
-        $value = max(0, (int) $raw);
-
-        if ($value > 0 && !tc_admin_settings_media_selectable($value)) {
-            throw new InvalidArgumentException(t('settings.messages.invalid_media'));
-        }
-
-        return [$value, 'int'];
+    if ($type === 'site_image') {
+        return tc_admin_settings_site_image_value($field, (string) $raw);
     }
 
-    if ($type === 'editor') {
+    if ($type === 'textarea') {
         return [(string) $raw, 'string'];
     }
 
@@ -356,286 +282,80 @@ function tc_admin_settings_value_from_post(array $field, array $posted): array
     return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
 }
 
-function tc_admin_settings_bytes_to_mb(int $bytes): string
+function tc_admin_settings_uploaded_file(string $key): ?array
 {
-    $mb = $bytes / 1024 / 1024;
+    $files = $_FILES['settings_files'] ?? null;
 
-    return rtrim(rtrim(number_format($mb, 1, '.', ''), '0'), '.');
-}
-
-function tc_admin_settings_field_target(string $key): string
-{
-    $target = preg_replace('/[^a-z0-9]+/', '-', strtolower($key)) ?? 'media';
-    $target = trim($target, '-');
-
-    return 'settings-' . ($target !== '' ? $target : 'media');
-}
-
-function tc_admin_settings_media_field(string $name, int $mediaId, string $target): string
-{
-    $media = $mediaId > 0 ? tc_admin_settings_media_record($mediaId) : null;
-    $mediaId = $media === null ? 0 : (int) $media['id'];
-    $url = $media === null ? '' : (string) ($media['url'] ?? '');
-    $title = $media === null ? '' : tc_admin_settings_media_title($media);
-
-    ob_start();
-    ?>
-    <input type="hidden" name="<?= e($name) ?>" value="<?= $mediaId > 0 ? e($mediaId) : '' ?>" data-file-picker-value="<?= e($target) ?>" data-file-default-url="<?= e($url) ?>" data-file-default-title="<?= e($title) ?>">
-    <div class="content-image-preview settings-media-preview" data-file-picker-preview="<?= e($target) ?>" data-empty-text="<?= et('settings.media_empty') ?>"<?= $url === '' ? ' data-empty="true"' : '' ?>>
-        <?php if ($url !== ''): ?>
-            <img src="<?= e($url) ?>" alt="<?= e($title) ?>" loading="lazy">
-            <?php if ($title !== ''): ?>
-                <span class="table-meta truncate"><?= e($title) ?></span>
-            <?php endif; ?>
-        <?php else: ?>
-            <span class="content-image-preview-empty"><?= icon('image') ?> <?= et('settings.media_empty') ?></span>
-        <?php endif; ?>
-    </div>
-    <div class="content-media-actions">
-        <button class="btn btn-secondary btn-sm" type="button" data-file-picker-open="settings-file-picker" data-file-picker-type="image" data-file-picker-mode="field" data-file-picker-target="<?= e($target) ?>">
-            <?= icon('image') ?> <span><?= et('settings.media_select') ?></span>
-        </button>
-    </div>
-    <?php
-
-    return trim((string) ob_get_clean());
-}
-
-function tc_admin_settings_media_record(int $id): ?array
-{
-    $media = media_record($id);
-
-    if ($media === null || !tc_admin_settings_media_is_image($media)) {
+    if (!is_array($files) || !isset($files['name'][$key])) {
         return null;
     }
 
-    return $media;
-}
-
-function tc_admin_settings_media_exists(int $id): bool
-{
-    return $id > 0 && find('media', ['id' => $id]) !== null;
-}
-
-function tc_admin_settings_media_selectable(int $id): bool
-{
-    return tc_admin_settings_media_record($id) !== null;
-}
-
-function tc_admin_settings_media_is_image(array $media): bool
-{
-    return str_starts_with(strtolower((string) ($media['mime_type'] ?? '')), 'image/');
-}
-
-function tc_admin_settings_media_title(array $media): string
-{
-    foreach (['title', 'original_name', 'filename'] as $key) {
-        $value = trim((string) ($media[$key] ?? ''));
-
-        if ($value !== '') {
-            return $value;
-        }
-    }
-
-    return '#' . (int) ($media['id'] ?? 0);
-}
-
-function tc_admin_settings_media_resource(array $media): array
-{
-    if ($media === []) {
-        return [];
-    }
-
-    $isImage = tc_admin_settings_media_is_image($media);
-
     return [
-        'id' => (int) ($media['id'] ?? 0),
-        'url' => (string) ($media['url'] ?? ''),
-        'title' => tc_admin_settings_media_title($media),
-        'mime_type' => (string) ($media['mime_type'] ?? ''),
-        'extension' => (string) ($media['extension'] ?? ''),
-        'type' => $isImage ? 'image' : 'file',
+        'name' => $files['name'][$key] ?? '',
+        'type' => $files['type'][$key] ?? '',
+        'tmp_name' => $files['tmp_name'][$key] ?? '',
+        'error' => $files['error'][$key] ?? UPLOAD_ERR_NO_FILE,
+        'size' => $files['size'][$key] ?? 0,
     ];
 }
 
-function tc_admin_settings_file_picker_type(?string $type = null): string
+function tc_admin_settings_site_image_value(array $field, string $currentUrl): array
 {
-    $type = strtolower(trim((string) ($type ?? get('type', 'image'))));
+    $key = (string) $field['key'];
+    $pathKey = (string) ($field['path_key'] ?? '');
+    $variant = (string) ($field['variant'] ?? 'logo');
+    $uploadedFile = tc_admin_settings_uploaded_file($key);
+    $remove = post('settings_remove', []);
 
-    return in_array($type, ['image', 'file'], true) ? $type : 'image';
-}
+    if (is_array($remove) && isset($remove[$key])) {
+        if ($pathKey !== '') {
+            setting_set($pathKey, '', 'string', 'site');
+        }
 
-function tc_admin_settings_file_upload_profile(string $type): string
-{
-    return tc_admin_settings_file_picker_type($type) === 'file' ? 'document' : 'image';
-}
-
-function tc_admin_settings_file_accept(string $type = 'image'): string
-{
-    if (tc_admin_settings_file_picker_type($type) === 'image') {
-        return 'image/*,.svg,.ico';
+        return ['', 'string'];
     }
 
-    $options = upload_options(tc_admin_settings_file_upload_profile($type));
-    $extensions = array_filter(array_map(
-        static fn (mixed $item): string => trim((string) $item),
-        (array) ($options['extensions'] ?? [])
-    ));
+    if (is_array($uploadedFile) && (int) ($uploadedFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        $uploaded = site_image_upload($uploadedFile, (string) ($field['label'] ?? $variant), $variant);
 
-    return implode(',', array_map(static fn (string $extension): string => '.' . ltrim($extension, '.'), $extensions));
-}
+        if ($pathKey !== '') {
+            setting_set($pathKey, (string) ($uploaded['path'] ?? ''), 'string', 'site');
+        }
 
-function tc_admin_settings_file_icon(array $media, string $type): string
-{
-    if (tc_admin_settings_file_picker_type($type) === 'image') {
-        return 'image';
+        return [(string) ($uploaded['url'] ?? ''), 'string'];
     }
 
-    return 'file';
+    return [trim($currentUrl), 'string'];
 }
 
-function tc_admin_settings_file_items(string $type = 'image', int $limit = 160): array
+function tc_admin_settings_site_image_field(string $name, string $url, string $variant): string
 {
-    $type = tc_admin_settings_file_picker_type($type);
-    $where = $type === 'image' ? 'mime_type LIKE ?' : 'mime_type NOT LIKE ?';
-
-    return all(
-        'SELECT *
-        FROM media
-        WHERE ' . $where . '
-        ORDER BY created_at DESC, id DESC
-        LIMIT ' . max(1, min(200, $limit)),
-        ['image/%']
-    );
-}
-
-function tc_admin_settings_file_library_html(string $type = 'image', int $selectedId = 0): string
-{
-    $type = tc_admin_settings_file_picker_type($type);
-    $items = tc_admin_settings_file_items($type);
-    $libraryId = 'settings-file-picker-' . $type . '-library';
-    $emptyKey = $type === 'image' ? 'content.file_empty_images' : 'content.file_empty_files';
-    $noResultsKey = $type === 'image' ? 'content.file_no_results_images' : 'content.file_no_results_files';
+    $settingKey = trim(str_replace(['settings[', ']'], '', $name));
+    $url = trim($url);
 
     ob_start();
     ?>
-    <?php if ($items === []): ?>
-        <div class="alert alert-info"><?= et($emptyKey) ?></div>
-    <?php else: ?>
-        <div class="file-picker-grid" data-file-library-grid>
-            <?php foreach ($items as $item): ?>
-                <?php
-                $id = (int) ($item['id'] ?? 0);
-                $title = tc_admin_settings_media_title($item);
-                $url = (string) ($item['url'] ?? '');
-                $search = trim($title . ' ' . (string) ($item['filename'] ?? '') . ' ' . (string) ($item['original_name'] ?? '') . ' ' . (string) ($item['mime_type'] ?? ''));
-                $isImage = tc_admin_settings_media_is_image($item);
-                ?>
-                <article class="file-picker-item" data-file-item data-file-type="<?= e($type) ?>" data-file-id="<?= e($id) ?>" data-file-url="<?= e($url) ?>" data-file-title="<?= e($title) ?>" data-file-mime="<?= e((string) ($item['mime_type'] ?? '')) ?>" data-file-extension="<?= e((string) ($item['extension'] ?? '')) ?>" data-file-search="<?= e(strtolower($search)) ?>">
-                    <button class="file-picker-select" type="button" data-file-select aria-pressed="<?= $selectedId === $id ? 'true' : 'false' ?>">
-                        <?php if ($isImage && $url !== ''): ?>
-                            <img src="<?= e($url) ?>" alt="<?= e($title) ?>" loading="lazy">
-                        <?php else: ?>
-                            <span class="file-picker-placeholder"><?= icon(tc_admin_settings_file_icon($item, $type)) ?></span>
-                        <?php endif; ?>
-                        <span class="file-picker-caption"><?= e($title) ?></span>
-                        <span class="file-picker-meta"><?= e(strtoupper((string) ($item['extension'] ?? ''))) ?></span>
-                    </button>
-                    <div class="file-picker-actions">
-                        <button class="btn btn-primary btn-sm" type="button" data-file-select><?= icon('check') ?> <span><?= et('content.file_use') ?></span></button>
-                        <button class="btn btn-ghost btn-sm btn-icon text-danger" type="button" data-ajax data-method="DELETE" data-url="/admin/settings?api=file-delete&view=html&type=<?= e($type) ?>&id=<?= e($id) ?>" data-ajax-target="#<?= e($libraryId) ?>" data-confirm="<?= et('content.file_delete_confirm', ['title' => $title]) ?>" data-confirm-title="<?= et('content.file_delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger" data-file-delete="<?= e($id) ?>" aria-label="<?= et('content.file_delete') ?>" title="<?= et('content.file_delete') ?>">
-                            <?= icon('trash') ?>
-                        </button>
-                    </div>
-                </article>
-            <?php endforeach; ?>
-        </div>
-        <div class="alert alert-info file-picker-no-results" data-file-empty hidden><?= et($noResultsKey) ?></div>
-    <?php endif; ?>
+    <input type="hidden" name="<?= e($name) ?>" value="<?= e($url) ?>">
+    <div class="content-image-preview settings-image-preview"<?= $url === '' ? ' data-empty="true"' : '' ?>>
+        <?php if ($url !== ''): ?>
+            <img src="<?= e($url) ?>" alt="" loading="lazy">
+        <?php else: ?>
+            <span class="content-image-preview-empty"><?= icon('image') ?> <?= et('settings.image_empty') ?></span>
+        <?php endif; ?>
+    </div>
+    <div class="content-image-actions">
+        <label class="btn btn-secondary btn-sm">
+            <?= icon('upload') ?> <span><?= et('settings.image_upload') ?></span>
+            <input class="sr-only" type="file" name="settings_files[<?= e($settingKey) ?>]" accept="image/jpeg,image/png,image/gif,image/webp">
+        </label>
+        <?php if ($url !== ''): ?>
+            <label class="check-line mb-0">
+                <input type="checkbox" name="settings_remove[<?= e($settingKey) ?>]" value="1">
+                <span><?= et('settings.image_remove') ?></span>
+            </label>
+        <?php endif; ?>
+    </div>
     <?php
 
     return trim((string) ob_get_clean());
-}
-
-function tc_admin_settings_store_file(array $file, string $title = '', string $type = 'image'): int
-{
-    $type = tc_admin_settings_file_picker_type($type);
-    $title = trim($title);
-    $title = $title !== '' ? $title : trim((string) pathinfo((string) ($file['name'] ?? ''), PATHINFO_FILENAME));
-    $title = $title !== '' ? $title : t('media.file');
-    $uploaded = upload($file, '', [
-        'profile' => tc_admin_settings_file_upload_profile($type),
-        'name' => $title,
-    ]);
-    $relativePath = trim(($uploaded['folder'] !== '' ? $uploaded['folder'] . '/' : '') . $uploaded['name'], '/');
-
-    return (int) insert('media', [
-        'disk' => 'local',
-        'path' => $relativePath,
-        'url' => $uploaded['url'],
-        'filename' => $uploaded['name'],
-        'original_name' => $uploaded['original'],
-        'mime_type' => $uploaded['mime'],
-        'extension' => $uploaded['extension'],
-        'size' => $uploaded['size'],
-        'title' => $title,
-        'alt' => $title,
-        'uploaded_by' => auth_id(),
-    ]);
-}
-
-function tc_admin_settings_delete_media(int $id): void
-{
-    $media = find('media', ['id' => $id]);
-
-    if ($media !== null) {
-        tc_admin_settings_delete_media_file($media);
-    }
-
-    run(
-        'DELETE FROM relations
-        WHERE (source_type = ? AND source_id = ?)
-           OR (target_type = ? AND target_id = ?)',
-        ['media', $id, 'media', $id]
-    );
-    run(
-        'UPDATE settings
-        SET setting_value = ?
-        WHERE setting_key IN (?, ?)
-          AND setting_value = ?',
-        ['0', 'site.logo_media_id', 'site.favicon_media_id', (string) $id]
-    );
-    delete('media', ['id' => $id]);
-}
-
-function tc_admin_settings_delete_media_file(array $media): void
-{
-    if ((string) ($media['disk'] ?? 'local') !== 'local') {
-        return;
-    }
-
-    $base = (string) config('upload.directory', base_path('uploads'));
-    $path = trim((string) ($media['path'] ?? ''), "/\\");
-
-    if ($base === '' || $path === '' || str_contains($path, "\0")) {
-        return;
-    }
-
-    $baseReal = realpath($base);
-    $fileReal = realpath(rtrim($base, "/\\") . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path));
-
-    if ($baseReal === false || $fileReal === false || !is_file($fileReal)) {
-        return;
-    }
-
-    $basePrefix = rtrim(strtolower($baseReal), "/\\") . DIRECTORY_SEPARATOR;
-
-    if (str_starts_with(strtolower($fileReal), strtolower($basePrefix))) {
-        @unlink($fileReal);
-    }
-}
-
-function tc_admin_settings_file_picker(): string
-{
-    return render('modals/settings-file-picker');
 }

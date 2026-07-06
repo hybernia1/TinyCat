@@ -335,12 +335,19 @@ function tc_install_create_tables(): void
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             locale VARCHAR(12) NULL,
             note TEXT NULL,
+            website VARCHAR(255) NULL,
+            bio TEXT NULL,
+            avatar_path VARCHAR(255) NULL,
+            avatar_url VARCHAR(255) NULL,
             last_login_at DATETIME NULL,
+            last_seen_at DATETIME NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             UNIQUE KEY users_email_unique (email),
-            KEY users_role_status_index (role, status)
+            KEY users_role_status_index (role, status),
+            KEY users_avatar_index (avatar_url),
+            KEY users_activity_index (last_seen_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -348,13 +355,10 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS content (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             status VARCHAR(30) NOT NULL DEFAULT 'draft',
-            title VARCHAR(190) NOT NULL,
-            excerpt TEXT NULL,
             body LONGTEXT NULL,
             author_id INT UNSIGNED NULL,
             published_at DATETIME NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY content_status_index (status),
             KEY content_author_index (author_id)
@@ -362,70 +366,135 @@ function tc_install_create_tables(): void
     );
 
     run(
-        "CREATE TABLE IF NOT EXISTS media (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            disk VARCHAR(40) NOT NULL DEFAULT 'local',
-            path VARCHAR(255) NOT NULL,
-            url VARCHAR(255) NULL,
-            filename VARCHAR(190) NOT NULL,
-            original_name VARCHAR(190) NULL,
-            mime_type VARCHAR(120) NULL,
-            extension VARCHAR(20) NULL,
-            size BIGINT UNSIGNED NOT NULL DEFAULT 0,
-            title VARCHAR(190) NULL,
-            alt VARCHAR(190) NULL,
-            uploaded_by INT UNSIGNED NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY media_path_index (path),
-            KEY media_uploaded_by_index (uploaded_by)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    run(
         "CREATE TABLE IF NOT EXISTS terms (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             name VARCHAR(120) NOT NULL,
-            description TEXT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             UNIQUE KEY terms_name_unique (name)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
     run(
-        "CREATE TABLE IF NOT EXISTS relations (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            source_type VARCHAR(60) NOT NULL,
-            source_id BIGINT UNSIGNED NOT NULL,
-            target_type VARCHAR(60) NOT NULL,
-            target_id BIGINT UNSIGNED NOT NULL,
-            relation VARCHAR(60) NOT NULL DEFAULT 'related',
-            position INT NOT NULL DEFAULT 0,
-            meta TEXT NULL,
+        "CREATE TABLE IF NOT EXISTS content_tags (
+            content_id BIGINT UNSIGNED NOT NULL,
+            term_id BIGINT UNSIGNED NOT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY relations_unique (source_type, source_id, target_type, target_id, relation),
-            KEY relations_source_index (source_type, source_id, relation, position),
-            KEY relations_target_index (target_type, target_id, relation)
+            PRIMARY KEY (content_id, term_id),
+            KEY content_tags_term_index (term_id, content_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
     run(
-        "CREATE TABLE IF NOT EXISTS menu_items (
+        "CREATE TABLE IF NOT EXISTS links (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            label VARCHAR(120) NOT NULL,
-            url VARCHAR(255) NOT NULL,
-            target VARCHAR(20) NOT NULL DEFAULT '_self',
-            is_active TINYINT(1) NOT NULL DEFAULT 1,
-            position INT NOT NULL DEFAULT 0,
+            url_hash CHAR(64) NOT NULL,
+            url TEXT NOT NULL,
+            final_url TEXT NULL,
+            title VARCHAR(255) NULL,
+            description TEXT NULL,
+            image_url TEXT NULL,
+            site_name VARCHAR(120) NULL,
+            source VARCHAR(30) NOT NULL DEFAULT 'web',
+            external_id VARCHAR(120) NULL,
+            embed_url TEXT NULL,
+            fetched_at DATETIME NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            KEY menu_items_active_position_index (is_active, position),
-            KEY menu_items_position_index (position)
+            UNIQUE KEY links_url_hash_unique (url_hash),
+            KEY links_source_index (source, external_id),
+            KEY links_fetched_index (fetched_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS content_links (
+            content_id BIGINT UNSIGNED NOT NULL,
+            link_id BIGINT UNSIGNED NOT NULL,
+            position INT UNSIGNED NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (content_id, link_id),
+            KEY content_links_link_index (link_id),
+            KEY content_links_content_index (content_id, position)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS content_shares (
+            content_id BIGINT UNSIGNED NOT NULL,
+            shared_content_id BIGINT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (content_id),
+            KEY content_shares_shared_index (shared_content_id, content_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS content_reactions (
+            content_id BIGINT UNSIGNED NOT NULL,
+            user_id INT UNSIGNED NOT NULL,
+            reaction VARCHAR(12) NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (content_id, user_id),
+            KEY content_reactions_user_index (user_id, content_id),
+            KEY content_reactions_reaction_index (content_id, reaction)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS content_comments (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            content_id BIGINT UNSIGNED NOT NULL,
+            parent_id BIGINT UNSIGNED NULL,
+            user_id INT UNSIGNED NOT NULL,
+            body TEXT NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY content_comments_content_index (content_id, parent_id, created_at),
+            KEY content_comments_user_index (user_id, created_at),
+            KEY content_comments_parent_index (parent_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS comment_likes (
+            comment_id BIGINT UNSIGNED NOT NULL,
+            user_id INT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (comment_id, user_id),
+            KEY comment_likes_user_index (user_id, comment_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS user_followers (
+            user_id INT UNSIGNED NOT NULL,
+            follower_id INT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, follower_id),
+            KEY user_followers_follower_index (follower_id, user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS notifications (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            user_id INT UNSIGNED NOT NULL,
+            actor_id INT UNSIGNED NOT NULL,
+            content_id BIGINT UNSIGNED NULL,
+            comment_id BIGINT UNSIGNED NULL,
+            type VARCHAR(40) NOT NULL,
+            notification_key VARCHAR(190) NOT NULL,
+            read_at DATETIME NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY notifications_key_unique (user_id, notification_key),
+            KEY notifications_user_index (user_id, read_at, created_at),
+            KEY notifications_actor_index (actor_id, created_at),
+            KEY notifications_content_index (content_id),
+            KEY notifications_comment_index (comment_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -451,10 +520,11 @@ function tc_install_default_settings(array $state): void
 {
     $locale = (string) ($state['locale'] ?? locale());
     $defaults = [
-        ['app.name', (string) config('app.name', 'TinyCat'), 'string', 'general'],
         ['site.name', (string) config('site.name', config('app.name', 'TinyCat')), 'string', 'site'],
-        ['site.logo_media_id', (int) config('site.logo_media_id', 0), 'int', 'site'],
-        ['site.favicon_media_id', (int) config('site.favicon_media_id', 0), 'int', 'site'],
+        ['site.logo_url', (string) config('site.logo_url', ''), 'string', 'site'],
+        ['site.logo_path', (string) config('site.logo_path', ''), 'string', 'site'],
+        ['site.favicon_url', (string) config('site.favicon_url', ''), 'string', 'site'],
+        ['site.favicon_path', (string) config('site.favicon_path', ''), 'string', 'site'],
         ['site.footer_html', (string) config('site.footer_html', ''), 'string', 'site'],
         ['i18n.locale', $locale, 'string', 'localization'],
         ['datetime.timezone', (string) config('datetime.timezone', 'Europe/Prague'), 'string', 'localization'],
@@ -462,17 +532,9 @@ function tc_install_default_settings(array $state): void
         ['datetime.time', (string) config('datetime.time', 'H:i'), 'string', 'localization'],
         ['datetime.datetime', (string) config('datetime.datetime', 'd.m.Y H:i'), 'string', 'localization'],
         ['datetime.relative', (bool) config('datetime.relative', false), 'bool', 'localization'],
-        ['security.enabled', (bool) config('security.enabled', true), 'bool', 'security'],
-        ['security.rate_limit.enabled', (bool) config('security.rate_limit.enabled', true), 'bool', 'security'],
-        ['security.rate_limit.max', (int) config('security.rate_limit.max', 240), 'int', 'security'],
-        ['security.rate_limit.window', (int) config('security.rate_limit.window', 60), 'int', 'security'],
-        ['security.rate_limit.login.max', (int) config('security.rate_limit.login.max', 8), 'int', 'security'],
-        ['security.rate_limit.login.window', (int) config('security.rate_limit.login.window', 900), 'int', 'security'],
         ['security.captcha.enabled', (bool) config('security.captcha.enabled', true), 'bool', 'security'],
-        ['security.captcha.tolerance', (int) config('security.captcha.tolerance', 4), 'int', 'security'],
-        ['upload.max_size', (int) config('upload.max_size', 5242880), 'int', 'uploads'],
-        ['upload.profiles.image.max_size', (int) config('upload.profiles.image.max_size', 3145728), 'int', 'uploads'],
-        ['upload.profiles.document.max_size', (int) config('upload.profiles.document.max_size', 10485760), 'int', 'uploads'],
+        ['auth.registration.enabled', (bool) config('auth.registration.enabled', false), 'bool', 'security'],
+        ['auth.registration.auto_approve', (bool) config('auth.registration.auto_approve', false), 'bool', 'security'],
     ];
 
     foreach ($defaults as [$key, $value, $type, $group]) {
@@ -490,7 +552,7 @@ function tc_install_create_admin_account(string $name, string $email, string $pa
         'role' => 'admin',
         'status' => 'active',
         'locale' => $locale,
-        'note' => 'Created during installation.',
+        'note' => '',
     ];
 
     if ($existing !== null) {
@@ -512,11 +574,19 @@ function tc_install_write_config(array $state): void
 
     $config = config();
     $config['database'] = $database;
-    $config['auth'] = [
+    $config['app']['debug'] = false;
+    $config['auth'] = array_replace_recursive([
         'login_url' => '/login',
         'home_url' => '/admin',
-        'remember_days' => (int) config('auth.remember_days', 30),
-    ];
+        'account_url' => '/account',
+        'remember_days' => 30,
+        'online_window' => 300,
+        'online_touch_interval' => 60,
+        'registration' => [
+            'enabled' => false,
+            'auto_approve' => false,
+        ],
+    ], is_array($config['auth'] ?? null) ? $config['auth'] : []);
     $config['install']['installed'] = true;
     $config['install']['installed_at'] = date(DATE_ATOM);
     $config['install']['locale'] = $locale;
@@ -534,20 +604,12 @@ function tc_install_config_content(array $config): string
     unset(
         $config['i18n']['directory'],
         $config['assets']['directory'],
-        $config['upload']['directory'],
-        $config['upload']['max_size'],
-        $config['upload']['profiles']['image']['max_size'],
-        $config['upload']['profiles']['document']['max_size'],
-        $config['security']['rate_limit']['storage'],
+        $config['avatar']['directory'],
+        $config['site']['image_directory'],
         $config['app']['locale'],
         $config['i18n']['locale'],
         $config['i18n']['fallback'],
         $config['datetime'],
-        $config['security']['enabled'],
-        $config['security']['rate_limit']['enabled'],
-        $config['security']['rate_limit']['max'],
-        $config['security']['rate_limit']['window'],
-        $config['security']['rate_limit']['login'],
         $config['security']['captcha']['enabled'],
         $config['directory']
     );
@@ -563,8 +625,8 @@ function tc_install_config_content(array $config): string
         . "\$config = " . var_export($config, true) . ";\n\n"
         . "\$config['i18n']['directory'] = \$path('lang');\n"
         . "\$config['assets']['directory'] = \$path('assets');\n"
-        . "\$config['upload']['directory'] = \$path('uploads');\n"
-        . "\$config['security']['rate_limit']['storage'] = \$path('storage/rate-limit');\n"
+        . "\$config['avatar']['directory'] = \$path('uploads/avatars');\n"
+        . "\$config['site']['image_directory'] = \$path('uploads/site');\n"
         . "return \$config;\n";
 }
 
@@ -573,10 +635,16 @@ function tc_install_schema_tables(): array
     return [
         'users' => 'install.purpose_users',
         'content' => 'install.purpose_content',
-        'media' => 'install.purpose_media',
         'terms' => 'install.purpose_terms',
-        'relations' => 'install.purpose_relations',
-        'menu_items' => 'install.purpose_menu',
+        'content_tags' => 'install.purpose_content_tags',
+        'links' => 'install.purpose_links',
+        'content_links' => 'install.purpose_content_links',
+        'content_shares' => 'install.purpose_content_shares',
+        'content_reactions' => 'install.purpose_content_reactions',
+        'content_comments' => 'install.purpose_content_comments',
+        'comment_likes' => 'install.purpose_comment_likes',
+        'user_followers' => 'install.purpose_user_followers',
+        'notifications' => 'install.purpose_notifications',
         'settings' => 'install.purpose_settings',
     ];
 }
@@ -772,7 +840,7 @@ function tc_install_database_view(array $state): void
 
 function tc_install_tables_view(array $state): void
 {
-    $statuses = [];
+    $tableStatuses = [];
     $error = null;
 
     if (!empty($state['database']) && is_array($state['database'])) {
@@ -780,7 +848,7 @@ function tc_install_tables_view(array $state): void
             Core::setDb(tc_install_pdo($state['database']));
 
             foreach (array_keys(tc_install_schema_tables()) as $table) {
-                $statuses[$table] = tc_install_table_exists($table);
+                $tableStatuses[$table] = tc_install_table_exists($table);
             }
         } catch (Throwable $exception) {
             $error = $exception->getMessage();
@@ -807,7 +875,7 @@ function tc_install_tables_view(array $state): void
                     </thead>
                     <tbody>
                         <?php foreach (tc_install_schema_tables() as $table => $purpose): ?>
-                            <?php $exists = (bool) ($statuses[$table] ?? false); ?>
+                            <?php $exists = (bool) ($tableStatuses[$table] ?? false); ?>
                             <tr>
                                 <td><code><?= e($table) ?></code></td>
                                 <td><?= et($purpose) ?></td>
@@ -885,7 +953,7 @@ function tc_install_done_view(): void
             <p class="text-muted mb-0"><?= et('install.done_intro') ?></p>
             <ul class="result-list">
                 <li class="result-item"><?= icon('globe') ?> <span><?= et('common.language') ?>: <strong><?= e(locale()) ?></strong></span></li>
-                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, media, terms, relations, menu_items, settings</strong></span></li>
+                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, links, content_links, content_shares, content_reactions, content_comments, comment_likes, user_followers, notifications, settings</strong></span></li>
                 <li class="result-item"><?= icon('shield') ?> <span><?= et('common.account') ?>: <strong><?= et('common.done') ?></strong></span></li>
             </ul>
             <div class="btn-group">

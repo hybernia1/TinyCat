@@ -10,22 +10,31 @@ if (!(bool) config('install.installed', false)) {
     redirect('/install');
 }
 
+$authUser = auth();
+$feed = (string) get('feed', 'all') === 'following' ? 'following' : 'all';
+$currentFeedUrl = $feed === 'following' ? '/?feed=following' : '/';
+
+if (is_post()) {
+    csrf_require();
+    status_handle_post(require_auth('/login'), $currentFeedUrl);
+}
+
 layout('layout', [
     'title' => site_name(),
     'current' => '/',
-], static function (): void {
+    'meta' => [
+        'description' => t('public.home_meta', ['site' => site_name()]),
+        'url' => '/',
+        'image' => site_meta_image_url(),
+        'type' => 'website',
+    ],
+], static function () use ($authUser, $feed): void {
     ?>
-    <article class="card">
-        <div class="card-header">
-            <h1 class="text-lg m-0 cluster gap-2"><?= icon('home') ?> <?= e(site_name()) ?></h1>
-        </div>
-        <div class="card-body stack">
-            <p class="text-muted mb-0"><?= et('admin.dashboard_intro') ?></p>
-            <div class="btn-group">
-                <a class="btn btn-primary" href="/admin"><?= icon('dashboard') ?> <span><?= et('install.open_admin') ?></span></a>
-                <a class="btn btn-secondary" href="/install"><?= icon('settings') ?> <span><?= et('install.step_done') ?></span></a>
-            </div>
-        </div>
-    </article>
+    <section class="public-layout">
+        <main class="home-feed-section stack" style="--stack-gap: 14px;">
+            <?= public_home_feed_html($feed, $authUser) ?>
+        </main>
+        <?= public_sidebar() ?>
+    </section>
     <?php
 });

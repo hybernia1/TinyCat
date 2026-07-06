@@ -4,6 +4,7 @@
   var TinyCat = window.TinyCat || {};
   var activeModal = null;
   var modalStack = [];
+  var statusEditorCounterId = 0;
 
   function qs(selector, root) {
     return (root || document).querySelector(selector);
@@ -282,25 +283,15 @@
 
     form.reset();
 
-    qsa("textarea[data-editor]", form).forEach(function (textarea) {
-      var instance = textarea.__tinycatEditor;
-
-      if (!instance) {
-        return;
-      }
-
-      instance.surface.innerHTML = textarea.value || "";
-      instance.source.value = textarea.value || "";
-      instance.surface.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
     qsa("[data-tagifier]", form).forEach(function (root) {
       root.__tinycatTags = parseList(root.dataset.tags || "");
       TinyCat.renderTagifier(root);
     });
 
-    qsa("[data-dropzone-files]", form).forEach(function (target) {
-      target.innerHTML = "";
+    qsa("[data-status-editor]", form).forEach(function (root) {
+      if (TinyCat.resetStatusEditor) {
+        TinyCat.resetStatusEditor(root);
+      }
     });
 
     qsa("[data-captcha]", form).forEach(function (root) {
@@ -309,20 +300,6 @@
       }
     });
 
-    qsa("[data-file-picker-value], [data-media-picker-value]", form).forEach(function (input) {
-      var targetKey = input.dataset.filePickerValue || input.dataset.mediaPickerValue || "";
-      var removeInput = findData("data-file-picker-remove", targetKey, form) || findData("data-media-picker-remove", targetKey, form);
-
-      if (removeInput) {
-        removeInput.value = "0";
-      }
-
-      TinyCat.renderFilePreview(targetKey, {
-        id: input.value || "",
-        url: input.dataset.fileDefaultUrl || input.dataset.mediaDefaultUrl || "",
-        title: input.dataset.fileDefaultTitle || input.dataset.mediaDefaultTitle || ""
-      });
-    });
   }
 
   function formSnapshot(form) {
@@ -451,16 +428,20 @@
     qsa("[data-tagifier]", root || document).forEach(initTagifierRoot);
     qsa("[data-captcha]", root || document).forEach(initCaptchaRoot);
 
+    if (TinyCat.initStatusEditors) {
+      TinyCat.initStatusEditors(root || document);
+    }
+
+    if (TinyCat.initStatusFeedLazy) {
+      TinyCat.initStatusFeedLazy(root || document);
+    }
+
+    if (TinyCat.initGlobalSearch) {
+      TinyCat.initGlobalSearch(root || document);
+    }
+
     if (TinyCat.initTabs) {
       TinyCat.initTabs();
-    }
-
-    if (TinyCat.Editor && TinyCat.Editor.initAll) {
-      TinyCat.Editor.initAll();
-    }
-
-    if (TinyCat.initDropzones) {
-      TinyCat.initDropzones(root || document);
     }
 
     if (TinyCat.initDirtyForms) {
@@ -522,19 +503,6 @@
       seen[key] = true;
       return true;
     });
-  }
-
-  function formatBytes(bytes) {
-    var size = Number(bytes || 0);
-    var units = ["B", "KB", "MB", "GB"];
-    var index = 0;
-
-    while (size >= 1024 && index < units.length - 1) {
-      size = size / 1024;
-      index += 1;
-    }
-
-    return (index === 0 ? size : size.toFixed(1)) + " " + units[index];
   }
 
   function createElement(tag, className, text) {
@@ -862,7 +830,7 @@
 
       event.preventDefault();
 
-      if (form.dataset.confirm && !await confirmAction(form)) {
+      if (form.dataset.confirm && !(await confirmAction(form))) {
         return;
       }
 
@@ -990,7 +958,7 @@
     });
 
     document.addEventListener("submit", async function (event) {
-      var form = event.target.closest && event.target.closest("form[data-confirm]:not([data-ajax-form])");
+      var form = event.target.closest && event.target.closest("form[data-confirm]:not([data-ajax-form]):not([data-status-form])");
 
       if (!form) {
         return;
@@ -1138,6 +1106,7 @@
     var input = qs("[data-tag-input]", root);
     var hidden = qs("[data-tag-value]", root);
     var tags = root.__tinycatTags || [];
+    var prefix = root.dataset.tagPrefix || "";
 
     if (list) {
       list.innerHTML = "";
@@ -1147,7 +1116,7 @@
 
         tag.className = "tag";
         tag.dataset.tag = value;
-        tag.appendChild(document.createTextNode(value));
+        tag.appendChild(document.createTextNode(prefix + value));
 
         remove.className = "tag-remove";
         remove.type = "button";
@@ -1170,10 +1139,16 @@
     var box = qs("[data-tag-suggestions]", root);
     var input = qs("[data-tag-input]", root);
     var tags = root.__tinycatTags || [];
+    var prefix = root.dataset.tagPrefix || "";
     var selected = tags.map(function (value) {
       return value.toLowerCase();
     });
     var needle = String(query || "").trim().toLowerCase();
+
+    if (prefix && needle.indexOf(prefix.toLowerCase()) === 0) {
+      needle = needle.slice(prefix.length).trim();
+    }
+
     var suggestions = uniqueList(parseList(root.dataset.suggestions))
       .filter(function (value) {
         var lower = value.toLowerCase();
@@ -1197,7 +1172,7 @@
       button.className = "tag-suggestion";
       button.type = "button";
       button.dataset.tagSuggestion = value;
-      button.textContent = value;
+      button.textContent = prefix + value;
       box.appendChild(button);
     });
 
@@ -1207,6 +1182,15 @@
   TinyCat.addTag = function (root, value) {
     var clean = String(value || "").trim().replace(/\s+/g, " ");
     var input = qs("[data-tag-input]", root);
+    var prefix = root.dataset.tagPrefix || "";
+
+    if (!clean) {
+      return;
+    }
+
+    if (prefix && clean.indexOf(prefix) === 0) {
+      clean = clean.slice(prefix.length).trim();
+    }
 
     if (!clean) {
       return;
@@ -1357,6 +1341,670 @@
     }, true);
   };
 
+  function parseJsonArray(value) {
+    try {
+      var parsed = JSON.parse(String(value || "[]"));
+
+      if (Array.isArray(parsed)) {
+        return parsed.map(function (item) {
+          return String(item || "").trim();
+        }).filter(Boolean);
+      }
+    } catch (_error) {
+      return parseList(value);
+    }
+
+    return [];
+  }
+
+  function statusSlug(value) {
+    var text = String(value || "").trim();
+
+    if (text.charAt(0) === "#") {
+      text = text.slice(1);
+    }
+
+    if (text.normalize) {
+      text = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 80);
+  }
+
+  function statusEditorSource(root) {
+    return qs("[data-status-editor-source]", root);
+  }
+
+  function statusEditorInput(root) {
+    return qs("[data-status-editor-input]", root);
+  }
+
+  function statusEditorBox(root) {
+    return qs("[data-status-editor-suggestions]", root);
+  }
+
+  function statusEditorCounter(root) {
+    return qs("[data-status-editor-counter]", root);
+  }
+
+  function statusEditorTags(root) {
+    if (!root.__tinycatStatusTags) {
+      var source = statusEditorSource(root);
+      root.__tinycatStatusTags = uniqueList(parseJsonArray(source ? source.dataset.statusTags : "[]").map(statusSlug).filter(Boolean));
+    }
+
+    return root.__tinycatStatusTags;
+  }
+
+  function statusEditorText(editor) {
+    var text = String(editor.innerText || "").replace(/\r\n/g, "\n").replace(/\u00a0/g, " ");
+
+    return text === "\n" ? "" : text;
+  }
+
+  function setStatusEditorText(editor, text, caret) {
+    var target = Math.max(0, Math.min(Number(caret || 0), String(text || "").length));
+    var walker;
+    var node;
+    var seen = 0;
+    var selection;
+    var range;
+
+    editor.textContent = String(text || "");
+    selection = window.getSelection && window.getSelection();
+
+    if (!selection) {
+      return;
+    }
+
+    range = document.createRange();
+    walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    node = walker.nextNode();
+
+    while (node) {
+      var next = seen + node.nodeValue.length;
+
+      if (target <= next) {
+        range.setStart(node, target - seen);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        return;
+      }
+
+      seen = next;
+      node = walker.nextNode();
+    }
+
+    if (!editor.firstChild) {
+      editor.appendChild(document.createTextNode(""));
+    }
+
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  function statusSelectionOffsets(editor) {
+    var selection = window.getSelection && window.getSelection();
+    var range;
+    var startRange;
+    var endRange;
+
+    if (!selection || selection.rangeCount === 0) {
+      return { start: 0, end: 0 };
+    }
+
+    range = selection.getRangeAt(0);
+
+    if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer)) {
+      return { start: statusEditorText(editor).length, end: statusEditorText(editor).length };
+    }
+
+    startRange = range.cloneRange();
+    startRange.selectNodeContents(editor);
+    startRange.setEnd(range.startContainer, range.startOffset);
+
+    endRange = range.cloneRange();
+    endRange.selectNodeContents(editor);
+    endRange.setEnd(range.endContainer, range.endOffset);
+
+    return {
+      start: startRange.toString().length,
+      end: endRange.toString().length
+    };
+  }
+
+  function statusEditorCaret(editor) {
+    return statusSelectionOffsets(editor).end;
+  }
+
+  function replaceStatusEditorRange(editor, start, end, value) {
+    var text = statusEditorText(editor);
+    var before = text.slice(0, start);
+    var after = text.slice(end);
+    var next = before + value + after;
+    var caret = before.length + value.length;
+
+    setStatusEditorText(editor, next, caret);
+    editor.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  function statusEditorActiveToken(root) {
+    var editor = statusEditorInput(root);
+    var text;
+    var caret;
+    var before;
+    var match;
+
+    if (!editor) {
+      return null;
+    }
+
+    text = statusEditorText(editor);
+    caret = statusEditorCaret(editor);
+    before = text.slice(0, caret);
+    match = /(^|[\s([{])#([^\s#@]*)$/.exec(before);
+
+    if (!match) {
+      return null;
+    }
+
+    return {
+      query: String(match[2] || ""),
+      start: caret - String(match[2] || "").length - 1,
+      end: caret
+    };
+  }
+
+  function syncStatusEditor(root) {
+    var editor = statusEditorInput(root);
+    var source = statusEditorSource(root);
+    var counter = statusEditorCounter(root);
+    var text;
+    var max;
+    var remaining;
+    var template;
+
+    if (!editor || !source) {
+      return;
+    }
+
+    text = statusEditorText(editor);
+    max = Number(source.getAttribute("maxlength") || 0);
+
+    if (max > 0 && text.length > max) {
+      text = text.slice(0, max);
+      setStatusEditorText(editor, text, max);
+    }
+
+    source.value = text;
+    if (counter && max > 0) {
+      remaining = Math.max(0, max - text.length);
+      template = counter.dataset.statusCounterTemplate || "{count}";
+      counter.textContent = template.replace("{count}", String(remaining));
+      counter.classList.toggle("is-warning", remaining <= Math.max(20, Math.floor(max * 0.1)));
+      counter.classList.toggle("is-limit", remaining === 0);
+    }
+    emit(root, "tinycat:editor-sync", { value: text });
+  }
+
+  function hideStatusEditorSuggestions(root) {
+    var box = statusEditorBox(root);
+
+    root.__tinycatStatusToken = null;
+    root.__tinycatStatusSuggestionIndex = 0;
+
+    if (box) {
+      box.hidden = true;
+      box.innerHTML = "";
+    }
+  }
+
+  function selectStatusEditorSuggestion(root, index) {
+    var box = statusEditorBox(root);
+    var items = box ? qsa("[data-status-editor-suggestion]", box) : [];
+
+    if (items.length === 0) {
+      return;
+    }
+
+    root.__tinycatStatusSuggestionIndex = (index + items.length) % items.length;
+
+    items.forEach(function (item, itemIndex) {
+      var active = itemIndex === root.__tinycatStatusSuggestionIndex;
+      item.classList.toggle("is-active", active);
+      item.setAttribute("aria-selected", active ? "true" : "false");
+    });
+  }
+
+  function renderStatusEditorSuggestions(root) {
+    var box = statusEditorBox(root);
+    var token = statusEditorActiveToken(root);
+    var needle;
+    var tags;
+
+    if (!box || !token) {
+      hideStatusEditorSuggestions(root);
+      return;
+    }
+
+    needle = statusSlug(token.query);
+    tags = statusEditorTags(root).filter(function (tag) {
+      return !needle || tag.indexOf(needle) !== -1;
+    });
+
+    if (needle && tags.indexOf(needle) === -1) {
+      tags.unshift(needle);
+    }
+
+    tags = tags.slice(0, 8);
+    box.innerHTML = "";
+    root.__tinycatStatusToken = token;
+
+    if (tags.length === 0) {
+      hideStatusEditorSuggestions(root);
+      return;
+    }
+
+    tags.forEach(function (tag) {
+      var button = document.createElement("button");
+      button.className = "status-editor-suggestion";
+      button.type = "button";
+      button.dataset.statusEditorSuggestion = tag;
+      button.setAttribute("role", "option");
+      button.innerHTML = "<strong>#" + tag + "</strong>";
+      box.appendChild(button);
+    });
+
+    box.hidden = false;
+    selectStatusEditorSuggestion(root, 0);
+  }
+
+  function insertStatusEditorSuggestion(root, value) {
+    var editor = statusEditorInput(root);
+    var token = root.__tinycatStatusToken || statusEditorActiveToken(root);
+    var clean = statusSlug(value);
+
+    if (!editor || !token || !clean) {
+      hideStatusEditorSuggestions(root);
+      return;
+    }
+
+    replaceStatusEditorRange(editor, token.start, token.end, "#" + clean + " ");
+    hideStatusEditorSuggestions(root);
+    editor.focus();
+  }
+
+  function initStatusEditorRoot(root) {
+    var source = statusEditorSource(root);
+    var shell;
+    var editor;
+    var box;
+    var meta;
+    var counter;
+    var counterId;
+    var form;
+
+    if (root.dataset.statusEditorReady === "true" || !source) {
+      return;
+    }
+
+    root.dataset.statusEditorReady = "true";
+
+    shell = document.createElement("div");
+    shell.className = "status-editor-shell";
+
+    editor = document.createElement("div");
+    editor.className = "status-editor-input";
+    editor.dataset.statusEditorInput = "true";
+    editor.dataset.placeholder = source.dataset.statusPlaceholder || source.getAttribute("placeholder") || "";
+    editor.setAttribute("contenteditable", "plaintext-only");
+    editor.setAttribute("role", "textbox");
+    editor.setAttribute("aria-multiline", "true");
+    editor.setAttribute("aria-label", source.getAttribute("placeholder") || "Status");
+    editor.spellcheck = true;
+
+    box = document.createElement("div");
+    box.className = "status-editor-suggestions";
+    box.dataset.statusEditorSuggestions = "true";
+    box.setAttribute("role", "listbox");
+    box.hidden = true;
+
+    shell.appendChild(editor);
+    shell.appendChild(box);
+    source.insertAdjacentElement("beforebegin", shell);
+
+    if (Number(source.getAttribute("maxlength") || 0) > 0) {
+      statusEditorCounterId += 1;
+      counterId = source.id ? source.id + "-counter" : "status-editor-counter-" + statusEditorCounterId;
+      meta = document.createElement("div");
+      meta.className = "status-editor-meta";
+      counter = document.createElement("small");
+      counter.id = counterId;
+      counter.className = "status-editor-counter";
+      counter.dataset.statusEditorCounter = "true";
+      counter.dataset.statusCounterTemplate = source.dataset.statusCounter || "{count}";
+      counter.setAttribute("aria-live", "polite");
+      meta.appendChild(counter);
+      shell.insertAdjacentElement("afterend", meta);
+      editor.setAttribute("aria-describedby", counterId);
+    }
+
+    source.hidden = true;
+
+    setStatusEditorText(editor, source.value || "", (source.value || "").length);
+    syncStatusEditor(root);
+
+    editor.addEventListener("input", function () {
+      syncStatusEditor(root);
+      renderStatusEditorSuggestions(root);
+    });
+
+    editor.addEventListener("click", function () {
+      renderStatusEditorSuggestions(root);
+    });
+
+    editor.addEventListener("focus", function () {
+      renderStatusEditorSuggestions(root);
+    });
+
+    editor.addEventListener("blur", function () {
+      window.setTimeout(function () {
+        if (!root.contains(document.activeElement)) {
+          hideStatusEditorSuggestions(root);
+        }
+      }, 120);
+    });
+
+    editor.addEventListener("paste", function (event) {
+      var clipboard = event.clipboardData || window.clipboardData;
+      var pasted = clipboard ? clipboard.getData("text") : "";
+      var selection = statusSelectionOffsets(editor);
+
+      if (pasted === "") {
+        return;
+      }
+
+      event.preventDefault();
+      replaceStatusEditorRange(editor, selection.start, selection.end, pasted);
+    });
+
+    editor.addEventListener("keydown", function (event) {
+      var items = box.hidden ? [] : qsa("[data-status-editor-suggestion]", box);
+      var index = root.__tinycatStatusSuggestionIndex || 0;
+
+      if (items.length > 0) {
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          selectStatusEditorSuggestion(root, index + 1);
+          return;
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          selectStatusEditorSuggestion(root, index - 1);
+          return;
+        } else if ((event.key === "Enter" && !event.shiftKey) || event.key === "Tab") {
+          event.preventDefault();
+          insertStatusEditorSuggestion(root, items[root.__tinycatStatusSuggestionIndex || 0].dataset.statusEditorSuggestion);
+          return;
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          hideStatusEditorSuggestions(root);
+          return;
+        }
+      }
+    });
+
+    box.addEventListener("pointerdown", function (event) {
+      var suggestion = event.target.closest && event.target.closest("[data-status-editor-suggestion]");
+
+      if (!suggestion) {
+        return;
+      }
+
+      event.preventDefault();
+      insertStatusEditorSuggestion(root, suggestion.dataset.statusEditorSuggestion);
+    });
+
+    form = root.closest("form");
+
+    if (form && form.dataset.statusEditorSubmitReady !== "true") {
+      form.dataset.statusEditorSubmitReady = "true";
+      form.addEventListener("submit", function () {
+        qsa("[data-status-editor]", form).forEach(syncStatusEditor);
+      }, true);
+    }
+  }
+
+  TinyCat.resetStatusEditor = function (root) {
+    var source = statusEditorSource(root);
+    var editor = statusEditorInput(root);
+
+    if (!source || !editor) {
+      return;
+    }
+
+    setStatusEditorText(editor, source.value || "", (source.value || "").length);
+    syncStatusEditor(root);
+    hideStatusEditorSuggestions(root);
+  };
+
+  TinyCat.initStatusEditors = function (scope) {
+    qsa("[data-status-editor]", scope || document).forEach(initStatusEditorRoot);
+  };
+
+  function globalSearchInput(root) {
+    return qs("[data-global-search-input]", root);
+  }
+
+  function globalSearchResults(root) {
+    return qs("[data-global-search-results]", root);
+  }
+
+  function globalSearchShowMessage(root, message) {
+    var box = globalSearchResults(root);
+    var item;
+
+    if (!box) {
+      return;
+    }
+
+    box.innerHTML = "";
+    item = createElement("div", "global-search-empty", message);
+    box.appendChild(item);
+    box.hidden = false;
+  }
+
+  function globalSearchHide(root) {
+    var box = globalSearchResults(root);
+
+    if (box) {
+      box.hidden = true;
+      box.innerHTML = "";
+    }
+  }
+
+  function globalSearchItem(item) {
+    var link = createElement("a", "global-search-item");
+    var title = createElement("strong", "global-search-title", item.title || "");
+    var meta = createElement("span", "global-search-meta", item.type === "tag" ? (item.excerpt || "") : (item.type === "user" ? "@" + (item.title || "") : (item.created_label || "")));
+    var excerpt = createElement("span", "global-search-excerpt", item.excerpt || "");
+    var avatar = createElement("span", "global-search-avatar");
+    var text = createElement("span", "global-search-text");
+
+    link.href = item.url || "#";
+    link.dataset.globalSearchLink = "true";
+
+    if (item.type === "tag") {
+      avatar.textContent = "#";
+    } else if (item.avatar_url) {
+      var image = document.createElement("img");
+      image.src = item.avatar_url;
+      image.alt = item.title || "";
+      image.loading = "lazy";
+      avatar.appendChild(image);
+    } else {
+      avatar.textContent = item.type === "user" ? "U" : "#";
+    }
+
+    text.appendChild(title);
+    text.appendChild(meta);
+
+    if (item.excerpt && item.type !== "tag") {
+      text.appendChild(excerpt);
+    }
+
+    link.appendChild(avatar);
+    link.appendChild(text);
+
+    return link;
+  }
+
+  function renderGlobalSearchSection(root, box, label, items) {
+    var section;
+    var heading;
+
+    if (!items || items.length === 0) {
+      return;
+    }
+
+    section = createElement("section", "global-search-section");
+    heading = createElement("div", "global-search-heading", label);
+    section.appendChild(heading);
+
+    items.forEach(function (item) {
+      section.appendChild(globalSearchItem(item));
+    });
+
+    box.appendChild(section);
+  }
+
+  function renderGlobalSearch(root, data) {
+    var payload = unwrapResult(data) || {};
+    var box = globalSearchResults(root);
+    var tags = payload.tags || [];
+    var users = payload.users || [];
+    var content = payload.content || [];
+
+    if (!box) {
+      return;
+    }
+
+    box.innerHTML = "";
+
+    if (tags.length === 0 && users.length === 0 && content.length === 0) {
+      globalSearchShowMessage(root, root.dataset.searchEmpty || "Nothing found.");
+      return;
+    }
+
+    renderGlobalSearchSection(root, box, root.dataset.searchTags || "Tags", tags);
+    renderGlobalSearchSection(root, box, root.dataset.searchUsers || "Profiles", users);
+    renderGlobalSearchSection(root, box, root.dataset.searchContent || "Posts", content);
+    box.hidden = false;
+  }
+
+  function runGlobalSearch(root) {
+    var input = globalSearchInput(root);
+    var query = input ? input.value.trim() : "";
+    var url;
+    var requestId;
+
+    if (query === "") {
+      globalSearchHide(root);
+      return;
+    }
+
+    if (query.length < 2) {
+      globalSearchShowMessage(root, root.dataset.searchMin || "Type at least 2 characters.");
+      return;
+    }
+
+    root.__tinycatSearchRequest = (root.__tinycatSearchRequest || 0) + 1;
+    requestId = root.__tinycatSearchRequest;
+    url = (root.dataset.searchApi || "/api/search") + "?q=" + encodeURIComponent(query);
+    root.setAttribute("aria-busy", "true");
+
+    TinyCat.request(url, { method: "GET" })
+      .then(function (data) {
+        if (requestId !== root.__tinycatSearchRequest) {
+          return;
+        }
+
+        renderGlobalSearch(root, data);
+      })
+      .catch(function () {
+        if (requestId === root.__tinycatSearchRequest) {
+          globalSearchShowMessage(root, root.dataset.searchEmpty || "Nothing found.");
+        }
+      })
+      .finally(function () {
+        if (requestId === root.__tinycatSearchRequest) {
+          root.removeAttribute("aria-busy");
+        }
+      });
+  }
+
+  function initGlobalSearchRoot(root) {
+    var input = globalSearchInput(root);
+
+    if (root.dataset.globalSearchReady === "true" || !input) {
+      return;
+    }
+
+    root.dataset.globalSearchReady = "true";
+
+    input.addEventListener("input", function () {
+      window.clearTimeout(root.__tinycatSearchTimer);
+      root.__tinycatSearchTimer = window.setTimeout(function () {
+        runGlobalSearch(root);
+      }, 180);
+    });
+
+    input.addEventListener("focus", function () {
+      if (input.value.trim() !== "") {
+        runGlobalSearch(root);
+      }
+    });
+
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        globalSearchHide(root);
+        input.blur();
+      }
+    });
+
+    root.addEventListener("submit", function (event) {
+      if (input.value.trim().length < 2) {
+        event.preventDefault();
+        globalSearchShowMessage(root, root.dataset.searchMin || "Type at least 2 characters.");
+      }
+    });
+  }
+
+  TinyCat.initGlobalSearch = function (scope) {
+    qsa("[data-global-search]", scope || document).forEach(initGlobalSearchRoot);
+
+    if (TinyCat.__globalSearchEventsBound === true) {
+      return;
+    }
+
+    TinyCat.__globalSearchEventsBound = true;
+
+    document.addEventListener("pointerdown", function (event) {
+      qsa("[data-global-search]").forEach(function (root) {
+        if (!root.contains(event.target)) {
+          globalSearchHide(root);
+        }
+      });
+    });
+  };
+
   TinyCat.initCaptcha = function (scope) {
     qsa("[data-captcha]", scope || document).forEach(initCaptchaRoot);
   };
@@ -1462,355 +2110,6 @@
     });
   };
 
-  TinyCat.renderFilePreview = function (target, file) {
-    var preview = findData("data-file-picker-preview", target, document) || findData("data-media-picker-preview", target, document);
-    var data = file || {};
-    var emptyText;
-    var mimeType;
-    var extension;
-    var urlPath;
-    var isImage;
-    var image;
-    var caption;
-    var empty;
-
-    if (!preview) {
-      return;
-    }
-
-    preview.innerHTML = "";
-    emptyText = preview.dataset.emptyText || "";
-    mimeType = String(data.mimeType || data.mime_type || "");
-    extension = String(data.extension || "").toLowerCase();
-    urlPath = String(data.url || "").split(/[?#]/)[0].toLowerCase();
-    isImage = data.type === "image"
-      || mimeType.indexOf("image/") === 0
-      || ["jpg", "jpeg", "png", "gif", "webp", "svg"].indexOf(extension) !== -1
-      || /\.(jpe?g|png|gif|webp|svg)$/.test(urlPath);
-
-    if (data.url && isImage) {
-      image = document.createElement("img");
-      image.src = String(data.url);
-      image.alt = String(data.title || "");
-      image.loading = "lazy";
-      preview.appendChild(image);
-
-      if (data.title) {
-        caption = createElement("span", "table-meta truncate", data.title);
-        preview.appendChild(caption);
-      }
-
-      preview.dataset.empty = "false";
-      return;
-    }
-
-    if (data.id || data.url || data.title) {
-      empty = createElement("span", "content-image-preview-empty", data.title || data.url || emptyText);
-      preview.appendChild(empty);
-      preview.dataset.empty = "false";
-      return;
-    }
-
-    empty = createElement("span", "content-image-preview-empty", emptyText);
-    preview.appendChild(empty);
-    preview.dataset.empty = "true";
-  };
-
-  TinyCat.fileInput = function (target) {
-    return findData("data-file-picker-value", target, document) || findData("data-media-picker-value", target, document);
-  };
-
-  TinyCat.fileRemoveInput = function (target) {
-    return findData("data-file-picker-remove", target, document) || findData("data-media-picker-remove", target, document);
-  };
-
-  TinyCat.setFileValue = function (target, file, remove) {
-    var input = TinyCat.fileInput(target);
-    var removeInput = TinyCat.fileRemoveInput(target);
-    var data = file || {};
-
-    if (!input) {
-      return;
-    }
-
-    input.value = remove ? "" : String(data.id || "");
-
-    if (removeInput) {
-      removeInput.value = remove ? "1" : "0";
-    }
-
-    TinyCat.renderFilePreview(target, remove ? {} : data);
-    emit(input, "tinycat:file", {
-      id: input.value,
-      url: remove ? "" : String(data.url || ""),
-      title: remove ? "" : String(data.title || ""),
-      type: remove ? "" : String(data.type || ""),
-      mimeType: remove ? "" : String(data.mimeType || data.mime_type || ""),
-      extension: remove ? "" : String(data.extension || ""),
-      remove: Boolean(remove)
-    });
-    emit(input, "tinycat:media", {
-      id: input.value,
-      url: remove ? "" : String(data.url || ""),
-      title: remove ? "" : String(data.title || ""),
-      type: remove ? "" : String(data.type || ""),
-      mimeType: remove ? "" : String(data.mimeType || data.mime_type || ""),
-      extension: remove ? "" : String(data.extension || ""),
-      remove: Boolean(remove)
-    });
-  };
-
-  TinyCat.activeFileTarget = function (modal) {
-    return modal ? (modal.dataset.fileActiveTarget || modal.dataset.mediaActiveTarget || "") : "";
-  };
-
-  TinyCat.refreshFileSelection = function (modal) {
-    var target = TinyCat.activeFileTarget(modal);
-    var input = target ? TinyCat.fileInput(target) : null;
-    var selected = input ? String(input.value || "") : "";
-
-    qsa("[data-file-item], [data-media-item]", modal || document).forEach(function (item) {
-      var itemId = item.dataset.fileId || item.dataset.mediaId || "";
-      var active = selected !== "" && itemId === selected;
-
-      item.dataset.selected = active ? "true" : "false";
-      qsa("[data-file-select], [data-media-select]", item).forEach(function (button) {
-        button.setAttribute("aria-pressed", active ? "true" : "false");
-      });
-    });
-  };
-
-  TinyCat.filterFilePicker = function (root, query) {
-    var needle = String(query || "").trim().toLowerCase();
-    var visible = 0;
-    var empty = qs("[data-file-empty], [data-media-empty]", root);
-
-    qsa("[data-file-item], [data-media-item]", root).forEach(function (item) {
-      var haystack = String(item.dataset.fileSearch || item.dataset.mediaSearch || "").toLowerCase();
-      var match = needle === "" || haystack.indexOf(needle) !== -1;
-
-      item.hidden = !match;
-      if (match) {
-        visible += 1;
-      }
-    });
-
-    if (empty) {
-      empty.hidden = visible !== 0;
-    }
-  };
-
-  TinyCat.openFilePicker = function (trigger) {
-    var modal = getModal(trigger.dataset.filePickerOpen || trigger.dataset.mediaPickerOpen || "content-file-picker");
-    var target = trigger.dataset.filePickerTarget || trigger.dataset.mediaPickerTarget || "";
-    var mode = trigger.dataset.filePickerMode || trigger.dataset.mediaPickerMode || "field";
-    var type = trigger.dataset.filePickerType || trigger.dataset.mediaPickerType || "image";
-    var screen;
-    var search;
-
-    if (!modal || (target === "" && mode !== "editor")) {
-      return null;
-    }
-
-    type = type === "file" ? "file" : "image";
-    modal.dataset.filePickerType = type;
-    modal.dataset.filePickerMode = mode;
-    modal.dataset.fileActiveTarget = target;
-    modal.dataset.mediaPickerMode = mode;
-    modal.dataset.mediaActiveTarget = target;
-    qsa("[data-file-picker-screen]", modal).forEach(function (screen) {
-      screen.hidden = screen.dataset.filePickerScreen !== type;
-    });
-    screen = qs('[data-file-picker-screen="' + type + '"]', modal) || modal;
-    TinyCat.refreshFileSelection(modal);
-    qsa("[data-file-clear], [data-media-clear]", modal).forEach(function (button) {
-      button.hidden = mode === "editor";
-    });
-    search = qs("[data-file-search]", screen) || qs("[data-media-search]", screen);
-
-    if (search) {
-      TinyCat.filterFilePicker(screen, search.value);
-    }
-
-    return TinyCat.openModal(modal);
-  };
-
-  TinyCat.selectFile = function (button) {
-    var item = button.closest("[data-file-item], [data-media-item]");
-    var modal = button.closest(".modal");
-    var target = button.dataset.fileTarget || button.dataset.mediaTarget || TinyCat.activeFileTarget(modal);
-    var file;
-
-    if (!item || target === "") {
-      return;
-    }
-
-    file = {
-      id: item.dataset.fileId || item.dataset.mediaId || "",
-      url: item.dataset.fileUrl || item.dataset.mediaUrl || "",
-      title: item.dataset.fileTitle || item.dataset.mediaTitle || "",
-      mimeType: item.dataset.fileMime || item.dataset.mediaMime || "",
-      extension: item.dataset.fileExtension || item.dataset.mediaExtension || "",
-      type: item.dataset.fileType || modal.dataset.filePickerType || "image"
-    };
-
-    if (modal && (modal.dataset.filePickerMode || modal.dataset.mediaPickerMode) === "editor") {
-      emit(modal, "tinycat:file-select", {
-        mode: "editor",
-        target: target,
-        file: file,
-        media: file
-      });
-      emit(modal, "tinycat:media-select", {
-        mode: "editor",
-        target: target,
-        media: file
-      });
-
-      TinyCat.closeModal(modal);
-      return;
-    }
-
-    TinyCat.setFileValue(target, file, false);
-    TinyCat.refreshFileSelection(modal);
-
-    if (modal) {
-      TinyCat.closeModal(modal);
-    }
-  };
-
-  TinyCat.clearFileSelection = function (button) {
-    var modal = button.closest(".modal");
-    var target = TinyCat.activeFileTarget(modal);
-
-    if (target === "") {
-      return;
-    }
-
-    TinyCat.setFileValue(target, {}, true);
-    TinyCat.refreshFileSelection(modal);
-
-    if (modal) {
-      TinyCat.closeModal(modal);
-    }
-  };
-
-  TinyCat.clearDeletedFile = function (id) {
-    qsa("[data-file-picker-value], [data-media-picker-value]").forEach(function (input) {
-      if (String(input.value || "") === String(id || "")) {
-        TinyCat.setFileValue(input.dataset.filePickerValue || input.dataset.mediaPickerValue, {}, true);
-      }
-    });
-  };
-
-  TinyCat.initFilePicker = function () {
-    if (TinyCat.__filePickerEventsBound === true) {
-      return;
-    }
-
-    TinyCat.__filePickerEventsBound = true;
-
-    document.addEventListener("click", function (event) {
-      var opener = event.target.closest && event.target.closest("[data-file-picker-open], [data-media-picker-open]");
-      var select = event.target.closest && event.target.closest("[data-file-select], [data-media-select]");
-      var clear = event.target.closest && event.target.closest("[data-file-clear], [data-media-clear]");
-
-      if (opener) {
-        event.preventDefault();
-        TinyCat.openFilePicker(opener);
-        return;
-      }
-
-      if (clear) {
-        event.preventDefault();
-        TinyCat.clearFileSelection(clear);
-        return;
-      }
-
-      if (select) {
-        event.preventDefault();
-        TinyCat.selectFile(select);
-      }
-    });
-
-    document.addEventListener("input", function (event) {
-      var search = event.target.closest && event.target.closest("[data-file-search], [data-media-search]");
-      var modal;
-
-      if (!search) {
-        return;
-      }
-
-      modal = search.closest("[data-file-picker-screen]") || search.closest(".modal") || document;
-      TinyCat.filterFilePicker(modal, search.value);
-    });
-
-    document.addEventListener("tinycat:success", function (event) {
-      var source = event.target;
-      var upload = source.closest && source.closest("[data-file-upload-form], [data-media-upload-form]");
-      var deleted = source.closest && source.closest("[data-file-delete], [data-media-delete]");
-      var payload = event.detail ? event.detail.payload : null;
-      var modal;
-      var search;
-
-      if (upload) {
-        modal = upload.closest(".modal");
-
-        if (payload && (payload.file || payload.media)) {
-          payload.media = payload.file || payload.media;
-
-          if (modal && (modal.dataset.filePickerMode || modal.dataset.mediaPickerMode) === "editor") {
-            emit(modal, "tinycat:file-select", {
-              mode: "editor",
-              target: TinyCat.activeFileTarget(modal),
-              file: payload.media,
-              media: payload.media
-            });
-            emit(modal, "tinycat:media-select", {
-              mode: "editor",
-              target: TinyCat.activeFileTarget(modal),
-              media: payload.media
-            });
-            TinyCat.closeModal(modal);
-            return;
-          }
-
-          TinyCat.setFileValue(TinyCat.activeFileTarget(modal), payload.media, false);
-          TinyCat.refreshFileSelection(modal);
-          TinyCat.closeModal(modal);
-        }
-      }
-
-      if (deleted) {
-        modal = deleted.closest(".modal");
-        TinyCat.clearDeletedFile(deleted.dataset.fileDelete || deleted.dataset.mediaDelete);
-
-        if (modal) {
-          TinyCat.refreshFileSelection(modal);
-          var screen = qs('[data-file-picker-screen="' + (modal.dataset.filePickerType || "image") + '"]', modal) || modal;
-          search = qs("[data-file-search]", screen) || qs("[data-media-search]", screen);
-
-          if (search) {
-            TinyCat.filterFilePicker(screen, search.value);
-          }
-        }
-      }
-    });
-  };
-
-  TinyCat.renderMediaPreview = TinyCat.renderFilePreview;
-  TinyCat.mediaInput = TinyCat.fileInput;
-  TinyCat.mediaRemoveInput = TinyCat.fileRemoveInput;
-  TinyCat.setMediaValue = TinyCat.setFileValue;
-  TinyCat.activeMediaTarget = TinyCat.activeFileTarget;
-  TinyCat.refreshMediaSelection = TinyCat.refreshFileSelection;
-  TinyCat.filterMediaPicker = TinyCat.filterFilePicker;
-  TinyCat.openMediaPicker = TinyCat.openFilePicker;
-  TinyCat.selectMedia = TinyCat.selectFile;
-  TinyCat.clearMediaSelection = TinyCat.clearFileSelection;
-  TinyCat.clearDeletedMedia = TinyCat.clearDeletedFile;
-  TinyCat.initMediaPicker = TinyCat.initFilePicker;
-
   TinyCat.initDirtyForms = function (scope) {
     qsa('form[data-confirm-unsaved="true"]', scope || document).forEach(function (form) {
       if (form.dataset.dirtyReady === "true") {
@@ -1835,100 +2134,10 @@
       updateDirtyForm(event.target.closest && event.target.closest('form[data-confirm-unsaved="true"]'));
     });
 
-    ["tinycat:tags", "tinycat:file", "tinycat:media", "tinycat:file-select", "tinycat:editor-sync"].forEach(function (name) {
+    ["tinycat:tags", "tinycat:editor-sync"].forEach(function (name) {
       document.addEventListener(name, function (event) {
         updateDirtyForm(event.target.closest && event.target.closest('form[data-confirm-unsaved="true"]'));
       });
-    });
-  };
-
-  TinyCat.renderDropzoneFiles = function (root, files) {
-    var target = qs("[data-dropzone-files]", root);
-
-    if (!target) {
-      return;
-    }
-
-    target.innerHTML = "";
-
-    Array.prototype.slice.call(files || []).forEach(function (file) {
-      var item = document.createElement("div");
-      var name = document.createElement("strong");
-      var size = document.createElement("span");
-
-      item.className = "dropzone-file";
-      name.textContent = file.name;
-      size.className = "table-meta";
-      size.textContent = formatBytes(file.size);
-      item.appendChild(name);
-      item.appendChild(size);
-      target.appendChild(item);
-    });
-  };
-
-  TinyCat.initDropzones = function (scope) {
-    qsa("[data-dropzone]", scope || document).forEach(function (root) {
-      var input = qs('input[type="file"]', root);
-
-      if (root.dataset.dropzoneReady === "true") {
-        return;
-      }
-
-      root.dataset.dropzoneReady = "true";
-
-      if (input) {
-        input.addEventListener("change", function () {
-          TinyCat.renderDropzoneFiles(root, input.files);
-          emit(root, "tinycat:files", { files: input.files });
-        });
-      }
-    });
-
-    if (TinyCat.__dropzoneEventsBound === true) {
-      return;
-    }
-
-    TinyCat.__dropzoneEventsBound = true;
-
-    ["dragenter", "dragover"].forEach(function (name) {
-      document.addEventListener(name, function (event) {
-        var root = event.target.closest && event.target.closest("[data-dropzone]");
-
-        if (!root) {
-          return;
-        }
-
-        event.preventDefault();
-        root.dataset.dragover = "true";
-      });
-    });
-
-    document.addEventListener("dragleave", function (event) {
-      var root = event.target.closest && event.target.closest("[data-dropzone]");
-
-      if (root && !root.contains(event.relatedTarget)) {
-        root.dataset.dragover = "false";
-      }
-    });
-
-    document.addEventListener("drop", function (event) {
-      var root = event.target.closest && event.target.closest("[data-dropzone]");
-      var input;
-
-      if (!root) {
-        return;
-      }
-
-      event.preventDefault();
-      root.dataset.dragover = "false";
-      input = qs('input[type="file"]', root);
-
-      if (input) {
-        input.files = event.dataTransfer.files;
-      }
-
-      TinyCat.renderDropzoneFiles(root, event.dataTransfer.files);
-      emit(root, "tinycat:files", { files: event.dataTransfer.files });
     });
   };
 
@@ -1955,6 +2164,671 @@
     });
   };
 
+  TinyCat.initCommentReplies = function () {
+    if (TinyCat.__commentReplyEventsBound === true) {
+      return;
+    }
+
+    TinyCat.__commentReplyEventsBound = true;
+
+    document.addEventListener("toggle", function (event) {
+      var details = event.target;
+      var input;
+      var length;
+
+      if (!details || !details.matches || !details.matches(".status-reply-details") || !details.open) {
+        return;
+      }
+
+      input = qs(".status-comment-input", details);
+
+      if (!input) {
+        return;
+      }
+
+      input.focus();
+      length = input.value.length;
+
+      if (input.setSelectionRange) {
+        input.setSelectionRange(length, length);
+      }
+    }, true);
+  };
+
+  TinyCat.openProfileEditor = function (root, focusName) {
+    var details;
+    var field;
+    var length;
+
+    if (!root) {
+      return;
+    }
+
+    details = qs("[data-profile-editor-panel]", root);
+
+    if (!details) {
+      return;
+    }
+
+    details.open = true;
+
+    if (focusName) {
+      field = qsa("[name]", details).find(function (item) {
+        return item.name === focusName;
+      });
+    }
+
+    if (!field) {
+      field = qs("input, textarea, select", details);
+    }
+
+    if (!field || !field.focus) {
+      return;
+    }
+
+    window.setTimeout(function () {
+      field.focus();
+
+      if (field.tagName === "TEXTAREA" || field.type === "text" || field.type === "url" || field.type === "email") {
+        length = String(field.value || "").length;
+
+        if (field.setSelectionRange) {
+          field.setSelectionRange(length, length);
+        }
+      }
+    }, 0);
+  };
+
+  TinyCat.initProfileEditors = function () {
+    if (TinyCat.__profileEditorEventsBound === true) {
+      return;
+    }
+
+    TinyCat.__profileEditorEventsBound = true;
+
+    document.addEventListener("click", function (event) {
+      var open = event.target.closest && event.target.closest("[data-profile-edit-open]");
+      var close = event.target.closest && event.target.closest("[data-profile-edit-close]");
+      var root;
+      var details;
+
+      if (open) {
+        event.preventDefault();
+        TinyCat.openProfileEditor(open.closest("[data-profile-editor]"), open.dataset.profileEditFocus || "");
+        return;
+      }
+
+      if (!close) {
+        return;
+      }
+
+      event.preventDefault();
+      root = close.closest("[data-profile-editor]");
+      details = root && qs("[data-profile-editor-panel]", root);
+
+      if (details) {
+        details.open = false;
+      }
+    });
+  };
+
+  function statusFormAction(form, body) {
+    var data = body;
+
+    try {
+      if (!data) {
+        data = new FormData(form);
+      }
+
+      return String(data.get("action") || "create");
+    } catch (error) {
+      return "create";
+    }
+  }
+
+  function shouldSubmitOnEnter(event) {
+    return event.key === "Enter"
+      && !event.shiftKey
+      && !event.altKey
+      && !event.ctrlKey
+      && !event.metaKey
+      && !event.isComposing
+      && event.keyCode !== 229;
+  }
+
+  function submitForm(form) {
+    if (!form || form.dataset.statusBusy === "true") {
+      return;
+    }
+
+    if (form.requestSubmit) {
+      form.requestSubmit();
+      return;
+    }
+
+    form.submit();
+  }
+
+  function statusFeedPayload(data) {
+    var payload = unwrapResult(data);
+
+    return payload && typeof payload === "object" ? payload : {};
+  }
+
+  function statusFeedTarget(control) {
+    var selector = control ? control.dataset.statusFeedTarget : "";
+
+    return selector ? qs(selector) : null;
+  }
+
+  function statusFeedNearViewport(control) {
+    var rect;
+
+    if (!control || control.hidden) {
+      return false;
+    }
+
+    rect = control.getBoundingClientRect();
+
+    return rect.top < window.innerHeight + 400;
+  }
+
+  async function loadStatusFeedMore(control) {
+    var target = statusFeedTarget(control);
+    var url = control ? control.dataset.statusFeedUrl : "";
+    var button = qs("[data-status-feed-load]", control);
+    var state = qs("[data-status-feed-state]", control);
+    var data;
+    var payload;
+    var template;
+
+    if (!control || !target || !url || control.dataset.statusFeedBusy === "true") {
+      return;
+    }
+
+    control.dataset.statusFeedBusy = "true";
+    control.classList.add("is-loading");
+
+    if (button) {
+      button.disabled = true;
+    }
+
+    if (state) {
+      state.hidden = false;
+    }
+
+    try {
+      data = await TinyCat.request(url, { method: "GET" });
+      payload = statusFeedPayload(data);
+
+      if (payload.html) {
+        template = document.createElement("template");
+        template.innerHTML = String(payload.html || "");
+        target.appendChild(template.content);
+        hydrateDynamic(target);
+      }
+
+      if (!payload.next_url || payload.done === true || Number(payload.count || 0) < 1) {
+        control.remove();
+        return;
+      }
+
+      control.dataset.statusFeedUrl = String(payload.next_url || "");
+    } catch (error) {
+      TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+    } finally {
+      delete control.dataset.statusFeedBusy;
+      control.classList.remove("is-loading");
+
+      if (button) {
+        button.disabled = false;
+      }
+
+      if (state) {
+        state.hidden = true;
+      }
+    }
+
+    if (statusFeedNearViewport(control)) {
+      window.setTimeout(function () {
+        loadStatusFeedMore(control);
+      }, 120);
+    }
+  }
+
+  function renderFetchedFlashes(doc) {
+    qsa("[data-tinycat-flashes]", doc).forEach(function (node) {
+      var messages;
+
+      try {
+        messages = JSON.parse(node.textContent || "[]");
+      } catch (error) {
+        messages = [];
+      }
+
+      if (!Array.isArray(messages)) {
+        return;
+      }
+
+      messages.forEach(function (item) {
+        TinyCat.toast(item.message || "", item.type || "info");
+      });
+    });
+  }
+
+  function replaceFromDocument(selector, doc) {
+    var current = qs(selector);
+    var next = qs(selector, doc);
+    var imported;
+
+    if (!current || !next) {
+      return false;
+    }
+
+    imported = document.importNode(next, true);
+    current.replaceWith(imported);
+    hydrateDynamic(imported);
+
+    return true;
+  }
+
+  function replaceStatusRegion(doc) {
+    return replaceFromDocument(".profile-layout", doc)
+      || replaceFromDocument(".public-layout", doc)
+      || replaceFromDocument(".home-feed-section", doc)
+      || replaceFromDocument(".profile-main", doc);
+  }
+
+  function modalScrollElement(modal) {
+    var body = qs(".modal-body", modal);
+    var panel = qs(".modal-panel", modal);
+    var bodyStyle;
+
+    if (body && body.scrollHeight > body.clientHeight + 2) {
+      bodyStyle = window.getComputedStyle ? window.getComputedStyle(body) : null;
+
+      if (!bodyStyle || bodyStyle.overflowY === "auto" || bodyStyle.overflowY === "scroll") {
+        return body;
+      }
+    }
+
+    return panel || body || modal;
+  }
+
+  function captureModalScroll(modal) {
+    var scroller = modal ? modalScrollElement(modal) : null;
+    var remaining;
+
+    if (!scroller) {
+      return null;
+    }
+
+    remaining = scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop;
+
+    return {
+      top: scroller.scrollTop,
+      atBottom: remaining <= 80
+    };
+  }
+
+  function restoreModalScroll(modal, state) {
+    var scroller;
+
+    if (!modal || !state) {
+      return;
+    }
+
+    scroller = modalScrollElement(modal);
+
+    if (!scroller) {
+      return;
+    }
+
+    window.requestAnimationFrame(function () {
+      window.requestAnimationFrame(function () {
+        scroller.scrollTop = state.atBottom ? scroller.scrollHeight : Math.min(state.top, scroller.scrollHeight);
+      });
+    });
+  }
+
+  function syncStatusResponse(form, doc, action) {
+    var currentCard = form.closest(".status-card");
+    var openedModal = form.closest(".modal");
+    var reopenModalId = openedModal && openedModal.dataset.open === "true" ? openedModal.id : "";
+    var modalScroll = captureModalScroll(openedModal);
+    var nextCard;
+    var imported;
+    var reopenedModal;
+
+    if (openedModal) {
+      TinyCat.closeModal(openedModal);
+    }
+
+    if (action === "share" && replaceStatusRegion(doc)) {
+      return true;
+    }
+
+    if (currentCard && currentCard.id) {
+      nextCard = doc.getElementById(currentCard.id);
+
+      if (nextCard) {
+        imported = document.importNode(nextCard, true);
+        currentCard.replaceWith(imported);
+        hydrateDynamic(imported);
+
+        if (reopenModalId && action !== "update" && action !== "delete" && action !== "share") {
+          reopenedModal = TinyCat.openModal(reopenModalId);
+          restoreModalScroll(reopenedModal, modalScroll);
+        }
+
+        return true;
+      }
+
+      if (replaceStatusRegion(doc)) {
+        return true;
+      }
+
+      currentCard.remove();
+      return true;
+    }
+
+    return replaceStatusRegion(doc);
+  }
+
+  TinyCat.initStatusForms = function () {
+    if (TinyCat.__statusFormEventsBound === true) {
+      return;
+    }
+
+    TinyCat.__statusFormEventsBound = true;
+
+    document.addEventListener("submit", async function (event) {
+      var form = event.target.closest && event.target.closest("form[data-status-form]");
+      var body;
+      var action;
+      var method;
+      var url;
+      var headers;
+      var response;
+      var html;
+      var doc;
+      var responseUrl;
+      var responsePath;
+
+      if (!form) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (form.dataset.statusBusy === "true") {
+        return;
+      }
+
+      if (form.dataset.confirm && !(await confirmAction(form))) {
+        return;
+      }
+
+      clearErrors(form);
+      body = new FormData(form);
+      action = statusFormAction(form, body);
+      method = (form.getAttribute("method") || "POST").toUpperCase();
+      url = form.getAttribute("action") || window.location.href;
+      headers = {
+        "Accept": "text/html, application/xhtml+xml, */*;q=0.8"
+      };
+
+      if (getCsrfToken()) {
+        headers["X-CSRF-Token"] = getCsrfToken();
+      }
+
+      try {
+        form.dataset.statusBusy = "true";
+        setLoading(form, true);
+
+        response = await fetch(url, {
+          method: method,
+          headers: headers,
+          body: method === "GET" ? null : body
+        });
+
+        responseUrl = response.url || "";
+
+        if (response.redirected && responseUrl) {
+          responsePath = new URL(responseUrl, window.location.href).pathname;
+
+          if (responsePath === "/login" || responsePath === "/install") {
+            window.location.assign(responseUrl);
+            return;
+          }
+        }
+
+        html = await response.text();
+
+        if (!response.ok) {
+          throw new Error(response.statusText || "Request failed");
+        }
+
+        doc = new DOMParser().parseFromString(html, "text/html");
+        renderFetchedFlashes(doc);
+
+        if (!syncStatusResponse(form, doc, action)) {
+          window.location.assign(responseUrl || url);
+        }
+      } catch (error) {
+        TinyCat.toast(error.message || "Request failed", "danger");
+      } finally {
+        delete form.dataset.statusBusy;
+        setLoading(form, false);
+      }
+    });
+
+    document.addEventListener("keydown", function (event) {
+      var field = event.target.closest && event.target.closest(".status-comment-input");
+
+      if (!field || !field.form || !shouldSubmitOnEnter(event)) {
+        return;
+      }
+
+      event.preventDefault();
+      submitForm(field.form);
+    });
+  };
+
+  TinyCat.initStatusFeedLazy = function (scope) {
+    qsa("[data-status-feed-more]", scope || document).forEach(function (control) {
+      if (control.dataset.statusFeedReady === "true") {
+        return;
+      }
+
+      control.dataset.statusFeedReady = "true";
+
+      if ("IntersectionObserver" in window) {
+        if (!TinyCat.__statusFeedObserver) {
+          TinyCat.__statusFeedObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                loadStatusFeedMore(entry.target);
+              }
+            });
+          }, { rootMargin: "420px 0px" });
+        }
+
+        TinyCat.__statusFeedObserver.observe(control);
+      }
+    });
+
+    if (TinyCat.__statusFeedClickReady === true) {
+      return;
+    }
+
+    TinyCat.__statusFeedClickReady = true;
+
+    document.addEventListener("click", function (event) {
+      var trigger = event.target.closest && event.target.closest("[data-status-feed-load]");
+
+      if (!trigger) {
+        return;
+      }
+
+      event.preventDefault();
+      loadStatusFeedMore(trigger.closest("[data-status-feed-more]"));
+    });
+  };
+
+  function notificationBadgeText(count) {
+    count = Math.max(0, parseInt(count || "0", 10) || 0);
+    return count > 99 ? "99+" : String(count);
+  }
+
+  function updateNotificationButton(button, state) {
+    var unread = Math.max(0, parseInt((state && state.unread) || "0", 10) || 0);
+    var latestId = Math.max(0, parseInt((state && state.latest_id) || "0", 10) || 0);
+    var badge = qs("[data-notification-count]", button);
+    var menu = button.closest && button.closest("[data-notification-menu]");
+    var menuBadge = menu ? qs("[data-notification-menu-count]", menu) : null;
+    var list = menu ? qs("[data-notification-list]", menu) : null;
+
+    button.dataset.notificationUnread = String(unread);
+    button.dataset.notificationLatestId = String(latestId);
+    button.classList.toggle("has-unread", unread > 0);
+
+    if (badge) {
+      badge.hidden = unread < 1;
+      badge.textContent = notificationBadgeText(unread);
+    }
+
+    if (menuBadge) {
+      menuBadge.hidden = unread < 1;
+      menuBadge.textContent = notificationBadgeText(unread);
+    }
+
+    if (list && state && typeof state.html === "string") {
+      list.innerHTML = state.html;
+    }
+  }
+
+  function setNotificationMenu(menu, open) {
+    if (!menu) {
+      return;
+    }
+
+    var button = qs("[data-notification-button]", menu);
+    var popover = qs("[data-notification-popover]", menu);
+
+    if (!button || !popover) {
+      return;
+    }
+
+    menu.classList.toggle("is-open", open);
+    popover.hidden = !open;
+    button.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  function closeNotificationMenus(except) {
+    qsa("[data-notification-menu]").forEach(function (menu) {
+      if (except && menu === except) {
+        return;
+      }
+
+      setNotificationMenu(menu, false);
+    });
+  }
+
+  TinyCat.initNotifications = function () {
+    if (TinyCat.__notificationMenuEventsBound !== true) {
+      TinyCat.__notificationMenuEventsBound = true;
+
+      document.addEventListener("click", function (event) {
+        var button = event.target.closest && event.target.closest("[data-notification-button]");
+        var menu = event.target.closest && event.target.closest("[data-notification-menu]");
+
+        if (button) {
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || button.target === "_blank") {
+            return;
+          }
+
+          event.preventDefault();
+          setNotificationMenu(button.closest("[data-notification-menu]"), button.getAttribute("aria-expanded") !== "true");
+          return;
+        }
+
+        if (!menu) {
+          closeNotificationMenus();
+        }
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closeNotificationMenus();
+        }
+      });
+    }
+
+    qsa("[data-notification-button]").forEach(function (button) {
+      var api;
+      var interval;
+      var latestId;
+      var unread;
+      var first = true;
+
+      if (button.dataset.notificationReady === "true") {
+        return;
+      }
+
+      api = button.dataset.notificationApi || "/api/notifications";
+      interval = Math.max(3000, parseInt(button.dataset.notificationInterval || "5000", 10) || 5000);
+      latestId = Math.max(0, parseInt(button.dataset.notificationLatestId || "0", 10) || 0);
+      unread = Math.max(0, parseInt(button.dataset.notificationUnread || "0", 10) || 0);
+      button.dataset.notificationReady = "true";
+      updateNotificationButton(button, {
+        unread: unread,
+        latest_id: latestId
+      });
+
+      async function poll() {
+        var state;
+        var nextLatestId;
+        var nextUnread;
+        var message;
+
+        if (document.hidden) {
+          return;
+        }
+
+        try {
+          state = await TinyCat.request(api, {
+            method: "GET",
+            cache: "no-store"
+          });
+          state = unwrapResult(state) || {};
+          nextLatestId = Math.max(0, parseInt((state && state.latest_id) || "0", 10) || 0);
+          nextUnread = Math.max(0, parseInt((state && state.unread) || "0", 10) || 0);
+          message = (state && state.message) || button.dataset.notificationMessage || "";
+
+          if (!first && message && nextUnread > 0 && (nextLatestId > latestId || nextUnread > unread)) {
+            TinyCat.toast(message, "info", 4200);
+          }
+
+          updateNotificationButton(button, state || {});
+          latestId = nextLatestId;
+          unread = nextUnread;
+          first = false;
+        } catch (_error) {
+          first = false;
+        }
+      }
+
+      window.setTimeout(poll, interval);
+      window.setInterval(poll, interval);
+      document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) {
+          poll();
+        }
+      });
+    });
+  };
+
   TinyCat.init = function () {
     TinyCat.initAdminNav();
     TinyCat.initModals();
@@ -1963,12 +2837,17 @@
     TinyCat.initToasts();
     TinyCat.initTabs();
     TinyCat.initTagifiers();
+    TinyCat.initStatusEditors();
+    TinyCat.initStatusFeedLazy();
+    TinyCat.initGlobalSearch();
     TinyCat.initCaptcha();
     TinyCat.initSortable();
-    TinyCat.initFilePicker();
     TinyCat.initDirtyForms();
-    TinyCat.initDropzones();
     TinyCat.initAutoSubmit();
+    TinyCat.initCommentReplies();
+    TinyCat.initProfileEditors();
+    TinyCat.initStatusForms();
+    TinyCat.initNotifications();
   };
 
   window.TinyCat = TinyCat;

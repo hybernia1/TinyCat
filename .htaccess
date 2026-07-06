@@ -1,5 +1,18 @@
 DirectoryIndex index.php
 
+<FilesMatch "^(config(\.local)?\.php|composer\.(json|lock)|package(-lock)?\.json|.*\.sql)$">
+    Require all denied
+</FilesMatch>
+
+RedirectMatch 404 ^/(App|lang|storage)(/|$)
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^Public(/.*)?$ index.php [L]

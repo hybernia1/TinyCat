@@ -6,6 +6,8 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
+require_admin();
+
 if (!function_exists('tc_admin_users_filter_fields')) {
     http_response_code(404);
     return;

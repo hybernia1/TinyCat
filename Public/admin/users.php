@@ -10,7 +10,7 @@ if (!(bool) config('install.installed', false)) {
     redirect('/install');
 }
 
-require_auth();
+require_admin();
 
 if (get('api') === 'list') {
     api_ok(tc_admin_users_response_payload());
@@ -47,6 +47,8 @@ if (get('api') === 'delete') {
             api_error(t('users.messages.not_found'), 404, 'user_not_found');
         }
 
+        tc_admin_user_require_deletable($id);
+
         delete('users', ['id' => $id]);
         api_ok(tc_admin_users_response_payload(), t('users.messages.deleted'));
     });
@@ -79,8 +81,6 @@ function tc_admin_roles(): array
 {
     return [
         'admin' => t('users.roles.admin'),
-        'manager' => t('users.roles.manager'),
-        'editor' => t('users.roles.editor'),
         'user' => t('users.roles.user'),
     ];
 }
@@ -128,8 +128,8 @@ function tc_admin_statuses(): array
 {
     return [
         'active' => t('users.statuses.active'),
-        'invited' => t('users.statuses.invited'),
-        'disabled' => t('users.statuses.disabled'),
+        'waiting' => t('users.statuses.waiting'),
+        'ban' => t('users.statuses.ban'),
     ];
 }
 
@@ -251,8 +251,8 @@ function tc_admin_users_stats(): array
     return [
         'total' => total('users'),
         'active' => total('users', ['status' => 'active']),
-        'invited' => total('users', ['status' => 'invited']),
-        'disabled' => total('users', ['status' => 'disabled']),
+        'waiting' => total('users', ['status' => 'waiting']),
+        'ban' => total('users', ['status' => 'ban']),
     ];
 }
 
@@ -303,6 +303,36 @@ function tc_admin_user_by_id(int $id): ?array
     return find('users', ['id' => $id]);
 }
 
+function tc_admin_super_admin_id(): int
+{
+    static $id = null;
+
+    if ($id === null) {
+        $id = (int) val(
+            'SELECT id FROM users WHERE role = ? ORDER BY created_at ASC, id ASC LIMIT 1',
+            ['admin']
+        );
+    }
+
+    return $id;
+}
+
+function tc_admin_user_is_super_admin(array|int $user): bool
+{
+    $id = is_array($user) ? (int) ($user['id'] ?? 0) : $user;
+
+    return $id > 0 && $id === tc_admin_super_admin_id();
+}
+
+function tc_admin_user_require_deletable(int $id): void
+{
+    $user = tc_admin_user_by_id($id);
+
+    if ($user !== null && tc_admin_user_is_super_admin($user)) {
+        api_error(t('users.messages.super_admin_protected'), 409, 'super_admin_protected');
+    }
+}
+
 function tc_admin_user_resource(array $user): array
 {
     if ($user === []) {
@@ -345,6 +375,7 @@ function tc_admin_email_taken(string $email, ?int $ignoreId = null): bool
 
 function tc_admin_user_payload(?int $id = null): array
 {
+    $existing = $id === null ? null : tc_admin_user_by_id($id);
     $passwordRule = $id === null ? 'required|string|min:8|max:200' : 'nullable|string|min:8|max:200';
     $data = api_validated([
         'name' => 'required|string|max:120',
@@ -361,11 +392,21 @@ function tc_admin_user_payload(?int $id = null): array
         api_validation(['email' => [t('users.messages.email_taken')]]);
     }
 
+    $role = (string) $data['role'];
+    $status = (string) $data['status'];
+
+    if ($existing !== null && tc_admin_user_is_super_admin($existing) && ($role !== 'admin' || $status !== 'active')) {
+        api_validation([
+            'role' => [t('users.messages.super_admin_protected')],
+            'status' => [t('users.messages.super_admin_protected')],
+        ]);
+    }
+
     $payload = [
         'name' => trim((string) $data['name']),
         'email' => $email,
-        'role' => (string) $data['role'],
-        'status' => (string) $data['status'],
+        'role' => $role,
+        'status' => $status,
         'note' => trim((string) ($data['note'] ?? '')),
     ];
 
@@ -392,9 +433,9 @@ function tc_admin_options(array $options, ?string $selected = null): string
 function tc_admin_status_badge(string $status): string
 {
     $labels = tc_admin_statuses();
-    $class = $status === 'disabled' ? 'badge badge-danger' : 'badge badge-primary';
+    $class = $status === 'ban' ? 'badge badge-danger' : 'badge badge-primary';
 
-    if ($status === 'invited') {
+    if ($status === 'waiting') {
         $class = 'badge';
     }
 
@@ -470,6 +511,7 @@ function tc_admin_users_html(): string
                     <tbody>
                         <?php foreach ($users as $user): ?>
                             <?php $id = (int) $user['id']; ?>
+                            <?php $isSuperAdmin = tc_admin_user_is_super_admin($user); ?>
                             <tr>
                                 <td>
                                     <strong><?= e($user['name']) ?></strong>
@@ -487,13 +529,15 @@ function tc_admin_users_html(): string
                                         <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-open="user-edit-<?= e($id) ?>" aria-label="<?= et('users.edit_user', ['name' => (string) $user['name']]) ?>" title="<?= et('common.edit') ?>">
                                             <?= icon('edit') ?>
                                         </button>
-                                        <form class="inline-flex" action="<?= e(tc_admin_users_api_url('delete', ['id' => $id])) ?>" method="post" data-ajax-form data-ajax-target="#users-list" data-confirm="<?= et('users.delete_confirm', ['name' => (string) $user['name']]) ?>" data-confirm-title="<?= et('users.delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
-                                            <?= csrf_field() ?>
-                                            <input type="hidden" name="_method" value="DELETE">
-                                            <button class="btn btn-sm btn-ghost btn-icon text-danger" type="submit" aria-label="<?= et('common.delete') ?>" title="<?= et('common.delete') ?>">
-                                                <?= icon('trash') ?>
-                                            </button>
-                                        </form>
+                                        <?php if (!$isSuperAdmin): ?>
+                                            <form class="inline-flex" action="<?= e(tc_admin_users_api_url('delete', ['id' => $id])) ?>" method="post" data-ajax-form data-ajax-target="#users-list" data-confirm="<?= et('users.delete_confirm', ['name' => (string) $user['name']]) ?>" data-confirm-title="<?= et('users.delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="_method" value="DELETE">
+                                                <button class="btn btn-sm btn-ghost btn-icon text-danger" type="submit" aria-label="<?= et('common.delete') ?>" title="<?= et('common.delete') ?>">
+                                                    <?= icon('trash') ?>
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>
@@ -622,6 +666,7 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
 {
     $role = (string) ($user['role'] ?? 'user');
     $status = (string) ($user['status'] ?? 'active');
+    $superAdminLocked = !$create && $user !== null && tc_admin_user_is_super_admin($user);
 
     ob_start();
     ?>
@@ -660,11 +705,17 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
                 <div class="user-editor-settings-grid">
                     <label class="field">
                         <span class="label"><?= et('common.role') ?></span>
-                        <select class="select" name="role"><?= tc_admin_options($roles, $role) ?></select>
+                        <?php if ($superAdminLocked): ?>
+                            <input type="hidden" name="role" value="admin">
+                        <?php endif; ?>
+                        <select class="select" name="<?= $superAdminLocked ? 'role_locked' : 'role' ?>"<?= $superAdminLocked ? ' disabled' : '' ?>><?= tc_admin_options($roles, $role) ?></select>
                     </label>
                     <label class="field">
                         <span class="label"><?= et('common.status') ?></span>
-                        <select class="select" name="status"><?= tc_admin_options($statuses, $status) ?></select>
+                        <?php if ($superAdminLocked): ?>
+                            <input type="hidden" name="status" value="active">
+                        <?php endif; ?>
+                        <select class="select" name="<?= $superAdminLocked ? 'status_locked' : 'status' ?>"<?= $superAdminLocked ? ' disabled' : '' ?>><?= tc_admin_options($statuses, $status) ?></select>
                     </label>
                 </div>
             </section>
