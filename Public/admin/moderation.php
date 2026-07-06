@@ -265,10 +265,6 @@ function tc_admin_moderation_review_report(): never
 
 function tc_admin_moderation_reports(): array
 {
-    if (!app_table_exists('content_reports')) {
-        return [];
-    }
-
     return all(
         'SELECT cr.*,
             rc.report_count,

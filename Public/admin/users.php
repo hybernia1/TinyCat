@@ -428,7 +428,7 @@ function tc_admin_user_payload(?int $id = null): array
         $payload['password'] = auth_password($password);
     }
 
-    if ($id === null && app_column_exists('users', 'recovery_hash')) {
+    if ($id === null) {
         $payload['recovery_hash'] = user_recovery_hash_generate();
     }
 

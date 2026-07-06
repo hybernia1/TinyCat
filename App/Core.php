@@ -1720,58 +1720,16 @@ final class Core
         }
 
         $now = self::dateDb();
-        $data = [];
+        $data = ['last_seen_at' => $now];
 
-        if ($login && self::tableHasColumn(self::AUTH_TABLE, 'last_login_at')) {
+        if ($login) {
             $data['last_login_at'] = $now;
-        }
-
-        if (self::tableHasColumn(self::AUTH_TABLE, 'last_seen_at')) {
-            $data['last_seen_at'] = $now;
-        }
-
-        if ($data === []) {
-            return;
         }
 
         try {
             self::update(self::AUTH_TABLE, $data, [self::AUTH_ID => $id]);
         } catch (Throwable) {
-            // Login must not fail because an optional activity column is unavailable.
-        }
-    }
-
-    private static function tableHasColumn(string $table, string $column): bool
-    {
-        static $cache = [];
-
-        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $column)) {
-            return false;
-        }
-
-        $key = $table . '.' . $column;
-
-        if (array_key_exists($key, $cache)) {
-            return $cache[$key];
-        }
-
-        try {
-            if ((string) self::config('database.driver', 'mysql') === 'sqlite') {
-                foreach (self::all('PRAGMA table_info(' . self::identifier($table) . ')') as $row) {
-                    if ((string) ($row['name'] ?? '') === $column) {
-                        return $cache[$key] = true;
-                    }
-                }
-
-                return $cache[$key] = false;
-            }
-
-            return $cache[$key] = (int) self::value(
-                'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
-                [$table, $column]
-            ) > 0;
-        } catch (Throwable) {
-            return $cache[$key] = false;
+            // Auth must not fail because activity tracking failed.
         }
     }
 

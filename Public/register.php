@@ -61,11 +61,8 @@ if (is_post()) {
         'note' => '',
         'website' => '',
         'bio' => '',
+        'recovery_hash' => user_recovery_hash_generate(),
     ];
-
-    if (app_column_exists('users', 'recovery_hash')) {
-        $userData['recovery_hash'] = user_recovery_hash_generate();
-    }
 
     $id = (int) insert('users', $userData);
 

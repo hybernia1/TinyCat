@@ -714,7 +714,7 @@ if (!function_exists('user_recovery_hash_ensure')) {
         $id = (int) ($user['id'] ?? 0);
         $hash = trim((string) ($user['recovery_hash'] ?? ''));
 
-        if ($hash !== '' || $id < 1 || !app_column_exists('users', 'recovery_hash')) {
+        if ($hash !== '' || $id < 1) {
             return $hash;
         }
 
@@ -728,7 +728,7 @@ if (!function_exists('user_recovery_hash_ensure')) {
 if (!function_exists('user_recovery_hash_rotate')) {
     function user_recovery_hash_rotate(int $id): string
     {
-        if ($id < 1 || !app_column_exists('users', 'recovery_hash')) {
+        if ($id < 1) {
             return '';
         }
 
@@ -753,7 +753,7 @@ if (!function_exists('user_find_by_recovery_hash')) {
     {
         $hash = user_recovery_hash_normalize($hash);
 
-        if ($hash === '' || !app_column_exists('users', 'recovery_hash')) {
+        if ($hash === '') {
             return null;
         }
 
@@ -798,10 +798,6 @@ if (!function_exists('moderation_blocked_domains')) {
 
         if ($items !== null) {
             return $items;
-        }
-
-        if (!app_table_exists('blocked_domains')) {
-            return $items = [];
         }
 
         try {
@@ -869,7 +865,7 @@ if (!function_exists('moderation_require_links_allowed')) {
 if (!function_exists('moderation_user_post_count')) {
     function moderation_user_post_count(int $userId): int
     {
-        if ($userId < 1 || !app_table_exists('content')) {
+        if ($userId < 1) {
             return 0;
         }
 
@@ -958,10 +954,6 @@ if (!function_exists('moderation_bucket_start')) {
 if (!function_exists('moderation_action_count')) {
     function moderation_action_count(array $user, string $action): int
     {
-        if (!app_table_exists('user_action_limits')) {
-            return 0;
-        }
-
         [$window] = moderation_action_rule($user, $action);
 
         try {
@@ -978,7 +970,7 @@ if (!function_exists('moderation_action_count')) {
 if (!function_exists('moderation_require_action')) {
     function moderation_require_action(array $user, string $action, string $redirect): void
     {
-        if ((string) ($user['role'] ?? '') === 'admin' || !app_table_exists('user_action_limits')) {
+        if ((string) ($user['role'] ?? '') === 'admin') {
             return;
         }
 
@@ -1018,7 +1010,7 @@ if (!function_exists('user_is_muted')) {
 if (!function_exists('user_mute')) {
     function user_mute(int $userId, array $actor, string $until, string $reason = ''): void
     {
-        if ($userId < 1 || !app_column_exists('users', 'muted_until')) {
+        if ($userId < 1) {
             return;
         }
 
@@ -1039,16 +1031,9 @@ if (!function_exists('user_mute')) {
 
         $data = [
             'muted_until' => $untilValue,
+            'muted_by' => ((int) ($actor['id'] ?? 0)) > 0 ? (int) ($actor['id'] ?? 0) : null,
+            'muted_reason' => plain_text_limit($reason, 80),
         ];
-
-        if (app_column_exists('users', 'muted_by')) {
-            $actorId = (int) ($actor['id'] ?? 0);
-            $data['muted_by'] = $actorId > 0 ? $actorId : null;
-        }
-
-        if (app_column_exists('users', 'muted_reason')) {
-            $data['muted_reason'] = plain_text_limit($reason, 80);
-        }
 
         update('users', $data, ['id' => $userId]);
     }
@@ -1073,7 +1058,7 @@ if (!function_exists('moderation_record_action')) {
     {
         $userId = (int) ($user['id'] ?? 0);
 
-        if ($userId < 1 || !app_table_exists('user_action_limits')) {
+        if ($userId < 1) {
             return;
         }
 
@@ -1108,7 +1093,7 @@ if (!function_exists('moderation_require_unique_body')) {
         $userId = (int) ($user['id'] ?? 0);
         $fingerprint = moderation_body_fingerprint($body);
 
-        if ($userId < 1 || strlen(trim($body)) < 12 || $fingerprint === '' || !app_table_exists('content')) {
+        if ($userId < 1 || strlen(trim($body)) < 12 || $fingerprint === '') {
             return;
         }
 
@@ -1187,10 +1172,6 @@ if (!function_exists('user_profile_store_avatar')) {
     {
         $title = trim($name) !== '' ? trim($name) : t('account.avatar');
 
-        if (!app_column_exists('users', 'avatar_url')) {
-            throw new RuntimeException('Avatar storage is not ready.');
-        }
-
         return avatar_upload($file, $title . ' avatar');
     }
 }
@@ -1252,19 +1233,10 @@ if (!function_exists('user_avatar_update')) {
             redirect($redirect);
         }
 
-        $data = [];
-
-        if (app_column_exists('users', 'avatar_path')) {
-            $data['avatar_path'] = (string) ($avatarData['path'] ?? '');
-        }
-
-        if (app_column_exists('users', 'avatar_url')) {
-            $data['avatar_url'] = (string) ($avatarData['url'] ?? '');
-        }
-
-        if ($data !== []) {
-            update('users', $data, ['id' => $id]);
-        }
+        update('users', [
+            'avatar_path' => (string) ($avatarData['path'] ?? ''),
+            'avatar_url' => (string) ($avatarData['url'] ?? ''),
+        ], ['id' => $id]);
 
         $newAvatarPath = (string) ($avatarData['path'] ?? '');
         $newAvatarUrl = (string) ($avatarData['url'] ?? '');
@@ -1375,13 +1347,11 @@ if (!function_exists('author_following_profiles')) {
         }
 
         $limit = max(1, min(50, $limit));
-        $avatarSelect = app_column_exists('users', 'avatar_url') ? 'u.avatar_url AS avatar_url' : "'' AS avatar_url";
-
         return all(
             'SELECT u.id,
                 u.username,
                 u.username AS name,
-                ' . $avatarSelect . ',
+                u.avatar_url AS avatar_url,
                 uf.created_at AS followed_at,
                 (
                     SELECT COUNT(*)
@@ -2078,13 +2048,6 @@ if (!function_exists('x_embed_data')) {
             'src' => 'https://platform.twitter.com/embed/Tweet.html?id=' . rawurlencode($id) . '&dnt=true',
             'id' => $id,
         ];
-    }
-}
-
-if (!function_exists('status_link_social_host')) {
-    function status_link_social_host(string $url): bool
-    {
-        return in_array(status_link_source($url), ['youtube', 'instagram', 'x', 'tiktok', 'facebook', 'threads'], true);
     }
 }
 
@@ -2800,7 +2763,7 @@ if (!function_exists('status_link_host_label')) {
 if (!function_exists('status_sync_links')) {
     function status_sync_links(int $contentId, string $body): void
     {
-        if ($contentId < 1 || !app_table_exists('links') || !app_table_exists('content_links')) {
+        if ($contentId < 1) {
             return;
         }
 
@@ -2865,7 +2828,7 @@ if (!function_exists('status_link_id')) {
     {
         $url = status_link_normalize_url($url);
 
-        if ($url === '' || !app_table_exists('links')) {
+        if ($url === '') {
             return 0;
         }
 
@@ -2947,17 +2910,9 @@ if (!function_exists('status_link_data')) {
             $data['created_at'] = $now;
         }
 
-        if (app_column_exists('links', 'source')) {
-            $data['source'] = $source;
-        }
-
-        if (app_column_exists('links', 'external_id')) {
-            $data['external_id'] = (string) ($meta['external_id'] ?? status_link_external_id($url, $source));
-        }
-
-        if (app_column_exists('links', 'embed_url')) {
-            $data['embed_url'] = (string) ($meta['embed_url'] ?? status_link_embed_url($url, $source));
-        }
+        $data['source'] = $source;
+        $data['external_id'] = (string) ($meta['external_id'] ?? status_link_external_id($url, $source));
+        $data['embed_url'] = (string) ($meta['embed_url'] ?? status_link_embed_url($url, $source));
 
         return $data;
     }
@@ -2967,17 +2922,8 @@ if (!function_exists('status_links')) {
     function status_links(int $contentId): array
     {
         static $cache = [];
-        static $hasTable = null;
 
         if ($contentId < 1) {
-            return [];
-        }
-
-        if ($hasTable === null) {
-            $hasTable = app_table_exists('links') && app_table_exists('content_links');
-        }
-
-        if (!$hasTable) {
             return [];
         }
 
@@ -3073,18 +3019,9 @@ if (!function_exists('status_link_cards')) {
 if (!function_exists('status_shared_id')) {
     function status_shared_id(int $contentId): int
     {
-        static $hasTable = null;
         static $cache = [];
 
         if ($contentId < 1) {
-            return 0;
-        }
-
-        if ($hasTable === null) {
-            $hasTable = app_table_exists('content_shares');
-        }
-
-        if (!$hasTable) {
             return 0;
         }
 
@@ -3102,18 +3039,9 @@ if (!function_exists('status_shared_id')) {
 if (!function_exists('status_share_count')) {
     function status_share_count(int $contentId): int
     {
-        static $hasTable = null;
         static $cache = [];
 
         if ($contentId < 1) {
-            return 0;
-        }
-
-        if ($hasTable === null) {
-            $hasTable = app_table_exists('content_shares');
-        }
-
-        if (!$hasTable) {
             return 0;
         }
 
@@ -3131,7 +3059,7 @@ if (!function_exists('status_share_count')) {
 if (!function_exists('status_sync_share')) {
     function status_sync_share(int $contentId, int $sharedContentId): void
     {
-        if ($contentId < 1 || !app_table_exists('content_shares')) {
+        if ($contentId < 1) {
             return;
         }
 
@@ -3261,14 +3189,9 @@ if (!function_exists('public_author_find')) {
             return null;
         }
 
-        $avatarSelect = app_column_exists('users', 'avatar_url') ? 'u.avatar_url' : "'' AS avatar_url";
-        $lastLoginSelect = app_column_exists('users', 'last_login_at') ? 'u.last_login_at' : 'NULL AS last_login_at';
-        $lastSeenSelect = app_column_exists('users', 'last_seen_at') ? 'u.last_seen_at' : 'NULL AS last_seen_at';
-        $mutedUntilSelect = app_column_exists('users', 'muted_until') ? 'u.muted_until' : 'NULL AS muted_until';
-        $mutedReasonSelect = app_column_exists('users', 'muted_reason') ? 'u.muted_reason' : 'NULL AS muted_reason';
-
         return one(
-            'SELECT u.id, u.username, u.username AS name, u.website, u.bio, u.created_at, ' . $avatarSelect . ', ' . $lastLoginSelect . ', ' . $lastSeenSelect . ', ' . $mutedUntilSelect . ', ' . $mutedReasonSelect . '
+            'SELECT u.id, u.username, u.username AS name, u.website, u.bio, u.created_at,
+                u.avatar_url, u.last_login_at, u.last_seen_at, u.muted_until, u.muted_reason
             FROM users u
             WHERE u.id = ? AND u.status = ?
             LIMIT 1',
@@ -3280,25 +3203,20 @@ if (!function_exists('public_author_find')) {
 if (!function_exists('public_status_select_sql')) {
     function public_status_select_sql(): string
     {
-        $avatarSelect = app_column_exists('users', 'avatar_url') ? 'u.avatar_url AS avatar_url' : "'' AS avatar_url";
-        $editLockedAtSelect = app_column_exists('content', 'edit_locked_at') ? 'c.edit_locked_at' : 'NULL AS edit_locked_at';
-        $editLockedBySelect = app_column_exists('content', 'edit_locked_by') ? 'c.edit_locked_by' : 'NULL AS edit_locked_by';
-        $editLockReasonSelect = app_column_exists('content', 'edit_lock_reason') ? 'c.edit_lock_reason' : 'NULL AS edit_lock_reason';
-
         return "SELECT c.id,
                 c.body,
                 c.author_id AS user_id,
                 c.author_id,
                 c.published_at,
                 c.created_at,
-                " . $editLockedAtSelect . ",
-                " . $editLockedBySelect . ",
-                " . $editLockReasonSelect . ",
+                c.edit_locked_at,
+                c.edit_locked_by,
+                c.edit_lock_reason,
                 u.username AS author_username,
                 u.username AS author_name,
                 u.website AS author_website,
                 u.bio AS author_bio,
-                " . $avatarSelect . ",
+                u.avatar_url AS avatar_url,
                 (
                     SELECT cs.shared_content_id
                     FROM content_shares cs
@@ -3539,16 +3457,13 @@ if (!function_exists('public_top_authors')) {
     {
         $limit = max(1, min(20, $limit));
         $days = max(1, min(365, $days));
-        $hasAvatar = app_column_exists('users', 'avatar_url');
-        $avatarSelect = $hasAvatar ? 'u.avatar_url AS avatar_url' : "'' AS avatar_url";
-        $groupBy = 'u.id, u.username, u.bio' . ($hasAvatar ? ', u.avatar_url' : '');
 
         return all(
             'SELECT u.id,
                 u.username,
                 u.username AS name,
                 u.bio,
-                ' . $avatarSelect . ',
+                u.avatar_url AS avatar_url,
                 COUNT(c.id) AS posts_count
             FROM users u
             INNER JOIN content c ON c.author_id = u.id
@@ -3556,7 +3471,7 @@ if (!function_exists('public_top_authors')) {
                 AND c.status = ?
                 AND (c.published_at IS NULL OR c.published_at <= ?)
                 AND u.status = ?
-            GROUP BY ' . $groupBy . '
+            GROUP BY u.id, u.username, u.bio, u.avatar_url
             ORDER BY posts_count DESC, MAX(COALESCE(c.published_at, c.created_at)) DESC, u.username ASC
             LIMIT ' . $limit,
             [date_db('-' . $days . ' days'), 'published', date_db(), 'active']
@@ -3671,15 +3586,7 @@ if (!function_exists('status_link_search_columns')) {
     function status_link_search_columns(string $alias = 'l'): array
     {
         $prefix = preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $alias) ? $alias . '.' : '';
-        $columns = ['url', 'final_url', 'title', 'description', 'site_name'];
-
-        if (app_column_exists('links', 'source')) {
-            $columns[] = 'source';
-        }
-
-        if (app_column_exists('links', 'external_id')) {
-            $columns[] = 'external_id';
-        }
+        $columns = ['url', 'final_url', 'title', 'description', 'site_name', 'source', 'external_id'];
 
         return array_map(static fn (string $column): string => $prefix . $column, $columns);
     }
@@ -3705,25 +3612,13 @@ if (!function_exists('status_link_search_params')) {
 if (!function_exists('public_search_content_link_excerpt')) {
     function public_search_content_link_excerpt(int $contentId, string $query, int $limit = 120): string
     {
-        static $hasTables = null;
-
         if ($contentId < 1) {
             return '';
         }
 
-        if ($hasTables === null) {
-            $hasTables = app_table_exists('links') && app_table_exists('content_links');
-        }
-
-        if (!$hasTables) {
-            return '';
-        }
-
         $like = '%' . $query . '%';
-        $sourceSelect = app_column_exists('links', 'source') ? 'l.source' : "'' AS source";
-        $externalSelect = app_column_exists('links', 'external_id') ? 'l.external_id' : "'' AS external_id";
         $link = one(
-            'SELECT l.url, l.final_url, l.title, l.description, l.site_name, ' . $sourceSelect . ', ' . $externalSelect . '
+            'SELECT l.url, l.final_url, l.title, l.description, l.site_name, l.source, l.external_id
             FROM content_links cl
             INNER JOIN links l ON l.id = cl.link_id
             WHERE cl.content_id = ?
@@ -3769,7 +3664,6 @@ if (!function_exists('public_search_results')) {
         $like = '%' . $query . '%';
         $tagQuery = status_tag_normalize($query);
         $tagLike = '%' . ($tagQuery !== '' ? $tagQuery : $query) . '%';
-        $avatarSelect = app_column_exists('users', 'avatar_url') ? 'u.avatar_url AS avatar_url' : "'' AS avatar_url";
         $tags = [];
         $users = [];
         $content = [];
@@ -3802,7 +3696,7 @@ if (!function_exists('public_search_results')) {
         }
 
         foreach (all(
-            'SELECT u.id, u.username, u.username AS name, u.bio, ' . $avatarSelect . '
+            'SELECT u.id, u.username, u.username AS name, u.bio, u.avatar_url AS avatar_url
             FROM users u
             WHERE u.status = ?
                 AND (
@@ -3862,10 +3756,8 @@ if (!function_exists('public_search_results')) {
             $contentIds[$id] = true;
         }
 
-        if (count($content) < $limit && app_table_exists('links') && app_table_exists('content_links')) {
+        if (count($content) < $limit) {
             $linkLimit = $limit * 4;
-            $linkSourceSelect = app_column_exists('links', 'source') ? 'l.source AS link_source' : "'' AS link_source";
-            $linkExternalSelect = app_column_exists('links', 'external_id') ? 'l.external_id AS link_external_id' : "'' AS link_external_id";
 
             foreach (all(
                 'SELECT c.id,
@@ -3873,14 +3765,14 @@ if (!function_exists('public_search_results')) {
                     c.author_id,
                     c.created_at,
                     u.username AS author_name,
-                    ' . $avatarSelect . ',
+                    u.avatar_url AS avatar_url,
                     l.url AS link_url,
                     l.final_url AS link_final_url,
                     l.title AS link_title,
                     l.description AS link_description,
                     l.site_name AS link_site_name,
-                    ' . $linkSourceSelect . ',
-                    ' . $linkExternalSelect . '
+                    l.source AS link_source,
+                    l.external_id AS link_external_id
                 FROM content c
                 INNER JOIN users u ON u.id = c.author_id
                 INNER JOIN content_links cl ON cl.content_id = c.id
@@ -3959,22 +3851,16 @@ if (!function_exists('status_edit_locked')) {
 if (!function_exists('status_edit_lock')) {
     function status_edit_lock(int $contentId, array $actor, string $reason = ''): void
     {
-        if ($contentId < 1 || !app_column_exists('content', 'edit_locked_at')) {
+        if ($contentId < 1) {
             return;
         }
 
+        $actorId = (int) ($actor['id'] ?? 0);
         $data = [
             'edit_locked_at' => date_db(),
+            'edit_locked_by' => $actorId > 0 ? $actorId : null,
+            'edit_lock_reason' => plain_text_limit($reason, 80),
         ];
-
-        if (app_column_exists('content', 'edit_locked_by')) {
-            $actorId = (int) ($actor['id'] ?? 0);
-            $data['edit_locked_by'] = $actorId > 0 ? $actorId : null;
-        }
-
-        if (app_column_exists('content', 'edit_lock_reason')) {
-            $data['edit_lock_reason'] = plain_text_limit($reason, 80);
-        }
 
         update('content', $data, ['id' => $contentId]);
     }
@@ -4019,27 +3905,6 @@ if (!function_exists('status_user_reaction')) {
     }
 }
 
-if (!function_exists('status_reaction_counts')) {
-    function status_reaction_counts(int $contentId): array
-    {
-        if ($contentId < 1) {
-            return ['like' => 0];
-        }
-
-        $row = one(
-            'SELECT
-                SUM(CASE WHEN reaction = ? THEN 1 ELSE 0 END) AS likes_count
-            FROM content_reactions
-            WHERE content_id = ?',
-            ['like', $contentId]
-        ) ?? [];
-
-        return [
-            'like' => (int) ($row['likes_count'] ?? 0),
-        ];
-    }
-}
-
 if (!function_exists('status_comments')) {
     function status_comments(int $contentId): array
     {
@@ -4047,7 +3912,6 @@ if (!function_exists('status_comments')) {
             return [];
         }
 
-        $avatarSelect = app_column_exists('users', 'avatar_url') ? 'u.avatar_url AS avatar_url' : "'' AS avatar_url";
         $rows = all(
             'SELECT cc.id,
                 cc.content_id,
@@ -4056,7 +3920,7 @@ if (!function_exists('status_comments')) {
                 cc.body,
                 cc.created_at,
                 u.username AS author_name,
-                ' . $avatarSelect . ',
+                u.avatar_url AS avatar_url,
                 (
                     SELECT COUNT(*)
                     FROM comment_likes cl
@@ -4460,13 +4324,6 @@ if (!function_exists('status_composer')) {
     }
 }
 
-if (!function_exists('notification_table_ready')) {
-    function notification_table_ready(): bool
-    {
-        return app_table_exists('notifications');
-    }
-}
-
 if (!function_exists('notification_icon')) {
     function notification_icon(string $type): string
     {
@@ -4513,7 +4370,7 @@ if (!function_exists('notification_url')) {
 if (!function_exists('notification_create')) {
     function notification_create(int $userId, string $type, int $actorId, int $contentId = 0, int $commentId = 0, string $key = ''): void
     {
-        if (!notification_table_ready() || $userId < 1 || $actorId < 1 || $userId === $actorId) {
+        if ($userId < 1 || $actorId < 1 || $userId === $actorId) {
             return;
         }
 
@@ -4607,7 +4464,7 @@ if (!function_exists('notification_create_for_comment_owner')) {
 if (!function_exists('notification_create_for_reporters')) {
     function notification_create_for_reporters(int $contentId, string $type, array $actor, string $reportStatus = ''): void
     {
-        if ($contentId < 1 || !notification_table_ready() || !app_table_exists('content_reports')) {
+        if ($contentId < 1) {
             return;
         }
 
@@ -4647,7 +4504,7 @@ if (!function_exists('notification_create_for_reporters')) {
 if (!function_exists('notification_unread_count')) {
     function notification_unread_count(int $userId): int
     {
-        if ($userId < 1 || !notification_table_ready()) {
+        if ($userId < 1) {
             return 0;
         }
 
@@ -4658,7 +4515,7 @@ if (!function_exists('notification_unread_count')) {
 if (!function_exists('notification_latest_id')) {
     function notification_latest_id(int $userId): int
     {
-        if ($userId < 1 || !notification_table_ready()) {
+        if ($userId < 1) {
             return 0;
         }
 
@@ -4669,17 +4526,15 @@ if (!function_exists('notification_latest_id')) {
 if (!function_exists('notifications_for_user')) {
     function notifications_for_user(int $userId, int $limit = 80): array
     {
-        if ($userId < 1 || !notification_table_ready()) {
+        if ($userId < 1) {
             return [];
         }
 
         $limit = max(1, min(200, $limit));
-        $avatarSelect = app_column_exists('users', 'avatar_url') ? 'u.avatar_url AS actor_avatar_url' : "'' AS actor_avatar_url";
-
         return all(
             'SELECT n.*,
                 u.username AS actor_name,
-                ' . $avatarSelect . ',
+                u.avatar_url AS actor_avatar_url,
                 c.body AS content_body
             FROM notifications n
             LEFT JOIN users u ON u.id = n.actor_id
@@ -4739,7 +4594,7 @@ if (!function_exists('notification_preview_html')) {
 if (!function_exists('notification_mark_read')) {
     function notification_mark_read(int $id, int $userId): void
     {
-        if ($id < 1 || $userId < 1 || !notification_table_ready()) {
+        if ($id < 1 || $userId < 1) {
             return;
         }
 
@@ -4753,7 +4608,7 @@ if (!function_exists('notification_mark_read')) {
 if (!function_exists('notification_mark_all_read')) {
     function notification_mark_all_read(int $userId): void
     {
-        if ($userId < 1 || !notification_table_ready()) {
+        if ($userId < 1) {
             return;
         }
 
@@ -4764,7 +4619,7 @@ if (!function_exists('notification_mark_all_read')) {
 if (!function_exists('notification_delete')) {
     function notification_delete(int $id, int $userId): void
     {
-        if ($id < 1 || $userId < 1 || !notification_table_ready()) {
+        if ($id < 1 || $userId < 1) {
             return;
         }
 
@@ -4775,7 +4630,7 @@ if (!function_exists('notification_delete')) {
 if (!function_exists('notification_delete_for_content')) {
     function notification_delete_for_content(int $contentId): void
     {
-        if ($contentId < 1 || !notification_table_ready()) {
+        if ($contentId < 1) {
             return;
         }
 
@@ -4786,7 +4641,7 @@ if (!function_exists('notification_delete_for_content')) {
 if (!function_exists('notification_delete_for_comment')) {
     function notification_delete_for_comment(int $commentId): void
     {
-        if ($commentId < 1 || !notification_table_ready()) {
+        if ($commentId < 1) {
             return;
         }
 
@@ -5030,7 +4885,7 @@ if (!function_exists('status_report_reasons')) {
 if (!function_exists('status_report_dismissal_lock')) {
     function status_report_dismissal_lock(int $contentId): ?array
     {
-        if ($contentId < 1 || !app_table_exists('content_reports')) {
+        if ($contentId < 1) {
             return null;
         }
 
@@ -5067,11 +4922,6 @@ if (!function_exists('status_report_for_user')) {
 
         if ((int) ($item['author_id'] ?? 0) === $userId) {
             flash('error', t('moderation.messages.report_own_content'));
-            redirect($redirect . '#' . status_anchor($contentId));
-        }
-
-        if (!app_table_exists('content_reports')) {
-            flash('error', t('moderation.messages.reports_unavailable'));
             redirect($redirect . '#' . status_anchor($contentId));
         }
 
@@ -5279,15 +5129,9 @@ if (!function_exists('status_delete_for_user')) {
         notification_delete_for_content($contentId);
         delete('content_comments', ['content_id' => $contentId]);
         delete('content_tags', ['content_id' => $contentId]);
-        if (app_table_exists('content_links')) {
-            delete('content_links', ['content_id' => $contentId]);
-        }
-        if (app_table_exists('content_shares')) {
-            delete('content_shares', ['content_id' => $contentId]);
-        }
-        if (app_table_exists('content_reports')) {
-            delete('content_reports', ['content_id' => $contentId]);
-        }
+        delete('content_links', ['content_id' => $contentId]);
+        delete('content_shares', ['content_id' => $contentId]);
+        delete('content_reports', ['content_id' => $contentId]);
         status_cleanup_unused_terms();
         delete('content', ['id' => $contentId]);
 
@@ -5993,52 +5837,39 @@ if (!function_exists('status_create_for_user')) {
     }
 }
 
-if (!function_exists('app_table_exists')) {
-    function app_table_exists(string $table): bool
+if (!function_exists('app_existing_tables')) {
+    function app_existing_tables(array $tables): array
     {
-        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table)) {
-            return false;
+        $tables = array_values(array_unique(array_filter(array_map(
+            static fn (mixed $table): string => trim((string) $table),
+            $tables
+        ), static fn (string $table): bool => preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table) === 1)));
+
+        if ($tables === []) {
+            return [];
         }
 
         $driver = (string) config('database.driver', 'mysql');
+        $placeholders = implode(', ', array_fill(0, count($tables), '?'));
 
         if ($driver === 'sqlite') {
-            return (int) val(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?",
-                [$table]
-            ) > 0;
+            $rows = all(
+                'SELECT name FROM sqlite_master WHERE type = ? AND name IN (' . $placeholders . ')',
+                array_merge(['table'], $tables)
+            );
+
+            return array_values(array_map(static fn (array $row): string => (string) ($row['name'] ?? ''), $rows));
         }
 
-        return (int) val(
-            'SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?',
-            [$table]
-        ) > 0;
-    }
-}
+        $rows = all(
+            'SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME IN (' . $placeholders . ')',
+            $tables
+        );
 
-if (!function_exists('app_column_exists')) {
-    function app_column_exists(string $table, string $column): bool
-    {
-        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $column)) {
-            return false;
-        }
-
-        $driver = (string) config('database.driver', 'mysql');
-
-        if ($driver === 'sqlite') {
-            foreach (all('PRAGMA table_info(' . app_sql_identifier($table) . ')') as $row) {
-                if ((string) ($row['name'] ?? '') === $column) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        return (int) val(
-            'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
-            [$table, $column]
-        ) > 0;
+        return array_values(array_map(static fn (array $row): string => (string) ($row['TABLE_NAME'] ?? ''), $rows));
     }
 }
 
@@ -6065,7 +5896,7 @@ if (!function_exists('app_touch_user_activity')) {
         $user ??= auth();
         $id = (int) ($user['id'] ?? 0);
 
-        if ($id < 1 || !app_column_exists('users', 'last_seen_at')) {
+        if ($id < 1) {
             return;
         }
 
@@ -6138,9 +5969,10 @@ if (!function_exists('app_db_status')) {
         try {
             db()->query('SELECT 1');
             $status['connected'] = true;
+            $existingTables = array_flip(app_existing_tables(array_map('strval', $requiredTables)));
 
             foreach ($requiredTables as $table) {
-                if (!app_table_exists((string) $table)) {
+                if (!isset($existingTables[(string) $table])) {
                     $status['missing_tables'][] = (string) $table;
                 }
             }
