@@ -3597,22 +3597,33 @@ if (!function_exists('public_trending_tags')) {
         $limit = max(1, min(30, $limit));
         $days = max(1, min(365, $days));
         $since = date_db('-' . $days . ' days');
+        $cacheKey = 'public_trending_tags_' . $limit . '_' . $days;
 
+        $cached = public_stats_cache_get($cacheKey);
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
+            ? ' FORCE INDEX (content_feed_index)'
+            : '';
         $rows = db_select(
             'SELECT t.id,
                 t.name,
-                COUNT(DISTINCT ct.content_id) AS posts_count
-            FROM terms t
-            INNER JOIN content_tags ct ON ct.term_id = t.id
-            INNER JOIN content c ON c.id = ct.content_id
-            INNER JOIN users u ON u.id = c.author_id'
+                COUNT(*) AS posts_count,
+                MAX(c.published_at) AS latest_at
+            FROM content c' . $feedIndex . '
+            INNER JOIN users u ON u.id = c.author_id
+            INNER JOIN content_tags ct ON ct.content_id = c.id
+            INNER JOIN terms t ON t.id = ct.term_id'
         )
-            ->where('COALESCE(c.published_at, c.created_at) >= ?', $since)
             ->where('c.status = ?', 'published')
-            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+            ->where('c.published_at >= ?', $since)
+            ->where('c.published_at <= ?', date_db())
             ->where('u.status = ?', 'active')
             ->group('t.id, t.name')
-            ->order('posts_count DESC, MAX(COALESCE(c.published_at, c.created_at)) DESC, t.name ASC')
+            ->order('posts_count DESC, latest_at DESC, t.name ASC')
             ->limit($limit)
             ->all();
 
@@ -3633,6 +3644,8 @@ if (!function_exists('public_trending_tags')) {
             ];
         }
 
+        public_stats_cache_set($cacheKey, $tags);
+
         return $tags;
     }
 }
@@ -3642,25 +3655,96 @@ if (!function_exists('public_top_authors')) {
     {
         $limit = max(1, min(20, $limit));
         $days = max(1, min(365, $days));
+        $cacheKey = 'public_top_authors_' . $limit . '_' . $days;
 
-        return db_select(
+        $cached = public_stats_cache_get($cacheKey);
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
+            ? ' FORCE INDEX (content_feed_index)'
+            : '';
+        $authors = db_select(
             'SELECT u.id,
                 u.username,
                 u.username AS name,
                 u.bio,
                 u.avatar_url AS avatar_url,
-                COUNT(c.id) AS posts_count
-            FROM users u
-            INNER JOIN content c ON c.author_id = u.id'
+                COUNT(*) AS posts_count,
+                MAX(c.published_at) AS latest_at
+            FROM content c' . $feedIndex . '
+            INNER JOIN users u ON u.id = c.author_id'
         )
-            ->where('COALESCE(c.published_at, c.created_at) >= ?', date_db('-' . $days . ' days'))
             ->where('c.status = ?', 'published')
-            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+            ->where('c.published_at >= ?', date_db('-' . $days . ' days'))
+            ->where('c.published_at <= ?', date_db())
             ->where('u.status = ?', 'active')
             ->group('u.id, u.username, u.bio, u.avatar_url')
-            ->order('posts_count DESC, MAX(COALESCE(c.published_at, c.created_at)) DESC, u.username ASC')
+            ->order('posts_count DESC, latest_at DESC, u.username ASC')
             ->limit($limit)
             ->all();
+
+        public_stats_cache_set($cacheKey, $authors);
+
+        return $authors;
+    }
+}
+
+if (!function_exists('public_stats_cache_get')) {
+    function public_stats_cache_get(string $key, int $ttl = 300): ?array
+    {
+        $file = public_stats_cache_file($key);
+
+        if (!is_file($file) || filemtime($file) < time() - max(1, $ttl)) {
+            return null;
+        }
+
+        $json = file_get_contents($file);
+
+        if (!is_string($json) || $json === '') {
+            return null;
+        }
+
+        $data = json_decode($json, true);
+
+        return is_array($data) ? $data : null;
+    }
+}
+
+if (!function_exists('public_stats_cache_set')) {
+    function public_stats_cache_set(string $key, array $data): void
+    {
+        $file = public_stats_cache_file($key);
+        $directory = dirname($file);
+
+        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+            return;
+        }
+
+        $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        if (!is_string($json)) {
+            return;
+        }
+
+        $tmp = $file . '.' . bin2hex(random_bytes(4)) . '.tmp';
+
+        if (file_put_contents($tmp, $json, LOCK_EX) === false) {
+            return;
+        }
+
+        @rename($tmp, $file);
+    }
+}
+
+if (!function_exists('public_stats_cache_file')) {
+    function public_stats_cache_file(string $key): string
+    {
+        $safe = preg_replace('/[^A-Za-z0-9_.-]+/', '_', $key) ?: 'public_stats';
+
+        return base_path('storage/cache/' . $safe . '.json');
     }
 }
 
