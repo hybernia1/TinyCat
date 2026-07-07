@@ -77,6 +77,7 @@ layout('layout', [
                                 <th><?= et('privacy.comments') ?></th>
                                 <th><?= et('privacy.likes') ?></th>
                                 <th><?= et('privacy.reports') ?></th>
+                                <th><?= et('privacy.searches') ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -88,6 +89,7 @@ layout('layout', [
                                     <td><?= e($row['comment']) ?></td>
                                     <td><?= e($row['like']) ?></td>
                                     <td><?= e($row['report']) ?></td>
+                                    <td><?= e($row['search']) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -148,6 +150,7 @@ function tc_privacy_limit_rows(): array
             'comment' => tc_privacy_limit_label((array) ($rule['comment'] ?? [])),
             'like' => tc_privacy_limit_label((array) ($rule['like'] ?? [])),
             'report' => tc_privacy_limit_label((array) ($rule['report'] ?? [])),
+            'search' => tc_privacy_limit_label((array) ($rule['search'] ?? [])),
         ];
     }
 

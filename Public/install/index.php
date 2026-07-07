@@ -371,7 +371,8 @@ function tc_install_create_tables(): void
             KEY content_feed_index (status, published_at, id),
             KEY content_sidebar_index (status, published_at, author_id, id),
             KEY content_author_index (author_id, status, published_at, id),
-            KEY content_edit_lock_index (edit_locked_at)
+            KEY content_edit_lock_index (edit_locked_at),
+            FULLTEXT KEY content_body_fulltext (body)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -413,7 +414,8 @@ function tc_install_create_tables(): void
             PRIMARY KEY (id),
             UNIQUE KEY links_url_hash_unique (url_hash),
             KEY links_source_index (source, external_id),
-            KEY links_fetched_index (fetched_at)
+            KEY links_fetched_index (fetched_at),
+            FULLTEXT KEY links_meta_fulltext (title, description, site_name, source, external_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 

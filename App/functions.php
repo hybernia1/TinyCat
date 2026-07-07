@@ -912,6 +912,7 @@ if (!function_exists('moderation_action_rules')) {
                 'comment' => [3600, 20],
                 'like' => [3600, 60],
                 'report' => [3600, 10],
+                'search' => [3600, 300],
             ],
             'normal' => [
                 'post' => [3600, 20],
@@ -919,6 +920,7 @@ if (!function_exists('moderation_action_rules')) {
                 'comment' => [3600, 80],
                 'like' => [3600, 180],
                 'report' => [3600, 30],
+                'search' => [3600, 900],
             ],
             'trusted' => [
                 'post' => [3600, 60],
@@ -926,6 +928,7 @@ if (!function_exists('moderation_action_rules')) {
                 'comment' => [3600, 240],
                 'like' => [3600, 600],
                 'report' => [3600, 80],
+                'search' => [3600, 3000],
             ],
         ];
     }
@@ -4018,24 +4021,568 @@ if (!function_exists('public_search_content_link_excerpt')) {
     }
 }
 
-if (!function_exists('public_search_results')) {
-    function public_search_results(string $query, int $limit = 6): array
+if (!function_exists('public_search_empty_result')) {
+    function public_search_empty_result(string $query): array
     {
-        $query = trim((string) preg_replace('/\s+/u', ' ', $query));
-        $limit = max(1, min(12, $limit));
+        return [
+            'query' => $query,
+            'tags' => [],
+            'users' => [],
+            'content' => [],
+        ];
+    }
+}
 
-        if ($query === '' || (function_exists('mb_strlen') ? mb_strlen($query, 'UTF-8') : strlen($query)) < 2) {
-            return [
-                'query' => $query,
-                'tags' => [],
-                'users' => [],
-                'content' => [],
+if (!function_exists('public_search_normalize_query')) {
+    function public_search_normalize_query(string $query): string
+    {
+        return trim((string) preg_replace('/\s+/u', ' ', $query));
+    }
+}
+
+if (!function_exists('public_search_query_too_short')) {
+    function public_search_query_too_short(string $query): bool
+    {
+        return (function_exists('mb_strlen') ? mb_strlen($query, 'UTF-8') : strlen($query)) < 2;
+    }
+}
+
+if (!function_exists('public_search_guest_limits')) {
+    function public_search_guest_limits(): array
+    {
+        return [
+            'max' => 10,
+            'window' => 300,
+            'unlock' => 600,
+        ];
+    }
+}
+
+if (!function_exists('public_search_guest_state')) {
+    function public_search_guest_state(bool $increment = false): array
+    {
+        Core::session();
+
+        $limits = public_search_guest_limits();
+        $now = time();
+        $state = $_SESSION['_tinycat_search_guard'] ?? [];
+
+        if (!is_array($state)) {
+            $state = [];
+        }
+
+        $started = (int) ($state['started_at'] ?? 0);
+
+        if ($started < 1 || $started <= $now - (int) $limits['window']) {
+            $state = [
+                'started_at' => $now,
+                'count' => 0,
+                'unlocked_until' => (int) ($state['unlocked_until'] ?? 0),
             ];
         }
 
+        if ($increment && (int) ($state['unlocked_until'] ?? 0) < $now) {
+            $state['count'] = (int) ($state['count'] ?? 0) + 1;
+        }
+
+        $_SESSION['_tinycat_search_guard'] = $state;
+
+        return $state + [
+            'started_at' => $now,
+            'count' => 0,
+            'unlocked_until' => 0,
+        ];
+    }
+}
+
+if (!function_exists('public_search_guest_unlock')) {
+    function public_search_guest_unlock(): void
+    {
+        Core::session();
+
+        $limits = public_search_guest_limits();
+        $_SESSION['_tinycat_search_guard'] = [
+            'started_at' => time(),
+            'count' => 0,
+            'unlocked_until' => time() + (int) $limits['unlock'],
+        ];
+    }
+}
+
+if (!function_exists('public_search_guard')) {
+    function public_search_guard(string $query, bool $increment = true): ?array
+    {
+        $query = public_search_normalize_query($query);
+
+        if (public_search_query_too_short($query)) {
+            return null;
+        }
+
+        $user = auth();
+
+        if ($user !== null) {
+            if ((string) ($user['role'] ?? '') === 'admin') {
+                return null;
+            }
+
+            [, $limit] = moderation_action_rule($user, 'search');
+
+            if (moderation_action_count($user, 'search') >= (int) $limit) {
+                return [
+                    'code' => 'action_limited',
+                    'message' => t('moderation.messages.action_limited'),
+                    'login_url' => '',
+                ];
+            }
+
+            if ($increment) {
+                moderation_record_action($user, 'search');
+            }
+
+            return null;
+        }
+
+        if (!(bool) config('security.captcha.enabled', true)) {
+            return null;
+        }
+
+        $limits = public_search_guest_limits();
+        $state = public_search_guest_state($increment);
+        $now = time();
+
+        if ((int) ($state['unlocked_until'] ?? 0) >= $now || (int) ($state['count'] ?? 0) <= (int) $limits['max']) {
+            return null;
+        }
+
+        captcha_refresh('search');
+
+        return [
+            'code' => 'captcha_required',
+            'message' => t('public.search_captcha_required'),
+            'captcha_html' => captcha_field('search'),
+            'verify_url' => '/api/search-captcha',
+            'login_url' => '/login',
+            'retry_after' => max(1, (int) ($state['started_at'] ?? $now) + (int) $limits['window'] - $now),
+        ];
+    }
+}
+
+if (!function_exists('public_search_api_guard')) {
+    function public_search_api_guard(string $query): void
+    {
+        $blocked = public_search_guard($query);
+
+        if ($blocked !== null) {
+            api_error(
+                (string) ($blocked['message'] ?? t('public.search_captcha_required')),
+                429,
+                (string) ($blocked['code'] ?? 'captcha_required'),
+                $blocked
+            );
+        }
+    }
+}
+
+if (!function_exists('public_search_captcha_verify')) {
+    function public_search_captcha_verify(): bool
+    {
+        if (!captcha_check('search')) {
+            captcha_refresh('search');
+            return false;
+        }
+
+        public_search_guest_unlock();
+
+        return true;
+    }
+}
+
+if (!function_exists('public_search_fulltext_query')) {
+    function public_search_fulltext_query(string $query): string
+    {
+        $tokens = preg_split('/[^\p{L}\p{N}_]+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $terms = [];
+
+        foreach ($tokens as $token) {
+            $token = trim($token);
+            $length = function_exists('mb_strlen') ? mb_strlen($token, 'UTF-8') : strlen($token);
+
+            if ($length < 4) {
+                continue;
+            }
+
+            $terms[] = '+' . $token . '*';
+
+            if (count($terms) >= 6) {
+                break;
+            }
+        }
+
+        return implode(' ', $terms);
+    }
+}
+
+if (!function_exists('public_search_fulltext_ready')) {
+    function public_search_fulltext_ready(string $table, string $index): bool
+    {
+        static $cache = [];
+
+        $key = $table . ':' . $index;
+
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        if ((string) config('database.driver', 'mysql') !== 'mysql') {
+            $cache[$key] = false;
+            return false;
+        }
+
+        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $index)) {
+            $cache[$key] = false;
+            return false;
+        }
+
+        try {
+            $cache[$key] = (int) val(
+                'SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.STATISTICS
+                WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME = ?
+                    AND INDEX_NAME = ?
+                    AND INDEX_TYPE = ?',
+                [$table, $index, 'FULLTEXT']
+            ) > 0;
+        } catch (Throwable) {
+            $cache[$key] = false;
+        }
+
+        return $cache[$key];
+    }
+}
+
+if (!function_exists('public_search_text_contains')) {
+    function public_search_text_contains(string $text, string $query): bool
+    {
+        if ($text === '' || $query === '') {
+            return false;
+        }
+
+        return (function_exists('mb_stripos') ? mb_stripos($text, $query, 0, 'UTF-8') : stripos($text, $query)) !== false;
+    }
+}
+
+if (!function_exists('public_search_urlish_query')) {
+    function public_search_urlish_query(string $query): bool
+    {
+        return str_contains($query, '.')
+            || str_contains($query, '/')
+            || str_contains($query, ':')
+            || str_contains($query, '@');
+    }
+}
+
+if (!function_exists('public_search_content_result')) {
+    function public_search_content_result(array $item, string $query, ?string $excerptText = null): array
+    {
+        $id = (int) ($item['id'] ?? 0);
+        $authorId = (int) ($item['author_id'] ?? 0);
+        $createdAt = (string) ($item['created_at'] ?? '');
+        $excerptText ??= (string) ($item['body'] ?? '');
+
+        return [
+            'id' => $id,
+            'type' => 'content',
+            'title' => (string) ($item['author_name'] ?? ''),
+            'excerpt' => public_search_excerpt($excerptText, $query, 120),
+            'url' => status_url($id),
+            'author_url' => author_url($authorId),
+            'created_at' => $createdAt,
+            'created_label' => datetime($createdAt),
+            'avatar_url' => (string) ($item['avatar_url'] ?? ''),
+        ];
+    }
+}
+
+if (!function_exists('public_search_recent_content_scan')) {
+    function public_search_recent_content_scan(string $query, int $limit): array
+    {
+        $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
+            ? ' FORCE INDEX (content_feed_index)'
+            : '';
+        $scanLimit = max(300, min(5000, $limit * 250));
+        $matches = [];
+
+        foreach (db_select(
+            'SELECT c.id,
+                c.body,
+                c.author_id,
+                c.created_at,
+                u.username AS author_name,
+                u.avatar_url AS avatar_url
+            FROM content c' . $feedIndex . '
+            INNER JOIN users u ON u.id = c.author_id'
+        )
+            ->where('c.status = ?', 'published')
+            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+            ->where('u.status = ?', 'active')
+            ->order('c.published_at DESC, c.id DESC')
+            ->limit($scanLimit)
+            ->all() as $item) {
+            if (!public_search_text_contains((string) ($item['body'] ?? ''), $query)) {
+                continue;
+            }
+
+            $matches[] = $item;
+
+            if (count($matches) >= $limit) {
+                break;
+            }
+        }
+
+        return $matches;
+    }
+}
+
+if (!function_exists('public_search_content_rows')) {
+    function public_search_content_rows(string $query, int $limit): array
+    {
+        $recent = public_search_recent_content_scan($query, $limit);
+
+        if (count($recent) >= $limit) {
+            return $recent;
+        }
+
+        $fulltext = public_search_fulltext_query($query);
+
+        if ($fulltext !== '' && public_search_fulltext_ready('content', 'content_body_fulltext')) {
+            try {
+                $fulltextQuery = db_select(
+                    'SELECT c.id,
+                        c.body,
+                        c.author_id,
+                        c.created_at,
+                        u.username AS author_name,
+                        u.avatar_url AS avatar_url
+                    FROM content c
+                    INNER JOIN users u ON u.id = c.author_id'
+                )
+                    ->where('MATCH(c.body) AGAINST (? IN BOOLEAN MODE)', $fulltext)
+                    ->where('c.status = ?', 'published')
+                    ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+                    ->where('u.status = ?', 'active');
+
+                $existingIds = array_values(array_filter(array_map(
+                    static fn (array $item): int => (int) ($item['id'] ?? 0),
+                    $recent
+                ), static fn (int $id): bool => $id > 0));
+
+                if ($existingIds !== []) {
+                    $fulltextQuery->where(
+                        'c.id NOT IN (' . implode(', ', array_fill(0, count($existingIds), '?')) . ')',
+                        $existingIds
+                    );
+                }
+
+                foreach ($fulltextQuery
+                    ->order('c.published_at DESC, c.id DESC')
+                    ->limit(max($limit, min(100, $limit * 4)))
+                    ->all() as $item) {
+                    $recent[] = $item;
+
+                    if (count($recent) >= $limit) {
+                        break;
+                    }
+                }
+            } catch (Throwable) {
+                return $recent;
+            }
+        }
+
+        return $recent;
+    }
+}
+
+if (!function_exists('public_search_link_text')) {
+    function public_search_link_text(array $item): string
+    {
+        return trim(implode(' ', array_filter([
+            (string) ($item['link_title'] ?? ''),
+            (string) ($item['link_description'] ?? ''),
+            (string) ($item['link_site_name'] ?? ''),
+            (string) ($item['link_source'] ?? ''),
+            (string) ($item['link_external_id'] ?? ''),
+            (string) ($item['link_final_url'] ?? ''),
+            (string) ($item['link_url'] ?? ''),
+        ], static fn (string $value): bool => trim($value) !== '')));
+    }
+}
+
+if (!function_exists('public_search_link_rows')) {
+    function public_search_link_rows(string $query, int $limit): array
+    {
         $like = '%' . $query . '%';
+        $fulltext = public_search_fulltext_query($query);
+        $conditions = [];
+        $params = [];
+
+        if ($fulltext !== '' && public_search_fulltext_ready('links', 'links_meta_fulltext')) {
+            $conditions[] = 'MATCH(l.title, l.description, l.site_name, l.source, l.external_id) AGAINST (? IN BOOLEAN MODE)';
+            $params[] = $fulltext;
+        }
+
+        if ($conditions === [] || public_search_urlish_query($query)) {
+            $conditions[] = 'l.url LIKE ?';
+            $conditions[] = 'l.final_url LIKE ?';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        if ($conditions === []) {
+            return [];
+        }
+
+        return db_select(
+            'SELECT c.id,
+                c.body,
+                c.author_id,
+                c.created_at,
+                u.username AS author_name,
+                u.avatar_url AS avatar_url,
+                l.url AS link_url,
+                l.final_url AS link_final_url,
+                l.title AS link_title,
+                l.description AS link_description,
+                l.site_name AS link_site_name,
+                l.source AS link_source,
+                l.external_id AS link_external_id
+            FROM content c
+            INNER JOIN users u ON u.id = c.author_id
+            INNER JOIN content_links cl ON cl.content_id = c.id
+            INNER JOIN links l ON l.id = cl.link_id'
+        )
+            ->where('(' . implode(' OR ', $conditions) . ')', $params)
+            ->where('c.status = ?', 'published')
+            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+            ->where('u.status = ?', 'active')
+            ->order('c.published_at DESC, c.id DESC, cl.position ASC')
+            ->limit(max($limit, min(100, $limit * 4)))
+            ->all();
+    }
+}
+
+if (!function_exists('public_search_suggestion_tags')) {
+    function public_search_suggestion_tags(string $query, int $limit): array
+    {
         $tagQuery = status_tag_normalize($query);
-        $tagLike = '%' . ($tagQuery !== '' ? $tagQuery : $query) . '%';
+
+        if ($tagQuery === '') {
+            return [];
+        }
+
+        $tags = [];
+
+        foreach (db_select('SELECT t.id, t.name FROM terms t')
+            ->where('t.name LIKE ?', $tagQuery . '%')
+            ->order('t.name ASC')
+            ->limit($limit)
+            ->all() as $tag) {
+            $name = status_tag_normalize((string) ($tag['name'] ?? ''));
+
+            if ($name === '') {
+                continue;
+            }
+
+            $tags[] = [
+                'id' => (int) ($tag['id'] ?? 0),
+                'type' => 'tag',
+                'title' => '#' . $name,
+                'excerpt' => '',
+                'url' => tag_url($name),
+                'posts_count' => 0,
+            ];
+        }
+
+        return $tags;
+    }
+}
+
+if (!function_exists('public_search_suggestion_users')) {
+    function public_search_suggestion_users(string $query, int $limit): array
+    {
+        $usernameQuery = username_normalize(ltrim($query, '@'));
+
+        if ($usernameQuery === '') {
+            return [];
+        }
+
+        $users = [];
+
+        foreach (db_select(
+            'SELECT u.id, u.username, u.username AS name, u.bio, u.avatar_url AS avatar_url
+            FROM users u'
+        )
+            ->where('u.status = ?', 'active')
+            ->where('u.username LIKE ?', $usernameQuery . '%')
+            ->order('u.username ASC, u.id ASC')
+            ->limit($limit)
+            ->all() as $user) {
+            $id = (int) ($user['id'] ?? 0);
+
+            if ($id < 1) {
+                continue;
+            }
+
+            $users[] = [
+                'id' => $id,
+                'type' => 'user',
+                'title' => (string) ($user['name'] ?? ''),
+                'excerpt' => public_search_excerpt((string) ($user['bio'] ?? ''), $query, 90),
+                'url' => author_url($id),
+                'avatar_url' => (string) ($user['avatar_url'] ?? ''),
+            ];
+        }
+
+        return $users;
+    }
+}
+
+if (!function_exists('public_search_suggestions')) {
+    function public_search_suggestions(string $query, int $limit = 6): array
+    {
+        $query = public_search_normalize_query($query);
+        $limit = max(1, min(8, $limit));
+
+        if ($query === '' || public_search_query_too_short($query)) {
+            return public_search_empty_result($query);
+        }
+
+        return [
+            'query' => $query,
+            'tags' => public_search_suggestion_tags($query, $limit),
+            'users' => public_search_suggestion_users($query, $limit),
+            'content' => [],
+        ];
+    }
+}
+
+if (!function_exists('public_search_results')) {
+    function public_search_results(string $query, int $limit = 6): array
+    {
+        $query = public_search_normalize_query($query);
+        $limit = max(1, min(12, $limit));
+
+        if ($query === '' || public_search_query_too_short($query)) {
+            return public_search_empty_result($query);
+        }
+
+        $like = '%' . $query . '%';
+        $queryLength = function_exists('mb_strlen') ? mb_strlen($query, 'UTF-8') : strlen($query);
+        $shortSearch = $queryLength < 4;
+        $tagQuery = status_tag_normalize($query);
+        $tagLike = $tagQuery !== ''
+            ? ($shortSearch ? $tagQuery . '%' : '%' . $tagQuery . '%')
+            : '%' . $query . '%';
         $tags = [];
         $users = [];
         $content = [];
@@ -4067,12 +4614,20 @@ if (!function_exists('public_search_results')) {
             ];
         }
 
-        foreach (db_select(
+        $userQuery = db_select(
             'SELECT u.id, u.username, u.username AS name, u.bio, u.avatar_url AS avatar_url
             FROM users u'
-        )
-            ->where('u.status = ?', 'active')
-            ->where(
+        )->where('u.status = ?', 'active');
+        $usernameQuery = username_normalize(ltrim($query, '@'));
+
+        if ($shortSearch) {
+            if ($usernameQuery !== '') {
+                $userQuery->where('u.username LIKE ?', $usernameQuery . '%');
+            } else {
+                $userQuery->where('1 = 0');
+            }
+        } else {
+            $userQuery->where(
                 '(
                     u.username LIKE ?
                     OR u.bio LIKE ?
@@ -4081,7 +4636,10 @@ if (!function_exists('public_search_results')) {
                 $like,
                 $like,
                 $like
-            )
+            );
+        }
+
+        foreach ($userQuery
             ->order('u.username ASC, u.id ASC')
             ->limit($limit)
             ->all() as $user) {
@@ -4101,11 +4659,7 @@ if (!function_exists('public_search_results')) {
             ];
         }
 
-        foreach (public_status_query()
-            ->where('c.body LIKE ?', $like)
-            ->order('COALESCE(c.published_at, c.created_at) DESC, c.id DESC')
-            ->limit($limit)
-            ->all() as $item) {
+        foreach (public_search_content_rows($query, $limit) as $item) {
             $id = (int) ($item['id'] ?? 0);
             $authorId = (int) ($item['author_id'] ?? 0);
 
@@ -4113,50 +4667,12 @@ if (!function_exists('public_search_results')) {
                 continue;
             }
 
-            $content[] = [
-                'id' => $id,
-                'type' => 'content',
-                'title' => (string) ($item['author_name'] ?? ''),
-                'excerpt' => public_search_content_link_excerpt($id, $query, 120)
-                    ?: public_search_excerpt((string) ($item['body'] ?? ''), $query, 120),
-                'url' => status_url($id),
-                'author_url' => author_url($authorId),
-                'created_at' => (string) ($item['created_at'] ?? ''),
-                'created_label' => datetime((string) ($item['created_at'] ?? '')),
-                'avatar_url' => (string) ($item['avatar_url'] ?? ''),
-            ];
+            $content[] = public_search_content_result($item, $query);
             $contentIds[$id] = true;
         }
 
-        if (count($content) < $limit) {
-            $linkLimit = $limit * 4;
-
-            foreach (db_select(
-                'SELECT c.id,
-                    c.body,
-                    c.author_id,
-                    c.created_at,
-                    u.username AS author_name,
-                    u.avatar_url AS avatar_url,
-                    l.url AS link_url,
-                    l.final_url AS link_final_url,
-                    l.title AS link_title,
-                    l.description AS link_description,
-                    l.site_name AS link_site_name,
-                    l.source AS link_source,
-                    l.external_id AS link_external_id
-                FROM content c
-                INNER JOIN users u ON u.id = c.author_id
-                INNER JOIN content_links cl ON cl.content_id = c.id
-                INNER JOIN links l ON l.id = cl.link_id'
-            )
-                ->where(status_link_search_condition('l'), status_link_search_params($like, 'l'))
-                ->where('c.status = ?', 'published')
-                ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
-                ->where('u.status = ?', 'active')
-                ->order('COALESCE(c.published_at, c.created_at) DESC, c.id DESC, cl.position ASC')
-                ->limit($linkLimit)
-                ->all() as $item) {
+        if (count($content) < $limit && (function_exists('mb_strlen') ? mb_strlen($query, 'UTF-8') : strlen($query)) >= 4) {
+            foreach (public_search_link_rows($query, $limit) as $item) {
                 $id = (int) ($item['id'] ?? 0);
                 $authorId = (int) ($item['author_id'] ?? 0);
 
@@ -4164,27 +4680,12 @@ if (!function_exists('public_search_results')) {
                     continue;
                 }
 
-                $linkText = trim(implode(' ', array_filter([
-                    (string) ($item['link_title'] ?? ''),
-                    (string) ($item['link_description'] ?? ''),
-                    (string) ($item['link_site_name'] ?? ''),
-                    (string) ($item['link_source'] ?? ''),
-                    (string) ($item['link_external_id'] ?? ''),
-                    (string) ($item['link_final_url'] ?? ''),
-                    (string) ($item['link_url'] ?? ''),
-                ], static fn (string $value): bool => trim($value) !== '')));
-
-                $content[] = [
-                    'id' => $id,
-                    'type' => 'content',
-                    'title' => (string) ($item['author_name'] ?? ''),
-                    'excerpt' => public_search_excerpt($linkText !== '' ? $linkText : (string) ($item['body'] ?? ''), $query, 120),
-                    'url' => status_url($id),
-                    'author_url' => author_url($authorId),
-                    'created_at' => (string) ($item['created_at'] ?? ''),
-                    'created_label' => datetime((string) ($item['created_at'] ?? '')),
-                    'avatar_url' => (string) ($item['avatar_url'] ?? ''),
-                ];
+                $linkText = public_search_link_text($item);
+                $content[] = public_search_content_result(
+                    $item,
+                    $query,
+                    $linkText !== '' ? $linkText : (string) ($item['body'] ?? '')
+                );
                 $contentIds[$id] = true;
 
                 if (count($content) >= $limit) {

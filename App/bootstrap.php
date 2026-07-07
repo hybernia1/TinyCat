@@ -43,7 +43,30 @@ route(['GET', 'POST'], '/tag/{tag}', static function (string $tag): void {
 });
 
 route('GET', '/api/search', static function (): array {
-    return public_search_results((string) get('q', ''), 6);
+    $query = (string) get('q', '');
+
+    public_search_api_guard($query);
+
+    return public_search_suggestions($query, 6);
+});
+
+api_route('POST', '/search-captcha', static function (): array {
+    if (!public_search_captcha_verify()) {
+        api_error(
+            t('auth.invalid_captcha'),
+            422,
+            'captcha_invalid',
+            [
+                'captcha_html' => captcha_field('search'),
+                'verify_url' => '/api/search-captcha',
+            ]
+        );
+    }
+
+    return [
+        'unlocked' => true,
+        'message' => t('public.search_captcha_unlocked'),
+    ];
 });
 
 api_route('GET', '/notifications', static function (): array {

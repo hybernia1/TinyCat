@@ -1923,7 +1923,10 @@
   function globalSearchItem(item) {
     var link = createElement("a", "global-search-item");
     var title = createElement("strong", "global-search-title", item.title || "");
-    var meta = createElement("span", "global-search-meta", item.type === "tag" ? (item.excerpt || "") : (item.type === "user" ? "@" + (item.title || "") : (item.created_label || "")));
+    var metaText = item.type === "tag"
+      ? (item.excerpt || "")
+      : (item.type === "user" ? "@" + (item.title || "") : (item.created_label || item.excerpt || ""));
+    var meta = createElement("span", "global-search-meta", metaText);
     var excerpt = createElement("span", "global-search-excerpt", item.excerpt || "");
     var avatar = createElement("span", "global-search-avatar");
     var text = createElement("span", "global-search-text");
@@ -1933,6 +1936,8 @@
 
     if (item.type === "tag") {
       avatar.textContent = "#";
+    } else if (item.type === "search") {
+      avatar.textContent = ">";
     } else if (item.avatar_url) {
       var image = document.createElement("img");
       image.src = item.avatar_url;
@@ -1944,9 +1949,11 @@
     }
 
     text.appendChild(title);
-    text.appendChild(meta);
+    if (metaText) {
+      text.appendChild(meta);
+    }
 
-    if (item.excerpt && item.type !== "tag") {
+    if (item.excerpt && item.type !== "tag" && item.type !== "search") {
       text.appendChild(excerpt);
     }
 
@@ -1975,9 +1982,27 @@
     box.appendChild(section);
   }
 
+  function renderGlobalSearchAll(root, box, query) {
+    var link;
+
+    if (!query) {
+      return;
+    }
+
+    link = globalSearchItem({
+      type: "search",
+      title: (root.dataset.searchAll || "Search all") + ": " + query,
+      excerpt: "",
+      url: "/search?q=" + encodeURIComponent(query)
+    });
+    link.classList.add("global-search-all");
+    box.appendChild(link);
+  }
+
   function renderGlobalSearch(root, data) {
     var payload = unwrapResult(data) || {};
     var box = globalSearchResults(root);
+    var query = payload.query || "";
     var tags = payload.tags || [];
     var users = payload.users || [];
     var content = payload.content || [];
@@ -1989,21 +2014,123 @@
     box.innerHTML = "";
 
     if (tags.length === 0 && users.length === 0 && content.length === 0) {
-      globalSearchShowMessage(root, root.dataset.searchEmpty || "Nothing found.");
+      renderGlobalSearchAll(root, box, query);
+      box.hidden = false;
       return;
     }
 
     renderGlobalSearchSection(root, box, root.dataset.searchTags || "Tags", tags);
     renderGlobalSearchSection(root, box, root.dataset.searchUsers || "Profiles", users);
     renderGlobalSearchSection(root, box, root.dataset.searchContent || "Posts", content);
+    renderGlobalSearchAll(root, box, query);
     box.hidden = false;
+  }
+
+  function searchCaptchaDetails(error) {
+    return error && error.data && error.data.error && error.data.error.details
+      ? error.data.error.details
+      : {};
+  }
+
+  function openGlobalSearchCaptcha(root, error) {
+    var details = searchCaptchaDetails(error);
+    var captchaHtml = details.captcha_html || "";
+    var verifyUrl = details.verify_url || "/api/search-captcha";
+    var message = (error && error.data && error.data.message) || "Please complete the security check.";
+    var modal = qs("#global-search-captcha-modal");
+    var panel;
+    var form;
+    var body;
+    var footer;
+    var submit;
+    var title;
+
+    if (!captchaHtml) {
+      globalSearchShowMessage(root, message);
+      return;
+    }
+
+    if (modal) {
+      modal.remove();
+    }
+
+    modal = createElement("div", "modal");
+    modal.id = "global-search-captcha-modal";
+    modal.setAttribute("aria-hidden", "true");
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.innerHTML = ''
+      + '<div class="modal-backdrop" data-modal-close></div>'
+      + '<div class="modal-panel modal-confirm-panel search-captcha-modal-panel">'
+      + '<div class="modal-header">'
+      + '<h2 class="modal-title text-lg m-0"></h2>'
+      + '<button class="btn btn-icon btn-ghost" type="button" data-modal-close aria-label="Close">&times;</button>'
+      + '</div>'
+      + '<form class="modal-body stack stack-gap-12" data-search-captcha-form></form>'
+      + '</div>';
+
+    panel = qs(".modal-panel", modal);
+    title = qs(".modal-title", modal);
+    form = qs("[data-search-captcha-form]", modal);
+
+    if (title) {
+      title.textContent = root.dataset.searchCaptchaTitle || "Security check";
+    }
+
+    if (form) {
+      body = createElement("div", "muted", message);
+      footer = createElement("div", "modal-footer justify-end");
+      submit = createElement("button", "btn btn-primary", root.dataset.searchCaptchaSubmit || "OK");
+      submit.type = "submit";
+      footer.appendChild(submit);
+      form.action = verifyUrl;
+      form.method = "post";
+      form.appendChild(body);
+      form.insertAdjacentHTML("beforeend", captchaHtml);
+      form.appendChild(footer);
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        TinyCat.request(verifyUrl, {
+          method: "POST",
+          body: new FormData(form)
+        })
+          .then(function () {
+            if (modal.parentNode) {
+              TinyCat.closeModal(modal);
+              modal.remove();
+            }
+
+            root.__tinycatSearchCache = {};
+            runGlobalSearch(root);
+          })
+          .catch(function (submitError) {
+            var submitDetails = searchCaptchaDetails(submitError);
+
+            if (submitDetails.captcha_html) {
+              openGlobalSearchCaptcha(root, submitError);
+              return;
+            }
+
+            globalSearchShowMessage(root, (submitError && submitError.data && submitError.data.message) || message);
+          });
+      });
+    }
+
+    document.body.appendChild(modal);
+    hydrateDynamic(modal);
+    TinyCat.openModal(modal);
+
+    return panel;
   }
 
   function runGlobalSearch(root) {
     var input = globalSearchInput(root);
     var query = input ? input.value.trim() : "";
+    var cacheKey = query.toLowerCase();
     var url;
     var requestId;
+    var controller;
 
     if (query === "") {
       globalSearchHide(root);
@@ -2015,27 +2142,56 @@
       return;
     }
 
+    root.__tinycatSearchCache = root.__tinycatSearchCache || {};
+
+    if (root.__tinycatSearchCache[cacheKey]) {
+      renderGlobalSearch(root, root.__tinycatSearchCache[cacheKey]);
+      return;
+    }
+
+    if (root.__tinycatSearchController) {
+      root.__tinycatSearchController.abort();
+    }
+
+    controller = "AbortController" in window ? new AbortController() : null;
+    root.__tinycatSearchController = controller;
     root.__tinycatSearchRequest = (root.__tinycatSearchRequest || 0) + 1;
     requestId = root.__tinycatSearchRequest;
     url = (root.dataset.searchApi || "/api/search") + "?q=" + encodeURIComponent(query);
     root.setAttribute("aria-busy", "true");
 
-    TinyCat.request(url, { method: "GET" })
+    TinyCat.request(url, {
+      method: "GET",
+      signal: controller ? controller.signal : undefined
+    })
       .then(function (data) {
         if (requestId !== root.__tinycatSearchRequest) {
           return;
         }
 
+        root.__tinycatSearchCache[cacheKey] = data;
         renderGlobalSearch(root, data);
       })
-      .catch(function () {
+      .catch(function (error) {
+        if (error && error.name === "AbortError") {
+          return;
+        }
+
+        if (error && error.data && error.data.error && error.data.error.code === "captcha_required") {
+          openGlobalSearchCaptcha(root, error);
+          return;
+        }
+
         if (requestId === root.__tinycatSearchRequest) {
-          globalSearchShowMessage(root, root.dataset.searchEmpty || "Nothing found.");
+          globalSearchShowMessage(root, (error && error.data && error.data.message) || root.dataset.searchEmpty || "Nothing found.");
         }
       })
       .finally(function () {
         if (requestId === root.__tinycatSearchRequest) {
           root.removeAttribute("aria-busy");
+          if (root.__tinycatSearchController === controller) {
+            root.__tinycatSearchController = null;
+          }
         }
       });
   }
@@ -2053,7 +2209,7 @@
       window.clearTimeout(root.__tinycatSearchTimer);
       root.__tinycatSearchTimer = window.setTimeout(function () {
         runGlobalSearch(root);
-      }, 180);
+      }, 220);
     });
 
     input.addEventListener("focus", function () {

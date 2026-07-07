@@ -204,11 +204,11 @@ $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
                     <?php endif; ?>
                     <strong><?= e($appName) ?></strong>
                 </a>
-                <form class="global-search" action="/search" method="get" role="search" data-global-search data-search-api="/api/search" data-search-tags="<?= et('public.search_tags') ?>" data-search-users="<?= et('public.search_users') ?>" data-search-content="<?= et('public.search_content') ?>" data-search-empty="<?= et('public.search_empty') ?>" data-search-min="<?= et('public.search_min') ?>" autocomplete="off">
+                <form class="global-search" action="/search" method="get" role="search" data-global-search data-search-api="/api/search" data-search-tags="<?= et('public.search_tags') ?>" data-search-users="<?= et('public.search_users') ?>" data-search-content="<?= et('public.search_content') ?>" data-search-all="<?= et('public.search_all') ?>" data-search-empty="<?= et('public.search_empty') ?>" data-search-min="<?= et('public.search_min') ?>" data-search-captcha-title="<?= et('public.search_captcha_title') ?>" data-search-captcha-submit="<?= et('common.confirm') ?>" autocomplete="off">
                     <label class="sr-only" for="global-search-input"><?= et('common.search') ?></label>
                     <div class="global-search-control">
                         <?= icon('search') ?>
-                        <input class="global-search-input" id="global-search-input" type="search" name="q" placeholder="<?= et('public.search_placeholder') ?>" minlength="2" maxlength="80" data-global-search-input>
+                        <input class="global-search-input" id="global-search-input" type="search" name="q" placeholder="<?= et('public.search_suggest_placeholder') ?>" minlength="2" maxlength="80" data-global-search-input>
                     </div>
                     <div class="global-search-results" data-global-search-results hidden></div>
                 </form>
