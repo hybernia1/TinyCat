@@ -1483,7 +1483,7 @@
   }
 
   function statusEditorCounter(root) {
-    return qs("[data-status-editor-counter]", root);
+    return root.__tinycatStatusCounter || qs("[data-status-editor-counter]", root);
   }
 
   function statusEditorTags(root) {
@@ -1745,6 +1745,7 @@
     var counter;
     var counterId;
     var form;
+    var metaSlot;
 
     if (root.dataset.statusEditorReady === "true" || !source) {
       return;
@@ -1786,8 +1787,17 @@
       counter.dataset.statusEditorCounter = "true";
       counter.dataset.statusCounterTemplate = source.dataset.statusCounter || "{count}";
       counter.setAttribute("aria-live", "polite");
+      root.__tinycatStatusCounter = counter;
       meta.appendChild(counter);
-      shell.insertAdjacentElement("afterend", meta);
+      form = root.closest("form");
+      metaSlot = form ? qs("[data-status-editor-meta-slot]", form) : null;
+
+      if (metaSlot) {
+        metaSlot.appendChild(meta);
+      } else {
+        shell.insertAdjacentElement("afterend", meta);
+      }
+
       editor.setAttribute("aria-describedby", counterId);
     }
 

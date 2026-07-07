@@ -2727,6 +2727,27 @@ a:hover {
   padding: 8px 12px;
 }
 
+.status-compose-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.status-compose-counter {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 1rem;
+  color: var(--muted);
+}
+
+.status-compose-counter .status-editor-meta {
+  justify-content: flex-start;
+  min-height: 0;
+  margin-top: 0;
+}
+
 .status-compose-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2771,8 +2792,28 @@ a:hover {
 }
 
 @media (max-width: 560px) {
+  .status-composer .card-body {
+    padding: 12px;
+  }
+
+  .status-compose-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .status-composer .status-compose-row .avatar {
+    width: 34px;
+    height: 34px;
+  }
+
   .status-editor-input {
     min-height: 72px;
+    padding: 9px 10px;
+  }
+
+  .status-compose-main .btn {
+    min-height: 36px;
+    padding: 7px 11px;
   }
 }
 

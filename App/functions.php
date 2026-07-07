@@ -6583,8 +6583,11 @@ if (!function_exists('status_composer')) {
                         </div>
                         <div class="status-compose-main">
                             <?= status_field(null) ?>
-                            <div class="status-compose-actions">
-                                <button class="btn btn-primary" type="submit"><?= icon('plus') ?> <span><?= et('account.status_create') ?></span></button>
+                            <div class="status-compose-footer">
+                                <div class="status-compose-counter" data-status-editor-meta-slot></div>
+                                <div class="status-compose-actions">
+                                    <button class="btn btn-primary" type="submit"><?= icon('plus') ?> <span><?= et('account.status_create') ?></span></button>
+                                </div>
                             </div>
                         </div>
                     </div>
