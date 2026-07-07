@@ -3371,6 +3371,44 @@ if (!function_exists('public_status_id_query')) {
     }
 }
 
+if (!function_exists('public_status_author_id_query')) {
+    function public_status_author_id_query(): CoreQuery
+    {
+        $authorIndex = (string) config('database.driver', 'mysql') === 'mysql'
+            ? ' FORCE INDEX (content_author_index)'
+            : '';
+
+        return db_select(
+            'SELECT c.id
+            FROM content c' . $authorIndex . '
+            INNER JOIN users u ON u.id = c.author_id'
+        )
+            ->where('c.status = ?', 'published')
+            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+            ->where('u.status = ?', 'active');
+    }
+}
+
+if (!function_exists('public_status_tag_id_query')) {
+    function public_status_tag_id_query(int $termId): CoreQuery
+    {
+        $tagIndex = (string) config('database.driver', 'mysql') === 'mysql'
+            ? ' FORCE INDEX (content_tags_term_index)'
+            : '';
+
+        return db_select(
+            'SELECT c.id
+            FROM content_tags ct' . $tagIndex . '
+            INNER JOIN content c ON c.id = ct.content_id
+            INNER JOIN users u ON u.id = c.author_id'
+        )
+            ->where('ct.term_id = ?', $termId)
+            ->where('c.status = ?', 'published')
+            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
+            ->where('u.status = ?', 'active');
+    }
+}
+
 if (!function_exists('public_status_query')) {
     function public_status_query(): CoreQuery
     {
@@ -3429,6 +3467,16 @@ if (!function_exists('public_status_items_for_user')) {
             return public_status_items($limit, $offset);
         }
 
+        $authorIds = public_following_author_ids($userId);
+
+        if (count($authorIds) <= 1000) {
+            return public_status_page(
+                public_status_author_id_query()->whereIn('c.author_id', $authorIds),
+                $limit,
+                $offset
+            );
+        }
+
         return public_status_page(
             public_status_id_query()->where(
                 '(
@@ -3449,6 +3497,30 @@ if (!function_exists('public_status_items_for_user')) {
     }
 }
 
+if (!function_exists('public_following_author_ids')) {
+    function public_following_author_ids(int $userId): array
+    {
+        static $cache = [];
+
+        if ($userId < 1) {
+            return [];
+        }
+
+        if (array_key_exists($userId, $cache)) {
+            return $cache[$userId];
+        }
+
+        $ids = array_map(
+            static fn (array $row): int => (int) ($row['user_id'] ?? 0),
+            all('SELECT user_id FROM user_followers WHERE follower_id = ?', [$userId])
+        );
+        $ids[] = $userId;
+        $ids = array_values(array_unique(array_filter($ids, static fn (int $id): bool => $id > 0)));
+
+        return $cache[$userId] = $ids;
+    }
+}
+
 if (!function_exists('public_status_items_by_author')) {
     function public_status_items_by_author(int $authorId, int $limit = 24, int $offset = 0): array
     {
@@ -3457,7 +3529,7 @@ if (!function_exists('public_status_items_by_author')) {
         }
 
         return public_status_page(
-            public_status_id_query()->where('c.author_id = ?', $authorId),
+            public_status_author_id_query()->where('c.author_id = ?', $authorId),
             $limit,
             $offset
         );
@@ -3477,6 +3549,14 @@ if (!function_exists('public_status_items_by_tag')) {
 
         if ($termId < 1) {
             return [];
+        }
+
+        if ($offset >= 8000) {
+            return public_status_page(
+                public_status_tag_id_query($termId),
+                $limit,
+                $offset
+            );
         }
 
         return public_status_page(
@@ -3606,7 +3686,7 @@ if (!function_exists('public_trending_tags')) {
         }
 
         $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
-            ? ' FORCE INDEX (content_feed_index)'
+            ? ' FORCE INDEX (content_sidebar_index)'
             : '';
         $rows = db_select(
             'SELECT t.id,
