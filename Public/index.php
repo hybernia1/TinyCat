@@ -31,7 +31,7 @@ layout('layout', [
 ], static function () use ($authUser, $feed): void {
     ?>
     <section class="public-layout">
-        <main class="home-feed-section stack stack-gap-14">
+        <main class="home-feed-section home-feed-app stack">
             <?= public_home_feed_html($feed, $authUser) ?>
         </main>
         <?= public_sidebar() ?>

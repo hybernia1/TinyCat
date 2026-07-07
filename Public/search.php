@@ -49,22 +49,14 @@ layout('layout', [
         'image' => site_meta_image_url(),
         'robots' => 'noindex,follow',
     ],
+    'search_query' => $query,
 ], static function () use ($query, $hasQuery, $searchBlocked, $statusItems, $current): void {
     ?>
     <section class="public-layout">
         <main class="home-feed-section stack stack-gap-16">
             <header class="public-list-header">
-                <h1 class="text-2xl m-0"><?= et('public.search_title') ?></h1>
+                <h1 class="text-2xl m-0"><?= e($hasQuery ? t('public.search_title_query', ['query' => $query]) : t('public.search_title')) ?></h1>
             </header>
-
-            <form class="search-page-form" action="/search" method="get" role="search">
-                <label class="sr-only" for="search-page-q"><?= et('common.search') ?></label>
-                <div class="input-icon">
-                    <?= icon('search') ?>
-                    <input class="input" id="search-page-q" type="search" name="q" value="<?= e($query) ?>" placeholder="<?= et('public.search_placeholder') ?>" minlength="2" maxlength="80" autofocus>
-                </div>
-                <button class="btn btn-primary" type="submit"><?= icon('search') ?> <span><?= et('common.search') ?></span></button>
-            </form>
 
             <?php if (!$hasQuery): ?>
                 <div class="alert alert-info"><?= et('public.search_min') ?></div>

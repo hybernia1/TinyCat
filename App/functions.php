@@ -3880,7 +3880,7 @@ if (!function_exists('public_sidebar')) {
                                 ?>
                                 <a class="topic-link<?= $isActive ? ' is-active' : '' ?>" href="<?= e((string) ($tag['url'] ?? tag_url($name))) ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
                                     <span class="topic-name">#<?= e($name) ?></span>
-                                    <span class="topic-count"><?= e((int) ($tag['posts_count'] ?? 0)) ?></span>
+                                    <span class="badge"><?= e((int) ($tag['posts_count'] ?? 0)) ?></span>
                                 </a>
                             <?php endforeach; ?>
                         </nav>
@@ -6614,12 +6614,12 @@ if (!function_exists('status_actions')) {
                     <input type="hidden" name="id" value="<?= e($contentId) ?>">
                     <input type="hidden" name="reaction" value="like">
                     <button class="btn btn-ghost btn-sm status-reaction<?= $reaction === 'like' ? ' is-active' : '' ?>" type="submit" title="<?= et('account.status_like') ?>" data-status-like-button data-status-id="<?= e($contentId) ?>">
-                        <?= icon('thumb-up') ?> <span data-status-count="likes" data-status-id="<?= e($contentId) ?>"><?= e($counts['like']) ?></span>
+                        <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span data-status-count="likes" data-status-id="<?= e($contentId) ?>"><?= e($counts['like']) ?></span>
                     </button>
                 </form>
             <?php else: ?>
                 <a class="btn btn-ghost btn-sm status-reaction" href="<?= e($loginUrl) ?>" aria-label="<?= et('account.status_like') ?>" title="<?= et('account.status_like') ?>">
-                    <?= icon('thumb-up') ?> <span data-status-count="likes" data-status-id="<?= e($contentId) ?>"><?= e($counts['like']) ?></span>
+                    <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span data-status-count="likes" data-status-id="<?= e($contentId) ?>"><?= e($counts['like']) ?></span>
                 </a>
             <?php endif; ?>
             <?php if ($openCommentsModal): ?>
@@ -6820,18 +6820,6 @@ if (!function_exists('public_home_feed_html')) {
 
         ob_start();
         ?>
-        <header class="public-list-header">
-            <h1 class="text-2xl m-0"><?= et('public.feed_title') ?></h1>
-            <nav class="feed-switch" aria-label="<?= et('public.feed_title') ?>">
-                <a class="feed-switch-link" href="/" data-ajax data-url="/api/home-feed?feed=all" data-ajax-target=".home-feed-section" data-history="/"<?= $feed === 'all' ? ' aria-current="page"' : '' ?>>
-                    <?= et('public.feed_all') ?>
-                </a>
-                <a class="feed-switch-link" href="/?feed=following" data-ajax data-url="/api/home-feed?feed=following" data-ajax-target=".home-feed-section" data-history="/?feed=following"<?= $feed === 'following' ? ' aria-current="page"' : '' ?>>
-                    <?= et('public.feed_following') ?>
-                </a>
-            </nav>
-        </header>
-
         <?php if ($user !== null && user_is_muted($user)): ?>
             <div class="alert alert-warning">
                 <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime(user_muted_until($user))]) ?></span>
@@ -6839,6 +6827,15 @@ if (!function_exists('public_home_feed_html')) {
         <?php elseif ($user !== null): ?>
             <?= status_composer($currentFeedUrl, $user) ?>
         <?php endif; ?>
+
+        <nav class="feed-switch home-feed-switch" aria-label="<?= et('public.feed_title') ?>">
+            <a class="feed-switch-link" href="/" data-ajax data-url="/api/home-feed?feed=all" data-ajax-target=".home-feed-section" data-history="/"<?= $feed === 'all' ? ' aria-current="page"' : '' ?>>
+                <?= et('public.feed_all') ?>
+            </a>
+            <a class="feed-switch-link" href="/?feed=following" data-ajax data-url="/api/home-feed?feed=following" data-ajax-target=".home-feed-section" data-history="/?feed=following"<?= $feed === 'following' ? ' aria-current="page"' : '' ?>>
+                <?= et('public.feed_following') ?>
+            </a>
+        </nav>
 
         <?php if ($followingLoginRequired): ?>
             <div class="alert alert-info cluster">
@@ -7126,12 +7123,12 @@ if (!function_exists('status_comment_like_control')) {
                 <input type="hidden" name="action" value="comment_like">
                 <input type="hidden" name="comment_id" value="<?= e($commentId) ?>">
                 <button class="link-button status-comment-like-button<?= $liked ? ' is-active' : '' ?>" type="submit" data-comment-like-button data-comment-id="<?= e($commentId) ?>">
-                    <?= icon('thumb-up') ?> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
+                    <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
                 </button>
             </form>
         <?php else: ?>
             <span class="status-comment-like-button" aria-label="<?= et('account.status_like') ?>" data-comment-like-button data-comment-id="<?= e($commentId) ?>">
-                <?= icon('thumb-up') ?> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
+                <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
             </span>
         <?php endif; ?>
         <?php

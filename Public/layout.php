@@ -15,6 +15,7 @@ $appName = site_name();
 $siteLogoUrl = site_logo_url();
 $siteFaviconUrl = site_favicon_url();
 $siteFooterHtml = site_footer_html();
+$searchQuery = trim((string) ($search_query ?? get('q', '')));
 $title = (string) ($title ?? $appName);
 $current = route_path((string) ($current ?? route_path()));
 $bodyClass = (string) ($bodyClass ?? '');
@@ -208,7 +209,7 @@ $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
                     <label class="sr-only" for="global-search-input"><?= et('common.search') ?></label>
                     <div class="global-search-control">
                         <?= icon('search') ?>
-                        <input class="global-search-input" id="global-search-input" type="search" name="q" placeholder="<?= et('public.search_suggest_placeholder') ?>" minlength="2" maxlength="80" data-global-search-input>
+                        <input class="global-search-input" id="global-search-input" type="search" name="q" value="<?= e($searchQuery) ?>" placeholder="<?= et('public.search_suggest_placeholder') ?>" minlength="2" maxlength="80" data-global-search-input>
                     </div>
                     <div class="global-search-results" data-global-search-results hidden></div>
                 </form>

@@ -193,7 +193,7 @@
         "active_users_empty": "Za posledních 7 dní zatím nikdo nepřidal příspěvek.",
         "active_user_posts": "{count} příspěvků",
         "search_title": "Vyhledávání",
-        "search_title_query": "Vyhledávání: {query}",
+        "search_title_query": "Vyhledávání \"{query}\"",
         "search_meta": "Vyhledávání příspěvků, profilů, štítků a sdílených odkazů.",
         "search_meta_query": "Výsledky vyhledávání pro {query}.",
         "search_placeholder": "Hledat příspěvky nebo profily",

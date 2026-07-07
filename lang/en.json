@@ -193,7 +193,7 @@
         "active_users_empty": "No one has posted in the last 7 days yet.",
         "active_user_posts": "{count} posts",
         "search_title": "Search",
-        "search_title_query": "Search: {query}",
+        "search_title_query": "Search \"{query}\"",
         "search_meta": "Search posts, profiles, tags, and shared links.",
         "search_meta_query": "Search results for {query}.",
         "search_placeholder": "Search posts or profiles",
