@@ -45,6 +45,10 @@ if (is_post()) {
         $errors[] = t('account.messages.password_mismatch');
     }
 
+    if ((string) post('platform_terms', '') !== '1') {
+        $errors[] = t('auth.platform_terms_required');
+    }
+
     if ($errors !== []) {
         captcha_refresh('register');
         flash('error', implode(' ', $errors));
@@ -113,6 +117,10 @@ layout('layout', [
                         <label class="field">
                             <span class="label"><?= et('common.password_confirm') ?></span>
                             <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" required>
+                        </label>
+                        <label class="check-line">
+                            <input type="checkbox" name="platform_terms" value="1" required>
+                            <span><?= et('auth.platform_terms_agree') ?> <a href="/privacy" target="_blank" rel="noopener"><?= et('privacy.title') ?></a></span>
                         </label>
                         <?= captcha_field('register') ?>
                         <button class="btn btn-primary" type="submit"><?= icon('user-plus') ?> <span><?= et('common.register') ?></span></button>

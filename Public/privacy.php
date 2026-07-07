@@ -32,6 +32,13 @@ layout('layout', [
         </article>
 
         <div class="grid lg:grid-2">
+            <?= tc_privacy_card('privacy.public_title', 'globe', [
+                'privacy.public_open',
+                'privacy.public_content',
+                'privacy.public_no_private',
+                'privacy.public_no_personal',
+            ]) ?>
+
             <?= tc_privacy_card('privacy.data_title', 'database', [
                 'privacy.data_account',
                 'privacy.data_content',
