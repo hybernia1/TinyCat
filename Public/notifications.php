@@ -46,7 +46,7 @@ layout('layout', [
     ],
 ], static function () use ($notifications, $unread): void {
     ?>
-    <section class="notifications-page stack" style="--stack-gap: 14px;">
+    <section class="notifications-page stack stack-gap-14">
         <article class="card">
             <div class="card-header split">
                 <h1 class="text-lg m-0 cluster gap-2"><?= icon('bell') ?> <?= et('notifications.title') ?></h1>

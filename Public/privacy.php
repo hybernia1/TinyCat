@@ -21,7 +21,7 @@ layout('layout', [
     ],
 ], static function (): void {
     ?>
-    <section class="stack" style="max-width: 920px; margin-inline: auto;">
+    <section class="stack max-w-prose mx-auto">
         <article class="card">
             <div class="card-header">
                 <h1 class="text-xl m-0 cluster gap-2"><?= icon('shield') ?> <?= et('privacy.title') ?></h1>

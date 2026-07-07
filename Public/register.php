@@ -89,7 +89,7 @@ layout('layout', [
     ],
 ], static function (): void {
     ?>
-    <section style="max-width: 560px; margin-inline: auto;">
+    <section class="max-w-auth mx-auto">
         <article class="card">
             <div class="card-header">
                 <h1 class="text-lg m-0 cluster gap-2"><?= icon('user-plus') ?> <?= et('auth.register_title') ?></h1>

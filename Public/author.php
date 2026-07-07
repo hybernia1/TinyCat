@@ -19,12 +19,36 @@ if (is_post()) {
 
     if ($action === 'follow') {
         author_follow($userId, $targetAuthorId);
+        if (wants_json()) {
+            $counts = author_follow_counts($targetAuthorId);
+            api([
+                'action' => 'follow',
+                'author_id' => $targetAuthorId,
+                'following' => true,
+                'followers_count' => (int) ($counts['followers'] ?? 0),
+                'following_count' => (int) ($counts['following'] ?? 0),
+                'html' => author_follow_button_html($targetAuthorId, true),
+            ], t('public.followed'));
+        }
+
         flash('success', t('public.followed'));
         redirect(author_url($targetAuthorId));
     }
 
     if ($action === 'unfollow') {
         author_unfollow($userId, $targetAuthorId);
+        if (wants_json()) {
+            $counts = author_follow_counts($targetAuthorId);
+            api([
+                'action' => 'unfollow',
+                'author_id' => $targetAuthorId,
+                'following' => false,
+                'followers_count' => (int) ($counts['followers'] ?? 0),
+                'following_count' => (int) ($counts['following'] ?? 0),
+                'html' => author_follow_button_html($targetAuthorId, false),
+            ], t('public.unfollowed'));
+        }
+
         flash('success', t('public.unfollowed'));
         redirect(author_url($targetAuthorId));
     }
@@ -144,7 +168,7 @@ layout('layout', [
                                 <?php endif; ?>
                             </div>
                         <?php endif; ?>
-                        <div class="stack" style="--stack-gap: 8px;">
+                        <div class="stack stack-gap-8">
                             <h1 class="text-xl m-0"><?= e($authorName) ?></h1>
                             <div class="profile-presence<?= ($presence['online'] ?? false) ? ' is-online' : '' ?>">
                                 <span class="profile-presence-dot" aria-hidden="true"></span>
@@ -173,8 +197,8 @@ layout('layout', [
                             <?php endif; ?>
                         </div>
                         <div class="profile-stats">
-                            <span><strong><?= e((int) ($followCounts['followers'] ?? 0)) ?></strong> <?= et('public.followers') ?></span>
-                            <span><strong><?= e((int) ($followCounts['following'] ?? 0)) ?></strong> <?= et('public.following') ?></span>
+                            <span><strong data-author-stat="followers" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['followers'] ?? 0)) ?></strong> <?= et('public.followers') ?></span>
+                            <span><strong data-author-stat="following" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['following'] ?? 0)) ?></strong> <?= et('public.following') ?></span>
                             <span><strong><?= e((int) ($activityStats['posts'] ?? 0)) ?></strong> <?= et('public.profile_posts') ?></span>
                             <span><strong><?= e((int) ($activityStats['likes_given'] ?? 0)) ?></strong> <?= et('public.profile_likes_given') ?></span>
                             <span><strong><?= e((int) ($activityStats['likes_received'] ?? 0)) ?></strong> <?= et('public.profile_likes_received') ?></span>
@@ -187,13 +211,7 @@ layout('layout', [
                         <?php endif; ?>
                         <div class="cluster gap-2">
                             <?php if ($canFollow): ?>
-                                <form method="post" action="<?= e(author_url($authorId)) ?>">
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="action" value="<?= $isFollowing ? 'unfollow' : 'follow' ?>">
-                                    <button class="btn <?= $isFollowing ? 'btn-secondary' : 'btn-primary' ?> btn-sm" type="submit">
-                                        <?= icon($isFollowing ? 'check' : 'plus') ?> <span><?= et($isFollowing ? 'public.unfollow' : 'public.follow') ?></span>
-                                    </button>
-                                </form>
+                                <?= author_follow_button_html($authorId, $isFollowing) ?>
                             <?php elseif ($authUser === null): ?>
                                 <a class="btn btn-secondary btn-sm" href="/login">
                                     <?= icon('login') ?> <span><?= et('public.follow_login') ?></span>
@@ -262,8 +280,8 @@ layout('layout', [
             </div>
         </aside>
 
-        <main class="profile-main stack" style="--stack-gap: 24px;">
-        <section class="stack" style="--stack-gap: 12px;">
+        <main class="profile-main stack stack-gap-24">
+        <section class="stack stack-gap-12">
             <header class="public-list-header">
                 <h2 class="text-xl m-0"><?= et('account.posts_title') ?></h2>
             </header>
@@ -277,15 +295,14 @@ layout('layout', [
             <?php endif; ?>
 
             <?php if ($statusItems === []): ?>
-                <div class="alert alert-info"><?= et('public.author_feed_empty') ?></div>
-            <?php else: ?>
-                <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
-                    <?php foreach ($statusItems as $item): ?>
-                        <?= status_card($item, author_url($authorId)) ?>
-                    <?php endforeach; ?>
-                </div>
-                <?= status_feed_more_control($feedId, 'author', count($statusItems), $statusLimit, ['author_id' => $authorId]) ?>
+                <div class="alert alert-info" data-status-empty><?= et('public.author_feed_empty') ?></div>
             <?php endif; ?>
+            <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
+                <?php foreach ($statusItems as $item): ?>
+                    <?= status_card($item, author_url($authorId)) ?>
+                <?php endforeach; ?>
+            </div>
+            <?= status_feed_more_control($feedId, 'author', count($statusItems), $statusLimit, ['author_id' => $authorId]) ?>
         </section>
         </main>
     </section>

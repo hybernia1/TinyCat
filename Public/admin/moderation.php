@@ -107,7 +107,7 @@ layout('layout', [
                         <span class="label"><?= et('moderation.block_reason') ?></span>
                         <textarea class="textarea" name="reason" rows="3" maxlength="1000"></textarea>
                     </label>
-                    <div class="cluster" style="justify-content: flex-end;">
+                    <div class="cluster justify-end">
                         <button class="btn btn-primary" type="submit"><?= icon('plus') ?> <span><?= et('moderation.block_domain') ?></span></button>
                     </div>
                 </form>

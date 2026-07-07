@@ -73,7 +73,7 @@ layout('layout', [
                 <?php endforeach; ?>
             </div>
 
-            <div class="card-footer cluster" style="justify-content: flex-end;">
+            <div class="card-footer cluster justify-end">
                 <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('common.save') ?></span></button>
             </div>
         </form>

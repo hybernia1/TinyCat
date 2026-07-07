@@ -19,6 +19,20 @@
     return Array.prototype.slice.call((root || document).querySelectorAll(selector));
   }
 
+  function selectorValue(value) {
+    value = String(value || "");
+
+    if (window.CSS && typeof window.CSS.escape === "function") {
+      return window.CSS.escape(value);
+    }
+
+    return value.replace(/["\\]/g, "\\$&");
+  }
+
+  function dataSelector(name, value) {
+    return "[" + name + "=\"" + selectorValue(value) + "\"]";
+  }
+
   function ready(callback) {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", callback, { once: true });
@@ -443,6 +457,10 @@
 
     if (TinyCat.initGlobalSearch) {
       TinyCat.initGlobalSearch(root || document);
+    }
+
+    if (TinyCat.initFollowForms) {
+      TinyCat.initFollowForms(root || document);
     }
 
     if (TinyCat.initTabs) {
@@ -2344,18 +2362,35 @@
     });
   };
 
+  function statusFormActionField(form) {
+    var field = form && form.elements ? form.elements.namedItem("action") : null;
+
+    if (field instanceof RadioNodeList) {
+      field = field[0] || null;
+    }
+
+    if (!field && form) {
+      field = qs('[name="action"]', form);
+    }
+
+    return field ? String(field.value || "") : "";
+  }
+
   function statusFormAction(form, body) {
     var data = body;
+    var value = "";
 
     try {
       if (!data) {
         data = new FormData(form);
       }
 
-      return String(data.get("action") || "create");
+      value = String(data.get("action") || "");
     } catch (error) {
-      return "create";
+      value = "";
     }
+
+    return value || statusFormActionField(form) || "create";
   }
 
   function shouldSubmitOnEnter(event) {
@@ -2796,16 +2831,350 @@
     });
   }
 
+  function shouldKeepStatusModalOpen(action, modal) {
+    return Boolean(
+      modal
+        && modal.id
+        && modal.id.indexOf("status-post-modal-") === 0
+        && ["react", "comment", "comment_like", "comment_delete"].indexOf(action) !== -1
+    );
+  }
+
+  function detachModalFromCard(modal, card) {
+    if (modal && card && card.contains(modal)) {
+      document.body.appendChild(modal);
+    }
+  }
+
+  async function refreshOpenStatusModal(modal, url, scrollState) {
+    var data;
+    var payload;
+    var html;
+    var template;
+    var nextModal;
+    var currentPanel;
+    var nextPanel;
+    var importedPanel;
+    var labelledBy;
+
+    if (!modal || !url) {
+      restoreModalScroll(modal, scrollState);
+      return false;
+    }
+
+    data = await TinyCat.request(url, { method: "GET" });
+    payload = unwrapResult(data);
+    html = payload && typeof payload === "object" ? (payload.html || "") : "";
+
+    if (!html) {
+      return false;
+    }
+
+    template = document.createElement("template");
+    template.innerHTML = String(html);
+    nextModal = qs(".modal", template.content);
+    currentPanel = qs(".modal-panel", modal);
+    nextPanel = nextModal ? qs(".modal-panel", nextModal) : null;
+
+    if (!nextModal || !currentPanel || !nextPanel) {
+      return false;
+    }
+
+    modal.className = nextModal.className;
+    modal.setAttribute("role", nextModal.getAttribute("role") || "dialog");
+    modal.setAttribute("aria-modal", nextModal.getAttribute("aria-modal") || "true");
+    labelledBy = nextModal.getAttribute("aria-labelledby") || "";
+    if (labelledBy) {
+      modal.setAttribute("aria-labelledby", labelledBy);
+    } else {
+      modal.removeAttribute("aria-labelledby");
+    }
+    modal.setAttribute("aria-hidden", "false");
+    modal.dataset.open = "true";
+    modal.dataset.remoteLoaded = "true";
+    modal.dataset.modalUrl = url;
+
+    importedPanel = document.importNode(nextPanel, true);
+    currentPanel.replaceWith(importedPanel);
+    hydrateDynamic(modal);
+    restoreModalScroll(modal, scrollState);
+
+    return true;
+  }
+
   function statusCardId(card) {
     var match = card && card.id ? /^status-(\d+)$/.exec(card.id) : null;
 
     return match ? match[1] : "";
   }
 
+  function statusFormCard(form) {
+    var card = form ? form.closest(".status-card") : null;
+    var id = form && form.dataset ? form.dataset.statusId : "";
+    var field;
+
+    if (card) {
+      return card;
+    }
+
+    if (!id && form) {
+      field = qs('input[name="id"]', form);
+      id = field ? field.value : "";
+    }
+
+    return id ? document.getElementById("status-" + id) : null;
+  }
+
   function statusCardAction(form) {
     var url = new URL(form.getAttribute("action") || window.location.href, window.location.href);
 
     return url.pathname + url.search;
+  }
+
+  function updateStatusSummary(summary) {
+    var id = summary && summary.id ? String(summary.id) : "";
+
+    if (!id) {
+      return;
+    }
+
+    qsa("[data-status-count]" + dataSelector("data-status-id", id)).forEach(function (node) {
+      var type = node.dataset.statusCount;
+      var value = summary[type + "_count"];
+
+      if (value !== undefined && value !== null) {
+        node.textContent = String(value);
+      }
+    });
+
+    qsa("[data-status-like-button]" + dataSelector("data-status-id", id)).forEach(function (button) {
+      button.classList.toggle("is-active", Boolean(summary.liked));
+    });
+
+    if (summary.comments_label) {
+      qsa("[data-status-comments-label]" + dataSelector("data-status-id", id)).forEach(function (node) {
+        node.textContent = String(summary.comments_label);
+      });
+    }
+  }
+
+  function updateCommentLike(payload) {
+    var id = payload && payload.comment_id ? String(payload.comment_id) : "";
+
+    if (!id) {
+      return;
+    }
+
+    qsa("[data-comment-like-count]" + dataSelector("data-comment-id", id)).forEach(function (node) {
+      node.textContent = String(payload.likes_count || 0);
+    });
+
+    qsa("[data-comment-like-button]" + dataSelector("data-comment-id", id)).forEach(function (button) {
+      button.classList.toggle("is-active", Boolean(payload.liked));
+    });
+  }
+
+  function elementFromHtml(html) {
+    var template = document.createElement("template");
+
+    template.innerHTML = String(html || "").trim();
+
+    return template.content.firstElementChild;
+  }
+
+  function ensureCommentReplies(parent) {
+    var list = qs("[data-comment-replies]", parent);
+    var main;
+
+    if (list) {
+      return list;
+    }
+
+    main = qs(".status-comment-main", parent);
+
+    if (!main) {
+      return null;
+    }
+
+    list = document.createElement("div");
+    list.className = "status-comment-replies";
+    list.dataset.commentReplies = "true";
+    list.dataset.commentId = parent.dataset.commentId || "";
+    main.appendChild(list);
+
+    return list;
+  }
+
+  function appendStatusComment(comment, scope) {
+    var contentId = comment && comment.content_id ? String(comment.content_id) : "";
+    var parentId = comment && comment.parent_id ? String(comment.parent_id) : "";
+    var node = elementFromHtml(comment ? comment.html : "");
+    var root = scope || document;
+    var list;
+    var parent;
+
+    if (!node || !contentId) {
+      return;
+    }
+
+    if (parentId && parentId !== "0") {
+      parent = qs("[data-comment-id]" + dataSelector("data-comment-id", parentId), root);
+      list = parent ? ensureCommentReplies(parent) : null;
+    } else {
+      list = qs("[data-status-comment-list]" + dataSelector("data-status-id", contentId), root);
+    }
+
+    if (!list) {
+      return;
+    }
+
+    list.appendChild(node);
+    hydrateDynamic(node);
+  }
+
+  function removeStatusComment(commentId) {
+    var id = commentId ? String(commentId) : "";
+
+    if (!id) {
+      return;
+    }
+
+    qsa("[data-comment-id]" + dataSelector("data-comment-id", id)).forEach(function (node) {
+      node.remove();
+    });
+  }
+
+  function statusFeedScope(form) {
+    return form
+      ? form.closest(".home-feed-section, .profile-main, .public-layout, .profile-layout")
+      : null;
+  }
+
+  function statusFeedForForm(form) {
+    var scope = statusFeedScope(form);
+
+    return (scope ? qs("[data-status-feed]", scope) : null) || qs("[data-status-feed]");
+  }
+
+  function bumpStatusFeedOffset(form, target, amount) {
+    var scope = statusFeedScope(form) || document;
+
+    qsa("[data-status-feed-more]", scope).forEach(function (control) {
+      var url;
+      var offset;
+
+      if (statusFeedTarget(control) !== target || !control.dataset.statusFeedUrl) {
+        return;
+      }
+
+      url = new URL(control.dataset.statusFeedUrl, window.location.href);
+      offset = parseInt(url.searchParams.get("offset") || "0", 10) || 0;
+      url.searchParams.set("offset", String(Math.max(0, offset + amount)));
+      control.dataset.statusFeedUrl = compactUrl(url);
+    });
+  }
+
+  function prependStatusCard(form, html) {
+    var target = statusFeedForForm(form);
+    var node = elementFromHtml(html);
+    var spacer;
+
+    if (!target || !node) {
+      return;
+    }
+
+    qsa("[data-status-empty]", statusFeedScope(form) || document).forEach(function (empty) {
+      empty.remove();
+    });
+
+    spacer = qs("[data-status-feed-spacer]", target);
+
+    if (spacer && spacer.nextSibling) {
+      target.insertBefore(node, spacer.nextSibling);
+    } else {
+      target.insertBefore(node, target.firstChild);
+    }
+
+    hydrateDynamic(node);
+    bumpStatusFeedOffset(form, target, 1);
+  }
+
+  function resetStatusCreateForm(form) {
+    if (!form || statusFormAction(form) !== "create") {
+      return;
+    }
+
+    form.reset();
+    qsa("[data-status-editor-source]", form).forEach(function (source) {
+      source.value = "";
+    });
+    qsa("[data-status-editor]", form).forEach(function (root) {
+      if (TinyCat.resetStatusEditor) {
+        TinyCat.resetStatusEditor(root);
+      }
+    });
+  }
+
+  function resetStatusCommentForm(form) {
+    var fields;
+    var details;
+    var parentField;
+
+    if (!form || statusFormAction(form) === "") {
+      return;
+    }
+
+    if (statusFormAction(form) === "comment") {
+      parentField = qs('input[name="parent_id"]', form);
+      details = form.closest(".status-reply-details");
+      form.reset();
+      fields = qsa(".status-comment-input", form);
+      fields.forEach(function (field) {
+        field.value = "";
+        field.defaultValue = "";
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+        field.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+
+      if (details && parseInt((parentField && parentField.value) || "0", 10) > 0) {
+        details.open = false;
+      }
+    }
+  }
+
+  function handleStatusJsonResponse(form, data) {
+    var payload = unwrapResult(data);
+
+    if (data && data.message) {
+      TinyCat.toast(data.message, data.type || (data.ok === false ? "danger" : "success"));
+    } else if (payload && payload.message) {
+      TinyCat.toast(payload.message, "success");
+    }
+
+    if (payload && payload.status) {
+      updateStatusSummary(payload.status);
+    }
+
+    if (payload && payload.comment_like) {
+      updateCommentLike(payload.comment_like);
+    }
+
+    if (payload && payload.comment) {
+      appendStatusComment(payload.comment, form.closest(".modal") || document);
+      resetStatusCommentForm(form);
+    }
+
+    if (payload && payload.card_html) {
+      prependStatusCard(form, payload.card_html);
+      resetStatusCreateForm(form);
+    }
+
+    if (payload && payload.deleted_comment_id) {
+      removeStatusComment(payload.deleted_comment_id);
+    }
+
+    markFormClean(form);
+    emit(form, "tinycat:success", { data: data, payload: payload, target: null });
   }
 
   async function refreshStatusCard(form, currentCard) {
@@ -2846,8 +3215,9 @@
   }
 
   async function syncStatusResponse(form, doc, action) {
-    var currentCard = form.closest(".status-card");
+    var currentCard = statusFormCard(form);
     var openedModal = form.closest(".modal");
+    var keepModalOpen = shouldKeepStatusModalOpen(action, openedModal);
     var reopenModalId = openedModal && openedModal.dataset.open === "true" ? openedModal.id : "";
     var reopenModalUrl = openedModal && openedModal.dataset.modalUrl ? openedModal.dataset.modalUrl : "";
     var modalScroll = captureModalScroll(openedModal);
@@ -2855,7 +3225,9 @@
     var imported;
     var reopenedModal;
 
-    if (openedModal) {
+    if (keepModalOpen) {
+      detachModalFromCard(openedModal, currentCard);
+    } else if (openedModal) {
       TinyCat.closeModal(openedModal);
     }
 
@@ -2871,7 +3243,9 @@
         currentCard.replaceWith(imported);
         hydrateDynamic(imported);
 
-        if (reopenModalId && action !== "update" && action !== "delete" && action !== "share" && action !== "report") {
+        if (keepModalOpen) {
+          await refreshOpenStatusModal(openedModal, reopenModalUrl, modalScroll);
+        } else if (reopenModalId && action !== "update" && action !== "delete" && action !== "share" && action !== "report") {
           if (reopenModalUrl) {
             loadRemoteModal(reopenModalId, reopenModalUrl, imported, true)
               .then(function (modal) {
@@ -2898,7 +3272,9 @@
       imported = await refreshStatusCard(form, currentCard);
 
       if (imported) {
-        if (reopenModalId && action !== "update" && action !== "share" && action !== "report") {
+        if (keepModalOpen) {
+          await refreshOpenStatusModal(openedModal, reopenModalUrl, modalScroll);
+        } else if (reopenModalId && action !== "update" && action !== "share" && action !== "report") {
           if (reopenModalUrl) {
             loadRemoteModal(reopenModalId, reopenModalUrl, imported, true)
               .then(function (modal) {
@@ -2918,10 +3294,20 @@
       }
 
       if (replaceStatusRegion(doc)) {
+        if (keepModalOpen) {
+          await refreshOpenStatusModal(openedModal, reopenModalUrl, modalScroll);
+        }
+
         return true;
       }
 
       currentCard.remove();
+      return true;
+    }
+
+    if (keepModalOpen) {
+      replaceStatusRegion(doc);
+      await refreshOpenStatusModal(openedModal, reopenModalUrl, modalScroll);
       return true;
     }
 
@@ -2943,6 +3329,8 @@
       var url;
       var headers;
       var response;
+      var contentType;
+      var jsonData;
       var html;
       var doc;
       var responseUrl;
@@ -2968,7 +3356,8 @@
       method = (form.getAttribute("method") || "POST").toUpperCase();
       url = form.getAttribute("action") || window.location.href;
       headers = {
-        "Accept": "text/html, application/xhtml+xml, */*;q=0.8"
+        "Accept": "application/json, text/html;q=0.9, application/xhtml+xml;q=0.8, */*;q=0.7",
+        "X-Requested-With": "XMLHttpRequest"
       };
 
       if (getCsrfToken()) {
@@ -2986,6 +3375,7 @@
         });
 
         responseUrl = response.url || "";
+        contentType = response.headers.get("content-type") || "";
 
         if (response.redirected && responseUrl) {
           responsePath = new URL(responseUrl, window.location.href).pathname;
@@ -2994,6 +3384,17 @@
             window.location.assign(responseUrl);
             return;
           }
+        }
+
+        if (contentType.indexOf("application/json") !== -1) {
+          jsonData = await response.json();
+
+          if (!response.ok) {
+            throw new Error(jsonData.message || (jsonData.error && jsonData.error.message) || response.statusText || "Request failed");
+          }
+
+          handleStatusJsonResponse(form, jsonData);
+          return;
         }
 
         html = await response.text();
@@ -3085,6 +3486,75 @@
 
       event.preventDefault();
       loadStatusFeedMore(trigger.closest("[data-status-feed-more]"));
+    });
+  };
+
+  function updateFollowResult(form, data) {
+    var payload = unwrapResult(data) || {};
+    var authorId = payload.author_id ? String(payload.author_id) : (form ? form.dataset.authorId : "");
+    var next = elementFromHtml(payload.html || "");
+
+    if (data && data.message) {
+      TinyCat.toast(data.message, data.type || "success");
+    }
+
+    if (authorId) {
+      qsa("[data-author-stat='followers']" + dataSelector("data-author-id", authorId)).forEach(function (node) {
+        node.textContent = String(payload.followers_count || 0);
+      });
+      qsa("[data-author-stat='following']" + dataSelector("data-author-id", authorId)).forEach(function (node) {
+        node.textContent = String(payload.following_count || 0);
+      });
+    }
+
+    if (form && next) {
+      form.replaceWith(next);
+      hydrateDynamic(next);
+    }
+  }
+
+  TinyCat.initFollowForms = function () {
+    if (TinyCat.__followFormEventsBound === true) {
+      return;
+    }
+
+    TinyCat.__followFormEventsBound = true;
+
+    document.addEventListener("submit", async function (event) {
+      var form = event.target.closest && event.target.closest("form[data-follow-form]");
+      var method;
+      var url;
+      var body;
+      var data;
+
+      if (!form) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (form.dataset.followBusy === "true") {
+        return;
+      }
+
+      method = (form.getAttribute("method") || "POST").toUpperCase();
+      url = form.getAttribute("action") || window.location.href;
+      body = new FormData(form);
+
+      try {
+        form.dataset.followBusy = "true";
+        setLoading(form, true);
+        data = await TinyCat.request(url, {
+          method: method,
+          body: method === "GET" ? null : body
+        });
+        updateFollowResult(form, data);
+      } catch (error) {
+        TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+      } finally {
+        delete form.dataset.followBusy;
+        setLoading(form, false);
+      }
     });
   };
 
@@ -3259,6 +3729,7 @@
     TinyCat.initCommentReplies();
     TinyCat.initProfileEditors();
     TinyCat.initStatusForms();
+    TinyCat.initFollowForms();
     TinyCat.initNotifications();
   };
 

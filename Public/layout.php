@@ -189,7 +189,7 @@ $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
                 </header>
 
                 <main class="admin-content">
-                    <div class="stack" style="--stack-gap: 24px;">
+                    <div class="stack stack-gap-24">
                         <?= $content ?>
                     </div>
                 </main>
@@ -279,7 +279,7 @@ $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
         </header>
 
         <main class="section">
-            <div class="container stack" style="--stack-gap: 24px;">
+            <div class="container stack stack-gap-24">
                 <?= $content ?>
             </div>
         </main>

@@ -59,9 +59,9 @@ layout('layout', [
     $contentId = (int) ($item['id'] ?? 0);
     ?>
     <section class="public-layout">
-        <main class="home-feed-section stack" style="--stack-gap: 14px;">
+        <main class="home-feed-section stack stack-gap-14">
             <article class="card status-card status-permalink-card" id="<?= e(status_anchor($contentId)) ?>">
-                <div class="card-body stack" style="--stack-gap: 12px;">
+                <div class="card-body stack stack-gap-12">
                     <div class="status-header">
                         <a class="avatar" href="<?= e($authorId > 0 ? author_url($authorId) : '#') ?>" aria-label="<?= e($authorName) ?>">
                             <?php if ($avatarUrl !== ''): ?>

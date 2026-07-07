@@ -508,7 +508,7 @@ function tc_admin_users_html(): string
 
     ob_start();
     ?>
-    <div class="stack" style="--stack-gap: 14px;">
+    <div class="stack stack-gap-14">
         <?= tc_admin_users_filter_toolbar($filters, $pagination) ?>
         <?php if ($users === []): ?>
             <div class="alert alert-info"><?= $hasFilters ? et('users.empty_filtered') : et('users.empty') ?></div>

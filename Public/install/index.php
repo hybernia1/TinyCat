@@ -751,8 +751,8 @@ function tc_install_render(string $step, array $languages, array $state): void
         </header>
 
         <main class="section">
-            <div class="container-sm stack" style="--stack-gap: 24px;">
-                <div class="stack" style="--stack-gap: 8px;">
+            <div class="container-sm stack stack-gap-24">
+                <div class="stack stack-gap-8">
                     <h1 class="text-2xl m-0"><?= et('install.title') ?></h1>
                 </div>
 

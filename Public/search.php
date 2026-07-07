@@ -41,7 +41,7 @@ layout('layout', [
 ], static function () use ($query, $hasQuery, $statusItems, $current): void {
     ?>
     <section class="public-layout">
-        <main class="home-feed-section stack" style="--stack-gap: 16px;">
+        <main class="home-feed-section stack stack-gap-16">
             <header class="public-list-header">
                 <h1 class="text-2xl m-0"><?= et('public.search_title') ?></h1>
             </header>

@@ -52,7 +52,7 @@ layout('layout', [
     ],
 ], static function () use ($error, $message): void {
     ?>
-    <section style="max-width: 520px; margin-inline: auto;">
+    <section class="max-w-auth-sm mx-auto">
         <article class="card">
             <div class="card-header">
                 <h1 class="text-lg m-0 cluster gap-2"><?= icon('login') ?> <?= et('auth.login_title') ?></h1>
