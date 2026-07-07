@@ -501,6 +501,50 @@
         "image_upload": "Nahrát obrázek",
         "image_remove": "Odebrat obrázek"
     },
+    "maintenance": {
+        "title": "Údržba",
+        "intro": "Normalizuje uložené odkazy a odstraní technické řádky, které už aplikaci nepomáhají.",
+        "run": "Spustit úklid",
+        "run_next_batch": "Spustit další dávku",
+        "batch_size": "Řádků v dávce",
+        "results": "Poslední úklid",
+        "task": "Úloha",
+        "before": "Před",
+        "changed": "Změněno",
+        "remaining": "Zbývá",
+        "details": "Detaily",
+        "unknown": "Neznámé",
+        "no_results": "V této relaci zatím neběžel žádný úklid.",
+        "no_details": "Bez detailů",
+        "production_title": "Produkční pomocník",
+        "production_intro": "Tyto úlohy je bezpečné spouštět opakovaně po přesunu TinyCatu na jiný server nebo po větším provozu.",
+        "production_normalize": "Kanonické odkazy se slučují místo dalšího ukládání.",
+        "production_repeatable": "Úklid jde opakovat bez ručního SQL.",
+        "production_no_ip": "Tyto úlohy nepoužívají IP tracking.",
+        "production_batched": "Velké mazání běží po menších dávkách, aby nehrozil PHP timeout.",
+        "tasks": {
+            "normalize_links": "Normalizovat a sloučit odkazy",
+            "normalize_links_help": "Kanonizuje URL, sloučí duplicitní social i web odkazy a ponechá nejbohatší metadata.",
+            "empty_web_links": "Odebrat prázdné web náhledy",
+            "empty_web_links_help": "Smaže webové náhledy bez titulku, popisu nebo obrázku.",
+            "orphan_links": "Odebrat osiřelé odkazy",
+            "orphan_links_help": "Smaže odkazy, které nejsou napojené na žádný příspěvek.",
+            "orphan_tag_relations": "Odebrat osiřelé vazby štítků",
+            "orphan_tag_relations_help": "Smaže vazby štítků mířící na chybějící příspěvky nebo štítky.",
+            "orphan_terms": "Odebrat nepoužité štítky",
+            "orphan_terms_help": "Smaže štítky, které nejsou napojené na žádný příspěvek.",
+            "old_action_limits": "Odebrat staré akční limity",
+            "old_action_limits_help": "Smaže bucket limity účtů starší než 30 dní.",
+            "old_read_notifications": "Odebrat staré přečtené notifikace",
+            "old_read_notifications_help": "Smaže přečtené notifikace starší než 90 dní."
+        },
+        "messages": {
+            "done": "Úklid dokončen. Změněno řádků: {count}.",
+            "batch_done": "Dávka úklidu dokončena. Změněno řádků: {count}, stále zbývá: {remaining}.",
+            "done_with_errors": "Úklid doběhl s chybami. Změněno řádků: {count}.",
+            "nothing_selected": "Vyber alespoň jednu úlohu úklidu."
+        }
+    },
     "admin": {
         "title": "Admin",
         "dashboard_title": "TinyCat CMS",
@@ -509,7 +553,15 @@
         "open_settings": "Nastavení",
         "stats": {
             "users": "Uživatelé",
-            "content": "Příspěvky"
+            "content": "Příspěvky",
+            "likes": "Lajky",
+            "shares": "Sdílení",
+            "comments": "Komentáře",
+            "links": "Odkazy",
+            "tags": "Štítky",
+            "follows": "Sledování",
+            "notifications": "Notifikace",
+            "reports": "Nahlášení"
         },
         "table_missing": "Tabulka zatím není vytvořená."
     },

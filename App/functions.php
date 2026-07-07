@@ -2178,7 +2178,7 @@ if (!function_exists('facebook_embed_data')) {
             return null;
         }
 
-        $href = status_link_normalize_url($url, false);
+        $href = facebook_canonical_url($url, $type, $id, $segments, $query, $path, $host);
 
         if ($href === '') {
             return null;
@@ -2202,6 +2202,66 @@ if (!function_exists('facebook_embed_data')) {
             'href' => $href,
             'type' => $type,
         ];
+    }
+}
+
+if (!function_exists('facebook_canonical_url')) {
+    function facebook_canonical_url(string $url, string $type, string $id, array $segments, array $query, string $path, string $host): string
+    {
+        $encodedId = rawurlencode($id);
+
+        if ($host === 'fb.watch') {
+            return 'https://fb.watch/' . $encodedId . '/';
+        }
+
+        if ($type === 'video') {
+            foreach ($segments as $index => $segment) {
+                $candidate = strtolower(rawurldecode((string) $segment));
+
+                if (in_array($candidate, ['reel', 'reels'], true) && rawurldecode((string) ($segments[$index + 1] ?? '')) === $id) {
+                    return 'https://www.facebook.com/reel/' . $encodedId;
+                }
+            }
+
+            return 'https://www.facebook.com/watch/?v=' . $encodedId;
+        }
+
+        if (in_array($path, ['permalink.php', 'story.php'], true)) {
+            $params = ['story_fbid' => $id];
+            $owner = trim((string) ($query['id'] ?? ''));
+
+            if ($owner !== '') {
+                $params['id'] = plain_text_limit($owner, 120);
+            }
+
+            return 'https://www.facebook.com/permalink.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        }
+
+        if ($path === 'photo.php') {
+            return 'https://www.facebook.com/photo.php?fbid=' . $encodedId;
+        }
+
+        foreach ($segments as $index => $segment) {
+            $candidate = strtolower(rawurldecode((string) $segment));
+
+            if (in_array($candidate, ['posts', 'permalink'], true) && rawurldecode((string) ($segments[$index + 1] ?? '')) === $id) {
+                $owner = trim((string) ($segments[0] ?? ''));
+
+                return $owner !== ''
+                    ? 'https://www.facebook.com/' . rawurlencode($owner) . '/posts/' . $encodedId
+                    : 'https://www.facebook.com/permalink.php?story_fbid=' . $encodedId;
+            }
+
+            if ($candidate === 'share') {
+                $kind = strtolower((string) ($segments[$index + 1] ?? ''));
+
+                if (in_array($kind, ['p', 'post'], true)) {
+                    return 'https://www.facebook.com/share/p/' . $encodedId . '/';
+                }
+            }
+        }
+
+        return status_link_normalize_url($url, false);
     }
 }
 
@@ -2455,7 +2515,9 @@ if (!function_exists('status_link_normalize_url')) {
             ? ':' . $port
             : '';
         $path = (string) ($parts['path'] ?? '');
-        $query = isset($parts['query']) && (string) $parts['query'] !== '' ? '?' . (string) $parts['query'] : '';
+        $path = $path === '' ? '/' : $path;
+        $queryString = status_link_clean_query((string) ($parts['query'] ?? ''));
+        $query = $queryString !== '' ? '?' . $queryString : '';
 
         $normalized = $scheme . '://' . $host . $portPart . $path . $query;
 
@@ -2468,6 +2530,88 @@ if (!function_exists('status_link_normalize_url')) {
         }
 
         return $normalized;
+    }
+}
+
+if (!function_exists('status_link_tracking_query_keys')) {
+    function status_link_tracking_query_keys(): array
+    {
+        return [
+            '__cft__',
+            '__tn__',
+            '_hsenc',
+            '_hsmi',
+            'dclid',
+            'fb_action_ids',
+            'fb_action_types',
+            'fb_source',
+            'fbclid',
+            'gclid',
+            'gclsrc',
+            'igsh',
+            'igshid',
+            'li_fat_id',
+            'mc_cid',
+            'mc_eid',
+            'mibextid',
+            'mkt_tok',
+            'msclkid',
+            'noredirect',
+            'pk_campaign',
+            'pk_kwd',
+            'spm',
+            'ttclid',
+            'twclid',
+            'vero_id',
+            'yclid',
+        ];
+    }
+}
+
+if (!function_exists('status_link_tracking_query_key')) {
+    function status_link_tracking_query_key(string $key): bool
+    {
+        $key = strtolower(trim($key));
+        $baseKey = preg_replace('/\[.*$/', '', $key) ?? $key;
+
+        return $key !== ''
+            && (
+                str_starts_with($key, 'utm_')
+                || in_array($key, status_link_tracking_query_keys(), true)
+                || in_array($baseKey, status_link_tracking_query_keys(), true)
+            );
+    }
+}
+
+if (!function_exists('status_link_clean_query')) {
+    function status_link_clean_query(string $query): string
+    {
+        $query = trim($query);
+
+        if ($query === '') {
+            return '';
+        }
+
+        $kept = [];
+
+        foreach (preg_split('/[&;]/', $query) ?: [] as $part) {
+            $part = trim((string) $part);
+
+            if ($part === '') {
+                continue;
+            }
+
+            [$key] = array_pad(explode('=', $part, 2), 2, '');
+            $key = rawurldecode(str_replace('+', ' ', (string) $key));
+
+            if (status_link_tracking_query_key($key)) {
+                continue;
+            }
+
+            $kept[] = $part;
+        }
+
+        return implode('&', $kept);
     }
 }
 
@@ -2515,7 +2659,37 @@ if (!function_exists('status_link_social_canonical_url')) {
             }
         }
 
+        if (in_array($source, ['tiktok', 'threads'], true)) {
+            return status_link_social_path_canonical_url($url, $source);
+        }
+
         return '';
+    }
+}
+
+if (!function_exists('status_link_social_path_canonical_url')) {
+    function status_link_social_path_canonical_url(string $url, string $source): string
+    {
+        $parts = parse_url($url);
+
+        if (!is_array($parts)) {
+            return '';
+        }
+
+        $scheme = strtolower((string) ($parts['scheme'] ?? 'https'));
+        $path = (string) ($parts['path'] ?? '');
+
+        if (!in_array($scheme, ['http', 'https'], true) || $path === '') {
+            return '';
+        }
+
+        $host = match ($source) {
+            'tiktok' => 'www.tiktok.com',
+            'threads' => 'www.threads.net',
+            default => '',
+        };
+
+        return $host !== '' ? 'https://' . $host . $path : '';
     }
 }
 
@@ -3003,11 +3177,23 @@ if (!function_exists('status_link_id')) {
             return 0;
         }
 
+        if (!status_link_url_allowed($url)) {
+            return 0;
+        }
+
         $hash = hash('sha256', $url);
         $link = one('SELECT * FROM links WHERE url_hash = ? LIMIT 1', [$hash]);
 
         if ($link !== null) {
             $id = (int) ($link['id'] ?? 0);
+
+            if ($id > 0) {
+                $canonicalId = status_link_existing_canonical_id($link, $url);
+
+                if ($canonicalId > 0 && $canonicalId !== $id) {
+                    return $canonicalId;
+                }
+            }
 
             if ($id > 0 && status_link_should_refresh((string) ($link['fetched_at'] ?? ''))) {
                 status_link_refresh($id, $url);
@@ -3016,7 +3202,57 @@ if (!function_exists('status_link_id')) {
             return $id;
         }
 
+        $source = status_link_source($url);
+        $externalId = status_link_external_id($url, $source);
+
+        if (status_link_can_reuse_external_id($source, $externalId)) {
+            $link = one(
+                'SELECT * FROM links WHERE source = ? AND external_id = ? ORDER BY id ASC LIMIT 1',
+                [$source, $externalId]
+            );
+
+            if ($link !== null) {
+                $id = (int) ($link['id'] ?? 0);
+
+                if ($id > 0) {
+                    $id = status_link_update_canonical_url($id, $url, $hash);
+
+                    if (status_link_should_refresh((string) ($link['fetched_at'] ?? ''))) {
+                        status_link_refresh($id, $url);
+                    }
+
+                    return $id;
+                }
+            }
+        }
+
         $meta = status_link_fetch_meta($url);
+        $storageUrl = status_link_storage_url($url, $meta);
+
+        if ($storageUrl === '') {
+            return 0;
+        }
+
+        if ($storageUrl !== $url) {
+            $storageHash = hash('sha256', $storageUrl);
+            $link = one('SELECT * FROM links WHERE url_hash = ? LIMIT 1', [$storageHash]);
+
+            if ($link !== null) {
+                $id = (int) ($link['id'] ?? 0);
+
+                if ($id > 0) {
+                    if (status_link_should_refresh((string) ($link['fetched_at'] ?? ''))) {
+                        status_link_refresh($id, $storageUrl);
+                    }
+
+                    return $id;
+                }
+            }
+
+            $url = $storageUrl;
+            $hash = $storageHash;
+        }
+
         $now = date_db();
 
         try {
@@ -3028,6 +3264,752 @@ if (!function_exists('status_link_id')) {
 
             return (int) ($link['id'] ?? 0);
         }
+    }
+}
+
+if (!function_exists('status_link_existing_canonical_id')) {
+    function status_link_existing_canonical_id(array $link, string $fallbackUrl): int
+    {
+        $id = (int) ($link['id'] ?? 0);
+        $url = status_link_normalize_url((string) ($link['url'] ?? $fallbackUrl));
+
+        if ($id < 1 || $url === '') {
+            return 0;
+        }
+
+        $storageUrl = status_link_storage_url($url, $link);
+
+        if ($storageUrl === '' || $storageUrl === $url) {
+            return $id;
+        }
+
+        $hash = hash('sha256', $storageUrl);
+        $existing = one('SELECT id FROM links WHERE url_hash = ? LIMIT 1', [$hash]);
+        $existingId = (int) ($existing['id'] ?? 0);
+
+        if ($existingId > 0) {
+            if ($existingId !== $id) {
+                status_link_merge_duplicate_metadata($existingId, $link);
+            }
+
+            return $existingId;
+        }
+
+        return status_link_update_canonical_url($id, $storageUrl, $hash);
+    }
+}
+
+if (!function_exists('status_link_storage_url')) {
+    function status_link_storage_url(string $url, array $meta): string
+    {
+        $source = (string) ($meta['source'] ?? status_link_source($url));
+
+        if ($source !== 'web') {
+            return status_link_normalize_url($url);
+        }
+
+        if (!status_link_has_preview_meta($meta)) {
+            return '';
+        }
+
+        $finalUrl = status_link_normalize_url((string) ($meta['final_url'] ?? ''), false);
+
+        if ($finalUrl !== '' && status_link_url_allowed($finalUrl)) {
+            return $finalUrl;
+        }
+
+        return status_link_normalize_url($url, false);
+    }
+}
+
+if (!function_exists('status_link_has_preview_meta')) {
+    function status_link_has_preview_meta(array $meta): bool
+    {
+        return trim((string) ($meta['title'] ?? '')) !== ''
+            || trim((string) ($meta['description'] ?? '')) !== ''
+            || trim((string) ($meta['image_url'] ?? '')) !== '';
+    }
+}
+
+if (!function_exists('status_link_can_reuse_external_id')) {
+    function status_link_can_reuse_external_id(string $source, string $externalId): bool
+    {
+        return $externalId !== ''
+            && in_array($source, ['youtube', 'instagram', 'x', 'facebook', 'tiktok', 'threads'], true);
+    }
+}
+
+if (!function_exists('status_link_update_canonical_url')) {
+    function status_link_update_canonical_url(int $linkId, string $url, string $hash): int
+    {
+        if ($linkId < 1 || $url === '' || $hash === '') {
+            return $linkId;
+        }
+
+        try {
+            update('links', [
+                'url' => $url,
+                'final_url' => $url,
+                'url_hash' => $hash,
+                'updated_at' => date_db(),
+            ], ['id' => $linkId]);
+        } catch (Throwable) {
+            $existing = one('SELECT id FROM links WHERE url_hash = ? LIMIT 1', [$hash]);
+            $existingId = (int) ($existing['id'] ?? 0);
+
+            if ($existingId > 0 && $existingId !== $linkId) {
+                $source = find('links', ['id' => $linkId]);
+
+                if ($source !== null) {
+                    status_link_merge_duplicate_metadata($existingId, $source);
+                }
+            }
+
+            return $existingId > 0 ? $existingId : $linkId;
+        }
+
+        return $linkId;
+    }
+}
+
+if (!function_exists('status_link_merge_duplicate_metadata')) {
+    function status_link_merge_duplicate_metadata(int $targetId, array $source): void
+    {
+        if ($targetId < 1) {
+            return;
+        }
+
+        $target = find('links', ['id' => $targetId]);
+
+        if ($target === null) {
+            return;
+        }
+
+        $data = [];
+
+        foreach (['title', 'description', 'image_url', 'site_name', 'embed_url'] as $column) {
+            $targetValue = trim((string) ($target[$column] ?? ''));
+            $sourceValue = trim((string) ($source[$column] ?? ''));
+
+            if ($targetValue === '' && $sourceValue !== '') {
+                $data[$column] = $sourceValue;
+            }
+        }
+
+        if (trim((string) ($target['final_url'] ?? '')) === '' && trim((string) ($source['final_url'] ?? '')) !== '') {
+            $data['final_url'] = (string) $source['final_url'];
+        }
+
+        if ($data === []) {
+            return;
+        }
+
+        $data['updated_at'] = date_db();
+
+        try {
+            update('links', $data, ['id' => $targetId]);
+        } catch (Throwable) {
+            // Metadata merge is a cleanup nicety and must not interrupt posting.
+        }
+    }
+}
+
+if (!function_exists('maintenance_cleanup_tasks')) {
+    function maintenance_cleanup_tasks(): array
+    {
+        return [
+            'normalize_links' => [
+                'icon' => 'link',
+                'label' => t('maintenance.tasks.normalize_links'),
+                'description' => t('maintenance.tasks.normalize_links_help'),
+            ],
+            'empty_web_links' => [
+                'icon' => 'delete',
+                'label' => t('maintenance.tasks.empty_web_links'),
+                'description' => t('maintenance.tasks.empty_web_links_help'),
+            ],
+            'orphan_links' => [
+                'icon' => 'database',
+                'label' => t('maintenance.tasks.orphan_links'),
+                'description' => t('maintenance.tasks.orphan_links_help'),
+            ],
+            'orphan_tag_relations' => [
+                'icon' => 'hash',
+                'label' => t('maintenance.tasks.orphan_tag_relations'),
+                'description' => t('maintenance.tasks.orphan_tag_relations_help'),
+            ],
+            'orphan_terms' => [
+                'icon' => 'hash',
+                'label' => t('maintenance.tasks.orphan_terms'),
+                'description' => t('maintenance.tasks.orphan_terms_help'),
+            ],
+            'old_action_limits' => [
+                'icon' => 'shield',
+                'label' => t('maintenance.tasks.old_action_limits'),
+                'description' => t('maintenance.tasks.old_action_limits_help'),
+            ],
+            'old_read_notifications' => [
+                'icon' => 'bell',
+                'label' => t('maintenance.tasks.old_read_notifications'),
+                'description' => t('maintenance.tasks.old_read_notifications_help'),
+            ],
+        ];
+    }
+}
+
+if (!function_exists('maintenance_cleanup_batch_size')) {
+    function maintenance_cleanup_batch_size(mixed $value = null): int
+    {
+        $size = $value === null
+            ? (int) config('maintenance.batch_size', 1000)
+            : (int) $value;
+
+        return max(100, min(5000, $size > 0 ? $size : 1000));
+    }
+}
+
+if (!function_exists('maintenance_cleanup_task_remaining')) {
+    function maintenance_cleanup_task_remaining(string $task): ?int
+    {
+        try {
+            return match ($task) {
+                'empty_web_links' => maintenance_cleanup_empty_web_links_count(),
+                'orphan_links' => maintenance_cleanup_orphan_links_count(),
+                'orphan_tag_relations' => maintenance_cleanup_orphan_tag_relations_count(),
+                'orphan_terms' => maintenance_cleanup_orphan_terms_count(),
+                'old_action_limits' => maintenance_cleanup_old_action_limits_count(),
+                'old_read_notifications' => maintenance_cleanup_old_read_notifications_count(),
+                default => null,
+            };
+        } catch (Throwable) {
+            return null;
+        }
+    }
+}
+
+if (!function_exists('maintenance_cleanup_run')) {
+    function maintenance_cleanup_run(array $selected, mixed $batchSize = null): array
+    {
+        $available = maintenance_cleanup_tasks();
+        $batchSize = maintenance_cleanup_batch_size($batchSize);
+        $selected = array_values(array_unique(array_filter(array_map(
+            static fn (mixed $task): string => trim((string) $task),
+            $selected
+        ), static fn (string $task): bool => isset($available[$task]))));
+
+        if ($selected === []) {
+            $selected = array_keys($available);
+        }
+
+        $results = [];
+
+        foreach ($selected as $task) {
+            $before = maintenance_cleanup_task_remaining($task);
+
+            try {
+                $result = match ($task) {
+                    'normalize_links' => maintenance_cleanup_normalize_links(),
+                    'empty_web_links' => maintenance_cleanup_empty_web_links($batchSize),
+                    'orphan_links' => maintenance_cleanup_orphan_links($batchSize),
+                    'orphan_tag_relations' => maintenance_cleanup_orphan_tag_relations($batchSize),
+                    'orphan_terms' => maintenance_cleanup_orphan_terms($batchSize),
+                    'old_action_limits' => maintenance_cleanup_old_action_limits(30, $batchSize),
+                    'old_read_notifications' => maintenance_cleanup_old_read_notifications(90, $batchSize),
+                    default => ['changed' => 0],
+                };
+            } catch (Throwable $exception) {
+                $result = [
+                    'changed' => 0,
+                    'error' => $exception->getMessage(),
+                ];
+            }
+
+            $after = maintenance_cleanup_task_remaining($task);
+
+            if ($before !== null) {
+                $result['before'] = $before;
+            }
+
+            if ($after !== null) {
+                $result['remaining'] = $after;
+                $result['done'] = $after === 0;
+            }
+
+            $result['batch_size'] = $batchSize;
+            $results[$task] = ['task' => $task] + $result;
+        }
+
+        return $results;
+    }
+}
+
+if (!function_exists('maintenance_cleanup_normalize_links')) {
+    function maintenance_cleanup_normalize_links(): array
+    {
+        $rows = all(
+            'SELECT l.*, COALESCE(link_uses.uses_count, 0) AS uses_count
+            FROM links l
+            LEFT JOIN (
+                SELECT link_id, COUNT(*) AS uses_count
+                FROM content_links
+                GROUP BY link_id
+            ) link_uses ON link_uses.link_id = l.id
+            ORDER BY l.id ASC'
+        );
+        $groups = [];
+        $normalized = 0;
+        $merged = 0;
+        $relations = 0;
+
+        foreach ($rows as $row) {
+            $canonical = maintenance_link_canonical_url($row);
+
+            if ($canonical === '') {
+                continue;
+            }
+
+            $source = status_link_source($canonical);
+            $externalId = status_link_external_id($canonical, $source);
+            $key = status_link_can_reuse_external_id($source, $externalId)
+                ? 'external:' . $source . ':' . $externalId
+                : 'url:' . $canonical;
+
+            $row['_canonical_url'] = $canonical;
+            $row['_canonical_hash'] = hash('sha256', $canonical);
+            $row['_source'] = $source;
+            $row['_external_id'] = $externalId;
+            $groups[$key][] = $row;
+        }
+
+        foreach ($groups as $group) {
+            if ($group === []) {
+                continue;
+            }
+
+            $target = maintenance_choose_link_target($group);
+            $targetId = (int) ($target['id'] ?? 0);
+            $canonical = (string) ($target['_canonical_url'] ?? '');
+
+            if ($targetId < 1 || $canonical === '') {
+                continue;
+            }
+
+            $newTargetId = maintenance_set_link_canonical($targetId, $canonical, $target);
+
+            if ($newTargetId !== $targetId) {
+                $merged++;
+                $targetId = $newTargetId;
+            } else {
+                $currentUrl = status_link_normalize_url((string) ($target['url'] ?? ''), false);
+                $currentHash = (string) ($target['url_hash'] ?? '');
+
+                if ($currentUrl !== $canonical || $currentHash !== hash('sha256', $canonical)) {
+                    $normalized++;
+                }
+            }
+
+            foreach ($group as $row) {
+                $sourceId = (int) ($row['id'] ?? 0);
+
+                if ($sourceId < 1 || $sourceId === $targetId) {
+                    continue;
+                }
+
+                $stats = maintenance_merge_link($targetId, $sourceId);
+                $merged += (int) ($stats['links_deleted'] ?? 0);
+                $relations += (int) ($stats['relations_moved'] ?? 0);
+            }
+        }
+
+        return [
+            'changed' => $normalized + $merged + $relations,
+            'normalized' => $normalized,
+            'merged' => $merged,
+            'relations_moved' => $relations,
+        ];
+    }
+}
+
+if (!function_exists('maintenance_link_canonical_url')) {
+    function maintenance_link_canonical_url(array $link): string
+    {
+        $url = status_link_normalize_url((string) ($link['url'] ?? ''));
+
+        if ($url === '') {
+            $url = status_link_normalize_url((string) ($link['final_url'] ?? ''));
+        }
+
+        if ($url === '') {
+            return '';
+        }
+
+        $source = (string) ($link['source'] ?? status_link_source($url));
+
+        if ($source === 'web') {
+            return status_link_storage_url($url, $link);
+        }
+
+        return status_link_normalize_url($url);
+    }
+}
+
+if (!function_exists('maintenance_choose_link_target')) {
+    function maintenance_choose_link_target(array $rows): array
+    {
+        usort($rows, static function (array $left, array $right): int {
+            $leftScore = maintenance_link_score($left);
+            $rightScore = maintenance_link_score($right);
+
+            if ($leftScore === $rightScore) {
+                return (int) ($left['id'] ?? 0) <=> (int) ($right['id'] ?? 0);
+            }
+
+            return $rightScore <=> $leftScore;
+        });
+
+        return (array) ($rows[0] ?? []);
+    }
+}
+
+if (!function_exists('maintenance_link_score')) {
+    function maintenance_link_score(array $row): int
+    {
+        $score = min(50, (int) ($row['uses_count'] ?? 0)) * 2;
+
+        foreach (['title' => 50, 'description' => 25, 'image_url' => 25, 'site_name' => 10, 'embed_url' => 10] as $column => $points) {
+            if (trim((string) ($row[$column] ?? '')) !== '') {
+                $score += $points;
+            }
+        }
+
+        return $score;
+    }
+}
+
+if (!function_exists('maintenance_set_link_canonical')) {
+    function maintenance_set_link_canonical(int $linkId, string $url, array $source = []): int
+    {
+        $url = status_link_normalize_url($url);
+
+        if ($linkId < 1 || $url === '') {
+            return $linkId;
+        }
+
+        $hash = hash('sha256', $url);
+        $existing = one('SELECT id FROM links WHERE url_hash = ? AND id <> ? LIMIT 1', [$hash, $linkId]);
+        $existingId = (int) ($existing['id'] ?? 0);
+
+        if ($existingId > 0) {
+            maintenance_merge_link($existingId, $linkId);
+            return $existingId;
+        }
+
+        $sourceName = status_link_source($url);
+        $data = [
+            'url' => $url,
+            'final_url' => $url,
+            'url_hash' => $hash,
+            'source' => $sourceName,
+            'external_id' => status_link_external_id($url, $sourceName),
+            'embed_url' => status_link_embed_url($url, $sourceName),
+            'updated_at' => date_db(),
+        ];
+
+        if ($data['embed_url'] === '' && trim((string) ($source['embed_url'] ?? '')) !== '') {
+            $data['embed_url'] = (string) $source['embed_url'];
+        }
+
+        update('links', $data, ['id' => $linkId]);
+
+        return $linkId;
+    }
+}
+
+if (!function_exists('maintenance_merge_link')) {
+    function maintenance_merge_link(int $targetId, int $sourceId): array
+    {
+        if ($targetId < 1 || $sourceId < 1 || $targetId === $sourceId) {
+            return ['relations_moved' => 0, 'links_deleted' => 0];
+        }
+
+        $source = find('links', ['id' => $sourceId]);
+
+        if ($source === null) {
+            return ['relations_moved' => 0, 'links_deleted' => 0];
+        }
+
+        status_link_merge_duplicate_metadata($targetId, $source);
+
+        $relations = 0;
+        $rows = all(
+            'SELECT content_id, position, created_at
+            FROM content_links
+            WHERE link_id = ?',
+            [$sourceId]
+        );
+
+        foreach ($rows as $row) {
+            try {
+                insert('content_links', [
+                    'content_id' => (int) ($row['content_id'] ?? 0),
+                    'link_id' => $targetId,
+                    'position' => (int) ($row['position'] ?? 0),
+                    'created_at' => (string) ($row['created_at'] ?? date_db()),
+                ]);
+                $relations++;
+            } catch (Throwable) {
+                // The target relation already exists, so only the duplicate row has to go away.
+            }
+        }
+
+        delete('content_links', ['link_id' => $sourceId]);
+        delete('links', ['id' => $sourceId]);
+
+        return ['relations_moved' => $relations, 'links_deleted' => 1];
+    }
+}
+
+if (!function_exists('maintenance_cleanup_empty_web_links_count')) {
+    function maintenance_cleanup_empty_web_links_count(): int
+    {
+        return (int) val(
+            "SELECT COUNT(*)
+            FROM links
+            WHERE source = ?
+                AND COALESCE(title, '') = ''
+                AND COALESCE(description, '') = ''
+                AND COALESCE(image_url, '') = ''",
+            ['web']
+        );
+    }
+}
+
+if (!function_exists('maintenance_cleanup_empty_web_links')) {
+    function maintenance_cleanup_empty_web_links(int $limit = 1000): array
+    {
+        $limit = maintenance_cleanup_batch_size($limit);
+        $rows = all(
+            "SELECT id
+            FROM links
+            WHERE source = ?
+                AND COALESCE(title, '') = ''
+                AND COALESCE(description, '') = ''
+                AND COALESCE(image_url, '') = ''
+            ORDER BY id ASC
+            LIMIT " . $limit,
+            ['web']
+        );
+        $deletedLinks = 0;
+        $deletedRelations = 0;
+
+        foreach ($rows as $row) {
+            $id = (int) ($row['id'] ?? 0);
+
+            if ($id < 1) {
+                continue;
+            }
+
+            $deletedRelations += delete('content_links', ['link_id' => $id]);
+            $deletedLinks += delete('links', ['id' => $id]);
+        }
+
+        return [
+            'changed' => $deletedLinks + $deletedRelations,
+            'links_deleted' => $deletedLinks,
+            'relations_deleted' => $deletedRelations,
+        ];
+    }
+}
+
+if (!function_exists('maintenance_cleanup_orphan_links_count')) {
+    function maintenance_cleanup_orphan_links_count(): int
+    {
+        return (int) val(
+            'SELECT COUNT(*)
+            FROM links
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM content_links cl
+                WHERE cl.link_id = links.id
+            )'
+        );
+    }
+}
+
+if (!function_exists('maintenance_cleanup_orphan_links')) {
+    function maintenance_cleanup_orphan_links(int $limit = 1000): array
+    {
+        $limit = maintenance_cleanup_batch_size($limit);
+        $rows = all(
+            'SELECT id
+            FROM links
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM content_links cl
+                WHERE cl.link_id = links.id
+            )
+            ORDER BY id ASC
+            LIMIT ' . $limit
+        );
+        $deleted = 0;
+
+        foreach ($rows as $row) {
+            $deleted += delete('links', ['id' => (int) ($row['id'] ?? 0)]);
+        }
+
+        return [
+            'changed' => $deleted,
+            'links_deleted' => $deleted,
+        ];
+    }
+}
+
+if (!function_exists('maintenance_cleanup_orphan_tag_relations_count')) {
+    function maintenance_cleanup_orphan_tag_relations_count(): int
+    {
+        return (int) val(
+            'SELECT COUNT(*)
+            FROM content_tags ct
+            LEFT JOIN content c ON c.id = ct.content_id
+            LEFT JOIN terms t ON t.id = ct.term_id
+            WHERE c.id IS NULL OR t.id IS NULL'
+        );
+    }
+}
+
+if (!function_exists('maintenance_cleanup_orphan_tag_relations')) {
+    function maintenance_cleanup_orphan_tag_relations(int $limit = 1000): array
+    {
+        $limit = maintenance_cleanup_batch_size($limit);
+        $rows = all(
+            'SELECT ct.content_id, ct.term_id
+            FROM content_tags ct
+            LEFT JOIN content c ON c.id = ct.content_id
+            LEFT JOIN terms t ON t.id = ct.term_id
+            WHERE c.id IS NULL OR t.id IS NULL
+            ORDER BY ct.content_id ASC, ct.term_id ASC
+            LIMIT ' . $limit
+        );
+        $deleted = 0;
+
+        foreach ($rows as $row) {
+            $deleted += delete('content_tags', [
+                'content_id' => (int) ($row['content_id'] ?? 0),
+                'term_id' => (int) ($row['term_id'] ?? 0),
+            ]);
+        }
+
+        return [
+            'changed' => $deleted,
+            'rows_deleted' => $deleted,
+        ];
+    }
+}
+
+if (!function_exists('maintenance_cleanup_orphan_terms_count')) {
+    function maintenance_cleanup_orphan_terms_count(): int
+    {
+        return (int) val(
+            'SELECT COUNT(*)
+            FROM terms t
+            LEFT JOIN content_tags ct ON ct.term_id = t.id
+            WHERE ct.term_id IS NULL'
+        );
+    }
+}
+
+if (!function_exists('maintenance_cleanup_orphan_terms')) {
+    function maintenance_cleanup_orphan_terms(int $limit = 1000): array
+    {
+        $limit = maintenance_cleanup_batch_size($limit);
+        $rows = all(
+            'SELECT t.id
+            FROM terms t
+            LEFT JOIN content_tags ct ON ct.term_id = t.id
+            WHERE ct.term_id IS NULL
+            ORDER BY t.id ASC
+            LIMIT ' . $limit
+        );
+        $deleted = 0;
+
+        foreach ($rows as $row) {
+            $deleted += delete('terms', ['id' => (int) ($row['id'] ?? 0)]);
+        }
+
+        return [
+            'changed' => $deleted,
+            'terms_deleted' => $deleted,
+        ];
+    }
+}
+
+if (!function_exists('maintenance_cleanup_old_action_limits_count')) {
+    function maintenance_cleanup_old_action_limits_count(int $days = 30): int
+    {
+        return (int) val(
+            'SELECT COUNT(*) FROM user_action_limits WHERE bucket_start < ?',
+            [date_db('-' . max(1, $days) . ' days')]
+        );
+    }
+}
+
+if (!function_exists('maintenance_cleanup_old_action_limits')) {
+    function maintenance_cleanup_old_action_limits(int $days = 30, int $limit = 1000): array
+    {
+        $limit = maintenance_cleanup_batch_size($limit);
+        $rows = all(
+            'SELECT id
+            FROM user_action_limits
+            WHERE bucket_start < ?
+            ORDER BY id ASC
+            LIMIT ' . $limit,
+            [date_db('-' . max(1, $days) . ' days')]
+        );
+        $deleted = 0;
+
+        foreach ($rows as $row) {
+            $deleted += delete('user_action_limits', ['id' => (int) ($row['id'] ?? 0)]);
+        }
+
+        return [
+            'changed' => $deleted,
+            'rows_deleted' => $deleted,
+        ];
+    }
+}
+
+if (!function_exists('maintenance_cleanup_old_read_notifications_count')) {
+    function maintenance_cleanup_old_read_notifications_count(int $days = 90): int
+    {
+        return (int) val(
+            'SELECT COUNT(*) FROM notifications WHERE read_at IS NOT NULL AND read_at < ?',
+            [date_db('-' . max(1, $days) . ' days')]
+        );
+    }
+}
+
+if (!function_exists('maintenance_cleanup_old_read_notifications')) {
+    function maintenance_cleanup_old_read_notifications(int $days = 90, int $limit = 1000): array
+    {
+        $limit = maintenance_cleanup_batch_size($limit);
+        $rows = all(
+            'SELECT id
+            FROM notifications
+            WHERE read_at IS NOT NULL AND read_at < ?
+            ORDER BY id ASC
+            LIMIT ' . $limit,
+            [date_db('-' . max(1, $days) . ' days')]
+        );
+        $deleted = 0;
+
+        foreach ($rows as $row) {
+            $deleted += delete('notifications', ['id' => (int) ($row['id'] ?? 0)]);
+        }
+
+        return [
+            'changed' => $deleted,
+            'rows_deleted' => $deleted,
+        ];
     }
 }
 

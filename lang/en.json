@@ -501,6 +501,50 @@
         "image_upload": "Upload image",
         "image_remove": "Remove image"
     },
+    "maintenance": {
+        "title": "Maintenance",
+        "intro": "Normalize stored links and remove technical rows that no longer help the app.",
+        "run": "Run cleanup",
+        "run_next_batch": "Run next batch",
+        "batch_size": "Rows per batch",
+        "results": "Last cleanup",
+        "task": "Task",
+        "before": "Before",
+        "changed": "Changed",
+        "remaining": "Remaining",
+        "details": "Details",
+        "unknown": "Unknown",
+        "no_results": "No cleanup has been run in this session.",
+        "no_details": "No details",
+        "production_title": "Production helper",
+        "production_intro": "These tasks are safe to run repeatedly after moving TinyCat to another server or after heavier traffic.",
+        "production_normalize": "Canonical links are merged instead of stored again.",
+        "production_repeatable": "Cleanup can be repeated without manual SQL.",
+        "production_no_ip": "No IP tracking is used by these tasks.",
+        "production_batched": "Large deletes run in small batches to avoid PHP timeouts.",
+        "tasks": {
+            "normalize_links": "Normalize and merge links",
+            "normalize_links_help": "Canonicalizes URLs, merges duplicate social and web links, and keeps the richest metadata.",
+            "empty_web_links": "Remove empty web previews",
+            "empty_web_links_help": "Deletes web preview rows without a title, description, or image.",
+            "orphan_links": "Remove orphan links",
+            "orphan_links_help": "Deletes links that are not connected to any post.",
+            "orphan_tag_relations": "Remove orphan tag relations",
+            "orphan_tag_relations_help": "Deletes tag relations pointing to missing posts or missing tags.",
+            "orphan_terms": "Remove unused tags",
+            "orphan_terms_help": "Deletes tags that are not connected to any post.",
+            "old_action_limits": "Remove old action limits",
+            "old_action_limits_help": "Deletes account action-limit buckets older than 30 days.",
+            "old_read_notifications": "Remove old read notifications",
+            "old_read_notifications_help": "Deletes read notifications older than 90 days."
+        },
+        "messages": {
+            "done": "Cleanup finished. {count} rows were changed.",
+            "batch_done": "Cleanup batch finished. {count} rows were changed, {remaining} still remain.",
+            "done_with_errors": "Cleanup finished with errors. {count} rows were changed.",
+            "nothing_selected": "Select at least one cleanup task."
+        }
+    },
     "admin": {
         "title": "Admin",
         "dashboard_title": "TinyCat CMS",
@@ -509,7 +553,15 @@
         "open_settings": "Settings",
         "stats": {
             "users": "Users",
-            "content": "Posts"
+            "content": "Posts",
+            "likes": "Likes",
+            "shares": "Shares",
+            "comments": "Comments",
+            "links": "Links",
+            "tags": "Tags",
+            "follows": "Follows",
+            "notifications": "Notifications",
+            "reports": "Reports"
         },
         "table_missing": "The table has not been created yet."
     },
