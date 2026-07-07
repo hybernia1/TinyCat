@@ -1855,6 +1855,12 @@ if (!function_exists('social_embed')) {
             return $instagram;
         }
 
+        $facebook = facebook_embed($url);
+
+        if ($facebook !== '') {
+            return $facebook;
+        }
+
         return x_embed($url);
     }
 }
@@ -2079,6 +2085,133 @@ if (!function_exists('x_embed_data')) {
     }
 }
 
+if (!function_exists('facebook_embed')) {
+    function facebook_embed(string $url): string
+    {
+        $data = facebook_embed_data($url);
+
+        if ($data === null) {
+            return '';
+        }
+
+        $classes = 'tc-social-embed tc-facebook-embed' . ((string) ($data['type'] ?? '') === 'video' ? ' is-video' : '');
+
+        return '<div class="' . e($classes) . '">'
+            . '<iframe src="' . e((string) $data['src']) . '" title="' . e(t('common.facebook_post')) . '" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>'
+            . '</div>';
+    }
+}
+
+if (!function_exists('facebook_embed_data')) {
+    function facebook_embed_data(string $url): ?array
+    {
+        $parts = parse_url($url);
+
+        if (!is_array($parts)) {
+            return null;
+        }
+
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        $host = preg_replace('/^(www\.|m\.|mobile\.|web\.|mbasic\.)/', '', $host) ?? $host;
+
+        if (!in_array($host, ['facebook.com', 'fb.watch'], true)) {
+            return null;
+        }
+
+        $path = trim((string) ($parts['path'] ?? ''), '/');
+        $segments = array_values(array_filter(explode('/', $path), static fn (string $segment): bool => $segment !== ''));
+        $query = [];
+        $id = '';
+        $type = 'post';
+
+        parse_str((string) ($parts['query'] ?? ''), $query);
+
+        if ($host === 'fb.watch') {
+            $id = (string) ($segments[0] ?? '');
+            $type = 'video';
+        } elseif (in_array($path, ['permalink.php', 'story.php'], true)) {
+            $id = (string) ($query['story_fbid'] ?? $query['id'] ?? '');
+        } elseif ($path === 'photo.php') {
+            $id = (string) ($query['fbid'] ?? '');
+        } elseif ($path === 'watch' || ($segments[0] ?? '') === 'watch') {
+            $id = (string) ($query['v'] ?? $segments[1] ?? '');
+            $type = 'video';
+        } else {
+            foreach ($segments as $index => $segment) {
+                $candidate = strtolower(rawurldecode((string) $segment));
+                $next = (string) ($segments[$index + 1] ?? '');
+
+                if (in_array($candidate, ['posts', 'permalink'], true) && $next !== '') {
+                    $id = $next;
+                    $type = 'post';
+                    break;
+                }
+
+                if (in_array($candidate, ['videos', 'video'], true) && $next !== '') {
+                    $id = $next;
+                    $type = 'video';
+                    break;
+                }
+
+                if (in_array($candidate, ['reel', 'reels'], true) && $next !== '') {
+                    $id = $next;
+                    $type = 'video';
+                    break;
+                }
+
+                if ($candidate === 'share') {
+                    $kind = strtolower((string) ($segments[$index + 1] ?? ''));
+                    $shareId = (string) ($segments[$index + 2] ?? '');
+
+                    if ($shareId !== '') {
+                        $id = $shareId;
+                        $type = in_array($kind, ['v', 'video', 'watch', 'r', 'reel'], true) ? 'video' : 'post';
+                        break;
+                    }
+                }
+            }
+        }
+
+        $id = trim(rawurldecode($id));
+
+        if (!facebook_embed_id_valid($id)) {
+            return null;
+        }
+
+        $href = status_link_normalize_url($url, false);
+
+        if ($href === '') {
+            return null;
+        }
+
+        $plugin = $type === 'video' ? 'video.php' : 'post.php';
+        $params = [
+            'href' => $href,
+            'width' => '500',
+        ];
+
+        if ($type === 'post') {
+            $params['show_text'] = 'true';
+        } else {
+            $params['show_text'] = 'false';
+        }
+
+        return [
+            'id' => plain_text_limit($id, 120),
+            'src' => 'https://www.facebook.com/plugins/' . $plugin . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986),
+            'href' => $href,
+            'type' => $type,
+        ];
+    }
+}
+
+if (!function_exists('facebook_embed_id_valid')) {
+    function facebook_embed_id_valid(string $id): bool
+    {
+        return preg_match('/^(pfbid[A-Za-z0-9_-]{8,}|[0-9]{5,30}|[A-Za-z0-9_-]{5,160})$/', $id) === 1;
+    }
+}
+
 if (!function_exists('status_link_source')) {
     function status_link_source(string $url): string
     {
@@ -2150,6 +2283,7 @@ if (!function_exists('status_link_external_id')) {
             'youtube' => youtube_embed_data($url),
             'instagram' => instagram_embed_data($url),
             'x' => x_embed_data($url),
+            'facebook' => facebook_embed_data($url),
             default => null,
         };
 
@@ -2261,6 +2395,7 @@ if (!function_exists('status_link_embed_url')) {
             'youtube' => youtube_embed_data($url),
             'instagram' => instagram_embed_data($url),
             'x' => x_embed_data($url),
+            'facebook' => facebook_embed_data($url),
             default => null,
         };
 
@@ -2369,6 +2504,14 @@ if (!function_exists('status_link_social_canonical_url')) {
 
             if (is_array($data) && trim((string) ($data['id'] ?? '')) !== '') {
                 return 'https://x.com/i/status/' . rawurlencode((string) $data['id']);
+            }
+        }
+
+        if ($source === 'facebook') {
+            $data = facebook_embed_data($url);
+
+            if (is_array($data) && trim((string) ($data['href'] ?? '')) !== '') {
+                return (string) $data['href'];
             }
         }
 

@@ -2381,6 +2381,18 @@ a:hover {
   background: var(--surface);
 }
 
+.tc-facebook-embed {
+  width: min(100%, 500px);
+  height: 640px;
+  background: var(--surface);
+}
+
+.tc-facebook-embed.is-video {
+  height: auto;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
 .tc-social-embed iframe {
   display: block;
   width: 100%;
