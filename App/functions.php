@@ -1848,9 +1848,16 @@ if (!function_exists('youtube_embed')) {
         }
 
         $classes = 'tc-social-embed tc-youtube-embed' . ((string) ($data['type'] ?? '') === 'short' ? ' is-short' : '');
+        $id = (string) ($data['id'] ?? '');
+        $thumbnail = 'https://img.youtube.com/vi/' . rawurlencode($id) . '/hqdefault.jpg';
+        $src = (string) ($data['src'] ?? '');
+        $label = t('common.video');
 
         return '<div class="' . e($classes) . '">'
-            . '<iframe src="' . e((string) $data['src']) . '" title="' . e(t('common.video')) . '" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>'
+            . '<button class="tc-youtube-preview" type="button" data-youtube-embed="' . e($src) . '" aria-label="' . e($label) . '">'
+            . '<img src="' . e($thumbnail) . '" alt="" loading="lazy">'
+            . '<span class="tc-youtube-play" aria-hidden="true">' . icon('play') . '</span>'
+            . '</button>'
             . '</div>';
     }
 }

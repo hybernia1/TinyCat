@@ -1996,6 +1996,11 @@ a:hover {
   max-width: 760px;
 }
 
+.status-feed-spacer {
+  min-height: 0;
+  pointer-events: none;
+}
+
 .status-feed-more {
   display: flex;
   min-height: 48px;
@@ -2258,6 +2263,54 @@ a:hover {
 .tc-youtube-embed.is-short {
   width: min(100%, 360px);
   aspect-ratio: 9 / 16;
+}
+
+.tc-youtube-preview {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 0;
+  border-radius: inherit;
+  background: #000;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tc-youtube-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.9;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.tc-youtube-preview:hover img,
+.tc-youtube-preview:focus-visible img {
+  opacity: 1;
+  transform: scale(1.015);
+}
+
+.tc-youtube-play {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  display: inline-grid;
+  width: 64px;
+  height: 46px;
+  place-items: center;
+  border-radius: 14px;
+  background: #ff0033;
+  color: #fff;
+  box-shadow: 0 14px 30px rgb(0 0 0 / 0.28);
+  transform: translate(-50%, -50%);
+}
+
+.tc-youtube-play svg {
+  width: 26px;
+  height: 26px;
+  margin-left: 2px;
 }
 
 .tc-instagram-embed {

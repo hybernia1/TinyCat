@@ -5,6 +5,11 @@
   var activeModal = null;
   var modalStack = [];
   var statusEditorCounterId = 0;
+  var statusFeedMaxCards = 120;
+  var statusFeedKeepCards = 96;
+  var statusFeedPruneMargin = 700;
+  var statusFeedLastScrollY = window.scrollY || 0;
+  var statusFeedScrollQueued = false;
 
   function qs(selector, root) {
     return (root || document).querySelector(selector);
@@ -2400,6 +2405,233 @@
     return rect.top < window.innerHeight + 400;
   }
 
+  function activateYoutubePreview(button) {
+    var src = button ? button.dataset.youtubeEmbed : "";
+    var iframe;
+
+    if (!button || !src) {
+      return;
+    }
+
+    iframe = document.createElement("iframe");
+    iframe.src = src + (src.indexOf("?") === -1 ? "?" : "&") + "autoplay=1";
+    iframe.title = button.getAttribute("aria-label") || "Video";
+    iframe.loading = "lazy";
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+    iframe.allowFullscreen = true;
+
+    button.replaceWith(iframe);
+  }
+
+  function statusFeedCards(target) {
+    return Array.prototype.slice.call(target ? target.children : []).filter(function (node) {
+      return node.classList && node.classList.contains("status-card");
+    });
+  }
+
+  function statusFeedGap(target) {
+    var style = window.getComputedStyle ? window.getComputedStyle(target) : null;
+    var value = style ? parseFloat(style.rowGap || style.gap || "0") : 0;
+
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  function statusFeedSpacer(target) {
+    var spacer = qs("[data-status-feed-spacer]", target);
+
+    if (spacer) {
+      return spacer;
+    }
+
+    spacer = document.createElement("div");
+    spacer.className = "status-feed-spacer";
+    spacer.setAttribute("aria-hidden", "true");
+    spacer.dataset.statusFeedSpacer = "true";
+    target.insertBefore(spacer, target.firstChild);
+
+    return spacer;
+  }
+
+  function statusFeedSpacerHeight(target) {
+    var spacer = qs("[data-status-feed-spacer]", target);
+
+    return spacer ? Math.max(0, parseFloat(spacer.dataset.height || spacer.style.height || "0") || 0) : 0;
+  }
+
+  function setStatusFeedSpacerHeight(target, height) {
+    var spacer = statusFeedSpacer(target);
+    var value = Math.max(0, Math.round(height));
+
+    spacer.dataset.height = String(value);
+    spacer.style.height = value + "px";
+    spacer.hidden = value < 1;
+  }
+
+  function statusFeedFirstPageUrl(url) {
+    var next = new URL(url || window.location.href, window.location.href);
+
+    next.searchParams.set("offset", "0");
+
+    return compactUrl(next);
+  }
+
+  function statusFeedControlForTarget(target) {
+    var controls = qsa("[data-status-feed-more]");
+    var i;
+
+    for (i = 0; i < controls.length; i += 1) {
+      if (statusFeedTarget(controls[i]) === target) {
+        return controls[i];
+      }
+    }
+
+    return null;
+  }
+
+  function statusFeedCardProtected(card) {
+    return Boolean(
+      card.contains(document.activeElement)
+        || qs(".modal[data-open='true'], [data-status-busy='true'], [data-modal-busy='true']", card)
+    );
+  }
+
+  function pruneStatusFeed(target, refreshUrl) {
+    var cards = statusFeedCards(target);
+    var excess = cards.length - statusFeedKeepCards;
+    var gap;
+    var currentSpacerHeight;
+    var remove = [];
+    var removedHeight = 0;
+    var anchor;
+    var beforeTop;
+    var afterTop;
+
+    if (!target || cards.length <= statusFeedMaxCards || excess < 1) {
+      return;
+    }
+
+    cards.some(function (card) {
+      var rect = card.getBoundingClientRect();
+
+      if (remove.length >= excess || rect.bottom > -statusFeedPruneMargin || statusFeedCardProtected(card)) {
+        return true;
+      }
+
+      remove.push(card);
+      removedHeight += rect.height;
+
+      return false;
+    });
+
+    if (remove.length < 1) {
+      return;
+    }
+
+    gap = statusFeedGap(target);
+    currentSpacerHeight = statusFeedSpacerHeight(target);
+    anchor = cards[remove.length] || null;
+    beforeTop = anchor ? anchor.getBoundingClientRect().top : 0;
+    setStatusFeedSpacerHeight(
+      target,
+      currentSpacerHeight + removedHeight + gap * (currentSpacerHeight > 0 ? remove.length : Math.max(0, remove.length - 1))
+    );
+    target.dataset.statusFeedPruned = "true";
+
+    if (refreshUrl) {
+      target.dataset.statusFeedRefreshUrl = statusFeedFirstPageUrl(refreshUrl);
+    }
+
+    remove.forEach(function (card) {
+      card.remove();
+    });
+
+    if (anchor) {
+      afterTop = anchor.getBoundingClientRect().top;
+
+      if (Math.abs(afterTop - beforeTop) > 1) {
+        window.scrollBy(0, afterTop - beforeTop);
+      }
+    }
+  }
+
+  async function refreshPrunedStatusFeed(target) {
+    var control = statusFeedControlForTarget(target);
+    var url = target ? target.dataset.statusFeedRefreshUrl : "";
+    var data;
+    var payload;
+    var template;
+
+    if (!target || !url || target.dataset.statusFeedRefreshing === "true" || activeModal || qs(".modal[data-open='true']", target)) {
+      return;
+    }
+
+    target.dataset.statusFeedRefreshing = "true";
+
+    try {
+      data = await TinyCat.request(url, { method: "GET", cache: "no-store" });
+      payload = statusFeedPayload(data);
+      template = document.createElement("template");
+      template.innerHTML = String(payload.html || "");
+      target.innerHTML = "";
+      target.appendChild(template.content);
+      delete target.dataset.statusFeedPruned;
+
+      if (control) {
+        if (payload.next_url && payload.done !== true) {
+          control.dataset.statusFeedUrl = String(payload.next_url || "");
+          control.hidden = false;
+        } else {
+          control.remove();
+        }
+      }
+
+      hydrateDynamic(target);
+
+      window.requestAnimationFrame(function () {
+        target.scrollIntoView({ block: "start" });
+      });
+    } catch (error) {
+      TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+    } finally {
+      delete target.dataset.statusFeedRefreshing;
+    }
+  }
+
+  function maybeRefreshPrunedStatusFeeds() {
+    qsa("[data-status-feed][data-status-feed-pruned='true']").forEach(function (target) {
+      var spacer = qs("[data-status-feed-spacer]", target);
+      var rect;
+
+      if (!spacer || spacer.hidden || target.dataset.statusFeedRefreshing === "true") {
+        return;
+      }
+
+      rect = spacer.getBoundingClientRect();
+
+      if (rect.top < window.innerHeight && rect.bottom > -80) {
+        refreshPrunedStatusFeed(target);
+      }
+    });
+  }
+
+  function queuePrunedStatusFeedRefreshCheck() {
+    var y = window.scrollY || 0;
+    var scrollingUp = y < statusFeedLastScrollY;
+
+    statusFeedLastScrollY = y;
+
+    if (!scrollingUp || statusFeedScrollQueued) {
+      return;
+    }
+
+    statusFeedScrollQueued = true;
+    window.requestAnimationFrame(function () {
+      statusFeedScrollQueued = false;
+      maybeRefreshPrunedStatusFeeds();
+    });
+  }
+
   async function loadStatusFeedMore(control) {
     var target = statusFeedTarget(control);
     var url = control ? control.dataset.statusFeedUrl : "";
@@ -2432,10 +2664,16 @@
         template = document.createElement("template");
         template.innerHTML = String(payload.html || "");
         target.appendChild(template.content);
+        pruneStatusFeed(target, url);
         hydrateDynamic(target);
       }
 
       if (!payload.next_url || payload.done === true || Number(payload.count || 0) < 1) {
+        if (target.dataset.statusFeedPruned === "true") {
+          control.hidden = true;
+          return;
+        }
+
         control.remove();
         return;
       }
@@ -2812,6 +3050,25 @@
         TinyCat.__statusFeedObserver.observe(control);
       }
     });
+
+    if (TinyCat.__statusFeedPruneScrollReady !== true) {
+      TinyCat.__statusFeedPruneScrollReady = true;
+      window.addEventListener("scroll", queuePrunedStatusFeedRefreshCheck, { passive: true });
+    }
+
+    if (TinyCat.__youtubePreviewReady !== true) {
+      TinyCat.__youtubePreviewReady = true;
+      document.addEventListener("click", function (event) {
+        var button = event.target.closest && event.target.closest("[data-youtube-embed]");
+
+        if (!button) {
+          return;
+        }
+
+        event.preventDefault();
+        activateYoutubePreview(button);
+      });
+    }
 
     if (TinyCat.__statusFeedClickReady === true) {
       return;
