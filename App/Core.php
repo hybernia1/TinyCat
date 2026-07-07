@@ -1933,13 +1933,15 @@ final class Core
     private static function authRedirectUrl(string $target): string
     {
         $current = (string) ($_SERVER['REQUEST_URI'] ?? self::path());
+        $currentPath = self::path((string) (parse_url($current, PHP_URL_PATH) ?: $current));
 
         if (
             $current !== ''
             && str_starts_with($current, '/')
             && !str_starts_with($current, '//')
+            && !self::isApiPath($currentPath)
             && !str_contains($target, 'next=')
-            && self::path($current) !== self::path($target)
+            && $currentPath !== self::path((string) (parse_url($target, PHP_URL_PATH) ?: $target))
         ) {
             $target .= (str_contains($target, '?') ? '&' : '?') . 'next=' . rawurlencode($current);
         }

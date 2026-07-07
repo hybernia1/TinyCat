@@ -459,6 +459,10 @@
       TinyCat.initGlobalSearch(root || document);
     }
 
+    if (TinyCat.initPublicSidebar) {
+      TinyCat.initPublicSidebar(root || document);
+    }
+
     if (TinyCat.initFollowForms) {
       TinyCat.initFollowForms(root || document);
     }
@@ -2251,6 +2255,47 @@
     });
   };
 
+  TinyCat.initPublicSidebar = function (scope) {
+    qsa("[data-public-sidebar][data-sidebar-url]", scope || document).forEach(function (sidebar) {
+      var url = sidebar.dataset.sidebarUrl || "";
+
+      if (!url || sidebar.dataset.sidebarLoading === "true") {
+        return;
+      }
+
+      sidebar.dataset.sidebarLoading = "true";
+      sidebar.classList.add("is-loading");
+
+      TinyCat.request(url, { method: "GET", cache: "no-store" })
+        .then(function (data) {
+          var payload = unwrapResult(data) || {};
+          var template;
+          var next;
+
+          if (!payload.html) {
+            return;
+          }
+
+          template = document.createElement("template");
+          template.innerHTML = String(payload.html).trim();
+          next = template.content.firstElementChild;
+
+          if (!next) {
+            return;
+          }
+
+          sidebar.replaceWith(next);
+          hydrateDynamic(next);
+        })
+        .catch(function () {
+          sidebar.classList.remove("is-loading");
+        })
+        .finally(function () {
+          delete sidebar.dataset.sidebarLoading;
+        });
+    });
+  };
+
   TinyCat.initCaptcha = function (scope) {
     qsa("[data-captcha]", scope || document).forEach(initCaptchaRoot);
   };
@@ -3878,6 +3923,7 @@
     TinyCat.initStatusEditors();
     TinyCat.initStatusFeedLazy();
     TinyCat.initGlobalSearch();
+    TinyCat.initPublicSidebar();
     TinyCat.initCaptcha();
     TinyCat.initSortable();
     TinyCat.initDirtyForms();

@@ -11,21 +11,23 @@ if (!(bool) config('install.installed', false)) {
 }
 
 if (auth_check()) {
-    redirect(auth_landing_url(auth()));
+    redirect(tc_register_redirect(auth()));
 }
 
 if (is_post()) {
     csrf_require();
 
+    $next = tc_register_next();
+
     if (!registration_enabled()) {
         flash('error', t('auth.registration_disabled'));
-        redirect('/register');
+        redirect(tc_register_url($next));
     }
 
     if (!captcha_check('register')) {
         captcha_refresh('register');
         flash('error', t('auth.invalid_captcha'));
-        redirect('/register');
+        redirect(tc_register_url($next));
     }
 
     $username = username_normalize((string) post('username', ''));
@@ -52,7 +54,7 @@ if (is_post()) {
     if ($errors !== []) {
         captcha_refresh('register');
         flash('error', implode(' ', $errors));
-        redirect('/register');
+        redirect(tc_register_url($next));
     }
 
     $status = registration_auto_approve() ? 'active' : 'waiting';
@@ -75,11 +77,11 @@ if (is_post()) {
     if ($status === 'active') {
         auth_login($id);
         flash('success', t('auth.registration_done'));
-        redirect(auth_landing_url(auth()));
+        redirect(tc_register_redirect(auth()));
     }
 
     flash('success', t('auth.registration_waiting'));
-    redirect('/login');
+    redirect('/login' . ($next !== '' ? '?next=' . rawurlencode($next) : ''));
 }
 
 layout('layout', [
@@ -101,10 +103,13 @@ layout('layout', [
             <div class="card-body stack">
                 <?php if (!registration_enabled()): ?>
                     <div class="alert alert-info"><?= et('auth.registration_disabled') ?></div>
-                    <a class="btn btn-secondary" href="/login"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
+                    <?php $next = tc_register_next(); ?>
+                    <a class="btn btn-secondary" href="/login<?= $next !== '' ? '?next=' . e(rawurlencode($next)) : '' ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
                 <?php else: ?>
-                    <form class="stack" method="post" action="/register">
+                    <?php $next = tc_register_next(); ?>
+                    <form class="stack" method="post" action="<?= e(tc_register_url($next)) ?>">
                         <?= csrf_field() ?>
+                        <input type="hidden" name="next" value="<?= e($next) ?>">
                         <label class="field">
                             <span class="label"><?= et('common.username') ?></span>
                             <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_]{2,31}" maxlength="32" required>
@@ -127,7 +132,7 @@ layout('layout', [
                     </form>
                     <div class="cluster gap-2">
                         <span class="text-muted"><?= et('auth.has_account') ?></span>
-                        <a class="btn btn-secondary btn-sm" href="/login"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
+                        <a class="btn btn-secondary btn-sm" href="/login<?= $next !== '' ? '?next=' . e(rawurlencode($next)) : '' ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -135,3 +140,37 @@ layout('layout', [
     </section>
     <?php
 });
+
+function tc_register_next(): string
+{
+    $next = auth_safe_next_url((string) post('next', (string) get('next', '')));
+
+    if ($next !== '') {
+        return $next;
+    }
+
+    return auth_referer_next_url();
+}
+
+function tc_register_url(string $next = ''): string
+{
+    $next = auth_safe_next_url($next);
+
+    return '/register' . ($next !== '' ? '?next=' . rawurlencode($next) : '');
+}
+
+function tc_register_redirect(?array $user): string
+{
+    $fallback = auth_landing_url($user);
+    $next = tc_register_next();
+
+    if ($next === '') {
+        return $fallback;
+    }
+
+    if (str_starts_with(route_path($next), '/admin') && (string) ($user['role'] ?? '') !== 'admin') {
+        return $fallback;
+    }
+
+    return $next;
+}

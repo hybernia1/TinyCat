@@ -93,6 +93,12 @@ api_route('GET', '/home-feed', static function (): array {
     ];
 });
 
+api_route('GET', '/sidebar', static function (): array {
+    return [
+        'html' => public_sidebar((string) get('tag', ''), true),
+    ];
+});
+
 api_route('GET', '/status-feed', static function (): array {
     $context = (string) get('context', 'home');
     $limit = max(1, min(50, (int) get('limit', public_status_page_limit())));

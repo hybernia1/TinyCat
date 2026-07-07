@@ -641,6 +641,60 @@ if (!function_exists('auth_landing_url')) {
     }
 }
 
+if (!function_exists('auth_next_path')) {
+    function auth_next_path(string $next): string
+    {
+        return route_path((string) (parse_url($next, PHP_URL_PATH) ?: '/'));
+    }
+}
+
+if (!function_exists('auth_safe_next_url')) {
+    function auth_safe_next_url(string $next): string
+    {
+        $next = trim($next);
+
+        if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')) {
+            return '';
+        }
+
+        $path = auth_next_path($next);
+
+        if (
+            in_array($path, ['/login', '/register', '/install'], true)
+            || $path === '/api'
+            || str_starts_with($path, '/api/')
+            || str_starts_with($path, '/install/')
+        ) {
+            return '';
+        }
+
+        return $next;
+    }
+}
+
+if (!function_exists('auth_referer_next_url')) {
+    function auth_referer_next_url(): string
+    {
+        $referer = trim((string) ($_SERVER['HTTP_REFERER'] ?? ''));
+
+        if ($referer === '') {
+            return '';
+        }
+
+        $refererHost = strtolower((string) (parse_url($referer, PHP_URL_HOST) ?: ''));
+        $currentHost = strtolower((string) (parse_url('http://' . (string) ($_SERVER['HTTP_HOST'] ?? ''), PHP_URL_HOST) ?: ''));
+
+        if ($refererHost === '' || $currentHost === '' || $refererHost !== $currentHost) {
+            return '';
+        }
+
+        $path = (string) (parse_url($referer, PHP_URL_PATH) ?: '/');
+        $query = (string) (parse_url($referer, PHP_URL_QUERY) ?: '');
+
+        return auth_safe_next_url($path . ($query !== '' ? '?' . $query : ''));
+    }
+}
+
 if (!function_exists('registration_enabled')) {
     function registration_enabled(): bool
     {
@@ -4823,17 +4877,21 @@ if (!function_exists('status_preload_feed')) {
 }
 
 if (!function_exists('public_trending_tags')) {
-    function public_trending_tags(int $limit = 8, int $days = 7): array
+    function public_trending_tags(int $limit = 8, int $days = 7, bool $compute = true): array
     {
         $limit = max(1, min(30, $limit));
         $days = max(1, min(365, $days));
         $since = date_db('-' . $days . ' days');
         $cacheKey = 'public_trending_tags_' . $limit . '_' . $days;
 
-        $cached = public_stats_cache_get($cacheKey);
+        $cached = public_stats_cache_get($cacheKey, 3600);
 
         if ($cached !== null) {
             return $cached;
+        }
+
+        if (!$compute) {
+            return public_stats_cache_read($cacheKey) ?? [];
         }
 
         $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
@@ -4882,16 +4940,20 @@ if (!function_exists('public_trending_tags')) {
 }
 
 if (!function_exists('public_top_authors')) {
-    function public_top_authors(int $limit = 5, int $days = 7): array
+    function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true): array
     {
         $limit = max(1, min(20, $limit));
         $days = max(1, min(365, $days));
         $cacheKey = 'public_top_authors_' . $limit . '_' . $days;
 
-        $cached = public_stats_cache_get($cacheKey);
+        $cached = public_stats_cache_get($cacheKey, 3600);
 
         if ($cached !== null) {
             return $cached;
+        }
+
+        if (!$compute) {
+            return public_stats_cache_read($cacheKey) ?? [];
         }
 
         $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
@@ -4928,7 +4990,37 @@ if (!function_exists('public_stats_cache_get')) {
     {
         $file = public_stats_cache_file($key);
 
-        if (!is_file($file) || filemtime($file) < time() - max(1, $ttl)) {
+        if (!public_stats_cache_fresh($key, $ttl)) {
+            return null;
+        }
+
+        $json = file_get_contents($file);
+
+        if (!is_string($json) || $json === '') {
+            return null;
+        }
+
+        $data = json_decode($json, true);
+
+        return is_array($data) ? $data : null;
+    }
+}
+
+if (!function_exists('public_stats_cache_fresh')) {
+    function public_stats_cache_fresh(string $key, int $ttl = 300): bool
+    {
+        $file = public_stats_cache_file($key);
+
+        return is_file($file) && filemtime($file) >= time() - max(1, $ttl);
+    }
+}
+
+if (!function_exists('public_stats_cache_read')) {
+    function public_stats_cache_read(string $key): ?array
+    {
+        $file = public_stats_cache_file($key);
+
+        if (!is_file($file)) {
             return null;
         }
 
@@ -4980,15 +5072,20 @@ if (!function_exists('public_stats_cache_file')) {
 }
 
 if (!function_exists('public_sidebar')) {
-    function public_sidebar(?string $activeTag = null): string
+    function public_sidebar(?string $activeTag = null, bool $compute = false): string
     {
         $activeTag = status_tag_normalize((string) $activeTag);
-        $tags = public_trending_tags();
-        $authors = public_top_authors();
+        $tags = public_trending_tags(8, 7, $compute);
+        $authors = public_top_authors(5, 7, $compute);
+        $needsRefresh = !$compute && (
+            !public_stats_cache_fresh('public_trending_tags_8_7', 3600)
+            || !public_stats_cache_fresh('public_top_authors_5_7', 3600)
+        );
+        $sidebarUrl = '/api/sidebar' . ($activeTag !== '' ? '?tag=' . rawurlencode($activeTag) : '');
 
         ob_start();
         ?>
-        <aside class="public-sidebar" aria-label="<?= et('public.sidebar_title') ?>">
+        <aside class="public-sidebar" aria-label="<?= et('public.sidebar_title') ?>"<?= $needsRefresh ? ' data-public-sidebar data-sidebar-url="' . e($sidebarUrl) . '"' : '' ?>>
             <article class="card public-sidebar-card">
                 <div class="card-header">
                     <h2 class="text-base m-0 cluster gap-2"><?= icon('hash') ?> <?= et('public.favorite_topics') ?></h2>
@@ -7727,7 +7824,7 @@ if (!function_exists('status_actions')) {
             : status_share_count($contentId);
         $userId = (int) ($user['id'] ?? 0);
         $reaction = $userId > 0 ? status_user_reaction($contentId, $userId) : '';
-        $loginUrl = status_login_url($contentId > 0 ? '#' . status_anchor($contentId) : '');
+        $loginUrl = status_login_url($contentId > 0 ? '#' . status_anchor($contentId) : '', $action);
 
         ob_start();
         ?>
@@ -7965,7 +8062,7 @@ if (!function_exists('public_home_feed_html')) {
         <?php if ($followingLoginRequired): ?>
             <div class="alert alert-info cluster">
                 <span><?= et('public.feed_following_login') ?></span>
-                <a class="btn btn-secondary btn-sm" href="<?= e(status_login_url()) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
+                <a class="btn btn-secondary btn-sm" href="<?= e(status_login_url('', $currentFeedUrl)) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
             </div>
         <?php else: ?>
             <?php if ($items === []): ?>
@@ -8059,7 +8156,7 @@ if (!function_exists('status_comments_section')) {
             <?= status_comment_item($latestComment, $user, $action, 0, 'preview-' . $contentId, false, false) ?>
 
             <?php if ($user === null): ?>
-                <a class="btn btn-secondary btn-sm status-comment-login" href="<?= e(status_login_url()) ?>">
+                <a class="btn btn-secondary btn-sm status-comment-login" href="<?= e(status_login_url('#' . status_anchor($contentId), $action)) ?>">
                     <?= icon('login') ?> <span><?= et('account.status_comment_login') ?></span>
                 </a>
             <?php endif; ?>
@@ -8099,7 +8196,7 @@ if (!function_exists('status_comment_thread_section')) {
             </div>
 
             <?php if ($user === null): ?>
-                <a class="btn btn-secondary btn-sm status-comment-login" href="<?= e(status_login_url()) ?>">
+                <a class="btn btn-secondary btn-sm status-comment-login" href="<?= e(status_login_url('#status-comments-thread-' . $contentId, $action)) ?>">
                     <?= icon('login') ?> <span><?= et('account.status_comment_login') ?></span>
                 </a>
             <?php endif; ?>
@@ -8315,11 +8412,19 @@ if (!function_exists('status_report_modal')) {
 }
 
 if (!function_exists('status_login_url')) {
-    function status_login_url(string $fragment = ''): string
+    function status_login_url(string $fragment = '', string $fallback = ''): string
     {
-        $next = (string) ($_SERVER['REQUEST_URI'] ?? route_path());
+        $next = auth_safe_next_url($fallback);
 
-        if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')) {
+        if ($next === '') {
+            $next = auth_safe_next_url((string) ($_SERVER['REQUEST_URI'] ?? route_path()));
+        }
+
+        if ($next === '') {
+            $next = auth_referer_next_url();
+        }
+
+        if ($next === '') {
             $next = '/';
         }
 

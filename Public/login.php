@@ -65,8 +65,10 @@ layout('layout', [
                 <?php if ($message): ?>
                     <div class="alert alert-success"><?= e($message) ?></div>
                 <?php endif; ?>
-                <form class="stack" method="post" action="/login?next=<?= e(rawurlencode(tc_login_next())) ?>">
+                <?php $next = tc_login_next(); ?>
+                <form class="stack" method="post" action="/login<?= $next !== '' ? '?next=' . e(rawurlencode($next)) : '' ?>">
                     <?= csrf_field() ?>
+                    <input type="hidden" name="next" value="<?= e($next) ?>">
                     <label class="field">
                         <span class="label"><?= et('common.username') ?></span>
                         <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
@@ -89,7 +91,7 @@ layout('layout', [
                 <?php if (registration_enabled()): ?>
                     <div class="cluster gap-2">
                         <span class="text-muted"><?= et('auth.no_account') ?></span>
-                        <a class="btn btn-secondary btn-sm" href="/register"><?= icon('user-plus') ?> <span><?= et('auth.register_link') ?></span></a>
+                        <a class="btn btn-secondary btn-sm" href="/register<?= $next !== '' ? '?next=' . e(rawurlencode($next)) : '' ?>"><?= icon('user-plus') ?> <span><?= et('auth.register_link') ?></span></a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -100,13 +102,13 @@ layout('layout', [
 
 function tc_login_next(): string
 {
-    $next = (string) get('next', '');
+    $next = auth_safe_next_url((string) post('next', (string) get('next', '')));
 
-    if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')) {
-        return '';
+    if ($next !== '') {
+        return $next;
     }
 
-    return in_array(route_path($next), ['/login', '/register'], true) ? '' : $next;
+    return auth_referer_next_url();
 }
 
 function tc_login_redirect(?array $user): string
