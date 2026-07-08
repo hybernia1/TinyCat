@@ -384,7 +384,7 @@ function tc_admin_user_payload(?int $id = null): array
         $rules = ['username' => 'required|string|max:32'] + $rules;
     }
 
-    $data = api_validated($rules);
+    $data = api_validated($rules, null, tc_admin_user_validation_messages());
 
     $username = $existing !== null ? (string) ($existing['username'] ?? '') : username_normalize((string) ($data['username'] ?? ''));
 
@@ -429,6 +429,27 @@ function tc_admin_user_payload(?int $id = null): array
     }
 
     return $payload;
+}
+
+function tc_admin_user_validation_messages(): array
+{
+    return [
+        'username.required' => t('users.validation.username_required'),
+        'username.string' => t('users.validation.username_invalid'),
+        'username.max' => t('users.validation.username_max'),
+        'password.required' => t('users.validation.password_required'),
+        'password.string' => t('users.validation.password_required'),
+        'password.min' => t('users.validation.password_min'),
+        'password.max' => t('users.validation.password_max'),
+        'role.required' => t('users.validation.role_required'),
+        'role.string' => t('users.validation.role_invalid'),
+        'role.in' => t('users.validation.role_invalid'),
+        'status.required' => t('users.validation.status_required'),
+        'status.string' => t('users.validation.status_invalid'),
+        'status.in' => t('users.validation.status_invalid'),
+        'note.string' => t('users.validation.note_invalid'),
+        'note.max' => t('users.validation.note_max'),
+    ];
 }
 
 function tc_admin_options(array $options, ?string $selected = null): string

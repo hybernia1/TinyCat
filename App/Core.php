@@ -486,50 +486,27 @@ final class Core
     {
         self::ensureBooted();
 
-        if (preg_match('/^(https?:)?\/\//', $path) || str_starts_with($path, 'data:')) {
-            return $path;
-        }
-
         $path = ltrim(str_replace('\\', '/', $path), '/');
+        $url = '/assets/' . $path;
 
-        if (str_starts_with($path, 'assets/')) {
-            $path = substr($path, 7);
-        }
-
-        $baseUrl = (string) self::config('assets.url', '/assets');
-        $baseUrl = $baseUrl === '' ? '/assets' : $baseUrl;
-        $url = rtrim($baseUrl, '/') . '/' . $path;
-
-        $version ??= (bool) self::config('assets.version', true);
-
-        if (!$version) {
+        if ($version === false) {
             return $url;
         }
 
-        $directory = self::config('assets.directory', self::basePath('assets'));
-
-        if (!is_string($directory) || $directory === '') {
-            return $url;
-        }
-
-        $file = rtrim($directory, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+        $file = self::basePath('assets/' . str_replace('/', DIRECTORY_SEPARATOR, $path));
 
         if (!is_file($file)) {
             return $url;
         }
 
-        $separator = str_contains($url, '?') ? '&' : '?';
-
-        return $url . $separator . 'v=' . filemtime($file);
+        return $url . '?v=' . filemtime($file);
     }
 
     public static function icon(string $name, string $class = 'icon', ?string $label = null, array $attributes = []): string
     {
         self::assertIconName($name);
 
-        $sprite = self::config('assets.icons', 'icons.svg');
-        $sprite = is_string($sprite) && $sprite !== '' ? $sprite : 'icons.svg';
-        $href = self::asset($sprite) . '#' . $name;
+        $href = self::asset('icons.svg') . '#' . $name;
         $extraClass = isset($attributes['class']) ? (string) $attributes['class'] : '';
         unset($attributes['class']);
 
@@ -1154,7 +1131,7 @@ final class Core
             $nullable = self::hasAnyRule($fieldRules, ['nullable']);
 
             if ($required && self::blank($value, $exists)) {
-                $errors[$field][] = self::validationMessage($messages, $field, 'required', 'The ' . $field . ' field is required.');
+                $errors[$field][] = self::validationMessage($messages, $field, 'required');
                 continue;
             }
 
@@ -1170,12 +1147,7 @@ final class Core
                 }
 
                 if (!self::passesRule($value, $name, $params, $fieldRules)) {
-                    $errors[$field][] = self::validationMessage(
-                        $messages,
-                        $field,
-                        $name,
-                        self::defaultValidationMessage($field, $name, $params)
-                    );
+                    $errors[$field][] = self::validationMessage($messages, $field, $name);
                 }
             }
         }
@@ -2067,33 +2039,13 @@ final class Core
         return !$exists || $value === null || $value === '' || $value === [];
     }
 
-    private static function validationMessage(array $messages, string $field, string $rule, string $default): string
+    private static function validationMessage(array $messages, string $field, string $rule): string
     {
         if (isset($messages[$field]) && is_array($messages[$field]) && isset($messages[$field][$rule])) {
             return (string) $messages[$field][$rule];
         }
 
-        return (string) ($messages[$field . '.' . $rule] ?? $messages[$rule] ?? $default);
-    }
-
-    private static function defaultValidationMessage(string $field, string $rule, array $params): string
-    {
-        return match ($rule) {
-            'accepted' => 'The ' . $field . ' field must be accepted.',
-            'array' => 'The ' . $field . ' field must be an array.',
-            'bool', 'boolean' => 'The ' . $field . ' field must be true or false.',
-            'date' => 'The ' . $field . ' field must be a valid date.',
-            'email' => 'The ' . $field . ' field must be a valid email address.',
-            'float', 'number', 'numeric' => 'The ' . $field . ' field must be numeric.',
-            'in' => 'The ' . $field . ' field has an invalid value.',
-            'int', 'integer' => 'The ' . $field . ' field must be an integer.',
-            'max' => 'The ' . $field . ' field must not be greater than ' . ($params[0] ?? 'the maximum') . '.',
-            'min' => 'The ' . $field . ' field must be at least ' . ($params[0] ?? 'the minimum') . '.',
-            'between' => 'The ' . $field . ' field must be between ' . ($params[0] ?? 'the minimum') . ' and ' . ($params[1] ?? 'the maximum') . '.',
-            'string' => 'The ' . $field . ' field must be a string.',
-            'url' => 'The ' . $field . ' field must be a valid URL.',
-            default => 'The ' . $field . ' field is invalid.',
-        };
+        return (string) ($messages[$field . '.' . $rule] ?? $messages[$rule] ?? 'validation.' . $field . '.' . $rule);
     }
 
     private static function captchaChallenge(string $context, bool $refresh = false): array

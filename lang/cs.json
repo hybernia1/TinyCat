@@ -103,6 +103,20 @@
             "username_invalid": "Použij 3-32 malých znaků latinky, čísla nebo podtržítko. První znak musí být písmeno.",
             "username_taken": "Toto uživatelské jméno už existuje.",
             "super_admin_protected": "Nejstarší admin účet nelze zneaktivnit, změnit na jinou roli ani smazat."
+        },
+        "validation": {
+            "username_required": "Vyplň uživatelské jméno.",
+            "username_invalid": "Uživatelské jméno není platné.",
+            "username_max": "Uživatelské jméno může mít nejvýše 32 znaků.",
+            "password_required": "Vyplň heslo.",
+            "password_min": "Heslo musí mít alespoň 8 znaků.",
+            "password_max": "Heslo může mít nejvýše 200 znaků.",
+            "role_required": "Vyber roli.",
+            "role_invalid": "Vybraná role není platná.",
+            "status_required": "Vyber stav.",
+            "status_invalid": "Vybraný stav není platný.",
+            "note_invalid": "Poznámka není platná.",
+            "note_max": "Poznámka může mít nejvýše 2000 znaků."
         }
     },
     "moderation": {

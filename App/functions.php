@@ -369,38 +369,30 @@ if (!function_exists('image_apply_orientation')) {
         $exif = @exif_read_data($path);
         $orientation = is_array($exif) ? (int) ($exif['Orientation'] ?? 1) : 1;
 
-        $oriented = match ($orientation) {
-            2 => image_flip($image, IMG_FLIP_HORIZONTAL),
-            3 => image_rotate($image, 180),
-            4 => image_flip($image, IMG_FLIP_VERTICAL),
-            5 => image_flip(image_rotate($image, -90), IMG_FLIP_HORIZONTAL),
-            6 => image_rotate($image, -90),
-            7 => image_flip(image_rotate($image, 90), IMG_FLIP_HORIZONTAL),
-            8 => image_rotate($image, 90),
-            default => $image,
+        $rotate = static function (GdImage $source, int $angle): GdImage {
+            $rotated = imagerotate($source, $angle, 0);
+
+            return $rotated instanceof GdImage ? $rotated : $source;
         };
 
-        return $oriented instanceof GdImage ? $oriented : $image;
-    }
-}
+        $flip = static function (GdImage $source, int $mode): GdImage {
+            if (function_exists('imageflip')) {
+                imageflip($source, $mode);
+            }
 
-if (!function_exists('image_rotate')) {
-    function image_rotate(GdImage $image, int $angle): GdImage
-    {
-        $rotated = imagerotate($image, $angle, 0);
+            return $source;
+        };
 
-        return $rotated instanceof GdImage ? $rotated : $image;
-    }
-}
-
-if (!function_exists('image_flip')) {
-    function image_flip(GdImage $image, int $mode): GdImage
-    {
-        if (function_exists('imageflip')) {
-            imageflip($image, $mode);
-        }
-
-        return $image;
+        return match ($orientation) {
+            2 => $flip($image, IMG_FLIP_HORIZONTAL),
+            3 => $rotate($image, 180),
+            4 => $flip($image, IMG_FLIP_VERTICAL),
+            5 => $flip($rotate($image, -90), IMG_FLIP_HORIZONTAL),
+            6 => $rotate($image, -90),
+            7 => $flip($rotate($image, 90), IMG_FLIP_HORIZONTAL),
+            8 => $rotate($image, 90),
+            default => $image,
+        };
     }
 }
 
