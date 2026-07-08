@@ -335,7 +335,7 @@ function tc_install_create_tables(): void
             locale VARCHAR(12) NULL,
             note TEXT NULL,
             website VARCHAR(255) NULL,
-            bio TEXT NULL,
+            bio VARCHAR(500) NULL,
             avatar_path VARCHAR(255) NULL,
             avatar_url VARCHAR(255) NULL,
             muted_until DATETIME NULL,
@@ -358,19 +358,17 @@ function tc_install_create_tables(): void
     run(
         "CREATE TABLE IF NOT EXISTS content (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            status VARCHAR(30) NOT NULL DEFAULT 'draft',
-            body LONGTEXT NULL,
+            body VARCHAR(2000) NOT NULL,
             author_id INT UNSIGNED NULL,
-            published_at DATETIME NULL,
+            published_at DATETIME NOT NULL,
             edit_locked_at DATETIME NULL,
             edit_locked_by INT UNSIGNED NULL,
             edit_lock_reason VARCHAR(80) NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            KEY content_status_index (status),
-            KEY content_feed_index (status, published_at, id),
-            KEY content_sidebar_index (status, published_at, author_id, id),
-            KEY content_author_index (author_id, status, published_at, id),
+            KEY content_feed_index (published_at, id),
+            KEY content_sidebar_index (published_at, author_id, id),
+            KEY content_author_index (author_id, published_at, id),
             KEY content_edit_lock_index (edit_locked_at),
             FULLTEXT KEY content_body_fulltext (body)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
@@ -389,68 +387,18 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS content_tags (
             content_id BIGINT UNSIGNED NOT NULL,
             term_id BIGINT UNSIGNED NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (content_id, term_id),
             KEY content_tags_term_index (term_id, content_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
     run(
-        "CREATE TABLE IF NOT EXISTS links (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            url_hash CHAR(64) NOT NULL,
-            url TEXT NOT NULL,
-            final_url TEXT NULL,
-            title VARCHAR(255) NULL,
-            description TEXT NULL,
-            image_url TEXT NULL,
-            site_name VARCHAR(120) NULL,
-            source VARCHAR(30) NOT NULL DEFAULT 'web',
-            external_id VARCHAR(120) NULL,
-            embed_url TEXT NULL,
-            fetched_at DATETIME NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY links_url_hash_unique (url_hash),
-            KEY links_source_index (source, external_id),
-            KEY links_fetched_index (fetched_at),
-            FULLTEXT KEY links_meta_fulltext (title, description, site_name, source, external_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    run(
-        "CREATE TABLE IF NOT EXISTS content_links (
-            content_id BIGINT UNSIGNED NOT NULL,
-            link_id BIGINT UNSIGNED NOT NULL,
-            position INT UNSIGNED NOT NULL DEFAULT 0,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (content_id, link_id),
-            KEY content_links_link_index (link_id),
-            KEY content_links_content_index (content_id, position)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    run(
-        "CREATE TABLE IF NOT EXISTS content_shares (
-            content_id BIGINT UNSIGNED NOT NULL,
-            shared_content_id BIGINT UNSIGNED NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (content_id),
-            KEY content_shares_shared_index (shared_content_id, content_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    run(
-        "CREATE TABLE IF NOT EXISTS content_reactions (
+        "CREATE TABLE IF NOT EXISTS content_likes (
             content_id BIGINT UNSIGNED NOT NULL,
             user_id INT UNSIGNED NOT NULL,
-            reaction VARCHAR(12) NOT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (content_id, user_id),
-            KEY content_reactions_user_index (user_id, content_id),
-            KEY content_reactions_reaction_index (content_id, reaction)
+            KEY content_likes_user_index (user_id, content_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -460,7 +408,7 @@ function tc_install_create_tables(): void
             content_id BIGINT UNSIGNED NOT NULL,
             parent_id BIGINT UNSIGNED NULL,
             user_id INT UNSIGNED NOT NULL,
-            body TEXT NOT NULL,
+            body VARCHAR(2000) NOT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY content_comments_content_index (content_id, parent_id, created_at),
@@ -527,18 +475,6 @@ function tc_install_create_tables(): void
             KEY content_reports_status_index (status, created_at),
             KEY content_reports_content_index (content_id),
             KEY content_reports_reporter_index (reporter_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    run(
-        "CREATE TABLE IF NOT EXISTS blocked_domains (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            domain VARCHAR(190) NOT NULL,
-            reason TEXT NULL,
-            created_by INT UNSIGNED NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY blocked_domains_domain_unique (domain)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -696,16 +632,12 @@ function tc_install_schema_tables(): array
         'content' => 'install.purpose_content',
         'terms' => 'install.purpose_terms',
         'content_tags' => 'install.purpose_content_tags',
-        'links' => 'install.purpose_links',
-        'content_links' => 'install.purpose_content_links',
-        'content_shares' => 'install.purpose_content_shares',
-        'content_reactions' => 'install.purpose_content_reactions',
+        'content_likes' => 'install.purpose_content_likes',
         'content_comments' => 'install.purpose_content_comments',
         'comment_likes' => 'install.purpose_comment_likes',
         'user_followers' => 'install.purpose_user_followers',
         'notifications' => 'install.purpose_notifications',
         'content_reports' => 'install.purpose_content_reports',
-        'blocked_domains' => 'install.purpose_blocked_domains',
         'user_action_limits' => 'install.purpose_user_action_limits',
         'settings' => 'install.purpose_settings',
     ];
@@ -1012,7 +944,7 @@ function tc_install_done_view(): void
             <p class="text-muted mb-0"><?= et('install.done_intro') ?></p>
             <ul class="result-list">
                 <li class="result-item"><?= icon('globe') ?> <span><?= et('common.language') ?>: <strong><?= e(locale()) ?></strong></span></li>
-                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, links, content_links, content_shares, content_reactions, content_comments, comment_likes, user_followers, notifications, content_reports, blocked_domains, user_action_limits, settings</strong></span></li>
+                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, user_action_limits, settings</strong></span></li>
                 <li class="result-item"><?= icon('shield') ?> <span><?= et('common.account') ?>: <strong><?= et('common.done') ?></strong></span></li>
             </ul>
             <div class="btn-group">

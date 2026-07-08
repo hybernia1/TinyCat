@@ -118,12 +118,6 @@
     <path d="M21 3 10 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="m21 3-7 18-4-7-7-4 18-7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
   </symbol>
-  <symbol id="share" viewBox="0 0 24 24">
-    <circle cx="18" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
-    <circle cx="6" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
-    <circle cx="18" cy="19" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
-    <path d="m8.7 10.7 6.6-4.4M8.7 13.3l6.6 4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  </symbol>
   <symbol id="edit" viewBox="0 0 24 24">
     <path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
     <path d="m13.5 6.5 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>

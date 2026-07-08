@@ -2651,25 +2651,6 @@
     return rect.top < window.innerHeight + 400;
   }
 
-  function activateYoutubePreview(button) {
-    var src = button ? button.dataset.youtubeEmbed : "";
-    var iframe;
-
-    if (!button || !src) {
-      return;
-    }
-
-    iframe = document.createElement("iframe");
-    iframe.src = src + (src.indexOf("?") === -1 ? "?" : "&") + "autoplay=1";
-    iframe.title = button.getAttribute("aria-label") || "Video";
-    iframe.loading = "lazy";
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-    iframe.referrerPolicy = "strict-origin-when-cross-origin";
-    iframe.allowFullscreen = true;
-
-    button.replaceWith(iframe);
-  }
-
   function statusFeedCards(target) {
     return Array.prototype.slice.call(target ? target.children : []).filter(function (node) {
       return node.classList && node.classList.contains("status-card");
@@ -3442,10 +3423,6 @@
       TinyCat.closeModal(openedModal);
     }
 
-    if (action === "share" && replaceStatusRegion(doc)) {
-      return true;
-    }
-
     if (currentCard && currentCard.id) {
       nextCard = doc.getElementById(currentCard.id);
 
@@ -3456,7 +3433,7 @@
 
         if (keepModalOpen) {
           await refreshOpenStatusModal(openedModal, reopenModalUrl, modalScroll);
-        } else if (reopenModalId && action !== "update" && action !== "delete" && action !== "share" && action !== "report") {
+        } else if (reopenModalId && action !== "update" && action !== "delete" && action !== "report") {
           if (reopenModalUrl) {
             loadRemoteModal(reopenModalId, reopenModalUrl, imported, true)
               .then(function (modal) {
@@ -3485,7 +3462,7 @@
       if (imported) {
         if (keepModalOpen) {
           await refreshOpenStatusModal(openedModal, reopenModalUrl, modalScroll);
-        } else if (reopenModalId && action !== "update" && action !== "share" && action !== "report") {
+        } else if (reopenModalId && action !== "update" && action !== "report") {
           if (reopenModalUrl) {
             loadRemoteModal(reopenModalId, reopenModalUrl, imported, true)
               .then(function (modal) {
@@ -3666,20 +3643,6 @@
     if (TinyCat.__statusFeedPruneScrollReady !== true) {
       TinyCat.__statusFeedPruneScrollReady = true;
       window.addEventListener("scroll", queuePrunedStatusFeedRefreshCheck, { passive: true });
-    }
-
-    if (TinyCat.__youtubePreviewReady !== true) {
-      TinyCat.__youtubePreviewReady = true;
-      document.addEventListener("click", function (event) {
-        var button = event.target.closest && event.target.closest("[data-youtube-embed]");
-
-        if (!button) {
-          return;
-        }
-
-        event.preventDefault();
-        activateYoutubePreview(button);
-      });
     }
 
     if (TinyCat.__statusFeedClickReady === true) {

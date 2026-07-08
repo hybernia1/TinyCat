@@ -15,10 +15,8 @@ layout('layout', [
     $stats = [
         ['icon' => 'users', 'label' => t('admin.stats.users'), 'table' => 'users'],
         ['icon' => 'file', 'label' => t('admin.stats.content'), 'table' => 'content'],
-        ['icon' => 'thumb-up', 'label' => t('admin.stats.likes'), 'table' => 'content_reactions'],
-        ['icon' => 'share', 'label' => t('admin.stats.shares'), 'table' => 'content_shares'],
+        ['icon' => 'thumb-up', 'label' => t('admin.stats.likes'), 'table' => 'content_likes'],
         ['icon' => 'message-circle', 'label' => t('admin.stats.comments'), 'table' => 'content_comments'],
-        ['icon' => 'link', 'label' => t('admin.stats.links'), 'table' => 'links'],
         ['icon' => 'hash', 'label' => t('admin.stats.tags'), 'table' => 'terms'],
         ['icon' => 'user-plus', 'label' => t('admin.stats.follows'), 'table' => 'user_followers'],
         ['icon' => 'bell', 'label' => t('admin.stats.notifications'), 'table' => 'notifications'],

@@ -162,30 +162,6 @@ api_route('GET', '/status-modal', static function (): array {
     ];
 });
 
-api_route('GET', '/status-share-modal', static function (): array {
-    $user = auth();
-    $contentId = max(0, (int) get('id', 0));
-    $item = public_status_item($contentId);
-
-    if ($user === null) {
-        api_error(t('auth.login_required', [], null, 'Login required.'), 401, 'unauthorized', ['redirect' => '/login']);
-    }
-
-    if ($item === null) {
-        api_error(t('account.messages.status_not_found'), 404, 'not_found');
-    }
-
-    $action = trim((string) get('action', ''));
-
-    if ($action === '' || !str_starts_with($action, '/')) {
-        $action = status_url($contentId);
-    }
-
-    return [
-        'html' => status_share_modal($item, $user, $action),
-    ];
-});
-
 api_route('GET', '/status-report-modal', static function (): array {
     $user = auth();
     $contentId = max(0, (int) get('id', 0));

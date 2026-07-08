@@ -86,8 +86,6 @@ layout('layout', [
                         <div class="status-body"><?= $bodyHtml ?></div>
                     <?php endif; ?>
 
-                    <?= status_link_cards($contentId) ?>
-                    <?= status_share_card($item) ?>
                     <?= status_actions($item, auth(), $current, false) ?>
                     <?= status_comment_thread_section($item, auth(), $current, 'status-' . $contentId) ?>
                 </div>

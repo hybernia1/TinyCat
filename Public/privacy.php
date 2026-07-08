@@ -64,7 +64,6 @@ layout('layout', [
                 'privacy.moderation_right',
                 'privacy.moderation_actions',
                 'privacy.moderation_mute',
-                'privacy.moderation_domains',
             ]) ?>
         </div>
 
@@ -80,7 +79,6 @@ layout('layout', [
                             <tr>
                                 <th><?= et('privacy.reputation') ?></th>
                                 <th><?= et('privacy.posts') ?></th>
-                                <th><?= et('privacy.shares') ?></th>
                                 <th><?= et('privacy.comments') ?></th>
                                 <th><?= et('privacy.likes') ?></th>
                                 <th><?= et('privacy.reports') ?></th>
@@ -92,7 +90,6 @@ layout('layout', [
                                 <tr>
                                     <td><strong><?= e($row['label']) ?></strong></td>
                                     <td><?= e($row['post']) ?></td>
-                                    <td><?= e($row['share']) ?></td>
                                     <td><?= e($row['comment']) ?></td>
                                     <td><?= e($row['like']) ?></td>
                                     <td><?= e($row['report']) ?></td>
@@ -153,7 +150,6 @@ function tc_privacy_limit_rows(): array
         $rows[] = [
             'label' => $label,
             'post' => tc_privacy_limit_label((array) ($rule['post'] ?? [])),
-            'share' => tc_privacy_limit_label((array) ($rule['share'] ?? [])),
             'comment' => tc_privacy_limit_label((array) ($rule['comment'] ?? [])),
             'like' => tc_privacy_limit_label((array) ($rule['like'] ?? [])),
             'report' => tc_privacy_limit_label((array) ($rule['report'] ?? [])),

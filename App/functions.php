@@ -63,7 +63,7 @@ if (!function_exists('db')) {
 if (!function_exists('app_required_tables')) {
     function app_required_tables(): array
     {
-        return ['users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_shares', 'content_reactions', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'blocked_domains', 'user_action_limits', 'settings'];
+        return ['users', 'content', 'terms', 'content_tags', 'content_likes', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'user_action_limits', 'settings'];
     }
 }
 
@@ -170,52 +170,11 @@ if (!function_exists('meta_text')) {
 if (!function_exists('status_meta_description')) {
     function status_meta_description(array $item): string
     {
-        $contentId = (int) ($item['id'] ?? 0);
-        $body = (string) preg_replace('~https?://[^\s<>"\']+~iu', ' ', (string) ($item['body'] ?? ''));
+        $body = status_strip_external_urls((string) ($item['body'] ?? ''));
         $body = meta_text($body, 180);
 
         if ($body !== '') {
             return $body;
-        }
-
-        foreach (status_links($contentId) as $link) {
-            $text = trim(implode(' ', array_filter([
-                (string) ($link['title'] ?? ''),
-                (string) ($link['description'] ?? ''),
-                (string) ($link['site_name'] ?? ''),
-            ], static fn (string $value): bool => trim($value) !== '')));
-
-            $text = meta_text($text, 180);
-
-            if ($text !== '') {
-                return $text;
-            }
-        }
-
-        $shared = status_shared_item($item);
-        $sharedId = (int) ($shared['id'] ?? 0);
-
-        if ($shared !== null && $sharedId > 0 && $sharedId !== $contentId) {
-            $sharedBody = (string) preg_replace('~https?://[^\s<>"\']+~iu', ' ', (string) ($shared['body'] ?? ''));
-            $sharedBody = meta_text($sharedBody, 180);
-
-            if ($sharedBody !== '') {
-                return $sharedBody;
-            }
-
-            foreach (status_links($sharedId) as $link) {
-                $text = trim(implode(' ', array_filter([
-                    (string) ($link['title'] ?? ''),
-                    (string) ($link['description'] ?? ''),
-                    (string) ($link['site_name'] ?? ''),
-                ], static fn (string $value): bool => trim($value) !== '')));
-
-                $text = meta_text($text, 180);
-
-                if ($text !== '') {
-                    return $text;
-                }
-            }
         }
 
         return t('public.status_meta_description', [
@@ -227,35 +186,6 @@ if (!function_exists('status_meta_description')) {
 if (!function_exists('status_meta_image')) {
     function status_meta_image(array $item): string
     {
-        $contentId = (int) ($item['id'] ?? 0);
-
-        foreach (status_links($contentId) as $link) {
-            $image = status_link_normalize_url((string) ($link['image_url'] ?? ''));
-
-            if ($image !== '') {
-                return $image;
-            }
-        }
-
-        $shared = status_shared_item($item);
-        $sharedId = (int) ($shared['id'] ?? 0);
-
-        if ($shared !== null && $sharedId > 0 && $sharedId !== $contentId) {
-            foreach (status_links($sharedId) as $link) {
-                $image = status_link_normalize_url((string) ($link['image_url'] ?? ''));
-
-                if ($image !== '') {
-                    return $image;
-                }
-            }
-
-            $sharedAvatar = (string) ($shared['avatar_url'] ?? '');
-
-            if ($sharedAvatar !== '') {
-                return $sharedAvatar;
-            }
-        }
-
         return (string) ($item['avatar_url'] ?? '') ?: site_meta_image_url();
     }
 }
@@ -821,101 +751,6 @@ if (!function_exists('user_find_by_recovery_hash')) {
     }
 }
 
-if (!function_exists('moderation_domain_normalize')) {
-    function moderation_domain_normalize(string $domain): string
-    {
-        $domain = strtolower(trim($domain));
-        $domain = preg_replace('~^https?://~', '', $domain) ?? $domain;
-        $domain = strtok($domain, "/?# \t\r\n") ?: $domain;
-        $domain = trim($domain, ". \t\r\n");
-        $domain = preg_replace('/^www\./', '', $domain) ?? $domain;
-
-        return preg_match('/^[a-z0-9.-]{1,190}$/', $domain) === 1 && str_contains($domain, '.')
-            ? $domain
-            : '';
-    }
-}
-
-if (!function_exists('moderation_domain_from_url')) {
-    function moderation_domain_from_url(string $url): string
-    {
-        $host = (string) (parse_url($url, PHP_URL_HOST) ?: '');
-
-        return moderation_domain_normalize($host);
-    }
-}
-
-if (!function_exists('moderation_blocked_domains')) {
-    function moderation_blocked_domains(): array
-    {
-        static $items = null;
-
-        if ($items !== null) {
-            return $items;
-        }
-
-        try {
-            return $items = all('SELECT * FROM blocked_domains ORDER BY domain ASC');
-        } catch (Throwable) {
-            return $items = [];
-        }
-    }
-}
-
-if (!function_exists('moderation_blocked_domain_for_url')) {
-    function moderation_blocked_domain_for_url(string $url): ?array
-    {
-        $host = moderation_domain_from_url($url);
-
-        if ($host === '') {
-            return null;
-        }
-
-        foreach (moderation_blocked_domains() as $row) {
-            $domain = moderation_domain_normalize((string) ($row['domain'] ?? ''));
-
-            if ($domain !== '' && ($host === $domain || str_ends_with($host, '.' . $domain))) {
-                return $row;
-            }
-        }
-
-        return null;
-    }
-}
-
-if (!function_exists('moderation_blocked_link')) {
-    function moderation_blocked_link(string $body): ?array
-    {
-        foreach (status_preview_links_from_text($body, 10) as $url) {
-            $blocked = moderation_blocked_domain_for_url((string) $url);
-
-            if ($blocked !== null) {
-                return [
-                    'url' => (string) $url,
-                    'domain' => (string) ($blocked['domain'] ?? moderation_domain_from_url((string) $url)),
-                    'reason' => (string) ($blocked['reason'] ?? ''),
-                ];
-            }
-        }
-
-        return null;
-    }
-}
-
-if (!function_exists('moderation_require_links_allowed')) {
-    function moderation_require_links_allowed(string $body, string $redirect): void
-    {
-        $blocked = moderation_blocked_link($body);
-
-        if ($blocked === null) {
-            return;
-        }
-
-        flash('error', t('moderation.messages.blocked_domain', ['domain' => (string) ($blocked['domain'] ?? '')]));
-        redirect($redirect);
-    }
-}
-
 if (!function_exists('moderation_user_post_count')) {
     function moderation_user_post_count(int $userId): int
     {
@@ -924,7 +759,7 @@ if (!function_exists('moderation_user_post_count')) {
         }
 
         try {
-            return (int) val('SELECT COUNT(*) FROM content WHERE author_id = ? AND status = ?', [$userId, 'published']);
+            return (int) val('SELECT COUNT(*) FROM content WHERE author_id = ?', [$userId]);
         } catch (Throwable) {
             return 0;
         }
@@ -962,7 +797,6 @@ if (!function_exists('moderation_action_rules')) {
         return [
             'new' => [
                 'post' => [3600, 5],
-                'share' => [3600, 3],
                 'comment' => [3600, 20],
                 'like' => [3600, 60],
                 'report' => [3600, 10],
@@ -970,7 +804,6 @@ if (!function_exists('moderation_action_rules')) {
             ],
             'normal' => [
                 'post' => [3600, 20],
-                'share' => [3600, 15],
                 'comment' => [3600, 80],
                 'like' => [3600, 180],
                 'report' => [3600, 30],
@@ -978,7 +811,6 @@ if (!function_exists('moderation_action_rules')) {
             ],
             'trusted' => [
                 'post' => [3600, 60],
-                'share' => [3600, 50],
                 'comment' => [3600, 240],
                 'like' => [3600, 600],
                 'report' => [3600, 80],
@@ -1431,7 +1263,7 @@ if (!function_exists('author_following_profiles')) {
                 (
                     SELECT COUNT(*)
                     FROM content c
-                    WHERE c.author_id = u.id AND c.status = ?
+                    WHERE c.author_id = u.id
                 ) AS posts_count
             FROM user_followers uf
             INNER JOIN users u ON u.id = uf.user_id
@@ -1439,7 +1271,7 @@ if (!function_exists('author_following_profiles')) {
                 AND u.status = ?
             ORDER BY uf.created_at DESC, u.username ASC
             LIMIT ' . $limit,
-            ['published', $authorId, 'active']
+            [$authorId, 'active']
         );
     }
 }
@@ -1463,36 +1295,36 @@ if (!function_exists('author_activity_stats')) {
                 'posts' => (int) val(
                     'SELECT COUNT(*)
                     FROM content
-                    WHERE author_id = ? AND status = ?',
-                    [$authorId, 'published']
+                    WHERE author_id = ?',
+                    [$authorId]
                 ),
                 'likes_given' => (int) val(
                     'SELECT
                         (
                             SELECT COUNT(*)
-                            FROM content_reactions
-                            WHERE user_id = ? AND reaction = ?
+                            FROM content_likes
+                            WHERE user_id = ?
                         ) + (
                             SELECT COUNT(*)
                             FROM comment_likes
                             WHERE user_id = ?
                         )',
-                    [$authorId, 'like', $authorId]
+                    [$authorId, $authorId]
                 ),
                 'likes_received' => (int) val(
                     'SELECT
                         (
                             SELECT COUNT(*)
-                            FROM content_reactions cr
-                            INNER JOIN content c ON c.id = cr.content_id
-                            WHERE c.author_id = ? AND cr.reaction = ?
+                            FROM content_likes cl
+                            INNER JOIN content c ON c.id = cl.content_id
+                            WHERE c.author_id = ?
                         ) + (
                             SELECT COUNT(*)
                             FROM comment_likes cl
                             INNER JOIN content_comments cc ON cc.id = cl.comment_id
                             WHERE cc.user_id = ?
                         )',
-                    [$authorId, 'like', $authorId]
+                    [$authorId, $authorId]
                 ),
                 'comments' => (int) val(
                     'SELECT COUNT(*)
@@ -1616,55 +1448,33 @@ if (!function_exists('status_internal_url')) {
     }
 }
 
-if (!function_exists('status_shared_id_from_url')) {
-    function status_shared_id_from_url(string $url): int
+if (!function_exists('status_external_url_pattern')) {
+    function status_external_url_pattern(): string
     {
-        [$url] = social_split_url_tail(trim($url));
-
-        if ($url === '') {
-            return 0;
-        }
-
-        if (str_starts_with($url, '/')) {
-            $path = (string) (parse_url($url, PHP_URL_PATH) ?: $url);
-        } elseif (preg_match('~^https?://~i', $url) && status_internal_url($url)) {
-            $path = (string) (parse_url($url, PHP_URL_PATH) ?: '');
-        } else {
-            return 0;
-        }
-
-        if (preg_match('~^/status/([0-9]+)/*$~', $path, $match) !== 1) {
-            return 0;
-        }
-
-        return max(0, (int) ($match[1] ?? 0));
+        return '~(?<![@\p{L}\p{N}_])(?:https?://|www\.)[^\s<>"\']+|(?<![@\p{L}\p{N}_])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(?:/[^\s<>"\']*)?~iu';
     }
 }
 
-if (!function_exists('status_share_from_text')) {
-    function status_share_from_text(string $text): array
+if (!function_exists('status_strip_external_urls')) {
+    function status_strip_external_urls(string $text): string
     {
-        if (!preg_match_all('~https?://[^\s<>"\']+|/status/[0-9]+[^\s<>"\']*~iu', $text, $matches, PREG_OFFSET_CAPTURE)) {
-            return ['body' => $text, 'shared_content_id' => 0];
+        if ($text === '') {
+            return '';
         }
 
-        foreach ((array) ($matches[0] ?? []) as $match) {
-            $token = (string) ($match[0] ?? '');
-            $position = (int) ($match[1] ?? 0);
-            $sharedId = status_shared_id_from_url($token);
+        $text = (string) preg_replace_callback(status_external_url_pattern(), static function (array $match): string {
+            [, $tail] = social_split_url_tail((string) ($match[0] ?? ''));
 
-            if ($sharedId < 1) {
-                continue;
-            }
+            return $tail;
+        }, $text);
 
-            $body = substr($text, 0, $position) . substr($text, $position + strlen($token));
-            $body = trim((string) preg_replace("/[ \t]{2,}/", ' ', $body));
-            $body = trim((string) preg_replace("/\n{3,}/", "\n\n", $body));
+        $text = (string) preg_replace('/[ \t]{2,}/', ' ', $text);
+        $text = (string) preg_replace('/\s+([.,;:!?])/u', '$1', $text);
+        $text = (string) preg_replace('/[ \t]+\R/u', "\n", $text);
+        $text = (string) preg_replace('/\R[ \t]+/u', "\n", $text);
+        $text = (string) preg_replace('/\R{3,}/u', "\n\n", $text);
 
-            return ['body' => $body, 'shared_content_id' => $sharedId];
-        }
-
-        return ['body' => $text, 'shared_content_id' => 0];
+        return trim($text);
     }
 }
 
@@ -1747,80 +1557,14 @@ if (!function_exists('normalize_mentions_for_storage')) {
 if (!function_exists('render_mentions')) {
     function render_mentions(string $text, bool $embeds = true, array $hiddenUrls = []): string
     {
-        $pattern = '~https?://[^\s<>"\']+~iu';
-        $offset = 0;
-        $html = '';
-        $hiddenMap = [];
-
-        foreach ($hiddenUrls as $hiddenUrl) {
-            $normalized = status_link_normalize_url((string) $hiddenUrl);
-
-            if ($normalized !== '') {
-                $hiddenMap[$normalized] = true;
-            }
-        }
-
-        if (!preg_match_all($pattern, $text, $matches, PREG_OFFSET_CAPTURE)) {
-            return render_mentions_segment($text);
-        }
-
-        foreach ($matches[0] as $match) {
-            $token = (string) $match[0];
-            $position = (int) $match[1];
-
-            $html .= render_mentions_segment(substr($text, $offset, $position - $offset));
-
-            [$url, $tail] = social_split_url_tail($token);
-            $normalizedUrl = status_link_normalize_url($url);
-            $embed = $embeds ? social_embed($url) : '';
-
-            if ($embed !== '') {
-                $html .= $embed;
-            } elseif ($embeds && $normalizedUrl !== '' && isset($hiddenMap[$normalizedUrl])) {
-                $html .= '';
-            } else {
-                $html .= render_url_link($url);
-            }
-
-            if ($tail !== '') {
-                $html .= render_mentions_segment($tail);
-            }
-
-            $offset = $position + strlen($token);
-        }
-
-        $html .= render_mentions_segment(substr($text, $offset));
-
-        return $html;
+        return render_mentions_segment(status_strip_external_urls($text));
     }
 }
 
 if (!function_exists('render_status_body')) {
     function render_status_body(array $item): string
     {
-        $contentId = (int) ($item['id'] ?? 0);
-        $hiddenUrls = [];
-
-        foreach (status_links($contentId) as $link) {
-            if (!status_link_has_card($link)) {
-                continue;
-            }
-
-            $url = status_link_normalize_url((string) ($link['url'] ?? ''));
-
-            if ($url !== '') {
-                $hiddenUrls[] = $url;
-            }
-        }
-
-        return trim(render_mentions((string) ($item['body'] ?? ''), true, $hiddenUrls));
-    }
-}
-
-if (!function_exists('render_url_link')) {
-    function render_url_link(string $url): string
-    {
-        return '<a class="url-link" href="' . e($url) . '" target="_blank" rel="noopener noreferrer">' . e($url) . '</a>';
+        return trim(render_mentions((string) ($item['body'] ?? ''), false));
     }
 }
 
@@ -1894,2626 +1638,6 @@ if (!function_exists('social_split_url_tail')) {
     }
 }
 
-if (!function_exists('social_embed')) {
-    function social_embed(string $url): string
-    {
-        $youtube = youtube_embed($url);
-
-        if ($youtube !== '') {
-            return $youtube;
-        }
-
-        $instagram = instagram_embed($url);
-
-        if ($instagram !== '') {
-            return $instagram;
-        }
-
-        $facebook = facebook_embed($url);
-
-        if ($facebook !== '') {
-            return $facebook;
-        }
-
-        return x_embed($url);
-    }
-}
-
-if (!function_exists('youtube_embed')) {
-    function youtube_embed(string $url): string
-    {
-        $data = youtube_embed_data($url);
-
-        if ($data === null) {
-            return '';
-        }
-
-        $classes = 'tc-social-embed tc-youtube-embed' . ((string) ($data['type'] ?? '') === 'short' ? ' is-short' : '');
-        $id = (string) ($data['id'] ?? '');
-        $thumbnail = 'https://img.youtube.com/vi/' . rawurlencode($id) . '/hqdefault.jpg';
-        $src = (string) ($data['src'] ?? '');
-        $label = t('common.video');
-
-        return '<div class="' . e($classes) . '">'
-            . '<button class="tc-youtube-preview" type="button" data-youtube-embed="' . e($src) . '" aria-label="' . e($label) . '">'
-            . '<img src="' . e($thumbnail) . '" alt="" loading="lazy">'
-            . '<span class="tc-youtube-play" aria-hidden="true">' . icon('play') . '</span>'
-            . '</button>'
-            . '</div>';
-    }
-}
-
-if (!function_exists('youtube_embed_data')) {
-    function youtube_embed_data(string $url): ?array
-    {
-        $parts = parse_url($url);
-
-        if (!is_array($parts)) {
-            return null;
-        }
-
-        $host = strtolower((string) ($parts['host'] ?? ''));
-        $host = preg_replace('/^(www\\.|m\\.)/', '', $host) ?? $host;
-        $path = trim((string) ($parts['path'] ?? ''), '/');
-        $query = [];
-        $id = '';
-        $type = 'video';
-
-        parse_str((string) ($parts['query'] ?? ''), $query);
-
-        if ($host === 'youtu.be') {
-            $id = (string) (explode('/', $path)[0] ?? '');
-        } elseif (in_array($host, ['youtube.com', 'youtube-nocookie.com'], true)) {
-            if ($path === 'watch') {
-                $id = (string) ($query['v'] ?? '');
-            } elseif (preg_match('~^(shorts|embed|live)/([^/?#]+)~', $path, $match)) {
-                $type = (string) ($match[1] ?? '') === 'shorts' ? 'short' : 'video';
-                $id = (string) ($match[2] ?? '');
-            }
-        }
-
-        if (!preg_match('/^[A-Za-z0-9_-]{6,32}$/', $id)) {
-            return null;
-        }
-
-        $src = 'https://www.youtube-nocookie.com/embed/' . rawurlencode($id);
-        $start = youtube_start_seconds($query);
-
-        if ($start > 0) {
-            $src .= '?start=' . $start;
-        }
-
-        return [
-            'id' => $id,
-            'src' => $src,
-            'type' => $type,
-        ];
-    }
-}
-
-if (!function_exists('youtube_start_seconds')) {
-    function youtube_start_seconds(array $query): int
-    {
-        $value = (string) ($query['start'] ?? $query['t'] ?? '');
-
-        if ($value === '') {
-            return 0;
-        }
-
-        if (ctype_digit($value)) {
-            return max(0, (int) $value);
-        }
-
-        preg_match_all('/(\\d+)\\s*([hms])/', strtolower($value), $matches, PREG_SET_ORDER);
-        $seconds = 0;
-
-        foreach ($matches as $match) {
-            $number = (int) ($match[1] ?? 0);
-            $unit = (string) ($match[2] ?? '');
-            $seconds += $unit === 'h' ? $number * 3600 : ($unit === 'm' ? $number * 60 : $number);
-        }
-
-        return max(0, $seconds);
-    }
-}
-
-if (!function_exists('instagram_embed')) {
-    function instagram_embed(string $url): string
-    {
-        $data = instagram_embed_data($url);
-
-        if ($data === null) {
-            return '';
-        }
-
-        $classes = 'tc-social-embed tc-instagram-embed' . ((string) ($data['type'] ?? '') === 'vertical' ? ' is-vertical' : '');
-
-        return '<div class="' . e($classes) . '">'
-            . '<iframe src="' . e((string) $data['src']) . '" title="' . e(t('common.instagram_post')) . '" loading="lazy" allowtransparency="true" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
-            . '</div>';
-    }
-}
-
-if (!function_exists('instagram_embed_data')) {
-    function instagram_embed_data(string $url): ?array
-    {
-        $parts = parse_url($url);
-
-        if (!is_array($parts)) {
-            return null;
-        }
-
-        $host = strtolower((string) ($parts['host'] ?? ''));
-        $host = preg_replace('/^(www\\.|m\\.)/', '', $host) ?? $host;
-
-        if ($host !== 'instagram.com') {
-            return null;
-        }
-
-        $segments = array_values(array_filter(explode('/', trim((string) ($parts['path'] ?? ''), '/')), static fn (string $segment): bool => $segment !== ''));
-        $kind = '';
-        $code = '';
-
-        foreach ($segments as $index => $segment) {
-            $candidate = strtolower((string) $segment);
-
-            if ($candidate === 'reels') {
-                $candidate = 'reel';
-            }
-
-            if (!in_array($candidate, ['p', 'reel', 'tv'], true)) {
-                continue;
-            }
-
-            $kind = $candidate;
-            $code = (string) ($segments[$index + 1] ?? '');
-            break;
-        }
-
-        if (!in_array($kind, ['p', 'reel', 'tv'], true) || !preg_match('/^[A-Za-z0-9_-]{5,80}$/', $code)) {
-            return null;
-        }
-
-        return [
-            'id' => $code,
-            'kind' => $kind,
-            'src' => 'https://www.instagram.com/' . rawurlencode($kind) . '/' . rawurlencode($code) . '/embed/',
-            'type' => $kind === 'reel' ? 'vertical' : 'post',
-        ];
-    }
-}
-
-if (!function_exists('x_embed')) {
-    function x_embed(string $url): string
-    {
-        $data = x_embed_data($url);
-
-        if ($data === null) {
-            return '';
-        }
-
-        return '<div class="tc-social-embed tc-x-embed">'
-            . '<iframe src="' . e((string) $data['src']) . '" title="' . e(t('common.x_post')) . '" loading="lazy" allow="clipboard-write; encrypted-media; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>'
-            . '</div>';
-    }
-}
-
-if (!function_exists('x_embed_data')) {
-    function x_embed_data(string $url): ?array
-    {
-        $parts = parse_url($url);
-
-        if (!is_array($parts)) {
-            return null;
-        }
-
-        $host = strtolower((string) ($parts['host'] ?? ''));
-        $host = preg_replace('/^(www\\.|m\\.|mobile\\.)/', '', $host) ?? $host;
-
-        if (!in_array($host, ['x.com', 'twitter.com'], true)) {
-            return null;
-        }
-
-        $segments = array_values(array_filter(explode('/', trim((string) ($parts['path'] ?? ''), '/')), static fn (string $segment): bool => $segment !== ''));
-        $id = '';
-
-        foreach ($segments as $index => $segment) {
-            if (in_array(strtolower($segment), ['status', 'statuses'], true)) {
-                $id = (string) ($segments[$index + 1] ?? '');
-                break;
-            }
-        }
-
-        if ($id === '' && ($segments[0] ?? '') === 'i' && ($segments[1] ?? '') === 'web' && ($segments[2] ?? '') === 'status') {
-            $id = (string) ($segments[3] ?? '');
-        }
-
-        if (!preg_match('/^[0-9]{5,30}$/', $id)) {
-            return null;
-        }
-
-        return [
-            'src' => 'https://platform.twitter.com/embed/Tweet.html?id=' . rawurlencode($id) . '&dnt=true',
-            'id' => $id,
-        ];
-    }
-}
-
-if (!function_exists('facebook_embed')) {
-    function facebook_embed(string $url): string
-    {
-        $data = facebook_embed_data($url);
-
-        if ($data === null) {
-            return '';
-        }
-
-        $classes = 'tc-social-embed tc-facebook-embed' . ((string) ($data['type'] ?? '') === 'video' ? ' is-video' : '');
-
-        return '<div class="' . e($classes) . '">'
-            . '<iframe src="' . e((string) $data['src']) . '" title="' . e(t('common.facebook_post')) . '" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>'
-            . '</div>';
-    }
-}
-
-if (!function_exists('facebook_embed_data')) {
-    function facebook_embed_data(string $url): ?array
-    {
-        $parts = parse_url($url);
-
-        if (!is_array($parts)) {
-            return null;
-        }
-
-        $host = strtolower((string) ($parts['host'] ?? ''));
-        $host = preg_replace('/^(www\.|m\.|mobile\.|web\.|mbasic\.)/', '', $host) ?? $host;
-
-        if (!in_array($host, ['facebook.com', 'fb.watch'], true)) {
-            return null;
-        }
-
-        $path = trim((string) ($parts['path'] ?? ''), '/');
-        $segments = array_values(array_filter(explode('/', $path), static fn (string $segment): bool => $segment !== ''));
-        $query = [];
-        $id = '';
-        $type = 'post';
-
-        parse_str((string) ($parts['query'] ?? ''), $query);
-
-        if ($host === 'fb.watch') {
-            $id = (string) ($segments[0] ?? '');
-            $type = 'video';
-        } elseif (in_array($path, ['permalink.php', 'story.php'], true)) {
-            $id = (string) ($query['story_fbid'] ?? $query['id'] ?? '');
-        } elseif ($path === 'photo.php') {
-            $id = (string) ($query['fbid'] ?? '');
-        } elseif ($path === 'watch' || ($segments[0] ?? '') === 'watch') {
-            $id = (string) ($query['v'] ?? $segments[1] ?? '');
-            $type = 'video';
-        } else {
-            foreach ($segments as $index => $segment) {
-                $candidate = strtolower(rawurldecode((string) $segment));
-                $next = (string) ($segments[$index + 1] ?? '');
-
-                if (in_array($candidate, ['posts', 'permalink'], true) && $next !== '') {
-                    $id = $next;
-                    $type = 'post';
-                    break;
-                }
-
-                if (in_array($candidate, ['videos', 'video'], true) && $next !== '') {
-                    $id = $next;
-                    $type = 'video';
-                    break;
-                }
-
-                if (in_array($candidate, ['reel', 'reels'], true) && $next !== '') {
-                    $id = $next;
-                    $type = 'video';
-                    break;
-                }
-
-                if ($candidate === 'share') {
-                    $kind = strtolower((string) ($segments[$index + 1] ?? ''));
-                    $shareId = (string) ($segments[$index + 2] ?? '');
-
-                    if ($shareId !== '') {
-                        $id = $shareId;
-                        $type = in_array($kind, ['v', 'video', 'watch', 'r', 'reel'], true) ? 'video' : 'post';
-                        break;
-                    }
-                }
-            }
-        }
-
-        $id = trim(rawurldecode($id));
-
-        if (!facebook_embed_id_valid($id)) {
-            return null;
-        }
-
-        $href = facebook_canonical_url($url, $type, $id, $segments, $query, $path, $host);
-
-        if ($href === '') {
-            return null;
-        }
-
-        $plugin = $type === 'video' ? 'video.php' : 'post.php';
-        $params = [
-            'href' => $href,
-            'width' => '500',
-        ];
-
-        if ($type === 'post') {
-            $params['show_text'] = 'true';
-        } else {
-            $params['show_text'] = 'false';
-        }
-
-        return [
-            'id' => plain_text_limit($id, 120),
-            'src' => 'https://www.facebook.com/plugins/' . $plugin . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986),
-            'href' => $href,
-            'type' => $type,
-        ];
-    }
-}
-
-if (!function_exists('facebook_canonical_url')) {
-    function facebook_canonical_url(string $url, string $type, string $id, array $segments, array $query, string $path, string $host): string
-    {
-        $encodedId = rawurlencode($id);
-
-        if ($host === 'fb.watch') {
-            return 'https://fb.watch/' . $encodedId . '/';
-        }
-
-        if ($type === 'video') {
-            foreach ($segments as $index => $segment) {
-                $candidate = strtolower(rawurldecode((string) $segment));
-
-                if (in_array($candidate, ['reel', 'reels'], true) && rawurldecode((string) ($segments[$index + 1] ?? '')) === $id) {
-                    return 'https://www.facebook.com/reel/' . $encodedId;
-                }
-            }
-
-            return 'https://www.facebook.com/watch/?v=' . $encodedId;
-        }
-
-        if (in_array($path, ['permalink.php', 'story.php'], true)) {
-            $params = ['story_fbid' => $id];
-            $owner = trim((string) ($query['id'] ?? ''));
-
-            if ($owner !== '') {
-                $params['id'] = plain_text_limit($owner, 120);
-            }
-
-            return 'https://www.facebook.com/permalink.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
-        }
-
-        if ($path === 'photo.php') {
-            return 'https://www.facebook.com/photo.php?fbid=' . $encodedId;
-        }
-
-        foreach ($segments as $index => $segment) {
-            $candidate = strtolower(rawurldecode((string) $segment));
-
-            if (in_array($candidate, ['posts', 'permalink'], true) && rawurldecode((string) ($segments[$index + 1] ?? '')) === $id) {
-                $owner = trim((string) ($segments[0] ?? ''));
-
-                return $owner !== ''
-                    ? 'https://www.facebook.com/' . rawurlencode($owner) . '/posts/' . $encodedId
-                    : 'https://www.facebook.com/permalink.php?story_fbid=' . $encodedId;
-            }
-
-            if ($candidate === 'share') {
-                $kind = strtolower((string) ($segments[$index + 1] ?? ''));
-
-                if (in_array($kind, ['p', 'post'], true)) {
-                    return 'https://www.facebook.com/share/p/' . $encodedId . '/';
-                }
-            }
-        }
-
-        return status_link_normalize_url($url, false);
-    }
-}
-
-if (!function_exists('facebook_embed_id_valid')) {
-    function facebook_embed_id_valid(string $id): bool
-    {
-        return preg_match('/^(pfbid[A-Za-z0-9_-]{8,}|[0-9]{5,30}|[A-Za-z0-9_-]{5,160})$/', $id) === 1;
-    }
-}
-
-if (!function_exists('status_link_source')) {
-    function status_link_source(string $url): string
-    {
-        if (status_link_image_extension($url) !== '') {
-            return 'image';
-        }
-
-        if (status_link_file_extension($url) !== '') {
-            return 'file';
-        }
-
-        $parts = parse_url($url);
-
-        if (!is_array($parts)) {
-            return 'web';
-        }
-
-        $host = strtolower((string) ($parts['host'] ?? ''));
-        $host = preg_replace('/^(www\\.|m\\.|mobile\\.)/', '', $host) ?? $host;
-
-        $sources = [
-            'youtube' => ['youtube.com', 'youtube-nocookie.com', 'youtu.be'],
-            'instagram' => ['instagram.com'],
-            'x' => ['x.com', 'twitter.com'],
-            'tiktok' => ['tiktok.com'],
-            'facebook' => ['facebook.com', 'fb.watch'],
-            'threads' => ['threads.net'],
-        ];
-
-        foreach ($sources as $source => $hosts) {
-            foreach ($hosts as $sourceHost) {
-                if ($host === $sourceHost || str_ends_with($host, '.' . $sourceHost)) {
-                    return $source;
-                }
-            }
-        }
-
-        return 'web';
-    }
-}
-
-if (!function_exists('status_link_source_label')) {
-    function status_link_source_label(string $source, string $url = ''): string
-    {
-        return match ($source) {
-            'youtube' => 'YouTube',
-            'instagram' => 'Instagram',
-            'x' => 'X',
-            'tiktok' => 'TikTok',
-            'facebook' => 'Facebook',
-            'threads' => 'Threads',
-            'image' => t('common.image', [], null, 'Image'),
-            'file' => t('common.file', [], null, 'File'),
-            default => status_link_host_label($url),
-        };
-    }
-}
-
-if (!function_exists('status_link_external_id')) {
-    function status_link_external_id(string $url, ?string $source = null): string
-    {
-        $source ??= status_link_source($url);
-
-        if (in_array($source, ['image', 'file'], true)) {
-            return status_link_file_name($url);
-        }
-
-        $data = match ($source) {
-            'youtube' => youtube_embed_data($url),
-            'instagram' => instagram_embed_data($url),
-            'x' => x_embed_data($url),
-            'facebook' => facebook_embed_data($url),
-            default => null,
-        };
-
-        if (is_array($data) && trim((string) ($data['id'] ?? '')) !== '') {
-            return plain_text_limit((string) $data['id'], 120);
-        }
-
-        if (in_array($source, ['tiktok', 'facebook', 'threads'], true)) {
-            $path = trim((string) (parse_url($url, PHP_URL_PATH) ?: ''), '/');
-
-            return plain_text_limit($path, 120);
-        }
-
-        return '';
-    }
-}
-
-if (!function_exists('status_link_image_extensions')) {
-    function status_link_image_extensions(): array
-    {
-        return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'heic', 'heif'];
-    }
-}
-
-if (!function_exists('status_link_image_extension')) {
-    function status_link_image_extension(string $url): string
-    {
-        $path = (string) (parse_url($url, PHP_URL_PATH) ?: '');
-        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-
-        return in_array($extension, status_link_image_extensions(), true) ? $extension : '';
-    }
-}
-
-if (!function_exists('status_link_file_extensions')) {
-    function status_link_file_extensions(): array
-    {
-        return [
-            'pdf', 'zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz',
-            'exe', 'msi', 'dmg', 'pkg', 'apk', 'ipa',
-            'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-            'odt', 'ods', 'odp', 'rtf', 'txt', 'csv',
-            'json', 'xml', 'ics', 'epub',
-        ];
-    }
-}
-
-if (!function_exists('status_link_file_extension')) {
-    function status_link_file_extension(string $url): string
-    {
-        $path = (string) (parse_url($url, PHP_URL_PATH) ?: '');
-        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-
-        return in_array($extension, status_link_file_extensions(), true) ? $extension : '';
-    }
-}
-
-if (!function_exists('status_link_file_name')) {
-    function status_link_file_name(string $url): string
-    {
-        $path = (string) (parse_url($url, PHP_URL_PATH) ?: '');
-        $name = trim(rawurldecode((string) basename($path)));
-
-        return plain_text_limit($name !== '' && $name !== '.' && $name !== '/' ? $name : status_link_host_label($url), 255);
-    }
-}
-
-if (!function_exists('status_link_image_meta')) {
-    function status_link_image_meta(string $url): array
-    {
-        $extension = status_link_image_extension($url);
-        $name = status_link_file_name($url);
-        $host = status_link_host_label($url);
-        $type = $extension !== '' ? strtoupper($extension) : t('common.image', [], null, 'Image');
-
-        return [
-            'title' => $name,
-            'description' => trim($type . ($host !== '' ? ' - ' . $host : '')),
-            'image_url' => $url,
-            'site_name' => t('common.image', [], null, 'Image'),
-            'external_id' => $name,
-        ];
-    }
-}
-
-if (!function_exists('status_link_file_meta')) {
-    function status_link_file_meta(string $url): array
-    {
-        $extension = status_link_file_extension($url);
-        $name = status_link_file_name($url);
-        $host = status_link_host_label($url);
-        $type = $extension !== '' ? strtoupper($extension) : t('common.file', [], null, 'File');
-
-        return [
-            'title' => $name,
-            'description' => trim($type . ($host !== '' ? ' - ' . $host : '')),
-            'image_url' => '',
-            'site_name' => t('common.file', [], null, 'File'),
-            'external_id' => $name,
-        ];
-    }
-}
-
-if (!function_exists('status_link_embed_url')) {
-    function status_link_embed_url(string $url, ?string $source = null): string
-    {
-        $source ??= status_link_source($url);
-        $data = match ($source) {
-            'youtube' => youtube_embed_data($url),
-            'instagram' => instagram_embed_data($url),
-            'x' => x_embed_data($url),
-            'facebook' => facebook_embed_data($url),
-            default => null,
-        };
-
-        return is_array($data) ? status_link_normalize_url((string) ($data['src'] ?? ''), false) : '';
-    }
-}
-
-if (!function_exists('status_preview_links_from_text')) {
-    function status_preview_links_from_text(string $text, int $limit = 3): array
-    {
-        $limit = max(1, min(10, $limit));
-
-        if (!preg_match_all('~https?://[^\s<>"\']+~iu', $text, $matches)) {
-            return [];
-        }
-
-        $links = [];
-
-        foreach ((array) ($matches[0] ?? []) as $token) {
-            [$url] = social_split_url_tail((string) $token);
-            $url = status_link_normalize_url($url);
-
-            if ($url === '' || isset($links[$url]) || status_internal_url($url)) {
-                continue;
-            }
-
-            $links[$url] = $url;
-
-            if (count($links) >= $limit) {
-                break;
-            }
-        }
-
-        return array_values($links);
-    }
-}
-
-if (!function_exists('status_link_normalize_url')) {
-    function status_link_normalize_url(string $url, bool $canonicalSocial = true): string
-    {
-        $url = trim($url);
-        $parts = parse_url($url);
-
-        if (!is_array($parts)) {
-            return '';
-        }
-
-        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
-        $host = strtolower((string) ($parts['host'] ?? ''));
-
-        if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
-            return '';
-        }
-
-        $port = isset($parts['port']) ? (int) $parts['port'] : null;
-        $portPart = $port !== null && !(($scheme === 'http' && $port === 80) || ($scheme === 'https' && $port === 443))
-            ? ':' . $port
-            : '';
-        $path = (string) ($parts['path'] ?? '');
-        $path = $path === '' ? '/' : $path;
-        $queryString = status_link_clean_query((string) ($parts['query'] ?? ''));
-        $query = $queryString !== '' ? '?' . $queryString : '';
-
-        $normalized = $scheme . '://' . $host . $portPart . $path . $query;
-
-        if ($canonicalSocial) {
-            $canonical = status_link_social_canonical_url($normalized);
-
-            if ($canonical !== '') {
-                return $canonical;
-            }
-        }
-
-        return $normalized;
-    }
-}
-
-if (!function_exists('status_link_tracking_query_keys')) {
-    function status_link_tracking_query_keys(): array
-    {
-        return [
-            '__cft__',
-            '__tn__',
-            '_hsenc',
-            '_hsmi',
-            'dclid',
-            'fb_action_ids',
-            'fb_action_types',
-            'fb_source',
-            'fbclid',
-            'gclid',
-            'gclsrc',
-            'igsh',
-            'igshid',
-            'li_fat_id',
-            'mc_cid',
-            'mc_eid',
-            'mibextid',
-            'mkt_tok',
-            'msclkid',
-            'noredirect',
-            'pk_campaign',
-            'pk_kwd',
-            'spm',
-            'ttclid',
-            'twclid',
-            'vero_id',
-            'yclid',
-        ];
-    }
-}
-
-if (!function_exists('status_link_tracking_query_key')) {
-    function status_link_tracking_query_key(string $key): bool
-    {
-        $key = strtolower(trim($key));
-        $baseKey = preg_replace('/\[.*$/', '', $key) ?? $key;
-
-        return $key !== ''
-            && (
-                str_starts_with($key, 'utm_')
-                || in_array($key, status_link_tracking_query_keys(), true)
-                || in_array($baseKey, status_link_tracking_query_keys(), true)
-            );
-    }
-}
-
-if (!function_exists('status_link_clean_query')) {
-    function status_link_clean_query(string $query): string
-    {
-        $query = trim($query);
-
-        if ($query === '') {
-            return '';
-        }
-
-        $kept = [];
-
-        foreach (preg_split('/[&;]/', $query) ?: [] as $part) {
-            $part = trim((string) $part);
-
-            if ($part === '') {
-                continue;
-            }
-
-            [$key] = array_pad(explode('=', $part, 2), 2, '');
-            $key = rawurldecode(str_replace('+', ' ', (string) $key));
-
-            if (status_link_tracking_query_key($key)) {
-                continue;
-            }
-
-            $kept[] = $part;
-        }
-
-        return implode('&', $kept);
-    }
-}
-
-if (!function_exists('status_link_social_canonical_url')) {
-    function status_link_social_canonical_url(string $url): string
-    {
-        $source = status_link_source($url);
-
-        if ($source === 'youtube') {
-            $data = youtube_embed_data($url);
-
-            if (is_array($data) && trim((string) ($data['id'] ?? '')) !== '') {
-                $id = rawurlencode((string) $data['id']);
-
-                return (string) ($data['type'] ?? '') === 'short'
-                    ? 'https://www.youtube.com/shorts/' . $id
-                    : 'https://www.youtube.com/watch?v=' . $id;
-            }
-        }
-
-        if ($source === 'instagram') {
-            $data = instagram_embed_data($url);
-
-            if (is_array($data) && trim((string) ($data['id'] ?? '')) !== '') {
-                $type = (string) ($data['kind'] ?? '');
-                $type = in_array($type, ['p', 'reel', 'tv'], true) ? $type : ((string) ($data['type'] ?? '') === 'vertical' ? 'reel' : 'p');
-
-                return 'https://www.instagram.com/' . $type . '/' . rawurlencode((string) $data['id']) . '/';
-            }
-        }
-
-        if ($source === 'x') {
-            $data = x_embed_data($url);
-
-            if (is_array($data) && trim((string) ($data['id'] ?? '')) !== '') {
-                return 'https://x.com/i/status/' . rawurlencode((string) $data['id']);
-            }
-        }
-
-        if ($source === 'facebook') {
-            $data = facebook_embed_data($url);
-
-            if (is_array($data) && trim((string) ($data['href'] ?? '')) !== '') {
-                return (string) $data['href'];
-            }
-        }
-
-        if (in_array($source, ['tiktok', 'threads'], true)) {
-            return status_link_social_path_canonical_url($url, $source);
-        }
-
-        return '';
-    }
-}
-
-if (!function_exists('status_link_social_path_canonical_url')) {
-    function status_link_social_path_canonical_url(string $url, string $source): string
-    {
-        $parts = parse_url($url);
-
-        if (!is_array($parts)) {
-            return '';
-        }
-
-        $scheme = strtolower((string) ($parts['scheme'] ?? 'https'));
-        $path = (string) ($parts['path'] ?? '');
-
-        if (!in_array($scheme, ['http', 'https'], true) || $path === '') {
-            return '';
-        }
-
-        $host = match ($source) {
-            'tiktok' => 'www.tiktok.com',
-            'threads' => 'www.threads.net',
-            default => '',
-        };
-
-        return $host !== '' ? 'https://' . $host . $path : '';
-    }
-}
-
-if (!function_exists('status_link_url_allowed')) {
-    function status_link_url_allowed(string $url): bool
-    {
-        $parts = parse_url($url);
-
-        if (!is_array($parts)) {
-            return false;
-        }
-
-        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
-        $host = strtolower(trim((string) ($parts['host'] ?? ''), '[]'));
-
-        if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
-            return false;
-        }
-
-        if (in_array($host, ['localhost', 'localhost.localdomain'], true) || str_ends_with($host, '.local')) {
-            return false;
-        }
-
-        if (moderation_blocked_domain_for_url($url) !== null) {
-            return false;
-        }
-
-        $ips = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : (gethostbynamel($host) ?: []);
-
-        if ($ips === []) {
-            return false;
-        }
-
-        foreach ($ips as $ip) {
-            if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-}
-
-if (!function_exists('status_link_fetch_meta')) {
-    function status_link_fetch_meta(string $url): array
-    {
-        $source = status_link_source($url);
-        $meta = [
-            'url' => $url,
-            'final_url' => $url,
-            'title' => '',
-            'description' => '',
-            'image_url' => '',
-            'site_name' => status_link_source_label($source, $url),
-            'source' => $source,
-            'external_id' => status_link_external_id($url, $source),
-            'embed_url' => status_link_embed_url($url, $source),
-        ];
-
-        if ($source === 'image') {
-            return array_replace($meta, status_link_image_meta($url));
-        }
-
-        if ($source === 'file') {
-            return array_replace($meta, status_link_file_meta($url));
-        }
-
-        if ($source !== 'web') {
-            foreach (status_link_oembed_meta($url, $source) as $key => $value) {
-                if ((string) $value !== '') {
-                    $meta[$key] = $value;
-                }
-            }
-        }
-
-        if (!status_link_url_allowed($url)) {
-            return $meta;
-        }
-
-        $response = status_link_http_get($url);
-        $html = (string) ($response['html'] ?? '');
-        $finalUrl = status_link_normalize_url((string) ($response['url'] ?? $url));
-
-        if ($finalUrl !== '') {
-            $meta['final_url'] = $finalUrl;
-            $meta['site_name'] = status_link_host_label($finalUrl);
-        }
-
-        if ($html === '') {
-            return $meta;
-        }
-
-        foreach (status_link_parse_meta($html, (string) $meta['final_url']) as $key => $value) {
-            if ((string) ($meta[$key] ?? '') === '' && (string) $value !== '') {
-                $meta[$key] = $value;
-            }
-        }
-
-        return $meta;
-    }
-}
-
-if (!function_exists('status_link_oembed_meta')) {
-    function status_link_oembed_meta(string $url, string $source): array
-    {
-        $endpoint = status_link_oembed_url($url, $source);
-
-        if ($endpoint === '') {
-            return [];
-        }
-
-        $data = status_link_http_json($endpoint);
-
-        if ($data === []) {
-            return [];
-        }
-
-        $htmlText = status_link_clean_text((string) ($data['html'] ?? ''), 500);
-        $title = (string) ($data['title'] ?? '');
-        $author = (string) ($data['author_name'] ?? '');
-        $provider = (string) ($data['provider_name'] ?? '');
-        $description = trim($author !== '' ? $author : $htmlText);
-
-        if ($title === '' && $htmlText !== '') {
-            $title = $htmlText;
-        }
-
-        return [
-            'title' => status_link_clean_text($title, 255),
-            'description' => status_link_clean_text($description, 500),
-            'image_url' => status_link_normalize_url((string) ($data['thumbnail_url'] ?? '')),
-            'site_name' => status_link_clean_text($provider, 120) ?: status_link_source_label($source, $url),
-        ];
-    }
-}
-
-if (!function_exists('status_link_oembed_url')) {
-    function status_link_oembed_url(string $url, string $source): string
-    {
-        $encoded = rawurlencode($url);
-
-        return match ($source) {
-            'youtube' => 'https://www.youtube.com/oembed?format=json&url=' . $encoded,
-            'instagram' => 'https://api.instagram.com/oembed?url=' . $encoded,
-            'x' => 'https://publish.twitter.com/oembed?omit_script=1&dnt=1&url=' . $encoded,
-            default => '',
-        };
-    }
-}
-
-if (!function_exists('status_link_http_json')) {
-    function status_link_http_json(string $url): array
-    {
-        if (!status_link_url_allowed($url)) {
-            return [];
-        }
-
-        $response = status_link_http_request($url, 'application/json,text/json;q=0.9,*/*;q=0.2');
-        $status = (int) ($response['status'] ?? 0);
-        $body = trim((string) ($response['body'] ?? ''));
-
-        if ($status < 200 || $status >= 300 || $body === '') {
-            return [];
-        }
-
-        try {
-            $data = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-        } catch (Throwable) {
-            return [];
-        }
-
-        return is_array($data) ? $data : [];
-    }
-}
-
-if (!function_exists('status_link_http_get')) {
-    function status_link_http_get(string $url): array
-    {
-        $current = $url;
-
-        for ($attempt = 0; $attempt < 4; $attempt++) {
-            if (!status_link_url_allowed($current)) {
-                return ['html' => '', 'url' => $current];
-            }
-
-            $response = status_link_http_request($current);
-            $status = (int) ($response['status'] ?? 0);
-            $headers = (string) ($response['headers'] ?? '');
-            $body = (string) ($response['body'] ?? '');
-            $type = strtolower((string) ($response['content_type'] ?? ''));
-
-            if ($status >= 300 && $status < 400 && preg_match('/^location:\s*(.+)$/im', $headers, $match) === 1) {
-                $next = status_link_absolute_url(trim((string) ($match[1] ?? '')), $current);
-
-                if ($next === '' || $next === $current) {
-                    break;
-                }
-
-                $current = $next;
-                continue;
-            }
-
-            if ($status >= 200 && $status < 300 && ($type === '' || str_contains($type, 'text/html') || str_contains(strtolower(substr($body, 0, 2048)), '<html'))) {
-                return [
-                    'html' => substr($body, 0, 262144),
-                    'url' => $current,
-                ];
-            }
-
-            break;
-        }
-
-        return ['html' => '', 'url' => $current];
-    }
-}
-
-if (!function_exists('status_link_http_request')) {
-    function status_link_http_request(string $url, string $accept = 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.2'): array
-    {
-        if (function_exists('curl_init')) {
-            $handle = curl_init($url);
-
-            if ($handle !== false) {
-                curl_setopt_array($handle, [
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_HEADER => true,
-                    CURLOPT_FOLLOWLOCATION => false,
-                    CURLOPT_CONNECTTIMEOUT => 3,
-                    CURLOPT_TIMEOUT => 5,
-                    CURLOPT_USERAGENT => 'TinyCat link preview',
-                    CURLOPT_HTTPHEADER => ['Accept: ' . $accept],
-                    CURLOPT_ENCODING => '',
-                ]);
-
-                $raw = curl_exec($handle);
-                $status = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
-                $headerSize = (int) curl_getinfo($handle, CURLINFO_HEADER_SIZE);
-                $contentType = (string) curl_getinfo($handle, CURLINFO_CONTENT_TYPE);
-                curl_close($handle);
-
-                if (is_string($raw)) {
-                    return [
-                        'status' => $status,
-                        'headers' => substr($raw, 0, $headerSize),
-                        'body' => substr($raw, $headerSize, 262144),
-                        'content_type' => $contentType,
-                    ];
-                }
-            }
-        }
-
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'GET',
-                'timeout' => 5,
-                'ignore_errors' => true,
-                'header' => "User-Agent: TinyCat link preview\r\nAccept: " . $accept . "\r\n",
-            ],
-        ]);
-        $handle = @fopen($url, 'rb', false, $context);
-
-        if (!is_resource($handle)) {
-            return ['status' => 0, 'headers' => '', 'body' => '', 'content_type' => ''];
-        }
-
-        $body = '';
-
-        while (!feof($handle) && strlen($body) < 262144) {
-            $body .= (string) fread($handle, 8192);
-        }
-
-        $meta = stream_get_meta_data($handle);
-        fclose($handle);
-
-        $headers = implode("\n", (array) ($meta['wrapper_data'] ?? []));
-        $status = preg_match('/\s(\d{3})\s/', $headers, $match) === 1 ? (int) ($match[1] ?? 0) : 0;
-        $contentType = preg_match('/^content-type:\s*(.+)$/im', $headers, $match) === 1 ? (string) ($match[1] ?? '') : '';
-
-        return [
-            'status' => $status,
-            'headers' => $headers,
-            'body' => substr($body, 0, 262144),
-            'content_type' => $contentType,
-        ];
-    }
-}
-
-if (!function_exists('status_link_parse_meta')) {
-    function status_link_parse_meta(string $html, string $baseUrl): array
-    {
-        $meta = [
-            'title' => '',
-            'description' => '',
-            'image_url' => '',
-            'site_name' => status_link_host_label($baseUrl),
-        ];
-
-        if (!class_exists('DOMDocument')) {
-            return $meta;
-        }
-
-        $previous = libxml_use_internal_errors(true);
-        $dom = new DOMDocument();
-        $loaded = $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html);
-        libxml_clear_errors();
-        libxml_use_internal_errors($previous);
-
-        if (!$loaded) {
-            return $meta;
-        }
-
-        $metaTags = [];
-
-        foreach ($dom->getElementsByTagName('meta') as $node) {
-            $key = strtolower((string) ($node->getAttribute('property') ?: $node->getAttribute('name')));
-            $value = (string) $node->getAttribute('content');
-
-            if ($key !== '' && $value !== '' && !isset($metaTags[$key])) {
-                $metaTags[$key] = $value;
-            }
-        }
-
-        $titleNode = $dom->getElementsByTagName('title')->item(0);
-        $title = $metaTags['og:title'] ?? $metaTags['twitter:title'] ?? ($titleNode ? (string) $titleNode->textContent : '');
-        $description = $metaTags['og:description'] ?? $metaTags['twitter:description'] ?? $metaTags['description'] ?? '';
-        $image = $metaTags['og:image'] ?? $metaTags['twitter:image'] ?? '';
-        $siteName = $metaTags['og:site_name'] ?? '';
-
-        $meta['title'] = status_link_clean_text($title, 255);
-        $meta['description'] = status_link_clean_text($description, 500);
-        $meta['site_name'] = status_link_clean_text($siteName, 120) ?: status_link_host_label($baseUrl);
-
-        if ($image !== '') {
-            $imageUrl = status_link_absolute_url($image, $baseUrl);
-
-            if (status_link_normalize_url($imageUrl) !== '') {
-                $meta['image_url'] = $imageUrl;
-            }
-        }
-
-        return $meta;
-    }
-}
-
-if (!function_exists('status_link_clean_text')) {
-    function status_link_clean_text(string $text, int $limit): string
-    {
-        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = (string) preg_replace('/\s+/u', ' ', strip_tags($text));
-
-        return plain_text_limit($text, $limit);
-    }
-}
-
-if (!function_exists('status_link_absolute_url')) {
-    function status_link_absolute_url(string $url, string $baseUrl): string
-    {
-        $url = trim(html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-
-        if ($url === '') {
-            return '';
-        }
-
-        if (status_link_normalize_url($url) !== '') {
-            return $url;
-        }
-
-        $base = parse_url($baseUrl);
-
-        if (!is_array($base) || empty($base['scheme']) || empty($base['host'])) {
-            return '';
-        }
-
-        $origin = strtolower((string) $base['scheme']) . '://' . (string) $base['host'] . (isset($base['port']) ? ':' . (int) $base['port'] : '');
-
-        if (str_starts_with($url, '//')) {
-            return strtolower((string) $base['scheme']) . ':' . $url;
-        }
-
-        if (str_starts_with($url, '/')) {
-            return $origin . $url;
-        }
-
-        $path = (string) ($base['path'] ?? '/');
-        $directory = rtrim(str_replace('\\', '/', dirname($path)), '/');
-        $combined = ($directory !== '' ? $directory : '') . '/' . $url;
-        $segments = [];
-
-        foreach (explode('/', $combined) as $segment) {
-            if ($segment === '' || $segment === '.') {
-                continue;
-            }
-
-            if ($segment === '..') {
-                array_pop($segments);
-                continue;
-            }
-
-            $segments[] = $segment;
-        }
-
-        return $origin . '/' . implode('/', $segments);
-    }
-}
-
-if (!function_exists('status_link_host_label')) {
-    function status_link_host_label(string $url): string
-    {
-        $host = strtolower((string) (parse_url($url, PHP_URL_HOST) ?: ''));
-        $host = preg_replace('/^www\\./', '', $host) ?? $host;
-
-        return $host;
-    }
-}
-
-if (!function_exists('status_sync_links')) {
-    function status_sync_links(int $contentId, string $body): void
-    {
-        if ($contentId < 1) {
-            return;
-        }
-
-        $urls = status_preview_links_from_text($body, 3);
-        $linkIds = [];
-
-        foreach ($urls as $position => $url) {
-            if (moderation_blocked_domain_for_url($url) !== null) {
-                continue;
-            }
-
-            $linkId = status_link_id($url);
-
-            if ($linkId < 1) {
-                continue;
-            }
-
-            $linkIds[] = $linkId;
-            $existing = one(
-                'SELECT content_id FROM content_links WHERE content_id = ? AND link_id = ? LIMIT 1',
-                [$contentId, $linkId]
-            );
-
-            if ($existing !== null) {
-                update('content_links', [
-                    'position' => $position,
-                ], ['content_id' => $contentId, 'link_id' => $linkId]);
-                continue;
-            }
-
-            try {
-                insert('content_links', [
-                    'content_id' => $contentId,
-                    'link_id' => $linkId,
-                    'position' => $position,
-                    'created_at' => date_db(),
-                ]);
-            } catch (Throwable) {
-                update('content_links', [
-                    'position' => $position,
-                ], ['content_id' => $contentId, 'link_id' => $linkId]);
-            }
-        }
-
-        $linkIds = array_values(array_unique($linkIds));
-
-        if ($linkIds === []) {
-            delete('content_links', ['content_id' => $contentId]);
-            return;
-        }
-
-        $placeholders = implode(', ', array_fill(0, count($linkIds), '?'));
-        run(
-            'DELETE FROM content_links WHERE content_id = ? AND link_id NOT IN (' . $placeholders . ')',
-            array_merge([$contentId], $linkIds)
-        );
-    }
-}
-
-if (!function_exists('status_link_id')) {
-    function status_link_id(string $url): int
-    {
-        $url = status_link_normalize_url($url);
-
-        if ($url === '') {
-            return 0;
-        }
-
-        if (!status_link_url_allowed($url)) {
-            return 0;
-        }
-
-        $hash = hash('sha256', $url);
-        $link = one('SELECT * FROM links WHERE url_hash = ? LIMIT 1', [$hash]);
-
-        if ($link !== null) {
-            $id = (int) ($link['id'] ?? 0);
-
-            if ($id > 0) {
-                $canonicalId = status_link_existing_canonical_id($link, $url);
-
-                if ($canonicalId > 0 && $canonicalId !== $id) {
-                    return $canonicalId;
-                }
-            }
-
-            if ($id > 0 && status_link_should_refresh((string) ($link['fetched_at'] ?? ''))) {
-                status_link_refresh($id, $url);
-            }
-
-            return $id;
-        }
-
-        $source = status_link_source($url);
-        $externalId = status_link_external_id($url, $source);
-
-        if (status_link_can_reuse_external_id($source, $externalId)) {
-            $link = one(
-                'SELECT * FROM links WHERE source = ? AND external_id = ? ORDER BY id ASC LIMIT 1',
-                [$source, $externalId]
-            );
-
-            if ($link !== null) {
-                $id = (int) ($link['id'] ?? 0);
-
-                if ($id > 0) {
-                    $id = status_link_update_canonical_url($id, $url, $hash);
-
-                    if (status_link_should_refresh((string) ($link['fetched_at'] ?? ''))) {
-                        status_link_refresh($id, $url);
-                    }
-
-                    return $id;
-                }
-            }
-        }
-
-        $meta = status_link_fetch_meta($url);
-        $storageUrl = status_link_storage_url($url, $meta);
-
-        if ($storageUrl === '') {
-            return 0;
-        }
-
-        if ($storageUrl !== $url) {
-            $storageHash = hash('sha256', $storageUrl);
-            $link = one('SELECT * FROM links WHERE url_hash = ? LIMIT 1', [$storageHash]);
-
-            if ($link !== null) {
-                $id = (int) ($link['id'] ?? 0);
-
-                if ($id > 0) {
-                    if (status_link_should_refresh((string) ($link['fetched_at'] ?? ''))) {
-                        status_link_refresh($id, $storageUrl);
-                    }
-
-                    return $id;
-                }
-            }
-
-            $url = $storageUrl;
-            $hash = $storageHash;
-        }
-
-        $now = date_db();
-
-        try {
-            return (int) insert('links', status_link_data($url, $meta, $now, true) + [
-                'url_hash' => $hash,
-            ]);
-        } catch (Throwable) {
-            $link = one('SELECT id FROM links WHERE url_hash = ? LIMIT 1', [$hash]);
-
-            return (int) ($link['id'] ?? 0);
-        }
-    }
-}
-
-if (!function_exists('status_link_existing_canonical_id')) {
-    function status_link_existing_canonical_id(array $link, string $fallbackUrl): int
-    {
-        $id = (int) ($link['id'] ?? 0);
-        $url = status_link_normalize_url((string) ($link['url'] ?? $fallbackUrl));
-
-        if ($id < 1 || $url === '') {
-            return 0;
-        }
-
-        $storageUrl = status_link_storage_url($url, $link);
-
-        if ($storageUrl === '' || $storageUrl === $url) {
-            return $id;
-        }
-
-        $hash = hash('sha256', $storageUrl);
-        $existing = one('SELECT id FROM links WHERE url_hash = ? LIMIT 1', [$hash]);
-        $existingId = (int) ($existing['id'] ?? 0);
-
-        if ($existingId > 0) {
-            if ($existingId !== $id) {
-                status_link_merge_duplicate_metadata($existingId, $link);
-            }
-
-            return $existingId;
-        }
-
-        return status_link_update_canonical_url($id, $storageUrl, $hash);
-    }
-}
-
-if (!function_exists('status_link_storage_url')) {
-    function status_link_storage_url(string $url, array $meta): string
-    {
-        $source = (string) ($meta['source'] ?? status_link_source($url));
-
-        if ($source !== 'web') {
-            return status_link_normalize_url($url);
-        }
-
-        if (!status_link_has_preview_meta($meta)) {
-            return '';
-        }
-
-        $finalUrl = status_link_normalize_url((string) ($meta['final_url'] ?? ''), false);
-
-        if ($finalUrl !== '' && status_link_url_allowed($finalUrl)) {
-            return $finalUrl;
-        }
-
-        return status_link_normalize_url($url, false);
-    }
-}
-
-if (!function_exists('status_link_has_preview_meta')) {
-    function status_link_has_preview_meta(array $meta): bool
-    {
-        return trim((string) ($meta['title'] ?? '')) !== ''
-            || trim((string) ($meta['description'] ?? '')) !== ''
-            || trim((string) ($meta['image_url'] ?? '')) !== '';
-    }
-}
-
-if (!function_exists('status_link_can_reuse_external_id')) {
-    function status_link_can_reuse_external_id(string $source, string $externalId): bool
-    {
-        return $externalId !== ''
-            && in_array($source, ['youtube', 'instagram', 'x', 'facebook', 'tiktok', 'threads'], true);
-    }
-}
-
-if (!function_exists('status_link_update_canonical_url')) {
-    function status_link_update_canonical_url(int $linkId, string $url, string $hash): int
-    {
-        if ($linkId < 1 || $url === '' || $hash === '') {
-            return $linkId;
-        }
-
-        try {
-            update('links', [
-                'url' => $url,
-                'final_url' => $url,
-                'url_hash' => $hash,
-                'updated_at' => date_db(),
-            ], ['id' => $linkId]);
-        } catch (Throwable) {
-            $existing = one('SELECT id FROM links WHERE url_hash = ? LIMIT 1', [$hash]);
-            $existingId = (int) ($existing['id'] ?? 0);
-
-            if ($existingId > 0 && $existingId !== $linkId) {
-                $source = find('links', ['id' => $linkId]);
-
-                if ($source !== null) {
-                    status_link_merge_duplicate_metadata($existingId, $source);
-                }
-            }
-
-            return $existingId > 0 ? $existingId : $linkId;
-        }
-
-        return $linkId;
-    }
-}
-
-if (!function_exists('status_link_merge_duplicate_metadata')) {
-    function status_link_merge_duplicate_metadata(int $targetId, array $source): void
-    {
-        if ($targetId < 1) {
-            return;
-        }
-
-        $target = find('links', ['id' => $targetId]);
-
-        if ($target === null) {
-            return;
-        }
-
-        $data = [];
-
-        foreach (['title', 'description', 'image_url', 'site_name', 'embed_url'] as $column) {
-            $targetValue = trim((string) ($target[$column] ?? ''));
-            $sourceValue = trim((string) ($source[$column] ?? ''));
-
-            if ($targetValue === '' && $sourceValue !== '') {
-                $data[$column] = $sourceValue;
-            }
-        }
-
-        if (trim((string) ($target['final_url'] ?? '')) === '' && trim((string) ($source['final_url'] ?? '')) !== '') {
-            $data['final_url'] = (string) $source['final_url'];
-        }
-
-        if ($data === []) {
-            return;
-        }
-
-        $data['updated_at'] = date_db();
-
-        try {
-            update('links', $data, ['id' => $targetId]);
-        } catch (Throwable) {
-            // Metadata merge is a cleanup nicety and must not interrupt posting.
-        }
-    }
-}
-
-if (!function_exists('maintenance_cleanup_tasks')) {
-    function maintenance_cleanup_tasks(): array
-    {
-        return [
-            'normalize_links' => [
-                'icon' => 'link',
-                'label' => t('maintenance.tasks.normalize_links'),
-                'description' => t('maintenance.tasks.normalize_links_help'),
-            ],
-            'empty_web_links' => [
-                'icon' => 'delete',
-                'label' => t('maintenance.tasks.empty_web_links'),
-                'description' => t('maintenance.tasks.empty_web_links_help'),
-            ],
-            'orphan_links' => [
-                'icon' => 'database',
-                'label' => t('maintenance.tasks.orphan_links'),
-                'description' => t('maintenance.tasks.orphan_links_help'),
-            ],
-            'orphan_tag_relations' => [
-                'icon' => 'hash',
-                'label' => t('maintenance.tasks.orphan_tag_relations'),
-                'description' => t('maintenance.tasks.orphan_tag_relations_help'),
-            ],
-            'orphan_terms' => [
-                'icon' => 'hash',
-                'label' => t('maintenance.tasks.orphan_terms'),
-                'description' => t('maintenance.tasks.orphan_terms_help'),
-            ],
-            'old_action_limits' => [
-                'icon' => 'shield',
-                'label' => t('maintenance.tasks.old_action_limits'),
-                'description' => t('maintenance.tasks.old_action_limits_help'),
-            ],
-            'old_read_notifications' => [
-                'icon' => 'bell',
-                'label' => t('maintenance.tasks.old_read_notifications'),
-                'description' => t('maintenance.tasks.old_read_notifications_help'),
-            ],
-        ];
-    }
-}
-
-if (!function_exists('maintenance_cleanup_batch_size')) {
-    function maintenance_cleanup_batch_size(mixed $value = null): int
-    {
-        $size = $value === null
-            ? (int) config('maintenance.batch_size', 1000)
-            : (int) $value;
-
-        return max(100, min(5000, $size > 0 ? $size : 1000));
-    }
-}
-
-if (!function_exists('maintenance_cleanup_task_remaining')) {
-    function maintenance_cleanup_task_remaining(string $task): ?int
-    {
-        try {
-            return match ($task) {
-                'empty_web_links' => maintenance_cleanup_empty_web_links_count(),
-                'orphan_links' => maintenance_cleanup_orphan_links_count(),
-                'orphan_tag_relations' => maintenance_cleanup_orphan_tag_relations_count(),
-                'orphan_terms' => maintenance_cleanup_orphan_terms_count(),
-                'old_action_limits' => maintenance_cleanup_old_action_limits_count(),
-                'old_read_notifications' => maintenance_cleanup_old_read_notifications_count(),
-                default => null,
-            };
-        } catch (Throwable) {
-            return null;
-        }
-    }
-}
-
-if (!function_exists('maintenance_cleanup_run')) {
-    function maintenance_cleanup_run(array $selected, mixed $batchSize = null): array
-    {
-        $available = maintenance_cleanup_tasks();
-        $batchSize = maintenance_cleanup_batch_size($batchSize);
-        $selected = array_values(array_unique(array_filter(array_map(
-            static fn (mixed $task): string => trim((string) $task),
-            $selected
-        ), static fn (string $task): bool => isset($available[$task]))));
-
-        if ($selected === []) {
-            $selected = array_keys($available);
-        }
-
-        $results = [];
-
-        foreach ($selected as $task) {
-            $before = maintenance_cleanup_task_remaining($task);
-
-            try {
-                $result = match ($task) {
-                    'normalize_links' => maintenance_cleanup_normalize_links(),
-                    'empty_web_links' => maintenance_cleanup_empty_web_links($batchSize),
-                    'orphan_links' => maintenance_cleanup_orphan_links($batchSize),
-                    'orphan_tag_relations' => maintenance_cleanup_orphan_tag_relations($batchSize),
-                    'orphan_terms' => maintenance_cleanup_orphan_terms($batchSize),
-                    'old_action_limits' => maintenance_cleanup_old_action_limits(30, $batchSize),
-                    'old_read_notifications' => maintenance_cleanup_old_read_notifications(90, $batchSize),
-                    default => ['changed' => 0],
-                };
-            } catch (Throwable $exception) {
-                $result = [
-                    'changed' => 0,
-                    'error' => $exception->getMessage(),
-                ];
-            }
-
-            $after = maintenance_cleanup_task_remaining($task);
-
-            if ($before !== null) {
-                $result['before'] = $before;
-            }
-
-            if ($after !== null) {
-                $result['remaining'] = $after;
-                $result['done'] = $after === 0;
-            }
-
-            $result['batch_size'] = $batchSize;
-            $results[$task] = ['task' => $task] + $result;
-        }
-
-        return $results;
-    }
-}
-
-if (!function_exists('maintenance_cleanup_normalize_links')) {
-    function maintenance_cleanup_normalize_links(): array
-    {
-        $rows = all(
-            'SELECT l.*, COALESCE(link_uses.uses_count, 0) AS uses_count
-            FROM links l
-            LEFT JOIN (
-                SELECT link_id, COUNT(*) AS uses_count
-                FROM content_links
-                GROUP BY link_id
-            ) link_uses ON link_uses.link_id = l.id
-            ORDER BY l.id ASC'
-        );
-        $groups = [];
-        $normalized = 0;
-        $merged = 0;
-        $relations = 0;
-
-        foreach ($rows as $row) {
-            $canonical = maintenance_link_canonical_url($row);
-
-            if ($canonical === '') {
-                continue;
-            }
-
-            $source = status_link_source($canonical);
-            $externalId = status_link_external_id($canonical, $source);
-            $key = status_link_can_reuse_external_id($source, $externalId)
-                ? 'external:' . $source . ':' . $externalId
-                : 'url:' . $canonical;
-
-            $row['_canonical_url'] = $canonical;
-            $row['_canonical_hash'] = hash('sha256', $canonical);
-            $row['_source'] = $source;
-            $row['_external_id'] = $externalId;
-            $groups[$key][] = $row;
-        }
-
-        foreach ($groups as $group) {
-            if ($group === []) {
-                continue;
-            }
-
-            $target = maintenance_choose_link_target($group);
-            $targetId = (int) ($target['id'] ?? 0);
-            $canonical = (string) ($target['_canonical_url'] ?? '');
-
-            if ($targetId < 1 || $canonical === '') {
-                continue;
-            }
-
-            $newTargetId = maintenance_set_link_canonical($targetId, $canonical, $target);
-
-            if ($newTargetId !== $targetId) {
-                $merged++;
-                $targetId = $newTargetId;
-            } else {
-                $currentUrl = status_link_normalize_url((string) ($target['url'] ?? ''), false);
-                $currentHash = (string) ($target['url_hash'] ?? '');
-
-                if ($currentUrl !== $canonical || $currentHash !== hash('sha256', $canonical)) {
-                    $normalized++;
-                }
-            }
-
-            foreach ($group as $row) {
-                $sourceId = (int) ($row['id'] ?? 0);
-
-                if ($sourceId < 1 || $sourceId === $targetId) {
-                    continue;
-                }
-
-                $stats = maintenance_merge_link($targetId, $sourceId);
-                $merged += (int) ($stats['links_deleted'] ?? 0);
-                $relations += (int) ($stats['relations_moved'] ?? 0);
-            }
-        }
-
-        return [
-            'changed' => $normalized + $merged + $relations,
-            'normalized' => $normalized,
-            'merged' => $merged,
-            'relations_moved' => $relations,
-        ];
-    }
-}
-
-if (!function_exists('maintenance_link_canonical_url')) {
-    function maintenance_link_canonical_url(array $link): string
-    {
-        $url = status_link_normalize_url((string) ($link['url'] ?? ''));
-
-        if ($url === '') {
-            $url = status_link_normalize_url((string) ($link['final_url'] ?? ''));
-        }
-
-        if ($url === '') {
-            return '';
-        }
-
-        $source = (string) ($link['source'] ?? status_link_source($url));
-
-        if ($source === 'web') {
-            return status_link_storage_url($url, $link);
-        }
-
-        return status_link_normalize_url($url);
-    }
-}
-
-if (!function_exists('maintenance_choose_link_target')) {
-    function maintenance_choose_link_target(array $rows): array
-    {
-        usort($rows, static function (array $left, array $right): int {
-            $leftScore = maintenance_link_score($left);
-            $rightScore = maintenance_link_score($right);
-
-            if ($leftScore === $rightScore) {
-                return (int) ($left['id'] ?? 0) <=> (int) ($right['id'] ?? 0);
-            }
-
-            return $rightScore <=> $leftScore;
-        });
-
-        return (array) ($rows[0] ?? []);
-    }
-}
-
-if (!function_exists('maintenance_link_score')) {
-    function maintenance_link_score(array $row): int
-    {
-        $score = min(50, (int) ($row['uses_count'] ?? 0)) * 2;
-
-        foreach (['title' => 50, 'description' => 25, 'image_url' => 25, 'site_name' => 10, 'embed_url' => 10] as $column => $points) {
-            if (trim((string) ($row[$column] ?? '')) !== '') {
-                $score += $points;
-            }
-        }
-
-        return $score;
-    }
-}
-
-if (!function_exists('maintenance_set_link_canonical')) {
-    function maintenance_set_link_canonical(int $linkId, string $url, array $source = []): int
-    {
-        $url = status_link_normalize_url($url);
-
-        if ($linkId < 1 || $url === '') {
-            return $linkId;
-        }
-
-        $hash = hash('sha256', $url);
-        $existing = one('SELECT id FROM links WHERE url_hash = ? AND id <> ? LIMIT 1', [$hash, $linkId]);
-        $existingId = (int) ($existing['id'] ?? 0);
-
-        if ($existingId > 0) {
-            maintenance_merge_link($existingId, $linkId);
-            return $existingId;
-        }
-
-        $sourceName = status_link_source($url);
-        $data = [
-            'url' => $url,
-            'final_url' => $url,
-            'url_hash' => $hash,
-            'source' => $sourceName,
-            'external_id' => status_link_external_id($url, $sourceName),
-            'embed_url' => status_link_embed_url($url, $sourceName),
-            'updated_at' => date_db(),
-        ];
-
-        if ($data['embed_url'] === '' && trim((string) ($source['embed_url'] ?? '')) !== '') {
-            $data['embed_url'] = (string) $source['embed_url'];
-        }
-
-        update('links', $data, ['id' => $linkId]);
-
-        return $linkId;
-    }
-}
-
-if (!function_exists('maintenance_merge_link')) {
-    function maintenance_merge_link(int $targetId, int $sourceId): array
-    {
-        if ($targetId < 1 || $sourceId < 1 || $targetId === $sourceId) {
-            return ['relations_moved' => 0, 'links_deleted' => 0];
-        }
-
-        $source = find('links', ['id' => $sourceId]);
-
-        if ($source === null) {
-            return ['relations_moved' => 0, 'links_deleted' => 0];
-        }
-
-        status_link_merge_duplicate_metadata($targetId, $source);
-
-        $relations = 0;
-        $rows = all(
-            'SELECT content_id, position, created_at
-            FROM content_links
-            WHERE link_id = ?',
-            [$sourceId]
-        );
-
-        foreach ($rows as $row) {
-            try {
-                insert('content_links', [
-                    'content_id' => (int) ($row['content_id'] ?? 0),
-                    'link_id' => $targetId,
-                    'position' => (int) ($row['position'] ?? 0),
-                    'created_at' => (string) ($row['created_at'] ?? date_db()),
-                ]);
-                $relations++;
-            } catch (Throwable) {
-                // The target relation already exists, so only the duplicate row has to go away.
-            }
-        }
-
-        delete('content_links', ['link_id' => $sourceId]);
-        delete('links', ['id' => $sourceId]);
-
-        return ['relations_moved' => $relations, 'links_deleted' => 1];
-    }
-}
-
-if (!function_exists('maintenance_cleanup_empty_web_links_count')) {
-    function maintenance_cleanup_empty_web_links_count(): int
-    {
-        return (int) val(
-            "SELECT COUNT(*)
-            FROM links
-            WHERE source = ?
-                AND COALESCE(title, '') = ''
-                AND COALESCE(description, '') = ''
-                AND COALESCE(image_url, '') = ''",
-            ['web']
-        );
-    }
-}
-
-if (!function_exists('maintenance_cleanup_empty_web_links')) {
-    function maintenance_cleanup_empty_web_links(int $limit = 1000): array
-    {
-        $limit = maintenance_cleanup_batch_size($limit);
-        $rows = all(
-            "SELECT id
-            FROM links
-            WHERE source = ?
-                AND COALESCE(title, '') = ''
-                AND COALESCE(description, '') = ''
-                AND COALESCE(image_url, '') = ''
-            ORDER BY id ASC
-            LIMIT " . $limit,
-            ['web']
-        );
-        $deletedLinks = 0;
-        $deletedRelations = 0;
-
-        foreach ($rows as $row) {
-            $id = (int) ($row['id'] ?? 0);
-
-            if ($id < 1) {
-                continue;
-            }
-
-            $deletedRelations += delete('content_links', ['link_id' => $id]);
-            $deletedLinks += delete('links', ['id' => $id]);
-        }
-
-        return [
-            'changed' => $deletedLinks + $deletedRelations,
-            'links_deleted' => $deletedLinks,
-            'relations_deleted' => $deletedRelations,
-        ];
-    }
-}
-
-if (!function_exists('maintenance_cleanup_orphan_links_count')) {
-    function maintenance_cleanup_orphan_links_count(): int
-    {
-        return (int) val(
-            'SELECT COUNT(*)
-            FROM links
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM content_links cl
-                WHERE cl.link_id = links.id
-            )'
-        );
-    }
-}
-
-if (!function_exists('maintenance_cleanup_orphan_links')) {
-    function maintenance_cleanup_orphan_links(int $limit = 1000): array
-    {
-        $limit = maintenance_cleanup_batch_size($limit);
-        $rows = all(
-            'SELECT id
-            FROM links
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM content_links cl
-                WHERE cl.link_id = links.id
-            )
-            ORDER BY id ASC
-            LIMIT ' . $limit
-        );
-        $deleted = 0;
-
-        foreach ($rows as $row) {
-            $deleted += delete('links', ['id' => (int) ($row['id'] ?? 0)]);
-        }
-
-        return [
-            'changed' => $deleted,
-            'links_deleted' => $deleted,
-        ];
-    }
-}
-
-if (!function_exists('maintenance_cleanup_orphan_tag_relations_count')) {
-    function maintenance_cleanup_orphan_tag_relations_count(): int
-    {
-        return (int) val(
-            'SELECT COUNT(*)
-            FROM content_tags ct
-            LEFT JOIN content c ON c.id = ct.content_id
-            LEFT JOIN terms t ON t.id = ct.term_id
-            WHERE c.id IS NULL OR t.id IS NULL'
-        );
-    }
-}
-
-if (!function_exists('maintenance_cleanup_orphan_tag_relations')) {
-    function maintenance_cleanup_orphan_tag_relations(int $limit = 1000): array
-    {
-        $limit = maintenance_cleanup_batch_size($limit);
-        $rows = all(
-            'SELECT ct.content_id, ct.term_id
-            FROM content_tags ct
-            LEFT JOIN content c ON c.id = ct.content_id
-            LEFT JOIN terms t ON t.id = ct.term_id
-            WHERE c.id IS NULL OR t.id IS NULL
-            ORDER BY ct.content_id ASC, ct.term_id ASC
-            LIMIT ' . $limit
-        );
-        $deleted = 0;
-
-        foreach ($rows as $row) {
-            $deleted += delete('content_tags', [
-                'content_id' => (int) ($row['content_id'] ?? 0),
-                'term_id' => (int) ($row['term_id'] ?? 0),
-            ]);
-        }
-
-        return [
-            'changed' => $deleted,
-            'rows_deleted' => $deleted,
-        ];
-    }
-}
-
-if (!function_exists('maintenance_cleanup_orphan_terms_count')) {
-    function maintenance_cleanup_orphan_terms_count(): int
-    {
-        return (int) val(
-            'SELECT COUNT(*)
-            FROM terms t
-            LEFT JOIN content_tags ct ON ct.term_id = t.id
-            WHERE ct.term_id IS NULL'
-        );
-    }
-}
-
-if (!function_exists('maintenance_cleanup_orphan_terms')) {
-    function maintenance_cleanup_orphan_terms(int $limit = 1000): array
-    {
-        $limit = maintenance_cleanup_batch_size($limit);
-        $rows = all(
-            'SELECT t.id
-            FROM terms t
-            LEFT JOIN content_tags ct ON ct.term_id = t.id
-            WHERE ct.term_id IS NULL
-            ORDER BY t.id ASC
-            LIMIT ' . $limit
-        );
-        $deleted = 0;
-
-        foreach ($rows as $row) {
-            $deleted += delete('terms', ['id' => (int) ($row['id'] ?? 0)]);
-        }
-
-        return [
-            'changed' => $deleted,
-            'terms_deleted' => $deleted,
-        ];
-    }
-}
-
-if (!function_exists('maintenance_cleanup_old_action_limits_count')) {
-    function maintenance_cleanup_old_action_limits_count(int $days = 30): int
-    {
-        return (int) val(
-            'SELECT COUNT(*) FROM user_action_limits WHERE bucket_start < ?',
-            [date_db('-' . max(1, $days) . ' days')]
-        );
-    }
-}
-
-if (!function_exists('maintenance_cleanup_old_action_limits')) {
-    function maintenance_cleanup_old_action_limits(int $days = 30, int $limit = 1000): array
-    {
-        $limit = maintenance_cleanup_batch_size($limit);
-        $rows = all(
-            'SELECT id
-            FROM user_action_limits
-            WHERE bucket_start < ?
-            ORDER BY id ASC
-            LIMIT ' . $limit,
-            [date_db('-' . max(1, $days) . ' days')]
-        );
-        $deleted = 0;
-
-        foreach ($rows as $row) {
-            $deleted += delete('user_action_limits', ['id' => (int) ($row['id'] ?? 0)]);
-        }
-
-        return [
-            'changed' => $deleted,
-            'rows_deleted' => $deleted,
-        ];
-    }
-}
-
-if (!function_exists('maintenance_cleanup_old_read_notifications_count')) {
-    function maintenance_cleanup_old_read_notifications_count(int $days = 90): int
-    {
-        return (int) val(
-            'SELECT COUNT(*) FROM notifications WHERE read_at IS NOT NULL AND read_at < ?',
-            [date_db('-' . max(1, $days) . ' days')]
-        );
-    }
-}
-
-if (!function_exists('maintenance_cleanup_old_read_notifications')) {
-    function maintenance_cleanup_old_read_notifications(int $days = 90, int $limit = 1000): array
-    {
-        $limit = maintenance_cleanup_batch_size($limit);
-        $rows = all(
-            'SELECT id
-            FROM notifications
-            WHERE read_at IS NOT NULL AND read_at < ?
-            ORDER BY id ASC
-            LIMIT ' . $limit,
-            [date_db('-' . max(1, $days) . ' days')]
-        );
-        $deleted = 0;
-
-        foreach ($rows as $row) {
-            $deleted += delete('notifications', ['id' => (int) ($row['id'] ?? 0)]);
-        }
-
-        return [
-            'changed' => $deleted,
-            'rows_deleted' => $deleted,
-        ];
-    }
-}
-
-if (!function_exists('status_link_should_refresh')) {
-    function status_link_should_refresh(string $fetchedAt): bool
-    {
-        if ($fetchedAt === '') {
-            return true;
-        }
-
-        $timestamp = strtotime($fetchedAt);
-
-        if ($timestamp === false) {
-            return true;
-        }
-
-        return $timestamp < time() - 86400;
-    }
-}
-
-if (!function_exists('status_link_refresh')) {
-    function status_link_refresh(int $linkId, string $url): void
-    {
-        if ($linkId < 1) {
-            return;
-        }
-
-        $meta = status_link_fetch_meta($url);
-        $now = date_db();
-
-        update('links', status_link_data($url, $meta, $now), ['id' => $linkId]);
-    }
-}
-
-if (!function_exists('status_link_data')) {
-    function status_link_data(string $url, array $meta, string $now, bool $create = false): array
-    {
-        $source = (string) ($meta['source'] ?? status_link_source($url));
-        $data = [
-            'url' => $url,
-            'final_url' => (string) ($meta['final_url'] ?? $url),
-            'title' => (string) ($meta['title'] ?? ''),
-            'description' => (string) ($meta['description'] ?? ''),
-            'image_url' => (string) ($meta['image_url'] ?? ''),
-            'site_name' => (string) ($meta['site_name'] ?? status_link_source_label($source, $url)),
-            'fetched_at' => $now,
-            'updated_at' => $now,
-        ];
-
-        if ($create) {
-            $data['created_at'] = $now;
-        }
-
-        $data['source'] = $source;
-        $data['external_id'] = (string) ($meta['external_id'] ?? status_link_external_id($url, $source));
-        $data['embed_url'] = (string) ($meta['embed_url'] ?? status_link_embed_url($url, $source));
-
-        return $data;
-    }
-}
-
-if (!function_exists('status_links_cache')) {
-    function &status_links_cache(): array
-    {
-        static $cache = [];
-
-        return $cache;
-    }
-}
-
-if (!function_exists('status_links')) {
-    function status_links(int $contentId): array
-    {
-        if ($contentId < 1) {
-            return [];
-        }
-
-        $cache =& status_links_cache();
-
-        if (!array_key_exists($contentId, $cache)) {
-            $cache[$contentId] = all(
-                'SELECT l.*, cl.position
-                FROM content_links cl
-                INNER JOIN links l ON l.id = cl.link_id
-                WHERE cl.content_id = ?
-                ORDER BY cl.position ASC, l.id ASC',
-                [$contentId]
-            );
-        }
-
-        return $cache[$contentId];
-    }
-}
-
-if (!function_exists('status_preload_links')) {
-    function status_preload_links(array $contentIds): void
-    {
-        $contentIds = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
-
-        if ($contentIds === []) {
-            return;
-        }
-
-        $cache =& status_links_cache();
-        $missing = [];
-
-        foreach ($contentIds as $contentId) {
-            if (!array_key_exists($contentId, $cache)) {
-                $cache[$contentId] = [];
-                $missing[] = $contentId;
-            }
-        }
-
-        if ($missing === []) {
-            return;
-        }
-
-        $placeholders = implode(', ', array_fill(0, count($missing), '?'));
-
-        foreach (all(
-            'SELECT cl.content_id, l.*, cl.position
-            FROM content_links cl
-            INNER JOIN links l ON l.id = cl.link_id
-            WHERE cl.content_id IN (' . $placeholders . ')
-            ORDER BY cl.content_id ASC, cl.position ASC, l.id ASC',
-            $missing
-        ) as $row) {
-            $contentId = (int) ($row['content_id'] ?? 0);
-
-            if ($contentId > 0) {
-                $cache[$contentId][] = $row;
-            }
-        }
-    }
-}
-
-if (!function_exists('status_link_has_card')) {
-    function status_link_has_card(array $link): bool
-    {
-        $source = trim((string) ($link['source'] ?? ''));
-        $url = (string) ($link['url'] ?? '');
-        $source = $source !== '' ? $source : status_link_source($url);
-
-        if (!in_array($source, ['web', 'image', 'file'], true)) {
-            return false;
-        }
-
-        return trim((string) ($link['title'] ?? '')) !== ''
-            || trim((string) ($link['description'] ?? '')) !== ''
-            || trim((string) ($link['image_url'] ?? '')) !== '';
-    }
-}
-
-if (!function_exists('status_link_cards')) {
-    function status_link_cards(int $contentId): string
-    {
-        $links = array_values(array_filter(
-            status_links($contentId),
-            static fn (array $link): bool => status_link_has_card($link)
-        ));
-
-        if ($links === []) {
-            return '';
-        }
-
-        ob_start();
-        ?>
-        <div class="status-link-cards">
-            <?php foreach ($links as $link): ?>
-                <?php
-                $href = status_link_normalize_url((string) ($link['final_url'] ?? '')) ?: status_link_normalize_url((string) ($link['url'] ?? ''));
-                $imageUrl = status_link_normalize_url((string) ($link['image_url'] ?? ''));
-                $siteName = trim((string) ($link['site_name'] ?? '')) ?: status_link_host_label($href);
-                $title = trim((string) ($link['title'] ?? ''));
-                $description = trim((string) ($link['description'] ?? ''));
-                $source = trim((string) ($link['source'] ?? ''));
-                $sourceClass = $source !== '' ? ' is-' . e(slug($source)) : '';
-                $extension = in_array($source, ['image', 'file'], true)
-                    ? strtoupper(status_link_image_extension($href) ?: status_link_file_extension($href))
-                    : '';
-                ?>
-                <?php if ($href !== ''): ?>
-                    <a class="status-link-card<?= $sourceClass ?><?= $imageUrl !== '' ? ' has-image' : ' no-image' ?>" href="<?= e($href) ?>" target="_blank" rel="noopener noreferrer"<?= $extension !== '' ? ' data-file-extension="' . e($extension) . '"' : '' ?>>
-                        <?php if ($imageUrl !== ''): ?>
-                            <img class="status-link-image" src="<?= e($imageUrl) ?>" alt="" loading="lazy">
-                        <?php endif; ?>
-                        <span class="status-link-content">
-                            <?php if ($siteName !== ''): ?>
-                                <span class="status-link-site"><?= e($siteName) ?></span>
-                            <?php endif; ?>
-                            <?php if ($title !== ''): ?>
-                                <span class="status-link-title"><?= e($title) ?></span>
-                            <?php endif; ?>
-                            <?php if ($description !== ''): ?>
-                                <span class="status-link-description"><?= e($description) ?></span>
-                            <?php endif; ?>
-                            <span class="status-link-url"><?= e(status_link_host_label($href)) ?></span>
-                        </span>
-                    </a>
-                <?php endif; ?>
-            <?php endforeach; ?>
-        </div>
-        <?php
-
-        return trim((string) ob_get_clean());
-    }
-}
-
-if (!function_exists('status_shared_id_cache')) {
-    function &status_shared_id_cache(): array
-    {
-        static $cache = [];
-
-        return $cache;
-    }
-}
-
-if (!function_exists('status_shared_id')) {
-    function status_shared_id(int $contentId): int
-    {
-        if ($contentId < 1) {
-            return 0;
-        }
-
-        $cache =& status_shared_id_cache();
-
-        if (!array_key_exists($contentId, $cache)) {
-            $cache[$contentId] = (int) val(
-                'SELECT shared_content_id FROM content_shares WHERE content_id = ? LIMIT 1',
-                [$contentId]
-            );
-        }
-
-        return (int) $cache[$contentId];
-    }
-}
-
-if (!function_exists('status_preload_shared_ids')) {
-    function status_preload_shared_ids(array $contentIds): void
-    {
-        $contentIds = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
-
-        if ($contentIds === []) {
-            return;
-        }
-
-        $cache =& status_shared_id_cache();
-        $missing = [];
-
-        foreach ($contentIds as $contentId) {
-            if (!array_key_exists($contentId, $cache)) {
-                $cache[$contentId] = 0;
-                $missing[] = $contentId;
-            }
-        }
-
-        if ($missing === []) {
-            return;
-        }
-
-        $placeholders = implode(', ', array_fill(0, count($missing), '?'));
-
-        foreach (all(
-            'SELECT content_id, shared_content_id
-            FROM content_shares
-            WHERE content_id IN (' . $placeholders . ')',
-            $missing
-        ) as $row) {
-            $contentId = (int) ($row['content_id'] ?? 0);
-
-            if ($contentId > 0) {
-                $cache[$contentId] = (int) ($row['shared_content_id'] ?? 0);
-            }
-        }
-    }
-}
-
-if (!function_exists('status_share_count')) {
-    function status_share_count(int $contentId): int
-    {
-        static $cache = [];
-
-        if ($contentId < 1) {
-            return 0;
-        }
-
-        if (!array_key_exists($contentId, $cache)) {
-            $cache[$contentId] = (int) val(
-                'SELECT COUNT(*) FROM content_shares WHERE shared_content_id = ?',
-                [$contentId]
-            );
-        }
-
-        return (int) $cache[$contentId];
-    }
-}
-
-if (!function_exists('status_sync_share')) {
-    function status_sync_share(int $contentId, int $sharedContentId): void
-    {
-        if ($contentId < 1) {
-            return;
-        }
-
-        if ($sharedContentId < 1 || $sharedContentId === $contentId) {
-            delete('content_shares', ['content_id' => $contentId]);
-            return;
-        }
-
-        $existing = one('SELECT content_id FROM content_shares WHERE content_id = ? LIMIT 1', [$contentId]);
-        $data = [
-            'content_id' => $contentId,
-            'shared_content_id' => $sharedContentId,
-            'created_at' => date_db(),
-        ];
-
-        if ($existing !== null) {
-            update('content_shares', [
-                'shared_content_id' => $sharedContentId,
-            ], ['content_id' => $contentId]);
-            return;
-        }
-
-        insert('content_shares', $data);
-    }
-}
-
-if (!function_exists('status_shared_item_cache')) {
-    function &status_shared_item_cache(): array
-    {
-        static $cache = [];
-
-        return $cache;
-    }
-}
-
-if (!function_exists('status_shared_item')) {
-    function status_shared_item(array|int $item): ?array
-    {
-        $contentId = is_array($item) ? (int) ($item['id'] ?? 0) : (int) $item;
-        $sharedContentId = is_array($item) && array_key_exists('shared_content_id', $item)
-            ? (int) ($item['shared_content_id'] ?? 0)
-            : status_shared_id($contentId);
-
-        if ($sharedContentId < 1) {
-            return null;
-        }
-
-        $cache =& status_shared_item_cache();
-
-        if (!array_key_exists($sharedContentId, $cache)) {
-            $cache[$sharedContentId] = public_status_item($sharedContentId);
-        }
-
-        return $cache[$sharedContentId];
-    }
-}
-
-if (!function_exists('status_embedded_share_card')) {
-    function status_embedded_share_card(array $shared): string
-    {
-        $contentId = (int) ($shared['id'] ?? 0);
-        $authorId = (int) ($shared['author_id'] ?? $shared['user_id'] ?? 0);
-        $authorName = trim((string) ($shared['author_name'] ?? ''));
-        $avatarUrl = (string) ($shared['avatar_url'] ?? '');
-        $createdAt = (string) ($shared['created_at'] ?? '');
-        $bodyHtml = render_status_body($shared);
-
-        if ($contentId < 1) {
-            return '';
-        }
-
-        ob_start();
-        ?>
-        <article class="status-share-card">
-            <div class="status-share-header">
-                <a class="avatar avatar-sm" href="<?= e($authorId > 0 ? author_url($authorId) : status_url($contentId)) ?>" aria-label="<?= e($authorName) ?>">
-                    <?php if ($avatarUrl !== ''): ?>
-                        <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
-                    <?php else: ?>
-                        <?= icon('user') ?>
-                    <?php endif; ?>
-                </a>
-                <div class="status-share-author">
-                    <?php if ($authorId > 0 && $authorName !== ''): ?>
-                        <a href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
-                    <?php endif; ?>
-                    <?php if ($createdAt !== ''): ?>
-                        <a class="public-content-meta" href="<?= e(status_url($contentId)) ?>">
-                            <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
-                        </a>
-                    <?php endif; ?>
-                </div>
-                <a class="btn btn-ghost btn-icon btn-sm status-share-open" href="<?= e(status_url($contentId)) ?>" title="<?= et('account.status_permalink') ?>" aria-label="<?= et('account.status_permalink') ?>">
-                    <?= icon('link') ?>
-                </a>
-            </div>
-            <?php if ($bodyHtml !== ''): ?>
-                <div class="status-share-body"><?= $bodyHtml ?></div>
-            <?php endif; ?>
-            <?= status_link_cards($contentId) ?>
-        </article>
-        <?php
-
-        return trim((string) ob_get_clean());
-    }
-}
-
-if (!function_exists('status_share_card')) {
-    function status_share_card(array $item): string
-    {
-        $contentId = (int) ($item['id'] ?? 0);
-        $sharedContentId = (int) ($item['shared_content_id'] ?? 0);
-
-        if ($sharedContentId < 1) {
-            $sharedContentId = status_shared_id($contentId);
-        }
-
-        if ($sharedContentId < 1) {
-            return '';
-        }
-
-        $shared = status_shared_item($item);
-
-        if ($shared === null) {
-            return '<div class="status-share-card status-share-missing">' . e(t('account.status_share_unavailable')) . '</div>';
-        }
-
-        return status_embedded_share_card($shared);
-    }
-}
-
-if (!function_exists('public_author_find')) {
-    function public_author_find(int $id): ?array
-    {
-        if ($id < 1) {
-            return null;
-        }
-
-        return one(
-            'SELECT u.id, u.username, u.username AS name, u.website, u.bio, u.created_at,
-                u.avatar_url, u.last_login_at, u.last_seen_at, u.muted_until, u.muted_reason
-            FROM users u
-            WHERE u.id = ? AND u.status = ?
-            LIMIT 1',
-            [$id, 'active']
-        );
-    }
-}
-
 if (!function_exists('public_status_select_sql')) {
     function public_status_select_sql(): string
     {
@@ -4532,27 +1656,15 @@ if (!function_exists('public_status_select_sql')) {
                 u.bio AS author_bio,
                 u.avatar_url AS avatar_url,
                 (
-                    SELECT cs.shared_content_id
-                    FROM content_shares cs
-                    WHERE cs.content_id = c.id
-                    LIMIT 1
-                ) AS shared_content_id,
-                (
                     SELECT COUNT(*)
-                    FROM content_reactions cr_like
-                    WHERE cr_like.content_id = c.id
-                        AND cr_like.reaction = 'like'
+                    FROM content_likes cl
+                    WHERE cl.content_id = c.id
                 ) AS likes_count,
                 (
                     SELECT COUNT(*)
                     FROM content_comments cc
                     WHERE cc.content_id = c.id
-                ) AS comments_count,
-                (
-                    SELECT COUNT(*)
-                    FROM content_shares cs_count
-                    WHERE cs_count.shared_content_id = c.id
-                ) AS shares_count
+                ) AS comments_count
             FROM content c
             INNER JOIN users u ON u.id = c.author_id";
     }
@@ -4570,8 +1682,6 @@ if (!function_exists('public_status_id_query')) {
             FROM content c' . $feedIndex . '
             INNER JOIN users u ON u.id = c.author_id'
         )
-            ->where('c.status = ?', 'published')
-            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
             ->where('u.status = ?', 'active');
     }
 }
@@ -4588,8 +1698,6 @@ if (!function_exists('public_status_author_id_query')) {
             FROM content c' . $authorIndex . '
             INNER JOIN users u ON u.id = c.author_id'
         )
-            ->where('c.status = ?', 'published')
-            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
             ->where('u.status = ?', 'active');
     }
 }
@@ -4608,8 +1716,6 @@ if (!function_exists('public_status_tag_id_query')) {
             INNER JOIN users u ON u.id = c.author_id'
         )
             ->where('ct.term_id = ?', $termId)
-            ->where('c.status = ?', 'published')
-            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
             ->where('u.status = ?', 'active');
     }
 }
@@ -4618,8 +1724,6 @@ if (!function_exists('public_status_query')) {
     function public_status_query(): CoreQuery
     {
         return db_select(public_status_select_sql())
-            ->where('c.status = ?', 'published')
-            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
             ->where('u.status = ?', 'active');
     }
 }
@@ -4835,44 +1939,7 @@ if (!function_exists('status_preload_feed')) {
             return;
         }
 
-        status_preload_links($ids);
         status_preload_latest_parent_comments($ids);
-        status_preload_shared_ids($ids);
-
-        $sharedIds = [];
-        $sharedIdCache =& status_shared_id_cache();
-
-        foreach ($items as $item) {
-            $contentId = (int) ($item['id'] ?? 0);
-            $sharedId = (int) ($item['shared_content_id'] ?? 0);
-
-            if ($sharedId < 1 && $contentId > 0) {
-                $sharedId = (int) ($sharedIdCache[$contentId] ?? 0);
-            }
-
-            if ($sharedId > 0) {
-                $sharedIds[] = $sharedId;
-            }
-        }
-
-        $sharedIds = array_values(array_unique($sharedIds));
-
-        if ($sharedIds === []) {
-            return;
-        }
-
-        $sharedItems = public_status_items_by_ids($sharedIds, false);
-        $sharedItemCache =& status_shared_item_cache();
-
-        foreach ($sharedItems as $sharedItem) {
-            $sharedItemId = (int) ($sharedItem['id'] ?? 0);
-
-            if ($sharedItemId > 0) {
-                $sharedItemCache[$sharedItemId] = $sharedItem;
-            }
-        }
-
-        status_preload_links($sharedIds);
     }
 }
 
@@ -4907,9 +1974,7 @@ if (!function_exists('public_trending_tags')) {
             INNER JOIN content_tags ct ON ct.content_id = c.id
             INNER JOIN terms t ON t.id = ct.term_id'
         )
-            ->where('c.status = ?', 'published')
             ->where('c.published_at >= ?', $since)
-            ->where('c.published_at <= ?', date_db())
             ->where('u.status = ?', 'active')
             ->group('t.id, t.name')
             ->order('posts_count DESC, latest_at DESC, t.name ASC')
@@ -4970,9 +2035,7 @@ if (!function_exists('public_top_authors')) {
             FROM content c' . $feedIndex . '
             INNER JOIN users u ON u.id = c.author_id'
         )
-            ->where('c.status = ?', 'published')
             ->where('c.published_at >= ?', date_db('-' . $days . ' days'))
-            ->where('c.published_at <= ?', date_db())
             ->where('u.status = ?', 'active')
             ->group('u.id, u.username, u.bio, u.avatar_url')
             ->order('posts_count DESC, latest_at DESC, u.username ASC')
@@ -5176,70 +2239,6 @@ if (!function_exists('public_search_excerpt')) {
             : substr($text, $start, $limit);
 
         return ($start > 0 ? '...' : '') . trim($excerpt) . ($start + $limit < $length ? '...' : '');
-    }
-}
-
-if (!function_exists('status_link_search_columns')) {
-    function status_link_search_columns(string $alias = 'l'): array
-    {
-        $prefix = preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $alias) ? $alias . '.' : '';
-        $columns = ['url', 'final_url', 'title', 'description', 'site_name', 'source', 'external_id'];
-
-        return array_map(static fn (string $column): string => $prefix . $column, $columns);
-    }
-}
-
-if (!function_exists('status_link_search_condition')) {
-    function status_link_search_condition(string $alias = 'l'): string
-    {
-        return implode(' OR ', array_map(
-            static fn (string $column): string => $column . ' LIKE ?',
-            status_link_search_columns($alias)
-        ));
-    }
-}
-
-if (!function_exists('status_link_search_params')) {
-    function status_link_search_params(string $like, string $alias = 'l'): array
-    {
-        return array_fill(0, count(status_link_search_columns($alias)), $like);
-    }
-}
-
-if (!function_exists('public_search_content_link_excerpt')) {
-    function public_search_content_link_excerpt(int $contentId, string $query, int $limit = 120): string
-    {
-        if ($contentId < 1) {
-            return '';
-        }
-
-        $like = '%' . $query . '%';
-        $link = db_select(
-            'SELECT l.url, l.final_url, l.title, l.description, l.site_name, l.source, l.external_id
-            FROM content_links cl
-            INNER JOIN links l ON l.id = cl.link_id'
-        )
-            ->where('cl.content_id = ?', $contentId)
-            ->where(status_link_search_condition('l'), status_link_search_params($like, 'l'))
-            ->order('cl.position ASC, l.id ASC')
-            ->limit(1)
-            ->one();
-
-        if ($link === null) {
-            return '';
-        }
-
-        $text = trim(implode(' ', array_filter([
-            (string) ($link['title'] ?? ''),
-            (string) ($link['description'] ?? ''),
-            (string) ($link['site_name'] ?? ''),
-            (string) ($link['source'] ?? ''),
-            (string) ($link['external_id'] ?? ''),
-            (string) ($link['final_url'] ?? ''),
-            (string) ($link['url'] ?? ''),
-        ], static fn (string $value): bool => trim($value) !== '')));
-
-        return $text !== '' ? public_search_excerpt($text, $query, $limit) : '';
     }
 }
 
@@ -5494,16 +2493,6 @@ if (!function_exists('public_search_text_contains')) {
     }
 }
 
-if (!function_exists('public_search_urlish_query')) {
-    function public_search_urlish_query(string $query): bool
-    {
-        return str_contains($query, '.')
-            || str_contains($query, '/')
-            || str_contains($query, ':')
-            || str_contains($query, '@');
-    }
-}
-
 if (!function_exists('public_search_content_result')) {
     function public_search_content_result(array $item, string $query, ?string $excerptText = null): array
     {
@@ -5545,8 +2534,6 @@ if (!function_exists('public_search_recent_content_scan')) {
             FROM content c' . $feedIndex . '
             INNER JOIN users u ON u.id = c.author_id'
         )
-            ->where('c.status = ?', 'published')
-            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
             ->where('u.status = ?', 'active')
             ->order('c.published_at DESC, c.id DESC')
             ->limit($scanLimit)
@@ -5590,8 +2577,6 @@ if (!function_exists('public_search_content_rows')) {
                     INNER JOIN users u ON u.id = c.author_id'
                 )
                     ->where('MATCH(c.body) AGAINST (? IN BOOLEAN MODE)', $fulltext)
-                    ->where('c.status = ?', 'published')
-                    ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
                     ->where('u.status = ?', 'active');
 
                 $existingIds = array_values(array_filter(array_map(
@@ -5622,74 +2607,6 @@ if (!function_exists('public_search_content_rows')) {
         }
 
         return $recent;
-    }
-}
-
-if (!function_exists('public_search_link_text')) {
-    function public_search_link_text(array $item): string
-    {
-        return trim(implode(' ', array_filter([
-            (string) ($item['link_title'] ?? ''),
-            (string) ($item['link_description'] ?? ''),
-            (string) ($item['link_site_name'] ?? ''),
-            (string) ($item['link_source'] ?? ''),
-            (string) ($item['link_external_id'] ?? ''),
-            (string) ($item['link_final_url'] ?? ''),
-            (string) ($item['link_url'] ?? ''),
-        ], static fn (string $value): bool => trim($value) !== '')));
-    }
-}
-
-if (!function_exists('public_search_link_rows')) {
-    function public_search_link_rows(string $query, int $limit): array
-    {
-        $like = '%' . $query . '%';
-        $fulltext = public_search_fulltext_query($query);
-        $conditions = [];
-        $params = [];
-
-        if ($fulltext !== '' && public_search_fulltext_ready('links', 'links_meta_fulltext')) {
-            $conditions[] = 'MATCH(l.title, l.description, l.site_name, l.source, l.external_id) AGAINST (? IN BOOLEAN MODE)';
-            $params[] = $fulltext;
-        }
-
-        if ($conditions === [] || public_search_urlish_query($query)) {
-            $conditions[] = 'l.url LIKE ?';
-            $conditions[] = 'l.final_url LIKE ?';
-            $params[] = $like;
-            $params[] = $like;
-        }
-
-        if ($conditions === []) {
-            return [];
-        }
-
-        return db_select(
-            'SELECT c.id,
-                c.body,
-                c.author_id,
-                c.created_at,
-                u.username AS author_name,
-                u.avatar_url AS avatar_url,
-                l.url AS link_url,
-                l.final_url AS link_final_url,
-                l.title AS link_title,
-                l.description AS link_description,
-                l.site_name AS link_site_name,
-                l.source AS link_source,
-                l.external_id AS link_external_id
-            FROM content c
-            INNER JOIN users u ON u.id = c.author_id
-            INNER JOIN content_links cl ON cl.content_id = c.id
-            INNER JOIN links l ON l.id = cl.link_id'
-        )
-            ->where('(' . implode(' OR ', $conditions) . ')', $params)
-            ->where('c.status = ?', 'published')
-            ->where('(c.published_at IS NULL OR c.published_at <= ?)', date_db())
-            ->where('u.status = ?', 'active')
-            ->order('c.published_at DESC, c.id DESC, cl.position ASC')
-            ->limit(max($limit, min(100, $limit * 4)))
-            ->all();
     }
 }
 
@@ -5893,29 +2810,6 @@ if (!function_exists('public_search_results')) {
             $contentIds[$id] = true;
         }
 
-        if (count($content) < $limit && (function_exists('mb_strlen') ? mb_strlen($query, 'UTF-8') : strlen($query)) >= 4) {
-            foreach (public_search_link_rows($query, $limit) as $item) {
-                $id = (int) ($item['id'] ?? 0);
-                $authorId = (int) ($item['author_id'] ?? 0);
-
-                if ($id < 1 || $authorId < 1 || isset($contentIds[$id])) {
-                    continue;
-                }
-
-                $linkText = public_search_link_text($item);
-                $content[] = public_search_content_result(
-                    $item,
-                    $query,
-                    $linkText !== '' ? $linkText : (string) ($item['body'] ?? '')
-                );
-                $contentIds[$id] = true;
-
-                if (count($content) >= $limit) {
-                    break;
-                }
-            }
-        }
-
         return [
             'query' => $query,
             'tags' => $tags,
@@ -5986,18 +2880,18 @@ if (!function_exists('status_can_delete')) {
     }
 }
 
-if (!function_exists('status_user_reaction')) {
-    function status_user_reaction(int $contentId, int $userId): string
+if (!function_exists('status_user_liked')) {
+    function status_user_liked(int $contentId, int $userId): bool
     {
         if ($contentId < 1 || $userId < 1) {
-            return '';
+            return false;
         }
 
-        return (string) db_select('SELECT reaction FROM content_reactions')
+        return db_select('SELECT content_id FROM content_likes')
             ->where('content_id = ?', $contentId)
             ->where('user_id = ?', $userId)
             ->limit(1)
-            ->value();
+            ->value() !== null;
     }
 }
 
@@ -6471,13 +3365,6 @@ if (!function_exists('status_post_modal_id')) {
     }
 }
 
-if (!function_exists('status_share_modal_id')) {
-    function status_share_modal_id(int $contentId): string
-    {
-        return 'status-share-modal-' . max(0, $contentId);
-    }
-}
-
 if (!function_exists('status_edit_modal_id')) {
     function status_edit_modal_id(int $contentId): string
     {
@@ -6501,7 +3388,7 @@ if (!function_exists('status_post_modal_url')) {
 if (!function_exists('status_action_modal_url')) {
     function status_action_modal_url(string $type, int $contentId, string $action = ''): string
     {
-        $type = in_array($type, ['share', 'report', 'edit'], true) ? $type : 'share';
+        $type = in_array($type, ['report', 'edit'], true) ? $type : 'edit';
         $query = ['id' => max(0, $contentId)];
 
         if ($action !== '') {
@@ -6607,7 +3494,6 @@ if (!function_exists('notification_icon')) {
             'content_like' => 'thumb-up',
             'comment_like' => 'thumb-up',
             'content_comment' => 'message-circle',
-            'content_share' => 'share',
             'report_resolved' => 'check',
             'report_dismissed' => 'flag',
             default => 'bell',
@@ -6626,7 +3512,6 @@ if (!function_exists('notification_message')) {
             'content_like' => t('notifications.messages.content_like', ['actor' => $actor]),
             'comment_like' => t('notifications.messages.comment_like', ['actor' => $actor]),
             'content_comment' => t('notifications.messages.content_comment', ['actor' => $actor]),
-            'content_share' => t('notifications.messages.content_share', ['actor' => $actor]),
             'report_resolved' => t('notifications.messages.report_resolved', ['actor' => $actor]),
             'report_dismissed' => t('notifications.messages.report_dismissed', ['actor' => $actor]),
             default => t('notifications.messages.generic', ['actor' => $actor]),
@@ -6702,7 +3587,6 @@ if (!function_exists('notification_create_for_content_owner')) {
         $key = match ($type) {
             'content_like' => 'content_like:' . $contentId . ':' . $actorId,
             'content_comment' => 'content_comment:' . $contentId . ':' . $commentId,
-            'content_share' => 'content_share:' . $contentId . ':' . max($sourceContentId, $actorId),
             default => $type . ':' . $contentId . ':' . $commentId . ':' . $actorId,
         };
 
@@ -6969,7 +3853,7 @@ if (!function_exists('status_handle_post')) {
         }
 
         if ($action === 'react') {
-            status_react_for_user($id, $user, (string) post('reaction', ''), $redirect);
+            status_react_for_user($id, $user, $redirect);
         }
 
         if ($action === 'comment') {
@@ -6978,10 +3862,6 @@ if (!function_exists('status_handle_post')) {
 
         if ($action === 'comment_like') {
             status_comment_like_for_user(max(0, (int) post('comment_id', 0)), $user, $redirect);
-        }
-
-        if ($action === 'share') {
-            status_share_for_user($id, $user, $redirect);
         }
 
         if ($action === 'report') {
@@ -7030,19 +3910,6 @@ if (!function_exists('status_json_require_action')) {
     }
 }
 
-if (!function_exists('status_json_require_links_allowed')) {
-    function status_json_require_links_allowed(string $body): void
-    {
-        $blocked = moderation_blocked_link($body);
-
-        if ($blocked === null) {
-            return;
-        }
-
-        api_error(t('moderation.messages.blocked_domain', ['domain' => (string) ($blocked['domain'] ?? '')]), 403, 'blocked_domain');
-    }
-}
-
 if (!function_exists('status_json_require_unique_body')) {
     function status_json_require_unique_body(array $user, string $body, int $ignoreId = 0): void
     {
@@ -7082,8 +3949,8 @@ if (!function_exists('status_like_count')) {
         }
 
         return (int) val(
-            'SELECT COUNT(*) FROM content_reactions WHERE content_id = ? AND reaction = ?',
-            [$contentId, 'like']
+            'SELECT COUNT(*) FROM content_likes WHERE content_id = ?',
+            [$contentId]
         );
     }
 }
@@ -7092,7 +3959,7 @@ if (!function_exists('status_json_summary')) {
     function status_json_summary(int $contentId, array $user): array
     {
         $userId = (int) ($user['id'] ?? 0);
-        $reaction = $userId > 0 ? status_user_reaction($contentId, $userId) : '';
+        $liked = $userId > 0 && status_user_liked($contentId, $userId);
         $commentsCount = status_comment_count($contentId);
 
         return [
@@ -7100,9 +3967,7 @@ if (!function_exists('status_json_summary')) {
             'likes_count' => status_like_count($contentId),
             'comments_count' => $commentsCount,
             'comments_label' => t('account.status_view_comments', ['count' => $commentsCount]),
-            'shares_count' => status_share_count($contentId),
-            'user_reaction' => $reaction,
-            'liked' => $reaction === 'like',
+            'liked' => $liked,
         ];
     }
 }
@@ -7155,7 +4020,7 @@ if (!function_exists('status_handle_post_json')) {
         }
 
         if ($action === 'react') {
-            api(status_json_react($id, $user, (string) post('reaction', '')));
+            api(status_json_react($id, $user));
         }
 
         if ($action === 'comment') {
@@ -7180,32 +4045,23 @@ if (!function_exists('status_json_create')) {
         $payload = status_payload();
         $userId = (int) ($user['id'] ?? 0);
         $body = (string) ($payload['body'] ?? '');
-        $sharedContentId = (int) ($payload['shared_content_id'] ?? 0);
 
-        if ($sharedContentId > 0 && public_status_item($sharedContentId) === null) {
-            api_error(t('account.messages.status_not_found'), 404, 'status_not_found');
-        }
-
-        if (trim($body) === '' && $sharedContentId < 1) {
+        if (trim($body) === '') {
             api_error(t('account.messages.status_required'), 422, 'status_required');
         }
 
         status_json_require_not_muted($user);
         status_json_require_action($user, 'post');
-        status_json_require_links_allowed($body);
         status_json_require_unique_body($user, $body);
 
         $now = date_db();
         $contentId = (int) insert('content', [
-            'status' => 'published',
             'body' => $body,
             'author_id' => $userId,
             'published_at' => $now,
             'created_at' => $now,
         ]);
         status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
-        status_sync_links($contentId, $body);
-        status_sync_share($contentId, $sharedContentId);
         moderation_record_action($user, 'post');
 
         $item = public_status_item($contentId);
@@ -7221,36 +4077,28 @@ if (!function_exists('status_json_create')) {
 }
 
 if (!function_exists('status_json_react')) {
-    function status_json_react(int $contentId, array $user, string $reaction): array
+    function status_json_react(int $contentId, array $user): array
     {
         $userId = (int) ($user['id'] ?? 0);
-        $reaction = $reaction === 'like' ? 'like' : '';
 
-        if ($contentId < 1 || $userId < 1 || $reaction === '' || status_find($contentId) === null) {
+        if ($contentId < 1 || $userId < 1 || status_find($contentId) === null) {
             api_error(t('account.messages.status_not_found'), 404, 'status_not_found');
         }
 
-        $current = status_user_reaction($contentId, $userId);
+        $liked = status_user_liked($contentId, $userId);
 
-        if ($current !== $reaction) {
+        if (!$liked) {
             status_json_require_not_muted($user);
             status_json_require_action($user, 'like');
         }
 
-        if ($current === $reaction) {
-            delete('content_reactions', ['content_id' => $contentId, 'user_id' => $userId]);
-        } elseif ($current !== '') {
-            update('content_reactions', [
-                'reaction' => $reaction,
-                'updated_at' => date_db(),
-            ], ['content_id' => $contentId, 'user_id' => $userId]);
-            moderation_record_action($user, 'like');
-            notification_create_for_content_owner('content_like', $contentId, $user);
+        if ($liked) {
+            delete('content_likes', ['content_id' => $contentId, 'user_id' => $userId]);
         } else {
-            insert('content_reactions', [
+            insert('content_likes', [
                 'content_id' => $contentId,
                 'user_id' => $userId,
-                'reaction' => $reaction,
+                'created_at' => date_db(),
             ]);
             moderation_record_action($user, 'like');
             notification_create_for_content_owner('content_like', $contentId, $user);
@@ -7269,10 +4117,11 @@ if (!function_exists('status_json_comment')) {
         $userId = (int) ($user['id'] ?? 0);
         $status = status_find($contentId);
         $body = plain_text_limit((string) post('comment', ''), 2000);
+        $body = status_strip_external_urls($body);
         $body = normalize_mentions_for_storage($body);
         $body = plain_text_limit($body, 2000);
 
-        if ($contentId < 1 || $userId < 1 || $status === null || (string) ($status['status'] ?? '') !== 'published') {
+        if ($contentId < 1 || $userId < 1 || $status === null) {
             api_error(t('account.messages.status_not_found'), 404, 'status_not_found');
         }
 
@@ -7395,57 +4244,42 @@ if (!function_exists('status_payload')) {
     function status_payload(): array
     {
         $body = plain_text_limit((string) post('body', ''), 2000);
+        $body = status_strip_external_urls($body);
         $body = normalize_mentions_for_storage($body);
         $body = normalize_tags_for_storage($body);
         $body = plain_text_limit($body, 2000);
-        $share = status_share_from_text($body);
-        $body = plain_text_limit((string) ($share['body'] ?? $body), 2000);
-        $sharedContentId = max(0, (int) post('shared_content_id', 0));
-
-        if ($sharedContentId < 1) {
-            $sharedContentId = (int) ($share['shared_content_id'] ?? 0);
-        }
 
         return [
             'body' => $body,
             'tags' => status_tags_from_text($body),
-            'shared_content_id' => $sharedContentId,
         ];
     }
 }
 
 if (!function_exists('status_react_for_user')) {
-    function status_react_for_user(int $contentId, array $user, string $reaction, string $redirect = '/'): void
+    function status_react_for_user(int $contentId, array $user, string $redirect = '/'): void
     {
         $userId = (int) ($user['id'] ?? 0);
-        $reaction = $reaction === 'like' ? 'like' : '';
 
-        if ($contentId < 1 || $userId < 1 || $reaction === '' || status_find($contentId) === null) {
+        if ($contentId < 1 || $userId < 1 || status_find($contentId) === null) {
             flash('error', t('account.messages.status_not_found'));
             redirect($redirect);
         }
 
-        $current = status_user_reaction($contentId, $userId);
+        $liked = status_user_liked($contentId, $userId);
 
-        if ($current !== $reaction) {
+        if (!$liked) {
             moderation_require_not_muted($user, $redirect);
             moderation_require_action($user, 'like', $redirect);
         }
 
-        if ($current === $reaction) {
-            delete('content_reactions', ['content_id' => $contentId, 'user_id' => $userId]);
-        } elseif ($current !== '') {
-            update('content_reactions', [
-                'reaction' => $reaction,
-                'updated_at' => date_db(),
-            ], ['content_id' => $contentId, 'user_id' => $userId]);
-            moderation_record_action($user, 'like');
-            notification_create_for_content_owner('content_like', $contentId, $user);
+        if ($liked) {
+            delete('content_likes', ['content_id' => $contentId, 'user_id' => $userId]);
         } else {
-            insert('content_reactions', [
+            insert('content_likes', [
                 'content_id' => $contentId,
                 'user_id' => $userId,
-                'reaction' => $reaction,
+                'created_at' => date_db(),
             ]);
             moderation_record_action($user, 'like');
             notification_create_for_content_owner('content_like', $contentId, $user);
@@ -7461,10 +4295,11 @@ if (!function_exists('status_comment_for_user')) {
         $userId = (int) ($user['id'] ?? 0);
         $status = status_find($contentId);
         $body = plain_text_limit((string) post('comment', ''), 2000);
+        $body = status_strip_external_urls($body);
         $body = normalize_mentions_for_storage($body);
         $body = plain_text_limit($body, 2000);
 
-        if ($contentId < 1 || $userId < 1 || $status === null || (string) ($status['status'] ?? '') !== 'published') {
+        if ($contentId < 1 || $userId < 1 || $status === null) {
             flash('error', t('account.messages.status_not_found'));
             redirect($redirect);
         }
@@ -7587,7 +4422,7 @@ if (!function_exists('status_report_for_user')) {
         $userId = (int) ($user['id'] ?? 0);
         $item = status_find($contentId);
 
-        if ($contentId < 1 || $userId < 1 || $item === null || (string) ($item['status'] ?? '') !== 'published') {
+        if ($contentId < 1 || $userId < 1 || $item === null) {
             flash('error', t('account.messages.status_not_found'));
             redirect($redirect);
         }
@@ -7663,44 +4498,6 @@ if (!function_exists('status_report_for_user')) {
     }
 }
 
-if (!function_exists('status_share_for_user')) {
-    function status_share_for_user(int $sharedContentId, array $user, string $redirect = '/'): void
-    {
-        $userId = (int) ($user['id'] ?? 0);
-        $shared = public_status_item($sharedContentId);
-        $payload = status_payload();
-        $body = (string) ($payload['body'] ?? '');
-
-        if ($sharedContentId < 1 || $userId < 1 || $shared === null) {
-            flash('error', t('account.messages.status_not_found'));
-            redirect($redirect);
-        }
-
-        moderation_require_not_muted($user, $redirect);
-        moderation_require_action($user, 'share', $redirect);
-        moderation_require_links_allowed($body, $redirect);
-        moderation_require_unique_body($user, $body, $redirect);
-
-        $now = date_db();
-        $contentId = (int) insert('content', [
-            'status' => 'published',
-            'body' => $body,
-            'author_id' => $userId,
-            'published_at' => $now,
-            'created_at' => $now,
-        ]);
-
-        status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
-        status_sync_links($contentId, $body);
-        status_sync_share($contentId, $sharedContentId);
-        moderation_record_action($user, 'share');
-        notification_create_for_content_owner('content_share', $sharedContentId, $user, 0, $contentId);
-
-        flash('success', t('account.messages.status_shared'));
-        redirect($redirect);
-    }
-}
-
 if (!function_exists('status_comment_delete_for_user')) {
     function status_comment_delete_for_user(int $commentId, array $user, string $redirect = '/'): void
     {
@@ -7753,34 +4550,49 @@ if (!function_exists('status_update_for_user')) {
 
         $payload = status_payload();
         $body = (string) ($payload['body'] ?? '');
-        $sharedContentId = (int) ($payload['shared_content_id'] ?? 0);
-        $existingSharedId = status_shared_id($contentId);
 
-        if ($sharedContentId > 0 && ($sharedContentId === $contentId || public_status_item($sharedContentId) === null)) {
-            flash('error', t('account.messages.status_not_found'));
-            redirect($redirect . '#' . status_anchor($contentId));
-        }
-
-        if (trim($body) === '' && $sharedContentId < 1 && $existingSharedId < 1) {
+        if (trim($body) === '') {
             flash('error', t('account.messages.status_required'));
             redirect($redirect . '#' . status_anchor($contentId));
         }
 
-        moderation_require_links_allowed($body, $redirect . '#' . status_anchor($contentId));
         moderation_require_unique_body($user, $body, $redirect . '#' . status_anchor($contentId), $contentId);
 
         update('content', [
             'body' => $body,
         ], ['id' => $contentId]);
         status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
-        status_sync_links($contentId, $body);
-
-        if ($sharedContentId > 0) {
-            status_sync_share($contentId, $sharedContentId);
-        }
 
         flash('success', t('account.messages.status_saved'));
         redirect($redirect . '#' . status_anchor($contentId));
+    }
+}
+
+if (!function_exists('status_delete_content')) {
+    function status_delete_content(int $contentId, bool $deleteReports = true, bool $deleteNotifications = true): void
+    {
+        if ($contentId < 1) {
+            return;
+        }
+
+        delete('content_likes', ['content_id' => $contentId]);
+        foreach (db_select('SELECT id FROM content_comments')->where('content_id = ?', $contentId)->all() as $comment) {
+            delete('comment_likes', ['comment_id' => (int) ($comment['id'] ?? 0)]);
+        }
+
+        if ($deleteNotifications) {
+            notification_delete_for_content($contentId);
+        }
+
+        delete('content_comments', ['content_id' => $contentId]);
+        delete('content_tags', ['content_id' => $contentId]);
+
+        if ($deleteReports) {
+            delete('content_reports', ['content_id' => $contentId]);
+        }
+
+        status_cleanup_unused_terms();
+        delete('content', ['id' => $contentId]);
     }
 }
 
@@ -7794,18 +4606,7 @@ if (!function_exists('status_delete_for_user')) {
             redirect($redirect);
         }
 
-        delete('content_reactions', ['content_id' => $contentId]);
-        foreach (db_select('SELECT id FROM content_comments')->where('content_id = ?', $contentId)->all() as $comment) {
-            delete('comment_likes', ['comment_id' => (int) ($comment['id'] ?? 0)]);
-        }
-        notification_delete_for_content($contentId);
-        delete('content_comments', ['content_id' => $contentId]);
-        delete('content_tags', ['content_id' => $contentId]);
-        delete('content_links', ['content_id' => $contentId]);
-        delete('content_shares', ['content_id' => $contentId]);
-        delete('content_reports', ['content_id' => $contentId]);
-        status_cleanup_unused_terms();
-        delete('content', ['id' => $contentId]);
+        status_delete_content($contentId);
 
         flash('success', t('account.messages.status_deleted'));
         redirect($redirect);
@@ -7822,11 +4623,8 @@ if (!function_exists('status_actions')) {
         $commentsCount = array_key_exists('comments_count', $item)
             ? (int) ($item['comments_count'] ?? 0)
             : status_comment_count($contentId);
-        $sharesCount = array_key_exists('shares_count', $item)
-            ? (int) ($item['shares_count'] ?? 0)
-            : status_share_count($contentId);
         $userId = (int) ($user['id'] ?? 0);
-        $reaction = $userId > 0 ? status_user_reaction($contentId, $userId) : '';
+        $liked = $userId > 0 && status_user_liked($contentId, $userId);
         $loginUrl = status_login_url($contentId > 0 ? '#' . status_anchor($contentId) : '', $action);
 
         ob_start();
@@ -7837,8 +4635,7 @@ if (!function_exists('status_actions')) {
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="react">
                     <input type="hidden" name="id" value="<?= e($contentId) ?>">
-                    <input type="hidden" name="reaction" value="like">
-                    <button class="btn btn-ghost btn-sm status-reaction<?= $reaction === 'like' ? ' is-active' : '' ?>" type="submit" title="<?= et('account.status_like') ?>" data-status-like-button data-status-id="<?= e($contentId) ?>">
+                    <button class="btn btn-ghost btn-sm status-reaction<?= $liked ? ' is-active' : '' ?>" type="submit" title="<?= et('account.status_like') ?>" data-status-like-button data-status-id="<?= e($contentId) ?>">
                         <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span data-status-count="likes" data-status-id="<?= e($contentId) ?>"><?= e($counts['like']) ?></span>
                     </button>
                 </form>
@@ -7854,15 +4651,6 @@ if (!function_exists('status_actions')) {
             <?php else: ?>
                 <a class="btn btn-ghost btn-sm status-reaction" href="#status-comments-thread-<?= e($contentId) ?>" aria-label="<?= et('account.status_comments') ?>">
                     <?= icon('message-circle') ?> <span data-status-count="comments" data-status-id="<?= e($contentId) ?>"><?= e($commentsCount) ?></span>
-                </a>
-            <?php endif; ?>
-            <?php if ($user !== null): ?>
-                <button class="btn btn-ghost btn-sm status-reaction" type="button" data-modal-open="<?= e(status_share_modal_id($contentId)) ?>" data-modal-url="<?= e(status_action_modal_url('share', $contentId, $action)) ?>" aria-label="<?= et('account.status_share') ?>" title="<?= et('account.status_share') ?>">
-                    <?= icon('share') ?> <span data-status-count="shares" data-status-id="<?= e($contentId) ?>"><?= e($sharesCount) ?></span>
-                </button>
-            <?php else: ?>
-                <a class="btn btn-ghost btn-sm status-reaction" href="<?= e($loginUrl) ?>" aria-label="<?= et('account.status_share') ?>" title="<?= et('account.status_share') ?>">
-                    <?= icon('share') ?> <span data-status-count="shares" data-status-id="<?= e($contentId) ?>"><?= e($sharesCount) ?></span>
                 </a>
             <?php endif; ?>
         </div>
@@ -7965,8 +4753,6 @@ if (!function_exists('status_card')) {
                 <?php if ($bodyHtml !== ''): ?>
                     <div class="status-body"><?= $bodyHtml ?></div>
                 <?php endif; ?>
-                <?= status_link_cards($contentId) ?>
-                <?= status_share_card($item) ?>
                 <?= status_actions($item, $user, $action) ?>
                 <?= status_comments_section($item, $user, $action) ?>
             </div>
@@ -8379,23 +5165,6 @@ if (!function_exists('status_post_modal')) {
     }
 }
 
-if (!function_exists('status_share_modal')) {
-    function status_share_modal(array $item, ?array $user, string $action): string
-    {
-        $contentId = (int) ($item['id'] ?? 0);
-
-        if ($contentId < 1 || $user === null) {
-            return '';
-        }
-
-        return render('modals/status-share', [
-            'item' => $item,
-            'user' => $user,
-            'action' => $action,
-        ]);
-    }
-}
-
 if (!function_exists('status_report_modal')) {
     function status_report_modal(array $item, ?array $user, string $action): string
     {
@@ -8461,34 +5230,24 @@ if (!function_exists('status_create_for_user')) {
         $payload = status_payload();
         $userId = (int) ($user['id'] ?? 0);
         $body = (string) ($payload['body'] ?? '');
-        $sharedContentId = (int) ($payload['shared_content_id'] ?? 0);
 
-        if ($sharedContentId > 0 && public_status_item($sharedContentId) === null) {
-            flash('error', t('account.messages.status_not_found'));
-            redirect($redirect);
-        }
-
-        if (trim($body) === '' && $sharedContentId < 1) {
+        if (trim($body) === '') {
             flash('error', t('account.messages.status_required'));
             redirect($redirect);
         }
 
         moderation_require_not_muted($user, $redirect);
         moderation_require_action($user, 'post', $redirect);
-        moderation_require_links_allowed($body, $redirect);
         moderation_require_unique_body($user, $body, $redirect);
 
         $now = date_db();
         $contentId = (int) insert('content', [
-            'status' => 'published',
             'body' => $body,
             'author_id' => $userId,
             'published_at' => $now,
             'created_at' => $now,
         ]);
         status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
-        status_sync_links($contentId, $body);
-        status_sync_share($contentId, $sharedContentId);
         moderation_record_action($user, 'post');
 
         flash('success', t('account.messages.status_created'));

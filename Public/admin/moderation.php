@@ -22,9 +22,8 @@ layout('layout', [
     'current' => '/admin/moderation',
 ], static function (): void {
     $reports = tc_admin_moderation_reports();
-    $domains = moderation_blocked_domains();
     ?>
-    <section class="grid lg:grid-2">
+    <section>
         <article class="card">
             <div class="card-header">
                 <h2 class="text-lg m-0 cluster gap-2"><?= icon('flag') ?> <?= et('moderation.reports_title') ?></h2>
@@ -76,73 +75,10 @@ layout('layout', [
                                                     <?= icon('link') ?>
                                                 </a>
                                                 <?php if ($openCount > 0): ?>
-                                                    <?= tc_admin_moderation_report_form($reportId, 'hide', 'eye-off', 'moderation.hide_content') ?>
                                                     <?= tc_admin_moderation_report_form($reportId, 'remove', 'trash', 'moderation.remove_content', 'danger') ?>
                                                     <?= tc_admin_moderation_report_form($reportId, 'dismiss', 'lock', 'moderation.keep_and_lock') ?>
                                                 <?php endif; ?>
                                             </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </article>
-
-        <article class="card">
-            <div class="card-header">
-                <h2 class="text-lg m-0 cluster gap-2"><?= icon('shield') ?> <?= et('moderation.blocked_domains_title') ?></h2>
-            </div>
-            <div class="card-body stack">
-                <form class="stack" method="post" action="/admin/moderation">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="action" value="block_domain">
-                    <label class="field">
-                        <span class="label"><?= et('moderation.domain') ?></span>
-                        <input class="input" name="domain" placeholder="example.com" required>
-                    </label>
-                    <label class="field">
-                        <span class="label"><?= et('moderation.block_reason') ?></span>
-                        <textarea class="textarea" name="reason" rows="3" maxlength="1000"></textarea>
-                    </label>
-                    <div class="cluster justify-end">
-                        <button class="btn btn-primary" type="submit"><?= icon('plus') ?> <span><?= et('moderation.block_domain') ?></span></button>
-                    </div>
-                </form>
-
-                <?php if ($domains === []): ?>
-                    <div class="alert alert-info"><?= et('moderation.blocked_domains_empty') ?></div>
-                <?php else: ?>
-                    <div class="table-wrap">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th><?= et('moderation.domain') ?></th>
-                                    <th><?= et('common.created') ?></th>
-                                    <th><?= et('common.actions') ?></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($domains as $domain): ?>
-                                    <tr>
-                                        <td>
-                                            <strong><?= e((string) ($domain['domain'] ?? '')) ?></strong>
-                                            <?php if ((string) ($domain['reason'] ?? '') !== ''): ?>
-                                                <div class="table-meta"><?= e((string) $domain['reason']) ?></div>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td><?= e(datetime((string) ($domain['created_at'] ?? ''))) ?></td>
-                                        <td>
-                                            <form method="post" action="/admin/moderation" data-confirm="<?= et('moderation.unblock_confirm', ['domain' => (string) ($domain['domain'] ?? '')]) ?>" data-confirm-title="<?= et('moderation.unblock_domain') ?>" data-confirm-ok="<?= et('moderation.unblock_domain') ?>" data-confirm-cancel="<?= et('common.cancel') ?>">
-                                                <?= csrf_field() ?>
-                                                <input type="hidden" name="action" value="unblock_domain">
-                                                <input type="hidden" name="id" value="<?= e((int) ($domain['id'] ?? 0)) ?>">
-                                                <button class="btn btn-sm btn-ghost btn-icon text-danger" type="submit" title="<?= et('moderation.unblock_domain') ?>" aria-label="<?= et('moderation.unblock_domain') ?>">
-                                                    <?= icon('trash') ?>
-                                                </button>
-                                            </form>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -160,49 +96,10 @@ function tc_admin_moderation_handle(): never
 {
     $action = (string) post('action', '');
 
-    if ($action === 'block_domain') {
-        tc_admin_moderation_block_domain();
-    }
-
-    if ($action === 'unblock_domain') {
-        delete('blocked_domains', ['id' => max(0, (int) post('id', 0))]);
-        flash('success', t('moderation.messages.domain_unblocked'));
-        redirect('/admin/moderation');
-    }
-
     if ($action === 'report_review') {
         tc_admin_moderation_review_report();
     }
 
-    redirect('/admin/moderation');
-}
-
-function tc_admin_moderation_block_domain(): never
-{
-    $domain = moderation_domain_normalize((string) post('domain', ''));
-    $reason = plain_text_limit((string) post('reason', ''), 1000);
-
-    if ($domain === '') {
-        flash('error', t('moderation.messages.invalid_domain'));
-        redirect('/admin/moderation');
-    }
-
-    try {
-        insert('blocked_domains', [
-            'domain' => $domain,
-            'reason' => $reason,
-            'created_by' => (int) auth('id', 0),
-            'created_at' => date_db(),
-        ]);
-    } catch (Throwable) {
-        update('blocked_domains', [
-            'reason' => $reason,
-            'created_by' => (int) auth('id', 0),
-            'created_at' => date_db(),
-        ], ['domain' => $domain]);
-    }
-
-    flash('success', t('moderation.messages.domain_blocked'));
     redirect('/admin/moderation');
 }
 
@@ -223,19 +120,13 @@ function tc_admin_moderation_review_report(): never
     $authorId = (int) ($content['author_id'] ?? 0);
     $status = 'reviewed';
     $note = '';
+    $removeContent = false;
 
-    if ($decision === 'hide') {
-        update('content', ['status' => 'hidden'], ['id' => $contentId]);
-        status_edit_lock($contentId, $actor, 'moderation_hide');
-        user_mute($authorId, $actor, '+24 hours', 'moderation_hide');
-        $status = 'resolved';
-        $note = 'hidden';
-    } elseif ($decision === 'remove') {
-        update('content', ['status' => 'removed'], ['id' => $contentId]);
-        status_edit_lock($contentId, $actor, 'moderation_remove');
+    if ($decision === 'remove') {
         user_mute($authorId, $actor, '+24 hours', 'moderation_remove');
         $status = 'resolved';
         $note = 'removed';
+        $removeContent = true;
     } elseif ($decision === 'dismiss') {
         status_edit_lock($contentId, $actor, 'moderation_keep');
         $status = 'dismissed';
@@ -259,6 +150,10 @@ function tc_admin_moderation_review_report(): never
         [$status, date_db(), (int) auth('id', 0), $note, $contentId, 'open']
     );
 
+    if ($removeContent) {
+        status_delete_content($contentId, false, false);
+    }
+
     flash('success', t('moderation.messages.report_reviewed'));
     redirect('/admin/moderation');
 }
@@ -271,7 +166,6 @@ function tc_admin_moderation_reports(): array
             rc.open_count,
             rc.latest_reported_at,
             c.body,
-            c.status AS content_status,
             au.username AS author_name,
             ru.username AS reporter_name
         FROM (
