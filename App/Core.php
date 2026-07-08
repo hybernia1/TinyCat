@@ -1056,16 +1056,14 @@ final class Core
 
         $name = (string) self::config('security.captcha.field', 'tc_captcha');
         $challenge = self::captchaChallenge($context, true);
-        $target = (int) ($challenge['target'] ?? 50);
         $pieceTop = (int) ($challenge['piece_top'] ?? 42);
-        $token = (string) ($challenge['token'] ?? '');
-        $tolerance = max(1, min(12, (int) self::config('security.captcha.tolerance', 4)));
+        $image = self::captchaBoardDataUri($challenge);
 
-        return '<div class="field captcha-puzzle" data-captcha data-captcha-token="' . self::e($token) . '" data-captcha-tolerance="' . self::e($tolerance) . '" data-captcha-hint="' . self::e(self::t('security.captcha_hint')) . '" style="--captcha-target: ' . self::e($target) . '%; --captcha-y: ' . self::e($pieceTop) . '%;">'
+        return '<div class="field captcha-puzzle" data-captcha data-captcha-hint="' . self::e(self::t('security.captcha_hint')) . '" style="--captcha-y: ' . self::e($pieceTop) . '%;">'
             . '<span class="label">' . self::e(self::t('security.captcha_label')) . '</span>'
             . '<input type="hidden" name="' . self::e($name) . '" value="" data-captcha-answer required>'
             . '<div class="captcha-board" aria-hidden="true">'
-            . '<span class="captcha-slot"></span>'
+            . '<img class="captcha-image" src="' . self::e($image) . '" alt="" draggable="false">'
             . '<span class="captcha-piece" data-captcha-piece></span>'
             . '</div>'
             . '<label class="captcha-slider-label">'
@@ -1090,7 +1088,7 @@ final class Core
             return false;
         }
 
-        [$token, $position, $elapsed, $moves, $method] = array_pad(explode(':', $answer, 5), 5, '');
+        [$position, $elapsed, $moves, $method] = array_pad(explode(':', $answer, 4), 4, '');
         $target = (int) ($challenge['target'] ?? -1);
         $expires = (int) ($challenge['expires'] ?? 0);
         $issuedAt = (float) ($challenge['issued_at'] ?? 0);
@@ -1098,8 +1096,7 @@ final class Core
         $minInteractionMs = max(150, min(2000, (int) self::config('security.captcha.min_interaction_ms', 350)));
         $minMoves = max(1, min(8, (int) self::config('security.captcha.min_moves', 1)));
         $serverElapsedMs = $issuedAt > 0 ? (int) floor((microtime(true) - $issuedAt) * 1000) : 0;
-        $valid = hash_equals((string) ($challenge['token'] ?? ''), (string) $token)
-            && $expires >= time()
+        $valid = $expires >= time()
             && is_numeric($position)
             && abs((int) $position - $target) <= $tolerance
             && is_numeric($elapsed)
@@ -2111,6 +2108,92 @@ final class Core
         $_SESSION[$key] = $challenge;
 
         return $challenge;
+    }
+
+    private static function captchaBoardDataUri(array $challenge): string
+    {
+        return 'data:image/png;base64,' . base64_encode(self::captchaBoardPng($challenge));
+    }
+
+    private static function captchaBoardPng(array $challenge): string
+    {
+        $width = 420;
+        $height = 128;
+        $target = max(12, min(88, (int) ($challenge['target'] ?? 50)));
+        $pieceTop = max(18, min(82, (int) ($challenge['piece_top'] ?? 42)));
+        $cx = (int) round($width * ($target / 100));
+        $cy = (int) round($height * ($pieceTop / 100));
+        $size = 42;
+        $tab = 10;
+        $seed = (int) hexdec(substr(hash('sha256', (string) ($challenge['token'] ?? 'captcha')), 0, 7));
+        $raw = '';
+
+        for ($y = 0; $y < $height; $y++) {
+            $raw .= "\0";
+
+            for ($x = 0; $x < $width; $x++) {
+                $noise = (($x * 17 + $y * 31 + $seed) % 19) - 9;
+                $r = 225 + (int) round(16 * ($x / $width)) + $noise;
+                $g = 238 + (int) round(10 * ($y / $height)) + $noise;
+                $b = 244 + (int) round(12 * (($x + $y) / ($width + $height))) + $noise;
+
+                if (($x + $seed) % 24 === 0 || ($y + $seed) % 24 === 0) {
+                    $r += 10;
+                    $g += 10;
+                    $b += 10;
+                }
+
+                if ((($x + $y + $seed) % 97) < 2) {
+                    $r -= 24;
+                    $g -= 16;
+                    $b += 4;
+                }
+
+                $inShape = self::captchaShapeContains($x, $y, $cx, $cy, $size, $tab);
+                $inside = self::captchaShapeContains($x, $y, $cx, $cy, $size - 7, max(3, $tab - 3));
+
+                if ($inShape) {
+                    $dash = (((int) floor(($x + $y) / 7)) % 2) === 0;
+
+                    if (!$inside && $dash) {
+                        [$r, $g, $b] = [15, 118, 110];
+                    } else {
+                        [$r, $g, $b] = [248, 252, 252];
+                    }
+                }
+
+                $raw .= chr(max(0, min(255, $r)))
+                    . chr(max(0, min(255, $g)))
+                    . chr(max(0, min(255, $b)));
+            }
+        }
+
+        $compressed = gzcompress($raw, 6);
+        $compressed = $compressed === false ? gzcompress('', 6) : $compressed;
+
+        return "\x89PNG\r\n\x1a\n"
+            . self::pngChunk('IHDR', pack('NNCCCCC', $width, $height, 8, 2, 0, 0, 0))
+            . self::pngChunk('IDAT', $compressed === false ? '' : $compressed)
+            . self::pngChunk('IEND', '');
+    }
+
+    private static function captchaShapeContains(int $x, int $y, int $cx, int $cy, int $size, int $tab): bool
+    {
+        $half = max(4, (int) floor($size / 2));
+        $tab = max(2, $tab);
+        $inRect = abs($x - $cx) <= $half && abs($y - $cy) <= $half;
+        $inRightTab = (($x - ($cx + $half)) ** 2 + ($y - $cy) ** 2) <= $tab ** 2;
+        $inBottomTab = (($x - $cx) ** 2 + ($y - ($cy + $half)) ** 2) <= $tab ** 2;
+
+        return $inRect || $inRightTab || $inBottomTab;
+    }
+
+    private static function pngChunk(string $type, string $data): string
+    {
+        return pack('N', strlen($data))
+            . $type
+            . $data
+            . pack('N', crc32($type . $data));
     }
 
     private static function captchaSessionKey(string $context): string

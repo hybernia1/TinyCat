@@ -408,9 +408,6 @@
     var slider = qs("[data-captcha-slider]", root);
     var answer = qs("[data-captcha-answer]", root);
     var status = qs("[data-captcha-status]", root);
-    var token = root.dataset.captchaToken || "";
-    var target = parsePercent(root.style.getPropertyValue("--captcha-target"), 50);
-    var tolerance = parsePercent(root.dataset.captchaTolerance, 4);
     var startedAt = 0;
     var moves = 0;
     var method = "";
@@ -437,7 +434,6 @@
 
     function sync(event) {
       var value = parsePercent(slider.value, 0);
-      var solved = Math.abs(value - target) <= tolerance;
       var moved = String(slider.value) !== String(slider.defaultValue || "");
       var currentValue = String(slider.value);
       var elapsed = startedAt ? Math.max(0, Date.now() - startedAt) : 0;
@@ -449,9 +445,8 @@
       lastValue = currentValue;
 
       root.style.setProperty("--captcha-position", value + "%");
-      root.dataset.captchaState = solved ? "solved" : (moved ? "active" : "idle");
+      root.dataset.captchaState = moved ? "active" : "idle";
       answer.value = [
-        token,
         String(Math.round(value)),
         String(Math.round(elapsed)),
         String(moves),
