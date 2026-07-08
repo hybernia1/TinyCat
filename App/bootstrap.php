@@ -12,6 +12,8 @@ if (!defined('TINYCAT')) {
 
 require_once __DIR__ . '/functions.php';
 
+Core::securityHeaders();
+
 $path = route_path();
 $installPath = $path === '/install' || str_starts_with($path, '/install/');
 $frontController = basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === 'index.php';

@@ -721,6 +721,37 @@ final class Core
         exit;
     }
 
+    public static function securityHeaders(): void
+    {
+        if (headers_sent()) {
+            return;
+        }
+
+        $csp = [
+            "default-src 'self'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'self'",
+            "object-src 'none'",
+            "script-src 'self'",
+            "script-src-attr 'none'",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data:",
+            "font-src 'self' data:",
+            "connect-src 'self'",
+            "frame-src 'none'",
+            "media-src 'self'",
+            "worker-src 'self'",
+            "manifest-src 'self'",
+        ];
+
+        header('Content-Security-Policy: ' . implode('; ', $csp));
+        header('X-Content-Type-Options: nosniff');
+        header('X-Frame-Options: SAMEORIGIN');
+        header('Referrer-Policy: no-referrer');
+        header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()');
+    }
+
     public static function capture(callable $callback): string
     {
         ob_start();

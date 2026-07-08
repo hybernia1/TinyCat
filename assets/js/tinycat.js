@@ -220,6 +220,63 @@
     return null;
   }
 
+  function unsafeUrl(value) {
+    var url = String(value || "").trim().replace(/[\u0000-\u001F\u007F\s]+/g, "").toLowerCase();
+
+    return url.indexOf("javascript:") === 0
+      || url.indexOf("vbscript:") === 0
+      || url.indexOf("data:text/html") === 0;
+  }
+
+  function sanitizeHtml(root) {
+    if (!root) {
+      return root;
+    }
+
+    qsa("script, iframe, object, embed, base, meta", root).forEach(function (node) {
+      node.remove();
+    });
+
+    qsa("*", root).forEach(function (node) {
+      Array.prototype.slice.call(node.attributes || []).forEach(function (attr) {
+        var name = attr.name.toLowerCase();
+        var value = attr.value || "";
+
+        if (name.indexOf("on") === 0 || name === "srcdoc") {
+          node.removeAttribute(attr.name);
+          return;
+        }
+
+        if (["href", "src", "action", "formaction", "xlink:href"].indexOf(name) !== -1 && unsafeUrl(value)) {
+          node.removeAttribute(attr.name);
+        }
+      });
+    });
+
+    return root;
+  }
+
+  function htmlTemplate(html) {
+    var template = document.createElement("template");
+
+    template.innerHTML = String(html || "");
+    sanitizeHtml(template.content);
+
+    return template;
+  }
+
+  function replaceHtml(target, html) {
+    var template;
+
+    if (!target) {
+      return;
+    }
+
+    template = htmlTemplate(html);
+    target.innerHTML = "";
+    target.appendChild(template.content);
+  }
+
   function renderTarget(target, data) {
     if (!target) {
       return;
@@ -232,7 +289,7 @@
     }
 
     if (typeof html === "string") {
-      target.innerHTML = html;
+      replaceHtml(target, html);
     }
   }
 
@@ -254,7 +311,7 @@
       var target = qs(selector);
 
       if (target) {
-        target.innerHTML = String(targets[selector] || "");
+        replaceHtml(target, targets[selector] || "");
       }
     });
   }
@@ -760,8 +817,7 @@
       throw new Error("Modal content is empty.");
     }
 
-    template = document.createElement("template");
-    template.innerHTML = String(html);
+    template = htmlTemplate(html);
     (host || document.body).appendChild(template.content);
     modal = getModal(target);
 
@@ -1755,7 +1811,7 @@
       button.type = "button";
       button.dataset.statusEditorSuggestion = tag;
       button.setAttribute("role", "option");
-      button.innerHTML = "<strong>#" + tag + "</strong>";
+      button.appendChild(createElement("strong", "", "#" + tag));
       box.appendChild(button);
     });
 
@@ -2142,7 +2198,7 @@
       form.action = verifyUrl;
       form.method = "post";
       form.appendChild(body);
-      form.insertAdjacentHTML("beforeend", captchaHtml);
+      form.appendChild(htmlTemplate(captchaHtml).content);
       form.appendChild(footer);
       form.addEventListener("submit", function (event) {
         event.preventDefault();
@@ -2328,8 +2384,7 @@
             return;
           }
 
-          template = document.createElement("template");
-          template.innerHTML = String(payload.html).trim();
+          template = htmlTemplate(payload.html);
           next = template.content.firstElementChild;
 
           if (!next) {
@@ -2763,8 +2818,7 @@
     try {
       data = await TinyCat.request(url, { method: "GET", cache: "no-store" });
       payload = statusFeedPayload(data);
-      template = document.createElement("template");
-      template.innerHTML = String(payload.html || "");
+      template = htmlTemplate(payload.html || "");
       target.innerHTML = "";
       target.appendChild(template.content);
       delete target.dataset.statusFeedPruned;
@@ -2853,8 +2907,7 @@
       payload = statusFeedPayload(data);
 
       if (payload.html) {
-        template = document.createElement("template");
-        template.innerHTML = String(payload.html || "");
+        template = htmlTemplate(payload.html || "");
         target.appendChild(template.content);
         pruneStatusFeed(target, url);
         hydrateDynamic(target);
@@ -3027,8 +3080,7 @@
       return false;
     }
 
-    template = document.createElement("template");
-    template.innerHTML = String(html);
+    template = htmlTemplate(html);
     nextModal = qs(".modal", template.content);
     currentPanel = qs(".modal-panel", modal);
     nextPanel = nextModal ? qs(".modal-panel", nextModal) : null;
@@ -3132,9 +3184,7 @@
   }
 
   function elementFromHtml(html) {
-    var template = document.createElement("template");
-
-    template.innerHTML = String(html || "").trim();
+    var template = htmlTemplate(String(html || "").trim());
 
     return template.content.firstElementChild;
   }
@@ -3357,8 +3407,7 @@
       return null;
     }
 
-    template = document.createElement("template");
-    template.innerHTML = String(html);
+    template = htmlTemplate(html);
     nextCard = qs(".status-card", template.content);
 
     if (!nextCard) {
@@ -3725,7 +3774,7 @@
     }
 
     if (list && state && typeof state.html === "string") {
-      list.innerHTML = state.html;
+      replaceHtml(list, state.html);
     }
   }
 

@@ -1485,7 +1485,7 @@ if (!function_exists('status_internal_url')) {
 if (!function_exists('status_external_url_pattern')) {
     function status_external_url_pattern(): string
     {
-        return '~(?<![@\p{L}\p{N}_])(?:https?://|www\.)[^\s<>"\']+|(?<![@\p{L}\p{N}_])(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(?:/[^\s<>"\']*)?~iu';
+        return '~(?<![@\p{L}\p{N}_])(?:https?://|www\.)[^\s<>"\']+~iu';
     }
 }
 
@@ -1497,7 +1497,7 @@ if (!function_exists('status_strip_external_urls')) {
         }
 
         $text = (string) preg_replace_callback(status_external_url_pattern(), static function (array $match): string {
-            [, $tail] = social_split_url_tail((string) ($match[0] ?? ''));
+            [, $tail] = status_url_split_tail((string) ($match[0] ?? ''));
 
             return $tail;
         }, $text);
@@ -1589,7 +1589,7 @@ if (!function_exists('normalize_mentions_for_storage')) {
 }
 
 if (!function_exists('render_mentions')) {
-    function render_mentions(string $text, bool $embeds = true, array $hiddenUrls = []): string
+    function render_mentions(string $text): string
     {
         return render_mentions_segment(status_strip_external_urls($text));
     }
@@ -1598,7 +1598,7 @@ if (!function_exists('render_mentions')) {
 if (!function_exists('render_status_body')) {
     function render_status_body(array $item): string
     {
-        return trim(render_mentions((string) ($item['body'] ?? ''), false));
+        return trim(render_mentions((string) ($item['body'] ?? '')));
     }
 }
 
@@ -1657,8 +1657,8 @@ if (!function_exists('render_mentions_segment')) {
     }
 }
 
-if (!function_exists('social_split_url_tail')) {
-    function social_split_url_tail(string $url): array
+if (!function_exists('status_url_split_tail')) {
+    function status_url_split_tail(string $url): array
     {
         $tail = '';
 
@@ -5128,7 +5128,7 @@ if (!function_exists('status_comment_item')) {
                     <?php if ($authorName !== ''): ?>
                         <a class="status-comment-author" href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
                     <?php endif; ?>
-                    <div class="status-comment-body"><?= render_mentions((string) ($comment['body'] ?? ''), false) ?></div>
+                    <div class="status-comment-body"><?= render_mentions((string) ($comment['body'] ?? '')) ?></div>
                 </div>
                 <div class="status-comment-meta">
                     <?php if ($createdAt !== ''): ?>

@@ -6,11 +6,12 @@ DirectoryIndex index.php
 
 RedirectMatch 404 ^/(App|lang|storage)(/|$)
 
+<IfModule mod_setenvif.c>
+    SetEnvIfNoCase Request_URI "\.(css|js|mjs|json|svg|png|jpe?g|gif|webp|ico|woff2?)$" tinycat_static_asset
+</IfModule>
+
 <IfModule mod_headers.c>
-    Header always set X-Content-Type-Options "nosniff"
-    Header always set X-Frame-Options "SAMEORIGIN"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always set X-Content-Type-Options "nosniff" env=tinycat_static_asset
 </IfModule>
 
 <IfModule mod_rewrite.c>
