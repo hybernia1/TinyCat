@@ -408,6 +408,8 @@
     var slider = qs("[data-captcha-slider]", root);
     var answer = qs("[data-captcha-answer]", root);
     var status = qs("[data-captcha-status]", root);
+    var board = qs(".captcha-board", root);
+    var piece = qs(".captcha-piece", root);
     var startedAt = 0;
     var moves = 0;
     var method = "";
@@ -437,6 +439,8 @@
       var moved = String(slider.value) !== String(slider.defaultValue || "");
       var currentValue = String(slider.value);
       var elapsed = startedAt ? Math.max(0, Date.now() - startedAt) : 0;
+      var boardWidth = board ? board.clientWidth : 0;
+      var offset = boardWidth * (value / 100);
 
       if (event && event.type === "input" && currentValue !== lastValue) {
         moves += 1;
@@ -444,7 +448,7 @@
 
       lastValue = currentValue;
 
-      root.style.setProperty("--captcha-position", value + "%");
+      root.style.setProperty("--captcha-offset", Math.round(offset) + "px");
       root.dataset.captchaState = moved ? "active" : "idle";
       answer.value = [
         String(Math.round(value)),
@@ -453,8 +457,9 @@
         method
       ].join(":");
 
-      if (status) {
+      if (status && !status.__tinycatCaptchaHintSet) {
         status.textContent = root.dataset.captchaHint || status.textContent || "";
+        status.__tinycatCaptchaHintSet = true;
       }
     }
 

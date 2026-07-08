@@ -911,6 +911,7 @@ a:hover {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-soft);
+  contain: layout paint;
 }
 
 .captcha-image {
@@ -927,14 +928,14 @@ a:hover {
 .captcha-piece {
   position: absolute;
   top: var(--captcha-y, 42%);
-  left: var(--captcha-position, 0%);
+  left: 0;
   display: block;
   width: 64px;
   height: 64px;
-  filter: drop-shadow(0 7px 12px rgba(15, 23, 42, 0.14));
   pointer-events: none;
-  transform: translate(-50%, -50%);
+  transform: translate3d(var(--captcha-offset, 0px), -50%, 0) translateX(-50%);
   user-select: none;
+  will-change: transform;
 }
 
 .captcha-slider-label {
@@ -950,10 +951,6 @@ a:hover {
   color: var(--muted);
   font-size: 0.875rem;
   font-weight: 650;
-}
-
-.captcha-puzzle[data-captcha-state="active"] .captcha-piece {
-  filter: drop-shadow(0 8px 18px rgba(15, 118, 110, 0.22));
 }
 
 .alert {
