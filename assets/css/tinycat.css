@@ -2592,49 +2592,6 @@ a:hover {
   z-index: 3;
 }
 
-.profile-avatar-upload {
-  display: inline-grid;
-  margin: 0;
-}
-
-.profile-avatar-button {
-  position: relative;
-  display: inline-grid;
-  cursor: pointer;
-}
-
-.profile-avatar-button .avatar {
-  transition: filter 150ms ease, box-shadow 150ms ease, transform 150ms ease;
-}
-
-.profile-avatar-button:hover .avatar,
-.profile-avatar-button:focus-within .avatar {
-  filter: brightness(0.94);
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-1px);
-}
-
-.profile-avatar-overlay {
-  position: absolute;
-  right: 3px;
-  bottom: 3px;
-  display: inline-flex;
-  width: 30px;
-  height: 30px;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--surface);
-  border-radius: 999px;
-  background: var(--primary);
-  color: #fff;
-  box-shadow: var(--shadow-sm);
-}
-
-.profile-avatar-overlay .icon {
-  width: 16px;
-  height: 16px;
-}
-
 .profile-stats {
   display: flex;
   flex-wrap: wrap;

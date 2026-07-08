@@ -18,7 +18,7 @@ if ($contentId < 1) {
 
 $authorId = (int) ($item['author_id'] ?? $item['user_id'] ?? 0);
 $authorName = trim((string) ($item['author_name'] ?? ''));
-$avatarUrl = (string) ($item['avatar_url'] ?? '');
+$avatarUrl = user_avatar_url($item);
 $createdAt = (string) ($item['created_at'] ?? '');
 $modalId = status_post_modal_id($contentId);
 $bodyHtml = render_status_body($item);

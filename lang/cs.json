@@ -327,7 +327,6 @@
         "status_comment_delete_confirm": "Opravdu smazat tento komentář?",
         "messages": {
             "profile_saved": "Profil byl uložen.",
-            "avatar_saved": "Avatar byl uložen.",
             "password_saved": "Heslo bylo změněno.",
             "recovery_hash_rotated": "Recovery hash byl přegenerován.",
             "recovery_hash_unavailable": "Úložiště recovery hashe není dostupné.",

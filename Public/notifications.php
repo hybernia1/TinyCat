@@ -77,7 +77,7 @@ function tc_notification_item(array $notification): string
     $id = (int) ($notification['id'] ?? 0);
     $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
     $actorName = trim((string) ($notification['actor_name'] ?? ''));
-    $avatarUrl = trim((string) ($notification['actor_avatar_url'] ?? ''));
+    $avatarUrl = user_avatar_url($notification);
     $createdAt = (string) ($notification['created_at'] ?? '');
     $contentText = meta_text((string) ($notification['content_body'] ?? ''), 120);
     $url = notification_url($notification);

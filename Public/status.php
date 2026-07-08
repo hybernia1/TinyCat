@@ -54,7 +54,7 @@ layout('layout', [
 ], static function () use ($item, $current): void {
     $authorId = (int) ($item['author_id'] ?? $item['user_id'] ?? 0);
     $authorName = trim((string) ($item['author_name'] ?? ''));
-    $avatarUrl = (string) ($item['avatar_url'] ?? '');
+    $avatarUrl = user_avatar_url($item);
     $createdAt = (string) ($item['created_at'] ?? '');
     $contentId = (int) ($item['id'] ?? 0);
     ?>

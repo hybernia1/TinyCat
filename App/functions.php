@@ -7,6 +7,7 @@ if (!defined('TINYCAT')) {
 }
 
 require_once __DIR__ . '/Core.php';
+require_once __DIR__ . '/Avatar.php';
 
 if (!function_exists('guard')) {
     function guard(): void
@@ -186,14 +187,33 @@ if (!function_exists('status_meta_description')) {
 if (!function_exists('status_meta_image')) {
     function status_meta_image(array $item): string
     {
-        return (string) ($item['avatar_url'] ?? '') ?: site_meta_image_url();
+        return user_avatar_url($item) ?: site_meta_image_url();
+    }
+}
+
+if (!function_exists('avatar_url')) {
+    function avatar_url(string $username): string
+    {
+        return Avatar::url($username);
     }
 }
 
 if (!function_exists('user_avatar_url')) {
     function user_avatar_url(?array $user): string
     {
-        return trim((string) ($user['avatar_url'] ?? ''));
+        if ($user === null) {
+            return '';
+        }
+
+        foreach (['username', 'author_username', 'actor_username', 'author_name', 'actor_name', 'name'] as $key) {
+            $username = username_normalize((string) ($user[$key] ?? ''));
+
+            if (username_valid($username)) {
+                return avatar_url($username);
+            }
+        }
+
+        return '';
     }
 }
 
@@ -205,171 +225,6 @@ if (!function_exists('user_display_name')) {
         }
 
         return trim((string) ($user['username'] ?? ''));
-    }
-}
-
-if (!function_exists('avatar_delete')) {
-    function avatar_delete(?string $path, ?string $url = null): void
-    {
-        $relative = trim(str_replace('\\', '/', (string) $path), '/');
-
-        if ($relative === '' && trim((string) $url) !== '') {
-            $baseUrl = rtrim((string) config('avatar.url', '/uploads/avatars'), '/') . '/';
-            $urlPath = (string) (parse_url((string) $url, PHP_URL_PATH) ?: '');
-
-            if (str_starts_with($urlPath, $baseUrl)) {
-                $relative = trim(substr($urlPath, strlen($baseUrl)), '/');
-            }
-        }
-
-        if ($relative === '' || str_contains($relative, '..')) {
-            return;
-        }
-
-        $baseDirectory = rtrim((string) config('avatar.directory', base_path('uploads/avatars')), "/\\");
-        $baseReal = realpath($baseDirectory);
-
-        if ($baseReal === false || !is_dir($baseReal)) {
-            return;
-        }
-
-        $target = $baseReal . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative);
-        $targetReal = realpath($target);
-
-        if ($targetReal === false || !is_file($targetReal)) {
-            return;
-        }
-
-        $basePrefix = rtrim($baseReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-
-        if (!str_starts_with(strtolower($targetReal), strtolower($basePrefix))) {
-            return;
-        }
-
-        @unlink($targetReal);
-    }
-}
-
-if (!function_exists('avatar_upload')) {
-    function avatar_upload(array $file, string $name): array
-    {
-        if (!extension_loaded('gd') || !function_exists('imagewebp')) {
-            throw new RuntimeException('WebP avatar conversion is not available.');
-        }
-
-        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('Uploaded avatar is not valid.');
-        }
-
-        $tmpName = (string) ($file['tmp_name'] ?? '');
-
-        if ($tmpName === '' || !is_uploaded_file($tmpName)) {
-            throw new RuntimeException('Uploaded avatar is not valid.');
-        }
-
-        $maxSize = (int) config('avatar.max_size', 64 * 1024 * 1024);
-        $size = (int) ($file['size'] ?? 0);
-
-        if ($maxSize > 0 && $size > $maxSize) {
-            throw new RuntimeException('Uploaded avatar is too large.');
-        }
-
-        $info = @getimagesize($tmpName);
-
-        if ($info === false || empty($info['mime'])) {
-            throw new RuntimeException('Uploaded avatar is not an image.');
-        }
-
-        $mime = strtolower((string) $info['mime']);
-        $source = match ($mime) {
-            'image/jpeg' => imagecreatefromjpeg($tmpName),
-            'image/png' => imagecreatefrompng($tmpName),
-            'image/gif' => imagecreatefromgif($tmpName),
-            'image/webp' => imagecreatefromwebp($tmpName),
-            default => false,
-        };
-
-        if (!$source instanceof GdImage) {
-            throw new RuntimeException('Only JPEG, PNG, GIF, and WebP avatars can be uploaded.');
-        }
-
-        if ($mime === 'image/jpeg') {
-            $source = avatar_apply_orientation($source, $tmpName);
-        }
-
-        $sourceWidth = imagesx($source);
-        $sourceHeight = imagesy($source);
-
-        if ($sourceWidth < 1 || $sourceHeight < 1) {
-            imagedestroy($source);
-            throw new RuntimeException('Uploaded avatar is empty.');
-        }
-
-        $targetSize = max(1, (int) config('avatar.size', 200));
-        $canvas = imagecreatetruecolor($targetSize, $targetSize);
-        $sourceRatio = $sourceWidth / $sourceHeight;
-
-        if ($sourceRatio > 1) {
-            $cropHeight = $sourceHeight;
-            $cropWidth = $sourceHeight;
-            $sourceX = (int) floor(($sourceWidth - $cropWidth) / 2);
-            $sourceY = 0;
-        } else {
-            $cropWidth = $sourceWidth;
-            $cropHeight = $sourceWidth;
-            $sourceX = 0;
-            $sourceY = (int) floor(($sourceHeight - $cropHeight) / 2);
-        }
-
-        imagecopyresampled(
-            $canvas,
-            $source,
-            0,
-            0,
-            $sourceX,
-            $sourceY,
-            $targetSize,
-            $targetSize,
-            $cropWidth,
-            $cropHeight
-        );
-
-        imagedestroy($source);
-
-        $baseDirectory = rtrim((string) config('avatar.directory', base_path('uploads/avatars')), "/\\");
-        $baseUrl = rtrim((string) config('avatar.url', '/uploads/avatars'), '/');
-        $subfolder = trim((string) date((string) config('avatar.subfolder', 'Y/m')), '/');
-        $directory = $baseDirectory . ($subfolder !== '' ? DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $subfolder) : '');
-
-        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
-            imagedestroy($canvas);
-            throw new RuntimeException('Could not create avatar directory.');
-        }
-
-        $base = slug($name);
-        $base = $base !== '' ? $base : 'avatar';
-        $filename = $base . '.webp';
-        $target = $directory . DIRECTORY_SEPARATOR . $filename;
-        $counter = 2;
-
-        while (is_file($target)) {
-            $filename = $base . '-' . $counter . '.webp';
-            $target = $directory . DIRECTORY_SEPARATOR . $filename;
-            $counter++;
-        }
-
-        if (!imagewebp($canvas, $target, max(1, min(100, (int) config('avatar.quality', 86))))) {
-            imagedestroy($canvas);
-            throw new RuntimeException('Could not write WebP avatar.');
-        }
-
-        imagedestroy($canvas);
-
-        return [
-            'path' => trim(($subfolder !== '' ? $subfolder . '/' : '') . $filename, '/'),
-            'url' => $baseUrl . '/' . ($subfolder !== '' ? $subfolder . '/' : '') . $filename,
-            'size' => (int) filesize($target),
-        ];
     }
 }
 
@@ -417,7 +272,7 @@ if (!function_exists('site_image_upload')) {
         }
 
         if ($mime === 'image/jpeg') {
-            $source = avatar_apply_orientation($source, $tmpName);
+            $source = image_apply_orientation($source, $tmpName);
         }
 
         $sourceWidth = imagesx($source);
@@ -504,8 +359,8 @@ if (!function_exists('site_image_upload')) {
     }
 }
 
-if (!function_exists('avatar_apply_orientation')) {
-    function avatar_apply_orientation(GdImage $image, string $path): GdImage
+if (!function_exists('image_apply_orientation')) {
+    function image_apply_orientation(GdImage $image, string $path): GdImage
     {
         if (!function_exists('exif_read_data')) {
             return $image;
@@ -515,13 +370,13 @@ if (!function_exists('avatar_apply_orientation')) {
         $orientation = is_array($exif) ? (int) ($exif['Orientation'] ?? 1) : 1;
 
         $oriented = match ($orientation) {
-            2 => avatar_flip($image, IMG_FLIP_HORIZONTAL),
-            3 => avatar_rotate($image, 180),
-            4 => avatar_flip($image, IMG_FLIP_VERTICAL),
-            5 => avatar_flip(avatar_rotate($image, -90), IMG_FLIP_HORIZONTAL),
-            6 => avatar_rotate($image, -90),
-            7 => avatar_flip(avatar_rotate($image, 90), IMG_FLIP_HORIZONTAL),
-            8 => avatar_rotate($image, 90),
+            2 => image_flip($image, IMG_FLIP_HORIZONTAL),
+            3 => image_rotate($image, 180),
+            4 => image_flip($image, IMG_FLIP_VERTICAL),
+            5 => image_flip(image_rotate($image, -90), IMG_FLIP_HORIZONTAL),
+            6 => image_rotate($image, -90),
+            7 => image_flip(image_rotate($image, 90), IMG_FLIP_HORIZONTAL),
+            8 => image_rotate($image, 90),
             default => $image,
         };
 
@@ -529,8 +384,8 @@ if (!function_exists('avatar_apply_orientation')) {
     }
 }
 
-if (!function_exists('avatar_rotate')) {
-    function avatar_rotate(GdImage $image, int $angle): GdImage
+if (!function_exists('image_rotate')) {
+    function image_rotate(GdImage $image, int $angle): GdImage
     {
         $rotated = imagerotate($image, $angle, 0);
 
@@ -538,8 +393,8 @@ if (!function_exists('avatar_rotate')) {
     }
 }
 
-if (!function_exists('avatar_flip')) {
-    function avatar_flip(GdImage $image, int $mode): GdImage
+if (!function_exists('image_flip')) {
+    function image_flip(GdImage $image, int $mode): GdImage
     {
         if (function_exists('imageflip')) {
             imageflip($image, $mode);
@@ -1056,15 +911,6 @@ if (!function_exists('plain_text_limit')) {
     }
 }
 
-if (!function_exists('user_profile_store_avatar')) {
-    function user_profile_store_avatar(array $file, string $name): array
-    {
-        $title = trim($name) !== '' ? trim($name) : t('account.avatar');
-
-        return avatar_upload($file, $title . ' avatar');
-    }
-}
-
 if (!function_exists('user_profile_update')) {
     function user_profile_update(array $user, string $redirect): void
     {
@@ -1102,43 +948,6 @@ if (!function_exists('user_profile_update')) {
     }
 }
 
-if (!function_exists('user_avatar_update')) {
-    function user_avatar_update(array $user, string $redirect): void
-    {
-        $id = (int) ($user['id'] ?? 0);
-        $name = user_display_name($user);
-        $oldAvatarPath = (string) ($user['avatar_path'] ?? '');
-        $oldAvatarUrl = (string) ($user['avatar_url'] ?? '');
-        $avatar = $_FILES['avatar'] ?? null;
-
-        if ($id < 1 || !is_array($avatar) || (int) ($avatar['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
-            redirect($redirect);
-        }
-
-        try {
-            $avatarData = user_profile_store_avatar($avatar, $name);
-        } catch (RuntimeException $exception) {
-            flash('error', $exception->getMessage());
-            redirect($redirect);
-        }
-
-        update('users', [
-            'avatar_path' => (string) ($avatarData['path'] ?? ''),
-            'avatar_url' => (string) ($avatarData['url'] ?? ''),
-        ], ['id' => $id]);
-
-        $newAvatarPath = (string) ($avatarData['path'] ?? '');
-        $newAvatarUrl = (string) ($avatarData['url'] ?? '');
-
-        if ($oldAvatarPath !== $newAvatarPath || $oldAvatarUrl !== $newAvatarUrl) {
-            avatar_delete($oldAvatarPath, $oldAvatarUrl);
-        }
-
-        flash('success', t('account.messages.avatar_saved'));
-        redirect($redirect);
-    }
-}
-
 if (!function_exists('author_url')) {
     function author_url(int $id): string
     {
@@ -1162,8 +971,6 @@ if (!function_exists('public_author_find')) {
                 locale,
                 website,
                 bio,
-                avatar_path,
-                avatar_url,
                 muted_until,
                 muted_by,
                 muted_reason,
@@ -1292,7 +1099,6 @@ if (!function_exists('author_following_profiles')) {
             'SELECT u.id,
                 u.username,
                 u.username AS name,
-                u.avatar_url AS avatar_url,
                 uf.created_at AS followed_at,
                 (
                     SELECT COUNT(*)
@@ -1688,7 +1494,6 @@ if (!function_exists('public_status_select_sql')) {
                 u.username AS author_name,
                 u.website AS author_website,
                 u.bio AS author_bio,
-                u.avatar_url AS avatar_url,
                 (
                     SELECT COUNT(*)
                     FROM content_likes cl
@@ -2063,7 +1868,6 @@ if (!function_exists('public_top_authors')) {
                 u.username,
                 u.username AS name,
                 u.bio,
-                u.avatar_url AS avatar_url,
                 COUNT(*) AS posts_count,
                 MAX(c.published_at) AS latest_at
             FROM content c' . $feedIndex . '
@@ -2071,7 +1875,7 @@ if (!function_exists('public_top_authors')) {
         )
             ->where('c.published_at >= ?', date_db('-' . $days . ' days'))
             ->where('u.status = ?', 'active')
-            ->group('u.id, u.username, u.bio, u.avatar_url')
+            ->group('u.id, u.username, u.bio')
             ->order('posts_count DESC, latest_at DESC, u.username ASC')
             ->limit($limit)
             ->all();
@@ -2219,7 +2023,7 @@ if (!function_exists('public_sidebar')) {
                                 <?php
                                 $id = (int) ($author['id'] ?? 0);
                                 $name = trim((string) ($author['name'] ?? ''));
-                                $avatarUrl = (string) ($author['avatar_url'] ?? '');
+                                $avatarUrl = user_avatar_url($author);
                                 ?>
                                 <?php if ($id > 0 && $name !== ''): ?>
                                     <a class="sidebar-user-link" href="<?= e(author_url($id)) ?>">
@@ -2544,7 +2348,7 @@ if (!function_exists('public_search_content_result')) {
             'author_url' => author_url($authorId),
             'created_at' => $createdAt,
             'created_label' => datetime($createdAt),
-            'avatar_url' => (string) ($item['avatar_url'] ?? ''),
+            'avatar_url' => user_avatar_url($item),
         ];
     }
 }
@@ -2564,7 +2368,7 @@ if (!function_exists('public_search_recent_content_scan')) {
                 c.author_id,
                 c.created_at,
                 u.username AS author_name,
-                u.avatar_url AS avatar_url
+                u.username AS author_username
             FROM content c' . $feedIndex . '
             INNER JOIN users u ON u.id = c.author_id'
         )
@@ -2606,7 +2410,7 @@ if (!function_exists('public_search_content_rows')) {
                         c.author_id,
                         c.created_at,
                         u.username AS author_name,
-                        u.avatar_url AS avatar_url
+                        u.username AS author_username
                     FROM content c
                     INNER JOIN users u ON u.id = c.author_id'
                 )
@@ -2692,7 +2496,7 @@ if (!function_exists('public_search_suggestion_users')) {
         $users = [];
 
         foreach (db_select(
-            'SELECT u.id, u.username, u.username AS name, u.bio, u.avatar_url AS avatar_url
+            'SELECT u.id, u.username, u.username AS name, u.bio
             FROM users u'
         )
             ->where('u.status = ?', 'active')
@@ -2712,7 +2516,7 @@ if (!function_exists('public_search_suggestion_users')) {
                 'title' => (string) ($user['name'] ?? ''),
                 'excerpt' => public_search_excerpt((string) ($user['bio'] ?? ''), $query, 90),
                 'url' => author_url($id),
-                'avatar_url' => (string) ($user['avatar_url'] ?? ''),
+                'avatar_url' => user_avatar_url($user),
             ];
         }
 
@@ -2788,7 +2592,7 @@ if (!function_exists('public_search_results')) {
         }
 
         $userQuery = db_select(
-            'SELECT u.id, u.username, u.username AS name, u.bio, u.avatar_url AS avatar_url
+            'SELECT u.id, u.username, u.username AS name, u.bio
             FROM users u'
         )->where('u.status = ?', 'active');
         $usernameQuery = username_normalize(ltrim($query, '@'));
@@ -2828,7 +2632,7 @@ if (!function_exists('public_search_results')) {
                 'title' => (string) ($user['name'] ?? ''),
                 'excerpt' => public_search_excerpt((string) ($user['bio'] ?? ''), $query, 90),
                 'url' => author_url($id),
-                'avatar_url' => (string) ($user['avatar_url'] ?? ''),
+                'avatar_url' => user_avatar_url($user),
             ];
         }
 
@@ -2985,7 +2789,7 @@ if (!function_exists('status_comments_query')) {
                 cc.body,
                 cc.created_at,
                 u.username AS author_name,
-                u.avatar_url AS avatar_url,
+                u.username AS author_username,
                 (
                     SELECT COUNT(*)
                     FROM comment_likes cl
@@ -3754,7 +3558,7 @@ if (!function_exists('notifications_for_user')) {
         return db_select(
             'SELECT n.*,
                 u.username AS actor_name,
-                u.avatar_url AS actor_avatar_url,
+                u.username AS actor_username,
                 c.body AS content_body
             FROM notifications n
             LEFT JOIN users u ON u.id = n.actor_id
@@ -3782,7 +3586,7 @@ if (!function_exists('notification_preview_html')) {
             <?php
             $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
             $actorName = trim((string) ($notification['actor_name'] ?? ''));
-            $avatarUrl = trim((string) ($notification['actor_avatar_url'] ?? ''));
+            $avatarUrl = user_avatar_url($notification);
             $createdAt = (string) ($notification['created_at'] ?? '');
             $contentText = meta_text((string) ($notification['content_body'] ?? ''), 90);
             ?>
@@ -4774,7 +4578,7 @@ if (!function_exists('status_card')) {
         $contentId = (int) ($item['id'] ?? 0);
         $authorId = (int) ($item['author_id'] ?? $item['user_id'] ?? 0);
         $authorName = trim((string) ($item['author_name'] ?? ''));
-        $avatarUrl = (string) ($item['avatar_url'] ?? '');
+        $avatarUrl = user_avatar_url($item);
         $createdAt = (string) ($item['created_at'] ?? '');
         $url = $authorId > 0 ? author_url($authorId) . '#' . status_anchor($contentId) : '#';
 
@@ -5102,7 +4906,7 @@ if (!function_exists('status_comment_item')) {
         $contentId = (int) ($comment['content_id'] ?? 0);
         $authorId = (int) ($comment['user_id'] ?? 0);
         $authorName = trim((string) ($comment['author_name'] ?? ''));
-        $avatarUrl = (string) ($comment['avatar_url'] ?? '');
+        $avatarUrl = user_avatar_url($comment);
         $createdAt = (string) ($comment['created_at'] ?? '');
         $replies = $depth === 0 ? (array) ($comment['replies'] ?? []) : [];
         $canDelete = status_comment_can_delete($comment, $user);

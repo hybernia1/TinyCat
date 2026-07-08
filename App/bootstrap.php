@@ -44,6 +44,10 @@ route(['GET', 'POST'], '/tag/{tag}', static function (string $tag): void {
     require public_path('tag.php');
 });
 
+route('GET', '/avatar/{username:[a-z][a-z0-9_]{2,31}}', static function (string $username): void {
+    Avatar::respond($username);
+});
+
 route('GET', '/api/search', static function (): array {
     $query = (string) get('q', '');
 

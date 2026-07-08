@@ -30,14 +30,6 @@ $config = array (
     'image_quality' => 86,
     'image_max_size' => 67108864,
   ),
-  'avatar' => 
-  array (
-    'url' => '/uploads/avatars',
-    'subfolder' => 'Y/m',
-    'size' => 200,
-    'quality' => 86,
-    'max_size' => 67108864,
-  ),
   'database' => 
   array (
     'driver' => 'mysql',
@@ -101,6 +93,5 @@ $config = array (
 
 $config['i18n']['directory'] = $path('lang');
 $config['assets']['directory'] = $path('assets');
-$config['avatar']['directory'] = $path('uploads/avatars');
 $config['site']['image_directory'] = $path('uploads/site');
 return $config;

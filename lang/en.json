@@ -327,7 +327,6 @@
         "status_comment_delete_confirm": "Really delete this comment?",
         "messages": {
             "profile_saved": "The profile was saved.",
-            "avatar_saved": "The avatar was saved.",
             "password_saved": "The password was changed.",
             "recovery_hash_rotated": "The recovery hash was regenerated.",
             "recovery_hash_unavailable": "Recovery hash storage is not available.",

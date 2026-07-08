@@ -336,8 +336,6 @@ function tc_install_create_tables(): void
             note TEXT NULL,
             website VARCHAR(255) NULL,
             bio VARCHAR(500) NULL,
-            avatar_path VARCHAR(255) NULL,
-            avatar_url VARCHAR(255) NULL,
             muted_until DATETIME NULL,
             muted_by INT UNSIGNED NULL,
             muted_reason VARCHAR(80) NULL,
@@ -349,7 +347,6 @@ function tc_install_create_tables(): void
             UNIQUE KEY users_username_unique (username),
             UNIQUE KEY users_recovery_hash_unique (recovery_hash),
             KEY users_role_status_index (role, status),
-            KEY users_avatar_index (avatar_url),
             KEY users_mute_index (muted_until),
             KEY users_activity_index (last_seen_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
@@ -599,7 +596,6 @@ function tc_install_config_content(array $config): string
     unset(
         $config['i18n']['directory'],
         $config['assets']['directory'],
-        $config['avatar']['directory'],
         $config['site']['image_directory'],
         $config['app']['locale'],
         $config['i18n']['locale'],
@@ -620,7 +616,6 @@ function tc_install_config_content(array $config): string
         . "\$config = " . var_export($config, true) . ";\n\n"
         . "\$config['i18n']['directory'] = \$path('lang');\n"
         . "\$config['assets']['directory'] = \$path('assets');\n"
-        . "\$config['avatar']['directory'] = \$path('uploads/avatars');\n"
         . "\$config['site']['image_directory'] = \$path('uploads/site');\n"
         . "return \$config;\n";
 }

@@ -62,15 +62,6 @@ if (is_post()) {
         user_profile_update($user, author_url($targetAuthorId));
     }
 
-    if ($action === 'avatar') {
-        if ($userId !== $targetAuthorId) {
-            flash('error', t('auth.forbidden'));
-            redirect(author_url($targetAuthorId));
-        }
-
-        user_avatar_update($user, author_url($targetAuthorId));
-    }
-
     if (in_array($action, ['react', 'comment', 'comment_like', 'comment_delete', 'update', 'delete'], true)) {
         status_handle_post($user, author_url($targetAuthorId));
     }
@@ -107,7 +98,7 @@ $authorId = (int) $author['id'];
 $authorName = user_display_name($author);
 $website = trim((string) ($author['website'] ?? ''));
 $bio = trim((string) ($author['bio'] ?? ''));
-$avatarUrl = (string) ($author['avatar_url'] ?? '');
+$avatarUrl = user_avatar_url($author);
 $memberSince = (string) ($author['created_at'] ?? '');
 $statusLimit = public_status_page_limit();
 $statusItems = public_status_items_by_author($authorId, $statusLimit);
@@ -147,32 +138,13 @@ layout('layout', [
                                 <?= icon('edit') ?>
                             </button>
                         <?php endif; ?>
-                        <?php if ($canPost): ?>
-                            <form class="profile-avatar-upload" method="post" action="<?= e(author_url($authorId)) ?>" enctype="multipart/form-data" title="<?= et('account.avatar') ?>">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="action" value="avatar">
-                                <label class="profile-avatar-button" title="<?= et('account.avatar') ?>">
-                                    <span class="avatar avatar-xl">
-                                        <?php if ($avatarUrl !== ''): ?>
-                                            <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
-                                        <?php else: ?>
-                                            <?= icon('user') ?>
-                                        <?php endif; ?>
-                                    </span>
-                                    <span class="sr-only"><?= et('account.avatar') ?></span>
-                                    <input class="sr-only" type="file" name="avatar" accept="image/jpeg,image/png,image/gif,image/webp" data-submit-on-change>
-                                    <span class="profile-avatar-overlay"><?= icon('upload') ?></span>
-                                </label>
-                            </form>
-                        <?php else: ?>
-                            <div class="avatar avatar-xl">
-                                <?php if ($avatarUrl !== ''): ?>
-                                    <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
-                                <?php else: ?>
-                                    <?= icon('user') ?>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
+                        <div class="avatar avatar-xl">
+                            <?php if ($avatarUrl !== ''): ?>
+                                <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
+                            <?php else: ?>
+                                <?= icon('user') ?>
+                            <?php endif; ?>
+                        </div>
                         <div class="stack stack-gap-8">
                             <h1 class="text-xl m-0"><?= e($authorName) ?></h1>
                             <div class="profile-presence<?= ($presence['online'] ?? false) ? ' is-online' : '' ?>">
@@ -252,7 +224,7 @@ layout('layout', [
                                     <?php
                                     $profileId = (int) ($profile['id'] ?? 0);
                                     $profileName = user_display_name($profile);
-                                    $profileAvatar = trim((string) ($profile['avatar_url'] ?? ''));
+                                    $profileAvatar = user_avatar_url($profile);
                                     ?>
                                     <a class="sidebar-user-link" href="<?= e(author_url($profileId)) ?>">
                                         <span class="avatar avatar-sm">
