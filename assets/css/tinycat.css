@@ -1120,34 +1120,6 @@ a:hover {
   border-bottom: 0;
 }
 
-.content-title-cell {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 10px;
-}
-
-.content-title-cell > span {
-  display: grid;
-  min-width: 0;
-}
-
-.content-thumb {
-  width: 46px;
-  height: 46px;
-  flex: 0 0 auto;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
-}
-
-.content-thumb-empty {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-soft);
-  color: var(--muted);
-}
-
 .content-image-preview {
   display: grid;
   gap: 8px;
@@ -1225,15 +1197,6 @@ a:hover {
 .settings-grid {
   display: grid;
   gap: 14px;
-}
-
-.settings-grid-site {
-  gap: 18px;
-  max-width: 980px;
-}
-
-.settings-grid-site .settings-field-span:not(.settings-editor-field) {
-  max-width: 560px;
 }
 
 .settings-field {
@@ -2117,7 +2080,8 @@ a:hover {
 }
 
 .status-card-body {
-  --stack-gap: 8px;
+  display: grid;
+  gap: 8px;
 }
 
 [data-status-form].is-loading {
@@ -2172,15 +2136,6 @@ a:hover {
 .hashtag:hover,
 .hashtag:focus {
   text-decoration: underline;
-}
-
-.status-image {
-  display: block;
-  width: 100%;
-  max-height: 620px;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
-  background: var(--surface-soft);
 }
 
 .status-reactions,
@@ -3376,10 +3331,6 @@ body.admin-nav-open .admin-backdrop {
   width: min(100%, 920px);
 }
 
-.modal-panel-xl {
-  width: min(100%, 1120px);
-}
-
 .modal-panel-full {
   display: grid;
   width: 100vw;
@@ -3723,11 +3674,6 @@ body.admin-nav-open .admin-backdrop {
 
   .settings-grid {
     grid-template-columns: repeat(2, minmax(240px, 1fr));
-  }
-
-  .settings-grid-site {
-    grid-template-columns: repeat(2, minmax(220px, 360px));
-    align-items: start;
   }
 
   .sm\:block {

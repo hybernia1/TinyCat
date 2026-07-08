@@ -3513,7 +3513,7 @@ if (!function_exists('status_composer')) {
         ?>
         <section class="card status-composer">
             <div class="card-body">
-                <form class="stack" method="post" action="<?= e($action) ?>" data-status-form data-status-scope="feed">
+                <form method="post" action="<?= e($action) ?>" data-status-form data-status-scope="feed">
                     <?= csrf_field() ?>
                     <div class="status-compose-row">
                         <div class="avatar">
@@ -4785,7 +4785,7 @@ if (!function_exists('status_card')) {
         ob_start();
         ?>
         <article class="card status-card" id="<?= e(status_anchor($contentId)) ?>">
-            <div class="card-body stack status-card-body">
+            <div class="card-body status-card-body">
                 <div class="status-header">
                     <a class="avatar" href="<?= e($url) ?>" aria-label="<?= e($authorName) ?>">
                         <?php if ($avatarUrl !== ''): ?>
@@ -4993,7 +4993,7 @@ if (!function_exists('status_comments_section')) {
 
         ob_start();
         ?>
-        <section class="status-comments status-comments-preview">
+        <section class="status-comments">
             <button class="link-button status-comments-open" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>" data-modal-url="<?= e(status_post_modal_url($contentId, $action)) ?>" data-status-comments-label data-status-id="<?= e($contentId) ?>">
                 <?= et('account.status_view_comments', ['count' => $commentsCount]) ?>
             </button>
