@@ -9,22 +9,11 @@ if (!defined('TINYCAT')) {
 /**
  * TinyCat core.
  *
- * Keep this file focused on portable application infrastructure:
- * config, database, simple CRUD, slugs, sessions and responses.
+ * Infrastructure for this project: config, database, routes, auth,
+ * settings, captcha, dates, responses and small rendering helpers.
  */
 final class Core
 {
-    private const AUTH_TABLE = 'users';
-    private const AUTH_ID = 'id';
-    private const AUTH_LOGIN = 'username';
-    private const AUTH_PASSWORD = 'password';
-    private const AUTH_ROLE = 'role';
-    private const AUTH_STATUS = 'status';
-    private const AUTH_ACTIVE_STATUS = 'active';
-    private const AUTH_SESSION = 'auth_user_id';
-    private const AUTH_REMEMBER = 'tinycat_remember';
-    private const SETTINGS_TABLE = 'settings';
-
     private static array $config = [];
     private static ?PDO $pdo = null;
     private static ?string $locale = null;
@@ -120,10 +109,7 @@ final class Core
 
         try {
             $rows = self::all(
-                sprintf(
-                    'SELECT setting_key, setting_value, setting_type FROM %s WHERE autoload = 1 ORDER BY setting_key',
-                    self::identifier(self::settingsTable())
-                )
+                'SELECT setting_key, setting_value, setting_type FROM settings WHERE autoload = 1 ORDER BY setting_key'
             );
 
             foreach ($rows as $row) {
@@ -152,8 +138,7 @@ final class Core
         $type = self::normalizeSettingType($type);
         $group = self::settingGroup($group);
         $stored = self::serializeSettingValue($value, $type);
-        $table = self::settingsTable();
-        $existing = self::find($table, ['setting_key' => $key], ['id']);
+        $existing = self::find('settings', ['setting_key' => $key], ['id']);
         $data = [
             'setting_key' => $key,
             'setting_group' => $group,
@@ -163,9 +148,9 @@ final class Core
         ];
 
         if ($existing === null) {
-            self::insert($table, $data);
+            self::insert('settings', $data);
         } else {
-            self::update($table, $data, ['id' => $existing['id']]);
+            self::update('settings', $data, ['id' => $existing['id']]);
         }
 
         self::$settings = null;
@@ -1278,7 +1263,7 @@ final class Core
     {
         self::session();
 
-        $id = $_SESSION[self::AUTH_SESSION] ?? null;
+        $id = $_SESSION['auth_user_id'] ?? null;
 
         if ($id === null || $id === '') {
             $remembered = self::authRememberUser();
@@ -1290,10 +1275,10 @@ final class Core
             return $key === null ? null : $default;
         }
 
-        $user = self::authUserById($id);
+        $user = self::findUserById($id);
 
-        if ($user === null || !self::authUserIsActive($user)) {
-            unset($_SESSION[self::AUTH_SESSION]);
+        if ($user === null || !self::userIsActive($user)) {
+            unset($_SESSION['auth_user_id']);
             return $key === null ? null : $default;
         }
 
@@ -1302,7 +1287,7 @@ final class Core
 
     public static function authId(): mixed
     {
-        return self::auth(self::AUTH_ID);
+        return self::auth('id');
     }
 
     public static function authCheck(): bool
@@ -1312,39 +1297,39 @@ final class Core
 
     public static function authAttempt(array $credentials): bool
     {
-        $login = $credentials[self::AUTH_LOGIN] ?? $credentials['login'] ?? $credentials['email'] ?? $credentials['username'] ?? null;
-        $password = $credentials[self::AUTH_PASSWORD] ?? $credentials['password'] ?? null;
+        $username = $credentials['username'] ?? null;
+        $password = $credentials['password'] ?? null;
         $remember = in_array($credentials['remember'] ?? false, [true, 1, '1', 'true', 'on', 'yes'], true);
         $roles = $credentials['roles'] ?? $credentials['role'] ?? null;
 
-        if (!is_string($login) || trim($login) === '' || !is_string($password) || $password === '') {
+        if (!is_string($username) || trim($username) === '' || !is_string($password) || $password === '') {
             return false;
         }
 
-        $user = self::authUserByLogin(trim($login));
+        $user = self::findUserByUsername(trim($username));
 
-        if ($user === null || !self::authUserIsActive($user)) {
+        if ($user === null || !self::userIsActive($user)) {
             return false;
         }
 
-        $hash = (string) ($user[self::AUTH_PASSWORD] ?? '');
+        $hash = (string) ($user['password'] ?? '');
 
         if ($hash === '' || !password_verify($password, $hash)) {
             return false;
         }
 
-        if ($roles !== null && !self::authUserHasRole($user, $roles)) {
+        if ($roles !== null && !self::userHasRole($user, $roles)) {
             return false;
         }
 
         if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
             $hash = self::authPassword($password);
             self::update(
-                self::AUTH_TABLE,
-                [self::AUTH_PASSWORD => $hash],
-                [self::AUTH_ID => $user[self::AUTH_ID]]
+                'users',
+                ['password' => $hash],
+                ['id' => $user['id']]
             );
-            $user[self::AUTH_PASSWORD] = $hash;
+            $user['password'] = $hash;
         }
 
         return self::authLogin($user, $remember);
@@ -1352,18 +1337,18 @@ final class Core
 
     public static function authLogin(array|int|string $user, bool $remember = false): bool
     {
-        $id = is_array($user) ? ($user[self::AUTH_ID] ?? null) : $user;
+        $id = is_array($user) ? ($user['id'] ?? null) : $user;
 
         if ($id === null || $id === '') {
             return false;
         }
 
         self::session();
-        $_SESSION[self::AUTH_SESSION] = $id;
+        $_SESSION['auth_user_id'] = $id;
         session_regenerate_id(true);
 
         if ($remember) {
-            $user = is_array($user) ? $user : self::authUserById($id);
+            $user = is_array($user) ? $user : self::findUserById($id);
 
             if (is_array($user)) {
                 self::authRemember($user);
@@ -1380,7 +1365,7 @@ final class Core
     public static function authLogout(): void
     {
         self::session();
-        unset($_SESSION[self::AUTH_SESSION]);
+        unset($_SESSION['auth_user_id']);
         self::authForget();
         session_regenerate_id(true);
     }
@@ -1397,19 +1382,19 @@ final class Core
             self::apiError('Unauthenticated.', 401, 'unauthenticated');
         }
 
-        self::redirect(self::authRedirectUrl($redirect ?? self::authUrl('login_url', '/login')));
+        self::redirect(self::authRedirectUrl($redirect ?? self::loginUrl()));
     }
 
     public static function guestOnly(?string $redirect = null): void
     {
         if (self::authCheck()) {
-            self::redirect($redirect ?? self::authUrl('home_url', '/'));
+            self::redirect($redirect ?? self::homeUrl());
         }
     }
 
     public static function authIs(array|string $roles): bool
     {
-        $role = self::auth(self::AUTH_ROLE);
+        $role = self::auth('role');
 
         if ($role === null || $role === '') {
             return false;
@@ -1750,11 +1735,18 @@ final class Core
         return true;
     }
 
-    private static function authUrl(string $key, string $default): string
+    private static function loginUrl(): string
     {
-        $url = self::config('auth.' . $key, $default);
+        $url = self::config('auth.login_url', '/login');
 
-        return is_string($url) && $url !== '' ? $url : $default;
+        return is_string($url) && $url !== '' ? $url : '/login';
+    }
+
+    private static function homeUrl(): string
+    {
+        $url = self::config('auth.home_url', '/admin');
+
+        return is_string($url) && $url !== '' ? $url : '/admin';
     }
 
     private static function authTouchUser(mixed $id, bool $login = false): void
@@ -1771,7 +1763,7 @@ final class Core
         }
 
         try {
-            self::update(self::AUTH_TABLE, $data, [self::AUTH_ID => $id]);
+            self::update('users', $data, ['id' => $id]);
         } catch (Throwable) {
             // Auth must not fail because activity tracking failed.
         }
@@ -1779,7 +1771,7 @@ final class Core
 
     private static function authRememberUser(): ?array
     {
-        $name = self::authRememberCookieName();
+        $name = 'tinycat_remember';
         $value = (string) ($_COOKIE[$name] ?? '');
 
         if ($value === '') {
@@ -1802,9 +1794,9 @@ final class Core
             return null;
         }
 
-        $user = self::authUserById($id);
+        $user = self::findUserById($id);
 
-        if ($user === null || !self::authUserIsActive($user) || (string) ($user[self::AUTH_PASSWORD] ?? '') === '') {
+        if ($user === null || !self::userIsActive($user) || (string) ($user['password'] ?? '') === '') {
             self::authForget();
             return null;
         }
@@ -1815,7 +1807,7 @@ final class Core
         }
 
         self::session();
-        $_SESSION[self::AUTH_SESSION] = $user[self::AUTH_ID] ?? $id;
+        $_SESSION['auth_user_id'] = $user['id'] ?? $id;
         session_regenerate_id(true);
         self::authRemember($user);
 
@@ -1824,8 +1816,8 @@ final class Core
 
     private static function authRemember(array $user): void
     {
-        $id = $user[self::AUTH_ID] ?? null;
-        $hash = (string) ($user[self::AUTH_PASSWORD] ?? '');
+        $id = $user['id'] ?? null;
+        $hash = (string) ($user['password'] ?? '');
 
         if ($id === null || $id === '' || $hash === '') {
             return;
@@ -1844,7 +1836,7 @@ final class Core
             return;
         }
 
-        $name = self::authRememberCookieName();
+        $name = 'tinycat_remember';
         $value = self::base64UrlEncode($json);
         setcookie($name, $value, self::authRememberCookieOptions($expires));
         $_COOKIE[$name] = $value;
@@ -1852,7 +1844,7 @@ final class Core
 
     private static function authForget(): void
     {
-        $name = self::authRememberCookieName();
+        $name = 'tinycat_remember';
         unset($_COOKIE[$name]);
         setcookie($name, '', self::authRememberCookieOptions(time() - 3600));
     }
@@ -1872,28 +1864,19 @@ final class Core
 
     private static function authRememberSignature(array $user, int $expires): string
     {
-        $id = (string) ($user[self::AUTH_ID] ?? '');
-        $hash = (string) ($user[self::AUTH_PASSWORD] ?? '');
+        $id = (string) ($user['id'] ?? '');
+        $hash = (string) ($user['password'] ?? '');
         $appSecret = (string) self::config('app.key', self::config('app.name', 'TinyCat'));
         $key = hash('sha256', $appSecret . '|' . $hash, true);
 
         return hash_hmac('sha256', $id . '|' . $expires, $key);
     }
 
-    private static function authRememberCookieName(): string
-    {
-        $name = (string) self::config('auth.remember_cookie', self::AUTH_REMEMBER);
-
-        return preg_match('/^[A-Za-z0-9_-]+$/', $name) === 1 ? $name : self::AUTH_REMEMBER;
-    }
-
     private static function authRememberCookieOptions(int $expires): array
     {
-        $path = (string) self::config('auth.remember_path', '/');
-
         return [
             'expires' => $expires,
-            'path' => $path !== '' ? $path : '/',
+            'path' => '/',
             'secure' => self::isHttpsRequest(),
             'httponly' => true,
             'samesite' => 'Lax',
@@ -1928,36 +1911,36 @@ final class Core
             || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
     }
 
-    private static function authUserById(mixed $id): ?array
+    private static function findUserById(mixed $id): ?array
     {
         try {
-            return self::find(self::AUTH_TABLE, [self::AUTH_ID => $id]);
+            return self::find('users', ['id' => $id]);
         } catch (Throwable) {
             return null;
         }
     }
 
-    private static function authUserByLogin(string $login): ?array
+    private static function findUserByUsername(string $username): ?array
     {
         try {
-            return self::find(self::AUTH_TABLE, [self::AUTH_LOGIN => strtolower(trim($login))]);
+            return self::find('users', ['username' => strtolower(trim($username))]);
         } catch (Throwable) {
             return null;
         }
     }
 
-    private static function authUserIsActive(array $user): bool
+    private static function userIsActive(array $user): bool
     {
-        if (!array_key_exists(self::AUTH_STATUS, $user)) {
+        if (!array_key_exists('status', $user)) {
             return true;
         }
 
-        return (string) $user[self::AUTH_STATUS] === self::AUTH_ACTIVE_STATUS;
+        return (string) $user['status'] === 'active';
     }
 
-    private static function authUserHasRole(array $user, array|string $roles): bool
+    private static function userHasRole(array $user, array|string $roles): bool
     {
-        $role = (string) ($user[self::AUTH_ROLE] ?? '');
+        $role = (string) ($user['role'] ?? '');
 
         if ($role === '') {
             return false;
@@ -2431,24 +2414,17 @@ final class Core
         return isset($keys[$key]);
     }
 
-    private static function settingsTable(): string
-    {
-        return self::SETTINGS_TABLE;
-    }
-
     private static function settingsTableReady(): bool
     {
-        static $ready = [];
+        static $ready = false;
 
-        $table = self::settingsTable();
-
-        if (($ready[$table] ?? false) === true) {
+        if ($ready) {
             return true;
         }
 
         try {
-            self::query(sprintf('SELECT setting_key FROM %s LIMIT 1', self::identifier($table)));
-            $ready[$table] = true;
+            self::query('SELECT setting_key FROM settings LIMIT 1');
+            $ready = true;
             return true;
         } catch (Throwable) {
             return false;

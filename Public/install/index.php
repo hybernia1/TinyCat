@@ -564,24 +564,25 @@ function tc_install_write_config(array $state): void
         throw new RuntimeException(t('install.messages.missing_db'));
     }
 
-    $config = config();
-    $config['database'] = $database;
-    $config['app']['debug'] = false;
-    $config['auth'] = array_replace_recursive([
-        'login_url' => '/login',
-        'home_url' => '/admin',
-        'account_url' => '/account',
-        'remember_days' => 30,
-        'online_window' => 300,
-        'online_touch_interval' => 60,
-        'registration' => [
-            'enabled' => false,
-            'auto_approve' => false,
+    unset($database['driver']);
+
+    $config = [
+        'database' => [
+            'host' => (string) ($database['host'] ?? 'localhost'),
+            'name' => (string) ($database['name'] ?? ''),
+            'user' => (string) ($database['user'] ?? 'root'),
+            'password' => (string) ($database['password'] ?? ''),
+            'charset' => (string) ($database['charset'] ?? 'utf8mb4'),
         ],
-    ], is_array($config['auth'] ?? null) ? $config['auth'] : []);
-    $config['install']['installed'] = true;
-    $config['install']['installed_at'] = date(DATE_ATOM);
-    $config['install']['locale'] = $locale;
+        'install' => [
+            'installed' => true,
+            'locale' => $locale,
+        ],
+    ];
+
+    if (isset($database['port'])) {
+        $config['database']['port'] = (int) $database['port'];
+    }
 
     $path = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config.php';
     $content = tc_install_config_content($config);
@@ -593,31 +594,9 @@ function tc_install_write_config(array $state): void
 
 function tc_install_config_content(array $config): string
 {
-    unset(
-        $config['i18n']['directory'],
-        $config['assets']['directory'],
-        $config['site']['image_directory'],
-        $config['app']['locale'],
-        $config['i18n']['locale'],
-        $config['i18n']['fallback'],
-        $config['datetime'],
-        $config['security']['captcha']['enabled'],
-        $config['directory']
-    );
-
     return "<?php\n"
         . "declare(strict_types=1);\n\n"
-        . "// App config file. Paths are derived from this file so the project stays portable.\n\n"
-        . "\$base = __DIR__;\n"
-        . "\$path = static function (string \$path = '') use (\$base): string {\n"
-        . "    \$path = trim(str_replace(['/', '\\\\'], DIRECTORY_SEPARATOR, \$path), DIRECTORY_SEPARATOR);\n\n"
-        . "    return rtrim(\$base, DIRECTORY_SEPARATOR) . (\$path === '' ? '' : DIRECTORY_SEPARATOR . \$path);\n"
-        . "};\n\n"
-        . "\$config = " . var_export($config, true) . ";\n\n"
-        . "\$config['i18n']['directory'] = \$path('lang');\n"
-        . "\$config['assets']['directory'] = \$path('assets');\n"
-        . "\$config['site']['image_directory'] = \$path('uploads/site');\n"
-        . "return \$config;\n";
+        . "return " . var_export($config, true) . ";\n";
 }
 
 function tc_install_schema_tables(): array
