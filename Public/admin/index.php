@@ -22,10 +22,14 @@ layout('layout', [
         ['icon' => 'bell', 'label' => t('admin.stats.notifications'), 'table' => 'notifications'],
         ['icon' => 'flag', 'label' => t('admin.stats.reports'), 'table' => 'content_reports'],
     ];
+    $counts = tc_admin_dashboard_counts(array_map(
+        static fn (array $item): string => (string) $item['table'],
+        $stats
+    ));
     ?>
     <section class="grid sm:grid-2 md:grid-4">
         <?php foreach ($stats as $item): ?>
-            <?php $count = tc_admin_dashboard_count((string) $item['table']); ?>
+            <?php $count = $counts[(string) $item['table']] ?? null; ?>
             <article class="card">
                 <div class="card-body stack">
                     <h2 class="text-lg m-0 cluster gap-2"><?= icon((string) $item['icon'], 'icon text-primary') ?> <?= e($item['label']) ?></h2>
@@ -41,6 +45,35 @@ layout('layout', [
     </section>
     <?php
 });
+
+function tc_admin_dashboard_counts(array $tables): array
+{
+    $tables = array_values(array_unique(array_filter(array_map(
+        static fn (mixed $table): string => trim((string) $table),
+        $tables
+    ), static fn (string $table): bool => preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table) === 1)));
+
+    if ($tables === []) {
+        return [];
+    }
+
+    $cacheKey = 'admin_dashboard_counts_' . md5(implode('|', $tables));
+    $cached = public_stats_cache_get($cacheKey, 300);
+
+    if (is_array($cached)) {
+        return array_map(static fn (mixed $value): ?int => $value === null ? null : (int) $value, $cached);
+    }
+
+    $counts = [];
+
+    foreach ($tables as $table) {
+        $counts[$table] = tc_admin_dashboard_count($table);
+    }
+
+    public_stats_cache_set($cacheKey, $counts);
+
+    return $counts;
+}
 
 function tc_admin_dashboard_count(string $table): ?int
 {
