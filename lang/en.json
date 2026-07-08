@@ -357,8 +357,7 @@
     "security": {
         "captcha_label": "Security check",
         "captcha_slider": "Move the piece to the marked position",
-        "captcha_hint": "Move the piece into the marked slot.",
-        "captcha_solved": "The piece is set."
+        "captcha_hint": "Move the piece into the marked slot."
     },
     "relative": {
         "now": "now",

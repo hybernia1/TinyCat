@@ -1061,7 +1061,7 @@ final class Core
         $token = (string) ($challenge['token'] ?? '');
         $tolerance = max(1, min(12, (int) self::config('security.captcha.tolerance', 4)));
 
-        return '<div class="field captcha-puzzle" data-captcha data-captcha-token="' . self::e($token) . '" data-captcha-tolerance="' . self::e($tolerance) . '" data-captcha-hint="' . self::e(self::t('security.captcha_hint')) . '" data-captcha-solved="' . self::e(self::t('security.captcha_solved')) . '" style="--captcha-target: ' . self::e($target) . '%; --captcha-y: ' . self::e($pieceTop) . '%;">'
+        return '<div class="field captcha-puzzle" data-captcha data-captcha-token="' . self::e($token) . '" data-captcha-tolerance="' . self::e($tolerance) . '" data-captcha-hint="' . self::e(self::t('security.captcha_hint')) . '" style="--captcha-target: ' . self::e($target) . '%; --captcha-y: ' . self::e($pieceTop) . '%;">'
             . '<span class="label">' . self::e(self::t('security.captcha_label')) . '</span>'
             . '<input type="hidden" name="' . self::e($name) . '" value="" data-captcha-answer required>'
             . '<div class="captcha-board" aria-hidden="true">'
@@ -1090,14 +1090,24 @@ final class Core
             return false;
         }
 
-        [$token, $position] = array_pad(explode(':', $answer, 2), 2, '');
+        [$token, $position, $elapsed, $moves, $method] = array_pad(explode(':', $answer, 5), 5, '');
         $target = (int) ($challenge['target'] ?? -1);
         $expires = (int) ($challenge['expires'] ?? 0);
+        $issuedAt = (float) ($challenge['issued_at'] ?? 0);
         $tolerance = max(1, min(12, (int) self::config('security.captcha.tolerance', 4)));
+        $minInteractionMs = max(150, min(2000, (int) self::config('security.captcha.min_interaction_ms', 350)));
+        $minMoves = max(1, min(8, (int) self::config('security.captcha.min_moves', 1)));
+        $serverElapsedMs = $issuedAt > 0 ? (int) floor((microtime(true) - $issuedAt) * 1000) : 0;
         $valid = hash_equals((string) ($challenge['token'] ?? ''), (string) $token)
             && $expires >= time()
             && is_numeric($position)
-            && abs((int) $position - $target) <= $tolerance;
+            && abs((int) $position - $target) <= $tolerance
+            && is_numeric($elapsed)
+            && (int) $elapsed >= $minInteractionMs
+            && $serverElapsedMs >= min(250, $minInteractionMs)
+            && is_numeric($moves)
+            && (int) $moves >= $minMoves
+            && in_array($method, ['pointer', 'mouse', 'touch', 'keyboard'], true);
 
         if ($valid) {
             unset($_SESSION[self::captchaSessionKey($context)]);
@@ -2094,6 +2104,7 @@ final class Core
             'token' => bin2hex(random_bytes(16)),
             'target' => random_int(28, 72),
             'piece_top' => random_int(24, 62),
+            'issued_at' => microtime(true),
             'expires' => time() + max(60, (int) self::config('security.captcha.ttl', 600)),
         ];
 

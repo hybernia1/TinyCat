@@ -357,8 +357,7 @@
     "security": {
         "captcha_label": "Bezpečnostní ověření",
         "captcha_slider": "Posuň dílek na vyznačené místo",
-        "captcha_hint": "Posuň dílek do vyznačeného otvoru.",
-        "captcha_solved": "Dílek je nastavený."
+        "captcha_hint": "Posuň dílek do vyznačeného otvoru."
     },
     "relative": {
         "now": "teď",

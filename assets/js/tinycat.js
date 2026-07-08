@@ -411,6 +411,11 @@
     var token = root.dataset.captchaToken || "";
     var target = parsePercent(root.style.getPropertyValue("--captcha-target"), 50);
     var tolerance = parsePercent(root.dataset.captchaTolerance, 4);
+    var startedAt = 0;
+    var moves = 0;
+    var method = "";
+    var lastValue = String(slider ? slider.value : "");
+    var form = root.closest ? root.closest("form") : null;
 
     if (root.dataset.captchaReady === "true") {
       return;
@@ -420,26 +425,63 @@
       return;
     }
 
-    function sync() {
+    function noteInteraction(type) {
+      if (!startedAt) {
+        startedAt = Date.now();
+      }
+
+      if (!method && type) {
+        method = type;
+      }
+    }
+
+    function sync(event) {
       var value = parsePercent(slider.value, 0);
       var solved = Math.abs(value - target) <= tolerance;
       var moved = String(slider.value) !== String(slider.defaultValue || "");
+      var currentValue = String(slider.value);
+      var elapsed = startedAt ? Math.max(0, Date.now() - startedAt) : 0;
+
+      if (event && event.type === "input" && currentValue !== lastValue) {
+        moves += 1;
+      }
+
+      lastValue = currentValue;
 
       root.style.setProperty("--captcha-position", value + "%");
       root.dataset.captchaState = solved ? "solved" : (moved ? "active" : "idle");
-      answer.value = token + ":" + String(Math.round(value));
+      answer.value = [
+        token,
+        String(Math.round(value)),
+        String(Math.round(elapsed)),
+        String(moves),
+        method
+      ].join(":");
 
       if (status) {
-        status.textContent = solved
-          ? (root.dataset.captchaSolved || status.textContent || "")
-          : (root.dataset.captchaHint || status.textContent || "");
+        status.textContent = root.dataset.captchaHint || status.textContent || "";
       }
     }
 
     root.dataset.captchaReady = "true";
     root.__tinycatCaptchaSync = sync;
+    slider.addEventListener("pointerdown", function () {
+      noteInteraction("pointer");
+    });
+    slider.addEventListener("mousedown", function () {
+      noteInteraction("mouse");
+    });
+    slider.addEventListener("touchstart", function () {
+      noteInteraction("touch");
+    }, { passive: true });
+    slider.addEventListener("keydown", function () {
+      noteInteraction("keyboard");
+    });
     slider.addEventListener("input", sync);
     slider.addEventListener("change", sync);
+    if (form) {
+      form.addEventListener("submit", sync);
+    }
     sync();
   }
 
