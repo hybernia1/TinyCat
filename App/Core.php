@@ -1057,14 +1057,15 @@ final class Core
         $name = (string) self::config('security.captcha.field', 'tc_captcha');
         $challenge = self::captchaChallenge($context, true);
         $pieceTop = (int) ($challenge['piece_top'] ?? 42);
-        $image = self::captchaBoardDataUri($challenge);
+        $boardImage = self::captchaBoardDataUri($challenge);
+        $pieceImage = self::captchaPieceDataUri($challenge);
 
         return '<div class="field captcha-puzzle" data-captcha data-captcha-hint="' . self::e(self::t('security.captcha_hint')) . '" style="--captcha-y: ' . self::e($pieceTop) . '%;">'
             . '<span class="label">' . self::e(self::t('security.captcha_label')) . '</span>'
             . '<input type="hidden" name="' . self::e($name) . '" value="" data-captcha-answer required>'
             . '<div class="captcha-board" aria-hidden="true">'
-            . '<img class="captcha-image" src="' . self::e($image) . '" alt="" draggable="false">'
-            . '<span class="captcha-piece" data-captcha-piece></span>'
+            . '<img class="captcha-image" src="' . self::e($boardImage) . '" alt="" draggable="false">'
+            . '<img class="captcha-piece" src="' . self::e($pieceImage) . '" alt="" draggable="false">'
             . '</div>'
             . '<label class="captcha-slider-label">'
             . '<span class="sr-only">' . self::e(self::t('security.captcha_slider')) . '</span>'
@@ -1082,9 +1083,11 @@ final class Core
 
         $name = (string) self::config('security.captcha.field', 'tc_captcha');
         $answer = trim((string) self::payload($name, ''));
-        $challenge = self::captchaChallenge($context);
+        $challenge = self::captchaStoredChallenge($context);
 
         if ($challenge === [] || $answer === '') {
+            unset($_SESSION[self::captchaSessionKey($context)]);
+
             return false;
         }
 
@@ -1098,7 +1101,7 @@ final class Core
         $serverElapsedMs = $issuedAt > 0 ? (int) floor((microtime(true) - $issuedAt) * 1000) : 0;
         $valid = $expires >= time()
             && is_numeric($position)
-            && abs((int) $position - $target) <= $tolerance
+            && abs((float) $position - $target) <= $tolerance
             && is_numeric($elapsed)
             && (int) $elapsed >= $minInteractionMs
             && $serverElapsedMs >= min(250, $minInteractionMs)
@@ -1106,9 +1109,7 @@ final class Core
             && (int) $moves >= $minMoves
             && in_array($method, ['pointer', 'mouse', 'touch', 'keyboard'], true);
 
-        if ($valid) {
-            unset($_SESSION[self::captchaSessionKey($context)]);
-        }
+        unset($_SESSION[self::captchaSessionKey($context)]);
 
         return $valid;
     }
@@ -2097,10 +2098,15 @@ final class Core
             return $challenge;
         }
 
+        $target = random_int(28, 72);
+        $pieceTop = random_int(24, 62);
+        $shape = self::captchaRandomShape();
         $challenge = [
             'token' => bin2hex(random_bytes(16)),
-            'target' => random_int(28, 72),
-            'piece_top' => random_int(24, 62),
+            'target' => $target,
+            'piece_top' => $pieceTop,
+            'shape' => $shape,
+            'decoys' => self::captchaDecoys($target, $pieceTop, $shape),
             'issued_at' => microtime(true),
             'expires' => time() + max(60, (int) self::config('security.captcha.ttl', 600)),
         ];
@@ -2110,9 +2116,34 @@ final class Core
         return $challenge;
     }
 
+    private static function captchaStoredChallenge(string $context): array
+    {
+        self::session();
+
+        $key = self::captchaSessionKey($context);
+        $challenge = $_SESSION[$key] ?? null;
+
+        if (
+            is_array($challenge)
+            && (int) ($challenge['expires'] ?? 0) >= time()
+            && is_string($challenge['token'] ?? null)
+        ) {
+            return $challenge;
+        }
+
+        unset($_SESSION[$key]);
+
+        return [];
+    }
+
     private static function captchaBoardDataUri(array $challenge): string
     {
         return 'data:image/png;base64,' . base64_encode(self::captchaBoardPng($challenge));
+    }
+
+    private static function captchaPieceDataUri(array $challenge): string
+    {
+        return 'data:image/png;base64,' . base64_encode(self::captchaPiecePng($challenge));
     }
 
     private static function captchaBoardPng(array $challenge): string
@@ -2121,12 +2152,32 @@ final class Core
         $height = 128;
         $target = max(12, min(88, (int) ($challenge['target'] ?? 50)));
         $pieceTop = max(18, min(82, (int) ($challenge['piece_top'] ?? 42)));
-        $cx = (int) round($width * ($target / 100));
-        $cy = (int) round($height * ($pieceTop / 100));
+        $shape = self::captchaShape((string) ($challenge['shape'] ?? 'rb'));
         $size = 42;
         $tab = 10;
         $seed = (int) hexdec(substr(hash('sha256', (string) ($challenge['token'] ?? 'captcha')), 0, 7));
+        $slots = [];
         $raw = '';
+
+        foreach ((array) ($challenge['decoys'] ?? []) as $decoy) {
+            if (!is_array($decoy)) {
+                continue;
+            }
+
+            $slots[] = [
+                'cx' => (int) round($width * (max(12, min(88, (int) ($decoy['x'] ?? 50))) / 100)),
+                'cy' => (int) round($height * (max(18, min(82, (int) ($decoy['y'] ?? 42))) / 100)),
+                'shape' => self::captchaShape((string) ($decoy['shape'] ?? 'rb')),
+                'valid' => false,
+            ];
+        }
+
+        $slots[] = [
+            'cx' => (int) round($width * ($target / 100)),
+            'cy' => (int) round($height * ($pieceTop / 100)),
+            'shape' => $shape,
+            'valid' => true,
+        ];
 
         for ($y = 0; $y < $height; $y++) {
             $raw .= "\0";
@@ -2149,10 +2200,17 @@ final class Core
                     $b += 4;
                 }
 
-                $inShape = self::captchaShapeContains($x, $y, $cx, $cy, $size, $tab);
-                $inside = self::captchaShapeContains($x, $y, $cx, $cy, $size - 7, max(3, $tab - 3));
+                foreach ($slots as $slot) {
+                    $slotShape = (string) ($slot['shape'] ?? 'rb');
+                    $slotCx = (int) ($slot['cx'] ?? 0);
+                    $slotCy = (int) ($slot['cy'] ?? 0);
+                    $inShape = self::captchaShapeContains($x, $y, $slotCx, $slotCy, $size, $tab, $slotShape);
 
-                if ($inShape) {
+                    if (!$inShape) {
+                        continue;
+                    }
+
+                    $inside = self::captchaShapeContains($x, $y, $slotCx, $slotCy, $size - 7, max(3, $tab - 3), $slotShape);
                     $dash = (((int) floor(($x + $y) / 7)) % 2) === 0;
 
                     if (!$inside && $dash) {
@@ -2177,15 +2235,110 @@ final class Core
             . self::pngChunk('IEND', '');
     }
 
-    private static function captchaShapeContains(int $x, int $y, int $cx, int $cy, int $size, int $tab): bool
+    private static function captchaPiecePng(array $challenge): string
+    {
+        $width = 64;
+        $height = 64;
+        $cx = 32;
+        $cy = 32;
+        $size = 42;
+        $tab = 10;
+        $shape = self::captchaShape((string) ($challenge['shape'] ?? 'rb'));
+        $raw = '';
+
+        for ($y = 0; $y < $height; $y++) {
+            $raw .= "\0";
+
+            for ($x = 0; $x < $width; $x++) {
+                $inShape = self::captchaShapeContains($x, $y, $cx, $cy, $size, $tab, $shape);
+                $inside = self::captchaShapeContains($x, $y, $cx, $cy, $size - 5, max(3, $tab - 3), $shape);
+
+                if (!$inShape) {
+                    $raw .= "\0\0\0\0";
+                    continue;
+                }
+
+                if ($inside) {
+                    [$r, $g, $b, $a] = [15, 118, 110, 255];
+                } else {
+                    [$r, $g, $b, $a] = [13, 95, 88, 255];
+                }
+
+                $raw .= chr($r) . chr($g) . chr($b) . chr($a);
+            }
+        }
+
+        $compressed = gzcompress($raw, 6);
+        $compressed = $compressed === false ? gzcompress('', 6) : $compressed;
+
+        return "\x89PNG\r\n\x1a\n"
+            . self::pngChunk('IHDR', pack('NNCCCCC', $width, $height, 8, 6, 0, 0, 0))
+            . self::pngChunk('IDAT', $compressed === false ? '' : $compressed)
+            . self::pngChunk('IEND', '');
+    }
+
+    private static function captchaShapeContains(int $x, int $y, int $cx, int $cy, int $size, int $tab, string $shape): bool
     {
         $half = max(4, (int) floor($size / 2));
         $tab = max(2, $tab);
+        $shape = self::captchaShape($shape);
         $inRect = abs($x - $cx) <= $half && abs($y - $cy) <= $half;
-        $inRightTab = (($x - ($cx + $half)) ** 2 + ($y - $cy) ** 2) <= $tab ** 2;
-        $inBottomTab = (($x - $cx) ** 2 + ($y - ($cy + $half)) ** 2) <= $tab ** 2;
+        $tabX = str_contains($shape, 'l') ? $cx - $half : $cx + $half;
+        $tabY = str_contains($shape, 't') ? $cy - $half : $cy + $half;
+        $inHorizontalTab = (($x - $tabX) ** 2 + ($y - $cy) ** 2) <= $tab ** 2;
+        $inVerticalTab = (($x - $cx) ** 2 + ($y - $tabY) ** 2) <= $tab ** 2;
 
-        return $inRect || $inRightTab || $inBottomTab;
+        return $inRect || $inHorizontalTab || $inVerticalTab;
+    }
+
+    private static function captchaShape(string $shape): string
+    {
+        return in_array($shape, ['rb', 'lb', 'rt', 'lt'], true) ? $shape : 'rb';
+    }
+
+    private static function captchaRandomShape(): string
+    {
+        $shapes = ['rb', 'lb', 'rt', 'lt'];
+
+        return $shapes[random_int(0, count($shapes) - 1)];
+    }
+
+    private static function captchaDecoys(int $target, int $pieceTop, string $shape): array
+    {
+        $decoys = [];
+        $attempts = 0;
+
+        $shapes = array_values(array_filter(['rb', 'lb', 'rt', 'lt'], static fn (string $item): bool => $item !== $shape));
+        shuffle($shapes);
+
+        while (count($decoys) < 3 && $attempts < 80) {
+            $attempts++;
+            $x = random_int(18, 82);
+            $y = random_int(22, 76);
+
+            if (self::captchaSlotNear($x, $y, $target, $pieceTop)) {
+                continue;
+            }
+
+            foreach ($decoys as $decoy) {
+                if (self::captchaSlotNear($x, $y, (int) ($decoy['x'] ?? 0), (int) ($decoy['y'] ?? 0))) {
+                    continue 2;
+                }
+            }
+
+            $decoys[] = [
+                'x' => $x,
+                'y' => $y,
+                'shape' => $shapes[count($decoys)] ?? self::captchaRandomShape(),
+            ];
+        }
+
+        return $decoys;
+    }
+
+    private static function captchaSlotNear(int $x, int $y, int $otherX, int $otherY): bool
+    {
+        return abs($x - $otherX) < 17 && abs($y - $otherY) < 20;
     }
 
     private static function pngChunk(string $type, string $data): string

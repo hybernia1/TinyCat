@@ -927,42 +927,14 @@ a:hover {
 .captcha-piece {
   position: absolute;
   top: var(--captcha-y, 42%);
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  transform: translate(-50%, -50%);
-}
-
-.captcha-piece {
   left: var(--captcha-position, 0%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  background: var(--primary);
-  box-shadow: var(--shadow-sm);
-  transition: background 150ms ease, box-shadow 150ms ease;
-}
-
-.captcha-piece::before,
-.captcha-piece::after {
-  position: absolute;
-  border-radius: 999px;
-  background: inherit;
-  content: "";
-}
-
-.captcha-piece::before {
-  top: 50%;
-  right: -9px;
-  width: 18px;
-  height: 18px;
-  transform: translateY(-50%);
-}
-
-.captcha-piece::after {
-  left: 50%;
-  bottom: -9px;
-  width: 18px;
-  height: 18px;
-  transform: translateX(-50%);
+  display: block;
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 7px 12px rgba(15, 23, 42, 0.14));
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  user-select: none;
 }
 
 .captcha-slider-label {
@@ -981,7 +953,7 @@ a:hover {
 }
 
 .captcha-puzzle[data-captcha-state="active"] .captcha-piece {
-  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.18);
+  filter: drop-shadow(0 8px 18px rgba(15, 118, 110, 0.22));
 }
 
 .alert {
