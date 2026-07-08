@@ -13,7 +13,7 @@ $state = &tc_install_state();
 $locale = tc_install_locale($languages, $state);
 locale($locale);
 
-if ((bool) config('install.installed', false) && empty($state['database']) && is_array(config('database', []))) {
+if (empty($state['database']) && is_array(config('database', []))) {
     $state['database'] = config('database', []);
 }
 
@@ -77,14 +77,14 @@ function tc_install_step(array $state): string
 {
     $status = app_db_status();
 
-    if ((bool) config('install.installed', false) && $status['ready']) {
+    if ($status['ready']) {
         return 'done';
     }
 
     $defaultStep = isset($state['locale']) ? 'db' : 'language';
 
-    if ((bool) config('install.installed', false)) {
-        $defaultStep = $status['connected'] ? 'tables' : 'db';
+    if (isset($state['locale']) && $status['connected']) {
+        $defaultStep = 'tables';
 
         if ($status['connected'] && $status['missing_tables'] === [] && !$status['account_ready']) {
             $defaultStep = 'admin';
@@ -575,7 +575,6 @@ function tc_install_write_config(array $state): void
             'charset' => (string) ($database['charset'] ?? 'utf8mb4'),
         ],
         'install' => [
-            'installed' => true,
             'locale' => $locale,
         ],
     ];
@@ -912,9 +911,6 @@ function tc_install_done_view(): void
             <h2 class="text-lg m-0 cluster gap-2"><?= icon('check-circle') ?> <?= et('install.done_title') ?></h2>
         </div>
         <div class="card-body stack">
-            <?php if ((bool) config('install.installed', false)): ?>
-                <div class="alert alert-info"><?= et('install.already_installed') ?></div>
-            <?php endif; ?>
             <p class="text-muted mb-0"><?= et('install.done_intro') ?></p>
             <ul class="result-list">
                 <li class="result-item"><?= icon('globe') ?> <span><?= et('common.language') ?>: <strong><?= e(locale()) ?></strong></span></li>

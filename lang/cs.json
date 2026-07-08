@@ -541,7 +541,6 @@
     "install": {
         "language_label": "Čeština",
         "title": "Instalace TinyCat CMS",
-        "already_installed": "TinyCat už je nainstalovaný.",
         "step_language": "Jazyk",
         "step_database": "Databáze",
         "step_tables": "Tabulky",

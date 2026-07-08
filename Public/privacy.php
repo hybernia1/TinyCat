@@ -6,10 +6,6 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-if (!(bool) config('install.installed', false)) {
-    redirect('/install');
-}
-
 layout('layout', [
     'title' => t('privacy.title'),
     'current' => '/privacy',

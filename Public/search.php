@@ -6,10 +6,6 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-if (!(bool) config('install.installed', false)) {
-    redirect('/install');
-}
-
 $query = trim((string) get('q', ''));
 $hasQuery = (function_exists('mb_strlen') ? mb_strlen($query, 'UTF-8') : strlen($query)) >= 2;
 $current = '/search' . ($query !== '' ? '?q=' . rawurlencode($query) : '');

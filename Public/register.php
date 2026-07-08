@@ -6,10 +6,6 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-if (!(bool) config('install.installed', false)) {
-    redirect('/install');
-}
-
 if (auth_check()) {
     redirect(tc_register_redirect(auth()));
 }

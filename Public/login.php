@@ -6,10 +6,6 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-if (!(bool) config('install.installed', false)) {
-    redirect('/install');
-}
-
 if (is_post()) {
     csrf_require();
 

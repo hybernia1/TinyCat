@@ -6,10 +6,6 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-if (!(bool) config('install.installed', false)) {
-    redirect('/install');
-}
-
 $statusId = max(0, (int) get('id', 0));
 $current = status_url($statusId);
 

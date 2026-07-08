@@ -6,10 +6,6 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-if (!(bool) config('install.installed', false)) {
-    redirect('/install');
-}
-
 $authUser = auth();
 $feed = (string) get('feed', 'all') === 'following' ? 'following' : 'all';
 $currentFeedUrl = $feed === 'following' ? '/?feed=following' : '/';

@@ -5415,17 +5415,12 @@ if (!function_exists('app_db_status')) {
     {
         $requiredTables ??= app_required_tables();
         $status = [
-            'installed' => (bool) config('install.installed', false),
             'connected' => false,
             'account_ready' => false,
             'ready' => false,
             'missing_tables' => [],
             'error' => null,
         ];
-
-        if (!$status['installed']) {
-            return $status;
-        }
 
         try {
             db()->query('SELECT 1');

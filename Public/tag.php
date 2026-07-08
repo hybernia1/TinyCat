@@ -6,10 +6,6 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-if (!(bool) config('install.installed', false)) {
-    redirect('/install');
-}
-
 $tag = status_tag_normalize((string) get('tag', ''));
 
 if ($tag === '') {

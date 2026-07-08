@@ -541,7 +541,6 @@
     "install": {
         "language_label": "English",
         "title": "Install TinyCat CMS",
-        "already_installed": "TinyCat is already installed.",
         "step_language": "Language",
         "step_database": "Database",
         "step_tables": "Tables",
