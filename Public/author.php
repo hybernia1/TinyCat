@@ -140,8 +140,13 @@ layout('layout', [
     <section class="profile-layout">
         <aside class="profile-sidebar">
             <div class="profile-sidebar-stack">
-                <article class="card profile-card" data-profile-editor>
+                <article class="card profile-card">
                     <div class="card-body stack">
+                        <?php if ($canPost): ?>
+                            <button class="btn btn-secondary btn-sm btn-icon profile-edit-toggle" type="button" data-modal-open="<?= e(author_profile_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_profile_edit_modal_url($authorId, 'bio')) ?>" title="<?= et('common.edit') ?>" aria-label="<?= et('common.edit') ?>">
+                                <?= icon('edit') ?>
+                            </button>
+                        <?php endif; ?>
                         <?php if ($canPost): ?>
                             <form class="profile-avatar-upload" method="post" action="<?= e(author_url($authorId)) ?>" enctype="multipart/form-data" title="<?= et('account.avatar') ?>">
                                 <?= csrf_field() ?>
@@ -185,7 +190,7 @@ layout('layout', [
                                 </div>
                             <?php endif; ?>
                             <?php if ($canPost): ?>
-                                <button class="profile-editable-text" type="button" data-profile-edit-open data-profile-edit-focus="bio">
+                                <button class="profile-editable-text" type="button" data-modal-open="<?= e(author_profile_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_profile_edit_modal_url($authorId, 'bio')) ?>">
                                     <?php if ($bio !== ''): ?>
                                         <?= nl2br(e($bio)) ?>
                                     <?php else: ?>
@@ -197,18 +202,16 @@ layout('layout', [
                             <?php endif; ?>
                         </div>
                         <div class="profile-stats">
-                            <span><strong data-author-stat="followers" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['followers'] ?? 0)) ?></strong> <?= et('public.followers') ?></span>
-                            <span><strong data-author-stat="following" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['following'] ?? 0)) ?></strong> <?= et('public.following') ?></span>
-                            <span><strong><?= e((int) ($activityStats['posts'] ?? 0)) ?></strong> <?= et('public.profile_posts') ?></span>
-                            <span><strong><?= e((int) ($activityStats['likes_given'] ?? 0)) ?></strong> <?= et('public.profile_likes_given') ?></span>
-                            <span><strong><?= e((int) ($activityStats['likes_received'] ?? 0)) ?></strong> <?= et('public.profile_likes_received') ?></span>
-                            <span><strong><?= e((int) ($activityStats['comments'] ?? 0)) ?></strong> <?= et('public.profile_comments') ?></span>
+                            <span class="badge profile-stat"><strong data-author-stat="followers" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['followers'] ?? 0)) ?></strong> <span><?= et('public.followers') ?></span></span>
+                            <span class="badge profile-stat"><strong data-author-stat="following" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['following'] ?? 0)) ?></strong> <span><?= et('public.following') ?></span></span>
+                            <span class="badge profile-stat"><strong><?= e((int) ($activityStats['posts'] ?? 0)) ?></strong> <span><?= et('public.profile_posts') ?></span></span>
+                            <span class="badge profile-stat"><strong><?= e((int) ($activityStats['likes_given'] ?? 0)) ?></strong> <span><?= et('public.profile_likes_given') ?></span></span>
+                            <span class="badge profile-stat"><strong><?= e((int) ($activityStats['likes_received'] ?? 0)) ?></strong> <span><?= et('public.profile_likes_received') ?></span></span>
+                            <span class="badge profile-stat"><strong><?= e((int) ($activityStats['comments'] ?? 0)) ?></strong> <span><?= et('public.profile_comments') ?></span></span>
+                            <?php if ($memberSince !== ''): ?>
+                                <span class="badge profile-stat profile-stat-muted"><?= icon('calendar') ?> <span><?= et('public.member_since', ['date' => date_value($memberSince)]) ?></span></span>
+                            <?php endif; ?>
                         </div>
-                        <?php if ($memberSince !== ''): ?>
-                            <div class="profile-meta-list">
-                                <span><?= et('public.member_since', ['date' => date_value($memberSince)]) ?></span>
-                            </div>
-                        <?php endif; ?>
                         <div class="cluster gap-2">
                             <?php if ($canFollow): ?>
                                 <?= author_follow_button_html($authorId, $isFollowing) ?>
@@ -223,7 +226,7 @@ layout('layout', [
                                 </a>
                             <?php endif; ?>
                             <?php if ($canPost): ?>
-                                <button class="btn btn-secondary btn-sm" type="button" data-profile-edit-open data-profile-edit-focus="website">
+                                <button class="btn btn-secondary btn-sm" type="button" data-modal-open="<?= e(author_profile_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_profile_edit_modal_url($authorId, 'website')) ?>">
                                     <?= icon('external-link') ?> <span><?= et('account.website') ?></span>
                                 </button>
                             <?php elseif ($website !== ''): ?>
@@ -232,21 +235,13 @@ layout('layout', [
                                 </a>
                             <?php endif; ?>
                         </div>
-                        <?php if ($canPost && $authUser !== null): ?>
-                            <details class="profile-inline-editor" data-profile-editor-panel>
-                                <summary class="btn btn-secondary btn-sm btn-icon profile-edit-toggle" title="<?= et('common.edit') ?>" data-profile-edit-open data-profile-edit-focus="bio">
-                                    <?= icon('edit') ?>
-                                    <span class="sr-only"><?= et('common.edit') ?></span>
-                                </summary>
-                                <?= tc_author_profile_editor($authUser, $authorId) ?>
-                            </details>
-                        <?php endif; ?>
                     </div>
                 </article>
 
                 <article class="card profile-following-card">
                     <div class="card-header">
                         <h2 class="text-base m-0 cluster gap-2"><?= icon('users') ?> <?= et('public.following_profiles') ?></h2>
+                        <span class="badge profile-following-count"><?= e((int) ($followCounts['following'] ?? 0)) ?></span>
                     </div>
                     <div class="card-body">
                         <?php if ($followingProfiles === []): ?>
@@ -281,68 +276,26 @@ layout('layout', [
         </aside>
 
         <main class="profile-main stack stack-gap-24">
-        <section class="stack stack-gap-12">
-            <header class="public-list-header">
-                <h2 class="text-xl m-0"><?= et('account.posts_title') ?></h2>
-            </header>
+            <section class="stack stack-gap-12">
+                <?php if ($canPost && $authUser !== null && $mutedUntil !== ''): ?>
+                    <div class="alert alert-warning">
+                        <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime($mutedUntil)]) ?></span>
+                    </div>
+                <?php elseif ($canPost && $authUser !== null): ?>
+                    <?= status_composer(author_url($authorId), $authUser) ?>
+                <?php endif; ?>
 
-            <?php if ($canPost && $authUser !== null && $mutedUntil !== ''): ?>
-                <div class="alert alert-warning">
-                    <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime($mutedUntil)]) ?></span>
+                <?php if ($statusItems === []): ?>
+                    <div class="alert alert-info" data-status-empty><?= et('public.author_feed_empty') ?></div>
+                <?php endif; ?>
+                <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
+                    <?php foreach ($statusItems as $item): ?>
+                        <?= status_card($item, author_url($authorId)) ?>
+                    <?php endforeach; ?>
                 </div>
-            <?php elseif ($canPost && $authUser !== null): ?>
-                <?= status_composer(author_url($authorId), $authUser) ?>
-            <?php endif; ?>
-
-            <?php if ($statusItems === []): ?>
-                <div class="alert alert-info" data-status-empty><?= et('public.author_feed_empty') ?></div>
-            <?php endif; ?>
-            <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
-                <?php foreach ($statusItems as $item): ?>
-                    <?= status_card($item, author_url($authorId)) ?>
-                <?php endforeach; ?>
-            </div>
-            <?= status_feed_more_control($feedId, 'author', count($statusItems), $statusLimit, ['author_id' => $authorId]) ?>
-        </section>
+                <?= status_feed_more_control($feedId, 'author', count($statusItems), $statusLimit, ['author_id' => $authorId]) ?>
+            </section>
         </main>
     </section>
     <?php
 });
-
-function tc_author_profile_editor(array $user, int $authorId): string
-{
-    $website = trim((string) ($user['website'] ?? ''));
-    $bio = trim((string) ($user['bio'] ?? ''));
-    $selectedLocale = language_code((string) ($user['locale'] ?? '')) ?: locale();
-    $action = author_url($authorId);
-
-    ob_start();
-    ?>
-    <form class="profile-edit-form" method="post" action="<?= e($action) ?>">
-        <?= csrf_field() ?>
-        <input type="hidden" name="action" value="profile">
-        <div class="profile-inline-grid">
-            <label class="field">
-                <span class="label"><?= et('account.website') ?></span>
-                <input class="input" type="url" name="website" autocomplete="url" value="<?= e($website) ?>">
-            </label>
-            <label class="field">
-                <span class="label"><?= et('common.language') ?></span>
-                <select class="select" name="locale" required>
-                    <?= language_options($selectedLocale) ?>
-                </select>
-            </label>
-            <label class="field profile-inline-span">
-                <span class="label"><?= et('account.bio') ?></span>
-                <textarea class="textarea" name="bio" rows="5" maxlength="500"><?= e($bio) ?></textarea>
-            </label>
-        </div>
-        <div class="profile-inline-footer">
-            <button class="btn btn-secondary" type="button" data-profile-edit-close><?= icon('close') ?> <span><?= et('common.cancel') ?></span></button>
-            <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('account.save_profile') ?></span></button>
-        </div>
-    </form>
-    <?php
-
-    return trim((string) ob_get_clean());
-}

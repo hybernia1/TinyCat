@@ -1097,7 +1097,7 @@ if (!function_exists('user_profile_update')) {
 
         locale($locale);
 
-        flash('success', t('account.messages.avatar_saved'));
+        flash('success', t('account.messages.profile_saved'));
         redirect($redirect);
     }
 }
@@ -1134,7 +1134,7 @@ if (!function_exists('user_avatar_update')) {
             avatar_delete($oldAvatarPath, $oldAvatarUrl);
         }
 
-        flash('success', t('account.messages.profile_saved'));
+        flash('success', t('account.messages.avatar_saved'));
         redirect($redirect);
     }
 }
@@ -3437,6 +3437,27 @@ if (!function_exists('status_report_modal_id')) {
     function status_report_modal_id(int $contentId): string
     {
         return 'status-report-modal-' . max(0, $contentId);
+    }
+}
+
+if (!function_exists('author_profile_edit_modal_id')) {
+    function author_profile_edit_modal_id(int $authorId): string
+    {
+        return 'profile-edit-modal-' . max(0, $authorId);
+    }
+}
+
+if (!function_exists('author_profile_edit_modal_url')) {
+    function author_profile_edit_modal_url(int $authorId, string $focus = ''): string
+    {
+        $focus = in_array($focus, ['website', 'locale', 'bio'], true) ? $focus : '';
+        $query = ['author_id' => max(0, $authorId)];
+
+        if ($focus !== '') {
+            $query['focus'] = $focus;
+        }
+
+        return '/api/profile-edit-modal?' . http_build_query($query);
     }
 }
 

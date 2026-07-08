@@ -170,7 +170,7 @@
   }
 
   function focusFirst(modal) {
-    var focusable = qs('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', modal);
+    var focusable = qs('[autofocus], button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', modal);
 
     if (focusable) {
       focusable.focus();
@@ -2496,83 +2496,6 @@
     }, true);
   };
 
-  TinyCat.openProfileEditor = function (root, focusName) {
-    var details;
-    var field;
-    var length;
-
-    if (!root) {
-      return;
-    }
-
-    details = qs("[data-profile-editor-panel]", root);
-
-    if (!details) {
-      return;
-    }
-
-    details.open = true;
-
-    if (focusName) {
-      field = qsa("[name]", details).find(function (item) {
-        return item.name === focusName;
-      });
-    }
-
-    if (!field) {
-      field = qs("input, textarea, select", details);
-    }
-
-    if (!field || !field.focus) {
-      return;
-    }
-
-    window.setTimeout(function () {
-      field.focus();
-
-      if (field.tagName === "TEXTAREA" || field.type === "text" || field.type === "url" || field.type === "email") {
-        length = String(field.value || "").length;
-
-        if (field.setSelectionRange) {
-          field.setSelectionRange(length, length);
-        }
-      }
-    }, 0);
-  };
-
-  TinyCat.initProfileEditors = function () {
-    if (TinyCat.__profileEditorEventsBound === true) {
-      return;
-    }
-
-    TinyCat.__profileEditorEventsBound = true;
-
-    document.addEventListener("click", function (event) {
-      var open = event.target.closest && event.target.closest("[data-profile-edit-open]");
-      var close = event.target.closest && event.target.closest("[data-profile-edit-close]");
-      var root;
-      var details;
-
-      if (open) {
-        event.preventDefault();
-        TinyCat.openProfileEditor(open.closest("[data-profile-editor]"), open.dataset.profileEditFocus || "");
-        return;
-      }
-
-      if (!close) {
-        return;
-      }
-
-      event.preventDefault();
-      root = close.closest("[data-profile-editor]");
-      details = root && qs("[data-profile-editor-panel]", root);
-
-      if (details) {
-        details.open = false;
-      }
-    });
-  };
-
   function statusFormActionField(form) {
     var field = form && form.elements ? form.elements.namedItem("action") : null;
 
@@ -3902,7 +3825,6 @@
     TinyCat.initDirtyForms();
     TinyCat.initAutoSubmit();
     TinyCat.initCommentReplies();
-    TinyCat.initProfileEditors();
     TinyCat.initStatusForms();
     TinyCat.initFollowForms();
     TinyCat.initNotifications();

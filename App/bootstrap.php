@@ -214,6 +214,29 @@ api_route('GET', '/status-edit-modal', static function (): array {
     ];
 });
 
+api_route('GET', '/profile-edit-modal', static function (): array {
+    $user = auth();
+    $authorId = max(0, (int) get('author_id', 0));
+    $userId = (int) ($user['id'] ?? 0);
+
+    if ($user === null) {
+        api_error(t('auth.login_required', [], null, 'Login required.'), 401, 'unauthorized', ['redirect' => '/login']);
+    }
+
+    if ($authorId < 1 || $userId !== $authorId) {
+        api_error(t('auth.forbidden'), 403, 'forbidden');
+    }
+
+    return [
+        'html' => render('modals/profile-edit', [
+            'user' => $user,
+            'author_id' => $authorId,
+            'action' => author_url($authorId),
+            'focus' => (string) get('focus', ''),
+        ]),
+    ];
+});
+
 if (!$installPath && !app_db_ready()) {
     if (str_starts_with($path, '/api') || wants_json() || isset($_GET['api'])) {
         api_error(t('install.messages.db_not_ready'), 503, 'database_not_ready', ['redirect' => '/install']);
