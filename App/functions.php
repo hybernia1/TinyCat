@@ -1146,6 +1146,40 @@ if (!function_exists('author_url')) {
     }
 }
 
+if (!function_exists('public_author_find')) {
+    function public_author_find(int $id): ?array
+    {
+        if ($id < 1) {
+            return null;
+        }
+
+        return db_select(
+            'SELECT id,
+                username,
+                username AS name,
+                role,
+                status,
+                locale,
+                website,
+                bio,
+                avatar_path,
+                avatar_url,
+                muted_until,
+                muted_by,
+                muted_reason,
+                last_login_at,
+                last_seen_at,
+                created_at,
+                updated_at
+            FROM users'
+        )
+            ->where('id = ?', $id)
+            ->where('status = ?', 'active')
+            ->limit(1)
+            ->one();
+    }
+}
+
 if (!function_exists('tag_url')) {
     function tag_url(string $tag): string
     {
@@ -5288,6 +5322,190 @@ if (!function_exists('app_existing_tables')) {
         );
 
         return array_values(array_map(static fn (array $row): string => (string) ($row['TABLE_NAME'] ?? ''), $rows));
+    }
+}
+
+if (!function_exists('maintenance_cleanup_batch_size')) {
+    function maintenance_cleanup_batch_size(mixed $value): int
+    {
+        $size = (int) $value;
+        $allowed = [500, 1000, 2500, 5000];
+
+        return in_array($size, $allowed, true) ? $size : 1000;
+    }
+}
+
+if (!function_exists('maintenance_cleanup_tasks')) {
+    function maintenance_cleanup_tasks(): array
+    {
+        return [
+            'orphan_tag_relations' => [
+                'icon' => 'tag',
+                'label' => t('maintenance.tasks.orphan_tag_relations'),
+                'description' => t('maintenance.tasks.orphan_tag_relations_help'),
+            ],
+            'orphan_terms' => [
+                'icon' => 'tag',
+                'label' => t('maintenance.tasks.orphan_terms'),
+                'description' => t('maintenance.tasks.orphan_terms_help'),
+            ],
+            'old_action_limits' => [
+                'icon' => 'clock',
+                'label' => t('maintenance.tasks.old_action_limits'),
+                'description' => t('maintenance.tasks.old_action_limits_help'),
+            ],
+            'old_read_notifications' => [
+                'icon' => 'bell',
+                'label' => t('maintenance.tasks.old_read_notifications'),
+                'description' => t('maintenance.tasks.old_read_notifications_help'),
+            ],
+        ];
+    }
+}
+
+if (!function_exists('maintenance_cleanup_run')) {
+    function maintenance_cleanup_run(array $selected, int $batchSize = 1000): array
+    {
+        $tasks = maintenance_cleanup_tasks();
+        $batchSize = maintenance_cleanup_batch_size($batchSize);
+        $results = [];
+
+        foreach ($selected as $task) {
+            $task = trim((string) $task);
+
+            if (!isset($tasks[$task])) {
+                continue;
+            }
+
+            try {
+                $results[$task] = maintenance_cleanup_task_run($task, $batchSize);
+            } catch (Throwable $exception) {
+                $results[$task] = [
+                    'task' => $task,
+                    'before' => null,
+                    'changed' => 0,
+                    'remaining' => null,
+                    'batch_size' => $batchSize,
+                    'error' => $exception->getMessage(),
+                ];
+            }
+        }
+
+        return $results;
+    }
+}
+
+if (!function_exists('maintenance_cleanup_task_run')) {
+    function maintenance_cleanup_task_run(string $task, int $batchSize): array
+    {
+        $before = maintenance_cleanup_count($task);
+        $changed = maintenance_cleanup_delete($task, $batchSize);
+        $remaining = maintenance_cleanup_count($task);
+
+        return [
+            'task' => $task,
+            'before' => $before,
+            'changed' => $changed,
+            'remaining' => $remaining,
+            'batch_size' => $batchSize,
+            'done' => $remaining < 1,
+        ];
+    }
+}
+
+if (!function_exists('maintenance_cleanup_count')) {
+    function maintenance_cleanup_count(string $task): int
+    {
+        return match ($task) {
+            'orphan_tag_relations' => (int) val(
+                'SELECT COUNT(*)
+                FROM content_tags ct
+                LEFT JOIN content c ON c.id = ct.content_id
+                LEFT JOIN terms t ON t.id = ct.term_id
+                WHERE c.id IS NULL OR t.id IS NULL'
+            ),
+            'orphan_terms' => (int) val(
+                'SELECT COUNT(*)
+                FROM terms t
+                LEFT JOIN content_tags ct ON ct.term_id = t.id
+                WHERE ct.term_id IS NULL'
+            ),
+            'old_action_limits' => (int) val(
+                'SELECT COUNT(*)
+                FROM user_action_limits
+                WHERE bucket_start < ?',
+                [date_db('-30 days')]
+            ),
+            'old_read_notifications' => (int) val(
+                'SELECT COUNT(*)
+                FROM notifications
+                WHERE read_at IS NOT NULL AND read_at < ?',
+                [date_db('-90 days')]
+            ),
+            default => 0,
+        };
+    }
+}
+
+if (!function_exists('maintenance_cleanup_delete')) {
+    function maintenance_cleanup_delete(string $task, int $batchSize): int
+    {
+        $batchSize = maintenance_cleanup_batch_size($batchSize);
+
+        return match ($task) {
+            'orphan_tag_relations' => maintenance_cleanup_delete_orphan_tag_relations($batchSize),
+            'orphan_terms' => maintenance_cleanup_delete_limited(
+                'DELETE FROM terms
+                WHERE id NOT IN (
+                    SELECT term_id FROM content_tags
+                )
+                LIMIT ' . $batchSize
+            ),
+            'old_action_limits' => maintenance_cleanup_delete_limited(
+                'DELETE FROM user_action_limits
+                WHERE bucket_start < ?
+                LIMIT ' . $batchSize,
+                [date_db('-30 days')]
+            ),
+            'old_read_notifications' => maintenance_cleanup_delete_limited(
+                'DELETE FROM notifications
+                WHERE read_at IS NOT NULL AND read_at < ?
+                LIMIT ' . $batchSize,
+                [date_db('-90 days')]
+            ),
+            default => 0,
+        };
+    }
+}
+
+if (!function_exists('maintenance_cleanup_delete_limited')) {
+    function maintenance_cleanup_delete_limited(string $sql, array $params = []): int
+    {
+        $stmt = db()->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->rowCount();
+    }
+}
+
+if (!function_exists('maintenance_cleanup_delete_orphan_tag_relations')) {
+    function maintenance_cleanup_delete_orphan_tag_relations(int $batchSize): int
+    {
+        $sql = 'DELETE ct
+            FROM content_tags ct
+            INNER JOIN (
+                SELECT content_id, term_id
+                FROM (
+                    SELECT ct.content_id, ct.term_id
+                    FROM content_tags ct
+                    LEFT JOIN content c ON c.id = ct.content_id
+                    LEFT JOIN terms t ON t.id = ct.term_id
+                    WHERE c.id IS NULL OR t.id IS NULL
+                    LIMIT ' . $batchSize . '
+                ) orphan_rows
+            ) x ON x.content_id = ct.content_id AND x.term_id = ct.term_id';
+
+        return maintenance_cleanup_delete_limited($sql);
     }
 }
 
