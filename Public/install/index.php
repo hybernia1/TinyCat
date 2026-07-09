@@ -333,6 +333,7 @@ function tc_install_create_tables(): void
             role VARCHAR(40) NOT NULL DEFAULT 'user',
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             locale VARCHAR(12) NULL,
+            avatar_config TEXT NULL,
             note TEXT NULL,
             bio VARCHAR(500) NULL,
             muted_until DATETIME NULL,

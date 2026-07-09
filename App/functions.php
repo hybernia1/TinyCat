@@ -192,9 +192,9 @@ if (!function_exists('status_meta_image')) {
 }
 
 if (!function_exists('avatar_url')) {
-    function avatar_url(string $username): string
+    function avatar_url(string $username, array|string|null $config = null): string
     {
-        return Avatar::url($username);
+        return Avatar::url($username, $config);
     }
 }
 
@@ -209,7 +209,7 @@ if (!function_exists('user_avatar_url')) {
             $username = username_normalize((string) ($user[$key] ?? ''));
 
             if (username_valid($username)) {
-                return avatar_url($username);
+                return avatar_url($username, $user['avatar_config'] ?? $user['author_avatar_config'] ?? $user['actor_avatar_config'] ?? null);
             }
         }
 
@@ -1028,6 +1028,32 @@ if (!function_exists('user_profile_update_request')) {
     }
 }
 
+if (!function_exists('user_avatar_update_request')) {
+    function user_avatar_update_request(array $user): array
+    {
+        $id = (int) ($user['id'] ?? 0);
+
+        if ($id < 1) {
+            api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
+        }
+
+        $config = Avatar::normalizeConfig(['paint' => post('paint', '')]);
+        $json = Avatar::configJson($config);
+
+        update('users', ['avatar_config' => $json !== '' ? $json : null], ['id' => $id]);
+
+        $updated = auth() ?: $user;
+        $updated['avatar_config'] = $json !== '' ? $json : null;
+
+        return [
+            'user' => user_public_payload($updated),
+            'avatar_url' => user_avatar_url($updated),
+            'message' => t('account.messages.avatar_saved'),
+            'redirect' => author_url($id),
+        ];
+    }
+}
+
 if (!function_exists('author_url')) {
     function author_url(int $id): string
     {
@@ -1058,6 +1084,7 @@ if (!function_exists('public_author_find')) {
                 role,
                 status,
                 locale,
+                avatar_config,
                 bio,
                 muted_until,
                 muted_by,
@@ -1187,6 +1214,7 @@ if (!function_exists('author_following_profiles')) {
             'SELECT u.id,
                 u.username,
                 u.username AS name,
+                u.avatar_config,
                 uf.created_at AS followed_at,
                 (
                     SELECT COUNT(*)
@@ -1580,6 +1608,7 @@ if (!function_exists('public_status_select_sql')) {
                 c.edit_lock_reason,
                 u.username AS author_username,
                 u.username AS author_name,
+                u.avatar_config AS author_avatar_config,
                 u.bio AS author_bio,
                 (
                     SELECT COUNT(*)
@@ -1954,6 +1983,7 @@ if (!function_exists('public_top_authors')) {
             'SELECT u.id,
                 u.username,
                 u.username AS name,
+                u.avatar_config,
                 u.bio,
                 COUNT(*) AS posts_count,
                 MAX(c.published_at) AS latest_at
@@ -1962,7 +1992,7 @@ if (!function_exists('public_top_authors')) {
         )
             ->where('c.published_at >= ?', date_db('-' . $days . ' days'))
             ->where('u.status = ?', 'active')
-            ->group('u.id, u.username, u.bio')
+            ->group('u.id, u.username, u.avatar_config, u.bio')
             ->order('posts_count DESC, latest_at DESC, u.username ASC')
             ->limit($limit)
             ->all();
@@ -2397,7 +2427,8 @@ if (!function_exists('public_search_recent_content_scan')) {
                 c.author_id,
                 c.created_at,
                 u.username AS author_name,
-                u.username AS author_username
+                u.username AS author_username,
+                u.avatar_config AS author_avatar_config
             FROM content c' . $feedIndex . '
             INNER JOIN users u ON u.id = c.author_id'
         )
@@ -2439,7 +2470,8 @@ if (!function_exists('public_search_content_rows')) {
                         c.author_id,
                         c.created_at,
                         u.username AS author_name,
-                        u.username AS author_username
+                        u.username AS author_username,
+                        u.avatar_config AS author_avatar_config
                     FROM content c
                     INNER JOIN users u ON u.id = c.author_id'
                 )
@@ -2525,7 +2557,7 @@ if (!function_exists('public_search_suggestion_users')) {
         $users = [];
 
         foreach (db_select(
-            'SELECT u.id, u.username, u.username AS name, u.bio
+            'SELECT u.id, u.username, u.username AS name, u.avatar_config, u.bio
             FROM users u'
         )
             ->where('u.status = ?', 'active')
@@ -2691,7 +2723,7 @@ if (!function_exists('public_search_results')) {
         }
 
         $userQuery = db_select(
-            'SELECT u.id, u.username, u.username AS name, u.bio
+            'SELECT u.id, u.username, u.username AS name, u.avatar_config, u.bio
             FROM users u'
         )->where('u.status = ?', 'active');
         $usernameQuery = username_normalize(ltrim($query, '@'));
@@ -2887,6 +2919,7 @@ if (!function_exists('status_comments_query')) {
                 cc.created_at,
                 u.username AS author_name,
                 u.username AS author_username,
+                u.avatar_config AS author_avatar_config,
                 (
                     SELECT COUNT(*)
                     FROM comment_likes cl
@@ -3382,6 +3415,20 @@ if (!function_exists('author_profile_edit_modal_url')) {
     }
 }
 
+if (!function_exists('author_avatar_edit_modal_id')) {
+    function author_avatar_edit_modal_id(int $authorId): string
+    {
+        return 'avatar-edit-modal-' . max(0, $authorId);
+    }
+}
+
+if (!function_exists('author_avatar_edit_modal_url')) {
+    function author_avatar_edit_modal_url(int $authorId): string
+    {
+        return '/api/avatar-edit-modal?' . http_build_query(['author_id' => max(0, $authorId)]);
+    }
+}
+
 if (!function_exists('status_time_button')) {
     function status_time_button(string $createdAt, int $contentId, bool $openModal = true, string $action = ''): string
     {
@@ -3636,6 +3683,7 @@ if (!function_exists('notifications_for_user')) {
             'SELECT n.*,
                 u.username AS actor_name,
                 u.username AS actor_username,
+                u.avatar_config AS actor_avatar_config,
                 c.body AS content_body
             FROM notifications n
             LEFT JOIN users u ON u.id = n.actor_id

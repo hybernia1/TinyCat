@@ -69,13 +69,21 @@ layout('layout', [
                                 <?= icon('edit') ?>
                             </button>
                         <?php endif; ?>
-                        <div class="avatar avatar-xl">
+                        <?php if ($canPost): ?>
+                            <button class="avatar avatar-xl profile-avatar-button" type="button" data-modal-open="<?= e(author_avatar_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_avatar_edit_modal_url($authorId)) ?>" title="<?= et('account.avatar_edit') ?>" aria-label="<?= et('account.avatar_edit') ?>">
+                        <?php else: ?>
+                            <div class="avatar avatar-xl">
+                        <?php endif; ?>
                             <?php if ($avatarUrl !== ''): ?>
                                 <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
                             <?php else: ?>
                                 <?= icon('user') ?>
                             <?php endif; ?>
-                        </div>
+                        <?php if ($canPost): ?>
+                            </button>
+                        <?php else: ?>
+                            </div>
+                        <?php endif; ?>
                         <div class="stack stack-gap-8">
                             <h1 class="text-xl m-0"><?= e($authorName) ?></h1>
                             <div class="profile-presence<?= ($presence['online'] ?? false) ? ' is-online' : '' ?>">

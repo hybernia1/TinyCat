@@ -20,6 +20,8 @@ final class Api
 
         api_route('POST', '/author/follow', [self::class, 'followAuthor']);
         api_route('POST', '/profile/update', [self::class, 'profileUpdate']);
+        api_route('POST', '/avatar/update', [self::class, 'avatarUpdate']);
+        api_route('GET', '/avatar/random', [self::class, 'avatarRandom']);
 
         api_route('POST', '/status/{action:[a-z-]+}', [self::class, 'statusAction']);
         api_route('GET', '/notifications', [self::class, 'notifications']);
@@ -33,6 +35,7 @@ final class Api
         api_route('GET', '/status-report-modal', [self::class, 'statusReportModal']);
         api_route('GET', '/status-edit-modal', [self::class, 'statusEditModal']);
         api_route('GET', '/profile-edit-modal', [self::class, 'profileEditModal']);
+        api_route('GET', '/avatar-edit-modal', [self::class, 'avatarEditModal']);
 
         api_route('ANY', '/admin/users', static function (): void {
             require public_path('admin/users.php');
@@ -158,6 +161,24 @@ final class Api
         csrf_require();
 
         return user_profile_update_request($user);
+    }
+
+    public static function avatarUpdate(): array
+    {
+        $user = require_auth('/login');
+        csrf_require();
+
+        return user_avatar_update_request($user);
+    }
+
+    public static function avatarRandom(): array
+    {
+        $user = require_auth('/login');
+        $username = username_normalize((string) ($user['username'] ?? ''));
+
+        return [
+            'paint' => Avatar::randomPaint($username),
+        ];
     }
 
     public static function statusAction(string $action): array
@@ -341,6 +362,29 @@ final class Api
                 'author_id' => $authorId,
                 'action' => '/api/profile/update',
                 'focus' => (string) get('focus', ''),
+            ]),
+        ];
+    }
+
+    public static function avatarEditModal(): array
+    {
+        $user = auth();
+        $authorId = max(0, (int) get('author_id', 0));
+        $userId = (int) ($user['id'] ?? 0);
+
+        if ($user === null) {
+            api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
+        }
+
+        if ($authorId < 1 || $userId !== $authorId) {
+            api_error(t('auth.forbidden'), 403, 'forbidden');
+        }
+
+        return [
+            'html' => render('modals/avatar-edit', [
+                'user' => $user,
+                'author_id' => $authorId,
+                'action' => '/api/avatar/update',
             ]),
         ];
     }

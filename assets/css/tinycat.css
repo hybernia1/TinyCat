@@ -2561,6 +2561,20 @@ a:hover {
   height: 96px;
 }
 
+.profile-avatar-button {
+  padding: 0;
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+.profile-avatar-button:hover,
+.profile-avatar-button:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 14%, transparent);
+  outline: 0;
+  transform: translateY(-1px);
+}
+
 .account-security-page {
   width: min(100%, 560px);
   margin-inline: auto;
@@ -2712,6 +2726,119 @@ a:hover {
 .profile-modal-grid {
   display: grid;
   gap: 12px;
+}
+
+.avatar-paint {
+  display: grid;
+  gap: 16px;
+}
+
+.avatar-paint-side {
+  display: grid;
+  gap: 12px;
+}
+
+.avatar-paint-preview {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+}
+
+.avatar-paint-preview img {
+  width: min(100%, 190px);
+  height: auto;
+}
+
+.avatar-paint-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.avatar-paint-main {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.avatar-paint-palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
+  gap: 7px;
+}
+
+.avatar-paint-swatch {
+  display: inline-flex;
+  width: 100%;
+  aspect-ratio: 1;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--swatch, var(--surface));
+  cursor: pointer;
+}
+
+.avatar-paint-swatch.is-eraser {
+  background:
+    linear-gradient(135deg, transparent 47%, var(--danger) 48%, var(--danger) 52%, transparent 53%),
+    var(--surface);
+  color: var(--danger);
+}
+
+.avatar-paint-swatch.is-active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.avatar-paint-board {
+  display: grid;
+  width: min(100%, 480px);
+  aspect-ratio: 1;
+  grid-template-columns: repeat(var(--avatar-paint-size), minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(45deg, color-mix(in srgb, var(--border) 42%, transparent) 25%, transparent 25%),
+    linear-gradient(-45deg, color-mix(in srgb, var(--border) 42%, transparent) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, color-mix(in srgb, var(--border) 42%, transparent) 75%),
+    linear-gradient(-45deg, transparent 75%, color-mix(in srgb, var(--border) 42%, transparent) 75%);
+  background-color: var(--surface);
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+  box-shadow: var(--shadow-sm);
+  touch-action: none;
+}
+
+.avatar-paint-cell {
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  border-right: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
+  background: var(--pixel, transparent);
+  border-radius: 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.avatar-paint-cell:hover,
+.avatar-paint-cell:focus {
+  box-shadow: inset 0 0 0 2px var(--primary);
+  outline: 0;
+}
+
+@media (min-width: 720px) {
+  .avatar-paint {
+    grid-template-columns: minmax(180px, 230px) 1fr;
+    align-items: start;
+  }
+
+  .avatar-paint-side {
+    position: sticky;
+    top: 16px;
+  }
 }
 
 @media (min-width: 540px) {
