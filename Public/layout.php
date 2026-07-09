@@ -114,9 +114,7 @@ $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
     <?php foreach ((array) $scripts as $script): ?>
         <script src="<?= e(asset((string) $script)) ?>" defer></script>
     <?php endforeach; ?>
-    <?php if ($flashToasts !== []): ?>
-        <template data-tinycat-flashes><?= json_encode($flashToasts, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></template>
-    <?php endif; ?>
+    <?= part('layout/flashes', ['items' => $flashToasts]) ?>
 </head>
 <body<?= $bodyClasses !== '' ? ' class="' . e($bodyClasses) . '"' : '' ?>>
     <?php if ($isAdminShell): ?>

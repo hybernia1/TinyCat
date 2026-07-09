@@ -2058,71 +2058,13 @@ if (!function_exists('public_sidebar')) {
         );
         $sidebarUrl = '/api/sidebar' . ($activeTag !== '' ? '?tag=' . rawurlencode($activeTag) : '');
 
-        ob_start();
-        ?>
-        <aside class="public-sidebar" aria-label="<?= et('public.sidebar_title') ?>"<?= $needsRefresh ? ' data-public-sidebar data-sidebar-url="' . e($sidebarUrl) . '"' : '' ?>>
-            <article class="card public-sidebar-card">
-                <div class="card-header">
-                    <h2 class="text-base m-0 cluster gap-2"><?= icon('hash') ?> <?= et('public.favorite_topics') ?></h2>
-                </div>
-                <div class="card-body">
-                    <?php if ($tags === []): ?>
-                        <p class="text-muted m-0"><?= et('public.favorite_topics_empty') ?></p>
-                    <?php else: ?>
-                        <nav class="topic-list" aria-label="<?= et('public.favorite_topics') ?>">
-                            <?php foreach ($tags as $tag): ?>
-                                <?php
-                                $name = (string) ($tag['name'] ?? '');
-                                $isActive = $activeTag !== '' && $activeTag === $name;
-                                ?>
-                                <a class="topic-link<?= $isActive ? ' is-active' : '' ?>" href="<?= e((string) ($tag['url'] ?? tag_url($name))) ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
-                                    <span class="topic-name">#<?= e($name) ?></span>
-                                    <span class="badge"><?= e((int) ($tag['posts_count'] ?? 0)) ?></span>
-                                </a>
-                            <?php endforeach; ?>
-                        </nav>
-                    <?php endif; ?>
-                </div>
-            </article>
-            <article class="card public-sidebar-card">
-                <div class="card-header">
-                    <h2 class="text-base m-0 cluster gap-2"><?= icon('users') ?> <?= et('public.active_users') ?></h2>
-                </div>
-                <div class="card-body">
-                    <?php if ($authors === []): ?>
-                        <p class="text-muted m-0"><?= et('public.active_users_empty') ?></p>
-                    <?php else: ?>
-                        <nav class="sidebar-user-list" aria-label="<?= et('public.active_users') ?>">
-                            <?php foreach ($authors as $author): ?>
-                                <?php
-                                $id = (int) ($author['id'] ?? 0);
-                                $name = trim((string) ($author['name'] ?? ''));
-                                $avatarUrl = user_avatar_url($author);
-                                ?>
-                                <?php if ($id > 0 && $name !== ''): ?>
-                                    <a class="sidebar-user-link" href="<?= e(author_url($id)) ?>">
-                                        <span class="avatar avatar-sm">
-                                            <?php if ($avatarUrl !== ''): ?>
-                                                <img src="<?= e($avatarUrl) ?>" alt="<?= e($name) ?>" loading="lazy">
-                                            <?php else: ?>
-                                                <?= icon('user') ?>
-                                            <?php endif; ?>
-                                        </span>
-                                        <span class="sidebar-user-main">
-                                            <strong><?= e($name) ?></strong>
-                                            <small><?= et('public.active_user_posts', ['count' => (int) ($author['posts_count'] ?? 0)]) ?></small>
-                                        </span>
-                                    </a>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </nav>
-                    <?php endif; ?>
-                </div>
-            </article>
-        </aside>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('sidebar', [
+            'active_tag' => $activeTag,
+            'tags' => $tags,
+            'authors' => $authors,
+            'needs_refresh' => $needsRefresh,
+            'sidebar_url' => $sidebarUrl,
+        ]);
     }
 }
 
@@ -3454,58 +3396,17 @@ if (!function_exists('status_time_button')) {
 if (!function_exists('status_field')) {
     function status_field(?array $item = null): string
     {
-        $tags = json_encode(
-            status_tag_suggestions(),
-            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
-        );
-
-        ob_start();
-        ?>
-        <div class="field status-field" data-status-editor>
-            <textarea class="textarea status-textarea" name="body" rows="4" maxlength="2000" placeholder="<?= et('account.status_body') ?>" aria-label="<?= et('account.status_body') ?>" data-status-editor-source data-status-tags="<?= e((string) $tags) ?>" data-status-suggest-url="/api/status-suggest" data-status-placeholder="<?= et('account.status_body') ?>" data-status-counter="<?= et('account.status_counter') ?>"><?= e($item['body'] ?? '') ?></textarea>
-        </div>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/field', ['item' => $item]);
     }
 }
 
 if (!function_exists('status_composer')) {
     function status_composer(string $action, array $user): string
     {
-        $avatarUrl = user_avatar_url($user);
-
-        ob_start();
-        ?>
-        <section class="card status-composer">
-            <div class="card-body">
-                <form method="post" action="<?= e(status_api_url('create')) ?>" data-status-form data-status-scope="feed">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="action" value="create">
-                    <div class="status-compose-row">
-                        <div class="avatar">
-                            <?php if ($avatarUrl !== ''): ?>
-                                <img src="<?= e($avatarUrl) ?>" alt="<?= e(user_display_name($user)) ?>" loading="lazy">
-                            <?php else: ?>
-                                <?= icon('user') ?>
-                            <?php endif; ?>
-                        </div>
-                        <div class="status-compose-main">
-                            <?= status_field(null) ?>
-                            <div class="status-compose-footer">
-                                <div class="status-compose-counter" data-status-editor-meta-slot></div>
-                                <div class="status-compose-actions">
-                                    <button class="btn btn-primary" type="submit"><?= icon('plus') ?> <span><?= et('account.status_create') ?></span></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </section>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/composer', [
+            'action' => $action,
+            'user' => $user,
+        ]);
     }
 }
 
@@ -4409,46 +4310,17 @@ if (!function_exists('status_actions')) {
     function status_actions(array $item, ?array $user, string $action, bool $openCommentsModal = true): string
     {
         $contentId = (int) ($item['id'] ?? 0);
-        $counts = [
-            'like' => (int) ($item['likes_count'] ?? 0),
-        ];
-        $commentsCount = array_key_exists('comments_count', $item)
-            ? (int) ($item['comments_count'] ?? 0)
-            : status_comment_count($contentId);
-        $userId = (int) ($user['id'] ?? 0);
-        $liked = $userId > 0 && status_user_liked($contentId, $userId);
-        $loginUrl = status_login_url($contentId > 0 ? '#' . status_anchor($contentId) : '', $action);
 
-        ob_start();
-        ?>
-        <div class="status-reactions">
-            <?php if ($user !== null): ?>
-                <form method="post" action="<?= e(status_api_url('react', ['id' => $contentId])) ?>" data-status-form data-status-id="<?= e($contentId) ?>">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="action" value="react">
-                    <input type="hidden" name="id" value="<?= e($contentId) ?>">
-                    <button class="btn btn-ghost btn-sm status-reaction<?= $liked ? ' is-active' : '' ?>" type="submit" title="<?= et('account.status_like') ?>" data-status-like-button data-status-id="<?= e($contentId) ?>">
-                        <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span data-status-count="likes" data-status-id="<?= e($contentId) ?>"><?= e($counts['like']) ?></span>
-                    </button>
-                </form>
-            <?php else: ?>
-                <a class="btn btn-ghost btn-sm status-reaction" href="<?= e($loginUrl) ?>" aria-label="<?= et('account.status_like') ?>" title="<?= et('account.status_like') ?>">
-                    <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span data-status-count="likes" data-status-id="<?= e($contentId) ?>"><?= e($counts['like']) ?></span>
-                </a>
-            <?php endif; ?>
-            <?php if ($openCommentsModal): ?>
-                <button class="btn btn-ghost btn-sm status-reaction" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>" data-modal-url="<?= e(status_post_modal_url($contentId, $action)) ?>" aria-label="<?= et('account.status_comments') ?>">
-                    <?= icon('message-circle') ?> <span data-status-count="comments" data-status-id="<?= e($contentId) ?>"><?= e($commentsCount) ?></span>
-                </button>
-            <?php else: ?>
-                <a class="btn btn-ghost btn-sm status-reaction" href="#status-comments-thread-<?= e($contentId) ?>" aria-label="<?= et('account.status_comments') ?>">
-                    <?= icon('message-circle') ?> <span data-status-count="comments" data-status-id="<?= e($contentId) ?>"><?= e($commentsCount) ?></span>
-                </a>
-            <?php endif; ?>
-        </div>
-        <?php
+        if ($contentId < 1) {
+            return '';
+        }
 
-        return trim((string) ob_get_clean());
+        return part('status/actions', [
+            'item' => $item,
+            'user' => $user,
+            'action' => $action,
+            'open_comments_modal' => $openCommentsModal,
+        ]);
     }
 }
 
@@ -4456,102 +4328,33 @@ if (!function_exists('status_manage_actions')) {
     function status_manage_actions(array $item, ?array $user, string $action): string
     {
         $contentId = (int) ($item['id'] ?? 0);
-        $isLocked = status_edit_locked($item);
-        $canEdit = status_can_edit($item, $user);
-        $canDelete = status_can_delete($item, $user);
-        $canReport = $user !== null
-            && (int) ($item['author_id'] ?? $item['user_id'] ?? 0) !== (int) ($user['id'] ?? 0);
 
         if ($contentId < 1) {
             return '';
         }
 
-        ob_start();
-        ?>
-        <div class="status-manage status-manage-top">
-            <a class="btn btn-ghost btn-icon btn-sm status-manage-icon" href="<?= e(status_url($contentId)) ?>" title="<?= et('account.status_permalink') ?>" aria-label="<?= et('account.status_permalink') ?>">
-                <?= icon('link') ?>
-            </a>
-            <?php if ($isLocked): ?>
-                <span class="btn btn-ghost btn-icon btn-sm status-manage-icon" title="<?= et('account.status_edit_locked') ?>" aria-label="<?= et('account.status_edit_locked') ?>">
-                    <?= icon('lock') ?>
-                </span>
-            <?php endif; ?>
-            <?php if ($canReport): ?>
-                <button class="btn btn-ghost btn-icon btn-sm status-manage-icon" type="button" data-modal-open="<?= e(status_report_modal_id($contentId)) ?>" data-modal-url="<?= e(status_action_modal_url('report', $contentId, $action)) ?>" title="<?= et('moderation.report_status') ?>" aria-label="<?= et('moderation.report_status') ?>">
-                    <?= icon('flag') ?>
-                </button>
-            <?php endif; ?>
-            <?php if ($canEdit): ?>
-                <button class="btn btn-ghost btn-icon btn-sm status-manage-icon" type="button" data-modal-open="<?= e(status_edit_modal_id($contentId)) ?>" data-modal-url="<?= e(status_action_modal_url('edit', $contentId, $action)) ?>" title="<?= et('account.status_edit') ?>" aria-label="<?= et('account.status_edit') ?>">
-                    <?= icon('edit') ?>
-                </button>
-            <?php endif; ?>
-            <?php if ($canDelete): ?>
-                <form method="post" action="<?= e(status_api_url('delete', ['id' => $contentId])) ?>" data-status-form data-status-id="<?= e($contentId) ?>" data-confirm="<?= et('account.status_delete_confirm') ?>" data-confirm-title="<?= et('account.status_delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="id" value="<?= e($contentId) ?>">
-                    <button class="btn btn-ghost btn-icon btn-sm status-manage-icon text-danger" type="submit" title="<?= et('account.status_delete') ?>" aria-label="<?= et('account.status_delete') ?>">
-                        <?= icon('trash') ?>
-                    </button>
-                </form>
-            <?php endif; ?>
-        </div>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/manage-actions', [
+            'item' => $item,
+            'user' => $user,
+            'action' => $action,
+        ]);
     }
 }
 
 if (!function_exists('status_card')) {
     function status_card(array $item, string $action = '/', ?array $user = null): string
     {
-        $user ??= auth();
         $contentId = (int) ($item['id'] ?? 0);
-        $authorId = (int) ($item['author_id'] ?? $item['user_id'] ?? 0);
-        $authorName = trim((string) ($item['author_name'] ?? ''));
-        $avatarUrl = user_avatar_url($item);
-        $createdAt = (string) ($item['created_at'] ?? '');
-        $url = $authorId > 0 ? author_url($authorId) . '#' . status_anchor($contentId) : '#';
 
         if ($contentId < 1) {
             return '';
         }
 
-        ob_start();
-        ?>
-        <article class="card status-card" id="<?= e(status_anchor($contentId)) ?>" data-status-action="<?= e($action) ?>">
-            <div class="card-body status-card-body">
-                <div class="status-header">
-                    <a class="avatar" href="<?= e($url) ?>" aria-label="<?= e($authorName) ?>">
-                        <?php if ($avatarUrl !== ''): ?>
-                            <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
-                        <?php else: ?>
-                            <?= icon('user') ?>
-                        <?php endif; ?>
-                    </a>
-                    <div class="status-author">
-                        <?php if ($authorId > 0 && $authorName !== ''): ?>
-                            <a href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
-                        <?php endif; ?>
-                        <?php if ($createdAt !== ''): ?>
-                            <?= status_time_button($createdAt, $contentId, true, $action) ?>
-                        <?php endif; ?>
-                    </div>
-                    <?= status_manage_actions($item, $user, $action) ?>
-                </div>
-                <?php $bodyHtml = render_status_body($item); ?>
-                <?php if ($bodyHtml !== ''): ?>
-                    <div class="status-body"><?= $bodyHtml ?></div>
-                <?php endif; ?>
-                <?= status_actions($item, $user, $action) ?>
-                <?= status_comments_section($item, $user, $action) ?>
-            </div>
-        </article>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/card', [
+            'item' => $item,
+            'action' => $action,
+            'user' => $user ?? auth(),
+        ]);
     }
 }
 
@@ -4621,42 +4424,15 @@ if (!function_exists('public_home_feed_html')) {
                 : public_status_items($limit));
         $feedId = 'status-feed-' . $feed;
 
-        ob_start();
-        ?>
-        <?php if ($user !== null && user_is_muted($user)): ?>
-            <div class="alert alert-warning">
-                <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime(user_muted_until($user))]) ?></span>
-            </div>
-        <?php elseif ($user !== null): ?>
-            <?= status_composer($currentFeedUrl, $user) ?>
-        <?php endif; ?>
-
-        <nav class="feed-switch home-feed-switch" aria-label="<?= et('public.feed_title') ?>">
-            <a class="feed-switch-link" href="/" data-ajax data-url="<?= e(public_home_feed_api_url('all', true)) ?>" data-ajax-target=".home-feed-section" data-history="/"<?= $feed === 'all' ? ' aria-current="page"' : '' ?>>
-                <?= et('public.feed_all') ?>
-            </a>
-            <a class="feed-switch-link" href="/?feed=following" data-ajax data-url="<?= e(public_home_feed_api_url('following', true)) ?>" data-ajax-target=".home-feed-section" data-history="/?feed=following"<?= $feed === 'following' ? ' aria-current="page"' : '' ?>>
-                <?= et('public.feed_following') ?>
-            </a>
-        </nav>
-
-        <?php if ($followingLoginRequired): ?>
-            <div class="alert alert-info cluster">
-                <span><?= et('public.feed_following_login') ?></span>
-                <a class="btn btn-secondary btn-sm" href="<?= e(status_login_url('', $currentFeedUrl)) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
-            </div>
-        <?php else: ?>
-            <?php if ($items === []): ?>
-                <div class="alert alert-info" data-status-empty><?= et($feed === 'following' ? 'public.feed_empty_following' : 'public.feed_empty') ?></div>
-            <?php endif; ?>
-            <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
-                <?= status_feed_html($items, $currentFeedUrl, $user) ?>
-            </div>
-            <?= status_feed_more_control($feedId, 'home', count($items), $limit, ['feed' => $feed]) ?>
-        <?php endif; ?>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/home-feed', [
+            'feed' => $feed,
+            'user' => $user,
+            'current_feed_url' => $currentFeedUrl,
+            'following_login_required' => $followingLoginRequired,
+            'limit' => $limit,
+            'items' => $items,
+            'feed_id' => $feedId,
+        ]);
     }
 }
 
@@ -4933,19 +4709,13 @@ if (!function_exists('status_feed_more_control')) {
             return '';
         }
 
-        $nextUrl = status_feed_next_url($context, $loaded, $limit, $params);
-
-        ob_start();
-        ?>
-        <div class="status-feed-more" data-status-feed-more data-status-feed-target="#<?= e($feedId) ?>" data-status-feed-url="<?= e($nextUrl) ?>">
-            <button class="btn btn-secondary status-feed-more-button" type="button" data-status-feed-load>
-                <?= icon('plus') ?> <span><?= et('public.load_more_posts') ?></span>
-            </button>
-            <span class="status-feed-more-state" data-status-feed-state hidden><?= et('public.loading_posts') ?></span>
-        </div>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/feed-more', [
+            'feed_id' => $feedId,
+            'context' => $context,
+            'loaded' => $loaded,
+            'limit' => $limit,
+            'params' => $params,
+        ]);
     }
 }
 
@@ -4958,32 +4728,11 @@ if (!function_exists('status_comments_section')) {
             return '';
         }
 
-        $latestComment = status_latest_parent_comment($contentId);
-        $commentsCount = array_key_exists('comments_count', $item)
-            ? (int) ($item['comments_count'] ?? 0)
-            : status_comment_count($contentId);
-
-        if ($latestComment === null) {
-            return '';
-        }
-
-        ob_start();
-        ?>
-        <section class="status-comments">
-            <button class="link-button status-comments-open" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>" data-modal-url="<?= e(status_post_modal_url($contentId, $action)) ?>" data-status-comments-label data-status-id="<?= e($contentId) ?>">
-                <?= et('account.status_view_comments', ['count' => $commentsCount]) ?>
-            </button>
-            <?= status_comment_item($latestComment, $user, $action, 0, 'preview-' . $contentId, false, false) ?>
-
-            <?php if ($user === null): ?>
-                <a class="btn btn-secondary btn-sm status-comment-login" href="<?= e(status_login_url('#' . status_anchor($contentId), $action)) ?>">
-                    <?= icon('login') ?> <span><?= et('account.status_comment_login') ?></span>
-                </a>
-            <?php endif; ?>
-        </section>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/comments-preview', [
+            'item' => $item,
+            'user' => $user,
+            'action' => $action,
+        ]);
     }
 }
 
@@ -4996,69 +4745,26 @@ if (!function_exists('status_comment_thread_section')) {
             return '';
         }
 
-        $comments = status_comments($contentId);
-
-        if ($comments === [] && $user === null) {
-            return '';
-        }
-
-        ob_start();
-        ?>
-        <section class="status-comments status-comments-thread" id="status-comments-thread-<?= e($contentId) ?>">
-            <?php if ($user !== null): ?>
-                <?= status_comment_form($contentId, $action, $user, 0, '', $context) ?>
-            <?php endif; ?>
-
-            <div class="status-comment-list" data-status-comment-list data-status-id="<?= e($contentId) ?>">
-                <?php foreach ($comments as $comment): ?>
-                    <?= status_comment_item($comment, $user, $action, 0, $context, true, true) ?>
-                <?php endforeach; ?>
-            </div>
-
-            <?php if ($user === null): ?>
-                <a class="btn btn-secondary btn-sm status-comment-login" href="<?= e(status_login_url('#status-comments-thread-' . $contentId, $action)) ?>">
-                    <?= icon('login') ?> <span><?= et('account.status_comment_login') ?></span>
-                </a>
-            <?php endif; ?>
-        </section>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/comments-thread', [
+            'item' => $item,
+            'user' => $user,
+            'action' => $action,
+            'context' => $context,
+        ]);
     }
 }
 
 if (!function_exists('status_comment_form')) {
     function status_comment_form(int $contentId, string $action, array $user, int $parentId = 0, string $mention = '', string $context = ''): string
     {
-        $avatarUrl = user_avatar_url($user);
-        $isReply = $parentId > 0;
-        $label = et($isReply ? 'account.status_reply' : 'account.status_comment');
-
-        ob_start();
-        ?>
-        <form class="status-comment-form<?= $isReply ? ' is-reply' : '' ?>" method="post" action="<?= e(status_api_url('comment', ['id' => $contentId])) ?>" data-status-form data-status-id="<?= e($contentId) ?>">
-            <?= csrf_field() ?>
-            <input type="hidden" name="action" value="comment">
-            <input type="hidden" name="id" value="<?= e($contentId) ?>">
-            <input type="hidden" name="parent_id" value="<?= e($parentId) ?>">
-            <input type="hidden" name="context" value="<?= e($context) ?>">
-            <div class="avatar avatar-sm">
-                <?php if ($avatarUrl !== ''): ?>
-                    <img src="<?= e($avatarUrl) ?>" alt="<?= e(user_display_name($user)) ?>" loading="lazy">
-                <?php else: ?>
-                    <?= icon('user') ?>
-                <?php endif; ?>
-            </div>
-            <div class="status-comment-input-shell">
-                <textarea class="textarea status-comment-input" name="comment" rows="1" maxlength="2000" placeholder="<?= et($isReply ? 'account.status_reply_placeholder' : 'account.status_comment_placeholder') ?>" aria-label="<?= $label ?>" required><?= e($mention) ?></textarea>
-                <button class="btn btn-primary btn-icon btn-sm status-comment-submit" type="submit" title="<?= $label ?>" aria-label="<?= $label ?>">
-                    <?= icon('send') ?>
-                </button>
-            </div>
-        </form>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/comment-form', [
+            'content_id' => $contentId,
+            'action' => $action,
+            'user' => $user,
+            'parent_id' => $parentId,
+            'mention' => $mention,
+            'context' => $context,
+        ]);
     }
 }
 
@@ -5074,108 +4780,40 @@ if (!function_exists('status_comment_mention')) {
 if (!function_exists('status_comment_item')) {
     function status_comment_item(array $comment, ?array $user, string $action, int $depth = 0, string $context = '', bool $showReplies = true, bool $showReplyForm = true): string
     {
-        $commentId = (int) ($comment['id'] ?? 0);
-        $contentId = (int) ($comment['content_id'] ?? 0);
-        $authorId = (int) ($comment['user_id'] ?? 0);
-        $authorName = trim((string) ($comment['author_name'] ?? ''));
-        $avatarUrl = user_avatar_url($comment);
-        $createdAt = (string) ($comment['created_at'] ?? '');
-        $replies = $depth === 0 ? (array) ($comment['replies'] ?? []) : [];
-        $canDelete = status_comment_can_delete($comment, $user);
-        $userId = (int) ($user['id'] ?? 0);
-        $likesCount = array_key_exists('likes_count', $comment)
-            ? (int) ($comment['likes_count'] ?? 0)
-            : status_comment_like_count($commentId);
-        $liked = $userId > 0 && status_comment_user_liked($commentId, $userId);
-        $commentDomId = 'comment-' . ($context !== '' ? preg_replace('/[^A-Za-z0-9_-]/', '', $context) . '-' : '') . $commentId;
-
-        ob_start();
-        ?>
-        <article class="status-comment<?= $depth > 0 ? ' is-child' : '' ?>" id="<?= e($commentDomId) ?>" data-comment-id="<?= e($commentId) ?>" data-content-id="<?= e($contentId) ?>" data-parent-id="<?= e((int) ($comment['parent_id'] ?? 0)) ?>">
-            <a class="avatar avatar-sm" href="<?= e(author_url($authorId)) ?>" aria-label="<?= e($authorName) ?>">
-                <?php if ($avatarUrl !== ''): ?>
-                    <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
-                <?php else: ?>
-                    <?= icon('user') ?>
-                <?php endif; ?>
-            </a>
-            <div class="status-comment-main">
-                <div class="status-comment-bubble">
-                    <?php if ($authorName !== ''): ?>
-                        <a class="status-comment-author" href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
-                    <?php endif; ?>
-                    <div class="status-comment-body"><?= render_mentions((string) ($comment['body'] ?? '')) ?></div>
-                </div>
-                <div class="status-comment-meta">
-                    <?php if ($createdAt !== ''): ?>
-                        <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
-                    <?php endif; ?>
-                    <?= status_comment_like_control($commentId, $likesCount, $liked, $user, $action, $contentId) ?>
-                    <?php if ($user !== null && $showReplyForm): ?>
-                        <details class="status-reply-details">
-                            <summary><?= et('account.status_reply') ?></summary>
-                            <?= status_comment_form($contentId, $action, $user, $commentId, $depth > 0 ? status_comment_mention($authorName) : '', $context) ?>
-                        </details>
-                    <?php endif; ?>
-                    <?php if ($canDelete): ?>
-                        <?= status_comment_delete_form($commentId, $action, $contentId) ?>
-                    <?php endif; ?>
-                </div>
-
-                <?php if ($showReplies && $replies !== []): ?>
-                    <div class="status-comment-replies" data-comment-replies data-comment-id="<?= e($commentId) ?>">
-                        <?php foreach ($replies as $reply): ?>
-                            <?= status_comment_item($reply, $user, $action, 1, $context, true, $showReplyForm) ?>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </article>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/comment-item', [
+            'comment' => $comment,
+            'user' => $user,
+            'action' => $action,
+            'depth' => $depth,
+            'context' => $context,
+            'show_replies' => $showReplies,
+            'show_reply_form' => $showReplyForm,
+        ]);
     }
 }
 
 if (!function_exists('status_comment_delete_form')) {
     function status_comment_delete_form(int $commentId, string $action, int $contentId = 0): string
     {
-        ob_start();
-        ?>
-        <form class="status-comment-delete" method="post" action="<?= e(status_api_url('comment-delete', ['comment_id' => $commentId])) ?>" data-status-form<?= $contentId > 0 ? ' data-status-id="' . e($contentId) . '"' : '' ?> data-confirm="<?= et('account.status_comment_delete_confirm') ?>" data-confirm-title="<?= et('account.status_comment_delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
-            <?= csrf_field() ?>
-            <input type="hidden" name="action" value="comment_delete">
-            <input type="hidden" name="comment_id" value="<?= e($commentId) ?>">
-            <button class="link-button text-danger" type="submit"><?= et('account.status_comment_delete') ?></button>
-        </form>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/comment-delete-form', [
+            'comment_id' => $commentId,
+            'action' => $action,
+            'content_id' => $contentId,
+        ]);
     }
 }
 
 if (!function_exists('status_comment_like_control')) {
     function status_comment_like_control(int $commentId, int $likesCount, bool $liked, ?array $user, string $action, int $contentId = 0): string
     {
-        ob_start();
-        ?>
-        <?php if ($user !== null): ?>
-            <form class="status-comment-like" method="post" action="<?= e(status_api_url('comment-like', ['comment_id' => $commentId])) ?>" data-status-form<?= $contentId > 0 ? ' data-status-id="' . e($contentId) . '"' : '' ?>>
-                <?= csrf_field() ?>
-                <input type="hidden" name="action" value="comment_like">
-                <input type="hidden" name="comment_id" value="<?= e($commentId) ?>">
-                <button class="link-button status-comment-like-button<?= $liked ? ' is-active' : '' ?>" type="submit" data-comment-like-button data-comment-id="<?= e($commentId) ?>">
-                    <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
-                </button>
-            </form>
-        <?php else: ?>
-            <span class="status-comment-like-button" aria-label="<?= et('account.status_like') ?>" data-comment-like-button data-comment-id="<?= e($commentId) ?>">
-                <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
-            </span>
-        <?php endif; ?>
-        <?php
-
-        return trim((string) ob_get_clean());
+        return part('status/comment-like-control', [
+            'comment_id' => $commentId,
+            'likes_count' => $likesCount,
+            'liked' => $liked,
+            'user' => $user,
+            'action' => $action,
+            'content_id' => $contentId,
+        ]);
     }
 }
 
@@ -6439,6 +6077,13 @@ if (!function_exists('view')) {
     function view(string $template, array $data = [], ?string $directory = null): string
     {
         return Core::render($template, $data, $directory);
+    }
+}
+
+if (!function_exists('part')) {
+    function part(string $template, array $data = []): string
+    {
+        return trim(render('parts/' . trim($template, '/'), $data));
     }
 }
 
