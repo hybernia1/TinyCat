@@ -25,12 +25,6 @@ if ($item === null) {
     return;
 }
 
-if (is_post()) {
-    csrf_require();
-    $redirect = (string) post('action', '') === 'delete' ? '/' : $current;
-    status_handle_post(require_auth('/login'), $redirect);
-}
-
 layout('layout', [
     'title' => trim((string) ($item['author_name'] ?? '')) !== ''
         ? t('public.status_title_by', ['author' => (string) ($item['author_name'] ?? '')])

@@ -35,7 +35,7 @@ echo render('modals/layout', [
     'id' => 'user-edit-' . $id,
     'title' => t('users.edit_user', ['username' => (string) ($user['username'] ?? '')]),
     'icon' => 'edit',
-    'action' => function_exists('tc_admin_users_api_url') ? tc_admin_users_api_url('update', ['id' => $id]) : '/admin/users?api=update&view=html&id=' . $id,
+    'action' => tc_admin_users_api_url('update', ['id' => $id]),
     'method' => 'PATCH',
     'target' => '#users-list',
     'closeOnSuccess' => true,

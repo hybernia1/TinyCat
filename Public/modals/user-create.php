@@ -21,7 +21,7 @@ echo render('modals/layout', [
     'id' => 'user-create-modal',
     'title' => t('users.new_user'),
     'icon' => 'user-plus',
-    'action' => function_exists('tc_admin_users_api_url') ? tc_admin_users_api_url('create') : '/admin/users?api=create&view=html',
+    'action' => tc_admin_users_api_url('create'),
     'target' => '#users-list',
     'reset' => true,
     'closeOnSuccess' => true,

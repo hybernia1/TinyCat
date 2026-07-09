@@ -228,6 +228,24 @@ if (!function_exists('user_display_name')) {
     }
 }
 
+if (!function_exists('user_public_payload')) {
+    function user_public_payload(?array $user): ?array
+    {
+        if ($user === null || (int) ($user['id'] ?? 0) < 1) {
+            return null;
+        }
+
+        return [
+            'id' => (int) ($user['id'] ?? 0),
+            'username' => (string) ($user['username'] ?? ''),
+            'role' => (string) ($user['role'] ?? ''),
+            'status' => (string) ($user['status'] ?? ''),
+            'locale' => (string) ($user['locale'] ?? ''),
+            'avatar_url' => user_avatar_url($user),
+        ];
+    }
+}
+
 if (!function_exists('site_image_upload')) {
     function site_image_upload(array $file, string $name, string $variant): array
     {
@@ -472,6 +490,155 @@ if (!function_exists('auth_referer_next_url')) {
     }
 }
 
+if (!function_exists('auth_request_next_url')) {
+    function auth_request_next_url(): string
+    {
+        $next = auth_safe_next_url((string) input('next', ''));
+
+        if ($next !== '') {
+            return $next;
+        }
+
+        return auth_referer_next_url();
+    }
+}
+
+if (!function_exists('auth_redirect_after_login')) {
+    function auth_redirect_after_login(?array $user, string $next = ''): string
+    {
+        $fallback = auth_landing_url($user);
+        $next = auth_safe_next_url($next);
+
+        if ($next === '') {
+            return $fallback;
+        }
+
+        if (str_starts_with(route_path($next), '/admin') && (string) ($user['role'] ?? '') !== 'admin') {
+            return $fallback;
+        }
+
+        return $next;
+    }
+}
+
+if (!function_exists('auth_login_request')) {
+    function auth_login_request(): array
+    {
+        if (!captcha_check('login')) {
+            captcha_refresh('login');
+            api_error(t('auth.invalid_captcha'), 422, 'captcha_invalid', [
+                'captcha_html' => captcha_field('login'),
+            ]);
+        }
+
+        if (!auth_attempt([
+            'username' => username_normalize((string) input('username', '')),
+            'password' => (string) input('password', ''),
+            'remember' => input('remember', ''),
+        ])) {
+            captcha_refresh('login');
+            api_error(t('auth.invalid_login'), 422, 'invalid_login', [
+                'captcha_html' => captcha_field('login'),
+            ]);
+        }
+
+        captcha_refresh('login');
+
+        $user = auth();
+        $next = auth_request_next_url();
+
+        return [
+            'user' => user_public_payload($user),
+            'redirect' => auth_redirect_after_login($user, $next),
+        ];
+    }
+}
+
+if (!function_exists('registration_url')) {
+    function registration_url(string $next = ''): string
+    {
+        $next = auth_safe_next_url($next);
+
+        return '/register' . ($next !== '' ? '?next=' . rawurlencode($next) : '');
+    }
+}
+
+if (!function_exists('registration_request')) {
+    function registration_request(): array
+    {
+        $next = auth_request_next_url();
+
+        if (!registration_enabled()) {
+            api_error(t('auth.registration_disabled'), 403, 'registration_disabled');
+        }
+
+        if (!captcha_check('register')) {
+            captcha_refresh('register');
+            api_error(t('auth.invalid_captcha'), 422, 'captcha_invalid', [
+                'captcha_html' => captcha_field('register'),
+            ]);
+        }
+
+        $username = username_normalize((string) input('username', ''));
+        $password = (string) input('password', '');
+        $passwordConfirm = (string) input('password_confirm', '');
+        $errors = [];
+
+        if (!username_valid($username)) {
+            $errors[] = t('account.messages.username_invalid');
+        } elseif (user_username_taken($username)) {
+            $errors[] = t('account.messages.username_taken');
+        }
+
+        if (strlen($password) < 8) {
+            $errors[] = t('account.messages.password_short');
+        } elseif ($password !== $passwordConfirm) {
+            $errors[] = t('account.messages.password_mismatch');
+        }
+
+        if ((string) input('platform_terms', '') !== '1') {
+            $errors[] = t('auth.platform_terms_required');
+        }
+
+        if ($errors !== []) {
+            captcha_refresh('register');
+            api_error(implode(' ', $errors), 422, 'validation_error', [
+                'errors' => $errors,
+                'captcha_html' => captcha_field('register'),
+            ]);
+        }
+
+        $status = registration_auto_approve() ? 'active' : 'waiting';
+        $userId = (int) insert('users', [
+            'username' => $username,
+            'password' => auth_password($password),
+            'role' => 'user',
+            'status' => $status,
+            'locale' => locale(),
+            'note' => '',
+            'bio' => '',
+            'recovery_hash' => user_recovery_hash_generate(),
+        ]);
+
+        captcha_refresh('register');
+
+        $data = [
+            'user_id' => $userId,
+            'status' => $status,
+            'approved' => $status === 'active',
+            'redirect' => '/login' . ($next !== '' ? '?next=' . rawurlencode($next) : ''),
+        ];
+
+        if ($status === 'active') {
+            auth_login($userId);
+            $data['user'] = user_public_payload(auth());
+            $data['redirect'] = auth_redirect_after_login(auth(), $next);
+        }
+
+        return $data;
+    }
+}
+
 if (!function_exists('registration_enabled')) {
     function registration_enabled(): bool
     {
@@ -703,24 +870,6 @@ if (!function_exists('moderation_action_count')) {
     }
 }
 
-if (!function_exists('moderation_require_action')) {
-    function moderation_require_action(array $user, string $action, string $redirect): void
-    {
-        if ((string) ($user['role'] ?? '') === 'admin') {
-            return;
-        }
-
-        [, $limit] = moderation_action_rule($user, $action);
-
-        if (moderation_action_count($user, $action) < (int) $limit) {
-            return;
-        }
-
-        flash('error', t('moderation.messages.action_limited'));
-        redirect($redirect);
-    }
-}
-
 if (!function_exists('user_muted_until')) {
     function user_muted_until(array $user): string
     {
@@ -775,20 +924,6 @@ if (!function_exists('user_mute')) {
     }
 }
 
-if (!function_exists('moderation_require_not_muted')) {
-    function moderation_require_not_muted(array $user, string $redirect): void
-    {
-        $mutedUntil = user_muted_until($user);
-
-        if ($mutedUntil === '') {
-            return;
-        }
-
-        flash('error', t('moderation.messages.account_muted', ['until' => datetime($mutedUntil)]));
-        redirect($redirect);
-    }
-}
-
 if (!function_exists('moderation_record_action')) {
     function moderation_record_action(array $user, string $action): void
     {
@@ -823,66 +958,6 @@ if (!function_exists('moderation_body_fingerprint')) {
     }
 }
 
-if (!function_exists('moderation_require_unique_body')) {
-    function moderation_require_unique_body(array $user, string $body, string $redirect, int $ignoreId = 0): void
-    {
-        $userId = (int) ($user['id'] ?? 0);
-        $fingerprint = moderation_body_fingerprint($body);
-
-        if ($userId < 1 || strlen(trim($body)) < 12 || $fingerprint === '') {
-            return;
-        }
-
-        try {
-            $rows = all(
-                'SELECT id, body FROM content WHERE author_id = ? AND created_at >= ? ORDER BY id DESC LIMIT 30',
-                [$userId, date_db('-1 day')]
-            );
-        } catch (Throwable) {
-            return;
-        }
-
-        foreach ($rows as $row) {
-            if ((int) ($row['id'] ?? 0) === $ignoreId) {
-                continue;
-            }
-
-            if (moderation_body_fingerprint((string) ($row['body'] ?? '')) === $fingerprint) {
-                flash('error', t('moderation.messages.duplicate_body'));
-                redirect($redirect);
-            }
-        }
-    }
-}
-
-if (!function_exists('user_profile_normalize_website')) {
-    function user_profile_normalize_website(string $website): string
-    {
-        $website = trim($website);
-
-        if ($website === '') {
-            return '';
-        }
-
-        if (!preg_match('~^https?://~i', $website)) {
-            $website = 'https://' . $website;
-        }
-
-        return function_exists('mb_substr') ? mb_substr($website, 0, 255) : substr($website, 0, 255);
-    }
-}
-
-if (!function_exists('user_profile_valid_url')) {
-    function user_profile_valid_url(string $url): bool
-    {
-        $parts = parse_url($url);
-
-        return filter_var($url, FILTER_VALIDATE_URL) !== false
-            && is_array($parts)
-            && in_array(strtolower((string) ($parts['scheme'] ?? '')), ['http', 'https'], true);
-    }
-}
-
 if (!function_exists('plain_text_limit')) {
     function plain_text_limit(string $value, int $limit): string
     {
@@ -903,17 +978,16 @@ if (!function_exists('plain_text_limit')) {
     }
 }
 
-if (!function_exists('user_profile_update')) {
-    function user_profile_update(array $user, string $redirect): void
+if (!function_exists('user_profile_update_request')) {
+    function user_profile_update_request(array $user): array
     {
         $id = (int) ($user['id'] ?? 0);
-        $website = user_profile_normalize_website((string) post('website', ''));
         $bio = plain_text_limit((string) post('bio', ''), 500);
         $locale = language_code((string) post('locale', ''));
         $errors = [];
 
-        if ($website !== '' && !user_profile_valid_url($website)) {
-            $errors[] = t('account.messages.website_invalid');
+        if ($id < 1) {
+            api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
         }
 
         if ($locale === '' || !array_key_exists($locale, language_packages())) {
@@ -921,12 +995,10 @@ if (!function_exists('user_profile_update')) {
         }
 
         if ($errors !== []) {
-            flash('error', implode(' ', $errors));
-            redirect($redirect);
+            api_error(implode(' ', $errors), 422, 'validation_error', ['errors' => $errors]);
         }
 
         $data = [
-            'website' => $website,
             'bio' => $bio,
             'locale' => $locale,
         ];
@@ -935,8 +1007,11 @@ if (!function_exists('user_profile_update')) {
 
         locale($locale);
 
-        flash('success', t('account.messages.profile_saved'));
-        redirect($redirect);
+        return [
+            'user' => user_public_payload(auth() ?: $user),
+            'message' => t('account.messages.profile_saved'),
+            'redirect' => author_url($id),
+        ];
     }
 }
 
@@ -944,6 +1019,15 @@ if (!function_exists('author_url')) {
     function author_url(int $id): string
     {
         return $id > 0 ? '/author/' . $id : '/';
+    }
+}
+
+if (!function_exists('author_api_url')) {
+    function author_api_url(int $id, string $action = 'follow', array $params = []): string
+    {
+        $query = ['author_id' => $id] + $params;
+
+        return '/api/author/' . rawurlencode($action) . '?' . http_build_query($query);
     }
 }
 
@@ -961,7 +1045,6 @@ if (!function_exists('public_author_find')) {
                 role,
                 status,
                 locale,
-                website,
                 bio,
                 muted_until,
                 muted_by,
@@ -1066,7 +1149,7 @@ if (!function_exists('author_follow_button_html')) {
     {
         ob_start();
         ?>
-        <form method="post" action="<?= e(author_url($authorId)) ?>" data-follow-form data-author-id="<?= e($authorId) ?>">
+        <form method="post" action="<?= e(author_api_url($authorId, 'follow', ['view' => 'html'])) ?>" data-follow-form data-author-id="<?= e($authorId) ?>">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="<?= $isFollowing ? 'unfollow' : 'follow' ?>">
             <button class="btn <?= $isFollowing ? 'btn-secondary' : 'btn-primary' ?> btn-sm" type="submit">
@@ -1368,7 +1451,7 @@ if (!function_exists('normalize_mentions_for_storage')) {
     {
         $map = author_mention_map();
         $users = author_mention_users();
-        $pattern = '/(?<![A-Za-z0-9_])@([a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?)/i';
+        $pattern = '/(?<![A-Za-z0-9_])@([0-9]+|[a-z][a-z0-9_]{2,31})/i';
 
         return (string) preg_replace_callback($pattern, static function (array $match) use ($map, $users): string {
             $token = strtolower((string) ($match[1] ?? ''));
@@ -1405,7 +1488,7 @@ if (!function_exists('render_mentions_segment')) {
     {
         $map = author_mention_map();
         $users = author_mention_users();
-        $pattern = '/(?<![\\p{L}\\p{N}_])([@#])([\\p{L}\\p{N}](?:[\\p{L}\\p{N}_-]{0,78}[\\p{L}\\p{N}])?)/u';
+        $pattern = '/(?<![\\p{L}\\p{N}_])([@#])([\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,79})/u';
         $offset = 0;
         $html = '';
 
@@ -1484,7 +1567,6 @@ if (!function_exists('public_status_select_sql')) {
                 c.edit_lock_reason,
                 u.username AS author_username,
                 u.username AS author_name,
-                u.website AS author_website,
                 u.bio AS author_bio,
                 (
                     SELECT COUNT(*)
@@ -2535,6 +2617,76 @@ if (!function_exists('public_search_suggestions')) {
     }
 }
 
+if (!function_exists('status_editor_suggestions')) {
+    function status_editor_suggestions(string $query, string $type = 'all', int $limit = 8): array
+    {
+        $query = trim($query);
+        $type = in_array($type, ['all', 'tag', 'user'], true) ? $type : 'all';
+        $limit = max(1, min(12, $limit));
+        $payload = [
+            'query' => $query,
+            'type' => $type,
+            'tags' => [],
+            'users' => [],
+        ];
+
+        if ($type === 'all' || $type === 'tag') {
+            $seen = [];
+            $tagQuery = status_tag_normalize($query);
+
+            foreach (public_search_suggestion_tags($query, $limit) as $tag) {
+                $name = status_tag_normalize((string) ($tag['title'] ?? $tag['name'] ?? ''));
+
+                if ($name === '' || isset($seen[$name])) {
+                    continue;
+                }
+
+                $seen[$name] = true;
+                $payload['tags'][] = [
+                    'id' => (int) ($tag['id'] ?? 0),
+                    'type' => 'tag',
+                    'title' => '#' . $name,
+                    'value' => $name,
+                    'url' => tag_url($name),
+                ];
+            }
+
+            if ($tagQuery !== '' && !isset($seen[$tagQuery])) {
+                array_unshift($payload['tags'], [
+                    'id' => 0,
+                    'type' => 'tag',
+                    'title' => '#' . $tagQuery,
+                    'value' => $tagQuery,
+                    'url' => tag_url($tagQuery),
+                ]);
+            }
+
+            $payload['tags'] = array_slice($payload['tags'], 0, $limit);
+        }
+
+        if (($type === 'all' || $type === 'user') && $query !== '') {
+            foreach (public_search_suggestion_users($query, $limit) as $user) {
+                $username = username_normalize((string) ($user['title'] ?? $user['username'] ?? ''));
+
+                if (!username_valid($username)) {
+                    continue;
+                }
+
+                $payload['users'][] = [
+                    'id' => (int) ($user['id'] ?? 0),
+                    'type' => 'user',
+                    'title' => '@' . $username,
+                    'value' => $username,
+                    'url' => (string) ($user['url'] ?? ''),
+                    'avatar_url' => (string) ($user['avatar_url'] ?? ''),
+                ];
+            }
+        }
+
+        return $payload;
+    }
+}
+
 if (!function_exists('public_search_results')) {
     function public_search_results(string $query, int $limit = 6): array
     {
@@ -2600,9 +2752,7 @@ if (!function_exists('public_search_results')) {
                 '(
                     u.username LIKE ?
                     OR u.bio LIKE ?
-                    OR u.website LIKE ?
                 )',
-                $like,
                 $like,
                 $like
             );
@@ -3229,6 +3379,26 @@ if (!function_exists('status_action_modal_url')) {
     }
 }
 
+if (!function_exists('status_api_url')) {
+    function status_api_url(string $action, array $params = [], bool $html = true): string
+    {
+        $action = trim(str_replace('_', '-', strtolower($action)), '-');
+        $query = [];
+
+        foreach ($params as $key => $value) {
+            if ($value !== '' && $value !== null) {
+                $query[$key] = $value;
+            }
+        }
+
+        if ($html) {
+            $query['view'] = 'html';
+        }
+
+        return '/api/status/' . rawurlencode($action) . ($query !== [] ? '?' . http_build_query($query) : '');
+    }
+}
+
 if (!function_exists('status_report_modal_id')) {
     function status_report_modal_id(int $contentId): string
     {
@@ -3246,7 +3416,7 @@ if (!function_exists('author_profile_edit_modal_id')) {
 if (!function_exists('author_profile_edit_modal_url')) {
     function author_profile_edit_modal_url(int $authorId, string $focus = ''): string
     {
-        $focus = in_array($focus, ['website', 'locale', 'bio'], true) ? $focus : '';
+        $focus = in_array($focus, ['locale', 'bio'], true) ? $focus : '';
         $query = ['author_id' => max(0, $authorId)];
 
         if ($focus !== '') {
@@ -3292,7 +3462,7 @@ if (!function_exists('status_field')) {
         ob_start();
         ?>
         <div class="field status-field" data-status-editor>
-            <textarea class="textarea status-textarea" name="body" rows="4" maxlength="2000" placeholder="<?= et('account.status_body') ?>" aria-label="<?= et('account.status_body') ?>" data-status-editor-source data-status-tags="<?= e((string) $tags) ?>" data-status-placeholder="<?= et('account.status_body') ?>" data-status-counter="<?= et('account.status_counter') ?>"><?= e($item['body'] ?? '') ?></textarea>
+            <textarea class="textarea status-textarea" name="body" rows="4" maxlength="2000" placeholder="<?= et('account.status_body') ?>" aria-label="<?= et('account.status_body') ?>" data-status-editor-source data-status-tags="<?= e((string) $tags) ?>" data-status-suggest-url="/api/status-suggest" data-status-placeholder="<?= et('account.status_body') ?>" data-status-counter="<?= et('account.status_counter') ?>"><?= e($item['body'] ?? '') ?></textarea>
         </div>
         <?php
 
@@ -3309,8 +3479,9 @@ if (!function_exists('status_composer')) {
         ?>
         <section class="card status-composer">
             <div class="card-body">
-                <form method="post" action="<?= e($action) ?>" data-status-form data-status-scope="feed">
+                <form method="post" action="<?= e(status_api_url('create')) ?>" data-status-form data-status-scope="feed">
                     <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="create">
                     <div class="status-compose-row">
                         <div class="avatar">
                             <?php if ($avatarUrl !== ''): ?>
@@ -3643,6 +3814,118 @@ if (!function_exists('notification_delete')) {
     }
 }
 
+if (!function_exists('notifications_apply_action')) {
+    function notifications_apply_action(int $userId, string $action, int $id = 0): string
+    {
+        if ($action === 'read') {
+            notification_mark_read($id, $userId);
+            return t('notifications.messages.read_done');
+        }
+
+        if ($action === 'read_all') {
+            notification_mark_all_read($userId);
+            return t('notifications.messages.read_all_done');
+        }
+
+        if ($action === 'delete') {
+            notification_delete($id, $userId);
+            return t('notifications.messages.deleted');
+        }
+
+        api_error('Unsupported notification action.', 400, 'unsupported_notification_action');
+    }
+}
+
+if (!function_exists('notification_item_html')) {
+    function notification_item_html(array $notification): string
+    {
+        $id = (int) ($notification['id'] ?? 0);
+        $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
+        $actorName = trim((string) ($notification['actor_name'] ?? ''));
+        $avatarUrl = user_avatar_url($notification);
+        $createdAt = (string) ($notification['created_at'] ?? '');
+        $contentText = meta_text((string) ($notification['content_body'] ?? ''), 120);
+        $url = notification_url($notification);
+
+        ob_start();
+        ?>
+        <article class="notification-item<?= $isUnread ? ' is-unread' : '' ?>">
+            <a class="notification-main" href="<?= e($url) ?>">
+                <span class="notification-avatar">
+                    <?php if ($avatarUrl !== ''): ?>
+                        <img src="<?= e($avatarUrl) ?>" alt="<?= e($actorName) ?>" loading="lazy">
+                    <?php else: ?>
+                        <?= icon(notification_icon((string) ($notification['type'] ?? ''))) ?>
+                    <?php endif; ?>
+                </span>
+                <span class="notification-copy">
+                    <strong><?= e(notification_message($notification)) ?></strong>
+                    <?php if ($contentText !== ''): ?>
+                        <span><?= e($contentText) ?></span>
+                    <?php endif; ?>
+                    <?php if ($createdAt !== ''): ?>
+                        <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
+                    <?php endif; ?>
+                </span>
+            </a>
+            <div class="notification-actions">
+                <?php if ($isUnread): ?>
+                    <form method="post" action="/api/notifications/read?view=html" data-ajax-form data-ajax-target="#notifications-view">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id" value="<?= e($id) ?>">
+                        <button class="btn btn-ghost btn-icon btn-sm" type="submit" title="<?= et('notifications.mark_read') ?>" aria-label="<?= et('notifications.mark_read') ?>">
+                            <?= icon('check') ?>
+                        </button>
+                    </form>
+                <?php endif; ?>
+                <form method="post" action="/api/notifications/delete?view=html" data-ajax-form data-ajax-target="#notifications-view">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="id" value="<?= e($id) ?>">
+                    <button class="btn btn-ghost btn-icon btn-sm text-danger" type="submit" title="<?= et('notifications.delete') ?>" aria-label="<?= et('notifications.delete') ?>">
+                        <?= icon('trash') ?>
+                    </button>
+                </form>
+            </div>
+        </article>
+        <?php
+
+        return trim((string) ob_get_clean());
+    }
+}
+
+if (!function_exists('notifications_page_html')) {
+    function notifications_page_html(array $notifications, int $unread): string
+    {
+        ob_start();
+        ?>
+        <section class="notifications-page stack stack-gap-14">
+            <article class="card">
+                <div class="card-header split">
+                    <h1 class="text-lg m-0 cluster gap-2"><?= icon('bell') ?> <?= et('notifications.title') ?></h1>
+                    <?php if ($unread > 0): ?>
+                        <form method="post" action="/api/notifications/read-all?view=html" data-ajax-form data-ajax-target="#notifications-view">
+                            <?= csrf_field() ?>
+                            <button class="btn btn-secondary btn-sm" type="submit"><?= icon('check') ?> <span><?= et('notifications.mark_all_read') ?></span></button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+                <div class="notifications-list">
+                    <?php if ($notifications === []): ?>
+                        <div class="notification-empty"><?= icon('bell') ?> <span><?= et('notifications.empty') ?></span></div>
+                    <?php else: ?>
+                        <?php foreach ($notifications as $notification): ?>
+                            <?= notification_item_html($notification) ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </article>
+        </section>
+        <?php
+
+        return trim((string) ob_get_clean());
+    }
+}
+
 if (!function_exists('notification_delete_for_content')) {
     function notification_delete_for_content(int $contentId): void
     {
@@ -3666,7 +3949,7 @@ if (!function_exists('notification_delete_for_comment')) {
 }
 
 if (!function_exists('notification_state')) {
-    function notification_state(int $userId): array
+    function notification_state(int $userId, bool $includeHtml = true): array
     {
         $unread = notification_unread_count($userId);
         $message = '';
@@ -3677,12 +3960,17 @@ if (!function_exists('notification_state')) {
             $message = t('notifications.new_count', ['count' => $unread]);
         }
 
-        return [
+        $state = [
             'unread' => $unread,
             'latest_id' => notification_latest_id($userId),
             'message' => $message,
-            'html' => notification_preview_html($userId),
         ];
+
+        if ($includeHtml) {
+            $state['html'] = notification_preview_html($userId);
+        }
+
+        return $state;
     }
 }
 
@@ -3690,48 +3978,6 @@ if (!function_exists('notification_badge_text')) {
     function notification_badge_text(int $count): string
     {
         return $count > 99 ? '99+' : (string) max(0, $count);
-    }
-}
-
-if (!function_exists('status_handle_post')) {
-    function status_handle_post(array $user, string $redirect = '/'): void
-    {
-        $action = (string) post('action', 'create');
-        $id = max(0, (int) post('id', 0));
-
-        if (wants_json() && in_array($action, ['create', 'react', 'comment', 'comment_like', 'comment_delete'], true)) {
-            status_handle_post_json($action, $id, $user, $redirect);
-        }
-
-        if ($action === 'react') {
-            status_react_for_user($id, $user, $redirect);
-        }
-
-        if ($action === 'comment') {
-            status_comment_for_user($id, max(0, (int) post('parent_id', 0)), $user, $redirect);
-        }
-
-        if ($action === 'comment_like') {
-            status_comment_like_for_user(max(0, (int) post('comment_id', 0)), $user, $redirect);
-        }
-
-        if ($action === 'report') {
-            status_report_for_user($id, $user, $redirect);
-        }
-
-        if ($action === 'comment_delete') {
-            status_comment_delete_for_user(max(0, (int) post('comment_id', 0)), $user, $redirect);
-        }
-
-        if ($action === 'update') {
-            status_update_for_user($id, $user, $redirect);
-        }
-
-        if ($action === 'delete') {
-            status_delete_for_user($id, $user, $redirect);
-        }
-
-        status_create_for_user($user, $redirect);
     }
 }
 
@@ -3863,33 +4109,6 @@ if (!function_exists('status_json_comment_payload')) {
     }
 }
 
-if (!function_exists('status_handle_post_json')) {
-    function status_handle_post_json(string $action, int $id, array $user, string $redirect = '/'): never
-    {
-        if ($action === 'create') {
-            api(status_json_create($user, $redirect));
-        }
-
-        if ($action === 'react') {
-            api(status_json_react($id, $user));
-        }
-
-        if ($action === 'comment') {
-            api(status_json_comment($id, max(0, (int) post('parent_id', 0)), $user, $redirect, (string) post('context', '')));
-        }
-
-        if ($action === 'comment_like') {
-            api(status_json_comment_like(max(0, (int) post('comment_id', 0)), $user));
-        }
-
-        if ($action === 'comment_delete') {
-            api(status_json_comment_delete(max(0, (int) post('comment_id', 0)), $user));
-        }
-
-        api_error('Unsupported status action.', 400, 'unsupported_action');
-    }
-}
-
 if (!function_exists('status_json_create')) {
     function status_json_create(array $user, string $redirect = '/'): array
     {
@@ -3917,13 +4136,18 @@ if (!function_exists('status_json_create')) {
 
         $item = public_status_item($contentId);
 
-        return [
+        $data = [
             'action' => 'create',
             'status' => status_json_summary($contentId, $user),
             'status_id' => $contentId,
-            'card_html' => $item !== null ? status_card($item, $redirect, $user) : '',
             'message' => t('account.messages.status_created'),
         ];
+
+        if (wants_partial()) {
+            $data['card_html'] = $item !== null ? status_card($item, $redirect, $user) : '';
+        }
+
+        return $data;
     }
 }
 
@@ -3967,7 +4191,7 @@ if (!function_exists('status_json_comment')) {
     {
         $userId = (int) ($user['id'] ?? 0);
         $status = status_find($contentId);
-        $body = plain_text_limit((string) post('comment', ''), 2000);
+        $body = plain_text_limit((string) input('comment', ''), 2000);
         $body = status_strip_external_urls($body);
         $body = normalize_mentions_for_storage($body);
         $body = plain_text_limit($body, 2000);
@@ -4005,12 +4229,18 @@ if (!function_exists('status_json_comment')) {
         moderation_record_action($user, 'comment');
         notification_create_for_content_owner('content_comment', $contentId, $user, $commentId);
 
-        return [
+        $data = [
             'action' => 'comment',
             'status' => status_json_summary($contentId, $user),
-            'comment' => status_json_comment_payload($commentId, $user, $redirect, $context),
+            'comment_id' => $commentId,
             'message' => t('account.messages.comment_created'),
         ];
+
+        if (wants_partial()) {
+            $data['comment'] = status_json_comment_payload($commentId, $user, $redirect, $context);
+        }
+
+        return $data;
     }
 }
 
@@ -4094,7 +4324,7 @@ if (!function_exists('status_json_comment_delete')) {
 if (!function_exists('status_payload')) {
     function status_payload(): array
     {
-        $body = plain_text_limit((string) post('body', ''), 2000);
+        $body = plain_text_limit((string) input('body', ''), 2000);
         $body = status_strip_external_urls($body);
         $body = normalize_mentions_for_storage($body);
         $body = normalize_tags_for_storage($body);
@@ -4104,126 +4334,6 @@ if (!function_exists('status_payload')) {
             'body' => $body,
             'tags' => status_tags_from_text($body),
         ];
-    }
-}
-
-if (!function_exists('status_react_for_user')) {
-    function status_react_for_user(int $contentId, array $user, string $redirect = '/'): void
-    {
-        $userId = (int) ($user['id'] ?? 0);
-
-        if ($contentId < 1 || $userId < 1 || status_find($contentId) === null) {
-            flash('error', t('account.messages.status_not_found'));
-            redirect($redirect);
-        }
-
-        $liked = status_user_liked($contentId, $userId);
-
-        if (!$liked) {
-            moderation_require_not_muted($user, $redirect);
-            moderation_require_action($user, 'like', $redirect);
-        }
-
-        if ($liked) {
-            delete('content_likes', ['content_id' => $contentId, 'user_id' => $userId]);
-        } else {
-            insert('content_likes', [
-                'content_id' => $contentId,
-                'user_id' => $userId,
-                'created_at' => date_db(),
-            ]);
-            moderation_record_action($user, 'like');
-            notification_create_for_content_owner('content_like', $contentId, $user);
-        }
-
-        redirect($redirect . '#' . status_anchor($contentId));
-    }
-}
-
-if (!function_exists('status_comment_for_user')) {
-    function status_comment_for_user(int $contentId, int $parentId, array $user, string $redirect = '/'): void
-    {
-        $userId = (int) ($user['id'] ?? 0);
-        $status = status_find($contentId);
-        $body = plain_text_limit((string) post('comment', ''), 2000);
-        $body = status_strip_external_urls($body);
-        $body = normalize_mentions_for_storage($body);
-        $body = plain_text_limit($body, 2000);
-
-        if ($contentId < 1 || $userId < 1 || $status === null) {
-            flash('error', t('account.messages.status_not_found'));
-            redirect($redirect);
-        }
-
-        if ($body === '') {
-            flash('error', t('account.messages.comment_required'));
-            redirect($redirect . '#' . status_anchor($contentId));
-        }
-
-        moderation_require_not_muted($user, $redirect . '#' . status_anchor($contentId));
-        moderation_require_action($user, 'comment', $redirect . '#' . status_anchor($contentId));
-
-        if ($parentId > 0) {
-            $parent = status_comment_find($parentId);
-
-            if ($parent === null || (int) ($parent['content_id'] ?? 0) !== $contentId) {
-                flash('error', t('account.messages.comment_not_found'));
-                redirect($redirect . '#' . status_anchor($contentId));
-            }
-
-            if ((int) ($parent['parent_id'] ?? 0) > 0) {
-                $parentId = (int) $parent['parent_id'];
-            }
-        }
-
-        $commentId = (int) insert('content_comments', [
-            'content_id' => $contentId,
-            'parent_id' => $parentId > 0 ? $parentId : null,
-            'user_id' => $userId,
-            'body' => $body,
-            'created_at' => date_db(),
-        ]);
-        moderation_record_action($user, 'comment');
-        notification_create_for_content_owner('content_comment', $contentId, $user, $commentId);
-
-        flash('success', t('account.messages.comment_created'));
-        redirect($redirect . '#' . status_anchor($contentId));
-    }
-}
-
-if (!function_exists('status_comment_like_for_user')) {
-    function status_comment_like_for_user(int $commentId, array $user, string $redirect = '/'): void
-    {
-        $userId = (int) ($user['id'] ?? 0);
-        $comment = status_comment_find($commentId);
-
-        if ($comment === null || $userId < 1) {
-            flash('error', t('account.messages.comment_not_found'));
-            redirect($redirect);
-        }
-
-        $contentId = (int) ($comment['content_id'] ?? 0);
-
-        $liked = status_comment_user_liked($commentId, $userId);
-
-        if (!$liked) {
-            moderation_require_not_muted($user, $redirect . '#' . status_anchor($contentId));
-            moderation_require_action($user, 'like', $redirect . '#' . status_anchor($contentId));
-        }
-
-        if ($liked) {
-            delete('comment_likes', ['comment_id' => $commentId, 'user_id' => $userId]);
-        } else {
-            insert('comment_likes', [
-                'comment_id' => $commentId,
-                'user_id' => $userId,
-                'created_at' => date_db(),
-            ]);
-            moderation_record_action($user, 'like');
-            notification_create_for_comment_owner($commentId, $user);
-        }
-
-        redirect($redirect . '#' . status_anchor($contentId));
     }
 }
 
@@ -4267,158 +4377,6 @@ if (!function_exists('status_report_dismissal_lock')) {
     }
 }
 
-if (!function_exists('status_report_for_user')) {
-    function status_report_for_user(int $contentId, array $user, string $redirect = '/'): void
-    {
-        $userId = (int) ($user['id'] ?? 0);
-        $item = status_find($contentId);
-
-        if ($contentId < 1 || $userId < 1 || $item === null) {
-            flash('error', t('account.messages.status_not_found'));
-            redirect($redirect);
-        }
-
-        if ((int) ($item['author_id'] ?? 0) === $userId) {
-            flash('error', t('moderation.messages.report_own_content'));
-            redirect($redirect . '#' . status_anchor($contentId));
-        }
-
-        $reasons = array_keys(status_report_reasons());
-        $reason = (string) post('reason', 'other');
-        $reason = in_array($reason, $reasons, true) ? $reason : 'other';
-        $note = plain_text_limit((string) post('note', ''), 1000);
-        $now = date_db();
-        $existing = one(
-            'SELECT *
-            FROM content_reports
-            WHERE content_id = ? AND reporter_id = ?
-            LIMIT 1',
-            [$contentId, $userId]
-        );
-
-        if ($existing !== null && (string) ($existing['status'] ?? '') !== 'open') {
-            flash('info', t('moderation.messages.report_already_reviewed'));
-            redirect($redirect . '#' . status_anchor($contentId));
-        }
-
-        $dismissed = status_report_dismissal_lock($contentId);
-
-        if ($dismissed !== null && $existing === null) {
-            try {
-                insert('content_reports', [
-                    'content_id' => $contentId,
-                    'reporter_id' => $userId,
-                    'reason' => $reason,
-                    'note' => $note,
-                    'status' => 'dismissed',
-                    'created_at' => $now,
-                    'reviewed_at' => $now,
-                    'reviewed_by' => (int) ($dismissed['reviewed_by'] ?? 0) ?: null,
-                    'action_note' => 'already_dismissed',
-                ]);
-            } catch (Throwable) {
-                // A race on the unique report key should behave like an already reviewed report.
-            }
-
-            flash('info', t('moderation.messages.report_already_reviewed'));
-            redirect($redirect . '#' . status_anchor($contentId));
-        }
-
-        moderation_require_action($user, 'report', $redirect . '#' . status_anchor($contentId));
-
-        if ($existing !== null) {
-            update('content_reports', [
-                'reason' => $reason,
-                'note' => $note,
-                'created_at' => $now,
-            ], ['content_id' => $contentId, 'reporter_id' => $userId]);
-        } else {
-            insert('content_reports', [
-                'content_id' => $contentId,
-                'reporter_id' => $userId,
-                'reason' => $reason,
-                'note' => $note,
-                'status' => 'open',
-                'created_at' => $now,
-            ]);
-        }
-
-        moderation_record_action($user, 'report');
-        flash('success', t('moderation.messages.report_created'));
-        redirect($redirect . '#' . status_anchor($contentId));
-    }
-}
-
-if (!function_exists('status_comment_delete_for_user')) {
-    function status_comment_delete_for_user(int $commentId, array $user, string $redirect = '/'): void
-    {
-        $comment = status_comment_find($commentId);
-
-        if ($comment === null) {
-            flash('error', t('account.messages.comment_not_found'));
-            redirect($redirect);
-        }
-
-        $contentId = (int) ($comment['content_id'] ?? 0);
-
-        if (!status_comment_can_delete($comment, $user)) {
-            flash('error', t('account.messages.comment_forbidden'));
-            redirect($redirect . '#' . status_anchor($contentId));
-        }
-
-        foreach (db_select('SELECT id FROM content_comments')->where('parent_id = ?', $commentId)->all() as $child) {
-            $childId = (int) ($child['id'] ?? 0);
-            delete('comment_likes', ['comment_id' => $childId]);
-            notification_delete_for_comment($childId);
-        }
-
-        delete('comment_likes', ['comment_id' => $commentId]);
-        notification_delete_for_comment($commentId);
-        delete('content_comments', ['parent_id' => $commentId]);
-        delete('content_comments', ['id' => $commentId]);
-
-        flash('success', t('account.messages.comment_deleted'));
-        redirect($redirect . '#' . status_anchor($contentId));
-    }
-}
-
-if (!function_exists('status_update_for_user')) {
-    function status_update_for_user(int $contentId, array $user, string $redirect = '/'): void
-    {
-        $item = status_find($contentId);
-
-        if (status_edit_locked($item)) {
-            flash('error', t('account.messages.status_edit_locked'));
-            redirect($redirect . '#' . status_anchor($contentId));
-        }
-
-        if (!status_can_edit($item, $user)) {
-            flash('error', t('account.messages.status_forbidden'));
-            redirect($redirect);
-        }
-
-        moderation_require_not_muted($user, $redirect . '#' . status_anchor($contentId));
-
-        $payload = status_payload();
-        $body = (string) ($payload['body'] ?? '');
-
-        if (trim($body) === '') {
-            flash('error', t('account.messages.status_required'));
-            redirect($redirect . '#' . status_anchor($contentId));
-        }
-
-        moderation_require_unique_body($user, $body, $redirect . '#' . status_anchor($contentId), $contentId);
-
-        update('content', [
-            'body' => $body,
-        ], ['id' => $contentId]);
-        status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
-
-        flash('success', t('account.messages.status_saved'));
-        redirect($redirect . '#' . status_anchor($contentId));
-    }
-}
-
 if (!function_exists('status_delete_content')) {
     function status_delete_content(int $contentId, bool $deleteReports = true, bool $deleteNotifications = true): void
     {
@@ -4447,23 +4405,6 @@ if (!function_exists('status_delete_content')) {
     }
 }
 
-if (!function_exists('status_delete_for_user')) {
-    function status_delete_for_user(int $contentId, array $user, string $redirect = '/'): void
-    {
-        $item = status_find($contentId);
-
-        if (!status_can_delete($item, $user)) {
-            flash('error', t('account.messages.status_forbidden'));
-            redirect($redirect);
-        }
-
-        status_delete_content($contentId);
-
-        flash('success', t('account.messages.status_deleted'));
-        redirect($redirect);
-    }
-}
-
 if (!function_exists('status_actions')) {
     function status_actions(array $item, ?array $user, string $action, bool $openCommentsModal = true): string
     {
@@ -4482,7 +4423,7 @@ if (!function_exists('status_actions')) {
         ?>
         <div class="status-reactions">
             <?php if ($user !== null): ?>
-                <form method="post" action="<?= e($action) ?>" data-status-form data-status-id="<?= e($contentId) ?>">
+                <form method="post" action="<?= e(status_api_url('react', ['id' => $contentId])) ?>" data-status-form data-status-id="<?= e($contentId) ?>">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="react">
                     <input type="hidden" name="id" value="<?= e($contentId) ?>">
@@ -4547,7 +4488,7 @@ if (!function_exists('status_manage_actions')) {
                 </button>
             <?php endif; ?>
             <?php if ($canDelete): ?>
-                <form method="post" action="<?= e($action) ?>" data-status-form data-status-id="<?= e($contentId) ?>" data-confirm="<?= et('account.status_delete_confirm') ?>" data-confirm-title="<?= et('account.status_delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
+                <form method="post" action="<?= e(status_api_url('delete', ['id' => $contentId])) ?>" data-status-form data-status-id="<?= e($contentId) ?>" data-confirm="<?= et('account.status_delete_confirm') ?>" data-confirm-title="<?= et('account.status_delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="<?= e($contentId) ?>">
@@ -4580,7 +4521,7 @@ if (!function_exists('status_card')) {
 
         ob_start();
         ?>
-        <article class="card status-card" id="<?= e(status_anchor($contentId)) ?>">
+        <article class="card status-card" id="<?= e(status_anchor($contentId)) ?>" data-status-action="<?= e($action) ?>">
             <div class="card-body status-card-body">
                 <div class="status-header">
                     <a class="avatar" href="<?= e($url) ?>" aria-label="<?= e($authorName) ?>">
@@ -4691,10 +4632,10 @@ if (!function_exists('public_home_feed_html')) {
         <?php endif; ?>
 
         <nav class="feed-switch home-feed-switch" aria-label="<?= et('public.feed_title') ?>">
-            <a class="feed-switch-link" href="/" data-ajax data-url="/api/home-feed?feed=all" data-ajax-target=".home-feed-section" data-history="/"<?= $feed === 'all' ? ' aria-current="page"' : '' ?>>
+            <a class="feed-switch-link" href="/" data-ajax data-url="<?= e(public_home_feed_api_url('all', true)) ?>" data-ajax-target=".home-feed-section" data-history="/"<?= $feed === 'all' ? ' aria-current="page"' : '' ?>>
                 <?= et('public.feed_all') ?>
             </a>
-            <a class="feed-switch-link" href="/?feed=following" data-ajax data-url="/api/home-feed?feed=following" data-ajax-target=".home-feed-section" data-history="/?feed=following"<?= $feed === 'following' ? ' aria-current="page"' : '' ?>>
+            <a class="feed-switch-link" href="/?feed=following" data-ajax data-url="<?= e(public_home_feed_api_url('following', true)) ?>" data-ajax-target=".home-feed-section" data-history="/?feed=following"<?= $feed === 'following' ? ' aria-current="page"' : '' ?>>
                 <?= et('public.feed_following') ?>
             </a>
         </nav>
@@ -4719,6 +4660,211 @@ if (!function_exists('public_home_feed_html')) {
     }
 }
 
+if (!function_exists('status_json_report')) {
+    function status_json_report(int $contentId, array $user): array
+    {
+        $userId = (int) ($user['id'] ?? 0);
+        $item = status_find($contentId);
+
+        if ($contentId < 1 || $userId < 1 || $item === null) {
+            api_error(t('account.messages.status_not_found'), 404, 'status_not_found');
+        }
+
+        if ((int) ($item['author_id'] ?? 0) === $userId) {
+            api_error(t('moderation.messages.report_own_content'), 403, 'report_own_content');
+        }
+
+        $reasons = array_keys(status_report_reasons());
+        $reason = (string) input('reason', 'other');
+        $reason = in_array($reason, $reasons, true) ? $reason : 'other';
+        $note = plain_text_limit((string) input('note', ''), 1000);
+        $now = date_db();
+        $existing = one(
+            'SELECT *
+            FROM content_reports
+            WHERE content_id = ? AND reporter_id = ?
+            LIMIT 1',
+            [$contentId, $userId]
+        );
+
+        if ($existing !== null && (string) ($existing['status'] ?? '') !== 'open') {
+            return [
+                'action' => 'report',
+                'status_id' => $contentId,
+                'modal_close' => true,
+                'message' => t('moderation.messages.report_already_reviewed'),
+                'type' => 'info',
+            ];
+        }
+
+        $dismissed = status_report_dismissal_lock($contentId);
+
+        if ($dismissed !== null && $existing === null) {
+            try {
+                insert('content_reports', [
+                    'content_id' => $contentId,
+                    'reporter_id' => $userId,
+                    'reason' => $reason,
+                    'note' => $note,
+                    'status' => 'dismissed',
+                    'created_at' => $now,
+                    'reviewed_at' => $now,
+                    'reviewed_by' => (int) ($dismissed['reviewed_by'] ?? 0) ?: null,
+                    'action_note' => 'already_dismissed',
+                ]);
+            } catch (Throwable) {
+                // A race on the unique report key should behave like an already reviewed report.
+            }
+
+            return [
+                'action' => 'report',
+                'status_id' => $contentId,
+                'modal_close' => true,
+                'message' => t('moderation.messages.report_already_reviewed'),
+                'type' => 'info',
+            ];
+        }
+
+        status_json_require_action($user, 'report');
+
+        if ($existing !== null) {
+            update('content_reports', [
+                'reason' => $reason,
+                'note' => $note,
+                'created_at' => $now,
+            ], ['content_id' => $contentId, 'reporter_id' => $userId]);
+        } else {
+            insert('content_reports', [
+                'content_id' => $contentId,
+                'reporter_id' => $userId,
+                'reason' => $reason,
+                'note' => $note,
+                'status' => 'open',
+                'created_at' => $now,
+            ]);
+        }
+
+        moderation_record_action($user, 'report');
+
+        return [
+            'action' => 'report',
+            'status_id' => $contentId,
+            'modal_close' => true,
+            'message' => t('moderation.messages.report_created'),
+        ];
+    }
+}
+
+if (!function_exists('status_json_update')) {
+    function status_json_update(int $contentId, array $user, string $redirect = '/'): array
+    {
+        $item = status_find($contentId);
+
+        if (status_edit_locked($item)) {
+            api_error(t('account.messages.status_edit_locked'), 423, 'status_edit_locked');
+        }
+
+        if (!status_can_edit($item, $user)) {
+            api_error(t('account.messages.status_forbidden'), 403, 'status_forbidden');
+        }
+
+        status_json_require_not_muted($user);
+
+        $payload = status_payload();
+        $body = (string) ($payload['body'] ?? '');
+
+        if (trim($body) === '') {
+            api_error(t('account.messages.status_required'), 422, 'status_required');
+        }
+
+        status_json_require_unique_body($user, $body, $contentId);
+
+        update('content', [
+            'body' => $body,
+        ], ['id' => $contentId]);
+        status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
+
+        $data = [
+            'action' => 'update',
+            'status_id' => $contentId,
+            'status' => status_json_summary($contentId, $user),
+            'modal_close' => true,
+            'message' => t('account.messages.status_saved'),
+        ];
+
+        if (wants_partial()) {
+            $updated = public_status_item($contentId);
+            $data['card_html'] = $updated !== null ? status_card($updated, $redirect, $user) : '';
+        }
+
+        return $data;
+    }
+}
+
+if (!function_exists('status_json_delete')) {
+    function status_json_delete(int $contentId, array $user): array
+    {
+        $item = status_find($contentId);
+
+        if (!status_can_delete($item, $user)) {
+            api_error(t('account.messages.status_forbidden'), 403, 'status_forbidden');
+        }
+
+        status_delete_content($contentId);
+
+        return [
+            'action' => 'delete',
+            'status_id' => $contentId,
+            'deleted_status_id' => $contentId,
+            'modal_close' => true,
+            'message' => t('account.messages.status_deleted'),
+        ];
+    }
+}
+
+if (!function_exists('public_home_feed_api_url')) {
+    function public_home_feed_api_url(string $feed = 'all', bool $html = false): string
+    {
+        $feed = $feed === 'following' ? 'following' : 'all';
+        $query = [];
+
+        if ($html) {
+            $query['view'] = 'html';
+        }
+
+        if ($feed !== 'all') {
+            $query['feed'] = $feed;
+        }
+
+        return '/api/home-feed' . ($query !== [] ? '?' . http_build_query($query) : '');
+    }
+}
+
+if (!function_exists('public_home_feed_payload')) {
+    function public_home_feed_payload(string $feed = 'all', ?array $user = null): array
+    {
+        $user ??= auth();
+        $feed = $feed === 'following' ? 'following' : 'all';
+        $limit = public_status_page_limit();
+        $items = $feed === 'following'
+            ? ((int) ($user['id'] ?? 0) > 0 ? public_status_items_for_user((int) ($user['id'] ?? 0), $limit) : [])
+            : public_status_items($limit);
+        $history = $feed === 'following' ? '/?feed=following' : '/';
+        $data = [
+            'feed' => $feed,
+            'history' => $history,
+            'count' => count($items),
+            'items' => $items,
+        ];
+
+        return api_payload($data, static fn (): array => [
+            'html' => public_home_feed_html($feed, $user),
+            'feed' => $feed,
+            'history' => $history,
+        ]);
+    }
+}
+
 if (!function_exists('status_feed_html')) {
     function status_feed_html(array $items, string $action, ?array $user = null): string
     {
@@ -4734,7 +4880,7 @@ if (!function_exists('status_feed_html')) {
 }
 
 if (!function_exists('status_feed_next_url')) {
-    function status_feed_next_url(string $context, int $offset, int $limit, array $params = []): string
+    function status_feed_next_url(string $context, int $offset, int $limit, array $params = [], bool $html = true): string
     {
         $query = array_merge($params, [
             'context' => $context,
@@ -4742,7 +4888,41 @@ if (!function_exists('status_feed_next_url')) {
             'limit' => max(1, min(50, $limit)),
         ]);
 
+        if ($html) {
+            $query['view'] = 'html';
+        }
+
         return '/api/status-feed?' . http_build_query($query);
+    }
+}
+
+if (!function_exists('status_feed_payload')) {
+    function status_feed_payload(string $context, int $limit, int $offset, array $params = [], ?array $user = null): array
+    {
+        $feed = status_feed_context_items($context, $limit, $offset, $params, $user);
+        $items = (array) ($feed['items'] ?? []);
+        $action = (string) ($feed['action'] ?? '/');
+        $count = count($items);
+        $nextOffset = $offset + $count;
+        $done = $count < $limit;
+        $data = [
+            'context' => $context,
+            'items' => $items,
+            'count' => $count,
+            'offset' => $offset,
+            'next_offset' => $nextOffset,
+            'done' => $done,
+            'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $params, false),
+        ];
+
+        return api_payload($data, static fn (): array => [
+            'html' => status_feed_html($items, $action, $user),
+            'count' => $count,
+            'offset' => $offset,
+            'next_offset' => $nextOffset,
+            'done' => $done,
+            'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $params, true),
+        ]);
     }
 }
 
@@ -4856,7 +5036,7 @@ if (!function_exists('status_comment_form')) {
 
         ob_start();
         ?>
-        <form class="status-comment-form<?= $isReply ? ' is-reply' : '' ?>" method="post" action="<?= e($action) ?>" data-status-form data-status-id="<?= e($contentId) ?>">
+        <form class="status-comment-form<?= $isReply ? ' is-reply' : '' ?>" method="post" action="<?= e(status_api_url('comment', ['id' => $contentId])) ?>" data-status-form data-status-id="<?= e($contentId) ?>">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="comment">
             <input type="hidden" name="id" value="<?= e($contentId) ?>">
@@ -4962,7 +5142,7 @@ if (!function_exists('status_comment_delete_form')) {
     {
         ob_start();
         ?>
-        <form class="status-comment-delete" method="post" action="<?= e($action) ?>" data-status-form<?= $contentId > 0 ? ' data-status-id="' . e($contentId) . '"' : '' ?> data-confirm="<?= et('account.status_comment_delete_confirm') ?>" data-confirm-title="<?= et('account.status_comment_delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
+        <form class="status-comment-delete" method="post" action="<?= e(status_api_url('comment-delete', ['comment_id' => $commentId])) ?>" data-status-form<?= $contentId > 0 ? ' data-status-id="' . e($contentId) . '"' : '' ?> data-confirm="<?= et('account.status_comment_delete_confirm') ?>" data-confirm-title="<?= et('account.status_comment_delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="comment_delete">
             <input type="hidden" name="comment_id" value="<?= e($commentId) ?>">
@@ -4980,7 +5160,7 @@ if (!function_exists('status_comment_like_control')) {
         ob_start();
         ?>
         <?php if ($user !== null): ?>
-            <form class="status-comment-like" method="post" action="<?= e($action) ?>" data-status-form<?= $contentId > 0 ? ' data-status-id="' . e($contentId) . '"' : '' ?>>
+            <form class="status-comment-like" method="post" action="<?= e(status_api_url('comment-like', ['comment_id' => $commentId])) ?>" data-status-form<?= $contentId > 0 ? ' data-status-id="' . e($contentId) . '"' : '' ?>>
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="comment_like">
                 <input type="hidden" name="comment_id" value="<?= e($commentId) ?>">
@@ -5072,37 +5252,6 @@ if (!function_exists('status_edit_modal')) {
             'item' => $item,
             'action' => $action,
         ]);
-    }
-}
-
-if (!function_exists('status_create_for_user')) {
-    function status_create_for_user(array $user, string $redirect = '/'): void
-    {
-        $payload = status_payload();
-        $userId = (int) ($user['id'] ?? 0);
-        $body = (string) ($payload['body'] ?? '');
-
-        if (trim($body) === '') {
-            flash('error', t('account.messages.status_required'));
-            redirect($redirect);
-        }
-
-        moderation_require_not_muted($user, $redirect);
-        moderation_require_action($user, 'post', $redirect);
-        moderation_require_unique_body($user, $body, $redirect);
-
-        $now = date_db();
-        $contentId = (int) insert('content', [
-            'body' => $body,
-            'author_id' => $userId,
-            'published_at' => $now,
-            'created_at' => $now,
-        ]);
-        status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
-        moderation_record_action($user, 'post');
-
-        flash('success', t('account.messages.status_created'));
-        redirect($redirect);
     }
 }
 
@@ -5642,7 +5791,6 @@ if (!function_exists('admin_list_query')) {
         $query = [];
 
         if ($ajax) {
-            $query['api'] = 'list';
             $query['view'] = 'html';
         }
 
@@ -5668,7 +5816,7 @@ if (!function_exists('admin_list_url')) {
 }
 
 if (!function_exists('admin_pagination')) {
-    function admin_pagination(array $pagination, string $path, string $target, array $params = [], string $pageName = 'page', int $window = 2): string
+    function admin_pagination(array $pagination, string $path, string $target, array $params = [], string $pageName = 'page', int $window = 2, ?string $historyPath = null): string
     {
         $page = max(1, (int) ($pagination['page'] ?? 1));
         $lastPage = max(1, (int) ($pagination['last_page'] ?? 1));
@@ -5681,7 +5829,7 @@ if (!function_exists('admin_pagination')) {
             return '';
         }
 
-        $item = static function (string $label, int|string|null $targetPage, string $class = '', bool $disabled = false, bool $current = false) use ($path, $target, $params, $pageName): string {
+        $item = static function (string $label, int|string|null $targetPage, string $class = '', bool $disabled = false, bool $current = false) use ($path, $target, $params, $pageName, $historyPath): string {
             $classes = trim('pagination-link ' . $class . ($current ? ' is-active' : ''));
 
             if ($disabled || $targetPage === null) {
@@ -5695,7 +5843,7 @@ if (!function_exists('admin_pagination')) {
             $query = $params;
             $query[$pageName] = (int) $targetPage;
             $href = admin_list_url($path, $query, true);
-            $history = admin_list_url($path, $query, false);
+            $history = admin_list_url($historyPath ?? $path, $query, false);
 
             return '<a class="' . e($classes) . '" href="' . e($href) . '" data-ajax data-ajax-target="' . e($target) . '" data-history="' . e($history) . '">' . e($label) . '</a>';
         };
@@ -5735,15 +5883,14 @@ if (!function_exists('admin_pagination')) {
 }
 
 if (!function_exists('admin_per_page_control')) {
-    function admin_per_page_control(string $path, string $target, array $params = [], ?int $selected = null): string
+    function admin_per_page_control(string $path, string $target, array $params = [], ?int $selected = null, ?string $historyPath = null): string
     {
         $selected ??= admin_per_page();
         $params['page'] = 1;
 
         ob_start();
         ?>
-        <form class="admin-per-page-form" action="<?= e($path) ?>" method="get" data-ajax-form data-ajax-target="<?= e($target) ?>" data-history="<?= e($path) ?>">
-            <input type="hidden" name="api" value="list">
+        <form class="admin-per-page-form" action="<?= e($path) ?>" method="get" data-ajax-form data-ajax-target="<?= e($target) ?>" data-history="<?= e($historyPath ?? $path) ?>">
             <input type="hidden" name="view" value="html">
             <?php foreach ($params as $key => $value): ?>
                 <?php if ($key === 'per_page' || $value === '' || $value === null) {
@@ -6323,6 +6470,25 @@ if (!function_exists('api_ok')) {
     }
 }
 
+if (!function_exists('api_payload')) {
+    function api_payload(array $data, array|callable|string|null $html = null): array
+    {
+        if (!wants_partial()) {
+            return $data;
+        }
+
+        if (is_callable($html)) {
+            return (array) $html($data);
+        }
+
+        if (is_array($html)) {
+            return $html;
+        }
+
+        return ['html' => (string) $html];
+    }
+}
+
 if (!function_exists('api_created')) {
     function api_created(mixed $data = null, ?string $message = 'Created.', array $meta = []): never
     {
@@ -6610,7 +6776,7 @@ if (!function_exists('require_role')) {
             return $user;
         }
 
-        if (str_starts_with(route_path(), '/api') || wants_json() || isset($_GET['api'])) {
+        if (str_starts_with(route_path(), '/api') || wants_json()) {
             api_error(t('auth.forbidden'), 403, 'forbidden');
         }
 

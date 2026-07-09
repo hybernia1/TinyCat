@@ -20,11 +20,6 @@ if (is_post() && (string) post('_search_captcha', '') === '1') {
     redirect($current);
 }
 
-if (is_post()) {
-    csrf_require();
-    status_handle_post(require_auth('/login'), $current);
-}
-
 $searchBlocked = $hasQuery ? public_search_guard($query) : null;
 $results = $hasQuery && $searchBlocked === null ? public_search_results($query, 24) : [
     'query' => $query,

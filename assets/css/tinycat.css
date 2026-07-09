@@ -2484,6 +2484,7 @@ a:hover {
   width: 100%;
   align-items: center;
   justify-content: flex-start;
+  gap: 8px;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -2499,6 +2500,29 @@ a:hover {
 .status-editor-suggestion.is-active {
   background: var(--primary-soft);
   color: var(--primary-strong);
+}
+
+.status-editor-suggestion-avatar {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.status-editor-suggestion-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .avatar {

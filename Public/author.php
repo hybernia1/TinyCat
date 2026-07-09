@@ -6,70 +6,6 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-if (is_post()) {
-    csrf_require();
-    $user = require_auth('/login');
-    $targetAuthorId = (int) get('id', 0);
-    $userId = (int) ($user['id'] ?? 0);
-    $action = (string) post('action', 'post');
-
-    if ($action === 'follow') {
-        author_follow($userId, $targetAuthorId);
-        if (wants_json()) {
-            $counts = author_follow_counts($targetAuthorId);
-            api([
-                'action' => 'follow',
-                'author_id' => $targetAuthorId,
-                'following' => true,
-                'followers_count' => (int) ($counts['followers'] ?? 0),
-                'following_count' => (int) ($counts['following'] ?? 0),
-                'html' => author_follow_button_html($targetAuthorId, true),
-            ], t('public.followed'));
-        }
-
-        flash('success', t('public.followed'));
-        redirect(author_url($targetAuthorId));
-    }
-
-    if ($action === 'unfollow') {
-        author_unfollow($userId, $targetAuthorId);
-        if (wants_json()) {
-            $counts = author_follow_counts($targetAuthorId);
-            api([
-                'action' => 'unfollow',
-                'author_id' => $targetAuthorId,
-                'following' => false,
-                'followers_count' => (int) ($counts['followers'] ?? 0),
-                'following_count' => (int) ($counts['following'] ?? 0),
-                'html' => author_follow_button_html($targetAuthorId, false),
-            ], t('public.unfollowed'));
-        }
-
-        flash('success', t('public.unfollowed'));
-        redirect(author_url($targetAuthorId));
-    }
-
-    if ($action === 'profile') {
-        if ($userId !== $targetAuthorId) {
-            flash('error', t('auth.forbidden'));
-            redirect(author_url($targetAuthorId));
-        }
-
-        user_profile_update($user, author_url($targetAuthorId));
-    }
-
-    if (in_array($action, ['react', 'comment', 'comment_like', 'comment_delete', 'update', 'delete'], true)) {
-        status_handle_post($user, author_url($targetAuthorId));
-    }
-
-    if ($userId !== $targetAuthorId) {
-        flash('error', t('auth.forbidden'));
-        redirect(author_url($targetAuthorId));
-    }
-
-    status_handle_post($user, author_url($targetAuthorId));
-}
-
 $author = public_author_find((int) get('id', 0));
 
 if ($author === null) {
@@ -92,7 +28,6 @@ if ($author === null) {
 
 $authorId = (int) $author['id'];
 $authorName = user_display_name($author);
-$website = trim((string) ($author['website'] ?? ''));
 $bio = trim((string) ($author['bio'] ?? ''));
 $avatarUrl = user_avatar_url($author);
 $memberSince = (string) ($author['created_at'] ?? '');
@@ -121,7 +56,7 @@ layout('layout', [
         'image' => $avatarUrl ?: site_meta_image_url(),
         'type' => 'profile',
     ],
-], static function () use ($authorId, $authorName, $website, $bio, $avatarUrl, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles): void {
+], static function () use ($authorId, $authorName, $bio, $avatarUrl, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -191,15 +126,6 @@ layout('layout', [
                             <?php if ($canPost): ?>
                                 <a class="btn btn-secondary btn-sm" href="/account">
                                     <?= icon('key') ?> <span><?= et('account.security_settings') ?></span>
-                                </a>
-                            <?php endif; ?>
-                            <?php if ($canPost): ?>
-                                <button class="btn btn-secondary btn-sm" type="button" data-modal-open="<?= e(author_profile_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_profile_edit_modal_url($authorId, 'website')) ?>">
-                                    <?= icon('external-link') ?> <span><?= et('account.website') ?></span>
-                                </button>
-                            <?php elseif ($website !== ''): ?>
-                                <a class="btn btn-secondary btn-sm" href="<?= e($website) ?>" target="_blank" rel="noopener">
-                                    <?= icon('external-link') ?> <span><?= et('account.website') ?></span>
                                 </a>
                             <?php endif; ?>
                         </div>

@@ -1350,7 +1350,7 @@ final class Core
             return $user;
         }
 
-        if (self::isApiPath(self::path()) || self::wantsJson() || isset($_GET['api'])) {
+        if (self::isApiPath(self::path()) || self::wantsJson()) {
             self::apiError('Unauthenticated.', 401, 'unauthenticated');
         }
 
@@ -1411,7 +1411,7 @@ final class Core
     public static function requireCsrf(?string $token = null): void
     {
         if (!self::verifyCsrf($token)) {
-            self::apiError('Invalid CSRF token.', 419, 'csrf_token_mismatch');
+            self::apiError('Invalid CSRF token.', 403, 'csrf_token_mismatch');
         }
     }
 

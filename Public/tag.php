@@ -32,11 +32,6 @@ if (method() === 'GET' && route_path() !== $current) {
     redirect($current, 301);
 }
 
-if (is_post()) {
-    csrf_require();
-    status_handle_post(require_auth('/login'), $current);
-}
-
 $statusLimit = public_status_page_limit();
 $statusItems = public_status_items_by_tag($tag, $statusLimit);
 

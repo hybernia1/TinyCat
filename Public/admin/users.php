@@ -8,11 +8,21 @@ if (!defined('TINYCAT')) {
 
 require_admin();
 
-if (get('api') === 'list') {
+$adminUsersApi = route_path() === '/api/admin/users'
+    ? match (method()) {
+        'GET' => 'list',
+        'POST' => 'create',
+        'PATCH' => 'update',
+        'DELETE' => 'delete',
+        default => '',
+    }
+    : '';
+
+if ($adminUsersApi === 'list') {
     api_ok(tc_admin_users_response_payload());
 }
 
-if (get('api') === 'create') {
+if ($adminUsersApi === 'create') {
     api_endpoint('POST', static function (): never {
         csrf_require();
         $id = insert('users', tc_admin_user_payload());
@@ -20,10 +30,10 @@ if (get('api') === 'create') {
     });
 }
 
-if (get('api') === 'update') {
+if ($adminUsersApi === 'update') {
     api_endpoint('PATCH', static function (): never {
         csrf_require();
-        $id = max(1, (int) get('id'));
+        $id = max(1, (int) input('id'));
 
         if (!tc_admin_user_exists($id)) {
             api_error(t('users.messages.not_found'), 404, 'user_not_found');
@@ -34,10 +44,10 @@ if (get('api') === 'update') {
     });
 }
 
-if (get('api') === 'delete') {
+if ($adminUsersApi === 'delete') {
     api_endpoint('DELETE', static function (): never {
         csrf_require();
-        $id = max(1, (int) get('id'));
+        $id = max(1, (int) input('id'));
 
         if (!tc_admin_user_exists($id)) {
             api_error(t('users.messages.not_found'), 404, 'user_not_found');
@@ -89,7 +99,6 @@ function tc_admin_users_actions(): string
 function tc_admin_users_api_url(string $api, array $params = [], bool $withFilters = true): string
 {
     $query = [
-        'api' => $api,
         'view' => 'html',
     ];
 
@@ -107,7 +116,7 @@ function tc_admin_users_api_url(string $api, array $params = [], bool $withFilte
         }
     }
 
-    return '/admin/users?' . http_build_query($query);
+    return '/api/admin/users?' . http_build_query($query);
 }
 
 function tc_admin_users_list_params(?array $filters = null, ?array $pagination = null): array
@@ -254,9 +263,20 @@ function tc_admin_users_stats(): array
 
 function tc_admin_users_response_payload(?int $id = null): array
 {
-    return wants_partial()
-        ? tc_admin_users_view_payload($id)
-        : tc_admin_users_api_payload($id);
+    return api_payload(
+        tc_admin_users_api_payload($id),
+        static function () use ($id): array {
+            $payload = [
+                'html' => tc_admin_users_html(),
+            ];
+
+            if ($id !== null) {
+                $payload['id'] = $id;
+            }
+
+            return $payload;
+        }
+    );
 }
 
 function tc_admin_users_api_payload(?int $id = null): array
@@ -276,19 +296,6 @@ function tc_admin_users_api_payload(?int $id = null): array
     if ($id !== null) {
         $payload['id'] = $id;
         $payload['item'] = tc_admin_user_resource(tc_admin_user_by_id($id) ?? []);
-    }
-
-    return $payload;
-}
-
-function tc_admin_users_view_payload(?int $id = null): array
-{
-    $payload = [
-        'html' => tc_admin_users_html(),
-    ];
-
-    if ($id !== null) {
-        $payload['id'] = $id;
     }
 
     return $payload;
@@ -577,7 +584,7 @@ function tc_admin_users_html(): string
                     </tbody>
                 </table>
             </div>
-            <?= admin_pagination($pagination, '/admin/users', '#users-list', $params) ?>
+            <?= admin_pagination($pagination, '/api/admin/users', '#users-list', $params, 'page', 2, '/admin/users') ?>
             <?php foreach ($users as $user): ?>
                 <?= tc_admin_user_modal($user, $roles, $statuses) ?>
             <?php endforeach; ?>
@@ -598,8 +605,7 @@ function tc_admin_users_filter_toolbar(array $filters, ?array $pagination = null
     ob_start();
     ?>
     <div class="admin-list-toolbar">
-        <form class="admin-search-form" action="/admin/users" method="get" data-ajax-form data-ajax-target="#users-list" data-history="/admin/users">
-            <input type="hidden" name="api" value="list">
+        <form class="admin-search-form" action="<?= e(tc_admin_users_api_url('list', [], false)) ?>" method="get" data-ajax-form data-ajax-target="#users-list" data-history="/admin/users">
             <input type="hidden" name="view" value="html">
             <?= tc_admin_users_filter_hidden($filters, ['q']) ?>
             <input type="hidden" name="per_page" value="<?= e((string) admin_per_page()) ?>">
@@ -617,7 +623,7 @@ function tc_admin_users_filter_toolbar(array $filters, ?array $pagination = null
                 </a>
             </div>
         <?php endif; ?>
-        <?= admin_per_page_control('/admin/users', '#users-list', $params, (int) ($pagination['per_page'] ?? admin_per_page())) ?>
+        <?= admin_per_page_control('/api/admin/users', '#users-list', $params, (int) ($pagination['per_page'] ?? admin_per_page()), '/admin/users') ?>
     </div>
     <?php
 

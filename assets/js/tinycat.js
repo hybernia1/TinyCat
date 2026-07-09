@@ -1568,6 +1568,16 @@
       .slice(0, 80);
   }
 
+  function statusUsername(value) {
+    var text = String(value || "").trim();
+
+    if (text.charAt(0) === "@") {
+      text = text.slice(1);
+    }
+
+    return text.toLowerCase().replace(/[^a-z0-9_]+/g, "").slice(0, 32);
+  }
+
   function statusEditorSource(root) {
     return qs("[data-status-editor-source]", root);
   }
@@ -1591,6 +1601,12 @@
     }
 
     return root.__tinycatStatusTags;
+  }
+
+  function statusEditorSuggestUrl(root) {
+    var source = statusEditorSource(root);
+
+    return source ? String(source.dataset.statusSuggestUrl || "") : "";
   }
 
   function statusEditorText(editor) {
@@ -1702,15 +1718,17 @@
     text = statusEditorText(editor);
     caret = statusEditorCaret(editor);
     before = text.slice(0, caret);
-    match = /(^|[\s([{])#([^\s#@]*)$/.exec(before);
+    match = /(^|[\s([{])([#@])([^\s#@]*)$/.exec(before);
 
     if (!match) {
       return null;
     }
 
     return {
-      query: String(match[2] || ""),
-      start: caret - String(match[2] || "").length - 1,
+      marker: String(match[2] || "#"),
+      type: String(match[2] || "#") === "@" ? "user" : "tag",
+      query: String(match[3] || ""),
+      start: caret - String(match[3] || "").length - 1,
       end: caret
     };
   }
@@ -1752,6 +1770,13 @@
 
     root.__tinycatStatusToken = null;
     root.__tinycatStatusSuggestionIndex = 0;
+    root.__tinycatStatusSuggestFingerprint = "";
+    window.clearTimeout(root.__tinycatStatusSuggestTimer);
+
+    if (root.__tinycatStatusSuggestAbort) {
+      root.__tinycatStatusSuggestAbort.abort();
+      root.__tinycatStatusSuggestAbort = null;
+    }
 
     if (box) {
       box.hidden = true;
@@ -1776,15 +1801,12 @@
     });
   }
 
-  function renderStatusEditorSuggestions(root) {
-    var box = statusEditorBox(root);
-    var token = statusEditorActiveToken(root);
+  function statusEditorLocalSuggestions(root, token) {
     var needle;
     var tags;
 
-    if (!box || !token) {
-      hideStatusEditorSuggestions(root);
-      return;
+    if (!token || token.type !== "tag") {
+      return [];
     }
 
     needle = statusSlug(token.query);
@@ -1796,40 +1818,152 @@
       tags.unshift(needle);
     }
 
-    tags = tags.slice(0, 8);
-    box.innerHTML = "";
-    root.__tinycatStatusToken = token;
+    return tags.slice(0, 8).map(function (tag) {
+      return {
+        type: "tag",
+        title: "#" + tag,
+        value: tag
+      };
+    });
+  }
 
-    if (tags.length === 0) {
-      hideStatusEditorSuggestions(root);
+  function renderStatusEditorSuggestionItems(root, items) {
+    var box = statusEditorBox(root);
+    var seen = {};
+
+    if (!box) {
       return;
     }
 
-    tags.forEach(function (tag) {
-      var button = document.createElement("button");
+    box.innerHTML = "";
+    root.__tinycatStatusSuggestionIndex = 0;
+
+    items.forEach(function (item) {
+      var type = item && item.type === "user" ? "user" : "tag";
+      var value = type === "user" ? statusUsername(item.value || item.title) : statusSlug(item.value || item.title);
+      var title = item.title || (type === "user" ? "@" + value : "#" + value);
+      var key = type + ":" + value;
+      var button;
+      var avatar;
+      var text;
+
+      if (!value || seen[key]) {
+        return;
+      }
+
+      seen[key] = true;
+      button = document.createElement("button");
       button.className = "status-editor-suggestion";
       button.type = "button";
-      button.dataset.statusEditorSuggestion = tag;
+      button.dataset.statusEditorSuggestion = value;
+      button.dataset.statusEditorSuggestionType = type;
       button.setAttribute("role", "option");
-      button.appendChild(createElement("strong", "", "#" + tag));
+
+      if (type === "user") {
+        if (item.avatar_url) {
+          avatar = document.createElement("img");
+          avatar.className = "status-editor-suggestion-avatar";
+          avatar.src = item.avatar_url;
+          avatar.alt = "";
+          avatar.loading = "lazy";
+          button.appendChild(avatar);
+        } else {
+          button.appendChild(createElement("span", "status-editor-suggestion-avatar", "@"));
+        }
+      }
+
+      text = createElement("span", "status-editor-suggestion-text");
+      text.appendChild(createElement("strong", "", title));
+      button.appendChild(text);
       box.appendChild(button);
     });
+
+    if (!box.firstElementChild) {
+      box.hidden = true;
+      return;
+    }
 
     box.hidden = false;
     selectStatusEditorSuggestion(root, 0);
   }
 
-  function insertStatusEditorSuggestion(root, value) {
+  function requestStatusEditorSuggestions(root, token) {
+    var suggestUrl = statusEditorSuggestUrl(root);
+    var fingerprint;
+
+    if (!suggestUrl || !token || !token.query) {
+      return;
+    }
+
+    window.clearTimeout(root.__tinycatStatusSuggestTimer);
+    fingerprint = token.type + ":" + token.start + ":" + token.end + ":" + token.query;
+    root.__tinycatStatusSuggestFingerprint = fingerprint;
+
+    root.__tinycatStatusSuggestTimer = window.setTimeout(function () {
+      var url = new URL(suggestUrl, window.location.href);
+      var controller = window.AbortController ? new AbortController() : null;
+
+      if (root.__tinycatStatusSuggestAbort) {
+        root.__tinycatStatusSuggestAbort.abort();
+      }
+
+      root.__tinycatStatusSuggestAbort = controller;
+      url.searchParams.set("type", token.type);
+      url.searchParams.set("q", token.query);
+      url.searchParams.set("limit", "8");
+
+      TinyCat.request(compactUrl(url), {
+        method: "GET",
+        cache: "no-store",
+        signal: controller ? controller.signal : undefined
+      })
+        .then(function (response) {
+          var data = unwrapResult(response) || {};
+          var items = token.type === "user" ? data.users : data.tags;
+
+          if (root.__tinycatStatusSuggestFingerprint !== fingerprint) {
+            return;
+          }
+
+          renderStatusEditorSuggestionItems(root, Array.isArray(items) ? items : []);
+        })
+        .catch(function (error) {
+          if (error && error.name === "AbortError") {
+            return;
+          }
+        });
+    }, 120);
+  }
+
+  function renderStatusEditorSuggestions(root) {
+    var box = statusEditorBox(root);
+    var token = statusEditorActiveToken(root);
+    var items;
+
+    if (!box || !token) {
+      hideStatusEditorSuggestions(root);
+      return;
+    }
+
+    root.__tinycatStatusToken = token;
+    items = statusEditorLocalSuggestions(root, token);
+    renderStatusEditorSuggestionItems(root, items);
+    requestStatusEditorSuggestions(root, token);
+  }
+
+  function insertStatusEditorSuggestion(root, value, type) {
     var editor = statusEditorInput(root);
     var token = root.__tinycatStatusToken || statusEditorActiveToken(root);
-    var clean = statusSlug(value);
+    var suggestionType = type || (token ? token.type : "tag");
+    var marker = suggestionType === "user" ? "@" : "#";
+    var clean = suggestionType === "user" ? statusUsername(value) : statusSlug(value);
 
     if (!editor || !token || !clean) {
       hideStatusEditorSuggestions(root);
       return;
     }
 
-    replaceStatusEditorRange(editor, token.start, token.end, "#" + clean + " ");
+    replaceStatusEditorRange(editor, token.start, token.end, marker + clean + " ");
     hideStatusEditorSuggestions(root);
     editor.focus();
   }
@@ -1953,7 +2087,11 @@
           return;
         } else if ((event.key === "Enter" && !event.shiftKey) || event.key === "Tab") {
           event.preventDefault();
-          insertStatusEditorSuggestion(root, items[root.__tinycatStatusSuggestionIndex || 0].dataset.statusEditorSuggestion);
+          insertStatusEditorSuggestion(
+            root,
+            items[root.__tinycatStatusSuggestionIndex || 0].dataset.statusEditorSuggestion,
+            items[root.__tinycatStatusSuggestionIndex || 0].dataset.statusEditorSuggestionType
+          );
           return;
         } else if (event.key === "Escape") {
           event.preventDefault();
@@ -1971,7 +2109,7 @@
       }
 
       event.preventDefault();
-      insertStatusEditorSuggestion(root, suggestion.dataset.statusEditorSuggestion);
+      insertStatusEditorSuggestion(root, suggestion.dataset.statusEditorSuggestion, suggestion.dataset.statusEditorSuggestionType);
     });
 
     form = root.closest("form");
@@ -2269,7 +2407,9 @@
     root.__tinycatSearchController = controller;
     root.__tinycatSearchRequest = (root.__tinycatSearchRequest || 0) + 1;
     requestId = root.__tinycatSearchRequest;
-    url = (root.dataset.searchApi || "/api/search") + "?q=" + encodeURIComponent(query);
+    url = new URL(root.dataset.searchApi || "/api/search", window.location.href);
+    url.searchParams.set("q", query);
+    url = compactUrl(url);
     root.setAttribute("aria-busy", "true");
 
     TinyCat.request(url, {
@@ -3135,7 +3275,15 @@
   }
 
   function statusCardAction(form) {
-    var url = new URL(form.getAttribute("action") || window.location.href, window.location.href);
+    var card = statusFormCard(form);
+    var action = card && card.dataset ? (card.dataset.statusAction || "") : "";
+    var url;
+
+    if (action) {
+      return action;
+    }
+
+    url = new URL(window.location.href);
 
     return url.pathname + url.search;
   }
@@ -3306,6 +3454,39 @@
     bumpStatusFeedOffset(form, target, 1);
   }
 
+  function replaceStatusCard(form, html) {
+    var current = statusFormCard(form);
+    var node = elementFromHtml(html);
+
+    if (!current || !node) {
+      return false;
+    }
+
+    current.replaceWith(node);
+    hydrateDynamic(node);
+
+    return true;
+  }
+
+  function removeStatusCard(statusId, form) {
+    var id = statusId ? String(statusId) : "";
+    var current = statusFormCard(form);
+
+    if (!id && current) {
+      id = statusCardId(current);
+    }
+
+    if (!id) {
+      return;
+    }
+
+    qsa(".status-card").forEach(function (card) {
+      if (statusCardId(card) === id) {
+        card.remove();
+      }
+    });
+  }
+
   function resetStatusCreateForm(form) {
     if (!form || statusFormAction(form) !== "create") {
       return;
@@ -3351,11 +3532,14 @@
 
   function handleStatusJsonResponse(form, data) {
     var payload = unwrapResult(data);
+    var action = payload && payload.action ? String(payload.action) : statusFormAction(form);
+    var modal = form ? form.closest(".modal") : null;
+    var messageType = (payload && payload.type) || (data && data.type) || (data && data.meta && data.meta.type) || "success";
 
     if (data && data.message) {
       TinyCat.toast(data.message, data.type || (data.ok === false ? "danger" : "success"));
     } else if (payload && payload.message) {
-      TinyCat.toast(payload.message, "success");
+      TinyCat.toast(payload.message, messageType);
     }
 
     if (payload && payload.status) {
@@ -3372,12 +3556,24 @@
     }
 
     if (payload && payload.card_html) {
-      prependStatusCard(form, payload.card_html);
-      resetStatusCreateForm(form);
+      if (action === "create") {
+        prependStatusCard(form, payload.card_html);
+        resetStatusCreateForm(form);
+      } else {
+        replaceStatusCard(form, payload.card_html);
+      }
+    }
+
+    if (payload && payload.deleted_status_id) {
+      removeStatusCard(payload.deleted_status_id, form);
     }
 
     if (payload && payload.deleted_comment_id) {
       removeStatusComment(payload.deleted_comment_id);
+    }
+
+    if (modal && payload && payload.modal_close) {
+      TinyCat.closeModal(modal);
     }
 
     markFormClean(form);
@@ -3684,6 +3880,8 @@
 
     if (data && data.message) {
       TinyCat.toast(data.message, data.type || "success");
+    } else if (payload.message) {
+      TinyCat.toast(payload.message, payload.type || "success");
     }
 
     if (authorId) {

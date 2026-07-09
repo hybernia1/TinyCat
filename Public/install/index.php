@@ -334,7 +334,6 @@ function tc_install_create_tables(): void
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             locale VARCHAR(12) NULL,
             note TEXT NULL,
-            website VARCHAR(255) NULL,
             bio VARCHAR(500) NULL,
             muted_until DATETIME NULL,
             muted_by INT UNSIGNED NULL,

@@ -61,7 +61,6 @@ if (is_post()) {
         'status' => $status,
         'locale' => locale(),
         'note' => '',
-        'website' => '',
         'bio' => '',
         'recovery_hash' => user_recovery_hash_generate(),
     ];

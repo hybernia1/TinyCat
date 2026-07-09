@@ -8,6 +8,20 @@ if (!defined('TINYCAT')) {
 
 require_admin();
 
+if (route_path() === '/api/admin/settings') {
+    api_endpoint('POST', static function (): never {
+        csrf_require();
+
+        try {
+            tc_admin_settings_save();
+        } catch (Throwable $exception) {
+            api_error($exception->getMessage(), 422, 'settings_save_failed');
+        }
+
+        api_ok(tc_admin_settings_payload(), t('settings.messages.saved'), 200, ['type' => 'success']);
+    });
+}
+
 if (is_post()) {
     csrf_require();
 
@@ -15,16 +29,8 @@ if (is_post()) {
         tc_admin_settings_save();
         $message = t('settings.messages.saved');
 
-        if (wants_json() || wants_partial() || isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-            api_ok(['saved' => true], $message, 200, ['type' => 'success']);
-        }
-
         flash('success', $message);
     } catch (Throwable $exception) {
-        if (wants_json() || wants_partial() || isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-            api_error($exception->getMessage(), 422, 'settings_save_failed');
-        }
-
         flash('error', $exception->getMessage());
     }
 
@@ -54,7 +60,7 @@ layout('layout', [
             <?php endforeach; ?>
         </div>
 
-        <form method="post" action="/admin/settings" enctype="multipart/form-data" data-ajax-form>
+        <form method="post" action="/api/admin/settings?view=html" enctype="multipart/form-data" data-ajax-form>
             <?= csrf_field() ?>
             <div class="card-body stack">
                 <?php foreach ($sections as $key => $section): ?>
@@ -76,6 +82,14 @@ layout('layout', [
     </section>
     <?php
 });
+
+function tc_admin_settings_payload(): array
+{
+    return [
+        'saved' => true,
+        'settings' => config(),
+    ];
+}
 
 function tc_admin_settings_sections(): array
 {

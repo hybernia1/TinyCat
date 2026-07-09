@@ -305,7 +305,6 @@
         "public_profile": "Veřejný profil",
         "security_settings": "Bezpečnost",
         "security_meta": "Správa hesla a bezpečnostního nastavení účtu.",
-        "website": "Web",
         "recovery_hash_title": "Recovery hash",
         "recovery_hash": "Recovery hash",
         "recovery_hash_help": "Ulož si tento neveřejný hash mimo TinyCat. Slouží k obnově hesla přes /recovery a po použití se přegeneruje.",
@@ -359,7 +358,6 @@
             "comment_forbidden": "Na smazání tohoto komentáře nemáš oprávnění.",
             "username_invalid": "Použij 3-32 malých znaků latinky, čísla nebo podtržítko. První znak musí být písmeno.",
             "username_taken": "Toto uživatelské jméno už existuje.",
-            "website_invalid": "Web není platná URL.",
             "password_short": "Heslo musí mít alespoň 8 znaků.",
             "password_mismatch": "Hesla se neshodují.",
             "current_password_invalid": "Aktuální heslo není správné."

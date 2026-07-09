@@ -8,12 +8,6 @@ if (!defined('TINYCAT')) {
 
 $authUser = auth();
 $feed = (string) get('feed', 'all') === 'following' ? 'following' : 'all';
-$currentFeedUrl = $feed === 'following' ? '/?feed=following' : '/';
-
-if (is_post()) {
-    csrf_require();
-    status_handle_post(require_auth('/login'), $currentFeedUrl);
-}
 
 layout('layout', [
     'title' => site_name(),
