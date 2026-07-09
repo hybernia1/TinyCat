@@ -9,7 +9,7 @@ if (!defined('TINYCAT')) {
 final class Avatar
 {
     private const SIZE = 240;
-    private const VERSION = '14';
+    private const VERSION = '15';
     private const PAINT_SIZE = 24;
     private const PAINT_EMPTY = '.';
     private const PAINT_ALPHABET = '.0123456789abcdef';
@@ -365,8 +365,8 @@ final class Avatar
     {
         $paint = self::normalizePaint($paint) ?: self::defaultPaint($username);
         $id = 'tc-paint-' . substr(hash('sha1', self::VERSION . '|' . $username . '|' . $paint), 0, 10);
-        $cell = (int) ((self::SIZE - 48) / self::PAINT_SIZE);
-        $offset = 24;
+        $cell = (int) (self::SIZE / self::PAINT_SIZE);
+        $offset = 0;
         $paths = [];
 
         for ($row = 0; $row < self::PAINT_SIZE; $row++) {
