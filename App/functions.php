@@ -443,10 +443,23 @@ if (!function_exists('auth_next_path')) {
     }
 }
 
+if (!function_exists('auth_normalize_next_url')) {
+    function auth_normalize_next_url(string $next): string
+    {
+        $fragment = (string) (parse_url($next, PHP_URL_FRAGMENT) ?: '');
+
+        if (preg_match('/^status-(?:comments-thread-)?([1-9][0-9]*)$/', $fragment, $match) === 1) {
+            return '/status/' . $match[1];
+        }
+
+        return $next;
+    }
+}
+
 if (!function_exists('auth_safe_next_url')) {
     function auth_safe_next_url(string $next): string
     {
-        $next = trim($next);
+        $next = auth_normalize_next_url(trim($next));
 
         if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')) {
             return '';
@@ -4870,7 +4883,7 @@ if (!function_exists('status_login_url')) {
         }
 
         if ($fragment !== '' && str_starts_with($fragment, '#') && !str_contains($next, '#')) {
-            $next .= $fragment;
+            $next = auth_safe_next_url($next . $fragment) ?: $next;
         }
 
         return '/login?next=' . rawurlencode($next);
