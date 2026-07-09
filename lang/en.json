@@ -248,6 +248,7 @@
         "recovery_done": "The password was changed. The recovery hash was regenerated; sign in with the new password.",
         "invalid_login": "Invalid login.",
         "invalid_captcha": "The security check did not pass.",
+        "login_required": "Sign in to continue.",
         "forbidden": "Administration requires an admin account.",
         "logged_out": "You have been logged out."
     },

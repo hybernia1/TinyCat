@@ -71,7 +71,7 @@ if (!function_exists('app_required_tables')) {
 if (!function_exists('site_name')) {
     function site_name(): string
     {
-        return (string) config('site.name', config('app.name', 'TinyCat'));
+        return (string) config('site.name', 'TinyCat');
     }
 }
 
@@ -245,7 +245,7 @@ if (!function_exists('site_image_upload')) {
             throw new RuntimeException('Uploaded image is not valid.');
         }
 
-        $maxSize = (int) config('site.image_max_size', 64 * 1024 * 1024);
+        $maxSize = 64 * 1024 * 1024;
         $size = (int) ($file['size'] ?? 0);
 
         if ($maxSize > 0 && $size > $maxSize) {
@@ -322,9 +322,9 @@ if (!function_exists('site_image_upload')) {
 
         imagedestroy($source);
 
-        $baseDirectory = rtrim((string) config('site.image_directory', base_path('uploads/site')), "/\\");
-        $baseUrl = rtrim((string) config('site.image_url', '/uploads/site'), '/');
-        $subfolder = trim((string) date((string) config('site.image_subfolder', 'Y/m')), '/');
+        $baseDirectory = base_path('uploads/site');
+        $baseUrl = '/uploads/site';
+        $subfolder = date('Y/m');
         $directory = $baseDirectory . ($subfolder !== '' ? DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $subfolder) : '');
 
         if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
@@ -344,7 +344,7 @@ if (!function_exists('site_image_upload')) {
             $counter++;
         }
 
-        if (!imagewebp($canvas, $target, max(1, min(100, (int) config('site.image_quality', 86))))) {
+        if (!imagewebp($canvas, $target, 86)) {
             imagedestroy($canvas);
             throw new RuntimeException('Could not write WebP image.');
         }
@@ -399,7 +399,7 @@ if (!function_exists('image_apply_orientation')) {
 if (!function_exists('auth_account_url')) {
     function auth_account_url(): string
     {
-        return (string) config('auth.account_url', '/account');
+        return '/account';
     }
 }
 
@@ -409,7 +409,7 @@ if (!function_exists('auth_landing_url')) {
         $user ??= auth();
 
         if ($user !== null && (string) ($user['role'] ?? '') === 'admin') {
-            return (string) config('auth.home_url', '/admin');
+            return '/admin';
         }
 
         $id = (int) ($user['id'] ?? 0);
@@ -1187,7 +1187,7 @@ if (!function_exists('author_is_online')) {
             return false;
         }
 
-        return ($now->getTimestamp() - $seen->getTimestamp()) <= max(60, (int) config('auth.online_window', 300));
+        return ($now->getTimestamp() - $seen->getTimestamp()) <= 300;
     }
 }
 
@@ -5357,7 +5357,7 @@ if (!function_exists('app_touch_user_activity')) {
 
         $key = '_last_seen_touch_' . $id;
         $now = time();
-        $interval = max(15, (int) config('auth.online_touch_interval', 60));
+        $interval = 60;
 
         if ((int) ($_SESSION[$key] ?? 0) > $now - $interval) {
             return;
@@ -5598,7 +5598,7 @@ if (!function_exists('pagination_sql')) {
 if (!function_exists('admin_per_page_options')) {
     function admin_per_page_options(): array
     {
-        $configured = (array) config('admin.per_page_options', [10, 25, 50, 100]);
+        $configured = [10, 25, 50, 100];
         $options = [];
 
         foreach ($configured as $option) {
@@ -5620,7 +5620,7 @@ if (!function_exists('admin_per_page')) {
     function admin_per_page(?int $value = null): int
     {
         $options = admin_per_page_options();
-        $default = (int) config('admin.per_page', $options[0] ?? 25);
+        $default = 25;
         $default = in_array($default, $options, true) ? $default : ($options[0] ?? 25);
         $value ??= (int) get('per_page', $default);
         $value = max(1, min(200, $value));
@@ -5714,7 +5714,7 @@ if (!function_exists('admin_pagination')) {
         $html = '<nav class="pagination admin-pagination" aria-label="' . et('common.pagination') . '">';
         $html .= '<div class="pagination-summary">' . e(t('common.pagination_summary', ['from' => (string) $from, 'to' => (string) $to, 'total' => (string) $total])) . '</div>';
         $html .= '<div class="pagination-list">';
-        $html .= $item(t('common.previous', [], null, 'Previous'), $pagination['prev_page'] ?? null, 'pagination-prev', $page <= 1);
+        $html .= $item(t('common.previous'), $pagination['prev_page'] ?? null, 'pagination-prev', $page <= 1);
 
         $previous = null;
 
@@ -5727,7 +5727,7 @@ if (!function_exists('admin_pagination')) {
             $previous = $pageNumber;
         }
 
-        $html .= $item(t('common.next', [], null, 'Next'), $pagination['next_page'] ?? null, 'pagination-next', $page >= $lastPage);
+        $html .= $item(t('common.next'), $pagination['next_page'] ?? null, 'pagination-next', $page >= $lastPage);
         $html .= '</div></nav>';
 
         return $html;
@@ -5781,16 +5781,16 @@ if (!function_exists('h')) {
 }
 
 if (!function_exists('t')) {
-    function t(string $key, array $replace = [], ?string $locale = null, ?string $default = null): string
+    function t(string $key, array $replace = [], ?string $locale = null): string
     {
-        return Core::t($key, $replace, $locale, $default);
+        return Core::t($key, $replace, $locale);
     }
 }
 
 if (!function_exists('et')) {
-    function et(string $key, array $replace = [], ?string $locale = null, ?string $default = null): string
+    function et(string $key, array $replace = [], ?string $locale = null): string
     {
-        return e(t($key, $replace, $locale, $default));
+        return e(t($key, $replace, $locale));
     }
 }
 
@@ -5852,19 +5852,7 @@ if (!function_exists('language_names')) {
             'vi' => 'Tiếng Việt',
             'zh' => '中文',
         ];
-        $configured = config('i18n.languages', []);
-        $configured = is_array($configured) ? $configured : [];
-        $languages = [];
-
-        foreach ($configured as $code => $label) {
-            $normalized = is_int($code) ? language_code((string) $label) : language_code((string) $code);
-
-            if ($normalized !== '') {
-                $languages[$normalized] = is_int($code) ? ($defaults[$normalized] ?? strtoupper($normalized)) : (string) $label;
-            }
-        }
-
-        return $languages + $defaults;
+        return $defaults;
     }
 }
 
@@ -5883,8 +5871,7 @@ if (!function_exists('language_name')) {
             return (string) $names[$code];
         }
 
-        $path = rtrim((string) config('i18n.directory', base_path('lang')), DIRECTORY_SEPARATOR . '/\\')
-            . DIRECTORY_SEPARATOR . $code . '.json';
+        $path = base_path('lang/' . $code . '.json');
 
         if (is_file($path)) {
             $data = json_decode((string) file_get_contents($path), true);
@@ -5914,7 +5901,7 @@ if (!function_exists('languages')) {
         }
 
         if ($includeFiles) {
-            $directory = rtrim((string) config('i18n.directory', base_path('lang')), DIRECTORY_SEPARATOR . '/\\');
+            $directory = base_path('lang');
 
             foreach (glob($directory . DIRECTORY_SEPARATOR . '*.json') ?: [] as $file) {
                 $code = language_code(pathinfo($file, PATHINFO_FILENAME));
@@ -5942,7 +5929,7 @@ if (!function_exists('languages')) {
 if (!function_exists('language_packages')) {
     function language_packages(): array
     {
-        $directory = rtrim((string) config('i18n.directory', base_path('lang')), DIRECTORY_SEPARATOR . '/\\');
+        $directory = base_path('lang');
         $defaults = language_names();
         $items = [];
 
@@ -6086,8 +6073,7 @@ if (!function_exists('timezone_presets')) {
             'Asia/Shanghai',
             'Australia/Sydney',
         ];
-        $configured = config('datetime.timezones', []);
-        $items = is_array($configured) && $configured !== [] ? $configured : $defaults;
+        $items = $defaults;
         $valid = array_flip(timezone_identifiers_list());
         $presets = [];
 
@@ -6629,7 +6615,7 @@ if (!function_exists('require_role')) {
         }
 
         flash('error', t('auth.forbidden'));
-        redirect($redirect ?? (string) config('auth.login_url', '/login'));
+        redirect($redirect ?? '/login');
     }
 }
 

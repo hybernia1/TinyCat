@@ -174,7 +174,7 @@ api_route('GET', '/status-report-modal', static function (): array {
     $item = public_status_item($contentId);
 
     if ($user === null) {
-        api_error(t('auth.login_required', [], null, 'Login required.'), 401, 'unauthorized', ['redirect' => '/login']);
+        api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
     }
 
     if ($item === null) {
@@ -202,7 +202,7 @@ api_route('GET', '/status-edit-modal', static function (): array {
     $item = public_status_item($contentId);
 
     if ($user === null) {
-        api_error(t('auth.login_required', [], null, 'Login required.'), 401, 'unauthorized', ['redirect' => '/login']);
+        api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
     }
 
     if (!status_can_edit($item, $user)) {
@@ -226,7 +226,7 @@ api_route('GET', '/profile-edit-modal', static function (): array {
     $userId = (int) ($user['id'] ?? 0);
 
     if ($user === null) {
-        api_error(t('auth.login_required', [], null, 'Login required.'), 401, 'unauthorized', ['redirect' => '/login']);
+        api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
     }
 
     if ($authorId < 1 || $userId !== $authorId) {

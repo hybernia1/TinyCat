@@ -37,7 +37,7 @@ function &tc_install_state(): array
 
 function tc_install_languages(): array
 {
-    $directory = (string) config('i18n.directory', dirname(__DIR__, 2) . '/lang');
+    $directory = dirname(__DIR__, 2) . '/lang';
     $files = glob(rtrim($directory, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . '*.json') ?: [];
     $languages = [];
 
@@ -64,7 +64,7 @@ function tc_install_languages(): array
 
 function tc_install_locale(array $languages, array $state): string
 {
-    $configured = (string) ($state['locale'] ?? config('i18n.locale', config('install.locale', config('app.locale', 'en'))));
+    $configured = (string) ($state['locale'] ?? config('i18n.locale', config('install.locale', 'en')));
 
     if (isset($languages[$configured])) {
         return $configured;
@@ -511,7 +511,7 @@ function tc_install_default_settings(array $state): void
 {
     $locale = (string) ($state['locale'] ?? locale());
     $defaults = [
-        ['site.name', (string) config('site.name', config('app.name', 'TinyCat')), 'string', 'site'],
+        ['site.name', (string) config('site.name', 'TinyCat'), 'string', 'site'],
         ['site.logo_url', (string) config('site.logo_url', ''), 'string', 'site'],
         ['site.logo_path', (string) config('site.logo_path', ''), 'string', 'site'],
         ['site.favicon_url', (string) config('site.favicon_url', ''), 'string', 'site'],
@@ -634,7 +634,7 @@ function tc_install_missing_tables(): array
 
 function tc_install_render(string $step, array $languages, array $state): void
 {
-    $appName = (string) config('app.name', 'TinyCat');
+    $appName = 'TinyCat';
     $pageTitle = t('install.title') . ' | ' . $appName;
     $error = flash('error');
     $success = flash('success');

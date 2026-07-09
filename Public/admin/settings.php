@@ -84,7 +84,7 @@ function tc_admin_settings_sections(): array
             'label' => t('settings.sections.site'),
             'icon' => 'home',
             'fields' => [
-                ['key' => 'site.name', 'label' => t('settings.fields.site_name'), 'type' => 'text', 'default' => config('app.name', 'TinyCat'), 'max' => 120, 'span' => true],
+                ['key' => 'site.name', 'label' => t('settings.fields.site_name'), 'type' => 'text', 'default' => 'TinyCat', 'max' => 120, 'span' => true],
                 ['key' => 'site.logo_url', 'path_key' => 'site.logo_path', 'label' => t('settings.fields.site_logo'), 'type' => 'site_image', 'variant' => 'logo', 'default' => '', 'compact' => true],
                 ['key' => 'site.favicon_url', 'path_key' => 'site.favicon_path', 'label' => t('settings.fields.site_favicon'), 'type' => 'site_image', 'variant' => 'favicon', 'default' => '', 'compact' => true],
                 ['key' => 'site.footer_html', 'label' => t('settings.fields.site_footer'), 'type' => 'textarea', 'default' => '', 'span' => true],

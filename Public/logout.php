@@ -10,7 +10,7 @@ if (is_post()) {
     csrf_require();
     auth_logout();
     flash('success', t('auth.logged_out'));
-    redirect((string) config('auth.login_url', '/login'));
+    redirect('/login');
 }
 
 require_auth();

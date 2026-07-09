@@ -455,14 +455,14 @@ final class Core
             return '';
         }
 
-        $html = '<nav class="pagination" aria-label="' . self::e(self::t('common.pagination', [], null, 'Pagination')) . '">';
+        $html = '<nav class="pagination" aria-label="' . self::e(self::t('common.pagination')) . '">';
         $html .= '<div class="pagination-summary">' . self::e(self::t('common.pagination_summary', [
             'from' => (string) $from,
             'to' => (string) $to,
             'total' => (string) $total,
-        ], null, $from . '-' . $to . ' / ' . $total)) . '</div>';
+        ])) . '</div>';
         $html .= '<div class="pagination-list">';
-        $html .= self::paginationItem(self::t('common.previous', [], null, 'Previous'), $pagination['prev_page'] ?? null, $baseUrl, $pageName, 'pagination-prev', $page <= 1);
+        $html .= self::paginationItem(self::t('common.previous'), $pagination['prev_page'] ?? null, $baseUrl, $pageName, 'pagination-prev', $page <= 1);
 
         $previous = null;
 
@@ -475,7 +475,7 @@ final class Core
             $previous = $item;
         }
 
-        $html .= self::paginationItem(self::t('common.next', [], null, 'Next'), $pagination['next_page'] ?? null, $baseUrl, $pageName, 'pagination-next', $page >= $lastPage);
+        $html .= self::paginationItem(self::t('common.next'), $pagination['next_page'] ?? null, $baseUrl, $pageName, 'pagination-next', $page >= $lastPage);
         $html .= '</div>';
         $html .= '</nav>';
 
@@ -540,7 +540,7 @@ final class Core
             return self::$locale;
         }
 
-        $configured = self::config('i18n.locale', self::config('install.locale', self::config('app.locale', 'en')));
+        $configured = self::config('i18n.locale', self::config('install.locale', 'en'));
         $configured = is_string($configured) && $configured !== '' ? $configured : 'en';
         self::assertLocale($configured);
 
@@ -549,7 +549,7 @@ final class Core
         return self::$locale;
     }
 
-    public static function translate(string $key, array $replace = [], ?string $locale = null, ?string $default = null): string
+    public static function translate(string $key, array $replace = [], ?string $locale = null): string
     {
         $locale ??= self::locale();
         self::assertLocale($locale);
@@ -557,15 +557,15 @@ final class Core
         $value = self::translation($key, $locale);
 
         if ($value === null) {
-            $value = $default ?? $key;
+            $value = $key;
         }
 
         return self::replacePlaceholders(self::stringValue($value), $replace);
     }
 
-    public static function t(string $key, array $replace = [], ?string $locale = null, ?string $default = null): string
+    public static function t(string $key, array $replace = [], ?string $locale = null): string
     {
-        return self::translate($key, $replace, $locale, $default);
+        return self::translate($key, $replace, $locale);
     }
 
     public static function translations(?string $locale = null): array
@@ -1047,7 +1047,7 @@ final class Core
             return '';
         }
 
-        $name = (string) self::config('security.captcha.field', 'tc_captcha');
+        $name = 'tc_captcha';
         $challenge = self::captchaChallenge($context, true);
         $pieceTop = (int) ($challenge['piece_top'] ?? 42);
         $boardImage = self::captchaBoardDataUri($challenge);
@@ -1074,7 +1074,7 @@ final class Core
             return true;
         }
 
-        $name = (string) self::config('security.captcha.field', 'tc_captcha');
+        $name = 'tc_captcha';
         $answer = trim((string) self::payload($name, ''));
         $challenge = self::captchaStoredChallenge($context);
 
@@ -1088,9 +1088,9 @@ final class Core
         $target = (int) ($challenge['target'] ?? -1);
         $expires = (int) ($challenge['expires'] ?? 0);
         $issuedAt = (float) ($challenge['issued_at'] ?? 0);
-        $tolerance = max(1, min(12, (int) self::config('security.captcha.tolerance', 4)));
-        $minInteractionMs = max(150, min(2000, (int) self::config('security.captcha.min_interaction_ms', 350)));
-        $minMoves = max(1, min(8, (int) self::config('security.captcha.min_moves', 1)));
+        $tolerance = 4;
+        $minInteractionMs = 350;
+        $minMoves = 1;
         $serverElapsedMs = $issuedAt > 0 ? (int) floor((microtime(true) - $issuedAt) * 1000) : 0;
         $valid = $expires >= time()
             && is_numeric($position)
@@ -1709,16 +1709,12 @@ final class Core
 
     private static function loginUrl(): string
     {
-        $url = self::config('auth.login_url', '/login');
-
-        return is_string($url) && $url !== '' ? $url : '/login';
+        return '/login';
     }
 
     private static function homeUrl(): string
     {
-        $url = self::config('auth.home_url', '/admin');
-
-        return is_string($url) && $url !== '' ? $url : '/admin';
+        return '/admin';
     }
 
     private static function authTouchUser(mixed $id, bool $login = false): void
@@ -1795,8 +1791,7 @@ final class Core
             return;
         }
 
-        $days = max(1, (int) self::config('auth.remember_days', 30));
-        $expires = time() + ($days * 86400);
+        $expires = time() + (30 * 86400);
         $payload = [
             'id' => (string) $id,
             'expires' => $expires,
@@ -1838,7 +1833,7 @@ final class Core
     {
         $id = (string) ($user['id'] ?? '');
         $hash = (string) ($user['password'] ?? '');
-        $appSecret = (string) self::config('app.key', self::config('app.name', 'TinyCat'));
+        $appSecret = 'TinyCat';
         $key = hash('sha256', $appSecret . '|' . $hash, true);
 
         return hash_hmac('sha256', $id . '|' . $expires, $key);
@@ -2074,7 +2069,7 @@ final class Core
             'shape' => $shape,
             'decoys' => self::captchaDecoys($target, $pieceTop, $shape),
             'issued_at' => microtime(true),
-            'expires' => time() + max(60, (int) self::config('security.captcha.ttl', 600)),
+            'expires' => time() + 600,
         ];
 
         $_SESSION[$key] = $challenge;
@@ -2470,13 +2465,7 @@ final class Core
     {
         self::assertLocale($locale);
 
-        $directory = self::config('i18n.directory', self::basePath('lang'));
-
-        if (!is_string($directory) || $directory === '') {
-            $directory = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'lang';
-        }
-
-        return rtrim($directory, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . $locale . '.json';
+        return self::basePath('lang/' . $locale . '.json');
     }
 
     private static function replacePlaceholders(string $text, array $replace): string

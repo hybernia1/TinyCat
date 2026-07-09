@@ -248,6 +248,7 @@
         "recovery_done": "Heslo bylo změněno. Recovery hash byl přegenerován, přihlas se novým heslem.",
         "invalid_login": "Neplatné přihlášení.",
         "invalid_captcha": "Bezpečnostní ověření se nepovedlo.",
+        "login_required": "Pro tuto akci se přihlas.",
         "forbidden": "Pro administraci je potřeba účet s rolí admin.",
         "logged_out": "Byla jsi odhlášena."
     },
