@@ -22,6 +22,7 @@
   --info-soft: #dbeafe;
   --radius: 8px;
   --radius-sm: 5px;
+  --avatar-radius: var(--radius-sm);
   --shadow: 0 10px 28px rgba(20, 31, 44, 0.12);
   --shadow-sm: 0 4px 14px rgba(20, 31, 44, 0.08);
   --container: 1120px;
@@ -1371,7 +1372,7 @@ a:hover {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--avatar-radius);
   background: var(--surface-muted);
   color: var(--muted);
 }
@@ -1379,6 +1380,7 @@ a:hover {
 .notification-popover-avatar img {
   width: 100%;
   height: 100%;
+  border-radius: inherit;
   object-fit: cover;
 }
 
@@ -1535,7 +1537,7 @@ a:hover {
   justify-content: center;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--avatar-radius);
   background: var(--surface-soft);
   color: var(--muted);
   font-weight: 850;
@@ -1544,6 +1546,7 @@ a:hover {
 .global-search-avatar img {
   width: 100%;
   height: 100%;
+  border-radius: inherit;
   object-fit: cover;
 }
 
@@ -1859,7 +1862,7 @@ a:hover {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--avatar-radius);
   background: var(--surface-muted);
   color: var(--muted);
 }
@@ -1867,6 +1870,7 @@ a:hover {
 .notification-avatar img {
   width: 100%;
   height: 100%;
+  border-radius: inherit;
   object-fit: cover;
 }
 
@@ -2511,11 +2515,15 @@ a:hover {
   justify-content: center;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--avatar-radius);
   background: var(--surface-soft);
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 800;
+}
+
+img.status-editor-suggestion-avatar {
+  object-fit: cover;
 }
 
 .status-editor-suggestion-text {
@@ -2534,7 +2542,7 @@ a:hover {
   justify-content: center;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--avatar-radius);
   background: var(--surface-soft);
   color: var(--muted);
 }
@@ -2542,6 +2550,7 @@ a:hover {
 .avatar img {
   width: 100%;
   height: 100%;
+  border-radius: inherit;
   object-fit: cover;
 }
 
