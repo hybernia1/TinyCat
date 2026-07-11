@@ -551,6 +551,7 @@ function tc_install_default_settings(array $state): void
         ['security.captcha.enabled', (bool) config('security.captcha.enabled', true), 'bool', 'security'],
         ['auth.registration.enabled', (bool) config('auth.registration.enabled', false), 'bool', 'security'],
         ['auth.registration.auto_approve', (bool) config('auth.registration.auto_approve', false), 'bool', 'security'],
+        ['moderation.blocked_urls', (string) config('moderation.blocked_urls', ''), 'string', 'moderation'],
     ];
 
     foreach ($defaults as [$key, $value, $type, $group]) {

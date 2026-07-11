@@ -2356,6 +2356,7 @@ final class Core
             'security.captcha.enabled' => true,
             'auth.registration.enabled' => true,
             'auth.registration.auto_approve' => true,
+            'moderation.blocked_urls' => true,
         ];
 
         return isset($keys[$key]);

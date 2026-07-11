@@ -545,7 +545,7 @@
   function hydrateDynamic(root) {
     qsa("[data-tagifier]", root || document).forEach(initTagifierRoot);
     qsa("[data-captcha]", root || document).forEach(initCaptchaRoot);
-    qsa("[data-avatar-paint]", root || document).forEach(initAvatarPaintRoot);
+    qsa("[data-avatar-upload]", root || document).forEach(initAvatarUploadRoot);
     qsa("[data-status-video]", root || document).forEach(initStatusVideoRoot);
 
     if (TinyCat.initStatusEditors) {
@@ -636,277 +636,43 @@
     });
   }
 
-  function initAvatarPaintRoot(root) {
-    var form = root.closest("form");
-    var hidden = form ? qs("[data-avatar-paint-value]", form) : null;
-    var preview = qs("[data-avatar-preview]", root);
-    var base = root.dataset.avatarPreviewUrl || "";
-    var randomUrl = root.dataset.avatarRandomUrl || "";
-    var empty = root.dataset.avatarEmpty || ".";
-    var defaultPaint = root.dataset.avatarDefault || "";
-    var cells = qsa("[data-avatar-pixel]", root);
-    var swatches = qsa("[data-avatar-color]", root);
-    var undoButton = qs("[data-avatar-undo]", root);
-    var redoButton = qs("[data-avatar-redo]", root);
-    var clearButton = qs("[data-avatar-clear]", root);
-    var templateButton = qs("[data-avatar-template]", root);
-    var randomButton = qs("[data-avatar-random]", root);
-    var colors = {};
-    var current = "0";
-    var drawing = false;
-    var dragStartPaint = "";
-    var history = [];
-    var historyIndex = -1;
-    var randomBusy = false;
+  function initAvatarUploadRoot(root) {
+    var input = qs("[data-avatar-upload-input]", root);
+    var preview = qs("[data-avatar-upload-preview]", root);
+    var empty = qs("[data-avatar-upload-empty]", root);
+    var objectUrl = "";
 
-    if (!hidden || !preview || !base || root.dataset.avatarReady === "true") {
+    if (!input || !preview || root.dataset.avatarUploadReady === "true") {
       return;
     }
 
-    swatches.forEach(function (swatch) {
-      var token = swatch.dataset.avatarColor || "";
-      var color = window.getComputedStyle ? window.getComputedStyle(swatch).getPropertyValue("--swatch").trim() : "";
+    root.dataset.avatarUploadReady = "true";
+    input.addEventListener("change", function () {
+      var file = input.files && input.files[0] ? input.files[0] : null;
 
-      if (token && token !== empty && color) {
-        colors[token] = color;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrl = "";
+      }
+
+      if (!file || ["image/png", "image/jpeg", "image/webp"].indexOf(file.type) === -1) {
+        preview.hidden = true;
+
+        if (empty) {
+          empty.hidden = false;
+        }
+
+        return;
+      }
+
+      objectUrl = URL.createObjectURL(file);
+      preview.src = objectUrl;
+      preview.hidden = false;
+
+      if (empty) {
+        empty.hidden = true;
       }
     });
-
-    function serializePaint() {
-      return cells.map(function (cell) {
-        return cell.dataset.value || empty;
-      }).join("");
-    }
-
-    function updatePreview() {
-      var url = new URL(base, window.location.href);
-
-      url.searchParams.set("preview", "1");
-      url.searchParams.set("paint", hidden.value || serializePaint());
-
-      preview.src = compactUrl(url);
-    }
-
-    function syncPaint(changed) {
-      hidden.value = serializePaint();
-
-      if (changed) {
-        hidden.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-    }
-
-    function updateHistoryButtons() {
-      if (undoButton) {
-        undoButton.disabled = historyIndex <= 0;
-      }
-
-      if (redoButton) {
-        redoButton.disabled = historyIndex < 0 || historyIndex >= history.length - 1;
-      }
-
-      if (randomButton) {
-        randomButton.disabled = randomBusy;
-      }
-    }
-
-    function pushHistory(value) {
-      value = value || serializePaint();
-
-      if (history[historyIndex] === value) {
-        updateHistoryButtons();
-        return;
-      }
-
-      history = history.slice(0, historyIndex + 1);
-      history.push(value);
-
-      if (history.length > 80) {
-        history.shift();
-      }
-
-      historyIndex = history.length - 1;
-      updateHistoryButtons();
-    }
-
-    function applyPixel(cell, value) {
-      if (!cell) {
-        return;
-      }
-
-      value = value || empty;
-      cell.dataset.value = value;
-
-      if (value === empty) {
-        cell.classList.add("is-empty");
-        cell.style.removeProperty("--pixel");
-        return;
-      }
-
-      cell.classList.remove("is-empty");
-      cell.style.setProperty("--pixel", colors[value] || "#111827");
-    }
-
-    function setColor(value) {
-      current = value || empty;
-      swatches.forEach(function (swatch) {
-        swatch.classList.toggle("is-active", (swatch.dataset.avatarColor || "") === current);
-      });
-    }
-
-    function paintTarget(target) {
-      var cell = target && target.closest ? target.closest("[data-avatar-pixel]") : null;
-
-      if (!cell || root.dataset.avatarDisabled === "true") {
-        return;
-      }
-
-      applyPixel(cell, current);
-      syncPaint(false);
-    }
-
-    function setPaint(value, options) {
-      options = options || {};
-      value = String(value || "").replace(/[^.0-9a-f]/gi, "").toLowerCase();
-
-      if (value.length !== cells.length) {
-        value = "";
-      }
-
-      cells.forEach(function (cell, index) {
-        applyPixel(cell, value.charAt(index) || empty);
-      });
-
-      syncPaint(options.changed !== false);
-
-      if (options.record) {
-        pushHistory(hidden.value);
-      } else {
-        updateHistoryButtons();
-      }
-
-      updatePreview();
-    }
-
-    root.dataset.avatarReady = "true";
-    setColor(current);
-    syncPaint(false);
-    pushHistory(hidden.value);
-
-    swatches.forEach(function (swatch) {
-      swatch.addEventListener("click", function () {
-        setColor(swatch.dataset.avatarColor || empty);
-      });
-    });
-
-    cells.forEach(function (cell) {
-      cell.addEventListener("pointerdown", function (event) {
-        event.preventDefault();
-        dragStartPaint = serializePaint();
-        drawing = true;
-        paintTarget(event.target);
-      });
-
-      cell.addEventListener("pointerenter", function (event) {
-        if (drawing) {
-          paintTarget(event.target);
-        }
-      });
-    });
-
-    document.addEventListener("pointermove", function (event) {
-      var target;
-
-      if (!drawing || typeof document.elementFromPoint !== "function") {
-        return;
-      }
-
-      event.preventDefault();
-      target = document.elementFromPoint(event.clientX, event.clientY);
-      paintTarget(target);
-    }, { passive: false });
-
-    document.addEventListener("pointerup", function () {
-      if (!drawing) {
-        return;
-      }
-
-      drawing = false;
-      syncPaint(true);
-
-      if (hidden.value !== dragStartPaint) {
-        pushHistory(hidden.value);
-      } else {
-        updateHistoryButtons();
-      }
-
-      updatePreview();
-    });
-
-    if (undoButton) {
-      undoButton.addEventListener("click", function () {
-        if (historyIndex <= 0) {
-          return;
-        }
-
-        historyIndex--;
-        setPaint(history[historyIndex], { record: false });
-      });
-    }
-
-    if (redoButton) {
-      redoButton.addEventListener("click", function () {
-        if (historyIndex >= history.length - 1) {
-          return;
-        }
-
-        historyIndex++;
-        setPaint(history[historyIndex], { record: false });
-      });
-    }
-
-    if (clearButton) {
-      clearButton.addEventListener("click", function () {
-        setPaint("", { record: true });
-      });
-    }
-
-    if (templateButton) {
-      templateButton.addEventListener("click", function () {
-        setPaint(defaultPaint, { record: true });
-      });
-    }
-
-    if (randomButton) {
-      randomButton.addEventListener("click", async function () {
-        var data;
-        var payload;
-        var paint;
-
-        if (!randomUrl || randomBusy) {
-          return;
-        }
-
-        randomBusy = true;
-        updateHistoryButtons();
-
-        try {
-          data = await TinyCat.request(randomUrl);
-          payload = unwrapResult(data);
-          paint = (data && data.paint) || (payload && payload.paint) || "";
-
-          if (paint) {
-            setPaint(paint, { record: true });
-          }
-        } catch (error) {
-          TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
-        } finally {
-          randomBusy = false;
-          updateHistoryButtons();
-        }
-      });
-    }
-
-    updatePreview();
   }
 
   function handleResult(source, data, target) {

@@ -18,8 +18,29 @@ layout('layout', [
     'current' => '/admin/moderation',
 ], static function (): void {
     $reports = tc_admin_moderation_reports();
+    $blockedUrls = tc_admin_moderation_blocked_urls_value();
     ?>
-    <section>
+    <section class="stack">
+        <article class="card">
+            <div class="card-header">
+                <h2 class="text-lg m-0 cluster gap-2"><?= icon('lock') ?> <?= et('moderation.url_blocker_title') ?></h2>
+            </div>
+            <form method="post" action="/admin/moderation">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="url_blocker_save">
+                <div class="card-body stack">
+                    <label class="field">
+                        <span class="label"><?= et('moderation.url_blocker_label') ?></span>
+                        <textarea class="textarea" name="blocked_urls" rows="4" placeholder="<?= et('moderation.url_blocker_placeholder') ?>"><?= e($blockedUrls) ?></textarea>
+                    </label>
+                    <p class="text-muted m-0"><?= et('moderation.url_blocker_help') ?></p>
+                </div>
+                <div class="card-footer cluster justify-end">
+                    <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('common.save') ?></span></button>
+                </div>
+            </form>
+        </article>
+
         <article class="card">
             <div class="card-header">
                 <h2 class="text-lg m-0 cluster gap-2"><?= icon('flag') ?> <?= et('moderation.reports_title') ?></h2>
@@ -92,11 +113,28 @@ function tc_admin_moderation_handle(): never
 {
     $action = (string) post('action', '');
 
+    if ($action === 'url_blocker_save') {
+        tc_admin_moderation_save_url_blocker();
+    }
+
     if ($action === 'report_review') {
         tc_admin_moderation_review_report();
     }
 
     redirect('/admin/moderation');
+}
+
+function tc_admin_moderation_save_url_blocker(): never
+{
+    $rules = moderation_blocked_url_rules((string) post('blocked_urls', ''));
+    setting_set('moderation.blocked_urls', implode(', ', $rules), 'string', 'moderation');
+    flash('success', t('moderation.messages.url_blocker_saved'));
+    redirect('/admin/moderation');
+}
+
+function tc_admin_moderation_blocked_urls_value(): string
+{
+    return implode(', ', moderation_blocked_url_rules());
 }
 
 function tc_admin_moderation_review_report(): never

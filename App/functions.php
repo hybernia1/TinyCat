@@ -1039,10 +1039,28 @@ if (!function_exists('user_avatar_update_request')) {
             api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
         }
 
-        $config = Avatar::normalizeConfig(['paint' => post('paint', '')]);
-        $json = Avatar::configJson($config);
+        $file = $_FILES['avatar'] ?? null;
 
-        update('users', ['avatar_config' => $json !== '' ? $json : null], ['id' => $id]);
+        if (!is_array($file)) {
+            api_error(t('account.messages.avatar_required'), 422, 'avatar_required');
+        }
+
+        try {
+            $oldConfig = $user['avatar_config'] ?? null;
+            $config = null;
+            $config = Avatar::upload($file, (string) ($user['username'] ?? ''));
+            $json = Avatar::configJson($config);
+
+            if ($json === '') {
+                throw new RuntimeException('Avatar config could not be stored.');
+            }
+        } catch (Throwable) {
+            Avatar::delete($config ?? null);
+            api_error(t('account.messages.avatar_invalid'), 422, 'avatar_invalid');
+        }
+
+        update('users', ['avatar_config' => $json], ['id' => $id]);
+        Avatar::delete($oldConfig ?? null, $config ?? null);
 
         $updated = auth() ?: $user;
         $updated['avatar_config'] = $json !== '' ? $json : null;
@@ -1461,6 +1479,190 @@ if (!function_exists('status_strip_external_urls')) {
     }
 }
 
+if (!function_exists('moderation_blocked_url_hosts')) {
+    function moderation_blocked_url_hosts(?string $value = null): array
+    {
+        return moderation_blocked_url_rules($value);
+    }
+}
+
+if (!function_exists('moderation_blocked_url_rules')) {
+    function moderation_blocked_url_rules(?string $value = null): array
+    {
+        $value = $value ?? (string) config('moderation.blocked_urls', '');
+        $items = preg_split('/[,;\r\n]+/', $value) ?: [];
+        $rules = [];
+
+        foreach ($items as $item) {
+            $rule = moderation_blocked_url_rule((string) $item);
+
+            if ($rule !== '') {
+                $rules[$rule] = true;
+            }
+        }
+
+        return array_keys($rules);
+    }
+}
+
+if (!function_exists('moderation_blocked_url_rule')) {
+    function moderation_blocked_url_rule(string $value): string
+    {
+        $value = strtolower(trim((string) preg_replace('/[\x00-\x1F\x7F]+/', '', $value)));
+
+        if ($value === '') {
+            return '';
+        }
+
+        if (str_starts_with($value, 'domain:')) {
+            $domain = trim(substr($value, 7), " \t\n\r\0\x0B./");
+
+            if (preg_match('/^[a-z0-9-]{2,63}(?:\.[a-z0-9-]{2,63})*$/', $domain) !== 1) {
+                return '';
+            }
+
+            return 'domain:' . $domain;
+        }
+
+        return moderation_url_host($value);
+    }
+}
+
+if (!function_exists('moderation_url_host')) {
+    function moderation_url_host(string $value): string
+    {
+        $value = strtolower(trim((string) preg_replace('/[\x00-\x1F\x7F]+/', '', $value)));
+        $value = trim($value, " \t\n\r\0\x0B/");
+
+        if ($value === '') {
+            return '';
+        }
+
+        $value = (string) preg_replace('/^\*\./', '', $value);
+        $candidate = preg_match('~^[a-z][a-z0-9+.-]*://~i', $value) === 1
+            ? $value
+            : 'https://' . ltrim($value, '/');
+        $parts = parse_url($candidate);
+
+        if (!is_array($parts)) {
+            return '';
+        }
+
+        $host = strtolower(rtrim(trim((string) ($parts['host'] ?? ''), '[]'), '.'));
+
+        if (str_starts_with($host, 'www.')) {
+            $host = substr($host, 4);
+        }
+
+        if ($host === '' || !str_contains($host, '.') || preg_match('/^[a-z0-9.-]+$/', $host) !== 1) {
+            return '';
+        }
+
+        return $host;
+    }
+}
+
+if (!function_exists('moderation_blocked_url_match')) {
+    function moderation_blocked_url_match(string $text): string
+    {
+        $blockedRules = moderation_blocked_url_rules();
+
+        if ($text === '' || $blockedRules === []) {
+            return '';
+        }
+
+        if (preg_match_all(StatusLinks::pattern(), $text, $matches)) {
+            foreach ((array) ($matches[0] ?? []) as $match) {
+                [$url] = StatusLinks::splitTail((string) $match);
+                $host = moderation_url_host($url);
+
+                if ($host !== '') {
+                    $blockedBy = moderation_host_blocked_by($host, $blockedRules);
+
+                    if ($blockedBy !== '') {
+                        return $blockedBy;
+                    }
+                }
+            }
+        }
+
+        foreach ($blockedRules as $blockedRule) {
+            if (moderation_text_contains_blocked_host($text, (string) $blockedRule)) {
+                return (string) $blockedRule;
+            }
+        }
+
+        return '';
+    }
+}
+
+if (!function_exists('moderation_text_contains_blocked_host')) {
+    function moderation_text_contains_blocked_host(string $text, string $blockedRule): bool
+    {
+        $blockedRule = moderation_blocked_url_rule($blockedRule);
+
+        if ($text === '' || $blockedRule === '') {
+            return false;
+        }
+
+        if (str_starts_with($blockedRule, 'domain:')) {
+            $domain = substr($blockedRule, 7);
+            $pattern = '/(?<![@A-Za-z0-9_.-])(?:[A-Za-z0-9-]+\.)+' . preg_quote($domain, '/')
+                . '(?=$|[\/?#:,\s!?\)\]\}]|\.(?:\s|$))/i';
+
+            return preg_match($pattern, $text) === 1;
+        }
+
+        $pattern = '/(?<![@A-Za-z0-9_.-])(?:[A-Za-z0-9-]+\.)*'
+            . preg_quote($blockedRule, '/')
+            . '(?=$|[\/?#:,\s!?\)\]\}]|\.(?:\s|$))/i';
+
+        return preg_match($pattern, $text) === 1;
+    }
+}
+
+if (!function_exists('moderation_host_is_blocked')) {
+    function moderation_host_is_blocked(string $host, array $blockedHosts): bool
+    {
+        return moderation_host_blocked_by($host, $blockedHosts) !== '';
+    }
+}
+
+if (!function_exists('moderation_host_blocked_by')) {
+    function moderation_host_blocked_by(string $host, array $blockedRules): string
+    {
+        $host = moderation_url_host($host);
+
+        if ($host === '') {
+            return '';
+        }
+
+        foreach ($blockedRules as $blockedRule) {
+            $blockedRule = moderation_blocked_url_rule((string) $blockedRule);
+
+            if ($blockedRule === '') {
+                continue;
+            }
+
+            if (str_starts_with($blockedRule, 'domain:')) {
+                $domain = substr($blockedRule, 7);
+
+                if ($host === $domain || str_ends_with($host, '.' . $domain)) {
+                    return $blockedRule;
+                }
+
+                continue;
+            }
+
+            if ($host === $blockedRule || str_ends_with($host, '.' . $blockedRule)) {
+                return $blockedRule;
+            }
+        }
+
+        return '';
+    }
+}
+
 if (!function_exists('author_mention_map')) {
     function author_mention_map(): array
     {
@@ -1576,11 +1778,13 @@ if (!function_exists('render_mentions')) {
 }
 
 if (!function_exists('render_status_text')) {
-    function render_status_text(string $text): string
+    function render_status_text(string $text, array $hiddenLinkHashes = []): string
     {
         if ($text === '') {
             return '';
         }
+
+        $hiddenLinkHashes = array_fill_keys(array_filter(array_map('strval', $hiddenLinkHashes)), true);
 
         if (!preg_match_all(StatusLinks::pattern(), $text, $matches, PREG_OFFSET_CAPTURE)) {
             return render_mentions_segment($text);
@@ -1603,6 +1807,14 @@ if (!function_exists('render_status_text')) {
                 $link = StatusLinks::fromRaw($url, $position);
 
                 if ($link !== null) {
+                    $hash = (string) ($link['url_hash'] ?? '');
+
+                    if ($hash !== '' && isset($hiddenLinkHashes[$hash])) {
+                        $html .= e($tail);
+                        $offset = $position + strlen($raw);
+                        continue;
+                    }
+
                     $html .= '<a class="status-inline-link" href="' . e((string) ($link['normalized_url'] ?? $url)) . '" target="_blank" rel="nofollow noopener noreferrer ugc">' . e($url) . '</a>';
                 } else {
                     $html .= e($url);
@@ -1622,7 +1834,24 @@ if (!function_exists('render_status_text')) {
 if (!function_exists('render_status_body')) {
     function render_status_body(array $item): string
     {
-        return trim(render_status_text((string) ($item['body'] ?? '')));
+        $hiddenLinkHashes = [];
+        $contentId = (int) ($item['id'] ?? 0);
+
+        if ($contentId > 0) {
+            foreach (status_links_for_content($contentId) as $link) {
+                if (status_link_is_internal((array) $link)) {
+                    continue;
+                }
+
+                $hash = (string) ($link['url_hash'] ?? '');
+
+                if ($hash !== '') {
+                    $hiddenLinkHashes[] = $hash;
+                }
+            }
+        }
+
+        return trim(render_status_text((string) ($item['body'] ?? ''), $hiddenLinkHashes));
     }
 }
 
@@ -3510,7 +3739,31 @@ if (!function_exists('status_sync_tags')) {
 if (!function_exists('status_links_from_text')) {
     function status_links_from_text(string $text): array
     {
-        return StatusLinks::extract($text);
+        return array_values(array_filter(
+            StatusLinks::extract($text),
+            static fn (array $link): bool => !status_link_is_internal($link)
+        ));
+    }
+}
+
+if (!function_exists('status_link_is_internal')) {
+    function status_link_is_internal(array|string $link): bool
+    {
+        if (is_array($link)) {
+            foreach (['normalized_url', 'raw_url'] as $key) {
+                $url = trim((string) ($link[$key] ?? ''));
+
+                if ($url !== '' && status_internal_url($url)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        $url = trim($link);
+
+        return $url !== '' && status_internal_url($url);
     }
 }
 
@@ -3756,6 +4009,10 @@ if (!function_exists('status_links_html')) {
         $html = '';
 
         foreach ($links as $link) {
+            if (status_link_is_internal((array) $link)) {
+                continue;
+            }
+
             $html .= status_link_card_html($link);
         }
 
@@ -4737,6 +4994,12 @@ if (!function_exists('status_payload')) {
     function status_payload(): array
     {
         $body = plain_text_limit((string) input('body', ''), 2000);
+        $blockedHost = moderation_blocked_url_match($body);
+
+        if ($blockedHost !== '') {
+            api_error(t('moderation.messages.blocked_url', ['host' => $blockedHost]), 422, 'blocked_url', ['host' => $blockedHost]);
+        }
+
         $body = normalize_mentions_for_storage($body);
         $body = normalize_tags_for_storage($body);
         $body = plain_text_limit($body, 2000);

@@ -21,7 +21,6 @@ final class Api
         api_route('POST', '/author/follow', [self::class, 'followAuthor']);
         api_route('POST', '/profile/update', [self::class, 'profileUpdate']);
         api_route('POST', '/avatar/update', [self::class, 'avatarUpdate']);
-        api_route('GET', '/avatar/random', [self::class, 'avatarRandom']);
 
         api_route('POST', '/status/{action:[a-z-]+}', [self::class, 'statusAction']);
         api_route('GET', '/notifications', [self::class, 'notifications']);
@@ -169,16 +168,6 @@ final class Api
         csrf_require();
 
         return user_avatar_update_request($user);
-    }
-
-    public static function avatarRandom(): array
-    {
-        $user = require_auth('/login');
-        $username = username_normalize((string) ($user['username'] ?? ''));
-
-        return [
-            'paint' => Avatar::randomPaint($username),
-        ];
     }
 
     public static function statusAction(string $action): array
