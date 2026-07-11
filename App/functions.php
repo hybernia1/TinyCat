@@ -4284,6 +4284,7 @@ if (!function_exists('notification_icon')) {
             'content_like' => 'thumb-up',
             'comment_like' => 'thumb-up',
             'content_comment' => 'message-circle',
+            'content_mention', 'comment_mention' => 'user',
             'report_resolved' => 'check',
             'report_dismissed' => 'flag',
             default => 'bell',
@@ -4302,6 +4303,8 @@ if (!function_exists('notification_message')) {
             'content_like' => t('notifications.messages.content_like', ['actor' => $actor]),
             'comment_like' => t('notifications.messages.comment_like', ['actor' => $actor]),
             'content_comment' => t('notifications.messages.content_comment', ['actor' => $actor]),
+            'content_mention' => t('notifications.messages.content_mention', ['actor' => $actor]),
+            'comment_mention' => t('notifications.messages.comment_mention', ['actor' => $actor]),
             'report_resolved' => t('notifications.messages.report_resolved', ['actor' => $actor]),
             'report_dismissed' => t('notifications.messages.report_dismissed', ['actor' => $actor]),
             default => t('notifications.messages.generic', ['actor' => $actor]),
@@ -4355,6 +4358,70 @@ if (!function_exists('notification_create')) {
                 'read_at' => null,
                 'updated_at' => $now,
             ], ['user_id' => $userId, 'notification_key' => $key]);
+        }
+    }
+}
+
+if (!function_exists('notification_mentioned_user_ids')) {
+    function notification_mentioned_user_ids(string $text): array
+    {
+        if ($text === '' || !preg_match_all('/(?<![A-Za-z0-9_])@([1-9][0-9]*)/', $text, $matches)) {
+            return [];
+        }
+
+        $ids = [];
+        $users = author_mention_users();
+
+        foreach ((array) ($matches[1] ?? []) as $id) {
+            $id = (int) $id;
+
+            if ($id > 0 && isset($users[$id])) {
+                $ids[$id] = $id;
+            }
+        }
+
+        return array_values($ids);
+    }
+}
+
+if (!function_exists('notification_create_for_mentions')) {
+    function notification_create_for_mentions(string $body, array $actor, int $contentId, int $commentId = 0, array $skipUserIds = []): void
+    {
+        if ($body === '' || $contentId < 1) {
+            return;
+        }
+
+        $actorId = (int) ($actor['id'] ?? 0);
+
+        if ($actorId < 1) {
+            return;
+        }
+
+        $mentionedIds = notification_mentioned_user_ids($body);
+
+        if ($mentionedIds === []) {
+            return;
+        }
+
+        $skip = [$actorId => true];
+
+        foreach ($skipUserIds as $skipUserId) {
+            $skipUserId = (int) $skipUserId;
+
+            if ($skipUserId > 0) {
+                $skip[$skipUserId] = true;
+            }
+        }
+
+        $type = $commentId > 0 ? 'comment_mention' : 'content_mention';
+        $keyBase = $type . ':' . $contentId . ':' . max(0, $commentId) . ':' . $actorId;
+
+        foreach ($mentionedIds as $mentionedId) {
+            if (isset($skip[$mentionedId])) {
+                continue;
+            }
+
+            notification_create($mentionedId, $type, $actorId, $contentId, $commentId, $keyBase);
         }
     }
 }
@@ -4903,6 +4970,7 @@ if (!function_exists('status_json_create')) {
         status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
         status_sync_links($contentId, (array) ($payload['links'] ?? []));
         moderation_record_action($user, 'post');
+        notification_create_for_mentions($body, $user, $contentId);
 
         $item = public_status_item($contentId);
 
@@ -4998,6 +5066,7 @@ if (!function_exists('status_json_comment')) {
         ]);
         moderation_record_action($user, 'comment');
         notification_create_for_content_owner('content_comment', $contentId, $user, $commentId);
+        notification_create_for_mentions($body, $user, $contentId, $commentId, [(int) ($status['author_id'] ?? 0)]);
 
         $data = [
             'action' => 'comment',
@@ -5430,12 +5499,14 @@ if (!function_exists('status_json_update')) {
         }
 
         status_json_require_unique_body($user, $body, $contentId);
+        $oldMentionIds = notification_mentioned_user_ids((string) ($item['body'] ?? ''));
 
         update('content', [
             'body' => $body,
         ], ['id' => $contentId]);
         status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
         status_sync_links($contentId, (array) ($payload['links'] ?? []));
+        notification_create_for_mentions($body, $user, $contentId, 0, $oldMentionIds);
 
         $data = [
             'action' => 'update',
