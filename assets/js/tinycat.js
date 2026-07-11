@@ -621,14 +621,20 @@
     button.addEventListener("click", function () {
       var iframe = document.createElement("iframe");
       var url = new URL(embedUrl);
+      var host = url.hostname.toLowerCase();
 
       url.searchParams.set("autoplay", "1");
       url.searchParams.set("playsinline", "1");
 
+      if (host === "youtube.com" || host === "www.youtube.com" || host === "youtube-nocookie.com" || host === "www.youtube-nocookie.com") {
+        url.searchParams.set("origin", window.location.origin);
+        url.searchParams.set("rel", "0");
+      }
+
       iframe.className = "status-video-frame";
       iframe.src = url.href;
       iframe.loading = "lazy";
-      iframe.referrerPolicy = "no-referrer";
+      iframe.referrerPolicy = "strict-origin-when-cross-origin";
       iframe.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share";
       iframe.allowFullscreen = true;
       root.innerHTML = "";

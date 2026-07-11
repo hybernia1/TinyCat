@@ -698,7 +698,7 @@ final class Core
             "script-src 'self'",
             "script-src-attr 'none'",
             "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data: https://i.ytimg.com https://img.youtube.com",
+            "img-src 'self' data: https:",
             "font-src 'self' data:",
             "connect-src 'self'",
             "frame-src https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.youtube.com https://youtube.com https://player.vimeo.com https://www.dailymotion.com https://dailymotion.com",

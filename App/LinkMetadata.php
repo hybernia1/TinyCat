@@ -10,7 +10,7 @@ final class LinkMetadata
 {
     private const USER_AGENT = 'TinyCatLinkPreview/1.0';
     private const HTML_LIMIT = 360000;
-    private const IMAGE_LIMIT = 1600000;
+    private const OEMBED_LIMIT = 32768;
     private const TIMEOUT = 4;
     private const REDIRECT_LIMIT = 3;
 
@@ -24,11 +24,11 @@ final class LinkMetadata
             return $link;
         }
 
-        if ($type !== 'link') {
+        if (!self::shouldFetch($link)) {
             return $link;
         }
 
-        $meta = self::fetch($url);
+        $meta = $type === 'video' ? self::fetchVideo($link) : self::fetch($url);
 
         if ($meta === []) {
             return $link;
@@ -43,14 +43,77 @@ final class LinkMetadata
         }
 
         if (!empty($meta['image_url'])) {
-            $imageUrl = self::cacheImage((string) $meta['image_url'], (string) ($link['url_hash'] ?? hash('sha256', $url)));
-
-            if ($imageUrl !== '') {
-                $link['image_url'] = $imageUrl;
-            }
+            $link['image_url'] = (string) $meta['image_url'];
         }
 
         return $link;
+    }
+
+    private static function fetchVideo(array $link): array
+    {
+        $provider = (string) ($link['provider'] ?? '');
+        $url = (string) ($link['normalized_url'] ?? '');
+
+        if ($url === '' || !self::safeUrl($url)) {
+            return [];
+        }
+
+        $oembedUrl = match ($provider) {
+            'youtube' => 'https://www.youtube.com/oembed?format=json&url=' . rawurlencode($url),
+            'vimeo' => 'https://vimeo.com/api/oembed.json?url=' . rawurlencode($url),
+            'dailymotion' => 'https://www.dailymotion.com/services/oembed?format=json&url=' . rawurlencode($url),
+            default => '',
+        };
+
+        if ($oembedUrl === '') {
+            return [];
+        }
+
+        $response = self::request($oembedUrl, self::OEMBED_LIMIT, 'application/json,text/json');
+
+        if ($response === null || !self::isJson((string) ($response['content_type'] ?? ''))) {
+            return [];
+        }
+
+        $payload = json_decode((string) ($response['body'] ?? ''), true);
+
+        if (!is_array($payload)) {
+            return [];
+        }
+
+        $meta = [];
+        $title = self::cleanText((string) ($payload['title'] ?? ''), 255);
+        $author = self::cleanText((string) ($payload['author_name'] ?? ''), 500);
+        $thumbnail = self::absoluteUrl($url, (string) ($payload['thumbnail_url'] ?? ''));
+
+        if ($title !== '') {
+            $meta['title'] = $title;
+        }
+
+        if ($author !== '') {
+            $meta['description'] = $author;
+        }
+
+        if ($thumbnail !== '' && self::safeUrl($thumbnail)) {
+            $meta['image_url'] = $thumbnail;
+        }
+
+        return $meta;
+    }
+
+    private static function shouldFetch(array $link): bool
+    {
+        $type = (string) ($link['link_type'] ?? 'link');
+
+        if ($type === 'link') {
+            return true;
+        }
+
+        if ($type !== 'video') {
+            return false;
+        }
+
+        return in_array((string) ($link['provider'] ?? ''), ['youtube', 'vimeo', 'dailymotion'], true);
     }
 
     public static function fetch(string $url): array
@@ -113,61 +176,6 @@ final class LinkMetadata
         }
 
         return array_filter($meta, static fn (mixed $value): bool => trim((string) $value) !== '');
-    }
-
-    private static function cacheImage(string $url, string $hash): string
-    {
-        if (!self::safeUrl($url)) {
-            return '';
-        }
-
-        $hash = preg_replace('/[^a-f0-9]/i', '', $hash) ?: hash('sha256', $url);
-        $hash = strtolower(substr((string) $hash, 0, 64));
-        $folder = substr($hash, 0, 2);
-        $baseDirectory = base_path('uploads/link-previews/' . $folder);
-        $baseUrl = '/uploads/link-previews/' . $folder;
-
-        foreach (['jpg', 'png', 'webp'] as $extension) {
-            $existing = $baseDirectory . DIRECTORY_SEPARATOR . $hash . '.' . $extension;
-
-            if (is_file($existing)) {
-                return $baseUrl . '/' . $hash . '.' . $extension;
-            }
-        }
-
-        $response = self::request($url, self::IMAGE_LIMIT, 'image/jpeg,image/png,image/webp');
-
-        if ($response === null || !self::isImage((string) ($response['content_type'] ?? ''))) {
-            return '';
-        }
-
-        $body = (string) ($response['body'] ?? '');
-        $info = @getimagesizefromstring($body);
-
-        if (!is_array($info)) {
-            return '';
-        }
-
-        $extension = match ((int) ($info[2] ?? 0)) {
-            IMAGETYPE_JPEG => 'jpg',
-            IMAGETYPE_PNG => 'png',
-            IMAGETYPE_WEBP => 'webp',
-            default => '',
-        };
-
-        if ($extension === '') {
-            return '';
-        }
-
-        if (!is_dir($baseDirectory) && !mkdir($baseDirectory, 0775, true) && !is_dir($baseDirectory)) {
-            return '';
-        }
-
-        $file = $baseDirectory . DIRECTORY_SEPARATOR . $hash . '.' . $extension;
-
-        return file_put_contents($file, $body, LOCK_EX) !== false
-            ? $baseUrl . '/' . $hash . '.' . $extension
-            : '';
     }
 
     private static function request(string $url, int $limit, string $accept, int $redirects = 0): ?array
@@ -310,13 +318,11 @@ final class LinkMetadata
         return $contentType === '' || str_contains($contentType, 'text/html') || str_contains($contentType, 'application/xhtml+xml');
     }
 
-    private static function isImage(string $contentType): bool
+    private static function isJson(string $contentType): bool
     {
         $contentType = strtolower($contentType);
 
-        return str_contains($contentType, 'image/jpeg')
-            || str_contains($contentType, 'image/png')
-            || str_contains($contentType, 'image/webp');
+        return $contentType === '' || str_contains($contentType, 'application/json') || str_contains($contentType, 'text/json');
     }
 
     private static function cleanText(string $text, int $limit): string

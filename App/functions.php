@@ -3820,9 +3820,36 @@ if (!function_exists('status_link_metadata_fresh')) {
             return false;
         }
 
+        if (!status_link_metadata_has_content($link)) {
+            return false;
+        }
+
         $updatedAt = strtotime((string) ($link['updated_at'] ?? ''));
 
         return $updatedAt > 0 && $updatedAt >= time() - status_link_metadata_ttl();
+    }
+}
+
+if (!function_exists('status_link_metadata_has_content')) {
+    function status_link_metadata_has_content(array $link): bool
+    {
+        $type = (string) ($link['link_type'] ?? 'link');
+        $provider = (string) ($link['provider'] ?? 'web');
+        $title = trim((string) ($link['title'] ?? ''));
+        $description = trim((string) ($link['description'] ?? ''));
+
+        if ($type === 'video') {
+            $fallbackTitle = match ($provider) {
+                'youtube' => 'YouTube video',
+                'vimeo' => 'Vimeo video',
+                'dailymotion' => 'Dailymotion video',
+                default => '',
+            };
+
+            return $title !== '' && ($fallbackTitle === '' || strcasecmp($title, $fallbackTitle) !== 0);
+        }
+
+        return $title !== '' || $description !== '';
     }
 }
 
@@ -4017,6 +4044,11 @@ if (!function_exists('status_video_thumbnail_url')) {
     {
         $provider = (string) ($link['provider'] ?? '');
         $videoId = trim((string) ($link['video_id'] ?? ''));
+        $imageUrl = trim((string) ($link['image_url'] ?? ''));
+
+        if ($imageUrl !== '') {
+            return $imageUrl;
+        }
 
         if ($provider === 'youtube' && $videoId !== '') {
             return 'https://i.ytimg.com/vi/' . rawurlencode($videoId) . '/hqdefault.jpg';
