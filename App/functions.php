@@ -1404,6 +1404,27 @@ if (!function_exists('status_internal_url')) {
     }
 }
 
+if (!function_exists('status_internal_url_path')) {
+    function status_internal_url_path(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '' || str_starts_with($url, '//')) {
+            return '';
+        }
+
+        if (str_starts_with($url, '/')) {
+            return route_path((string) (parse_url($url, PHP_URL_PATH) ?: $url));
+        }
+
+        if (!preg_match('~^https?://~i', $url) || !status_internal_url($url)) {
+            return '';
+        }
+
+        return route_path((string) (parse_url($url, PHP_URL_PATH) ?: '/'));
+    }
+}
+
 if (!function_exists('status_external_url_pattern')) {
     function status_external_url_pattern(): string
     {
@@ -1419,7 +1440,11 @@ if (!function_exists('status_strip_external_urls')) {
         }
 
         $text = (string) preg_replace_callback(status_external_url_pattern(), static function (array $match): string {
-            [, $tail] = status_url_split_tail((string) ($match[0] ?? ''));
+            [$url, $tail] = status_url_split_tail((string) ($match[0] ?? ''));
+
+            if (status_internal_url($url)) {
+                return $url . $tail;
+            }
 
             return $tail;
         }, $text);
@@ -1487,9 +1512,40 @@ if (!function_exists('author_mention_users')) {
     }
 }
 
+if (!function_exists('status_author_url_mention')) {
+    function status_author_url_mention(string $url): string
+    {
+        $path = status_internal_url_path($url);
+
+        if ($path === '' || preg_match('~^/author/([0-9]+)/?$~', $path, $match) !== 1) {
+            return '';
+        }
+
+        $authorId = (int) ($match[1] ?? 0);
+
+        return $authorId > 0 && isset(author_mention_users()[$authorId]) ? '@' . $authorId : '';
+    }
+}
+
+if (!function_exists('normalize_author_urls_for_storage')) {
+    function normalize_author_urls_for_storage(string $text): string
+    {
+        $pattern = '~(?<![\p{L}\p{N}_])((?:https?://|www\.)[^\s<>"\']+|/author/[0-9]+[^\s<>"\']*)~iu';
+
+        return (string) preg_replace_callback($pattern, static function (array $match): string {
+            $raw = (string) ($match[1] ?? '');
+            [$url, $tail] = status_url_split_tail($raw);
+            $mention = status_author_url_mention($url);
+
+            return $mention !== '' ? $mention . $tail : $raw;
+        }, $text);
+    }
+}
+
 if (!function_exists('normalize_mentions_for_storage')) {
     function normalize_mentions_for_storage(string $text): string
     {
+        $text = normalize_author_urls_for_storage($text);
         $map = author_mention_map();
         $users = author_mention_users();
         $pattern = '/(?<![A-Za-z0-9_])@([0-9]+|[a-z][a-z0-9_]{2,31})/i';
