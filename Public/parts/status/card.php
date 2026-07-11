@@ -44,6 +44,7 @@ if ($contentId < 1) {
         <?php if ($bodyHtml !== ''): ?>
             <div class="status-body"><?= $bodyHtml ?></div>
         <?php endif; ?>
+        <?= status_links_html($item) ?>
         <?= status_actions($item, $user, $action) ?>
         <?= status_comments_section($item, $user, $action) ?>
     </div>

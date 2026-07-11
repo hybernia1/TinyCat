@@ -75,6 +75,7 @@ layout('layout', [
                     <?php if ($bodyHtml !== ''): ?>
                         <div class="status-body"><?= $bodyHtml ?></div>
                     <?php endif; ?>
+                    <?= status_links_html($item) ?>
 
                     <?= status_actions($item, auth(), $current, false) ?>
                     <?= status_comment_thread_section($item, auth(), $current, 'status-' . $contentId) ?>

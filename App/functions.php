@@ -8,6 +8,8 @@ if (!defined('TINYCAT')) {
 
 require_once __DIR__ . '/Core.php';
 require_once __DIR__ . '/Avatar.php';
+require_once __DIR__ . '/StatusLinks.php';
+require_once __DIR__ . '/LinkMetadata.php';
 
 if (!function_exists('guard')) {
     function guard(): void
@@ -64,7 +66,7 @@ if (!function_exists('db')) {
 if (!function_exists('app_required_tables')) {
     function app_required_tables(): array
     {
-        return ['users', 'content', 'terms', 'content_tags', 'content_likes', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'user_action_limits', 'settings'];
+        return ['users', 'content', 'terms', 'content_tags', 'content_links', 'content_likes', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'user_action_limits', 'settings'];
     }
 }
 
@@ -1573,10 +1575,54 @@ if (!function_exists('render_mentions')) {
     }
 }
 
+if (!function_exists('render_status_text')) {
+    function render_status_text(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+
+        if (!preg_match_all(StatusLinks::pattern(), $text, $matches, PREG_OFFSET_CAPTURE)) {
+            return render_mentions_segment($text);
+        }
+
+        $offset = 0;
+        $html = '';
+
+        foreach ((array) ($matches[0] ?? []) as $match) {
+            $raw = (string) ($match[0] ?? '');
+            $position = (int) ($match[1] ?? 0);
+            [$url, $tail] = StatusLinks::splitTail($raw);
+
+            $html .= render_mentions_segment(substr($text, $offset, $position - $offset));
+
+            if (status_internal_url($url)) {
+                $href = status_internal_url_path($url);
+                $html .= '<a class="status-inline-link" href="' . e($href !== '' ? $href : $url) . '">' . e($url) . '</a>';
+            } else {
+                $link = StatusLinks::fromRaw($url, $position);
+
+                if ($link !== null) {
+                    $html .= '<a class="status-inline-link" href="' . e((string) ($link['normalized_url'] ?? $url)) . '" target="_blank" rel="nofollow noopener noreferrer ugc">' . e($url) . '</a>';
+                } else {
+                    $html .= e($url);
+                }
+            }
+
+            $html .= e($tail);
+            $offset = $position + strlen($raw);
+        }
+
+        $html .= render_mentions_segment(substr($text, $offset));
+
+        return $html;
+    }
+}
+
 if (!function_exists('render_status_body')) {
     function render_status_body(array $item): string
     {
-        return trim(render_mentions((string) ($item['body'] ?? '')));
+        return trim(render_status_text((string) ($item['body'] ?? '')));
     }
 }
 
@@ -1951,6 +1997,7 @@ if (!function_exists('status_preload_feed')) {
         }
 
         status_preload_latest_parent_comments($ids);
+        status_preload_links($ids);
     }
 }
 
@@ -2507,6 +2554,79 @@ if (!function_exists('public_search_recent_content_scan')) {
     }
 }
 
+if (!function_exists('public_search_link_content_rows')) {
+    function public_search_link_content_rows(string $query, int $limit, array $excludeIds = []): array
+    {
+        $limit = max(1, min(50, $limit));
+        $excludeIds = array_values(array_unique(array_filter(array_map('intval', $excludeIds), static fn (int $id): bool => $id > 0)));
+        $fulltext = public_search_fulltext_query($query);
+        $rows = [];
+
+        try {
+            $linkQuery = db_select(
+                'SELECT c.id,
+                    c.body,
+                    c.author_id,
+                    c.created_at,
+                    u.username AS author_name,
+                    u.username AS author_username,
+                    u.avatar_config AS author_avatar_config,
+                    CONCAT_WS(" ", cl.title, cl.description, cl.normalized_url) AS link_excerpt
+                FROM content_links cl
+                INNER JOIN content c ON c.id = cl.content_id
+                INNER JOIN users u ON u.id = c.author_id'
+            )->where('u.status = ?', 'active');
+
+            if ($fulltext !== '' && public_search_fulltext_ready('content_links', 'content_links_search_fulltext')) {
+                $linkQuery->where('MATCH(cl.normalized_url, cl.title, cl.description) AGAINST (? IN BOOLEAN MODE)', $fulltext);
+            } else {
+                $like = '%' . $query . '%';
+                $linkQuery->where(
+                    '(
+                        cl.normalized_url LIKE ?
+                        OR cl.title LIKE ?
+                        OR cl.description LIKE ?
+                    )',
+                    $like,
+                    $like,
+                    $like
+                );
+            }
+
+            if ($excludeIds !== []) {
+                $linkQuery->where(
+                    'c.id NOT IN (' . implode(', ', array_fill(0, count($excludeIds), '?')) . ')',
+                    $excludeIds
+                );
+            }
+
+            $seen = array_fill_keys($excludeIds, true);
+
+            foreach ($linkQuery
+                ->order('c.published_at DESC, c.id DESC')
+                ->limit(max($limit, min(100, $limit * 4)))
+                ->all() as $item) {
+                $id = (int) ($item['id'] ?? 0);
+
+                if ($id < 1 || isset($seen[$id])) {
+                    continue;
+                }
+
+                $seen[$id] = true;
+                $rows[] = $item;
+
+                if (count($rows) >= $limit) {
+                    break;
+                }
+            }
+        } catch (Throwable) {
+            return [];
+        }
+
+        return $rows;
+    }
+}
+
 if (!function_exists('public_search_content_rows')) {
     function public_search_content_rows(string $query, int $limit): array
     {
@@ -2557,7 +2677,24 @@ if (!function_exists('public_search_content_rows')) {
                     }
                 }
             } catch (Throwable) {
-                return $recent;
+                // Link search below can still provide useful results.
+            }
+        }
+
+        if (count($recent) >= $limit) {
+            return $recent;
+        }
+
+        $existingIds = array_values(array_filter(array_map(
+            static fn (array $item): int => (int) ($item['id'] ?? 0),
+            $recent
+        ), static fn (int $id): bool => $id > 0));
+
+        foreach (public_search_link_content_rows($query, $limit - count($recent), $existingIds) as $item) {
+            $recent[] = $item;
+
+            if (count($recent) >= $limit) {
+                break;
             }
         }
 
@@ -2829,7 +2966,7 @@ if (!function_exists('public_search_results')) {
                 continue;
             }
 
-            $content[] = public_search_content_result($item, $query);
+            $content[] = public_search_content_result($item, $query, (string) ($item['link_excerpt'] ?? '') ?: null);
             $contentIds[$id] = true;
         }
 
@@ -3367,6 +3504,262 @@ if (!function_exists('status_sync_tags')) {
         }
 
         status_cleanup_unused_terms();
+    }
+}
+
+if (!function_exists('status_links_from_text')) {
+    function status_links_from_text(string $text): array
+    {
+        return StatusLinks::extract($text);
+    }
+}
+
+if (!function_exists('status_sync_links')) {
+    function status_sync_links(int $contentId, array $links): void
+    {
+        if ($contentId < 1) {
+            return;
+        }
+
+        delete('content_links', ['content_id' => $contentId]);
+
+        foreach ($links as $link) {
+            $link = LinkMetadata::enrich((array) $link);
+            $normalizedUrl = plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048);
+            $hash = (string) ($link['url_hash'] ?? '');
+
+            if ($normalizedUrl === '' || $hash === '') {
+                continue;
+            }
+
+            try {
+                insert('content_links', [
+                    'content_id' => $contentId,
+                    'position_index' => max(0, (int) ($link['position'] ?? 0)),
+                    'raw_url' => plain_text_limit((string) ($link['raw_url'] ?? $normalizedUrl), 2048),
+                    'normalized_url' => $normalizedUrl,
+                    'url_hash' => plain_text_limit($hash, 64),
+                    'provider' => plain_text_limit((string) ($link['provider'] ?? 'web'), 40),
+                    'link_type' => plain_text_limit((string) ($link['link_type'] ?? 'link'), 20),
+                    'title' => plain_text_limit((string) ($link['title'] ?? ''), 255),
+                    'description' => plain_text_limit((string) ($link['description'] ?? ''), 500),
+                    'image_url' => plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
+                    'video_id' => plain_text_limit((string) ($link['video_id'] ?? ''), 80),
+                    'embed_url' => plain_text_limit((string) ($link['embed_url'] ?? ''), 2048),
+                ]);
+            } catch (Throwable) {
+                // Duplicate links inside one post are ignored by the unique content/hash key.
+            }
+        }
+    }
+}
+
+if (!function_exists('status_links_cache')) {
+    function status_links_cache(array $contentIds): array
+    {
+        static $cache = [];
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $missing = array_values(array_filter($ids, static fn (int $id): bool => !array_key_exists($id, $cache)));
+
+        foreach ($missing as $id) {
+            $cache[$id] = [];
+        }
+
+        if ($missing !== []) {
+            foreach (db_select('SELECT * FROM content_links')
+                ->whereIn('content_id', $missing)
+                ->order('content_id ASC, position_index ASC, id ASC')
+                ->all() as $row) {
+                $contentId = (int) ($row['content_id'] ?? 0);
+
+                if ($contentId > 0) {
+                    $cache[$contentId][] = $row;
+                }
+            }
+        }
+
+        $result = [];
+
+        foreach ($ids as $id) {
+            $result[$id] = $cache[$id] ?? [];
+        }
+
+        return $result;
+    }
+}
+
+if (!function_exists('status_preload_links')) {
+    function status_preload_links(array $contentIds): void
+    {
+        status_links_cache($contentIds);
+    }
+}
+
+if (!function_exists('status_links_for_content')) {
+    function status_links_for_content(int $contentId): array
+    {
+        $links = status_links_cache([$contentId]);
+
+        return $links[$contentId] ?? [];
+    }
+}
+
+if (!function_exists('status_link_display_url')) {
+    function status_link_display_url(array $link): string
+    {
+        $url = (string) ($link['normalized_url'] ?? '');
+        $parts = parse_url($url);
+
+        if (!is_array($parts)) {
+            return $url;
+        }
+
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        $path = (string) ($parts['path'] ?? '');
+
+        return trim($host . ($path !== '/' ? $path : ''));
+    }
+}
+
+if (!function_exists('status_video_embed_allowed')) {
+    function status_video_embed_allowed(string $url): bool
+    {
+        $host = strtolower((string) (parse_url($url, PHP_URL_HOST) ?: ''));
+
+        return in_array($host, [
+            'www.youtube-nocookie.com',
+            'youtube-nocookie.com',
+            'www.youtube.com',
+            'youtube.com',
+            'player.vimeo.com',
+            'www.dailymotion.com',
+            'dailymotion.com',
+        ], true);
+    }
+}
+
+if (!function_exists('status_video_embed_url')) {
+    function status_video_embed_url(array $link): string
+    {
+        $provider = (string) ($link['provider'] ?? '');
+        $videoId = trim((string) ($link['video_id'] ?? ''));
+
+        if ($provider === 'youtube' && $videoId !== '') {
+            return 'https://www.youtube.com/embed/' . rawurlencode($videoId);
+        }
+
+        return (string) ($link['embed_url'] ?? '');
+    }
+}
+
+if (!function_exists('status_video_thumbnail_url')) {
+    function status_video_thumbnail_url(array $link): string
+    {
+        $provider = (string) ($link['provider'] ?? '');
+        $videoId = trim((string) ($link['video_id'] ?? ''));
+
+        if ($provider === 'youtube' && $videoId !== '') {
+            return 'https://i.ytimg.com/vi/' . rawurlencode($videoId) . '/hqdefault.jpg';
+        }
+
+        return '';
+    }
+}
+
+if (!function_exists('status_link_card_html')) {
+    function status_link_card_html(array $link): string
+    {
+        $type = (string) ($link['link_type'] ?? 'link');
+        $provider = (string) ($link['provider'] ?? 'web');
+        $url = (string) ($link['normalized_url'] ?? '');
+        $title = trim((string) ($link['title'] ?? ''));
+        $description = trim((string) ($link['description'] ?? ''));
+        $imageUrl = trim((string) ($link['image_url'] ?? ''));
+        $displayUrl = status_link_display_url($link);
+
+        if ($url === '') {
+            return '';
+        }
+
+        if ($title === '') {
+            $title = $displayUrl !== '' ? $displayUrl : $url;
+        }
+
+        $embedUrl = status_video_embed_url($link);
+        $thumbnailUrl = status_video_thumbnail_url($link);
+
+        if ($type === 'video' && status_video_embed_allowed($embedUrl)) {
+            ob_start();
+            ?>
+            <div class="status-video-card" data-status-video data-embed-url="<?= e($embedUrl) ?>">
+                <button class="status-video-placeholder" type="button" data-status-video-load aria-label="<?= e($title) ?>">
+                    <?php if ($thumbnailUrl !== ''): ?>
+                        <img class="status-video-thumb" src="<?= e($thumbnailUrl) ?>" alt="" loading="lazy" referrerpolicy="no-referrer">
+                    <?php endif; ?>
+                    <span class="status-video-play"><?= icon('play') ?></span>
+                    <span class="status-video-copy">
+                        <strong><?= e($title) ?></strong>
+                        <small><?= e($description !== '' ? $description : $provider) ?></small>
+                    </span>
+                </button>
+            </div>
+            <?php
+
+            return trim((string) ob_get_clean());
+        }
+
+        ob_start();
+        ?>
+        <a class="status-link-card<?= $imageUrl !== '' ? ' has-image' : '' ?>" href="<?= e($url) ?>" target="_blank" rel="nofollow noopener noreferrer ugc">
+            <?php if ($imageUrl !== ''): ?>
+                <img class="status-link-image" src="<?= e($imageUrl) ?>" alt="" loading="lazy">
+            <?php else: ?>
+                <span class="status-link-icon"><?= icon('external-link') ?></span>
+            <?php endif; ?>
+            <span class="status-link-copy">
+                <strong><?= e($title) ?></strong>
+                <?php if ($description !== '' && $description !== $displayUrl): ?>
+                    <span><?= e($description) ?></span>
+                <?php endif; ?>
+                <?php if ($displayUrl !== ''): ?>
+                    <small><?= e($displayUrl) ?></small>
+                <?php endif; ?>
+            </span>
+        </a>
+        <?php
+
+        return trim((string) ob_get_clean());
+    }
+}
+
+if (!function_exists('status_links_html')) {
+    function status_links_html(array $item): string
+    {
+        $contentId = (int) ($item['id'] ?? 0);
+
+        if ($contentId < 1) {
+            return '';
+        }
+
+        $links = status_links_for_content($contentId);
+
+        if ($links === []) {
+            return '';
+        }
+
+        $html = '';
+
+        foreach ($links as $link) {
+            $html .= status_link_card_html($link);
+        }
+
+        return $html !== '' ? '<div class="status-links">' . $html . '</div>' : '';
     }
 }
 
@@ -4150,6 +4543,7 @@ if (!function_exists('status_json_create')) {
             'created_at' => $now,
         ]);
         status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
+        status_sync_links($contentId, (array) ($payload['links'] ?? []));
         moderation_record_action($user, 'post');
 
         $item = public_status_item($contentId);
@@ -4343,7 +4737,6 @@ if (!function_exists('status_payload')) {
     function status_payload(): array
     {
         $body = plain_text_limit((string) input('body', ''), 2000);
-        $body = status_strip_external_urls($body);
         $body = normalize_mentions_for_storage($body);
         $body = normalize_tags_for_storage($body);
         $body = plain_text_limit($body, 2000);
@@ -4351,6 +4744,7 @@ if (!function_exists('status_payload')) {
         return [
             'body' => $body,
             'tags' => status_tags_from_text($body),
+            'links' => status_links_from_text($body),
         ];
     }
 }
@@ -4413,6 +4807,7 @@ if (!function_exists('status_delete_content')) {
 
         delete('content_comments', ['content_id' => $contentId]);
         delete('content_tags', ['content_id' => $contentId]);
+        delete('content_links', ['content_id' => $contentId]);
 
         if ($deleteReports) {
             delete('content_reports', ['content_id' => $contentId]);
@@ -4676,6 +5071,7 @@ if (!function_exists('status_json_update')) {
             'body' => $body,
         ], ['id' => $contentId]);
         status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
+        status_sync_links($contentId, (array) ($payload['links'] ?? []));
 
         $data = [
             'action' => 'update',
@@ -5070,6 +5466,11 @@ if (!function_exists('maintenance_cleanup_tasks')) {
                 'label' => t('maintenance.tasks.orphan_terms'),
                 'description' => t('maintenance.tasks.orphan_terms_help'),
             ],
+            'orphan_content_links' => [
+                'icon' => 'link',
+                'label' => t('maintenance.tasks.orphan_content_links'),
+                'description' => t('maintenance.tasks.orphan_content_links_help'),
+            ],
             'old_action_limits' => [
                 'icon' => 'clock',
                 'label' => t('maintenance.tasks.old_action_limits'),
@@ -5151,6 +5552,12 @@ if (!function_exists('maintenance_cleanup_count')) {
                 LEFT JOIN content_tags ct ON ct.term_id = t.id
                 WHERE ct.term_id IS NULL'
             ),
+            'orphan_content_links' => (int) val(
+                'SELECT COUNT(*)
+                FROM content_links cl
+                LEFT JOIN content c ON c.id = cl.content_id
+                WHERE c.id IS NULL'
+            ),
             'old_action_limits' => (int) val(
                 'SELECT COUNT(*)
                 FROM user_action_limits
@@ -5182,6 +5589,7 @@ if (!function_exists('maintenance_cleanup_delete')) {
                 )
                 LIMIT ' . $batchSize
             ),
+            'orphan_content_links' => maintenance_cleanup_delete_orphan_content_links($batchSize),
             'old_action_limits' => maintenance_cleanup_delete_limited(
                 'DELETE FROM user_action_limits
                 WHERE bucket_start < ?
@@ -5225,6 +5633,26 @@ if (!function_exists('maintenance_cleanup_delete_orphan_tag_relations')) {
                     LIMIT ' . $batchSize . '
                 ) orphan_rows
             ) x ON x.content_id = ct.content_id AND x.term_id = ct.term_id';
+
+        return maintenance_cleanup_delete_limited($sql);
+    }
+}
+
+if (!function_exists('maintenance_cleanup_delete_orphan_content_links')) {
+    function maintenance_cleanup_delete_orphan_content_links(int $batchSize): int
+    {
+        $sql = 'DELETE cl
+            FROM content_links cl
+            INNER JOIN (
+                SELECT id
+                FROM (
+                    SELECT cl.id
+                    FROM content_links cl
+                    LEFT JOIN content c ON c.id = cl.content_id
+                    WHERE c.id IS NULL
+                    LIMIT ' . $batchSize . '
+                ) orphan_rows
+            ) x ON x.id = cl.id';
 
         return maintenance_cleanup_delete_limited($sql);
     }

@@ -546,6 +546,7 @@
     qsa("[data-tagifier]", root || document).forEach(initTagifierRoot);
     qsa("[data-captcha]", root || document).forEach(initCaptchaRoot);
     qsa("[data-avatar-paint]", root || document).forEach(initAvatarPaintRoot);
+    qsa("[data-status-video]", root || document).forEach(initStatusVideoRoot);
 
     if (TinyCat.initStatusEditors) {
       TinyCat.initStatusEditors(root || document);
@@ -574,6 +575,65 @@
     if (TinyCat.initDirtyForms) {
       TinyCat.initDirtyForms(root || document);
     }
+  }
+
+  function allowedStatusVideoUrl(value) {
+    var url;
+    var allowedHosts = [
+      "www.youtube-nocookie.com",
+      "youtube-nocookie.com",
+      "www.youtube.com",
+      "youtube.com",
+      "player.vimeo.com",
+      "www.dailymotion.com",
+      "dailymotion.com"
+    ];
+
+    try {
+      url = new URL(String(value || ""), window.location.href);
+    } catch (error) {
+      return "";
+    }
+
+    if (url.protocol !== "https:" || allowedHosts.indexOf(url.hostname.toLowerCase()) === -1) {
+      return "";
+    }
+
+    return url.href;
+  }
+
+  function initStatusVideoRoot(root) {
+    var button;
+    var embedUrl;
+
+    if (!root || root.dataset.statusVideoReady === "true") {
+      return;
+    }
+
+    button = qs("[data-status-video-load]", root);
+    embedUrl = allowedStatusVideoUrl(root.dataset.embedUrl || "");
+
+    if (!button || !embedUrl) {
+      return;
+    }
+
+    root.dataset.statusVideoReady = "true";
+    button.addEventListener("click", function () {
+      var iframe = document.createElement("iframe");
+      var url = new URL(embedUrl);
+
+      url.searchParams.set("autoplay", "1");
+      url.searchParams.set("playsinline", "1");
+
+      iframe.className = "status-video-frame";
+      iframe.src = url.href;
+      iframe.loading = "lazy";
+      iframe.referrerPolicy = "no-referrer";
+      iframe.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share";
+      iframe.allowFullscreen = true;
+      root.innerHTML = "";
+      root.appendChild(iframe);
+    });
   }
 
   function initAvatarPaintRoot(root) {
@@ -4380,6 +4440,7 @@
     TinyCat.initTabs();
     TinyCat.initTagifiers();
     TinyCat.initStatusEditors();
+    qsa("[data-status-video]", document).forEach(initStatusVideoRoot);
     TinyCat.initStatusFeedLazy();
     TinyCat.initGlobalSearch();
     TinyCat.initPublicSidebar();

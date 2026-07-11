@@ -48,6 +48,7 @@ ob_start();
     <?php if ($bodyHtml !== ''): ?>
         <div class="status-body"><?= $bodyHtml ?></div>
     <?php endif; ?>
+    <?= status_links_html($item) ?>
     <?= status_actions($item, $user, $action) ?>
     <?= status_comment_thread_section($item, $user, $action, 'modal-' . $contentId) ?>
 </article>

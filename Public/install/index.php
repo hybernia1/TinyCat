@@ -390,6 +390,31 @@ function tc_install_create_tables(): void
     );
 
     run(
+        "CREATE TABLE IF NOT EXISTS content_links (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            content_id BIGINT UNSIGNED NOT NULL,
+            position_index INT UNSIGNED NOT NULL DEFAULT 0,
+            raw_url VARCHAR(2048) NOT NULL,
+            normalized_url VARCHAR(2048) NOT NULL,
+            url_hash CHAR(64) NOT NULL,
+            provider VARCHAR(40) NOT NULL DEFAULT 'web',
+            link_type VARCHAR(20) NOT NULL DEFAULT 'link',
+            title VARCHAR(255) NULL,
+            description VARCHAR(500) NULL,
+            image_url VARCHAR(2048) NULL,
+            video_id VARCHAR(80) NULL,
+            embed_url VARCHAR(2048) NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY content_links_content_hash_unique (content_id, url_hash),
+            KEY content_links_content_index (content_id, position_index),
+            KEY content_links_hash_index (url_hash),
+            KEY content_links_provider_index (provider, link_type),
+            FULLTEXT KEY content_links_search_fulltext (normalized_url, title, description)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
         "CREATE TABLE IF NOT EXISTS content_likes (
             content_id BIGINT UNSIGNED NOT NULL,
             user_id INT UNSIGNED NOT NULL,
@@ -605,6 +630,7 @@ function tc_install_schema_tables(): array
         'content' => 'install.purpose_content',
         'terms' => 'install.purpose_terms',
         'content_tags' => 'install.purpose_content_tags',
+        'content_links' => 'install.purpose_content_links',
         'content_likes' => 'install.purpose_content_likes',
         'content_comments' => 'install.purpose_content_comments',
         'comment_likes' => 'install.purpose_comment_likes',
@@ -914,7 +940,7 @@ function tc_install_done_view(): void
             <p class="text-muted mb-0"><?= et('install.done_intro') ?></p>
             <ul class="result-list">
                 <li class="result-item"><?= icon('globe') ?> <span><?= et('common.language') ?>: <strong><?= e(locale()) ?></strong></span></li>
-                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, user_action_limits, settings</strong></span></li>
+                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, content_links, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, user_action_limits, settings</strong></span></li>
                 <li class="result-item"><?= icon('shield') ?> <span><?= et('common.account') ?>: <strong><?= et('common.done') ?></strong></span></li>
             </ul>
             <div class="btn-group">
