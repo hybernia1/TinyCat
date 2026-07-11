@@ -405,6 +405,7 @@ function tc_install_create_tables(): void
             video_id VARCHAR(80) NULL,
             embed_url VARCHAR(2048) NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             UNIQUE KEY content_links_content_hash_unique (content_id, url_hash),
             KEY content_links_content_index (content_id, position_index),

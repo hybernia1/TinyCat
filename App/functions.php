@@ -3767,6 +3767,101 @@ if (!function_exists('status_link_is_internal')) {
     }
 }
 
+if (!function_exists('status_link_metadata_ttl')) {
+    function status_link_metadata_ttl(): int
+    {
+        return 86400;
+    }
+}
+
+if (!function_exists('status_link_metadata_cache')) {
+    function status_link_metadata_cache(array $links): array
+    {
+        $hashes = [];
+
+        foreach ($links as $link) {
+            $link = (array) $link;
+            $hash = (string) ($link['url_hash'] ?? '');
+
+            if ($hash !== '') {
+                $hashes[$hash] = $hash;
+            }
+        }
+
+        if ($hashes === []) {
+            return [];
+        }
+
+        $cached = [];
+
+        try {
+            foreach (db_select('SELECT * FROM content_links')
+                ->whereIn('url_hash', array_values($hashes))
+                ->order('updated_at DESC, id DESC')
+                ->all() as $row) {
+                $hash = (string) ($row['url_hash'] ?? '');
+
+                if ($hash !== '' && !isset($cached[$hash])) {
+                    $cached[$hash] = $row;
+                }
+            }
+        } catch (Throwable) {
+            return [];
+        }
+
+        return $cached;
+    }
+}
+
+if (!function_exists('status_link_metadata_fresh')) {
+    function status_link_metadata_fresh(?array $link): bool
+    {
+        if ($link === null) {
+            return false;
+        }
+
+        $updatedAt = strtotime((string) ($link['updated_at'] ?? ''));
+
+        return $updatedAt > 0 && $updatedAt >= time() - status_link_metadata_ttl();
+    }
+}
+
+if (!function_exists('status_link_apply_cached_metadata')) {
+    function status_link_apply_cached_metadata(array $link, array $cached, bool $preserveTimestamp): array
+    {
+        foreach (['provider', 'link_type', 'title', 'description', 'image_url', 'video_id', 'embed_url'] as $key) {
+            $value = (string) ($cached[$key] ?? '');
+
+            if ($value !== '') {
+                $link[$key] = $value;
+            }
+        }
+
+        $updatedAt = (string) ($cached['updated_at'] ?? '');
+        $link['_metadata_updated_at'] = $preserveTimestamp && $updatedAt !== '' ? $updatedAt : date_db();
+
+        return $link;
+    }
+}
+
+if (!function_exists('status_link_prepare_metadata')) {
+    function status_link_prepare_metadata(array $link, ?array $cached): array
+    {
+        if ($cached !== null && status_link_metadata_fresh($cached)) {
+            return status_link_apply_cached_metadata($link, $cached, true);
+        }
+
+        $enriched = LinkMetadata::enrich($link);
+        $enriched['_metadata_updated_at'] = date_db();
+
+        if (!empty($enriched['_metadata_fetched']) || $cached === null) {
+            return $enriched;
+        }
+
+        return status_link_apply_cached_metadata($enriched, $cached, false);
+    }
+}
+
 if (!function_exists('status_sync_links')) {
     function status_sync_links(int $contentId, array $links): void
     {
@@ -3774,16 +3869,20 @@ if (!function_exists('status_sync_links')) {
             return;
         }
 
+        $metadataCache = status_link_metadata_cache($links);
+
         delete('content_links', ['content_id' => $contentId]);
 
         foreach ($links as $link) {
-            $link = LinkMetadata::enrich((array) $link);
+            $link = (array) $link;
             $normalizedUrl = plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048);
             $hash = (string) ($link['url_hash'] ?? '');
 
             if ($normalizedUrl === '' || $hash === '') {
                 continue;
             }
+
+            $link = status_link_prepare_metadata($link, $metadataCache[$hash] ?? null);
 
             try {
                 insert('content_links', [
@@ -3799,6 +3898,8 @@ if (!function_exists('status_sync_links')) {
                     'image_url' => plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
                     'video_id' => plain_text_limit((string) ($link['video_id'] ?? ''), 80),
                     'embed_url' => plain_text_limit((string) ($link['embed_url'] ?? ''), 2048),
+                    'created_at' => date_db(),
+                    'updated_at' => (string) ($link['_metadata_updated_at'] ?? date_db()),
                 ]);
             } catch (Throwable) {
                 // Duplicate links inside one post are ignored by the unique content/hash key.

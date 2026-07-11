@@ -16,6 +16,7 @@ final class LinkMetadata
 
     public static function enrich(array $link): array
     {
+        $link['_metadata_fetched'] = false;
         $type = (string) ($link['link_type'] ?? 'link');
         $url = (string) ($link['normalized_url'] ?? '');
 
@@ -32,6 +33,8 @@ final class LinkMetadata
         if ($meta === []) {
             return $link;
         }
+
+        $link['_metadata_fetched'] = true;
 
         foreach (['title', 'description'] as $key) {
             if (!empty($meta[$key])) {
