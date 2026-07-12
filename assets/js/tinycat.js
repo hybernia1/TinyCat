@@ -924,18 +924,6 @@
     return element;
   }
 
-  function findData(name, value, root) {
-    var nodes = qsa("[" + name + "]", root || document);
-
-    for (var index = 0; index < nodes.length; index += 1) {
-      if (nodes[index].getAttribute(name) === String(value)) {
-        return nodes[index];
-      }
-    }
-
-    return null;
-  }
-
   function confirmOptions(trigger) {
     return {
       title: trigger.dataset.confirmTitle || "Confirm action",
@@ -2897,107 +2885,6 @@
     qsa("[data-captcha]", scope || document).forEach(initCaptchaRoot);
   };
 
-  function sortableItems(root) {
-    return qsa("[data-sortable-item]", root);
-  }
-
-  function getDragAfterElement(root, y) {
-    return sortableItems(root)
-      .filter(function (item) {
-        return item.dataset.dragging !== "true";
-      })
-      .reduce(function (closest, child) {
-        var box = child.getBoundingClientRect();
-        var offset = y - box.top - box.height / 2;
-
-        if (offset < 0 && offset > closest.offset) {
-          return { offset: offset, element: child };
-        }
-
-        return closest;
-      }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
-  }
-
-  TinyCat.syncSortable = function (root) {
-    var order = sortableItems(root).map(function (item, index) {
-      var indexTarget = qs("[data-sortable-index]", item);
-
-      if (indexTarget) {
-        indexTarget.textContent = String(index + 1);
-      }
-
-      return item.dataset.id || item.id || String(index + 1);
-    });
-    var input = root.dataset.sortableInput ? qs(root.dataset.sortableInput) : null;
-
-    if (input) {
-      input.value = order.join(",");
-    }
-
-    emit(root, "tinycat:sort", { order: order });
-  };
-
-  TinyCat.initSortable = function () {
-    qsa("[data-sortable]").forEach(function (root) {
-      sortableItems(root).forEach(function (item) {
-        item.draggable = true;
-      });
-      TinyCat.syncSortable(root);
-    });
-
-    document.addEventListener("dragstart", function (event) {
-      var item = event.target.closest && event.target.closest("[data-sortable-item]");
-
-      if (!item) {
-        return;
-      }
-
-      item.dataset.dragging = "true";
-      event.dataTransfer.effectAllowed = "move";
-      event.dataTransfer.setData("text/plain", item.dataset.id || item.id || "");
-    });
-
-    document.addEventListener("dragover", function (event) {
-      var root = event.target.closest && event.target.closest("[data-sortable]");
-      var dragging = qs('[data-sortable-item][data-dragging="true"]');
-      var after;
-
-      if (!root || !dragging || !root.contains(dragging)) {
-        return;
-      }
-
-      event.preventDefault();
-      after = getDragAfterElement(root, event.clientY);
-
-      if (after === null) {
-        root.appendChild(dragging);
-      } else if (after !== dragging) {
-        root.insertBefore(dragging, after);
-      }
-    });
-
-    document.addEventListener("drop", function (event) {
-      var root = event.target.closest && event.target.closest("[data-sortable]");
-
-      if (!root) {
-        return;
-      }
-
-      event.preventDefault();
-      TinyCat.syncSortable(root);
-    });
-
-    document.addEventListener("dragend", function () {
-      qsa("[data-sortable]").forEach(function (root) {
-        sortableItems(root).forEach(function (item) {
-          delete item.dataset.dragging;
-          delete item.dataset.dragOver;
-        });
-        TinyCat.syncSortable(root);
-      });
-    });
-  };
-
   TinyCat.initDirtyForms = function (scope) {
     qsa('form[data-confirm-unsaved="true"]', scope || document).forEach(function (form) {
       if (form.dataset.dirtyReady === "true") {
@@ -4473,7 +4360,6 @@
     TinyCat.initGlobalSearch();
     TinyCat.initPublicSidebar();
     TinyCat.initCaptcha();
-    TinyCat.initSortable();
     TinyCat.initDirtyForms();
     TinyCat.initAutoSubmit();
     TinyCat.initCommentReplies();
