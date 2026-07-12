@@ -1078,8 +1078,15 @@ final class Core
         $answer = trim((string) self::payload($name, ''));
         $challenge = self::captchaStoredChallenge($context);
 
+        if (self::captchaFailureLocked($context)) {
+            unset($_SESSION[self::captchaSessionKey($context)]);
+
+            return false;
+        }
+
         if ($challenge === [] || $answer === '') {
             unset($_SESSION[self::captchaSessionKey($context)]);
+            self::captchaRecordFailure($context);
 
             return false;
         }
@@ -1088,8 +1095,8 @@ final class Core
         $target = (int) ($challenge['target'] ?? -1);
         $expires = (int) ($challenge['expires'] ?? 0);
         $issuedAt = (float) ($challenge['issued_at'] ?? 0);
-        $tolerance = 4;
-        $minInteractionMs = 350;
+        $tolerance = 2;
+        $minInteractionMs = 500;
         $minMoves = 1;
         $serverElapsedMs = $issuedAt > 0 ? (int) floor((microtime(true) - $issuedAt) * 1000) : 0;
         $valid = $expires >= time()
@@ -1097,12 +1104,18 @@ final class Core
             && abs((float) $position - $target) <= $tolerance
             && is_numeric($elapsed)
             && (int) $elapsed >= $minInteractionMs
-            && $serverElapsedMs >= min(250, $minInteractionMs)
+            && $serverElapsedMs >= $minInteractionMs
             && is_numeric($moves)
             && (int) $moves >= $minMoves
             && in_array($method, ['pointer', 'mouse', 'touch', 'keyboard'], true);
 
         unset($_SESSION[self::captchaSessionKey($context)]);
+
+        if ($valid) {
+            self::captchaClearFailures($context);
+        } else {
+            self::captchaRecordFailure($context);
+        }
 
         return $valid;
     }
@@ -2059,7 +2072,7 @@ final class Core
             return $challenge;
         }
 
-        $target = random_int(28, 72);
+        $target = random_int(18, 82);
         $pieceTop = random_int(24, 62);
         $shape = self::captchaRandomShape();
         $challenge = [
@@ -2095,6 +2108,58 @@ final class Core
         unset($_SESSION[$key]);
 
         return [];
+    }
+
+    private static function captchaFailureLocked(string $context): bool
+    {
+        self::session();
+
+        $key = self::captchaFailureSessionKey($context);
+        $state = $_SESSION[$key] ?? null;
+
+        if (!is_array($state)) {
+            return false;
+        }
+
+        $now = time();
+        $lockUntil = (int) ($state['lock_until'] ?? 0);
+        $updatedAt = (int) ($state['updated_at'] ?? 0);
+
+        if ($updatedAt > 0 && $updatedAt < $now - 900) {
+            unset($_SESSION[$key]);
+
+            return false;
+        }
+
+        return $lockUntil > $now;
+    }
+
+    private static function captchaRecordFailure(string $context): void
+    {
+        self::session();
+
+        $key = self::captchaFailureSessionKey($context);
+        $state = $_SESSION[$key] ?? [];
+        $now = time();
+        $updatedAt = is_array($state) ? (int) ($state['updated_at'] ?? 0) : 0;
+        $count = $updatedAt >= $now - 900 && is_array($state) ? (int) ($state['count'] ?? 0) + 1 : 1;
+        $lockUntil = 0;
+
+        if ($count >= 4) {
+            $lockUntil = $now + min(20, 2 * ($count - 3));
+        }
+
+        $_SESSION[$key] = [
+            'count' => $count,
+            'updated_at' => $now,
+            'lock_until' => $lockUntil,
+        ];
+    }
+
+    private static function captchaClearFailures(string $context): void
+    {
+        self::session();
+        unset($_SESSION[self::captchaFailureSessionKey($context)]);
     }
 
     private static function captchaBoardDataUri(array $challenge): string
@@ -2268,9 +2333,7 @@ final class Core
     {
         $decoys = [];
         $attempts = 0;
-
-        $shapes = array_values(array_filter(['rb', 'lb', 'rt', 'lt'], static fn (string $item): bool => $item !== $shape));
-        shuffle($shapes);
+        $shapes = ['rb', 'lb', 'rt', 'lt'];
 
         while (count($decoys) < 3 && $attempts < 80) {
             $attempts++;
@@ -2290,7 +2353,7 @@ final class Core
             $decoys[] = [
                 'x' => $x,
                 'y' => $y,
-                'shape' => $shapes[count($decoys)] ?? self::captchaRandomShape(),
+                'shape' => $shapes[random_int(0, count($shapes) - 1)],
             ];
         }
 
@@ -2316,6 +2379,11 @@ final class Core
         $context = trim($context, '_-');
 
         return '_captcha_' . ($context !== '' ? $context : 'form');
+    }
+
+    private static function captchaFailureSessionKey(string $context): string
+    {
+        return self::captchaSessionKey($context) . '_failures';
     }
 
     private static function limitString(string $value, int $limit): string
