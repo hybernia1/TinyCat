@@ -4355,7 +4355,10 @@ if (!function_exists('status_link_card_html')) {
         ?>
         <a class="status-link-card<?= $imageUrl !== '' ? ' has-image' : '' ?>" href="<?= e($url) ?>" target="_blank" rel="nofollow noopener noreferrer ugc">
             <?php if ($imageUrl !== ''): ?>
-                <img class="status-link-image" src="<?= e($imageUrl) ?>" alt="" loading="lazy">
+                <span class="status-link-media" data-status-link-media>
+                    <img class="status-link-image" src="<?= e($imageUrl) ?>" alt="" loading="lazy" data-status-link-image>
+                    <span class="status-link-icon status-link-fallback-icon" data-status-link-fallback><?= icon('image') ?></span>
+                </span>
             <?php else: ?>
                 <span class="status-link-icon"><?= icon('external-link') ?></span>
             <?php endif; ?>

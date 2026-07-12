@@ -2274,12 +2274,43 @@ a:hover {
   color: var(--primary-strong);
 }
 
-.status-link-image {
+.status-link-media {
+  position: relative;
+  display: grid;
   width: 92px;
-  height: 100%;
   min-height: 86px;
-  object-fit: cover;
+  place-items: center;
+  overflow: hidden;
   background: var(--bg);
+}
+
+.status-link-media .status-link-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+  opacity: 0;
+  background: var(--bg);
+}
+
+.status-link-fallback-icon {
+  position: relative;
+  z-index: 1;
+  color: var(--muted);
+}
+
+.status-link-card.is-image-ready .status-link-image {
+  opacity: 1;
+}
+
+.status-link-card.is-image-ready .status-link-fallback-icon {
+  opacity: 0;
+}
+
+.status-link-card.is-image-missing .status-link-media {
+  background: var(--surface-soft);
 }
 
 .status-link-copy,
@@ -2396,7 +2427,7 @@ a:hover {
     grid-template-columns: 76px minmax(0, 1fr);
   }
 
-  .status-link-image {
+  .status-link-media {
     width: 76px;
     min-height: 76px;
   }

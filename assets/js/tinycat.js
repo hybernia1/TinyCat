@@ -648,11 +648,78 @@
     sync();
   }
 
+  function markStatusLinkImageMissing(image) {
+    var media = image && image.closest ? image.closest("[data-status-link-media]") : null;
+    var card = image && image.closest ? image.closest(".status-link-card") : null;
+    var fallback = media ? qs("[data-status-link-fallback]", media) : null;
+
+    if (!image) {
+      return;
+    }
+
+    image.hidden = true;
+    image.dataset.statusLinkImageMissing = "true";
+
+    if (card) {
+      card.classList.add("is-image-missing");
+      card.classList.remove("is-image-ready");
+    }
+
+    if (fallback) {
+      fallback.hidden = false;
+    }
+  }
+
+  function markStatusLinkImageReady(image) {
+    var media = image && image.closest ? image.closest("[data-status-link-media]") : null;
+    var card = image && image.closest ? image.closest(".status-link-card") : null;
+    var fallback = media ? qs("[data-status-link-fallback]", media) : null;
+
+    if (!image) {
+      return;
+    }
+
+    image.hidden = false;
+    image.dataset.statusLinkImageMissing = "false";
+
+    if (card) {
+      card.classList.add("is-image-ready");
+      card.classList.remove("is-image-missing");
+    }
+
+    if (fallback) {
+      fallback.hidden = true;
+    }
+  }
+
+  function initStatusLinkImageRoot(image) {
+    if (!image || image.dataset.statusLinkImageReady === "true") {
+      return;
+    }
+
+    image.dataset.statusLinkImageReady = "true";
+    image.addEventListener("load", function () {
+      markStatusLinkImageReady(image);
+    });
+    image.addEventListener("error", function () {
+      markStatusLinkImageMissing(image);
+    });
+
+    if (image.complete) {
+      if (image.naturalWidth > 0) {
+        markStatusLinkImageReady(image);
+      } else {
+        markStatusLinkImageMissing(image);
+      }
+    }
+  }
+
   function hydrateDynamic(root) {
     qsa("[data-tagifier]", root || document).forEach(initTagifierRoot);
     qsa("[data-captcha]", root || document).forEach(initCaptchaRoot);
     qsa("[data-avatar-upload]", root || document).forEach(initAvatarUploadRoot);
     qsa("[data-status-video]", root || document).forEach(initStatusVideoRoot);
+    qsa("[data-status-link-image]", root || document).forEach(initStatusLinkImageRoot);
 
     if (TinyCat.initStatusEditors) {
       TinyCat.initStatusEditors(root || document);
@@ -4389,6 +4456,7 @@
     TinyCat.initTagifiers();
     TinyCat.initStatusEditors();
     qsa("[data-status-video]", document).forEach(initStatusVideoRoot);
+    qsa("[data-status-link-image]", document).forEach(initStatusLinkImageRoot);
     TinyCat.initStatusFeedLazy();
     TinyCat.initGlobalSearch();
     TinyCat.initPublicSidebar();
