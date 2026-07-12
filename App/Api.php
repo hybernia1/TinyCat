@@ -24,6 +24,7 @@ final class Api
 
         api_route('POST', '/status/{action:[a-z-]+}', [self::class, 'statusAction']);
         api_route('GET', '/notifications', [self::class, 'notifications']);
+        api_route('GET', '/notifications-page', [self::class, 'notificationsPage']);
         api_route('POST', '/notifications/{action:[a-z-]+}', [self::class, 'notificationAction']);
 
         api_route('GET', '/home-feed', [self::class, 'homeFeed']);
@@ -223,7 +224,7 @@ final class Api
         $userId = (int) ($user['id'] ?? 0);
         $action = str_replace('-', '_', strtolower($action));
         $message = notifications_apply_action($userId, $action, max(0, (int) input('id', 0)));
-        $notifications = notifications_for_user($userId, 120);
+        $batch = notifications_page_batch($userId);
         $unread = notification_unread_count($userId);
         $data = [
             'action' => $action,
@@ -233,8 +234,25 @@ final class Api
         ];
 
         return api_payload($data, static fn (): array => $data + [
-            'html' => notifications_page_html($notifications, $unread),
+            'html' => notifications_page_html((array) $batch['items'], $unread, (string) $batch['next_url']),
         ]);
+    }
+
+    public static function notificationsPage(): array
+    {
+        $user = require_auth('/login');
+        $batch = notifications_page_batch(
+            (int) ($user['id'] ?? 0),
+            (string) get('cursor_at', ''),
+            max(0, (int) get('cursor_id', 0))
+        );
+
+        return [
+            'html' => notification_items_html((array) $batch['items']),
+            'count' => (int) $batch['count'],
+            'done' => (bool) $batch['done'],
+            'next_url' => (string) $batch['next_url'],
+        ];
     }
 
     public static function homeFeed(): array

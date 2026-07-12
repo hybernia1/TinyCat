@@ -4572,7 +4572,7 @@ function notification_latest_id(int $userId): int
         ->value();
 }
 
-function notifications_for_user(int $userId, int $limit = 80): array
+function notifications_for_user(int $userId, int $limit = 80, string $cursorAt = '', int $cursorId = 0): array
 {
     if ($userId < 1) {
         return [];
@@ -4580,7 +4580,7 @@ function notifications_for_user(int $userId, int $limit = 80): array
 
     $limit = max(1, min(200, $limit));
 
-    return db_select(
+    $query = db_select(
         'SELECT n.*,
                 u.username AS actor_name,
                 u.username AS actor_username,
@@ -4590,10 +4590,58 @@ function notifications_for_user(int $userId, int $limit = 80): array
             LEFT JOIN users u ON u.id = n.actor_id
             LEFT JOIN content c ON c.id = n.content_id'
     )
-        ->where('n.user_id = ?', $userId)
+        ->where('n.user_id = ?', $userId);
+
+    if ($cursorAt !== '' && $cursorId > 0) {
+        $query->where(
+            '(n.created_at < ? OR (n.created_at = ? AND n.id < ?))',
+            $cursorAt,
+            $cursorAt,
+            $cursorId
+        );
+    }
+
+    return $query
         ->order('n.created_at DESC, n.id DESC')
         ->limit($limit)
         ->all();
+}
+
+function notifications_page_limit(): int
+{
+    return 40;
+}
+
+function notifications_page_url(string $cursorAt, int $cursorId): string
+{
+    return '/api/notifications-page?' . http_build_query([
+        'cursor_at' => $cursorAt,
+        'cursor_id' => $cursorId,
+    ]);
+}
+
+function notifications_page_batch(int $userId, string $cursorAt = '', int $cursorId = 0): array
+{
+    $limit = notifications_page_limit();
+    $cursorAt = preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $cursorAt) === 1 ? $cursorAt : '';
+    $cursorId = max(0, $cursorId);
+    $items = notifications_for_user($userId, $limit + 1, $cursorAt, $cursorId);
+    $hasMore = count($items) > $limit;
+
+    if ($hasMore) {
+        $items = array_slice($items, 0, $limit);
+    }
+
+    $last = $items !== [] ? $items[array_key_last($items)] : [];
+    $nextAt = $hasMore ? (string) ($last['created_at'] ?? '') : '';
+    $nextId = $hasMore ? (int) ($last['id'] ?? 0) : 0;
+
+    return [
+        'items' => $items,
+        'count' => count($items),
+        'done' => !$hasMore,
+        'next_url' => $nextAt !== '' && $nextId > 0 ? notifications_page_url($nextAt, $nextId) : '',
+    ];
 }
 
 function notification_preview_html(int $userId, int $limit = 6): string
@@ -4773,7 +4821,15 @@ function notification_item_html(array $notification): string
     return trim((string) ob_get_clean());
 }
 
-function notifications_page_html(array $notifications, int $unread): string
+function notification_items_html(array $notifications): string
+{
+    return implode('', array_map(
+        static fn (array $notification): string => notification_item_html($notification),
+        $notifications
+    ));
+}
+
+function notifications_page_html(array $notifications, int $unread, string $nextUrl = ''): string
 {
     ob_start();
     ?>
@@ -4788,16 +4844,22 @@ function notifications_page_html(array $notifications, int $unread): string
                         </form>
                     <?php endif; ?>
                 </div>
-                <div class="notifications-list">
+                <div class="notifications-list" id="notifications-list">
                     <?php if ($notifications === []): ?>
                         <div class="notification-empty"><?= icon('bell') ?> <span><?= et('notifications.empty') ?></span></div>
                     <?php else: ?>
-                        <?php foreach ($notifications as $notification): ?>
-                            <?= notification_item_html($notification) ?>
-                        <?php endforeach; ?>
+                        <?= notification_items_html($notifications) ?>
                     <?php endif; ?>
                 </div>
             </article>
+            <?php if ($nextUrl !== ''): ?>
+                <div class="status-feed-more" data-status-feed-more data-status-feed-target="#notifications-list" data-status-feed-url="<?= e($nextUrl) ?>">
+                    <button class="btn btn-secondary status-feed-more-button" type="button" data-status-feed-load>
+                        <?= icon('plus') ?> <span><?= et('notifications.load_more') ?></span>
+                    </button>
+                    <span class="status-feed-more-state" data-status-feed-state hidden><?= et('notifications.loading') ?></span>
+                </div>
+            <?php endif; ?>
         </section>
         <?php
 

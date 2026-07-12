@@ -460,6 +460,8 @@
         "delete": "Smazat",
         "open": "Otevřít",
         "more": "Zobrazit další notifikace",
+        "load_more": "Načíst další",
+        "loading": "Načítání...",
         "someone": "Někdo",
         "new": "Máš novou notifikaci.",
         "new_count": "Máš {count} nových notifikací.",

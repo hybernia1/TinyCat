@@ -460,6 +460,8 @@
         "delete": "Delete",
         "open": "Open",
         "more": "View more notifications",
+        "load_more": "Load more",
+        "loading": "Loading...",
         "someone": "Someone",
         "new": "You have a new notification.",
         "new_count": "You have {count} new notifications.",

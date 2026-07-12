@@ -23,7 +23,7 @@ if (is_post()) {
     redirect('/notifications');
 }
 
-$notifications = notifications_for_user($userId, 120);
+$batch = notifications_page_batch($userId);
 $unread = notification_unread_count($userId);
 
 layout('layout', [
@@ -34,10 +34,10 @@ layout('layout', [
         'url' => '/notifications',
         'robots' => 'noindex,nofollow',
     ],
-], static function () use ($notifications, $unread): void {
+], static function () use ($batch, $unread): void {
     ?>
     <div id="notifications-view">
-        <?= notifications_page_html($notifications, $unread) ?>
+        <?= notifications_page_html((array) $batch['items'], $unread, (string) $batch['next_url']) ?>
     </div>
     <?php
 });
