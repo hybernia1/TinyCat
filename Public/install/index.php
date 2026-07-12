@@ -396,11 +396,8 @@ function tc_install_create_tables(): void
     );
 
     run(
-        "CREATE TABLE IF NOT EXISTS content_links (
+        "CREATE TABLE IF NOT EXISTS links (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            content_id BIGINT UNSIGNED NOT NULL,
-            position_index INT UNSIGNED NOT NULL DEFAULT 0,
-            raw_url VARCHAR(2048) NOT NULL,
             normalized_url VARCHAR(2048) NOT NULL,
             url_hash CHAR(64) NOT NULL,
             provider VARCHAR(40) NOT NULL DEFAULT 'web',
@@ -413,11 +410,21 @@ function tc_install_create_tables(): void
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            UNIQUE KEY content_links_content_hash_unique (content_id, url_hash),
+            UNIQUE KEY links_hash_unique (url_hash),
+            KEY links_provider_index (provider, link_type),
+            FULLTEXT KEY links_search_fulltext (normalized_url, title, description)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS content_links (
+            content_id BIGINT UNSIGNED NOT NULL,
+            link_id BIGINT UNSIGNED NOT NULL,
+            position_index INT UNSIGNED NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (content_id, link_id),
             KEY content_links_content_index (content_id, position_index),
-            KEY content_links_hash_index (url_hash),
-            KEY content_links_provider_index (provider, link_type),
-            FULLTEXT KEY content_links_search_fulltext (normalized_url, title, description)
+            KEY content_links_link_index (link_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -639,6 +646,7 @@ function tc_install_schema_tables(): array
         'content' => 'install.purpose_content',
         'terms' => 'install.purpose_terms',
         'content_tags' => 'install.purpose_content_tags',
+        'links' => 'install.purpose_links',
         'content_links' => 'install.purpose_content_links',
         'content_likes' => 'install.purpose_content_likes',
         'content_comments' => 'install.purpose_content_comments',
@@ -949,7 +957,7 @@ function tc_install_done_view(): void
             <p class="text-muted mb-0"><?= et('install.done_intro') ?></p>
             <ul class="result-list">
                 <li class="result-item"><?= icon('globe') ?> <span><?= et('common.language') ?>: <strong><?= e(locale()) ?></strong></span></li>
-                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, content_links, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, user_action_limits, settings</strong></span></li>
+                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, links, content_links, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, user_action_limits, settings</strong></span></li>
                 <li class="result-item"><?= icon('shield') ?> <span><?= et('common.account') ?>: <strong><?= et('common.done') ?></strong></span></li>
             </ul>
             <div class="btn-group">

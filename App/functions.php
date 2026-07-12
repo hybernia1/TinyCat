@@ -66,7 +66,7 @@ if (!function_exists('db')) {
 if (!function_exists('app_required_tables')) {
     function app_required_tables(): array
     {
-        return ['users', 'content', 'terms', 'content_tags', 'content_links', 'content_likes', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'user_action_limits', 'settings'];
+        return ['users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_likes', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'user_action_limits', 'settings'];
     }
 }
 
@@ -2949,21 +2949,22 @@ if (!function_exists('public_search_link_content_rows')) {
                     u.username AS author_name,
                     u.username AS author_username,
                     u.avatar_config AS author_avatar_config,
-                    CONCAT_WS(" ", cl.title, cl.description, cl.normalized_url) AS link_excerpt
+                    CONCAT_WS(" ", l.title, l.description, l.normalized_url) AS link_excerpt
                 FROM content_links cl
+                INNER JOIN links l ON l.id = cl.link_id
                 INNER JOIN content c ON c.id = cl.content_id
                 INNER JOIN users u ON u.id = c.author_id'
             )->where('u.status = ?', 'active');
 
-            if ($fulltext !== '' && public_search_fulltext_ready('content_links', 'content_links_search_fulltext')) {
-                $linkQuery->where('MATCH(cl.normalized_url, cl.title, cl.description) AGAINST (? IN BOOLEAN MODE)', $fulltext);
+            if ($fulltext !== '' && public_search_fulltext_ready('links', 'links_search_fulltext')) {
+                $linkQuery->where('MATCH(l.normalized_url, l.title, l.description) AGAINST (? IN BOOLEAN MODE)', $fulltext);
             } else {
                 $like = '%' . $query . '%';
                 $linkQuery->where(
                     '(
-                        cl.normalized_url LIKE ?
-                        OR cl.title LIKE ?
-                        OR cl.description LIKE ?
+                        l.normalized_url LIKE ?
+                        OR l.title LIKE ?
+                        OR l.description LIKE ?
                     )',
                     $like,
                     $like,
@@ -3899,7 +3900,7 @@ if (!function_exists('status_link_is_internal')) {
     function status_link_is_internal(array|string $link): bool
     {
         if (is_array($link)) {
-            foreach (['normalized_url', 'raw_url'] as $key) {
+            foreach (['normalized_url'] as $key) {
                 $url = trim((string) ($link[$key] ?? ''));
 
                 if ($url !== '' && status_internal_url($url)) {
@@ -3944,7 +3945,7 @@ if (!function_exists('status_link_metadata_cache')) {
         $cached = [];
 
         try {
-            foreach (db_select('SELECT * FROM content_links')
+            foreach (db_select('SELECT * FROM links')
                 ->whereIn('url_hash', array_values($hashes))
                 ->order('updated_at DESC, id DESC')
                 ->all() as $row) {
@@ -3959,6 +3960,78 @@ if (!function_exists('status_link_metadata_cache')) {
         }
 
         return $cached;
+    }
+}
+
+if (!function_exists('status_link_data')) {
+    function status_link_data(array $link): array
+    {
+        $normalizedUrl = plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048);
+        $hash = plain_text_limit((string) ($link['url_hash'] ?? ''), 64);
+
+        if ($normalizedUrl === '' || $hash === '') {
+            return [];
+        }
+
+        return [
+            'normalized_url' => $normalizedUrl,
+            'url_hash' => $hash,
+            'provider' => plain_text_limit((string) ($link['provider'] ?? 'web'), 40),
+            'link_type' => plain_text_limit((string) ($link['link_type'] ?? 'link'), 20),
+            'title' => plain_text_limit((string) ($link['title'] ?? ''), 255),
+            'description' => plain_text_limit((string) ($link['description'] ?? ''), 500),
+            'image_url' => plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
+            'video_id' => plain_text_limit((string) ($link['video_id'] ?? ''), 80),
+            'embed_url' => plain_text_limit((string) ($link['embed_url'] ?? ''), 2048),
+            'updated_at' => (string) ($link['_metadata_updated_at'] ?? date_db()),
+        ];
+    }
+}
+
+if (!function_exists('status_link_find_by_hash')) {
+    function status_link_find_by_hash(string $hash): ?array
+    {
+        $hash = plain_text_limit($hash, 64);
+
+        if ($hash === '') {
+            return null;
+        }
+
+        return db_select('SELECT * FROM links')
+            ->where('url_hash = ?', $hash)
+            ->limit(1)
+            ->one();
+    }
+}
+
+if (!function_exists('status_link_upsert')) {
+    function status_link_upsert(array $link): int
+    {
+        $data = status_link_data($link);
+
+        if ($data === []) {
+            return 0;
+        }
+
+        $existing = status_link_find_by_hash((string) $data['url_hash']);
+
+        if ($existing === null) {
+            try {
+                $id = insert('links', $data + ['created_at' => date_db()]);
+
+                return max(0, (int) $id);
+            } catch (Throwable) {
+                $existing = status_link_find_by_hash((string) $data['url_hash']);
+            }
+        }
+
+        $id = (int) ($existing['id'] ?? 0);
+
+        if ($id > 0) {
+            update('links', $data, ['id' => $id]);
+        }
+
+        return $id;
     }
 }
 
@@ -4051,35 +4124,47 @@ if (!function_exists('status_sync_links')) {
 
         foreach ($links as $link) {
             $link = (array) $link;
-            $normalizedUrl = plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048);
             $hash = (string) ($link['url_hash'] ?? '');
 
-            if ($normalizedUrl === '' || $hash === '') {
+            if (plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048) === '' || $hash === '') {
                 continue;
             }
 
             $link = status_link_prepare_metadata($link, $metadataCache[$hash] ?? null);
+            $linkId = status_link_upsert($link);
+
+            if ($linkId < 1) {
+                continue;
+            }
 
             try {
                 insert('content_links', [
                     'content_id' => $contentId,
+                    'link_id' => $linkId,
                     'position_index' => max(0, (int) ($link['position'] ?? 0)),
-                    'raw_url' => plain_text_limit((string) ($link['raw_url'] ?? $normalizedUrl), 2048),
-                    'normalized_url' => $normalizedUrl,
-                    'url_hash' => plain_text_limit($hash, 64),
-                    'provider' => plain_text_limit((string) ($link['provider'] ?? 'web'), 40),
-                    'link_type' => plain_text_limit((string) ($link['link_type'] ?? 'link'), 20),
-                    'title' => plain_text_limit((string) ($link['title'] ?? ''), 255),
-                    'description' => plain_text_limit((string) ($link['description'] ?? ''), 500),
-                    'image_url' => plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
-                    'video_id' => plain_text_limit((string) ($link['video_id'] ?? ''), 80),
-                    'embed_url' => plain_text_limit((string) ($link['embed_url'] ?? ''), 2048),
                     'created_at' => date_db(),
-                    'updated_at' => (string) ($link['_metadata_updated_at'] ?? date_db()),
                 ]);
             } catch (Throwable) {
-                // Duplicate links inside one post are ignored by the unique content/hash key.
+                // Duplicate links inside one post are ignored by the unique relation key.
             }
+        }
+
+        status_cleanup_unused_links();
+    }
+}
+
+if (!function_exists('status_cleanup_unused_links')) {
+    function status_cleanup_unused_links(): void
+    {
+        try {
+            run(
+                'DELETE l
+                FROM links l
+                LEFT JOIN content_links cl ON cl.link_id = l.id
+                WHERE cl.link_id IS NULL'
+            );
+        } catch (Throwable) {
+            // Cleanup is opportunistic; a failed cleanup must not block posting.
         }
     }
 }
@@ -4102,9 +4187,26 @@ if (!function_exists('status_links_cache')) {
         }
 
         if ($missing !== []) {
-            foreach (db_select('SELECT * FROM content_links')
-                ->whereIn('content_id', $missing)
-                ->order('content_id ASC, position_index ASC, id ASC')
+            foreach (db_select(
+                'SELECT cl.content_id,
+                    cl.position_index,
+                    l.id AS link_id,
+                    l.normalized_url,
+                    l.url_hash,
+                    l.provider,
+                    l.link_type,
+                    l.title,
+                    l.description,
+                    l.image_url,
+                    l.video_id,
+                    l.embed_url,
+                    l.created_at,
+                    l.updated_at
+                FROM content_links cl
+                INNER JOIN links l ON l.id = cl.link_id'
+            )
+                ->whereIn('cl.content_id', $missing)
+                ->order('cl.content_id ASC, cl.position_index ASC, l.id ASC')
                 ->all() as $row) {
                 $contentId = (int) ($row['content_id'] ?? 0);
 
@@ -5425,6 +5527,7 @@ if (!function_exists('status_delete_content')) {
         }
 
         status_cleanup_unused_terms();
+        status_cleanup_unused_links();
         delete('content', ['id' => $contentId]);
     }
 }
@@ -6169,7 +6272,8 @@ if (!function_exists('maintenance_cleanup_count')) {
                 'SELECT COUNT(*)
                 FROM content_links cl
                 LEFT JOIN content c ON c.id = cl.content_id
-                WHERE c.id IS NULL'
+                LEFT JOIN links l ON l.id = cl.link_id
+                WHERE c.id IS NULL OR l.id IS NULL'
             ),
             'old_action_limits' => (int) val(
                 'SELECT COUNT(*)
@@ -6257,15 +6361,16 @@ if (!function_exists('maintenance_cleanup_delete_orphan_content_links')) {
         $sql = 'DELETE cl
             FROM content_links cl
             INNER JOIN (
-                SELECT id
+                SELECT content_id, link_id
                 FROM (
-                    SELECT cl.id
+                    SELECT cl.content_id, cl.link_id
                     FROM content_links cl
                     LEFT JOIN content c ON c.id = cl.content_id
-                    WHERE c.id IS NULL
+                    LEFT JOIN links l ON l.id = cl.link_id
+                    WHERE c.id IS NULL OR l.id IS NULL
                     LIMIT ' . $batchSize . '
                 ) orphan_rows
-            ) x ON x.id = cl.id';
+            ) x ON x.content_id = cl.content_id AND x.link_id = cl.link_id';
 
         return maintenance_cleanup_delete_limited($sql);
     }

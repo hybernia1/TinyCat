@@ -10,14 +10,40 @@ final class StatusLinks
 {
     private const MAX_LINKS = 5;
     private const TRACKING_PARAMS = [
+        '_hsenc',
+        '_hsmi',
+        '_openstat',
+        'ab_channel',
+        'campaign',
+        'ck_subscriber_id',
+        'dclid',
         'fbclid',
+        'fb_action_ids',
+        'fb_action_types',
+        'fb_ref',
+        'fb_source',
+        'feature',
         'gclid',
+        'gbraid',
         'igshid',
         'mc_cid',
         'mc_eid',
+        'mkt_tok',
         'msclkid',
+        'oly_anon_id',
+        'oly_enc_id',
         'ref',
+        'ref_src',
+        'sc_customer',
+        'sc_eh',
+        'sc_llid',
+        'sc_src',
+        'si',
         'spm',
+        'srsltid',
+        'vero_id',
+        'wbraid',
+        'yclid',
     ];
     private const SOCIAL_HOSTS = [
         'bsky.app',
@@ -112,7 +138,6 @@ final class StatusLinks
 
             return [
                 'position' => $position,
-                'raw_url' => $raw,
                 'normalized_url' => $normalizedUrl,
                 'url_hash' => self::hash($normalizedUrl),
                 'provider' => $video['provider'],
@@ -133,7 +158,6 @@ final class StatusLinks
 
         return [
             'position' => $position,
-            'raw_url' => $raw,
             'normalized_url' => $normalizedUrl,
             'url_hash' => self::hash($normalizedUrl),
             'provider' => 'web',
@@ -148,7 +172,7 @@ final class StatusLinks
 
     public static function pattern(): string
     {
-        return '~(?<![@\p{L}\p{N}_])(?:https?://|www\.)[^\s<>"\']+~iu';
+        return '~(?<![@\p{L}\p{N}_])(?:https?://[^\s<>"\']+|(?:www\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(?:[/?#][^\s<>"\']*)?)~iu';
     }
 
     public static function splitTail(string $url): array
@@ -292,13 +316,16 @@ final class StatusLinks
         $scheme = strtolower((string) ($parts['scheme'] ?? 'https'));
         $path = (string) ($parts['path'] ?? '/');
         $query = self::cleanQuery((string) ($parts['query'] ?? ''));
-        $port = isset($parts['port']) ? ':' . (int) $parts['port'] : '';
+        $portNumber = isset($parts['port']) ? (int) $parts['port'] : 0;
+        $port = $portNumber > 0 && !(($scheme === 'http' && $portNumber === 80) || ($scheme === 'https' && $portNumber === 443))
+            ? ':' . $portNumber
+            : '';
 
         if ($path === '') {
             $path = '/';
         }
 
-        return $scheme . '://' . $host . $port . $path . ($query !== '' ? '?' . $query : '');
+        return $scheme . '://' . $host . $port . ($path !== '/' ? $path : '') . ($query !== '' ? '?' . $query : '');
     }
 
     private static function cleanQuery(string $query): string
@@ -359,7 +386,7 @@ final class StatusLinks
             return '';
         }
 
-        if (preg_match('~^www\.~i', $url) === 1) {
+        if (preg_match('~^(?:www\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(?:[/?#]|$)~i', $url) === 1) {
             return 'https://' . $url;
         }
 
@@ -369,6 +396,10 @@ final class StatusLinks
     private static function host(string $host): string
     {
         $host = strtolower(trim($host, ". \t\n\r\0\x0B[]"));
+
+        if (str_starts_with($host, 'www.')) {
+            $host = substr($host, 4);
+        }
 
         return preg_match('/^[a-z0-9.-]+$/', $host) === 1 ? $host : '';
     }
