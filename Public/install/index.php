@@ -245,6 +245,11 @@ function tc_install_store_admin(): never
         redirect('/install?step=admin');
     }
 
+    if (auth_password_too_long($password)) {
+        flash('error', t('account.messages.password_too_long'));
+        redirect('/install?step=admin');
+    }
+
     if ($password !== $confirm) {
         flash('error', t('install.messages.password_mismatch'));
         redirect('/install?step=admin');
@@ -916,11 +921,11 @@ function tc_install_admin_view(): void
                 <div class="grid sm:grid-2">
                     <label class="field">
                         <span class="label"><?= et('common.password') ?></span>
-                        <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" required>
+                        <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
                     </label>
                     <label class="field">
                         <span class="label"><?= et('install.admin_password_confirm') ?></span>
-                        <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" required>
+                        <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
                     </label>
                 </div>
                 <div class="choice-row">

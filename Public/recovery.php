@@ -45,11 +45,11 @@ layout('layout', [
                     </label>
                     <label class="field">
                         <span class="label"><?= et('common.new_password') ?></span>
-                        <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" required>
+                        <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
                     </label>
                     <label class="field">
                         <span class="label"><?= et('common.password_confirm') ?></span>
-                        <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" required>
+                        <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
                     </label>
                     <?= captcha_field('recovery') ?>
                     <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('auth.recovery_submit') ?></span></button>
@@ -78,6 +78,8 @@ function tc_recovery_update_password(): void
 
     if (strlen($password) < 8) {
         $errors[] = t('account.messages.password_short');
+    } elseif (auth_password_too_long($password)) {
+        $errors[] = t('account.messages.password_too_long');
     } elseif ($password !== $passwordConfirm) {
         $errors[] = t('account.messages.password_mismatch');
     }

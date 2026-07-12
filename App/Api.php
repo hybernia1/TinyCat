@@ -67,6 +67,8 @@ final class Api
 
     public static function searchCaptcha(): array
     {
+        csrf_require();
+
         if (!public_search_captcha_verify()) {
             api_error(
                 t('auth.invalid_captcha'),

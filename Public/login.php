@@ -15,9 +15,17 @@ if (is_post()) {
         redirect('/login?next=' . rawurlencode(tc_login_next()));
     }
 
+    $password = (string) post('password', '');
+
+    if (auth_password_too_long($password)) {
+        captcha_refresh('login');
+        flash('error', t('auth.invalid_login'));
+        redirect('/login?next=' . rawurlencode(tc_login_next()));
+    }
+
     if (auth_attempt([
         'username' => username_normalize((string) post('username', '')),
-        'password' => (string) post('password', ''),
+        'password' => $password,
         'remember' => post('remember', ''),
     ])) {
         captcha_refresh('login');
@@ -71,7 +79,7 @@ layout('layout', [
                     </label>
                     <label class="field">
                         <span class="label"><?= et('common.password') ?></span>
-                        <input class="input" type="password" name="password" autocomplete="current-password" required>
+                        <input class="input" type="password" name="password" autocomplete="current-password" maxlength="<?= auth_password_max_length() ?>" required>
                     </label>
                     <label class="check-line">
                         <input type="checkbox" name="remember" value="1">

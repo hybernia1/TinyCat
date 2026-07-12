@@ -377,6 +377,7 @@
             "username_invalid": "Použij 3-32 malých znaků latinky, čísla nebo podtržítko. První znak musí být písmeno.",
             "username_taken": "Toto uživatelské jméno už existuje.",
             "password_short": "Heslo musí mít alespoň 8 znaků.",
+            "password_too_long": "Heslo je příliš dlouhé.",
             "password_mismatch": "Hesla se neshodují.",
             "current_password_invalid": "Aktuální heslo není správné."
         }

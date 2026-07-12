@@ -728,7 +728,7 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
             <section class="user-editor-panel">
                 <label class="field">
                     <span class="label"><?= $create ? et('common.password') : et('common.new_password') ?></span>
-                    <input class="input" type="password" name="password" autocomplete="new-password" minlength="8"<?= $create ? ' required' : '' ?> placeholder="<?= $create ? '' : et('users.password_keep') ?>">
+                    <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="200"<?= $create ? ' required' : '' ?> placeholder="<?= $create ? '' : et('users.password_keep') ?>">
                 </label>
             </section>
 

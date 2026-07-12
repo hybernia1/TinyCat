@@ -39,6 +39,8 @@ if (is_post()) {
 
     if (strlen($password) < 8) {
         $errors[] = t('account.messages.password_short');
+    } elseif (auth_password_too_long($password)) {
+        $errors[] = t('account.messages.password_too_long');
     } elseif ($password !== $passwordConfirm) {
         $errors[] = t('account.messages.password_mismatch');
     }
@@ -113,11 +115,11 @@ layout('layout', [
                         </label>
                         <label class="field">
                             <span class="label"><?= et('common.password') ?></span>
-                            <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" required>
+                            <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
                         </label>
                         <label class="field">
                             <span class="label"><?= et('common.password_confirm') ?></span>
-                            <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" required>
+                            <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
                         </label>
                         <label class="check-line">
                             <input type="checkbox" name="platform_terms" value="1" required>

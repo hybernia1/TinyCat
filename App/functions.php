@@ -655,9 +655,18 @@ if (!function_exists('auth_login_request')) {
             ]);
         }
 
+        $password = (string) input('password', '');
+
+        if (auth_password_too_long($password)) {
+            captcha_refresh('login');
+            api_error(t('auth.invalid_login'), 422, 'invalid_login', [
+                'captcha_html' => captcha_field('login'),
+            ]);
+        }
+
         if (!auth_attempt([
             'username' => username_normalize((string) input('username', '')),
-            'password' => (string) input('password', ''),
+            'password' => $password,
             'remember' => input('remember', ''),
         ])) {
             captcha_refresh('login');
@@ -675,6 +684,20 @@ if (!function_exists('auth_login_request')) {
             'user' => user_public_payload($user),
             'redirect' => auth_redirect_after_login($user, $next),
         ];
+    }
+}
+
+if (!function_exists('auth_password_max_length')) {
+    function auth_password_max_length(): int
+    {
+        return 1024;
+    }
+}
+
+if (!function_exists('auth_password_too_long')) {
+    function auth_password_too_long(string $password): bool
+    {
+        return strlen($password) > auth_password_max_length();
     }
 }
 
@@ -716,6 +739,8 @@ if (!function_exists('registration_request')) {
 
         if (strlen($password) < 8) {
             $errors[] = t('account.messages.password_short');
+        } elseif (auth_password_too_long($password)) {
+            $errors[] = t('account.messages.password_too_long');
         } elseif ($password !== $passwordConfirm) {
             $errors[] = t('account.messages.password_mismatch');
         }
@@ -1706,6 +1731,17 @@ if (!function_exists('moderation_blocked_url_match')) {
         }
 
         return '';
+    }
+}
+
+if (!function_exists('moderation_require_allowed_urls')) {
+    function moderation_require_allowed_urls(string $text): void
+    {
+        $blockedHost = moderation_blocked_url_match($text);
+
+        if ($blockedHost !== '') {
+            api_error(t('moderation.messages.blocked_url', ['host' => $blockedHost]), 422, 'blocked_url', ['host' => $blockedHost]);
+        }
     }
 }
 
@@ -5175,6 +5211,7 @@ if (!function_exists('status_json_comment')) {
         $userId = (int) ($user['id'] ?? 0);
         $status = status_find($contentId);
         $body = plain_text_limit((string) input('comment', ''), 2000);
+        moderation_require_allowed_urls($body);
         $body = status_strip_external_urls($body);
         $body = normalize_mentions_for_storage($body);
         $body = plain_text_limit($body, 2000);
@@ -5309,11 +5346,7 @@ if (!function_exists('status_payload')) {
     function status_payload(): array
     {
         $body = plain_text_limit((string) input('body', ''), 2000);
-        $blockedHost = moderation_blocked_url_match($body);
-
-        if ($blockedHost !== '') {
-            api_error(t('moderation.messages.blocked_url', ['host' => $blockedHost]), 422, 'blocked_url', ['host' => $blockedHost]);
-        }
+        moderation_require_allowed_urls($body);
 
         $body = normalize_mentions_for_storage($body);
         $body = normalize_tags_for_storage($body);
@@ -7512,6 +7545,12 @@ if (!function_exists('auth_check')) {
 if (!function_exists('auth_attempt')) {
     function auth_attempt(array $credentials): bool
     {
+        $password = $credentials['password'] ?? null;
+
+        if (is_string($password) && auth_password_too_long($password)) {
+            return false;
+        }
+
         return Core::authAttempt($credentials);
     }
 }
