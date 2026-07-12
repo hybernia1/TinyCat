@@ -2403,6 +2403,25 @@ a:hover {
   box-shadow: none;
 }
 
+.status-comment-editor {
+  min-width: 0;
+}
+
+.status-comment-editor .status-editor-input {
+  min-height: 34px;
+  max-height: 160px;
+  border: 0;
+  background: transparent;
+  padding: 8px 0 7px;
+  line-height: 1.35;
+  box-shadow: none;
+}
+
+.status-comment-editor .status-editor-input:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+
 .status-comment-submit {
   position: absolute;
   right: 5px;
@@ -2974,6 +2993,10 @@ img.status-editor-suggestion-avatar {
 
 .status-post-modal-panel {
   width: min(100%, 740px);
+}
+
+.status-post-modal-panel.has-editor-suggestions {
+  min-height: min(620px, calc(100vh - 32px));
 }
 
 .status-post-modal-body {

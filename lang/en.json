@@ -363,6 +363,8 @@
             "status_saved": "The post was saved.",
             "status_deleted": "The post was deleted.",
             "status_required": "Post cannot be empty.",
+            "status_tag_too_long": "A tag can contain at most {max} characters.",
+            "status_tags_limit": "A post or comment can contain at most {max} unique tags.",
             "status_not_found": "The post was not found.",
             "status_forbidden": "You are not allowed to perform this action.",
             "status_edit_locked": "This post is locked after moderation and cannot be edited.",

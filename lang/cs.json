@@ -363,6 +363,8 @@
             "status_saved": "Příspěvek byl uložen.",
             "status_deleted": "Příspěvek byl smazán.",
             "status_required": "Příspěvek nemůže být prázdný.",
+            "status_tag_too_long": "Tag může obsahovat nejvýše {max} znaků.",
+            "status_tags_limit": "Příspěvek nebo komentář může obsahovat nejvýše {max} unikátních tagů.",
             "status_not_found": "Příspěvek nebyl nalezen.",
             "status_forbidden": "Na tuto akci nemáš oprávnění.",
             "status_edit_locked": "Příspěvek je po moderaci zamčený a nelze ho upravit.",

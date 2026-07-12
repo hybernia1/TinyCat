@@ -34,7 +34,9 @@ if ($contentId < 1 || $user === []) {
         <?php endif; ?>
     </div>
     <div class="status-comment-input-shell">
-        <textarea class="textarea status-comment-input" name="comment" rows="1" maxlength="2000" placeholder="<?= et($isReply ? 'account.status_reply_placeholder' : 'account.status_comment_placeholder') ?>" aria-label="<?= $label ?>" required><?= e($mention) ?></textarea>
+        <div class="status-comment-editor" data-status-editor>
+            <textarea class="textarea status-comment-input" name="comment" rows="1" maxlength="2000" placeholder="<?= et($isReply ? 'account.status_reply_placeholder' : 'account.status_comment_placeholder') ?>" aria-label="<?= $label ?>" required data-status-editor-source data-status-suggest-url="/api/status-suggest" data-status-placeholder="<?= et($isReply ? 'account.status_reply_placeholder' : 'account.status_comment_placeholder') ?>" data-status-editor-counter-disabled="true"><?= e($mention) ?></textarea>
+        </div>
         <button class="btn btn-primary btn-icon btn-sm status-comment-submit" type="submit" title="<?= $label ?>" aria-label="<?= $label ?>">
             <?= icon('send') ?>
         </button>

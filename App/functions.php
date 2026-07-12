@@ -1834,7 +1834,7 @@ function render_status_body(array $item): string
 
 function render_mentions_segment(string $text): string
 {
-    $pattern = '/(?<![\\p{L}\\p{N}_])([@#])([\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,79})/u';
+    $pattern = '/(?<![\\p{L}\\p{N}_])([@#])([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)/u';
     $offset = 0;
     $html = '';
 
@@ -3510,23 +3510,65 @@ function status_tag_normalize(string $tag): string
     $tag = ltrim($tag, "# \t\n\r\0\x0B");
     $tag = slug($tag);
 
-    return substr($tag, 0, 80);
+    return strlen($tag) <= status_tag_max_length() ? $tag : '';
+}
+
+function status_tag_max_length(): int
+{
+    return 32;
+}
+
+function status_tag_max_count(): int
+{
+    return 10;
+}
+
+function status_tag_tokens_from_text(string $text): array
+{
+    if (!preg_match_all('/(?<![\\p{L}\\p{N}_])#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)/u', $text, $matches)) {
+        return [];
+    }
+
+    return array_map('strval', (array) ($matches[1] ?? []));
 }
 
 function status_tags_from_text(string $text): array
 {
-    if (!preg_match_all('/(?<![\\p{L}\\p{N}_])#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,79})/u', $text, $matches)) {
-        return [];
-    }
-
     $tags = [];
 
-    foreach ((array) ($matches[1] ?? []) as $item) {
+    foreach (status_tag_tokens_from_text($text) as $item) {
         $tag = status_tag_normalize((string) $item);
 
         if ($tag !== '') {
             $tags[$tag] = $tag;
         }
+    }
+
+    return array_slice(array_values($tags), 0, status_tag_max_count());
+}
+
+function status_require_valid_tags(string $text): array
+{
+    $tags = [];
+
+    foreach (status_tag_tokens_from_text($text) as $item) {
+        $normalized = slug((string) $item);
+
+        if (strlen($normalized) > status_tag_max_length()) {
+            api_error(t('account.messages.status_tag_too_long', [
+                'max' => (string) status_tag_max_length(),
+            ]), 422, 'status_tag_too_long');
+        }
+
+        if ($normalized !== '') {
+            $tags[$normalized] = $normalized;
+        }
+    }
+
+    if (count($tags) > status_tag_max_count()) {
+        api_error(t('account.messages.status_tags_limit', [
+            'max' => (string) status_tag_max_count(),
+        ]), 422, 'status_tags_limit');
     }
 
     return array_values($tags);
@@ -3535,7 +3577,7 @@ function status_tags_from_text(string $text): array
 function normalize_tags_for_storage(string $text): string
 {
     return (string) preg_replace_callback(
-        '/(?<![\\p{L}\\p{N}_])#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,79})/u',
+        '/(?<![\\p{L}\\p{N}_])#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)/u',
         static function (array $match): string {
             $tag = status_tag_normalize((string) ($match[1] ?? ''));
 
@@ -5112,6 +5154,8 @@ function status_json_comment(int $contentId, int $parentId, array $user, string 
     moderation_require_allowed_urls($body);
     $body = status_strip_external_urls($body);
     $body = normalize_mentions_for_storage($body);
+    status_require_valid_tags($body);
+    $body = normalize_tags_for_storage($body);
     $body = plain_text_limit($body, 2000);
 
     if ($contentId < 1 || $userId < 1 || $status === null) {
@@ -5243,12 +5287,13 @@ function status_payload(): array
     moderation_require_allowed_urls($body);
 
     $body = normalize_mentions_for_storage($body);
+    $tags = status_require_valid_tags($body);
     $body = normalize_tags_for_storage($body);
     $body = plain_text_limit($body, 2000);
 
     return [
         'body' => $body,
-        'tags' => status_tags_from_text($body),
+        'tags' => $tags,
         'links' => status_links_from_text($body),
     ];
 }

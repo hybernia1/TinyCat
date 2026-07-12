@@ -1903,7 +1903,7 @@
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "")
-      .slice(0, 80);
+      .slice(0, 32);
   }
 
   function statusUsername(value) {
@@ -1930,6 +1930,19 @@
 
   function statusEditorCounter(root) {
     return root.__tinycatStatusCounter || qs("[data-status-editor-counter]", root);
+  }
+
+  function syncStatusEditorModalSize(root) {
+    var panel = root && root.closest ? root.closest(".status-post-modal-panel") : null;
+
+    if (!panel) {
+      return;
+    }
+
+    panel.classList.toggle(
+      "has-editor-suggestions",
+      Boolean(qs("[data-status-editor-suggestions]:not([hidden])", panel))
+    );
   }
 
   function statusEditorTags(root) {
@@ -2120,6 +2133,8 @@
       box.hidden = true;
       box.innerHTML = "";
     }
+
+    syncStatusEditorModalSize(root);
   }
 
   function selectStatusEditorSuggestion(root, index) {
@@ -2218,10 +2233,12 @@
 
     if (!box.firstElementChild) {
       box.hidden = true;
+      syncStatusEditorModalSize(root);
       return;
     }
 
     box.hidden = false;
+    syncStatusEditorModalSize(root);
     selectStatusEditorSuggestion(root, 0);
   }
 
@@ -2346,7 +2363,7 @@
     shell.appendChild(box);
     source.insertAdjacentElement("beforebegin", shell);
 
-    if (Number(source.getAttribute("maxlength") || 0) > 0) {
+    if (Number(source.getAttribute("maxlength") || 0) > 0 && source.dataset.statusEditorCounterDisabled !== "true") {
       statusEditorCounterId += 1;
       counterId = source.id ? source.id + "-counter" : "status-editor-counter-" + statusEditorCounterId;
       meta = document.createElement("div");
@@ -3764,12 +3781,17 @@
       parentField = qs('input[name="parent_id"]', form);
       details = form.closest(".status-reply-details");
       form.reset();
-      fields = qsa(".status-comment-input", form);
+      fields = qsa("textarea.status-comment-input", form);
       fields.forEach(function (field) {
         field.value = "";
         field.defaultValue = "";
         field.dispatchEvent(new Event("input", { bubbles: true }));
         field.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      qsa("[data-status-editor]", form).forEach(function (root) {
+        if (TinyCat.resetStatusEditor) {
+          TinyCat.resetStatusEditor(root);
+        }
       });
 
       if (details && parseInt((parentField && parentField.value) || "0", 10) > 0) {
@@ -4064,14 +4086,15 @@
     });
 
     document.addEventListener("keydown", function (event) {
-      var field = event.target.closest && event.target.closest(".status-comment-input");
+      var field = event.target.closest && event.target.closest(".status-comment-input, .status-comment-editor [data-status-editor-input]");
+      var form = field ? (field.form || field.closest("form")) : null;
 
-      if (!field || !field.form || !shouldSubmitOnEnter(event)) {
+      if (!form || !shouldSubmitOnEnter(event)) {
         return;
       }
 
       event.preventDefault();
-      submitForm(field.form);
+      submitForm(form);
     });
   };
 
