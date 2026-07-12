@@ -11,16 +11,6 @@ require_once __DIR__ . '/Avatar.php';
 require_once __DIR__ . '/StatusLinks.php';
 require_once __DIR__ . '/LinkMetadata.php';
 
-if (!function_exists('guard')) {
-    function guard(): void
-    {
-        if (!defined('TINYCAT')) {
-            http_response_code(403);
-            exit('Forbidden');
-        }
-    }
-}
-
 if (!function_exists('config')) {
     function config(?string $key = null, mixed $default = null): mixed
     {
@@ -698,15 +688,6 @@ if (!function_exists('auth_password_too_long')) {
     function auth_password_too_long(string $password): bool
     {
         return strlen($password) > auth_password_max_length();
-    }
-}
-
-if (!function_exists('registration_url')) {
-    function registration_url(string $next = ''): string
-    {
-        $next = auth_safe_next_url($next);
-
-        return '/register' . ($next !== '' ? '?next=' . rawurlencode($next) : '');
     }
 }
 
@@ -1616,13 +1597,6 @@ if (!function_exists('status_strip_external_urls')) {
     }
 }
 
-if (!function_exists('moderation_blocked_url_hosts')) {
-    function moderation_blocked_url_hosts(?string $value = null): array
-    {
-        return moderation_blocked_url_rules($value);
-    }
-}
-
 if (!function_exists('moderation_blocked_url_rules')) {
     function moderation_blocked_url_rules(?string $value = null): array
     {
@@ -1766,13 +1740,6 @@ if (!function_exists('moderation_text_contains_blocked_host')) {
             . '(?=$|[\/?#:,\s!?\)\]\}]|\.(?:\s|$))/i';
 
         return preg_match($pattern, $text) === 1;
-    }
-}
-
-if (!function_exists('moderation_host_is_blocked')) {
-    function moderation_host_is_blocked(string $host, array $blockedHosts): bool
-    {
-        return moderation_host_blocked_by($host, $blockedHosts) !== '';
     }
 }
 
@@ -2231,22 +2198,6 @@ if (!function_exists('public_status_page')) {
         );
 
         return public_status_items_by_ids($ids);
-    }
-}
-
-if (!function_exists('public_status_hydrate_page')) {
-    function public_status_hydrate_page(CoreQuery $query, int $limit = 24, int $offset = 0): array
-    {
-        $limit = max(1, min(100, $limit));
-        $offset = max(0, $offset);
-        $items = $query
-            ->order('c.published_at DESC, c.id DESC')
-            ->limit($limit, $offset)
-            ->all();
-
-        status_preload_feed($items);
-
-        return $items;
     }
 }
 
@@ -3674,48 +3625,6 @@ if (!function_exists('status_comments')) {
     }
 }
 
-if (!function_exists('status_preload_comments')) {
-    function status_preload_comments(array $contentIds): void
-    {
-        $contentIds = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
-
-        if ($contentIds === []) {
-            return;
-        }
-
-        $cache =& status_comments_cache();
-        $missing = [];
-
-        foreach ($contentIds as $contentId) {
-            if (!array_key_exists($contentId, $cache)) {
-                $cache[$contentId] = [];
-                $missing[] = $contentId;
-            }
-        }
-
-        if ($missing === []) {
-            return;
-        }
-
-        $rowsByContent = [];
-
-        foreach (status_comments_query()
-            ->whereIn('cc.content_id', $missing)
-            ->order('cc.content_id ASC, cc.created_at ASC, cc.id ASC')
-            ->all() as $row) {
-            $contentId = (int) ($row['content_id'] ?? 0);
-
-            if ($contentId > 0) {
-                $rowsByContent[$contentId][] = $row;
-            }
-        }
-
-        foreach ($missing as $contentId) {
-            $cache[$contentId] = status_comment_rows_to_tree($rowsByContent[$contentId] ?? []);
-        }
-    }
-}
-
 if (!function_exists('status_comment_find')) {
     function status_comment_find(int $id): ?array
     {
@@ -4456,22 +4365,6 @@ if (!function_exists('status_cleanup_unused_link_ids')) {
     }
 }
 
-if (!function_exists('status_cleanup_unused_links')) {
-    function status_cleanup_unused_links(): void
-    {
-        try {
-            run(
-                'DELETE l
-                FROM links l
-                LEFT JOIN content_links cl ON cl.link_id = l.id
-                WHERE cl.link_id IS NULL'
-            );
-        } catch (Throwable) {
-            // Cleanup is opportunistic; a failed cleanup must not block posting.
-        }
-    }
-}
-
 if (!function_exists('status_links_cache')) {
     function status_links_cache(array $contentIds): array
     {
@@ -4707,18 +4600,6 @@ if (!function_exists('status_links_html')) {
         }
 
         return $html !== '' ? '<div class="status-links">' . $html . '</div>' : '';
-    }
-}
-
-if (!function_exists('status_cleanup_unused_terms')) {
-    function status_cleanup_unused_terms(): void
-    {
-        run(
-            'DELETE FROM terms
-            WHERE id NOT IN (
-                SELECT term_id FROM content_tags
-            )'
-        );
     }
 }
 
