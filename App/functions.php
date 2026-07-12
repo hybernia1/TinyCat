@@ -1823,8 +1823,8 @@ if (!function_exists('author_mention_map')) {
 
         $map = [];
 
-        foreach (all('SELECT id, username FROM users WHERE status = ? ORDER BY id ASC', ['active']) as $user) {
-            $handle = username_normalize((string) ($user['username'] ?? ''));
+        foreach (author_mention_users() as $user) {
+            $handle = (string) ($user['handle'] ?? '');
             $id = (int) ($user['id'] ?? 0);
 
             if ($handle !== '' && $id > 0 && !isset($map[$handle])) {
@@ -1836,16 +1836,24 @@ if (!function_exists('author_mention_map')) {
     }
 }
 
+if (!function_exists('author_mention_user_cache')) {
+    function &author_mention_user_cache(): array
+    {
+        static $users = [];
+
+        return $users;
+    }
+}
+
 if (!function_exists('author_mention_users')) {
     function author_mention_users(): array
     {
-        static $users = null;
+        static $loaded = false;
+        $users =& author_mention_user_cache();
 
-        if ($users !== null) {
+        if ($loaded) {
             return $users;
         }
-
-        $users = [];
 
         foreach (all('SELECT id, username FROM users WHERE status = ? ORDER BY id ASC', ['active']) as $user) {
             $id = (int) ($user['id'] ?? 0);
@@ -1861,7 +1869,55 @@ if (!function_exists('author_mention_users')) {
             }
         }
 
+        $loaded = true;
+
         return $users;
+    }
+}
+
+if (!function_exists('author_mention_users_by_ids')) {
+    function author_mention_users_by_ids(array $userIds): array
+    {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds), static fn (int $id): bool => $id > 0)));
+
+        if ($userIds === []) {
+            return [];
+        }
+
+        $users =& author_mention_user_cache();
+        $missing = array_values(array_filter($userIds, static fn (int $id): bool => !array_key_exists($id, $users)));
+
+        if ($missing !== []) {
+            foreach ($missing as $id) {
+                $users[$id] = null;
+            }
+
+            foreach (db_select('SELECT id, username FROM users')
+                ->where('status = ?', 'active')
+                ->whereIn('id', $missing)
+                ->all() as $user) {
+                $id = (int) ($user['id'] ?? 0);
+                $name = (string) ($user['username'] ?? '');
+
+                if ($id > 0) {
+                    $users[$id] = [
+                        'id' => $id,
+                        'name' => $name,
+                        'handle' => username_normalize($name),
+                    ];
+                }
+            }
+        }
+
+        $result = [];
+
+        foreach ($userIds as $id) {
+            if (isset($users[$id])) {
+                $result[$id] = $users[$id];
+            }
+        }
+
+        return $result;
     }
 }
 
@@ -1876,7 +1932,7 @@ if (!function_exists('status_author_url_mention')) {
 
         $authorId = (int) ($match[1] ?? 0);
 
-        return $authorId > 0 && isset(author_mention_users()[$authorId]) ? '@' . $authorId : '';
+        return $authorId > 0 && isset(author_mention_users_by_ids([$authorId])[$authorId]) ? '@' . $authorId : '';
     }
 }
 
@@ -1916,6 +1972,32 @@ if (!function_exists('normalize_mentions_for_storage')) {
 
             return (string) ($match[0] ?? '');
         }, $text);
+    }
+}
+
+if (!function_exists('mentions_for_editing')) {
+    function mentions_for_editing(string $text): string
+    {
+        if ($text === '' || !preg_match_all('/(?<![A-Za-z0-9_])@([1-9][0-9]*)/', $text, $matches)) {
+            return $text;
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map(
+            'intval',
+            (array) ($matches[1] ?? [])
+        ), static fn (int $id): bool => $id > 0)));
+        $users = author_mention_users_by_ids($ids);
+
+        return (string) preg_replace_callback(
+            '/(?<![A-Za-z0-9_])@([1-9][0-9]*)/',
+            static function (array $match) use ($users): string {
+                $id = (int) ($match[1] ?? 0);
+                $handle = (string) ($users[$id]['handle'] ?? '');
+
+                return $handle !== '' ? '@' . $handle : (string) ($match[0] ?? '');
+            },
+            $text
+        );
     }
 }
 
@@ -2007,8 +2089,6 @@ if (!function_exists('render_status_body')) {
 if (!function_exists('render_mentions_segment')) {
     function render_mentions_segment(string $text): string
     {
-        $map = author_mention_map();
-        $users = author_mention_users();
         $pattern = '/(?<![\\p{L}\\p{N}_])([@#])([\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,79})/u';
         $offset = 0;
         $html = '';
@@ -2017,21 +2097,31 @@ if (!function_exists('render_mentions_segment')) {
             return nl2br(e($text), false);
         }
 
+        $mentionIds = [];
+
+        foreach ($matches[0] as $index => $_match) {
+            $symbol = (string) ($matches[1][$index][0] ?? '');
+            $value = (string) ($matches[2][$index][0] ?? '');
+
+            if ($symbol === '@' && ctype_digit($value) && (int) $value > 0) {
+                $mentionIds[(int) $value] = (int) $value;
+            }
+        }
+
+        $users = author_mention_users_by_ids(array_values($mentionIds));
+
         foreach ($matches[0] as $index => $match) {
             $token = (string) $match[0];
             $position = (int) $match[1];
             $symbol = (string) ($matches[1][$index][0] ?? '');
             $handleRaw = (string) ($matches[2][$index][0] ?? '');
-            $handle = strtolower($handleRaw);
             $authorId = 0;
 
             $html .= e(substr($text, $offset, $position - $offset));
 
             if ($symbol === '@') {
-                if (ctype_digit($handle) && isset($users[(int) $handle])) {
-                    $authorId = (int) $handle;
-                } elseif (isset($map[$handle])) {
-                    $authorId = (int) $map[$handle];
+                if (ctype_digit($handleRaw) && isset($users[(int) $handleRaw])) {
+                    $authorId = (int) $handleRaw;
                 }
 
                 if ($authorId > 0 && isset($users[$authorId])) {
@@ -2374,6 +2464,23 @@ if (!function_exists('status_preload_feed')) {
             return;
         }
 
+        $mentionIds = [];
+
+        foreach ($items as $item) {
+            if (!preg_match_all('/(?<![A-Za-z0-9_])@([1-9][0-9]*)/', (string) ($item['body'] ?? ''), $matches)) {
+                continue;
+            }
+
+            foreach ((array) ($matches[1] ?? []) as $mentionId) {
+                $mentionId = (int) $mentionId;
+
+                if ($mentionId > 0) {
+                    $mentionIds[$mentionId] = $mentionId;
+                }
+            }
+        }
+
+        author_mention_users_by_ids(array_values($mentionIds));
         status_preload_latest_parent_comments($ids);
         status_preload_links($ids);
     }
@@ -4735,12 +4842,14 @@ if (!function_exists('notification_mentioned_user_ids')) {
         }
 
         $ids = [];
-        $users = author_mention_users();
+        $candidateIds = array_values(array_unique(array_filter(array_map(
+            'intval',
+            (array) ($matches[1] ?? [])
+        ), static fn (int $id): bool => $id > 0)));
+        $users = author_mention_users_by_ids($candidateIds);
 
-        foreach ((array) ($matches[1] ?? []) as $id) {
-            $id = (int) $id;
-
-            if ($id > 0 && isset($users[$id])) {
+        foreach ($candidateIds as $id) {
+            if (isset($users[$id])) {
                 $ids[$id] = $id;
             }
         }
@@ -6199,6 +6308,8 @@ if (!function_exists('status_edit_modal')) {
         if ($contentId < 1) {
             return '';
         }
+
+        $item['body'] = mentions_for_editing((string) ($item['body'] ?? ''));
 
         return render('modals/status-edit', [
             'item' => $item,
