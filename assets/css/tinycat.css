@@ -1323,10 +1323,6 @@ a:hover {
   max-width: min(100%, 880px);
 }
 
-.user-editor-note .textarea {
-  min-height: 240px;
-}
-
 .check-line {
   display: inline-flex;
   align-items: center;

@@ -3207,7 +3207,13 @@
   function statusFeedFirstPageUrl(url) {
     var next = new URL(url || window.location.href, window.location.href);
 
-    next.searchParams.set("offset", "0");
+    if (next.searchParams.get("context") === "tag") {
+      next.searchParams.delete("offset");
+    } else {
+      next.searchParams.set("offset", "0");
+    }
+    next.searchParams.delete("cursor_at");
+    next.searchParams.delete("cursor_id");
 
     return compactUrl(next);
   }
@@ -3772,6 +3778,11 @@
       }
 
       url = new URL(control.dataset.statusFeedUrl, window.location.href);
+
+      if (url.searchParams.get("context") === "tag") {
+        return;
+      }
+
       offset = parseInt(url.searchParams.get("offset") || "0", 10) || 0;
       url.searchParams.set("offset", String(Math.max(0, offset + amount)));
       control.dataset.statusFeedUrl = compactUrl(url);

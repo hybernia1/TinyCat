@@ -71,8 +71,7 @@
         "new_user": "New user",
         "list_title": "Users",
         "filter_title": "Filter users",
-        "search_placeholder": "Search username or note",
-        "note_placeholder": "Short internal note",
+        "search_placeholder": "Search username",
         "empty": "The table is empty. Create the first user.",
         "empty_filtered": "No users match the filters.",
         "table_user": "User",
@@ -114,9 +113,7 @@
             "role_required": "Choose a role.",
             "role_invalid": "The selected role is not valid.",
             "status_required": "Choose a status.",
-            "status_invalid": "The selected status is not valid.",
-            "note_invalid": "The note is not valid.",
-            "note_max": "The note can be at most 2000 characters."
+            "status_invalid": "The selected status is not valid."
         }
     },
     "moderation": {

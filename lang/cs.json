@@ -71,8 +71,7 @@
         "new_user": "Nový uživatel",
         "list_title": "Uživatelé",
         "filter_title": "Filtrovat uživatele",
-        "search_placeholder": "Hledat username nebo poznámku",
-        "note_placeholder": "Krátká interní poznámka",
+        "search_placeholder": "Hledat username",
         "empty": "Tabulka je prázdná. Vytvoř prvního uživatele.",
         "empty_filtered": "Žádní uživatelé neodpovídají filtrům.",
         "table_user": "Uživatel",
@@ -114,9 +113,7 @@
             "role_required": "Vyber roli.",
             "role_invalid": "Vybraná role není platná.",
             "status_required": "Vyber stav.",
-            "status_invalid": "Vybraný stav není platný.",
-            "note_invalid": "Poznámka není platná.",
-            "note_max": "Poznámka může mít nejvýše 2000 znaků."
+            "status_invalid": "Vybraný stav není platný."
         }
     },
     "moderation": {

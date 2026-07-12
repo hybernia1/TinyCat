@@ -197,8 +197,8 @@ function tc_admin_users_filter_sql(array $filters): array
 
     if ($filters['q'] !== '') {
         $like = tc_admin_user_like($filters['q']);
-        $clauses[] = '(username LIKE ? ESCAPE \'\\\\\' OR note LIKE ? ESCAPE \'\\\\\')';
-        array_push($params, $like, $like);
+        $clauses[] = 'username LIKE ? ESCAPE \'\\\\\'';
+        $params[] = $like;
     }
 
     if ($filters['role'] !== '') {
@@ -347,7 +347,6 @@ function tc_admin_user_resource(array $user): array
         'username' => (string) ($user['username'] ?? ''),
         'role' => (string) ($user['role'] ?? ''),
         'status' => (string) ($user['status'] ?? ''),
-        'note' => (string) ($user['note'] ?? ''),
         'created_at' => (string) ($user['created_at'] ?? ''),
         'updated_at' => (string) ($user['updated_at'] ?? ''),
         'created_at_iso' => tc_admin_datetime_iso((string) ($user['created_at'] ?? '')),
@@ -384,7 +383,6 @@ function tc_admin_user_payload(?int $id = null): array
         'password' => $passwordRule,
         'role' => 'required|string|in:' . implode(',', array_keys(tc_admin_roles())),
         'status' => 'required|string|in:' . implode(',', array_keys(tc_admin_statuses())),
-        'note' => 'nullable|string|max:2000',
     ];
 
     if ($id === null) {
@@ -418,7 +416,6 @@ function tc_admin_user_payload(?int $id = null): array
     $payload = [
         'role' => $role,
         'status' => $status,
-        'note' => trim((string) ($data['note'] ?? '')),
     ];
 
     if ($id === null) {
@@ -454,8 +451,6 @@ function tc_admin_user_validation_messages(): array
         'status.required' => t('users.validation.status_required'),
         'status.string' => t('users.validation.status_invalid'),
         'status.in' => t('users.validation.status_invalid'),
-        'note.string' => t('users.validation.note_invalid'),
-        'note.max' => t('users.validation.note_max'),
     ];
 }
 
@@ -732,12 +727,6 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
                 </label>
             </section>
 
-            <section class="user-editor-panel">
-                <label class="field user-editor-note">
-                    <span class="label"><?= et('common.note') ?></span>
-                    <textarea class="textarea" name="note" rows="8" placeholder="<?= et('users.note_placeholder') ?>"><?= e($user['note'] ?? '') ?></textarea>
-                </label>
-            </section>
         </main>
 
         <aside class="user-editor-sidebar">

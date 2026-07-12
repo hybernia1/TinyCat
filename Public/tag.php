@@ -60,7 +60,13 @@ layout('layout', [
                         <?= status_card($item, $current) ?>
                     <?php endforeach; ?>
                 </div>
-                <?= status_feed_more_control($feedId, 'tag', count($statusItems), $statusLimit, ['tag' => $tag]) ?>
+                <?= status_feed_more_control(
+                    $feedId,
+                    'tag',
+                    count($statusItems),
+                    $statusLimit,
+                    ['tag' => $tag] + status_feed_cursor_params($statusItems)
+                ) ?>
             <?php endif; ?>
         </main>
         <?= public_sidebar($tag) ?>

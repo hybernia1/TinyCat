@@ -340,7 +340,6 @@ function tc_install_create_tables(): void
             locale VARCHAR(12) NULL,
             theme VARCHAR(12) NOT NULL DEFAULT 'system',
             avatar_config TEXT NULL,
-            note TEXT NULL,
             bio VARCHAR(500) NULL,
             muted_until DATETIME NULL,
             muted_by INT UNSIGNED NULL,
@@ -352,9 +351,7 @@ function tc_install_create_tables(): void
             PRIMARY KEY (id),
             UNIQUE KEY users_username_unique (username),
             UNIQUE KEY users_recovery_hash_unique (recovery_hash),
-            KEY users_role_status_index (role, status),
-            KEY users_mute_index (muted_until),
-            KEY users_activity_index (last_seen_at)
+            KEY users_role_status_index (role, status)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -372,7 +369,6 @@ function tc_install_create_tables(): void
             KEY content_feed_index (published_at, id),
             KEY content_sidebar_index (published_at, author_id, id),
             KEY content_author_index (author_id, published_at, id),
-            KEY content_edit_lock_index (edit_locked_at),
             FULLTEXT KEY content_body_fulltext (body)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
@@ -411,7 +407,6 @@ function tc_install_create_tables(): void
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             UNIQUE KEY links_hash_unique (url_hash),
-            KEY links_provider_index (provider, link_type),
             FULLTEXT KEY links_search_fulltext (normalized_url, title, description)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
@@ -509,22 +504,19 @@ function tc_install_create_tables(): void
             PRIMARY KEY (id),
             UNIQUE KEY content_reports_unique (content_id, reporter_id),
             KEY content_reports_status_index (status, created_at),
-            KEY content_reports_content_index (content_id),
             KEY content_reports_reporter_index (reporter_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
     run(
         "CREATE TABLE IF NOT EXISTS user_action_limits (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id INT UNSIGNED NOT NULL,
             action_name VARCHAR(40) NOT NULL,
             bucket_start DATETIME NOT NULL,
             action_count INT UNSIGNED NOT NULL DEFAULT 0,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY user_action_limits_unique (user_id, action_name, bucket_start),
-            KEY user_action_limits_user_index (user_id, bucket_start)
+            PRIMARY KEY (user_id, action_name, bucket_start),
+            KEY user_action_limits_bucket_index (bucket_start)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -585,7 +577,6 @@ function tc_install_create_admin_account(string $username, string $password, str
         'status' => 'active',
         'locale' => $locale,
         'theme' => 'system',
-        'note' => '',
     ];
 
     if ($existing !== null) {

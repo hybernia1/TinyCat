@@ -765,7 +765,6 @@ if (!function_exists('registration_request')) {
             'status' => $status,
             'locale' => locale(),
             'theme' => 'system',
-            'note' => '',
             'bio' => '',
             'recovery_hash' => user_recovery_hash_generate(),
         ]);
@@ -2227,24 +2226,6 @@ if (!function_exists('public_status_author_id_query')) {
     }
 }
 
-if (!function_exists('public_status_tag_id_query')) {
-    function public_status_tag_id_query(int $termId): CoreQuery
-    {
-        $tagIndex = (string) config('database.driver', 'mysql') === 'mysql'
-            ? ' FORCE INDEX (content_tags_term_index)'
-            : '';
-
-        return db_select(
-            'SELECT c.id
-            FROM content_tags ct' . $tagIndex . '
-            INNER JOIN content c ON c.id = ct.content_id
-            INNER JOIN users u ON u.id = c.author_id'
-        )
-            ->where('ct.term_id = ?', $termId)
-            ->where('u.status = ?', 'active');
-    }
-}
-
 if (!function_exists('public_status_query')) {
     function public_status_query(): CoreQuery
     {
@@ -2371,7 +2352,12 @@ if (!function_exists('public_status_items_by_author')) {
 }
 
 if (!function_exists('public_status_items_by_tag')) {
-    function public_status_items_by_tag(string $tag, int $limit = 24, int $offset = 0): array
+    function public_status_items_by_tag(
+        string $tag,
+        int $limit = 24,
+        string $cursorAt = '',
+        int $cursorId = 0
+    ): array
     {
         $tag = status_tag_normalize($tag);
 
@@ -2385,21 +2371,26 @@ if (!function_exists('public_status_items_by_tag')) {
             return [];
         }
 
-        if ($offset >= 8000) {
+        $query = public_status_id_query()
+            ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
+            ->where('ct.term_id = ?', $termId);
+
+        if ($cursorAt !== '' && $cursorId > 0) {
             return public_status_page(
-                public_status_tag_id_query($termId),
-                $limit,
-                $offset
+                $query->where(
+                    '(
+                        c.published_at < ?
+                        OR (c.published_at = ? AND c.id < ?)
+                    )',
+                    $cursorAt,
+                    $cursorAt,
+                    $cursorId
+                ),
+                $limit
             );
         }
 
-        return public_status_page(
-            public_status_id_query()
-                ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
-                ->where('ct.term_id = ?', $termId),
-            $limit,
-            $offset
-        );
+        return public_status_page($query, $limit);
     }
 }
 
@@ -2482,6 +2473,24 @@ if (!function_exists('status_preload_feed')) {
 
         author_mention_users_by_ids(array_values($mentionIds));
         status_preload_latest_parent_comments($ids);
+
+        $userId = (int) (auth()['id'] ?? 0);
+
+        if ($userId > 0) {
+            status_preload_user_likes($ids, $userId);
+            $commentIds = [];
+
+            foreach ($ids as $contentId) {
+                $commentId = (int) (status_latest_parent_comment($contentId)['id'] ?? 0);
+
+                if ($commentId > 0) {
+                    $commentIds[] = $commentId;
+                }
+            }
+
+            status_preload_comment_user_likes($commentIds, $userId);
+        }
+
         status_preload_links($ids);
     }
 }
@@ -3526,11 +3535,67 @@ if (!function_exists('status_user_liked')) {
             return false;
         }
 
-        return db_select('SELECT content_id FROM content_likes')
-            ->where('content_id = ?', $contentId)
+        $cache =& status_user_liked_cache();
+
+        if (!array_key_exists($contentId, $cache[$userId] ?? [])) {
+            status_preload_user_likes([$contentId], $userId);
+        }
+
+        return (bool) ($cache[$userId][$contentId] ?? false);
+    }
+}
+
+if (!function_exists('status_user_liked_cache')) {
+    function &status_user_liked_cache(): array
+    {
+        static $cache = [];
+
+        return $cache;
+    }
+}
+
+if (!function_exists('status_preload_user_likes')) {
+    function status_preload_user_likes(array $contentIds, int $userId): void
+    {
+        if ($userId < 1) {
+            return;
+        }
+
+        $contentIds = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
+        $cache =& status_user_liked_cache();
+        $cache[$userId] ??= [];
+        $missing = array_values(array_filter($contentIds, static fn (int $id): bool => !array_key_exists($id, $cache[$userId])));
+
+        if ($missing === []) {
+            return;
+        }
+
+        foreach ($missing as $contentId) {
+            $cache[$userId][$contentId] = false;
+        }
+
+        foreach (db_select('SELECT content_id FROM content_likes')
             ->where('user_id = ?', $userId)
-            ->limit(1)
-            ->value() !== null;
+            ->whereIn('content_id', $missing)
+            ->all() as $row) {
+            $contentId = (int) ($row['content_id'] ?? 0);
+
+            if ($contentId > 0) {
+                $cache[$userId][$contentId] = true;
+            }
+        }
+    }
+}
+
+if (!function_exists('status_set_user_liked')) {
+    function status_set_user_liked(int $contentId, int $userId, bool $liked): void
+    {
+        if ($contentId < 1 || $userId < 1) {
+            return;
+        }
+
+        $cache =& status_user_liked_cache();
+        $cache[$userId][$contentId] = $liked;
     }
 }
 
@@ -3758,6 +3823,18 @@ if (!function_exists('status_preload_latest_parent_comments')) {
         foreach (status_comments_query()
             ->whereIn('cc.content_id', $missing)
             ->where('cc.parent_id IS NULL')
+            ->where(
+                'NOT EXISTS (
+                    SELECT 1
+                    FROM content_comments newer
+                    WHERE newer.content_id = cc.content_id
+                        AND newer.parent_id IS NULL
+                        AND (
+                            newer.created_at > cc.created_at
+                            OR (newer.created_at = cc.created_at AND newer.id > cc.id)
+                        )
+                )'
+            )
             ->order('cc.content_id ASC, cc.created_at DESC, cc.id DESC')
             ->all() as $comment) {
             $contentId = (int) ($comment['content_id'] ?? 0);
@@ -3802,10 +3879,67 @@ if (!function_exists('status_comment_user_liked')) {
             return false;
         }
 
-        return db_select('SELECT comment_id FROM comment_likes')
-            ->where('comment_id = ?', $commentId)
+        $cache =& status_comment_user_liked_cache();
+
+        if (!array_key_exists($commentId, $cache[$userId] ?? [])) {
+            status_preload_comment_user_likes([$commentId], $userId);
+        }
+
+        return (bool) ($cache[$userId][$commentId] ?? false);
+    }
+}
+
+if (!function_exists('status_comment_user_liked_cache')) {
+    function &status_comment_user_liked_cache(): array
+    {
+        static $cache = [];
+
+        return $cache;
+    }
+}
+
+if (!function_exists('status_preload_comment_user_likes')) {
+    function status_preload_comment_user_likes(array $commentIds, int $userId): void
+    {
+        if ($userId < 1) {
+            return;
+        }
+
+        $commentIds = array_values(array_unique(array_filter(array_map('intval', $commentIds), static fn (int $id): bool => $id > 0)));
+        $cache =& status_comment_user_liked_cache();
+        $cache[$userId] ??= [];
+        $missing = array_values(array_filter($commentIds, static fn (int $id): bool => !array_key_exists($id, $cache[$userId])));
+
+        if ($missing === []) {
+            return;
+        }
+
+        foreach ($missing as $commentId) {
+            $cache[$userId][$commentId] = false;
+        }
+
+        foreach (db_select('SELECT comment_id FROM comment_likes')
             ->where('user_id = ?', $userId)
-            ->exists();
+            ->whereIn('comment_id', $missing)
+            ->all() as $row) {
+            $commentId = (int) ($row['comment_id'] ?? 0);
+
+            if ($commentId > 0) {
+                $cache[$userId][$commentId] = true;
+            }
+        }
+    }
+}
+
+if (!function_exists('status_set_comment_user_liked')) {
+    function status_set_comment_user_liked(int $commentId, int $userId, bool $liked): void
+    {
+        if ($commentId < 1 || $userId < 1) {
+            return;
+        }
+
+        $cache =& status_comment_user_liked_cache();
+        $cache[$userId][$commentId] = $liked;
     }
 }
 
@@ -5491,6 +5625,8 @@ if (!function_exists('status_json_react')) {
             notification_create_for_content_owner('content_like', $contentId, $user);
         }
 
+        status_set_user_liked($contentId, $userId, !$liked);
+
         return [
             'action' => 'react',
             'status' => status_json_summary($contentId, $user),
@@ -5587,6 +5723,8 @@ if (!function_exists('status_json_comment_like')) {
             moderation_record_action($user, 'like');
             notification_create_for_comment_owner($commentId, $user);
         }
+
+        status_set_comment_user_liked($commentId, $userId, !$liked);
 
         return [
             'action' => 'comment_like',
@@ -5804,9 +5942,12 @@ if (!function_exists('status_feed_context_items')) {
 
         if ($context === 'tag') {
             $tag = status_tag_normalize((string) ($params['tag'] ?? ''));
+            $cursorAt = trim((string) ($params['cursor_at'] ?? ''));
+            $cursorAt = preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $cursorAt) === 1 ? $cursorAt : '';
+            $cursorId = max(0, (int) ($params['cursor_id'] ?? 0));
 
             return [
-                'items' => public_status_items_by_tag($tag, $limit, $offset),
+                'items' => public_status_items_by_tag($tag, $limit, $cursorAt, $cursorId),
                 'action' => tag_url($tag),
             ];
         }
@@ -6083,15 +6224,43 @@ if (!function_exists('status_feed_next_url')) {
     {
         $query = array_merge($params, [
             'context' => $context,
-            'offset' => max(0, $offset),
             'limit' => max(1, min(50, $limit)),
         ]);
+
+        if ($context !== 'tag') {
+            $query['offset'] = max(0, $offset);
+        } else {
+            unset($query['offset']);
+        }
 
         if ($html) {
             $query['view'] = 'html';
         }
 
         return '/api/status-feed?' . http_build_query($query);
+    }
+}
+
+if (!function_exists('status_feed_cursor_params')) {
+    function status_feed_cursor_params(array $items): array
+    {
+        $last = $items !== [] ? end($items) : null;
+
+        if (!is_array($last)) {
+            return [];
+        }
+
+        $publishedAt = trim((string) ($last['published_at'] ?? ''));
+        $id = (int) ($last['id'] ?? 0);
+
+        if ($publishedAt === '' || $id < 1) {
+            return [];
+        }
+
+        return [
+            'cursor_at' => $publishedAt,
+            'cursor_id' => $id,
+        ];
     }
 }
 
@@ -6104,24 +6273,39 @@ if (!function_exists('status_feed_payload')) {
         $count = count($items);
         $nextOffset = $offset + $count;
         $done = $count < $limit;
+        $nextParams = $params;
+
+        if ($context === 'tag') {
+            unset($nextParams['cursor_at'], $nextParams['cursor_id']);
+            $nextParams += status_feed_cursor_params($items);
+        }
+
         $data = [
             'context' => $context,
             'items' => $items,
             'count' => $count,
-            'offset' => $offset,
-            'next_offset' => $nextOffset,
             'done' => $done,
-            'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $params, false),
+            'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $nextParams, false),
         ];
 
-        return api_payload($data, static fn (): array => [
+        if ($context !== 'tag') {
+            $data['offset'] = $offset;
+            $data['next_offset'] = $nextOffset;
+        }
+
+        $htmlData = [
             'html' => status_feed_html($items, $action, $user),
             'count' => $count,
-            'offset' => $offset,
-            'next_offset' => $nextOffset,
             'done' => $done,
-            'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $params, true),
-        ]);
+            'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $nextParams, true),
+        ];
+
+        if ($context !== 'tag') {
+            $htmlData['offset'] = $offset;
+            $htmlData['next_offset'] = $nextOffset;
+        }
+
+        return api_payload($data, static fn (): array => $htmlData);
     }
 }
 

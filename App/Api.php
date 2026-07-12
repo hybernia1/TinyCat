@@ -253,11 +253,13 @@ final class Api
     {
         $context = (string) get('context', 'home');
         $limit = max(1, min(50, (int) get('limit', public_status_page_limit())));
-        $offset = max(0, (int) get('offset', 0));
+        $offset = $context === 'tag' ? 0 : max(0, (int) get('offset', 0));
         $params = [
             'feed' => (string) get('feed', 'all'),
             'author_id' => max(0, (int) get('author_id', 0)),
             'tag' => (string) get('tag', ''),
+            'cursor_at' => (string) get('cursor_at', ''),
+            'cursor_id' => max(0, (int) get('cursor_id', 0)),
         ];
 
         return status_feed_payload($context, $limit, $offset, $params, auth());
