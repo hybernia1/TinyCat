@@ -13,10 +13,10 @@ if (is_post()) {
 
     $tasks = maintenance_cleanup_tasks();
     $batchSize = maintenance_cleanup_batch_size(post('batch_size', null));
-    $selected = array_values(array_filter(
+    $selected = array_values(array_unique(array_filter(
         array_map(static fn (mixed $task): string => trim((string) $task), (array) post('tasks', [])),
         static fn (string $task): bool => isset($tasks[$task])
-    ));
+    )));
 
     if ($selected === []) {
         flash('warning', t('maintenance.messages.nothing_selected'));
@@ -28,20 +28,16 @@ if (is_post()) {
         static fn (array $result): int => (int) ($result['changed'] ?? 0),
         $results
     ));
-    $remaining = array_sum(array_map(
-        static fn (array $result): int => max(0, (int) ($result['remaining'] ?? 0)),
-        $results
-    ));
+    $hasMore = array_filter($results, static fn (array $result): bool => !empty($result['has_more']));
     $errors = array_filter($results, static fn (array $result): bool => isset($result['error']));
     $messageKey = $errors === []
-        ? ($remaining > 0 ? 'maintenance.messages.batch_done' : 'maintenance.messages.done')
+        ? ($hasMore !== [] ? 'maintenance.messages.batch_done' : 'maintenance.messages.done')
         : 'maintenance.messages.done_with_errors';
 
     flash('maintenance_results', $results);
     flash('maintenance_batch_size', $batchSize);
-    flash($errors === [] && $remaining < 1 ? 'success' : 'warning', t($messageKey, [
+    flash($errors === [] && $hasMore === [] ? 'success' : 'warning', t($messageKey, [
         'count' => (string) $changed,
-        'remaining' => (string) $remaining,
     ]));
 
     redirect('/admin/maintenance');
@@ -55,11 +51,10 @@ layout('layout', [
     $results = flash('maintenance_results');
     $results = is_array($results) ? $results : [];
     $batchSize = maintenance_cleanup_batch_size(flash('maintenance_batch_size'));
-    $remaining = array_sum(array_map(
-        static fn (array $result): int => max(0, (int) ($result['remaining'] ?? 0)),
-        $results
+    $continuingTasks = array_keys(array_filter(
+        $results,
+        static fn (array $result): bool => !empty($result['has_more']) && empty($result['stalled']) && !isset($result['error'])
     ));
-    $selectedTasks = array_values(array_intersect(array_keys($tasks), array_keys($results)));
     ?>
     <section class="card">
         <div class="card-header">
@@ -82,7 +77,7 @@ layout('layout', [
                 <div class="grid md:grid-2">
                     <?php foreach ($tasks as $key => $task): ?>
                         <label class="check-card">
-                            <input type="checkbox" name="tasks[]" value="<?= e($key) ?>" checked>
+                            <input type="checkbox" name="tasks[]" value="<?= e($key) ?>">
                             <span class="check-card-body">
                                 <strong class="cluster gap-2">
                                     <?= icon((string) ($task['icon'] ?? 'database')) ?>
@@ -120,11 +115,11 @@ layout('layout', [
     <section class="card">
         <div class="card-header split">
             <h2 class="text-lg m-0 cluster gap-2"><?= icon('check-circle') ?> <?= et('maintenance.results') ?></h2>
-            <?php if ($remaining > 0 && $selectedTasks !== []): ?>
+            <?php if ($continuingTasks !== []): ?>
                 <form method="post" action="/admin/maintenance">
                     <?= csrf_field() ?>
                     <input type="hidden" name="batch_size" value="<?= e((string) $batchSize) ?>">
-                    <?php foreach ($selectedTasks as $task): ?>
+                    <?php foreach ($continuingTasks as $task): ?>
                         <input type="hidden" name="tasks[]" value="<?= e($task) ?>">
                     <?php endforeach; ?>
                     <button class="btn btn-primary btn-sm" type="submit"><?= icon('database') ?> <span><?= et('maintenance.run_next_batch') ?></span></button>
@@ -140,9 +135,9 @@ layout('layout', [
                         <thead>
                             <tr>
                                 <th><?= et('maintenance.task') ?></th>
-                                <th><?= et('maintenance.before') ?></th>
                                 <th><?= et('maintenance.changed') ?></th>
-                                <th><?= et('maintenance.remaining') ?></th>
+                                <th><?= et('maintenance.status') ?></th>
+                                <th><?= et('maintenance.duration') ?></th>
                                 <th><?= et('maintenance.details') ?></th>
                             </tr>
                         </thead>
@@ -156,19 +151,19 @@ layout('layout', [
                                     <td>
                                         <strong class="cluster gap-2">
                                             <?= icon((string) ($task['icon'] ?? 'database')) ?>
-                                                <?= e((string) ($task['label'] ?? $key)) ?>
-                                            </strong>
-                                        </td>
-                                        <td><?= e(tc_admin_maintenance_count($result['before'] ?? null)) ?></td>
-                                        <td>
-                                            <span class="badge<?= $hasError ? ' badge-danger' : ' badge-primary' ?>">
-                                                <?= e(tc_admin_maintenance_count((int) ($result['changed'] ?? 0))) ?>
-                                            </span>
-                                        </td>
-                                        <td><?= e(tc_admin_maintenance_count($result['remaining'] ?? null)) ?></td>
-                                        <td><?= tc_admin_maintenance_details($result) ?></td>
-                                    </tr>
-                                <?php endforeach; ?>
+                                            <?= e((string) ($task['label'] ?? $key)) ?>
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge<?= $hasError ? ' badge-danger' : ' badge-primary' ?>">
+                                            <?= e(number_format(max(0, (int) ($result['changed'] ?? 0)), 0, '.', ' ')) ?>
+                                        </span>
+                                    </td>
+                                    <td><?= tc_admin_maintenance_status($result) ?></td>
+                                    <td><?= e((string) max(0, (int) ($result['duration_ms'] ?? 0))) ?> ms</td>
+                                    <td><?= tc_admin_maintenance_details($result) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
@@ -183,7 +178,7 @@ function tc_admin_maintenance_details(array $result): string
     $details = [];
 
     foreach ($result as $key => $value) {
-        if (in_array($key, ['task', 'before', 'changed', 'remaining', 'done', 'batch_size'], true) || is_array($value) || is_object($value)) {
+        if (in_array($key, ['task', 'changed', 'has_more', 'stalled', 'done', 'batch_size', 'duration_ms'], true) || is_array($value) || is_object($value)) {
             continue;
         }
 
@@ -193,7 +188,19 @@ function tc_admin_maintenance_details(array $result): string
     return $details === [] ? '<span class="text-muted">' . et('maintenance.no_details') . '</span>' : '<div class="cluster gap-2">' . implode('', $details) . '</div>';
 }
 
-function tc_admin_maintenance_count(mixed $value): string
+function tc_admin_maintenance_status(array $result): string
 {
-    return $value === null ? t('maintenance.unknown') : number_format((int) $value, 0, '.', ' ');
+    if (isset($result['error'])) {
+        return '<span class="badge badge-danger">' . et('maintenance.status_error') . '</span>';
+    }
+
+    if (!empty($result['stalled'])) {
+        return '<span class="badge badge-danger">' . et('maintenance.status_stalled') . '</span>';
+    }
+
+    if (!empty($result['has_more'])) {
+        return '<span class="badge">' . et('maintenance.status_more') . '</span>';
+    }
+
+    return '<span class="badge badge-primary">' . et('maintenance.status_done') . '</span>';
 }

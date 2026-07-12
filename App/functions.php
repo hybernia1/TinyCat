@@ -5902,6 +5902,11 @@ function maintenance_cleanup_tasks(): array
             'label' => t('maintenance.tasks.orphan_content_links'),
             'description' => t('maintenance.tasks.orphan_content_links_help'),
         ],
+        'orphan_links' => [
+            'icon' => 'link',
+            'label' => t('maintenance.tasks.orphan_links'),
+            'description' => t('maintenance.tasks.orphan_links_help'),
+        ],
         'old_action_limits' => [
             'icon' => 'clock',
             'label' => t('maintenance.tasks.old_action_limits'),
@@ -5921,7 +5926,7 @@ function maintenance_cleanup_run(array $selected, int $batchSize = 1000): array
     $batchSize = maintenance_cleanup_batch_size($batchSize);
     $results = [];
 
-    foreach ($selected as $task) {
+    foreach (array_unique($selected) as $task) {
         $task = trim((string) $task);
 
         if (!isset($tasks[$task])) {
@@ -5933,9 +5938,9 @@ function maintenance_cleanup_run(array $selected, int $batchSize = 1000): array
         } catch (Throwable $exception) {
             $results[$task] = [
                 'task' => $task,
-                'before' => null,
                 'changed' => 0,
-                'remaining' => null,
+                'has_more' => false,
+                'stalled' => false,
                 'batch_size' => $batchSize,
                 'error' => $exception->getMessage(),
             ];
@@ -5947,57 +5952,79 @@ function maintenance_cleanup_run(array $selected, int $batchSize = 1000): array
 
 function maintenance_cleanup_task_run(string $task, int $batchSize): array
 {
-    $before = maintenance_cleanup_count($task);
+    $batchSize = maintenance_cleanup_batch_size($batchSize);
+    $startedAt = hrtime(true);
     $changed = maintenance_cleanup_delete($task, $batchSize);
-    $remaining = maintenance_cleanup_count($task);
+    $hasMore = $changed >= $batchSize && maintenance_cleanup_has_rows($task);
 
     return [
         'task' => $task,
-        'before' => $before,
         'changed' => $changed,
-        'remaining' => $remaining,
+        'has_more' => $hasMore,
+        'stalled' => $hasMore && $changed < 1,
         'batch_size' => $batchSize,
-        'done' => $remaining < 1,
+        'duration_ms' => max(0, (int) round((hrtime(true) - $startedAt) / 1_000_000)),
+        'done' => !$hasMore,
     ];
 }
 
-function maintenance_cleanup_count(string $task): int
+function maintenance_cleanup_has_rows(string $task): bool
 {
-    return match ($task) {
-        'orphan_tag_relations' => (int) val(
-            'SELECT COUNT(*)
+    $value = match ($task) {
+        'orphan_tag_relations' => val(
+            'SELECT 1
                 FROM content_tags ct
                 LEFT JOIN content c ON c.id = ct.content_id
                 LEFT JOIN terms t ON t.id = ct.term_id
-                WHERE c.id IS NULL OR t.id IS NULL'
+                WHERE c.id IS NULL OR t.id IS NULL
+                LIMIT 1'
         ),
-        'orphan_terms' => (int) val(
-            'SELECT COUNT(*)
+        'orphan_terms' => val(
+            'SELECT 1
                 FROM terms t
-                LEFT JOIN content_tags ct ON ct.term_id = t.id
-                WHERE ct.term_id IS NULL'
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM content_tags ct
+                    WHERE ct.term_id = t.id
+                )
+                LIMIT 1'
         ),
-        'orphan_content_links' => (int) val(
-            'SELECT COUNT(*)
+        'orphan_content_links' => val(
+            'SELECT 1
                 FROM content_links cl
                 LEFT JOIN content c ON c.id = cl.content_id
                 LEFT JOIN links l ON l.id = cl.link_id
-                WHERE c.id IS NULL OR l.id IS NULL'
+                WHERE c.id IS NULL OR l.id IS NULL
+                LIMIT 1'
         ),
-        'old_action_limits' => (int) val(
-            'SELECT COUNT(*)
+        'orphan_links' => val(
+            'SELECT 1
+                FROM links l
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM content_links cl
+                    WHERE cl.link_id = l.id
+                )
+                LIMIT 1'
+        ),
+        'old_action_limits' => val(
+            'SELECT 1
                 FROM user_action_limits
-                WHERE bucket_start < ?',
+                WHERE bucket_start < ?
+                LIMIT 1',
             [date_db('-30 days')]
         ),
-        'old_read_notifications' => (int) val(
-            'SELECT COUNT(*)
+        'old_read_notifications' => val(
+            'SELECT 1
                 FROM notifications
-                WHERE read_at IS NOT NULL AND read_at < ?',
+                WHERE read_at IS NOT NULL AND read_at < ?
+                LIMIT 1',
             [date_db('-30 days')]
         ),
-        default => 0,
+        default => null,
     };
+
+    return $value !== null && $value !== false;
 }
 
 function maintenance_cleanup_delete(string $task, int $batchSize): int
@@ -6008,12 +6035,23 @@ function maintenance_cleanup_delete(string $task, int $batchSize): int
         'orphan_tag_relations' => maintenance_cleanup_delete_orphan_tag_relations($batchSize),
         'orphan_terms' => maintenance_cleanup_delete_limited(
             'DELETE FROM terms
-                WHERE id NOT IN (
-                    SELECT term_id FROM content_tags
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM content_tags ct
+                    WHERE ct.term_id = terms.id
                 )
                 LIMIT ' . $batchSize
         ),
         'orphan_content_links' => maintenance_cleanup_delete_orphan_content_links($batchSize),
+        'orphan_links' => maintenance_cleanup_delete_limited(
+            'DELETE FROM links
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM content_links cl
+                    WHERE cl.link_id = links.id
+                )
+                LIMIT ' . $batchSize
+        ),
         'old_action_limits' => maintenance_cleanup_delete_limited(
             'DELETE FROM user_action_limits
                 WHERE bucket_start < ?
