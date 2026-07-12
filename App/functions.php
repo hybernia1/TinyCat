@@ -6995,13 +6995,6 @@ if (!function_exists('find')) {
     }
 }
 
-if (!function_exists('records')) {
-    function records(string $table, array $where = [], array|string $columns = '*', ?int $limit = null, ?int $offset = null): array
-    {
-        return Core::get($table, $where, $columns, $limit, $offset);
-    }
-}
-
 if (!function_exists('total')) {
     function total(string $table, array $where = []): int
     {
@@ -7025,13 +7018,6 @@ if (!function_exists('paginate')) {
 
 if (!function_exists('pagination')) {
     function pagination(array $pagination, ?string $baseUrl = null, string $pageName = 'page', int $window = 2): string
-    {
-        return Core::pagination($pagination, $baseUrl, $pageName, $window);
-    }
-}
-
-if (!function_exists('pager')) {
-    function pager(array $pagination, ?string $baseUrl = null, string $pageName = 'page', int $window = 2): string
     {
         return Core::pagination($pagination, $baseUrl, $pageName, $window);
     }
@@ -7662,20 +7648,6 @@ if (!function_exists('relative_time')) {
     }
 }
 
-if (!function_exists('relative_date')) {
-    function relative_date(mixed $value = null, mixed $base = null): string
-    {
-        return relative_time($value, $base);
-    }
-}
-
-if (!function_exists('time_ago')) {
-    function time_ago(mixed $value = null, mixed $base = null): string
-    {
-        return relative_time($value, $base);
-    }
-}
-
 if (!function_exists('relative_datetime_value')) {
     function relative_datetime_value(mixed $value = null): DateTimeImmutable
     {
@@ -7718,13 +7690,6 @@ if (!function_exists('date_value')) {
     function date_value(mixed $value = null, ?string $format = null): string
     {
         return Core::dateValue($value, $format);
-    }
-}
-
-if (!function_exists('time_value')) {
-    function time_value(mixed $value = null, ?string $format = null): string
-    {
-        return Core::timeValue($value, $format);
     }
 }
 
@@ -7838,13 +7803,6 @@ if (!function_exists('api_created')) {
     }
 }
 
-if (!function_exists('api_no_content')) {
-    function api_no_content(): never
-    {
-        Core::apiNoContent();
-    }
-}
-
 if (!function_exists('api_error')) {
     function api_error(string $message = 'Request failed.', int $status = 400, string $code = 'error', array $details = []): never
     {
@@ -7880,41 +7838,6 @@ if (!function_exists('api_route')) {
     }
 }
 
-if (!function_exists('route_get')) {
-    function route_get(string $path, callable $handler): void
-    {
-        Core::route('GET', $path, $handler);
-    }
-}
-
-if (!function_exists('route_post')) {
-    function route_post(string $path, callable $handler): void
-    {
-        Core::route('POST', $path, $handler);
-    }
-}
-
-if (!function_exists('route_put')) {
-    function route_put(string $path, callable $handler): void
-    {
-        Core::route('PUT', $path, $handler);
-    }
-}
-
-if (!function_exists('route_patch')) {
-    function route_patch(string $path, callable $handler): void
-    {
-        Core::route('PATCH', $path, $handler);
-    }
-}
-
-if (!function_exists('route_delete')) {
-    function route_delete(string $path, callable $handler): void
-    {
-        Core::route('DELETE', $path, $handler);
-    }
-}
-
 if (!function_exists('dispatch_routes')) {
     function dispatch_routes(?string $path = null, ?string $method = null): bool
     {
@@ -7933,13 +7856,6 @@ if (!function_exists('route_path')) {
     function route_path(?string $path = null): string
     {
         return Core::path($path);
-    }
-}
-
-if (!function_exists('require_method')) {
-    function require_method(array|string $methods): void
-    {
-        Core::requireMethod($methods);
     }
 }
 
@@ -7999,20 +7915,6 @@ if (!function_exists('wants_partial')) {
     }
 }
 
-if (!function_exists('is_json')) {
-    function is_json(): bool
-    {
-        return Core::isJson();
-    }
-}
-
-if (!function_exists('bearer_token')) {
-    function bearer_token(): ?string
-    {
-        return Core::bearerToken();
-    }
-}
-
 if (!function_exists('get')) {
     function get(?string $key = null, mixed $default = null): mixed
     {
@@ -8064,13 +7966,6 @@ if (!function_exists('auth')) {
     function auth(?string $key = null, mixed $default = null): mixed
     {
         return Core::auth($key, $default);
-    }
-}
-
-if (!function_exists('auth_id')) {
-    function auth_id(): mixed
-    {
-        return Core::authId();
     }
 }
 
@@ -8140,13 +8035,6 @@ if (!function_exists('require_admin')) {
     }
 }
 
-if (!function_exists('guest_only')) {
-    function guest_only(?string $redirect = null): void
-    {
-        Core::guestOnly($redirect);
-    }
-}
-
 if (!function_exists('auth_is')) {
     function auth_is(array|string $roles): bool
     {
@@ -8172,13 +8060,6 @@ if (!function_exists('csrf_field')) {
     function csrf_field(): string
     {
         return Core::csrfField();
-    }
-}
-
-if (!function_exists('csrf_check')) {
-    function csrf_check(?string $token = null): bool
-    {
-        return Core::verifyCsrf($token);
     }
 }
 
