@@ -42,7 +42,7 @@ The project favors:
 4. Open `/install`.
 5. Choose a language, enter database credentials, and create the first admin account.
 
-The default `config.php` is safe for a fresh install. Runtime data, uploaded files, and local overrides are ignored by Git.
+The installer creates `config.php` after the database and administrator account are configured. The generated configuration, runtime data, uploaded files, and local overrides are ignored by Git.
 
 ## Project Layout
 

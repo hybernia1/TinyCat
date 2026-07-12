@@ -43,7 +43,19 @@ final class Core
         $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config.php';
 
         if (!is_file($path)) {
-            throw new RuntimeException('Config file was not found: ' . $path);
+            self::$config = [
+                'install' => [
+                    'locale' => 'en',
+                    'complete' => false,
+                ],
+            ];
+            self::$pdo = null;
+            self::$locale = null;
+            self::$translations = [];
+            self::$payload = null;
+            self::$settings = null;
+            self::$settingsLoading = false;
+            return;
         }
 
         $loaded = require $path;
