@@ -4835,7 +4835,7 @@ if (!function_exists('status_time_button')) {
         ob_start();
         ?>
         <?php if ($openModal): ?>
-            <button class="link-button public-content-meta status-time-button" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>" data-modal-url="<?= e(status_post_modal_url($contentId, $action)) ?>">
+            <button class="link-button public-content-meta status-time-button" type="button" data-modal-open>
                 <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
             </button>
         <?php else: ?>

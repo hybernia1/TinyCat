@@ -512,13 +512,10 @@ final class Core
 
         $svgAttributes = [
             'class' => trim($class . ' ' . $extraClass),
-            'width' => '1em',
-            'height' => '1em',
         ] + $attributes;
 
         if ($label === null || $label === '') {
             $svgAttributes['aria-hidden'] = 'true';
-            $svgAttributes['focusable'] = 'false';
         } else {
             $svgAttributes['role'] = 'img';
             $svgAttributes['aria-label'] = $label;

@@ -27,12 +27,13 @@ $likesCount = array_key_exists('likes_count', $comment)
     : status_comment_like_count($commentId);
 $liked = $userId > 0 && status_comment_user_liked($commentId, $userId);
 $commentDomId = 'comment-' . ($context !== '' ? preg_replace('/[^A-Za-z0-9_-]/', '', $context) . '-' : '') . $commentId;
+$preview = !$showReplies && !$showReplyForm;
 
 if ($commentId < 1 || $contentId < 1) {
     return '';
 }
 ?>
-<article class="status-comment<?= $depth > 0 ? ' is-child' : '' ?>" id="<?= e($commentDomId) ?>" data-comment-id="<?= e($commentId) ?>" data-content-id="<?= e($contentId) ?>" data-parent-id="<?= e((int) ($comment['parent_id'] ?? 0)) ?>">
+<article class="status-comment<?= $depth > 0 ? ' is-child' : '' ?>"<?= $preview ? '' : ' id="' . e($commentDomId) . '"' ?> data-comment-id="<?= e($commentId) ?>"<?= $preview ? '' : ' data-content-id="' . e($contentId) . '" data-parent-id="' . e((int) ($comment['parent_id'] ?? 0)) . '"' ?>>
     <a class="avatar avatar-sm" href="<?= e(author_url($authorId)) ?>" aria-label="<?= e($authorName) ?>">
         <?php if ($avatarUrl !== ''): ?>
             <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">

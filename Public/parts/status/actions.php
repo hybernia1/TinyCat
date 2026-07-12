@@ -29,22 +29,22 @@ if ($contentId < 1) {
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="react">
             <input type="hidden" name="id" value="<?= e($contentId) ?>">
-            <button class="btn btn-ghost btn-sm status-reaction<?= $liked ? ' is-active' : '' ?>" type="submit" title="<?= et('account.status_like') ?>" data-status-like-button data-status-id="<?= e($contentId) ?>">
-                <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span data-status-count="likes" data-status-id="<?= e($contentId) ?>"><?= e($likesCount) ?></span>
+            <button class="btn btn-ghost btn-sm status-reaction<?= $liked ? ' is-active' : '' ?>" type="submit" title="<?= et('account.status_like') ?>" data-status-like-button>
+                <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span data-status-count="likes"><?= e($likesCount) ?></span>
             </button>
         </form>
     <?php else: ?>
         <a class="btn btn-ghost btn-sm status-reaction" href="<?= e($loginUrl) ?>" aria-label="<?= et('account.status_like') ?>" title="<?= et('account.status_like') ?>">
-            <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span data-status-count="likes" data-status-id="<?= e($contentId) ?>"><?= e($likesCount) ?></span>
+            <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span data-status-count="likes"><?= e($likesCount) ?></span>
         </a>
     <?php endif; ?>
     <?php if ($openCommentsModal): ?>
-        <button class="btn btn-ghost btn-sm status-reaction" type="button" data-modal-open="<?= e(status_post_modal_id($contentId)) ?>" data-modal-url="<?= e(status_post_modal_url($contentId, $action)) ?>" aria-label="<?= et('account.status_comments') ?>">
-            <?= icon('message-circle') ?> <span data-status-count="comments" data-status-id="<?= e($contentId) ?>"><?= e($commentsCount) ?></span>
+        <button class="btn btn-ghost btn-sm status-reaction" type="button" data-modal-open aria-label="<?= et('account.status_comments') ?>">
+            <?= icon('message-circle') ?> <span data-status-count="comments"><?= e($commentsCount) ?></span>
         </button>
     <?php else: ?>
         <a class="btn btn-ghost btn-sm status-reaction" href="#status-comments-thread-<?= e($contentId) ?>" aria-label="<?= et('account.status_comments') ?>">
-            <?= icon('message-circle') ?> <span data-status-count="comments" data-status-id="<?= e($contentId) ?>"><?= e($commentsCount) ?></span>
+            <?= icon('message-circle') ?> <span data-status-count="comments"><?= e($commentsCount) ?></span>
         </a>
     <?php endif; ?>
 </div>

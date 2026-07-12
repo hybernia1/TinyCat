@@ -1112,8 +1112,9 @@
   }
 
   async function openRemoteModal(trigger, force) {
-    var target = trigger ? trigger.dataset.modalOpen : "";
-    var url = trigger ? trigger.dataset.modalUrl : "";
+    var parent = trigger && trigger.closest ? trigger.closest("[data-modal-parent-open]") : null;
+    var target = trigger ? (trigger.dataset.modalOpen || (parent ? parent.dataset.modalParentOpen : "")) : "";
+    var url = trigger ? (trigger.dataset.modalUrl || (parent ? parent.dataset.modalParentUrl : "")) : "";
     var host = trigger && trigger.closest ? trigger.closest(".status-card") : null;
     var modal;
 
@@ -3650,7 +3651,7 @@
       return;
     }
 
-    qsa("[data-status-count]" + dataSelector("data-status-id", id)).forEach(function (node) {
+    qsa(dataSelector("data-status-id", id) + " [data-status-count]").forEach(function (node) {
       var type = node.dataset.statusCount;
       var value = summary[type + "_count"];
 
@@ -3659,12 +3660,12 @@
       }
     });
 
-    qsa("[data-status-like-button]" + dataSelector("data-status-id", id)).forEach(function (button) {
+    qsa(dataSelector("data-status-id", id) + " [data-status-like-button]").forEach(function (button) {
       button.classList.toggle("is-active", Boolean(summary.liked));
     });
 
     if (summary.comments_label) {
-      qsa("[data-status-comments-label]" + dataSelector("data-status-id", id)).forEach(function (node) {
+      qsa(dataSelector("data-status-id", id) + " [data-status-comments-label]").forEach(function (node) {
         node.textContent = String(summary.comments_label);
       });
     }
