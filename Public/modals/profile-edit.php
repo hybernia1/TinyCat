@@ -12,6 +12,7 @@ $action = (string) ($action ?? '');
 $focus = (string) ($focus ?? '');
 $bio = trim((string) ($user['bio'] ?? ''));
 $selectedLocale = language_code((string) ($user['locale'] ?? '')) ?: locale();
+$selectedTheme = user_theme($user);
 
 if ($authorId < 1 || $action === '') {
     http_response_code(404);
@@ -28,6 +29,12 @@ ob_start();
         <span class="label"><?= et('common.language') ?></span>
         <select class="select" name="locale" required<?= $autofocus('locale') ?>>
             <?= language_options($selectedLocale) ?>
+        </select>
+    </label>
+    <label class="field">
+        <span class="label"><?= et('account.theme') ?></span>
+        <select class="select" name="theme" required<?= $autofocus('theme') ?>>
+            <?= theme_options($selectedTheme) ?>
         </select>
     </label>
     <label class="field profile-modal-span">

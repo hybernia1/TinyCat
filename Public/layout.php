@@ -62,12 +62,15 @@ $metaType = (string) ($meta['type'] ?? 'website');
 $metaRobots = trim((string) ($meta['robots'] ?? ($isAdminShell ? 'noindex,nofollow' : '')));
 $metaLocale = str_replace('-', '_', locale());
 $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
+$theme = user_theme($authUser);
+$themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
 ?>
 <!doctype html>
-<html lang="<?= e(locale()) ?>">
+<html lang="<?= e(locale()) ?>"<?= $themeAttribute ?>>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
     <?php if ($csrfToken !== ''): ?>
         <meta name="csrf-token" content="<?= e($csrfToken) ?>">
     <?php endif; ?>

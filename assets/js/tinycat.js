@@ -960,24 +960,94 @@
     }
   }
 
+  function toastIconName(type) {
+    if (type === "success") {
+      return "check-circle";
+    }
+
+    if (type === "danger") {
+      return "x-circle";
+    }
+
+    if (type === "warning") {
+      return "alert";
+    }
+
+    return "info";
+  }
+
+  function normalizeToastType(type) {
+    type = String(type || "info").toLowerCase();
+
+    if (type === "error") {
+      return "danger";
+    }
+
+    return ["success", "danger", "warning", "info"].indexOf(type) === -1 ? "info" : type;
+  }
+
+  function createToastIcon(type) {
+    var icon = document.createElement("span");
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+
+    icon.className = "toast-icon";
+    icon.setAttribute("aria-hidden", "true");
+    svg.setAttribute("class", "icon");
+    svg.setAttribute("width", "1em");
+    svg.setAttribute("height", "1em");
+    use.setAttribute("href", "/assets/icons.svg#" + toastIconName(type));
+    svg.appendChild(use);
+    icon.appendChild(svg);
+
+    return icon;
+  }
+
   TinyCat.toast = function (message, type, timeout) {
     var stack = qs(".toast-stack");
+    var normalizedType = normalizeToastType(type);
+    var closeTimeout;
 
     if (!stack) {
       stack = document.createElement("div");
       stack.className = "toast-stack";
       stack.setAttribute("aria-live", "polite");
+      stack.setAttribute("aria-atomic", "true");
       document.body.appendChild(stack);
     }
 
     var toast = document.createElement("div");
-    toast.className = "toast toast-" + (type || "info");
-    toast.textContent = String(message || "");
+    var body = document.createElement("div");
+    var close = document.createElement("button");
+
+    toast.className = "toast toast-" + normalizedType;
+    toast.setAttribute("role", normalizedType === "danger" || normalizedType === "warning" ? "alert" : "status");
+    body.className = "toast-body";
+    body.textContent = String(message || "");
+    close.className = "toast-close";
+    close.type = "button";
+    close.setAttribute("aria-label", "Close");
+    close.innerHTML = '<svg class="icon" width="1em" height="1em" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#close"></use></svg>';
+
+    toast.appendChild(createToastIcon(normalizedType));
+    toast.appendChild(body);
+    toast.appendChild(close);
     stack.appendChild(toast);
 
-    window.setTimeout(function () {
+    function removeToast() {
       toast.remove();
-    }, timeout || 3600);
+    }
+
+    close.addEventListener("click", removeToast);
+    closeTimeout = window.setTimeout(removeToast, timeout || (normalizedType === "danger" ? 5600 : 4200));
+
+    toast.addEventListener("mouseenter", function () {
+      window.clearTimeout(closeTimeout);
+    });
+
+    toast.addEventListener("mouseleave", function () {
+      closeTimeout = window.setTimeout(removeToast, 1800);
+    });
 
     return toast;
   };

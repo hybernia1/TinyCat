@@ -170,6 +170,73 @@ if (!function_exists('meta_text')) {
     }
 }
 
+if (!function_exists('status_meta_title')) {
+    function status_meta_title(array $item, int $limit = 110): string
+    {
+        $author = trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? ''));
+        $body = status_strip_external_urls((string) ($item['body'] ?? ''));
+        $body = meta_text($body, 90);
+
+        if ($body !== '') {
+            $title = $author !== '' ? $author . ': ' . $body : $body;
+
+            return meta_text($title, $limit);
+        }
+
+        $linkTitle = status_meta_link_title($item, 90);
+
+        if ($linkTitle !== '') {
+            $title = $author !== '' ? $author . ': ' . $linkTitle : $linkTitle;
+
+            return meta_text($title, $limit);
+        }
+
+        if ($author !== '') {
+            return t('public.status_title_by', ['author' => $author]);
+        }
+
+        return t('public.status_title');
+    }
+}
+
+if (!function_exists('status_meta_link_title')) {
+    function status_meta_link_title(array $item, int $limit = 90): string
+    {
+        $contentId = (int) ($item['id'] ?? $item['content_id'] ?? 0);
+
+        if ($contentId < 1) {
+            return '';
+        }
+
+        foreach (status_links_for_content($contentId) as $link) {
+            $link = (array) $link;
+
+            if (status_link_is_internal($link)) {
+                continue;
+            }
+
+            $title = meta_text((string) ($link['title'] ?? ''), $limit);
+
+            if ($title !== '' && !status_link_title_is_placeholder($title)) {
+                return $title;
+            }
+        }
+
+        return '';
+    }
+}
+
+if (!function_exists('status_link_title_is_placeholder')) {
+    function status_link_title_is_placeholder(string $title): bool
+    {
+        return in_array(strtolower(trim($title)), [
+            'youtube video',
+            'vimeo video',
+            'dailymotion video',
+        ], true);
+    }
+}
+
 if (!function_exists('status_meta_description')) {
     function status_meta_description(array $item): string
     {
@@ -243,8 +310,50 @@ if (!function_exists('user_public_payload')) {
             'role' => (string) ($user['role'] ?? ''),
             'status' => (string) ($user['status'] ?? ''),
             'locale' => (string) ($user['locale'] ?? ''),
+            'theme' => user_theme($user),
             'avatar_url' => user_avatar_url($user),
         ];
+    }
+}
+
+if (!function_exists('theme_choices')) {
+    function theme_choices(): array
+    {
+        return [
+            'system' => t('account.theme_system'),
+            'light' => t('account.theme_light'),
+            'dark' => t('account.theme_dark'),
+        ];
+    }
+}
+
+if (!function_exists('theme_normalize')) {
+    function theme_normalize(string $theme): string
+    {
+        $theme = strtolower(trim($theme));
+
+        return in_array($theme, ['system', 'light', 'dark'], true) ? $theme : 'system';
+    }
+}
+
+if (!function_exists('user_theme')) {
+    function user_theme(?array $user): string
+    {
+        return theme_normalize((string) ($user['theme'] ?? 'system'));
+    }
+}
+
+if (!function_exists('theme_options')) {
+    function theme_options(string $selected = 'system'): string
+    {
+        $selected = theme_normalize($selected);
+        $html = '';
+
+        foreach (theme_choices() as $value => $label) {
+            $html .= '<option value="' . e($value) . '"' . ($value === $selected ? ' selected' : '') . '>' . e($label) . '</option>';
+        }
+
+        return $html;
     }
 }
 
@@ -630,6 +739,7 @@ if (!function_exists('registration_request')) {
             'role' => 'user',
             'status' => $status,
             'locale' => locale(),
+            'theme' => 'system',
             'note' => '',
             'bio' => '',
             'recovery_hash' => user_recovery_hash_generate(),
@@ -999,6 +1109,7 @@ if (!function_exists('user_profile_update_request')) {
         $id = (int) ($user['id'] ?? 0);
         $bio = plain_text_limit((string) post('bio', ''), 500);
         $locale = language_code((string) post('locale', ''));
+        $theme = theme_normalize((string) post('theme', 'system'));
         $errors = [];
 
         if ($id < 1) {
@@ -1016,6 +1127,7 @@ if (!function_exists('user_profile_update_request')) {
         $data = [
             'bio' => $bio,
             'locale' => $locale,
+            'theme' => $theme,
         ];
 
         update('users', $data, ['id' => $id]);
@@ -1104,6 +1216,7 @@ if (!function_exists('public_author_find')) {
                 role,
                 status,
                 locale,
+                theme,
                 avatar_config,
                 bio,
                 muted_until,
@@ -4243,7 +4356,7 @@ if (!function_exists('author_profile_edit_modal_id')) {
 if (!function_exists('author_profile_edit_modal_url')) {
     function author_profile_edit_modal_url(int $authorId, string $focus = ''): string
     {
-        $focus = in_array($focus, ['locale', 'bio'], true) ? $focus : '';
+        $focus = in_array($focus, ['locale', 'theme', 'bio'], true) ? $focus : '';
         $query = ['author_id' => max(0, $authorId)];
 
         if ($focus !== '') {

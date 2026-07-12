@@ -25,15 +25,13 @@ if ($item === null) {
     return;
 }
 
+$statusTitle = status_meta_title($item);
+
 layout('layout', [
-    'title' => trim((string) ($item['author_name'] ?? '')) !== ''
-        ? t('public.status_title_by', ['author' => (string) ($item['author_name'] ?? '')])
-        : t('public.status_title'),
+    'title' => $statusTitle,
     'current' => $current,
     'meta' => [
-        'title' => trim((string) ($item['author_name'] ?? '')) !== ''
-            ? t('public.status_title_by', ['author' => (string) ($item['author_name'] ?? '')])
-            : t('public.status_title'),
+        'title' => $statusTitle,
         'description' => status_meta_description($item),
         'url' => $current,
         'image' => status_meta_image($item),

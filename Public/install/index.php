@@ -333,6 +333,7 @@ function tc_install_create_tables(): void
             role VARCHAR(40) NOT NULL DEFAULT 'user',
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             locale VARCHAR(12) NULL,
+            theme VARCHAR(12) NOT NULL DEFAULT 'system',
             avatar_config TEXT NULL,
             note TEXT NULL,
             bio VARCHAR(500) NULL,
@@ -571,6 +572,7 @@ function tc_install_create_admin_account(string $username, string $password, str
         'role' => 'admin',
         'status' => 'active',
         'locale' => $locale,
+        'theme' => 'system',
         'note' => '',
     ];
 

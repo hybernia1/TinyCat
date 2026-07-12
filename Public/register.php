@@ -60,6 +60,7 @@ if (is_post()) {
         'role' => 'user',
         'status' => $status,
         'locale' => locale(),
+        'theme' => 'system',
         'note' => '',
         'bio' => '',
         'recovery_hash' => user_recovery_hash_generate(),
