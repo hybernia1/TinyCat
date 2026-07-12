@@ -715,6 +715,7 @@
   }
 
   function hydrateDynamic(root) {
+    initUserAvatarImages(root || document);
     qsa("[data-tagifier]", root || document).forEach(initTagifierRoot);
     qsa("[data-captcha]", root || document).forEach(initCaptchaRoot);
     qsa("[data-avatar-upload]", root || document).forEach(initAvatarUploadRoot);
@@ -819,6 +820,11 @@
     var input = qs("[data-avatar-upload-input]", root);
     var preview = qs("[data-avatar-upload-preview]", root);
     var empty = qs("[data-avatar-upload-empty]", root);
+    var emptyNote = qs("[data-avatar-upload-empty-note]", root);
+    var form = root.closest("form");
+    var action = form ? qs("[data-avatar-upload-action]", form) : null;
+    var remove = form ? qs("[data-avatar-upload-remove]", form) : null;
+    var originalSrc = preview ? String(preview.getAttribute("src") || "") : "";
     var objectUrl = "";
 
     if (!input || !preview || root.dataset.avatarUploadReady === "true") {
@@ -826,8 +832,47 @@
     }
 
     root.dataset.avatarUploadReady = "true";
+
+    function showOriginal() {
+      if (originalSrc) {
+        preview.src = originalSrc;
+        preview.hidden = false;
+      } else {
+        preview.removeAttribute("src");
+        preview.hidden = true;
+      }
+
+      if (empty) {
+        empty.hidden = Boolean(originalSrc);
+      }
+
+      if (emptyNote) {
+        emptyNote.hidden = Boolean(originalSrc);
+      }
+    }
+
+    preview.addEventListener("error", function () {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrl = "";
+      } else {
+        originalSrc = "";
+      }
+
+      showOriginal();
+    });
+
+    if (preview.complete && preview.getAttribute("src") && preview.naturalWidth < 1) {
+      originalSrc = "";
+      showOriginal();
+    }
+
     input.addEventListener("change", function () {
       var file = input.files && input.files[0] ? input.files[0] : null;
+
+      if (action) {
+        action.value = "upload";
+      }
 
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);
@@ -835,12 +880,7 @@
       }
 
       if (!file || ["image/png", "image/jpeg", "image/webp"].indexOf(file.type) === -1) {
-        preview.hidden = true;
-
-        if (empty) {
-          empty.hidden = false;
-        }
-
+        showOriginal();
         return;
       }
 
@@ -851,8 +891,66 @@
       if (empty) {
         empty.hidden = true;
       }
+
+      if (emptyNote) {
+        emptyNote.hidden = true;
+      }
+    });
+
+    if (remove && form) {
+      remove.addEventListener("click", async function () {
+        var confirmed = await TinyCat.confirm({
+          title: root.dataset.avatarRemoveTitle || "Remove avatar",
+          message: root.dataset.avatarRemoveMessage || "Remove the current avatar?",
+          confirmLabel: root.dataset.avatarRemoveOk || "Remove",
+          cancelLabel: root.dataset.avatarRemoveCancel || "Cancel",
+          variant: "danger"
+        });
+
+        if (!confirmed) {
+          return;
+        }
+
+        if (action) {
+          action.value = "remove";
+        }
+
+        form.requestSubmit();
+      });
+    }
+  }
+
+  function showUserAvatarFallback(image) {
+    var root = image && image.parentElement;
+    var fallback = root ? qs("[data-user-avatar-fallback]", root) : null;
+
+    if (!image) {
+      return;
+    }
+
+    image.hidden = true;
+    image.removeAttribute("src");
+
+    if (fallback) {
+      fallback.hidden = false;
+    }
+  }
+
+  function initUserAvatarImages(scope) {
+    qsa("[data-user-avatar-image]", scope || document).forEach(function (image) {
+      if (image.complete && image.naturalWidth < 1) {
+        showUserAvatarFallback(image);
+      }
     });
   }
+
+  document.addEventListener("error", function (event) {
+    var image = event.target;
+
+    if (image && image.matches && image.matches("[data-user-avatar-image]")) {
+      showUserAvatarFallback(image);
+    }
+  }, true);
 
   function handleResult(source, data, target) {
     var payload = unwrapResult(data);
@@ -922,6 +1020,26 @@
     }
 
     return element;
+  }
+
+  function appendUserAvatar(container, url, alt, className, fallbackText) {
+    var fallback = createElement("span", "avatar-fallback" + (className ? " " + className : ""), fallbackText || "U");
+    var image;
+
+    fallback.dataset.userAvatarFallback = "true";
+
+    if (url) {
+      image = document.createElement("img");
+      image.className = className || "";
+      image.src = url;
+      image.alt = alt || "";
+      image.loading = "lazy";
+      image.dataset.userAvatarImage = "true";
+      fallback.hidden = true;
+      container.appendChild(image);
+    }
+
+    container.appendChild(fallback);
   }
 
   function confirmOptions(trigger) {
@@ -2197,7 +2315,6 @@
       var title = item.title || (type === "user" ? "@" + value : "#" + value);
       var key = type + ":" + value;
       var button;
-      var avatar;
       var text;
 
       if (!value || seen[key]) {
@@ -2213,16 +2330,7 @@
       button.setAttribute("role", "option");
 
       if (type === "user") {
-        if (item.avatar_url) {
-          avatar = document.createElement("img");
-          avatar.className = "status-editor-suggestion-avatar";
-          avatar.src = item.avatar_url;
-          avatar.alt = "";
-          avatar.loading = "lazy";
-          button.appendChild(avatar);
-        } else {
-          button.appendChild(createElement("span", "status-editor-suggestion-avatar", "@"));
-        }
+        appendUserAvatar(button, item.avatar_url, "", "status-editor-suggestion-avatar", "@");
       }
 
       text = createElement("span", "status-editor-suggestion-text");
@@ -2543,14 +2651,10 @@
       avatar.textContent = "#";
     } else if (item.type === "search") {
       avatar.textContent = ">";
-    } else if (item.avatar_url) {
-      var image = document.createElement("img");
-      image.src = item.avatar_url;
-      image.alt = item.title || "";
-      image.loading = "lazy";
-      avatar.appendChild(image);
+    } else if (item.type === "user") {
+      appendUserAvatar(avatar, item.avatar_url, item.title || "", "", "U");
     } else {
-      avatar.textContent = item.type === "user" ? "U" : "#";
+      avatar.textContent = "#";
     }
 
     text.appendChild(title);
@@ -4369,6 +4473,7 @@
   };
 
   TinyCat.init = function () {
+    initUserAvatarImages(document);
     TinyCat.initAdminNav();
     TinyCat.initModals();
     TinyCat.initAjax();

@@ -12,7 +12,6 @@ $action = (string) ($action ?? '/');
 $contentId = (int) ($item['id'] ?? 0);
 $authorId = (int) ($item['author_id'] ?? 0);
 $authorName = trim((string) ($item['author_name'] ?? ''));
-$avatarUrl = user_avatar_url($item);
 $createdAt = (string) ($item['created_at'] ?? '');
 $url = $authorId > 0 ? author_url($authorId) . '#' . status_anchor($contentId) : '#';
 $bodyHtml = render_status_body($item);
@@ -25,11 +24,7 @@ if ($contentId < 1) {
     <div class="card-body status-card-body">
         <div class="status-header">
             <a class="avatar" href="<?= e($url) ?>" aria-label="<?= e($authorName) ?>">
-                <?php if ($avatarUrl !== ''): ?>
-                    <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
-                <?php else: ?>
-                    <?= icon('user') ?>
-                <?php endif; ?>
+                <?= user_avatar_html($item, $authorName) ?>
             </a>
             <div class="status-author">
                 <?php if ($authorId > 0 && $authorName !== ''): ?>

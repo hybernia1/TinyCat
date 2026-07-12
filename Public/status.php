@@ -42,7 +42,6 @@ layout('layout', [
 ], static function () use ($item, $current): void {
     $authorId = (int) ($item['author_id'] ?? 0);
     $authorName = trim((string) ($item['author_name'] ?? ''));
-    $avatarUrl = user_avatar_url($item);
     $createdAt = (string) ($item['created_at'] ?? '');
     $contentId = (int) ($item['id'] ?? 0);
     ?>
@@ -52,11 +51,7 @@ layout('layout', [
                 <div class="card-body stack stack-gap-12">
                     <div class="status-header">
                         <a class="avatar" href="<?= e($authorId > 0 ? author_url($authorId) : '#') ?>" aria-label="<?= e($authorName) ?>">
-                            <?php if ($avatarUrl !== ''): ?>
-                                <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
-                            <?php else: ?>
-                                <?= icon('user') ?>
-                            <?php endif; ?>
+                            <?= user_avatar_html($item, $authorName) ?>
                         </a>
                         <div class="status-author">
                             <?php if ($authorId > 0 && $authorName !== ''): ?>

@@ -19,16 +19,17 @@ if ($authorId < 1 || $action === '' || !username_valid($username)) {
 
 ob_start();
 ?>
-<div class="avatar-upload" data-avatar-upload>
-    <div class="avatar-upload-preview" aria-label="<?= et('account.avatar_preview') ?>">
-        <img<?= $avatarUrl !== '' ? ' src="' . e($avatarUrl) . '"' : '' ?> alt="<?= et('account.avatar_preview') ?>" data-avatar-upload-preview<?= $avatarUrl === '' ? ' hidden' : '' ?>>
+<input type="hidden" name="avatar_action" value="upload" data-avatar-upload-action>
+<div class="avatar-upload" data-avatar-upload data-avatar-remove-title="<?= et('account.remove_avatar_title') ?>" data-avatar-remove-message="<?= et('account.remove_avatar_confirm') ?>" data-avatar-remove-ok="<?= et('account.remove_avatar') ?>" data-avatar-remove-cancel="<?= et('common.cancel') ?>">
+    <div class="avatar avatar-xl avatar-upload-preview" aria-label="<?= et('account.avatar_preview') ?>">
+        <img<?= $avatarUrl !== '' ? ' src="' . e($avatarUrl) . '"' : '' ?> alt="" data-avatar-upload-preview<?= $avatarUrl === '' ? ' hidden' : '' ?>>
         <span class="avatar-upload-empty" data-avatar-upload-empty<?= $avatarUrl !== '' ? ' hidden' : '' ?>>
             <?= icon('user') ?>
-            <span><?= et('account.avatar_upload_empty') ?></span>
         </span>
     </div>
+    <small class="avatar-upload-empty-note" data-avatar-upload-empty-note<?= $avatarUrl !== '' ? ' hidden' : '' ?>><?= et('account.avatar_upload_empty') ?></small>
     <label class="avatar-upload-drop">
-        <input class="sr-only" type="file" name="avatar" accept="image/png,image/jpeg,image/webp" required data-avatar-upload-input>
+        <input class="sr-only" type="file" name="avatar" accept="image/png,image/jpeg,image/webp" data-avatar-upload-input>
         <?= icon('upload') ?>
         <span><?= et('account.avatar_upload_label') ?></span>
     </label>
@@ -37,6 +38,7 @@ ob_start();
 
 $body = trim((string) ob_get_clean());
 $footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . icon('close') . ' <span>' . et('common.cancel') . '</span></button>'
+    . ($avatarUrl !== '' ? '<button class="btn btn-danger" type="button" data-avatar-upload-remove>' . icon('trash') . ' <span>' . et('account.remove_avatar') . '</span></button>' : '')
     . '<button class="btn btn-primary" type="submit">' . icon('save') . ' <span>' . et('account.save_avatar') . '</span></button>';
 
 echo render('modals/layout', [

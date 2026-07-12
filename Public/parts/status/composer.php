@@ -7,7 +7,6 @@ if (!defined('TINYCAT')) {
 }
 
 $user = is_array($user ?? null) ? $user : [];
-$avatarUrl = user_avatar_url($user);
 ?>
 <section class="card status-composer">
     <div class="card-body">
@@ -16,11 +15,7 @@ $avatarUrl = user_avatar_url($user);
             <input type="hidden" name="action" value="create">
             <div class="status-compose-row">
                 <div class="avatar">
-                    <?php if ($avatarUrl !== ''): ?>
-                        <img src="<?= e($avatarUrl) ?>" alt="<?= e(user_display_name($user)) ?>" loading="lazy">
-                    <?php else: ?>
-                        <?= icon('user') ?>
-                    <?php endif; ?>
+                    <?= user_avatar_html($user, user_display_name($user)) ?>
                 </div>
                 <div class="status-compose-main">
                     <?= status_field(null) ?>

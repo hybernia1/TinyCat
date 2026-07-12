@@ -56,7 +56,7 @@ layout('layout', [
         'image' => $avatarUrl ?: site_meta_image_url(),
         'type' => 'profile',
     ],
-], static function () use ($authorId, $authorName, $bio, $avatarUrl, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles): void {
+], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -74,11 +74,7 @@ layout('layout', [
                         <?php else: ?>
                             <div class="avatar avatar-xl">
                         <?php endif; ?>
-                            <?php if ($avatarUrl !== ''): ?>
-                                <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
-                            <?php else: ?>
-                                <?= icon('user') ?>
-                            <?php endif; ?>
+                            <?= user_avatar_html($author, $authorName) ?>
                         <?php if ($canPost): ?>
                             </button>
                         <?php else: ?>
@@ -154,15 +150,10 @@ layout('layout', [
                                     <?php
                                     $profileId = (int) ($profile['id'] ?? 0);
                                     $profileName = user_display_name($profile);
-                                    $profileAvatar = user_avatar_url($profile);
                                     ?>
                                     <a class="sidebar-user-link" href="<?= e(author_url($profileId)) ?>">
                                         <span class="avatar avatar-sm">
-                                            <?php if ($profileAvatar !== ''): ?>
-                                                <img src="<?= e($profileAvatar) ?>" alt="<?= e($profileName) ?>" loading="lazy">
-                                            <?php else: ?>
-                                                <?= icon('user') ?>
-                                            <?php endif; ?>
+                                            <?= user_avatar_html($profile, $profileName) ?>
                                         </span>
                                         <span class="sidebar-user-main">
                                             <strong><?= e($profileName) ?></strong>

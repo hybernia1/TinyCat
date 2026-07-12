@@ -178,8 +178,8 @@ final class Api
         $user = require_auth('/login');
 
         csrf_require();
-
         $action = str_replace('-', '_', strtolower($action));
+        status_json_require_session_interval($action);
         $id = max(0, (int) input('id', 0));
         $commentId = max(0, (int) input('comment_id', 0));
         $redirect = auth_safe_next_url((string) input('redirect', ''));

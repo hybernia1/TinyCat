@@ -2706,6 +2706,19 @@ img.status-editor-suggestion-avatar {
   object-fit: cover;
 }
 
+.avatar-fallback {
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-user-avatar-image][hidden],
+.avatar-fallback[hidden] {
+  display: none;
+}
+
 .status-header .avatar,
 .status-compose-row .avatar {
   width: 38px;
@@ -2895,13 +2908,8 @@ img.status-editor-suggestion-avatar {
 }
 
 .avatar-upload-preview {
-  display: grid;
-  width: min(100%, 220px);
-  aspect-ratio: 1;
-  place-items: center;
-  overflow: hidden;
-  border-radius: var(--avatar-radius);
-  background: var(--surface-soft);
+  width: 96px;
+  height: 96px;
 }
 
 .avatar-upload-preview img {
@@ -2911,17 +2919,26 @@ img.status-editor-suggestion-avatar {
 }
 
 .avatar-upload-empty {
-  display: grid;
-  gap: 8px;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--muted);
-  font-weight: 700;
-  text-align: center;
 }
 
 .avatar-upload-empty .icon {
   width: 34px;
   height: 34px;
+}
+
+.avatar-upload-empty-note {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.avatar-upload-preview img[hidden],
+.avatar-upload-empty[hidden],
+.avatar-upload-empty-note[hidden] {
+  display: none;
 }
 
 .avatar-upload-drop {

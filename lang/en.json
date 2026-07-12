@@ -151,6 +151,7 @@
         },
         "messages": {
             "action_limited": "This account has reached the temporary action limit.",
+            "action_too_fast": "Please wait a moment before the next action.",
             "account_muted": "This account is temporarily muted until {until}.",
             "blocked_url": "This link is not allowed: {host}.",
             "duplicate_body": "This post is too similar to your recent post.",
@@ -325,6 +326,9 @@
         "avatar_upload_label": "Choose image",
         "avatar_upload_empty": "No avatar uploaded yet.",
         "save_avatar": "Save avatar",
+        "remove_avatar": "Remove avatar",
+        "remove_avatar_title": "Remove avatar",
+        "remove_avatar_confirm": "Remove the current avatar?",
         "username_hint": "Use lowercase a-z, numbers, or underscore. 3-32 characters, start with a letter.",
         "password_title": "Change password",
         "save_password": "Change password",
@@ -354,6 +358,7 @@
         "messages": {
             "profile_saved": "The profile was saved.",
             "avatar_saved": "The avatar was saved.",
+            "avatar_removed": "The avatar was removed.",
             "avatar_required": "Choose an avatar image.",
             "avatar_invalid": "Avatar must be a PNG, JPEG, or WebP image.",
             "password_saved": "The password was changed.",

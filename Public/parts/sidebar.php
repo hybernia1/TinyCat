@@ -49,16 +49,11 @@ $sidebarUrl = (string) ($sidebar_url ?? '/api/sidebar');
                         <?php
                         $id = (int) ($author['id'] ?? 0);
                         $name = trim((string) ($author['name'] ?? ''));
-                        $avatarUrl = user_avatar_url($author);
                         ?>
                         <?php if ($id > 0 && $name !== ''): ?>
                             <a class="sidebar-user-link" href="<?= e(author_url($id)) ?>">
                                 <span class="avatar avatar-sm">
-                                    <?php if ($avatarUrl !== ''): ?>
-                                        <img src="<?= e($avatarUrl) ?>" alt="<?= e($name) ?>" loading="lazy">
-                                    <?php else: ?>
-                                        <?= icon('user') ?>
-                                    <?php endif; ?>
+                                    <?= user_avatar_html($author, $name) ?>
                                 </span>
                                 <span class="sidebar-user-main">
                                     <strong><?= e($name) ?></strong>

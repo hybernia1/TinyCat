@@ -12,7 +12,6 @@ $user = is_array($user ?? null) ? $user : [];
 $parentId = (int) ($parent_id ?? 0);
 $mention = (string) ($mention ?? '');
 $context = (string) ($context ?? '');
-$avatarUrl = user_avatar_url($user);
 $isReply = $parentId > 0;
 $label = et($isReply ? 'account.status_reply' : 'account.status_comment');
 
@@ -27,11 +26,7 @@ if ($contentId < 1 || $user === []) {
     <input type="hidden" name="parent_id" value="<?= e($parentId) ?>">
     <input type="hidden" name="context" value="<?= e($context) ?>">
     <div class="avatar avatar-sm">
-        <?php if ($avatarUrl !== ''): ?>
-            <img src="<?= e($avatarUrl) ?>" alt="<?= e(user_display_name($user)) ?>" loading="lazy">
-        <?php else: ?>
-            <?= icon('user') ?>
-        <?php endif; ?>
+        <?= user_avatar_html($user, user_display_name($user)) ?>
     </div>
     <div class="status-comment-input-shell">
         <div class="status-comment-editor" data-status-editor>

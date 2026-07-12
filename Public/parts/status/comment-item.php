@@ -17,7 +17,6 @@ $commentId = (int) ($comment['id'] ?? 0);
 $contentId = (int) ($comment['content_id'] ?? 0);
 $authorId = (int) ($comment['user_id'] ?? 0);
 $authorName = trim((string) ($comment['author_name'] ?? ''));
-$avatarUrl = user_avatar_url($comment);
 $createdAt = (string) ($comment['created_at'] ?? '');
 $replies = $depth === 0 ? (array) ($comment['replies'] ?? []) : [];
 $canDelete = status_comment_can_delete($comment, $user);
@@ -35,11 +34,7 @@ if ($commentId < 1 || $contentId < 1) {
 ?>
 <article class="status-comment<?= $depth > 0 ? ' is-child' : '' ?>"<?= $preview ? '' : ' id="' . e($commentDomId) . '"' ?> data-comment-id="<?= e($commentId) ?>"<?= $preview ? '' : ' data-content-id="' . e($contentId) . '" data-parent-id="' . e((int) ($comment['parent_id'] ?? 0)) . '"' ?>>
     <a class="avatar avatar-sm" href="<?= e(author_url($authorId)) ?>" aria-label="<?= e($authorName) ?>">
-        <?php if ($avatarUrl !== ''): ?>
-            <img src="<?= e($avatarUrl) ?>" alt="<?= e($authorName) ?>" loading="lazy">
-        <?php else: ?>
-            <?= icon('user') ?>
-        <?php endif; ?>
+        <?= user_avatar_html($comment, $authorName) ?>
     </a>
     <div class="status-comment-main">
         <div class="status-comment-bubble">

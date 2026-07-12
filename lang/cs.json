@@ -151,6 +151,7 @@
         },
         "messages": {
             "action_limited": "Tento účet dosáhl dočasného limitu akcí.",
+            "action_too_fast": "Před další akcí chvíli počkej.",
             "account_muted": "Účet je dočasně umlčen do {until}.",
             "blocked_url": "Tento odkaz není povolen: {host}.",
             "duplicate_body": "Tento příspěvek je příliš podobný tvému nedávnému příspěvku.",
@@ -325,6 +326,9 @@
         "avatar_upload_label": "Vybrat obrázek",
         "avatar_upload_empty": "Avatar zatím není nahraný.",
         "save_avatar": "Uložit avatar",
+        "remove_avatar": "Odstranit avatar",
+        "remove_avatar_title": "Odstranit avatar",
+        "remove_avatar_confirm": "Opravdu odstranit současný avatar?",
         "username_hint": "Použij malá písmena a-z, čísla nebo podtržítko. 3-32 znaků, první znak písmeno.",
         "password_title": "Změna hesla",
         "save_password": "Změnit heslo",
@@ -354,6 +358,7 @@
         "messages": {
             "profile_saved": "Profil byl uložen.",
             "avatar_saved": "Avatar byl uložen.",
+            "avatar_removed": "Avatar byl odstraněn.",
             "avatar_required": "Vyber obrázek avatara.",
             "avatar_invalid": "Avatar musí být PNG, JPEG nebo WebP obrázek.",
             "password_saved": "Heslo bylo změněno.",

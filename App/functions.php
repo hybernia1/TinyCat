@@ -232,6 +232,19 @@ function user_avatar_url(?array $user): string
     return '';
 }
 
+function user_avatar_html(?array $user, string $alt = '', string $fallbackIcon = 'user'): string
+{
+    $url = user_avatar_url($user);
+    $fallback = '<span class="avatar-fallback" data-user-avatar-fallback'
+        . ($url !== '' ? ' hidden' : '') . '>' . icon($fallbackIcon) . '</span>';
+
+    if ($url === '') {
+        return $fallback;
+    }
+
+    return '<img src="' . e($url) . '" alt="' . e($alt) . '" loading="lazy" data-user-avatar-image>' . $fallback;
+}
+
 function user_display_name(?array $user): string
 {
     if ($user === null) {
@@ -960,6 +973,65 @@ function moderation_body_fingerprint(string $body): string
     return $body !== '' ? hash('sha256', $body) : '';
 }
 
+function session_action_retry_after(string $key, int $intervalMs): int
+{
+    $key = preg_replace('/[^a-z0-9_.-]+/i', '', strtolower(trim($key))) ?? '';
+    $intervalMs = max(1, min(60_000, $intervalMs));
+
+    if ($key === '') {
+        return 0;
+    }
+
+    Core::session();
+
+    $now = (int) floor(microtime(true) * 1000);
+    $last = (int) ($_SESSION['_action_timestamps'][$key] ?? 0);
+    $retryAfter = $last > 0 ? $intervalMs - ($now - $last) : 0;
+
+    if ($retryAfter > 0) {
+        return min($intervalMs, $retryAfter);
+    }
+
+    $_SESSION['_action_timestamps'][$key] = $now;
+
+    return 0;
+}
+
+function status_session_interval_rule(string $action): array
+{
+    $action = str_replace('-', '_', strtolower(trim($action)));
+
+    return match ($action) {
+        'react', 'like', 'comment_like' => ['rating', 500],
+        'comment', 'comment_delete' => ['comment', 1000],
+        'create', 'update', 'delete' => ['post', 5000],
+        'report' => ['report', 60_000],
+        default => ['status_mutation', 500],
+    };
+}
+
+function status_json_require_session_interval(string $action): void
+{
+    [$key, $intervalMs] = status_session_interval_rule($action);
+    $retryAfter = session_action_retry_after('status_' . $key, $intervalMs);
+
+    if ($retryAfter > 0) {
+        if (!headers_sent()) {
+            header('Retry-After: ' . max(1, (int) ceil($retryAfter / 1000)));
+        }
+
+        api_error(
+            t('moderation.messages.action_too_fast'),
+            429,
+            'action_too_fast',
+            [
+                'retry_after_ms' => $retryAfter,
+                'interval_ms' => $intervalMs,
+            ]
+        );
+    }
+}
+
 function plain_text_limit(string $value, int $limit): string
 {
     $value = str_replace(["\r\n", "\r"], "\n", $value);
@@ -1023,6 +1095,24 @@ function user_avatar_update_request(array $user): array
         api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
     }
 
+    $action = strtolower(trim((string) input('avatar_action', 'upload')));
+    $oldConfig = $user['avatar_config'] ?? null;
+
+    if ($action === 'remove') {
+        update('users', ['avatar_config' => null], ['id' => $id]);
+        Avatar::delete($oldConfig);
+
+        $updated = $user;
+        $updated['avatar_config'] = null;
+
+        return [
+            'user' => user_public_payload($updated),
+            'avatar_url' => '',
+            'message' => t('account.messages.avatar_removed'),
+            'redirect' => author_url($id),
+        ];
+    }
+
     $file = $_FILES['avatar'] ?? null;
 
     if (!is_array($file)) {
@@ -1030,7 +1120,6 @@ function user_avatar_update_request(array $user): array
     }
 
     try {
-        $oldConfig = $user['avatar_config'] ?? null;
         $config = null;
         $config = Avatar::upload($file, (string) ($user['username'] ?? ''));
         $json = Avatar::configJson($config);
@@ -4700,17 +4789,12 @@ function notification_preview_html(int $userId, int $limit = 6): string
             <?php
         $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
         $actorName = trim((string) ($notification['actor_name'] ?? ''));
-        $avatarUrl = user_avatar_url($notification);
         $createdAt = (string) ($notification['created_at'] ?? '');
         $contentText = meta_text((string) ($notification['content_body'] ?? ''), 90);
         ?>
             <a class="notification-popover-item<?= $isUnread ? ' is-unread' : '' ?>" href="<?= e(notification_url($notification)) ?>">
                 <span class="notification-popover-avatar">
-                    <?php if ($avatarUrl !== ''): ?>
-                        <img src="<?= e($avatarUrl) ?>" alt="<?= e($actorName) ?>" loading="lazy">
-                    <?php else: ?>
-                        <?= icon(notification_icon((string) ($notification['type'] ?? ''))) ?>
-                    <?php endif; ?>
+                    <?= user_avatar_html($notification, $actorName, notification_icon((string) ($notification['type'] ?? ''))) ?>
                 </span>
                 <span class="notification-popover-copy">
                     <strong><?= e(notification_message($notification)) ?></strong>
@@ -4813,7 +4897,6 @@ function notification_item_html(array $notification): string
     $id = (int) ($notification['id'] ?? 0);
     $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
     $actorName = trim((string) ($notification['actor_name'] ?? ''));
-    $avatarUrl = user_avatar_url($notification);
     $createdAt = (string) ($notification['created_at'] ?? '');
     $contentText = meta_text((string) ($notification['content_body'] ?? ''), 120);
     $url = notification_url($notification);
@@ -4823,11 +4906,7 @@ function notification_item_html(array $notification): string
         <article class="notification-item<?= $isUnread ? ' is-unread' : '' ?>">
             <a class="notification-main" href="<?= e($url) ?>">
                 <span class="notification-avatar">
-                    <?php if ($avatarUrl !== ''): ?>
-                        <img src="<?= e($avatarUrl) ?>" alt="<?= e($actorName) ?>" loading="lazy">
-                    <?php else: ?>
-                        <?= icon(notification_icon((string) ($notification['type'] ?? ''))) ?>
-                    <?php endif; ?>
+                    <?= user_avatar_html($notification, $actorName, notification_icon((string) ($notification['type'] ?? ''))) ?>
                 </span>
                 <span class="notification-copy">
                     <strong><?= e(notification_message($notification)) ?></strong>
