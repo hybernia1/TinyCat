@@ -7230,6 +7230,31 @@ if (!function_exists('e')) {
     }
 }
 
+if (!function_exists('html_attributes')) {
+    function html_attributes(array $attributes): string
+    {
+        $html = '';
+
+        foreach ($attributes as $name => $value) {
+            $name = (string) $name;
+
+            if ($name === '' || $value === false || $value === null) {
+                continue;
+            }
+
+            if (!preg_match('/^[A-Za-z_:][A-Za-z0-9_:\-.]*$/', $name)) {
+                throw new InvalidArgumentException('Invalid HTML attribute: ' . $name);
+            }
+
+            $html .= $value === true
+                ? ' ' . $name
+                : ' ' . $name . '="' . e($value) . '"';
+        }
+
+        return $html;
+    }
+}
+
 if (!function_exists('h')) {
     function h(mixed $value): string
     {
