@@ -3307,14 +3307,7 @@ if (!function_exists('public_search_results')) {
                 $userQuery->where('1 = 0');
             }
         } else {
-            $userQuery->where(
-                '(
-                    u.username LIKE ?
-                    OR u.bio LIKE ?
-                )',
-                $like,
-                $like
-            );
+            $userQuery->where('u.username LIKE ?', $like);
         }
 
         foreach ($userQuery
@@ -3863,6 +3856,8 @@ if (!function_exists('status_sync_tags')) {
             return;
         }
 
+        $previousTermIds = status_term_ids_for_content($contentId);
+
         delete('content_tags', ['content_id' => $contentId]);
 
         foreach ($tags as $tag) {
@@ -3882,7 +3877,46 @@ if (!function_exists('status_sync_tags')) {
             }
         }
 
-        status_cleanup_unused_terms();
+        status_cleanup_unused_term_ids($previousTermIds);
+    }
+}
+
+if (!function_exists('status_term_ids_for_content')) {
+    function status_term_ids_for_content(int $contentId): array
+    {
+        if ($contentId < 1) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn (array $row): int => (int) ($row['term_id'] ?? 0),
+            all('SELECT term_id FROM content_tags WHERE content_id = ?', [$contentId])
+        ), static fn (int $id): bool => $id > 0)));
+    }
+}
+
+if (!function_exists('status_cleanup_unused_term_ids')) {
+    function status_cleanup_unused_term_ids(array $termIds): void
+    {
+        $termIds = array_values(array_unique(array_filter(array_map('intval', $termIds), static fn (int $id): bool => $id > 0)));
+
+        if ($termIds === []) {
+            return;
+        }
+
+        foreach (array_chunk($termIds, 100) as $chunk) {
+            $placeholders = implode(', ', array_fill(0, count($chunk), '?'));
+            run(
+                'DELETE FROM terms
+                WHERE id IN (' . $placeholders . ')
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM content_tags ct
+                        WHERE ct.term_id = terms.id
+                    )',
+                $chunk
+            );
+        }
     }
 }
 
@@ -4118,6 +4152,7 @@ if (!function_exists('status_sync_links')) {
             return;
         }
 
+        $previousLinkIds = status_link_ids_for_content($contentId);
         $metadataCache = status_link_metadata_cache($links);
 
         delete('content_links', ['content_id' => $contentId]);
@@ -4149,7 +4184,51 @@ if (!function_exists('status_sync_links')) {
             }
         }
 
-        status_cleanup_unused_links();
+        status_cleanup_unused_link_ids($previousLinkIds);
+    }
+}
+
+if (!function_exists('status_link_ids_for_content')) {
+    function status_link_ids_for_content(int $contentId): array
+    {
+        if ($contentId < 1) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn (array $row): int => (int) ($row['link_id'] ?? 0),
+            all('SELECT link_id FROM content_links WHERE content_id = ?', [$contentId])
+        ), static fn (int $id): bool => $id > 0)));
+    }
+}
+
+if (!function_exists('status_cleanup_unused_link_ids')) {
+    function status_cleanup_unused_link_ids(array $linkIds): void
+    {
+        $linkIds = array_values(array_unique(array_filter(array_map('intval', $linkIds), static fn (int $id): bool => $id > 0)));
+
+        if ($linkIds === []) {
+            return;
+        }
+
+        foreach (array_chunk($linkIds, 100) as $chunk) {
+            $placeholders = implode(', ', array_fill(0, count($chunk), '?'));
+
+            try {
+                run(
+                    'DELETE FROM links
+                    WHERE id IN (' . $placeholders . ')
+                        AND NOT EXISTS (
+                            SELECT 1
+                            FROM content_links cl
+                            WHERE cl.link_id = links.id
+                        )',
+                    $chunk
+                );
+            } catch (Throwable) {
+                // Link cleanup is opportunistic and must not block saving a post.
+            }
+        }
     }
 }
 
@@ -5512,6 +5591,9 @@ if (!function_exists('status_delete_content')) {
             return;
         }
 
+        $termIds = status_term_ids_for_content($contentId);
+        $linkIds = status_link_ids_for_content($contentId);
+
         delete('content_likes', ['content_id' => $contentId]);
         foreach (db_select('SELECT id FROM content_comments')->where('content_id = ?', $contentId)->all() as $comment) {
             delete('comment_likes', ['comment_id' => (int) ($comment['id'] ?? 0)]);
@@ -5529,8 +5611,8 @@ if (!function_exists('status_delete_content')) {
             delete('content_reports', ['content_id' => $contentId]);
         }
 
-        status_cleanup_unused_terms();
-        status_cleanup_unused_links();
+        status_cleanup_unused_term_ids($termIds);
+        status_cleanup_unused_link_ids($linkIds);
         delete('content', ['id' => $contentId]);
     }
 }
