@@ -544,7 +544,7 @@
             "old_action_limits": "Remove old action limits",
             "old_action_limits_help": "Deletes account action-limit buckets older than 30 days.",
             "old_read_notifications": "Remove old read notifications",
-            "old_read_notifications_help": "Deletes read notifications older than 90 days."
+            "old_read_notifications_help": "Deletes read notifications older than 30 days."
         },
         "messages": {
             "done": "Cleanup finished. {count} rows were changed.",

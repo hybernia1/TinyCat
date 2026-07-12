@@ -4901,12 +4901,26 @@ if (!function_exists('notification_message')) {
     }
 }
 
-if (!function_exists('notification_url')) {
-    function notification_url(array $notification): string
+if (!function_exists('notification_target_url')) {
+    function notification_target_url(array $notification): string
     {
         $contentId = (int) ($notification['content_id'] ?? 0);
 
         return $contentId > 0 ? status_url($contentId) : '/notifications';
+    }
+}
+
+if (!function_exists('notification_url')) {
+    function notification_url(array $notification): string
+    {
+        $id = (int) ($notification['id'] ?? 0);
+        $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
+
+        if ($id > 0 && $isUnread) {
+            return '/notifications/open?id=' . $id;
+        }
+
+        return notification_target_url($notification);
     }
 }
 
@@ -5216,6 +5230,38 @@ if (!function_exists('notification_mark_read')) {
             'read_at' => date_db(),
             'updated_at' => date_db(),
         ], ['id' => $id, 'user_id' => $userId]);
+    }
+}
+
+if (!function_exists('notification_open')) {
+    function notification_open(int $id, int $userId): string
+    {
+        if ($id < 1 || $userId < 1) {
+            return '/notifications';
+        }
+
+        $notification = one(
+            'SELECT id, content_id, read_at
+            FROM notifications
+            WHERE id = ? AND user_id = ?
+            LIMIT 1',
+            [$id, $userId]
+        );
+
+        if ($notification === null) {
+            return '/notifications';
+        }
+
+        if (trim((string) ($notification['read_at'] ?? '')) === '') {
+            run(
+                'UPDATE notifications
+                SET read_at = ?, updated_at = ?
+                WHERE id = ? AND user_id = ? AND read_at IS NULL',
+                [date_db(), date_db(), $id, $userId]
+            );
+        }
+
+        return notification_target_url($notification);
     }
 }
 
@@ -6648,7 +6694,7 @@ if (!function_exists('maintenance_cleanup_count')) {
                 'SELECT COUNT(*)
                 FROM notifications
                 WHERE read_at IS NOT NULL AND read_at < ?',
-                [date_db('-90 days')]
+                [date_db('-30 days')]
             ),
             default => 0,
         };
@@ -6680,7 +6726,7 @@ if (!function_exists('maintenance_cleanup_delete')) {
                 'DELETE FROM notifications
                 WHERE read_at IS NOT NULL AND read_at < ?
                 LIMIT ' . $batchSize,
-                [date_db('-90 days')]
+                [date_db('-30 days')]
             ),
             default => 0,
         };

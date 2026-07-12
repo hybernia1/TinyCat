@@ -544,7 +544,7 @@
             "old_action_limits": "Odebrat staré akční limity",
             "old_action_limits_help": "Smaže bucket limity účtů starší než 30 dní.",
             "old_read_notifications": "Odebrat staré přečtené notifikace",
-            "old_read_notifications_help": "Smaže přečtené notifikace starší než 90 dní."
+            "old_read_notifications_help": "Smaže přečtené notifikace starší než 30 dní."
         },
         "messages": {
             "done": "Úklid dokončen. Změněno řádků: {count}.",
