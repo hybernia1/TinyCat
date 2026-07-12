@@ -1025,11 +1025,65 @@ a:hover {
 
 .captcha-slider-label {
   display: block;
+  padding: 10px 0;
+  touch-action: none;
+  user-select: none;
 }
 
 .captcha-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
   width: 100%;
-  accent-color: var(--primary);
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+}
+
+.captcha-slider:active {
+  cursor: grabbing;
+}
+
+.captcha-slider::-webkit-slider-runnable-track {
+  height: 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.captcha-slider::-moz-range-track {
+  height: 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.captcha-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  margin-top: -11px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 3px 10px var(--shadow);
+}
+
+.captcha-slider::-moz-range-thumb {
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow: 0 3px 10px var(--shadow);
+}
+
+.captcha-slider:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 6px;
 }
 
 .captcha-hint {

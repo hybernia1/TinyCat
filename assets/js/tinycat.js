@@ -467,11 +467,13 @@
     var status = qs("[data-captcha-status]", root);
     var board = qs(".captcha-board", root);
     var piece = qs(".captcha-piece", root);
+    var sliderLabel = qs(".captcha-slider-label", root);
     var startedAt = 0;
     var moves = 0;
     var method = "";
     var lastValue = String(slider ? slider.value : "");
     var form = root.closest ? root.closest("form") : null;
+    var activePointer = null;
 
     if (root.dataset.captchaReady === "true") {
       return;
@@ -520,8 +522,112 @@
       }
     }
 
+    function sliderNumber(name, fallback) {
+      var value = parseFloat(slider.getAttribute(name));
+
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function captchaPointerType(event) {
+      if (event.pointerType === "touch") {
+        return "touch";
+      }
+
+      if (event.pointerType === "mouse") {
+        return "mouse";
+      }
+
+      return "pointer";
+    }
+
+    function setSliderFromClientX(clientX) {
+      var target = sliderLabel || slider;
+      var rect = target.getBoundingClientRect();
+      var min = sliderNumber("min", 0);
+      var max = sliderNumber("max", 100);
+      var step = Math.max(0.01, sliderNumber("step", 1));
+      var ratio;
+      var raw;
+      var next;
+
+      if (!rect.width) {
+        return;
+      }
+
+      ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      raw = min + ((max - min) * ratio);
+      next = Math.round(raw / step) * step;
+      next = Math.max(min, Math.min(max, next));
+      slider.value = String(Math.round(next * 1000) / 1000);
+      sync({ type: "input" });
+    }
+
+    function focusSlider() {
+      try {
+        slider.focus({ preventScroll: true });
+      } catch (error) {
+        slider.focus();
+      }
+    }
+
+    function captureSliderPointer(pointerId) {
+      try {
+        sliderLabel.setPointerCapture(pointerId);
+      } catch (error) {
+        // Pointer capture is an enhancement; the native range still works without it.
+      }
+    }
+
+    function releaseSliderPointer(pointerId) {
+      try {
+        if (sliderLabel.hasPointerCapture(pointerId)) {
+          sliderLabel.releasePointerCapture(pointerId);
+        }
+      } catch (error) {
+        // Ignore unsupported capture APIs.
+      }
+    }
+
     root.dataset.captchaReady = "true";
     root.__tinycatCaptchaSync = sync;
+    if (sliderLabel && window.PointerEvent) {
+      sliderLabel.addEventListener("pointerdown", function (event) {
+        if (event.button !== undefined && event.button !== 0) {
+          return;
+        }
+
+        activePointer = event.pointerId;
+        event.preventDefault();
+        noteInteraction(captchaPointerType(event));
+        focusSlider();
+        captureSliderPointer(event.pointerId);
+        setSliderFromClientX(event.clientX);
+      });
+      sliderLabel.addEventListener("pointermove", function (event) {
+        if (activePointer !== event.pointerId) {
+          return;
+        }
+
+        event.preventDefault();
+        setSliderFromClientX(event.clientX);
+      });
+      sliderLabel.addEventListener("pointerup", function (event) {
+        if (activePointer !== event.pointerId) {
+          return;
+        }
+
+        event.preventDefault();
+        setSliderFromClientX(event.clientX);
+        releaseSliderPointer(event.pointerId);
+        activePointer = null;
+      });
+      sliderLabel.addEventListener("pointercancel", function (event) {
+        if (activePointer === event.pointerId) {
+          releaseSliderPointer(event.pointerId);
+          activePointer = null;
+        }
+      });
+    }
     slider.addEventListener("pointerdown", function () {
       noteInteraction("pointer");
     });
