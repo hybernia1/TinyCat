@@ -11,6 +11,8 @@ final class Avatar
     private const SIZE = 200;
     private const QUALITY = 86;
     private const MAX_UPLOAD_SIZE = 10_485_760;
+    private const MAX_SOURCE_DIMENSION = 8192;
+    private const MAX_SOURCE_PIXELS = 16_777_216;
     private const BASE_DIRECTORY = 'uploads/avatars';
     private const BASE_URL = '/uploads/avatars';
     private const ALLOWED_MIMES = [
@@ -114,6 +116,8 @@ final class Avatar
             throw new RuntimeException('Uploaded avatar is not an image.');
         }
 
+        self::assertSourceDimensions($info);
+
         $mime = strtolower((string) $info['mime']);
 
         if (!in_array($mime, self::ALLOWED_MIMES, true)) {
@@ -126,12 +130,12 @@ final class Avatar
             throw new RuntimeException('Uploaded avatar could not be read.');
         }
 
-        if ($mime === 'image/jpeg') {
-            $source = self::applyOrientation($source, $tmpName);
-        }
-
         $canvas = self::resizeSquare($source);
         imagedestroy($source);
+
+        if ($mime === 'image/jpeg') {
+            $canvas = self::applyOrientation($canvas, $tmpName);
+        }
 
         $username = self::username($username) ?: 'avatar';
         $hash = substr(hash('sha256', $username . '|' . microtime(true) . '|' . bin2hex(random_bytes(16))), 0, 16);
@@ -217,6 +221,24 @@ final class Avatar
             'image/webp' => imagecreatefromwebp($path),
             default => false,
         };
+    }
+
+    private static function assertSourceDimensions(array $info): void
+    {
+        $width = (int) ($info[0] ?? 0);
+        $height = (int) ($info[1] ?? 0);
+
+        if ($width < 1 || $height < 1) {
+            throw new RuntimeException('Uploaded avatar is not an image.');
+        }
+
+        if (
+            $width > self::MAX_SOURCE_DIMENSION
+            || $height > self::MAX_SOURCE_DIMENSION
+            || $height > intdiv(self::MAX_SOURCE_PIXELS, $width)
+        ) {
+            throw new RuntimeException('Avatar image dimensions are too large.');
+        }
     }
 
     private static function resizeSquare(GdImage $source): GdImage
