@@ -630,7 +630,10 @@ final class Core
 
     public static function timezone(): DateTimeZone
     {
-        return new DateTimeZone((string) self::config('datetime.timezone', date_default_timezone_get()));
+        static $zones = [];
+        $name = (string) self::config('datetime.timezone', date_default_timezone_get());
+
+        return $zones[$name] ??= new DateTimeZone($name);
     }
 
     public static function now(?string $format = null): DateTimeImmutable|string
@@ -2434,7 +2437,7 @@ final class Core
     {
         static $ready = false;
 
-        if ($ready) {
+        if ($ready || (bool) self::config('install.complete', false)) {
             return true;
         }
 

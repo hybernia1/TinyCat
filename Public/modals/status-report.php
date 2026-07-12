@@ -10,7 +10,7 @@ $item = (array) ($item ?? []);
 $user = isset($user) && is_array($user) ? $user : null;
 $action = (string) ($action ?? '');
 $contentId = (int) ($item['id'] ?? 0);
-$authorId = (int) ($item['author_id'] ?? $item['user_id'] ?? 0);
+$authorId = (int) ($item['author_id'] ?? 0);
 
 if ($contentId < 1 || $user === null || $authorId === (int) ($user['id'] ?? 0)) {
     return;

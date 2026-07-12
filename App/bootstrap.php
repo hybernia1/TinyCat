@@ -51,7 +51,7 @@ route('GET', '/avatar/{username:[a-z][a-z0-9_]{2,31}}', static function (string 
 
 Api::register();
 
-if (!$installPath && !app_db_ready()) {
+if (!$installPath && !(bool) config('install.complete', false) && !app_db_ready()) {
     if (str_starts_with($path, '/api') || wants_json()) {
         api_error(t('install.messages.db_not_ready'), 503, 'database_not_ready', ['redirect' => '/install']);
     }

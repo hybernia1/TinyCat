@@ -40,7 +40,7 @@ layout('layout', [
         'author' => (string) ($item['author_name'] ?? ''),
     ],
 ], static function () use ($item, $current): void {
-    $authorId = (int) ($item['author_id'] ?? $item['user_id'] ?? 0);
+    $authorId = (int) ($item['author_id'] ?? 0);
     $authorName = trim((string) ($item['author_name'] ?? ''));
     $avatarUrl = user_avatar_url($item);
     $createdAt = (string) ($item['created_at'] ?? '');

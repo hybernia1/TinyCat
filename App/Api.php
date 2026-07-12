@@ -307,7 +307,7 @@ final class Api
             api_error(t('account.messages.status_not_found'), 404, 'not_found');
         }
 
-        if ((int) ($item['author_id'] ?? $item['user_id'] ?? 0) === (int) ($user['id'] ?? 0)) {
+        if ((int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0)) {
             api_error(t('account.messages.status_forbidden'), 403, 'forbidden');
         }
 

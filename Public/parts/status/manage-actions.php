@@ -14,7 +14,7 @@ $isLocked = status_edit_locked($item);
 $canEdit = status_can_edit($item, $user);
 $canDelete = status_can_delete($item, $user);
 $canReport = $user !== null
-    && (int) ($item['author_id'] ?? $item['user_id'] ?? 0) !== (int) ($user['id'] ?? 0);
+    && (int) ($item['author_id'] ?? 0) !== (int) ($user['id'] ?? 0);
 
 if ($contentId < 1) {
     return '';

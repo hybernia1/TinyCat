@@ -608,6 +608,7 @@ function tc_install_write_config(array $state): void
         ],
         'install' => [
             'locale' => $locale,
+            'complete' => true,
         ],
     ];
 

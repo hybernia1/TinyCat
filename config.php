@@ -11,5 +11,6 @@ return [
     ],
     'install' => [
         'locale' => 'cs',
+        'complete' => true,
     ],
 ];

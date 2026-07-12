@@ -1811,64 +1811,10 @@ if (!function_exists('moderation_host_blocked_by')) {
     }
 }
 
-if (!function_exists('author_mention_map')) {
-    function author_mention_map(): array
-    {
-        static $map = null;
-
-        if ($map !== null) {
-            return $map;
-        }
-
-        $map = [];
-
-        foreach (author_mention_users() as $user) {
-            $handle = (string) ($user['handle'] ?? '');
-            $id = (int) ($user['id'] ?? 0);
-
-            if ($handle !== '' && $id > 0 && !isset($map[$handle])) {
-                $map[$handle] = $id;
-            }
-        }
-
-        return $map;
-    }
-}
-
 if (!function_exists('author_mention_user_cache')) {
     function &author_mention_user_cache(): array
     {
         static $users = [];
-
-        return $users;
-    }
-}
-
-if (!function_exists('author_mention_users')) {
-    function author_mention_users(): array
-    {
-        static $loaded = false;
-        $users =& author_mention_user_cache();
-
-        if ($loaded) {
-            return $users;
-        }
-
-        foreach (all('SELECT id, username FROM users WHERE status = ? ORDER BY id ASC', ['active']) as $user) {
-            $id = (int) ($user['id'] ?? 0);
-            $name = (string) ($user['username'] ?? '');
-            $handle = username_normalize($name);
-
-            if ($id > 0) {
-                $users[$id] = [
-                    'id' => $id,
-                    'name' => $name,
-                    'handle' => $handle,
-                ];
-            }
-        }
-
-        $loaded = true;
 
         return $users;
     }
@@ -1954,9 +1900,49 @@ if (!function_exists('normalize_mentions_for_storage')) {
     function normalize_mentions_for_storage(string $text): string
     {
         $text = normalize_author_urls_for_storage($text);
-        $map = author_mention_map();
-        $users = author_mention_users();
         $pattern = '/(?<![A-Za-z0-9_])@([0-9]+|[a-z][a-z0-9_]{2,31})/i';
+
+        if (!preg_match_all($pattern, $text, $matches)) {
+            return $text;
+        }
+
+        $ids = [];
+        $handles = [];
+
+        foreach ((array) ($matches[1] ?? []) as $token) {
+            $token = strtolower((string) $token);
+
+            if (ctype_digit($token)) {
+                $id = (int) $token;
+
+                if ($id > 0) {
+                    $ids[$id] = $id;
+                }
+            } else {
+                $handle = username_normalize($token);
+
+                if ($handle !== '') {
+                    $handles[$handle] = $handle;
+                }
+            }
+        }
+
+        $users = author_mention_users_by_ids(array_values($ids));
+        $map = [];
+
+        if ($handles !== []) {
+            foreach (db_select('SELECT id, username FROM users')
+                ->where('status = ?', 'active')
+                ->whereIn('username', array_values($handles))
+                ->all() as $user) {
+                $id = (int) ($user['id'] ?? 0);
+                $handle = username_normalize((string) ($user['username'] ?? ''));
+
+                if ($id > 0 && $handle !== '') {
+                    $map[$handle] = $id;
+                }
+            }
+        }
 
         return (string) preg_replace_callback($pattern, static function (array $match) use ($map, $users): string {
             $token = strtolower((string) ($match[1] ?? ''));
@@ -2168,17 +2154,13 @@ if (!function_exists('public_status_select_sql')) {
     {
         return "SELECT c.id,
                 c.body,
-                c.author_id AS user_id,
                 c.author_id,
                 c.published_at,
                 c.created_at,
                 c.edit_locked_at,
-                c.edit_locked_by,
-                c.edit_lock_reason,
                 u.username AS author_username,
                 u.username AS author_name,
                 u.avatar_config AS author_avatar_config,
-                u.bio AS author_bio,
                 (
                     SELECT COUNT(*)
                     FROM content_likes cl
@@ -2922,7 +2904,7 @@ if (!function_exists('public_search_fulltext_query')) {
             $token = trim($token);
             $length = function_exists('mb_strlen') ? mb_strlen($token, 'UTF-8') : strlen($token);
 
-            if ($length < 4) {
+            if ($length < 3) {
                 continue;
             }
 
@@ -2956,6 +2938,10 @@ if (!function_exists('public_search_fulltext_ready')) {
         if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $index)) {
             $cache[$key] = false;
             return false;
+        }
+
+        if ((bool) config('install.complete', false)) {
+            return $cache[$key] = true;
         }
 
         try {
@@ -3016,9 +3002,9 @@ if (!function_exists('public_search_recent_content_scan')) {
             ? ' FORCE INDEX (content_feed_index)'
             : '';
         $scanLimit = max(300, min(5000, $limit * 250));
-        $matches = [];
+        $limit = max(1, min(50, $limit));
 
-        foreach (db_select(
+        return all(
             'SELECT c.id,
                 c.body,
                 c.author_id,
@@ -3026,25 +3012,20 @@ if (!function_exists('public_search_recent_content_scan')) {
                 u.username AS author_name,
                 u.username AS author_username,
                 u.avatar_config AS author_avatar_config
-            FROM content c' . $feedIndex . '
-            INNER JOIN users u ON u.id = c.author_id'
-        )
-            ->where('u.status = ?', 'active')
-            ->order('c.published_at DESC, c.id DESC')
-            ->limit($scanLimit)
-            ->all() as $item) {
-            if (!public_search_text_contains((string) ($item['body'] ?? ''), $query)) {
-                continue;
-            }
-
-            $matches[] = $item;
-
-            if (count($matches) >= $limit) {
-                break;
-            }
-        }
-
-        return $matches;
+            FROM (
+                SELECT id, published_at
+                FROM content' . $feedIndex . '
+                ORDER BY published_at DESC, id DESC
+                LIMIT ' . $scanLimit . '
+            ) recent
+            INNER JOIN content c ON c.id = recent.id
+            INNER JOIN users u ON u.id = c.author_id
+            WHERE u.status = ?
+                AND c.body LIKE ?
+            ORDER BY recent.published_at DESC, recent.id DESC
+            LIMIT ' . $limit,
+            ['active', '%' . $query . '%']
+        );
     }
 }
 
@@ -3125,10 +3106,22 @@ if (!function_exists('public_search_link_content_rows')) {
 if (!function_exists('public_search_content_rows')) {
     function public_search_content_rows(string $query, int $limit): array
     {
-        $recent = public_search_recent_content_scan($query, $limit);
+        $rows = [];
+        $seen = [];
 
-        if (count($recent) >= $limit) {
-            return $recent;
+        foreach (public_search_recent_content_scan($query, $limit) as $item) {
+            $id = (int) ($item['id'] ?? 0);
+
+            if ($id < 1 || isset($seen[$id])) {
+                continue;
+            }
+
+            $seen[$id] = true;
+            $rows[] = $item;
+
+            if (count($rows) >= $limit) {
+                return $rows;
+            }
         }
 
         $fulltext = public_search_fulltext_query($query);
@@ -3149,25 +3142,20 @@ if (!function_exists('public_search_content_rows')) {
                     ->where('MATCH(c.body) AGAINST (? IN BOOLEAN MODE)', $fulltext)
                     ->where('u.status = ?', 'active');
 
-                $existingIds = array_values(array_filter(array_map(
-                    static fn (array $item): int => (int) ($item['id'] ?? 0),
-                    $recent
-                ), static fn (int $id): bool => $id > 0));
-
-                if ($existingIds !== []) {
-                    $fulltextQuery->where(
-                        'c.id NOT IN (' . implode(', ', array_fill(0, count($existingIds), '?')) . ')',
-                        $existingIds
-                    );
-                }
-
                 foreach ($fulltextQuery
                     ->order('c.published_at DESC, c.id DESC')
                     ->limit(max($limit, min(100, $limit * 4)))
                     ->all() as $item) {
-                    $recent[] = $item;
+                    $id = (int) ($item['id'] ?? 0);
 
-                    if (count($recent) >= $limit) {
+                    if ($id < 1 || isset($seen[$id]) || !public_search_text_contains((string) ($item['body'] ?? ''), $query)) {
+                        continue;
+                    }
+
+                    $seen[$id] = true;
+                    $rows[] = $item;
+
+                    if (count($rows) >= $limit) {
                         break;
                     }
                 }
@@ -3176,24 +3164,19 @@ if (!function_exists('public_search_content_rows')) {
             }
         }
 
-        if (count($recent) >= $limit) {
-            return $recent;
+        if (count($rows) >= $limit) {
+            return $rows;
         }
 
-        $existingIds = array_values(array_filter(array_map(
-            static fn (array $item): int => (int) ($item['id'] ?? 0),
-            $recent
-        ), static fn (int $id): bool => $id > 0));
+        foreach (public_search_link_content_rows($query, $limit - count($rows), array_keys($seen)) as $item) {
+            $rows[] = $item;
 
-        foreach (public_search_link_content_rows($query, $limit - count($recent), $existingIds) as $item) {
-            $recent[] = $item;
-
-            if (count($recent) >= $limit) {
+            if (count($rows) >= $limit) {
                 break;
             }
         }
 
-        return $recent;
+        return $rows;
     }
 }
 
@@ -6445,7 +6428,7 @@ if (!function_exists('status_report_modal')) {
     function status_report_modal(array $item, ?array $user, string $action): string
     {
         $contentId = (int) ($item['id'] ?? 0);
-        $authorId = (int) ($item['author_id'] ?? $item['user_id'] ?? 0);
+        $authorId = (int) ($item['author_id'] ?? 0);
 
         if ($contentId < 1 || $user === null || $authorId === (int) ($user['id'] ?? 0)) {
             return '';
