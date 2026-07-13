@@ -4860,9 +4860,9 @@ function status_time_button(string $createdAt, int $contentId, bool $openModal =
     ob_start();
     ?>
         <?php if ($openModal): ?>
-            <button class="link-button public-content-meta status-time-button" type="button" data-modal-open>
+            <a class="link-button public-content-meta status-time-button" href="<?= e(status_url($contentId)) ?>" data-modal-open>
                 <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
-            </button>
+            </a>
         <?php else: ?>
             <a class="link-button public-content-meta status-time-button" href="<?= e(status_url($contentId)) ?>">
                 <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>

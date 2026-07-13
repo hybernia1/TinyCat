@@ -3291,31 +3291,6 @@ img.status-editor-suggestion-avatar {
   font-size: 1rem;
 }
 
-@media (max-width: 640px) {
-  .modal.status-post-modal {
-    width: 100vw;
-    height: 100vh;
-    height: var(--status-modal-height, 100dvh);
-    padding: 0;
-    background: var(--surface);
-  }
-
-  .status-post-modal > .modal-backdrop {
-    display: none;
-  }
-
-  .modal-panel.status-post-modal-panel {
-    position: absolute;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    height: var(--status-modal-height, 100dvh);
-    max-height: 100vh;
-    max-height: var(--status-modal-height, 100dvh);
-    border-radius: 0;
-  }
-}
-
 .site-footer {
   border-top: 1px solid var(--border);
   background: var(--surface);
@@ -4026,7 +4001,7 @@ body.admin-nav-open .admin-backdrop {
   color: currentColor;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px), (hover: none) and (pointer: coarse) {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
   select,
   textarea,
@@ -4034,7 +4009,9 @@ body.admin-nav-open .admin-backdrop {
   [contenteditable="plaintext-only"] {
     font-size: 16px;
   }
+}
 
+@media (max-width: 640px) {
   .modal.modal-form {
     padding: 0;
   }

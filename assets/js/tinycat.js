@@ -169,6 +169,37 @@
     return document.getElementById(target);
   }
 
+  function mobileStatusUrl(trigger) {
+    var parent;
+    var modalTarget;
+    var card;
+    var href;
+    var statusId;
+
+    if (!trigger || !window.matchMedia || !window.matchMedia("(max-width: 760px), (hover: none) and (pointer: coarse)").matches) {
+      return "";
+    }
+
+    parent = trigger.closest("[data-modal-parent-open]");
+    modalTarget = String(trigger.dataset.modalOpen || (parent ? parent.dataset.modalParentOpen : ""));
+    if (modalTarget.indexOf("status-post-modal-") !== 0) {
+      return "";
+    }
+
+    href = String(trigger.getAttribute("href") || "");
+    if (href.indexOf("/status/") === 0) {
+      return href;
+    }
+
+    card = trigger.closest(".status-card");
+    if (card && card.dataset.statusUrl) {
+      return String(card.dataset.statusUrl);
+    }
+
+    statusId = parseInt(modalTarget.slice("status-post-modal-".length), 10) || 0;
+    return statusId > 0 ? "/status/" + statusId : "";
+  }
+
   function focusFirst(modal) {
     var focusable = qs('[autofocus], button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', modal);
 
@@ -1462,9 +1493,15 @@
       var target = event.target;
       var open = target.closest && target.closest("[data-modal-open]");
       var close = target.closest && target.closest("[data-modal-close]");
+      var statusUrl;
 
       if (open) {
+        statusUrl = mobileStatusUrl(open);
         event.preventDefault();
+        if (statusUrl) {
+          window.location.assign(statusUrl);
+          return;
+        }
         openRemoteModal(open).catch(function (error) {
           TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
         });
@@ -2068,18 +2105,15 @@
 
   function syncStatusEditorModalSize(root) {
     var panel = root && root.closest ? root.closest(".status-post-modal-panel") : null;
-    var suggestionsOpen;
 
     if (!panel) {
       return;
     }
 
-    suggestionsOpen = Boolean(qs("[data-status-editor-suggestions]:not([hidden])", root));
-    panel.classList.toggle("has-editor-suggestions", suggestionsOpen);
-
-    if (suggestionsOpen) {
-      queueStatusCommentReveal(statusEditorInput(root));
-    }
+    panel.classList.toggle(
+      "has-editor-suggestions",
+      Boolean(qs("[data-status-editor-suggestions]:not([hidden])", panel))
+    );
   }
 
   function statusEditorTags(root) {
@@ -3086,34 +3120,6 @@
 
     TinyCat.__commentReplyEventsBound = true;
 
-    document.addEventListener("focusin", function (event) {
-      var input = event.target.closest && event.target.closest("[data-status-editor-input]");
-
-      if (input && input.closest(".status-post-modal")) {
-        queueStatusCommentReveal(input);
-      }
-    });
-
-    document.addEventListener("tinycat:modal-open", function (event) {
-      if (event.target && event.target.matches && event.target.matches(".status-post-modal")) {
-        syncStatusModalViewport(event.target);
-      }
-    });
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", function () {
-        var modal = qs(".status-post-modal[data-open='true']");
-        var input = modal ? qs("[data-status-editor-input]:focus", modal) : null;
-
-        if (modal) {
-          syncStatusModalViewport(modal);
-        }
-        if (input) {
-          queueStatusCommentReveal(input);
-        }
-      });
-    }
-
     document.addEventListener("toggle", function (event) {
       var details = event.target;
       var editorRoot;
@@ -3140,58 +3146,8 @@
         input.setSelectionRange(length, length);
       }
 
-      queueStatusCommentReveal(input);
     }, true);
   };
-
-  function syncStatusModalViewport(modal) {
-    var height;
-
-    if (!modal || !window.visualViewport) {
-      return;
-    }
-
-    height = Math.round(window.visualViewport.height);
-    if (height > 0) {
-      modal.style.setProperty("--status-modal-height", height + "px");
-    }
-  }
-
-  function revealStatusCommentInput(input) {
-    var body = input && input.closest ? input.closest(".status-post-modal-body") : null;
-    var form = input && input.closest ? input.closest(".status-comment-form") : null;
-    var editorRoot = input && input.closest ? input.closest("[data-status-editor]") : null;
-    var suggestions = editorRoot ? qs("[data-status-editor-suggestions]:not([hidden])", editorRoot) : null;
-    var bodyRect;
-    var targetRect;
-    var suggestionRect;
-    var top;
-    var bottom;
-
-    if (!body || !form) {
-      return;
-    }
-
-    bodyRect = body.getBoundingClientRect();
-    targetRect = form.getBoundingClientRect();
-    suggestionRect = suggestions ? suggestions.getBoundingClientRect() : null;
-    top = targetRect.top;
-    bottom = Math.max(targetRect.bottom, suggestionRect ? suggestionRect.bottom : targetRect.bottom);
-
-    if (bottom > bodyRect.bottom - 12) {
-      body.scrollTop += bottom - bodyRect.bottom + 12;
-    } else if (top < bodyRect.top + 12) {
-      body.scrollTop -= bodyRect.top - top + 12;
-    }
-  }
-
-  function queueStatusCommentReveal(input) {
-    [0, 100, 280].forEach(function (delay) {
-      window.setTimeout(function () {
-        revealStatusCommentInput(input);
-      }, delay);
-    });
-  }
 
   function statusFormActionField(form) {
     var field = form && form.elements ? form.elements.namedItem("action") : null;

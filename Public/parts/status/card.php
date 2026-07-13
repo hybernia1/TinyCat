@@ -20,7 +20,7 @@ if ($contentId < 1) {
     return '';
 }
 ?>
-<article class="card status-card" id="<?= e(status_anchor($contentId)) ?>" data-status-id="<?= e($contentId) ?>" data-status-action="<?= e($action) ?>" data-modal-parent-open="<?= e(status_post_modal_id($contentId)) ?>" data-modal-parent-url="<?= e(status_post_modal_url($contentId, $action)) ?>">
+<article class="card status-card" id="<?= e(status_anchor($contentId)) ?>" data-status-id="<?= e($contentId) ?>" data-status-url="<?= e(status_url($contentId)) ?>" data-status-action="<?= e($action) ?>" data-modal-parent-open="<?= e(status_post_modal_id($contentId)) ?>" data-modal-parent-url="<?= e(status_post_modal_url($contentId, $action)) ?>">
     <div class="card-body status-card-body">
         <div class="status-header">
             <a class="avatar" href="<?= e($url) ?>" aria-label="<?= e($authorName) ?>">

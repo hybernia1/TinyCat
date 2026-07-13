@@ -20,8 +20,8 @@ if ($contentId < 1 || $latestComment === null) {
 }
 ?>
 <section class="status-comments">
-    <button class="link-button status-comments-open" type="button" data-modal-open data-status-comments-label>
+    <a class="link-button status-comments-open" href="<?= e(status_url($contentId) . '#status-comments-thread-' . $contentId) ?>" data-modal-open data-status-comments-label>
         <?= et('account.status_view_comments', ['count' => $commentsCount]) ?>
-    </button>
+    </a>
     <?= status_comment_item($latestComment, $user, $action, 0, 'preview-' . $contentId, false, false) ?>
 </section>

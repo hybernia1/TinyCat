@@ -39,9 +39,9 @@ if ($contentId < 1) {
         </a>
     <?php endif; ?>
     <?php if ($openCommentsModal): ?>
-        <button class="btn btn-ghost btn-sm status-reaction" type="button" data-modal-open aria-label="<?= et('account.status_comments') ?>">
+        <a class="btn btn-ghost btn-sm status-reaction" href="<?= e(status_url($contentId) . '#status-comments-thread-' . $contentId) ?>" data-modal-open aria-label="<?= et('account.status_comments') ?>">
             <?= icon('message-circle') ?> <span data-status-count="comments"><?= e($commentsCount) ?></span>
-        </button>
+        </a>
     <?php else: ?>
         <a class="btn btn-ghost btn-sm status-reaction" href="#status-comments-thread-<?= e($contentId) ?>" aria-label="<?= et('account.status_comments') ?>">
             <?= icon('message-circle') ?> <span data-status-count="comments"><?= e($commentsCount) ?></span>
