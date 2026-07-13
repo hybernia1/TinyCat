@@ -1100,6 +1100,10 @@
       return null;
     }
 
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+
     index = modalStack.indexOf(modal);
     if (index !== -1) {
       modalStack.splice(index, 1);
