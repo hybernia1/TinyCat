@@ -3656,9 +3656,11 @@ body.admin-nav-open .admin-backdrop {
 
 .modal-panel {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: min(100%, 560px);
   max-height: min(760px, calc(100vh - 32px));
-  overflow: auto;
+  overflow: hidden;
   border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
@@ -3691,6 +3693,11 @@ body.admin-nav-open .admin-backdrop {
 .modal-body,
 .modal-footer {
   padding: 12px;
+}
+
+.modal-body {
+  min-height: 0;
+  overflow: auto;
 }
 
 .modal-header {
