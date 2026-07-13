@@ -4415,37 +4415,6 @@ function bot_link_image_exists(string $url): bool
     return is_file(base_path('uploads/links/' . $relative));
 }
 
-function bot_link_images_localize_existing(int $limit = 2): int
-{
-    $limit = max(1, min(5, $limit));
-    $rows = all(
-        "SELECT DISTINCT l.id, l.image_url
-            FROM links l
-            INNER JOIN content_links cl ON cl.link_id = l.id
-            INNER JOIN content c ON c.id = cl.content_id
-            INNER JOIN users u ON u.id = c.author_id
-            WHERE u.role = ? AND l.link_type = ? AND l.image_url LIKE 'http%'
-            ORDER BY l.id ASC
-            LIMIT " . $limit,
-        ['bot', 'link']
-    );
-    $localized = 0;
-
-    foreach ($rows as $row) {
-        $id = (int) ($row['id'] ?? 0);
-        if ($id < 1) {
-            continue;
-        }
-        $localUrl = bot_link_image_cache((string) ($row['image_url'] ?? ''));
-        update('links', ['image_url' => $localUrl !== '' ? $localUrl : null], ['id' => $id]);
-        if ($localUrl !== '') {
-            $localized++;
-        }
-    }
-
-    return $localized;
-}
-
 function status_link_prepare_metadata(array $link, ?array $cached, bool $localizeImage = false, string $localImageSource = ''): array
 {
     if ($cached !== null && status_link_metadata_fresh($cached)) {
@@ -6348,72 +6317,6 @@ function bot_schema_ensure(): void
             KEY bot_feed_history_created_index (created_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
-
-    bot_sources_import_time_migrate();
-    bot_accounts_harden();
-    bot_feed_history_migrate();
-}
-
-function bot_sources_import_time_migrate(): void
-{
-    if ((bool) setting('bots.import_time_migrated', false)) {
-        return;
-    }
-
-    if (one("SHOW COLUMNS FROM bot_sources LIKE 'last_imported_at'") === null) {
-        run('ALTER TABLE bot_sources ADD COLUMN last_imported_at DATETIME NULL AFTER last_checked_at');
-    }
-
-    run(
-        'UPDATE bot_sources bs
-            LEFT JOIN (
-                SELECT source_id, MAX(created_at) AS last_imported_at
-                FROM bot_feed_items
-                GROUP BY source_id
-            ) imported ON imported.source_id = bs.id
-            SET bs.last_imported_at = imported.last_imported_at
-            WHERE bs.last_imported_at IS NULL AND imported.last_imported_at IS NOT NULL'
-    );
-    setting_set('bots.import_time_migrated', true, 'bool', 'bots');
-}
-
-function bot_accounts_harden(): void
-{
-    if ((bool) setting('bots.accounts_hardened', false)) {
-        return;
-    }
-
-    run("UPDATE users SET password = NULL WHERE role = 'bot' AND password IS NOT NULL");
-    run("DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE role = 'bot')");
-    setting_set('bots.accounts_hardened', true, 'bool', 'bots');
-}
-
-function bot_feed_history_migrate(): void
-{
-    if ((bool) setting('bots.feed_history_migrated', false)) {
-        return;
-    }
-
-    foreach (all('SELECT id, bot_user_id, feed_url FROM bot_sources ORDER BY id ASC') as $source) {
-        foreach (all(
-            'SELECT * FROM bot_feed_items
-                WHERE source_id = ?
-                ORDER BY COALESCE(item_published_at, created_at) DESC, created_at DESC, item_hash DESC
-                LIMIT 100',
-            [(int) ($source['id'] ?? 0)]
-        ) as $item) {
-            bot_feed_history_record(
-                (int) ($source['bot_user_id'] ?? 0),
-                (string) ($source['feed_url'] ?? ''),
-                (string) ($item['item_guid'] ?? ''),
-                (int) ($item['content_id'] ?? 0),
-                (string) ($item['item_published_at'] ?? ''),
-                (string) ($item['created_at'] ?? '')
-            );
-        }
-    }
-
-    setting_set('bots.feed_history_migrated', true, 'bool', 'bots');
 }
 
 function bot_feed_url_normalize(string $url): string
@@ -6599,7 +6502,6 @@ function bot_delete_sources_for_user(int $botUserId): void
         return;
     }
 
-    bot_schema_ensure();
     $ids = array_map(
         static fn (array $row): int => (int) ($row['id'] ?? 0),
         all('SELECT id FROM bot_sources WHERE bot_user_id = ?', [$botUserId])
@@ -6757,7 +6659,6 @@ function bot_render_post(array $source, array $item): string
 
 function bot_run_due_sources(int $limit = 10): array
 {
-    bot_schema_ensure();
     $limit = max(1, min(100, $limit));
     $sources = all(
         'SELECT bs.*, u.username, u.status AS user_status
@@ -6774,8 +6675,6 @@ function bot_run_due_sources(int $limit = 10): array
     foreach ($sources as $source) {
         $results[] = bot_run_source($source);
     }
-
-    bot_link_images_localize_existing(1);
 
     return $results;
 }

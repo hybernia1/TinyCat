@@ -62,7 +62,6 @@ if ($adminUsersApi === 'update') {
             Avatar::delete($existing['avatar_config'] ?? null, $avatar['config']);
         }
         if ((string) input('role', '') !== 'bot') {
-            bot_schema_ensure();
             update('bot_sources', ['enabled' => 0], ['bot_user_id' => $id]);
         } else {
             delete('notifications', ['user_id' => $id]);

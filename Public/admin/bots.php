@@ -7,7 +7,6 @@ if (!defined('TINYCAT')) {
 }
 
 require_admin();
-bot_schema_ensure();
 
 $isApi = route_path() === '/api/admin/bots';
 
