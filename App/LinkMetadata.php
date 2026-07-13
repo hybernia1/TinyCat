@@ -137,7 +137,9 @@ final class LinkMetadata
 
     public static function fetchDocument(string $url, int $limit = self::FEED_LIMIT, string $accept = 'application/rss+xml,application/atom+xml,application/xml,text/xml'): ?array
     {
-        return self::request($url, max(1024, min(self::FEED_LIMIT, $limit)), $accept, 0, false, self::FEED_TIMEOUT);
+        $limit = max(1024, min(self::FEED_LIMIT, $limit));
+        return self::requestCurl($url, $limit, $accept, 0, false, self::FEED_TIMEOUT)
+            ?? self::request($url, $limit, $accept, 0, false, self::FEED_TIMEOUT);
     }
 
     public static function isSafeRemoteUrl(string $url): bool
@@ -315,6 +317,87 @@ final class LinkMetadata
             'status' => $status,
             'content_type' => (string) ($headers['content-type'] ?? ''),
             'body' => $body,
+        ];
+    }
+
+    private static function requestCurl(
+        string $url,
+        int $limit,
+        string $accept,
+        int $redirects = 0,
+        bool $allowTruncated = false,
+        int $timeout = self::TIMEOUT
+    ): ?array {
+        if ($redirects > self::REDIRECT_LIMIT || !self::safeUrl($url) || !function_exists('curl_init')) {
+            return null;
+        }
+
+        $body = '';
+        $rawHeaders = [];
+        $overflow = false;
+        $curl = curl_init($url);
+        if ($curl === false) {
+            return null;
+        }
+
+        curl_setopt_array($curl, [
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_CONNECTTIMEOUT => min(5, max(1, $timeout)),
+            CURLOPT_TIMEOUT => max(1, min(self::FEED_TIMEOUT, $timeout)),
+            CURLOPT_USERAGENT => self::USER_AGENT,
+            CURLOPT_HTTPHEADER => ['Accept: ' . $accept . ';q=1,*/*;q=0.2'],
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_HEADERFUNCTION => static function (CurlHandle $handle, string $line) use (&$rawHeaders): int {
+                $rawHeaders[] = trim($line);
+                return strlen($line);
+            },
+            CURLOPT_WRITEFUNCTION => static function (CurlHandle $handle, string $chunk) use (&$body, &$overflow, $limit): int {
+                $remaining = $limit + 1 - strlen($body);
+                if ($remaining <= 0) {
+                    $overflow = true;
+                    return 0;
+                }
+
+                $body .= substr($chunk, 0, $remaining);
+                if (strlen($chunk) > $remaining) {
+                    $overflow = true;
+                    return 0;
+                }
+
+                return strlen($chunk);
+            },
+        ]);
+
+        $result = curl_exec($curl);
+        $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+        $contentType = (string) curl_getinfo($curl, CURLINFO_CONTENT_TYPE);
+        curl_close($curl);
+
+        if ($overflow && !$allowTruncated) {
+            return null;
+        }
+        if ($result === false && !($overflow && $allowTruncated)) {
+            return null;
+        }
+
+        $headers = self::headers($rawHeaders);
+        if ($status >= 300 && $status < 400 && !empty($headers['location'])) {
+            $next = self::absoluteUrl($url, (string) $headers['location']);
+            return $next !== ''
+                ? self::requestCurl($next, $limit, $accept, $redirects + 1, $allowTruncated, $timeout)
+                : null;
+        }
+        if ($status >= 400 || $status < 200) {
+            return null;
+        }
+
+        return [
+            'url' => $url,
+            'status' => $status,
+            'content_type' => $contentType !== '' ? $contentType : (string) ($headers['content-type'] ?? ''),
+            'body' => $allowTruncated ? substr($body, 0, $limit) : $body,
         ];
     }
 
