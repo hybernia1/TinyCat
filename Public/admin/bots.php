@@ -105,7 +105,8 @@ layout('layout', [
 
 function tc_admin_bots_payload(?int $id = null): array
 {
-    $sources = bot_sources();
+    $filterBotId = tc_admin_bots_filter_id();
+    $sources = bot_sources($filterBotId > 0 ? $filterBotId : null);
     $data = [
         'items' => array_map('bot_source_resource', $sources),
         'bots' => array_map(static fn (array $user): array => [
@@ -113,6 +114,7 @@ function tc_admin_bots_payload(?int $id = null): array
             'username' => (string) ($user['username'] ?? ''),
             'status' => (string) ($user['status'] ?? ''),
         ], bot_users()),
+        'filter_bot_user_id' => $filterBotId,
     ];
 
     if ($id !== null) {
@@ -122,6 +124,23 @@ function tc_admin_bots_payload(?int $id = null): array
     }
 
     return api_payload($data, static fn (): array => $data + ['html' => tc_admin_bots_html()]);
+}
+
+function tc_admin_bots_filter_id(): int
+{
+    $id = max(0, (int) get('bot', 0));
+    return $id > 0 && (int) val('SELECT COUNT(*) FROM users WHERE id = ? AND role = ?', [$id, 'bot']) > 0 ? $id : 0;
+}
+
+function tc_admin_bots_api_url(): string
+{
+    $query = ['view' => 'html'];
+    $filterBotId = tc_admin_bots_filter_id();
+    if ($filterBotId > 0) {
+        $query['bot'] = $filterBotId;
+    }
+
+    return '/api/admin/bots?' . http_build_query($query);
 }
 
 function tc_admin_bot_source_payload(): array
@@ -166,14 +185,36 @@ function tc_admin_bot_source_payload(): array
 
 function tc_admin_bots_html(): string
 {
-    $sources = bot_sources();
+    $bots = bot_users();
+    $filterBotId = tc_admin_bots_filter_id();
+    $sources = bot_sources($filterBotId > 0 ? $filterBotId : null);
     ob_start();
     ?>
-    <?php if (bot_users() === []): ?>
+    <?php if ($bots === []): ?>
         <div class="alert alert-info"><?= et('bots.no_bots') ?></div>
-    <?php elseif ($sources === []): ?>
-        <div class="alert alert-info"><?= et('bots.no_sources') ?></div>
     <?php else: ?>
+        <div class="split gap-3 mb-4">
+            <form class="cluster gap-2" method="get" action="/admin/bots">
+                <label class="field">
+                    <span class="label"><?= et('bots.filter_by_bot') ?></span>
+                    <select class="select" name="bot">
+                        <option value="0"><?= et('bots.all_bots') ?></option>
+                        <?php foreach ($bots as $bot): ?>
+                            <option value="<?= e((int) $bot['id']) ?>"<?= $filterBotId === (int) $bot['id'] ? ' selected' : '' ?>>@<?= e((string) $bot['username']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <button class="btn btn-secondary btn-sm" type="submit"><?= icon('filter') ?> <span><?= et('common.apply_filters') ?></span></button>
+                <?php if ($filterBotId > 0): ?><a class="btn btn-ghost btn-sm" href="/admin/bots"><?= icon('close') ?> <span><?= et('common.clear_filters') ?></span></a><?php endif; ?>
+            </form>
+            <div class="cluster gap-2">
+                <span class="badge"><?= et('bots.sources_count', ['count' => count($sources)]) ?></span>
+                <span class="badge badge-primary"><?= et('bots.active_sources_count', ['count' => count(array_filter($sources, static fn (array $source): bool => (bool) ($source['enabled'] ?? false)))]) ?></span>
+            </div>
+        </div>
+        <?php if ($sources === []): ?>
+            <div class="alert alert-info"><?= et($filterBotId > 0 ? 'bots.no_sources_filtered' : 'bots.no_sources') ?></div>
+        <?php else: ?>
         <div class="stack stack-gap-12">
             <?php foreach ($sources as $source): ?>
                 <?php $id = (int) ($source['id'] ?? 0); ?>
@@ -182,7 +223,7 @@ function tc_admin_bots_html(): string
                         <div class="cluster gap-2">
                             <strong><?= e((string) ($source['name'] ?? '')) ?></strong>
                             <span class="badge<?= (bool) ($source['enabled'] ?? false) ? ' badge-primary' : '' ?>"><?= et((bool) ($source['enabled'] ?? false) ? 'bots.enabled' : 'bots.disabled') ?></span>
-                            <span class="badge">@<?= e((string) ($source['username'] ?? '')) ?></span>
+                            <a class="badge" href="/admin/bots?bot=<?= e((int) ($source['bot_user_id'] ?? 0)) ?>">@<?= e((string) ($source['username'] ?? '')) ?></a>
                         </div>
                         <a class="text-muted" href="<?= e((string) ($source['feed_url'] ?? '')) ?>" target="_blank" rel="noopener noreferrer"><?= e((string) ($source['feed_url'] ?? '')) ?></a>
                         <small class="text-muted"><?= et('bots.every_minutes', ['count' => (int) ($source['interval_minutes'] ?? 60)]) ?><?= !empty($source['next_run_at']) ? ' · ' . et('bots.next_run', ['time' => datetime((string) $source['next_run_at'])]) : '' ?></small>
@@ -190,7 +231,7 @@ function tc_admin_bots_html(): string
                     </div>
                     <div class="cluster gap-2">
                         <button class="btn btn-secondary btn-sm btn-icon" type="button" data-modal-open="bot-source-edit-<?= e($id) ?>" aria-label="<?= et('common.edit') ?>"><?= icon('edit') ?></button>
-                        <form method="post" action="/api/admin/bots?view=html" data-ajax-form data-ajax-target="#bots-list" data-confirm="<?= et('bots.delete_confirm') ?>">
+                        <form method="post" action="<?= e(tc_admin_bots_api_url()) ?>" data-ajax-form data-ajax-target="#bots-list" data-confirm="<?= et('bots.delete_confirm') ?>">
                             <?= csrf_field() ?><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="id" value="<?= e($id) ?>">
                             <button class="btn btn-danger btn-sm btn-icon" type="submit" aria-label="<?= et('common.delete') ?>"><?= icon('trash') ?></button>
                         </form>
@@ -199,6 +240,7 @@ function tc_admin_bots_html(): string
                 <?= tc_admin_bot_source_modal($source) ?>
             <?php endforeach; ?>
         </div>
+        <?php endif; ?>
     <?php endif; ?>
     <?php
     return trim((string) ob_get_clean());
@@ -210,6 +252,9 @@ function tc_admin_bot_source_modal(?array $source): string
     $source ??= [];
     $id = (int) ($source['id'] ?? 0);
     $bots = bot_users();
+    if ($create && tc_admin_bots_filter_id() > 0) {
+        $source['bot_user_id'] = tc_admin_bots_filter_id();
+    }
     ob_start();
     ?>
     <?php if (!$create): ?><input type="hidden" name="id" value="<?= e($id) ?>"><?php endif; ?>
@@ -230,7 +275,7 @@ function tc_admin_bot_source_modal(?array $source): string
         'id' => $create ? 'bot-source-create-modal' : 'bot-source-edit-' . $id,
         'title' => t($create ? 'bots.new_source' : 'bots.edit_source'),
         'icon' => 'link',
-        'action' => '/api/admin/bots?view=html',
+        'action' => tc_admin_bots_api_url(),
         'method' => $create ? 'POST' : 'PATCH',
         'ajax' => true,
         'target' => '#bots-list',

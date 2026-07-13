@@ -6333,7 +6333,23 @@ function bot_schema_ensure(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
+    run(
+        "CREATE TABLE IF NOT EXISTS bot_feed_history (
+            bot_user_id INT UNSIGNED NOT NULL,
+            feed_hash CHAR(64) NOT NULL,
+            item_hash CHAR(64) NOT NULL,
+            content_id BIGINT UNSIGNED NULL,
+            item_guid VARCHAR(2048) NOT NULL,
+            item_published_at DATETIME NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (bot_user_id, feed_hash, item_hash),
+            KEY bot_feed_history_content_index (content_id),
+            KEY bot_feed_history_created_index (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
     bot_accounts_harden();
+    bot_feed_history_migrate();
 }
 
 function bot_accounts_harden(): void
@@ -6345,6 +6361,129 @@ function bot_accounts_harden(): void
     run("UPDATE users SET password = NULL WHERE role = 'bot' AND password IS NOT NULL");
     run("DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE role = 'bot')");
     setting_set('bots.accounts_hardened', true, 'bool', 'bots');
+}
+
+function bot_feed_history_migrate(): void
+{
+    if ((bool) setting('bots.feed_history_migrated', false)) {
+        return;
+    }
+
+    foreach (all('SELECT id, bot_user_id, feed_url FROM bot_sources ORDER BY id ASC') as $source) {
+        foreach (all(
+            'SELECT * FROM bot_feed_items
+                WHERE source_id = ?
+                ORDER BY COALESCE(item_published_at, created_at) DESC, created_at DESC, item_hash DESC
+                LIMIT 100',
+            [(int) ($source['id'] ?? 0)]
+        ) as $item) {
+            bot_feed_history_record(
+                (int) ($source['bot_user_id'] ?? 0),
+                (string) ($source['feed_url'] ?? ''),
+                (string) ($item['item_guid'] ?? ''),
+                (int) ($item['content_id'] ?? 0),
+                (string) ($item['item_published_at'] ?? ''),
+                (string) ($item['created_at'] ?? '')
+            );
+        }
+    }
+
+    setting_set('bots.feed_history_migrated', true, 'bool', 'bots');
+}
+
+function bot_feed_url_normalize(string $url): string
+{
+    $parts = parse_url(trim($url));
+    if (!is_array($parts)) {
+        return '';
+    }
+
+    $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+    $host = strtolower(rtrim((string) ($parts['host'] ?? ''), '.'));
+    if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
+        return '';
+    }
+
+    $port = isset($parts['port']) && !in_array((int) $parts['port'], [80, 443], true) ? ':' . (int) $parts['port'] : '';
+    $path = (string) ($parts['path'] ?? '/');
+    $path = $path === '/' ? '/' : rtrim($path, '/');
+    $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
+
+    return $scheme . '://' . $host . $port . $path . $query;
+}
+
+function bot_feed_source_hash(string $url): string
+{
+    $url = bot_feed_url_normalize($url);
+    return $url !== '' ? hash('sha256', $url) : '';
+}
+
+function bot_feed_history_has(int $botUserId, string $feedUrl, string $itemGuid): bool
+{
+    $feedHash = bot_feed_source_hash($feedUrl);
+    $itemHash = $itemGuid !== '' ? hash('sha256', $itemGuid) : '';
+
+    return $botUserId > 0
+        && $feedHash !== ''
+        && $itemHash !== ''
+        && (int) val(
+            'SELECT COUNT(*) FROM bot_feed_history WHERE bot_user_id = ? AND feed_hash = ? AND item_hash = ?',
+            [$botUserId, $feedHash, $itemHash]
+        ) > 0;
+}
+
+function bot_feed_history_record(
+    int $botUserId,
+    string $feedUrl,
+    string $itemGuid,
+    int $contentId,
+    string $publishedAt = '',
+    string $createdAt = ''
+): void {
+    $feedHash = bot_feed_source_hash($feedUrl);
+    $itemHash = $itemGuid !== '' ? hash('sha256', $itemGuid) : '';
+    if ($botUserId < 1 || $feedHash === '' || $itemHash === '') {
+        return;
+    }
+
+    try {
+        insert('bot_feed_history', [
+            'bot_user_id' => $botUserId,
+            'feed_hash' => $feedHash,
+            'item_hash' => $itemHash,
+            'content_id' => $contentId > 0 ? $contentId : null,
+            'item_guid' => $itemGuid,
+            'item_published_at' => $publishedAt !== '' ? $publishedAt : null,
+            'created_at' => $createdAt !== '' ? $createdAt : date_db(),
+        ]);
+    } catch (Throwable) {
+        // The global history key is intentionally immutable and race-safe.
+    }
+
+    bot_feed_history_prune($botUserId, $feedHash);
+}
+
+function bot_feed_history_prune(int $botUserId, string $feedHash, int $keep = 100): void
+{
+    if ($botUserId < 1 || !preg_match('/^[a-f0-9]{64}$/', $feedHash)) {
+        return;
+    }
+
+    $keep = max(10, min(500, $keep));
+    run(
+        'DELETE FROM bot_feed_history
+            WHERE bot_user_id = ? AND feed_hash = ?
+                AND item_hash NOT IN (
+                    SELECT item_hash FROM (
+                        SELECT item_hash
+                        FROM bot_feed_history
+                        WHERE bot_user_id = ? AND feed_hash = ?
+                        ORDER BY COALESCE(item_published_at, created_at) DESC, created_at DESC, item_hash DESC
+                        LIMIT ' . $keep . '
+                    ) recent_items
+                )',
+        [$botUserId, $feedHash, $botUserId, $feedHash]
+    );
 }
 
 function bot_source_default_template(): string
@@ -6446,6 +6585,7 @@ function bot_delete_sources_for_user(int $botUserId): void
         }
     }
 
+    delete('bot_feed_history', ['bot_user_id' => $botUserId]);
     delete('bot_sources', ['bot_user_id' => $botUserId]);
 }
 
@@ -6617,6 +6757,8 @@ function bot_run_due_sources(int $limit = 10): array
 function bot_run_source(array $source): array
 {
     $sourceId = (int) ($source['id'] ?? 0);
+    $botUserId = (int) ($source['bot_user_id'] ?? 0);
+    $feedUrl = (string) ($source['feed_url'] ?? '');
     $interval = max(5, min(43200, (int) ($source['interval_minutes'] ?? 60)));
     $now = date_db();
     $next = date('Y-m-d H:i:s', time() + $interval * 60);
@@ -6641,8 +6783,12 @@ function bot_run_source(array $source): array
         }
 
         foreach ($items as $item) {
-            $hash = hash('sha256', (string) ($item['guid'] ?? ''));
-            if ((int) val('SELECT COUNT(*) FROM bot_feed_items WHERE source_id = ? AND item_hash = ?', [$sourceId, $hash]) > 0) {
+            $itemGuid = (string) ($item['guid'] ?? '');
+            $hash = hash('sha256', $itemGuid);
+            if (
+                (int) val('SELECT COUNT(*) FROM bot_feed_items WHERE source_id = ? AND item_hash = ?', [$sourceId, $hash]) > 0
+                || bot_feed_history_has($botUserId, $feedUrl, $itemGuid)
+            ) {
                 continue;
             }
 
@@ -6654,7 +6800,7 @@ function bot_run_source(array $source): array
             $publishedAt = date_db();
             $contentId = (int) insert('content', [
                 'body' => $body,
-                'author_id' => (int) ($source['bot_user_id'] ?? 0),
+                'author_id' => $botUserId,
                 'published_at' => $publishedAt,
                 'created_at' => $publishedAt,
             ]);
@@ -6674,6 +6820,14 @@ function bot_run_source(array $source): array
                 'item_published_at' => $item['published_at'] ?? null,
                 'created_at' => $publishedAt,
             ]);
+            bot_feed_history_record(
+                $botUserId,
+                $feedUrl,
+                $itemGuid,
+                $contentId,
+                (string) ($item['published_at'] ?? ''),
+                $publishedAt
+            );
 
             return ['source_id' => $sourceId, 'status' => 'posted', 'content_id' => $contentId];
         }

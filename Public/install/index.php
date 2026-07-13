@@ -653,6 +653,7 @@ function tc_install_schema_tables(): array
         'user_action_limits' => 'install.purpose_user_action_limits',
         'bot_sources' => 'install.purpose_bot_sources',
         'bot_feed_items' => 'install.purpose_bot_feed_items',
+        'bot_feed_history' => 'install.purpose_bot_feed_history',
         'user_profile_links' => 'install.purpose_user_profile_links',
         'settings' => 'install.purpose_settings',
     ];
