@@ -1340,16 +1340,18 @@ final class Core
             return false;
         }
 
+        $user = self::findUserById($id);
+
+        if ($user === null || !self::userIsActive($user)) {
+            return false;
+        }
+
         self::session();
         $_SESSION['auth_user_id'] = $id;
         session_regenerate_id(true);
 
         if ($remember) {
-            $user = is_array($user) ? $user : self::findUserById($id);
-
-            if (is_array($user)) {
-                self::authRemember($user);
-            }
+            self::authRemember($user);
         } else {
             self::authForget();
         }
@@ -1923,6 +1925,10 @@ final class Core
 
     private static function userIsActive(array $user): bool
     {
+        if ((string) ($user['role'] ?? '') === 'bot') {
+            return false;
+        }
+
         if (!array_key_exists('status', $user)) {
             return true;
         }

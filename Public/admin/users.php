@@ -64,6 +64,8 @@ if ($adminUsersApi === 'update') {
         if ((string) input('role', '') !== 'bot') {
             bot_schema_ensure();
             update('bot_sources', ['enabled' => 0], ['bot_user_id' => $id]);
+        } else {
+            delete('notifications', ['user_id' => $id]);
         }
         api_ok(tc_admin_users_response_payload($id), t('users.messages.saved'));
     });

@@ -796,9 +796,9 @@ function user_find_by_recovery_hash(string $hash): ?array
     return one(
         'SELECT *
             FROM users
-            WHERE recovery_hash = ? AND status = ?
+            WHERE recovery_hash = ? AND status = ? AND role <> ?
             LIMIT 1',
-        [$hash, 'active']
+        [$hash, 'active', 'bot']
     );
 }
 
@@ -4297,23 +4297,177 @@ function status_link_apply_cached_metadata(array $link, array $cached, bool $pre
     return $link;
 }
 
-function status_link_prepare_metadata(array $link, ?array $cached): array
+function bot_link_image_cache(string $imageUrl): string
 {
-    if ($cached !== null && status_link_metadata_fresh($cached)) {
-        return status_link_apply_cached_metadata($link, $cached, true);
+    $imageUrl = trim($imageUrl);
+    if ($imageUrl === '' || !extension_loaded('gd') || !function_exists('imagewebp')) {
+        return '';
+    }
+    if (str_starts_with($imageUrl, '/uploads/links/')) {
+        return bot_link_image_exists($imageUrl) ? $imageUrl : '';
+    }
+    if (!LinkMetadata::isSafeRemoteUrl($imageUrl)) {
+        return '';
     }
 
-    $enriched = LinkMetadata::enrich($link);
-    $enriched['_metadata_updated_at'] = date_db();
+    $subfolder = date('Y/m');
+    $filename = substr(hash('sha256', $imageUrl), 0, 40) . '.webp';
+    $directory = base_path('uploads/links/' . $subfolder);
+    $target = $directory . DIRECTORY_SEPARATOR . $filename;
+    $localUrl = '/uploads/links/' . $subfolder . '/' . $filename;
 
-    if (!empty($enriched['_metadata_fetched']) || $cached === null) {
-        return $enriched;
+    if (is_file($target)) {
+        return $localUrl;
     }
 
-    return status_link_apply_cached_metadata($enriched, $cached, false);
+    $response = LinkMetadata::fetchImage($imageUrl);
+    $body = (string) ($response['body'] ?? '');
+    $info = $body !== '' && function_exists('getimagesizefromstring') ? @getimagesizefromstring($body) : false;
+    $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    $width = is_array($info) ? (int) ($info[0] ?? 0) : 0;
+    $height = is_array($info) ? (int) ($info[1] ?? 0) : 0;
+    $mime = is_array($info) ? strtolower((string) ($info['mime'] ?? '')) : '';
+
+    if (
+        $response === null
+        || !in_array($mime, $allowedMimes, true)
+        || $width < 1
+        || $height < 1
+        || $width > 8192
+        || $height > 8192
+        || $height > intdiv(20_000_000, $width)
+    ) {
+        return '';
+    }
+
+    $source = @imagecreatefromstring($body);
+    if (!$source instanceof GdImage) {
+        return '';
+    }
+
+    $targetWidth = 184;
+    $targetHeight = 172;
+    $targetRatio = $targetWidth / $targetHeight;
+    $sourceRatio = $width / $height;
+    $cropWidth = $width;
+    $cropHeight = $height;
+    $sourceX = 0;
+    $sourceY = 0;
+
+    if ($sourceRatio > $targetRatio) {
+        $cropWidth = max(1, (int) round($height * $targetRatio));
+        $sourceX = (int) floor(($width - $cropWidth) / 2);
+    } elseif ($sourceRatio < $targetRatio) {
+        $cropHeight = max(1, (int) round($width / $targetRatio));
+        $sourceY = (int) floor(($height - $cropHeight) / 2);
+    }
+
+    $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
+    imagealphablending($canvas, false);
+    imagesavealpha($canvas, true);
+    imagefill($canvas, 0, 0, imagecolorallocatealpha($canvas, 0, 0, 0, 127));
+    imagecopyresampled(
+        $canvas,
+        $source,
+        0,
+        0,
+        $sourceX,
+        $sourceY,
+        $targetWidth,
+        $targetHeight,
+        $cropWidth,
+        $cropHeight
+    );
+    imagedestroy($source);
+
+    if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+        imagedestroy($canvas);
+        return '';
+    }
+
+    $temporary = $target . '.tmp-' . bin2hex(random_bytes(6));
+    $written = imagewebp($canvas, $temporary, 62);
+    imagedestroy($canvas);
+
+    if (!$written) {
+        @unlink($temporary);
+        return '';
+    }
+    if (is_file($target)) {
+        @unlink($temporary);
+        return $localUrl;
+    }
+    if (!@rename($temporary, $target)) {
+        @unlink($temporary);
+        return '';
+    }
+
+    return $localUrl;
 }
 
-function status_sync_links(int $contentId, array $links): void
+function bot_link_image_exists(string $url): bool
+{
+    $relative = str_replace('\\', '/', trim(substr($url, strlen('/uploads/links/')), '/'));
+    if (!preg_match('~^[0-9]{4}/[0-9]{2}/[a-f0-9]{40}\.webp$~', $relative) || str_contains($relative, '..')) {
+        return false;
+    }
+
+    return is_file(base_path('uploads/links/' . $relative));
+}
+
+function bot_link_images_localize_existing(int $limit = 2): int
+{
+    $limit = max(1, min(5, $limit));
+    $rows = all(
+        "SELECT DISTINCT l.id, l.image_url
+            FROM links l
+            INNER JOIN content_links cl ON cl.link_id = l.id
+            INNER JOIN content c ON c.id = cl.content_id
+            INNER JOIN users u ON u.id = c.author_id
+            WHERE u.role = ? AND l.link_type = ? AND l.image_url LIKE 'http%'
+            ORDER BY l.id ASC
+            LIMIT " . $limit,
+        ['bot', 'link']
+    );
+    $localized = 0;
+
+    foreach ($rows as $row) {
+        $id = (int) ($row['id'] ?? 0);
+        if ($id < 1) {
+            continue;
+        }
+        $localUrl = bot_link_image_cache((string) ($row['image_url'] ?? ''));
+        update('links', ['image_url' => $localUrl !== '' ? $localUrl : null], ['id' => $id]);
+        if ($localUrl !== '') {
+            $localized++;
+        }
+    }
+
+    return $localized;
+}
+
+function status_link_prepare_metadata(array $link, ?array $cached, bool $localizeImage = false, string $localImageSource = ''): array
+{
+    if ($cached !== null && status_link_metadata_fresh($cached)) {
+        $prepared = status_link_apply_cached_metadata($link, $cached, true);
+    } else {
+        $prepared = LinkMetadata::enrich($link);
+        $prepared['_metadata_updated_at'] = date_db();
+
+        if (empty($prepared['_metadata_fetched']) && $cached !== null) {
+            $prepared = status_link_apply_cached_metadata($prepared, $cached, false);
+        }
+    }
+
+    if ($localizeImage) {
+        $imageUrl = $localImageSource ?: (string) ($prepared['image_url'] ?? '');
+        $prepared['image_url'] = bot_link_image_cache($imageUrl);
+    }
+
+    return $prepared;
+}
+
+function status_sync_links(int $contentId, array $links, string $localImageLinkHash = '', string $localImageSource = ''): void
 {
     if ($contentId < 1) {
         return;
@@ -4332,7 +4486,13 @@ function status_sync_links(int $contentId, array $links): void
             continue;
         }
 
-        $link = status_link_prepare_metadata($link, $metadataCache[$hash] ?? null);
+        $cacheImage = $localImageLinkHash !== '' && hash_equals($localImageLinkHash, $hash);
+        $link = status_link_prepare_metadata(
+            $link,
+            $metadataCache[$hash] ?? null,
+            $cacheImage,
+            $cacheImage ? $localImageSource : ''
+        );
         $linkId = status_link_upsert($link);
 
         if ($linkId < 1) {
@@ -4810,6 +4970,14 @@ function notification_url(array $notification): string
 function notification_create(int $userId, string $type, int $actorId, int $contentId = 0, int $commentId = 0, string $key = ''): void
 {
     if ($userId < 1 || $actorId < 1 || $userId === $actorId) {
+        return;
+    }
+
+    static $recipientRoles = [];
+    if (!array_key_exists($userId, $recipientRoles)) {
+        $recipientRoles[$userId] = (string) val('SELECT role FROM users WHERE id = ? LIMIT 1', [$userId]);
+    }
+    if ($recipientRoles[$userId] === 'bot') {
         return;
     }
 
@@ -6164,6 +6332,19 @@ function bot_schema_ensure(): void
             KEY bot_feed_items_created_index (created_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
+
+    bot_accounts_harden();
+}
+
+function bot_accounts_harden(): void
+{
+    if ((bool) setting('bots.accounts_hardened', false)) {
+        return;
+    }
+
+    run("UPDATE users SET password = NULL WHERE role = 'bot' AND password IS NOT NULL");
+    run("DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE role = 'bot')");
+    setting_set('bots.accounts_hardened', true, 'bool', 'bots');
 }
 
 function bot_source_default_template(): string
@@ -6319,7 +6500,8 @@ function bot_feed_parse(string $xml): array
         }
 
         $title = bot_feed_text((string) $node->title, 500);
-        $description = bot_feed_text((string) ($node->description ?: $node->summary ?: $node->content), 1200);
+        $descriptionSource = (string) ($node->description ?: $node->summary ?: $node->content);
+        $description = bot_feed_text($descriptionSource, 1200);
         $guid = trim((string) ($node->guid ?: $node->id ?: $link));
         $published = trim((string) ($node->pubDate ?: $node->published ?: $node->updated));
 
@@ -6333,6 +6515,7 @@ function bot_feed_parse(string $xml): array
             'title' => $title,
             'description' => $description,
             'url' => LinkMetadata::isSafeRemoteUrl($link) ? $link : '',
+            'image_url' => bot_feed_image_url($node, $namespaces, $descriptionSource),
             'author' => bot_feed_text($creator, 200),
             'categories' => array_values(array_unique($categories)),
             'published_at' => $timestamp !== false ? date('Y-m-d H:i:s', $timestamp) : null,
@@ -6353,6 +6536,43 @@ function bot_feed_text(string $value, int $limit): string
     $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
     return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
+}
+
+function bot_feed_image_url(SimpleXMLElement $node, array $namespaces, string $description = ''): string
+{
+    $candidates = [];
+
+    if (isset($namespaces['media'])) {
+        $media = $node->children((string) $namespaces['media']);
+        foreach (['content', 'thumbnail'] as $element) {
+            foreach ($media->{$element} as $image) {
+                $candidates[] = (string) ($image->attributes()['url'] ?? '');
+            }
+        }
+    }
+
+    foreach ($node->enclosure as $enclosure) {
+        $attributes = $enclosure->attributes();
+        $type = strtolower((string) ($attributes['type'] ?? ''));
+        if ($type === '' || str_starts_with($type, 'image/')) {
+            $candidates[] = (string) ($attributes['url'] ?? '');
+        }
+    }
+
+    if (preg_match('~<img\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1~is', $description, $match) === 1) {
+        $candidates[] = (string) ($match[2] ?? '');
+    } elseif (preg_match('~<img\b[^>]*\bsrc\s*=\s*([^\s>]+)~is', $description, $match) === 1) {
+        $candidates[] = trim((string) ($match[1] ?? ''), "\"'");
+    }
+
+    foreach ($candidates as $candidate) {
+        $url = html_entity_decode(trim((string) $candidate), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        if (strlen($url) <= 2048 && LinkMetadata::isSafeRemoteUrl($url)) {
+            return $url;
+        }
+    }
+
+    return '';
 }
 
 function bot_render_post(array $source, array $item): string
@@ -6388,6 +6608,8 @@ function bot_run_due_sources(int $limit = 10): array
     foreach ($sources as $source) {
         $results[] = bot_run_source($source);
     }
+
+    bot_link_images_localize_existing(1);
 
     return $results;
 }
@@ -6437,7 +6659,13 @@ function bot_run_source(array $source): array
                 'created_at' => $publishedAt,
             ]);
             status_sync_tags($contentId, status_tags_from_text($body));
-            status_sync_links($contentId, status_links_from_text($body));
+            $feedLink = StatusLinks::fromRaw((string) ($item['url'] ?? ''));
+            status_sync_links(
+                $contentId,
+                status_links_from_text($body),
+                (string) ($feedLink['url_hash'] ?? ''),
+                (string) ($item['image_url'] ?? '')
+            );
             insert('bot_feed_items', [
                 'source_id' => $sourceId,
                 'item_hash' => $hash,

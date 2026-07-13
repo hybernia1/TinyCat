@@ -14,6 +14,8 @@ final class LinkMetadata
     private const TIMEOUT = 4;
     private const FEED_TIMEOUT = 10;
     private const FEED_LIMIT = 2097152;
+    private const IMAGE_TIMEOUT = 8;
+    private const IMAGE_LIMIT = 5242880;
     private const REDIRECT_LIMIT = 3;
 
     public static function enrich(array $link): array
@@ -141,6 +143,24 @@ final class LinkMetadata
     public static function isSafeRemoteUrl(string $url): bool
     {
         return self::safeUrl($url);
+    }
+
+    public static function fetchImage(string $url): ?array
+    {
+        $response = self::request(
+            $url,
+            self::IMAGE_LIMIT,
+            'image/webp,image/jpeg,image/png,image/gif',
+            0,
+            false,
+            self::IMAGE_TIMEOUT
+        );
+
+        if ($response === null || !str_starts_with(strtolower((string) ($response['content_type'] ?? '')), 'image/')) {
+            return null;
+        }
+
+        return $response;
     }
 
     private static function parseHtml(string $html, string $baseUrl): array
