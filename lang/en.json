@@ -352,6 +352,13 @@
         "cookies_remember": "Optional remember-me login uses a technical cookie only when the user enables it.",
         "cookies_no_ads": "TinyCat core does not use advertising cookies or analytics tracking."
     },
+    "profile_links": {
+        "title": "Website and social profiles",
+        "website": "Website",
+        "help": "Add only links that should be publicly visible on the profile.",
+        "invalid": "The {type} URL is not valid.",
+        "validation_failed": "Check the profile links."
+    },
     "account": {
         "title": "My account",
         "save_profile": "Save profile",
@@ -678,6 +685,7 @@
         "purpose_user_action_limits": "Account-based action limits without IP tracking.",
         "purpose_bot_sources": "RSS and Atom publishing rules for bot accounts.",
         "purpose_bot_feed_items": "Imported feed GUIDs used to prevent duplicate bot posts.",
+        "purpose_user_profile_links": "Public website and social profile links.",
         "purpose_settings": "Database-backed application settings.",
         "admin_title": "First admin account",
         "admin_password_confirm": "Confirm password",

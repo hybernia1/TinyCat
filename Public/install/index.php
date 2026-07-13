@@ -538,6 +538,7 @@ function tc_install_create_tables(): void
     );
 
     bot_schema_ensure();
+    profile_links_schema_ensure();
 }
 
 function tc_install_default_settings(array $state): void
@@ -652,6 +653,7 @@ function tc_install_schema_tables(): array
         'user_action_limits' => 'install.purpose_user_action_limits',
         'bot_sources' => 'install.purpose_bot_sources',
         'bot_feed_items' => 'install.purpose_bot_feed_items',
+        'user_profile_links' => 'install.purpose_user_profile_links',
         'settings' => 'install.purpose_settings',
     ];
 }

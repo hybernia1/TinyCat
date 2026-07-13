@@ -39,7 +39,28 @@ if ($adminUsersApi === 'update') {
             api_error(t('users.messages.not_found'), 404, 'user_not_found');
         }
 
-        update('users', tc_admin_user_payload($id), ['id' => $id]);
+        $existing = tc_admin_user_by_id($id);
+        $profileLinks = profile_links_from_input();
+        $avatar = tc_admin_user_avatar_change((array) $existing);
+        $payload = tc_admin_user_payload($id);
+
+        if ($avatar['changed']) {
+            $payload['avatar_config'] = $avatar['json'];
+        }
+
+        try {
+            update('users', $payload, ['id' => $id]);
+            user_profile_links_sync($id, $profileLinks);
+        } catch (Throwable $exception) {
+            if ($avatar['uploaded']) {
+                Avatar::delete($avatar['config']);
+            }
+            throw $exception;
+        }
+
+        if ($avatar['changed']) {
+            Avatar::delete($existing['avatar_config'] ?? null, $avatar['config']);
+        }
         if ((string) input('role', '') !== 'bot') {
             bot_schema_ensure();
             update('bot_sources', ['enabled' => 0], ['bot_user_id' => $id]);
@@ -64,7 +85,12 @@ if ($adminUsersApi === 'delete') {
             bot_delete_sources_for_user($id);
         }
 
+        try {
+            delete('user_profile_links', ['user_id' => $id]);
+        } catch (Throwable) {
+        }
         delete('users', ['id' => $id]);
+        Avatar::delete($user['avatar_config'] ?? null);
         api_ok(tc_admin_users_response_payload(), t('users.messages.deleted'));
     });
 }
@@ -293,6 +319,11 @@ function tc_admin_users_api_payload(?int $id = null): array
 {
     $filters = tc_admin_users_filters();
     $page = tc_admin_users_page($filters);
+    $profileLinks = user_profile_links_for_users(array_column($page['items'], 'id'));
+    foreach ($page['items'] as &$user) {
+        $user['profile_links'] = $profileLinks[(int) ($user['id'] ?? 0)] ?? [];
+    }
+    unset($user);
     $users = array_map('tc_admin_user_resource', $page['items']);
     $payload = [
         'items' => $users,
@@ -305,7 +336,11 @@ function tc_admin_users_api_payload(?int $id = null): array
 
     if ($id !== null) {
         $payload['id'] = $id;
-        $payload['item'] = tc_admin_user_resource(tc_admin_user_by_id($id) ?? []);
+        $item = tc_admin_user_by_id($id) ?? [];
+        if ($item !== []) {
+            $item['profile_links'] = user_profile_links($id);
+        }
+        $payload['item'] = tc_admin_user_resource($item);
     }
 
     return $payload;
@@ -357,6 +392,9 @@ function tc_admin_user_resource(array $user): array
         'username' => (string) ($user['username'] ?? ''),
         'role' => (string) ($user['role'] ?? ''),
         'status' => (string) ($user['status'] ?? ''),
+        'bio' => (string) ($user['bio'] ?? ''),
+        'avatar_url' => user_avatar_url($user),
+        'profile_links' => (array) ($user['profile_links'] ?? []),
         'created_at' => (string) ($user['created_at'] ?? ''),
         'updated_at' => (string) ($user['updated_at'] ?? ''),
         'created_at_iso' => tc_admin_datetime_iso((string) ($user['created_at'] ?? '')),
@@ -430,6 +468,7 @@ function tc_admin_user_payload(?int $id = null): array
     $payload = [
         'role' => $role,
         'status' => $status,
+        'bio' => plain_text_limit((string) input('bio', ''), 500),
     ];
 
     if ($id === null) {
@@ -449,6 +488,33 @@ function tc_admin_user_payload(?int $id = null): array
     }
 
     return $payload;
+}
+
+function tc_admin_user_avatar_change(array $user): array
+{
+    $file = $_FILES['avatar'] ?? null;
+    $remove = in_array(input('remove_avatar', null), [true, 1, '1', 'true', 'on'], true);
+    $hasUpload = is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+    $result = ['changed' => false, 'uploaded' => false, 'json' => null, 'config' => null];
+
+    if (!$hasUpload) {
+        if ($remove) {
+            $result['changed'] = true;
+        }
+        return $result;
+    }
+
+    try {
+        $config = Avatar::upload((array) $file, (string) ($user['username'] ?? ''));
+        $json = Avatar::configJson($config);
+        if ($json === '') {
+            throw new RuntimeException('Avatar config could not be stored.');
+        }
+        return ['changed' => true, 'uploaded' => true, 'json' => $json, 'config' => $config];
+    } catch (Throwable) {
+        Avatar::delete($config ?? null);
+        api_error(t('account.messages.avatar_invalid'), 422, 'avatar_invalid');
+    }
 }
 
 function tc_admin_user_validation_messages(): array
@@ -540,6 +606,7 @@ function tc_admin_users_html(): string
     $roles = tc_admin_roles();
     $statuses = tc_admin_statuses();
     $hasFilters = tc_admin_users_active_filters($filters) !== [];
+    $profileLinks = user_profile_links_for_users(array_column($users, 'id'));
 
     ob_start();
     ?>
@@ -597,6 +664,7 @@ function tc_admin_users_html(): string
             </div>
             <?= admin_pagination($pagination, '/api/admin/users', '#users-list', $params, 'page', 2, '/admin/users') ?>
             <?php foreach ($users as $user): ?>
+                <?php $user['profile_links'] = $profileLinks[(int) ($user['id'] ?? 0)] ?? []; ?>
                 <?= tc_admin_user_modal($user, $roles, $statuses) ?>
             <?php endforeach; ?>
         <?php endif; ?>
@@ -716,6 +784,7 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
     $role = (string) ($user['role'] ?? 'user');
     $status = (string) ($user['status'] ?? 'active');
     $superAdminLocked = !$create && $user !== null && tc_admin_user_is_super_admin($user);
+    $profileLinks = (array) ($user['profile_links'] ?? []);
 
     ob_start();
     ?>
@@ -736,6 +805,19 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
                 </div>
             </section>
 
+            <?php if (!$create): ?>
+                <section class="user-editor-panel stack">
+                    <label class="field">
+                        <span class="label"><?= et('account.bio') ?></span>
+                        <textarea class="textarea" name="bio" rows="5" maxlength="500"><?= e((string) ($user['bio'] ?? '')) ?></textarea>
+                    </label>
+                </section>
+                <section class="user-editor-panel stack">
+                    <div><span class="label"><?= et('profile_links.title') ?></span><span class="help"><?= et('profile_links.help') ?></span></div>
+                    <?= user_profile_links_fields($profileLinks) ?>
+                </section>
+            <?php endif; ?>
+
             <section class="user-editor-panel">
                 <label class="field">
                     <span class="label"><?= $create ? et('common.password') : et('common.new_password') ?></span>
@@ -746,6 +828,16 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
         </main>
 
         <aside class="user-editor-sidebar">
+            <?php if (!$create): ?>
+                <section class="user-editor-panel stack">
+                    <span class="label"><?= et('account.avatar') ?></span>
+                    <div class="avatar avatar-xl"><?= user_avatar_html($user, (string) ($user['username'] ?? '')) ?></div>
+                    <label class="field"><span class="label"><?= et('account.avatar_upload_label') ?></span><input class="input" type="file" name="avatar" accept="image/png,image/jpeg,image/webp"></label>
+                    <?php if (user_avatar_url($user) !== ''): ?>
+                        <label class="check"><input type="checkbox" name="remove_avatar" value="1"> <span><?= et('account.remove_avatar') ?></span></label>
+                    <?php endif; ?>
+                </section>
+            <?php endif; ?>
             <section class="user-editor-panel">
                 <div class="user-editor-settings-grid">
                     <label class="field">

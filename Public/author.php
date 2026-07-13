@@ -43,6 +43,7 @@ $isFollowing = $canFollow && author_is_followed((int) ($authUser['id'] ?? 0), $a
 $followCounts = author_follow_counts($authorId);
 $activityStats = author_activity_stats($authorId);
 $presence = author_presence($author);
+$profileLinks = user_profile_links($authorId);
 $followingProfiles = author_following_profiles($authorId, 10);
 $hasMoreFollowing = count($followingProfiles) > 9;
 $followingProfiles = array_slice($followingProfiles, 0, 9);
@@ -58,7 +59,7 @@ layout('layout', [
         'image' => $avatarUrl ?: site_meta_image_url(),
         'type' => 'profile',
     ],
-], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles, $hasMoreFollowing): void {
+], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -113,6 +114,7 @@ layout('layout', [
                             <?php elseif ($bio !== ''): ?>
                                 <p class="text-muted mb-0"><?= nl2br(e($bio)) ?></p>
                             <?php endif; ?>
+                            <?= user_profile_links_html($profileLinks) ?>
                         </div>
                         <div class="profile-stats">
                             <span class="profile-stat"><strong data-author-stat="followers" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['followers'] ?? 0)) ?></strong> <span><?= et('public.followers') ?></span></span>

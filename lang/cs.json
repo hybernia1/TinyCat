@@ -352,6 +352,13 @@
         "cookies_remember": "Volitelné zapamatování přihlášení používá technickou cookie jen tehdy, když si ho uživatel sám zapne.",
         "cookies_no_ads": "TinyCat core nepoužívá reklamní cookies ani analytické sledování."
     },
+    "profile_links": {
+        "title": "Web a sociální profily",
+        "website": "Webová stránka",
+        "help": "Přidej pouze odkazy, které mají být veřejně viditelné na profilu.",
+        "invalid": "Adresa pro {type} není platná.",
+        "validation_failed": "Zkontroluj profilové odkazy."
+    },
     "account": {
         "title": "Můj účet",
         "save_profile": "Uložit profil",
@@ -678,6 +685,7 @@
         "purpose_user_action_limits": "Limity akcí podle účtu bez IP trackingu.",
         "purpose_bot_sources": "Pravidla publikování RSS a Atom zdrojů pro bot účty.",
         "purpose_bot_feed_items": "Importovaná GUID feedů zabraňující duplicitním příspěvkům botů.",
+        "purpose_user_profile_links": "Veřejný web a odkazy na sociální profily.",
         "purpose_settings": "Databázová nastavení aplikace.",
         "admin_title": "První admin účet",
         "admin_password_confirm": "Potvrzení hesla",

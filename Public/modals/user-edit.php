@@ -37,6 +37,7 @@ echo render('modals/layout', [
     'icon' => 'edit',
     'action' => tc_admin_users_api_url('update', ['id' => $id]),
     'method' => 'PATCH',
+    'multipart' => true,
     'target' => '#users-list',
     'closeOnSuccess' => true,
     'formAttributes' => [
