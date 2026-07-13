@@ -188,16 +188,23 @@
 
     href = String(trigger.getAttribute("href") || "");
     if (href.indexOf("/status/") === 0) {
-      return href;
+      return mobileStatusPageUrl(href);
     }
 
     card = trigger.closest(".status-card");
     if (card && card.dataset.statusUrl) {
-      return String(card.dataset.statusUrl);
+      return mobileStatusPageUrl(String(card.dataset.statusUrl));
     }
 
     statusId = parseInt(modalTarget.slice("status-post-modal-".length), 10) || 0;
-    return statusId > 0 ? "/status/" + statusId : "";
+    return statusId > 0 ? mobileStatusPageUrl("/status/" + statusId) : "";
+  }
+
+  function mobileStatusPageUrl(value) {
+    var url = new URL(value, window.location.origin);
+
+    url.searchParams.set("compact", "1");
+    return compactUrl(url);
   }
 
   function focusFirst(modal) {

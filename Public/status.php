@@ -8,6 +8,8 @@ if (!defined('TINYCAT')) {
 
 $statusId = max(0, (int) get('id', 0));
 $current = status_url($statusId);
+$compact = (string) get('compact', '') === '1';
+$pageAction = $current . ($compact ? '?compact=1' : '');
 
 if ($statusId < 1) {
     tc_status_not_found();
@@ -39,7 +41,7 @@ layout('layout', [
         'published_time' => (string) ($item['created_at'] ?? ''),
         'author' => (string) ($item['author_name'] ?? ''),
     ],
-], static function () use ($item, $current): void {
+], static function () use ($item, $current, $compact, $pageAction): void {
     $authorId = (int) ($item['author_id'] ?? 0);
     $authorName = trim((string) ($item['author_name'] ?? ''));
     $createdAt = (string) ($item['created_at'] ?? '');
@@ -61,7 +63,7 @@ layout('layout', [
                                 <?= status_time_button($createdAt, $contentId, false) ?>
                             <?php endif; ?>
                         </div>
-                        <?= status_manage_actions($item, auth(), $current) ?>
+                        <?= status_manage_actions($item, auth(), $pageAction) ?>
                     </div>
 
                     <?php $bodyHtml = render_status_body($item); ?>
@@ -70,12 +72,12 @@ layout('layout', [
                     <?php endif; ?>
                     <?= status_links_html($item) ?>
 
-                    <?= status_actions($item, auth(), $current, false) ?>
-                    <?= status_comment_thread_section($item, auth(), $current, 'status-' . $contentId) ?>
+                    <?= status_actions($item, auth(), $pageAction, false) ?>
+                    <?= status_comment_thread_section($item, auth(), $pageAction, 'status-' . $contentId) ?>
                 </div>
             </article>
         </main>
-        <?= public_sidebar() ?>
+        <?php if (!$compact): ?><?= public_sidebar() ?><?php endif; ?>
     </section>
     <?php
 });
