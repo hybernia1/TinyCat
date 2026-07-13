@@ -167,8 +167,6 @@
             "bot": "Choose an existing bot account.",
             "name": "Enter a source name of at most 120 characters.",
             "feed_url": "Enter a public HTTP or HTTPS feed URL.",
-            "feed_unreachable": "The feed could not be downloaded. Check its URL and availability.",
-            "feed_invalid": "No valid RSS or Atom feed was found at this URL.",
             "interval": "The interval must be between 5 and 43200 minutes.",
             "template": "Enter a post template of at most 2000 characters."
         }

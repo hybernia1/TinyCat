@@ -167,8 +167,6 @@
             "bot": "Vyber existující bot účet.",
             "name": "Zadej název zdroje dlouhý nejvýše 120 znaků.",
             "feed_url": "Zadej veřejnou HTTP nebo HTTPS adresu feedu.",
-            "feed_unreachable": "Feed se nepodařilo stáhnout. Zkontroluj adresu a dostupnost zdroje.",
-            "feed_invalid": "Na adrese nebyl nalezen platný RSS nebo Atom feed.",
             "interval": "Interval musí být mezi 5 a 43200 minutami.",
             "template": "Zadej šablonu příspěvku dlouhou nejvýše 2000 znaků."
         }

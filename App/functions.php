@@ -6697,25 +6697,6 @@ function bot_feed_parse(string $xml): array
     return $items;
 }
 
-function bot_feed_document_valid(string $xml): bool
-{
-    if ($xml === '' || !function_exists('simplexml_load_string')) {
-        return false;
-    }
-
-    $previous = libxml_use_internal_errors(true);
-    $feed = simplexml_load_string($xml, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
-    libxml_clear_errors();
-    libxml_use_internal_errors($previous);
-
-    if (!$feed instanceof SimpleXMLElement) {
-        return false;
-    }
-
-    $root = strtolower($feed->getName());
-    return ($root === 'rss' && isset($feed->channel)) || $root === 'feed';
-}
-
 function bot_feed_text(string $value, int $limit): string
 {
     $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');

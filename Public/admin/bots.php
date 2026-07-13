@@ -27,14 +27,11 @@ if ($isApi && in_array(method(), ['POST', 'PATCH'], true)) {
         csrf_require();
         $id = method() === 'PATCH' ? max(1, (int) input('id', 0)) : null;
 
-        $source = $id !== null ? bot_source_find($id) : null;
-        if ($id !== null && $source === null) {
+        if ($id !== null && bot_source_find($id) === null) {
             api_error(t('bots.messages.not_found'), 404, 'bot_source_not_found');
         }
 
-        $submittedFeedUrl = trim((string) input('feed_url', ''));
-        $validateFeed = $source === null || $submittedFeedUrl !== trim((string) ($source['feed_url'] ?? ''));
-        $payload = tc_admin_bot_source_payload($validateFeed);
+        $payload = tc_admin_bot_source_payload();
         if ($id === null) {
             $id = (int) insert('bot_sources', $payload + ['created_at' => date_db()]);
             $message = t('bots.messages.created');
@@ -146,7 +143,7 @@ function tc_admin_bots_api_url(): string
     return '/api/admin/bots?' . http_build_query($query);
 }
 
-function tc_admin_bot_source_payload(bool $validateFeed = false): array
+function tc_admin_bot_source_payload(): array
 {
     $botUserId = max(0, (int) input('bot_user_id', 0));
     $name = trim((string) input('name', ''));
@@ -169,18 +166,6 @@ function tc_admin_bot_source_payload(bool $validateFeed = false): array
     }
     if ($template === '' || strlen($template) > 2000) {
         $errors['post_template'][] = t('bots.validation.template');
-    }
-    if ($validateFeed && !isset($errors['feed_url'])) {
-        try {
-            $response = LinkMetadata::fetchDocument($feedUrl);
-            if ($response === null) {
-                $errors['feed_url'][] = t('bots.validation.feed_unreachable');
-            } elseif (!bot_feed_document_valid((string) ($response['body'] ?? ''))) {
-                $errors['feed_url'][] = t('bots.validation.feed_invalid');
-            }
-        } catch (Throwable) {
-            $errors['feed_url'][] = t('bots.validation.feed_unreachable');
-        }
     }
     if ($errors !== []) {
         api_validation($errors);
