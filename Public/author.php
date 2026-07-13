@@ -63,33 +63,37 @@ layout('layout', [
         <aside class="profile-sidebar">
             <div class="profile-sidebar-stack">
                 <article class="card profile-card">
-                    <div class="card-body stack">
+                    <div class="card-body profile-card-body">
                         <?php if ($canPost): ?>
                             <button class="btn btn-secondary btn-sm btn-icon profile-edit-toggle" type="button" data-modal-open="<?= e(author_profile_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_profile_edit_modal_url($authorId, 'bio')) ?>" title="<?= et('common.edit') ?>" aria-label="<?= et('common.edit') ?>">
                                 <?= icon('edit') ?>
                             </button>
                         <?php endif; ?>
-                        <?php if ($canPost): ?>
-                            <button class="avatar avatar-xl profile-avatar-button" type="button" data-modal-open="<?= e(author_avatar_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_avatar_edit_modal_url($authorId)) ?>" title="<?= et('account.avatar_edit') ?>" aria-label="<?= et('account.avatar_edit') ?>">
-                        <?php else: ?>
-                            <div class="avatar avatar-xl">
-                        <?php endif; ?>
-                            <?= user_avatar_html($author, $authorName) ?>
-                        <?php if ($canPost): ?>
-                            </button>
-                        <?php else: ?>
+                        <div class="profile-identity">
+                            <?php if ($canPost): ?>
+                                <button class="avatar avatar-xl profile-avatar-button" type="button" data-modal-open="<?= e(author_avatar_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_avatar_edit_modal_url($authorId)) ?>" title="<?= et('account.avatar_edit') ?>" aria-label="<?= et('account.avatar_edit') ?>">
+                            <?php else: ?>
+                                <div class="avatar avatar-xl">
+                            <?php endif; ?>
+                                <?= user_avatar_html($author, $authorName) ?>
+                            <?php if ($canPost): ?>
+                                </button>
+                            <?php else: ?>
+                                </div>
+                            <?php endif; ?>
+                            <div class="profile-identity-main">
+                                <h1 class="profile-name m-0"><?= e($authorName) ?></h1>
+                                <div class="profile-presence<?= ($presence['online'] ?? false) ? ' is-online' : '' ?>">
+                                    <span class="profile-presence-dot" aria-hidden="true"></span>
+                                    <?php if ((string) ($presence['datetime'] ?? '') !== ''): ?>
+                                        <time datetime="<?= e((string) $presence['datetime']) ?>"><?= e((string) ($presence['label'] ?? '')) ?></time>
+                                    <?php else: ?>
+                                        <span><?= e((string) ($presence['label'] ?? '')) ?></span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                        <?php endif; ?>
-                        <div class="stack stack-gap-8">
-                            <h1 class="text-xl m-0"><?= e($authorName) ?></h1>
-                            <div class="profile-presence<?= ($presence['online'] ?? false) ? ' is-online' : '' ?>">
-                                <span class="profile-presence-dot" aria-hidden="true"></span>
-                                <?php if ((string) ($presence['datetime'] ?? '') !== ''): ?>
-                                    <time datetime="<?= e((string) $presence['datetime']) ?>"><?= e((string) ($presence['label'] ?? '')) ?></time>
-                                <?php else: ?>
-                                    <span><?= e((string) ($presence['label'] ?? '')) ?></span>
-                                <?php endif; ?>
-                            </div>
+                        </div>
+                        <div class="profile-details">
                             <?php if ($canSeeMute && $mutedUntil !== ''): ?>
                                 <div class="alert alert-warning profile-mute-alert">
                                     <?= icon('lock') ?>
@@ -109,17 +113,17 @@ layout('layout', [
                             <?php endif; ?>
                         </div>
                         <div class="profile-stats">
-                            <span class="badge profile-stat"><strong data-author-stat="followers" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['followers'] ?? 0)) ?></strong> <span><?= et('public.followers') ?></span></span>
-                            <span class="badge profile-stat"><strong data-author-stat="following" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['following'] ?? 0)) ?></strong> <span><?= et('public.following') ?></span></span>
-                            <span class="badge profile-stat"><strong><?= e((int) ($activityStats['posts'] ?? 0)) ?></strong> <span><?= et('public.profile_posts') ?></span></span>
-                            <span class="badge profile-stat"><strong><?= e((int) ($activityStats['likes_given'] ?? 0)) ?></strong> <span><?= et('public.profile_likes_given') ?></span></span>
-                            <span class="badge profile-stat"><strong><?= e((int) ($activityStats['likes_received'] ?? 0)) ?></strong> <span><?= et('public.profile_likes_received') ?></span></span>
-                            <span class="badge profile-stat"><strong><?= e((int) ($activityStats['comments'] ?? 0)) ?></strong> <span><?= et('public.profile_comments') ?></span></span>
+                            <span class="profile-stat"><strong data-author-stat="followers" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['followers'] ?? 0)) ?></strong> <span><?= et('public.followers') ?></span></span>
+                            <span class="profile-stat"><strong data-author-stat="following" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['following'] ?? 0)) ?></strong> <span><?= et('public.following') ?></span></span>
+                            <span class="profile-stat"><strong><?= e((int) ($activityStats['posts'] ?? 0)) ?></strong> <span><?= et('public.profile_posts') ?></span></span>
+                            <span class="profile-stat"><strong><?= e((int) ($activityStats['likes_given'] ?? 0)) ?></strong> <span><?= et('public.profile_likes_given') ?></span></span>
+                            <span class="profile-stat"><strong><?= e((int) ($activityStats['likes_received'] ?? 0)) ?></strong> <span><?= et('public.profile_likes_received') ?></span></span>
+                            <span class="profile-stat"><strong><?= e((int) ($activityStats['comments'] ?? 0)) ?></strong> <span><?= et('public.profile_comments') ?></span></span>
                             <?php if ($memberSince !== ''): ?>
-                                <span class="badge profile-stat profile-stat-muted"><?= icon('calendar') ?> <span><?= et('public.member_since', ['date' => date_value($memberSince)]) ?></span></span>
+                                <span class="profile-member-since"><?= icon('calendar') ?> <span><?= et('public.member_since', ['date' => date_value($memberSince)]) ?></span></span>
                             <?php endif; ?>
                         </div>
-                        <div class="cluster gap-2">
+                        <div class="profile-actions">
                             <?php if ($canFollow): ?>
                                 <?= author_follow_button_html($authorId, $isFollowing) ?>
                             <?php elseif ($authUser === null): ?>

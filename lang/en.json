@@ -243,6 +243,7 @@
         "platform_terms_required": "Registration requires agreement with the public platform rules.",
         "logout_title": "Logout",
         "logout_intro": "Confirm signing out of the current session.",
+        "logout_confirm": "Are you sure you want to log out?",
         "remember_me": "Remember me",
         "recovery_title": "Password recovery",
         "recovery_intro": "Enter your private recovery hash and a new password. The hash does not sign you in; it only authorizes a password change.",

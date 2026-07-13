@@ -2790,6 +2790,44 @@ img.status-editor-suggestion-avatar {
 
 .profile-card {
   position: relative;
+  overflow: hidden;
+}
+
+.profile-card-body {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+}
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding-right: 28px;
+}
+
+.profile-identity .avatar-xl {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+}
+
+.profile-identity-main {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.profile-name {
+  overflow-wrap: anywhere;
+  font-size: 1.35rem;
+  line-height: 1.15;
+}
+
+.profile-details {
+  display: grid;
+  gap: 12px;
 }
 
 .profile-sidebar-stack {
@@ -2805,17 +2843,36 @@ img.status-editor-suggestion-avatar {
 }
 
 .profile-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
 }
 
 .profile-stat {
-  justify-content: flex-start;
-  gap: 4px;
-  min-height: 26px;
-  padding: 4px 8px;
-  text-align: left;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 11px 6px;
+  text-align: center;
+}
+
+.profile-stat:nth-child(-n + 3) {
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-stat:not(:nth-child(3n)) {
+  border-right: 1px solid var(--border);
+}
+
+.profile-stat > span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
 }
 
 .profile-stat .icon {
@@ -2823,8 +2880,32 @@ img.status-editor-suggestion-avatar {
   height: 1em;
 }
 
-.profile-stat-muted {
+.profile-member-since {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-top: 1px solid var(--border);
+  padding: 9px 10px;
+  color: var(--muted);
+  font-size: 0.78rem;
   font-weight: 650;
+}
+
+.profile-member-since .icon {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-actions > * {
+  flex: 1 1 auto;
+  justify-content: center;
 }
 
 .profile-following-card .card-header {
@@ -2844,7 +2925,8 @@ img.status-editor-suggestion-avatar {
 
 .profile-stats strong {
   color: var(--text);
-  font-size: 0.875rem;
+  font-size: 1rem;
+  line-height: 1.1;
 }
 
 .profile-presence {

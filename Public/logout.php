@@ -31,7 +31,7 @@ layout('layout', [
         </div>
         <div class="card-body stack">
             <p class="text-muted mb-0"><?= et('auth.logout_intro') ?></p>
-            <form method="post" action="/logout">
+            <form method="post" action="/logout" data-confirm="<?= et('auth.logout_confirm') ?>" data-confirm-title="<?= et('auth.logout_title') ?>" data-confirm-ok="<?= et('common.logout') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
                 <?= csrf_field() ?>
                 <button class="btn btn-danger" type="submit"><?= icon('logout') ?> <span><?= et('common.logout') ?></span></button>
             </form>

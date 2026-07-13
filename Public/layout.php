@@ -165,7 +165,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                             <small><?= e($adminIdentity) ?></small>
                         </span>
                     </div>
-                    <form action="/logout" method="post">
+                    <form action="/logout" method="post" data-confirm="<?= et('auth.logout_confirm') ?>" data-confirm-title="<?= et('auth.logout_title') ?>" data-confirm-ok="<?= et('common.logout') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
                         <?= csrf_field() ?>
                         <button class="btn btn-secondary w-full" type="submit">
                             <?= icon('logout') ?> <span><?= et('common.logout') ?></span>
@@ -261,7 +261,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                         <a class="nav-link nav-link-icon" href="<?= e($profileUrl) ?>"<?= $current === $profileUrl ? ' aria-current="page"' : '' ?> aria-label="<?= et('account.public_profile') ?>" title="<?= et('account.public_profile') ?>">
                             <?= icon('user') ?>
                         </a>
-                        <form action="/logout" method="post" class="inline-flex">
+                        <form action="/logout" method="post" class="inline-flex" data-confirm="<?= et('auth.logout_confirm') ?>" data-confirm-title="<?= et('auth.logout_title') ?>" data-confirm-ok="<?= et('common.logout') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
                             <?= csrf_field() ?>
                             <button class="nav-link nav-link-icon" type="submit" aria-label="<?= et('common.logout') ?>" title="<?= et('common.logout') ?>">
                                 <?= icon('logout') ?>

@@ -243,6 +243,7 @@
         "platform_terms_required": "Pro registraci je potřeba souhlasit s pravidly veřejné platformy.",
         "logout_title": "Odhlášení",
         "logout_intro": "Potvrď odhlášení z aktuální session.",
+        "logout_confirm": "Opravdu se chceš odhlásit?",
         "remember_me": "Zapamatovat přihlášení",
         "recovery_title": "Obnova hesla",
         "recovery_intro": "Zadej neveřejný recovery hash a nové heslo. Hash účet nepřihlásí, slouží jen ke změně hesla.",
