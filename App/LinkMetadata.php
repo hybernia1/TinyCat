@@ -122,13 +122,23 @@ final class LinkMetadata
             return [];
         }
 
-        $response = self::request($url, self::HTML_LIMIT, 'text/html,application/xhtml+xml');
+        $response = self::request($url, self::HTML_LIMIT, 'text/html,application/xhtml+xml', 0, true);
 
         if ($response === null || !self::isHtml((string) ($response['content_type'] ?? ''))) {
             return [];
         }
 
         return self::parseHtml((string) ($response['body'] ?? ''), (string) ($response['url'] ?? $url));
+    }
+
+    public static function fetchDocument(string $url, int $limit = 1048576, string $accept = 'application/rss+xml,application/atom+xml,application/xml,text/xml'): ?array
+    {
+        return self::request($url, max(1024, min(2097152, $limit)), $accept);
+    }
+
+    public static function isSafeRemoteUrl(string $url): bool
+    {
+        return self::safeUrl($url);
     }
 
     private static function parseHtml(string $html, string $baseUrl): array
@@ -148,10 +158,22 @@ final class LinkMetadata
         }
 
         $meta = [];
+        $candidates = [
+            'title' => '',
+            'og_title' => '',
+            'twitter_title' => '',
+            'description' => '',
+            'og_description' => '',
+            'twitter_description' => '',
+            'og_image_secure' => '',
+            'og_image' => '',
+            'twitter_image' => '',
+            'image' => '',
+        ];
         $titles = $dom->getElementsByTagName('title');
 
         if ($titles->length > 0) {
-            $meta['title'] = self::cleanText((string) $titles->item(0)?->textContent, 255);
+            $candidates['title'] = self::cleanText((string) $titles->item(0)?->textContent, 255);
         }
 
         foreach ($dom->getElementsByTagName('meta') as $node) {
@@ -162,23 +184,55 @@ final class LinkMetadata
                 continue;
             }
 
-            if (in_array($name, ['og:title', 'twitter:title'], true)) {
-                $meta['title'] = self::cleanText($content, 255);
-            } elseif (in_array($name, ['description', 'og:description', 'twitter:description'], true)) {
-                $meta['description'] = self::cleanText($content, 500);
-            } elseif (in_array($name, ['og:image', 'og:image:secure_url', 'twitter:image', 'twitter:image:src'], true)) {
+            if ($name === 'og:title') {
+                $candidates['og_title'] = self::cleanText($content, 255);
+            } elseif ($name === 'twitter:title') {
+                $candidates['twitter_title'] = self::cleanText($content, 255);
+            } elseif ($name === 'description') {
+                $candidates['description'] = self::cleanText($content, 500);
+            } elseif ($name === 'og:description') {
+                $candidates['og_description'] = self::cleanText($content, 500);
+            } elseif ($name === 'twitter:description') {
+                $candidates['twitter_description'] = self::cleanText($content, 500);
+            } elseif (in_array($name, ['og:image:secure_url', 'og:image', 'twitter:image', 'twitter:image:src', 'image'], true)) {
                 $image = self::absoluteUrl($baseUrl, $content);
 
                 if ($image !== '' && self::safeUrl($image)) {
-                    $meta['image_url'] = $image;
+                    $key = match ($name) {
+                        'og:image:secure_url' => 'og_image_secure',
+                        'og:image' => 'og_image',
+                        'twitter:image', 'twitter:image:src' => 'twitter_image',
+                        default => 'image',
+                    };
+                    if ($candidates[$key] === '') {
+                        $candidates[$key] = $image;
+                    }
                 }
             }
         }
 
+        foreach ($dom->getElementsByTagName('link') as $node) {
+            $rel = strtolower(trim((string) $node->getAttribute('rel')));
+
+            if ($rel !== 'image_src') {
+                continue;
+            }
+
+            $image = self::absoluteUrl($baseUrl, (string) $node->getAttribute('href'));
+            if ($image !== '' && self::safeUrl($image)) {
+                $candidates['image'] = $image;
+                break;
+            }
+        }
+
+        $meta['title'] = $candidates['title'] ?: $candidates['og_title'] ?: $candidates['twitter_title'];
+        $meta['description'] = $candidates['description'] ?: $candidates['og_description'] ?: $candidates['twitter_description'];
+        $meta['image_url'] = $candidates['og_image_secure'] ?: $candidates['og_image'] ?: $candidates['twitter_image'] ?: $candidates['image'];
+
         return array_filter($meta, static fn (mixed $value): bool => trim((string) $value) !== '');
     }
 
-    private static function request(string $url, int $limit, string $accept, int $redirects = 0): ?array
+    private static function request(string $url, int $limit, string $accept, int $redirects = 0, bool $allowTruncated = false): ?array
     {
         if ($redirects > self::REDIRECT_LIMIT || !self::safeUrl($url)) {
             return null;
@@ -214,7 +268,7 @@ final class LinkMetadata
             fclose($stream);
             $next = self::absoluteUrl($url, (string) $headers['location']);
 
-            return $next !== '' ? self::request($next, $limit, $accept, $redirects + 1) : null;
+            return $next !== '' ? self::request($next, $limit, $accept, $redirects + 1, $allowTruncated) : null;
         }
 
         if ($status >= 400) {
@@ -226,8 +280,12 @@ final class LinkMetadata
         $body = stream_get_contents($stream, $limit + 1);
         fclose($stream);
 
-        if ($body === false || strlen($body) > $limit) {
+        if ($body === false || (!$allowTruncated && strlen($body) > $limit)) {
             return null;
+        }
+
+        if ($allowTruncated && strlen($body) > $limit) {
+            $body = substr($body, 0, $limit);
         }
 
         return [

@@ -12,6 +12,7 @@ It is designed to run without mandatory email, phone numbers, external accounts,
 - Profile pages with member stats, followed profiles, and user feed.
 - Link previews with Open Graph metadata and searchable linked content.
 - Admin area for users, settings, moderation, reports, and domain rules.
+- Bot accounts that can publish gradually from multiple independently configured RSS or Atom sources.
 - Installer for language, database connection, schema creation, and first admin account.
 - Mobile-first UI with lightweight CSS and JavaScript assets.
 
@@ -43,6 +44,14 @@ The project favors:
 5. Choose a language, enter database credentials, and create the first admin account.
 
 The installer creates `config.php` after the database and administrator account are configured. The generated configuration, runtime data, uploaded files, and local overrides are ignored by Git.
+
+## RSS bots
+
+Create a user with the `Bot` role, then configure one or more sources under **Admin → Bots**. Each source has its own publishing interval and post template. The administration provides a protected `cron.php` URL and Bearer token for the server scheduler or an external web-cron service. Call it once per minute using `POST` with the token in the `Authorization` header.
+
+The endpoint publishes at most one new item per due source, remembers imported RSS GUIDs, rejects unauthenticated calls, and uses a database lock to prevent overlapping runs.
+
+Append `?health=1` to perform an authenticated connectivity check without running or publishing anything.
 
 ## Project Layout
 

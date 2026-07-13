@@ -536,6 +536,8 @@ function tc_install_create_tables(): void
             KEY settings_autoload_index (autoload)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
+
+    bot_schema_ensure();
 }
 
 function tc_install_default_settings(array $state): void
@@ -553,6 +555,7 @@ function tc_install_default_settings(array $state): void
         ['datetime.date', (string) config('datetime.date', 'd.m.Y'), 'string', 'localization'],
         ['datetime.time', (string) config('datetime.time', 'H:i'), 'string', 'localization'],
         ['datetime.datetime', (string) config('datetime.datetime', 'd.m.Y H:i'), 'string', 'localization'],
+        ['bots.cron_token', bin2hex(random_bytes(32)), 'string', 'bots'],
         ['datetime.relative', (bool) config('datetime.relative', false), 'bool', 'localization'],
         ['security.captcha.enabled', (bool) config('security.captcha.enabled', true), 'bool', 'security'],
         ['auth.registration.enabled', (bool) config('auth.registration.enabled', false), 'bool', 'security'],
@@ -647,6 +650,8 @@ function tc_install_schema_tables(): array
         'notifications' => 'install.purpose_notifications',
         'content_reports' => 'install.purpose_content_reports',
         'user_action_limits' => 'install.purpose_user_action_limits',
+        'bot_sources' => 'install.purpose_bot_sources',
+        'bot_feed_items' => 'install.purpose_bot_feed_items',
         'settings' => 'install.purpose_settings',
     ];
 }

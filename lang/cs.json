@@ -77,6 +77,7 @@
         "table_user": "Uživatel",
         "edit_user": "Upravit @{username}",
         "password_keep": "Nechat prázdné beze změny",
+        "password_bot_optional": "Pro uživatele povinné; boti se nemohou přihlásit",
         "username_locked": "Username je primární identita a nejde změnit.",
         "delete_title": "Smazat uživatele",
         "delete_confirm": "Opravdu smazat uživatele @{username}?",
@@ -87,6 +88,7 @@
         },
         "roles": {
             "admin": "Admin",
+            "bot": "Bot",
             "user": "Uživatel"
         },
         "statuses": {
@@ -114,6 +116,48 @@
             "role_invalid": "Vybraná role není platná.",
             "status_required": "Vyber stav.",
             "status_invalid": "Vybraný stav není platný."
+        }
+    },
+    "bots": {
+        "title": "Boti",
+        "intro": "Publikování příspěvků z RSS nebo Atom zdrojů přes bot účty.",
+        "new_source": "Nový RSS zdroj",
+        "edit_source": "Upravit RSS zdroj",
+        "no_bots": "Nejdřív vytvoř uživatele s rolí Bot.",
+        "no_sources": "Zatím není nastavený žádný RSS zdroj.",
+        "bot": "Bot účet",
+        "source_name": "Název zdroje",
+        "feed_url": "RSS nebo Atom URL",
+        "interval": "Interval publikování v minutách",
+        "interval_help": "Minimum je 5 minut. Každý běh publikuje nejvýše jednu novou položku z tohoto zdroje.",
+        "template": "Šablona příspěvku",
+        "template_help": "Proměnné: {{title}}, {{description}}, {{url}}, {{author}}, {{source}}, {{categories}}",
+        "enabled": "Aktivní",
+        "disabled": "Vypnutý",
+        "every_minutes": "Každých {count} minut",
+        "next_run": "Další běh {time}",
+        "delete_confirm": "Opravdu smazat tento RSS zdroj i historii importovaných položek?",
+        "cron_title": "Produkční cron",
+        "cron_intro": "Spouštění bot zdrojů ze serverového plánovače nebo externí web-cron služby.",
+        "cron_url": "URL endpointu",
+        "cron_token": "Bearer token",
+        "cron_example": "Příklad příkazu",
+        "cron_help": "Spouštěj jednou za minutu. Token posílej v Authorization hlavičce; nevkládej ho do URL ani veřejných logů.",
+        "cron_rotate": "Obnovit token",
+        "cron_rotate_confirm": "Obnovit cron token? Existující naplánovaná volání přestanou fungovat, dokud je neupravíš.",
+        "messages": {
+            "created": "RSS zdroj byl vytvořen.",
+            "saved": "RSS zdroj byl uložen.",
+            "deleted": "RSS zdroj byl smazán.",
+            "not_found": "RSS zdroj nebyl nalezen.",
+            "token_rotated": "Cron token byl obnoven."
+        },
+        "validation": {
+            "bot": "Vyber existující bot účet.",
+            "name": "Zadej název zdroje dlouhý nejvýše 120 znaků.",
+            "feed_url": "Zadej veřejnou HTTP nebo HTTPS adresu feedu.",
+            "interval": "Interval musí být mezi 5 a 43200 minutami.",
+            "template": "Zadej šablonu příspěvku dlouhou nejvýše 2000 znaků."
         }
     },
     "moderation": {
@@ -630,6 +674,8 @@
         "purpose_notifications": "Upozornění na lajky, komentáře a označení.",
         "purpose_content_reports": "Uživatelská nahlášení pro moderaci.",
         "purpose_user_action_limits": "Limity akcí podle účtu bez IP trackingu.",
+        "purpose_bot_sources": "Pravidla publikování RSS a Atom zdrojů pro bot účty.",
+        "purpose_bot_feed_items": "Importovaná GUID feedů zabraňující duplicitním příspěvkům botů.",
         "purpose_settings": "Databázová nastavení aplikace.",
         "admin_title": "První admin účet",
         "admin_password_confirm": "Potvrzení hesla",

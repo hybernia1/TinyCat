@@ -40,6 +40,10 @@ if ($adminUsersApi === 'update') {
         }
 
         update('users', tc_admin_user_payload($id), ['id' => $id]);
+        if ((string) input('role', '') !== 'bot') {
+            bot_schema_ensure();
+            update('bot_sources', ['enabled' => 0], ['bot_user_id' => $id]);
+        }
         api_ok(tc_admin_users_response_payload($id), t('users.messages.saved'));
     });
 }
@@ -54,6 +58,11 @@ if ($adminUsersApi === 'delete') {
         }
 
         tc_admin_user_require_deletable($id);
+
+        $user = tc_admin_user_by_id($id);
+        if ((string) ($user['role'] ?? '') === 'bot') {
+            bot_delete_sources_for_user($id);
+        }
 
         delete('users', ['id' => $id]);
         api_ok(tc_admin_users_response_payload(), t('users.messages.deleted'));
@@ -87,6 +96,7 @@ function tc_admin_roles(): array
 {
     return [
         'admin' => t('users.roles.admin'),
+        'bot' => t('users.roles.bot'),
         'user' => t('users.roles.user'),
     ];
 }
@@ -378,7 +388,7 @@ function tc_admin_username_taken(string $username, ?int $ignoreId = null): bool
 function tc_admin_user_payload(?int $id = null): array
 {
     $existing = $id === null ? null : tc_admin_user_by_id($id);
-    $passwordRule = $id === null ? 'required|string|min:8|max:200' : 'nullable|string|min:8|max:200';
+    $passwordRule = 'nullable|string|min:8|max:200';
     $rules = [
         'password' => $passwordRule,
         'role' => 'required|string|in:' . implode(',', array_keys(tc_admin_roles())),
@@ -406,6 +416,10 @@ function tc_admin_user_payload(?int $id = null): array
     $role = (string) $data['role'];
     $status = (string) $data['status'];
 
+    if ($id === null && $role !== 'bot' && (string) ($data['password'] ?? '') === '') {
+        api_validation(['password' => [t('users.validation.password_required')]]);
+    }
+
     if ($existing !== null && tc_admin_user_is_super_admin($existing) && ($role !== 'admin' || $status !== 'active')) {
         api_validation([
             'role' => [t('users.messages.super_admin_protected')],
@@ -424,7 +438,9 @@ function tc_admin_user_payload(?int $id = null): array
 
     $password = (string) ($data['password'] ?? '');
 
-    if ($password !== '') {
+    if ($role === 'bot') {
+        $payload['password'] = null;
+    } elseif ($password !== '') {
         $payload['password'] = auth_password($password);
     }
 
@@ -723,7 +739,7 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
             <section class="user-editor-panel">
                 <label class="field">
                     <span class="label"><?= $create ? et('common.password') : et('common.new_password') ?></span>
-                    <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="200"<?= $create ? ' required' : '' ?> placeholder="<?= $create ? '' : et('users.password_keep') ?>">
+                    <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="200" placeholder="<?= $create ? et('users.password_bot_optional') : et('users.password_keep') ?>">
                 </label>
             </section>
 

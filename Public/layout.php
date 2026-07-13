@@ -40,6 +40,7 @@ foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', '
 $defaultAdminNav = [
     ['href' => '/admin', 'icon' => 'dashboard', 'label' => t('common.dashboard')],
     ['href' => '/admin/users', 'icon' => 'users', 'label' => t('users.list_title')],
+    ['href' => '/admin/bots', 'icon' => 'link', 'label' => t('bots.title')],
     ['href' => '/admin/moderation', 'icon' => 'shield', 'label' => t('moderation.title')],
     ['href' => '/admin/maintenance', 'icon' => 'database', 'label' => t('maintenance.title')],
     ['href' => '/admin/settings', 'icon' => 'settings', 'label' => t('settings.title')],

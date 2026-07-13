@@ -7,6 +7,7 @@ DirectoryIndex index.php
 RedirectMatch 404 ^/(App|lang|storage)(/|$)
 
 <IfModule mod_setenvif.c>
+    SetEnvIfNoCase Authorization "^(.+)$" HTTP_AUTHORIZATION=$1
     SetEnvIfNoCase Request_URI "\.(css|js|mjs|json|svg|png|jpe?g|gif|webp|ico|woff2?)$" tinycat_static_asset
 </IfModule>
 
@@ -16,6 +17,7 @@ RedirectMatch 404 ^/(App|lang|storage)(/|$)
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
     RewriteRule ^Public(/.*)?$ index.php [L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d

@@ -42,6 +42,10 @@ final class Api
             require public_path('admin/users.php');
         });
 
+        api_route('ANY', '/admin/bots', static function (): void {
+            require public_path('admin/bots.php');
+        });
+
         api_route('POST', '/admin/settings', static function (): void {
             require public_path('admin/settings.php');
         });

@@ -77,6 +77,7 @@
         "table_user": "User",
         "edit_user": "Edit @{username}",
         "password_keep": "Leave empty to keep unchanged",
+        "password_bot_optional": "Required for users; bots cannot sign in",
         "username_locked": "Username is the primary identity and cannot be changed.",
         "delete_title": "Delete user",
         "delete_confirm": "Really delete user @{username}?",
@@ -87,6 +88,7 @@
         },
         "roles": {
             "admin": "Admin",
+            "bot": "Bot",
             "user": "User"
         },
         "statuses": {
@@ -114,6 +116,48 @@
             "role_invalid": "The selected role is not valid.",
             "status_required": "Choose a status.",
             "status_invalid": "The selected status is not valid."
+        }
+    },
+    "bots": {
+        "title": "Bots",
+        "intro": "Publish posts from RSS or Atom feeds through bot accounts.",
+        "new_source": "New RSS source",
+        "edit_source": "Edit RSS source",
+        "no_bots": "Create a user with the Bot role first.",
+        "no_sources": "No RSS sources have been configured yet.",
+        "bot": "Bot account",
+        "source_name": "Source name",
+        "feed_url": "RSS or Atom URL",
+        "interval": "Publishing interval in minutes",
+        "interval_help": "Minimum 5 minutes. Each run publishes at most one new item from this source.",
+        "template": "Post template",
+        "template_help": "Placeholders: {{title}}, {{description}}, {{url}}, {{author}}, {{source}}, {{categories}}",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "every_minutes": "Every {count} minutes",
+        "next_run": "Next run {time}",
+        "delete_confirm": "Really delete this RSS source and its import history?",
+        "cron_title": "Production cron",
+        "cron_intro": "Trigger due bot sources from the server scheduler or an external web-cron service.",
+        "cron_url": "Endpoint URL",
+        "cron_token": "Bearer token",
+        "cron_example": "Example command",
+        "cron_help": "Run once per minute. Send the token in the Authorization header; do not put it in the URL or public logs.",
+        "cron_rotate": "Rotate token",
+        "cron_rotate_confirm": "Rotate the cron token? Existing scheduled calls will stop working until they are updated.",
+        "messages": {
+            "created": "The RSS source was created.",
+            "saved": "The RSS source was saved.",
+            "deleted": "The RSS source was deleted.",
+            "not_found": "The RSS source was not found.",
+            "token_rotated": "The cron token was rotated."
+        },
+        "validation": {
+            "bot": "Choose an existing bot account.",
+            "name": "Enter a source name of at most 120 characters.",
+            "feed_url": "Enter a public HTTP or HTTPS feed URL.",
+            "interval": "The interval must be between 5 and 43200 minutes.",
+            "template": "Enter a post template of at most 2000 characters."
         }
     },
     "moderation": {
@@ -630,6 +674,8 @@
         "purpose_notifications": "Alerts for likes, comments, and mentions.",
         "purpose_content_reports": "User reports for moderation.",
         "purpose_user_action_limits": "Account-based action limits without IP tracking.",
+        "purpose_bot_sources": "RSS and Atom publishing rules for bot accounts.",
+        "purpose_bot_feed_items": "Imported feed GUIDs used to prevent duplicate bot posts.",
         "purpose_settings": "Database-backed application settings.",
         "admin_title": "First admin account",
         "admin_password_confirm": "Confirm password",
