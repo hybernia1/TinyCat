@@ -4027,6 +4027,14 @@ body.admin-nav-open .admin-backdrop {
 }
 
 @media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
+  select,
+  textarea,
+  [contenteditable="true"],
+  [contenteditable="plaintext-only"] {
+    font-size: 16px;
+  }
+
   .modal.modal-form {
     padding: 0;
   }
