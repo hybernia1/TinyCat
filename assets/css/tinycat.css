@@ -4027,6 +4027,10 @@ body.admin-nav-open .admin-backdrop {
     border-radius: 0;
   }
 
+  .status-feed {
+    gap: 12px;
+  }
+
   .admin-content {
     padding: 14px 0 24px;
   }
