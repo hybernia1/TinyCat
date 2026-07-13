@@ -1177,6 +1177,7 @@
 
   async function loadRemoteModal(target, url, host, force) {
     var modal = getModal(target);
+    var modalIndex;
     var data;
     var payload;
     var html;
@@ -1186,12 +1187,8 @@
       return modal;
     }
 
-    if (modal && modal.dataset.remoteLoaded === "true" && force !== true) {
+    if (modal && modal.dataset.remoteLoaded === "true" && modal.dataset.modalUrl === url && force !== true) {
       return modal;
-    }
-
-    if (modal) {
-      modal.remove();
     }
 
     data = await TinyCat.request(url, { method: "GET" });
@@ -1200,6 +1197,21 @@
 
     if (!html) {
       throw new Error("Modal content is empty.");
+    }
+
+    if (modal) {
+      modalIndex = modalStack.indexOf(modal);
+
+      if (modalIndex !== -1) {
+        modalStack.splice(modalIndex, 1);
+      }
+
+      if (activeModal === modal) {
+        activeModal = modalStack.length > 0 ? modalStack[modalStack.length - 1] : null;
+      }
+
+      modal.remove();
+      document.body.classList.toggle("has-modal", activeModal !== null);
     }
 
     template = htmlTemplate(html);

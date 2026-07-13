@@ -36,6 +36,7 @@ final class Api
         api_route('GET', '/status-edit-modal', [self::class, 'statusEditModal']);
         api_route('GET', '/profile-edit-modal', [self::class, 'profileEditModal']);
         api_route('GET', '/avatar-edit-modal', [self::class, 'avatarEditModal']);
+        api_route('GET', '/author/following', [self::class, 'authorFollowing']);
 
         api_route('ANY', '/admin/users', static function (): void {
             require public_path('admin/users.php');
@@ -398,6 +399,48 @@ final class Api
                 'action' => '/api/avatar/update',
             ]),
         ];
+    }
+
+    public static function authorFollowing(): array
+    {
+        $authorId = max(0, (int) get('author_id', 0));
+        $author = public_author_find($authorId);
+
+        if ($author === null) {
+            api_error(t('public.author_not_found'), 404, 'not_found');
+        }
+
+        $perPage = 36;
+        $total = author_following_profiles_count($authorId);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min($lastPage, max(1, (int) get('page', 1)));
+
+        $profiles = author_following_profiles($authorId, $perPage, ($page - 1) * $perPage);
+        $data = [
+            'author' => author_following_profile_payload($author),
+            'items' => array_map('author_following_profile_payload', $profiles),
+            'pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'pages' => $lastPage,
+                'total' => $total,
+                'count' => count($profiles),
+                'previous_url' => $page > 1 ? author_following_api_url($authorId, $page - 1) : null,
+                'next_url' => $page < $lastPage ? author_following_api_url($authorId, $page + 1) : null,
+            ],
+        ];
+
+        return api_payload($data, static fn (): array => [
+            'html' => render('modals/following-list', [
+                'author' => $author,
+                'author_id' => $authorId,
+                'profiles' => $profiles,
+                'page' => $page,
+                'last_page' => $lastPage,
+                'total' => $total,
+            ]),
+            'pagination' => $data['pagination'],
+        ]);
     }
 
     private static function statusPageAction(int $contentId): string

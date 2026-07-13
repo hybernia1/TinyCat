@@ -1277,13 +1277,14 @@ function author_follow_button_html(int $authorId, bool $isFollowing): string
     return trim((string) ob_get_clean());
 }
 
-function author_following_profiles(int $authorId, int $limit = 12): array
+function author_following_profiles(int $authorId, int $limit = 12, int $offset = 0): array
 {
     if ($authorId < 1) {
         return [];
     }
 
-    $limit = max(1, min(50, $limit));
+    $limit = max(1, min(100, $limit));
+    $offset = max(0, $offset);
     return all(
         'SELECT u.id,
                 u.username,
@@ -1300,9 +1301,61 @@ function author_following_profiles(int $authorId, int $limit = 12): array
             WHERE uf.follower_id = ?
                 AND u.status = ?
             ORDER BY uf.created_at DESC, u.username ASC
-            LIMIT ' . $limit,
+            LIMIT ' . $limit . ' OFFSET ' . $offset,
         [$authorId, 'active']
     );
+}
+
+function author_following_profiles_count(int $authorId): int
+{
+    if ($authorId < 1) {
+        return 0;
+    }
+
+    return (int) val(
+        'SELECT COUNT(*)
+            FROM user_followers uf
+            INNER JOIN users u ON u.id = uf.user_id
+            WHERE uf.follower_id = ?
+                AND u.status = ?',
+        [$authorId, 'active']
+    );
+}
+
+function author_following_profile_html(array $profile): string
+{
+    $profileId = (int) ($profile['id'] ?? 0);
+    $profileName = user_display_name($profile);
+
+    ob_start();
+    ?>
+        <a class="profile-following-link" href="<?= e(author_url($profileId)) ?>">
+            <span class="avatar avatar-sm">
+                <?= user_avatar_html($profile, $profileName) ?>
+            </span>
+            <span class="profile-following-main">
+                <strong><?= e($profileName) ?></strong>
+                <small><?= et('public.active_user_posts', ['count' => (int) ($profile['posts_count'] ?? 0)]) ?></small>
+            </span>
+        </a>
+        <?php
+
+    return trim((string) ob_get_clean());
+}
+
+function author_following_profile_payload(array $profile): array
+{
+    $id = (int) ($profile['id'] ?? 0);
+
+    return [
+        'id' => $id,
+        'username' => (string) ($profile['username'] ?? ''),
+        'name' => user_display_name($profile),
+        'url' => author_url($id),
+        'avatar_url' => user_avatar_url($profile),
+        'posts_count' => (int) ($profile['posts_count'] ?? 0),
+        'followed_at' => (string) ($profile['followed_at'] ?? ''),
+    ];
 }
 
 function author_activity_stats(int $authorId): array
@@ -4407,6 +4460,31 @@ function author_avatar_edit_modal_id(int $authorId): string
 function author_avatar_edit_modal_url(int $authorId): string
 {
     return '/api/avatar-edit-modal?' . http_build_query(['author_id' => max(0, $authorId)]);
+}
+
+function author_following_modal_id(int $authorId): string
+{
+    return 'following-modal-' . max(0, $authorId);
+}
+
+function author_following_modal_url(int $authorId, int $page = 1): string
+{
+    return author_following_api_url($authorId, $page, true);
+}
+
+function author_following_api_url(int $authorId, int $page = 1, bool $html = false): string
+{
+    $query = ['author_id' => max(0, $authorId)];
+
+    if ($page > 1) {
+        $query['page'] = $page;
+    }
+
+    if ($html) {
+        $query['view'] = 'html';
+    }
+
+    return '/api/author/following?' . http_build_query($query);
 }
 
 function status_time_button(string $createdAt, int $contentId, bool $openModal = true, string $action = ''): string

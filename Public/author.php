@@ -43,7 +43,9 @@ $isFollowing = $canFollow && author_is_followed((int) ($authUser['id'] ?? 0), $a
 $followCounts = author_follow_counts($authorId);
 $activityStats = author_activity_stats($authorId);
 $presence = author_presence($author);
-$followingProfiles = author_following_profiles($authorId, 12);
+$followingProfiles = author_following_profiles($authorId, 10);
+$hasMoreFollowing = count($followingProfiles) > 9;
+$followingProfiles = array_slice($followingProfiles, 0, 9);
 
 layout('layout', [
     'title' => t('public.author_archive_title', ['author' => $authorName]),
@@ -56,7 +58,7 @@ layout('layout', [
         'image' => $avatarUrl ?: site_meta_image_url(),
         'type' => 'profile',
     ],
-], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles): void {
+], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles, $hasMoreFollowing): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -149,23 +151,16 @@ layout('layout', [
                         <?php if ($followingProfiles === []): ?>
                             <p class="text-muted m-0"><?= et('public.following_profiles_empty') ?></p>
                         <?php else: ?>
-                            <nav class="sidebar-user-list" aria-label="<?= et('public.following_profiles') ?>">
+                            <nav class="profile-following-grid" aria-label="<?= et('public.following_profiles') ?>">
                                 <?php foreach ($followingProfiles as $profile): ?>
-                                    <?php
-                                    $profileId = (int) ($profile['id'] ?? 0);
-                                    $profileName = user_display_name($profile);
-                                    ?>
-                                    <a class="sidebar-user-link" href="<?= e(author_url($profileId)) ?>">
-                                        <span class="avatar avatar-sm">
-                                            <?= user_avatar_html($profile, $profileName) ?>
-                                        </span>
-                                        <span class="sidebar-user-main">
-                                            <strong><?= e($profileName) ?></strong>
-                                            <small><?= et('public.active_user_posts', ['count' => (int) ($profile['posts_count'] ?? 0)]) ?></small>
-                                        </span>
-                                    </a>
+                                    <?= author_following_profile_html($profile) ?>
                                 <?php endforeach; ?>
                             </nav>
+                            <?php if ($hasMoreFollowing): ?>
+                                <button class="btn btn-secondary btn-sm profile-following-more" type="button" data-modal-open="<?= e(author_following_modal_id($authorId)) ?>" data-modal-url="<?= e(author_following_modal_url($authorId)) ?>">
+                                    <?= icon('users') ?> <span><?= et('public.following_profiles_all') ?></span>
+                                </button>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </article>
