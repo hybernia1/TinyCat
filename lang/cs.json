@@ -256,7 +256,7 @@
         "search_meta": "Vyhledávání příspěvků, profilů a štítků.",
         "search_meta_query": "Výsledky vyhledávání pro {query}.",
         "search_placeholder": "Hledat příspěvky nebo profily",
-        "search_suggest_placeholder": "Hledat profily nebo štítky",
+        "search_suggest_placeholder": "Hledat",
         "search_all": "Hledat vše",
         "search_tags": "Štítky",
         "search_users": "Profily",

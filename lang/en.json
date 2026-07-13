@@ -256,7 +256,7 @@
         "search_meta": "Search posts, profiles, and tags.",
         "search_meta_query": "Search results for {query}.",
         "search_placeholder": "Search posts or profiles",
-        "search_suggest_placeholder": "Search profiles or tags",
+        "search_suggest_placeholder": "Search",
         "search_all": "Search all",
         "search_tags": "Tags",
         "search_users": "Profiles",
