@@ -3276,6 +3276,9 @@ img.status-editor-suggestion-avatar {
 
 .modal-body.status-post-modal-body {
   padding: 0;
+  overscroll-behavior: contain;
+  scroll-padding-block: 12px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .status-post-detail {
@@ -3292,7 +3295,7 @@ img.status-editor-suggestion-avatar {
   .modal.status-post-modal {
     width: 100vw;
     height: 100vh;
-    height: 100dvh;
+    height: var(--status-modal-height, 100dvh);
     padding: 0;
     background: var(--surface);
   }
@@ -3306,9 +3309,9 @@ img.status-editor-suggestion-avatar {
     inset: 0;
     width: 100vw;
     height: 100vh;
-    height: 100dvh;
+    height: var(--status-modal-height, 100dvh);
     max-height: 100vh;
-    max-height: 100dvh;
+    max-height: var(--status-modal-height, 100dvh);
     border-radius: 0;
   }
 }

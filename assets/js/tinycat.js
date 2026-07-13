@@ -2068,15 +2068,18 @@
 
   function syncStatusEditorModalSize(root) {
     var panel = root && root.closest ? root.closest(".status-post-modal-panel") : null;
+    var suggestionsOpen;
 
     if (!panel) {
       return;
     }
 
-    panel.classList.toggle(
-      "has-editor-suggestions",
-      Boolean(qs("[data-status-editor-suggestions]:not([hidden])", panel))
-    );
+    suggestionsOpen = Boolean(qs("[data-status-editor-suggestions]:not([hidden])", root));
+    panel.classList.toggle("has-editor-suggestions", suggestionsOpen);
+
+    if (suggestionsOpen) {
+      queueStatusCommentReveal(statusEditorInput(root));
+    }
   }
 
   function statusEditorTags(root) {
@@ -3083,8 +3086,37 @@
 
     TinyCat.__commentReplyEventsBound = true;
 
+    document.addEventListener("focusin", function (event) {
+      var input = event.target.closest && event.target.closest("[data-status-editor-input]");
+
+      if (input && input.closest(".status-post-modal")) {
+        queueStatusCommentReveal(input);
+      }
+    });
+
+    document.addEventListener("tinycat:modal-open", function (event) {
+      if (event.target && event.target.matches && event.target.matches(".status-post-modal")) {
+        syncStatusModalViewport(event.target);
+      }
+    });
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", function () {
+        var modal = qs(".status-post-modal[data-open='true']");
+        var input = modal ? qs("[data-status-editor-input]:focus", modal) : null;
+
+        if (modal) {
+          syncStatusModalViewport(modal);
+        }
+        if (input) {
+          queueStatusCommentReveal(input);
+        }
+      });
+    }
+
     document.addEventListener("toggle", function (event) {
       var details = event.target;
+      var editorRoot;
       var input;
       var length;
 
@@ -3092,20 +3124,74 @@
         return;
       }
 
-      input = qs(".status-comment-input", details);
+      editorRoot = qs("[data-status-editor]", details);
+      input = (editorRoot ? statusEditorInput(editorRoot) : null) || qs(".status-comment-input", details);
 
       if (!input) {
         return;
       }
 
       input.focus();
-      length = input.value.length;
+      length = input.isContentEditable ? statusEditorText(input).length : input.value.length;
 
-      if (input.setSelectionRange) {
+      if (input.isContentEditable) {
+        setStatusEditorText(input, statusEditorText(input), length);
+      } else if (input.setSelectionRange) {
         input.setSelectionRange(length, length);
       }
+
+      queueStatusCommentReveal(input);
     }, true);
   };
+
+  function syncStatusModalViewport(modal) {
+    var height;
+
+    if (!modal || !window.visualViewport) {
+      return;
+    }
+
+    height = Math.round(window.visualViewport.height);
+    if (height > 0) {
+      modal.style.setProperty("--status-modal-height", height + "px");
+    }
+  }
+
+  function revealStatusCommentInput(input) {
+    var body = input && input.closest ? input.closest(".status-post-modal-body") : null;
+    var form = input && input.closest ? input.closest(".status-comment-form") : null;
+    var editorRoot = input && input.closest ? input.closest("[data-status-editor]") : null;
+    var suggestions = editorRoot ? qs("[data-status-editor-suggestions]:not([hidden])", editorRoot) : null;
+    var bodyRect;
+    var targetRect;
+    var suggestionRect;
+    var top;
+    var bottom;
+
+    if (!body || !form) {
+      return;
+    }
+
+    bodyRect = body.getBoundingClientRect();
+    targetRect = form.getBoundingClientRect();
+    suggestionRect = suggestions ? suggestions.getBoundingClientRect() : null;
+    top = targetRect.top;
+    bottom = Math.max(targetRect.bottom, suggestionRect ? suggestionRect.bottom : targetRect.bottom);
+
+    if (bottom > bodyRect.bottom - 12) {
+      body.scrollTop += bottom - bodyRect.bottom + 12;
+    } else if (top < bodyRect.top + 12) {
+      body.scrollTop -= bodyRect.top - top + 12;
+    }
+  }
+
+  function queueStatusCommentReveal(input) {
+    [0, 100, 280].forEach(function (delay) {
+      window.setTimeout(function () {
+        revealStatusCommentInput(input);
+      }, delay);
+    });
+  }
 
   function statusFormActionField(form) {
     var field = form && form.elements ? form.elements.namedItem("action") : null;
