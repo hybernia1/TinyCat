@@ -12,6 +12,8 @@ final class LinkMetadata
     private const HTML_LIMIT = 360000;
     private const OEMBED_LIMIT = 32768;
     private const TIMEOUT = 4;
+    private const FEED_TIMEOUT = 10;
+    private const FEED_LIMIT = 2097152;
     private const REDIRECT_LIMIT = 3;
 
     public static function enrich(array $link): array
@@ -131,9 +133,9 @@ final class LinkMetadata
         return self::parseHtml((string) ($response['body'] ?? ''), (string) ($response['url'] ?? $url));
     }
 
-    public static function fetchDocument(string $url, int $limit = 1048576, string $accept = 'application/rss+xml,application/atom+xml,application/xml,text/xml'): ?array
+    public static function fetchDocument(string $url, int $limit = self::FEED_LIMIT, string $accept = 'application/rss+xml,application/atom+xml,application/xml,text/xml'): ?array
     {
-        return self::request($url, max(1024, min(2097152, $limit)), $accept);
+        return self::request($url, max(1024, min(self::FEED_LIMIT, $limit)), $accept, 0, false, self::FEED_TIMEOUT);
     }
 
     public static function isSafeRemoteUrl(string $url): bool
@@ -232,7 +234,7 @@ final class LinkMetadata
         return array_filter($meta, static fn (mixed $value): bool => trim((string) $value) !== '');
     }
 
-    private static function request(string $url, int $limit, string $accept, int $redirects = 0, bool $allowTruncated = false): ?array
+    private static function request(string $url, int $limit, string $accept, int $redirects = 0, bool $allowTruncated = false, int $timeout = self::TIMEOUT): ?array
     {
         if ($redirects > self::REDIRECT_LIMIT || !self::safeUrl($url)) {
             return null;
@@ -241,7 +243,7 @@ final class LinkMetadata
         $context = stream_context_create([
             'http' => [
                 'method' => 'GET',
-                'timeout' => self::TIMEOUT,
+                'timeout' => max(1, min(self::FEED_TIMEOUT, $timeout)),
                 'ignore_errors' => true,
                 'follow_location' => 0,
                 'max_redirects' => 0,
@@ -268,7 +270,7 @@ final class LinkMetadata
             fclose($stream);
             $next = self::absoluteUrl($url, (string) $headers['location']);
 
-            return $next !== '' ? self::request($next, $limit, $accept, $redirects + 1, $allowTruncated) : null;
+            return $next !== '' ? self::request($next, $limit, $accept, $redirects + 1, $allowTruncated, $timeout) : null;
         }
 
         if ($status >= 400) {
