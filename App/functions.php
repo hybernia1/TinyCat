@@ -2397,7 +2397,7 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
 {
     $limit = max(1, min(20, $limit));
     $days = max(1, min(365, $days));
-    $cacheKey = 'public_top_authors_' . $limit . '_' . $days;
+    $cacheKey = 'public_top_authors_human_' . $limit . '_' . $days;
 
     $cached = public_stats_cache_get($cacheKey, 3600);
 
@@ -2425,6 +2425,7 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
     )
         ->where('c.published_at >= ?', date_db('-' . $days . ' days'))
         ->where('u.status = ?', 'active')
+        ->where('u.role <> ?', 'bot')
         ->group('u.id, u.username, u.avatar_config, u.bio')
         ->order('posts_count DESC, latest_at DESC, u.username ASC')
         ->limit($limit)
@@ -2518,7 +2519,7 @@ function public_sidebar(?string $activeTag = null, bool $compute = false): strin
     $authors = public_top_authors(5, 7, $compute);
     $needsRefresh = !$compute && (
         !public_stats_cache_fresh('public_trending_tags_8_7', 3600)
-        || !public_stats_cache_fresh('public_top_authors_5_7', 3600)
+        || !public_stats_cache_fresh('public_top_authors_human_5_7', 3600)
     );
     $sidebarUrl = '/api/sidebar' . ($activeTag !== '' ? '?tag=' . rawurlencode($activeTag) : '');
 
@@ -5969,7 +5970,13 @@ function bot_cron_request_token(): string
         return trim((string) ($match[1] ?? ''));
     }
 
-    return trim((string) ($_SERVER['HTTP_X_TINYCAT_CRON'] ?? ''));
+    $header = trim((string) ($_SERVER['HTTP_X_TINYCAT_CRON'] ?? ''));
+
+    if ($header !== '') {
+        return $header;
+    }
+
+    return trim((string) get('bearer', ''));
 }
 
 function bot_source_find(int $id): ?array

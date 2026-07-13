@@ -58,7 +58,7 @@ function tc_admin_dashboard_counts(array $tables): array
         return [];
     }
 
-    $cacheKey = 'admin_dashboard_counts_' . md5(implode('|', $tables));
+    $cacheKey = 'admin_dashboard_counts_human_users_' . md5(implode('|', $tables));
     $cached = public_stats_cache_get($cacheKey, 300);
 
     if (is_array($cached)) {
@@ -79,6 +79,10 @@ function tc_admin_dashboard_counts(array $tables): array
 function tc_admin_dashboard_count(string $table): ?int
 {
     try {
+        if ($table === 'users') {
+            return (int) val('SELECT COUNT(*) FROM users WHERE role <> ?', ['bot']);
+        }
+
         return total($table);
     } catch (Throwable) {
         return null;

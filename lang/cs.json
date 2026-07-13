@@ -141,6 +141,8 @@
         "cron_intro": "Spouštění bot zdrojů ze serverového plánovače nebo externí web-cron služby.",
         "cron_url": "URL endpointu",
         "cron_token": "Bearer token",
+        "cron_query_url": "Jednoduchá URL pro web-cron",
+        "cron_query_help": "Kompatibilní varianta pro služby bez vlastních hlaviček. Token se může uložit do access logu serveru.",
         "cron_example": "Příklad příkazu",
         "cron_help": "Spouštěj jednou za minutu. Token posílej v Authorization hlavičce; nevkládej ho do URL ani veřejných logů.",
         "cron_rotate": "Obnovit token",

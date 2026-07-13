@@ -66,6 +66,7 @@ layout('layout', [
 ], static function (): void {
     $cronToken = bot_cron_token(true);
     $cronUrl = absolute_url('/cron.php');
+    $cronQueryUrl = $cronUrl . '?bearer=' . rawurlencode($cronToken);
     ?>
     <section class="card mb-4">
         <div class="card-header split">
@@ -81,6 +82,7 @@ layout('layout', [
         <div class="card-body stack">
             <label class="field"><span class="label"><?= et('bots.cron_url') ?></span><input class="input" value="<?= e($cronUrl) ?>" readonly></label>
             <label class="field"><span class="label"><?= et('bots.cron_token') ?></span><input class="input" value="<?= e($cronToken) ?>" readonly></label>
+            <label class="field"><span class="label"><?= et('bots.cron_query_url') ?></span><input class="input" value="<?= e($cronQueryUrl) ?>" readonly><span class="help"><?= et('bots.cron_query_help') ?></span></label>
             <div class="field"><span class="label"><?= et('bots.cron_example') ?></span><pre class="code-block"><code><?= e('curl -fsS -X POST -H "Authorization: Bearer ' . $cronToken . '" ' . $cronUrl) ?></code></pre></div>
             <p class="help m-0"><?= et('bots.cron_help') ?></p>
         </div>

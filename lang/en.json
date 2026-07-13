@@ -141,6 +141,8 @@
         "cron_intro": "Trigger due bot sources from the server scheduler or an external web-cron service.",
         "cron_url": "Endpoint URL",
         "cron_token": "Bearer token",
+        "cron_query_url": "Simple web-cron URL",
+        "cron_query_help": "Compatibility option for services without custom headers. The token may be stored in server access logs.",
         "cron_example": "Example command",
         "cron_help": "Run once per minute. Send the token in the Authorization header; do not put it in the URL or public logs.",
         "cron_rotate": "Rotate token",

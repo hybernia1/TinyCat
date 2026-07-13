@@ -264,10 +264,10 @@ function tc_admin_users_page(?array $filters = null): array
 function tc_admin_users_stats(): array
 {
     return [
-        'total' => total('users'),
-        'active' => total('users', ['status' => 'active']),
-        'waiting' => total('users', ['status' => 'waiting']),
-        'ban' => total('users', ['status' => 'ban']),
+        'total' => (int) val('SELECT COUNT(*) FROM users WHERE role <> ?', ['bot']),
+        'active' => (int) val('SELECT COUNT(*) FROM users WHERE role <> ? AND status = ?', ['bot', 'active']),
+        'waiting' => (int) val('SELECT COUNT(*) FROM users WHERE role <> ? AND status = ?', ['bot', 'waiting']),
+        'ban' => (int) val('SELECT COUNT(*) FROM users WHERE role <> ? AND status = ?', ['bot', 'ban']),
     ];
 }
 

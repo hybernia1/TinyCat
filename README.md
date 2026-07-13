@@ -51,6 +51,8 @@ Create a user with the `Bot` role, then configure one or more sources under **Ad
 
 The endpoint publishes at most one new item per due source, remembers imported RSS GUIDs, rejects unauthenticated calls, and uses a database lock to prevent overlapping runs.
 
+Services without custom-header support may call `cron.php?bearer=TOKEN`. This compatibility form is less private because query strings are commonly stored in web-server access logs; prefer the `Authorization` header whenever possible.
+
 Append `?health=1` to perform an authenticated connectivity check without running or publishing anything.
 
 ## Project Layout
