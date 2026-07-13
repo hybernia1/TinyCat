@@ -144,6 +144,8 @@
         "cron_query_url": "Simple web-cron URL",
         "cron_query_help": "Compatibility option for services without custom headers. The token may be stored in server access logs.",
         "cron_example": "Example command",
+        "cron_cli_example": "Direct server cron",
+        "cron_cli_help": "CLI execution does not need a bearer token. Optionally add --limit=20 or use --health for a check.",
         "cron_help": "Run once per minute. Send the token in the Authorization header; do not put it in the URL or public logs.",
         "cron_rotate": "Rotate token",
         "cron_rotate_confirm": "Rotate the cron token? Existing scheduled calls will stop working until they are updated.",

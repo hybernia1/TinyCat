@@ -84,6 +84,7 @@ layout('layout', [
             <label class="field"><span class="label"><?= et('bots.cron_token') ?></span><input class="input" value="<?= e($cronToken) ?>" readonly></label>
             <label class="field"><span class="label"><?= et('bots.cron_query_url') ?></span><input class="input" value="<?= e($cronQueryUrl) ?>" readonly><span class="help"><?= et('bots.cron_query_help') ?></span></label>
             <div class="field"><span class="label"><?= et('bots.cron_example') ?></span><pre class="code-block"><code><?= e('curl -fsS -X POST -H "Authorization: Bearer ' . $cronToken . '" ' . $cronUrl) ?></code></pre></div>
+            <div class="field"><span class="label"><?= et('bots.cron_cli_example') ?></span><pre class="code-block"><code><?= e('php "' . base_path('cron.php') . '"') ?></code></pre><span class="help"><?= et('bots.cron_cli_help') ?></span></div>
             <p class="help m-0"><?= et('bots.cron_help') ?></p>
         </div>
     </section>

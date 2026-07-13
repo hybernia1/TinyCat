@@ -144,6 +144,8 @@
         "cron_query_url": "Jednoduchá URL pro web-cron",
         "cron_query_help": "Kompatibilní varianta pro služby bez vlastních hlaviček. Token se může uložit do access logu serveru.",
         "cron_example": "Příklad příkazu",
+        "cron_cli_example": "Přímý serverový cron",
+        "cron_cli_help": "CLI spuštění nepotřebuje bearer token. Volitelně lze přidat --limit=20 nebo použít --health pro kontrolu.",
         "cron_help": "Spouštěj jednou za minutu. Token posílej v Authorization hlavičce; nevkládej ho do URL ani veřejných logů.",
         "cron_rotate": "Obnovit token",
         "cron_rotate_confirm": "Obnovit cron token? Existující naplánovaná volání přestanou fungovat, dokud je neupravíš.",
