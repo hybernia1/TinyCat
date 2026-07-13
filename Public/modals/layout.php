@@ -25,6 +25,7 @@ $panelClass = trim('modal-panel ' . trim((string) ($size ?? '')));
 $hasForm = $action !== '';
 
 if ($hasForm) {
+    $modalClass .= ' modal-form';
     $method = strtoupper((string) ($method ?? 'POST'));
     $methodOverride = strtoupper((string) ($methodOverride ?? ''));
     $nativeMethod = in_array($method, ['GET', 'POST'], true);

@@ -53,6 +53,7 @@ $body = trim((string) ob_get_clean());
 echo render('modals/layout', [
     'id' => $modalId,
     'title' => t('account.status_thread_title'),
+    'modalClass' => 'status-post-modal',
     'size' => 'modal-panel-lg status-post-modal-panel',
     'bodyClass' => 'status-post-modal-body',
     'body' => $body,
