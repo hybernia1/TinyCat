@@ -598,6 +598,31 @@ a:hover {
   gap: 8px;
 }
 
+.bots-card-header p {
+  margin: 4px 0 0;
+}
+
+.admin-search-form.bots-filter-form {
+  flex: 0 1 390px;
+  max-width: 100%;
+}
+
+.bots-filter-form > .select {
+  min-width: 0;
+  flex: 1 1 170px;
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.bots-filter-form > .btn {
+  min-height: 38px;
+}
+
+.bots-source-summary {
+  flex: 0 0 auto;
+  justify-content: flex-start;
+}
+
 .admin-per-page-form {
   display: flex;
   align-items: center;

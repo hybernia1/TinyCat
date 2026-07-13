@@ -141,6 +141,8 @@
         "disabled": "Vypnutý",
         "every_minutes": "Každých {count} minut",
         "next_run": "Další běh {time}",
+        "last_imported": "Poslední příspěvek importován {time}",
+        "never_imported": "Zatím nebyl importován žádný příspěvek",
         "delete_confirm": "Opravdu smazat tento RSS zdroj? Poslední historie importů zůstane zachována proti duplicitám.",
         "cron_title": "Produkční cron",
         "cron_intro": "Spouštění bot zdrojů ze serverového plánovače nebo externí web-cron služby.",
@@ -165,6 +167,8 @@
             "bot": "Vyber existující bot účet.",
             "name": "Zadej název zdroje dlouhý nejvýše 120 znaků.",
             "feed_url": "Zadej veřejnou HTTP nebo HTTPS adresu feedu.",
+            "feed_unreachable": "Feed se nepodařilo stáhnout. Zkontroluj adresu a dostupnost zdroje.",
+            "feed_invalid": "Na adrese nebyl nalezen platný RSS nebo Atom feed.",
             "interval": "Interval musí být mezi 5 a 43200 minutami.",
             "template": "Zadej šablonu příspěvku dlouhou nejvýše 2000 znaků."
         }

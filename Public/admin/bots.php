@@ -27,11 +27,14 @@ if ($isApi && in_array(method(), ['POST', 'PATCH'], true)) {
         csrf_require();
         $id = method() === 'PATCH' ? max(1, (int) input('id', 0)) : null;
 
-        if ($id !== null && bot_source_find($id) === null) {
+        $source = $id !== null ? bot_source_find($id) : null;
+        if ($id !== null && $source === null) {
             api_error(t('bots.messages.not_found'), 404, 'bot_source_not_found');
         }
 
-        $payload = tc_admin_bot_source_payload();
+        $submittedFeedUrl = trim((string) input('feed_url', ''));
+        $validateFeed = $source === null || $submittedFeedUrl !== trim((string) ($source['feed_url'] ?? ''));
+        $payload = tc_admin_bot_source_payload($validateFeed);
         if ($id === null) {
             $id = (int) insert('bot_sources', $payload + ['created_at' => date_db()]);
             $message = t('bots.messages.created');
@@ -89,10 +92,10 @@ layout('layout', [
         </div>
     </section>
     <section class="card">
-        <div class="card-header split">
+        <div class="card-header bots-card-header">
             <div>
                 <h1 class="text-lg m-0 cluster gap-2"><?= icon('link') ?> <?= et('bots.title') ?></h1>
-                <p class="text-muted mb-0"><?= et('bots.intro') ?></p>
+                <p class="text-muted"><?= et('bots.intro') ?></p>
             </div>
         </div>
         <div class="card-body" id="bots-list">
@@ -143,7 +146,7 @@ function tc_admin_bots_api_url(): string
     return '/api/admin/bots?' . http_build_query($query);
 }
 
-function tc_admin_bot_source_payload(): array
+function tc_admin_bot_source_payload(bool $validateFeed = false): array
 {
     $botUserId = max(0, (int) input('bot_user_id', 0));
     $name = trim((string) input('name', ''));
@@ -166,6 +169,18 @@ function tc_admin_bot_source_payload(): array
     }
     if ($template === '' || strlen($template) > 2000) {
         $errors['post_template'][] = t('bots.validation.template');
+    }
+    if ($validateFeed && !isset($errors['feed_url'])) {
+        try {
+            $response = LinkMetadata::fetchDocument($feedUrl);
+            if ($response === null) {
+                $errors['feed_url'][] = t('bots.validation.feed_unreachable');
+            } elseif (!bot_feed_document_valid((string) ($response['body'] ?? ''))) {
+                $errors['feed_url'][] = t('bots.validation.feed_invalid');
+            }
+        } catch (Throwable) {
+            $errors['feed_url'][] = t('bots.validation.feed_unreachable');
+        }
     }
     if ($errors !== []) {
         api_validation($errors);
@@ -193,21 +208,19 @@ function tc_admin_bots_html(): string
     <?php if ($bots === []): ?>
         <div class="alert alert-info"><?= et('bots.no_bots') ?></div>
     <?php else: ?>
-        <div class="split gap-3 mb-4">
-            <form class="cluster gap-2" method="get" action="/admin/bots">
-                <label class="field">
-                    <span class="label"><?= et('bots.filter_by_bot') ?></span>
-                    <select class="select" name="bot">
-                        <option value="0"><?= et('bots.all_bots') ?></option>
-                        <?php foreach ($bots as $bot): ?>
-                            <option value="<?= e((int) $bot['id']) ?>"<?= $filterBotId === (int) $bot['id'] ? ' selected' : '' ?>>@<?= e((string) $bot['username']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </label>
+        <div class="admin-list-toolbar bots-list-toolbar mb-4">
+            <form class="admin-search-form bots-filter-form" method="get" action="/admin/bots">
+                <label class="sr-only" for="bots-filter"><?= et('bots.filter_by_bot') ?></label>
+                <select class="select select-sm" id="bots-filter" name="bot">
+                    <option value="0"><?= et('bots.all_bots') ?></option>
+                    <?php foreach ($bots as $bot): ?>
+                        <option value="<?= e((int) $bot['id']) ?>"<?= $filterBotId === (int) $bot['id'] ? ' selected' : '' ?>>@<?= e((string) $bot['username']) ?></option>
+                    <?php endforeach; ?>
+                </select>
                 <button class="btn btn-secondary btn-sm" type="submit"><?= icon('filter') ?> <span><?= et('common.apply_filters') ?></span></button>
-                <?php if ($filterBotId > 0): ?><a class="btn btn-ghost btn-sm" href="/admin/bots"><?= icon('close') ?> <span><?= et('common.clear_filters') ?></span></a><?php endif; ?>
+                <?php if ($filterBotId > 0): ?><a class="btn btn-ghost btn-sm btn-icon" href="/admin/bots" aria-label="<?= et('common.clear_filters') ?>" title="<?= et('common.clear_filters') ?>"><?= icon('close') ?></a><?php endif; ?>
             </form>
-            <div class="cluster gap-2">
+            <div class="cluster gap-2 bots-source-summary">
                 <span class="badge"><?= et('bots.sources_count', ['count' => count($sources)]) ?></span>
                 <span class="badge badge-primary"><?= et('bots.active_sources_count', ['count' => count(array_filter($sources, static fn (array $source): bool => (bool) ($source['enabled'] ?? false)))]) ?></span>
             </div>
@@ -227,6 +240,7 @@ function tc_admin_bots_html(): string
                         </div>
                         <a class="text-muted" href="<?= e((string) ($source['feed_url'] ?? '')) ?>" target="_blank" rel="noopener noreferrer"><?= e((string) ($source['feed_url'] ?? '')) ?></a>
                         <small class="text-muted"><?= et('bots.every_minutes', ['count' => (int) ($source['interval_minutes'] ?? 60)]) ?><?= !empty($source['next_run_at']) ? ' · ' . et('bots.next_run', ['time' => datetime((string) $source['next_run_at'])]) : '' ?></small>
+                        <small class="text-muted"><?= !empty($source['last_imported_at']) ? et('bots.last_imported', ['time' => datetime((string) $source['last_imported_at'])]) : et('bots.never_imported') ?></small>
                         <?php if (!empty($source['last_error'])): ?><small class="text-danger"><?= e((string) $source['last_error']) ?></small><?php endif; ?>
                     </div>
                     <div class="cluster gap-2">

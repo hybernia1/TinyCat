@@ -6309,6 +6309,7 @@ function bot_schema_ensure(): void
             post_template VARCHAR(2000) NOT NULL,
             enabled TINYINT(1) NOT NULL DEFAULT 1,
             last_checked_at DATETIME NULL,
+            last_imported_at DATETIME NULL,
             next_run_at DATETIME NULL,
             last_error VARCHAR(500) NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -6348,8 +6349,32 @@ function bot_schema_ensure(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
+    bot_sources_import_time_migrate();
     bot_accounts_harden();
     bot_feed_history_migrate();
+}
+
+function bot_sources_import_time_migrate(): void
+{
+    if ((bool) setting('bots.import_time_migrated', false)) {
+        return;
+    }
+
+    if (one("SHOW COLUMNS FROM bot_sources LIKE 'last_imported_at'") === null) {
+        run('ALTER TABLE bot_sources ADD COLUMN last_imported_at DATETIME NULL AFTER last_checked_at');
+    }
+
+    run(
+        'UPDATE bot_sources bs
+            LEFT JOIN (
+                SELECT source_id, MAX(created_at) AS last_imported_at
+                FROM bot_feed_items
+                GROUP BY source_id
+            ) imported ON imported.source_id = bs.id
+            SET bs.last_imported_at = imported.last_imported_at
+            WHERE bs.last_imported_at IS NULL AND imported.last_imported_at IS NOT NULL'
+    );
+    setting_set('bots.import_time_migrated', true, 'bool', 'bots');
 }
 
 function bot_accounts_harden(): void
@@ -6562,6 +6587,7 @@ function bot_source_resource(array $source): array
         'post_template' => (string) ($source['post_template'] ?? ''),
         'enabled' => (bool) ($source['enabled'] ?? false),
         'last_checked_at' => (string) ($source['last_checked_at'] ?? ''),
+        'last_imported_at' => (string) ($source['last_imported_at'] ?? ''),
         'next_run_at' => (string) ($source['next_run_at'] ?? ''),
         'last_error' => (string) ($source['last_error'] ?? ''),
     ];
@@ -6669,6 +6695,25 @@ function bot_feed_parse(string $xml): array
 
     usort($items, static fn (array $a, array $b): int => ((int) $a['_timestamp']) <=> ((int) $b['_timestamp']));
     return $items;
+}
+
+function bot_feed_document_valid(string $xml): bool
+{
+    if ($xml === '' || !function_exists('simplexml_load_string')) {
+        return false;
+    }
+
+    $previous = libxml_use_internal_errors(true);
+    $feed = simplexml_load_string($xml, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
+    libxml_clear_errors();
+    libxml_use_internal_errors($previous);
+
+    if (!$feed instanceof SimpleXMLElement) {
+        return false;
+    }
+
+    $root = strtolower($feed->getName());
+    return ($root === 'rss' && isset($feed->channel)) || $root === 'feed';
 }
 
 function bot_feed_text(string $value, int $limit): string
@@ -6828,6 +6873,7 @@ function bot_run_source(array $source): array
                 (string) ($item['published_at'] ?? ''),
                 $publishedAt
             );
+            update('bot_sources', ['last_imported_at' => $publishedAt], ['id' => $sourceId]);
 
             return ['source_id' => $sourceId, 'status' => 'posted', 'content_id' => $contentId];
         }
