@@ -136,7 +136,7 @@
         "interval": "Interval publikování v minutách",
         "interval_help": "Minimum je 5 minut. Každý běh publikuje nejvýše jednu novou položku z tohoto zdroje.",
         "template": "Šablona příspěvku",
-        "template_help": "Proměnné: {{title}}, {{description}}, {{url}}, {{author}}, {{source}}, {{categories}}",
+        "template_help": "Proměnné: {{title}}, {{description}}, {{url}}, {{author}}, {{source}}, {{categories}}. Pro kategorie jako štítky použijte #{categories}.",
         "enabled": "Aktivní",
         "disabled": "Vypnutý",
         "every_minutes": "Každých {count} minut",

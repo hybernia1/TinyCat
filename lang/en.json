@@ -136,7 +136,7 @@
         "interval": "Publishing interval in minutes",
         "interval_help": "Minimum 5 minutes. Each run publishes at most one new item from this source.",
         "template": "Post template",
-        "template_help": "Placeholders: {{title}}, {{description}}, {{url}}, {{author}}, {{source}}, {{categories}}",
+        "template_help": "Placeholders: {{title}}, {{description}}, {{url}}, {{author}}, {{source}}, {{categories}}. Use #{categories} for categories as hashtags.",
         "enabled": "Enabled",
         "disabled": "Disabled",
         "every_minutes": "Every {count} minutes",

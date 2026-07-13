@@ -6652,9 +6652,28 @@ function bot_render_post(array $source, array $item): string
         '{{author}}' => (string) ($item['author'] ?? ''),
         '{{source}}' => (string) ($source['name'] ?? ''),
         '{{categories}}' => implode(', ', (array) ($item['categories'] ?? [])),
+        '#{categories}' => bot_feed_category_tags((array) ($item['categories'] ?? [])),
     ];
     $body = trim(preg_replace("/\n{3,}/", "\n\n", strtr((string) ($source['post_template'] ?? bot_source_default_template()), $values)) ?? '');
     return function_exists('mb_substr') ? mb_substr($body, 0, 2000, 'UTF-8') : substr($body, 0, 2000);
+}
+
+function bot_feed_category_tags(array $categories): string
+{
+    $tags = [];
+
+    foreach ($categories as $category) {
+        $tag = status_tag_normalize((string) $category);
+        if ($tag !== '') {
+            $tags[$tag] = '#' . $tag;
+        }
+
+        if (count($tags) >= status_tag_max_count()) {
+            break;
+        }
+    }
+
+    return implode(' ', array_values($tags));
 }
 
 function bot_run_due_sources(int $limit = 10): array
