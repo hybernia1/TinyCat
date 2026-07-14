@@ -6608,12 +6608,38 @@ function bot_feed_text(string $value, int $limit): string
 
 function bot_feed_description_text(string $value, int $limit): string
 {
+    $value = preg_replace_callback(
+        '~<a\b([^>]*)>(.*?)</a\s*>~is',
+        static function (array $match): string {
+            $label = (string) ($match[2] ?? '');
+            $videoUrl = bot_feed_html_video_url((string) ($match[1] ?? ''), 'href');
+            if ($videoUrl === '') {
+                return $label;
+            }
+
+            $labelText = html_entity_decode(strip_tags($label), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            foreach (StatusLinks::extract($labelText) as $labelLink) {
+                if ((string) ($labelLink['normalized_url'] ?? '') === $videoUrl) {
+                    return $label;
+                }
+            }
+
+            return $label . ' ' . $videoUrl;
+        },
+        $value
+    ) ?? $value;
+    $value = preg_replace_callback(
+        '~<(?:iframe|embed)\b([^>]*)>(?:\s*</iframe\s*>)?~is',
+        static fn (array $match): string => bot_feed_html_video_url((string) ($match[1] ?? ''), 'src'),
+        $value
+    ) ?? $value;
     $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $value = preg_replace_callback(
         StatusLinks::pattern(),
         static function (array $match): string {
-            [, $tail] = StatusLinks::splitTail((string) ($match[0] ?? ''));
-            return $tail;
+            [$url, $tail] = StatusLinks::splitTail((string) ($match[0] ?? ''));
+            $videoUrl = bot_feed_supported_video_url($url);
+            return ($videoUrl !== '' ? $videoUrl : '') . $tail;
         },
         $value
     ) ?? '';
@@ -6623,6 +6649,25 @@ function bot_feed_description_text(string $value, int $limit): string
     $value = trim($value);
 
     return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
+}
+
+function bot_feed_html_video_url(string $attributes, string $name): string
+{
+    $name = preg_quote($name, '~');
+    if (preg_match('~\b' . $name . '\s*=\s*(["\'])(.*?)\1~is', $attributes, $match) === 1) {
+        return bot_feed_supported_video_url(html_entity_decode((string) ($match[2] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+    if (preg_match('~\b' . $name . '\s*=\s*([^\s>]+)~i', $attributes, $match) === 1) {
+        return bot_feed_supported_video_url(html_entity_decode(trim((string) ($match[1] ?? ''), "\"'"), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+
+    return '';
+}
+
+function bot_feed_supported_video_url(string $url): string
+{
+    $link = StatusLinks::fromRaw(trim($url));
+    return ($link['link_type'] ?? '') === 'video' ? (string) ($link['normalized_url'] ?? '') : '';
 }
 
 function bot_feed_image_url(SimpleXMLElement $node, array $namespaces, string $description = ''): string
