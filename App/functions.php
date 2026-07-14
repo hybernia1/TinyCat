@@ -6595,7 +6595,7 @@ function bot_feed_parse(string $xml): array
         }
     }
 
-    usort($items, static fn (array $a, array $b): int => ((int) $b['_timestamp']) <=> ((int) $a['_timestamp']));
+    usort($items, static fn (array $a, array $b): int => ((int) $a['_timestamp']) <=> ((int) $b['_timestamp']));
     return $items;
 }
 
