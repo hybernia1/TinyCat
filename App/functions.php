@@ -6569,7 +6569,7 @@ function bot_feed_parse(string $xml): array
 
         $title = bot_feed_text((string) $node->title, 500);
         $descriptionSource = (string) ($node->description ?: $node->summary ?: $node->content);
-        $description = bot_feed_text($descriptionSource, 1200);
+        $description = bot_feed_description_text($descriptionSource, 1200);
         $guid = trim((string) ($node->guid ?: $node->id ?: $link));
         $published = trim((string) ($node->pubDate ?: $node->published ?: $node->updated));
 
@@ -6603,6 +6603,25 @@ function bot_feed_text(string $value, int $limit): string
 {
     $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
+    return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
+}
+
+function bot_feed_description_text(string $value, int $limit): string
+{
+    $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $value = preg_replace_callback(
+        StatusLinks::pattern(),
+        static function (array $match): string {
+            [, $tail] = StatusLinks::splitTail((string) ($match[0] ?? ''));
+            return $tail;
+        },
+        $value
+    ) ?? '';
+    $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
+    $value = preg_replace('/\s+([.,;:!?])/u', '$1', $value) ?? $value;
+    $value = preg_replace('/(?:^|\s)The post\b.*?\bappeared first on\s*[.!?]*\s*$/iu', '', $value) ?? $value;
+    $value = trim($value);
+
     return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
 }
 
