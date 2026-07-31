@@ -3930,7 +3930,7 @@ body.admin-nav-open .admin-backdrop {
   padding: 10px 12px;
 }
 
-.result-item .icon {
+.result-item > .icon {
   color: var(--success);
 }
 
