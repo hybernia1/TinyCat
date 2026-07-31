@@ -135,7 +135,7 @@ function app_request_scheme(): string
 
 function meta_text(string $text, int $limit = 180): string
 {
-    $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $text = strip_html_tags_preserving_text(html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     $text = trim((string) preg_replace('/\s+/u', ' ', $text));
 
     if ($text === '') {
@@ -1294,7 +1294,11 @@ function status_json_require_session_interval(string $action): void
 function plain_text_limit(string $value, int $limit): string
 {
     $value = str_replace(["\r\n", "\r"], "\n", $value);
-    $value = trim(strip_tags($value));
+    // `strip_tags()` treats text such as `<3 glad to hear that` as a
+    // malformed HTML tag and removes the rest of the value. User-entered
+    // content is plain text, so strip only recognizable tags and preserve
+    // comparison operators and emoticons such as `<3`.
+    $value = trim(strip_html_tags_preserving_text($value));
 
     if ($limit < 1) {
         return '';
@@ -1307,6 +1311,11 @@ function plain_text_limit(string $value, int $limit): string
     }
 
     return trim($value);
+}
+
+function strip_html_tags_preserving_text(string $value): string
+{
+    return (string) preg_replace('/<!--[\\s\\S]*?-->|<\/?[a-z][^>]*>/i', '', $value);
 }
 
 function profile_link_types(): array
@@ -2494,6 +2503,7 @@ function render_status_body(array $item): string
 
 function render_mentions_segment(string $text): string
 {
+    $text = render_status_emoticons($text);
     $pattern = '/(?<![\\p{L}\\p{N}_])([@#])([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)/u';
     $offset = 0;
     $html = '';
@@ -2551,6 +2561,63 @@ function render_mentions_segment(string $text): string
     $html .= e(substr($text, $offset));
 
     return nl2br($html, false);
+}
+
+function render_status_emoticons(string $text): string
+{
+    if ($text === '') {
+        return '';
+    }
+
+    // Keep URL text untouched. Statuses render URLs separately, while
+    // comments use this generic mention renderer directly.
+    if (!preg_match_all(StatusLinks::pattern(), $text, $matches, PREG_OFFSET_CAPTURE)) {
+        return render_status_emoticons_segment($text);
+    }
+
+    $offset = 0;
+    $result = '';
+
+    foreach ((array) ($matches[0] ?? []) as $match) {
+        $raw = (string) ($match[0] ?? '');
+        $position = (int) ($match[1] ?? 0);
+
+        $result .= render_status_emoticons_segment(substr($text, $offset, $position - $offset));
+        $result .= $raw;
+        $offset = $position + strlen($raw);
+    }
+
+    return $result . render_status_emoticons_segment(substr($text, $offset));
+}
+
+function render_status_emoticons_segment(string $text): string
+{
+    $pattern = '/(?<![\\p{L}\\p{N}_])(<3|<2|:-?\\)|:-?\\(|:-?D|;-?\\)|;-?\\(|:-?P|;-?P|:-?\\/)(?![\\p{L}\\p{N}_])/iu';
+    $map = [
+        '<2' => '❤️',
+        '<3' => '❤️',
+        ':)' => '🙂',
+        ':-)' => '🙂',
+        ':(' => '🙁',
+        ':-(' => '🙁',
+        ':d' => '😄',
+        ':-d' => '😄',
+        ';)' => '😉',
+        ';-)' => '😉',
+        ';(' => '😢',
+        ';-(' => '😢',
+        ':p' => '😛',
+        ':-p' => '😛',
+        ';p' => '😜',
+        ';-p' => '😜',
+        ':-/' => '😕',
+    ];
+
+    return (string) preg_replace_callback($pattern, static function (array $match) use ($map): string {
+        $token = strtolower((string) ($match[1] ?? ''));
+
+        return $map[$token] ?? (string) ($match[0] ?? '');
+    }, $text);
 }
 
 function status_url_split_tail(string $url): array
@@ -6970,7 +7037,7 @@ function bot_feed_parse(string $xml): array
 
 function bot_feed_text(string $value, int $limit): string
 {
-    $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $value = strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
     return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
 }
@@ -6986,7 +7053,7 @@ function bot_feed_description_text(string $value, int $limit): string
                 return $label;
             }
 
-            $labelText = html_entity_decode(strip_tags($label), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $labelText = strip_html_tags_preserving_text(html_entity_decode($label, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
             foreach (StatusLinks::extract($labelText) as $labelLink) {
                 if ((string) ($labelLink['normalized_url'] ?? '') === $videoUrl) {
                     return $label;
@@ -7002,7 +7069,7 @@ function bot_feed_description_text(string $value, int $limit): string
         static fn (array $match): string => bot_feed_html_video_url((string) ($match[1] ?? ''), 'src'),
         $value
     ) ?? $value;
-    $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $value = strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     $value = preg_replace_callback(
         StatusLinks::pattern(),
         static function (array $match): string {
