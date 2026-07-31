@@ -181,45 +181,44 @@ layout('layout', [
                 <?php else: ?>
                     <?php foreach ($sources as $source): ?>
                         <?php $sourceId = (int) ($source['id'] ?? 0); $enabled = (bool) ($source['enabled'] ?? false); ?>
-                        <article class="result-item stack gap-2">
-                            <div class="split gap-3">
-                                <div>
+                        <details class="result-item">
+                            <summary class="split gap-3">
+                                <div class="stack gap-1">
                                     <strong><?= e((string) ($source['name'] ?? '')) ?></strong>
-                                    <div class="table-meta"><?= e((string) ($source['feed_url'] ?? '')) ?></div>
+                                    <span class="table-meta"><?= e((string) ($source['feed_url'] ?? '')) ?></span>
+                                    <small class="table-meta"><?= et('bots.every_minutes', ['count' => (int) ($source['interval_minutes'] ?? 60)]) ?><?php if (!empty($source['last_imported_at'])): ?> · <?= et('bots.last_imported', ['time' => datetime((string) $source['last_imported_at'])]) ?><?php endif; ?></small>
                                 </div>
                                 <span class="badge<?= $enabled ? ' badge-primary' : '' ?>"><?= et($enabled ? 'bots.enabled' : 'bots.disabled') ?></span>
-                            </div>
-                            <form class="stack gap-2" method="post">
-                                <?= csrf_field() ?><input type="hidden" name="action" value="save_source"><input type="hidden" name="source_id" value="<?= e($sourceId) ?>">
-                                <div class="grid sm:grid-2">
-                                    <label class="field"><span class="label"><?= et('bots.source_name') ?></span><input class="input" name="name" maxlength="120" value="<?= e((string) ($source['name'] ?? '')) ?>" required></label>
-                                    <label class="field"><span class="label"><?= et('bots.interval') ?></span><input class="input" type="number" name="interval_minutes" min="5" max="43200" value="<?= e((int) ($source['interval_minutes'] ?? 60)) ?>" required></label>
-                                </div>
-                                <label class="field"><span class="label"><?= et('bots.feed_url') ?></span><input class="input" type="url" name="feed_url" maxlength="2048" value="<?= e((string) ($source['feed_url'] ?? '')) ?>" required></label>
-                                <label class="field"><span class="label"><?= et('bots.template') ?></span><textarea class="textarea" name="post_template" rows="5" maxlength="2000" required><?= e((string) ($source['post_template'] ?? '')) ?></textarea></label>
-                                <label class="check"><input type="checkbox" name="enabled" value="1"<?= $enabled ? ' checked' : '' ?><?= (string) ($bot['status'] ?? '') !== 'active' ? ' disabled' : '' ?>> <span><?= et('bots.enabled') ?></span></label>
-                                <div class="table-meta">
-                                    <?= et('bots.every_minutes', ['count' => (int) ($source['interval_minutes'] ?? 60)]) ?>
-                                    <?php if (!empty($source['last_imported_at'])): ?> · <?= et('bots.last_imported', ['time' => datetime((string) $source['last_imported_at'])]) ?><?php endif; ?>
-                                    <?php if (!empty($source['last_error'])): ?><br><span class="text-danger"><?= e((string) $source['last_error']) ?></span><?php endif; ?>
-                                </div>
-                                <div class="cluster gap-2">
-                                    <button class="btn btn-primary btn-sm" type="submit"><?= icon('save') ?> <span><?= et('common.save') ?></span></button>
-                                </div>
-                            </form>
-                            <div class="cluster gap-2">
-                                <form method="post">
-                                    <?= csrf_field() ?><input type="hidden" name="action" value="toggle_source"><input type="hidden" name="source_id" value="<?= e($sourceId) ?>">
-                                    <button class="btn btn-secondary btn-sm" type="submit"><?= icon($enabled ? 'minus' : 'play') ?> <span><?= et($enabled ? 'bots.detail_pause' : 'bots.detail_enable') ?></span></button>
+                            </summary>
+                            <div class="stack gap-2 mt-3">
+                                <form class="stack gap-2" method="post">
+                                    <?= csrf_field() ?><input type="hidden" name="action" value="save_source"><input type="hidden" name="source_id" value="<?= e($sourceId) ?>">
+                                    <div class="grid sm:grid-2">
+                                        <label class="field"><span class="label"><?= et('bots.source_name') ?></span><input class="input" name="name" maxlength="120" value="<?= e((string) ($source['name'] ?? '')) ?>" required></label>
+                                        <label class="field"><span class="label"><?= et('bots.interval') ?></span><input class="input" type="number" name="interval_minutes" min="5" max="43200" value="<?= e((int) ($source['interval_minutes'] ?? 60)) ?>" required></label>
+                                    </div>
+                                    <label class="field"><span class="label"><?= et('bots.feed_url') ?></span><input class="input" type="url" name="feed_url" maxlength="2048" value="<?= e((string) ($source['feed_url'] ?? '')) ?>" required></label>
+                                    <label class="field"><span class="label"><?= et('bots.template') ?></span><textarea class="textarea" name="post_template" rows="5" maxlength="2000" required><?= e((string) ($source['post_template'] ?? '')) ?></textarea></label>
+                                    <label class="check"><input type="checkbox" name="enabled" value="1"<?= $enabled ? ' checked' : '' ?><?= (string) ($bot['status'] ?? '') !== 'active' ? ' disabled' : '' ?>> <span><?= et('bots.enabled') ?></span></label>
+                                    <?php if (!empty($source['last_error'])): ?><div class="text-danger"><?= e((string) $source['last_error']) ?></div><?php endif; ?>
+                                    <div class="cluster gap-2">
+                                        <button class="btn btn-primary btn-sm" type="submit"><?= icon('save') ?> <span><?= et('common.save') ?></span></button>
+                                    </div>
                                 </form>
-                                <?php if ($enabled): ?>
+                                <div class="cluster gap-2">
                                     <form method="post">
-                                        <?= csrf_field() ?><input type="hidden" name="action" value="run_source"><input type="hidden" name="source_id" value="<?= e($sourceId) ?>">
-                                        <button class="btn btn-primary btn-sm" type="submit"><?= icon('refresh') ?> <span><?= et('bots.detail_run_now') ?></span></button>
+                                        <?= csrf_field() ?><input type="hidden" name="action" value="toggle_source"><input type="hidden" name="source_id" value="<?= e($sourceId) ?>">
+                                        <button class="btn btn-secondary btn-sm" type="submit"><?= icon($enabled ? 'minus' : 'play') ?> <span><?= et($enabled ? 'bots.detail_pause' : 'bots.detail_enable') ?></span></button>
                                     </form>
-                                <?php endif; ?>
+                                    <?php if ($enabled): ?>
+                                        <form method="post">
+                                            <?= csrf_field() ?><input type="hidden" name="action" value="run_source"><input type="hidden" name="source_id" value="<?= e($sourceId) ?>">
+                                            <button class="btn btn-primary btn-sm" type="submit"><?= icon('refresh') ?> <span><?= et('bots.detail_run_now') ?></span></button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                        </article>
+                        </details>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
