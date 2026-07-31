@@ -1,0 +1,45 @@
+{
+  "signature": "Best regards,\n{{site}}",
+  "templates": {
+    "welcome": {
+      "subject": "Welcome to {{site}}",
+      "body": "Hello {{username}},\n\nWelcome to {{site}}. Your account is ready.\n\nSign in: {{login_url}}\n\n{{signature}}"
+    },
+    "password_reset": {
+      "subject": "Reset your {{site}} password",
+      "body": "Hello {{username}},\n\nWe received a request to reset your password.\n\nReset your password: {{reset_url}}\n\nThis link expires in 60 minutes. If you did not request this, you can ignore this email.\n\n{{signature}}"
+    },
+    "notification_content_like": {
+      "subject": "{{actor}} liked your post",
+      "body": "{{actor}} liked your post.\n\nView the post: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_content_comment": {
+      "subject": "{{actor}} commented on your post",
+      "body": "{{actor}} commented on your post.\n\nView the conversation: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_comment_like": {
+      "subject": "{{actor}} liked your comment",
+      "body": "{{actor}} liked your comment.\n\nView the conversation: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_follow": {
+      "subject": "{{actor}} followed you",
+      "body": "{{actor}} followed you.\n\nView their profile: {{actor_url}}\n\n{{signature}}"
+    },
+    "notification_content_mention": {
+      "subject": "{{actor}} mentioned you",
+      "body": "{{actor}} mentioned you in a post.\n\nView the post: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_comment_mention": {
+      "subject": "{{actor}} mentioned you",
+      "body": "{{actor}} mentioned you in a comment.\n\nView the conversation: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_report_resolved": {
+      "subject": "Your report was resolved",
+      "body": "Your report was resolved by the moderation team.\n\nView the reported content: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_report_dismissed": {
+      "subject": "Your report was dismissed",
+      "body": "Your report was reviewed and dismissed by the moderation team.\n\nView the reported content: {{content_url}}\n\n{{signature}}"
+    }
+  }
+}

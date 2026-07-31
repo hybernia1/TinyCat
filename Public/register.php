@@ -78,7 +78,6 @@ if (is_post()) {
     $id = (int) insert('users', $userData);
 
     email_template_send('welcome', $id, [
-        'welcome_message' => (string) config('email.welcome_message', ''),
         'login_url' => absolute_url('/login'),
     ]);
 

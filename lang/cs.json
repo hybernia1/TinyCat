@@ -121,6 +121,34 @@
     },
     "bots": {
         "title": "Boti",
+        "detail_not_found": "Bot \u00fa\u010det nebyl nalezen.",
+        "detail_title": "Administrace bot \u00fa\u010dtu",
+        "detail_account": "Nastaven\u00ed bot \u00fa\u010dtu",
+        "detail_identity": "\u00da\u010det",
+        "detail_bio": "Bio",
+        "detail_public_profile": "Ve\u0159ejn\u00fd profil",
+        "detail_sources": "Zdroje",
+        "detail_manage_sources": "Spravovat zdroje",
+        "detail_bot_inactive": "Tento bot nen\u00ed aktivn\u00ed.",
+        "detail_source_disabled": "P\u0159ed spu\u0161t\u011bn\u00edm zdroj nejd\u0159\u00edv zapni.",
+        "detail_run_failed": "Spu\u0161t\u011bn\u00ed bot\u00edho zdroje selhalo.",
+        "detail_run_finished": "B\u011bh bot\u00edho zdroje byl dokon\u010den.",
+        "detail_pause": "Pozastavit",
+        "detail_enable": "Zapnout",
+        "detail_run_now": "Spustit nyn\u00ed",
+        "detail_last_run": "Posledn\u00ed b\u011bh",
+        "detail_no_runs": "Zat\u00edm nejsou zaznamenan\u00e9 \u017e\u00e1dn\u00e9 b\u011bhy bot\u016f.",
+        "detail_source": "Zdroj",
+        "detail_status": "Stav",
+        "detail_started": "Spu\u0161t\u011bno",
+        "detail_items_seen": "Na\u010dten\u00e9 polo\u017eky",
+        "detail_history": "Historie b\u011bh\u016f",
+        "detail_posts": "Posledn\u00ed p\u0159\u00edsp\u011bvky",
+        "detail_no_posts": "Tento bot zat\u00edm nepublikoval \u017e\u00e1dn\u00fd p\u0159\u00edsp\u011bvek.",
+        "detail_stat_sources": "Zdroje",
+        "detail_stat_active_sources": "Aktivn\u00ed zdroje",
+        "detail_stat_posts": "Publikovan\u00e9 p\u0159\u00edsp\u011bvky",
+        "detail_stat_runs": "Zaznamenan\u00e9 b\u011bhy",
         "intro": "Publikování příspěvků z RSS nebo Atom zdrojů přes bot účty.",
         "new_source": "Nový RSS zdroj",
         "edit_source": "Upravit RSS zdroj",
@@ -571,6 +599,7 @@
     "settings": {
         "meta_title": "Nastavení",
         "email_templates_title": "Emailové šablony",
+        "email_templates_localized": "Texty emailů dodává aplikace v jazyce příjemce. Na této stránce se pouze nastavuje, které typy emailů se smějí odesílat.",
         "title": "Nastavení",
         "enabled": "Zapnuto",
         "sections": {
@@ -601,11 +630,10 @@
             "smtp_encryption": "SMTP šifrování",
             "email_from": "Odesílací email",
             "email_from_name": "Jméno odesílatele",
-            "welcome_message": "Uvítací zpráva po registraci"
-            ,"email_template_subject": "Předmět"
-            ,"email_template_body": "Tělo emailu"
-            ,"google_measurement_id": "Google Analytics Measurement ID"
-            ,"google_measurement_id_help": "Volitelné, například G-XXXXXXXXXX."
+            "email_template_subject": "Předmět",
+            "email_template_body": "Tělo emailu",
+            "google_measurement_id": "Google Analytics Measurement ID",
+            "google_measurement_id_help": "Volitelné, například G-XXXXXXXXXX."
         },
         "messages": {
             "saved": "Nastavení bylo uloženo.",
@@ -735,6 +763,10 @@
         "purpose_bot_sources": "Pravidla publikování RSS a Atom zdrojů pro bot účty.",
         "purpose_bot_feed_items": "Importovaná GUID feedů zabraňující duplicitním příspěvkům botů.",
         "purpose_bot_feed_history": "Omezená historie posledních importů bránící duplicitám po opětovném přidání zdroje.",
+        "purpose_bot_source_runs": "Provozní historie kontrol a importů botích zdrojů.",
+        "purpose_ip_action_limits": "IP bucket limity pro vybrané akce.",
+        "purpose_email_templates": "Nastavitelné emailové šablony a přepínače odesílání.",
+        "purpose_password_reset_tokens": "Krátkodobé tokeny obnovy hesla posílané emailem.",
         "purpose_user_profile_links": "Veřejný web a odkazy na sociální profily.",
         "purpose_settings": "Databázová nastavení aplikace.",
         "admin_title": "První admin účet",

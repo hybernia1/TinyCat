@@ -532,8 +532,6 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS email_templates (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             template_key VARCHAR(80) NOT NULL,
-            subject VARCHAR(255) NOT NULL,
-            body TEXT NOT NULL,
             enabled TINYINT(1) NOT NULL DEFAULT 1,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -569,7 +567,77 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    bot_schema_ensure();
+    run(
+        "CREATE TABLE IF NOT EXISTS bot_sources (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            bot_user_id INT UNSIGNED NOT NULL,
+            name VARCHAR(120) NOT NULL,
+            feed_url VARCHAR(2048) NOT NULL,
+            interval_minutes INT UNSIGNED NOT NULL DEFAULT 60,
+            post_template VARCHAR(2000) NOT NULL,
+            enabled TINYINT(1) NOT NULL DEFAULT 1,
+            last_checked_at DATETIME NULL,
+            last_imported_at DATETIME NULL,
+            next_run_at DATETIME NULL,
+            last_error VARCHAR(500) NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY bot_sources_due_index (enabled, next_run_at, id),
+            KEY bot_sources_user_index (bot_user_id, id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS bot_feed_items (
+            source_id BIGINT UNSIGNED NOT NULL,
+            item_hash CHAR(64) NOT NULL,
+            content_id BIGINT UNSIGNED NULL,
+            item_guid VARCHAR(2048) NOT NULL,
+            item_published_at DATETIME NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (source_id, item_hash),
+            KEY bot_feed_items_content_index (content_id),
+            KEY bot_feed_items_created_index (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS bot_feed_history (
+            bot_user_id INT UNSIGNED NOT NULL,
+            feed_hash CHAR(64) NOT NULL,
+            item_hash CHAR(64) NOT NULL,
+            content_id BIGINT UNSIGNED NULL,
+            item_guid VARCHAR(2048) NOT NULL,
+            item_published_at DATETIME NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (bot_user_id, feed_hash, item_hash),
+            KEY bot_feed_history_content_index (content_id),
+            KEY bot_feed_history_created_index (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS bot_source_runs (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            source_id BIGINT UNSIGNED NOT NULL,
+            bot_user_id INT UNSIGNED NOT NULL,
+            status VARCHAR(20) NOT NULL,
+            started_at DATETIME NOT NULL,
+            finished_at DATETIME NULL,
+            items_seen INT UNSIGNED NOT NULL DEFAULT 0,
+            items_imported INT UNSIGNED NOT NULL DEFAULT 0,
+            content_id BIGINT UNSIGNED NULL,
+            http_status SMALLINT UNSIGNED NULL,
+            error VARCHAR(500) NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY bot_source_runs_source_index (source_id, started_at),
+            KEY bot_source_runs_bot_index (bot_user_id, started_at),
+            KEY bot_source_runs_status_index (status, started_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
     profile_links_schema_ensure();
 }
 
@@ -601,7 +669,6 @@ function tc_install_default_settings(array $state): void
         ['email.smtp.encryption', 'tls', 'string', 'email'],
         ['email.from_address', '', 'string', 'email'],
         ['email.from_name', 'TinyCat', 'string', 'email'],
-        ['email.welcome_message', 'Vítej na {{site}}! Tvůj účet {{username}} byl právě vytvořen.', 'string', 'email'],
         ['analytics.google_measurement_id', '', 'string', 'analytics'],
     ];
 
@@ -609,20 +676,8 @@ function tc_install_default_settings(array $state): void
         setting_set((string) $key, $value, (string) $type, (string) $group);
     }
 
-    $templates = [
-        ['welcome', 'Vítej na {{site}}', '{{welcome_message}}'],
-        ['password_reset', 'Obnova hesla na {{site}}', "Ahoj {{username}},\n\npro obnovení hesla použij tento odkaz:\n{{reset_url}}\n\nOdkaz platí 60 minut."],
-        ['notification_content_like', '{{actor}} reagoval/a na tvůj příspěvek', '{{actor}} označil/a tvůj příspěvek jako To se mi líbí.\n{{content_url}}'],
-        ['notification_content_comment', '{{actor}} komentoval/a tvůj příspěvek', '{{actor}} okomentoval/a tvůj příspěvek.\n{{content_url}}'],
-        ['notification_comment_like', '{{actor}} reagoval/a na tvůj komentář', '{{actor}} označil/a tvůj komentář jako To se mi líbí.'],
-        ['notification_follow', '{{actor}} tě začal/a sledovat', '{{actor}} tě začal/a sledovat.\n{{author_url}}'],
-        ['notification_content_mention', '{{actor}} tě zmínil/a', '{{actor}} tě zmínil/a v příspěvku.\n{{content_url}}'],
-        ['notification_comment_mention', '{{actor}} tě zmínil/a', '{{actor}} tě zmínil/a v komentáři.\n{{content_url}}'],
-        ['notification_report_resolved', 'Nahlášení bylo vyřešeno', 'Tvé nahlášení na {{content_url}} bylo vyřešeno.'],
-        ['notification_report_dismissed', 'Nahlášení bylo zamítnuto', 'Tvé nahlášení na {{content_url}} bylo zamítnuto.'],
-    ];
-    foreach ($templates as [$key, $subject, $body]) {
-        run('INSERT IGNORE INTO email_templates (template_key, subject, body, enabled) VALUES (?, ?, ?, 1)', [$key, $subject, $body]);
+    foreach (email_template_keys() as $key) {
+        run('INSERT IGNORE INTO email_templates (template_key, enabled) VALUES (?, 1)', [$key]);
     }
 }
 
@@ -710,6 +765,10 @@ function tc_install_schema_tables(): array
         'bot_sources' => 'install.purpose_bot_sources',
         'bot_feed_items' => 'install.purpose_bot_feed_items',
         'bot_feed_history' => 'install.purpose_bot_feed_history',
+        'bot_source_runs' => 'install.purpose_bot_source_runs',
+        'ip_action_limits' => 'install.purpose_ip_action_limits',
+        'email_templates' => 'install.purpose_email_templates',
+        'password_reset_tokens' => 'install.purpose_password_reset_tokens',
         'user_profile_links' => 'install.purpose_user_profile_links',
         'settings' => 'install.purpose_settings',
     ];
@@ -1013,7 +1072,7 @@ function tc_install_done_view(): void
             <p class="text-muted mb-0"><?= et('install.done_intro') ?></p>
             <ul class="result-list">
                 <li class="result-item"><?= icon('globe') ?> <span><?= et('common.language') ?>: <strong><?= e(locale()) ?></strong></span></li>
-                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, links, content_links, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, ip_action_limits, email_templates, password_reset_tokens, settings</strong></span></li>
+                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, links, content_links, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, ip_action_limits, email_templates, password_reset_tokens, bot_sources, bot_feed_items, bot_feed_history, bot_source_runs, settings</strong></span></li>
                 <li class="result-item"><?= icon('shield') ?> <span><?= et('common.account') ?>: <strong><?= et('common.done') ?></strong></span></li>
             </ul>
             <div class="btn-group">

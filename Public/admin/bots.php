@@ -52,6 +52,7 @@ if ($isApi && method() === 'DELETE') {
             api_error(t('bots.messages.not_found'), 404, 'bot_source_not_found');
         }
 
+        delete('bot_source_runs', ['source_id' => $id]);
         delete('bot_feed_items', ['source_id' => $id]);
         delete('bot_sources', ['id' => $id]);
         api_ok(tc_admin_bots_payload(), t('bots.messages.deleted'));
@@ -220,7 +221,7 @@ function tc_admin_bots_html(): string
                         <div class="cluster gap-2">
                             <strong><?= e((string) ($source['name'] ?? '')) ?></strong>
                             <span class="badge<?= (bool) ($source['enabled'] ?? false) ? ' badge-primary' : '' ?>"><?= et((bool) ($source['enabled'] ?? false) ? 'bots.enabled' : 'bots.disabled') ?></span>
-                            <a class="badge" href="/admin/bots?bot=<?= e((int) ($source['bot_user_id'] ?? 0)) ?>">@<?= e((string) ($source['username'] ?? '')) ?></a>
+                            <a class="badge" href="/admin/bots/<?= e((int) ($source['bot_user_id'] ?? 0)) ?>">@<?= e((string) ($source['username'] ?? '')) ?></a>
                         </div>
                         <a class="text-muted" href="<?= e((string) ($source['feed_url'] ?? '')) ?>" target="_blank" rel="noopener noreferrer"><?= e((string) ($source['feed_url'] ?? '')) ?></a>
                         <small class="text-muted"><?= et('bots.every_minutes', ['count' => (int) ($source['interval_minutes'] ?? 60)]) ?><?= !empty($source['next_run_at']) ? ' · ' . et('bots.next_run', ['time' => datetime((string) $source['next_run_at'])]) : '' ?></small>
@@ -228,14 +229,13 @@ function tc_admin_bots_html(): string
                         <?php if (!empty($source['last_error'])): ?><small class="text-danger"><?= e((string) $source['last_error']) ?></small><?php endif; ?>
                     </div>
                     <div class="cluster gap-2">
-                        <button class="btn btn-secondary btn-sm btn-icon" type="button" data-modal-open="bot-source-edit-<?= e($id) ?>" aria-label="<?= et('common.edit') ?>"><?= icon('edit') ?></button>
+                        <a class="btn btn-secondary btn-sm btn-icon" href="/admin/bots/<?= e((int) ($source['bot_user_id'] ?? 0)) ?>" aria-label="<?= et('bots.detail_title') ?>" title="<?= et('bots.detail_title') ?>"><?= icon('edit') ?></a>
                         <form method="post" action="<?= e(tc_admin_bots_api_url()) ?>" data-ajax-form data-ajax-target="#bots-list" data-confirm="<?= et('bots.delete_confirm') ?>">
                             <?= csrf_field() ?><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="id" value="<?= e($id) ?>">
                             <button class="btn btn-danger btn-sm btn-icon" type="submit" aria-label="<?= et('common.delete') ?>"><?= icon('trash') ?></button>
                         </form>
                     </div>
                 </article>
-                <?= tc_admin_bot_source_modal($source) ?>
             <?php endforeach; ?>
         </div>
         <?php endif; ?>

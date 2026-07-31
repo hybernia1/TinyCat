@@ -644,9 +644,15 @@ function tc_admin_users_html(): string
                                 </td>
                                 <td>
                                     <div class="table-actions">
-                                        <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-open="user-edit-<?= e($id) ?>" aria-label="<?= et('users.edit_user', ['username' => (string) ($user['username'] ?? '')]) ?>" title="<?= et('common.edit') ?>">
-                                            <?= icon('edit') ?>
-                                        </button>
+                                        <?php if ((string) ($user['role'] ?? '') === 'bot'): ?>
+                                            <a class="btn btn-sm btn-ghost btn-icon" href="/admin/bots/<?= e($id) ?>" aria-label="<?= et('bots.detail_title') ?>" title="<?= et('bots.detail_title') ?>">
+                                                <?= icon('external-link') ?>
+                                            </a>
+                                        <?php else: ?>
+                                            <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-open="user-edit-<?= e($id) ?>" aria-label="<?= et('users.edit_user', ['username' => (string) ($user['username'] ?? '')]) ?>" title="<?= et('common.edit') ?>">
+                                                <?= icon('edit') ?>
+                                            </button>
+                                        <?php endif; ?>
                                         <?php if (!$isSuperAdmin): ?>
                                             <form class="inline-flex" action="<?= e(tc_admin_users_api_url('delete', ['id' => $id])) ?>" method="post" data-ajax-form data-ajax-target="#users-list" data-confirm="<?= et('users.delete_confirm', ['username' => (string) ($user['username'] ?? '')]) ?>" data-confirm-title="<?= et('users.delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
                                                 <?= csrf_field() ?>
@@ -666,7 +672,9 @@ function tc_admin_users_html(): string
             <?= admin_pagination($pagination, '/api/admin/users', '#users-list', $params, 'page', 2, '/admin/users') ?>
             <?php foreach ($users as $user): ?>
                 <?php $user['profile_links'] = $profileLinks[(int) ($user['id'] ?? 0)] ?? []; ?>
-                <?= tc_admin_user_modal($user, $roles, $statuses) ?>
+                <?php if ((string) ($user['role'] ?? '') !== 'bot'): ?>
+                    <?= tc_admin_user_modal($user, $roles, $statuses) ?>
+                <?php endif; ?>
             <?php endforeach; ?>
         <?php endif; ?>
         <?= tc_admin_user_create_modal() ?>
