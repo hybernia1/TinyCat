@@ -22,17 +22,19 @@ if (is_post()) {
     }
 }
 
+$recoveryToken = trim((string) get('token', ''));
+
 layout('layout', [
     'title' => t('auth.recovery_title'),
     'current' => '/recovery',
     'nav' => [],
     'meta' => [
-        'description' => t('auth.recovery_intro'),
+        'description' => t($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro'),
         'url' => '/recovery',
         'image' => site_meta_image_url(),
         'robots' => 'noindex,nofollow',
     ],
-], static function (): void {
+], static function () use ($recoveryToken): void {
     ?>
     <section class="max-w-auth mx-auto">
         <article class="card">
@@ -40,23 +42,22 @@ layout('layout', [
                 <h1 class="text-lg m-0 cluster gap-2"><?= icon('key') ?> <?= et('auth.recovery_title') ?></h1>
             </div>
             <div class="card-body stack">
-                <p class="text-muted mb-0"><?= et('auth.recovery_intro') ?></p>
-                <?php $token = trim((string) get('token', '')); ?>
-                <form class="stack" method="post" action="/recovery<?= $token !== '' ? '?token=' . e(rawurlencode($token)) : '' ?>">
+                <p class="text-muted mb-0"><?= et($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro') ?></p>
+                <form class="stack" method="post" action="/recovery<?= $recoveryToken !== '' ? '?token=' . e(rawurlencode($recoveryToken)) : '' ?>">
                     <?= csrf_field() ?>
-                    <?php if ($token !== ''): ?>
+                    <?php if ($recoveryToken !== ''): ?>
                         <input type="hidden" name="action" value="reset">
-                        <input type="hidden" name="token" value="<?= e($token) ?>">
+                        <input type="hidden" name="token" value="<?= e($recoveryToken) ?>">
                     <?php endif; ?>
                     <label class="field">
-                        <span class="label"><?= et($token !== '' ? 'common.new_password' : 'common.email') ?></span>
-                        <?php if ($token !== ''): ?>
+                        <span class="label"><?= et($recoveryToken !== '' ? 'common.new_password' : 'common.email') ?></span>
+                        <?php if ($recoveryToken !== ''): ?>
                             <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
                         <?php else: ?>
                             <input class="input" type="email" name="email" autocomplete="email" required>
                         <?php endif; ?>
                     </label>
-                    <?php if ($token !== ''): ?>
+                    <?php if ($recoveryToken !== ''): ?>
                         <label class="field">
                             <span class="label"><?= et('common.password_confirm') ?></span>
                             <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>

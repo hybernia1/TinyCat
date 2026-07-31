@@ -336,6 +336,7 @@
         "remember_me": "Zapamatovat přihlášení",
         "recovery_title": "Obnova hesla",
         "recovery_intro": "Zadej svůj email a pošleme ti odkaz pro obnovu hesla.",
+        "recovery_reset_intro": "Nastav si nové heslo pro svůj účet.",
         "recovery_link": "Obnovit heslo",
         "recovery_submit": "Změnit heslo",
         "recovery_invalid": "Odkaz pro obnovu hesla není platný nebo už vypršel.",

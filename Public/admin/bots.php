@@ -10,6 +10,28 @@ require_admin();
 
 $isApi = route_path() === '/api/admin/bots';
 
+if (!$isApi && is_post() && (string) post('action', '') === 'run_source') {
+    csrf_require();
+    $sourceId = max(0, (int) post('source_id', 0));
+    $source = $sourceId > 0 ? bot_source_find($sourceId) : null;
+    $botId = (int) ($source['bot_user_id'] ?? 0);
+    $bot = $botId > 0 ? one('SELECT id, status FROM users WHERE id = ? AND role = ? LIMIT 1', [$botId, 'bot']) : null;
+
+    if ($source === null || $bot === null) {
+        flash('error', t('bots.messages.not_found'));
+    } elseif ((string) ($bot['status'] ?? '') !== 'active') {
+        flash('error', t('bots.detail_bot_inactive'));
+    } elseif (!(bool) ($source['enabled'] ?? false)) {
+        flash('error', t('bots.detail_source_disabled'));
+    } else {
+        $result = bot_run_source($source, true);
+        $failed = (string) ($result['status'] ?? '') === 'error';
+        flash($failed ? 'error' : 'success', t($failed ? 'bots.detail_run_failed' : 'bots.detail_run_finished'));
+    }
+
+    redirect('/admin/bots' . ($botId > 0 ? '?bot=' . $botId : ''));
+}
+
 if (!$isApi && is_post() && (string) post('action', '') === 'rotate_cron_token') {
     csrf_require();
     bot_cron_token_rotate();
@@ -229,13 +251,18 @@ function tc_admin_bots_html(): string
                         <?php if (!empty($source['last_error'])): ?><small class="text-danger"><?= e((string) $source['last_error']) ?></small><?php endif; ?>
                     </div>
                     <div class="cluster gap-2">
-                        <a class="btn btn-secondary btn-sm btn-icon" href="/admin/bots/<?= e((int) ($source['bot_user_id'] ?? 0)) ?>" aria-label="<?= et('bots.detail_title') ?>" title="<?= et('bots.detail_title') ?>"><?= icon('edit') ?></a>
+                        <button class="btn btn-secondary btn-sm btn-icon" type="button" data-modal-open="bot-source-edit-<?= e($id) ?>" aria-label="<?= et('bots.edit_source') ?>" title="<?= et('bots.edit_source') ?>"><?= icon('edit') ?></button>
+                        <form method="post" action="/admin/bots">
+                            <?= csrf_field() ?><input type="hidden" name="action" value="run_source"><input type="hidden" name="source_id" value="<?= e($id) ?>">
+                            <button class="btn btn-primary btn-sm btn-icon" type="submit" aria-label="<?= et('bots.detail_run_now') ?>" title="<?= et('bots.detail_run_now') ?>"><?= icon('refresh') ?></button>
+                        </form>
                         <form method="post" action="<?= e(tc_admin_bots_api_url()) ?>" data-ajax-form data-ajax-target="#bots-list" data-confirm="<?= et('bots.delete_confirm') ?>">
                             <?= csrf_field() ?><input type="hidden" name="_method" value="DELETE"><input type="hidden" name="id" value="<?= e($id) ?>">
                             <button class="btn btn-danger btn-sm btn-icon" type="submit" aria-label="<?= et('common.delete') ?>"><?= icon('trash') ?></button>
                         </form>
                     </div>
                 </article>
+                <?= tc_admin_bot_source_modal($source) ?>
             <?php endforeach; ?>
         </div>
         <?php endif; ?>

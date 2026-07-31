@@ -336,6 +336,7 @@
         "remember_me": "Remember me",
         "recovery_title": "Password recovery",
         "recovery_intro": "Enter your email address and we will send you a password reset link.",
+        "recovery_reset_intro": "Choose a new password for your account.",
         "recovery_link": "Recover password",
         "recovery_submit": "Change password",
         "recovery_invalid": "The password reset link is not valid or has expired.",
