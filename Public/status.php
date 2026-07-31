@@ -38,8 +38,35 @@ layout('layout', [
         'url' => $current,
         'image' => status_meta_image($item),
         'type' => 'article',
-        'published_time' => (string) ($item['created_at'] ?? ''),
+        'published_time' => (string) ($item['published_at'] ?? $item['created_at'] ?? ''),
         'author' => (string) ($item['author_name'] ?? ''),
+        'jsonld' => [
+            '@context' => 'https://schema.org',
+            '@type' => 'DiscussionForumPosting',
+            '@id' => absolute_url($current),
+            'url' => absolute_url($current),
+            'headline' => $statusTitle,
+            'articleBody' => (string) ($item['body'] ?? ''),
+            'keywords' => status_tags_from_text((string) ($item['body'] ?? '')),
+            'datePublished' => date_iso((string) ($item['published_at'] ?? $item['created_at'] ?? '')),
+            'author' => [
+                '@type' => 'Person',
+                'name' => (string) ($item['author_name'] ?? ''),
+                'url' => absolute_url(author_url((int) ($item['author_id'] ?? 0))),
+            ],
+            'interactionStatistic' => [
+                [
+                    '@type' => 'InteractionCounter',
+                    'interactionType' => 'https://schema.org/LikeAction',
+                    'userInteractionCount' => (int) ($item['likes_count'] ?? 0),
+                ],
+                [
+                    '@type' => 'InteractionCounter',
+                    'interactionType' => 'https://schema.org/CommentAction',
+                    'userInteractionCount' => (int) ($item['comments_count'] ?? 0),
+                ],
+            ],
+        ],
     ],
 ], static function () use ($item, $current, $compact, $pageAction): void {
     $authorId = (int) ($item['author_id'] ?? 0);
@@ -57,7 +84,7 @@ layout('layout', [
                         </a>
                         <div class="status-author">
                             <?php if ($authorId > 0 && $authorName !== ''): ?>
-                                <a href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
+                                <a href="<?= e(author_url($authorId)) ?>" rel="author"><?= e($authorName) ?></a>
                             <?php endif; ?>
                             <?php if ($createdAt !== ''): ?>
                                 <?= status_time_button($createdAt, $contentId, false) ?>

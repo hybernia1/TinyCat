@@ -31,9 +31,14 @@ $authorName = user_display_name($author);
 $bio = trim((string) ($author['bio'] ?? ''));
 $avatarUrl = user_avatar_url($author);
 $memberSince = (string) ($author['created_at'] ?? '');
-$statusLimit = public_status_page_limit();
-$statusItems = public_status_items_by_author($authorId, $statusLimit);
 $current = author_url($authorId);
+$statusLimit = public_status_page_limit();
+$pagination = pagination_meta(public_status_count_by_author($authorId), (int) get('page', 1), $statusLimit);
+$page = (int) ($pagination['page'] ?? 1);
+$pageUrl = $current . ($page > 1 ? '?page=' . $page : '');
+$statusItems = public_status_items_by_author($authorId, $statusLimit, (int) ($pagination['offset'] ?? 0));
+$prevUrl = ($pagination['has_prev'] ?? false) ? $current . '?page=' . ($page - 1) : '';
+$nextUrl = ($pagination['has_next'] ?? false) ? $current . '?page=' . ($page + 1) : '';
 $authUser = auth();
 $canPost = $authUser !== null && (int) ($authUser['id'] ?? 0) === $authorId;
 $canSeeMute = $authUser !== null && ($canPost || (string) ($authUser['role'] ?? '') === 'admin');
@@ -47,6 +52,36 @@ $profileLinks = user_profile_links($authorId);
 $followingProfiles = author_following_profiles($authorId, 10);
 $hasMoreFollowing = count($followingProfiles) > 9;
 $followingProfiles = array_slice($followingProfiles, 0, 9);
+$authorEntityId = absolute_url($current) . '#author';
+$authorStructuredData = [
+    '@context' => 'https://schema.org',
+    '@type' => 'ProfilePage',
+    '@id' => absolute_url($pageUrl),
+    'url' => absolute_url($pageUrl),
+    'dateCreated' => $memberSince !== '' ? date_iso($memberSince) : null,
+    'dateModified' => (string) ($author['updated_at'] ?? '') !== '' ? date_iso((string) $author['updated_at']) : null,
+    'mainEntity' => [
+        '@type' => (string) ($author['role'] ?? '') === 'bot' ? 'Organization' : 'Person',
+        '@id' => $authorEntityId,
+        'name' => $authorName,
+        'alternateName' => (string) ($author['username'] ?? ''),
+        'identifier' => (string) $authorId,
+        'description' => $bio !== '' ? $bio : null,
+        'image' => $avatarUrl !== '' ? absolute_url($avatarUrl) : null,
+        'sameAs' => array_values(array_filter(array_map(static fn (string $url): string => absolute_url($url), array_map('strval', $profileLinks)))),
+    ],
+    'hasPart' => array_values(array_map(static function (array $item) use ($authorEntityId): array {
+        return [
+            '@type' => 'DiscussionForumPosting',
+            'url' => absolute_url(status_url((int) ($item['id'] ?? 0))),
+            'headline' => status_meta_title($item),
+            'datePublished' => date_iso((string) ($item['published_at'] ?? $item['created_at'] ?? '')),
+            'author' => ['@id' => $authorEntityId],
+        ];
+    }, $statusItems)),
+];
+$authorStructuredData = array_filter($authorStructuredData, static fn (mixed $value): bool => $value !== null && $value !== []);
+$authorStructuredData['mainEntity'] = array_filter($authorStructuredData['mainEntity'], static fn (mixed $value): bool => $value !== null && $value !== [] && $value !== '');
 
 layout('layout', [
     'title' => t('public.author_archive_title', ['author' => $authorName]),
@@ -55,11 +90,15 @@ layout('layout', [
         'description' => $bio !== ''
             ? $bio
             : t('public.author_meta', ['author' => $authorName]),
-        'url' => $current,
+        'url' => $pageUrl,
         'image' => $avatarUrl ?: site_meta_image_url(),
         'type' => 'profile',
+        'rss' => author_feed_url($authorId),
+        'prev' => $prevUrl,
+        'next' => $nextUrl,
+        'jsonld' => $authorStructuredData,
     ],
-], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing): void {
+], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $pagination, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -128,6 +167,9 @@ layout('layout', [
                             <?php endif; ?>
                         </div>
                         <div class="profile-actions">
+                            <a class="btn btn-secondary btn-sm" href="<?= e(author_feed_url($authorId)) ?>" title="RSS feed" aria-label="RSS feed">
+                                <?= icon('rss') ?> <span>RSS</span>
+                            </a>
                             <?php if ($canFollow): ?>
                                 <?= author_follow_button_html($authorId, $isFollowing) ?>
                             <?php elseif ($authUser === null): ?>
@@ -188,6 +230,7 @@ layout('layout', [
                     <?php endforeach; ?>
                 </div>
                 <?= status_feed_more_control($feedId, 'author', count($statusItems), $statusLimit, ['author_id' => $authorId]) ?>
+                <?= pagination($pagination, author_url($authorId)) ?>
             </section>
         </main>
     </section>

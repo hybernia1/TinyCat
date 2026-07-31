@@ -16,6 +16,47 @@ route(['GET', 'POST'], '/admin/bots/{bot_id:[0-9]+}', static function (string $b
     require public_path('admin/bot.php');
 });
 
+route('GET', '/author/{author_id:[0-9]+}/feed', static function (string $author_id): void {
+    $rssType = 'author';
+    $rssAuthorId = max(0, (int) $author_id);
+
+    require public_path('rss.php');
+});
+
+route('GET', '/sitemap.xml', static function (): void {
+    $sitemapSection = 'index';
+    require public_path('sitemap.php');
+});
+
+route('GET', '/sitemap-authors.xml', static function (): void {
+    $sitemapSection = 'authors';
+    require public_path('sitemap.php');
+});
+
+route('GET', '/sitemap-status.xml', static function (): void {
+    $sitemapSection = 'status';
+    require public_path('sitemap.php');
+});
+
+route('GET', '/sitemap-tags.xml', static function (): void {
+    $sitemapSection = 'tags';
+    require public_path('sitemap.php');
+});
+
+route('GET', '/robots.txt', static function (): void {
+    require public_path('robots.php');
+});
+
+route('GET', '/llms.txt', static function (): void {
+    $llmsFull = false;
+    require public_path('llms.php');
+});
+
+route('GET', '/llms-full.txt', static function (): void {
+    $llmsFull = true;
+    require public_path('llms.php');
+});
+
 route('GET', '/author/{author_id:[0-9]+}', static function (string $author_id): void {
     $_GET['id'] = (string) max(0, (int) $author_id);
 
@@ -39,6 +80,13 @@ route('GET', '/notifications/open', static function (): void {
 
 route(['GET', 'POST'], '/notifications', static function (): void {
     require public_path('notifications.php');
+});
+
+route('GET', '/tag/{tag}/feed', static function (string $tag): void {
+    $rssType = 'tag';
+    $rssTag = $tag;
+
+    require public_path('rss.php');
 });
 
 route(['GET', 'POST'], '/tag/{tag}', static function (string $tag): void {

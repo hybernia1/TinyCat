@@ -1632,6 +1632,11 @@ function author_url(int $id): string
     return $id > 0 ? '/author/' . $id : '/';
 }
 
+function author_feed_url(int $id): string
+{
+    return $id > 0 ? '/author/' . $id . '/feed' : '/';
+}
+
 function author_api_url(int $id, string $action = 'follow', array $params = []): string
 {
     $query = ['author_id' => $id] + $params;
@@ -1675,6 +1680,13 @@ function tag_url(string $tag): string
     $tag = status_tag_normalize($tag);
 
     return $tag !== '' ? '/tag/' . rawurlencode($tag) : '/';
+}
+
+function tag_feed_url(string $tag): string
+{
+    $tag = status_tag_normalize($tag);
+
+    return $tag !== '' ? '/tag/' . rawurlencode($tag) . '/feed' : '/';
 }
 
 function author_is_followed(int $followerId, int $authorId): bool
@@ -2722,6 +2734,62 @@ function public_status_items_by_tag(
     }
 
     return public_status_page($query, $limit);
+}
+
+function public_status_items_by_tag_offset(string $tag, int $limit = 24, int $offset = 0): array
+{
+    $tag = status_tag_normalize($tag);
+
+    if ($tag === '') {
+        return [];
+    }
+
+    $termId = status_term_id_exact($tag);
+
+    if ($termId < 1) {
+        return [];
+    }
+
+    return public_status_page(
+        public_status_id_query()
+            ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
+            ->where('ct.term_id = ?', $termId),
+        $limit,
+        $offset
+    );
+}
+
+function public_status_count_by_author(int $authorId): int
+{
+    if ($authorId < 1) {
+        return 0;
+    }
+
+    return (int) val(
+        'SELECT COUNT(*)
+            FROM content c
+            INNER JOIN users u ON u.id = c.author_id
+            WHERE c.author_id = ? AND u.status = ?',
+        [$authorId, 'active']
+    );
+}
+
+function public_status_count_by_tag(string $tag): int
+{
+    $termId = status_term_id_exact($tag);
+
+    if ($termId < 1) {
+        return 0;
+    }
+
+    return (int) val(
+        'SELECT COUNT(*)
+            FROM content c
+            INNER JOIN users u ON u.id = c.author_id
+            INNER JOIN content_tags ct ON ct.content_id = c.id
+            WHERE ct.term_id = ? AND u.status = ?',
+        [$termId, 'active']
+    );
 }
 
 function public_status_item(int $id): ?array

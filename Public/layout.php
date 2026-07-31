@@ -62,6 +62,13 @@ $metaUrl = absolute_url((string) ($meta['url'] ?? ($_SERVER['REQUEST_URI'] ?? $c
 $metaImageRaw = trim((string) ($meta['image'] ?? site_meta_image_url()));
 $metaImage = $metaImageRaw !== '' ? absolute_url($metaImageRaw) : '';
 $metaType = (string) ($meta['type'] ?? 'website');
+$metaRss = trim((string) ($meta['rss'] ?? ''));
+$metaPrev = trim((string) ($meta['prev'] ?? ''));
+$metaNext = trim((string) ($meta['next'] ?? ''));
+$metaJsonLd = $meta['jsonld'] ?? null;
+$metaJsonLdJson = is_array($metaJsonLd)
+    ? json_encode($metaJsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
+    : false;
 $metaRobots = trim((string) ($meta['robots'] ?? ($isAdminShell ? 'noindex,nofollow' : '')));
 $metaLocale = str_replace('-', '_', locale());
 $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
@@ -85,6 +92,15 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
         <meta name="robots" content="<?= e($metaRobots) ?>">
     <?php endif; ?>
     <link rel="canonical" href="<?= e($metaUrl) ?>">
+    <?php if ($metaRss !== ''): ?>
+        <link rel="alternate" type="application/rss+xml" title="<?= e($pageTitle) ?>" href="<?= e(absolute_url($metaRss)) ?>">
+    <?php endif; ?>
+    <?php if ($metaPrev !== ''): ?>
+        <link rel="prev" href="<?= e(absolute_url($metaPrev)) ?>">
+    <?php endif; ?>
+    <?php if ($metaNext !== ''): ?>
+        <link rel="next" href="<?= e(absolute_url($metaNext)) ?>">
+    <?php endif; ?>
     <meta property="og:site_name" content="<?= e($appName) ?>">
     <meta property="og:title" content="<?= e($metaTitle) ?>">
     <?php if ($metaDescription !== ''): ?>
@@ -113,6 +129,9 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php endif; ?>
     <?php if ($siteFaviconUrl !== ''): ?>
         <link rel="icon" type="image/webp" href="<?= e($siteFaviconUrl) ?>">
+    <?php endif; ?>
+    <?php if (is_string($metaJsonLdJson) && $metaJsonLdJson !== ''): ?>
+        <script type="application/ld+json"><?= $metaJsonLdJson ?></script>
     <?php endif; ?>
     <?php foreach ((array) $styles as $style): ?>
         <link rel="stylesheet" href="<?= e(asset((string) $style)) ?>">
