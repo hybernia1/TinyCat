@@ -37,6 +37,7 @@ layout('layout', [
 
             <?= tc_privacy_card('privacy.data_title', 'database', [
                 'privacy.data_account',
+                'privacy.data_email',
                 'privacy.data_content',
                 'privacy.data_technical',
                 'privacy.data_server_logs',

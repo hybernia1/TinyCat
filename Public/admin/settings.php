@@ -125,6 +125,27 @@ function tc_admin_settings_sections(): array
                 ['key' => 'auth.registration.auto_approve', 'label' => t('settings.fields.registration_auto_approve'), 'type' => 'bool', 'default' => false],
             ],
         ],
+        'email' => [
+            'label' => t('settings.sections.email'),
+            'icon' => 'mail',
+            'fields' => [
+                ['key' => 'email.smtp.host', 'label' => t('settings.fields.smtp_host'), 'type' => 'optional_text', 'default' => '', 'max' => 190],
+                ['key' => 'email.smtp.port', 'label' => t('settings.fields.smtp_port'), 'type' => 'int', 'default' => 587, 'min' => 1, 'max' => 65535],
+                ['key' => 'email.smtp.username', 'label' => t('settings.fields.smtp_username'), 'type' => 'optional_text', 'default' => '', 'max' => 190],
+                ['key' => 'email.smtp.password', 'label' => t('settings.fields.smtp_password'), 'type' => 'password', 'default' => '', 'max' => 190],
+                ['key' => 'email.smtp.encryption', 'label' => t('settings.fields.smtp_encryption'), 'type' => 'optional_text', 'default' => 'tls', 'max' => 20],
+                ['key' => 'email.from_address', 'label' => t('settings.fields.email_from'), 'type' => 'email', 'default' => '', 'max' => 190],
+                ['key' => 'email.from_name', 'label' => t('settings.fields.email_from_name'), 'type' => 'optional_text', 'default' => 'TinyCat', 'max' => 120],
+                ['key' => 'email.welcome_message', 'label' => t('settings.fields.welcome_message'), 'type' => 'textarea', 'default' => '', 'span' => true],
+            ],
+        ],
+        'analytics' => [
+            'label' => t('settings.sections.analytics'),
+            'icon' => 'chart',
+            'fields' => [
+                ['key' => 'analytics.google_measurement_id', 'label' => t('settings.fields.google_measurement_id'), 'type' => 'optional_text', 'default' => '', 'max' => 40, 'help' => t('settings.fields.google_measurement_id_help')],
+            ],
+        ],
     ];
 }
 
@@ -133,6 +154,7 @@ function tc_admin_settings_field(array $field, string $group): string
     $key = (string) $field['key'];
     $type = (string) ($field['type'] ?? 'text');
     $value = config($key, $field['default'] ?? '');
+    $displayValue = $type === 'password' ? '' : $value;
     $name = 'settings[' . $key . ']';
     $tag = $type === 'site_image' ? 'div' : 'label';
     $classes = ['field', 'settings-field'];
@@ -188,6 +210,13 @@ function tc_admin_settings_field(array $field, string $group): string
             <input class="input" type="number" name="<?= e($name) ?>" value="<?= e(tc_admin_settings_bytes_to_mb((int) $value)) ?>" min="<?= e((float) ($field['min'] ?? 0)) ?>" max="<?= e((float) ($field['max'] ?? 1024)) ?>" step="0.1" required>
         <?php elseif ($type === 'site_image'): ?>
             <?= tc_admin_settings_site_image_field($name, (string) $value, (string) ($field['variant'] ?? 'logo')) ?>
+        <?php elseif ($type === 'password'): ?>
+            <input class="input" type="password" name="<?= e($name) ?>" value="<?= e((string) $displayValue) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>" autocomplete="new-password">
+        <?php elseif ($type === 'email'): ?>
+            <input class="input" type="email" name="<?= e($name) ?>" value="<?= e((string) $value) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>">
+        <?php elseif ($type === 'optional_text'): ?>
+            <input class="input" name="<?= e($name) ?>" value="<?= e((string) $value) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>">
+            <?php if (!empty($field['help'])): ?><span class="help"><?= e((string) $field['help']) ?></span><?php endif; ?>
         <?php elseif ($type === 'textarea'): ?>
             <textarea class="textarea" name="<?= e($name) ?>" rows="8" placeholder="<?= et('settings.footer_placeholder') ?>"><?= e((string) $value) ?></textarea>
         <?php else: ?>
@@ -206,6 +235,9 @@ function tc_admin_settings_save(): void
 
     foreach (tc_admin_settings_sections() as $group => $section) {
         foreach ((array) $section['fields'] as $field) {
+            if (($field['type'] ?? '') === 'password' && trim((string) (($posted[(string) $field['key']] ?? ''))) === '') {
+                continue;
+            }
             [$value, $type] = tc_admin_settings_value_from_post($field, $posted);
             setting_set((string) $field['key'], $value, $type, (string) $group);
         }
@@ -280,6 +312,25 @@ function tc_admin_settings_value_from_post(array $field, array $posted): array
 
     if ($type === 'textarea') {
         return [(string) $raw, 'string'];
+    }
+
+    if (in_array($type, ['password', 'email'], true)) {
+        $value = trim((string) $raw);
+        $max = (int) ($field['max'] ?? 190);
+        if ($type === 'email' && $value !== '' && !user_email_valid($value)) {
+            throw new InvalidArgumentException(t('account.messages.email_invalid'));
+        }
+
+        return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
+    }
+
+    if ($type === 'optional_text') {
+        $value = trim((string) $raw);
+        $max = (int) ($field['max'] ?? 190);
+        if ($key === 'analytics.google_measurement_id' && $value !== '' && preg_match('/^G-[A-Z0-9]+$/i', $value) !== 1) {
+            throw new InvalidArgumentException('Google Analytics Measurement ID must look like G-XXXXXXXXXX.');
+        }
+        return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
     }
 
     $value = trim((string) $raw);

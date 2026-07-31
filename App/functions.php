@@ -43,7 +43,7 @@ function db(): PDO
 
 function app_required_tables(): array
 {
-    return ['users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_likes', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'user_action_limits', 'settings'];
+    return ['users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_likes', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'ip_action_limits', 'email_templates', 'password_reset_tokens', 'settings'];
 }
 
 function site_name(): string
@@ -591,7 +591,7 @@ function auth_login_request(): array
     }
 
     if (!auth_attempt([
-        'username' => username_normalize((string) input('username', '')),
+        'username' => trim((string) input('username', '')),
         'password' => $password,
         'remember' => input('remember', ''),
     ])) {
@@ -638,6 +638,7 @@ function registration_request(): array
     }
 
     $username = username_normalize((string) input('username', ''));
+    $email = user_email_normalize((string) input('email', ''));
     $password = (string) input('password', '');
     $passwordConfirm = (string) input('password_confirm', '');
     $errors = [];
@@ -646,6 +647,12 @@ function registration_request(): array
         $errors[] = t('account.messages.username_invalid');
     } elseif (user_username_taken($username)) {
         $errors[] = t('account.messages.username_taken');
+    }
+
+    if ($email !== '' && !user_email_valid($email)) {
+        $errors[] = t('account.messages.email_invalid');
+    } elseif ($email !== '' && user_email_taken($email)) {
+        $errors[] = t('account.messages.email_taken');
     }
 
     if (strlen($password) < 8) {
@@ -671,6 +678,7 @@ function registration_request(): array
     $status = registration_auto_approve() ? 'active' : 'waiting';
     $userId = (int) insert('users', [
         'username' => $username,
+        'email' => $email !== '' ? $email : null,
         'password' => auth_password($password),
         'role' => 'user',
         'status' => $status,
@@ -678,6 +686,11 @@ function registration_request(): array
         'theme' => 'system',
         'bio' => '',
         'recovery_hash' => user_recovery_hash_generate(),
+    ]);
+
+    email_template_send('welcome', $userId, [
+        'welcome_message' => (string) config('email.welcome_message', ''),
+        'login_url' => absolute_url('/login'),
     ]);
 
     captcha_refresh('register');
@@ -744,6 +757,204 @@ function user_username_taken(string $username, ?int $ignoreId = null): bool
     } catch (Throwable) {
         return false;
     }
+}
+
+function user_email_normalize(string $email): string
+{
+    return strtolower(trim($email));
+}
+
+function user_email_valid(string $email): bool
+{
+    return strlen($email) <= 254 && filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+}
+
+function user_email_taken(string $email, ?int $ignoreId = null): bool
+{
+    $email = user_email_normalize($email);
+    if ($email === '') {
+        return false;
+    }
+
+    $params = ['email' => $email];
+    $sql = 'SELECT COUNT(*) FROM users WHERE email = :email';
+    if ($ignoreId !== null) {
+        $sql .= ' AND id <> :id';
+        $params['id'] = $ignoreId;
+    }
+
+    try {
+        return (int) val($sql, $params) > 0;
+    } catch (Throwable) {
+        return false;
+    }
+}
+
+function rate_limit_ip(): string
+{
+    $ip = trim((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+    return filter_var($ip, FILTER_VALIDATE_IP) !== false ? $ip : 'unknown';
+}
+
+function rate_limit_ip_action_count(string $action, int $window = 3600): int
+{
+    $bucket = moderation_bucket_start($window);
+
+    return (int) val(
+        'SELECT action_count FROM ip_action_limits WHERE ip_address = ? AND action_name = ? AND bucket_start = ? LIMIT 1',
+        [rate_limit_ip(), $action, $bucket]
+    );
+}
+
+function rate_limit_ip_action_record(string $action, int $window = 3600): void
+{
+    $bucket = moderation_bucket_start($window);
+    run(
+        'INSERT INTO ip_action_limits (ip_address, action_name, bucket_start, action_count, updated_at)
+            VALUES (?, ?, ?, 1, ?)
+            ON DUPLICATE KEY UPDATE action_count = action_count + 1, updated_at = VALUES(updated_at)',
+        [rate_limit_ip(), $action, $bucket, date_db()]
+    );
+}
+
+function email_user(int $userId): ?array
+{
+    if ($userId < 1) {
+        return null;
+    }
+
+    try {
+        return one('SELECT id, username, email, email_notifications FROM users WHERE id = ? LIMIT 1', [$userId]);
+    } catch (Throwable) {
+        return null;
+    }
+}
+
+function email_template_send(string $templateKey, int $userId, array $vars = []): bool
+{
+    try {
+        $user = email_user($userId);
+        if ($user === null) return false;
+        $address = user_email_normalize((string) ($user['email'] ?? ''));
+        if (!user_email_valid($address)) return false;
+        if (str_starts_with($templateKey, 'notification_') && !(bool) ($user['email_notifications'] ?? false)) return false;
+        $template = one('SELECT subject, body, enabled FROM email_templates WHERE template_key = ? LIMIT 1', [$templateKey]);
+        if ($template === null || !(bool) $template['enabled']) return false;
+        $vars += ['site' => site_name(), 'username' => (string) $user['username'], 'email' => $address];
+        $subject = (string) ($template['subject'] ?? '');
+        $body = (string) ($template['body'] ?? '');
+        foreach ($vars as $key => $value) {
+            $subject = str_replace('{{' . $key . '}}', (string) $value, $subject);
+            $body = str_replace('{{' . $key . '}}', (string) $value, $body);
+        }
+        return email_smtp_send($address, $subject, $body);
+    } catch (Throwable) {
+        return false;
+    }
+}
+
+function email_notification_templates_enabled(): bool
+{
+    try {
+        return (int) val("SELECT COUNT(*) FROM email_templates WHERE template_key LIKE 'notification_%' AND enabled = 1") > 0;
+    } catch (Throwable) {
+        return false;
+    }
+}
+
+function email_smtp_send(string $to, string $subject, string $body): bool
+{
+    $host = trim((string) config('email.smtp.host', ''));
+    $from = user_email_normalize((string) config('email.from_address', ''));
+    if ($host === '' || !user_email_valid($to) || !user_email_valid($from)) {
+        return false;
+    }
+
+    $port = (int) config('email.smtp.port', 587);
+    $encryption = strtolower(trim((string) config('email.smtp.encryption', 'tls')));
+    $transport = $encryption === 'ssl' ? 'ssl://' . $host : $host;
+    $socket = @stream_socket_client($transport . ':' . $port, $errno, $error, 10);
+    if (!is_resource($socket)) {
+        return false;
+    }
+
+    stream_set_timeout($socket, 10);
+    $read = static function () use ($socket): string {
+        $response = '';
+
+        while (($line = fgets($socket, 512)) !== false) {
+            $response .= $line;
+
+            if (strlen($line) < 4 || $line[3] === ' ') {
+                break;
+            }
+        }
+
+        return $response;
+    };
+    $expect = static function (array $codes) use (&$read): bool {
+        $response = $read();
+        $code = (int) substr($response, 0, 3);
+
+        return in_array($code, $codes, true);
+    };
+    $write = static function (string $line) use ($socket): void {
+        fwrite($socket, $line . "\r\n");
+    };
+    $fail = static function () use ($socket): bool {
+        fclose($socket);
+        return false;
+    };
+
+    if (!$expect([220])) return $fail();
+
+    $serverName = preg_replace('/[^a-z0-9.-]/i', '', (string) ($_SERVER['SERVER_NAME'] ?? 'localhost')) ?: 'localhost';
+    $write('EHLO ' . $serverName);
+    if (!$expect([250])) return $fail();
+
+    if ($encryption === 'tls') {
+        $write('STARTTLS');
+        if (!$expect([220]) || !@stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+            return $fail();
+        }
+
+        $write('EHLO ' . $serverName);
+        if (!$expect([250])) return $fail();
+    }
+
+    $username = (string) config('email.smtp.username', '');
+    if ($username !== '') {
+        $write('AUTH LOGIN');
+        if (!$expect([334])) return $fail();
+        $write(base64_encode($username));
+        if (!$expect([334])) return $fail();
+        $write(base64_encode((string) config('email.smtp.password', '')));
+        if (!$expect([235])) return $fail();
+    }
+
+    $write('MAIL FROM:<' . $from . '>');
+    if (!$expect([250])) return $fail();
+    $write('RCPT TO:<' . $to . '>');
+    if (!$expect([250, 251])) return $fail();
+    $write('DATA');
+    if (!$expect([354])) return $fail();
+
+    $fromName = str_replace(["\r", "\n"], '', (string) config('email.from_name', 'TinyCat'));
+    $subject = str_replace(["\r", "\n"], '', $subject);
+    $encodedSubject = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($subject, 'UTF-8') : $subject;
+    $body = preg_replace('/\r\n|\r|\n/', "\r\n", $body) ?? $body;
+    $body = preg_replace('/^\./m', '..', $body) ?? $body;
+    $headers = 'From: ' . $fromName . ' <' . $from . ">\r\n"
+        . 'To: <' . $to . ">\r\n"
+        . 'Subject: ' . $encodedSubject . "\r\n"
+        . "Content-Type: text/plain; charset=UTF-8\r\n"
+        . "Content-Transfer-Encoding: 8bit\r\n\r\n";
+    fwrite($socket, $headers . $body . "\r\n.\r\n");
+    if (!$expect([250])) return $fail();
+
+    $write('QUIT');
+    fclose($socket);
+    return true;
 }
 
 function user_recovery_hash_generate(): string
@@ -886,10 +1097,7 @@ function moderation_action_count(array $user, string $action): int
     [$window] = moderation_action_rule($user, $action);
 
     try {
-        return (int) val(
-            'SELECT action_count FROM user_action_limits WHERE user_id = ? AND action_name = ? AND bucket_start = ? LIMIT 1',
-            [(int) ($user['id'] ?? 0), $action, moderation_bucket_start((int) $window)]
-        );
+        return rate_limit_ip_action_count($action, (int) $window);
     } catch (Throwable) {
         return 0;
     }
@@ -955,12 +1163,7 @@ function moderation_record_action(array $user, string $action): void
     $bucket = moderation_bucket_start((int) $window);
 
     try {
-        run(
-            'INSERT INTO user_action_limits (user_id, action_name, bucket_start, action_count, updated_at)
-                VALUES (?, ?, ?, 1, ?)
-                ON DUPLICATE KEY UPDATE action_count = action_count + 1, updated_at = VALUES(updated_at)',
-            [$userId, $action, $bucket, date_db()]
-        );
+        rate_limit_ip_action_record($action, (int) $window);
     } catch (Throwable) {
         // Moderation limits must never break the primary action.
     }
@@ -1280,6 +1483,8 @@ function user_profile_update_request(array $user): array
 {
     $id = (int) ($user['id'] ?? 0);
     $bio = plain_text_limit((string) post('bio', ''), 500);
+    $emailProvided = input('email', null) !== null;
+    $email = $emailProvided ? user_email_normalize((string) post('email', '')) : user_email_normalize((string) ($user['email'] ?? ''));
     $locale = language_code((string) post('locale', ''));
     $theme = theme_normalize((string) post('theme', 'system'));
     $errors = [];
@@ -1292,6 +1497,11 @@ function user_profile_update_request(array $user): array
     if ($locale === '' || !array_key_exists($locale, language_packages())) {
         $errors[] = t('settings.messages.invalid_language');
     }
+    if ($emailProvided && $email !== '' && !user_email_valid($email)) {
+        $errors[] = t('account.messages.email_invalid');
+    } elseif ($email !== '' && user_email_taken($email, $id)) {
+        $errors[] = t('account.messages.email_taken');
+    }
 
     if ($errors !== []) {
         api_error(implode(' ', $errors), 422, 'validation_error', ['errors' => $errors]);
@@ -1302,6 +1512,14 @@ function user_profile_update_request(array $user): array
         'locale' => $locale,
         'theme' => $theme,
     ];
+    if ($emailProvided) {
+        $data['email'] = $email !== '' ? $email : null;
+    }
+    if (input('email_notifications', null) !== null) {
+        $data['email_notifications'] = $email !== '' && (string) input('email_notifications', '') === '1' ? 1 : 0;
+    } elseif ($emailProvided && $email === '') {
+        $data['email_notifications'] = 0;
+    }
 
     update('users', $data, ['id' => $id]);
     user_profile_links_sync($id, $profileLinks);
@@ -1452,6 +1670,10 @@ function author_follow(int $followerId, int $authorId): void
     insert('user_followers', [
         'user_id' => $authorId,
         'follower_id' => $followerId,
+    ]);
+    email_template_send('notification_follow', $authorId, [
+        'actor' => (string) (email_user($followerId)['username'] ?? 'Někdo'),
+        'author_url' => absolute_url('/author/' . $followerId),
     ]);
 }
 
@@ -4981,6 +5203,24 @@ function notification_create(int $userId, string $type, int $actorId, int $conte
             'updated_at' => $now,
         ], ['user_id' => $userId, 'notification_key' => $key]);
     }
+
+    $template = match ($type) {
+        'content_like' => 'notification_content_like',
+        'content_comment' => 'notification_content_comment',
+        'comment_like' => 'notification_comment_like',
+        'content_mention' => 'notification_content_mention',
+        'comment_mention' => 'notification_comment_mention',
+        'report_resolved' => 'notification_report_resolved',
+        'report_dismissed' => 'notification_report_dismissed',
+        default => '',
+    };
+    if ($template !== '') {
+        $actor = email_user($actorId);
+        email_template_send($template, $userId, [
+            'actor' => (string) ($actor['username'] ?? 'Někdo'),
+            'content_url' => absolute_url('/status/' . $contentId),
+        ]);
+    }
 }
 
 function notification_mentioned_user_ids(string $text): array
@@ -7228,7 +7468,7 @@ function maintenance_cleanup_has_rows(string $task): bool
         ),
         'old_action_limits' => val(
             'SELECT 1
-                FROM user_action_limits
+                FROM ip_action_limits
                 WHERE bucket_start < ?
                 LIMIT 1',
             [date_db('-30 days')]
@@ -7272,7 +7512,7 @@ function maintenance_cleanup_delete(string $task, int $batchSize): int
                 LIMIT ' . $batchSize
         ),
         'old_action_limits' => maintenance_cleanup_delete_limited(
-            'DELETE FROM user_action_limits
+            'DELETE FROM ip_action_limits
                 WHERE bucket_start < ?
                 LIMIT ' . $batchSize,
             [date_db('-30 days')]

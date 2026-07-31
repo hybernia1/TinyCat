@@ -27,6 +27,7 @@ if (is_post()) {
     }
 
     $username = username_normalize((string) post('username', ''));
+    $email = user_email_normalize((string) post('email', ''));
     $password = (string) post('password', '');
     $passwordConfirm = (string) post('password_confirm', '');
     $errors = [];
@@ -35,6 +36,12 @@ if (is_post()) {
         $errors[] = t('account.messages.username_invalid');
     } elseif (user_username_taken($username)) {
         $errors[] = t('account.messages.username_taken');
+    }
+
+    if ($email !== '' && !user_email_valid($email)) {
+        $errors[] = t('account.messages.email_invalid');
+    } elseif ($email !== '' && user_email_taken($email)) {
+        $errors[] = t('account.messages.email_taken');
     }
 
     if (strlen($password) < 8) {
@@ -58,6 +65,7 @@ if (is_post()) {
     $status = registration_auto_approve() ? 'active' : 'waiting';
     $userData = [
         'username' => $username,
+        'email' => $email !== '' ? $email : null,
         'password' => auth_password($password),
         'role' => 'user',
         'status' => $status,
@@ -68,6 +76,11 @@ if (is_post()) {
     ];
 
     $id = (int) insert('users', $userData);
+
+    email_template_send('welcome', $id, [
+        'welcome_message' => (string) config('email.welcome_message', ''),
+        'login_url' => absolute_url('/login'),
+    ]);
 
     captcha_refresh('register');
 
@@ -111,6 +124,11 @@ layout('layout', [
                             <span class="label"><?= et('common.username') ?></span>
                             <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_]{2,31}" maxlength="32" required>
                             <span class="help"><?= e(username_hint()) ?></span>
+                        </label>
+                        <label class="field">
+                            <span class="label"><?= et('common.email') ?></span>
+                            <input class="input" type="email" name="email" autocomplete="email" maxlength="254">
+                            <span class="help"><?= et('auth.email_optional') ?></span>
                         </label>
                         <label class="field">
                             <span class="label"><?= et('common.password') ?></span>

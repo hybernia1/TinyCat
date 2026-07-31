@@ -31,6 +31,7 @@
         "account": "Account",
         "done": "Done",
         "username": "Username",
+        "email": "Email",
         "password": "Password",
         "new_password": "New password",
         "current_password": "Current password",
@@ -289,6 +290,7 @@
     "auth": {
         "login_title": "Login",
         "login_intro": "Sign in to your account.",
+        "login_identifier": "Username or email",
         "register_title": "Register",
         "register_intro": "Create a new account and join the feed.",
         "register_link": "Create account",
@@ -297,6 +299,7 @@
         "registration_disabled": "Registration is currently disabled.",
         "registration_done": "The account was created.",
         "registration_waiting": "The account was created and is waiting for approval.",
+        "email_optional": "Optional. If provided, it must be unique.",
         "platform_terms_agree": "I agree to the public platform rules and understand that content is public.",
         "platform_terms_required": "Registration requires agreement with the public platform rules.",
         "logout_title": "Logout",
@@ -304,11 +307,12 @@
         "logout_confirm": "Are you sure you want to log out?",
         "remember_me": "Remember me",
         "recovery_title": "Password recovery",
-        "recovery_intro": "Enter your private recovery hash and a new password. The hash does not sign you in; it only authorizes a password change.",
+        "recovery_intro": "Enter your email address and we will send you a password reset link.",
         "recovery_link": "Recover password",
         "recovery_submit": "Change password",
-        "recovery_invalid": "The recovery hash is not valid.",
-        "recovery_done": "The password was changed. The recovery hash was regenerated; sign in with the new password.",
+        "recovery_invalid": "The password reset link is not valid or has expired.",
+        "recovery_done": "The password was changed.",
+        "recovery_sent": "If an active account uses that email, a password reset link has been sent.",
         "invalid_login": "Invalid login.",
         "invalid_captcha": "The security check did not pass.",
         "login_required": "Sign in to continue.",
@@ -317,7 +321,7 @@
     },
     "privacy": {
         "title": "Privacy and Rules",
-        "meta": "How TinyCat handles accounts, public content, recovery hashes, reports, limits, and content moderation.",
+        "meta": "How TinyCat handles accounts, public content, email recovery, reports, limits, and content moderation.",
         "intro": "TinyCat is an open and free public social platform designed not to require a real-world identity. This overview explains what is public, what the app stores, how password recovery works, and how reported content is handled.",
         "public_title": "Public Platform",
         "public_open": "TinyCat is intended for free public posting. Posts, comments, profiles, likes, follows, and tags are public parts of the platform.",
@@ -325,15 +329,16 @@
         "public_no_private": "The platform has no private messages, private profiles, or personal storage mode. TinyCat is therefore not meant for sharing private or sensitive things.",
         "public_no_personal": "Do not post personal data, intimate content, non-public documents, or anything you do not want to be publicly accessible.",
         "data_title": "Data and Account",
-        "data_account": "Registration does not require contact information or a real name. The primary identifier is the username.",
+        "data_account": "Registration does not require contact information or a real name. Email is optional and unique when provided. The primary identifier is the username.",
+        "data_email": "A provided email can also be used to sign in, recover the password, and receive optional email notifications. Users can control notifications in their profile, while administrators control which notification types are available.",
         "data_content": "The app stores content users create themselves: posts, comments, likes, follows, reports, and optional profile fields.",
-        "data_technical": "Passwords are stored only as hashes. The recovery hash is a private security value and the user must store it outside the platform.",
-        "data_server_logs": "TinyCat does not use IP tracking or analytics profiles in the application database. The server operator may still have technical server logs outside the app.",
+        "data_technical": "Passwords are stored only as hashes. Password reset links are short-lived, single-use tokens.",
+        "data_server_logs": "TinyCat stores IP addresses for rate limiting selected signed-in actions such as posts, comments, likes, reports, and searches. The server operator may also have technical server logs outside the app.",
         "recovery_title": "Password Recovery",
-        "recovery_hash": "The only password recovery mechanism is the /recovery page and the private recovery hash.",
-        "recovery_no_contact": "The platform does not use contact information for password recovery.",
-        "recovery_lost": "If a user loses both the password and the recovery hash, the app has no safe way to restore the account.",
-        "recovery_rotation": "After a successful password recovery, the recovery hash is regenerated so the old hash cannot be reused.",
+        "recovery_hash": "Password recovery uses the /recovery page and a link sent to the account email.",
+        "recovery_no_contact": "An email address is optional at registration, but required for email-based password recovery.",
+        "recovery_lost": "If no email was added to an account, email recovery is not available.",
+        "recovery_rotation": "Reset links expire after 60 minutes and can be used only once.",
         "reporting_title": "Reporting Content",
         "reporting_how": "A post can be reported through the report icon on the post. The user selects a reason and may add a note.",
         "reporting_duplicate": "The same user cannot keep reopening the same report. If a post was already reviewed as acceptable, another identical report does not reopen it.",
@@ -344,7 +349,7 @@
         "moderation_actions": "A moderator can keep a post and lock it against edits, hide it, or remove it.",
         "moderation_mute": "If a post is confirmed as harmful, its author may receive a temporary mute, typically for 24 hours.",
         "limits_title": "Action Limits",
-        "limits_intro": "Limits protect the platform from spam and heavy automated use. Signed-in limits are account-based, without IP tracking. Guest search uses only the technical session and captcha.",
+        "limits_intro": "Limits protect the platform from spam and heavy automated use. Signed-in action limits are based on the IP address, so they cannot be bypassed by creating more accounts.",
         "reputation": "Reputation",
         "reputation_new": "New account",
         "reputation_normal": "Normal account",
@@ -359,7 +364,11 @@
         "cookies_title": "Cookies",
         "cookies_session": "The app uses technical cookies for sessions, CSRF protection, and security captcha.",
         "cookies_remember": "Optional remember-me login uses a technical cookie only when the user enables it.",
-        "cookies_no_ads": "TinyCat core does not use advertising cookies or analytics tracking."
+        "cookies_no_ads": "TinyCat core does not use advertising cookies. Optional Google Analytics stores analytics cookies only after consent; denied visits may send cookieless consent signals.",
+        "cookie_consent_title": "Cookies",
+        "cookie_consent_text": "We use necessary cookies for sessions, CSRF protection and captcha. If enabled, Google receives a consent-aware, cookieless signal when analytics is declined; analytics cookies start only after consent.",
+        "cookie_consent_accept": "Allow analytics",
+        "cookie_consent_necessary": "Necessary only"
     },
     "profile_links": {
         "title": "Website and social profiles",
@@ -372,7 +381,12 @@
         "title": "My account",
         "save_profile": "Save profile",
         "profile_settings": "Profile",
+        "email_notifications": "Send me email notifications",
+        "email_notifications_email_required": "Add an email address to enable this.",
+        "email_optional": "Optional. It must be unique when provided.",
+        "email_missing_notice": "Your account has no email address. Add one so you can recover your password if needed.",
         "public_profile": "Public profile",
+        "email_missing_title": "Add an email address to protect password recovery",
         "security_settings": "Security",
         "security_meta": "Manage your account password and security settings.",
         "recovery_hash_title": "Recovery hash",
@@ -446,6 +460,8 @@
             "comment_forbidden": "You are not allowed to delete this comment.",
             "username_invalid": "Use 3-32 lowercase Latin characters, numbers, or underscores. Start with a letter.",
             "username_taken": "This username is already taken.",
+            "email_invalid": "The email address is not valid.",
+            "email_taken": "This email address is already in use.",
             "password_short": "Password must have at least 8 characters.",
             "password_too_long": "Password is too long.",
             "password_mismatch": "Passwords do not match.",
@@ -554,12 +570,15 @@
     },
     "settings": {
         "meta_title": "Settings",
+        "email_templates_title": "Email templates",
         "title": "Settings",
         "enabled": "Enabled",
         "sections": {
             "localization": "Localization",
             "security": "Security",
-            "site": "Site"
+            "site": "Site",
+            "email": "Email",
+            "analytics": "Analytics"
         },
         "fields": {
             "locale": "Default language",
@@ -574,7 +593,19 @@
             "site_name": "Site name",
             "site_logo": "Site logo",
             "site_favicon": "Favicon",
-            "site_footer": "Site footer"
+            "site_footer": "Site footer",
+            "smtp_host": "SMTP host",
+            "smtp_port": "SMTP port",
+            "smtp_username": "SMTP username",
+            "smtp_password": "SMTP password",
+            "smtp_encryption": "SMTP encryption",
+            "email_from": "Sender email",
+            "email_from_name": "Sender name",
+            "welcome_message": "Welcome message after registration"
+            ,"email_template_subject": "Subject"
+            ,"email_template_body": "Body"
+            ,"google_measurement_id": "Google Analytics Measurement ID"
+            ,"google_measurement_id_help": "Optional, for example G-XXXXXXXXXX."
         },
         "messages": {
             "saved": "Settings were saved.",
@@ -623,7 +654,7 @@
             "orphan_links": "Remove unused links",
             "orphan_links_help": "Deletes links that are not connected to any post.",
             "old_action_limits": "Remove old action limits",
-            "old_action_limits_help": "Deletes account action-limit buckets older than 30 days.",
+            "old_action_limits_help": "Deletes IP action-limit buckets older than 30 days.",
             "old_read_notifications": "Remove old read notifications",
             "old_read_notifications_help": "Deletes read notifications older than 30 days."
         },
@@ -635,6 +666,8 @@
         }
     },
     "admin": {
+        "recent_comments": "Recent comments",
+        "no_recent_comments": "No comments yet.",
         "title": "Admin",
         "dashboard_title": "TinyCat CMS",
         "dashboard_intro": "The TinyCat foundation is ready for configuration and users.",
@@ -652,6 +685,14 @@
             "reports": "Reports"
         },
         "table_missing": "The table has not been created yet."
+    },
+    "updates": {
+        "title": "Database updates",
+        "intro": "Run pending database migrations before or after deploying a new version. The operation is safe to repeat.",
+        "run": "Run updates",
+        "cli_hint": "CLI alternative: php update.php",
+        "completed": "Database updates completed.",
+        "failed": "Database update failed: {message}"
     },
     "install": {
         "language_label": "English",
@@ -671,7 +712,7 @@
         "db_charset": "Charset",
         "db_test": "Test and continue",
         "tables_title": "Create tables",
-        "tables_intro": "TinyCat will create core tables: users, content, terms, content_tags, links, content_links, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, user_action_limits, and settings.",
+        "tables_intro": "TinyCat will create core tables for accounts, content, notifications, moderation, rate limits, email templates, password recovery, and settings.",
         "create_tables": "Create tables",
         "table_name": "Table",
         "table_purpose": "Purpose",
@@ -691,7 +732,6 @@
         "purpose_user_followers": "Profile follows between users.",
         "purpose_notifications": "Alerts for likes, comments, and mentions.",
         "purpose_content_reports": "User reports for moderation.",
-        "purpose_user_action_limits": "Account-based action limits without IP tracking.",
         "purpose_bot_sources": "RSS and Atom publishing rules for bot accounts.",
         "purpose_bot_feed_items": "Imported feed GUIDs used to prevent duplicate bot posts.",
         "purpose_bot_feed_history": "Bounded recent import history preventing duplicates after a source is added again.",

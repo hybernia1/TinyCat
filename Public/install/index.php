@@ -333,6 +333,8 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS users (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,
             username VARCHAR(32) NOT NULL,
+            email VARCHAR(254) NULL,
+            email_notifications TINYINT(1) NOT NULL DEFAULT 1,
             password VARCHAR(255) NULL,
             recovery_hash VARCHAR(128) NOT NULL,
             role VARCHAR(40) NOT NULL DEFAULT 'user',
@@ -350,6 +352,7 @@ function tc_install_create_tables(): void
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             UNIQUE KEY users_username_unique (username),
+            UNIQUE KEY users_email_unique (email),
             UNIQUE KEY users_recovery_hash_unique (recovery_hash),
             KEY users_role_status_index (role, status)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
@@ -509,18 +512,6 @@ function tc_install_create_tables(): void
     );
 
     run(
-        "CREATE TABLE IF NOT EXISTS user_action_limits (
-            user_id INT UNSIGNED NOT NULL,
-            action_name VARCHAR(40) NOT NULL,
-            bucket_start DATETIME NOT NULL,
-            action_count INT UNSIGNED NOT NULL DEFAULT 0,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (user_id, action_name, bucket_start),
-            KEY user_action_limits_bucket_index (bucket_start)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    run(
         "CREATE TABLE IF NOT EXISTS settings (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             setting_key VARCHAR(120) NOT NULL,
@@ -534,6 +525,47 @@ function tc_install_create_tables(): void
             UNIQUE KEY settings_key_unique (setting_key),
             KEY settings_group_index (setting_group),
             KEY settings_autoload_index (autoload)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS email_templates (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            template_key VARCHAR(80) NOT NULL,
+            subject VARCHAR(255) NOT NULL,
+            body TEXT NOT NULL,
+            enabled TINYINT(1) NOT NULL DEFAULT 1,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY email_templates_key_unique (template_key)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            user_id INT UNSIGNED NOT NULL,
+            token_hash CHAR(64) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used_at DATETIME NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY password_reset_tokens_hash_unique (token_hash),
+            KEY password_reset_tokens_user_index (user_id, expires_at),
+            KEY password_reset_tokens_expiry_index (expires_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
+        "CREATE TABLE IF NOT EXISTS ip_action_limits (
+            ip_address VARCHAR(45) NOT NULL,
+            action_name VARCHAR(40) NOT NULL,
+            bucket_start DATETIME NOT NULL,
+            action_count INT UNSIGNED NOT NULL DEFAULT 0,
+            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (ip_address, action_name, bucket_start),
+            KEY ip_action_limits_bucket_index (bucket_start)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -562,10 +594,35 @@ function tc_install_default_settings(array $state): void
         ['auth.registration.enabled', (bool) config('auth.registration.enabled', false), 'bool', 'security'],
         ['auth.registration.auto_approve', (bool) config('auth.registration.auto_approve', false), 'bool', 'security'],
         ['moderation.blocked_urls', (string) config('moderation.blocked_urls', ''), 'string', 'moderation'],
+        ['email.smtp.host', '', 'string', 'email'],
+        ['email.smtp.port', 587, 'int', 'email'],
+        ['email.smtp.username', '', 'string', 'email'],
+        ['email.smtp.password', '', 'string', 'email'],
+        ['email.smtp.encryption', 'tls', 'string', 'email'],
+        ['email.from_address', '', 'string', 'email'],
+        ['email.from_name', 'TinyCat', 'string', 'email'],
+        ['email.welcome_message', 'Vítej na {{site}}! Tvůj účet {{username}} byl právě vytvořen.', 'string', 'email'],
+        ['analytics.google_measurement_id', '', 'string', 'analytics'],
     ];
 
     foreach ($defaults as [$key, $value, $type, $group]) {
         setting_set((string) $key, $value, (string) $type, (string) $group);
+    }
+
+    $templates = [
+        ['welcome', 'Vítej na {{site}}', '{{welcome_message}}'],
+        ['password_reset', 'Obnova hesla na {{site}}', "Ahoj {{username}},\n\npro obnovení hesla použij tento odkaz:\n{{reset_url}}\n\nOdkaz platí 60 minut."],
+        ['notification_content_like', '{{actor}} reagoval/a na tvůj příspěvek', '{{actor}} označil/a tvůj příspěvek jako To se mi líbí.\n{{content_url}}'],
+        ['notification_content_comment', '{{actor}} komentoval/a tvůj příspěvek', '{{actor}} okomentoval/a tvůj příspěvek.\n{{content_url}}'],
+        ['notification_comment_like', '{{actor}} reagoval/a na tvůj komentář', '{{actor}} označil/a tvůj komentář jako To se mi líbí.'],
+        ['notification_follow', '{{actor}} tě začal/a sledovat', '{{actor}} tě začal/a sledovat.\n{{author_url}}'],
+        ['notification_content_mention', '{{actor}} tě zmínil/a', '{{actor}} tě zmínil/a v příspěvku.\n{{content_url}}'],
+        ['notification_comment_mention', '{{actor}} tě zmínil/a', '{{actor}} tě zmínil/a v komentáři.\n{{content_url}}'],
+        ['notification_report_resolved', 'Nahlášení bylo vyřešeno', 'Tvé nahlášení na {{content_url}} bylo vyřešeno.'],
+        ['notification_report_dismissed', 'Nahlášení bylo zamítnuto', 'Tvé nahlášení na {{content_url}} bylo zamítnuto.'],
+    ];
+    foreach ($templates as [$key, $subject, $body]) {
+        run('INSERT IGNORE INTO email_templates (template_key, subject, body, enabled) VALUES (?, ?, ?, 1)', [$key, $subject, $body]);
     }
 }
 
@@ -650,7 +707,6 @@ function tc_install_schema_tables(): array
         'user_followers' => 'install.purpose_user_followers',
         'notifications' => 'install.purpose_notifications',
         'content_reports' => 'install.purpose_content_reports',
-        'user_action_limits' => 'install.purpose_user_action_limits',
         'bot_sources' => 'install.purpose_bot_sources',
         'bot_feed_items' => 'install.purpose_bot_feed_items',
         'bot_feed_history' => 'install.purpose_bot_feed_history',
@@ -957,7 +1013,7 @@ function tc_install_done_view(): void
             <p class="text-muted mb-0"><?= et('install.done_intro') ?></p>
             <ul class="result-list">
                 <li class="result-item"><?= icon('globe') ?> <span><?= et('common.language') ?>: <strong><?= e(locale()) ?></strong></span></li>
-                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, links, content_links, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, user_action_limits, settings</strong></span></li>
+                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, links, content_links, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, ip_action_limits, email_templates, password_reset_tokens, settings</strong></span></li>
                 <li class="result-item"><?= icon('shield') ?> <span><?= et('common.account') ?>: <strong><?= et('common.done') ?></strong></span></li>
             </ul>
             <div class="btn-group">

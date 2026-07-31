@@ -24,7 +24,7 @@ if (is_post()) {
     }
 
     if (auth_attempt([
-        'username' => username_normalize((string) post('username', '')),
+        'username' => trim((string) post('username', '')),
         'password' => $password,
         'remember' => post('remember', ''),
     ])) {
@@ -74,7 +74,7 @@ layout('layout', [
                     <?= csrf_field() ?>
                     <input type="hidden" name="next" value="<?= e($next) ?>">
                     <label class="field">
-                        <span class="label"><?= et('common.username') ?></span>
+                        <span class="label"><?= et('auth.login_identifier') ?></span>
                         <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
                     </label>
                     <label class="field">

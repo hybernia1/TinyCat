@@ -31,6 +31,7 @@
         "account": "Účet",
         "done": "Hotovo",
         "username": "Uživatelské jméno",
+        "email": "Email",
         "password": "Heslo",
         "new_password": "Nové heslo",
         "current_password": "Aktuální heslo",
@@ -289,6 +290,7 @@
     "auth": {
         "login_title": "Přihlášení",
         "login_intro": "Přihlas se ke svému účtu.",
+        "login_identifier": "Uživatelské jméno nebo email",
         "register_title": "Registrace",
         "register_intro": "Vytvoř si nový účet a přidej se do feedu.",
         "register_link": "Vytvořit účet",
@@ -297,6 +299,7 @@
         "registration_disabled": "Registrace je momentálně vypnutá.",
         "registration_done": "Účet byl vytvořen.",
         "registration_waiting": "Účet byl vytvořen a čeká na schválení.",
+        "email_optional": "Volitelné. Pokud ho uvedeš, musí být unikátní.",
         "platform_terms_agree": "Souhlasím s pravidly veřejné platformy a beru na vědomí, že obsah je veřejný.",
         "platform_terms_required": "Pro registraci je potřeba souhlasit s pravidly veřejné platformy.",
         "logout_title": "Odhlášení",
@@ -304,11 +307,12 @@
         "logout_confirm": "Opravdu se chceš odhlásit?",
         "remember_me": "Zapamatovat přihlášení",
         "recovery_title": "Obnova hesla",
-        "recovery_intro": "Zadej neveřejný recovery hash a nové heslo. Hash účet nepřihlásí, slouží jen ke změně hesla.",
+        "recovery_intro": "Zadej svůj email a pošleme ti odkaz pro obnovu hesla.",
         "recovery_link": "Obnovit heslo",
         "recovery_submit": "Změnit heslo",
-        "recovery_invalid": "Recovery hash není platný.",
-        "recovery_done": "Heslo bylo změněno. Recovery hash byl přegenerován, přihlas se novým heslem.",
+        "recovery_invalid": "Odkaz pro obnovu hesla není platný nebo už vypršel.",
+        "recovery_done": "Heslo bylo změněno.",
+        "recovery_sent": "Pokud je email vedený u aktivního účtu, poslali jsme na něj odkaz pro obnovu hesla.",
         "invalid_login": "Neplatné přihlášení.",
         "invalid_captcha": "Bezpečnostní ověření se nepovedlo.",
         "login_required": "Pro tuto akci se přihlas.",
@@ -317,7 +321,7 @@
     },
     "privacy": {
         "title": "Soukromí a pravidla",
-        "meta": "Jak TinyCat pracuje s účty, veřejným obsahem, recovery hashem, nahlášením obsahu, limity a moderací.",
+        "meta": "Jak TinyCat pracuje s účty, veřejným obsahem, obnovou hesla emailem, nahlášením obsahu, limity a moderací.",
         "intro": "TinyCat je otevřená a svobodná veřejná sociální platforma postavená tak, aby nevyžadovala reálnou identitu. Tento přehled vysvětluje, co je veřejné, co aplikace ukládá, jak funguje obnova hesla a jak se řeší nahlášení obsahu.",
         "public_title": "Veřejná platforma",
         "public_open": "TinyCat je určený pro svobodné veřejné publikování. Příspěvky, komentáře, profily, lajky, sledování a štítky jsou veřejnou součástí platformy.",
@@ -325,15 +329,16 @@
         "public_no_private": "Platforma nemá soukromé zprávy, neveřejné profily ani režim osobního úložiště. TinyCat proto neslouží pro publikování soukromých nebo citlivých věcí.",
         "public_no_personal": "Nezveřejňuj osobní údaje, intimní obsah, neveřejné dokumenty ani informace, u kterých nechceš, aby byly veřejně dostupné.",
         "data_title": "Data a účet",
-        "data_account": "Registrace nevyžaduje kontaktní údaj ani reálné jméno. Primárním identifikátorem je uživatelské jméno.",
+        "data_account": "Registrace nevyžaduje kontaktní údaj ani reálné jméno. Email je dobrovolný, pokud ho uvedeš, musí být unikátní. Primárním identifikátorem je uživatelské jméno.",
+        "data_email": "Uvedený email lze použít také k přihlášení, obnově hesla a k příjmu volitelných emailových notifikací. Notifikace si uživatel může vypnout ve svém profilu a administrátor určuje, které typy jsou dostupné.",
         "data_content": "Aplikace ukládá obsah, který uživatel sám vytvoří: příspěvky, komentáře, lajky, sledování profilů, nahlášení a volitelné profilové údaje.",
-        "data_technical": "Heslo se ukládá pouze jako hash. Recovery hash je neveřejný bezpečnostní údaj a uživatel si ho musí uložit mimo platformu.",
-        "data_server_logs": "TinyCat v aplikační databázi nepoužívá IP tracking ani analytické profily. Provozovatel serveru ale může mít technické serverové logy mimo aplikaci.",
+        "data_technical": "Hesla se ukládají pouze jako hashe. Odkazy pro obnovu hesla jsou krátkodobé a jednorázové.",
+        "data_server_logs": "TinyCat ukládá IP adresu pro omezení vybraných akcí přihlášených uživatelů, například příspěvků, komentářů, lajků, nahlášení a hledání. Provozovatel serveru může mít také technické serverové logy mimo aplikaci.",
         "recovery_title": "Obnova hesla",
-        "recovery_hash": "Jediný mechanismus obnovy hesla je stránka /recovery a neveřejný recovery hash.",
-        "recovery_no_contact": "Platforma nepoužívá kontaktní údaj pro obnovu hesla.",
-        "recovery_lost": "Pokud uživatel ztratí heslo i recovery hash, aplikace nemá bezpečný způsob, jak účet obnovit.",
-        "recovery_rotation": "Po úspěšné obnově hesla se recovery hash přegeneruje, aby starý hash nešel použít znovu.",
+        "recovery_hash": "Obnova hesla používá stránku /recovery a odkaz zaslaný na email účtu.",
+        "recovery_no_contact": "Email je při registraci dobrovolný, ale bez něj nejde použít obnovu hesla emailem.",
+        "recovery_lost": "Pokud účet nemá email, obnova hesla emailem není dostupná.",
+        "recovery_rotation": "Odkaz pro obnovu vyprší po 60 minutách a lze ho použít jen jednou.",
         "reporting_title": "Nahlášení obsahu",
         "reporting_how": "Příspěvek lze nahlásit přes ikonu nahlášení u příspěvku. Uživatel vybere důvod a může přidat poznámku.",
         "reporting_duplicate": "Stejný uživatel nemůže donekonečna otevírat stejné nahlášení. Pokud už byl příspěvek zkontrolovaný jako v pořádku, další stejné nahlášení ho znovu neotevře.",
@@ -344,7 +349,7 @@
         "moderation_actions": "Moderátor může příspěvek ponechat a zamknout proti editaci, skrýt, nebo odstranit.",
         "moderation_mute": "Pokud je příspěvek uznán jako závadný, autor může dostat dočasné umlčení, typicky na 24 hodin.",
         "limits_title": "Limity akcí",
-        "limits_intro": "Limity chrání platformu před spamem a těžkým automatizovaným používáním. U přihlášených se počítají podle účtu, bez IP trackingu. Anonymní hledání používá jen technickou session a captchu.",
+        "limits_intro": "Limity chrání platformu před spamem a těžkým automatizovaným používáním. Limity akcí pro přihlášené se počítají podle IP adresy, aby je nešlo obcházet zakládáním dalších účtů.",
         "reputation": "Reputace",
         "reputation_new": "Nový účet",
         "reputation_normal": "Běžný účet",
@@ -359,7 +364,11 @@
         "cookies_title": "Cookies",
         "cookies_session": "Aplikace používá technické cookies pro session, CSRF ochranu a bezpečnostní captcha.",
         "cookies_remember": "Volitelné zapamatování přihlášení používá technickou cookie jen tehdy, když si ho uživatel sám zapne.",
-        "cookies_no_ads": "TinyCat core nepoužívá reklamní cookies ani analytické sledování."
+        "cookies_no_ads": "TinyCat core nepoužívá reklamní cookies. Volitelné Google Analytics ukládá analytické cookies až po souhlasu; při odmítnutí mohou odejít signály bez cookies.",
+        "cookie_consent_title": "Cookies",
+        "cookie_consent_text": "Používáme nezbytné cookies pro session, CSRF ochranu a captchu. Pokud je Analytics zapnuté, Google při odmítnutí obdrží pouze consent-aware signál bez cookies; analytické cookies se spustí až po souhlasu.",
+        "cookie_consent_accept": "Povolit analytiku",
+        "cookie_consent_necessary": "Jen nezbytné"
     },
     "profile_links": {
         "title": "Web a sociální profily",
@@ -372,7 +381,12 @@
         "title": "Můj účet",
         "save_profile": "Uložit profil",
         "profile_settings": "Profil",
+        "email_notifications": "Posílat mi emailové notifikace",
+        "email_notifications_email_required": "Pro zapnutí nejdřív přidej email.",
+        "email_optional": "Volitelné. Pokud ho vyplníš, musí být unikátní.",
+        "email_missing_notice": "Účet nemá vyplněný email. Přidej ho, abys mohl(a) v případě potřeby obnovit heslo.",
         "public_profile": "Veřejný profil",
+        "email_missing_title": "Přidej email pro možnost obnovy hesla",
         "security_settings": "Bezpečnost",
         "security_meta": "Správa hesla a bezpečnostního nastavení účtu.",
         "recovery_hash_title": "Recovery hash",
@@ -446,6 +460,8 @@
             "comment_forbidden": "Na smazání tohoto komentáře nemáš oprávnění.",
             "username_invalid": "Použij 3-32 malých znaků latinky, čísla nebo podtržítko. První znak musí být písmeno.",
             "username_taken": "Toto uživatelské jméno už existuje.",
+            "email_invalid": "Emailová adresa není platná.",
+            "email_taken": "Tato emailová adresa už existuje.",
             "password_short": "Heslo musí mít alespoň 8 znaků.",
             "password_too_long": "Heslo je příliš dlouhé.",
             "password_mismatch": "Hesla se neshodují.",
@@ -554,12 +570,15 @@
     },
     "settings": {
         "meta_title": "Nastavení",
+        "email_templates_title": "Emailové šablony",
         "title": "Nastavení",
         "enabled": "Zapnuto",
         "sections": {
             "localization": "Lokalizace",
             "security": "Bezpečnost",
-            "site": "Web"
+            "site": "Web",
+            "email": "Email",
+            "analytics": "Analytika"
         },
         "fields": {
             "locale": "Výchozí jazyk",
@@ -574,7 +593,19 @@
             "site_name": "Název webu",
             "site_logo": "Logo webu",
             "site_favicon": "Favicon",
-            "site_footer": "Footer webu"
+            "site_footer": "Footer webu",
+            "smtp_host": "SMTP host",
+            "smtp_port": "SMTP port",
+            "smtp_username": "SMTP uživatel",
+            "smtp_password": "SMTP heslo",
+            "smtp_encryption": "SMTP šifrování",
+            "email_from": "Odesílací email",
+            "email_from_name": "Jméno odesílatele",
+            "welcome_message": "Uvítací zpráva po registraci"
+            ,"email_template_subject": "Předmět"
+            ,"email_template_body": "Tělo emailu"
+            ,"google_measurement_id": "Google Analytics Measurement ID"
+            ,"google_measurement_id_help": "Volitelné, například G-XXXXXXXXXX."
         },
         "messages": {
             "saved": "Nastavení bylo uloženo.",
@@ -623,7 +654,7 @@
             "orphan_links": "Odebrat nepoužité odkazy",
             "orphan_links_help": "Smaže odkazy, které nejsou napojené na žádný příspěvek.",
             "old_action_limits": "Odebrat staré akční limity",
-            "old_action_limits_help": "Smaže bucket limity účtů starší než 30 dní.",
+            "old_action_limits_help": "Smaže IP bucket limity starší než 30 dní.",
             "old_read_notifications": "Odebrat staré přečtené notifikace",
             "old_read_notifications_help": "Smaže přečtené notifikace starší než 30 dní."
         },
@@ -635,6 +666,8 @@
         }
     },
     "admin": {
+        "recent_comments": "Poslední komentáře",
+        "no_recent_comments": "Zatím nejsou žádné komentáře.",
         "title": "Admin",
         "dashboard_title": "TinyCat CMS",
         "dashboard_intro": "Základ TinyCat je připravený pro konfiguraci a uživatele.",
@@ -652,6 +685,14 @@
             "reports": "Nahlášení"
         },
         "table_missing": "Tabulka zatím není vytvořená."
+    },
+    "updates": {
+        "title": "Aktualizace databáze",
+        "intro": "Spusť čekající databázové migrace před nasazením nebo po něm. Operaci lze bezpečně opakovat.",
+        "run": "Spustit aktualizace",
+        "cli_hint": "Alternativa přes CLI: php update.php",
+        "completed": "Aktualizace databáze dokončena.",
+        "failed": "Aktualizace databáze selhala: {message}"
     },
     "install": {
         "language_label": "Čeština",
@@ -671,7 +712,7 @@
         "db_charset": "Charset",
         "db_test": "Otestovat a pokračovat",
         "tables_title": "Vytvoření tabulek",
-        "tables_intro": "TinyCat vytvoří základní tabulky: users, content, terms, content_tags, links, content_links, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, user_action_limits a settings.",
+        "tables_intro": "TinyCat vytvoří základní tabulky pro účty, obsah, notifikace, moderaci, rate limity, emailové šablony, obnovu hesla a nastavení.",
         "create_tables": "Vytvořit tabulky",
         "table_name": "Tabulka",
         "table_purpose": "Účel",
@@ -691,7 +732,6 @@
         "purpose_user_followers": "Sledování profilů uživateli.",
         "purpose_notifications": "Upozornění na lajky, komentáře a označení.",
         "purpose_content_reports": "Uživatelská nahlášení pro moderaci.",
-        "purpose_user_action_limits": "Limity akcí podle účtu bez IP trackingu.",
         "purpose_bot_sources": "Pravidla publikování RSS a Atom zdrojů pro bot účty.",
         "purpose_bot_feed_items": "Importovaná GUID feedů zabraňující duplicitním příspěvkům botů.",
         "purpose_bot_feed_history": "Omezená historie posledních importů bránící duplicitám po opětovném přidání zdroje.",
