@@ -39,9 +39,20 @@ ob_start();
         </select>
     </label>
     <label class="field profile-modal-span">
+        <span class="label"><?= et('common.email') ?></span>
+        <input class="input" type="email" name="email" value="<?= e((string) ($user['email'] ?? '')) ?>" maxlength="254" autocomplete="email"<?= $autofocus('email') ?>>
+        <span class="help"><?= et('account.email_optional') ?></span>
+    </label>
+    <label class="field profile-modal-span">
         <span class="label"><?= et('account.bio') ?></span>
         <textarea class="textarea" name="bio" rows="6" maxlength="500"<?= $autofocus('bio') ?>><?= e($bio) ?></textarea>
     </label>
+    <?php if (email_notification_templates_enabled()): ?>
+        <label class="check-line profile-modal-span">
+            <input type="checkbox" name="email_notifications" value="1"<?= (bool) ($user['email_notifications'] ?? true) ? ' checked' : '' ?><?= user_email_valid((string) ($user['email'] ?? '')) ? '' : ' disabled' ?>>
+            <span><?= et('account.email_notifications') ?><?php if (!user_email_valid((string) ($user['email'] ?? ''))): ?> <small class="text-muted"><?= et('account.email_notifications_email_required') ?></small><?php endif; ?></span>
+        </label>
+    <?php endif; ?>
     <section class="profile-modal-span stack">
         <div>
             <span class="label"><?= et('profile_links.title') ?></span>

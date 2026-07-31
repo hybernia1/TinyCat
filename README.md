@@ -45,6 +45,16 @@ The project favors:
 
 The installer creates `config.php` after the database and administrator account are configured. The generated configuration, runtime data, uploaded files, and local overrides are ignored by Git.
 
+## Updates
+
+Before deploying a new version, back up the database and run the versioned migrations from the project root:
+
+```bash
+php update.php
+```
+
+You can also run pending migrations while logged in as an administrator on `/admin/updates`. Both entry points use the same updater, are safe to repeat, and record applied migrations in `schema_migrations`. Normal web requests do not alter the database schema.
+
 ## RSS bots
 
 Create a user with the `Bot` role, then configure one or more sources under **Admin → Bots**. Each source has its own publishing interval and post template. The administration provides a protected `cron.php` URL and Bearer token for the server scheduler or an external web-cron service. Call it once per minute using `POST` with the token in the `Authorization` header.

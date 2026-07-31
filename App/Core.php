@@ -701,18 +701,20 @@ final class Core
             return;
         }
 
+        $analyticsId = trim((string) self::config('analytics.google_measurement_id', ''));
+        $analyticsEnabled = preg_match('/^G-[A-Z0-9]+$/i', $analyticsId) === 1;
         $csp = [
             "default-src 'self'",
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'self'",
             "object-src 'none'",
-            "script-src 'self'",
+            "script-src 'self'" . ($analyticsEnabled ? " https://www.googletagmanager.com 'unsafe-inline'" : ''),
             "script-src-attr 'none'",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: https:",
             "font-src 'self' data:",
-            "connect-src 'self'",
+            "connect-src 'self'" . ($analyticsEnabled ? ' https://www.google-analytics.com https://region1.google-analytics.com' : ''),
             "frame-src https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.youtube.com https://youtube.com https://player.vimeo.com https://www.dailymotion.com https://dailymotion.com",
             "media-src 'self'",
             "worker-src 'self'",
@@ -1303,7 +1305,7 @@ final class Core
             return false;
         }
 
-        $user = self::findUserByUsername(trim($username));
+        $user = self::findUserByLoginIdentifier(trim($username));
 
         if ($user === null || !self::userIsActive($user)) {
             return false;
@@ -1923,6 +1925,25 @@ final class Core
         }
     }
 
+    private static function findUserByLoginIdentifier(string $identifier): ?array
+    {
+        $identifier = strtolower(trim($identifier));
+
+        if (filter_var($identifier, FILTER_VALIDATE_EMAIL) !== false) {
+            try {
+                $user = self::find('users', ['email' => $identifier]);
+
+                if ($user !== null) {
+                    return $user;
+                }
+            } catch (Throwable) {
+                // Older installations may not have the optional email column yet.
+            }
+        }
+
+        return self::findUserByUsername($identifier);
+    }
+
     private static function userIsActive(array $user): bool
     {
         if ((string) ($user['role'] ?? '') === 'bot') {
@@ -2443,6 +2464,15 @@ final class Core
             'auth.registration.enabled' => true,
             'auth.registration.auto_approve' => true,
             'moderation.blocked_urls' => true,
+            'email.smtp.host' => true,
+            'email.smtp.port' => true,
+            'email.smtp.username' => true,
+            'email.smtp.password' => true,
+            'email.smtp.encryption' => true,
+            'email.from_address' => true,
+            'email.from_name' => true,
+            'email.welcome_message' => true,
+            'analytics.google_measurement_id' => true,
         ];
 
         return isset($keys[$key]);

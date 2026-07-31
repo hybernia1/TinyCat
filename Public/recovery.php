@@ -15,7 +15,11 @@ if (is_post()) {
         redirect('/recovery');
     }
 
-    tc_recovery_update_password();
+    if ((string) post('action', '') === 'reset') {
+        tc_recovery_update_password();
+    } else {
+        tc_recovery_send_link();
+    }
 }
 
 layout('layout', [
@@ -37,20 +41,27 @@ layout('layout', [
             </div>
             <div class="card-body stack">
                 <p class="text-muted mb-0"><?= et('auth.recovery_intro') ?></p>
-                <form class="stack" method="post" action="/recovery">
+                <?php $token = trim((string) get('token', '')); ?>
+                <form class="stack" method="post" action="/recovery<?= $token !== '' ? '?token=' . e(rawurlencode($token)) : '' ?>">
                     <?= csrf_field() ?>
+                    <?php if ($token !== ''): ?>
+                        <input type="hidden" name="action" value="reset">
+                        <input type="hidden" name="token" value="<?= e($token) ?>">
+                    <?php endif; ?>
                     <label class="field">
-                        <span class="label"><?= et('account.recovery_hash') ?></span>
-                        <input class="input" name="recovery_hash" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+                        <span class="label"><?= et($token !== '' ? 'common.new_password' : 'common.email') ?></span>
+                        <?php if ($token !== ''): ?>
+                            <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
+                        <?php else: ?>
+                            <input class="input" type="email" name="email" autocomplete="email" required>
+                        <?php endif; ?>
                     </label>
-                    <label class="field">
-                        <span class="label"><?= et('common.new_password') ?></span>
-                        <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
-                    </label>
-                    <label class="field">
-                        <span class="label"><?= et('common.password_confirm') ?></span>
-                        <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
-                    </label>
+                    <?php if ($token !== ''): ?>
+                        <label class="field">
+                            <span class="label"><?= et('common.password_confirm') ?></span>
+                            <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
+                        </label>
+                    <?php endif; ?>
                     <?= captcha_field('recovery') ?>
                     <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('auth.recovery_submit') ?></span></button>
                 </form>
@@ -66,10 +77,10 @@ layout('layout', [
 
 function tc_recovery_update_password(): void
 {
-    $hash = (string) post('recovery_hash', '');
+    $token = trim((string) post('token', ''));
     $password = (string) post('password', '');
     $passwordConfirm = (string) post('password_confirm', '');
-    $user = user_find_by_recovery_hash($hash);
+    $user = one('SELECT u.* FROM password_reset_tokens t INNER JOIN users u ON u.id = t.user_id WHERE t.token_hash = ? AND t.used_at IS NULL AND t.expires_at > ? AND u.status = ? LIMIT 1', [hash('sha256', $token), date_db(), 'active']);
     $errors = [];
 
     if ($user === null) {
@@ -95,9 +106,32 @@ function tc_recovery_update_password(): void
     update('users', [
         'password' => auth_password($password),
     ], ['id' => $id]);
-    user_recovery_hash_rotate($id);
+    run('UPDATE password_reset_tokens SET used_at = ? WHERE token_hash = ?', [date_db(), hash('sha256', $token)]);
     captcha_refresh('recovery');
 
     flash('success', t('auth.recovery_done'));
     redirect('/login');
+}
+
+function tc_recovery_send_link(): void
+{
+    $email = user_email_normalize((string) post('email', ''));
+    if (user_email_valid($email)) {
+        $user = one('SELECT id, username FROM users WHERE email = ? AND status = ? LIMIT 1', [$email, 'active']);
+        if ($user !== null) {
+            delete('password_reset_tokens', ['user_id' => (int) $user['id']]);
+            $token = bin2hex(random_bytes(32));
+            insert('password_reset_tokens', [
+                'user_id' => (int) $user['id'],
+                'token_hash' => hash('sha256', $token),
+                'expires_at' => date_db('+60 minutes'),
+            ]);
+            email_template_send('password_reset', (int) $user['id'], [
+                'reset_url' => absolute_url('/recovery?token=' . rawurlencode($token)),
+            ]);
+        }
+    }
+    captcha_refresh('recovery');
+    flash('success', t('auth.recovery_sent'));
+    redirect('/recovery');
 }

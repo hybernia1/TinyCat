@@ -42,6 +42,16 @@
     callback();
   }
 
+  ready(function () {
+    qsa("[data-cookie-consent-choice]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var choice = button.getAttribute("data-cookie-consent-choice") === "granted" ? "granted" : "denied";
+        document.cookie = "tinycat_analytics_consent=" + choice + "; Max-Age=" + (180 * 86400) + "; Path=/; SameSite=Lax" + (window.location.protocol === "https:" ? "; Secure" : "");
+        window.location.reload();
+      });
+    });
+  });
+
   function emit(element, name, detail) {
     element.dispatchEvent(new CustomEvent(name, {
       bubbles: true,

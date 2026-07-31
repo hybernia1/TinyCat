@@ -43,7 +43,9 @@ $defaultAdminNav = [
     ['href' => '/admin/bots', 'icon' => 'link', 'label' => t('bots.title')],
     ['href' => '/admin/moderation', 'icon' => 'shield', 'label' => t('moderation.title')],
     ['href' => '/admin/maintenance', 'icon' => 'database', 'label' => t('maintenance.title')],
+    ['href' => '/admin/updates', 'icon' => 'refresh', 'label' => t('updates.title')],
     ['href' => '/admin/settings', 'icon' => 'settings', 'label' => t('settings.title')],
+    ['href' => '/admin/email-templates', 'icon' => 'mail', 'label' => t('settings.email_templates_title')],
 ];
 $authUser = auth();
 $isAdminShell = $authUser !== null && (bool) ($adminShell ?? str_starts_with($current, '/admin'));
@@ -118,6 +120,23 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php foreach ((array) $scripts as $script): ?>
         <script src="<?= e(asset((string) $script)) ?>" defer></script>
     <?php endforeach; ?>
+    <?php $googleMeasurementId = trim((string) config('analytics.google_measurement_id', '')); ?>
+    <?php $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? ''); ?>
+    <?php if (preg_match('/^G-[A-Z0-9]+$/i', $googleMeasurementId) === 1): ?>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=<?= e($googleMeasurementId) ?>"></script>
+        <script>
+            window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+            gtag('consent','default',{
+                analytics_storage:'<?= $analyticsConsent === 'granted' ? 'granted' : 'denied' ?>',
+                ad_storage:'denied',
+                ad_user_data:'denied',
+                ad_personalization:'denied',
+                wait_for_update:500
+            });
+            gtag('js',new Date());
+            gtag('config','<?= e($googleMeasurementId) ?>');
+        </script>
+    <?php endif; ?>
     <?= part('layout/flashes', ['items' => $flashToasts]) ?>
 </head>
 <body<?= $bodyClasses !== '' ? ' class="' . e($bodyClasses) . '"' : '' ?>>
@@ -231,6 +250,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                     <?php endforeach; ?>
                     <?php if ($authUser !== null): ?>
                         <?php $profileUrl = author_url((int) ($authUser['id'] ?? 0)); ?>
+                        <?php $profileNeedsEmail = trim((string) ($authUser['email'] ?? '')) === ''; ?>
                         <?php if ((string) ($authUser['role'] ?? '') === 'admin'): ?>
                             <a class="nav-link nav-link-icon" href="/admin" aria-label="<?= et('common.admin') ?>" title="<?= et('common.admin') ?>">
                                 <?= icon('dashboard') ?>
@@ -259,8 +279,12 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                                 </a>
                             </div>
                         </div>
-                        <a class="nav-link nav-link-icon" href="<?= e($profileUrl) ?>"<?= $current === $profileUrl ? ' aria-current="page"' : '' ?> aria-label="<?= et('account.public_profile') ?>" title="<?= et('account.public_profile') ?>">
+                        <a class="nav-link nav-link-icon profile-nav-link" href="<?= e($profileUrl) ?>"<?= $current === $profileUrl ? ' aria-current="page"' : '' ?> aria-label="<?= e($profileNeedsEmail ? t('account.email_missing_title') : t('account.public_profile')) ?>" title="<?= e($profileNeedsEmail ? t('account.email_missing_title') : t('account.public_profile')) ?>">
                             <?= icon('user') ?>
+                            <?php if ($profileNeedsEmail): ?>
+                                <span class="notification-badge profile-email-warning" aria-hidden="true">!</span>
+                                <span class="sr-only"><?= et('account.email_missing_title') ?></span>
+                            <?php endif; ?>
                         </a>
                         <form action="/logout" method="post" class="inline-flex" data-confirm="<?= et('auth.logout_confirm') ?>" data-confirm-title="<?= et('auth.logout_title') ?>" data-confirm-ok="<?= et('common.logout') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
                             <?= csrf_field() ?>
@@ -288,7 +312,20 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
             </div>
         </main>
 
-        <?php if ($siteFooterHtml !== ''): ?>
+        <?php if (preg_match('/^G-[A-Z0-9]+$/i', $googleMeasurementId) === 1 && !in_array($analyticsConsent, ['granted', 'denied'], true)): ?>
+        <aside class="cookie-consent" data-cookie-consent role="dialog" aria-label="<?= et('privacy.cookie_consent_title') ?>">
+            <div class="cookie-consent-copy">
+                <strong><?= et('privacy.cookie_consent_title') ?></strong>
+                <span><?= et('privacy.cookie_consent_text') ?></span>
+            </div>
+            <div class="cookie-consent-actions">
+                <button class="btn btn-primary btn-sm" type="button" data-cookie-consent-choice="granted"><?= et('privacy.cookie_consent_accept') ?></button>
+                <button class="btn btn-secondary btn-sm" type="button" data-cookie-consent-choice="denied"><?= et('privacy.cookie_consent_necessary') ?></button>
+            </div>
+        </aside>
+    <?php endif; ?>
+
+    <?php if ($siteFooterHtml !== ''): ?>
             <footer class="site-footer">
                 <div class="container site-footer-inner">
                     <?= $siteFooterHtml ?>

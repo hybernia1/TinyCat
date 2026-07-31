@@ -10,6 +10,13 @@ $user = is_array($user ?? null) ? $user : [];
 ?>
 <section class="card status-composer">
     <div class="card-body">
+        <?php if (trim((string) ($user['email'] ?? '')) === ''): ?>
+            <div class="alert alert-info status-email-notice">
+                <?= icon('info') ?>
+                <span class="status-email-notice-copy"><?= et('account.email_missing_notice') ?></span>
+                <a class="btn btn-secondary btn-sm" href="/account"><?= icon('edit') ?> <span><?= et('account.profile_settings') ?></span></a>
+            </div>
+        <?php endif; ?>
         <form method="post" action="<?= e(status_api_url('create')) ?>" data-status-form data-status-scope="feed">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="create">

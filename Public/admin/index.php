@@ -27,6 +27,7 @@ layout('layout', [
         static fn (array $item): string => (string) $item['table'],
         $stats
     ));
+    $recentComments = tc_admin_dashboard_recent_comments();
     ?>
     <section class="grid sm:grid-2 md:grid-4">
         <?php foreach ($stats as $item): ?>
@@ -44,8 +45,48 @@ layout('layout', [
             </article>
         <?php endforeach; ?>
     </section>
+    <section class="card mt-6">
+        <div class="card-header split">
+            <h2 class="text-lg m-0 cluster gap-2"><?= icon('message-circle') ?> <?= et('admin.recent_comments') ?></h2>
+            <a class="btn btn-secondary btn-sm" href="/admin/moderation"><?= et('common.open') ?></a>
+        </div>
+        <div class="card-body stack">
+            <?php if ($recentComments === []): ?>
+                <p class="text-muted mb-0"><?= et('admin.no_recent_comments') ?></p>
+            <?php else: ?>
+                <div class="stack">
+                    <?php foreach ($recentComments as $comment): ?>
+                        <article class="card-body px-0 py-2 border-b">
+                            <div class="split gap-3">
+                                <strong><?= e('@' . (string) ($comment['username'] ?? '')) ?></strong>
+                                <time class="table-meta" datetime="<?= e(date_iso((string) ($comment['created_at'] ?? ''))) ?>"><?= e(datetime((string) ($comment['created_at'] ?? ''))) ?></time>
+                            </div>
+                            <p class="m-0 text-muted"><?= e(plain_text_limit((string) ($comment['body'] ?? ''), 220)) ?></p>
+                            <a class="table-meta" href="<?= e(status_url((int) ($comment['content_id'] ?? 0))) ?>"><?= e(plain_text_limit((string) ($comment['content_body'] ?? ''), 100)) ?></a>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
     <?php
 });
+
+function tc_admin_dashboard_recent_comments(int $limit = 8): array
+{
+    try {
+        return all(
+            'SELECT cc.id, cc.content_id, cc.body, cc.created_at, u.username, c.body AS content_body
+             FROM content_comments cc
+             INNER JOIN users u ON u.id = cc.user_id
+             INNER JOIN content c ON c.id = cc.content_id
+             ORDER BY cc.created_at DESC, cc.id DESC
+             LIMIT ' . max(1, min(30, $limit))
+        );
+    } catch (Throwable) {
+        return [];
+    }
+}
 
 function tc_admin_dashboard_counts(array $tables): array
 {
