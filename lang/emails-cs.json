@@ -1,0 +1,45 @@
+{
+  "signature": "S pozdravem,\n{{site}}",
+  "templates": {
+    "welcome": {
+      "subject": "Vítej na {{site}}",
+      "body": "Ahoj {{username}},\n\nvítej na {{site}}. Tvůj účet je připravený.\n\nPřihlásit se: {{login_url}}\n\n{{signature}}"
+    },
+    "password_reset": {
+      "subject": "Obnova hesla na {{site}}",
+      "body": "Ahoj {{username}},\n\nobdrželi jsme žádost o obnovu tvého hesla.\n\nObnovit heslo: {{reset_url}}\n\nOdkaz platí 60 minut. Pokud jsi o obnovu nežádal(a), můžeš tento email ignorovat.\n\n{{signature}}"
+    },
+    "notification_content_like": {
+      "subject": "{{actor}} označil(a) tvůj příspěvek jako To se mi líbí",
+      "body": "{{actor}} označil(a) tvůj příspěvek jako To se mi líbí.\n\nZobrazit příspěvek: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_content_comment": {
+      "subject": "{{actor}} komentoval(a) tvůj příspěvek",
+      "body": "{{actor}} komentoval(a) tvůj příspěvek.\n\nZobrazit konverzaci: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_comment_like": {
+      "subject": "{{actor}} označil(a) tvůj komentář jako To se mi líbí",
+      "body": "{{actor}} označil(a) tvůj komentář jako To se mi líbí.\n\nZobrazit konverzaci: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_follow": {
+      "subject": "{{actor}} tě začal(a) sledovat",
+      "body": "{{actor}} tě začal(a) sledovat.\n\nZobrazit profil: {{actor_url}}\n\n{{signature}}"
+    },
+    "notification_content_mention": {
+      "subject": "{{actor}} tě zmínil(a)",
+      "body": "{{actor}} tě zmínil(a) v příspěvku.\n\nZobrazit příspěvek: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_comment_mention": {
+      "subject": "{{actor}} tě zmínil(a)",
+      "body": "{{actor}} tě zmínil(a) v komentáři.\n\nZobrazit konverzaci: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_report_resolved": {
+      "subject": "Tvé nahlášení bylo vyřešeno",
+      "body": "Tvé nahlášení bylo vyřešeno moderátorským týmem.\n\nZobrazit nahlášený obsah: {{content_url}}\n\n{{signature}}"
+    },
+    "notification_report_dismissed": {
+      "subject": "Tvé nahlášení bylo zamítnuto",
+      "body": "Tvé nahlášení bylo posouzeno a moderátorský tým ho zamítl.\n\nZobrazit nahlášený obsah: {{content_url}}\n\n{{signature}}"
+    }
+  }
+}

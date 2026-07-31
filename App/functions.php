@@ -689,7 +689,6 @@ function registration_request(): array
     ]);
 
     email_template_send('welcome', $userId, [
-        'welcome_message' => (string) config('email.welcome_message', ''),
         'login_url' => absolute_url('/login'),
     ]);
 
@@ -824,10 +823,41 @@ function email_user(int $userId): ?array
     }
 
     try {
-        return one('SELECT id, username, email, email_notifications FROM users WHERE id = ? LIMIT 1', [$userId]);
+        return one('SELECT id, username, email, email_notifications, locale FROM users WHERE id = ? LIMIT 1', [$userId]);
     } catch (Throwable) {
         return null;
     }
+}
+
+function email_template_keys(): array
+{
+    static $keys;
+    if ($keys !== null) {
+        return $keys;
+    }
+
+    $catalog = email_catalog('en');
+    $keys = array_keys((array) ($catalog['templates'] ?? []));
+
+    return $keys;
+}
+
+function email_catalog(string $requestedLocale = ''): array
+{
+    static $cache = [];
+    $requestedLocale = language_code($requestedLocale !== '' ? $requestedLocale : locale());
+    $baseLocale = strtolower(strtok($requestedLocale, '-_') ?: 'en');
+    $locale = in_array($baseLocale, ['cs', 'en'], true) ? $baseLocale : 'en';
+
+    if (isset($cache[$locale])) {
+        return $cache[$locale];
+    }
+
+    $path = base_path('lang/emails-' . $locale . '.json');
+    $data = is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
+    $cache[$locale] = is_array($data) ? $data : ['signature' => '', 'templates' => []];
+
+    return $cache[$locale];
 }
 
 function email_template_send(string $templateKey, int $userId, array $vars = []): bool
@@ -838,9 +868,14 @@ function email_template_send(string $templateKey, int $userId, array $vars = [])
         $address = user_email_normalize((string) ($user['email'] ?? ''));
         if (!user_email_valid($address)) return false;
         if (str_starts_with($templateKey, 'notification_') && !(bool) ($user['email_notifications'] ?? false)) return false;
-        $template = one('SELECT subject, body, enabled FROM email_templates WHERE template_key = ? LIMIT 1', [$templateKey]);
-        if ($template === null || !(bool) $template['enabled']) return false;
+        $templateState = one('SELECT enabled FROM email_templates WHERE template_key = ? LIMIT 1', [$templateKey]);
+        if ($templateState === null || !(bool) $templateState['enabled']) return false;
+        $catalog = email_catalog((string) ($user['locale'] ?? ''));
+        $template = (array) (($catalog['templates'] ?? [])[$templateKey] ?? []);
+        if ($template === []) return false;
         $vars += ['site' => site_name(), 'username' => (string) $user['username'], 'email' => $address];
+        $vars += ['site_url' => absolute_url('/'), 'signature' => (string) ($catalog['signature'] ?? '')];
+        $vars['signature'] = str_replace('{{site}}', site_name(), (string) $vars['signature']);
         $subject = (string) ($template['subject'] ?? '');
         $body = (string) ($template['body'] ?? '');
         foreach ($vars as $key => $value) {
@@ -1673,7 +1708,7 @@ function author_follow(int $followerId, int $authorId): void
     ]);
     email_template_send('notification_follow', $authorId, [
         'actor' => (string) (email_user($followerId)['username'] ?? 'Někdo'),
-        'author_url' => absolute_url('/author/' . $followerId),
+        'actor_url' => absolute_url('/author/' . $followerId),
     ]);
 }
 
@@ -5218,6 +5253,7 @@ function notification_create(int $userId, string $type, int $actorId, int $conte
         $actor = email_user($actorId);
         email_template_send($template, $userId, [
             'actor' => (string) ($actor['username'] ?? 'Někdo'),
+            'actor_url' => absolute_url('/author/' . $actorId),
             'content_url' => absolute_url('/status/' . $contentId),
         ]);
     }
@@ -8097,7 +8133,11 @@ function languages(?array $codes = null, bool $includeFiles = true): array
         $directory = base_path('lang');
 
         foreach (glob($directory . DIRECTORY_SEPARATOR . '*.json') ?: [] as $file) {
-            $code = language_code(pathinfo($file, PATHINFO_FILENAME));
+            $filename = pathinfo($file, PATHINFO_FILENAME);
+            if (str_starts_with($filename, 'emails-')) {
+                continue;
+            }
+            $code = language_code($filename);
 
             if ($code !== '') {
                 $items[$code] = language_name($code);
@@ -8125,7 +8165,11 @@ function language_packages(): array
     $items = [];
 
     foreach (glob($directory . DIRECTORY_SEPARATOR . '*.json') ?: [] as $file) {
-        $code = language_code(pathinfo($file, PATHINFO_FILENAME));
+        $filename = pathinfo($file, PATHINFO_FILENAME);
+        if (str_starts_with($filename, 'emails-')) {
+            continue;
+        }
+        $code = language_code($filename);
 
         if ($code === '') {
             continue;

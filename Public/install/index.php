@@ -532,8 +532,6 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS email_templates (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             template_key VARCHAR(80) NOT NULL,
-            subject VARCHAR(255) NOT NULL,
-            body TEXT NOT NULL,
             enabled TINYINT(1) NOT NULL DEFAULT 1,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -671,7 +669,6 @@ function tc_install_default_settings(array $state): void
         ['email.smtp.encryption', 'tls', 'string', 'email'],
         ['email.from_address', '', 'string', 'email'],
         ['email.from_name', 'TinyCat', 'string', 'email'],
-        ['email.welcome_message', 'Vítej na {{site}}! Tvůj účet {{username}} byl právě vytvořen.', 'string', 'email'],
         ['analytics.google_measurement_id', '', 'string', 'analytics'],
     ];
 
@@ -679,20 +676,8 @@ function tc_install_default_settings(array $state): void
         setting_set((string) $key, $value, (string) $type, (string) $group);
     }
 
-    $templates = [
-        ['welcome', 'Vítej na {{site}}', '{{welcome_message}}'],
-        ['password_reset', 'Obnova hesla na {{site}}', "Ahoj {{username}},\n\npro obnovení hesla použij tento odkaz:\n{{reset_url}}\n\nOdkaz platí 60 minut."],
-        ['notification_content_like', '{{actor}} reagoval/a na tvůj příspěvek', '{{actor}} označil/a tvůj příspěvek jako To se mi líbí.\n{{content_url}}'],
-        ['notification_content_comment', '{{actor}} komentoval/a tvůj příspěvek', '{{actor}} okomentoval/a tvůj příspěvek.\n{{content_url}}'],
-        ['notification_comment_like', '{{actor}} reagoval/a na tvůj komentář', '{{actor}} označil/a tvůj komentář jako To se mi líbí.'],
-        ['notification_follow', '{{actor}} tě začal/a sledovat', '{{actor}} tě začal/a sledovat.\n{{author_url}}'],
-        ['notification_content_mention', '{{actor}} tě zmínil/a', '{{actor}} tě zmínil/a v příspěvku.\n{{content_url}}'],
-        ['notification_comment_mention', '{{actor}} tě zmínil/a', '{{actor}} tě zmínil/a v komentáři.\n{{content_url}}'],
-        ['notification_report_resolved', 'Nahlášení bylo vyřešeno', 'Tvé nahlášení na {{content_url}} bylo vyřešeno.'],
-        ['notification_report_dismissed', 'Nahlášení bylo zamítnuto', 'Tvé nahlášení na {{content_url}} bylo zamítnuto.'],
-    ];
-    foreach ($templates as [$key, $subject, $body]) {
-        run('INSERT IGNORE INTO email_templates (template_key, subject, body, enabled) VALUES (?, ?, ?, 1)', [$key, $subject, $body]);
+    foreach (email_template_keys() as $key) {
+        run('INSERT IGNORE INTO email_templates (template_key, enabled) VALUES (?, 1)', [$key]);
     }
 }
 

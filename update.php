@@ -84,8 +84,6 @@ function tinycat_migrations(): array
             $pdo->exec("CREATE TABLE IF NOT EXISTS email_templates (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 template_key VARCHAR(80) NOT NULL,
-                subject VARCHAR(255) NOT NULL,
-                body TEXT NOT NULL,
                 enabled TINYINT(1) NOT NULL DEFAULT 1,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -103,21 +101,9 @@ function tinycat_migrations(): array
                 KEY password_reset_tokens_expiry_index (expires_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-            $templates = [
-                ['welcome', 'Welcome to {{site}}', '{{welcome_message}}'],
-                ['password_reset', 'Password reset for {{site}}', "Hello {{username}},\n\nReset your password here:\n{{reset_url}}\n\nThis link expires in 60 minutes."],
-                ['notification_content_like', '{{actor}} liked your post', '{{actor}} liked your post.\n{{content_url}}'],
-                ['notification_content_comment', '{{actor}} commented on your post', '{{actor}} commented on your post.\n{{content_url}}'],
-                ['notification_comment_like', '{{actor}} liked your comment', '{{actor}} liked your comment.'],
-                ['notification_follow', '{{actor}} followed you', '{{actor}} followed you.\n{{author_url}}'],
-                ['notification_content_mention', '{{actor}} mentioned you', '{{actor}} mentioned you in a post.\n{{content_url}}'],
-                ['notification_comment_mention', '{{actor}} mentioned you', '{{actor}} mentioned you in a comment.\n{{content_url}}'],
-                ['notification_report_resolved', 'Your report was resolved', 'Your report about {{content_url}} was resolved.'],
-                ['notification_report_dismissed', 'Your report was dismissed', 'Your report about {{content_url}} was dismissed.'],
-            ];
-            $template = $pdo->prepare('INSERT IGNORE INTO email_templates (template_key, subject, body, enabled) VALUES (?, ?, ?, 1)');
-            foreach ($templates as $item) {
-                $template->execute($item);
+            $template = $pdo->prepare('INSERT IGNORE INTO email_templates (template_key, enabled) VALUES (?, 1)');
+            foreach (email_template_keys() as $key) {
+                $template->execute([$key]);
             }
 
             $settings = [
@@ -128,7 +114,6 @@ function tinycat_migrations(): array
                 ['email.smtp.encryption', 'tls', 'string', 'email'],
                 ['email.from_address', '', 'string', 'email'],
                 ['email.from_name', 'TinyCat', 'string', 'email'],
-                ['email.welcome_message', 'Welcome to {{site}}! Your account {{username}} was created.', 'string', 'email'],
                 ['analytics.google_measurement_id', '', 'string', 'analytics'],
             ];
             $setting = $pdo->prepare('INSERT IGNORE INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES (?, ?, ?, ?)');
@@ -196,6 +181,19 @@ function tinycat_migrations(): array
                 KEY bot_source_runs_bot_index (bot_user_id, started_at),
                 KEY bot_source_runs_status_index (status, started_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        },
+        '20260731_localized_email_catalog' => static function (PDO $pdo): void {
+            if (tinycat_schema_column_exists($pdo, 'email_templates', 'subject')) {
+                $pdo->exec('ALTER TABLE email_templates DROP COLUMN subject');
+            }
+            if (tinycat_schema_column_exists($pdo, 'email_templates', 'body')) {
+                $pdo->exec('ALTER TABLE email_templates DROP COLUMN body');
+            }
+
+            $template = $pdo->prepare('INSERT IGNORE INTO email_templates (template_key, enabled) VALUES (?, 1)');
+            foreach (email_template_keys() as $key) {
+                $template->execute([$key]);
+            }
         },
     ];
 }

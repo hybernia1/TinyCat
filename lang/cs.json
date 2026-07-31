@@ -596,6 +596,7 @@
     "settings": {
         "meta_title": "Nastavení",
         "email_templates_title": "Emailové šablony",
+        "email_templates_localized": "Texty emailů dodává aplikace v jazyce příjemce. Na této stránce se pouze nastavuje, které typy emailů se smějí odesílat.",
         "title": "Nastavení",
         "enabled": "Zapnuto",
         "sections": {
@@ -626,11 +627,10 @@
             "smtp_encryption": "SMTP šifrování",
             "email_from": "Odesílací email",
             "email_from_name": "Jméno odesílatele",
-            "welcome_message": "Uvítací zpráva po registraci"
-            ,"email_template_subject": "Předmět"
-            ,"email_template_body": "Tělo emailu"
-            ,"google_measurement_id": "Google Analytics Measurement ID"
-            ,"google_measurement_id_help": "Volitelné, například G-XXXXXXXXXX."
+            "email_template_subject": "Předmět",
+            "email_template_body": "Tělo emailu",
+            "google_measurement_id": "Google Analytics Measurement ID",
+            "google_measurement_id_help": "Volitelné, například G-XXXXXXXXXX."
         },
         "messages": {
             "saved": "Nastavení bylo uloženo.",

@@ -136,7 +136,6 @@ function tc_admin_settings_sections(): array
                 ['key' => 'email.smtp.encryption', 'label' => t('settings.fields.smtp_encryption'), 'type' => 'optional_text', 'default' => 'tls', 'max' => 20],
                 ['key' => 'email.from_address', 'label' => t('settings.fields.email_from'), 'type' => 'email', 'default' => '', 'max' => 190],
                 ['key' => 'email.from_name', 'label' => t('settings.fields.email_from_name'), 'type' => 'optional_text', 'default' => 'TinyCat', 'max' => 120],
-                ['key' => 'email.welcome_message', 'label' => t('settings.fields.welcome_message'), 'type' => 'textarea', 'default' => '', 'span' => true],
             ],
         ],
         'analytics' => [

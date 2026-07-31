@@ -2471,7 +2471,6 @@ final class Core
             'email.smtp.encryption' => true,
             'email.from_address' => true,
             'email.from_name' => true,
-            'email.welcome_message' => true,
             'analytics.google_measurement_id' => true,
         ];
 

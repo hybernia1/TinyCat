@@ -596,6 +596,7 @@
     "settings": {
         "meta_title": "Settings",
         "email_templates_title": "Email templates",
+        "email_templates_localized": "Email text is provided by the application in the selected language. This page only controls which email types may be sent.",
         "title": "Settings",
         "enabled": "Enabled",
         "sections": {
@@ -626,11 +627,10 @@
             "smtp_encryption": "SMTP encryption",
             "email_from": "Sender email",
             "email_from_name": "Sender name",
-            "welcome_message": "Welcome message after registration"
-            ,"email_template_subject": "Subject"
-            ,"email_template_body": "Body"
-            ,"google_measurement_id": "Google Analytics Measurement ID"
-            ,"google_measurement_id_help": "Optional, for example G-XXXXXXXXXX."
+            "email_template_subject": "Subject",
+            "email_template_body": "Body",
+            "google_measurement_id": "Google Analytics Measurement ID",
+            "google_measurement_id_help": "Optional, for example G-XXXXXXXXXX."
         },
         "messages": {
             "saved": "Settings were saved.",
