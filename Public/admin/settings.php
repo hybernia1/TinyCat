@@ -99,6 +99,9 @@ function tc_admin_settings_sections(): array
             'icon' => 'home',
             'fields' => [
                 ['key' => 'site.name', 'label' => t('settings.fields.site_name'), 'type' => 'text', 'default' => 'TinyCat', 'max' => 120, 'span' => true],
+                ['key' => 'site.home_title', 'label' => t('settings.fields.site_home_title'), 'type' => 'optional_text', 'default' => '', 'max' => 160, 'span' => true, 'help' => t('settings.fields.site_home_title_help')],
+                ['key' => 'site.home_intro', 'label' => t('settings.fields.site_home_intro'), 'type' => 'textarea', 'default' => '', 'max' => 500, 'span' => true, 'placeholder' => t('settings.fields.site_home_intro_placeholder')],
+                ['key' => 'site.meta_description', 'label' => t('settings.fields.site_meta_description'), 'type' => 'textarea', 'default' => '', 'max' => 500, 'span' => true, 'placeholder' => t('settings.fields.site_meta_description_placeholder'), 'help' => t('settings.fields.site_meta_description_help')],
                 ['key' => 'site.logo_url', 'path_key' => 'site.logo_path', 'label' => t('settings.fields.site_logo'), 'type' => 'site_image', 'variant' => 'logo', 'default' => '', 'compact' => true],
                 ['key' => 'site.favicon_url', 'path_key' => 'site.favicon_path', 'label' => t('settings.fields.site_favicon'), 'type' => 'site_image', 'variant' => 'favicon', 'default' => '', 'compact' => true],
                 ['key' => 'site.footer_html', 'label' => t('settings.fields.site_footer'), 'type' => 'textarea', 'default' => '', 'span' => true],
@@ -215,12 +218,12 @@ function tc_admin_settings_field(array $field, string $group): string
             <input class="input" type="email" name="<?= e($name) ?>" value="<?= e((string) $value) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>">
         <?php elseif ($type === 'optional_text'): ?>
             <input class="input" name="<?= e($name) ?>" value="<?= e((string) $value) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>">
-            <?php if (!empty($field['help'])): ?><span class="help"><?= e((string) $field['help']) ?></span><?php endif; ?>
         <?php elseif ($type === 'textarea'): ?>
-            <textarea class="textarea" name="<?= e($name) ?>" rows="8" placeholder="<?= et('settings.footer_placeholder') ?>"><?= e((string) $value) ?></textarea>
+            <textarea class="textarea" name="<?= e($name) ?>" rows="8" maxlength="<?= e((int) ($field['max'] ?? 5000)) ?>" placeholder="<?= e((string) ($field['placeholder'] ?? t('settings.footer_placeholder'))) ?>"><?= e((string) $value) ?></textarea>
         <?php else: ?>
             <input class="input" name="<?= e($name) ?>" value="<?= e((string) $value) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>" required>
         <?php endif; ?>
+        <?php if (!empty($field['help'])): ?><span class="help"><?= e((string) $field['help']) ?></span><?php endif; ?>
     </<?= $tag ?>>
     <?php
 
@@ -310,7 +313,10 @@ function tc_admin_settings_value_from_post(array $field, array $posted): array
     }
 
     if ($type === 'textarea') {
-        return [(string) $raw, 'string'];
+        $value = trim((string) $raw);
+        $max = (int) ($field['max'] ?? 5000);
+
+        return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
     }
 
     if (in_array($type, ['password', 'email'], true)) {

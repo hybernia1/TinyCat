@@ -2449,6 +2449,9 @@ final class Core
     {
         static $keys = [
             'site.name' => true,
+            'site.home_title' => true,
+            'site.home_intro' => true,
+            'site.meta_description' => true,
             'site.logo_url' => true,
             'site.logo_path' => true,
             'site.favicon_url' => true,

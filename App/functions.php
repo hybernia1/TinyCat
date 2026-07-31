@@ -51,6 +51,27 @@ function site_name(): string
     return (string) config('site.name', 'TinyCat');
 }
 
+function site_home_title(): string
+{
+    $title = trim((string) config('site.home_title', ''));
+
+    return $title !== '' ? $title : site_name();
+}
+
+function site_home_intro(): string
+{
+    return trim((string) config('site.home_intro', ''));
+}
+
+function site_meta_description(): string
+{
+    $description = trim((string) config('site.meta_description', ''));
+
+    return $description !== ''
+        ? meta_text($description, 180)
+        : t('public.meta_description', ['site' => site_name()]);
+}
+
 function site_logo_url(): string
 {
     return trim((string) config('site.logo_url', ''));

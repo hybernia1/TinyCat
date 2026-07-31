@@ -8,7 +8,7 @@ if (!defined('TINYCAT')) {
 
 $full = (bool) ($llmsFull ?? false);
 $name = site_name();
-$description = meta_text(t('public.meta_description', ['site' => $name]), 500);
+$description = meta_text(site_meta_description(), 500);
 
 header('Content-Type: text/plain; charset=UTF-8');
 header('Cache-Control: public, max-age=900');

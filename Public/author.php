@@ -34,6 +34,7 @@ $memberSince = (string) ($author['created_at'] ?? '');
 $current = author_url($authorId);
 $statusLimit = public_status_page_limit();
 $pagination = pagination_meta(public_status_count_by_author($authorId), (int) get('page', 1), $statusLimit);
+$publicPostCount = (int) ($pagination['total'] ?? public_status_count_by_author($authorId));
 $page = (int) ($pagination['page'] ?? 1);
 $pageUrl = $current . ($page > 1 ? '?page=' . $page : '');
 $statusItems = public_status_items_by_author($authorId, $statusLimit, (int) ($pagination['offset'] ?? 0));
@@ -96,6 +97,7 @@ layout('layout', [
         'rss' => author_feed_url($authorId),
         'prev' => $prevUrl,
         'next' => $nextUrl,
+        'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
         'jsonld' => $authorStructuredData,
     ],
 ], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $pagination, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing): void {

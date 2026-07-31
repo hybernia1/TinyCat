@@ -33,7 +33,8 @@ if (method() === 'GET' && route_path() !== $current) {
 }
 
 $statusLimit = public_status_page_limit();
-$pagination = pagination_meta(public_status_count_by_tag($tag), (int) get('page', 1), $statusLimit);
+$publicPostCount = public_status_count_by_tag($tag);
+$pagination = pagination_meta($publicPostCount, (int) get('page', 1), $statusLimit);
 $page = (int) ($pagination['page'] ?? 1);
 $pageUrl = $current . ($page > 1 ? '?page=' . $page : '');
 $statusItems = public_status_items_by_tag_offset($tag, $statusLimit, (int) ($pagination['offset'] ?? 0));
@@ -68,6 +69,7 @@ layout('layout', [
         'rss' => tag_feed_url($tag),
         'prev' => $prevUrl,
         'next' => $nextUrl,
+        'robots' => $publicPostCount >= 2 ? '' : 'noindex,follow',
         'jsonld' => $tagStructuredData,
     ],
 ], static function () use ($tag, $statusItems, $statusLimit, $current, $pagination): void {

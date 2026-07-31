@@ -57,7 +57,7 @@ if (!$isAdminShell && $nav === []) {
 
 $pageTitle = $title === $appName ? $title : $title . ' | ' . $appName;
 $metaTitle = meta_text((string) ($meta['title'] ?? $pageTitle), 120);
-$metaDescription = meta_text((string) ($meta['description'] ?? t('public.meta_description', ['site' => $appName])), 180);
+$metaDescription = meta_text((string) ($meta['description'] ?? site_meta_description()), 180);
 $metaUrl = absolute_url((string) ($meta['url'] ?? ($_SERVER['REQUEST_URI'] ?? $current)));
 $metaImageRaw = trim((string) ($meta['image'] ?? site_meta_image_url()));
 $metaImage = $metaImageRaw !== '' ? absolute_url($metaImageRaw) : '';

@@ -646,6 +646,9 @@ function tc_install_default_settings(array $state): void
     $locale = (string) ($state['locale'] ?? locale());
     $defaults = [
         ['site.name', (string) config('site.name', 'TinyCat'), 'string', 'site'],
+        ['site.home_title', (string) config('site.home_title', ''), 'string', 'site'],
+        ['site.home_intro', (string) config('site.home_intro', ''), 'string', 'site'],
+        ['site.meta_description', (string) config('site.meta_description', ''), 'string', 'site'],
         ['site.logo_url', (string) config('site.logo_url', ''), 'string', 'site'],
         ['site.logo_path', (string) config('site.logo_path', ''), 'string', 'site'],
         ['site.favicon_url', (string) config('site.favicon_url', ''), 'string', 'site'],

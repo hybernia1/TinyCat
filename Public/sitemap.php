@@ -17,14 +17,26 @@ $pageUrl = static function (string $name, int $page): string {
 
 $countRows = static function (string $section): int {
     return match ($section) {
-        'authors' => (int) val('SELECT COUNT(*) FROM users WHERE status = ?', ['active']),
+        'pages' => 1,
+        'authors' => (int) val(
+            'SELECT COUNT(DISTINCT u.id)
+                FROM users u
+                INNER JOIN content c ON c.author_id = u.id
+                WHERE u.status = ?',
+            ['active']
+        ),
         'tags' => (int) val(
-            "SELECT COUNT(DISTINCT t.id)
-                FROM terms t
-                INNER JOIN content_tags ct ON ct.term_id = t.id
-                INNER JOIN content c ON c.id = ct.content_id
-                INNER JOIN users u ON u.id = c.author_id
-                WHERE u.status = ?",
+            "SELECT COUNT(*)
+                FROM (
+                    SELECT t.id
+                    FROM terms t
+                    INNER JOIN content_tags ct ON ct.term_id = t.id
+                    INNER JOIN content c ON c.id = ct.content_id
+                    INNER JOIN users u ON u.id = c.author_id
+                    WHERE u.status = ?
+                    GROUP BY t.id
+                    HAVING COUNT(DISTINCT c.id) >= 2
+                ) eligible_tags",
             ['active']
         ),
         'status' => (int) val(
@@ -50,7 +62,7 @@ if ($section === 'index') {
     echo '<?xml version="1.0" encoding="UTF-8"?>';
     ?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<?php foreach (['authors', 'status', 'tags'] as $name):
+    <?php foreach (['pages', 'authors', 'status', 'tags'] as $name):
     $pages = $pageCount($countRows($name));
     for ($part = 1; $part <= $pages; $part++):
 ?>
@@ -63,18 +75,21 @@ if ($section === 'index') {
     return;
 }
 
-if (!in_array($section, ['authors', 'status', 'tags'], true)) {
+if (!in_array($section, ['pages', 'authors', 'status', 'tags'], true)) {
     http_response_code(404);
     exit('Sitemap not found.');
 }
 
 $offset = ($page - 1) * $perPage;
 $rows = match ($section) {
+    'pages' => [['path' => '/']],
     'authors' => all(
-        'SELECT id, updated_at AS last_modified
-            FROM users
-            WHERE status = ?
-            ORDER BY id ASC
+        'SELECT u.id, u.updated_at AS last_modified
+            FROM users u
+            INNER JOIN content c ON c.author_id = u.id
+            WHERE u.status = ?
+            GROUP BY u.id, u.updated_at
+            ORDER BY u.id ASC
             LIMIT ' . $perPage . ' OFFSET ' . $offset,
         ['active']
     ),
@@ -86,6 +101,7 @@ $rows = match ($section) {
             INNER JOIN users u ON u.id = c.author_id
             WHERE u.status = ?
             GROUP BY t.id, t.name
+            HAVING COUNT(DISTINCT c.id) >= 2
             ORDER BY t.id ASC
             LIMIT " . $perPage . ' OFFSET ' . $offset,
         ['active']
@@ -109,7 +125,9 @@ echo '<?xml version="1.0" encoding="UTF-8"?>';
 ?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <?php foreach ($rows as $row):
-    if ($section === 'authors') {
+    if ($section === 'pages') {
+        $url = (string) ($row['path'] ?? '/');
+    } elseif ($section === 'authors') {
         $url = author_url((int) ($row['id'] ?? 0));
     } elseif ($section === 'tags') {
         $tag = status_tag_normalize((string) ($row['name'] ?? ''));

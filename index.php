@@ -33,6 +33,11 @@ route('GET', '/sitemap-authors.xml', static function (): void {
     require public_path('sitemap.php');
 });
 
+route('GET', '/sitemap-pages.xml', static function (): void {
+    $sitemapSection = 'pages';
+    require public_path('sitemap.php');
+});
+
 route('GET', '/sitemap-status.xml', static function (): void {
     $sitemapSection = 'status';
     require public_path('sitemap.php');
