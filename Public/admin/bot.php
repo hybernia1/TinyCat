@@ -24,6 +24,23 @@ if ($bot === null) {
 if (is_post()) {
     csrf_require();
     $action = (string) post('action', '');
+
+    if ($action === 'save_bot') {
+        $status = (string) post('status', '');
+        $allowedStatuses = ['active', 'waiting', 'ban'];
+        $bio = plain_text_limit((string) post('bio', ''), 500);
+        if (!in_array($status, $allowedStatuses, true)) {
+            flash('error', t('users.validation.status_invalid'));
+        } else {
+            update('users', ['status' => $status, 'bio' => $bio], ['id' => $botId]);
+            if ($status !== 'active') {
+                update('bot_sources', ['enabled' => 0], ['bot_user_id' => $botId]);
+            }
+            flash('success', t('bots.messages.saved'));
+        }
+        redirect('/admin/bots/' . $botId);
+    }
+
     $sourceId = max(0, (int) post('source_id', 0));
     $source = $sourceId > 0 ? bot_source_find($sourceId) : null;
 
@@ -32,7 +49,41 @@ if (is_post()) {
         redirect('/admin/bots/' . $botId);
     }
 
-    if ($action === 'toggle_source') {
+    if ($action === 'save_source') {
+        $name = trim((string) post('name', ''));
+        $feedUrl = trim((string) post('feed_url', ''));
+        $interval = (int) post('interval_minutes', 60);
+        $template = trim((string) post('post_template', ''));
+        $errors = [];
+        if ($name === '' || strlen($name) > 120) {
+            $errors[] = t('bots.validation.name');
+        }
+        if (!LinkMetadata::isSafeRemoteUrl($feedUrl) || strlen($feedUrl) > 2048) {
+            $errors[] = t('bots.validation.feed_url');
+        }
+        if ($interval < 5 || $interval > 43200) {
+            $errors[] = t('bots.validation.interval');
+        }
+        if ($template === '' || strlen($template) > 2000) {
+            $errors[] = t('bots.validation.template');
+        }
+        if ($errors !== []) {
+            flash('error', implode(' ', $errors));
+        } else {
+            $enabled = in_array(post('enabled', null), [true, 1, '1', 'true', 'on'], true)
+                && (string) ($bot['status'] ?? '') === 'active';
+            update('bot_sources', [
+                'name' => $name,
+                'feed_url' => $feedUrl,
+                'interval_minutes' => $interval,
+                'post_template' => $template,
+                'enabled' => $enabled ? 1 : 0,
+                'next_run_at' => $enabled ? date_db() : null,
+                'last_error' => null,
+            ], ['id' => $sourceId]);
+            flash('success', t('bots.messages.saved'));
+        }
+    } elseif ($action === 'toggle_source') {
         $enabled = (bool) ($source['enabled'] ?? false);
         update('bot_sources', [
             'enabled' => $enabled ? 0 : 1,
@@ -102,11 +153,27 @@ layout('layout', [
         </div>
     </section>
 
+    <section class="card">
+        <div class="card-header"><h2 class="text-lg m-0 cluster gap-2"><?= icon('settings') ?> <?= et('bots.detail_account') ?></h2></div>
+        <form method="post" action="/admin/bots/<?= e((int) ($bot['id'] ?? 0)) ?>">
+            <?= csrf_field() ?><input type="hidden" name="action" value="save_bot">
+            <div class="card-body grid md:grid-2">
+                <label class="field"><span class="label"><?= et('common.status') ?></span><select class="select" name="status">
+                    <?php foreach (['active' => 'users.statuses.active', 'waiting' => 'users.statuses.waiting', 'ban' => 'users.statuses.ban'] as $value => $label): ?>
+                        <option value="<?= e($value) ?>"<?= (string) ($bot['status'] ?? '') === $value ? ' selected' : '' ?>><?= et($label) ?></option>
+                    <?php endforeach; ?>
+                </select></label>
+                <div class="field"><span class="label"><?= et('bots.detail_identity') ?></span><div class="table-meta">@<?= e((string) ($bot['username'] ?? '')) ?> · <?= et('users.roles.bot') ?></div></div>
+                <label class="field settings-field-span"><span class="label"><?= et('bots.detail_bio') ?></span><textarea class="textarea" name="bio" rows="4" maxlength="500"><?= e((string) ($bot['bio'] ?? '')) ?></textarea></label>
+            </div>
+            <div class="card-footer cluster justify-end"><button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('common.save') ?></span></button></div>
+        </form>
+    </section>
+
     <section class="grid lg:grid-2">
         <article class="card">
             <div class="card-header split">
                 <h2 class="text-lg m-0 cluster gap-2"><?= icon('link') ?> <?= et('bots.detail_sources') ?></h2>
-                <a class="btn btn-secondary btn-sm" href="/admin/bots?bot=<?= e((int) ($bot['id'] ?? 0)) ?>"><?= icon('settings') ?> <span><?= et('bots.detail_manage_sources') ?></span></a>
             </div>
             <div class="card-body stack">
                 <?php if ($sources === []): ?>
@@ -122,11 +189,24 @@ layout('layout', [
                                 </div>
                                 <span class="badge<?= $enabled ? ' badge-primary' : '' ?>"><?= et($enabled ? 'bots.enabled' : 'bots.disabled') ?></span>
                             </div>
-                            <div class="table-meta">
-                                <?= et('bots.every_minutes', ['count' => (int) ($source['interval_minutes'] ?? 60)]) ?>
-                                <?php if (!empty($source['last_imported_at'])): ?> · <?= et('bots.last_imported', ['time' => datetime((string) $source['last_imported_at'])]) ?><?php endif; ?>
-                                <?php if (!empty($source['last_error'])): ?><br><span class="text-danger"><?= e((string) $source['last_error']) ?></span><?php endif; ?>
-                            </div>
+                            <form class="stack gap-2" method="post">
+                                <?= csrf_field() ?><input type="hidden" name="action" value="save_source"><input type="hidden" name="source_id" value="<?= e($sourceId) ?>">
+                                <div class="grid sm:grid-2">
+                                    <label class="field"><span class="label"><?= et('bots.source_name') ?></span><input class="input" name="name" maxlength="120" value="<?= e((string) ($source['name'] ?? '')) ?>" required></label>
+                                    <label class="field"><span class="label"><?= et('bots.interval') ?></span><input class="input" type="number" name="interval_minutes" min="5" max="43200" value="<?= e((int) ($source['interval_minutes'] ?? 60)) ?>" required></label>
+                                </div>
+                                <label class="field"><span class="label"><?= et('bots.feed_url') ?></span><input class="input" type="url" name="feed_url" maxlength="2048" value="<?= e((string) ($source['feed_url'] ?? '')) ?>" required></label>
+                                <label class="field"><span class="label"><?= et('bots.template') ?></span><textarea class="textarea" name="post_template" rows="5" maxlength="2000" required><?= e((string) ($source['post_template'] ?? '')) ?></textarea></label>
+                                <label class="check"><input type="checkbox" name="enabled" value="1"<?= $enabled ? ' checked' : '' ?><?= (string) ($bot['status'] ?? '') !== 'active' ? ' disabled' : '' ?>> <span><?= et('bots.enabled') ?></span></label>
+                                <div class="table-meta">
+                                    <?= et('bots.every_minutes', ['count' => (int) ($source['interval_minutes'] ?? 60)]) ?>
+                                    <?php if (!empty($source['last_imported_at'])): ?> · <?= et('bots.last_imported', ['time' => datetime((string) $source['last_imported_at'])]) ?><?php endif; ?>
+                                    <?php if (!empty($source['last_error'])): ?><br><span class="text-danger"><?= e((string) $source['last_error']) ?></span><?php endif; ?>
+                                </div>
+                                <div class="cluster gap-2">
+                                    <button class="btn btn-primary btn-sm" type="submit"><?= icon('save') ?> <span><?= et('common.save') ?></span></button>
+                                </div>
+                            </form>
                             <div class="cluster gap-2">
                                 <form method="post">
                                     <?= csrf_field() ?><input type="hidden" name="action" value="toggle_source"><input type="hidden" name="source_id" value="<?= e($sourceId) ?>">
