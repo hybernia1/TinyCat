@@ -11,6 +11,11 @@ Core::securityHeaders();
 $path = route_path();
 $installPath = $path === '/install' || str_starts_with($path, '/install/');
 
+route(['GET', 'POST'], '/admin/bots/{bot_id:[0-9]+}', static function (string $bot_id): void {
+    $_GET['id'] = (string) max(0, (int) $bot_id);
+    require public_path('admin/bot.php');
+});
+
 route('GET', '/author/{author_id:[0-9]+}', static function (string $author_id): void {
     $_GET['id'] = (string) max(0, (int) $author_id);
 

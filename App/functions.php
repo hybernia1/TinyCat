@@ -43,7 +43,7 @@ function db(): PDO
 
 function app_required_tables(): array
 {
-    return ['users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_likes', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'ip_action_limits', 'email_templates', 'password_reset_tokens', 'settings'];
+    return ['users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_likes', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'ip_action_limits', 'email_templates', 'password_reset_tokens', 'bot_sources', 'bot_feed_items', 'bot_feed_history', 'bot_source_runs', 'settings'];
 }
 
 function site_name(): string
@@ -6508,55 +6508,7 @@ function status_feed_cursor_params(array $items): array
 
 function bot_schema_ensure(): void
 {
-    run(
-        "CREATE TABLE IF NOT EXISTS bot_sources (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            bot_user_id INT UNSIGNED NOT NULL,
-            name VARCHAR(120) NOT NULL,
-            feed_url VARCHAR(2048) NOT NULL,
-            interval_minutes INT UNSIGNED NOT NULL DEFAULT 60,
-            post_template VARCHAR(2000) NOT NULL,
-            enabled TINYINT(1) NOT NULL DEFAULT 1,
-            last_checked_at DATETIME NULL,
-            last_imported_at DATETIME NULL,
-            next_run_at DATETIME NULL,
-            last_error VARCHAR(500) NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY bot_sources_due_index (enabled, next_run_at, id),
-            KEY bot_sources_user_index (bot_user_id, id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    run(
-        "CREATE TABLE IF NOT EXISTS bot_feed_items (
-            source_id BIGINT UNSIGNED NOT NULL,
-            item_hash CHAR(64) NOT NULL,
-            content_id BIGINT UNSIGNED NULL,
-            item_guid VARCHAR(2048) NOT NULL,
-            item_published_at DATETIME NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (source_id, item_hash),
-            KEY bot_feed_items_content_index (content_id),
-            KEY bot_feed_items_created_index (created_at)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    run(
-        "CREATE TABLE IF NOT EXISTS bot_feed_history (
-            bot_user_id INT UNSIGNED NOT NULL,
-            feed_hash CHAR(64) NOT NULL,
-            item_hash CHAR(64) NOT NULL,
-            content_id BIGINT UNSIGNED NULL,
-            item_guid VARCHAR(2048) NOT NULL,
-            item_published_at DATETIME NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (bot_user_id, feed_hash, item_hash),
-            KEY bot_feed_history_content_index (content_id),
-            KEY bot_feed_history_created_index (created_at)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
+    // Bot tables are created by the installer and versioned update.php migrations.
 }
 
 function bot_feed_url_normalize(string $url): string
@@ -6736,6 +6688,57 @@ function bot_source_resource(array $source): array
     ];
 }
 
+function bot_source_run_create(int $sourceId, int $botUserId): int
+{
+    if ($sourceId < 1 || $botUserId < 1) {
+        return 0;
+    }
+
+    try {
+        return (int) insert('bot_source_runs', [
+            'source_id' => $sourceId,
+            'bot_user_id' => $botUserId,
+            'status' => 'running',
+            'started_at' => date_db(),
+        ]);
+    } catch (Throwable) {
+        return 0;
+    }
+}
+
+function bot_source_run_finish(int $runId, string $status, int $itemsSeen = 0, int $itemsImported = 0, int $contentId = 0, ?int $httpStatus = null, string $error = ''): void
+{
+    if ($runId < 1) {
+        return;
+    }
+
+    try {
+        update('bot_source_runs', [
+            'status' => $status,
+            'finished_at' => date_db(),
+            'items_seen' => max(0, $itemsSeen),
+            'items_imported' => max(0, $itemsImported),
+            'content_id' => $contentId > 0 ? $contentId : null,
+            'http_status' => $httpStatus !== null && $httpStatus > 0 ? $httpStatus : null,
+            'error' => $error !== '' ? bot_feed_text($error, 500) : null,
+        ], ['id' => $runId]);
+    } catch (Throwable) {
+        // Run history is diagnostic and must never break the import.
+    }
+}
+
+function bot_source_runs(int $sourceId, int $limit = 25): array
+{
+    if ($sourceId < 1) {
+        return [];
+    }
+
+    return all(
+        'SELECT * FROM bot_source_runs WHERE source_id = ? ORDER BY started_at DESC, id DESC LIMIT ' . max(1, min(100, $limit)),
+        [$sourceId]
+    );
+}
+
 function bot_delete_sources_for_user(int $botUserId): void
 {
     if ($botUserId < 1) {
@@ -6749,6 +6752,7 @@ function bot_delete_sources_for_user(int $botUserId): void
 
     foreach ($ids as $id) {
         if ($id > 0) {
+            delete('bot_source_runs', ['source_id' => $id]);
             delete('bot_feed_items', ['source_id' => $id]);
         }
     }
@@ -7002,7 +7006,7 @@ function bot_run_due_sources(int $limit = 10): array
     return $results;
 }
 
-function bot_run_source(array $source): array
+function bot_run_source(array $source, bool $force = false): array
 {
     $sourceId = (int) ($source['id'] ?? 0);
     $botUserId = (int) ($source['bot_user_id'] ?? 0);
@@ -7010,14 +7014,23 @@ function bot_run_source(array $source): array
     $interval = max(5, min(43200, (int) ($source['interval_minutes'] ?? 60)));
     $now = date_db();
     $next = date('Y-m-d H:i:s', time() + $interval * 60);
-    $claimed = run(
-        'UPDATE bot_sources SET next_run_at = ?, last_checked_at = ?, last_error = NULL WHERE id = ? AND enabled = 1 AND (next_run_at IS NULL OR next_run_at <= ?)',
-        [$next, $now, $sourceId, $now]
-    );
+    $claimed = $force
+        ? run(
+            'UPDATE bot_sources SET next_run_at = ?, last_checked_at = ?, last_error = NULL WHERE id = ? AND enabled = 1',
+            [$next, $now, $sourceId]
+        )
+        : run(
+            'UPDATE bot_sources SET next_run_at = ?, last_checked_at = ?, last_error = NULL WHERE id = ? AND enabled = 1 AND (next_run_at IS NULL OR next_run_at <= ?)',
+            [$next, $now, $sourceId, $now]
+        );
 
     if ($sourceId < 1 || $claimed < 1) {
         return ['source_id' => $sourceId, 'status' => 'skipped'];
     }
+
+    $runId = bot_source_run_create($sourceId, $botUserId);
+    $itemsSeen = 0;
+    $httpStatus = null;
 
     try {
         $response = LinkMetadata::fetchDocument((string) ($source['feed_url'] ?? ''));
@@ -7025,7 +7038,9 @@ function bot_run_source(array $source): array
             throw new RuntimeException('RSS feed could not be downloaded.');
         }
 
+        $httpStatus = (int) ($response['status'] ?? 0);
         $items = bot_feed_parse((string) ($response['body'] ?? ''));
+        $itemsSeen = count($items);
         if ($items === []) {
             throw new RuntimeException('RSS feed contains no usable items.');
         }
@@ -7077,14 +7092,17 @@ function bot_run_source(array $source): array
                 $publishedAt
             );
             update('bot_sources', ['last_imported_at' => $publishedAt], ['id' => $sourceId]);
+            bot_source_run_finish($runId, 'posted', $itemsSeen, 1, $contentId, $httpStatus);
 
             return ['source_id' => $sourceId, 'status' => 'posted', 'content_id' => $contentId];
         }
 
+        bot_source_run_finish($runId, 'current', $itemsSeen, 0, 0, $httpStatus);
         return ['source_id' => $sourceId, 'status' => 'current'];
     } catch (Throwable $exception) {
         $error = bot_feed_text($exception->getMessage(), 500);
         update('bot_sources', ['last_error' => $error], ['id' => $sourceId]);
+        bot_source_run_finish($runId, 'error', $itemsSeen, 0, 0, $httpStatus, $error);
         return ['source_id' => $sourceId, 'status' => 'error', 'error' => $error];
     }
 }

@@ -52,6 +52,7 @@ if ($isApi && method() === 'DELETE') {
             api_error(t('bots.messages.not_found'), 404, 'bot_source_not_found');
         }
 
+        delete('bot_source_runs', ['source_id' => $id]);
         delete('bot_feed_items', ['source_id' => $id]);
         delete('bot_sources', ['id' => $id]);
         api_ok(tc_admin_bots_payload(), t('bots.messages.deleted'));
@@ -220,7 +221,7 @@ function tc_admin_bots_html(): string
                         <div class="cluster gap-2">
                             <strong><?= e((string) ($source['name'] ?? '')) ?></strong>
                             <span class="badge<?= (bool) ($source['enabled'] ?? false) ? ' badge-primary' : '' ?>"><?= et((bool) ($source['enabled'] ?? false) ? 'bots.enabled' : 'bots.disabled') ?></span>
-                            <a class="badge" href="/admin/bots?bot=<?= e((int) ($source['bot_user_id'] ?? 0)) ?>">@<?= e((string) ($source['username'] ?? '')) ?></a>
+                            <a class="badge" href="/admin/bots/<?= e((int) ($source['bot_user_id'] ?? 0)) ?>">@<?= e((string) ($source['username'] ?? '')) ?></a>
                         </div>
                         <a class="text-muted" href="<?= e((string) ($source['feed_url'] ?? '')) ?>" target="_blank" rel="noopener noreferrer"><?= e((string) ($source['feed_url'] ?? '')) ?></a>
                         <small class="text-muted"><?= et('bots.every_minutes', ['count' => (int) ($source['interval_minutes'] ?? 60)]) ?><?= !empty($source['next_run_at']) ? ' · ' . et('bots.next_run', ['time' => datetime((string) $source['next_run_at'])]) : '' ?></small>

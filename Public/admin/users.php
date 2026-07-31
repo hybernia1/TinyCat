@@ -644,6 +644,11 @@ function tc_admin_users_html(): string
                                 </td>
                                 <td>
                                     <div class="table-actions">
+                                        <?php if ((string) ($user['role'] ?? '') === 'bot'): ?>
+                                            <a class="btn btn-sm btn-ghost btn-icon" href="/admin/bots/<?= e($id) ?>" aria-label="<?= et('bots.detail_title') ?>" title="<?= et('bots.detail_title') ?>">
+                                                <?= icon('external-link') ?>
+                                            </a>
+                                        <?php endif; ?>
                                         <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-open="user-edit-<?= e($id) ?>" aria-label="<?= et('users.edit_user', ['username' => (string) ($user['username'] ?? '')]) ?>" title="<?= et('common.edit') ?>">
                                             <?= icon('edit') ?>
                                         </button>
