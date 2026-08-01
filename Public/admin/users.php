@@ -391,6 +391,7 @@ function tc_admin_user_resource(array $user): array
     return [
         'id' => (int) ($user['id'] ?? 0),
         'username' => (string) ($user['username'] ?? ''),
+        'email' => (string) ($user['email'] ?? ''),
         'role' => (string) ($user['role'] ?? ''),
         'status' => (string) ($user['status'] ?? ''),
         'bio' => (string) ($user['bio'] ?? ''),
@@ -429,6 +430,7 @@ function tc_admin_user_payload(?int $id = null): array
     $existing = $id === null ? null : tc_admin_user_by_id($id);
     $passwordRule = 'nullable|string|min:8|max:200';
     $rules = [
+        'email' => 'nullable|string|max:254',
         'password' => $passwordRule,
         'role' => 'required|string|in:' . implode(',', array_keys(tc_admin_roles())),
         'status' => 'required|string|in:' . implode(',', array_keys(tc_admin_statuses())),
@@ -454,6 +456,18 @@ function tc_admin_user_payload(?int $id = null): array
 
     $role = (string) $data['role'];
     $status = (string) $data['status'];
+    $emailProvided = input('email', null) !== null;
+    $email = $emailProvided || $id === null
+        ? user_email_normalize((string) ($data['email'] ?? ''))
+        : user_email_normalize((string) ($existing['email'] ?? ''));
+
+    if ($email !== '' && !user_email_valid($email)) {
+        api_validation(['email' => [t('account.messages.email_invalid')]]);
+    }
+
+    if ($email !== '' && user_email_taken($email, $id)) {
+        api_validation(['email' => [t('account.messages.email_taken')]]);
+    }
 
     if ($id === null && $role !== 'bot' && (string) ($data['password'] ?? '') === '') {
         api_validation(['password' => [t('users.validation.password_required')]]);
@@ -471,6 +485,10 @@ function tc_admin_user_payload(?int $id = null): array
         'status' => $status,
         'bio' => plain_text_limit((string) input('bio', ''), 500),
     ];
+
+    if ($id === null || $emailProvided) {
+        $payload['email'] = $email !== '' ? $email : null;
+    }
 
     if ($id === null) {
         $payload['username'] = $username;
@@ -810,6 +828,11 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
                             <input class="input input-lg" value="<?= e((string) ($user['username'] ?? '')) ?>" disabled>
                             <span class="help"><?= et('users.username_locked') ?></span>
                         <?php endif; ?>
+                    </label>
+                    <label class="field">
+                        <span class="label"><?= et('common.email') ?></span>
+                        <input class="input input-lg" type="email" name="email" autocomplete="email" maxlength="254" value="<?= e((string) ($user['email'] ?? '')) ?>">
+                        <span class="help"><?= et('account.email_optional') ?></span>
                     </label>
                 </div>
             </section>

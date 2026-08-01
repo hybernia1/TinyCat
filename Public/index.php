@@ -22,12 +22,6 @@ layout('layout', [
     ?>
     <section class="public-layout">
         <main class="home-feed-section home-feed-app stack">
-            <header class="home-intro stack stack-gap-4">
-                <h1 class="text-2xl m-0"><?= e(site_home_title()) ?></h1>
-                <?php if (site_home_intro() !== ''): ?>
-                    <p class="text-muted m-0"><?= nl2br(e(site_home_intro())) ?></p>
-                <?php endif; ?>
-            </header>
             <?= public_home_feed_html($feed, $authUser) ?>
         </main>
         <?= public_sidebar() ?>
