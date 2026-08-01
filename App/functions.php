@@ -6,6 +6,11 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
+if (PHP_VERSION_ID < 80400) {
+    http_response_code(500);
+    exit('TinyCat requires PHP 8.4 or newer.');
+}
+
 require_once __DIR__ . '/Core.php';
 require_once __DIR__ . '/Cache.php';
 require_once __DIR__ . '/AssetOptimizer.php';

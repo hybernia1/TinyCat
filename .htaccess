@@ -1,6 +1,6 @@
 DirectoryIndex index.php
 
-<FilesMatch "^(config(\.local)?\.php|composer\.(json|lock)|package(-lock)?\.json|.*\.sql)$">
+<FilesMatch "^(config\.php|.*\.sql)$">
     Require all denied
 </FilesMatch>
 

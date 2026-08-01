@@ -1,79 +1,99 @@
 # TinyCat
 
-TinyCat is a small open-source PHP social media app built for anonymous, self-hosted communities.
+TinyCat is a small, self-hosted social publishing application written in plain PHP 8.4. It is designed for pseudonymous communities: a username is enough to create an account, while email and recovery details remain optional.
 
-It is designed to run without mandatory email, phone numbers, external accounts, trackers, or cloud services. A username is the primary identity, and users can later add optional recovery contact details if the community wants that workflow.
+The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-## What It Does
+## Features
 
-- Public feed with all posts and a following-only feed.
-- Username-only accounts with optional profile bio, website, avatar, and UI language.
-- Posts with tags, likes, shares, comments, nested replies, and notifications.
-- Profile pages with member stats, followed profiles, and user feed.
-- Link previews with Open Graph metadata and searchable linked content.
-- Admin area for users, settings, moderation, reports, and domain rules.
-- Bot accounts that can publish gradually from multiple independently configured RSS or Atom sources.
-- Installer for language, database connection, schema creation, and first admin account.
-- Mobile-first UI with lightweight CSS and JavaScript assets.
-
-## Philosophy
-
-TinyCat is intentionally small. It avoids heavy framework structure and keeps the core in plain PHP files that are easy to inspect, copy, deploy, and adapt for small or medium projects.
-
-The project favors:
-
-- Anonymous operation by default.
-- Self-hosting and data ownership.
-- Simple deployment on standard PHP hosting.
-- Clear database tables instead of hidden services.
-- Useful defaults without a large dependency stack.
+- Public and following-only feeds with incremental loading.
+- Posts with hashtags, mentions, likes, threaded comments, comment likes, and notifications.
+- Profiles with avatars, bios, validated profile links, language and appearance preferences, activity statistics, and following lists.
+- Search across posts, users, tags, and metadata extracted from linked pages.
+- HTML5 link previews with Open Graph, video embeds, and cached metadata.
+- Optional email recovery and localized email notifications through PHP mail or SMTP.
+- Administration for users, site settings, email templates, updates, maintenance, moderation reports, account muting, and blocked domains.
+- Passwordless bot accounts that publish from independently scheduled RSS or Atom sources without duplicating imported items.
+- Author and tag feeds, XML sitemaps, `robots.txt`, `llms.txt`, and a generated web app manifest.
+- English and Czech interfaces with mobile-first CSS and lightweight JavaScript.
 
 ## Requirements
 
-- PHP 8.1 or newer.
-- MySQL or MariaDB.
-- Apache with rewrite support.
-- Writable `storage/` and `uploads/` directories.
+- PHP 8.4 or newer.
+- MySQL or MariaDB with the `pdo_mysql` PHP extension.
+- Apache 2.4 with `mod_rewrite` and `.htaccess` overrides enabled.
+- The `mbstring`, `gd`, `dom`, and `simplexml` PHP extensions for the full feature set.
+- Outbound HTTPS streams (`allow_url_fopen`) for link previews and remote images; cURL is recommended for feed downloads.
+- Write access to `storage/` and `uploads/`. The installer also needs temporary permission to create `config.php` in the project root.
+
+The PHP `exif` extension improves JPEG orientation handling but is optional. Apache modules such as `mod_headers` and `mod_deflate` enable the cache headers and compression rules already included in `.htaccess`.
 
 ## Installation
 
-1. Clone the repository.
-2. Point the web server to the project root or route requests through `index.php`.
-3. Make `storage/` and `uploads/` writable.
-4. Open `/install`.
-5. Choose a language, enter database credentials, and create the first admin account.
+1. Clone or upload the repository.
+2. Point the Apache document root to the repository root.
+3. Ensure Apache permits the bundled `.htaccess` rules (`AllowOverride All`).
+4. Grant the web-server user write access described in the requirements.
+5. Open `/install` and select a language.
+6. Enter the database connection, create the schema, and create the first administrator account.
 
-The installer creates `config.php` after the database and administrator account are configured. The generated configuration, runtime data, uploaded files, and local overrides are ignored by Git.
+The final installer step writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root no longer needs to remain writable.
+
+Use HTTPS in production. The supplied Apache rules prevent direct web access to `config.php`, `App/`, `lang/`, and private `storage/` content; equivalent protection is required if the application is adapted to another web server.
 
 ## Updates
 
-Before deploying a new version, back up the database and run the versioned migrations from the project root:
+Back up the database and local files before deploying a new revision. Then run pending migrations from the repository root with the same PHP 8.4 runtime used by the web server:
 
 ```bash
 php update.php
 ```
 
-You can also run pending migrations while logged in as an administrator on `/admin/updates`. Both entry points use the same updater, are safe to repeat, and record applied migrations in `schema_migrations`. Normal web requests do not alter the database schema.
+Administrators can run the same updater from `/admin/updates`. Migrations are repeatable and recorded in `schema_migrations`; ordinary web requests never change the schema.
 
-## RSS bots
+## RSS and Atom bots
 
-Create a user with the `Bot` role, then configure one or more sources under **Admin → Bots**. Each source has its own publishing interval and post template. The administration provides a protected `cron.php` URL and Bearer token for the server scheduler or an external web-cron service. Call it once per minute using `POST` with the token in the `Authorization` header.
+Create bot accounts under **Admin → Bots → Accounts**, then add one or more sources under **Admin → Bots → Sources**. Each source has its own interval and post template. Bot accounts have no password and cannot sign in.
 
-The endpoint publishes at most one new item per due source, remembers imported RSS GUIDs, rejects unauthenticated calls, and uses a database lock to prevent overlapping runs.
+The recommended scheduler is the command-line runner:
 
-Services without custom-header support may call `cron.php?bearer=TOKEN`. This compatibility form is less private because query strings are commonly stored in web-server access logs; prefer the `Authorization` header whenever possible.
+```bash
+php cron.php --health
+php cron.php --limit=20
+```
 
-Append `?health=1` to perform an authenticated connectivity check without running or publishing anything.
+Run `php cron.php` once per minute. Source intervals decide which feeds are due, and a database lock prevents overlapping runs. Each run publishes at most one new item per due source and retains a bounded GUID history to prevent duplicates.
 
-## Project Layout
+When command-line scheduling is unavailable, use the protected HTTP endpoint shown in **Admin → Bots → Cron**:
 
-- `App/` contains the core, bootstrap, helpers, routing, auth, database, upload, translation, and social helpers.
-- `Public/` contains frontend pages, admin pages, install flow, layouts, and modals.
-- `assets/` contains the TinyCat CSS, JavaScript, icons, and UI assets.
-- `lang/` contains translation JSON files.
-- `storage/` contains runtime storage and generated files.
-- `uploads/` contains user uploaded files.
+```bash
+curl -X POST -H "Authorization: Bearer TOKEN" https://example.test/cron.php
+```
+
+An authenticated `POST /cron.php?health=1` checks connectivity without importing anything. Services that cannot send custom headers may use `cron.php?bearer=TOKEN`, but query-string tokens can appear in server access logs and should be treated as a last resort.
+
+## Privacy and security defaults
+
+- Registration does not require an email address, phone number, or third-party identity provider.
+- Sessions, CSRF tokens, password hashing, login captcha, and action rate limits are built in.
+- Remote link and feed requests reject private and reserved network addresses.
+- Google Analytics is optional, disabled until configured, and integrated with the consent UI.
+- SMTP, Google Analytics, and external web-cron services are optional integrations.
+
+See `/privacy` on an installed site for the user-facing data and cookie policy generated by the application.
+
+## Project layout
+
+- `index.php` is the HTTP front controller and route registry.
+- `cron.php` runs scheduled bot imports from CLI or an authenticated HTTP request.
+- `update.php` contains the versioned database migrations.
+- `App/` contains the runtime, database layer, routing, authentication, caching, metadata extraction, and administration modules.
+- `Public/` contains pages, layouts, modals, reusable view parts, and the installer.
+- `assets/` contains the source CSS, JavaScript, and SVG icon sprite.
+- `lang/` contains the interface and email translation catalogs.
+- `storage/` contains private runtime state and generated asset caches.
+- `uploads/` contains user and site media.
 
 ## License
 
-TinyCat is released under the MIT License.
+TinyCat is released under the [MIT License](LICENSE).

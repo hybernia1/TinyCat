@@ -167,18 +167,21 @@ final class LinkMetadata
 
     private static function parseHtml(string $html, string $baseUrl): array
     {
-        if ($html === '' || !class_exists(DOMDocument::class)) {
+        if ($html === '' || !class_exists(\Dom\HTMLDocument::class)) {
             return [];
         }
 
         $previous = libxml_use_internal_errors(true);
-        $dom = new DOMDocument();
-        $loaded = @$dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET);
-        libxml_clear_errors();
-        libxml_use_internal_errors($previous);
-
-        if (!$loaded) {
+        try {
+            $dom = \Dom\HTMLDocument::createFromString(
+                $html,
+                LIBXML_NOERROR | LIBXML_COMPACT
+            );
+        } catch (ValueError) {
             return [];
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
         }
 
         $meta = [];
@@ -194,11 +197,7 @@ final class LinkMetadata
             'twitter_image' => '',
             'image' => '',
         ];
-        $titles = $dom->getElementsByTagName('title');
-
-        if ($titles->length > 0) {
-            $candidates['title'] = self::cleanText((string) $titles->item(0)?->textContent, 255);
-        }
+        $candidates['title'] = self::cleanText($dom->title, 255);
 
         foreach ($dom->getElementsByTagName('meta') as $node) {
             $name = strtolower(trim((string) ($node->getAttribute('property') ?: $node->getAttribute('name'))));
