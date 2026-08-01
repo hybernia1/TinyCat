@@ -6,92 +6,63 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
+$next = auth_request_next_url();
+
 if (auth_check()) {
-    redirect(tc_register_redirect(auth()));
+    redirect(auth_redirect_after_login(auth(), $next));
 }
 
 if (is_post()) {
     csrf_require();
 
-    $next = tc_register_next();
-
     if (!registration_enabled()) {
         flash('error', t('auth.registration_disabled'));
-        redirect(tc_register_url($next));
+        redirect(auth_url_with_next('/register', $next));
     }
 
     if (!captcha_check('register')) {
         captcha_refresh('register');
+        auth_form_state_remember('register');
         flash('error', t('auth.invalid_captcha'));
-        redirect(tc_register_url($next));
+        redirect(auth_url_with_next('/register', $next));
     }
 
-    $username = username_normalize((string) post('username', ''));
-    $email = user_email_normalize((string) post('email', ''));
-    $password = (string) post('password', '');
-    $passwordConfirm = (string) post('password_confirm', '');
-    $errors = [];
-
-    if (!username_valid($username)) {
-        $errors[] = t('account.messages.username_invalid');
-    } elseif (user_username_taken($username)) {
-        $errors[] = t('account.messages.username_taken');
-    }
-
-    if ($email !== '' && !user_email_valid($email)) {
-        $errors[] = t('account.messages.email_invalid');
-    } elseif ($email !== '' && user_email_taken($email)) {
-        $errors[] = t('account.messages.email_taken');
-    }
-
-    if (strlen($password) < 8) {
-        $errors[] = t('account.messages.password_short');
-    } elseif (auth_password_too_long($password)) {
-        $errors[] = t('account.messages.password_too_long');
-    } elseif ($password !== $passwordConfirm) {
-        $errors[] = t('account.messages.password_mismatch');
-    }
-
-    if ((string) post('platform_terms', '') !== '1') {
-        $errors[] = t('auth.platform_terms_required');
-    }
+    $registration = registration_input();
+    $errors = (array) $registration['errors'];
 
     if ($errors !== []) {
         captcha_refresh('register');
+        auth_form_state_remember('register');
         flash('error', implode(' ', $errors));
-        redirect(tc_register_url($next));
+        redirect(auth_url_with_next('/register', $next));
     }
 
-    $status = registration_auto_approve() ? 'active' : 'waiting';
-    $userData = [
-        'username' => $username,
-        'email' => $email !== '' ? $email : null,
-        'password' => auth_password($password),
-        'role' => 'user',
-        'status' => $status,
-        'locale' => locale(),
-        'theme' => 'system',
-        'bio' => '',
-        'recovery_hash' => user_recovery_hash_generate(),
-    ];
+    try {
+        $result = registration_create_user($registration);
+    } catch (Throwable $exception) {
+        captcha_refresh('register');
+        auth_form_state_remember('register');
+        error_log('Registration failed: ' . $exception->getMessage());
+        flash('error', t('auth.registration_failed'));
+        redirect(auth_url_with_next('/register', $next));
+    }
 
-    $id = (int) insert('users', $userData);
-
-    email_template_send('welcome', $id, [
-        'login_url' => absolute_url('/login'),
-    ]);
+    $id = (int) $result['user_id'];
+    $status = (string) $result['status'];
 
     captcha_refresh('register');
 
     if ($status === 'active') {
         auth_login($id);
         flash('success', t('auth.registration_done'));
-        redirect(tc_register_redirect(auth()));
+        redirect(auth_redirect_after_login(auth(), $next));
     }
 
     flash('success', t('auth.registration_waiting'));
-    redirect('/login' . ($next !== '' ? '?next=' . rawurlencode($next) : ''));
+    redirect(auth_url_with_next('/login', $next));
 }
+
+$old = auth_form_state_old('register');
 
 layout('layout', [
     'title' => t('auth.register_title'),
@@ -102,7 +73,7 @@ layout('layout', [
         'image' => site_meta_image_url(),
         'robots' => 'noindex,follow',
     ],
-], static function (): void {
+], static function () use ($next, $old): void {
     ?>
     <section class="max-w-auth mx-auto">
         <article class="card">
@@ -112,21 +83,19 @@ layout('layout', [
             <div class="card-body stack">
                 <?php if (!registration_enabled()): ?>
                     <div class="alert alert-info"><?= et('auth.registration_disabled') ?></div>
-                    <?php $next = tc_register_next(); ?>
-                    <a class="btn btn-secondary" href="/login<?= $next !== '' ? '?next=' . e(rawurlencode($next)) : '' ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
+                    <a class="btn btn-secondary" href="<?= e(auth_url_with_next('/login', $next)) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
                 <?php else: ?>
-                    <?php $next = tc_register_next(); ?>
-                    <form class="stack" method="post" action="<?= e(tc_register_url($next)) ?>">
+                    <form class="stack" method="post" action="<?= e(auth_url_with_next('/register', $next)) ?>" data-ajax-form data-ajax-action="/api/auth/register">
                         <?= csrf_field() ?>
                         <input type="hidden" name="next" value="<?= e($next) ?>">
                         <label class="field">
                             <span class="label"><?= et('common.username') ?></span>
-                            <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_]{2,31}" maxlength="32" required>
+                            <input class="input" name="username" value="<?= e((string) ($old['username'] ?? '')) ?>" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_]{2,31}" maxlength="32" required>
                             <span class="help"><?= e(username_hint()) ?></span>
                         </label>
                         <label class="field">
                             <span class="label"><?= et('common.email') ?></span>
-                            <input class="input" type="email" name="email" autocomplete="email" maxlength="254">
+                            <input class="input" type="email" name="email" value="<?= e((string) ($old['email'] ?? '')) ?>" autocomplete="email" maxlength="<?= user_email_max_length() ?>">
                             <span class="help"><?= et('auth.email_optional') ?></span>
                         </label>
                         <label class="field">
@@ -138,7 +107,7 @@ layout('layout', [
                             <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
                         </label>
                         <label class="check-line">
-                            <input type="checkbox" name="platform_terms" value="1" required>
+                            <input type="checkbox" name="platform_terms" value="1" required<?= !empty($old['platform_terms']) ? ' checked' : '' ?>>
                             <span><?= et('auth.platform_terms_agree') ?> <a href="/privacy" target="_blank" rel="noopener"><?= et('privacy.title') ?></a></span>
                         </label>
                         <?= captcha_field('register') ?>
@@ -146,7 +115,7 @@ layout('layout', [
                     </form>
                     <div class="cluster gap-2">
                         <span class="text-muted"><?= et('auth.has_account') ?></span>
-                        <a class="btn btn-secondary btn-sm" href="/login<?= $next !== '' ? '?next=' . e(rawurlencode($next)) : '' ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
+                        <a class="btn btn-secondary btn-sm" href="<?= e(auth_url_with_next('/login', $next)) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -154,37 +123,3 @@ layout('layout', [
     </section>
     <?php
 });
-
-function tc_register_next(): string
-{
-    $next = auth_safe_next_url((string) post('next', (string) get('next', '')));
-
-    if ($next !== '') {
-        return $next;
-    }
-
-    return auth_referer_next_url();
-}
-
-function tc_register_url(string $next = ''): string
-{
-    $next = auth_safe_next_url($next);
-
-    return '/register' . ($next !== '' ? '?next=' . rawurlencode($next) : '');
-}
-
-function tc_register_redirect(?array $user): string
-{
-    $fallback = auth_landing_url($user);
-    $next = tc_register_next();
-
-    if ($next === '') {
-        return $fallback;
-    }
-
-    if (str_starts_with(route_path($next), '/admin') && (string) ($user['role'] ?? '') !== 'admin') {
-        return $fallback;
-    }
-
-    return $next;
-}

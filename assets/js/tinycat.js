@@ -268,6 +268,34 @@
     return null;
   }
 
+  function resultErrorDetails(data) {
+    return data && data.error && data.error.details && typeof data.error.details === "object"
+      ? data.error.details
+      : {};
+  }
+
+  function refreshFormCaptcha(form, data) {
+    var details = resultErrorDetails(data);
+    var captchaHtml = details.captcha_html || "";
+    var current = form ? qs("[data-captcha]", form) : null;
+    var template;
+    var replacement;
+
+    if (!current || !captchaHtml) {
+      return;
+    }
+
+    template = htmlTemplate(captchaHtml);
+    replacement = qs("[data-captcha]", template.content);
+
+    if (!replacement || !current.parentNode) {
+      return;
+    }
+
+    current.parentNode.replaceChild(replacement, current);
+    hydrateDynamic(form);
+  }
+
   function unsafeUrl(value) {
     var url = String(value || "").trim().replace(/[\u0000-\u001F\u007F\s]+/g, "").toLowerCase();
 
@@ -407,11 +435,6 @@
 
     form.reset();
 
-    qsa("[data-tagifier]", form).forEach(function (root) {
-      root.__tinycatTags = parseList(root.dataset.tags || "");
-      TinyCat.renderTagifier(root);
-    });
-
     qsa("[data-status-editor]", form).forEach(function (root) {
       if (TinyCat.resetStatusEditor) {
         TinyCat.resetStatusEditor(root);
@@ -488,19 +511,6 @@
       cancelLabel: form.dataset.confirmUnsavedCancel || "Stay",
       variant: "danger"
     });
-  }
-
-  function initTagifierRoot(root) {
-    var hidden = qs("[data-tag-value]", root);
-    var values = hidden && hidden.value ? hidden.value : root.dataset.value;
-
-    if (root.dataset.tagifierReady === "true") {
-      return;
-    }
-
-    root.dataset.tagifierReady = "true";
-    root.__tinycatTags = uniqueList(parseList(values));
-    TinyCat.renderTagifier(root);
   }
 
   function parsePercent(value, fallback) {
@@ -764,7 +774,6 @@
 
   function hydrateDynamic(root) {
     initUserAvatarImages(root || document);
-    qsa("[data-tagifier]", root || document).forEach(initTagifierRoot);
     qsa("[data-captcha]", root || document).forEach(initCaptchaRoot);
     qsa("[data-avatar-upload]", root || document).forEach(initAvatarUploadRoot);
     qsa("[data-status-video]", root || document).forEach(initStatusVideoRoot);
@@ -1556,7 +1565,7 @@
 
       var target = form.dataset.ajaxTarget ? qs(form.dataset.ajaxTarget) : null;
       var method = (form.getAttribute("method") || "POST").toUpperCase();
-      var action = form.getAttribute("action") || window.location.href;
+      var action = form.dataset.ajaxAction || form.getAttribute("action") || window.location.href;
       var body = new FormData(form);
       var headers = {};
       var override = body.get("_method");
@@ -1595,6 +1604,8 @@
         pushHistory(nextHistory);
       } catch (error) {
         var errors = resultErrors(error.data);
+
+        refreshFormCaptcha(form, error.data);
 
         if (errors) {
           applyErrors(form, errors);
@@ -1817,246 +1828,6 @@
         TinyCat.activateTab(next, true);
       }
     });
-  };
-
-  TinyCat.renderTagifier = function (root) {
-    var list = qs("[data-tag-list]", root);
-    var input = qs("[data-tag-input]", root);
-    var hidden = qs("[data-tag-value]", root);
-    var tags = root.__tinycatTags || [];
-    var prefix = root.dataset.tagPrefix || "";
-
-    if (list) {
-      list.innerHTML = "";
-      tags.forEach(function (value, index) {
-        var tag = document.createElement("span");
-        var remove = document.createElement("button");
-
-        tag.className = "tag";
-        tag.dataset.tag = value;
-        tag.appendChild(document.createTextNode(prefix + value));
-
-        remove.className = "tag-remove";
-        remove.type = "button";
-        remove.dataset.tagRemove = String(index);
-        remove.setAttribute("aria-label", "Remove tag");
-        remove.textContent = "x";
-        tag.appendChild(remove);
-        list.appendChild(tag);
-      });
-    }
-
-    if (hidden) {
-      hidden.value = root.dataset.tagFormat === "json" ? JSON.stringify(tags) : tags.join(",");
-    }
-
-    TinyCat.renderTagSuggestions(root, input ? input.value : "");
-  };
-
-  TinyCat.renderTagSuggestions = function (root, query) {
-    var box = qs("[data-tag-suggestions]", root);
-    var input = qs("[data-tag-input]", root);
-    var tags = root.__tinycatTags || [];
-    var prefix = root.dataset.tagPrefix || "";
-    var selected = tags.map(function (value) {
-      return value.toLowerCase();
-    });
-    var needle = String(query || "").trim().toLowerCase();
-
-    if (prefix && needle.indexOf(prefix.toLowerCase()) === 0) {
-      needle = needle.slice(prefix.length).trim();
-    }
-
-    var suggestions = uniqueList(parseList(root.dataset.suggestions))
-      .filter(function (value) {
-        var lower = value.toLowerCase();
-        return selected.indexOf(lower) === -1 && (!needle || lower.indexOf(needle) !== -1);
-      })
-      .slice(0, 8);
-
-    if (!box) {
-      return;
-    }
-
-    box.innerHTML = "";
-
-    if (suggestions.length === 0 || (!needle && input !== document.activeElement)) {
-      box.hidden = true;
-      return;
-    }
-
-    suggestions.forEach(function (value) {
-      var button = document.createElement("button");
-      button.className = "tag-suggestion";
-      button.type = "button";
-      button.dataset.tagSuggestion = value;
-      button.textContent = prefix + value;
-      box.appendChild(button);
-    });
-
-    box.hidden = false;
-  };
-
-  TinyCat.addTag = function (root, value) {
-    var clean = String(value || "").trim().replace(/\s+/g, " ");
-    var input = qs("[data-tag-input]", root);
-    var prefix = root.dataset.tagPrefix || "";
-
-    if (!clean) {
-      return;
-    }
-
-    if (prefix && clean.indexOf(prefix) === 0) {
-      clean = clean.slice(prefix.length).trim();
-    }
-
-    if (!clean) {
-      return;
-    }
-
-    root.__tinycatTags = uniqueList((root.__tinycatTags || []).concat(clean));
-
-    if (input) {
-      input.value = "";
-      input.focus();
-    }
-
-    TinyCat.renderTagifier(root);
-    emit(root, "tinycat:tags", { tags: root.__tinycatTags });
-  };
-
-  TinyCat.removeTag = function (root, index) {
-    root.__tinycatTags = (root.__tinycatTags || []).filter(function (_value, itemIndex) {
-      return itemIndex !== index;
-    });
-
-    TinyCat.renderTagifier(root);
-    emit(root, "tinycat:tags", { tags: root.__tinycatTags });
-  };
-
-  TinyCat.commitTagifierInput = function (root) {
-    var input = qs("[data-tag-input]", root);
-    var value = input ? input.value : "";
-
-    if (String(value || "").trim() !== "") {
-      TinyCat.addTag(root, value);
-    } else {
-      TinyCat.renderTagifier(root);
-    }
-  };
-
-  TinyCat.initTagifiers = function () {
-    qsa("[data-tagifier]").forEach(initTagifierRoot);
-
-    if (TinyCat.__tagifierEventsBound === true) {
-      return;
-    }
-
-    TinyCat.__tagifierEventsBound = true;
-
-    document.addEventListener("input", function (event) {
-      var input = event.target.closest && event.target.closest("[data-tag-input]");
-
-      if (input) {
-        TinyCat.renderTagSuggestions(input.closest("[data-tagifier]"), input.value);
-      }
-    });
-
-    document.addEventListener("keydown", function (event) {
-      var input = event.target.closest && event.target.closest("[data-tag-input]");
-      var root;
-
-      if (!input) {
-        return;
-      }
-
-      root = input.closest("[data-tagifier]");
-
-      if (event.key === "Enter" || event.key === ",") {
-        event.preventDefault();
-        TinyCat.addTag(root, input.value);
-      } else if (event.key === "Backspace" && input.value === "") {
-        TinyCat.removeTag(root, (root.__tinycatTags || []).length - 1);
-      } else if (event.key === "Escape") {
-        var suggestions = qs("[data-tag-suggestions]", root);
-        if (suggestions) {
-          suggestions.hidden = true;
-        }
-      }
-    });
-
-    document.addEventListener("paste", function (event) {
-      var input = event.target.closest && event.target.closest("[data-tag-input]");
-      var root;
-      var pasted;
-
-      if (!input) {
-        return;
-      }
-
-      pasted = (event.clipboardData || window.clipboardData).getData("text");
-
-      if (pasted.indexOf(",") === -1) {
-        return;
-      }
-
-      event.preventDefault();
-      root = input.closest("[data-tagifier]");
-      parseList(pasted).forEach(function (value) {
-        TinyCat.addTag(root, value);
-      });
-    });
-
-    document.addEventListener("click", function (event) {
-      var remove = event.target.closest && event.target.closest("[data-tag-remove]");
-      var suggestion = event.target.closest && event.target.closest("[data-tag-suggestion]");
-      var box = event.target.closest && event.target.closest(".tag-box");
-      var root;
-      var input;
-
-      if (remove) {
-        event.preventDefault();
-        TinyCat.removeTag(remove.closest("[data-tagifier]"), Number(remove.dataset.tagRemove));
-        return;
-      }
-
-      if (suggestion) {
-        event.preventDefault();
-        root = suggestion.closest("[data-tagifier]");
-        TinyCat.addTag(root, suggestion.dataset.tagSuggestion);
-        return;
-      }
-
-      if (box) {
-        input = qs("[data-tag-input]", box);
-
-        if (input) {
-          input.focus();
-        }
-      }
-    });
-
-    document.addEventListener("focusout", function (event) {
-      var root = event.target.closest && event.target.closest("[data-tagifier]");
-
-      if (!root) {
-        return;
-      }
-
-      window.setTimeout(function () {
-        var suggestions = qs("[data-tag-suggestions]", root);
-
-        if (suggestions && !root.contains(document.activeElement)) {
-          suggestions.hidden = true;
-        }
-      }, 120);
-    });
-
-    document.addEventListener("submit", function (event) {
-      qsa("[data-tagifier]", event.target).forEach(function (root) {
-        TinyCat.commitTagifierInput(root);
-      });
-    }, true);
   };
 
   function parseJsonArray(value) {
@@ -3100,10 +2871,8 @@
       updateDirtyForm(event.target.closest && event.target.closest('form[data-confirm-unsaved="true"]'));
     });
 
-    ["tinycat:tags", "tinycat:editor-sync"].forEach(function (name) {
-      document.addEventListener(name, function (event) {
-        updateDirtyForm(event.target.closest && event.target.closest('form[data-confirm-unsaved="true"]'));
-      });
+    document.addEventListener("tinycat:editor-sync", function (event) {
+      updateDirtyForm(event.target.closest && event.target.closest('form[data-confirm-unsaved="true"]'));
     });
   };
 
@@ -4555,7 +4324,6 @@
     TinyCat.initConfirm();
     TinyCat.initToasts();
     TinyCat.initTabs();
-    TinyCat.initTagifiers();
     TinyCat.initStatusEditors();
     qsa("[data-status-video]", document).forEach(initStatusVideoRoot);
     qsa("[data-status-link-image]", document).forEach(initStatusLinkImageRoot);

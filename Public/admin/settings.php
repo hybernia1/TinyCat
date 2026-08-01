@@ -100,7 +100,6 @@ function tc_admin_settings_sections(): array
             'fields' => [
                 ['key' => 'site.name', 'label' => t('settings.fields.site_name'), 'type' => 'text', 'default' => 'TinyCat', 'max' => 120, 'span' => true],
                 ['key' => 'site.home_title', 'label' => t('settings.fields.site_home_title'), 'type' => 'optional_text', 'default' => '', 'max' => 160, 'span' => true, 'help' => t('settings.fields.site_home_title_help')],
-                ['key' => 'site.home_intro', 'label' => t('settings.fields.site_home_intro'), 'type' => 'textarea', 'default' => '', 'max' => 500, 'span' => true, 'placeholder' => t('settings.fields.site_home_intro_placeholder')],
                 ['key' => 'site.meta_description', 'label' => t('settings.fields.site_meta_description'), 'type' => 'textarea', 'default' => '', 'max' => 500, 'span' => true, 'placeholder' => t('settings.fields.site_meta_description_placeholder'), 'help' => t('settings.fields.site_meta_description_help')],
                 ['key' => 'site.logo_url', 'path_key' => 'site.logo_path', 'label' => t('settings.fields.site_logo'), 'type' => 'site_image', 'variant' => 'logo', 'default' => '', 'compact' => true],
                 ['key' => 'site.favicon_url', 'path_key' => 'site.favicon_path', 'label' => t('settings.fields.site_favicon'), 'type' => 'site_image', 'variant' => 'favicon', 'default' => '', 'compact' => true],

@@ -666,13 +666,6 @@ final class Core
         return self::toDateTime($value)->format($format);
     }
 
-    public static function timeValue(mixed $value = null, ?string $format = null): string
-    {
-        $format ??= (string) self::config('datetime.time', 'H:i:s');
-
-        return self::toDateTime($value)->format($format);
-    }
-
     public static function dateIso(mixed $value = null): string
     {
         return self::toDateTime($value)->format((string) self::config('datetime.iso', DATE_ATOM));
@@ -808,12 +801,6 @@ final class Core
     public static function apiCreated(mixed $data = null, ?string $message = 'Created.', array $meta = []): never
     {
         self::apiOk($data, $message, 201, $meta);
-    }
-
-    public static function apiNoContent(): never
-    {
-        http_response_code(204);
-        exit;
     }
 
     public static function apiError(string $message = 'Request failed.', int $status = 400, string $code = 'error', array $details = []): never
@@ -1284,11 +1271,6 @@ final class Core
         return $key === null ? $user : self::dataGet($user, $key, $default);
     }
 
-    public static function authId(): mixed
-    {
-        return self::auth('id');
-    }
-
     public static function authCheck(): bool
     {
         return self::auth() !== null;
@@ -1384,13 +1366,6 @@ final class Core
         }
 
         self::redirect(self::authRedirectUrl($redirect ?? self::loginUrl()));
-    }
-
-    public static function guestOnly(?string $redirect = null): void
-    {
-        if (self::authCheck()) {
-            self::redirect($redirect ?? self::homeUrl());
-        }
     }
 
     public static function authIs(array|string $roles): bool
@@ -1739,11 +1714,6 @@ final class Core
     private static function loginUrl(): string
     {
         return '/login';
-    }
-
-    private static function homeUrl(): string
-    {
-        return '/admin';
     }
 
     private static function authTouchUser(mixed $id, bool $login = false): void
@@ -2450,7 +2420,6 @@ final class Core
         static $keys = [
             'site.name' => true,
             'site.home_title' => true,
-            'site.home_intro' => true,
             'site.meta_description' => true,
             'site.logo_url' => true,
             'site.logo_path' => true,

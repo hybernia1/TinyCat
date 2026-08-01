@@ -336,7 +336,6 @@ function tc_install_create_tables(): void
             email VARCHAR(254) NULL,
             email_notifications TINYINT(1) NOT NULL DEFAULT 1,
             password VARCHAR(255) NULL,
-            recovery_hash VARCHAR(128) NOT NULL,
             role VARCHAR(40) NOT NULL DEFAULT 'user',
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             locale VARCHAR(12) NULL,
@@ -353,7 +352,6 @@ function tc_install_create_tables(): void
             PRIMARY KEY (id),
             UNIQUE KEY users_username_unique (username),
             UNIQUE KEY users_email_unique (email),
-            UNIQUE KEY users_recovery_hash_unique (recovery_hash),
             KEY users_role_status_index (role, status)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
@@ -647,7 +645,6 @@ function tc_install_default_settings(array $state): void
     $defaults = [
         ['site.name', (string) config('site.name', 'TinyCat'), 'string', 'site'],
         ['site.home_title', (string) config('site.home_title', ''), 'string', 'site'],
-        ['site.home_intro', (string) config('site.home_intro', ''), 'string', 'site'],
         ['site.meta_description', (string) config('site.meta_description', ''), 'string', 'site'],
         ['site.logo_url', (string) config('site.logo_url', ''), 'string', 'site'],
         ['site.logo_path', (string) config('site.logo_path', ''), 'string', 'site'],
@@ -691,7 +688,6 @@ function tc_install_create_admin_account(string $username, string $password, str
     $data = [
         'username' => $username,
         'password' => auth_password($password),
-        'recovery_hash' => user_recovery_hash_generate(),
         'role' => 'admin',
         'status' => 'active',
         'locale' => $locale,
@@ -752,29 +748,12 @@ function tc_install_config_content(array $config): string
 
 function tc_install_schema_tables(): array
 {
-    return [
-        'users' => 'install.purpose_users',
-        'content' => 'install.purpose_content',
-        'terms' => 'install.purpose_terms',
-        'content_tags' => 'install.purpose_content_tags',
-        'links' => 'install.purpose_links',
-        'content_links' => 'install.purpose_content_links',
-        'content_likes' => 'install.purpose_content_likes',
-        'content_comments' => 'install.purpose_content_comments',
-        'comment_likes' => 'install.purpose_comment_likes',
-        'user_followers' => 'install.purpose_user_followers',
-        'notifications' => 'install.purpose_notifications',
-        'content_reports' => 'install.purpose_content_reports',
-        'bot_sources' => 'install.purpose_bot_sources',
-        'bot_feed_items' => 'install.purpose_bot_feed_items',
-        'bot_feed_history' => 'install.purpose_bot_feed_history',
-        'bot_source_runs' => 'install.purpose_bot_source_runs',
-        'ip_action_limits' => 'install.purpose_ip_action_limits',
-        'email_templates' => 'install.purpose_email_templates',
-        'password_reset_tokens' => 'install.purpose_password_reset_tokens',
-        'user_profile_links' => 'install.purpose_user_profile_links',
-        'settings' => 'install.purpose_settings',
-    ];
+    $tables = app_required_tables();
+
+    return array_combine(
+        $tables,
+        array_map(static fn (string $table): string => 'install.purpose_' . $table, $tables)
+    );
 }
 
 function tc_install_table_exists(string $table): bool
@@ -1075,7 +1054,7 @@ function tc_install_done_view(): void
             <p class="text-muted mb-0"><?= et('install.done_intro') ?></p>
             <ul class="result-list">
                 <li class="result-item"><?= icon('globe') ?> <span><?= et('common.language') ?>: <strong><?= e(locale()) ?></strong></span></li>
-                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong>users, content, terms, content_tags, links, content_links, content_likes, content_comments, comment_likes, user_followers, notifications, content_reports, ip_action_limits, email_templates, password_reset_tokens, bot_sources, bot_feed_items, bot_feed_history, bot_source_runs, settings</strong></span></li>
+                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong><?= e(implode(', ', app_required_tables())) ?></strong></span></li>
                 <li class="result-item"><?= icon('shield') ?> <span><?= et('common.account') ?>: <strong><?= et('common.done') ?></strong></span></li>
             </ul>
             <div class="btn-group">

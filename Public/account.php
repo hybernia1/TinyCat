@@ -10,8 +10,6 @@ $user = require_auth('/login');
 
 if (is_post()) {
     csrf_require();
-    $action = (string) post('action', 'password');
-
     tc_account_update_password($user);
 }
 
@@ -71,13 +69,7 @@ function tc_account_update_password(array $user): void
         $errors[] = t('account.messages.current_password_invalid');
     }
 
-    if (strlen($password) < 8) {
-        $errors[] = t('account.messages.password_short');
-    } elseif (auth_password_too_long($password)) {
-        $errors[] = t('account.messages.password_too_long');
-    } elseif ($password !== $passwordConfirm) {
-        $errors[] = t('account.messages.password_mismatch');
-    }
+    $errors = array_merge($errors, auth_password_validation_errors($password, $passwordConfirm));
 
     if ($errors !== []) {
         flash('error', implode(' ', $errors));

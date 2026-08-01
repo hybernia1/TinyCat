@@ -44,7 +44,7 @@ layout('layout', [
             ]) ?>
 
             <?= tc_privacy_card('privacy.recovery_title', 'key', [
-                'privacy.recovery_hash',
+                'privacy.recovery_email',
                 'privacy.recovery_no_contact',
                 'privacy.recovery_lost',
                 'privacy.recovery_rotation',

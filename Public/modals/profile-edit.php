@@ -40,7 +40,7 @@ ob_start();
     </label>
     <label class="field profile-modal-span">
         <span class="label"><?= et('common.email') ?></span>
-        <input class="input" type="email" name="email" value="<?= e((string) ($user['email'] ?? '')) ?>" maxlength="254" autocomplete="email"<?= $autofocus('email') ?>>
+        <input class="input" type="email" name="email" value="<?= e((string) ($user['email'] ?? '')) ?>" maxlength="<?= user_email_max_length() ?>" autocomplete="email"<?= $autofocus('email') ?>>
         <span class="help"><?= et('account.email_optional') ?></span>
     </label>
     <label class="field profile-modal-span">

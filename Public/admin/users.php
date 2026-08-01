@@ -34,14 +34,14 @@ if ($adminUsersApi === 'update') {
     api_endpoint('PATCH', static function (): never {
         csrf_require();
         $id = max(1, (int) input('id'));
+        $existing = tc_admin_user_by_id($id);
 
-        if (!tc_admin_user_exists($id)) {
+        if ($existing === null) {
             api_error(t('users.messages.not_found'), 404, 'user_not_found');
         }
 
-        $existing = tc_admin_user_by_id($id);
         $profileLinks = profile_links_from_input();
-        $avatar = tc_admin_user_avatar_change((array) $existing);
+        $avatar = tc_admin_user_avatar_change($existing);
         $payload = tc_admin_user_payload($id);
 
         if ($avatar['changed']) {
@@ -74,14 +74,14 @@ if ($adminUsersApi === 'delete') {
     api_endpoint('DELETE', static function (): never {
         csrf_require();
         $id = max(1, (int) input('id'));
+        $user = tc_admin_user_by_id($id);
 
-        if (!tc_admin_user_exists($id)) {
+        if ($user === null) {
             api_error(t('users.messages.not_found'), 404, 'user_not_found');
         }
 
-        tc_admin_user_require_deletable($id);
+        tc_admin_user_require_deletable($user);
 
-        $user = tc_admin_user_by_id($id);
         if ((string) ($user['role'] ?? '') === 'bot') {
             bot_delete_sources_for_user($id);
         }
@@ -234,7 +234,8 @@ function tc_admin_users_filter_sql(array $filters): array
 
     if ($filters['q'] !== '') {
         $like = tc_admin_user_like($filters['q']);
-        $clauses[] = 'username LIKE ? ESCAPE \'\\\\\'';
+        $clauses[] = '(username LIKE ? ESCAPE \'\\\\\' OR email LIKE ? ESCAPE \'\\\\\')';
+        $params[] = $like;
         $params[] = $like;
     }
 
@@ -264,11 +265,6 @@ function tc_admin_users_filter_sql(array $filters): array
     ];
 }
 
-function tc_admin_users(?array $filters = null): array
-{
-    return tc_admin_users_page($filters)['items'];
-}
-
 function tc_admin_users_page(?array $filters = null): array
 {
     $filters ??= tc_admin_users_filters();
@@ -290,11 +286,21 @@ function tc_admin_users_page(?array $filters = null): array
 
 function tc_admin_users_stats(): array
 {
+    $stats = one(
+        'SELECT COUNT(*) AS total,
+            SUM(status = ?) AS active,
+            SUM(status = ?) AS waiting,
+            SUM(status = ?) AS ban
+        FROM users
+        WHERE role <> ?',
+        ['active', 'waiting', 'ban', 'bot']
+    ) ?? [];
+
     return [
-        'total' => (int) val('SELECT COUNT(*) FROM users WHERE role <> ?', ['bot']),
-        'active' => (int) val('SELECT COUNT(*) FROM users WHERE role <> ? AND status = ?', ['bot', 'active']),
-        'waiting' => (int) val('SELECT COUNT(*) FROM users WHERE role <> ? AND status = ?', ['bot', 'waiting']),
-        'ban' => (int) val('SELECT COUNT(*) FROM users WHERE role <> ? AND status = ?', ['bot', 'ban']),
+        'total' => (int) ($stats['total'] ?? 0),
+        'active' => (int) ($stats['active'] ?? 0),
+        'waiting' => (int) ($stats['waiting'] ?? 0),
+        'ban' => (int) ($stats['ban'] ?? 0),
     ];
 }
 
@@ -373,9 +379,9 @@ function tc_admin_user_is_super_admin(array|int $user): bool
     return $id > 0 && $id === tc_admin_super_admin_id();
 }
 
-function tc_admin_user_require_deletable(int $id): void
+function tc_admin_user_require_deletable(array|int $user): void
 {
-    $user = tc_admin_user_by_id($id);
+    $user = is_array($user) ? $user : tc_admin_user_by_id($user);
 
     if ($user !== null && tc_admin_user_is_super_admin($user)) {
         api_error(t('users.messages.super_admin_protected'), 409, 'super_admin_protected');
@@ -406,31 +412,12 @@ function tc_admin_user_resource(array $user): array
     ];
 }
 
-function tc_admin_user_exists(int $id): bool
-{
-    return total('users', ['id' => $id]) > 0;
-}
-
-function tc_admin_username_taken(string $username, ?int $ignoreId = null): bool
-{
-    $username = username_normalize($username);
-    $params = ['username' => $username];
-    $sql = 'SELECT COUNT(*) FROM users WHERE username = :username';
-
-    if ($ignoreId !== null) {
-        $sql .= ' AND id <> :id';
-        $params['id'] = $ignoreId;
-    }
-
-    return (int) val($sql, $params) > 0;
-}
-
 function tc_admin_user_payload(?int $id = null): array
 {
     $existing = $id === null ? null : tc_admin_user_by_id($id);
-    $passwordRule = 'nullable|string|min:8|max:200';
+    $passwordRule = 'nullable|string|min:8|max:' . auth_password_max_length();
     $rules = [
-        'email' => 'nullable|string|max:254',
+        'email' => 'nullable|string|max:' . user_email_max_length(),
         'password' => $passwordRule,
         'role' => 'required|string|in:' . implode(',', array_keys(tc_admin_roles())),
         'status' => 'required|string|in:' . implode(',', array_keys(tc_admin_statuses())),
@@ -449,7 +436,7 @@ function tc_admin_user_payload(?int $id = null): array
             api_validation(['username' => [t('users.messages.username_invalid')]]);
         }
 
-        if (tc_admin_username_taken($username)) {
+        if (user_username_taken($username)) {
             api_validation(['username' => [t('users.messages.username_taken')]]);
         }
     }
@@ -502,10 +489,6 @@ function tc_admin_user_payload(?int $id = null): array
         $payload['password'] = auth_password($password);
     }
 
-    if ($id === null) {
-        $payload['recovery_hash'] = user_recovery_hash_generate();
-    }
-
     return $payload;
 }
 
@@ -545,7 +528,7 @@ function tc_admin_user_validation_messages(): array
         'password.required' => t('users.validation.password_required'),
         'password.string' => t('users.validation.password_required'),
         'password.min' => t('users.validation.password_min'),
-        'password.max' => t('users.validation.password_max'),
+        'password.max' => t('users.validation.password_max', ['max' => (string) auth_password_max_length()]),
         'role.required' => t('users.validation.role_required'),
         'role.string' => t('users.validation.role_invalid'),
         'role.in' => t('users.validation.role_invalid'),
@@ -586,33 +569,6 @@ function tc_admin_datetime(string $value): string
 function tc_admin_datetime_iso(string $value): string
 {
     return $value === '' ? '' : date_iso($value);
-}
-
-function tc_admin_users_stats_html(array $stats): string
-{
-    ob_start();
-    ?>
-    <article class="card">
-        <div class="card-body stack">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon('users', 'icon text-primary') ?> <?= et('users.stats.total') ?></h2>
-            <p class="text-2xl m-0"><strong><?= e($stats['total']) ?></strong></p>
-        </div>
-    </article>
-    <article class="card">
-        <div class="card-body stack">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon('check-circle', 'icon text-success') ?> <?= et('users.stats.active') ?></h2>
-            <p class="text-2xl m-0"><strong><?= e($stats['active']) ?></strong></p>
-        </div>
-    </article>
-    <article class="card">
-        <div class="card-body stack">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon('database', 'icon text-primary') ?> <?= et('users.stats.table') ?></h2>
-            <p class="text-muted mb-0"><code>users</code></p>
-        </div>
-    </article>
-    <?php
-
-    return trim((string) ob_get_clean());
 }
 
 function tc_admin_users_html(): string
@@ -831,7 +787,7 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
                     </label>
                     <label class="field">
                         <span class="label"><?= et('common.email') ?></span>
-                        <input class="input input-lg" type="email" name="email" autocomplete="email" maxlength="254" value="<?= e((string) ($user['email'] ?? '')) ?>">
+                        <input class="input input-lg" type="email" name="email" autocomplete="email" maxlength="<?= user_email_max_length() ?>" value="<?= e((string) ($user['email'] ?? '')) ?>">
                         <span class="help"><?= et('account.email_optional') ?></span>
                     </label>
                 </div>
@@ -853,7 +809,7 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
             <section class="user-editor-panel">
                 <label class="field">
                     <span class="label"><?= $create ? et('common.password') : et('common.new_password') ?></span>
-                    <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="200" placeholder="<?= $create ? et('users.password_bot_optional') : et('users.password_keep') ?>">
+                    <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" placeholder="<?= $create ? et('users.password_bot_optional') : et('users.password_keep') ?>">
                 </label>
             </section>
 

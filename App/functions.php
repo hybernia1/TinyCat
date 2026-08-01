@@ -43,7 +43,29 @@ function db(): PDO
 
 function app_required_tables(): array
 {
-    return ['users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_likes', 'content_comments', 'comment_likes', 'user_followers', 'notifications', 'content_reports', 'ip_action_limits', 'email_templates', 'password_reset_tokens', 'bot_sources', 'bot_feed_items', 'bot_feed_history', 'bot_source_runs', 'settings'];
+    return [
+        'users',
+        'content',
+        'terms',
+        'content_tags',
+        'links',
+        'content_links',
+        'content_likes',
+        'content_comments',
+        'comment_likes',
+        'user_followers',
+        'user_profile_links',
+        'notifications',
+        'content_reports',
+        'ip_action_limits',
+        'email_templates',
+        'password_reset_tokens',
+        'bot_sources',
+        'bot_feed_items',
+        'bot_feed_history',
+        'bot_source_runs',
+        'settings',
+    ];
 }
 
 function site_name(): string
@@ -56,11 +78,6 @@ function site_home_title(): string
     $title = trim((string) config('site.home_title', ''));
 
     return $title !== '' ? $title : site_name();
-}
-
-function site_home_intro(): string
-{
-    return trim((string) config('site.home_intro', ''));
 }
 
 function site_meta_description(): string
@@ -577,6 +594,13 @@ function auth_request_next_url(): string
     return auth_referer_next_url();
 }
 
+function auth_url_with_next(string $path, string $next = ''): string
+{
+    $next = auth_safe_next_url($next);
+
+    return $path . ($next !== '' ? '?next=' . rawurlencode($next) : '');
+}
+
 function auth_redirect_after_login(?array $user, string $next = ''): string
 {
     $fallback = auth_landing_url($user);
@@ -593,6 +617,60 @@ function auth_redirect_after_login(?array $user, string $next = ''): string
     return $next;
 }
 
+function auth_login_credentials(): array
+{
+    return [
+        'username' => trim((string) input('username', '')),
+        'password' => (string) input('password', ''),
+        'remember' => input('remember', ''),
+    ];
+}
+
+function auth_form_state_from_request(string $context): array
+{
+    return match ($context) {
+        'login' => [
+            'username' => auth_form_text_input('username', user_email_max_length()),
+            'remember' => (string) input('remember', '') === '1',
+        ],
+        'register' => [
+            'username' => username_normalize(auth_form_text_input('username', 32)),
+            'email' => user_email_normalize(auth_form_text_input('email', user_email_max_length())),
+            'platform_terms' => (string) input('platform_terms', '') === '1',
+        ],
+        default => [],
+    };
+}
+
+function auth_form_state_remember(string $context): void
+{
+    if (!in_array($context, ['login', 'register'], true)) {
+        return;
+    }
+
+    flash('auth_form_' . $context, auth_form_state_from_request($context));
+}
+
+function auth_form_state_old(string $context): array
+{
+    if (!in_array($context, ['login', 'register'], true)) {
+        return [];
+    }
+
+    $state = flash('auth_form_' . $context);
+
+    return is_array($state) ? $state : [];
+}
+
+function auth_form_text_input(string $key, int $maxLength): string
+{
+    $value = trim((string) input($key, ''));
+
+    return function_exists('mb_substr')
+        ? mb_substr($value, 0, $maxLength)
+        : substr($value, 0, $maxLength);
+}
+
 function auth_login_request(): array
 {
     if (!captcha_check('login')) {
@@ -602,20 +680,7 @@ function auth_login_request(): array
         ]);
     }
 
-    $password = (string) input('password', '');
-
-    if (auth_password_too_long($password)) {
-        captcha_refresh('login');
-        api_error(t('auth.invalid_login'), 422, 'invalid_login', [
-            'captcha_html' => captcha_field('login'),
-        ]);
-    }
-
-    if (!auth_attempt([
-        'username' => trim((string) input('username', '')),
-        'password' => $password,
-        'remember' => input('remember', ''),
-    ])) {
+    if (!auth_attempt(auth_login_credentials())) {
         captcha_refresh('login');
         api_error(t('auth.invalid_login'), 422, 'invalid_login', [
             'captcha_html' => captcha_field('login'),
@@ -643,6 +708,84 @@ function auth_password_too_long(string $password): bool
     return strlen($password) > auth_password_max_length();
 }
 
+function auth_password_validation_errors(string $password, string $passwordConfirm): array
+{
+    if (strlen($password) < 8) {
+        return [t('account.messages.password_short')];
+    }
+
+    if (auth_password_too_long($password)) {
+        return [t('account.messages.password_too_long')];
+    }
+
+    if ($password !== $passwordConfirm) {
+        return [t('account.messages.password_mismatch')];
+    }
+
+    return [];
+}
+
+function registration_input(): array
+{
+    $username = username_normalize((string) input('username', ''));
+    $email = user_email_normalize((string) input('email', ''));
+    $password = (string) input('password', '');
+    $errors = [];
+
+    if (!username_valid($username)) {
+        $errors[] = t('account.messages.username_invalid');
+    } elseif (user_username_taken($username)) {
+        $errors[] = t('account.messages.username_taken');
+    }
+
+    if ($email !== '' && !user_email_valid($email)) {
+        $errors[] = t('account.messages.email_invalid');
+    } elseif ($email !== '' && user_email_taken($email)) {
+        $errors[] = t('account.messages.email_taken');
+    }
+
+    $errors = array_merge(
+        $errors,
+        auth_password_validation_errors($password, (string) input('password_confirm', ''))
+    );
+
+    if ((string) input('platform_terms', '') !== '1') {
+        $errors[] = t('auth.platform_terms_required');
+    }
+
+    return [
+        'username' => $username,
+        'email' => $email,
+        'password' => $password,
+        'errors' => $errors,
+    ];
+}
+
+function registration_create_user(array $registration): array
+{
+    $status = registration_auto_approve() ? 'active' : 'waiting';
+    $userId = (int) insert('users', [
+        'username' => (string) ($registration['username'] ?? ''),
+        'email' => ($registration['email'] ?? '') !== '' ? (string) $registration['email'] : null,
+        'password' => auth_password((string) ($registration['password'] ?? '')),
+        'role' => 'user',
+        'status' => $status,
+        'locale' => locale(),
+        'theme' => 'system',
+        'bio' => '',
+    ]);
+
+    email_template_send('welcome', $userId, [
+        'login_url' => absolute_url('/login'),
+    ]);
+
+    return [
+        'user_id' => $userId,
+        'status' => $status,
+        'approved' => $status === 'active',
+    ];
+}
+
 function registration_request(): array
 {
     $next = auth_request_next_url();
@@ -658,35 +801,8 @@ function registration_request(): array
         ]);
     }
 
-    $username = username_normalize((string) input('username', ''));
-    $email = user_email_normalize((string) input('email', ''));
-    $password = (string) input('password', '');
-    $passwordConfirm = (string) input('password_confirm', '');
-    $errors = [];
-
-    if (!username_valid($username)) {
-        $errors[] = t('account.messages.username_invalid');
-    } elseif (user_username_taken($username)) {
-        $errors[] = t('account.messages.username_taken');
-    }
-
-    if ($email !== '' && !user_email_valid($email)) {
-        $errors[] = t('account.messages.email_invalid');
-    } elseif ($email !== '' && user_email_taken($email)) {
-        $errors[] = t('account.messages.email_taken');
-    }
-
-    if (strlen($password) < 8) {
-        $errors[] = t('account.messages.password_short');
-    } elseif (auth_password_too_long($password)) {
-        $errors[] = t('account.messages.password_too_long');
-    } elseif ($password !== $passwordConfirm) {
-        $errors[] = t('account.messages.password_mismatch');
-    }
-
-    if ((string) input('platform_terms', '') !== '1') {
-        $errors[] = t('auth.platform_terms_required');
-    }
+    $registration = registration_input();
+    $errors = (array) $registration['errors'];
 
     if ($errors !== []) {
         captcha_refresh('register');
@@ -696,31 +812,22 @@ function registration_request(): array
         ]);
     }
 
-    $status = registration_auto_approve() ? 'active' : 'waiting';
-    $userId = (int) insert('users', [
-        'username' => $username,
-        'email' => $email !== '' ? $email : null,
-        'password' => auth_password($password),
-        'role' => 'user',
-        'status' => $status,
-        'locale' => locale(),
-        'theme' => 'system',
-        'bio' => '',
-        'recovery_hash' => user_recovery_hash_generate(),
-    ]);
+    try {
+        $result = registration_create_user($registration);
+    } catch (Throwable $exception) {
+        captcha_refresh('register');
+        error_log('Registration API failed: ' . $exception->getMessage());
+        api_error(t('auth.registration_failed'), 500, 'registration_failed', [
+            'captcha_html' => captcha_field('register'),
+        ]);
+    }
 
-    email_template_send('welcome', $userId, [
-        'login_url' => absolute_url('/login'),
-    ]);
+    $userId = (int) $result['user_id'];
+    $status = (string) $result['status'];
 
     captcha_refresh('register');
 
-    $data = [
-        'user_id' => $userId,
-        'status' => $status,
-        'approved' => $status === 'active',
-        'redirect' => '/login' . ($next !== '' ? '?next=' . rawurlencode($next) : ''),
-    ];
+    $data = $result + ['redirect' => auth_url_with_next('/login', $next)];
 
     if ($status === 'active') {
         auth_login($userId);
@@ -784,9 +891,14 @@ function user_email_normalize(string $email): string
     return strtolower(trim($email));
 }
 
+function user_email_max_length(): int
+{
+    return 254;
+}
+
 function user_email_valid(string $email): bool
 {
-    return strlen($email) <= 254 && filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    return strlen($email) <= user_email_max_length() && filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
 function user_email_taken(string $email, ?int $ignoreId = null): bool
@@ -1011,62 +1123,6 @@ function email_smtp_send(string $to, string $subject, string $body): bool
     $write('QUIT');
     fclose($socket);
     return true;
-}
-
-function user_recovery_hash_generate(): string
-{
-    return bin2hex(random_bytes(32));
-}
-
-function user_recovery_hash_ensure(array $user): string
-{
-    $id = (int) ($user['id'] ?? 0);
-    $hash = trim((string) ($user['recovery_hash'] ?? ''));
-
-    if ($hash !== '' || $id < 1) {
-        return $hash;
-    }
-
-    $hash = user_recovery_hash_generate();
-    update('users', ['recovery_hash' => $hash], ['id' => $id]);
-
-    return $hash;
-}
-
-function user_recovery_hash_rotate(int $id): string
-{
-    if ($id < 1) {
-        return '';
-    }
-
-    $hash = user_recovery_hash_generate();
-    update('users', ['recovery_hash' => $hash], ['id' => $id]);
-
-    return $hash;
-}
-
-function user_recovery_hash_normalize(string $hash): string
-{
-    $hash = strtolower(trim($hash));
-
-    return preg_match('/^[a-f0-9]{64,128}$/', $hash) === 1 ? $hash : '';
-}
-
-function user_find_by_recovery_hash(string $hash): ?array
-{
-    $hash = user_recovery_hash_normalize($hash);
-
-    if ($hash === '') {
-        return null;
-    }
-
-    return one(
-        'SELECT *
-            FROM users
-            WHERE recovery_hash = ? AND status = ? AND role <> ?
-            LIMIT 1',
-        [$hash, 'active', 'bot']
-    );
 }
 
 function moderation_user_post_count(int $userId): int
@@ -1337,6 +1393,20 @@ function profile_link_social_domains(): array
     ];
 }
 
+function profile_links_schema_sql(): string
+{
+    return "CREATE TABLE IF NOT EXISTS user_profile_links (
+        user_id INT UNSIGNED NOT NULL,
+        link_type VARCHAR(32) NOT NULL,
+        link_url VARCHAR(2048) NOT NULL,
+        position_index INT UNSIGNED NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, link_type),
+        KEY user_profile_links_type_index (link_type, user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+}
+
 function profile_links_schema_ensure(): void
 {
     static $ready = false;
@@ -1344,18 +1414,7 @@ function profile_links_schema_ensure(): void
         return;
     }
 
-    run(
-        "CREATE TABLE IF NOT EXISTS user_profile_links (
-            user_id INT UNSIGNED NOT NULL,
-            link_type VARCHAR(32) NOT NULL,
-            link_url VARCHAR(2048) NOT NULL,
-            position_index INT UNSIGNED NOT NULL DEFAULT 0,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (user_id, link_type),
-            KEY user_profile_links_type_index (link_type, user_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
+    run(profile_links_schema_sql());
     run("DELETE FROM user_profile_links WHERE link_type NOT IN ('website', 'x', 'instagram', 'facebook')");
     $ready = true;
 }
@@ -1494,7 +1553,7 @@ function user_profile_links_sync(int $userId, array $links): void
     if ($userId < 1) {
         return;
     }
-    profile_links_schema_ensure();
+
     delete('user_profile_links', ['user_id' => $userId]);
     foreach ($links as $type => $link) {
         if (!array_key_exists((string) $type, profile_link_types())) {
@@ -6824,10 +6883,10 @@ function bot_cron_token_rotate(): string
 
 function bot_cron_request_token(): string
 {
-    $authorization = trim((string) ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? ''));
+    $bearer = Core::bearerToken();
 
-    if (preg_match('/^Bearer\s+(.+)$/i', $authorization, $match) === 1) {
-        return trim((string) ($match[1] ?? ''));
+    if ($bearer !== null) {
+        return $bearer;
     }
 
     $header = trim((string) ($_SERVER['HTTP_X_TINYCAT_CRON'] ?? ''));
@@ -7581,6 +7640,11 @@ function maintenance_cleanup_tasks(): array
             'label' => t('maintenance.tasks.old_action_limits'),
             'description' => t('maintenance.tasks.old_action_limits_help'),
         ],
+        'old_password_reset_tokens' => [
+            'icon' => 'key',
+            'label' => t('maintenance.tasks.old_password_reset_tokens'),
+            'description' => t('maintenance.tasks.old_password_reset_tokens_help'),
+        ],
         'old_read_notifications' => [
             'icon' => 'bell',
             'label' => t('maintenance.tasks.old_read_notifications'),
@@ -7683,6 +7747,13 @@ function maintenance_cleanup_has_rows(string $task): bool
                 LIMIT 1',
             [date_db('-30 days')]
         ),
+        'old_password_reset_tokens' => val(
+            'SELECT 1
+                FROM password_reset_tokens
+                WHERE used_at IS NOT NULL OR expires_at < ?
+                LIMIT 1',
+            [date_db()]
+        ),
         'old_read_notifications' => val(
             'SELECT 1
                 FROM notifications
@@ -7726,6 +7797,12 @@ function maintenance_cleanup_delete(string $task, int $batchSize): int
                 WHERE bucket_start < ?
                 LIMIT ' . $batchSize,
             [date_db('-30 days')]
+        ),
+        'old_password_reset_tokens' => maintenance_cleanup_delete_limited(
+            'DELETE FROM password_reset_tokens
+                WHERE used_at IS NOT NULL OR expires_at < ?
+                LIMIT ' . $batchSize,
+            [date_db()]
         ),
         'old_read_notifications' => maintenance_cleanup_delete_limited(
             'DELETE FROM notifications
@@ -7898,11 +7975,6 @@ function asset(string $path, ?bool $version = null): string
 function icon(string $name, string $class = 'icon', ?string $label = null, array $attributes = []): string
 {
     return Core::icon($name, $class, $label, $attributes);
-}
-
-function q(string $sql, array $params = []): PDOStatement
-{
-    return Core::query($sql, $params);
 }
 
 function query(string $sql, array $params = []): PDOStatement
@@ -8171,11 +8243,6 @@ function html_attributes(array $attributes): string
     }
 
     return $html;
-}
-
-function h(mixed $value): string
-{
-    return Core::e($value);
 }
 
 function t(string $key, array $replace = [], ?string $locale = null): string
@@ -8613,11 +8680,6 @@ function render(string $template, array $data = [], ?string $directory = null): 
     return Core::render($template, $data, $directory);
 }
 
-function view(string $template, array $data = [], ?string $directory = null): string
-{
-    return Core::render($template, $data, $directory);
-}
-
 function part(string $template, array $data = []): string
 {
     return trim(render('parts/' . trim($template, '/'), $data));
@@ -8631,11 +8693,6 @@ function layout(string $template, array $data = [], mixed $content = null, ?stri
 function json(mixed $data, int $status = 200): never
 {
     Core::json($data, $status);
-}
-
-function api(mixed $data = null, ?string $message = null, int $status = 200, array $meta = []): never
-{
-    Core::apiOk($data, $message, $status, $meta);
 }
 
 function api_ok(mixed $data = null, ?string $message = null, int $status = 200, array $meta = []): never
@@ -8703,11 +8760,6 @@ function autoroute(?string $path = null, ?string $directory = null): bool
 function route_path(?string $path = null): string
 {
     return Core::path($path);
-}
-
-function body(?string $key = null, mixed $default = null): mixed
-{
-    return Core::payload($key, $default);
 }
 
 function payload(?string $key = null, mixed $default = null): mixed

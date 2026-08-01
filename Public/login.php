@@ -6,43 +6,38 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
+$next = auth_request_next_url();
+
 if (is_post()) {
     csrf_require();
 
+    $credentials = auth_login_credentials();
+
     if (!captcha_check('login')) {
         captcha_refresh('login');
+        auth_form_state_remember('login');
         flash('error', t('auth.invalid_captcha'));
-        redirect('/login?next=' . rawurlencode(tc_login_next()));
+        redirect(auth_url_with_next('/login', $next));
     }
 
-    $password = (string) post('password', '');
-
-    if (auth_password_too_long($password)) {
+    if (auth_attempt($credentials)) {
         captcha_refresh('login');
-        flash('error', t('auth.invalid_login'));
-        redirect('/login?next=' . rawurlencode(tc_login_next()));
-    }
-
-    if (auth_attempt([
-        'username' => trim((string) post('username', '')),
-        'password' => $password,
-        'remember' => post('remember', ''),
-    ])) {
-        captcha_refresh('login');
-        redirect(tc_login_redirect(auth()));
+        redirect(auth_redirect_after_login(auth(), $next));
     }
 
     captcha_refresh('login');
+    auth_form_state_remember('login');
     flash('error', t('auth.invalid_login'));
-    redirect('/login?next=' . rawurlencode(tc_login_next()));
+    redirect(auth_url_with_next('/login', $next));
 }
 
 if (auth_check()) {
-    redirect(tc_login_redirect(auth()));
+    redirect(auth_redirect_after_login(auth(), $next));
 }
 
 $error = flash('error');
 $message = flash('success');
+$old = auth_form_state_old('login');
 
 layout('layout', [
     'title' => t('auth.login_title'),
@@ -54,7 +49,7 @@ layout('layout', [
         'image' => site_meta_image_url(),
         'robots' => 'noindex,follow',
     ],
-], static function () use ($error, $message): void {
+], static function () use ($error, $message, $next, $old): void {
     ?>
     <section class="max-w-auth-sm mx-auto">
         <article class="card">
@@ -69,20 +64,19 @@ layout('layout', [
                 <?php if ($message): ?>
                     <div class="alert alert-success"><?= e($message) ?></div>
                 <?php endif; ?>
-                <?php $next = tc_login_next(); ?>
-                <form class="stack" method="post" action="/login<?= $next !== '' ? '?next=' . e(rawurlencode($next)) : '' ?>">
+                <form class="stack" method="post" action="<?= e(auth_url_with_next('/login', $next)) ?>" data-ajax-form data-ajax-action="/api/auth/login">
                     <?= csrf_field() ?>
                     <input type="hidden" name="next" value="<?= e($next) ?>">
                     <label class="field">
                         <span class="label"><?= et('auth.login_identifier') ?></span>
-                        <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                        <input class="input" name="username" value="<?= e((string) ($old['username'] ?? '')) ?>" autocomplete="username" autocapitalize="none" spellcheck="false" required>
                     </label>
                     <label class="field">
                         <span class="label"><?= et('common.password') ?></span>
                         <input class="input" type="password" name="password" autocomplete="current-password" maxlength="<?= auth_password_max_length() ?>" required>
                     </label>
                     <label class="check-line">
-                        <input type="checkbox" name="remember" value="1">
+                        <input type="checkbox" name="remember" value="1"<?= !empty($old['remember']) ? ' checked' : '' ?>>
                         <span><?= et('auth.remember_me') ?></span>
                     </label>
                     <?= captcha_field('login') ?>
@@ -95,7 +89,7 @@ layout('layout', [
                 <?php if (registration_enabled()): ?>
                     <div class="cluster gap-2">
                         <span class="text-muted"><?= et('auth.no_account') ?></span>
-                        <a class="btn btn-secondary btn-sm" href="/register<?= $next !== '' ? '?next=' . e(rawurlencode($next)) : '' ?>"><?= icon('user-plus') ?> <span><?= et('auth.register_link') ?></span></a>
+                        <a class="btn btn-secondary btn-sm" href="<?= e(auth_url_with_next('/register', $next)) ?>"><?= icon('user-plus') ?> <span><?= et('auth.register_link') ?></span></a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -103,30 +97,3 @@ layout('layout', [
     </section>
     <?php
 });
-
-function tc_login_next(): string
-{
-    $next = auth_safe_next_url((string) post('next', (string) get('next', '')));
-
-    if ($next !== '') {
-        return $next;
-    }
-
-    return auth_referer_next_url();
-}
-
-function tc_login_redirect(?array $user): string
-{
-    $fallback = auth_landing_url($user);
-    $next = tc_login_next();
-
-    if ($next === '') {
-        return $fallback;
-    }
-
-    if (str_starts_with(route_path($next), '/admin') && (string) ($user['role'] ?? '') !== 'admin') {
-        return auth_landing_url($user);
-    }
-
-    return $next;
-}

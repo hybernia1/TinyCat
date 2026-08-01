@@ -29,23 +29,15 @@ function tinycat_run_updates(): array
     );
     $applied = [];
 
+    // MySQL commits DDL implicitly, so migrations must be repeatable and are recorded only after success.
     foreach (tinycat_migrations() as $version => $migration) {
         if (isset($appliedVersions[$version])) {
             continue;
         }
 
-        $pdo->beginTransaction();
-        try {
-            $migration($pdo);
-            $pdo->prepare('INSERT INTO schema_migrations (version) VALUES (?)')->execute([$version]);
-            $pdo->commit();
-            $applied[] = $version;
-        } catch (Throwable $exception) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            throw $exception;
-        }
+        $migration($pdo);
+        $pdo->prepare('INSERT INTO schema_migrations (version) VALUES (?)')->execute([$version]);
+        $applied[] = $version;
     }
 
     return [
@@ -195,6 +187,16 @@ function tinycat_migrations(): array
                 $template->execute([$key]);
             }
         },
+        '20260801_profile_links_and_legacy_cleanup' => static function (PDO $pdo): void {
+            $pdo->exec(profile_links_schema_sql());
+            $pdo->exec("DELETE FROM user_profile_links WHERE link_type NOT IN ('website', 'x', 'instagram', 'facebook')");
+
+            if (tinycat_schema_column_exists($pdo, 'users', 'recovery_hash')) {
+                $pdo->exec('ALTER TABLE users DROP COLUMN recovery_hash');
+            }
+
+            $pdo->exec("DELETE FROM settings WHERE setting_key = 'site.home_intro'");
+        },
     ];
 }
 
@@ -220,7 +222,7 @@ function tinycat_schema_unique_column_index_exists(PDO $pdo, string $table, stri
     return (int) $statement->fetchColumn() > 0;
 }
 
-if (PHP_SAPI === 'cli') {
+if (PHP_SAPI === 'cli' && realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === __FILE__) {
     try {
         $result = tinycat_run_updates();
         fwrite(STDOUT, (string) $result['message'] . "\n");
