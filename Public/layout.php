@@ -59,7 +59,6 @@ $defaultAdminNav = [
         ],
     ],
     ['href' => '/admin/maintenance', 'icon' => 'database', 'label' => t('maintenance.title')],
-    ['href' => '/admin/updates', 'icon' => 'refresh', 'label' => t('updates.title')],
     ['href' => '/admin/settings', 'icon' => 'settings', 'label' => t('settings.title')],
     ['href' => '/admin/email-templates', 'icon' => 'mail', 'label' => t('settings.email_templates_title')],
 ];
@@ -269,7 +268,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                         <?= icon('user') ?>
                         <span>
                             <strong><?= e($adminIdentity) ?></strong>
-                            <small><?= e($adminIdentity) ?></small>
+                            <small>TinyCat v<?= e(Core::VERSION) ?></small>
                         </span>
                     </div>
                     <form action="/logout" method="post" data-confirm="<?= et('auth.logout_confirm') ?>" data-confirm-title="<?= et('auth.logout_title') ?>" data-confirm-ok="<?= et('common.logout') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">

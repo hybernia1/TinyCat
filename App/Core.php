@@ -14,6 +14,8 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
+    public const string VERSION = '1.0.0';
+
     private static array $config = [];
     private static ?PDO $pdo = null;
     private static ?string $locale = null;

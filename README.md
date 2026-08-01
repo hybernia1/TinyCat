@@ -4,6 +4,8 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
+Current release: **1.0.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
+
 ## Features
 
 - Public and following-only feeds with incremental loading.
@@ -12,7 +14,7 @@ The application runs without Composer packages, a JavaScript package manager, or
 - Search across posts, users, tags, and metadata extracted from linked pages.
 - HTML5 link previews with Open Graph, video embeds, and cached metadata.
 - Optional email recovery and localized email notifications through PHP mail or SMTP.
-- Administration for users, site settings, email templates, updates, maintenance, moderation reports, account muting, and blocked domains.
+- Administration for users, site settings, email templates, maintenance, moderation reports, account muting, and blocked domains.
 - Passwordless bot accounts that publish from independently scheduled RSS or Atom sources without duplicating imported items.
 - Author and tag feeds, XML sitemaps, `robots.txt`, `llms.txt`, and a generated web app manifest.
 - English and Czech interfaces with mobile-first CSS and lightweight JavaScript.
@@ -37,19 +39,11 @@ The PHP `exif` extension improves JPEG orientation handling but is optional. Apa
 5. Open `/install` and select a language.
 6. Enter the database connection, create the schema, and create the first administrator account.
 
-The final installer step writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root no longer needs to remain writable.
+The installer creates the complete TinyCat 1.0.0 schema and writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root no longer needs to remain writable.
 
 Use HTTPS in production. The supplied Apache rules prevent direct web access to `config.php`, `App/`, `lang/`, and private `storage/` content; equivalent protection is required if the application is adapted to another web server.
 
-## Updates
-
-Back up the database and local files before deploying a new revision. Then run pending migrations from the repository root with the same PHP 8.4 runtime used by the web server:
-
-```bash
-php update.php
-```
-
-Administrators can run the same updater from `/admin/updates`. Migrations are repeatable and recorded in `schema_migrations`; ordinary web requests never change the schema.
+TinyCat 1.0.0 is a clean installation baseline. It contains no pre-1.0 database migrations or compatibility layer for older schemas; an existing installation must already match the 1.0.0 schema before this code is deployed.
 
 ## RSS and Atom bots
 
@@ -86,7 +80,6 @@ See `/privacy` on an installed site for the user-facing data and cookie policy g
 
 - `index.php` is the HTTP front controller and route registry.
 - `cron.php` runs scheduled bot imports from CLI or an authenticated HTTP request.
-- `update.php` contains the versioned database migrations.
 - `App/` contains the runtime, database layer, routing, authentication, caching, metadata extraction, and administration modules.
 - `Public/` contains pages, layouts, modals, reusable view parts, and the installer.
 - `assets/` contains the source CSS, JavaScript, and SVG icon sprite.

@@ -62,7 +62,7 @@ if (is_post()) {
     redirect(auth_url_with_next('/login', $next));
 }
 
-$old = auth_form_state_old('register');
+$old = auth_form_state_previous('register');
 
 layout('layout', [
     'title' => t('auth.register_title'),

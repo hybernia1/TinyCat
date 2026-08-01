@@ -746,14 +746,6 @@
         },
         "table_missing": "Tabulka zatím není vytvořená."
     },
-    "updates": {
-        "title": "Aktualizace databáze",
-        "intro": "Spusť čekající databázové migrace před nasazením nebo po něm. Operaci lze bezpečně opakovat.",
-        "run": "Spustit aktualizace",
-        "cli_hint": "Alternativa přes CLI: php update.php",
-        "completed": "Aktualizace databáze dokončena.",
-        "failed": "Aktualizace databáze selhala: {message}"
-    },
     "install": {
         "language_label": "Čeština",
         "title": "Instalace TinyCat CMS",

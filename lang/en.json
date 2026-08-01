@@ -746,14 +746,6 @@
         },
         "table_missing": "The table has not been created yet."
     },
-    "updates": {
-        "title": "Database updates",
-        "intro": "Run pending database migrations before or after deploying a new version. The operation is safe to repeat.",
-        "run": "Run updates",
-        "cli_hint": "CLI alternative: php update.php",
-        "completed": "Database updates completed.",
-        "failed": "Database update failed: {message}"
-    },
     "install": {
         "language_label": "English",
         "title": "Install TinyCat CMS",
