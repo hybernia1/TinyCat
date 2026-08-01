@@ -695,7 +695,9 @@ final class Core
         }
 
         $analyticsId = trim((string) self::config('analytics.google_measurement_id', ''));
-        $analyticsEnabled = preg_match('/^G-[A-Z0-9]+$/i', $analyticsId) === 1;
+        $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? '');
+        $analyticsEnabled = $analyticsConsent === 'granted'
+            && preg_match('/^G-[A-Z0-9]+$/i', $analyticsId) === 1;
         $csp = [
             "default-src 'self'",
             "base-uri 'self'",

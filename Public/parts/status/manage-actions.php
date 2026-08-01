@@ -25,7 +25,7 @@ if ($contentId < 1) {
         <?= icon('link') ?>
     </a>
     <?php if ($isLocked): ?>
-        <span class="btn btn-ghost btn-icon btn-sm status-manage-icon" title="<?= et('account.status_edit_locked') ?>" aria-label="<?= et('account.status_edit_locked') ?>">
+        <span class="btn btn-ghost btn-icon btn-sm status-manage-icon" role="img" title="<?= et('account.status_edit_locked') ?>" aria-label="<?= et('account.status_edit_locked') ?>">
             <?= icon('lock') ?>
         </span>
     <?php endif; ?>

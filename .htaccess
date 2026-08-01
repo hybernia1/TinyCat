@@ -8,11 +8,15 @@ RedirectMatch 404 ^/(App|lang|storage)(/|$)
 
 <IfModule mod_setenvif.c>
     SetEnvIfNoCase Authorization "^(.+)$" HTTP_AUTHORIZATION=$1
-    SetEnvIfNoCase Request_URI "\.(css|js|mjs|json|svg|png|jpe?g|gif|webp|ico|woff2?)$" tinycat_static_asset
+    SetEnvIfNoCase Request_URI "\.(css|js|mjs|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot)$" tinycat_static_asset
+    SetEnvIfNoCase Request_URI "^/assets/.*\.(css|js|mjs|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot)$" tinycat_versioned_asset
+    SetEnvIfNoCase Request_URI "^/uploads/.*\.(svg|png|jpe?g|gif|webp|avif)$" tinycat_upload_asset
 </IfModule>
 
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff" env=tinycat_static_asset
+    Header set Cache-Control "public, max-age=31536000, immutable" env=tinycat_versioned_asset
+    Header set Cache-Control "public, max-age=2592000, stale-while-revalidate=86400" env=tinycat_upload_asset
 </IfModule>
 
 <IfModule mod_deflate.c>

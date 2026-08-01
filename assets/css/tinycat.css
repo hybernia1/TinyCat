@@ -1944,6 +1944,9 @@ a:hover {
 }
 
 .hashtag {
+  display: inline-block;
+  min-height: 24px;
+  line-height: 24px;
   color: var(--primary-strong);
   font-weight: 800;
   text-decoration: none;
@@ -3158,6 +3161,9 @@ img.status-editor-suggestion-avatar {
 }
 
 .status-time-button {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
   justify-self: start;
   text-align: left;
 }

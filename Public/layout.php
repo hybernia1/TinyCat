@@ -141,12 +141,13 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php endforeach; ?>
     <?php $googleMeasurementId = trim((string) config('analytics.google_measurement_id', '')); ?>
     <?php $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? ''); ?>
-    <?php if (preg_match('/^G-[A-Z0-9]+$/i', $googleMeasurementId) === 1): ?>
+    <?php $analyticsConfigured = preg_match('/^G-[A-Z0-9]+$/i', $googleMeasurementId) === 1; ?>
+    <?php if ($analyticsConfigured && $analyticsConsent === 'granted'): ?>
         <script async src="https://www.googletagmanager.com/gtag/js?id=<?= e($googleMeasurementId) ?>"></script>
         <script>
             window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
             gtag('consent','default',{
-                analytics_storage:'<?= $analyticsConsent === 'granted' ? 'granted' : 'denied' ?>',
+                analytics_storage:'granted',
                 ad_storage:'denied',
                 ad_user_data:'denied',
                 ad_personalization:'denied',
@@ -331,10 +332,10 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
             </div>
         </main>
 
-        <?php if (preg_match('/^G-[A-Z0-9]+$/i', $googleMeasurementId) === 1 && !in_array($analyticsConsent, ['granted', 'denied'], true)): ?>
-        <aside class="cookie-consent" data-cookie-consent role="dialog" aria-label="<?= et('privacy.cookie_consent_title') ?>">
+        <?php if ($analyticsConfigured && !in_array($analyticsConsent, ['granted', 'denied'], true)): ?>
+        <aside class="cookie-consent" data-cookie-consent aria-labelledby="cookie-consent-title">
             <div class="cookie-consent-copy">
-                <strong><?= et('privacy.cookie_consent_title') ?></strong>
+                <strong id="cookie-consent-title"><?= et('privacy.cookie_consent_title') ?></strong>
                 <span><?= et('privacy.cookie_consent_text') ?></span>
             </div>
             <div class="cookie-consent-actions">
