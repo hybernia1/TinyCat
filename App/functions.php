@@ -6449,18 +6449,22 @@ function status_feed_context_items(string $context, int $limit, int $offset, arr
     ];
 }
 
-function public_home_feed_html(string $feed = 'all', ?array $user = null): string
+function public_home_feed_html(string $feed = 'all', ?array $user = null, ?array $items = null): string
 {
     $user ??= auth();
     $feed = $feed === 'following' ? 'following' : 'all';
     $currentFeedUrl = $feed === 'following' ? '/?feed=following' : '/';
     $followingLoginRequired = $feed === 'following' && $user === null;
     $limit = public_status_page_limit();
-    $items = $followingLoginRequired
-        ? []
-        : ($feed === 'following'
-            ? public_status_items_for_user((int) ($user['id'] ?? 0), $limit)
-            : public_status_items($limit));
+
+    if ($items === null) {
+        $items = $followingLoginRequired
+            ? []
+            : ($feed === 'following'
+                ? public_status_items_for_user((int) ($user['id'] ?? 0), $limit)
+                : public_status_items($limit));
+    }
+
     $feedId = 'status-feed-' . $feed;
 
     return part('status/home-feed', [
@@ -6666,7 +6670,7 @@ function public_home_feed_payload(string $feed = 'all', ?array $user = null): ar
     ];
 
     return api_payload($data, static fn (): array => [
-        'html' => public_home_feed_html($feed, $user),
+        'html' => public_home_feed_html($feed, $user, $items),
         'feed' => $feed,
         'history' => $history,
     ]);
@@ -7354,19 +7358,32 @@ function status_feed_payload(string $context, int $limit, int $offset, array $pa
         $data['next_offset'] = $nextOffset;
     }
 
-    $htmlData = [
-        'html' => status_feed_html($items, $action, $user),
-        'count' => $count,
-        'done' => $done,
-        'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $nextParams, true),
-    ];
+    return api_payload($data, static function () use (
+        $items,
+        $action,
+        $user,
+        $count,
+        $done,
+        $context,
+        $nextOffset,
+        $limit,
+        $nextParams,
+        $offset
+    ): array {
+        $htmlData = [
+            'html' => status_feed_html($items, $action, $user),
+            'count' => $count,
+            'done' => $done,
+            'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $nextParams, true),
+        ];
 
-    if ($context !== 'tag') {
-        $htmlData['offset'] = $offset;
-        $htmlData['next_offset'] = $nextOffset;
-    }
+        if ($context !== 'tag') {
+            $htmlData['offset'] = $offset;
+            $htmlData['next_offset'] = $nextOffset;
+        }
 
-    return api_payload($data, static fn (): array => $htmlData);
+        return $htmlData;
+    });
 }
 
 function status_feed_more_control(string $feedId, string $context, int $loaded, int $limit, array $params = []): string
