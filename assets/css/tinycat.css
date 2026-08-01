@@ -2139,6 +2139,12 @@ a:hover {
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+.status-video-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 

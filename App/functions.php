@@ -1255,8 +1255,17 @@ function moderation_action_count(array $user, string $action): int
     }
 }
 
+function user_can_be_muted(array $user): bool
+{
+    return !in_array((string) ($user['role'] ?? ''), ['admin', 'bot'], true);
+}
+
 function user_muted_until(array $user): string
 {
+    if (!user_can_be_muted($user)) {
+        return '';
+    }
+
     $mutedUntil = trim((string) ($user['muted_until'] ?? ''));
 
     if ($mutedUntil === '') {
@@ -1281,7 +1290,7 @@ function user_mute(int $userId, array $actor, string $until, string $reason = ''
 
     $target = one('SELECT id, role, muted_until FROM users WHERE id = ? LIMIT 1', [$userId]);
 
-    if ($target === null || (string) ($target['role'] ?? '') === 'admin') {
+    if ($target === null || !user_can_be_muted($target)) {
         return;
     }
 
@@ -5072,21 +5081,25 @@ function status_video_embed_url(array $link): string
     return (string) ($link['embed_url'] ?? '');
 }
 
-function status_video_thumbnail_url(array $link): string
+function status_video_thumbnail_sources(array $link): array
 {
     $provider = (string) ($link['provider'] ?? '');
     $videoId = trim((string) ($link['video_id'] ?? ''));
     $imageUrl = trim((string) ($link['image_url'] ?? ''));
 
-    if ($imageUrl !== '') {
-        return $imageUrl;
-    }
-
     if ($provider === 'youtube' && $videoId !== '') {
-        return 'https://i.ytimg.com/vi/' . rawurlencode($videoId) . '/hqdefault.jpg';
+        $encodedId = rawurlencode($videoId);
+
+        return [
+            'webp' => 'https://i.ytimg.com/vi_webp/' . $encodedId . '/hqdefault.webp',
+            'fallback' => 'https://i.ytimg.com/vi/' . $encodedId . '/hqdefault.jpg',
+        ];
     }
 
-    return '';
+    return [
+        'webp' => '',
+        'fallback' => $imageUrl,
+    ];
 }
 
 function status_link_card_html(array $link): string
@@ -5108,7 +5121,9 @@ function status_link_card_html(array $link): string
     }
 
     $embedUrl = status_video_embed_url($link);
-    $thumbnailUrl = status_video_thumbnail_url($link);
+    $thumbnailSources = status_video_thumbnail_sources($link);
+    $thumbnailUrl = (string) ($thumbnailSources['fallback'] ?? '');
+    $thumbnailWebpUrl = (string) ($thumbnailSources['webp'] ?? '');
 
     if ($type === 'video' && status_video_embed_allowed($embedUrl)) {
         ob_start();
@@ -5116,7 +5131,12 @@ function status_link_card_html(array $link): string
             <div class="status-video-card" data-status-video data-embed-url="<?= e($embedUrl) ?>">
                 <button class="status-video-placeholder" type="button" data-status-video-load aria-label="<?= e($title) ?>">
                     <?php if ($thumbnailUrl !== ''): ?>
-                        <img class="status-video-thumb" src="<?= e($thumbnailUrl) ?>" alt="" loading="lazy" referrerpolicy="no-referrer">
+                        <picture class="status-video-thumb">
+                            <?php if ($thumbnailWebpUrl !== ''): ?>
+                                <source srcset="<?= e($thumbnailWebpUrl) ?>" type="image/webp">
+                            <?php endif; ?>
+                            <img src="<?= e($thumbnailUrl) ?>" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+                        </picture>
                     <?php endif; ?>
                     <span class="status-video-play"><?= icon('play') ?></span>
                     <span class="status-video-copy">

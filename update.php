@@ -206,6 +206,14 @@ function tinycat_migrations(): array
                 $statement->execute([$key, '0', 'bool', 'performance']);
             }
         },
+        '20260801_bot_mute_exemption' => static function (PDO $pdo): void {
+            $pdo->exec(
+                "UPDATE users
+                 SET muted_until = NULL, muted_by = NULL, muted_reason = NULL
+                 WHERE role = 'bot'
+                   AND (muted_until IS NOT NULL OR muted_by IS NOT NULL OR muted_reason IS NOT NULL)"
+            );
+        },
     ];
 }
 
