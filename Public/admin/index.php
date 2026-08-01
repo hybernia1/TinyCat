@@ -48,7 +48,7 @@ layout('layout', [
     <section class="card mt-6">
         <div class="card-header split">
             <h2 class="text-lg m-0 cluster gap-2"><?= icon('message-circle') ?> <?= et('admin.recent_comments') ?></h2>
-            <a class="btn btn-secondary btn-sm" href="/admin/moderation"><?= et('common.open') ?></a>
+            <a class="btn btn-secondary btn-sm" href="/admin/moderation/reports"><?= et('common.open') ?></a>
         </div>
         <div class="card-body stack">
             <?php if ($recentComments === []): ?>

@@ -223,6 +223,47 @@ function tinycat_migrations(): array
             );
             $statement->execute();
         },
+        '20260801_bot_source_uniqueness' => static function (PDO $pdo): void {
+            if (!tinycat_schema_column_exists($pdo, 'bot_sources', 'feed_hash')) {
+                $pdo->exec('ALTER TABLE bot_sources ADD COLUMN feed_hash CHAR(64) NULL AFTER feed_url');
+            }
+
+            $sources = $pdo->query('SELECT id, feed_url FROM bot_sources ORDER BY id ASC')->fetchAll(PDO::FETCH_ASSOC);
+            $updateHash = $pdo->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = ?');
+            $deleteRuns = $pdo->prepare('DELETE FROM bot_source_runs WHERE source_id = ?');
+            $deleteItems = $pdo->prepare('DELETE FROM bot_feed_items WHERE source_id = ?');
+            $deleteSource = $pdo->prepare('DELETE FROM bot_sources WHERE id = ?');
+            $seen = [];
+
+            foreach ($sources as $source) {
+                $id = (int) ($source['id'] ?? 0);
+                $feedHash = bot_feed_source_hash((string) ($source['feed_url'] ?? ''));
+
+                if ($id < 1) {
+                    continue;
+                }
+
+                if ($feedHash === '') {
+                    $feedHash = hash('sha256', 'legacy-bot-source:' . $id . ':' . (string) ($source['feed_url'] ?? ''));
+                }
+
+                if (isset($seen[$feedHash])) {
+                    $deleteRuns->execute([$id]);
+                    $deleteItems->execute([$id]);
+                    $deleteSource->execute([$id]);
+                    continue;
+                }
+
+                $seen[$feedHash] = $id;
+                $updateHash->execute([$feedHash, $id]);
+            }
+
+            $pdo->exec('ALTER TABLE bot_sources MODIFY COLUMN feed_hash CHAR(64) NOT NULL AFTER feed_url');
+
+            if (!tinycat_schema_unique_column_index_exists($pdo, 'bot_sources', 'feed_hash')) {
+                $pdo->exec('ALTER TABLE bot_sources ADD UNIQUE KEY bot_sources_feed_hash_unique (feed_hash)');
+            }
+        },
     ];
 }
 

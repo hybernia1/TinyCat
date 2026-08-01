@@ -15,7 +15,7 @@ if (!function_exists('tc_admin_user_form_fields')) {
 
 $user = (array) ($user ?? []);
 $roles = (array) ($roles ?? tc_admin_roles());
-$statuses = (array) ($statuses ?? tc_admin_statuses());
+$statuses = (array) ($statuses ?? admin_user_statuses());
 $id = (int) ($user['id'] ?? 0);
 
 if ($id <= 0) {
@@ -35,7 +35,7 @@ echo render('modals/layout', [
     'id' => 'user-edit-' . $id,
     'title' => t('users.edit_user', ['username' => (string) ($user['username'] ?? '')]),
     'icon' => 'edit',
-    'action' => tc_admin_users_api_url('update', ['id' => $id]),
+    'action' => tc_admin_users_api_url(['id' => $id]),
     'method' => 'PATCH',
     'multipart' => true,
     'target' => '#users-list',

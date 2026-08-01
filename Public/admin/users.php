@@ -36,12 +36,16 @@ if ($adminUsersApi === 'update') {
         $id = max(1, (int) input('id'));
         $existing = tc_admin_user_by_id($id);
 
-        if ($existing === null) {
+        if ($existing === null || (string) ($existing['role'] ?? '') === 'bot') {
             api_error(t('users.messages.not_found'), 404, 'user_not_found');
         }
 
         $profileLinks = profile_links_from_input();
-        $avatar = tc_admin_user_avatar_change($existing);
+        try {
+            $avatar = admin_user_avatar_change($existing);
+        } catch (InvalidArgumentException $exception) {
+            api_error($exception->getMessage(), 422, 'avatar_invalid');
+        }
         $payload = tc_admin_user_payload($id);
 
         if ($avatar['changed']) {
@@ -61,11 +65,6 @@ if ($adminUsersApi === 'update') {
         if ($avatar['changed']) {
             Avatar::delete($existing['avatar_config'] ?? null, $avatar['config']);
         }
-        if ((string) input('role', '') !== 'bot') {
-            update('bot_sources', ['enabled' => 0], ['bot_user_id' => $id]);
-        } else {
-            delete('notifications', ['user_id' => $id]);
-        }
         api_ok(tc_admin_users_response_payload($id), t('users.messages.saved'));
     });
 }
@@ -76,21 +75,16 @@ if ($adminUsersApi === 'delete') {
         $id = max(1, (int) input('id'));
         $user = tc_admin_user_by_id($id);
 
-        if ($user === null) {
+        if ($user === null || (string) ($user['role'] ?? '') === 'bot') {
             api_error(t('users.messages.not_found'), 404, 'user_not_found');
         }
 
         tc_admin_user_require_deletable($user);
 
-        if ((string) ($user['role'] ?? '') === 'bot') {
-            bot_delete_sources_for_user($id);
-        }
-
-        try {
+        db_transaction(static function () use ($id): void {
             delete('user_profile_links', ['user_id' => $id]);
-        } catch (Throwable) {
-        }
-        delete('users', ['id' => $id]);
+            delete('users', ['id' => $id]);
+        });
         Avatar::delete($user['avatar_config'] ?? null);
         api_ok(tc_admin_users_response_payload(), t('users.messages.deleted'));
     });
@@ -123,7 +117,6 @@ function tc_admin_roles(): array
 {
     return [
         'admin' => t('users.roles.admin'),
-        'bot' => t('users.roles.bot'),
         'user' => t('users.roles.user'),
     ];
 }
@@ -133,7 +126,7 @@ function tc_admin_users_actions(): string
     return '<button class="btn btn-primary btn-sm" type="button" data-modal-open="user-create-modal">' . icon('user-plus') . ' <span>' . et('users.new_user') . '</span></button>';
 }
 
-function tc_admin_users_api_url(string $api, array $params = [], bool $withFilters = true): string
+function tc_admin_users_api_url(array $params = [], bool $withFilters = true): string
 {
     $query = [
         'view' => 'html',
@@ -166,15 +159,6 @@ function tc_admin_users_list_params(?array $filters = null, ?array $pagination =
     return $params;
 }
 
-function tc_admin_statuses(): array
-{
-    return [
-        'active' => t('users.statuses.active'),
-        'waiting' => t('users.statuses.waiting'),
-        'ban' => t('users.statuses.ban'),
-    ];
-}
-
 function tc_admin_users_filters(): array
 {
     $role = (string) get('role', '');
@@ -184,12 +168,12 @@ function tc_admin_users_filters(): array
         $role = '';
     }
 
-    if (!array_key_exists($status, tc_admin_statuses())) {
+    if (!array_key_exists($status, admin_user_statuses())) {
         $status = '';
     }
 
     return [
-        'q' => tc_admin_user_filter_text((string) get('q', ''), 120),
+        'q' => admin_filter_text((string) get('q', '')),
         'role' => $role,
         'status' => $status,
         'updated_from' => tc_admin_user_filter_date((string) get('updated_from', '')),
@@ -197,27 +181,11 @@ function tc_admin_users_filters(): array
     ];
 }
 
-function tc_admin_user_filter_text(string $value, int $limit): string
-{
-    $value = trim(preg_replace('/\s+/', ' ', $value) ?? '');
-
-    if ($value === '') {
-        return '';
-    }
-
-    return function_exists('mb_substr') ? mb_substr($value, 0, $limit) : substr($value, 0, $limit);
-}
-
 function tc_admin_user_filter_date(string $value): string
 {
     $value = trim($value);
 
     return preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1 ? $value : '';
-}
-
-function tc_admin_user_like(string $value): string
-{
-    return '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value) . '%';
 }
 
 function tc_admin_users_active_filters(array $filters, bool $includeSearch = true): array
@@ -229,11 +197,11 @@ function tc_admin_users_active_filters(array $filters, bool $includeSearch = tru
 
 function tc_admin_users_filter_sql(array $filters): array
 {
-    $clauses = [];
-    $params = [];
+    $clauses = ['role <> ?'];
+    $params = ['bot'];
 
     if ($filters['q'] !== '') {
-        $like = tc_admin_user_like($filters['q']);
+        $like = admin_search_like($filters['q']);
         $clauses[] = '(username LIKE ? ESCAPE \'\\\\\' OR email LIKE ? ESCAPE \'\\\\\')';
         $params[] = $like;
         $params[] = $like;
@@ -306,20 +274,16 @@ function tc_admin_users_stats(): array
 
 function tc_admin_users_response_payload(?int $id = null): array
 {
-    return api_payload(
-        tc_admin_users_api_payload($id),
-        static function () use ($id): array {
-            $payload = [
-                'html' => tc_admin_users_html(),
-            ];
+    if (!wants_partial()) {
+        return tc_admin_users_api_payload($id);
+    }
 
-            if ($id !== null) {
-                $payload['id'] = $id;
-            }
+    $payload = ['html' => tc_admin_users_html()];
+    if ($id !== null) {
+        $payload['id'] = $id;
+    }
 
-            return $payload;
-        }
-    );
+    return $payload;
 }
 
 function tc_admin_users_api_payload(?int $id = null): array
@@ -337,7 +301,7 @@ function tc_admin_users_api_payload(?int $id = null): array
         'pagination' => $page['pagination'],
         'stats' => tc_admin_users_stats(),
         'roles' => tc_admin_roles(),
-        'statuses' => tc_admin_statuses(),
+        'statuses' => admin_user_statuses(),
         'filters' => $filters,
     ];
 
@@ -420,7 +384,7 @@ function tc_admin_user_payload(?int $id = null): array
         'email' => 'nullable|string|max:' . user_email_max_length(),
         'password' => $passwordRule,
         'role' => 'required|string|in:' . implode(',', array_keys(tc_admin_roles())),
-        'status' => 'required|string|in:' . implode(',', array_keys(tc_admin_statuses())),
+        'status' => 'required|string|in:' . implode(',', array_keys(admin_user_statuses())),
     ];
 
     if ($id === null) {
@@ -456,7 +420,7 @@ function tc_admin_user_payload(?int $id = null): array
         api_validation(['email' => [t('account.messages.email_taken')]]);
     }
 
-    if ($id === null && $role !== 'bot' && (string) ($data['password'] ?? '') === '') {
+    if ($id === null && (string) ($data['password'] ?? '') === '') {
         api_validation(['password' => [t('users.validation.password_required')]]);
     }
 
@@ -483,40 +447,11 @@ function tc_admin_user_payload(?int $id = null): array
 
     $password = (string) ($data['password'] ?? '');
 
-    if ($role === 'bot') {
-        $payload['password'] = null;
-    } elseif ($password !== '') {
+    if ($password !== '') {
         $payload['password'] = auth_password($password);
     }
 
     return $payload;
-}
-
-function tc_admin_user_avatar_change(array $user): array
-{
-    $file = $_FILES['avatar'] ?? null;
-    $remove = in_array(input('remove_avatar', null), [true, 1, '1', 'true', 'on'], true);
-    $hasUpload = is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
-    $result = ['changed' => false, 'uploaded' => false, 'json' => null, 'config' => null];
-
-    if (!$hasUpload) {
-        if ($remove) {
-            $result['changed'] = true;
-        }
-        return $result;
-    }
-
-    try {
-        $config = Avatar::upload((array) $file, (string) ($user['username'] ?? ''));
-        $json = Avatar::configJson($config);
-        if ($json === '') {
-            throw new RuntimeException('Avatar config could not be stored.');
-        }
-        return ['changed' => true, 'uploaded' => true, 'json' => $json, 'config' => $config];
-    } catch (Throwable) {
-        Avatar::delete($config ?? null);
-        api_error(t('account.messages.avatar_invalid'), 422, 'avatar_invalid');
-    }
 }
 
 function tc_admin_user_validation_messages(): array
@@ -549,18 +484,6 @@ function tc_admin_options(array $options, ?string $selected = null): string
     return $html;
 }
 
-function tc_admin_status_badge(string $status): string
-{
-    $labels = tc_admin_statuses();
-    $class = $status === 'ban' ? 'badge badge-danger' : 'badge badge-primary';
-
-    if ($status === 'waiting') {
-        $class = 'badge';
-    }
-
-    return '<span class="' . e($class) . '">' . e($labels[$status] ?? $status) . '</span>';
-}
-
 function tc_admin_datetime(string $value): string
 {
     return $value === '' ? '' : datetime($value);
@@ -579,7 +502,7 @@ function tc_admin_users_html(): string
     $pagination = $page['pagination'];
     $params = tc_admin_users_list_params($filters, $pagination);
     $roles = tc_admin_roles();
-    $statuses = tc_admin_statuses();
+    $statuses = admin_user_statuses();
     $hasFilters = tc_admin_users_active_filters($filters) !== [];
     $profileLinks = user_profile_links_for_users(array_column($users, 'id'));
 
@@ -610,7 +533,7 @@ function tc_admin_users_html(): string
                                     <strong>@<?= e((string) ($user['username'] ?? '')) ?></strong>
                                 </td>
                                 <td><?= e($roles[$user['role']] ?? $user['role']) ?></td>
-                                <td><?= tc_admin_status_badge((string) $user['status']) ?></td>
+                                <td><?= admin_user_status_badge((string) $user['status']) ?></td>
                                 <td>
                                     <time class="table-meta" datetime="<?= e(tc_admin_datetime_iso((string) $user['updated_at'])) ?>">
                                         <?= e(tc_admin_datetime((string) $user['updated_at'])) ?>
@@ -618,17 +541,11 @@ function tc_admin_users_html(): string
                                 </td>
                                 <td>
                                     <div class="table-actions">
-                                        <?php if ((string) ($user['role'] ?? '') === 'bot'): ?>
-                                            <a class="btn btn-sm btn-ghost btn-icon" href="/admin/bots/<?= e($id) ?>" aria-label="<?= et('bots.detail_title') ?>" title="<?= et('bots.detail_title') ?>">
-                                                <?= icon('external-link') ?>
-                                            </a>
-                                        <?php else: ?>
-                                            <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-open="user-edit-<?= e($id) ?>" aria-label="<?= et('users.edit_user', ['username' => (string) ($user['username'] ?? '')]) ?>" title="<?= et('common.edit') ?>">
-                                                <?= icon('edit') ?>
-                                            </button>
-                                        <?php endif; ?>
+                                        <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-open="user-edit-<?= e($id) ?>" aria-label="<?= et('users.edit_user', ['username' => (string) ($user['username'] ?? '')]) ?>" title="<?= et('common.edit') ?>">
+                                            <?= icon('edit') ?>
+                                        </button>
                                         <?php if (!$isSuperAdmin): ?>
-                                            <form class="inline-flex" action="<?= e(tc_admin_users_api_url('delete', ['id' => $id])) ?>" method="post" data-ajax-form data-ajax-target="#users-list" data-confirm="<?= et('users.delete_confirm', ['username' => (string) ($user['username'] ?? '')]) ?>" data-confirm-title="<?= et('users.delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
+                                            <form class="inline-flex" action="<?= e(tc_admin_users_api_url(['id' => $id])) ?>" method="post" data-ajax-form data-ajax-target="#users-list" data-confirm="<?= et('users.delete_confirm', ['username' => (string) ($user['username'] ?? '')]) ?>" data-confirm-title="<?= et('users.delete_title') ?>" data-confirm-ok="<?= et('common.delete') ?>" data-confirm-cancel="<?= et('common.cancel') ?>" data-confirm-variant="danger">
                                                 <?= csrf_field() ?>
                                                 <input type="hidden" name="_method" value="DELETE">
                                                 <button class="btn btn-sm btn-ghost btn-icon text-danger" type="submit" aria-label="<?= et('common.delete') ?>" title="<?= et('common.delete') ?>">
@@ -646,9 +563,7 @@ function tc_admin_users_html(): string
             <?= admin_pagination($pagination, '/api/admin/users', '#users-list', $params, 'page', 2, '/admin/users') ?>
             <?php foreach ($users as $user): ?>
                 <?php $user['profile_links'] = $profileLinks[(int) ($user['id'] ?? 0)] ?? []; ?>
-                <?php if ((string) ($user['role'] ?? '') !== 'bot'): ?>
-                    <?= tc_admin_user_modal($user, $roles, $statuses) ?>
-                <?php endif; ?>
+                <?= tc_admin_user_modal($user, $roles, $statuses) ?>
             <?php endforeach; ?>
         <?php endif; ?>
         <?= tc_admin_user_create_modal() ?>
@@ -667,7 +582,7 @@ function tc_admin_users_filter_toolbar(array $filters, ?array $pagination = null
     ob_start();
     ?>
     <div class="admin-list-toolbar">
-        <form class="admin-search-form" action="<?= e(tc_admin_users_api_url('list', [], false)) ?>" method="get" data-ajax-form data-ajax-target="#users-list" data-history="/admin/users">
+        <form class="admin-search-form" action="<?= e(tc_admin_users_api_url([], false)) ?>" method="get" data-ajax-form data-ajax-target="#users-list" data-history="/admin/users">
             <input type="hidden" name="view" value="html">
             <?= tc_admin_users_filter_hidden($filters, ['q']) ?>
             <input type="hidden" name="per_page" value="<?= e((string) admin_per_page()) ?>">
@@ -680,7 +595,7 @@ function tc_admin_users_filter_toolbar(array $filters, ?array $pagination = null
         </form>
         <?php if ($hasFilters): ?>
             <div class="admin-filter-actions">
-                <a class="btn btn-ghost" href="<?= e(tc_admin_users_api_url('list', ['per_page' => admin_per_page(), 'page' => 1], false)) ?>" data-ajax data-ajax-target="#users-list" data-history="<?= e(admin_list_url('/admin/users', ['per_page' => admin_per_page(), 'page' => 1], false)) ?>">
+                <a class="btn btn-ghost" href="<?= e(tc_admin_users_api_url(['per_page' => admin_per_page(), 'page' => 1], false)) ?>" data-ajax data-ajax-target="#users-list" data-history="<?= e(admin_list_url('/admin/users', ['per_page' => admin_per_page(), 'page' => 1], false)) ?>">
                     <?= icon('close') ?> <span><?= et('common.clear_filters') ?></span>
                 </a>
             </div>
@@ -809,7 +724,7 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
             <section class="user-editor-panel">
                 <label class="field">
                     <span class="label"><?= $create ? et('common.password') : et('common.new_password') ?></span>
-                    <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" placeholder="<?= $create ? et('users.password_bot_optional') : et('users.password_keep') ?>">
+                    <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" placeholder="<?= $create ? '' : et('users.password_keep') ?>">
                 </label>
             </section>
 

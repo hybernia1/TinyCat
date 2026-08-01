@@ -41,8 +41,23 @@ foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', '
 $defaultAdminNav = [
     ['href' => '/admin', 'icon' => 'dashboard', 'label' => t('common.dashboard')],
     ['href' => '/admin/users', 'icon' => 'users', 'label' => t('users.list_title')],
-    ['href' => '/admin/bots', 'icon' => 'link', 'label' => t('bots.title')],
-    ['href' => '/admin/moderation', 'icon' => 'shield', 'label' => t('moderation.title')],
+    [
+        'icon' => 'rss',
+        'label' => t('bots.title'),
+        'children' => [
+            ['href' => '/admin/bots/accounts', 'icon' => 'users', 'label' => t('bots.accounts_title')],
+            ['href' => '/admin/bots/list', 'icon' => 'list-unordered', 'label' => t('bots.sources_title')],
+            ['href' => '/admin/bots/cron', 'icon' => 'clock', 'label' => t('bots.cron_title')],
+        ],
+    ],
+    [
+        'icon' => 'shield',
+        'label' => t('moderation.title'),
+        'children' => [
+            ['href' => '/admin/moderation/reports', 'icon' => 'flag', 'label' => t('moderation.reports_title')],
+            ['href' => '/admin/moderation/blocking', 'icon' => 'lock', 'label' => t('moderation.url_blocker_title')],
+        ],
+    ],
     ['href' => '/admin/maintenance', 'icon' => 'database', 'label' => t('maintenance.title')],
     ['href' => '/admin/updates', 'icon' => 'refresh', 'label' => t('updates.title')],
     ['href' => '/admin/settings', 'icon' => 'settings', 'label' => t('settings.title')],
@@ -51,6 +66,8 @@ $defaultAdminNav = [
 $authUser = auth();
 $isAdminShell = $authUser !== null && (bool) ($adminShell ?? str_starts_with($current, '/admin'));
 $nav = $isAdminShell ? (array) ($nav ?? $defaultAdminNav) : (array) ($frontendNav ?? []);
+$adminNavItemIsActive = static fn (string $href): bool => $current === $href
+    || ($href !== '/admin' && str_starts_with($current, $href . '/'));
 
 if (!$isAdminShell && $nav === []) {
     $nav = [];
@@ -200,8 +217,41 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                 <nav class="admin-nav" aria-label="<?= et('common.admin') ?>">
                     <?php foreach ((array) $nav as $item): ?>
                         <?php
+                        $children = array_values((array) ($item['children'] ?? []));
+                        if ($children !== []):
+                            $groupActive = false;
+                            foreach ($children as $child) {
+                                $childHref = route_path((string) ($child['href'] ?? '#'));
+                                if ($adminNavItemIsActive($childHref)) {
+                                    $groupActive = true;
+                                    break;
+                                }
+                            }
+                            ?>
+                            <details class="admin-nav-group"<?= $groupActive ? ' open data-active="true"' : '' ?>>
+                                <summary class="admin-nav-link admin-nav-summary">
+                                    <?= icon((string) ($item['icon'] ?? 'folder')) ?>
+                                    <span><?= e((string) ($item['label'] ?? '')) ?></span>
+                                    <?= icon('chevron-down', 'icon admin-nav-chevron') ?>
+                                </summary>
+                                <div class="admin-nav-submenu">
+                                    <?php foreach ($children as $child): ?>
+                                        <?php
+                                        $childHref = route_path((string) ($child['href'] ?? '#'));
+                                        $childActive = $adminNavItemIsActive($childHref);
+                                        ?>
+                                        <a class="admin-nav-link" href="<?= e($childHref) ?>"<?= $childActive ? ' aria-current="page"' : '' ?>>
+                                            <?= icon((string) ($child['icon'] ?? 'link')) ?>
+                                            <span><?= e((string) ($child['label'] ?? $childHref)) ?></span>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            </details>
+                            <?php continue; ?>
+                        <?php endif; ?>
+                        <?php
                         $href = route_path((string) ($item['href'] ?? '#'));
-                        $active = $current === $href || ($href !== '/admin' && str_starts_with($current, $href . '/'));
+                        $active = $adminNavItemIsActive($href);
                         ?>
                         <a class="admin-nav-link" href="<?= e($href) ?>"<?= $active ? ' aria-current="page"' : '' ?>>
                             <?= icon((string) ($item['icon'] ?? 'link')) ?>

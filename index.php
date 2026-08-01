@@ -22,9 +22,29 @@ $siteIdentityPath = in_array($path, [
     '/icons/icon-maskable-512.png',
 ], true);
 
+route('GET', '/admin/bots', static function (): void {
+    $botId = max(0, (int) get('bot', 0));
+    redirect($botId > 0
+        ? '/admin/bots/list?' . http_build_query(['bot' => $botId])
+        : '/admin/bots/accounts');
+});
+
+route('POST', '/admin/bots', static function (): void {
+    require public_path('admin/bots/list.php');
+});
+
 route(['GET', 'POST'], '/admin/bots/{bot_id:[0-9]+}', static function (string $bot_id): void {
     $_GET['id'] = (string) max(0, (int) $bot_id);
     require public_path('admin/bot.php');
+});
+
+route('GET', '/admin/moderation', static function (): void {
+    redirect('/admin/moderation/reports');
+});
+
+route('POST', '/admin/moderation', static function (): void {
+    $page = (string) post('action', '') === 'url_blocker_save' ? 'blocking' : 'reports';
+    require public_path('admin/moderation/' . $page . '.php');
 });
 
 route('GET', '/author/{author_id:[0-9]+}/feed', static function (string $author_id): void {

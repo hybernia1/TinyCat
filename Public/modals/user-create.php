@@ -13,7 +13,7 @@ if (!function_exists('tc_admin_user_form_fields')) {
     return;
 }
 
-$body = tc_admin_user_form_fields(null, tc_admin_roles(), tc_admin_statuses(), true);
+$body = tc_admin_user_form_fields(null, tc_admin_roles(), admin_user_statuses(), true);
 $footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . icon('close') . ' <span>' . et('common.cancel') . '</span></button>'
     . '<button class="btn btn-primary" type="submit">' . icon('save') . ' <span>' . et('common.create') . '</span></button>';
 
@@ -21,7 +21,7 @@ echo render('modals/layout', [
     'id' => 'user-create-modal',
     'title' => t('users.new_user'),
     'icon' => 'user-plus',
-    'action' => tc_admin_users_api_url('create'),
+    'action' => tc_admin_users_api_url(),
     'target' => '#users-list',
     'reset' => true,
     'closeOnSuccess' => true,

@@ -13,6 +13,8 @@ require_once __DIR__ . '/Avatar.php';
 require_once __DIR__ . '/SiteIdentity.php';
 require_once __DIR__ . '/StatusLinks.php';
 require_once __DIR__ . '/LinkMetadata.php';
+require_once __DIR__ . '/BotAdmin.php';
+require_once __DIR__ . '/ModerationAdmin.php';
 
 function config(?string $key = null, mixed $default = null): mixed
 {
@@ -42,6 +44,30 @@ function base_path(string $path = ''): string
 function db(): PDO
 {
     return Core::db();
+}
+
+function db_transaction(callable $callback): mixed
+{
+    $pdo = db();
+
+    if ($pdo->inTransaction()) {
+        return $callback();
+    }
+
+    $pdo->beginTransaction();
+
+    try {
+        $result = $callback();
+        $pdo->commit();
+
+        return $result;
+    } catch (Throwable $exception) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        throw $exception;
+    }
 }
 
 function app_required_tables(): array
@@ -284,6 +310,33 @@ function user_avatar_html(?array $user, string $alt = '', string $fallbackIcon =
     }
 
     return '<img src="' . e($url) . '" alt="' . e($alt) . '" loading="lazy" data-user-avatar-image>' . $fallback;
+}
+
+function admin_user_avatar_change(array $user): array
+{
+    $file = $_FILES['avatar'] ?? null;
+    $remove = in_array(input('remove_avatar', null), [true, 1, '1', 'true', 'on'], true);
+    $hasUpload = is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+    $result = ['changed' => false, 'uploaded' => false, 'json' => null, 'config' => null];
+
+    if (!$hasUpload) {
+        if ($remove) {
+            $result['changed'] = true;
+        }
+        return $result;
+    }
+
+    try {
+        $config = Avatar::upload((array) $file, (string) ($user['username'] ?? ''));
+        $json = Avatar::configJson($config);
+        if ($json === '') {
+            throw new RuntimeException('Avatar config could not be stored.');
+        }
+        return ['changed' => true, 'uploaded' => true, 'json' => $json, 'config' => $config];
+    } catch (Throwable $exception) {
+        Avatar::delete($config ?? null);
+        throw new InvalidArgumentException(t('account.messages.avatar_invalid'), 0, $exception);
+    }
 }
 
 function user_display_name(?array $user): string
@@ -6793,7 +6846,10 @@ function bot_feed_url_normalize(string $url): string
         return '';
     }
 
-    $port = isset($parts['port']) && !in_array((int) $parts['port'], [80, 443], true) ? ':' . (int) $parts['port'] : '';
+    $portNumber = isset($parts['port']) ? (int) $parts['port'] : 0;
+    $isDefaultPort = ($scheme === 'http' && $portNumber === 80)
+        || ($scheme === 'https' && $portNumber === 443);
+    $port = $portNumber > 0 && !$isDefaultPort ? ':' . $portNumber : '';
     $path = (string) ($parts['path'] ?? '/');
     $path = $path === '/' ? '/' : rtrim($path, '/');
     $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
@@ -6805,6 +6861,32 @@ function bot_feed_source_hash(string $url): string
 {
     $url = bot_feed_url_normalize($url);
     return $url !== '' ? hash('sha256', $url) : '';
+}
+
+function bot_source_duplicate_exists(string $feedUrl, int $excludeId = 0): bool
+{
+    $feedHash = bot_feed_source_hash($feedUrl);
+
+    if ($feedHash === '') {
+        return false;
+    }
+
+    $sql = 'SELECT COUNT(*) FROM bot_sources WHERE feed_hash = ?';
+    $params = [$feedHash];
+
+    if ($excludeId > 0) {
+        $sql .= ' AND id <> ?';
+        $params[] = $excludeId;
+    }
+
+    return (int) val($sql, $params) > 0;
+}
+
+function bot_source_duplicate_exception(Throwable $exception): bool
+{
+    return $exception instanceof PDOException
+        && (string) $exception->getCode() === '23000'
+        && (int) ($exception->errorInfo[1] ?? 0) === 1062;
 }
 
 function bot_feed_history_has(int $botUserId, string $feedUrl, string $itemGuid): bool
@@ -6918,7 +7000,16 @@ function bot_cron_request_token(): string
 
 function bot_source_find(int $id): ?array
 {
-    return $id > 0 ? one('SELECT * FROM bot_sources WHERE id = ? LIMIT 1', [$id]) : null;
+    return $id > 0
+        ? one(
+            'SELECT bs.*, u.username
+             FROM bot_sources bs
+             LEFT JOIN users u ON u.id = bs.bot_user_id AND u.role = ?
+             WHERE bs.id = ?
+             LIMIT 1',
+            ['bot', $id]
+        )
+        : null;
 }
 
 function bot_sources(?int $botUserId = null): array
@@ -7014,20 +7105,31 @@ function bot_delete_sources_for_user(int $botUserId): void
         return;
     }
 
-    $ids = array_map(
-        static fn (array $row): int => (int) ($row['id'] ?? 0),
-        all('SELECT id FROM bot_sources WHERE bot_user_id = ?', [$botUserId])
-    );
+    db_transaction(static function () use ($botUserId): void {
+        $ids = array_map(
+            static fn (array $row): int => (int) ($row['id'] ?? 0),
+            all('SELECT id FROM bot_sources WHERE bot_user_id = ?', [$botUserId])
+        );
 
-    foreach ($ids as $id) {
-        if ($id > 0) {
-            delete('bot_source_runs', ['source_id' => $id]);
-            delete('bot_feed_items', ['source_id' => $id]);
+        foreach ($ids as $id) {
+            bot_delete_source($id);
         }
+
+        delete('bot_feed_history', ['bot_user_id' => $botUserId]);
+    });
+}
+
+function bot_delete_source(int $sourceId): void
+{
+    if ($sourceId < 1) {
+        return;
     }
 
-    delete('bot_feed_history', ['bot_user_id' => $botUserId]);
-    delete('bot_sources', ['bot_user_id' => $botUserId]);
+    db_transaction(static function () use ($sourceId): void {
+        delete('bot_source_runs', ['source_id' => $sourceId]);
+        delete('bot_feed_items', ['source_id' => $sourceId]);
+        delete('bot_sources', ['id' => $sourceId]);
+    });
 }
 
 function bot_feed_parse(string $xml): array
@@ -8091,6 +8193,43 @@ function pagination_sql(array $pagination): string
     $offset = max(0, (int) ($pagination['offset'] ?? 0));
 
     return ' LIMIT ' . $perPage . ' OFFSET ' . $offset;
+}
+
+function admin_user_statuses(): array
+{
+    return [
+        'active' => t('users.statuses.active'),
+        'waiting' => t('users.statuses.waiting'),
+        'ban' => t('users.statuses.ban'),
+    ];
+}
+
+function admin_user_status_badge(string $status): string
+{
+    $class = match ($status) {
+        'active' => 'badge badge-primary',
+        'ban' => 'badge badge-danger',
+        default => 'badge',
+    };
+
+    return '<span class="' . e($class) . '">' . e(admin_user_statuses()[$status] ?? $status) . '</span>';
+}
+
+function admin_search_like(string $value): string
+{
+    return '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value) . '%';
+}
+
+function admin_filter_text(string $value, int $limit = 120): string
+{
+    $value = trim((string) preg_replace('/\s+/', ' ', $value));
+    $limit = max(1, $limit);
+
+    if ($value === '') {
+        return '';
+    }
+
+    return function_exists('mb_substr') ? mb_substr($value, 0, $limit) : substr($value, 0, $limit);
 }
 
 function admin_per_page_options(): array

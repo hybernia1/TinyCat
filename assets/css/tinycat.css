@@ -597,31 +597,6 @@ a:hover {
   gap: 8px;
 }
 
-.bots-card-header p {
-  margin: 4px 0 0;
-}
-
-.admin-search-form.bots-filter-form {
-  flex: 0 1 390px;
-  max-width: 100%;
-}
-
-.bots-filter-form > .select {
-  min-width: 0;
-  flex: 1 1 170px;
-  border-start-end-radius: 0;
-  border-end-end-radius: 0;
-}
-
-.bots-filter-form > .btn {
-  min-height: 38px;
-}
-
-.bots-source-summary {
-  flex: 0 0 auto;
-  justify-content: flex-start;
-}
-
 .admin-per-page-form {
   display: flex;
   align-items: center;
@@ -3404,6 +3379,49 @@ body.admin-nav-open .admin-backdrop {
 
 .admin-nav-link[aria-current="page"] {
   box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.admin-nav-group {
+  display: grid;
+}
+
+.admin-nav-summary {
+  width: 100%;
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-nav-summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-nav-group[data-active="true"] > .admin-nav-summary,
+.admin-nav-summary:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.admin-nav-chevron {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin-inline-start: auto;
+  transition: transform 160ms ease;
+}
+
+.admin-nav-group[open] .admin-nav-chevron {
+  transform: rotate(180deg);
+}
+
+.admin-nav-submenu {
+  display: grid;
+  gap: 4px;
+  padding: 4px 0 4px 18px;
+}
+
+.admin-nav-submenu .admin-nav-link {
+  min-height: 40px;
+  font-size: 0.9rem;
 }
 
 .admin-sidebar-footer {

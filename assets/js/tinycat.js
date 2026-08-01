@@ -1597,7 +1597,7 @@
     document.addEventListener("click", function (event) {
       var toggle = event.target.closest && event.target.closest("[data-admin-nav-toggle]");
       var close = event.target.closest && event.target.closest("[data-admin-nav-close]");
-      var navLink = event.target.closest && event.target.closest(".admin-nav-link");
+      var navLink = event.target.closest && event.target.closest("a.admin-nav-link");
 
       if (toggle) {
         event.preventDefault();

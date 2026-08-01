@@ -6,7 +6,7 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-$admin = require_admin();
+require_admin();
 $botId = max(0, (int) get('id', 0));
 $bot = $botId > 0 ? one('SELECT * FROM users WHERE id = ? AND role = ? LIMIT 1', [$botId, 'bot']) : null;
 
@@ -14,7 +14,7 @@ if ($bot === null) {
     http_response_code(404);
     layout('layout', [
         'title' => t('bots.detail_not_found'),
-        'current' => '/admin/bots',
+        'current' => '/admin/bots/accounts',
     ], static function (): void {
         ?><div class="alert alert-info"><?= et('bots.detail_not_found') ?></div><?php
     });
@@ -27,22 +27,29 @@ if (is_post()) {
 
     if ($action === 'save_bot') {
         $status = (string) post('status', '');
-        $allowedStatuses = ['active', 'waiting', 'ban'];
+        $allowedStatuses = array_keys(admin_user_statuses());
         $bio = plain_text_limit((string) post('bio', ''), 500);
         if (!in_array($status, $allowedStatuses, true)) {
             flash('error', t('users.validation.status_invalid'));
         } else {
-            $avatar = tc_admin_user_avatar_change($bot);
+            try {
+                $avatar = admin_user_avatar_change($bot);
+            } catch (InvalidArgumentException $exception) {
+                flash('error', $exception->getMessage());
+                redirect('/admin/bots/' . $botId);
+            }
             $payload = ['status' => $status, 'bio' => $bio];
             if ($avatar['changed']) {
                 $payload['avatar_config'] = $avatar['json'];
             }
 
             try {
-                update('users', $payload, ['id' => $botId]);
-                if ($status !== 'active') {
-                    update('bot_sources', ['enabled' => 0], ['bot_user_id' => $botId]);
-                }
+                db_transaction(static function () use ($payload, $botId, $status): void {
+                    update('users', $payload, ['id' => $botId]);
+                    if ($status !== 'active') {
+                        update('bot_sources', ['enabled' => 0], ['bot_user_id' => $botId]);
+                    }
+                });
             } catch (Throwable $exception) {
                 if ($avatar['uploaded']) {
                     Avatar::delete($avatar['config']);
@@ -66,48 +73,18 @@ if (is_post()) {
         redirect('/admin/bots/' . $botId);
     }
 
-    if ($action === 'save_source') {
-        $name = trim((string) post('name', ''));
-        $feedUrl = trim((string) post('feed_url', ''));
-        $interval = (int) post('interval_minutes', 60);
-        $template = trim((string) post('post_template', ''));
-        $errors = [];
-        if ($name === '' || strlen($name) > 120) {
-            $errors[] = t('bots.validation.name');
-        }
-        if (!LinkMetadata::isSafeRemoteUrl($feedUrl) || strlen($feedUrl) > 2048) {
-            $errors[] = t('bots.validation.feed_url');
-        }
-        if ($interval < 5 || $interval > 43200) {
-            $errors[] = t('bots.validation.interval');
-        }
-        if ($template === '' || strlen($template) > 2000) {
-            $errors[] = t('bots.validation.template');
-        }
-        if ($errors !== []) {
-            flash('error', implode(' ', $errors));
+    if ($action === 'toggle_source') {
+        $enabled = (bool) ($source['enabled'] ?? false);
+        if (!$enabled && (string) ($bot['status'] ?? '') !== 'active') {
+            flash('error', t('bots.detail_bot_inactive'));
         } else {
-            $enabled = in_array(post('enabled', null), [true, 1, '1', 'true', 'on'], true)
-                && (string) ($bot['status'] ?? '') === 'active';
             update('bot_sources', [
-                'name' => $name,
-                'feed_url' => $feedUrl,
-                'interval_minutes' => $interval,
-                'post_template' => $template,
-                'enabled' => $enabled ? 1 : 0,
-                'next_run_at' => $enabled ? date_db() : null,
+                'enabled' => $enabled ? 0 : 1,
+                'next_run_at' => $enabled ? null : date_db(),
                 'last_error' => null,
             ], ['id' => $sourceId]);
             flash('success', t('bots.messages.saved'));
         }
-    } elseif ($action === 'toggle_source') {
-        $enabled = (bool) ($source['enabled'] ?? false);
-        update('bot_sources', [
-            'enabled' => $enabled ? 0 : 1,
-            'next_run_at' => $enabled ? null : date_db(),
-            'last_error' => null,
-        ], ['id' => $sourceId]);
-        flash('success', t('bots.messages.saved'));
     } elseif ($action === 'run_source') {
         if ((string) ($bot['status'] ?? '') !== 'active') {
             flash('error', t('bots.detail_bot_inactive'));
@@ -137,8 +114,8 @@ $profileUrl = author_url($botId);
 
 layout('layout', [
     'title' => '@' . (string) $bot['username'],
-    'current' => '/admin/bots',
-    'actions' => '<a class="btn btn-secondary btn-sm" href="/admin/bots">' . icon('arrow-left') . ' <span>' . et('common.back') . '</span></a>',
+    'current' => '/admin/bots/accounts',
+    'actions' => '<a class="btn btn-secondary btn-sm" href="/admin/bots/accounts">' . icon('arrow-left') . ' <span>' . et('common.back') . '</span></a>',
 ], static function () use ($bot, $sources, $runs, $stats, $lastPosts, $lastRun, $profileUrl): void {
     $botName = '@' . (string) ($bot['username'] ?? '');
     ?>

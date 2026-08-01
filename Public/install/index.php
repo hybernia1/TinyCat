@@ -571,6 +571,7 @@ function tc_install_create_tables(): void
             bot_user_id INT UNSIGNED NOT NULL,
             name VARCHAR(120) NOT NULL,
             feed_url VARCHAR(2048) NOT NULL,
+            feed_hash CHAR(64) NOT NULL,
             interval_minutes INT UNSIGNED NOT NULL DEFAULT 60,
             post_template VARCHAR(2000) NOT NULL,
             enabled TINYINT(1) NOT NULL DEFAULT 1,
@@ -581,6 +582,7 @@ function tc_install_create_tables(): void
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
+            UNIQUE KEY bot_sources_feed_hash_unique (feed_hash),
             KEY bot_sources_due_index (enabled, next_run_at, id),
             KEY bot_sources_user_index (bot_user_id, id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
