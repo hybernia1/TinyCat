@@ -17,9 +17,6 @@ $siteIdentityPath = in_array($path, [
     '/icon-192.png',
     '/icon-512.png',
     '/icon-maskable-512.png',
-    '/icons/icon-192.png',
-    '/icons/icon-512.png',
-    '/icons/icon-maskable-512.png',
 ], true);
 
 route('GET', '/admin/bots', static function (): void {
@@ -114,19 +111,6 @@ route('GET', '/icon-512.png', static function (): void {
 });
 
 route('GET', '/icon-maskable-512.png', static function (): void {
-    SiteIdentity::respondIcon('maskable-512');
-});
-
-// Backward-compatible aliases for installations where /icons is routed through PHP.
-route('GET', '/icons/icon-192.png', static function (): void {
-    SiteIdentity::respondIcon('pwa-192');
-});
-
-route('GET', '/icons/icon-512.png', static function (): void {
-    SiteIdentity::respondIcon('pwa-512');
-});
-
-route('GET', '/icons/icon-maskable-512.png', static function (): void {
     SiteIdentity::respondIcon('maskable-512');
 });
 

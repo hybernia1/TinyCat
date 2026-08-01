@@ -6,6 +6,11 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
+if (PHP_VERSION_ID < 80400) {
+    http_response_code(500);
+    exit('TinyCat requires PHP 8.4 or newer.');
+}
+
 require_once __DIR__ . '/Core.php';
 require_once __DIR__ . '/Cache.php';
 require_once __DIR__ . '/AssetOptimizer.php';
@@ -723,7 +728,7 @@ function auth_form_state_remember(string $context): void
     flash('auth_form_' . $context, auth_form_state_from_request($context));
 }
 
-function auth_form_state_old(string $context): array
+function auth_form_state_previous(string $context): array
 {
     if (!in_array($context, ['login', 'register'], true)) {
         return [];
@@ -1495,32 +1500,6 @@ function profile_link_social_domains(): array
     ];
 }
 
-function profile_links_schema_sql(): string
-{
-    return "CREATE TABLE IF NOT EXISTS user_profile_links (
-        user_id INT UNSIGNED NOT NULL,
-        link_type VARCHAR(32) NOT NULL,
-        link_url VARCHAR(2048) NOT NULL,
-        position_index INT UNSIGNED NOT NULL DEFAULT 0,
-        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (user_id, link_type),
-        KEY user_profile_links_type_index (link_type, user_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-}
-
-function profile_links_schema_ensure(): void
-{
-    static $ready = false;
-    if ($ready) {
-        return;
-    }
-
-    run(profile_links_schema_sql());
-    run("DELETE FROM user_profile_links WHERE link_type NOT IN ('website', 'x', 'instagram', 'facebook')");
-    $ready = true;
-}
-
 function profile_link_normalize(string $url, ?string $type = null): string
 {
     $url = trim((string) preg_replace('/[\x00-\x1F\x7F]+/', '', $url));
@@ -1606,11 +1585,7 @@ function user_profile_links(int $userId): array
     if ($userId < 1) {
         return [];
     }
-    try {
-        $rows = all('SELECT link_type, link_url FROM user_profile_links WHERE user_id = ? ORDER BY position_index ASC, link_type ASC', [$userId]);
-    } catch (Throwable) {
-        return [];
-    }
+    $rows = all('SELECT link_type, link_url FROM user_profile_links WHERE user_id = ? ORDER BY position_index ASC, link_type ASC', [$userId]);
 
     $links = [];
     $types = profile_link_types();
@@ -1629,14 +1604,10 @@ function user_profile_links_for_users(array $userIds): array
     if ($userIds === []) {
         return [];
     }
-    try {
-        $rows = db_select('SELECT user_id, link_type, link_url FROM user_profile_links')
-            ->whereIn('user_id', $userIds)
-            ->order('position_index ASC, link_type ASC')
-            ->all();
-    } catch (Throwable) {
-        return [];
-    }
+    $rows = db_select('SELECT user_id, link_type, link_url FROM user_profile_links')
+        ->whereIn('user_id', $userIds)
+        ->order('position_index ASC, link_type ASC')
+        ->all();
 
     $result = [];
     $types = profile_link_types();
@@ -6826,11 +6797,6 @@ function status_feed_cursor_params(array $items): array
         'cursor_at' => $publishedAt,
         'cursor_id' => $id,
     ];
-}
-
-function bot_schema_ensure(): void
-{
-    // Bot tables are created by the installer and versioned update.php migrations.
 }
 
 function bot_feed_url_normalize(string $url): string

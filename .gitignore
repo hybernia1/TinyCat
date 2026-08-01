@@ -1,9 +1,5 @@
 # Local environment
 /config.php
-/config.local.php
-/.env
-/.env.*
-!/.env.example
 
 # Runtime data
 /storage/*
@@ -11,9 +7,7 @@
 /uploads/*
 !/uploads/.gitkeep
 
-# Dependencies and tooling
-/vendor/
-/node_modules/
+# Tooling
 /.idea/
 /.vscode/
 /.agents/

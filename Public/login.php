@@ -37,7 +37,7 @@ if (auth_check()) {
 
 $error = flash('error');
 $message = flash('success');
-$old = auth_form_state_old('login');
+$old = auth_form_state_previous('login');
 
 layout('layout', [
     'title' => t('auth.login_title'),

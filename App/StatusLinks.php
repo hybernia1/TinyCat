@@ -196,13 +196,10 @@ final class StatusLinks
             return false;
         }
 
-        foreach (self::SOCIAL_HOSTS as $socialHost) {
-            if ($host === $socialHost || str_ends_with($host, '.' . $socialHost)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            self::SOCIAL_HOSTS,
+            static fn (string $socialHost): bool => $host === $socialHost || str_ends_with($host, '.' . $socialHost)
+        );
     }
 
     private static function video(array $parts, string $host): ?array
@@ -406,13 +403,10 @@ final class StatusLinks
 
     private static function hostMatches(string $host, array $domains): bool
     {
-        foreach ($domains as $domain) {
-            if ($host === $domain || str_ends_with($host, '.' . $domain)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            $domains,
+            static fn (string $domain): bool => $host === $domain || str_ends_with($host, '.' . $domain)
+        );
     }
 
     private static function hash(string $url): string
