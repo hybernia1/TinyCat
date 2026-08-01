@@ -15,6 +15,8 @@ $limit = (int) ($limit ?? public_status_page_limit());
 $items = is_array($items ?? null) ? $items : [];
 $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
 ?>
+<h1 class="sr-only"><?= et($feed === 'following' ? 'public.feed_title_following' : 'public.feed_title') ?></h1>
+
 <?php if ($user !== null && user_is_muted($user)): ?>
     <div class="alert alert-warning">
         <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime(user_muted_until($user))]) ?></span>

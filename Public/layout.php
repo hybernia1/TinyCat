@@ -14,6 +14,7 @@ if (!isset($content)) {
 $appName = site_name();
 $siteLogoUrl = site_logo_url();
 $siteFaviconUrl = site_favicon_url();
+$siteIdentity = SiteIdentity::metadata();
 $siteFooterHtml = site_footer_html();
 $searchQuery = trim((string) ($search_query ?? get('q', '')));
 $title = (string) ($title ?? $appName);
@@ -81,6 +82,15 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
+    <?php if ($theme === 'light'): ?>
+        <meta name="theme-color" content="<?= e((string) $siteIdentity['light_theme_color']) ?>">
+    <?php elseif ($theme === 'dark'): ?>
+        <meta name="theme-color" content="<?= e((string) $siteIdentity['dark_theme_color']) ?>">
+    <?php else: ?>
+        <meta name="theme-color" content="<?= e((string) $siteIdentity['light_theme_color']) ?>" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="<?= e((string) $siteIdentity['dark_theme_color']) ?>" media="(prefers-color-scheme: dark)">
+    <?php endif; ?>
+    <link rel="manifest" href="<?= e((string) $siteIdentity['manifest_url']) ?>">
     <?php if ($csrfToken !== ''): ?>
         <meta name="csrf-token" content="<?= e($csrfToken) ?>">
     <?php endif; ?>
@@ -130,6 +140,12 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php if ($siteFaviconUrl !== ''): ?>
         <link rel="icon" type="image/webp" href="<?= e($siteFaviconUrl) ?>">
     <?php endif; ?>
+    <?php if ((string) $siteIdentity['favicon_url'] !== ''): ?>
+        <link rel="icon" type="image/png" sizes="32x32" href="<?= e((string) $siteIdentity['favicon_url']) ?>">
+    <?php endif; ?>
+    <?php if ((string) $siteIdentity['apple_touch_icon_url'] !== ''): ?>
+        <link rel="apple-touch-icon" sizes="180x180" href="<?= e((string) $siteIdentity['apple_touch_icon_url']) ?>">
+    <?php endif; ?>
     <?php if (is_string($metaJsonLdJson) && $metaJsonLdJson !== ''): ?>
         <script type="application/ld+json"><?= $metaJsonLdJson ?></script>
     <?php endif; ?>
@@ -159,7 +175,8 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php endif; ?>
     <?= part('layout/flashes', ['items' => $flashToasts]) ?>
 </head>
-<body<?= $bodyClasses !== '' ? ' class="' . e($bodyClasses) . '"' : '' ?>>
+<body<?= $bodyClasses !== '' ? ' class="' . e($bodyClasses) . '"' : '' ?> data-ui-close="<?= et('common.close') ?>" data-ui-cancel="<?= et('common.cancel') ?>" data-ui-confirm="<?= et('common.confirm') ?>" data-ui-confirm-title="<?= et('common.confirm_action') ?>" data-ui-request-failed="<?= et('common.request_failed') ?>">
+    <a class="skip-link" href="#main-content"><?= et('common.skip_to_content') ?></a>
     <?php if ($isAdminShell): ?>
         <div class="admin-shell" data-admin-shell>
             <aside class="admin-sidebar" id="admin-sidebar" data-admin-sidebar>
@@ -231,7 +248,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                     <?php endif; ?>
                 </header>
 
-                <main class="admin-content">
+                <main class="admin-content" id="main-content" tabindex="-1">
                     <div class="stack stack-gap-24">
                         <?= $content ?>
                     </div>
@@ -247,7 +264,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                     <?php endif; ?>
                     <strong><?= e($appName) ?></strong>
                 </a>
-                <form class="global-search" action="/search" method="get" role="search" data-global-search data-search-api="/api/search" data-search-tags="<?= et('public.search_tags') ?>" data-search-users="<?= et('public.search_users') ?>" data-search-content="<?= et('public.search_content') ?>" data-search-all="<?= et('public.search_all') ?>" data-search-empty="<?= et('public.search_empty') ?>" data-search-min="<?= et('public.search_min') ?>" data-search-captcha-title="<?= et('public.search_captcha_title') ?>" data-search-captcha-submit="<?= et('common.confirm') ?>" autocomplete="off">
+                <form class="global-search" action="/search" method="get" role="search" data-global-search data-search-api="/api/search" data-search-tags="<?= et('public.search_tags') ?>" data-search-users="<?= et('public.search_users') ?>" data-search-content="<?= et('public.search_content') ?>" data-search-all="<?= et('public.search_all') ?>" data-search-empty="<?= et('public.search_empty') ?>" data-search-min="<?= et('public.search_min') ?>" data-search-captcha-title="<?= et('public.search_captcha_title') ?>" data-search-captcha-required="<?= et('public.search_captcha_required') ?>" data-search-captcha-submit="<?= et('common.confirm') ?>" autocomplete="off">
                     <label class="sr-only" for="global-search-input"><?= et('common.search') ?></label>
                     <div class="global-search-control">
                         <?= icon('search') ?>
@@ -255,7 +272,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                     </div>
                     <div class="global-search-results" data-global-search-results hidden></div>
                 </form>
-                <nav class="nav-links" aria-label="Main">
+                <nav class="nav-links" aria-label="<?= et('common.main_navigation') ?>">
                     <?php foreach ((array) $nav as $item): ?>
                         <?php
                         $href = (string) ($item['href'] ?? '#');
@@ -326,7 +343,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
             </div>
         </header>
 
-        <main class="section">
+        <main class="section" id="main-content" tabindex="-1">
             <div class="container stack stack-gap-24">
                 <?= $content ?>
             </div>

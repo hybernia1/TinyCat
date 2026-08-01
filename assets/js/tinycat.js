@@ -4,6 +4,8 @@
   var TinyCat = window.TinyCat || {};
   var activeModal = null;
   var modalStack = [];
+  var modalCounterId = 0;
+  var fieldErrorCounterId = 0;
   var statusEditorCounterId = 0;
   var statusFeedMaxCards = 120;
   var statusFeedKeepCards = 96;
@@ -217,11 +219,76 @@
     return compactUrl(url);
   }
 
-  function focusFirst(modal) {
-    var focusable = qs('[autofocus], button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', modal);
+  function uiText(name, fallback) {
+    var body = document.body;
+    var key = "ui" + name.charAt(0).toUpperCase() + name.slice(1);
+    var value = body && body.dataset ? body.dataset[key] : "";
 
-    if (focusable) {
-      focusable.focus();
+    return value || fallback;
+  }
+
+  function isFocusableVisible(element) {
+    var style;
+
+    if (!element || element.disabled || element.hidden || element.closest('[hidden], [aria-hidden="true"]')) {
+      return false;
+    }
+
+    style = window.getComputedStyle ? window.getComputedStyle(element) : null;
+    return !style || (style.display !== "none" && style.visibility !== "hidden");
+  }
+
+  function modalFocusable(modal) {
+    return qsa('a[href], area[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), iframe, [contenteditable="true"], [tabindex]:not([tabindex="-1"])', modal)
+      .filter(isFocusableVisible);
+  }
+
+  function focusFirst(modal) {
+    var focusable = modalFocusable(modal);
+    var autofocus = focusable.find(function (element) {
+      return element.hasAttribute("autofocus");
+    });
+    var target = autofocus || focusable[0];
+    var panel;
+
+    if (!target) {
+      panel = qs(".modal-panel", modal);
+
+      if (panel) {
+        panel.setAttribute("tabindex", "-1");
+        target = panel;
+      }
+    }
+
+    if (target && target.focus) {
+      target.focus();
+    }
+  }
+
+  function trapModalFocus(event, modal) {
+    var focusable = modalFocusable(modal);
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    var current = document.activeElement;
+
+    if (focusable.length === 0) {
+      event.preventDefault();
+      focusFirst(modal);
+      return;
+    }
+
+    if (!modal.contains(current)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+      return;
+    }
+
+    if (event.shiftKey && (current === first || current === qs(".modal-panel", modal))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && current === last) {
+      event.preventDefault();
+      first.focus();
     }
   }
 
@@ -259,6 +326,10 @@
 
     if (data.errors) {
       return data.errors;
+    }
+
+    if (data.error && data.error.details && data.error.details.errors && typeof data.error.details.errors === "object") {
+      return data.error.details.errors;
     }
 
     if (data.error && data.error.code === "validation_error" && data.error.details) {
@@ -394,7 +465,26 @@
 
   function clearErrors(form) {
     qsa('[aria-invalid="true"]', form).forEach(function (field) {
+      var errorId = field.dataset.tinycatFieldErrorId || "";
+      var describedBy;
+
       field.removeAttribute("aria-invalid");
+
+      if (errorId) {
+        describedBy = String(field.getAttribute("aria-describedby") || "")
+          .split(/\s+/)
+          .filter(function (id) {
+            return id && id !== errorId;
+          });
+
+        if (describedBy.length > 0) {
+          field.setAttribute("aria-describedby", describedBy.join(" "));
+        } else {
+          field.removeAttribute("aria-describedby");
+        }
+
+        delete field.dataset.tinycatFieldErrorId;
+      }
     });
 
     qsa("[data-field-error]", form).forEach(function (error) {
@@ -403,29 +493,75 @@
   }
 
   function applyErrors(form, errors) {
+    var firstInvalid = null;
+
     if (!errors || typeof errors !== "object") {
-      return;
+      return firstInvalid;
     }
 
     Object.keys(errors).forEach(function (name) {
       var field = form.elements.namedItem(name);
+      var fields;
+      var input;
+      var message;
+      var error;
+      var container;
 
       if (!field) {
         return;
       }
 
-      var input = field instanceof RadioNodeList ? field[0] : field;
-      var message = Array.isArray(errors[name]) ? errors[name][0] : errors[name];
+      fields = field instanceof RadioNodeList ? Array.prototype.slice.call(field) : [field];
+      input = fields[0];
+      message = Array.isArray(errors[name]) ? errors[name][0] : errors[name];
 
-      input.setAttribute("aria-invalid", "true");
+      if (!input) {
+        return;
+      }
 
-      var error = document.createElement("div");
+      if (input.type === "hidden") {
+        container = input.closest("[data-captcha]");
+        input = container ? qs("[data-captcha-slider]", container) : input;
+        fields = [input];
+      }
+
+      fieldErrorCounterId += 1;
+      error = document.createElement("span");
+      error.id = "field-error-" + fieldErrorCounterId;
       error.className = "field-error";
       error.dataset.fieldError = name;
       error.textContent = String(message || "");
 
-      input.insertAdjacentElement("afterend", error);
+      fields.filter(Boolean).forEach(function (control) {
+        var describedBy = String(control.getAttribute("aria-describedby") || "")
+          .split(/\s+/)
+          .filter(Boolean);
+
+        control.setAttribute("aria-invalid", "true");
+        control.dataset.tinycatFieldErrorId = error.id;
+
+        if (describedBy.indexOf(error.id) === -1) {
+          describedBy.push(error.id);
+          control.setAttribute("aria-describedby", describedBy.join(" "));
+        }
+      });
+
+      container = input.closest("[data-captcha], .field");
+
+      if (container) {
+        container.appendChild(error);
+      } else if (input.closest(".check-line")) {
+        input.closest(".check-line").insertAdjacentElement("afterend", error);
+      } else {
+        input.insertAdjacentElement("afterend", error);
+      }
+
+      if (!firstInvalid && isFocusableVisible(input)) {
+        firstInvalid = input;
+      }
     });
+
+    return firstInvalid;
   }
 
   function resetForm(form) {
@@ -1140,7 +1276,7 @@
     var data = await parseResponse(response);
 
     if (!response.ok) {
-      var error = new Error(response.statusText || "Request failed");
+      var error = new Error(response.statusText || uiText("requestFailed", "Request failed"));
       error.response = response;
       error.data = data;
       throw error;
@@ -1152,6 +1288,7 @@
   TinyCat.openModal = function (target) {
     var modal = getModal(target);
     var index;
+    var previousModal = activeModal;
 
     if (!modal) {
       return null;
@@ -1165,11 +1302,16 @@
     if (index !== -1) {
       modalStack.splice(index, 1);
     }
+
+    if (previousModal && previousModal !== modal) {
+      previousModal.setAttribute("aria-hidden", "true");
+    }
+
     modalStack.push(modal);
     activeModal = modal;
     modal.dataset.open = "true";
     modal.setAttribute("aria-hidden", "false");
-    modal.__tinycatPreviousFocus = document.activeElement;
+    modal.__tinycatPreviousFocus = previousModal === modal ? modal.__tinycatPreviousFocus : document.activeElement;
     document.body.classList.add("has-modal");
     focusFirst(modal);
     emit(modal, "tinycat:modal-open");
@@ -1180,10 +1322,15 @@
   TinyCat.closeModal = function (target) {
     var modal = getModal(target) || activeModal;
     var index;
+    var wasActive;
+    var previousFocus;
 
     if (!modal) {
       return;
     }
+
+    wasActive = modal === activeModal;
+    previousFocus = modal.__tinycatPreviousFocus;
 
     modal.dataset.open = "false";
     modal.setAttribute("aria-hidden", "true");
@@ -1196,9 +1343,17 @@
     activeModal = modalStack.length > 0 ? modalStack[modalStack.length - 1] : null;
     document.body.classList.toggle("has-modal", activeModal !== null);
 
-    if (modal.__tinycatPreviousFocus && modal.__tinycatPreviousFocus.focus) {
-      modal.__tinycatPreviousFocus.focus();
+    if (activeModal) {
+      activeModal.setAttribute("aria-hidden", "false");
     }
+
+    if (wasActive && previousFocus && previousFocus.isConnected && previousFocus.focus) {
+      previousFocus.focus();
+    } else if (wasActive && activeModal) {
+      focusFirst(activeModal);
+    }
+
+    delete modal.__tinycatPreviousFocus;
 
     emit(modal, "tinycat:modal-close");
   };
@@ -1379,7 +1534,7 @@
     body.textContent = String(message || "");
     close.className = "toast-close";
     close.type = "button";
-    close.setAttribute("aria-label", "Close");
+    close.setAttribute("aria-label", uiText("close", "Close"));
     close.innerHTML = '<svg class="icon" width="1em" height="1em" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#close"></use></svg>';
 
     toast.appendChild(createToastIcon(normalizedType));
@@ -1450,17 +1605,18 @@
 
   TinyCat.confirm = function (options) {
     var settings = typeof options === "string" ? { message: options } : (options || {});
+    var modalId;
     var modal = createElement("div", "modal");
     var backdrop = createElement("div", "modal-backdrop");
     var panel = createElement("div", "modal-panel modal-confirm-panel");
     var header = createElement("div", "modal-header");
-    var title = createElement("h2", "modal-title text-lg m-0", settings.title || "Confirm action");
-    var close = createElement("button", "btn btn-ghost btn-icon", "x");
+    var title = createElement("h2", "modal-title text-lg m-0", settings.title || uiText("confirmTitle", "Confirm action"));
+    var close = createElement("button", "btn btn-ghost btn-icon", "×");
     var body = createElement("div", "modal-body");
     var message = createElement("p", "modal-confirm-message", settings.message || "");
     var footer = createElement("div", "modal-footer");
-    var cancel = createElement("button", "btn btn-secondary", settings.cancelLabel || "Cancel");
-    var confirm = createElement("button", "btn " + (settings.variant === "danger" ? "btn-danger" : "btn-primary"), settings.confirmLabel || "Confirm");
+    var cancel = createElement("button", "btn btn-secondary", settings.cancelLabel || uiText("cancel", "Cancel"));
+    var confirm = createElement("button", "btn " + (settings.variant === "danger" ? "btn-danger" : "btn-primary"), settings.confirmLabel || uiText("confirm", "Confirm"));
 
     return new Promise(function (resolve) {
       function finish(value) {
@@ -1481,9 +1637,15 @@
       modal.setAttribute("aria-hidden", "true");
       modal.setAttribute("role", "dialog");
       modal.setAttribute("aria-modal", "true");
+      modalCounterId += 1;
+      modalId = "confirm-modal-" + modalCounterId;
+      title.id = modalId + "-title";
+      message.id = modalId + "-description";
+      modal.setAttribute("aria-labelledby", title.id);
+      modal.setAttribute("aria-describedby", message.id);
 
       close.type = "button";
-      close.setAttribute("aria-label", "Close");
+      close.setAttribute("aria-label", uiText("close", "Close"));
       cancel.type = "button";
       confirm.type = "button";
 
@@ -1529,7 +1691,7 @@
           return;
         }
         openRemoteModal(open).catch(function (error) {
-          TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+          TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
         });
         return;
       }
@@ -1542,7 +1704,16 @@
 
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape" && activeModal) {
+        event.preventDefault();
         TinyCat.requestCloseModal(activeModal);
+      } else if (event.key === "Tab" && activeModal) {
+        trapModalFocus(event, activeModal);
+      }
+    });
+
+    document.addEventListener("focusin", function (event) {
+      if (activeModal && !activeModal.contains(event.target)) {
+        focusFirst(activeModal);
       }
     });
   };
@@ -1550,6 +1721,7 @@
   TinyCat.initAjax = function () {
     document.addEventListener("submit", async function (event) {
       var form = event.target.closest && event.target.closest("form[data-ajax-form]");
+      var invalidField = null;
 
       if (!form) {
         return;
@@ -1608,13 +1780,17 @@
         refreshFormCaptcha(form, error.data);
 
         if (errors) {
-          applyErrors(form, errors);
+          invalidField = applyErrors(form, errors);
         }
 
-        TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+        TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
         emit(form, "tinycat:error", { error: error, target: target });
       } finally {
         setLoading(form, false);
+
+        if (invalidField && invalidField.isConnected && invalidField.focus) {
+          invalidField.focus();
+        }
       }
     });
 
@@ -1648,7 +1824,7 @@
         handleResult(link, data, target);
         pushHistory(nextHistory);
       } catch (error) {
-        TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+        TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
         emit(link, "tinycat:error", { error: error, target: target });
       } finally {
         setLoading(link, false);
@@ -2586,7 +2762,7 @@
     var details = searchCaptchaDetails(error);
     var captchaHtml = details.captcha_html || "";
     var verifyUrl = details.verify_url || "/api/search-captcha";
-    var message = (error && error.data && error.data.message) || "Please complete the security check.";
+    var message = (error && error.data && error.data.message) || root.dataset.searchCaptchaRequired || "Please complete the security check.";
     var modal = qs("#global-search-captcha-modal");
     var panel;
     var form;
@@ -2609,12 +2785,13 @@
     modal.setAttribute("aria-hidden", "true");
     modal.setAttribute("role", "dialog");
     modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "global-search-captcha-title");
     modal.innerHTML = ''
       + '<div class="modal-backdrop" data-modal-close></div>'
       + '<div class="modal-panel modal-confirm-panel search-captcha-modal-panel">'
       + '<div class="modal-header">'
-      + '<h2 class="modal-title text-lg m-0"></h2>'
-      + '<button class="btn btn-icon btn-ghost" type="button" data-modal-close aria-label="Close">&times;</button>'
+      + '<h2 class="modal-title text-lg m-0" id="global-search-captcha-title"></h2>'
+      + '<button class="btn btn-icon btn-ghost" type="button" data-modal-close></button>'
       + '</div>'
       + '<form class="modal-body stack stack-gap-12" data-search-captcha-form></form>'
       + '</div>';
@@ -2622,6 +2799,8 @@
     panel = qs(".modal-panel", modal);
     title = qs(".modal-title", modal);
     form = qs("[data-search-captcha-form]", modal);
+    qs("[data-modal-close]", modal).setAttribute("aria-label", uiText("close", "Close"));
+    qs("[data-modal-close]", modal).textContent = "×";
 
     if (title) {
       title.textContent = root.dataset.searchCaptchaTitle || "Security check";
@@ -3186,7 +3365,7 @@
         target.scrollIntoView({ block: "start" });
       });
     } catch (error) {
-      TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+      TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
     } finally {
       delete target.dataset.statusFeedRefreshing;
     }
@@ -3273,7 +3452,7 @@
 
       control.dataset.statusFeedUrl = String(payload.next_url || "");
     } catch (error) {
-      TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+      TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
     } finally {
       delete control.dataset.statusFeedBusy;
       control.classList.remove("is-loading");
@@ -3869,7 +4048,7 @@
                 restoreModalScroll(reopenedModal, modalScroll);
               })
               .catch(function (error) {
-                TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+                TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
               });
           } else {
             reopenedModal = TinyCat.openModal(reopenModalId);
@@ -3898,7 +4077,7 @@
                 restoreModalScroll(reopenedModal, modalScroll);
               })
               .catch(function (error) {
-                TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+                TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
               });
           } else {
             reopenedModal = TinyCat.openModal(reopenModalId);
@@ -4006,7 +4185,7 @@
           jsonData = await response.json();
 
           if (!response.ok) {
-            throw new Error(jsonData.message || (jsonData.error && jsonData.error.message) || response.statusText || "Request failed");
+            throw new Error(jsonData.message || (jsonData.error && jsonData.error.message) || response.statusText || uiText("requestFailed", "Request failed"));
           }
 
           handleStatusJsonResponse(form, jsonData);
@@ -4016,7 +4195,7 @@
         html = await response.text();
 
         if (!response.ok) {
-          throw new Error(response.statusText || "Request failed");
+          throw new Error(response.statusText || uiText("requestFailed", "Request failed"));
         }
 
         doc = new DOMParser().parseFromString(html, "text/html");
@@ -4026,7 +4205,7 @@
           window.location.assign(responseUrl || url);
         }
       } catch (error) {
-        TinyCat.toast(error.message || "Request failed", "danger");
+        TinyCat.toast(error.message || uiText("requestFailed", "Request failed"), "danger");
       } finally {
         delete form.dataset.statusBusy;
         setLoading(form, false);
@@ -4155,7 +4334,7 @@
         });
         updateFollowResult(form, data);
       } catch (error) {
-        TinyCat.toast((error.data && error.data.message) || error.message || "Request failed", "danger");
+        TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
       } finally {
         delete form.dataset.followBusy;
         setLoading(form, false);

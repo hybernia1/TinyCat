@@ -44,7 +44,7 @@ layout('layout', [
 ], static function () use ($query, $hasQuery, $searchBlocked, $statusItems, $current): void {
     ?>
     <section class="public-layout">
-        <main class="home-feed-section stack stack-gap-16">
+        <div class="home-feed-section stack stack-gap-16">
             <header class="public-list-header">
                 <h1 class="text-2xl m-0"><?= e($hasQuery ? t('public.search_title_query', ['query' => $query]) : t('public.search_title')) ?></h1>
             </header>
@@ -81,7 +81,7 @@ layout('layout', [
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
-        </main>
+        </div>
         <?= public_sidebar() ?>
     </section>
     <?php

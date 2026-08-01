@@ -75,7 +75,8 @@ layout('layout', [
     $contentId = (int) ($item['id'] ?? 0);
     ?>
     <section class="public-layout">
-        <main class="home-feed-section stack stack-gap-14">
+        <div class="home-feed-section stack stack-gap-14">
+            <h1 class="sr-only"><?= et('public.status_title') ?></h1>
             <article class="card status-card status-permalink-card" id="<?= e(status_anchor($contentId)) ?>">
                 <div class="card-body stack stack-gap-12">
                     <div class="status-header">
@@ -103,7 +104,7 @@ layout('layout', [
                     <?= status_comment_thread_section($item, auth(), $pageAction, 'status-' . $contentId) ?>
                 </div>
             </article>
-        </main>
+        </div>
         <?php if (!$compact): ?><?= public_sidebar() ?><?php endif; ?>
     </section>
     <?php

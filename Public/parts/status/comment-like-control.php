@@ -22,11 +22,11 @@ if ($commentId < 1) {
         <input type="hidden" name="action" value="comment_like">
         <input type="hidden" name="comment_id" value="<?= e($commentId) ?>">
         <button class="link-button status-comment-like-button<?= $liked ? ' is-active' : '' ?>" type="submit" data-comment-like-button data-comment-id="<?= e($commentId) ?>">
-            <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
+            <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span class="sr-only"><?= et('account.status_like') ?>:</span> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
         </button>
     </form>
 <?php else: ?>
-    <span class="status-comment-like-button" aria-label="<?= et('account.status_like') ?>" data-comment-like-button data-comment-id="<?= e($commentId) ?>">
-        <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
+    <span class="status-comment-like-button" data-comment-like-button data-comment-id="<?= e($commentId) ?>">
+        <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span class="sr-only"><?= et('account.status_like') ?>:</span> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
     </span>
 <?php endif; ?>

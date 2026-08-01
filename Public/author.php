@@ -169,7 +169,7 @@ layout('layout', [
                             <?php endif; ?>
                         </div>
                         <div class="profile-actions">
-                            <a class="btn btn-secondary btn-sm" href="<?= e(author_feed_url($authorId)) ?>" title="RSS feed" aria-label="RSS feed">
+                            <a class="btn btn-secondary btn-sm" href="<?= e(author_feed_url($authorId)) ?>" title="<?= et('public.rss_feed') ?>" aria-label="<?= et('public.rss_feed') ?>">
                                 <?= icon('rss') ?> <span>RSS</span>
                             </a>
                             <?php if ($canFollow): ?>
@@ -213,7 +213,7 @@ layout('layout', [
             </div>
         </aside>
 
-        <main class="profile-main stack stack-gap-24">
+        <div class="profile-main stack stack-gap-24">
             <section class="stack stack-gap-12">
                 <?php if ($canPost && $authUser !== null && $mutedUntil !== ''): ?>
                     <div class="alert alert-warning">
@@ -234,7 +234,7 @@ layout('layout', [
                 <?= status_feed_more_control($feedId, 'author', count($statusItems), $statusLimit, ['author_id' => $authorId]) ?>
                 <?= pagination($pagination, author_url($authorId)) ?>
             </section>
-        </main>
+        </div>
     </section>
     <?php
 });

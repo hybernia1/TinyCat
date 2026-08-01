@@ -772,7 +772,7 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
     ob_start();
     ?>
     <div class="user-editor-layout">
-        <main class="user-editor-main stack">
+        <div class="user-editor-main stack">
             <section class="user-editor-panel">
                 <div class="grid sm:grid-2">
                     <label class="field">
@@ -813,7 +813,7 @@ function tc_admin_user_form_fields(?array $user, array $roles, array $statuses, 
                 </label>
             </section>
 
-        </main>
+        </div>
 
         <aside class="user-editor-sidebar">
             <?php if (!$create): ?>

@@ -191,6 +191,25 @@ a:hover {
   outline-offset: 2px;
 }
 
+.skip-link {
+  position: fixed;
+  inset-block-start: -100px;
+  inset-inline-start: 12px;
+  z-index: 1100;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 14px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
+}
+
+.skip-link:focus {
+  inset-block-start: 12px;
+  color: #fff;
+}
+
 ::selection {
   background: var(--primary-soft);
   color: var(--text);

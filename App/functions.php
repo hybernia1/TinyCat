@@ -8,6 +8,7 @@ if (!defined('TINYCAT')) {
 
 require_once __DIR__ . '/Core.php';
 require_once __DIR__ . '/Avatar.php';
+require_once __DIR__ . '/SiteIdentity.php';
 require_once __DIR__ . '/StatusLinks.php';
 require_once __DIR__ . '/LinkMetadata.php';
 
@@ -433,14 +434,13 @@ function site_image_upload(array $file, string $name, string $variant): array
         $cropHeight
     );
 
-    imagedestroy($source);
-
     $baseDirectory = base_path('uploads/site');
     $baseUrl = '/uploads/site';
     $subfolder = date('Y/m');
     $directory = $baseDirectory . ($subfolder !== '' ? DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $subfolder) : '');
 
     if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+        imagedestroy($source);
         imagedestroy($canvas);
         throw new RuntimeException('Could not create image directory.');
     }
@@ -458,10 +458,27 @@ function site_image_upload(array $file, string $name, string $variant): array
     }
 
     if (!imagewebp($canvas, $target, 86)) {
+        imagedestroy($source);
         imagedestroy($canvas);
         throw new RuntimeException('Could not write WebP image.');
     }
 
+    if ($variant === 'favicon') {
+        try {
+            SiteIdentity::writeVariants($source, $directory, pathinfo($filename, PATHINFO_FILENAME));
+        } catch (Throwable $exception) {
+            imagedestroy($source);
+            imagedestroy($canvas);
+
+            if (is_file($target)) {
+                @unlink($target);
+            }
+
+            throw $exception;
+        }
+    }
+
+    imagedestroy($source);
     imagedestroy($canvas);
 
     return [
@@ -676,6 +693,7 @@ function auth_login_request(): array
     if (!captcha_check('login')) {
         captcha_refresh('login');
         api_error(t('auth.invalid_captcha'), 422, 'captcha_invalid', [
+            'errors' => ['tc_captcha' => [t('auth.invalid_captcha')]],
             'captcha_html' => captcha_field('login'),
         ]);
     }
@@ -683,6 +701,7 @@ function auth_login_request(): array
     if (!auth_attempt(auth_login_credentials())) {
         captcha_refresh('login');
         api_error(t('auth.invalid_login'), 422, 'invalid_login', [
+            'errors' => ['username' => [t('auth.invalid_login')]],
             'captcha_html' => captcha_field('login'),
         ]);
     }
@@ -708,21 +727,32 @@ function auth_password_too_long(string $password): bool
     return strlen($password) > auth_password_max_length();
 }
 
-function auth_password_validation_errors(string $password, string $passwordConfirm): array
+function auth_password_validation_field_errors(string $password, string $passwordConfirm): array
 {
     if (strlen($password) < 8) {
-        return [t('account.messages.password_short')];
+        return ['password' => [t('account.messages.password_short')]];
     }
 
     if (auth_password_too_long($password)) {
-        return [t('account.messages.password_too_long')];
+        return ['password' => [t('account.messages.password_too_long')]];
     }
 
     if ($password !== $passwordConfirm) {
-        return [t('account.messages.password_mismatch')];
+        return ['password_confirm' => [t('account.messages.password_mismatch')]];
     }
 
     return [];
+}
+
+function auth_password_validation_errors(string $password, string $passwordConfirm): array
+{
+    $messages = [];
+
+    foreach (auth_password_validation_field_errors($password, $passwordConfirm) as $fieldMessages) {
+        $messages = array_merge($messages, $fieldMessages);
+    }
+
+    return $messages;
 }
 
 function registration_input(): array
@@ -730,27 +760,33 @@ function registration_input(): array
     $username = username_normalize((string) input('username', ''));
     $email = user_email_normalize((string) input('email', ''));
     $password = (string) input('password', '');
-    $errors = [];
+    $fieldErrors = [];
 
     if (!username_valid($username)) {
-        $errors[] = t('account.messages.username_invalid');
+        $fieldErrors['username'][] = t('account.messages.username_invalid');
     } elseif (user_username_taken($username)) {
-        $errors[] = t('account.messages.username_taken');
+        $fieldErrors['username'][] = t('account.messages.username_taken');
     }
 
     if ($email !== '' && !user_email_valid($email)) {
-        $errors[] = t('account.messages.email_invalid');
+        $fieldErrors['email'][] = t('account.messages.email_invalid');
     } elseif ($email !== '' && user_email_taken($email)) {
-        $errors[] = t('account.messages.email_taken');
+        $fieldErrors['email'][] = t('account.messages.email_taken');
     }
 
-    $errors = array_merge(
-        $errors,
-        auth_password_validation_errors($password, (string) input('password_confirm', ''))
+    $fieldErrors = array_merge(
+        $fieldErrors,
+        auth_password_validation_field_errors($password, (string) input('password_confirm', ''))
     );
 
     if ((string) input('platform_terms', '') !== '1') {
-        $errors[] = t('auth.platform_terms_required');
+        $fieldErrors['platform_terms'][] = t('auth.platform_terms_required');
+    }
+
+    $errors = [];
+
+    foreach ($fieldErrors as $fieldMessages) {
+        $errors = array_merge($errors, $fieldMessages);
     }
 
     return [
@@ -758,6 +794,7 @@ function registration_input(): array
         'email' => $email,
         'password' => $password,
         'errors' => $errors,
+        'field_errors' => $fieldErrors,
     ];
 }
 
@@ -797,6 +834,7 @@ function registration_request(): array
     if (!captcha_check('register')) {
         captcha_refresh('register');
         api_error(t('auth.invalid_captcha'), 422, 'captcha_invalid', [
+            'errors' => ['tc_captcha' => [t('auth.invalid_captcha')]],
             'captcha_html' => captcha_field('register'),
         ]);
     }
@@ -807,7 +845,7 @@ function registration_request(): array
     if ($errors !== []) {
         captcha_refresh('register');
         api_error(implode(' ', $errors), 422, 'validation_error', [
-            'errors' => $errors,
+            'errors' => (array) ($registration['field_errors'] ?? []),
             'captcha_html' => captcha_field('register'),
         ]);
     }

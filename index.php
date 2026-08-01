@@ -10,6 +10,14 @@ Core::securityHeaders();
 
 $path = route_path();
 $installPath = $path === '/install' || str_starts_with($path, '/install/');
+$siteIdentityPath = in_array($path, [
+    '/site.webmanifest',
+    '/favicon-32x32.png',
+    '/apple-touch-icon.png',
+    '/icons/icon-192.png',
+    '/icons/icon-512.png',
+    '/icons/icon-maskable-512.png',
+], true);
 
 route(['GET', 'POST'], '/admin/bots/{bot_id:[0-9]+}', static function (string $bot_id): void {
     $_GET['id'] = (string) max(0, (int) $bot_id);
@@ -60,6 +68,30 @@ route('GET', '/llms.txt', static function (): void {
 route('GET', '/llms-full.txt', static function (): void {
     $llmsFull = true;
     require public_path('llms.php');
+});
+
+route('GET', '/site.webmanifest', static function (): void {
+    SiteIdentity::respondManifest();
+});
+
+route('GET', '/favicon-32x32.png', static function (): void {
+    SiteIdentity::respondIcon('favicon');
+});
+
+route('GET', '/apple-touch-icon.png', static function (): void {
+    SiteIdentity::respondIcon('apple');
+});
+
+route('GET', '/icons/icon-192.png', static function (): void {
+    SiteIdentity::respondIcon('pwa-192');
+});
+
+route('GET', '/icons/icon-512.png', static function (): void {
+    SiteIdentity::respondIcon('pwa-512');
+});
+
+route('GET', '/icons/icon-maskable-512.png', static function (): void {
+    SiteIdentity::respondIcon('maskable-512');
 });
 
 route('GET', '/author/{author_id:[0-9]+}', static function (string $author_id): void {
@@ -114,7 +146,7 @@ if (!$installPath && !(bool) config('install.complete', false) && !app_db_ready(
     redirect('/install');
 }
 
-if (!$installPath) {
+if (!$installPath && !$siteIdentityPath) {
     app_apply_user_locale();
     app_touch_user_activity();
 }

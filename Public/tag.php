@@ -76,10 +76,10 @@ layout('layout', [
     $feedId = 'status-feed-tag-' . slug($tag);
     ?>
     <section class="public-layout">
-        <main class="home-feed-section stack stack-gap-14">
+        <div class="home-feed-section stack stack-gap-14">
             <header class="public-list-header">
                 <h1 class="text-2xl m-0"><?= e(t('public.tag_feed_title', ['tag' => '#' . $tag])) ?></h1>
-                <a class="btn btn-ghost btn-sm" href="<?= e(tag_feed_url($tag)) ?>" title="RSS feed" aria-label="RSS feed">
+                <a class="btn btn-ghost btn-sm" href="<?= e(tag_feed_url($tag)) ?>" title="<?= et('public.rss_feed') ?>" aria-label="<?= et('public.rss_feed') ?>">
                     <?= icon('rss') ?> <span>RSS</span>
                 </a>
             </header>
@@ -101,7 +101,7 @@ layout('layout', [
                 ) ?>
                 <?= pagination($pagination, $current) ?>
             <?php endif; ?>
-        </main>
+        </div>
         <?= public_sidebar($tag) ?>
     </section>
     <?php
