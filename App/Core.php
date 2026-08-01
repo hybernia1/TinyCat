@@ -511,6 +511,21 @@ final class Core
             return $url;
         }
 
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $minify = match ($extension) {
+            'css' => (bool) self::setting('performance.minify_css', false),
+            'js' => (bool) self::setting('performance.minify_js', false),
+            default => false,
+        };
+
+        if ($minify) {
+            $optimizedUrl = AssetOptimizer::assetUrl($path, $file, $extension);
+
+            if ($optimizedUrl !== null) {
+                return $optimizedUrl;
+            }
+        }
+
         return $url . '?v=' . filemtime($file);
     }
 
@@ -774,7 +789,13 @@ final class Core
             $data['content'] = is_callable($content) ? self::capture($content) : self::stringValue($content);
         }
 
-        echo self::render($template, $data, $directory);
+        $output = self::render($template, $data, $directory);
+
+        if ((bool) self::setting('performance.minify_html', false)) {
+            $output = AssetOptimizer::minifyHtml($output);
+        }
+
+        echo $output;
     }
 
     public static function json(mixed $data, int $status = 200, array $headers = []): never
@@ -2437,6 +2458,9 @@ final class Core
             'security.captcha.enabled' => true,
             'auth.registration.enabled' => true,
             'auth.registration.auto_approve' => true,
+            'performance.minify_css' => true,
+            'performance.minify_js' => true,
+            'performance.minify_html' => true,
             'moderation.blocked_urls' => true,
             'email.smtp.host' => true,
             'email.smtp.port' => true,

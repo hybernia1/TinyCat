@@ -197,6 +197,15 @@ function tinycat_migrations(): array
 
             $pdo->exec("DELETE FROM settings WHERE setting_key = 'site.home_intro'");
         },
+        '20260801_performance_minification' => static function (PDO $pdo): void {
+            $statement = $pdo->prepare(
+                'INSERT IGNORE INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES (?, ?, ?, ?)'
+            );
+
+            foreach (['performance.minify_css', 'performance.minify_js', 'performance.minify_html'] as $key) {
+                $statement->execute([$key, '0', 'bool', 'performance']);
+            }
+        },
     ];
 }
 

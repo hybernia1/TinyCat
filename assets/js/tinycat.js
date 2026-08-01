@@ -1494,19 +1494,33 @@
     return ["success", "danger", "warning", "info"].indexOf(type) === -1 ? "info" : type;
   }
 
-  function createToastIcon(type) {
-    var icon = document.createElement("span");
+  function iconSpriteHref(name) {
+    var sprite = document.body ? document.body.getAttribute("data-icon-sprite") : "";
+
+    return String(sprite || "") + "#" + String(name || "");
+  }
+
+  function createSvgIcon(name) {
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     var use = document.createElementNS("http://www.w3.org/2000/svg", "use");
 
-    icon.className = "toast-icon";
-    icon.setAttribute("aria-hidden", "true");
     svg.setAttribute("class", "icon");
     svg.setAttribute("width", "1em");
     svg.setAttribute("height", "1em");
-    use.setAttribute("href", "/assets/icons.svg#" + toastIconName(type));
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    use.setAttribute("href", iconSpriteHref(name));
     svg.appendChild(use);
-    icon.appendChild(svg);
+
+    return svg;
+  }
+
+  function createToastIcon(type) {
+    var icon = document.createElement("span");
+
+    icon.className = "toast-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.appendChild(createSvgIcon(toastIconName(type)));
 
     return icon;
   }
@@ -1535,7 +1549,7 @@
     close.className = "toast-close";
     close.type = "button";
     close.setAttribute("aria-label", uiText("close", "Close"));
-    close.innerHTML = '<svg class="icon" width="1em" height="1em" aria-hidden="true" focusable="false"><use href="/assets/icons.svg#close"></use></svg>';
+    close.appendChild(createSvgIcon("close"));
 
     toast.appendChild(createToastIcon(normalizedType));
     toast.appendChild(body);

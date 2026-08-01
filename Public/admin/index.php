@@ -100,7 +100,7 @@ function tc_admin_dashboard_counts(array $tables): array
     }
 
     $cacheKey = 'admin_dashboard_counts_human_users_' . md5(implode('|', $tables));
-    $cached = public_stats_cache_get($cacheKey, 300);
+    $cached = Cache::get($cacheKey, 300);
 
     if (is_array($cached)) {
         return array_map(static fn (mixed $value): ?int => $value === null ? null : (int) $value, $cached);
@@ -112,7 +112,7 @@ function tc_admin_dashboard_counts(array $tables): array
         $counts[$table] = tc_admin_dashboard_count($table);
     }
 
-    public_stats_cache_set($cacheKey, $counts);
+    Cache::put($cacheKey, $counts);
 
     return $counts;
 }

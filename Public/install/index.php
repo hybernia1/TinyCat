@@ -661,6 +661,9 @@ function tc_install_default_settings(array $state): void
         ['security.captcha.enabled', (bool) config('security.captcha.enabled', true), 'bool', 'security'],
         ['auth.registration.enabled', (bool) config('auth.registration.enabled', false), 'bool', 'security'],
         ['auth.registration.auto_approve', (bool) config('auth.registration.auto_approve', false), 'bool', 'security'],
+        ['performance.minify_css', (bool) config('performance.minify_css', false), 'bool', 'performance'],
+        ['performance.minify_js', (bool) config('performance.minify_js', false), 'bool', 'performance'],
+        ['performance.minify_html', (bool) config('performance.minify_html', false), 'bool', 'performance'],
         ['moderation.blocked_urls', (string) config('moderation.blocked_urls', ''), 'string', 'moderation'],
         ['email.smtp.host', '', 'string', 'email'],
         ['email.smtp.port', 587, 'int', 'email'],
@@ -789,7 +792,7 @@ function tc_install_render(string $step, array $languages, array $state): void
         <link rel="stylesheet" href="<?= e(asset('css/tinycat.css')) ?>">
         <script src="<?= e(asset('js/tinycat.js')) ?>" defer></script>
     </head>
-    <body>
+    <body data-icon-sprite="<?= e(asset('icons.svg')) ?>">
         <header class="navbar">
             <div class="container navbar-inner">
                 <strong><?= e($appName) ?></strong>

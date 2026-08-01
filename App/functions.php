@@ -7,6 +7,8 @@ if (!defined('TINYCAT')) {
 }
 
 require_once __DIR__ . '/Core.php';
+require_once __DIR__ . '/Cache.php';
+require_once __DIR__ . '/AssetOptimizer.php';
 require_once __DIR__ . '/Avatar.php';
 require_once __DIR__ . '/SiteIdentity.php';
 require_once __DIR__ . '/StatusLinks.php';
@@ -3079,14 +3081,16 @@ function public_trending_tags(int $limit = 8, int $days = 7, bool $compute = tru
     $since = date_db('-' . $days . ' days');
     $cacheKey = 'public_trending_tags_' . $limit . '_' . $days;
 
-    $cached = public_stats_cache_get($cacheKey, 3600);
+    $cached = Cache::get($cacheKey, 3600);
 
-    if ($cached !== null) {
+    if (is_array($cached)) {
         return $cached;
     }
 
     if (!$compute) {
-        return public_stats_cache_read($cacheKey) ?? [];
+        $stale = Cache::read($cacheKey);
+
+        return is_array($stale) ? $stale : [];
     }
 
     $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
@@ -3126,7 +3130,7 @@ function public_trending_tags(int $limit = 8, int $days = 7, bool $compute = tru
         ];
     }
 
-    public_stats_cache_set($cacheKey, $tags);
+    Cache::put($cacheKey, $tags);
 
     return $tags;
 }
@@ -3137,14 +3141,16 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
     $days = max(1, min(365, $days));
     $cacheKey = 'public_top_authors_human_' . $limit . '_' . $days;
 
-    $cached = public_stats_cache_get($cacheKey, 3600);
+    $cached = Cache::get($cacheKey, 3600);
 
-    if ($cached !== null) {
+    if (is_array($cached)) {
         return $cached;
     }
 
     if (!$compute) {
-        return public_stats_cache_read($cacheKey) ?? [];
+        $stale = Cache::read($cacheKey);
+
+        return is_array($stale) ? $stale : [];
     }
 
     $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
@@ -3169,85 +3175,9 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
         ->limit($limit)
         ->all();
 
-    public_stats_cache_set($cacheKey, $authors);
+    Cache::put($cacheKey, $authors);
 
     return $authors;
-}
-
-function public_stats_cache_get(string $key, int $ttl = 300): ?array
-{
-    $file = public_stats_cache_file($key);
-
-    if (!public_stats_cache_fresh($key, $ttl)) {
-        return null;
-    }
-
-    $json = file_get_contents($file);
-
-    if (!is_string($json) || $json === '') {
-        return null;
-    }
-
-    $data = json_decode($json, true);
-
-    return is_array($data) ? $data : null;
-}
-
-function public_stats_cache_fresh(string $key, int $ttl = 300): bool
-{
-    $file = public_stats_cache_file($key);
-
-    return is_file($file) && filemtime($file) >= time() - max(1, $ttl);
-}
-
-function public_stats_cache_read(string $key): ?array
-{
-    $file = public_stats_cache_file($key);
-
-    if (!is_file($file)) {
-        return null;
-    }
-
-    $json = file_get_contents($file);
-
-    if (!is_string($json) || $json === '') {
-        return null;
-    }
-
-    $data = json_decode($json, true);
-
-    return is_array($data) ? $data : null;
-}
-
-function public_stats_cache_set(string $key, array $data): void
-{
-    $file = public_stats_cache_file($key);
-    $directory = dirname($file);
-
-    if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
-        return;
-    }
-
-    $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-    if (!is_string($json)) {
-        return;
-    }
-
-    $tmp = $file . '.' . bin2hex(random_bytes(4)) . '.tmp';
-
-    if (file_put_contents($tmp, $json, LOCK_EX) === false) {
-        return;
-    }
-
-    @rename($tmp, $file);
-}
-
-function public_stats_cache_file(string $key): string
-{
-    $safe = preg_replace('/[^A-Za-z0-9_.-]+/', '_', $key) ?: 'public_stats';
-
-    return base_path('storage/cache/' . $safe . '.json');
 }
 
 function public_sidebar(?string $activeTag = null, bool $compute = false): string
@@ -3256,8 +3186,8 @@ function public_sidebar(?string $activeTag = null, bool $compute = false): strin
     $tags = public_trending_tags(8, 7, $compute);
     $authors = public_top_authors(5, 7, $compute);
     $needsRefresh = !$compute && (
-        !public_stats_cache_fresh('public_trending_tags_8_7', 3600)
-        || !public_stats_cache_fresh('public_top_authors_human_5_7', 3600)
+        !Cache::fresh('public_trending_tags_8_7', 3600)
+        || !Cache::fresh('public_top_authors_human_5_7', 3600)
     );
     $sidebarUrl = '/api/sidebar' . ($activeTag !== '' ? '?tag=' . rawurlencode($activeTag) : '');
 

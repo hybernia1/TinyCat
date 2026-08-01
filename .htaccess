@@ -4,12 +4,14 @@ DirectoryIndex index.php
     Require all denied
 </FilesMatch>
 
-RedirectMatch 404 ^/(App|lang|storage)(/|$)
+RedirectMatch 404 ^/(App|lang)(/|$)
+RedirectMatch 404 "^/storage(?:$|/(?!cache/assets/[A-Za-z0-9._-]+\.(?:css|js)$).*)"
 
 <IfModule mod_setenvif.c>
     SetEnvIfNoCase Authorization "^(.+)$" HTTP_AUTHORIZATION=$1
     SetEnvIfNoCase Request_URI "\.(css|js|mjs|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot)$" tinycat_static_asset
     SetEnvIfNoCase Request_URI "^/assets/.*\.(css|js|mjs|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot)$" tinycat_versioned_asset
+    SetEnvIfNoCase Request_URI "^/(?:cache/assets|storage/cache/assets)/[A-Za-z0-9._-]+\.(css|js)$" tinycat_versioned_asset
     SetEnvIfNoCase Request_URI "^/uploads/.*\.(svg|png|jpe?g|gif|webp|avif)$" tinycat_upload_asset
 </IfModule>
 
@@ -42,6 +44,7 @@ RedirectMatch 404 ^/(App|lang|storage)(/|$)
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    RewriteRule ^cache/assets/([A-Za-z0-9._-]+\.(?:css|js))$ storage/cache/assets/$1 [L]
     RewriteRule ^Public(/.*)?$ index.php [L]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d

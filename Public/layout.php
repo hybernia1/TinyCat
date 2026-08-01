@@ -175,7 +175,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php endif; ?>
     <?= part('layout/flashes', ['items' => $flashToasts]) ?>
 </head>
-<body<?= $bodyClasses !== '' ? ' class="' . e($bodyClasses) . '"' : '' ?> data-ui-close="<?= et('common.close') ?>" data-ui-cancel="<?= et('common.cancel') ?>" data-ui-confirm="<?= et('common.confirm') ?>" data-ui-confirm-title="<?= et('common.confirm_action') ?>" data-ui-request-failed="<?= et('common.request_failed') ?>">
+<body<?= $bodyClasses !== '' ? ' class="' . e($bodyClasses) . '"' : '' ?> data-icon-sprite="<?= e(asset('icons.svg')) ?>" data-ui-close="<?= et('common.close') ?>" data-ui-cancel="<?= et('common.cancel') ?>" data-ui-confirm="<?= et('common.confirm') ?>" data-ui-confirm-title="<?= et('common.confirm_action') ?>" data-ui-request-failed="<?= et('common.request_failed') ?>">
     <a class="skip-link" href="#main-content"><?= et('common.skip_to_content') ?></a>
     <?php if ($isAdminShell): ?>
         <div class="admin-shell" data-admin-shell>

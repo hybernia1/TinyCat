@@ -106,6 +106,15 @@ function tc_admin_settings_sections(): array
                 ['key' => 'site.footer_html', 'label' => t('settings.fields.site_footer'), 'type' => 'textarea', 'default' => '', 'span' => true],
             ],
         ],
+        'performance' => [
+            'label' => t('settings.sections.performance'),
+            'icon' => 'settings',
+            'fields' => [
+                ['key' => 'performance.minify_css', 'label' => t('settings.fields.minify_css'), 'type' => 'bool', 'default' => false, 'help' => t('settings.fields.minify_css_help')],
+                ['key' => 'performance.minify_js', 'label' => t('settings.fields.minify_js'), 'type' => 'bool', 'default' => false, 'help' => t('settings.fields.minify_js_help')],
+                ['key' => 'performance.minify_html', 'label' => t('settings.fields.minify_html'), 'type' => 'bool', 'default' => false, 'help' => t('settings.fields.minify_html_help')],
+            ],
+        ],
         'localization' => [
             'label' => t('settings.sections.localization'),
             'icon' => 'globe',
