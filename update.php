@@ -214,6 +214,15 @@ function tinycat_migrations(): array
                    AND (muted_until IS NOT NULL OR muted_by IS NOT NULL OR muted_reason IS NOT NULL)"
             );
         },
+        '20260801_legacy_ua_cleanup' => static function (PDO $pdo): void {
+            $statement = $pdo->prepare(
+                "UPDATE settings
+                 SET setting_value = ''
+                 WHERE setting_key = 'analytics.google_measurement_id'
+                   AND UPPER(TRIM(setting_value)) LIKE 'UA-%'"
+            );
+            $statement->execute();
+        },
     ];
 }
 

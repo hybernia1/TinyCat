@@ -14,6 +14,9 @@ $siteIdentityPath = in_array($path, [
     '/site.webmanifest',
     '/favicon-32x32.png',
     '/apple-touch-icon.png',
+    '/icon-192.png',
+    '/icon-512.png',
+    '/icon-maskable-512.png',
     '/icons/icon-192.png',
     '/icons/icon-512.png',
     '/icons/icon-maskable-512.png',
@@ -82,6 +85,19 @@ route('GET', '/apple-touch-icon.png', static function (): void {
     SiteIdentity::respondIcon('apple');
 });
 
+route('GET', '/icon-192.png', static function (): void {
+    SiteIdentity::respondIcon('pwa-192');
+});
+
+route('GET', '/icon-512.png', static function (): void {
+    SiteIdentity::respondIcon('pwa-512');
+});
+
+route('GET', '/icon-maskable-512.png', static function (): void {
+    SiteIdentity::respondIcon('maskable-512');
+});
+
+// Backward-compatible aliases for installations where /icons is routed through PHP.
 route('GET', '/icons/icon-192.png', static function (): void {
     SiteIdentity::respondIcon('pwa-192');
 });

@@ -11,6 +11,7 @@ final class SiteIdentity
     public const LIGHT_THEME_COLOR = '#f6f6f4';
     public const DARK_THEME_COLOR = '#141416';
     public const MANIFEST_THEME_COLOR = '#64748b';
+    private const CACHE_VERSION = '2';
 
     private const VARIANTS = [
         'favicon' => [
@@ -28,21 +29,21 @@ final class SiteIdentity
             'background' => '#ffffff',
         ],
         'pwa-192' => [
-            'route' => '/icons/icon-192.png',
+            'route' => '/icon-192.png',
             'suffix' => '-192.png',
             'size' => 192,
             'scale' => 1.0,
             'background' => '#ffffff',
         ],
         'pwa-512' => [
-            'route' => '/icons/icon-512.png',
+            'route' => '/icon-512.png',
             'suffix' => '-512.png',
             'size' => 512,
             'scale' => 1.0,
             'background' => '#ffffff',
         ],
         'maskable-512' => [
-            'route' => '/icons/icon-maskable-512.png',
+            'route' => '/icon-maskable-512.png',
             'suffix' => '-maskable-512.png',
             'size' => 512,
             'scale' => 0.64,
@@ -257,6 +258,7 @@ final class SiteIdentity
     {
         $source = self::source();
         $fingerprint = implode('|', [
+            self::CACHE_VERSION,
             (string) Core::config('site.name', 'TinyCat'),
             (string) Core::config('site.meta_description', ''),
             (string) Core::config('i18n.locale', Core::config('install.locale', 'en')),
