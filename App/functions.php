@@ -2112,6 +2112,32 @@ function status_url(int $id): string
     return $id > 0 ? '/status/' . $id : '/';
 }
 
+function status_permalink_label(array $item): string
+{
+    $author = trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? ''));
+    $body = status_strip_external_urls((string) ($item['body'] ?? ''));
+    $excerpt = meta_text($body, 80);
+
+    if ($author !== '' && $excerpt !== '') {
+        return t('account.status_permalink_context', [
+            'author' => $author,
+            'excerpt' => $excerpt,
+        ]);
+    }
+
+    if ($author !== '') {
+        return t('account.status_permalink_author', ['author' => $author]);
+    }
+
+    if ($excerpt !== '') {
+        return t('account.status_permalink_excerpt', ['excerpt' => $excerpt]);
+    }
+
+    $id = max(0, (int) ($item['id'] ?? $item['content_id'] ?? 0));
+
+    return t('account.status_permalink_for', ['id' => $id]);
+}
+
 function status_url_host_key(string $url): string
 {
     $parts = parse_url($url);

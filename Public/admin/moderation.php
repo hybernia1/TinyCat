@@ -88,7 +88,8 @@ layout('layout', [
                                         </td>
                                         <td>
                                             <div class="table-actions">
-                                                <a class="btn btn-sm btn-ghost btn-icon" href="<?= e(status_url((int) ($report['content_id'] ?? 0))) ?>" title="<?= et('account.status_permalink') ?>" aria-label="<?= et('account.status_permalink') ?>">
+                                                <?php $permalinkLabel = status_permalink_label($report); ?>
+                                                <a class="btn btn-sm btn-ghost btn-icon" href="<?= e(status_url((int) ($report['content_id'] ?? 0))) ?>" title="<?= e($permalinkLabel) ?>" aria-label="<?= e($permalinkLabel) ?>">
                                                     <?= icon('link') ?>
                                                 </a>
                                                 <?php if ($openCount > 0): ?>

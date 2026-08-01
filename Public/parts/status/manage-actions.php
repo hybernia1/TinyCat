@@ -19,9 +19,11 @@ $canReport = $user !== null
 if ($contentId < 1) {
     return '';
 }
+
+$permalinkLabel = status_permalink_label($item);
 ?>
 <div class="status-manage status-manage-top">
-    <a class="btn btn-ghost btn-icon btn-sm status-manage-icon" href="<?= e(status_url($contentId)) ?>" title="<?= et('account.status_permalink') ?>" aria-label="<?= et('account.status_permalink') ?>">
+    <a class="btn btn-ghost btn-icon btn-sm status-manage-icon" href="<?= e(status_url($contentId)) ?>" title="<?= e($permalinkLabel) ?>" aria-label="<?= e($permalinkLabel) ?>">
         <?= icon('link') ?>
     </a>
     <?php if ($isLocked): ?>
