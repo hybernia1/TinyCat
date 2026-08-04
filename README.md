@@ -89,4 +89,6 @@ See `/privacy` on an installed site for the user-facing data and cookie policy g
 
 ## License
 
-TinyCat is released under the [MIT License](LICENSE).
+Copyright (C) 2026 TinyCat contributors.
+
+TinyCat is licensed solely under the [GNU Affero General Public License v3.0 or later](LICENSE) (`AGPL-3.0-or-later`), with no permissive or proprietary alternative license. This strong copyleft license requires modified versions offered as a network service to provide their Corresponding Source to the service's users under the same license.
