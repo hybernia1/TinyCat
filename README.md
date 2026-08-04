@@ -39,11 +39,11 @@ The PHP `exif` extension improves JPEG orientation handling but is optional. Apa
 5. Open `/install` and select a language.
 6. Enter the database connection, create the schema, and create the first administrator account.
 
-The installer creates the complete TinyCat 1.0.0 schema and writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root no longer needs to remain writable.
+The installer creates the complete TinyCat 1.0 schema and writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root no longer needs to remain writable.
 
 Use HTTPS in production. The supplied Apache rules prevent direct web access to `config.php`, `App/`, `lang/`, and private `storage/` content; equivalent protection is required if the application is adapted to another web server.
 
-TinyCat 1.0.0 is a clean installation baseline. It contains no pre-1.0 database migrations or compatibility layer for older schemas; an existing installation must already match the 1.0.0 schema before this code is deployed.
+TinyCat 1.0 is a clean installation baseline. It contains no pre-1.0 database migrations or compatibility layer for older schemas; an existing installation must already match the 1.0 schema before this code is deployed.
 
 ## RSS and Atom bots
 
