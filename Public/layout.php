@@ -342,29 +342,12 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                                 <?= icon('dashboard') ?>
                             </a>
                         <?php endif; ?>
-                        <?php
-                        $notificationUserId = (int) ($authUser['id'] ?? 0);
-                        $notificationUnread = notification_unread_count($notificationUserId);
-                        $notificationLatestId = notification_latest_id($notificationUserId);
-                        ?>
-                        <div class="notification-menu" data-notification-menu>
-                            <a class="nav-link nav-link-icon notification-nav-link" href="/notifications"<?= $current === '/notifications' ? ' aria-current="page"' : '' ?> aria-label="<?= et('notifications.title') ?>" title="<?= et('notifications.title') ?>" aria-haspopup="true" aria-expanded="false" aria-controls="notification-popover" data-notification-button data-notification-api="/api/notifications?view=html" data-notification-interval="5000" data-notification-unread="<?= e($notificationUnread) ?>" data-notification-latest-id="<?= e($notificationLatestId) ?>" data-notification-message="<?= et('notifications.new') ?>">
-                                <?= icon('bell') ?>
-                                <span class="notification-badge" data-notification-count<?= $notificationUnread < 1 ? ' hidden' : '' ?>><?= e(notification_badge_text($notificationUnread)) ?></span>
-                            </a>
-                            <div class="notification-popover" id="notification-popover" data-notification-popover hidden>
-                                <div class="notification-popover-header">
-                                    <strong><?= et('notifications.title') ?></strong>
-                                    <span class="badge badge-primary" data-notification-menu-count<?= $notificationUnread < 1 ? ' hidden' : '' ?>><?= e(notification_badge_text($notificationUnread)) ?></span>
-                                </div>
-                                <div class="notification-popover-list" data-notification-list>
-                                    <?= notification_preview_html($notificationUserId) ?>
-                                </div>
-                                <a class="notification-popover-more" href="/notifications">
-                                    <?= icon('bell') ?> <span><?= et('notifications.more') ?></span>
-                                </a>
-                            </div>
-                        </div>
+                        <?php $notificationUserId = (int) ($authUser['id'] ?? 0); ?>
+                        <?= part('notifications/menu', [
+                            'current' => $current,
+                            'state' => Notifications::state($notificationUserId),
+                            'notifications' => Notifications::items($notificationUserId, Notifications::PREVIEW_LIMIT),
+                        ]) ?>
                         <a class="nav-link nav-link-icon profile-nav-link" href="<?= e($profileUrl) ?>"<?= $current === $profileUrl ? ' aria-current="page"' : '' ?> aria-label="<?= e($profileNeedsEmail ? t('account.email_missing_title') : t('account.public_profile')) ?>" title="<?= e($profileNeedsEmail ? t('account.email_missing_title') : t('account.public_profile')) ?>">
                             <?= icon('user') ?>
                             <?php if ($profileNeedsEmail): ?>

@@ -119,7 +119,7 @@ route(['GET', 'POST'], '/search', static function (): void {
 
 route('GET', '/notifications/open', static function (): void {
     $user = require_auth('/login');
-    redirect(notification_open((int) get('id', 0), (int) $user['id']));
+    redirect(Notifications::open((int) get('id', 0), (int) $user['id']));
 });
 
 route(['GET', 'POST'], '/notifications', static function (): void {

@@ -162,7 +162,10 @@ final class Api
         ];
 
         return api_payload($data, static fn (): array => $data + [
-            'html' => author_follow_button_html($authorId, $following),
+            'html' => part('author/follow-button', [
+                'author_id' => $authorId,
+                'is_following' => $following,
+            ]),
         ]);
     }
 
@@ -222,7 +225,14 @@ final class Api
             api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
         }
 
-        return notification_state((int) ($user['id'] ?? 0), wants_partial());
+        $userId = (int) ($user['id'] ?? 0);
+        $state = Notifications::state($userId);
+
+        return api_payload($state, static fn (): array => $state + [
+            'html' => part('notifications/preview', [
+                'notifications' => Notifications::items($userId, Notifications::PREVIEW_LIMIT),
+            ]),
+        ]);
     }
 
     public static function notificationAction(string $action): array
@@ -232,32 +242,36 @@ final class Api
 
         $userId = (int) ($user['id'] ?? 0);
         $action = str_replace('-', '_', strtolower($action));
-        $message = notifications_apply_action($userId, $action, max(0, (int) input('id', 0)));
-        $batch = notifications_page_batch($userId);
-        $unread = notification_unread_count($userId);
+        $message = Notifications::applyAction($userId, $action, max(0, (int) input('id', 0)));
+        $batch = Notifications::page($userId);
+        $unread = Notifications::unreadCount($userId);
         $data = [
             'action' => $action,
             'unread' => $unread,
-            'latest_id' => notification_latest_id($userId),
+            'latest_id' => Notifications::latestId($userId),
             'message' => $message,
         ];
 
         return api_payload($data, static fn (): array => $data + [
-            'html' => notifications_page_html((array) $batch['items'], $unread, (string) $batch['next_url']),
+            'html' => part('notifications/page', [
+                'notifications' => (array) $batch['items'],
+                'unread' => $unread,
+                'next_url' => (string) $batch['next_url'],
+            ]),
         ]);
     }
 
     public static function notificationsPage(): array
     {
         $user = require_auth('/login');
-        $batch = notifications_page_batch(
+        $batch = Notifications::page(
             (int) ($user['id'] ?? 0),
             (string) get('cursor_at', ''),
             max(0, (int) get('cursor_id', 0))
         );
 
         return [
-            'html' => notification_items_html((array) $batch['items']),
+            'html' => part('notifications/items', ['notifications' => (array) $batch['items']]),
             'count' => (int) $batch['count'],
             'done' => (bool) $batch['done'],
             'next_url' => (string) $batch['next_url'],
@@ -302,7 +316,11 @@ final class Api
         }
 
         return [
-            'html' => status_card($item, self::statusPageAction($contentId), auth()),
+            'html' => part('status/card', [
+                'item' => $item,
+                'action' => self::statusPageAction($contentId),
+                'user' => auth(),
+            ]),
         ];
     }
 
@@ -316,7 +334,11 @@ final class Api
         }
 
         return [
-            'html' => status_post_modal($item, auth(), self::statusPageAction($contentId)),
+            'html' => render('modals/status-post', [
+                'item' => $item,
+                'user' => auth(),
+                'action' => self::statusPageAction($contentId),
+            ]),
         ];
     }
 
@@ -339,7 +361,11 @@ final class Api
         }
 
         return [
-            'html' => status_report_modal($item, $user, status_api_url('report', ['id' => $contentId])),
+            'html' => render('modals/status-report', [
+                'item' => $item,
+                'user' => $user,
+                'action' => status_api_url('report', ['id' => $contentId]),
+            ]),
         ];
     }
 
@@ -357,8 +383,13 @@ final class Api
             api_error(t('account.messages.status_forbidden'), 403, 'forbidden');
         }
 
+        $item['body'] = mentions_for_editing((string) ($item['body'] ?? ''));
+
         return [
-            'html' => status_edit_modal((array) $item, status_api_url('update', ['id' => $contentId])),
+            'html' => render('modals/status-edit', [
+                'item' => (array) $item,
+                'action' => status_api_url('update', ['id' => $contentId]),
+            ]),
         ];
     }
 

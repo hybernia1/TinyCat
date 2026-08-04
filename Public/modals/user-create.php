@@ -8,12 +8,12 @@ if (!defined('TINYCAT')) {
 
 require_admin();
 
-if (!function_exists('tc_admin_user_form_fields')) {
-    http_response_code(404);
-    return;
-}
-
-$body = tc_admin_user_form_fields(null, tc_admin_roles(), admin_user_statuses(), true);
+$body = part('admin/users/form-fields', [
+    'user' => null,
+    'roles' => tc_admin_roles(),
+    'statuses' => admin_user_statuses(),
+    'create' => true,
+]);
 $footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . icon('close') . ' <span>' . et('common.cancel') . '</span></button>'
     . '<button class="btn btn-primary" type="submit">' . icon('save') . ' <span>' . et('common.create') . '</span></button>';
 

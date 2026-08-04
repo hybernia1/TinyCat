@@ -22,7 +22,7 @@ ob_start();
 ?>
 <div class="following-modal-grid">
     <?php foreach ($profiles as $profile): ?>
-        <?= author_following_profile_html((array) $profile) ?>
+        <?= part('author/following-profile', ['profile' => (array) $profile]) ?>
     <?php endforeach; ?>
 </div>
 <?php

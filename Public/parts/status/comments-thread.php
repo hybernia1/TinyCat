@@ -19,12 +19,25 @@ if ($contentId < 1 || ($comments === [] && $user === null)) {
 ?>
 <section class="status-comments status-comments-thread" id="status-comments-thread-<?= e($contentId) ?>">
     <?php if ($user !== null): ?>
-        <?= status_comment_form($contentId, $action, $user, 0, '', $context) ?>
+        <?= part('status/comment-form', [
+            'content_id' => $contentId,
+            'action' => $action,
+            'user' => $user,
+            'context' => $context,
+        ]) ?>
     <?php endif; ?>
 
     <div class="status-comment-list" data-status-comment-list data-status-id="<?= e($contentId) ?>">
         <?php foreach ($comments as $comment): ?>
-            <?= status_comment_item($comment, $user, $action, 0, $context, true, true) ?>
+            <?= part('status/comment-item', [
+                'comment' => $comment,
+                'user' => $user,
+                'action' => $action,
+                'depth' => 0,
+                'context' => $context,
+                'show_replies' => true,
+                'show_reply_form' => true,
+            ]) ?>
         <?php endforeach; ?>
     </div>
 

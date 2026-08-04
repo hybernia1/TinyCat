@@ -89,16 +89,16 @@ layout('layout', [
             <?php else: ?>
                 <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
                     <?php foreach ($statusItems as $item): ?>
-                        <?= status_card($item, $current) ?>
+                        <?= part('status/card', ['item' => $item, 'action' => $current, 'user' => auth()]) ?>
                     <?php endforeach; ?>
                 </div>
-                <?= status_feed_more_control(
-                    $feedId,
-                    'tag',
-                    count($statusItems),
-                    $statusLimit,
-                    ['tag' => $tag] + status_feed_cursor_params($statusItems)
-                ) ?>
+                <?= part('status/feed-more', [
+                    'feed_id' => $feedId,
+                    'context' => 'tag',
+                    'loaded' => count($statusItems),
+                    'limit' => $statusLimit,
+                    'params' => ['tag' => $tag] + status_feed_cursor_params($statusItems),
+                ]) ?>
                 <?= pagination($pagination, $current) ?>
             <?php endif; ?>
         </div>

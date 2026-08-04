@@ -44,10 +44,10 @@ layout('layout', [
             </button>
         </div>
         <div class="card-body" id="bots-list">
-            <?= BotAdmin::html() ?>
+            <?= part('admin/bots/sources', BotAdmin::sourcesViewData()) ?>
         </div>
     </section>
-    <?= BotAdmin::sourceModal(null) ?>
-    <?= BotAdmin::filterModal() ?>
+    <?= render('modals/bot-source', BotAdmin::sourceFormData(null)) ?>
+    <?= render('modals/bot-source-filter', BotAdmin::sourceFilterData()) ?>
     <?php
 });

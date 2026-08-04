@@ -23,6 +23,27 @@ $action = (string) ($action ?? '');
 $labelledBy = (string) ($labelledBy ?? $id . '-title');
 $panelClass = trim('modal-panel ' . trim((string) ($size ?? '')));
 $hasForm = $action !== '';
+$attributes = static function (array $values): string {
+    $html = '';
+
+    foreach ($values as $name => $value) {
+        $name = (string) $name;
+
+        if ($name === '' || $value === false || $value === null) {
+            continue;
+        }
+
+        if (!preg_match('/^[A-Za-z_:][A-Za-z0-9_:\-.]*$/', $name)) {
+            throw new InvalidArgumentException('Invalid HTML attribute: ' . $name);
+        }
+
+        $html .= $value === true
+            ? ' ' . $name
+            : ' ' . $name . '="' . e($value) . '"';
+    }
+
+    return $html;
+};
 
 if ($hasForm) {
     $modalClass .= ' modal-form';
@@ -37,9 +58,9 @@ if ($hasForm) {
     $reset = (bool) ($reset ?? false);
     $closeOnSuccess = (bool) ($closeOnSuccess ?? false);
     $ajax = (bool) ($ajax ?? true);
-    $extraAttributes = html_attributes((array) ($formAttributes ?? []));
+    $extraAttributes = $attributes((array) ($formAttributes ?? []));
 } else {
-    $extraAttributes = html_attributes((array) ($panelAttributes ?? []));
+    $extraAttributes = $attributes((array) ($panelAttributes ?? []));
 }
 ?>
 <div class="<?= e($modalClass) ?>" id="<?= e($id) ?>" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="<?= e($labelledBy) ?>" data-open="false">

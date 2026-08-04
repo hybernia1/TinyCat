@@ -22,10 +22,10 @@ $user = is_array($user ?? null) ? $user : [];
             <input type="hidden" name="action" value="create">
             <div class="status-compose-row">
                 <div class="avatar">
-                    <?= user_avatar_html($user, user_display_name($user)) ?>
+                    <?= part('user/avatar', ['user' => $user, 'alt' => user_display_name($user)]) ?>
                 </div>
                 <div class="status-compose-main">
-                    <?= status_field(null) ?>
+                    <?= part('status/field') ?>
                     <div class="status-compose-footer">
                         <div class="status-compose-counter" data-status-editor-meta-slot></div>
                         <div class="status-compose-actions">

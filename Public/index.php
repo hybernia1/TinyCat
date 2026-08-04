@@ -22,7 +22,7 @@ layout('layout', [
     ?>
     <section class="public-layout">
         <div class="home-feed-section home-feed-app stack">
-            <?= public_home_feed_html($feed, $authUser) ?>
+            <?= part('status/home-feed', public_home_feed_data($feed, $authUser)) ?>
         </div>
         <?= public_sidebar() ?>
     </section>

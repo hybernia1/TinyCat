@@ -8,15 +8,14 @@ if (!defined('TINYCAT')) {
 
 require_admin();
 
-if (!function_exists('tc_admin_users_filter_fields')) {
-    http_response_code(404);
-    return;
-}
-
 $filters = tc_admin_users_filters();
 $roles = tc_admin_roles();
 $statuses = admin_user_statuses();
-$body = tc_admin_users_filter_fields($filters, $roles, $statuses);
+$body = part('admin/users/filter-fields', [
+    'filters' => $filters,
+    'roles' => $roles,
+    'statuses' => $statuses,
+]);
 $clearParams = ['per_page' => admin_per_page(), 'page' => 1];
 $footer = '<a class="btn btn-secondary" href="' . e(tc_admin_users_api_url($clearParams, false)) . '" data-ajax data-ajax-target="#users-list" data-history="' . e(admin_list_url('/admin/users', $clearParams, false)) . '" data-modal-close>' . icon('close') . ' <span>' . et('common.clear_filters') . '</span></a>'
     . '<button class="btn btn-primary" type="submit">' . icon('filter') . ' <span>' . et('common.apply_filters') . '</span></button>';

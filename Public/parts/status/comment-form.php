@@ -26,7 +26,7 @@ if ($contentId < 1 || $user === []) {
     <input type="hidden" name="parent_id" value="<?= e($parentId) ?>">
     <input type="hidden" name="context" value="<?= e($context) ?>">
     <div class="avatar avatar-sm">
-        <?= user_avatar_html($user, user_display_name($user)) ?>
+        <?= part('user/avatar', ['user' => $user, 'alt' => user_display_name($user)]) ?>
     </div>
     <div class="status-comment-input-shell">
         <div class="status-comment-editor" data-status-editor>

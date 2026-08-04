@@ -14,7 +14,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '1.0.1';
+    public const string VERSION = '1.0.2';
 
     private static array $config = [];
     private static ?PDO $pdo = null;
@@ -2581,7 +2581,7 @@ final class Core
     {
         self::assertLocale($locale);
 
-        return self::basePath('lang/' . $locale . '.json');
+        return self::basePath('lang/' . $locale . '/app.json');
     }
 
     private static function replacePlaceholders(string $text, array $replace): string

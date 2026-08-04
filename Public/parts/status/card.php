@@ -24,23 +24,27 @@ if ($contentId < 1) {
     <div class="card-body status-card-body">
         <div class="status-header">
             <a class="avatar" href="<?= e($url) ?>" aria-label="<?= e($authorName) ?>">
-                <?= user_avatar_html($item, $authorName) ?>
+                <?= part('user/avatar', ['user' => $item, 'alt' => $authorName]) ?>
             </a>
             <div class="status-author">
                 <?php if ($authorId > 0 && $authorName !== ''): ?>
                     <a href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
                 <?php endif; ?>
                 <?php if ($createdAt !== ''): ?>
-                    <?= status_time_button($createdAt, $contentId, true, $action) ?>
+                    <?= part('status/time-link', [
+                        'created_at' => $createdAt,
+                        'content_id' => $contentId,
+                        'open_modal' => true,
+                    ]) ?>
                 <?php endif; ?>
             </div>
-            <?= status_manage_actions($item, $user, $action) ?>
+            <?= part('status/manage-actions', ['item' => $item, 'user' => $user, 'action' => $action]) ?>
         </div>
         <?php if ($bodyHtml !== ''): ?>
             <div class="status-body"><?= $bodyHtml ?></div>
         <?php endif; ?>
-        <?= status_links_html($item) ?>
-        <?= status_actions($item, $user, $action) ?>
-        <?= status_comments_section($item, $user, $action) ?>
+        <?= part('status/links', ['item' => $item]) ?>
+        <?= part('status/actions', ['item' => $item, 'user' => $user, 'action' => $action]) ?>
+        <?= part('status/comments-preview', ['item' => $item, 'user' => $user, 'action' => $action]) ?>
     </div>
 </article>

@@ -14,7 +14,7 @@ if (is_post()) {
 
     $action = (string) post('action', '');
     $id = max(0, (int) post('id', 0));
-    $message = notifications_apply_action($userId, $action, $id);
+    $message = Notifications::applyAction($userId, $action, $id);
 
     if ($message !== '') {
         flash('success', $message);
@@ -23,8 +23,8 @@ if (is_post()) {
     redirect('/notifications');
 }
 
-$batch = notifications_page_batch($userId);
-$unread = notification_unread_count($userId);
+$batch = Notifications::page($userId);
+$unread = Notifications::unreadCount($userId);
 
 layout('layout', [
     'title' => t('notifications.title'),
@@ -37,7 +37,11 @@ layout('layout', [
 ], static function () use ($batch, $unread): void {
     ?>
     <div id="notifications-view">
-        <?= notifications_page_html((array) $batch['items'], $unread, (string) $batch['next_url']) ?>
+        <?= part('notifications/page', [
+            'notifications' => (array) $batch['items'],
+            'unread' => $unread,
+            'next_url' => (string) $batch['next_url'],
+        ]) ?>
     </div>
     <?php
 });

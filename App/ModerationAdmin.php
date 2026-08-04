@@ -61,7 +61,7 @@ final class ModerationAdmin
             $note = 'kept_locked';
         }
 
-        notification_create_for_reporters(
+        Notifications::notifyReporters(
             $contentId,
             $status === 'dismissed' ? 'report_dismissed' : 'report_resolved',
             $actor,
@@ -116,74 +116,30 @@ final class ModerationAdmin
         );
     }
 
-    public static function reportsHtml(): string
+    public static function reportsViewData(): array
     {
-        $reports = self::reports();
-        ob_start();
-        ?>
-        <div class="stack stack-gap-14">
-            <?php if ($reports === []): ?>
-                <div class="alert alert-info"><?= et('moderation.reports_empty') ?></div>
-            <?php else: ?>
-                <div class="table-wrap">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th><?= et('moderation.reported_content') ?></th>
-                                <th><?= et('moderation.report_reason') ?></th>
-                                <th><?= et('common.status') ?></th>
-                                <th><?= et('common.actions') ?></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($reports as $report): ?>
-                                <?php
-                                $reportId = (int) ($report['id'] ?? 0);
-                                $openCount = (int) ($report['open_count'] ?? 0);
-                                $reportCount = (int) ($report['report_count'] ?? 1);
-                                $reportStatus = $openCount > 0 ? 'open' : (string) ($report['status'] ?? 'reviewed');
-                                ?>
-                                <tr>
-                                    <td>
-                                        <strong><?= e(self::excerpt((string) ($report['body'] ?? ''))) ?></strong>
-                                        <div class="table-meta">
-                                            #<?= e((string) ($report['content_id'] ?? '')) ?>
-                                            <?php if ((string) ($report['author_name'] ?? '') !== ''): ?>
-                                                · @<?= e((string) $report['author_name']) ?>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div class="table-meta"><?= e(self::reportCountLabel($reportCount)) ?></div>
-                                        <?php if ((string) ($report['note'] ?? '') !== ''): ?>
-                                            <div class="table-meta"><?= e((string) $report['note']) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><?= e(self::reasonLabel((string) ($report['reason'] ?? 'other'))) ?></td>
-                                    <td>
-                                        <span class="<?= e(self::statusBadgeClass($reportStatus)) ?>"><?= e(self::reportStatus($reportStatus)) ?></span>
-                                        <div class="table-meta"><?= e(datetime((string) ($report['latest_reported_at'] ?? $report['created_at'] ?? ''))) ?></div>
-                                    </td>
-                                    <td>
-                                        <div class="table-actions">
-                                            <?php $permalinkLabel = status_permalink_label($report); ?>
-                                            <a class="btn btn-sm btn-ghost btn-icon" href="<?= e(status_url((int) ($report['content_id'] ?? 0))) ?>" title="<?= e($permalinkLabel) ?>" aria-label="<?= e($permalinkLabel) ?>">
-                                                <?= icon('link') ?>
-                                            </a>
-                                            <?php if ($openCount > 0): ?>
-                                                <?= self::reportForm($reportId, 'remove', 'trash', 'moderation.remove_content', 'danger') ?>
-                                                <?= self::reportForm($reportId, 'dismiss', 'lock', 'moderation.keep_and_lock') ?>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </div>
-        <?php
+        return [
+            'reports' => array_map([self::class, 'reportViewData'], self::reports()),
+        ];
+    }
 
-        return trim((string) ob_get_clean());
+    private static function reportViewData(array $report): array
+    {
+        $openCount = max(0, (int) ($report['open_count'] ?? 0));
+        $reportCount = max(1, (int) ($report['report_count'] ?? 1));
+        $status = $openCount > 0 ? 'open' : (string) ($report['status'] ?? 'reviewed');
+
+        return array_merge($report, [
+            'excerpt' => self::excerpt((string) ($report['body'] ?? '')),
+            'reason_label' => self::reasonLabel((string) ($report['reason'] ?? 'other')),
+            'report_count_label' => self::reportCountLabel($reportCount),
+            'display_status' => $status,
+            'status_label' => self::reportStatus($status),
+            'status_badge_class' => self::statusBadgeClass($status),
+            'reported_at_label' => datetime((string) ($report['latest_reported_at'] ?? $report['created_at'] ?? '')),
+            'permalink_url' => status_url((int) ($report['content_id'] ?? 0)),
+            'permalink_label' => status_permalink_label($report),
+        ]);
     }
 
     private static function excerpt(string $body): string
@@ -228,23 +184,4 @@ final class ModerationAdmin
         };
     }
 
-    private static function reportForm(int $reportId, string $decision, string $icon, string $labelKey, string $variant = ''): string
-    {
-        $class = trim('btn btn-sm btn-ghost btn-icon ' . ($variant === 'danger' ? 'text-danger' : ''));
-
-        ob_start();
-        ?>
-        <form class="inline-flex" method="post" action="/admin/moderation/reports">
-            <?= csrf_field() ?>
-            <input type="hidden" name="action" value="report_review">
-            <input type="hidden" name="report_id" value="<?= e($reportId) ?>">
-            <input type="hidden" name="decision" value="<?= e($decision) ?>">
-            <button class="<?= e($class) ?>" type="submit" title="<?= et($labelKey) ?>" aria-label="<?= et($labelKey) ?>">
-                <?= icon($icon) ?>
-            </button>
-        </form>
-        <?php
-
-        return trim((string) ob_get_clean());
-    }
 }

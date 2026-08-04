@@ -28,7 +28,7 @@ layout('layout', [
             <h2 class="text-lg m-0 cluster gap-2"><?= icon('flag') ?> <?= et('moderation.reports_title') ?></h2>
         </div>
         <div class="card-body" id="moderation-reports">
-            <?= ModerationAdmin::reportsHtml() ?>
+            <?= part('admin/moderation/reports', ModerationAdmin::reportsViewData()) ?>
         </div>
     </section>
     <?php

@@ -18,6 +18,7 @@ require_once __DIR__ . '/Avatar.php';
 require_once __DIR__ . '/SiteIdentity.php';
 require_once __DIR__ . '/StatusLinks.php';
 require_once __DIR__ . '/LinkMetadata.php';
+require_once __DIR__ . '/Notifications.php';
 require_once __DIR__ . '/BotAdmin.php';
 require_once __DIR__ . '/ModerationAdmin.php';
 
@@ -323,11 +324,6 @@ function status_meta_image(array $item): string
     return user_avatar_url($item) ?: site_meta_image_url();
 }
 
-function avatar_url(string $username, array|string|null $config = null): string
-{
-    return Avatar::url($username, $config);
-}
-
 function user_avatar_url(?array $user): string
 {
     if ($user === null) {
@@ -338,24 +334,11 @@ function user_avatar_url(?array $user): string
         $username = username_normalize((string) ($user[$key] ?? ''));
 
         if (username_valid($username)) {
-            return avatar_url($username, $user['avatar_config'] ?? $user['author_avatar_config'] ?? $user['actor_avatar_config'] ?? null);
+            return Avatar::url($username, $user['avatar_config'] ?? $user['author_avatar_config'] ?? $user['actor_avatar_config'] ?? null);
         }
     }
 
     return '';
-}
-
-function user_avatar_html(?array $user, string $alt = '', string $fallbackIcon = 'user'): string
-{
-    $url = user_avatar_url($user);
-    $fallback = '<span class="avatar-fallback" data-user-avatar-fallback'
-        . ($url !== '' ? ' hidden' : '') . '>' . icon($fallbackIcon) . '</span>';
-
-    if ($url === '') {
-        return $fallback;
-    }
-
-    return '<img src="' . e($url) . '" alt="' . e($alt) . '" loading="lazy" data-user-avatar-image>' . $fallback;
 }
 
 function admin_user_avatar_change(array $user): array
@@ -411,15 +394,6 @@ function user_public_payload(?array $user): ?array
     ];
 }
 
-function theme_choices(): array
-{
-    return [
-        'system' => t('account.theme_system'),
-        'light' => t('account.theme_light'),
-        'dark' => t('account.theme_dark'),
-    ];
-}
-
 function theme_normalize(string $theme): string
 {
     $theme = strtolower(trim($theme));
@@ -430,18 +404,6 @@ function theme_normalize(string $theme): string
 function user_theme(?array $user): string
 {
     return theme_normalize((string) ($user['theme'] ?? 'system'));
-}
-
-function theme_options(string $selected = 'system'): string
-{
-    $selected = theme_normalize($selected);
-    $html = '';
-
-    foreach (theme_choices() as $value => $label) {
-        $html .= '<option value="' . e($value) . '"' . ($value === $selected ? ' selected' : '') . '>' . e($label) . '</option>';
-    }
-
-    return $html;
 }
 
 function site_image_upload(array $file, string $name, string $variant): array
@@ -624,11 +586,6 @@ function image_apply_orientation(GdImage $image, string $path): GdImage
     };
 }
 
-function auth_account_url(): string
-{
-    return '/account';
-}
-
 function auth_landing_url(?array $user = null): string
 {
     $user ??= auth();
@@ -639,7 +596,7 @@ function auth_landing_url(?array $user = null): string
 
     $id = (int) ($user['id'] ?? 0);
 
-    return $id > 0 ? author_url($id) : auth_account_url();
+    return $id > 0 ? author_url($id) : '/account';
 }
 
 function auth_next_path(string $next): string
@@ -1118,18 +1075,30 @@ function email_catalog(string $requestedLocale = ''): array
 {
     static $cache = [];
     $requestedLocale = language_code($requestedLocale !== '' ? $requestedLocale : locale());
-    $baseLocale = strtolower(strtok($requestedLocale, '-_') ?: 'en');
-    $locale = in_array($baseLocale, ['cs', 'en'], true) ? $baseLocale : 'en';
+    $requestedLocale = $requestedLocale !== '' ? $requestedLocale : 'en';
 
-    if (isset($cache[$locale])) {
-        return $cache[$locale];
+    if (isset($cache[$requestedLocale])) {
+        return $cache[$requestedLocale];
     }
 
-    $path = base_path('lang/emails-' . $locale . '.json');
-    $data = is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
-    $cache[$locale] = is_array($data) ? $data : ['signature' => '', 'templates' => []];
+    $baseLocale = explode('-', $requestedLocale, 2)[0];
+    $locales = array_values(array_unique([$requestedLocale, $baseLocale, 'en']));
 
-    return $cache[$locale];
+    foreach ($locales as $locale) {
+        $path = base_path('lang/' . $locale . '/emails.json');
+
+        if (!is_file($path)) {
+            continue;
+        }
+
+        $data = json_decode((string) file_get_contents($path), true);
+
+        if (is_array($data)) {
+            return $cache[$requestedLocale] = $data;
+        }
+    }
+
+    return $cache[$requestedLocale] = ['signature' => '', 'templates' => []];
 }
 
 function email_template_send(string $templateKey, int $userId, array $vars = []): bool
@@ -1683,40 +1652,6 @@ function user_profile_links_sync(int $userId, array $links): void
     }
 }
 
-function user_profile_links_fields(array $links = []): string
-{
-    ob_start();
-    ?>
-    <div class="grid sm:grid-2 profile-links-fields">
-        <?php foreach (profile_link_types() as $type => $label): ?>
-            <label class="field">
-                <span class="label"><?= e($label) ?></span>
-                <input class="input" type="text" inputmode="url" name="profile_link_<?= e($type) ?>" maxlength="2048" value="<?= e((string) ($links[$type] ?? '')) ?>" placeholder="https://">
-            </label>
-        <?php endforeach; ?>
-    </div>
-    <?php
-    return trim((string) ob_get_clean());
-}
-
-function user_profile_links_html(array $links): string
-{
-    if ($links === []) {
-        return '';
-    }
-    ob_start();
-    ?>
-    <nav class="profile-links" aria-label="<?= et('profile_links.title') ?>">
-        <?php foreach (profile_link_types() as $type => $label): ?>
-            <?php if (!empty($links[$type])): ?>
-                <a class="profile-link" href="<?= e((string) $links[$type]) ?>" target="_blank" rel="nofollow noopener noreferrer"><?= icon('link') ?> <span><?= e($label) ?></span></a>
-            <?php endif; ?>
-        <?php endforeach; ?>
-    </nav>
-    <?php
-    return trim((string) ob_get_clean());
-}
-
 function user_profile_update_request(array $user): array
 {
     $id = (int) ($user['id'] ?? 0);
@@ -1961,22 +1896,6 @@ function author_follow_counts(int $authorId): array
     ];
 }
 
-function author_follow_button_html(int $authorId, bool $isFollowing): string
-{
-    ob_start();
-    ?>
-        <form method="post" action="<?= e(author_api_url($authorId, 'follow', ['view' => 'html'])) ?>" data-follow-form data-author-id="<?= e($authorId) ?>">
-            <?= csrf_field() ?>
-            <input type="hidden" name="action" value="<?= $isFollowing ? 'unfollow' : 'follow' ?>">
-            <button class="btn <?= $isFollowing ? 'btn-secondary' : 'btn-primary' ?> btn-sm" type="submit">
-                <?= icon($isFollowing ? 'check' : 'plus') ?> <span><?= et($isFollowing ? 'public.unfollow' : 'public.follow') ?></span>
-            </button>
-        </form>
-        <?php
-
-    return trim((string) ob_get_clean());
-}
-
 function author_following_profiles(int $authorId, int $limit = 12, int $offset = 0): array
 {
     if ($authorId < 1) {
@@ -2020,27 +1939,6 @@ function author_following_profiles_count(int $authorId): int
                 AND u.status = ?',
         [$authorId, 'active']
     );
-}
-
-function author_following_profile_html(array $profile): string
-{
-    $profileId = (int) ($profile['id'] ?? 0);
-    $profileName = user_display_name($profile);
-
-    ob_start();
-    ?>
-        <a class="profile-following-link" href="<?= e(author_url($profileId)) ?>">
-            <span class="avatar avatar-sm">
-                <?= user_avatar_html($profile, $profileName) ?>
-            </span>
-            <span class="profile-following-main">
-                <strong><?= e($profileName) ?></strong>
-                <small><?= et('public.active_user_posts', ['count' => (int) ($profile['posts_count'] ?? 0)]) ?></small>
-            </span>
-        </a>
-        <?php
-
-    return trim((string) ob_get_clean());
 }
 
 function author_following_profile_payload(array $profile): array
@@ -2273,7 +2171,7 @@ function status_strip_external_urls(string $text): string
     }
 
     $text = (string) preg_replace_callback(status_external_url_pattern(), static function (array $match): string {
-        [$url, $tail] = status_url_split_tail((string) ($match[0] ?? ''));
+        [$url, $tail] = StatusLinks::splitTail((string) ($match[0] ?? ''));
 
         if (status_internal_url($url)) {
             return $url . $tail;
@@ -2528,7 +2426,7 @@ function normalize_author_urls_for_storage(string $text): string
 
     return (string) preg_replace_callback($pattern, static function (array $match): string {
         $raw = (string) ($match[1] ?? '');
-        [$url, $tail] = status_url_split_tail($raw);
+        [$url, $tail] = StatusLinks::splitTail($raw);
         $mention = status_author_url_mention($url);
 
         return $mention !== '' ? $mention . $tail : $raw;
@@ -2817,19 +2715,6 @@ function render_status_emoticons_segment(string $text): string
 
         return $map[$token] ?? (string) ($match[0] ?? '');
     }, $text);
-}
-
-function status_url_split_tail(string $url): array
-{
-    $tail = '';
-
-    while ($url !== '' && preg_match('/[\\.,;:!\\?\\)\\]\\}]+$/', $url, $match) === 1) {
-        $chunk = (string) ($match[0] ?? '');
-        $tail = $chunk . $tail;
-        $url = substr($url, 0, -strlen($chunk));
-    }
-
-    return [$url, $tail];
 }
 
 function public_status_select_sql(): string
@@ -3171,7 +3056,7 @@ function status_preload_feed(array $items): void
         status_preload_comment_user_likes($commentIds, $userId);
     }
 
-    status_preload_links($ids);
+    status_links_cache($ids);
 }
 
 function public_trending_tags(int $limit = 8, int $days = 7, bool $compute = true): array
@@ -5118,11 +5003,6 @@ function status_links_cache(array $contentIds): array
     return $result;
 }
 
-function status_preload_links(array $contentIds): void
-{
-    status_links_cache($contentIds);
-}
-
 function status_links_for_content(int $contentId): array
 {
     $links = status_links_cache([$contentId]);
@@ -5191,107 +5071,6 @@ function status_video_thumbnail_sources(array $link): array
         'webp' => '',
         'fallback' => $imageUrl,
     ];
-}
-
-function status_link_card_html(array $link): string
-{
-    $type = (string) ($link['link_type'] ?? 'link');
-    $provider = (string) ($link['provider'] ?? 'web');
-    $url = (string) ($link['normalized_url'] ?? '');
-    $title = trim((string) ($link['title'] ?? ''));
-    $description = trim((string) ($link['description'] ?? ''));
-    $imageUrl = trim((string) ($link['image_url'] ?? ''));
-    $displayUrl = status_link_display_url($link);
-
-    if ($url === '') {
-        return '';
-    }
-
-    if ($title === '') {
-        $title = $displayUrl !== '' ? $displayUrl : $url;
-    }
-
-    $embedUrl = status_video_embed_url($link);
-    $thumbnailSources = status_video_thumbnail_sources($link);
-    $thumbnailUrl = (string) ($thumbnailSources['fallback'] ?? '');
-    $thumbnailWebpUrl = (string) ($thumbnailSources['webp'] ?? '');
-
-    if ($type === 'video' && status_video_embed_allowed($embedUrl)) {
-        ob_start();
-        ?>
-            <div class="status-video-card" data-status-video data-embed-url="<?= e($embedUrl) ?>">
-                <button class="status-video-placeholder" type="button" data-status-video-load aria-label="<?= e($title) ?>">
-                    <?php if ($thumbnailUrl !== ''): ?>
-                        <picture class="status-video-thumb">
-                            <?php if ($thumbnailWebpUrl !== ''): ?>
-                                <source srcset="<?= e($thumbnailWebpUrl) ?>" type="image/webp">
-                            <?php endif; ?>
-                            <img src="<?= e($thumbnailUrl) ?>" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
-                        </picture>
-                    <?php endif; ?>
-                    <span class="status-video-play"><?= icon('play') ?></span>
-                    <span class="status-video-copy">
-                        <strong><?= e($title) ?></strong>
-                        <small><?= e($description !== '' ? $description : $provider) ?></small>
-                    </span>
-                </button>
-            </div>
-            <?php
-
-        return trim((string) ob_get_clean());
-    }
-
-    ob_start();
-    ?>
-        <a class="status-link-card<?= $imageUrl !== '' ? ' has-image' : '' ?>" href="<?= e($url) ?>" target="_blank" rel="nofollow noopener noreferrer ugc">
-            <?php if ($imageUrl !== ''): ?>
-                <span class="status-link-media" data-status-link-media>
-                    <img class="status-link-image" src="<?= e($imageUrl) ?>" alt="" loading="lazy" data-status-link-image>
-                    <span class="status-link-icon status-link-fallback-icon" data-status-link-fallback><?= icon('image') ?></span>
-                </span>
-            <?php else: ?>
-                <span class="status-link-icon"><?= icon('external-link') ?></span>
-            <?php endif; ?>
-            <span class="status-link-copy">
-                <strong><?= e($title) ?></strong>
-                <?php if ($description !== '' && $description !== $displayUrl): ?>
-                    <span><?= e($description) ?></span>
-                <?php endif; ?>
-                <?php if ($displayUrl !== ''): ?>
-                    <small><?= e($displayUrl) ?></small>
-                <?php endif; ?>
-            </span>
-        </a>
-        <?php
-
-    return trim((string) ob_get_clean());
-}
-
-function status_links_html(array $item): string
-{
-    $contentId = (int) ($item['id'] ?? 0);
-
-    if ($contentId < 1) {
-        return '';
-    }
-
-    $links = status_links_for_content($contentId);
-
-    if ($links === []) {
-        return '';
-    }
-
-    $html = '';
-
-    foreach ($links as $link) {
-        if (status_link_is_internal((array) $link)) {
-            continue;
-        }
-
-        $html .= status_link_card_html($link);
-    }
-
-    return $html !== '' ? '<div class="status-links">' . $html . '</div>' : '';
 }
 
 function status_post_modal_id(int $contentId): string
@@ -5400,658 +5179,6 @@ function author_following_api_url(int $authorId, int $page = 1, bool $html = fal
     }
 
     return '/api/author/following?' . http_build_query($query);
-}
-
-function status_time_button(string $createdAt, int $contentId, bool $openModal = true, string $action = ''): string
-{
-    if ($createdAt === '') {
-        return '';
-    }
-
-    ob_start();
-    ?>
-        <?php if ($openModal): ?>
-            <a class="link-button public-content-meta status-time-button" href="<?= e(status_url($contentId)) ?>" data-modal-open>
-                <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
-            </a>
-        <?php else: ?>
-            <a class="link-button public-content-meta status-time-button" href="<?= e(status_url($contentId)) ?>">
-                <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
-            </a>
-        <?php endif; ?>
-        <?php
-
-    return trim((string) ob_get_clean());
-}
-
-function status_field(?array $item = null): string
-{
-    return part('status/field', ['item' => $item]);
-}
-
-function status_composer(string $action, array $user): string
-{
-    return part('status/composer', [
-        'action' => $action,
-        'user' => $user,
-    ]);
-}
-
-function notification_icon(string $type): string
-{
-    return match ($type) {
-        'content_like' => 'thumb-up',
-        'comment_like' => 'thumb-up',
-        'content_comment' => 'message-circle',
-        'content_mention', 'comment_mention' => 'user',
-        'report_resolved' => 'check',
-        'report_dismissed' => 'flag',
-        default => 'bell',
-    };
-}
-
-function notification_message(array $notification): string
-{
-    $type = (string) ($notification['type'] ?? '');
-    $actor = trim((string) ($notification['actor_name'] ?? ''));
-    $actor = $actor !== '' ? $actor : t('notifications.someone');
-
-    return match ($type) {
-        'content_like' => t('notifications.messages.content_like', ['actor' => $actor]),
-        'comment_like' => t('notifications.messages.comment_like', ['actor' => $actor]),
-        'content_comment' => t('notifications.messages.content_comment', ['actor' => $actor]),
-        'content_mention' => t('notifications.messages.content_mention', ['actor' => $actor]),
-        'comment_mention' => t('notifications.messages.comment_mention', ['actor' => $actor]),
-        'report_resolved' => t('notifications.messages.report_resolved', ['actor' => $actor]),
-        'report_dismissed' => t('notifications.messages.report_dismissed', ['actor' => $actor]),
-        default => t('notifications.messages.generic', ['actor' => $actor]),
-    };
-}
-
-function notification_target_url(array $notification): string
-{
-    $contentId = (int) ($notification['content_id'] ?? 0);
-
-    return $contentId > 0 ? status_url($contentId) : '/notifications';
-}
-
-function notification_url(array $notification): string
-{
-    $id = (int) ($notification['id'] ?? 0);
-    $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
-
-    if ($id > 0 && $isUnread) {
-        return '/notifications/open?id=' . $id;
-    }
-
-    return notification_target_url($notification);
-}
-
-function notification_create(int $userId, string $type, int $actorId, int $contentId = 0, int $commentId = 0, string $key = ''): void
-{
-    if ($userId < 1 || $actorId < 1 || $userId === $actorId) {
-        return;
-    }
-
-    static $recipientRoles = [];
-    if (!array_key_exists($userId, $recipientRoles)) {
-        $recipientRoles[$userId] = (string) val('SELECT role FROM users WHERE id = ? LIMIT 1', [$userId]);
-    }
-    if ($recipientRoles[$userId] === 'bot') {
-        return;
-    }
-
-    $type = plain_text_limit($type, 40);
-
-    if ($type === '') {
-        return;
-    }
-
-    $key = plain_text_limit($key !== '' ? $key : $type . ':' . $contentId . ':' . $commentId . ':' . $actorId, 190);
-    $now = date_db();
-    $data = [
-        'user_id' => $userId,
-        'actor_id' => $actorId,
-        'content_id' => $contentId > 0 ? $contentId : null,
-        'comment_id' => $commentId > 0 ? $commentId : null,
-        'type' => $type,
-        'notification_key' => $key,
-        'read_at' => null,
-        'created_at' => $now,
-        'updated_at' => $now,
-    ];
-
-    try {
-        insert('notifications', $data);
-    } catch (Throwable) {
-        update('notifications', [
-            'actor_id' => $actorId,
-            'content_id' => $contentId > 0 ? $contentId : null,
-            'comment_id' => $commentId > 0 ? $commentId : null,
-            'read_at' => null,
-            'updated_at' => $now,
-        ], ['user_id' => $userId, 'notification_key' => $key]);
-    }
-
-    $template = match ($type) {
-        'content_like' => 'notification_content_like',
-        'content_comment' => 'notification_content_comment',
-        'comment_like' => 'notification_comment_like',
-        'content_mention' => 'notification_content_mention',
-        'comment_mention' => 'notification_comment_mention',
-        'report_resolved' => 'notification_report_resolved',
-        'report_dismissed' => 'notification_report_dismissed',
-        default => '',
-    };
-    if ($template !== '') {
-        $actor = email_user($actorId);
-        email_template_send($template, $userId, [
-            'actor' => (string) ($actor['username'] ?? 'Někdo'),
-            'actor_url' => absolute_url('/author/' . $actorId),
-            'content_url' => absolute_url('/status/' . $contentId),
-        ]);
-    }
-}
-
-function notification_mentioned_user_ids(string $text): array
-{
-    if ($text === '' || !preg_match_all('/(?<![A-Za-z0-9_])@([1-9][0-9]*)/', $text, $matches)) {
-        return [];
-    }
-
-    $ids = [];
-    $candidateIds = array_values(array_unique(array_filter(array_map(
-        'intval',
-        (array) ($matches[1] ?? [])
-    ), static fn (int $id): bool => $id > 0)));
-    $users = author_mention_users_by_ids($candidateIds);
-
-    foreach ($candidateIds as $id) {
-        if (isset($users[$id])) {
-            $ids[$id] = $id;
-        }
-    }
-
-    return array_values($ids);
-}
-
-function notification_create_for_mentions(string $body, array $actor, int $contentId, int $commentId = 0, array $skipUserIds = []): void
-{
-    if ($body === '' || $contentId < 1) {
-        return;
-    }
-
-    $actorId = (int) ($actor['id'] ?? 0);
-
-    if ($actorId < 1) {
-        return;
-    }
-
-    $mentionedIds = notification_mentioned_user_ids($body);
-
-    if ($mentionedIds === []) {
-        return;
-    }
-
-    $skip = [$actorId => true];
-
-    foreach ($skipUserIds as $skipUserId) {
-        $skipUserId = (int) $skipUserId;
-
-        if ($skipUserId > 0) {
-            $skip[$skipUserId] = true;
-        }
-    }
-
-    $type = $commentId > 0 ? 'comment_mention' : 'content_mention';
-    $keyBase = $type . ':' . $contentId . ':' . max(0, $commentId) . ':' . $actorId;
-
-    foreach ($mentionedIds as $mentionedId) {
-        if (isset($skip[$mentionedId])) {
-            continue;
-        }
-
-        notification_create($mentionedId, $type, $actorId, $contentId, $commentId, $keyBase);
-    }
-}
-
-function notification_create_for_content_owner(string $type, int $contentId, array $actor, int $commentId = 0, int $sourceContentId = 0): void
-{
-    if ($contentId < 1) {
-        return;
-    }
-
-    $status = status_find($contentId);
-    $ownerId = (int) ($status['author_id'] ?? 0);
-    $actorId = (int) ($actor['id'] ?? 0);
-
-    if ($ownerId < 1 || $actorId < 1 || $ownerId === $actorId) {
-        return;
-    }
-
-    $key = match ($type) {
-        'content_like' => 'content_like:' . $contentId . ':' . $actorId,
-        'content_comment' => 'content_comment:' . $contentId . ':' . $commentId,
-        default => $type . ':' . $contentId . ':' . $commentId . ':' . $actorId,
-    };
-
-    notification_create($ownerId, $type, $actorId, $contentId, $commentId, $key);
-}
-
-function notification_create_for_comment_owner(int $commentId, array $actor): void
-{
-    if ($commentId < 1) {
-        return;
-    }
-
-    $comment = status_comment_find($commentId);
-    $ownerId = (int) ($comment['user_id'] ?? 0);
-    $actorId = (int) ($actor['id'] ?? 0);
-    $contentId = (int) ($comment['content_id'] ?? 0);
-
-    if ($ownerId < 1 || $actorId < 1 || $ownerId === $actorId || $contentId < 1) {
-        return;
-    }
-
-    notification_create(
-        $ownerId,
-        'comment_like',
-        $actorId,
-        $contentId,
-        $commentId,
-        'comment_like:' . $commentId . ':' . $actorId
-    );
-}
-
-function notification_create_for_reporters(int $contentId, string $type, array $actor, string $reportStatus = ''): void
-{
-    if ($contentId < 1) {
-        return;
-    }
-
-    $actorId = (int) ($actor['id'] ?? 0);
-
-    if ($actorId < 1) {
-        return;
-    }
-
-    $query = db_select('SELECT DISTINCT reporter_id FROM content_reports')
-        ->where('content_id = ?', $contentId);
-
-    if ($reportStatus !== '') {
-        $query->where('status = ?', $reportStatus);
-    }
-
-    foreach ($query->all() as $row) {
-        $reporterId = (int) ($row['reporter_id'] ?? 0);
-
-        if ($reporterId < 1 || $reporterId === $actorId) {
-            continue;
-        }
-
-        notification_create(
-            $reporterId,
-            $type,
-            $actorId,
-            $contentId,
-            0,
-            $type . ':' . $contentId . ':' . $reporterId
-        );
-    }
-}
-
-function notification_unread_count(int $userId): int
-{
-    if ($userId < 1) {
-        return 0;
-    }
-
-    return db_select('SELECT id FROM notifications')
-        ->where('user_id = ?', $userId)
-        ->where('read_at IS NULL')
-        ->count();
-}
-
-function notification_latest_id(int $userId): int
-{
-    if ($userId < 1) {
-        return 0;
-    }
-
-    return (int) db_select('SELECT COALESCE(MAX(id), 0) FROM notifications')
-        ->where('user_id = ?', $userId)
-        ->value();
-}
-
-function notifications_for_user(int $userId, int $limit = 80, string $cursorAt = '', int $cursorId = 0): array
-{
-    if ($userId < 1) {
-        return [];
-    }
-
-    $limit = max(1, min(200, $limit));
-
-    $query = db_select(
-        'SELECT n.*,
-                u.username AS actor_name,
-                u.username AS actor_username,
-                u.avatar_config AS actor_avatar_config,
-                c.body AS content_body
-            FROM notifications n
-            LEFT JOIN users u ON u.id = n.actor_id
-            LEFT JOIN content c ON c.id = n.content_id'
-    )
-        ->where('n.user_id = ?', $userId);
-
-    if ($cursorAt !== '' && $cursorId > 0) {
-        $query->where(
-            '(n.created_at < ? OR (n.created_at = ? AND n.id < ?))',
-            $cursorAt,
-            $cursorAt,
-            $cursorId
-        );
-    }
-
-    return $query
-        ->order('n.created_at DESC, n.id DESC')
-        ->limit($limit)
-        ->all();
-}
-
-function notifications_page_limit(): int
-{
-    return 40;
-}
-
-function notifications_page_url(string $cursorAt, int $cursorId): string
-{
-    return '/api/notifications-page?' . http_build_query([
-        'cursor_at' => $cursorAt,
-        'cursor_id' => $cursorId,
-    ]);
-}
-
-function notifications_page_batch(int $userId, string $cursorAt = '', int $cursorId = 0): array
-{
-    $limit = notifications_page_limit();
-    $cursorAt = preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $cursorAt) === 1 ? $cursorAt : '';
-    $cursorId = max(0, $cursorId);
-    $items = notifications_for_user($userId, $limit + 1, $cursorAt, $cursorId);
-    $hasMore = count($items) > $limit;
-
-    if ($hasMore) {
-        $items = array_slice($items, 0, $limit);
-    }
-
-    $last = $items !== [] ? $items[array_key_last($items)] : [];
-    $nextAt = $hasMore ? (string) ($last['created_at'] ?? '') : '';
-    $nextId = $hasMore ? (int) ($last['id'] ?? 0) : 0;
-
-    return [
-        'items' => $items,
-        'count' => count($items),
-        'done' => !$hasMore,
-        'next_url' => $nextAt !== '' && $nextId > 0 ? notifications_page_url($nextAt, $nextId) : '',
-    ];
-}
-
-function notification_preview_html(int $userId, int $limit = 6): string
-{
-    $items = notifications_for_user($userId, $limit);
-
-    if ($items === []) {
-        return '<div class="notification-popover-empty">' . icon('bell') . ' <span>' . e(t('notifications.empty')) . '</span></div>';
-    }
-
-    ob_start();
-    ?>
-        <?php foreach ($items as $notification): ?>
-            <?php
-        $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
-        $actorName = trim((string) ($notification['actor_name'] ?? ''));
-        $createdAt = (string) ($notification['created_at'] ?? '');
-        $contentText = meta_text((string) ($notification['content_body'] ?? ''), 90);
-        ?>
-            <a class="notification-popover-item<?= $isUnread ? ' is-unread' : '' ?>" href="<?= e(notification_url($notification)) ?>">
-                <span class="notification-popover-avatar">
-                    <?= user_avatar_html($notification, $actorName, notification_icon((string) ($notification['type'] ?? ''))) ?>
-                </span>
-                <span class="notification-popover-copy">
-                    <strong><?= e(notification_message($notification)) ?></strong>
-                    <?php if ($contentText !== ''): ?>
-                        <span><?= e($contentText) ?></span>
-                    <?php endif; ?>
-                    <?php if ($createdAt !== ''): ?>
-                        <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
-                    <?php endif; ?>
-                </span>
-            </a>
-        <?php endforeach; ?>
-        <?php
-
-    return trim((string) ob_get_clean());
-}
-
-function notification_mark_read(int $id, int $userId): void
-{
-    if ($id < 1 || $userId < 1) {
-        return;
-    }
-
-    update('notifications', [
-        'read_at' => date_db(),
-        'updated_at' => date_db(),
-    ], ['id' => $id, 'user_id' => $userId]);
-}
-
-function notification_open(int $id, int $userId): string
-{
-    if ($id < 1 || $userId < 1) {
-        return '/notifications';
-    }
-
-    $notification = one(
-        'SELECT id, content_id, read_at
-            FROM notifications
-            WHERE id = ? AND user_id = ?
-            LIMIT 1',
-        [$id, $userId]
-    );
-
-    if ($notification === null) {
-        return '/notifications';
-    }
-
-    if (trim((string) ($notification['read_at'] ?? '')) === '') {
-        run(
-            'UPDATE notifications
-                SET read_at = ?, updated_at = ?
-                WHERE id = ? AND user_id = ? AND read_at IS NULL',
-            [date_db(), date_db(), $id, $userId]
-        );
-    }
-
-    return notification_target_url($notification);
-}
-
-function notification_mark_all_read(int $userId): void
-{
-    if ($userId < 1) {
-        return;
-    }
-
-    run('UPDATE notifications SET read_at = ?, updated_at = ? WHERE user_id = ? AND read_at IS NULL', [date_db(), date_db(), $userId]);
-}
-
-function notification_delete(int $id, int $userId): void
-{
-    if ($id < 1 || $userId < 1) {
-        return;
-    }
-
-    delete('notifications', ['id' => $id, 'user_id' => $userId]);
-}
-
-function notifications_apply_action(int $userId, string $action, int $id = 0): string
-{
-    if ($action === 'read') {
-        notification_mark_read($id, $userId);
-        return t('notifications.messages.read_done');
-    }
-
-    if ($action === 'read_all') {
-        notification_mark_all_read($userId);
-        return t('notifications.messages.read_all_done');
-    }
-
-    if ($action === 'delete') {
-        notification_delete($id, $userId);
-        return t('notifications.messages.deleted');
-    }
-
-    api_error('Unsupported notification action.', 400, 'unsupported_notification_action');
-}
-
-function notification_item_html(array $notification): string
-{
-    $id = (int) ($notification['id'] ?? 0);
-    $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
-    $actorName = trim((string) ($notification['actor_name'] ?? ''));
-    $createdAt = (string) ($notification['created_at'] ?? '');
-    $contentText = meta_text((string) ($notification['content_body'] ?? ''), 120);
-    $url = notification_url($notification);
-
-    ob_start();
-    ?>
-        <article class="notification-item<?= $isUnread ? ' is-unread' : '' ?>">
-            <a class="notification-main" href="<?= e($url) ?>">
-                <span class="notification-avatar">
-                    <?= user_avatar_html($notification, $actorName, notification_icon((string) ($notification['type'] ?? ''))) ?>
-                </span>
-                <span class="notification-copy">
-                    <strong><?= e(notification_message($notification)) ?></strong>
-                    <?php if ($contentText !== ''): ?>
-                        <span><?= e($contentText) ?></span>
-                    <?php endif; ?>
-                    <?php if ($createdAt !== ''): ?>
-                        <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
-                    <?php endif; ?>
-                </span>
-            </a>
-            <div class="notification-actions">
-                <?php if ($isUnread): ?>
-                    <form method="post" action="/api/notifications/read?view=html" data-ajax-form data-ajax-target="#notifications-view">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="id" value="<?= e($id) ?>">
-                        <button class="btn btn-ghost btn-icon btn-sm" type="submit" title="<?= et('notifications.mark_read') ?>" aria-label="<?= et('notifications.mark_read') ?>">
-                            <?= icon('check') ?>
-                        </button>
-                    </form>
-                <?php endif; ?>
-                <form method="post" action="/api/notifications/delete?view=html" data-ajax-form data-ajax-target="#notifications-view">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="id" value="<?= e($id) ?>">
-                    <button class="btn btn-ghost btn-icon btn-sm text-danger" type="submit" title="<?= et('notifications.delete') ?>" aria-label="<?= et('notifications.delete') ?>">
-                        <?= icon('trash') ?>
-                    </button>
-                </form>
-            </div>
-        </article>
-        <?php
-
-    return trim((string) ob_get_clean());
-}
-
-function notification_items_html(array $notifications): string
-{
-    return implode('', array_map(
-        static fn (array $notification): string => notification_item_html($notification),
-        $notifications
-    ));
-}
-
-function notifications_page_html(array $notifications, int $unread, string $nextUrl = ''): string
-{
-    ob_start();
-    ?>
-        <section class="notifications-page stack stack-gap-14">
-            <article class="card">
-                <div class="card-header split">
-                    <h1 class="text-lg m-0 cluster gap-2"><?= icon('bell') ?> <?= et('notifications.title') ?></h1>
-                    <?php if ($unread > 0): ?>
-                        <form method="post" action="/api/notifications/read-all?view=html" data-ajax-form data-ajax-target="#notifications-view">
-                            <?= csrf_field() ?>
-                            <button class="btn btn-secondary btn-sm" type="submit"><?= icon('check') ?> <span><?= et('notifications.mark_all_read') ?></span></button>
-                        </form>
-                    <?php endif; ?>
-                </div>
-                <div class="notifications-list" id="notifications-list">
-                    <?php if ($notifications === []): ?>
-                        <div class="notification-empty"><?= icon('bell') ?> <span><?= et('notifications.empty') ?></span></div>
-                    <?php else: ?>
-                        <?= notification_items_html($notifications) ?>
-                    <?php endif; ?>
-                </div>
-            </article>
-            <?php if ($nextUrl !== ''): ?>
-                <div class="status-feed-more" data-status-feed-more data-status-feed-target="#notifications-list" data-status-feed-url="<?= e($nextUrl) ?>">
-                    <button class="btn btn-secondary status-feed-more-button" type="button" data-status-feed-load>
-                        <?= icon('plus') ?> <span><?= et('notifications.load_more') ?></span>
-                    </button>
-                    <span class="status-feed-more-state" data-status-feed-state hidden><?= et('notifications.loading') ?></span>
-                </div>
-            <?php endif; ?>
-        </section>
-        <?php
-
-    return trim((string) ob_get_clean());
-}
-
-function notification_delete_for_content(int $contentId): void
-{
-    if ($contentId < 1) {
-        return;
-    }
-
-    delete('notifications', ['content_id' => $contentId]);
-}
-
-function notification_delete_for_comment(int $commentId): void
-{
-    if ($commentId < 1) {
-        return;
-    }
-
-    delete('notifications', ['comment_id' => $commentId]);
-}
-
-function notification_state(int $userId, bool $includeHtml = true): array
-{
-    $unread = notification_unread_count($userId);
-    $message = '';
-
-    if ($unread === 1) {
-        $message = t('notifications.new');
-    } elseif ($unread > 1) {
-        $message = t('notifications.new_count', ['count' => $unread]);
-    }
-
-    $state = [
-        'unread' => $unread,
-        'latest_id' => notification_latest_id($userId),
-        'message' => $message,
-    ];
-
-    if ($includeHtml) {
-        $state['html'] = notification_preview_html($userId);
-    }
-
-    return $state;
-}
-
-function notification_badge_text(int $count): string
-{
-    return $count > 99 ? '99+' : (string) max(0, $count);
 }
 
 function status_json_require_not_muted(array $user): void
@@ -6164,7 +5291,15 @@ function status_json_comment_payload(int $commentId, array $user, string $action
         'id' => $commentId,
         'content_id' => (int) ($comment['content_id'] ?? 0),
         'parent_id' => (int) ($comment['parent_id'] ?? 0),
-        'html' => status_comment_item($comment, $user, $action, $depth, $context, true, true),
+        'html' => part('status/comment-item', [
+            'comment' => $comment,
+            'user' => $user,
+            'action' => $action,
+            'depth' => $depth,
+            'context' => $context,
+            'show_replies' => true,
+            'show_reply_form' => true,
+        ]),
     ];
 }
 
@@ -6192,7 +5327,7 @@ function status_json_create(array $user, string $redirect = '/'): array
     status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
     status_sync_links($contentId, (array) ($payload['links'] ?? []));
     moderation_record_action($user, 'post');
-    notification_create_for_mentions($body, $user, $contentId);
+    Notifications::notifyMentions($body, $user, $contentId);
 
     $item = public_status_item($contentId);
 
@@ -6204,7 +5339,11 @@ function status_json_create(array $user, string $redirect = '/'): array
     ];
 
     if (wants_partial()) {
-        $data['card_html'] = $item !== null ? status_card($item, $redirect, $user) : '';
+        $data['card_html'] = $item !== null ? part('status/card', [
+            'item' => $item,
+            'action' => $redirect,
+            'user' => $user,
+        ]) : '';
     }
 
     return $data;
@@ -6234,7 +5373,7 @@ function status_json_react(int $contentId, array $user): array
             'created_at' => date_db(),
         ]);
         moderation_record_action($user, 'like');
-        notification_create_for_content_owner('content_like', $contentId, $user);
+        Notifications::notifyContentOwner('content_like', $contentId, $user);
     }
 
     status_set_user_liked($contentId, $userId, !$liked);
@@ -6288,8 +5427,8 @@ function status_json_comment(int $contentId, int $parentId, array $user, string 
         'created_at' => date_db(),
     ]);
     moderation_record_action($user, 'comment');
-    notification_create_for_content_owner('content_comment', $contentId, $user, $commentId);
-    notification_create_for_mentions($body, $user, $contentId, $commentId, [(int) ($status['author_id'] ?? 0)]);
+    Notifications::notifyContentOwner('content_comment', $contentId, $user, $commentId);
+    Notifications::notifyMentions($body, $user, $contentId, $commentId, [(int) ($status['author_id'] ?? 0)]);
 
     $data = [
         'action' => 'comment',
@@ -6331,7 +5470,7 @@ function status_json_comment_like(int $commentId, array $user): array
             'created_at' => date_db(),
         ]);
         moderation_record_action($user, 'like');
-        notification_create_for_comment_owner($commentId, $user);
+        Notifications::notifyCommentOwner($commentId, $user);
     }
 
     status_set_comment_user_liked($commentId, $userId, !$liked);
@@ -6364,11 +5503,11 @@ function status_json_comment_delete(int $commentId, array $user): array
     foreach (db_select('SELECT id FROM content_comments')->where('parent_id = ?', $commentId)->all() as $child) {
         $childId = (int) ($child['id'] ?? 0);
         delete('comment_likes', ['comment_id' => $childId]);
-        notification_delete_for_comment($childId);
+        Notifications::removeForComment($childId);
     }
 
     delete('comment_likes', ['comment_id' => $commentId]);
-    notification_delete_for_comment($commentId);
+    Notifications::removeForComment($commentId);
     delete('content_comments', ['parent_id' => $commentId]);
     delete('content_comments', ['id' => $commentId]);
 
@@ -6448,7 +5587,7 @@ function status_delete_content(int $contentId, bool $deleteReports = true, bool 
     }
 
     if ($deleteNotifications) {
-        notification_delete_for_content($contentId);
+        Notifications::removeForContent($contentId);
     }
 
     delete('content_comments', ['content_id' => $contentId]);
@@ -6462,52 +5601,6 @@ function status_delete_content(int $contentId, bool $deleteReports = true, bool 
     status_cleanup_unused_term_ids($termIds);
     status_cleanup_unused_link_ids($linkIds);
     delete('content', ['id' => $contentId]);
-}
-
-function status_actions(array $item, ?array $user, string $action, bool $openCommentsModal = true): string
-{
-    $contentId = (int) ($item['id'] ?? 0);
-
-    if ($contentId < 1) {
-        return '';
-    }
-
-    return part('status/actions', [
-        'item' => $item,
-        'user' => $user,
-        'action' => $action,
-        'open_comments_modal' => $openCommentsModal,
-    ]);
-}
-
-function status_manage_actions(array $item, ?array $user, string $action): string
-{
-    $contentId = (int) ($item['id'] ?? 0);
-
-    if ($contentId < 1) {
-        return '';
-    }
-
-    return part('status/manage-actions', [
-        'item' => $item,
-        'user' => $user,
-        'action' => $action,
-    ]);
-}
-
-function status_card(array $item, string $action = '/', ?array $user = null): string
-{
-    $contentId = (int) ($item['id'] ?? 0);
-
-    if ($contentId < 1) {
-        return '';
-    }
-
-    return part('status/card', [
-        'item' => $item,
-        'action' => $action,
-        'user' => $user ?? auth(),
-    ]);
 }
 
 function public_status_page_limit(): int
@@ -6560,7 +5653,7 @@ function status_feed_context_items(string $context, int $limit, int $offset, arr
     ];
 }
 
-function public_home_feed_html(string $feed = 'all', ?array $user = null, ?array $items = null): string
+function public_home_feed_data(string $feed = 'all', ?array $user = null, ?array $items = null): array
 {
     $user ??= auth();
     $feed = $feed === 'following' ? 'following' : 'all';
@@ -6578,7 +5671,7 @@ function public_home_feed_html(string $feed = 'all', ?array $user = null, ?array
 
     $feedId = 'status-feed-' . $feed;
 
-    return part('status/home-feed', [
+    return [
         'feed' => $feed,
         'user' => $user,
         'current_feed_url' => $currentFeedUrl,
@@ -6586,7 +5679,7 @@ function public_home_feed_html(string $feed = 'all', ?array $user = null, ?array
         'limit' => $limit,
         'items' => $items,
         'feed_id' => $feedId,
-    ]);
+    ];
 }
 
 function status_json_report(int $contentId, array $user): array
@@ -6704,14 +5797,14 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
     }
 
     status_json_require_unique_body($user, $body, $contentId);
-    $oldMentionIds = notification_mentioned_user_ids((string) ($item['body'] ?? ''));
+    $oldMentionIds = Notifications::mentionedUserIds((string) ($item['body'] ?? ''));
 
     update('content', [
         'body' => $body,
     ], ['id' => $contentId]);
     status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
     status_sync_links($contentId, (array) ($payload['links'] ?? []));
-    notification_create_for_mentions($body, $user, $contentId, 0, $oldMentionIds);
+    Notifications::notifyMentions($body, $user, $contentId, 0, $oldMentionIds);
 
     $data = [
         'action' => 'update',
@@ -6723,7 +5816,11 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
 
     if (wants_partial()) {
         $updated = public_status_item($contentId);
-        $data['card_html'] = $updated !== null ? status_card($updated, $redirect, $user) : '';
+        $data['card_html'] = $updated !== null ? part('status/card', [
+            'item' => $updated,
+            'action' => $redirect,
+            'user' => $user,
+        ]) : '';
     }
 
     return $data;
@@ -6781,22 +5878,10 @@ function public_home_feed_payload(string $feed = 'all', ?array $user = null): ar
     ];
 
     return api_payload($data, static fn (): array => [
-        'html' => public_home_feed_html($feed, $user, $items),
+        'html' => part('status/home-feed', public_home_feed_data($feed, $user, $items)),
         'feed' => $feed,
         'history' => $history,
     ]);
-}
-
-function status_feed_html(array $items, string $action, ?array $user = null): string
-{
-    $user ??= auth();
-    $html = '';
-
-    foreach ($items as $item) {
-        $html .= status_card($item, $action, $user);
-    }
-
-    return $html;
 }
 
 function status_feed_next_url(string $context, int $offset, int $limit, array $params = [], bool $html = true): string
@@ -7032,11 +6117,6 @@ function bot_sources(?int $botUserId = null): array
     return all($sql . ' ORDER BY u.username ASC, bs.name ASC, bs.id ASC', $params);
 }
 
-function bot_users(): array
-{
-    return all('SELECT id, username, status FROM users WHERE role = ? ORDER BY username ASC', ['bot']);
-}
-
 function bot_source_resource(array $source): array
 {
     return [
@@ -7092,18 +6172,6 @@ function bot_source_run_finish(int $runId, string $status, int $itemsSeen = 0, i
     } catch (Throwable) {
         // Run history is diagnostic and must never break the import.
     }
-}
-
-function bot_source_runs(int $sourceId, int $limit = 25): array
-{
-    if ($sourceId < 1) {
-        return [];
-    }
-
-    return all(
-        'SELECT * FROM bot_source_runs WHERE source_id = ? ORDER BY started_at DESC, id DESC LIMIT ' . max(1, min(100, $limit)),
-        [$sourceId]
-    );
 }
 
 function bot_delete_sources_for_user(int $botUserId): void
@@ -7526,7 +6594,11 @@ function status_feed_payload(string $context, int $limit, int $offset, array $pa
         $offset
     ): array {
         $htmlData = [
-            'html' => status_feed_html($items, $action, $user),
+            'html' => part('status/feed', [
+                'items' => $items,
+                'action' => $action,
+                'user' => $user,
+            ]),
             'count' => $count,
             'done' => $done,
             'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $nextParams, true),
@@ -7541,134 +6613,11 @@ function status_feed_payload(string $context, int $limit, int $offset, array $pa
     });
 }
 
-function status_feed_more_control(string $feedId, string $context, int $loaded, int $limit, array $params = []): string
-{
-    if ($loaded < $limit) {
-        return '';
-    }
-
-    return part('status/feed-more', [
-        'feed_id' => $feedId,
-        'context' => $context,
-        'loaded' => $loaded,
-        'limit' => $limit,
-        'params' => $params,
-    ]);
-}
-
-function status_comments_section(array $item, ?array $user, string $action): string
-{
-    $contentId = (int) ($item['id'] ?? 0);
-
-    if ($contentId < 1) {
-        return '';
-    }
-
-    return part('status/comments-preview', [
-        'item' => $item,
-        'user' => $user,
-        'action' => $action,
-    ]);
-}
-
-function status_comment_thread_section(array $item, ?array $user, string $action, string $context): string
-{
-    $contentId = (int) ($item['id'] ?? 0);
-
-    if ($contentId < 1) {
-        return '';
-    }
-
-    return part('status/comments-thread', [
-        'item' => $item,
-        'user' => $user,
-        'action' => $action,
-        'context' => $context,
-    ]);
-}
-
-function status_comment_form(int $contentId, string $action, array $user, int $parentId = 0, string $mention = '', string $context = ''): string
-{
-    return part('status/comment-form', [
-        'content_id' => $contentId,
-        'action' => $action,
-        'user' => $user,
-        'parent_id' => $parentId,
-        'mention' => $mention,
-        'context' => $context,
-    ]);
-}
-
 function status_comment_mention(string $name): string
 {
     $handle = slug($name);
 
     return $handle !== '' ? '@' . $handle . ' ' : '';
-}
-
-function status_comment_item(array $comment, ?array $user, string $action, int $depth = 0, string $context = '', bool $showReplies = true, bool $showReplyForm = true): string
-{
-    return part('status/comment-item', [
-        'comment' => $comment,
-        'user' => $user,
-        'action' => $action,
-        'depth' => $depth,
-        'context' => $context,
-        'show_replies' => $showReplies,
-        'show_reply_form' => $showReplyForm,
-    ]);
-}
-
-function status_comment_delete_form(int $commentId, string $action, int $contentId = 0): string
-{
-    return part('status/comment-delete-form', [
-        'comment_id' => $commentId,
-        'action' => $action,
-        'content_id' => $contentId,
-    ]);
-}
-
-function status_comment_like_control(int $commentId, int $likesCount, bool $liked, ?array $user, string $action, int $contentId = 0): string
-{
-    return part('status/comment-like-control', [
-        'comment_id' => $commentId,
-        'likes_count' => $likesCount,
-        'liked' => $liked,
-        'user' => $user,
-        'action' => $action,
-        'content_id' => $contentId,
-    ]);
-}
-
-function status_post_modal(array $item, ?array $user, string $action): string
-{
-    $contentId = (int) ($item['id'] ?? 0);
-
-    if ($contentId < 1) {
-        return '';
-    }
-
-    return render('modals/status-post', [
-        'item' => $item,
-        'user' => $user,
-        'action' => $action,
-    ]);
-}
-
-function status_report_modal(array $item, ?array $user, string $action): string
-{
-    $contentId = (int) ($item['id'] ?? 0);
-    $authorId = (int) ($item['author_id'] ?? 0);
-
-    if ($contentId < 1 || $user === null || $authorId === (int) ($user['id'] ?? 0)) {
-        return '';
-    }
-
-    return render('modals/status-report', [
-        'item' => $item,
-        'user' => $user,
-        'action' => $action,
-    ]);
 }
 
 function status_login_url(string $fragment = '', string $fallback = ''): string
@@ -7692,22 +6641,6 @@ function status_login_url(string $fragment = '', string $fallback = ''): string
     }
 
     return '/login?next=' . rawurlencode($next);
-}
-
-function status_edit_modal(array $item, string $action): string
-{
-    $contentId = (int) ($item['id'] ?? 0);
-
-    if ($contentId < 1) {
-        return '';
-    }
-
-    $item['body'] = mentions_for_editing((string) ($item['body'] ?? ''));
-
-    return render('modals/status-edit', [
-        'item' => $item,
-        'action' => $action,
-    ]);
 }
 
 function app_existing_tables(array $tables): array
@@ -8117,11 +7050,6 @@ function icon(string $name, string $class = 'icon', ?string $label = null, array
     return Core::icon($name, $class, $label, $attributes);
 }
 
-function query(string $sql, array $params = []): PDOStatement
-{
-    return Core::query($sql, $params);
-}
-
 function run(string $sql, array $params = []): int
 {
     return Core::exec($sql, $params);
@@ -8172,18 +7100,6 @@ function total(string $table, array $where = []): int
     return Core::count($table, $where);
 }
 
-function paginate(
-    string $table,
-    array $where = [],
-    array|string $columns = '*',
-    ?int $page = null,
-    int $perPage = 15,
-    ?string $orderBy = null,
-    string $direction = 'ASC'
-): array {
-    return Core::paginate($table, $where, $columns, $page, $perPage, $orderBy, $direction);
-}
-
 function pagination(array $pagination, ?string $baseUrl = null, string $pageName = 'page', int $window = 2): string
 {
     return Core::pagination($pagination, $baseUrl, $pageName, $window);
@@ -8209,17 +7125,6 @@ function admin_user_statuses(): array
         'waiting' => t('users.statuses.waiting'),
         'ban' => t('users.statuses.ban'),
     ];
-}
-
-function admin_user_status_badge(string $status): string
-{
-    $class = match ($status) {
-        'active' => 'badge badge-primary',
-        'ban' => 'badge badge-danger',
-        default => 'badge',
-    };
-
-    return '<span class="' . e($class) . '">' . e(admin_user_statuses()[$status] ?? $status) . '</span>';
 }
 
 function admin_search_like(string $value): string
@@ -8300,126 +7205,9 @@ function admin_list_url(string $path, array $params = [], bool $ajax = true): st
     return $path . ($query !== [] ? '?' . http_build_query($query) : '');
 }
 
-function admin_pagination(array $pagination, string $path, string $target, array $params = [], string $pageName = 'page', int $window = 2, ?string $historyPath = null): string
-{
-    $page = max(1, (int) ($pagination['page'] ?? 1));
-    $lastPage = max(1, (int) ($pagination['last_page'] ?? 1));
-    $total = max(0, (int) ($pagination['total'] ?? 0));
-    $from = max(0, (int) ($pagination['from'] ?? 0));
-    $to = max(0, (int) ($pagination['to'] ?? 0));
-    $window = max(1, $window);
-
-    if ($lastPage <= 1) {
-        return '';
-    }
-
-    $item = static function (string $label, int|string|null $targetPage, string $class = '', bool $disabled = false, bool $current = false) use ($path, $target, $params, $pageName, $historyPath): string {
-        $classes = trim('pagination-link ' . $class . ($current ? ' is-active' : ''));
-
-        if ($disabled || $targetPage === null) {
-            return '<span class="' . e($classes) . '" aria-disabled="true">' . e($label) . '</span>';
-        }
-
-        if ($current) {
-            return '<span class="' . e($classes) . '" aria-current="page">' . e($label) . '</span>';
-        }
-
-        $query = $params;
-        $query[$pageName] = (int) $targetPage;
-        $href = admin_list_url($path, $query, true);
-        $history = admin_list_url($historyPath ?? $path, $query, false);
-
-        return '<a class="' . e($classes) . '" href="' . e($href) . '" data-ajax data-ajax-target="' . e($target) . '" data-history="' . e($history) . '">' . e($label) . '</a>';
-    };
-
-    $pages = [1, $lastPage];
-    $start = max(1, $page - $window);
-    $end = min($lastPage, $page + $window);
-
-    for ($i = $start; $i <= $end; $i++) {
-        $pages[] = $i;
-    }
-
-    $pages = array_values(array_unique($pages));
-    sort($pages);
-
-    $html = '<nav class="pagination admin-pagination" aria-label="' . et('common.pagination') . '">';
-    $html .= '<div class="pagination-summary">' . e(t('common.pagination_summary', ['from' => (string) $from, 'to' => (string) $to, 'total' => (string) $total])) . '</div>';
-    $html .= '<div class="pagination-list">';
-    $html .= $item(t('common.previous'), $pagination['prev_page'] ?? null, 'pagination-prev', $page <= 1);
-
-    $previous = null;
-
-    foreach ($pages as $pageNumber) {
-        if ($previous !== null && $pageNumber > $previous + 1) {
-            $html .= '<span class="pagination-ellipsis" aria-hidden="true">...</span>';
-        }
-
-        $html .= $item((string) $pageNumber, $pageNumber, '', false, $pageNumber === $page);
-        $previous = $pageNumber;
-    }
-
-    $html .= $item(t('common.next'), $pagination['next_page'] ?? null, 'pagination-next', $page >= $lastPage);
-    $html .= '</div></nav>';
-
-    return $html;
-}
-
-function admin_per_page_control(string $path, string $target, array $params = [], ?int $selected = null, ?string $historyPath = null): string
-{
-    $selected ??= admin_per_page();
-    $params['page'] = 1;
-
-    ob_start();
-    ?>
-        <form class="admin-per-page-form" action="<?= e($path) ?>" method="get" data-ajax-form data-ajax-target="<?= e($target) ?>" data-history="<?= e($historyPath ?? $path) ?>">
-            <input type="hidden" name="view" value="html">
-            <?php foreach ($params as $key => $value): ?>
-                <?php if ($key === 'per_page' || $value === '' || $value === null) {
-                continue;
-            } ?>
-                <input type="hidden" name="<?= e((string) $key) ?>" value="<?= e((string) $value) ?>">
-            <?php endforeach; ?>
-            <label class="field-inline">
-                <span class="label"><?= et('common.per_page') ?></span>
-                <select class="select select-sm" name="per_page" data-submit-on-change>
-                    <?php foreach (admin_per_page_options() as $option): ?>
-                        <option value="<?= e((string) $option) ?>"<?= $selected === $option ? ' selected' : '' ?>><?= e((string) $option) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </label>
-        </form>
-        <?php
-
-    return trim((string) ob_get_clean());
-}
-
 function e(mixed $value): string
 {
     return Core::e($value);
-}
-
-function html_attributes(array $attributes): string
-{
-    $html = '';
-
-    foreach ($attributes as $name => $value) {
-        $name = (string) $name;
-
-        if ($name === '' || $value === false || $value === null) {
-            continue;
-        }
-
-        if (!preg_match('/^[A-Za-z_:][A-Za-z0-9_:\-.]*$/', $name)) {
-            throw new InvalidArgumentException('Invalid HTML attribute: ' . $name);
-        }
-
-        $html .= $value === true
-            ? ' ' . $name
-            : ' ' . $name . '="' . e($value) . '"';
-    }
-
-    return $html;
 }
 
 function t(string $key, array $replace = [], ?string $locale = null): string
@@ -8502,7 +7290,7 @@ function language_name(string $code, ?string $default = null): string
         return (string) $names[$code];
     }
 
-    $path = base_path('lang/' . $code . '.json');
+    $path = base_path('lang/' . $code . '/app.json');
 
     if (is_file($path)) {
         $data = json_decode((string) file_get_contents($path), true);
@@ -8530,18 +7318,8 @@ function languages(?array $codes = null, bool $includeFiles = true): array
     }
 
     if ($includeFiles) {
-        $directory = base_path('lang');
-
-        foreach (glob($directory . DIRECTORY_SEPARATOR . '*.json') ?: [] as $file) {
-            $filename = pathinfo($file, PATHINFO_FILENAME);
-            if (str_starts_with($filename, 'emails-')) {
-                continue;
-            }
-            $code = language_code($filename);
-
-            if ($code !== '') {
-                $items[$code] = language_name($code);
-            }
+        foreach (language_packages() as $code => $label) {
+            $items[$code] = $label;
         }
     }
 
@@ -8564,14 +7342,17 @@ function language_packages(): array
     $defaults = language_names();
     $items = [];
 
-    foreach (glob($directory . DIRECTORY_SEPARATOR . '*.json') ?: [] as $file) {
-        $filename = pathinfo($file, PATHINFO_FILENAME);
-        if (str_starts_with($filename, 'emails-')) {
+    foreach (glob($directory . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [] as $languageDirectory) {
+        $directoryName = basename($languageDirectory);
+        $code = language_code($directoryName);
+
+        if ($code === '' || $directoryName !== $code) {
             continue;
         }
-        $code = language_code($filename);
 
-        if ($code === '') {
+        $file = $languageDirectory . DIRECTORY_SEPARATOR . 'app.json';
+
+        if (!is_file($file)) {
             continue;
         }
 
@@ -8744,11 +7525,6 @@ function timezone(): DateTimeZone
     return Core::timezone();
 }
 
-function now(?string $format = null): DateTimeImmutable|string
-{
-    return Core::now($format);
-}
-
 function datetime(mixed $value = null, ?string $format = null, ?bool $relative = null): string
 {
     if ($relative === true || ($relative === null && $format === null && (bool) config('datetime.relative', false))) {
@@ -8847,11 +7623,6 @@ function redirect(string $url, int $status = 302): never
     Core::redirect($url, $status);
 }
 
-function capture(callable $callback): string
-{
-    return Core::capture($callback);
-}
-
 function render(string $template, array $data = [], ?string $directory = null): string
 {
     return Core::render($template, $data, $directory);
@@ -8865,11 +7636,6 @@ function part(string $template, array $data = []): string
 function layout(string $template, array $data = [], mixed $content = null, ?string $directory = null): void
 {
     Core::layout($template, $data, $content, $directory);
-}
-
-function json(mixed $data, int $status = 200): never
-{
-    Core::json($data, $status);
 }
 
 function api_ok(mixed $data = null, ?string $message = null, int $status = 200, array $meta = []): never
@@ -8939,24 +7705,9 @@ function route_path(?string $path = null): string
     return Core::path($path);
 }
 
-function payload(?string $key = null, mixed $default = null): mixed
-{
-    return Core::payload($key, $default);
-}
-
 function input(?string $key = null, mixed $default = null): mixed
 {
     return Core::input($key, $default);
-}
-
-function request(?string $key = null, mixed $default = null): mixed
-{
-    return Core::request($key, $default);
-}
-
-function validate(array $data, array $rules, array $messages = []): array
-{
-    return Core::validate($data, $rules, $messages);
 }
 
 function api_validated(array $rules, ?array $data = null, array $messages = []): array

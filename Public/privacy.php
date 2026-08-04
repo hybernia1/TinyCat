@@ -28,40 +28,40 @@ layout('layout', [
         </article>
 
         <div class="grid lg:grid-2">
-            <?= tc_privacy_card('privacy.public_title', 'globe', [
+            <?= part('privacy/card', ['title_key' => 'privacy.public_title', 'icon_name' => 'globe', 'paragraph_keys' => [
                 'privacy.public_open',
                 'privacy.public_content',
                 'privacy.public_no_private',
                 'privacy.public_no_personal',
-            ]) ?>
+            ]]) ?>
 
-            <?= tc_privacy_card('privacy.data_title', 'database', [
+            <?= part('privacy/card', ['title_key' => 'privacy.data_title', 'icon_name' => 'database', 'paragraph_keys' => [
                 'privacy.data_account',
                 'privacy.data_email',
                 'privacy.data_content',
                 'privacy.data_technical',
                 'privacy.data_server_logs',
-            ]) ?>
+            ]]) ?>
 
-            <?= tc_privacy_card('privacy.recovery_title', 'key', [
+            <?= part('privacy/card', ['title_key' => 'privacy.recovery_title', 'icon_name' => 'key', 'paragraph_keys' => [
                 'privacy.recovery_email',
                 'privacy.recovery_no_contact',
                 'privacy.recovery_lost',
                 'privacy.recovery_rotation',
-            ]) ?>
+            ]]) ?>
 
-            <?= tc_privacy_card('privacy.reporting_title', 'flag', [
+            <?= part('privacy/card', ['title_key' => 'privacy.reporting_title', 'icon_name' => 'flag', 'paragraph_keys' => [
                 'privacy.reporting_how',
                 'privacy.reporting_duplicate',
                 'privacy.reporting_result',
                 'privacy.reporting_notification',
-            ]) ?>
+            ]]) ?>
 
-            <?= tc_privacy_card('privacy.moderation_title', 'lock', [
+            <?= part('privacy/card', ['title_key' => 'privacy.moderation_title', 'icon_name' => 'lock', 'paragraph_keys' => [
                 'privacy.moderation_right',
                 'privacy.moderation_actions',
                 'privacy.moderation_mute',
-            ]) ?>
+            ]]) ?>
         </div>
 
         <article class="card">
@@ -113,24 +113,6 @@ layout('layout', [
     <?php
 });
 
-function tc_privacy_card(string $titleKey, string $icon, array $paragraphKeys): string
-{
-    ob_start();
-    ?>
-    <article class="card">
-        <div class="card-header">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon($icon) ?> <?= et($titleKey) ?></h2>
-        </div>
-        <div class="card-body stack">
-            <?php foreach ($paragraphKeys as $key): ?>
-                <p class="mb-0"><?= et($key) ?></p>
-            <?php endforeach; ?>
-        </div>
-    </article>
-    <?php
-
-    return trim((string) ob_get_clean());
-}
 
 function tc_privacy_limit_rows(): array
 {

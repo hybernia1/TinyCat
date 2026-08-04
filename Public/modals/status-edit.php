@@ -21,7 +21,7 @@ ob_start();
 ?>
 <input type="hidden" name="action" value="update">
 <input type="hidden" name="id" value="<?= e($contentId) ?>">
-<?= status_field($item) ?>
+<?= part('status/field', ['item' => $item]) ?>
 <?php
 $body = trim((string) ob_get_clean());
 $footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . icon('close') . ' <span>' . et('common.cancel') . '</span></button>'

@@ -11,6 +11,11 @@ $context = (string) ($context ?? 'home');
 $loaded = (int) ($loaded ?? 0);
 $limit = (int) ($limit ?? public_status_page_limit());
 $params = is_array($params ?? null) ? $params : [];
+
+if ($loaded < $limit) {
+    return '';
+}
+
 $nextUrl = status_feed_next_url($context, $loaded, $limit, $params);
 ?>
 <div class="status-feed-more" data-status-feed-more data-status-feed-target="#<?= e($feedId) ?>" data-status-feed-url="<?= e($nextUrl) ?>">

@@ -22,7 +22,7 @@ layout('layout', [
             </button>
         </div>
         <div class="card-body" id="bot-accounts-list">
-            <?= BotAdmin::accountsHtml() ?>
+            <?= part('admin/bots/accounts', BotAdmin::accountsViewData()) ?>
         </div>
     </section>
     <?php

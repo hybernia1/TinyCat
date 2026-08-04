@@ -34,7 +34,7 @@ if ($commentId < 1 || $contentId < 1) {
 ?>
 <article class="status-comment<?= $depth > 0 ? ' is-child' : '' ?>"<?= $preview ? '' : ' id="' . e($commentDomId) . '"' ?> data-comment-id="<?= e($commentId) ?>"<?= $preview ? '' : ' data-content-id="' . e($contentId) . '" data-parent-id="' . e((int) ($comment['parent_id'] ?? 0)) . '"' ?>>
     <a class="avatar avatar-sm" href="<?= e(author_url($authorId)) ?>" aria-label="<?= e($authorName) ?>">
-        <?= user_avatar_html($comment, $authorName) ?>
+        <?= part('user/avatar', ['user' => $comment, 'alt' => $authorName]) ?>
     </a>
     <div class="status-comment-main">
         <div class="status-comment-bubble">
@@ -47,22 +47,46 @@ if ($commentId < 1 || $contentId < 1) {
             <?php if ($createdAt !== ''): ?>
                 <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
             <?php endif; ?>
-            <?= status_comment_like_control($commentId, $likesCount, $liked, $user, $action, $contentId) ?>
+            <?= part('status/comment-like-control', [
+                'comment_id' => $commentId,
+                'likes_count' => $likesCount,
+                'liked' => $liked,
+                'user' => $user,
+                'content_id' => $contentId,
+            ]) ?>
             <?php if ($user !== null && $showReplyForm): ?>
                 <details class="status-reply-details">
                     <summary><?= et('account.status_reply') ?></summary>
-                    <?= status_comment_form($contentId, $action, $user, $commentId, $depth > 0 ? status_comment_mention($authorName) : '', $context) ?>
+                    <?= part('status/comment-form', [
+                        'content_id' => $contentId,
+                        'action' => $action,
+                        'user' => $user,
+                        'parent_id' => $commentId,
+                        'mention' => $depth > 0 ? status_comment_mention($authorName) : '',
+                        'context' => $context,
+                    ]) ?>
                 </details>
             <?php endif; ?>
             <?php if ($canDelete): ?>
-                <?= status_comment_delete_form($commentId, $action, $contentId) ?>
+                <?= part('status/comment-delete-form', [
+                    'comment_id' => $commentId,
+                    'content_id' => $contentId,
+                ]) ?>
             <?php endif; ?>
         </div>
 
         <?php if ($showReplies && $replies !== []): ?>
             <div class="status-comment-replies" data-comment-replies data-comment-id="<?= e($commentId) ?>">
                 <?php foreach ($replies as $reply): ?>
-                    <?= status_comment_item($reply, $user, $action, 1, $context, true, $showReplyForm) ?>
+                    <?= part('status/comment-item', [
+                        'comment' => $reply,
+                        'user' => $user,
+                        'action' => $action,
+                        'depth' => 1,
+                        'context' => $context,
+                        'show_replies' => true,
+                        'show_reply_form' => $showReplyForm,
+                    ]) ?>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>

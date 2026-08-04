@@ -122,7 +122,7 @@ layout('layout', [
     <section class="card">
         <div class="card-header split">
             <div class="cluster gap-3">
-                <div class="avatar avatar-lg"><?= user_avatar_html($bot, $botName) ?></div>
+                <div class="avatar avatar-lg"><?= part('user/avatar', ['user' => $bot, 'alt' => $botName]) ?></div>
                 <div>
                     <h1 class="text-xl m-0"><?= e($botName) ?></h1>
                     <p class="text-muted mb-0"><?= et('bots.detail_title') ?></p>
@@ -162,7 +162,7 @@ layout('layout', [
                 <div class="field settings-field-span">
                     <span class="label"><?= et('account.avatar') ?></span>
                     <div class="cluster gap-3">
-                        <div class="avatar avatar-lg"><?= user_avatar_html($bot, '@' . (string) ($bot['username'] ?? '')) ?></div>
+                        <div class="avatar avatar-lg"><?= part('user/avatar', ['user' => $bot, 'alt' => '@' . (string) ($bot['username'] ?? '')]) ?></div>
                         <div class="stack gap-1">
                             <input class="input" type="file" name="avatar" accept="image/png,image/jpeg,image/webp">
                             <?php if (user_avatar_url($bot) !== ''): ?>

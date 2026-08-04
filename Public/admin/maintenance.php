@@ -159,9 +159,9 @@ layout('layout', [
                                             <?= e(number_format(max(0, (int) ($result['changed'] ?? 0)), 0, '.', ' ')) ?>
                                         </span>
                                     </td>
-                                    <td><?= tc_admin_maintenance_status($result) ?></td>
+                                    <td><?= part('admin/maintenance/result-status', ['result' => $result]) ?></td>
                                     <td><?= e((string) max(0, (int) ($result['duration_ms'] ?? 0))) ?> ms</td>
-                                    <td><?= tc_admin_maintenance_details($result) ?></td>
+                                    <td><?= part('admin/maintenance/result-details', ['result' => $result]) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -172,35 +172,3 @@ layout('layout', [
     </section>
     <?php
 });
-
-function tc_admin_maintenance_details(array $result): string
-{
-    $details = [];
-
-    foreach ($result as $key => $value) {
-        if (in_array($key, ['task', 'changed', 'has_more', 'stalled', 'done', 'batch_size', 'duration_ms'], true) || is_array($value) || is_object($value)) {
-            continue;
-        }
-
-        $details[] = '<span class="badge">' . e(str_replace('_', ' ', (string) $key)) . ': ' . e((string) $value) . '</span>';
-    }
-
-    return $details === [] ? '<span class="text-muted">' . et('maintenance.no_details') . '</span>' : '<div class="cluster gap-2">' . implode('', $details) . '</div>';
-}
-
-function tc_admin_maintenance_status(array $result): string
-{
-    if (isset($result['error'])) {
-        return '<span class="badge badge-danger">' . et('maintenance.status_error') . '</span>';
-    }
-
-    if (!empty($result['stalled'])) {
-        return '<span class="badge badge-danger">' . et('maintenance.status_stalled') . '</span>';
-    }
-
-    if (!empty($result['has_more'])) {
-        return '<span class="badge">' . et('maintenance.status_more') . '</span>';
-    }
-
-    return '<span class="badge badge-primary">' . et('maintenance.status_done') . '</span>';
-}

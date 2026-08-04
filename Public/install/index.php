@@ -37,20 +37,9 @@ function &tc_install_state(): array
 
 function tc_install_languages(): array
 {
-    $directory = dirname(__DIR__, 2) . '/lang';
-    $files = glob(rtrim($directory, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . '*.json') ?: [];
     $languages = [];
 
-    foreach ($files as $file) {
-        $code = pathinfo($file, PATHINFO_FILENAME);
-
-        if (!preg_match('/^[A-Za-z0-9_-]+$/', $code)) {
-            continue;
-        }
-
-        $data = json_decode((string) file_get_contents($file), true);
-        $label = is_array($data) ? (string) ($data['install']['language_label'] ?? strtoupper($code)) : strtoupper($code);
-
+    foreach (language_packages() as $code => $label) {
         $languages[$code] = [
             'code' => $code,
             'label' => $label,
@@ -819,7 +808,7 @@ function tc_install_render(string $step, array $languages, array $state): void
                     <h1 class="text-2xl m-0"><?= et('install.title') ?></h1>
                 </div>
 
-                <?= tc_install_steps_html($step) ?>
+                <?= part('install/steps', ['current' => $step]) ?>
 
                 <?php if ($error): ?>
                     <div class="alert alert-danger"><?= e($error) ?></div>
@@ -845,39 +834,6 @@ function tc_install_render(string $step, array $languages, array $state): void
     <?php
 }
 
-function tc_install_steps_html(string $current): string
-{
-    $steps = [
-        'language' => 'install.step_language',
-        'db' => 'install.step_database',
-        'tables' => 'install.step_tables',
-        'admin' => 'install.step_admin',
-        'done' => 'install.step_done',
-    ];
-    $currentIndex = array_search($current, array_keys($steps), true);
-    $currentIndex = $currentIndex === false ? 0 : $currentIndex;
-
-    ob_start();
-    ?>
-    <ol class="steps" aria-label="<?= et('install.title') ?>">
-        <?php $index = 0; ?>
-        <?php foreach ($steps as $step => $label): ?>
-            <?php
-            $class = 'step';
-            $class .= $step === $current ? ' is-active' : '';
-            $class .= $index < $currentIndex ? ' is-complete' : '';
-            ?>
-            <li class="<?= e($class) ?>">
-                <span class="step-marker"><?= e($index + 1) ?></span>
-                <span><?= et($label) ?></span>
-            </li>
-            <?php $index++; ?>
-        <?php endforeach; ?>
-    </ol>
-    <?php
-
-    return trim((string) ob_get_clean());
-}
 
 function tc_install_language_view(array $languages, array $state): void
 {

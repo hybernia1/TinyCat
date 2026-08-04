@@ -68,7 +68,7 @@ layout('layout', [
                     <div class="tab-panel stack" id="settings-panel-<?= e($key) ?>" role="tabpanel" aria-labelledby="settings-tab-<?= e($key) ?>" data-tab-panel="<?= e($key) ?>"<?= $selected ? '' : ' hidden' ?>>
                         <div class="settings-grid settings-grid-<?= e($key) ?>">
                             <?php foreach ((array) $section['fields'] as $field): ?>
-                                <?= tc_admin_settings_field($field, (string) $key) ?>
+                                <?= part('admin/settings/field', ['field' => $field]) ?>
                             <?php endforeach; ?>
                         </div>
                     </div>
@@ -159,84 +159,6 @@ function tc_admin_settings_sections(): array
     ];
 }
 
-function tc_admin_settings_field(array $field, string $group): string
-{
-    $key = (string) $field['key'];
-    $type = (string) ($field['type'] ?? 'text');
-    $value = config($key, $field['default'] ?? '');
-    $displayValue = $type === 'password' ? '' : $value;
-    $name = 'settings[' . $key . ']';
-    $tag = $type === 'site_image' ? 'div' : 'label';
-    $classes = ['field', 'settings-field'];
-
-    if ($type === 'site_image') {
-        $classes[] = 'settings-image-field';
-    }
-
-    if ($type === 'textarea') {
-        $classes[] = 'settings-editor-field';
-    }
-
-    if (!empty($field['span'])) {
-        $classes[] = 'settings-field-span';
-    }
-
-    if (!empty($field['compact'])) {
-        $classes[] = 'settings-field-compact';
-    }
-
-    ob_start();
-    ?>
-    <<?= $tag ?> class="<?= e(implode(' ', $classes)) ?>">
-        <span class="label"><?= e((string) $field['label']) ?></span>
-        <?php if ($type === 'bool'): ?>
-            <span class="check-line">
-                <input type="checkbox" name="<?= e($name) ?>" value="1"<?= (bool) $value ? ' checked' : '' ?>>
-                <span><?= et('settings.enabled') ?></span>
-            </span>
-        <?php elseif ($type === 'language'): ?>
-            <select class="select" name="<?= e($name) ?>">
-                <?= language_options((string) $value) ?>
-            </select>
-        <?php elseif ($type === 'timezone'): ?>
-            <select class="select" name="<?= e($name) ?>" required>
-                <?= timezone_options((string) $value) ?>
-            </select>
-        <?php elseif ($type === 'date_format'): ?>
-            <select class="select" name="<?= e($name) ?>" required>
-                <?= datetime_format_preset_options('date', (string) $value) ?>
-            </select>
-        <?php elseif ($type === 'time_format'): ?>
-            <select class="select" name="<?= e($name) ?>" required>
-                <?= datetime_format_preset_options('time', (string) $value) ?>
-            </select>
-        <?php elseif ($type === 'datetime_format'): ?>
-            <select class="select" name="<?= e($name) ?>" required>
-                <?= datetime_format_preset_options('datetime', (string) $value) ?>
-            </select>
-        <?php elseif ($type === 'int'): ?>
-            <input class="input" type="number" name="<?= e($name) ?>" value="<?= e((int) $value) ?>" min="<?= e((int) ($field['min'] ?? 0)) ?>" max="<?= e((int) ($field['max'] ?? PHP_INT_MAX)) ?>" required>
-        <?php elseif ($type === 'mb'): ?>
-            <input class="input" type="number" name="<?= e($name) ?>" value="<?= e(tc_admin_settings_bytes_to_mb((int) $value)) ?>" min="<?= e((float) ($field['min'] ?? 0)) ?>" max="<?= e((float) ($field['max'] ?? 1024)) ?>" step="0.1" required>
-        <?php elseif ($type === 'site_image'): ?>
-            <?= tc_admin_settings_site_image_field($name, (string) $value, (string) ($field['variant'] ?? 'logo')) ?>
-        <?php elseif ($type === 'password'): ?>
-            <input class="input" type="password" name="<?= e($name) ?>" value="<?= e((string) $displayValue) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>" autocomplete="new-password">
-        <?php elseif ($type === 'email'): ?>
-            <input class="input" type="email" name="<?= e($name) ?>" value="<?= e((string) $value) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>">
-        <?php elseif ($type === 'optional_text'): ?>
-            <input class="input" name="<?= e($name) ?>" value="<?= e((string) $value) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>">
-        <?php elseif ($type === 'textarea'): ?>
-            <textarea class="textarea" name="<?= e($name) ?>" rows="8" maxlength="<?= e((int) ($field['max'] ?? 5000)) ?>" placeholder="<?= e((string) ($field['placeholder'] ?? t('settings.footer_placeholder'))) ?>"><?= e((string) $value) ?></textarea>
-        <?php else: ?>
-            <input class="input" name="<?= e($name) ?>" value="<?= e((string) $value) ?>" maxlength="<?= e((int) ($field['max'] ?? 190)) ?>" required>
-        <?php endif; ?>
-        <?php if (!empty($field['help'])): ?><span class="help"><?= e((string) $field['help']) ?></span><?php endif; ?>
-    </<?= $tag ?>>
-    <?php
-
-    return trim((string) ob_get_clean());
-}
 
 function tc_admin_settings_save(): void
 {
@@ -400,36 +322,4 @@ function tc_admin_settings_site_image_value(array $field, string $currentUrl): a
     }
 
     return [trim($currentUrl), 'string'];
-}
-
-function tc_admin_settings_site_image_field(string $name, string $url, string $variant): string
-{
-    $settingKey = trim(str_replace(['settings[', ']'], '', $name));
-    $url = trim($url);
-
-    ob_start();
-    ?>
-    <input type="hidden" name="<?= e($name) ?>" value="<?= e($url) ?>">
-    <div class="content-image-preview settings-image-preview"<?= $url === '' ? ' data-empty="true"' : '' ?>>
-        <?php if ($url !== ''): ?>
-            <img src="<?= e($url) ?>" alt="" loading="lazy">
-        <?php else: ?>
-            <span class="content-image-preview-empty"><?= icon('image') ?> <?= et('settings.image_empty') ?></span>
-        <?php endif; ?>
-    </div>
-    <div class="content-image-actions">
-        <label class="btn btn-secondary btn-sm">
-            <?= icon('upload') ?> <span><?= et('settings.image_upload') ?></span>
-            <input class="sr-only" type="file" name="settings_files[<?= e($settingKey) ?>]" accept="image/jpeg,image/png,image/gif,image/webp">
-        </label>
-        <?php if ($url !== ''): ?>
-            <label class="check-line mb-0">
-                <input type="checkbox" name="settings_remove[<?= e($settingKey) ?>]" value="1">
-                <span><?= et('settings.image_remove') ?></span>
-            </label>
-        <?php endif; ?>
-    </div>
-    <?php
-
-    return trim((string) ob_get_clean());
 }

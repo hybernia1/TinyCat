@@ -8,11 +8,6 @@ if (!defined('TINYCAT')) {
 
 require_admin();
 
-if (!function_exists('tc_admin_user_form_fields')) {
-    http_response_code(404);
-    return;
-}
-
 $user = (array) ($user ?? []);
 $roles = (array) ($roles ?? tc_admin_roles());
 $statuses = (array) ($statuses ?? admin_user_statuses());
@@ -27,7 +22,12 @@ $meta = '<div class="user-editor-meta">'
     . '<span>' . et('common.created') . ' <time datetime="' . e(tc_admin_datetime_iso((string) ($user['created_at'] ?? ''))) . '">' . e(tc_admin_datetime((string) ($user['created_at'] ?? ''))) . '</time></span>'
     . '<span>' . et('common.updated') . ' <time datetime="' . e(tc_admin_datetime_iso((string) ($user['updated_at'] ?? ''))) . '">' . e(tc_admin_datetime((string) ($user['updated_at'] ?? ''))) . '</time></span>'
     . '</div>';
-$body = $meta . tc_admin_user_form_fields($user, $roles, $statuses, false);
+$body = $meta . part('admin/users/form-fields', [
+    'user' => $user,
+    'roles' => $roles,
+    'statuses' => $statuses,
+    'create' => false,
+]);
 $footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . icon('close') . ' <span>' . et('common.cancel') . '</span></button>'
     . '<button class="btn btn-primary" type="submit">' . icon('save') . ' <span>' . et('common.save') . '</span></button>';
 

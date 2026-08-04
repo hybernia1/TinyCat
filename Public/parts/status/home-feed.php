@@ -22,7 +22,7 @@ $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
         <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime(user_muted_until($user))]) ?></span>
     </div>
 <?php elseif ($user !== null): ?>
-    <?= status_composer($currentFeedUrl, $user) ?>
+    <?= part('status/composer', ['action' => $currentFeedUrl, 'user' => $user]) ?>
 <?php endif; ?>
 
 <nav class="feed-switch home-feed-switch" aria-label="<?= et('public.feed_title') ?>">
@@ -44,7 +44,13 @@ $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
         <div class="alert alert-info" data-status-empty><?= et($feed === 'following' ? 'public.feed_empty_following' : 'public.feed_empty') ?></div>
     <?php endif; ?>
     <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
-        <?= status_feed_html($items, $currentFeedUrl, $user) ?>
+        <?= part('status/feed', ['items' => $items, 'action' => $currentFeedUrl, 'user' => $user]) ?>
     </div>
-    <?= status_feed_more_control($feedId, 'home', count($items), $limit, ['feed' => $feed]) ?>
+    <?= part('status/feed-more', [
+        'feed_id' => $feedId,
+        'context' => 'home',
+        'loaded' => count($items),
+        'limit' => $limit,
+        'params' => ['feed' => $feed],
+    ]) ?>
 <?php endif; ?>

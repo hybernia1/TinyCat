@@ -122,7 +122,7 @@ layout('layout', [
                             <?php else: ?>
                                 <div class="avatar avatar-xl">
                             <?php endif; ?>
-                                <?= user_avatar_html($author, $authorName) ?>
+                                <?= part('user/avatar', ['user' => $author, 'alt' => $authorName]) ?>
                             <?php if ($canPost): ?>
                                 </button>
                             <?php else: ?>
@@ -158,7 +158,7 @@ layout('layout', [
                             <?php elseif ($bio !== ''): ?>
                                 <p class="text-muted mb-0"><?= nl2br(e($bio)) ?></p>
                             <?php endif; ?>
-                            <?= user_profile_links_html($profileLinks) ?>
+                            <?= part('profile/links', ['links' => $profileLinks]) ?>
                         </div>
                         <div class="profile-stats">
                             <span class="profile-stat"><strong data-author-stat="followers" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['followers'] ?? 0)) ?></strong> <span><?= et('public.followers') ?></span></span>
@@ -176,7 +176,10 @@ layout('layout', [
                                 <?= icon('rss') ?> <span>RSS</span>
                             </a>
                             <?php if ($canFollow): ?>
-                                <?= author_follow_button_html($authorId, $isFollowing) ?>
+                                <?= part('author/follow-button', [
+                                    'author_id' => $authorId,
+                                    'is_following' => $isFollowing,
+                                ]) ?>
                             <?php elseif ($authUser === null): ?>
                                 <a class="btn btn-secondary btn-sm" href="/login">
                                     <?= icon('login') ?> <span><?= et('public.follow_login') ?></span>
@@ -202,7 +205,7 @@ layout('layout', [
                         <?php else: ?>
                             <nav class="profile-following-grid" aria-label="<?= et('public.following_profiles') ?>">
                                 <?php foreach ($followingProfiles as $profile): ?>
-                                    <?= author_following_profile_html($profile) ?>
+                                    <?= part('author/following-profile', ['profile' => $profile]) ?>
                                 <?php endforeach; ?>
                             </nav>
                             <?php if ($hasMoreFollowing): ?>
@@ -223,7 +226,7 @@ layout('layout', [
                         <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime($mutedUntil)]) ?></span>
                     </div>
                 <?php elseif ($canPost && $authUser !== null): ?>
-                    <?= status_composer(author_url($authorId), $authUser) ?>
+                    <?= part('status/composer', ['action' => author_url($authorId), 'user' => $authUser]) ?>
                 <?php endif; ?>
 
                 <?php if ($statusItems === []): ?>
@@ -231,10 +234,20 @@ layout('layout', [
                 <?php endif; ?>
                 <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
                     <?php foreach ($statusItems as $item): ?>
-                        <?= status_card($item, author_url($authorId)) ?>
+                        <?= part('status/card', [
+                            'item' => $item,
+                            'action' => author_url($authorId),
+                            'user' => auth(),
+                        ]) ?>
                     <?php endforeach; ?>
                 </div>
-                <?= status_feed_more_control($feedId, 'author', count($statusItems), $statusLimit, ['author_id' => $authorId]) ?>
+                <?= part('status/feed-more', [
+                    'feed_id' => $feedId,
+                    'context' => 'author',
+                    'loaded' => count($statusItems),
+                    'limit' => $statusLimit,
+                    'params' => ['author_id' => $authorId],
+                ]) ?>
                 <?= pagination($pagination, author_url($authorId)) ?>
             </section>
         </div>

@@ -77,7 +77,7 @@ layout('layout', [
             <?php else: ?>
                 <div class="status-feed">
                     <?php foreach ($statusItems as $item): ?>
-                        <?= status_card($item, $current) ?>
+                        <?= part('status/card', ['item' => $item, 'action' => $current, 'user' => auth()]) ?>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>

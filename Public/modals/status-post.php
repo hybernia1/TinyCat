@@ -27,7 +27,7 @@ ob_start();
 <article class="status-post-detail">
     <div class="status-header">
         <a class="avatar" href="<?= e($authorId > 0 ? author_url($authorId) : '#') ?>" aria-label="<?= e($authorName) ?>">
-            <?= user_avatar_html($item, $authorName) ?>
+            <?= part('user/avatar', ['user' => $item, 'alt' => $authorName]) ?>
         </a>
         <div class="status-author">
             <?php if ($authorId > 0 && $authorName !== ''): ?>
@@ -43,9 +43,14 @@ ob_start();
     <?php if ($bodyHtml !== ''): ?>
         <div class="status-body"><?= $bodyHtml ?></div>
     <?php endif; ?>
-    <?= status_links_html($item) ?>
-    <?= status_actions($item, $user, $action) ?>
-    <?= status_comment_thread_section($item, $user, $action, 'modal-' . $contentId) ?>
+    <?= part('status/links', ['item' => $item]) ?>
+    <?= part('status/actions', ['item' => $item, 'user' => $user, 'action' => $action]) ?>
+    <?= part('status/comments-thread', [
+        'item' => $item,
+        'user' => $user,
+        'action' => $action,
+        'context' => 'modal-' . $contentId,
+    ]) ?>
 </article>
 <?php
 $body = trim((string) ob_get_clean());

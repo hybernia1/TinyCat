@@ -14,6 +14,11 @@ $bio = trim((string) ($user['bio'] ?? ''));
 $profileLinks = user_profile_links($authorId);
 $selectedLocale = language_code((string) ($user['locale'] ?? '')) ?: locale();
 $selectedTheme = user_theme($user);
+$themeChoices = [
+    'system' => t('account.theme_system'),
+    'light' => t('account.theme_light'),
+    'dark' => t('account.theme_dark'),
+];
 
 if ($authorId < 1 || $action === '') {
     http_response_code(404);
@@ -35,7 +40,9 @@ ob_start();
     <label class="field">
         <span class="label"><?= et('account.theme') ?></span>
         <select class="select" name="theme" required<?= $autofocus('theme') ?>>
-            <?= theme_options($selectedTheme) ?>
+            <?php foreach ($themeChoices as $value => $label): ?>
+                <option value="<?= e($value) ?>"<?= $value === $selectedTheme ? ' selected' : '' ?>><?= e($label) ?></option>
+            <?php endforeach; ?>
         </select>
     </label>
     <label class="field profile-modal-span">
@@ -58,7 +65,7 @@ ob_start();
             <span class="label"><?= et('profile_links.title') ?></span>
             <span class="help"><?= et('profile_links.help') ?></span>
         </div>
-        <?= user_profile_links_fields($profileLinks) ?>
+        <?= part('profile/link-fields', ['links' => $profileLinks]) ?>
     </section>
 </div>
 <?php

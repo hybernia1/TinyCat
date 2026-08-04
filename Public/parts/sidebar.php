@@ -53,7 +53,7 @@ $sidebarUrl = (string) ($sidebar_url ?? '/api/sidebar');
                         <?php if ($id > 0 && $name !== ''): ?>
                             <a class="sidebar-user-link" href="<?= e(author_url($id)) ?>">
                                 <span class="avatar avatar-sm">
-                                    <?= user_avatar_html($author, $name) ?>
+                                    <?= part('user/avatar', ['user' => $author, 'alt' => $name]) ?>
                                 </span>
                                 <span class="sidebar-user-main">
                                     <strong><?= e($name) ?></strong>

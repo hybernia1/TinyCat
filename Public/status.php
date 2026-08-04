@@ -83,27 +83,41 @@ layout('layout', [
                 <div class="card-body stack stack-gap-12">
                     <div class="status-header">
                         <a class="avatar" href="<?= e($authorId > 0 ? author_url($authorId) : '#') ?>" aria-label="<?= e($authorName) ?>">
-                            <?= user_avatar_html($item, $authorName) ?>
+                            <?= part('user/avatar', ['user' => $item, 'alt' => $authorName]) ?>
                         </a>
                         <div class="status-author">
                             <?php if ($authorId > 0 && $authorName !== ''): ?>
                                 <a href="<?= e(author_url($authorId)) ?>" rel="author"><?= e($authorName) ?></a>
                             <?php endif; ?>
                             <?php if ($createdAt !== ''): ?>
-                                <?= status_time_button($createdAt, $contentId, false) ?>
+                                <?= part('status/time-link', [
+                                    'created_at' => $createdAt,
+                                    'content_id' => $contentId,
+                                    'open_modal' => false,
+                                ]) ?>
                             <?php endif; ?>
                         </div>
-                        <?= status_manage_actions($item, auth(), $pageAction) ?>
+                        <?= part('status/manage-actions', ['item' => $item, 'user' => auth(), 'action' => $pageAction]) ?>
                     </div>
 
                     <?php $bodyHtml = render_status_body($item); ?>
                     <?php if ($bodyHtml !== ''): ?>
                         <div class="status-body"><?= $bodyHtml ?></div>
                     <?php endif; ?>
-                    <?= status_links_html($item) ?>
+                    <?= part('status/links', ['item' => $item]) ?>
 
-                    <?= status_actions($item, auth(), $pageAction, false) ?>
-                    <?= status_comment_thread_section($item, auth(), $pageAction, 'status-' . $contentId) ?>
+                    <?= part('status/actions', [
+                        'item' => $item,
+                        'user' => auth(),
+                        'action' => $pageAction,
+                        'open_comments_modal' => false,
+                    ]) ?>
+                    <?= part('status/comments-thread', [
+                        'item' => $item,
+                        'user' => auth(),
+                        'action' => $pageAction,
+                        'context' => 'status-' . $contentId,
+                    ]) ?>
                 </div>
             </article>
         </div>
