@@ -1253,10 +1253,6 @@
     return TinyCat.confirm(confirmOptions(trigger));
   }
 
-  TinyCat.qs = qs;
-  TinyCat.qsa = qsa;
-  TinyCat.ready = ready;
-
   TinyCat.request = async function (url, options) {
     var settings = options || {};
     var headers = Object.assign({
@@ -1371,24 +1367,6 @@
 
     TinyCat.closeModal(modal);
     return true;
-  };
-
-  TinyCat.markFormClean = markFormClean;
-  TinyCat.updateDirtyForm = updateDirtyForm;
-
-  TinyCat.toggleModal = function (target) {
-    var modal = getModal(target);
-
-    if (!modal) {
-      return null;
-    }
-
-    if (modal.dataset.open === "true") {
-      TinyCat.requestCloseModal(modal);
-      return modal;
-    }
-
-    return TinyCat.openModal(modal);
   };
 
   async function loadRemoteModal(target, url, host, force) {
@@ -1573,6 +1551,32 @@
 
     return toast;
   };
+
+  function renderFlashMessages(scope) {
+    qsa("[data-tinycat-flashes]", scope || document).forEach(function (node) {
+      var messages;
+
+      if (node.dataset.toastReady === "true") {
+        return;
+      }
+
+      node.dataset.toastReady = "true";
+
+      try {
+        messages = JSON.parse(node.textContent || "[]");
+      } catch (error) {
+        messages = [];
+      }
+
+      if (Array.isArray(messages)) {
+        messages.forEach(function (item) {
+          TinyCat.toast(item.message || "", item.type || "info");
+        });
+      }
+
+      node.remove();
+    });
+  }
 
   TinyCat.setAdminNav = function (open) {
     var isOpen = Boolean(open);
@@ -1903,29 +1907,7 @@
   };
 
   TinyCat.initToasts = function () {
-    qsa("[data-tinycat-flashes]").forEach(function (node) {
-      var messages;
-
-      if (node.dataset.toastReady === "true") {
-        return;
-      }
-
-      node.dataset.toastReady = "true";
-
-      try {
-        messages = JSON.parse(node.textContent || "[]");
-      } catch (error) {
-        messages = [];
-      }
-
-      if (Array.isArray(messages)) {
-        messages.forEach(function (item) {
-          TinyCat.toast(item.message || "", item.type || "info");
-        });
-      }
-
-      node.remove();
-    });
+    renderFlashMessages(document);
 
     document.addEventListener("click", function (event) {
       var trigger = event.target.closest && event.target.closest("[data-toast]");
@@ -3487,26 +3469,6 @@
     }
   }
 
-  function renderFetchedFlashes(doc) {
-    qsa("[data-tinycat-flashes]", doc).forEach(function (node) {
-      var messages;
-
-      try {
-        messages = JSON.parse(node.textContent || "[]");
-      } catch (error) {
-        messages = [];
-      }
-
-      if (!Array.isArray(messages)) {
-        return;
-      }
-
-      messages.forEach(function (item) {
-        TinyCat.toast(item.message || "", item.type || "info");
-      });
-    });
-  }
-
   function replaceFromDocument(selector, doc) {
     var current = qs(selector);
     var next = qs(selector, doc);
@@ -4213,7 +4175,7 @@
         }
 
         doc = new DOMParser().parseFromString(html, "text/html");
-        renderFetchedFlashes(doc);
+        renderFlashMessages(doc);
 
         if (!await syncStatusResponse(form, doc, action)) {
           window.location.assign(responseUrl || url);
@@ -4451,6 +4413,7 @@
       var latestId;
       var unread;
       var first = true;
+      var polling = false;
 
       if (button.dataset.notificationReady === "true") {
         return;
@@ -4472,9 +4435,11 @@
         var nextUnread;
         var message;
 
-        if (document.hidden) {
+        if (document.hidden || polling) {
           return;
         }
+
+        polling = true;
 
         try {
           state = await TinyCat.request(api, {
@@ -4496,10 +4461,11 @@
           first = false;
         } catch (_error) {
           first = false;
+        } finally {
+          polling = false;
         }
       }
 
-      window.setTimeout(poll, interval);
       window.setInterval(poll, interval);
       document.addEventListener("visibilitychange", function () {
         if (!document.hidden) {

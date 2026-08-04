@@ -14,7 +14,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '1.0.3';
+    public const string VERSION = '1.0.4';
 
     private static bool $booted = false;
     private static array $config = [];
@@ -445,7 +445,7 @@ final class Core
         };
 
         if ($minify) {
-            $optimizedUrl = AssetOptimizer::assetUrl($path, $file, $extension);
+            $optimizedUrl = Minifier::assetUrl($path, $file, $extension);
 
             if ($optimizedUrl !== null) {
                 return $optimizedUrl;
@@ -706,7 +706,7 @@ final class Core
         $output = self::render($template, $data, $directory);
 
         if ((bool) self::setting('performance.minify_html', false)) {
-            $output = AssetOptimizer::minifyHtml($output);
+            $output = Minifier::minifyHtml($output);
         }
 
         echo $output;

@@ -17,8 +17,6 @@
   --unread-surface: color-mix(in srgb, var(--primary-soft) 54%, var(--surface));
   --on-primary: #ffffff;
   --accent: #5f7f7a;
-  --accent-strong: #496963;
-  --on-accent: #ffffff;
   --danger: #dc2626;
   --danger-strong: #b91c1c;
   --danger-soft: #fee2e2;
@@ -58,8 +56,6 @@
     --primary-soft: #252d36;
     --on-primary: #151a20;
     --accent: #8aa7a1;
-    --accent-strong: #a5bdb7;
-    --on-accent: #17201e;
     --danger: #f87171;
     --danger-strong: #fca5a5;
     --danger-soft: #3d1f25;
@@ -94,8 +90,6 @@
   --primary-soft: #252d36;
   --on-primary: #151a20;
   --accent: #8aa7a1;
-  --accent-strong: #a5bdb7;
-  --on-accent: #17201e;
   --danger: #f87171;
   --danger-strong: #fca5a5;
   --danger-soft: #3d1f25;
@@ -202,7 +196,7 @@ a:hover {
   padding: 10px 14px;
   font-weight: 700;
   text-decoration: none;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow);
 }
 
 .skip-link:focus {
@@ -770,7 +764,7 @@ a:hover {
   border: 2px solid var(--surface);
   border-radius: 999px;
   background: var(--primary);
-  box-shadow: 0 3px 10px var(--shadow);
+  box-shadow: var(--shadow-sm);
 }
 
 .captcha-slider::-moz-range-thumb {
@@ -779,7 +773,7 @@ a:hover {
   border: 2px solid var(--surface);
   border-radius: 999px;
   background: var(--primary);
-  box-shadow: 0 3px 10px var(--shadow);
+  box-shadow: var(--shadow-sm);
 }
 
 .captcha-slider:focus-visible {
@@ -3236,28 +3230,6 @@ img.status-editor-suggestion-avatar {
 .site-footer-inner a {
   color: var(--primary-strong);
   font-weight: 650;
-}
-
-.site-footer-inner a[data-file-link="true"] {
-  display: inline-flex;
-  max-width: 100%;
-  align-items: center;
-  gap: 7px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft);
-  padding: 7px 10px;
-  text-decoration: none;
-  vertical-align: middle;
-}
-
-.site-footer-inner a[data-file-link="true"]::before {
-  flex: 0 0 auto;
-  color: var(--muted);
-  content: attr(data-file-extension);
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
 }
 
 .admin-shell-page {

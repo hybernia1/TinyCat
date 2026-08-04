@@ -13,7 +13,7 @@ if (PHP_VERSION_ID < 80400) {
 
 require_once __DIR__ . '/Core.php';
 require_once __DIR__ . '/Cache.php';
-require_once __DIR__ . '/AssetOptimizer.php';
+require_once __DIR__ . '/Minifier.php';
 require_once __DIR__ . '/Avatar.php';
 require_once __DIR__ . '/SiteIdentity.php';
 require_once __DIR__ . '/StatusLinks.php';
