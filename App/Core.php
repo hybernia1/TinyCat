@@ -14,8 +14,9 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '1.0.2';
+    public const string VERSION = '1.0.3';
 
+    private static bool $booted = false;
     private static array $config = [];
     private static ?PDO $pdo = null;
     private static ?string $locale = null;
@@ -29,50 +30,27 @@ final class Core
     {
     }
 
-    public static function boot(?array $config = null): void
+    private static function boot(): void
     {
-        if ($config !== null) {
-            self::$config = $config;
-            self::$pdo = null;
-            self::$locale = null;
-            self::$translations = [];
-            self::$payload = null;
-            self::$settings = null;
-            self::$settingsLoading = false;
-            return;
-        }
-
         $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config.php';
 
         if (!is_file($path)) {
-            self::$config = [
+            $loaded = [
                 'install' => [
                     'locale' => 'en',
                     'complete' => false,
                 ],
             ];
-            self::$pdo = null;
-            self::$locale = null;
-            self::$translations = [];
-            self::$payload = null;
-            self::$settings = null;
-            self::$settingsLoading = false;
-            return;
-        }
+        } else {
+            $loaded = require $path;
 
-        $loaded = require $path;
-
-        if (!is_array($loaded)) {
-            throw new RuntimeException('Config file must return an array.');
+            if (!is_array($loaded)) {
+                throw new RuntimeException('Config file must return an array.');
+            }
         }
 
         self::$config = $loaded;
-        self::$pdo = null;
-        self::$locale = null;
-        self::$translations = [];
-        self::$payload = null;
-        self::$settings = null;
-        self::$settingsLoading = false;
+        self::$booted = true;
     }
 
     public static function config(?string $key = null, mixed $default = null): mixed
@@ -107,7 +85,7 @@ final class Core
         return array_key_exists($key, $settings) ? $settings[$key] : $default;
     }
 
-    public static function settings(): array
+    private static function settings(): array
     {
         if (self::$settings !== null) {
             return self::$settings;
@@ -253,7 +231,7 @@ final class Core
         self::$pdo = $pdo;
     }
 
-    public static function query(string $sql, array $params = []): PDOStatement
+    private static function query(string $sql, array $params = []): PDOStatement
     {
         $statement = self::db()->prepare($sql);
         $statement->execute($params);
@@ -364,40 +342,6 @@ final class Core
         );
     }
 
-    public static function get(
-        string $table,
-        array $where = [],
-        array|string $columns = '*',
-        ?int $limit = null,
-        ?int $offset = null,
-        ?string $orderBy = null,
-        string $direction = 'ASC'
-    ): array
-    {
-        $params = [];
-        $select = self::selectColumns($columns);
-        $sql = sprintf('SELECT %s FROM %s', $select, self::identifier($table));
-
-        if ($where !== []) {
-            [$whereSql, $params] = self::where($where);
-            $sql .= ' WHERE ' . $whereSql;
-        }
-
-        if ($orderBy !== null) {
-            $sql .= ' ORDER BY ' . self::column($orderBy) . ' ' . self::direction($direction);
-        }
-
-        if ($limit !== null || $offset !== null) {
-            $sql .= ' LIMIT ' . max(0, $limit ?? PHP_INT_MAX);
-        }
-
-        if ($offset !== null) {
-            $sql .= ' OFFSET ' . max(0, $offset);
-        }
-
-        return self::all($sql, $params);
-    }
-
     public static function count(string $table, array $where = []): int
     {
         $params = [];
@@ -409,26 +353,6 @@ final class Core
         }
 
         return (int) self::value($sql, $params);
-    }
-
-    public static function paginate(
-        string $table,
-        array $where = [],
-        array|string $columns = '*',
-        ?int $page = null,
-        int $perPage = 15,
-        ?string $orderBy = null,
-        string $direction = 'ASC'
-    ): array {
-        $total = self::count($table, $where);
-        $pagination = self::paginationMeta($total, $page, $perPage);
-        $items = $total > 0
-            ? self::get($table, $where, $columns, (int) $pagination['per_page'], (int) $pagination['offset'], $orderBy, $direction)
-            : [];
-
-        return ['items' => $items] + $pagination + [
-            'to' => $total === 0 ? 0 : (int) $pagination['offset'] + count($items),
-        ];
     }
 
     public static function paginationMeta(int $total, ?int $page = null, int $perPage = 15): array
@@ -575,7 +499,7 @@ final class Core
         return self::$locale;
     }
 
-    public static function translate(string $key, array $replace = [], ?string $locale = null): string
+    public static function t(string $key, array $replace = [], ?string $locale = null): string
     {
         $locale ??= self::locale();
         self::assertLocale($locale);
@@ -589,12 +513,7 @@ final class Core
         return self::replacePlaceholders(self::stringValue($value), $replace);
     }
 
-    public static function t(string $key, array $replace = [], ?string $locale = null): string
-    {
-        return self::translate($key, $replace, $locale);
-    }
-
-    public static function translations(?string $locale = null): array
+    private static function translations(?string $locale = null): array
     {
         $locale ??= self::locale();
         self::assertLocale($locale);
@@ -660,13 +579,6 @@ final class Core
         $name = (string) self::config('datetime.timezone', date_default_timezone_get());
 
         return $zones[$name] ??= new DateTimeZone($name);
-    }
-
-    public static function now(?string $format = null): DateTimeImmutable|string
-    {
-        $date = new DateTimeImmutable('now', self::timezone());
-
-        return $format === null ? $date : $date->format($format);
     }
 
     public static function dateTime(mixed $value = null, ?string $format = null): string
@@ -740,7 +652,7 @@ final class Core
         header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()');
     }
 
-    public static function capture(callable $callback): string
+    private static function capture(callable $callback): string
     {
         ob_start();
 
@@ -800,7 +712,7 @@ final class Core
         echo $output;
     }
 
-    public static function json(mixed $data, int $status = 200, array $headers = []): never
+    private static function json(mixed $data, int $status = 200, array $headers = []): never
     {
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
@@ -847,7 +759,7 @@ final class Core
         self::json($payload, 422);
     }
 
-    public static function apiException(Throwable $exception): never
+    private static function apiException(Throwable $exception): never
     {
         $status = (int) $exception->getCode();
 
@@ -910,7 +822,17 @@ final class Core
     public static function dispatch(?string $path = null, ?string $method = null): bool
     {
         $path = self::path($path);
-        $method = strtoupper($method ?? self::method());
+
+        try {
+            $method = strtoupper($method ?? self::method());
+        } catch (Throwable $exception) {
+            if (self::isApiPath($path) || self::wantsJson()) {
+                self::apiException($exception);
+            }
+
+            throw $exception;
+        }
+
         $allowed = [];
 
         foreach (self::$routes as $route) {
@@ -993,7 +915,7 @@ final class Core
         return $path === '/' ? '/' : rtrim($path, '/');
     }
 
-    public static function requireMethod(array|string $methods): void
+    private static function requireMethod(array|string $methods): void
     {
         $allowed = self::normalizeMethods($methods);
 
@@ -1003,7 +925,7 @@ final class Core
         }
     }
 
-    public static function payload(?string $key = null, mixed $default = null): mixed
+    private static function payload(?string $key = null, mixed $default = null): mixed
     {
         if (self::$payload === null) {
             self::$payload = self::parsePayload();
@@ -1027,11 +949,6 @@ final class Core
         return self::dataGet($input, $key, $default);
     }
 
-    public static function request(?string $key = null, mixed $default = null): mixed
-    {
-        return self::input($key, $default);
-    }
-
     public static function wantsJson(): bool
     {
         $accept = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
@@ -1049,7 +966,7 @@ final class Core
         return in_array($view, $values, true) || in_array($header, $values, true);
     }
 
-    public static function isJson(): bool
+    private static function isJson(): bool
     {
         $contentType = strtolower((string) ($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? ''));
 
@@ -1157,7 +1074,7 @@ final class Core
         return (string) ($challenge['token'] ?? '');
     }
 
-    public static function validate(array $data, array $rules, array $messages = []): array
+    private static function validate(array $data, array $rules, array $messages = []): array
     {
         $errors = [];
 
@@ -1250,9 +1167,20 @@ final class Core
 
     public static function session(): void
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return;
         }
+
+        $cookie = session_get_cookie_params();
+        session_set_cookie_params([
+            'lifetime' => (int) ($cookie['lifetime'] ?? 0),
+            'path' => (string) ($cookie['path'] ?? '/'),
+            'domain' => (string) ($cookie['domain'] ?? ''),
+            'secure' => (bool) ($cookie['secure'] ?? false) || self::isHttpsRequest(),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        session_start();
     }
 
     public static function flash(string $key, mixed $value = null): mixed
@@ -1428,7 +1356,7 @@ final class Core
         return '<input type="hidden" name="_csrf" value="' . self::e(self::csrfToken()) . '">';
     }
 
-    public static function verifyCsrf(?string $token = null): bool
+    private static function verifyCsrf(?string $token = null): bool
     {
         self::session();
 
@@ -2544,7 +2472,7 @@ final class Core
 
     private static function ensureBooted(): void
     {
-        if (self::$config === []) {
+        if (!self::$booted) {
             self::boot();
         }
     }
@@ -2654,17 +2582,6 @@ final class Core
         }
 
         return $html;
-    }
-
-    private static function direction(string $direction): string
-    {
-        $direction = strtoupper($direction);
-
-        if (!in_array($direction, ['ASC', 'DESC'], true)) {
-            throw new InvalidArgumentException('Invalid SQL direction: ' . $direction);
-        }
-
-        return $direction;
     }
 
     private static function paginationPages(int $page, int $lastPage, int $window): array
@@ -2917,37 +2834,9 @@ final class CoreQuery
         return (int) Core::value('SELECT COUNT(*) FROM (' . $this->buildSql(false) . ') core_count', $this->params);
     }
 
-    public function exists(): bool
-    {
-        return (clone $this)->limit(1)->one() !== null;
-    }
-
-    public function paginate(?int $page = null, int $perPage = 15): array
-    {
-        $total = $this->count();
-        $pagination = Core::paginationMeta($total, $page, $perPage);
-        $items = $total > 0
-            ? (clone $this)->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all()
-            : [];
-
-        return ['items' => $items] + $pagination + [
-            'to' => $total === 0 ? 0 : (int) $pagination['offset'] + count($items),
-        ];
-    }
-
-    public function sql(): string
+    private function sql(): string
     {
         return $this->buildSql(true);
-    }
-
-    public function params(): array
-    {
-        return $this->params;
-    }
-
-    public function __toString(): string
-    {
-        return $this->sql();
     }
 
     private function buildSql(bool $includeOrderAndLimit): string
@@ -3006,4 +2895,3 @@ final class CoreQuery
         }
     }
 }
-
