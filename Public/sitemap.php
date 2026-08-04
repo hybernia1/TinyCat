@@ -7,38 +7,20 @@ if (!defined('TINYCAT')) {
 }
 
 $section = (string) ($sitemapSection ?? 'index');
-$page = max(1, (int) get('page', 1));
+$page = max(1, (int) ($sitemapPage ?? 1));
 $perPage = 1000;
 $xmlEscape = static fn (string $value): string => htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
-
-$pageUrl = static function (string $name, int $page): string {
-    return '/' . $name . '.xml?page=' . $page;
-};
 
 $countRows = static function (string $section): int {
     return match ($section) {
         'pages' => 1,
         'authors' => (int) val(
-            'SELECT COUNT(DISTINCT u.id)
-                FROM users u
-                INNER JOIN content c ON c.author_id = u.id
-                WHERE u.status = ?',
+            'SELECT COUNT(*)
+                FROM users
+                WHERE status = ?',
             ['active']
         ),
-        'tags' => (int) val(
-            "SELECT COUNT(*)
-                FROM (
-                    SELECT t.id
-                    FROM terms t
-                    INNER JOIN content_tags ct ON ct.term_id = t.id
-                    INNER JOIN content c ON c.id = ct.content_id
-                    INNER JOIN users u ON u.id = c.author_id
-                    WHERE u.status = ?
-                    GROUP BY t.id
-                    HAVING COUNT(DISTINCT c.id) >= 2
-                ) eligible_tags",
-            ['active']
-        ),
+        'tags' => (int) val('SELECT COUNT(*) FROM terms'),
         'status' => (int) val(
             'SELECT COUNT(*)
                 FROM content c
@@ -67,7 +49,7 @@ if ($section === 'index') {
     for ($part = 1; $part <= $pages; $part++):
 ?>
     <sitemap>
-        <loc><?= $xmlEscape(absolute_url($pageUrl('sitemap-' . $name, $part))) ?></loc>
+        <loc><?= $xmlEscape(absolute_url(sitemap_url($name, $part))) ?></loc>
     </sitemap>
 <?php endfor; endforeach; ?>
 </sitemapindex>
@@ -86,25 +68,16 @@ $rows = match ($section) {
     'authors' => all(
         'SELECT u.id, u.updated_at AS last_modified
             FROM users u
-            INNER JOIN content c ON c.author_id = u.id
             WHERE u.status = ?
-            GROUP BY u.id, u.updated_at
             ORDER BY u.id ASC
             LIMIT ' . $perPage . ' OFFSET ' . $offset,
         ['active']
     ),
     'tags' => all(
-        "SELECT t.id, t.name, MAX(c.published_at) AS last_modified
+        "SELECT t.id, t.name
             FROM terms t
-            INNER JOIN content_tags ct ON ct.term_id = t.id
-            INNER JOIN content c ON c.id = ct.content_id
-            INNER JOIN users u ON u.id = c.author_id
-            WHERE u.status = ?
-            GROUP BY t.id, t.name
-            HAVING COUNT(DISTINCT c.id) >= 2
             ORDER BY t.id ASC
-            LIMIT " . $perPage . ' OFFSET ' . $offset,
-        ['active']
+            LIMIT " . $perPage . ' OFFSET ' . $offset
     ),
     default => all(
         'SELECT c.id, c.published_at AS last_modified
@@ -116,6 +89,11 @@ $rows = match ($section) {
         ['active']
     ),
 };
+
+if ($rows === []) {
+    http_response_code(404);
+    exit('Sitemap page not found.');
+}
 
 header('Content-Type: application/xml; charset=UTF-8');
 header('Cache-Control: public, max-age=900');

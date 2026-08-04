@@ -9,7 +9,7 @@ if (!defined('TINYCAT')) {
 final class SiteIdentity
 {
     public const LIGHT_THEME_COLOR = '#f6f6f4';
-    public const DARK_THEME_COLOR = '#141416';
+    public const DARK_THEME_COLOR = '#1c1d21';
     public const MANIFEST_THEME_COLOR = '#64748b';
     private const CACHE_VERSION = '2';
 

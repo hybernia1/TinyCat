@@ -28,6 +28,7 @@ if ($item === null) {
 }
 
 $statusTitle = status_meta_title($item);
+$statusStructuredImage = status_meta_link_image($item);
 
 layout('layout', [
     'title' => $statusTitle,
@@ -40,11 +41,12 @@ layout('layout', [
         'type' => 'article',
         'published_time' => (string) ($item['published_at'] ?? $item['created_at'] ?? ''),
         'author' => (string) ($item['author_name'] ?? ''),
-        'jsonld' => [
+        'jsonld' => array_filter([
             '@context' => 'https://schema.org',
             '@type' => 'DiscussionForumPosting',
             '@id' => absolute_url($current),
             'url' => absolute_url($current),
+            'image' => $statusStructuredImage !== '' ? $statusStructuredImage : null,
             'headline' => $statusTitle,
             'articleBody' => (string) ($item['body'] ?? ''),
             'keywords' => status_tags_from_text((string) ($item['body'] ?? '')),
@@ -66,7 +68,7 @@ layout('layout', [
                     'userInteractionCount' => (int) ($item['comments_count'] ?? 0),
                 ],
             ],
-        ],
+        ], static fn (mixed $value): bool => $value !== null),
     ],
 ], static function () use ($item, $current, $compact, $pageAction): void {
     $authorId = (int) ($item['author_id'] ?? 0);

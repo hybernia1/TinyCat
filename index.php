@@ -56,23 +56,10 @@ route('GET', '/sitemap.xml', static function (): void {
     require public_path('sitemap.php');
 });
 
-route('GET', '/sitemap-authors.xml', static function (): void {
-    $sitemapSection = 'authors';
-    require public_path('sitemap.php');
-});
-
-route('GET', '/sitemap-pages.xml', static function (): void {
-    $sitemapSection = 'pages';
-    require public_path('sitemap.php');
-});
-
-route('GET', '/sitemap-status.xml', static function (): void {
-    $sitemapSection = 'status';
-    require public_path('sitemap.php');
-});
-
-route('GET', '/sitemap-tags.xml', static function (): void {
-    $sitemapSection = 'tags';
+route('GET', '/{sitemap_file:sitemap-(?:pages|authors|status|tags)-[1-9][0-9]*[.]xml}', static function (string $sitemap_file): void {
+    preg_match('/^sitemap-(pages|authors|status|tags)-([1-9][0-9]*)\.xml$/D', $sitemap_file, $matches);
+    $sitemapSection = (string) ($matches[1] ?? '');
+    $sitemapPage = (int) ($matches[2] ?? 0);
     require public_path('sitemap.php');
 });
 

@@ -72,13 +72,16 @@ $authorStructuredData = [
         'sameAs' => array_values(array_filter(array_map(static fn (string $url): string => absolute_url($url), array_map('strval', $profileLinks)))),
     ],
     'hasPart' => array_values(array_map(static function (array $item) use ($authorEntityId): array {
-        return [
+        $image = status_meta_link_image($item);
+
+        return array_filter([
             '@type' => 'DiscussionForumPosting',
             'url' => absolute_url(status_url((int) ($item['id'] ?? 0))),
+            'image' => $image !== '' ? $image : null,
             'headline' => status_meta_title($item),
             'datePublished' => date_iso((string) ($item['published_at'] ?? $item['created_at'] ?? '')),
             'author' => ['@id' => $authorEntityId],
-        ];
+        ], static fn (mixed $value): bool => $value !== null);
     }, $statusItems)),
 ];
 $authorStructuredData = array_filter($authorStructuredData, static fn (mixed $value): bool => $value !== null && $value !== []);
@@ -169,7 +172,7 @@ layout('layout', [
                             <?php endif; ?>
                         </div>
                         <div class="profile-actions">
-                            <a class="btn btn-secondary btn-sm" href="<?= e(author_feed_url($authorId)) ?>" title="<?= et('public.rss_feed') ?>" aria-label="<?= et('public.rss_feed') ?>">
+                            <a class="btn btn-secondary btn-sm" href="<?= e(author_feed_url($authorId)) ?>" target="_blank" rel="noopener" title="<?= et('public.rss_feed') ?>" aria-label="<?= et('public.rss_feed') ?>">
                                 <?= icon('rss') ?> <span>RSS</span>
                             </a>
                             <?php if ($canFollow): ?>

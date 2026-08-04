@@ -173,6 +173,21 @@ function absolute_url(string $url = ''): string
     return app_request_scheme() . '://' . $host . $path;
 }
 
+function sitemap_url(string $section = 'index', int $page = 1): string
+{
+    $section = strtolower(trim($section));
+
+    if ($section === 'index') {
+        return '/sitemap.xml';
+    }
+
+    if (!in_array($section, ['pages', 'authors', 'status', 'tags'], true)) {
+        return '';
+    }
+
+    return '/sitemap-' . $section . '-' . max(1, $page) . '.xml';
+}
+
 function app_request_scheme(): string
 {
     $https = strtolower((string) ($_SERVER['HTTPS'] ?? ''));
@@ -248,6 +263,32 @@ function status_meta_link_title(array $item, int $limit = 90): string
 
         if ($title !== '' && !status_link_title_is_placeholder($title)) {
             return $title;
+        }
+    }
+
+    return '';
+}
+
+function status_meta_link_image(array $item): string
+{
+    $contentId = (int) ($item['id'] ?? $item['content_id'] ?? 0);
+
+    if ($contentId < 1) {
+        return '';
+    }
+
+    foreach (status_links_for_content($contentId) as $link) {
+        $link = (array) $link;
+
+        if (status_link_is_internal($link)) {
+            continue;
+        }
+
+        $thumbnail = status_video_thumbnail_sources($link);
+        $imageUrl = trim((string) ($thumbnail['fallback'] ?? ''));
+
+        if ($imageUrl !== '') {
+            return absolute_url($imageUrl);
         }
     }
 

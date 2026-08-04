@@ -79,7 +79,7 @@ layout('layout', [
         <div class="home-feed-section stack stack-gap-14">
             <header class="public-list-header">
                 <h1 class="text-2xl m-0"><?= e(t('public.tag_feed_title', ['tag' => '#' . $tag])) ?></h1>
-                <a class="btn btn-ghost btn-sm" href="<?= e(tag_feed_url($tag)) ?>" title="<?= et('public.rss_feed') ?>" aria-label="<?= et('public.rss_feed') ?>">
+                <a class="btn btn-ghost btn-sm" href="<?= e(tag_feed_url($tag)) ?>" target="_blank" rel="noopener" title="<?= et('public.rss_feed') ?>" aria-label="<?= et('public.rss_feed') ?>">
                     <?= icon('rss') ?> <span>RSS</span>
                 </a>
             </header>
