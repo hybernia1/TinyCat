@@ -7,7 +7,6 @@ if (!defined('TINYCAT')) {
 }
 
 require_admin();
-require_once base_path('App/BotAdmin.php');
 
 if (method() === 'GET') {
     api_ok(BotAdmin::accountsPayload());

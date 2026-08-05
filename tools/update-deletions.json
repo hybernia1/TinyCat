@@ -9,5 +9,19 @@
         "Public/admin/maintenance.php",
         "Public/parts/admin/maintenance/result-details.php",
         "Public/parts/admin/maintenance/result-status.php"
+    ],
+    "1.0.13": [
+        "App/BotAdmin.php",
+        "Public/admin/bot-accounts.php",
+        "Public/admin/bot.php",
+        "Public/admin/bots.php",
+        "Public/admin/bots/accounts.php",
+        "Public/admin/bots/list.php",
+        "Public/modals/bot-account-create.php",
+        "Public/modals/bot-account-filter.php",
+        "Public/modals/bot-source-filter.php",
+        "Public/modals/bot-source.php",
+        "Public/parts/admin/bots/accounts.php",
+        "Public/parts/admin/bots/sources.php"
     ]
 }

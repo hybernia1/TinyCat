@@ -7,7 +7,6 @@ if (!defined('TINYCAT')) {
 }
 
 require_admin();
-require_once base_path('App/BotAdmin.php');
 
 if (method() !== 'GET') {
     header('Allow: GET');
@@ -30,10 +29,10 @@ layout('layout', [
             </button>
         </div>
         <div class="card-body" id="bots-list">
-            <?= part('admin/bots/sources', BotAdmin::sourcesViewData()) ?>
+            <?= ExtensionRegistry::render('bots', 'parts/sources', BotAdmin::sourcesViewData()) ?>
         </div>
     </section>
-    <?= render('modals/bot-source', BotAdmin::sourceFormData(null)) ?>
-    <?= render('modals/bot-source-filter', BotAdmin::sourceFilterData()) ?>
+    <?= ExtensionRegistry::render('bots', 'modals/source', BotAdmin::sourceFormData(null)) ?>
+    <?= ExtensionRegistry::render('bots', 'modals/source-filter', BotAdmin::sourceFilterData()) ?>
     <?php
 });

@@ -5,12 +5,38 @@ define('TINYCAT', true);
 require_once __DIR__ . '/App/functions.php';
 
 $isCli = PHP_SAPI === 'cli';
-$availableTasks = ['feeds', 'cleanup'];
+$taskDefinitions = ExtensionRegistry::scheduledTasks();
+if (isset($taskDefinitions['cleanup'])) {
+    throw new LogicException('The cleanup scheduled task name is reserved by TinyCat.');
+}
+$taskDefinitions['cleanup'] = [
+    'runner' => static function (array $context): array {
+        $cleanupBatch = cleanup_batch_size($context['options']['cleanup_batch'] ?? 500);
+        $result = cron_cleanup_run($cleanupBatch);
+        $hasErrors = array_any(
+            (array) ($result['results'] ?? []),
+            static fn (array $task): bool => isset($task['error'])
+        );
+        $status = $hasErrors
+            ? 'failed'
+            : (empty($result['due'])
+                ? 'not_due'
+                : (!empty($result['has_more']) ? 'has_more' : 'completed'));
+
+        return [
+            'ok' => !$hasErrors,
+            'status' => $status,
+            'batch_size' => $cleanupBatch,
+            ...$result,
+        ];
+    },
+    'options' => ['cleanup_batch' => 500],
+];
+$availableTasks = array_keys($taskDefinitions);
 $cliOptions = [
     'health' => false,
     'task' => 'all',
-    'bot_limit' => null,
-    'cleanup_batch' => null,
+    'options' => [],
 ];
 
 if ($isCli) {
@@ -25,16 +51,26 @@ if ($isCli) {
             $cliOptions['task'] = (string) $match[1];
         } elseif ($argument === '--task' && isset($arguments[$index + 1])) {
             $cliOptions['task'] = trim((string) $arguments[++$index]);
-        } elseif (preg_match('/^--bot-limit=(\d+)$/', $argument, $match) === 1) {
-            $cliOptions['bot_limit'] = (int) $match[1];
-        } elseif ($argument === '--bot-limit' && isset($arguments[$index + 1]) && ctype_digit((string) $arguments[$index + 1])) {
-            $cliOptions['bot_limit'] = (int) $arguments[++$index];
-        } elseif (preg_match('/^--cleanup-batch=(\d+)$/', $argument, $match) === 1) {
-            $cliOptions['cleanup_batch'] = (int) $match[1];
-        } elseif ($argument === '--cleanup-batch' && isset($arguments[$index + 1]) && ctype_digit((string) $arguments[$index + 1])) {
-            $cliOptions['cleanup_batch'] = (int) $arguments[++$index];
+        } elseif (preg_match('/^--([a-z][a-z0-9-]*)=(\d+)$/', $argument, $match) === 1) {
+            $cliOptions['options'][str_replace('-', '_', (string) $match[1])] = (int) $match[2];
+        } elseif (
+            preg_match('/^--([a-z][a-z0-9-]*)$/', $argument, $match) === 1
+            && isset($arguments[$index + 1])
+            && ctype_digit((string) $arguments[$index + 1])
+        ) {
+            $cliOptions['options'][str_replace('-', '_', (string) $match[1])] = (int) $arguments[++$index];
         } elseif (in_array($argument, ['--help', '-h'], true)) {
-            echo "TinyCat scheduled tasks\n\nUsage:\n  php scheduled-tasks.php [--task=all|feeds|cleanup] [--health] [--bot-limit=20] [--cleanup-batch=500]\n";
+            $taskUsage = implode('|', ['all', ...$availableTasks]);
+            $optionUsage = [];
+            foreach ($taskDefinitions as $definition) {
+                foreach ((array) ($definition['options'] ?? []) as $name => $default) {
+                    $optionUsage[$name] = '[--' . str_replace('_', '-', (string) $name) . '=' . (int) $default . ']';
+                }
+            }
+            echo 'TinyCat scheduled tasks' . PHP_EOL . PHP_EOL
+                . 'Usage:' . PHP_EOL
+                . '  php scheduled-tasks.php [--task=' . $taskUsage . '] [--health]'
+                . ($optionUsage !== [] ? ' ' . implode(' ', $optionUsage) : '') . PHP_EOL;
             exit(0);
         } else {
             fwrite(STDERR, 'Unknown option: ' . $argument . PHP_EOL);
@@ -93,6 +129,20 @@ if (!in_array($requestedTask, [...$availableTasks, 'all'], true)) {
     ], $isCli ? 200 : 400, 2);
 }
 
+$selectedTasks = $requestedTask === 'all' ? $availableTasks : [$requestedTask];
+$allowedOptions = [];
+foreach ($selectedTasks as $task) {
+    $allowedOptions = [...$allowedOptions, ...array_keys((array) ($taskDefinitions[$task]['options'] ?? []))];
+}
+$unknownOptions = array_diff(array_keys((array) $cliOptions['options']), array_unique($allowedOptions));
+if ($isCli && $unknownOptions !== []) {
+    $respond([
+        'ok' => false,
+        'error' => 'unknown_option',
+        'option' => (string) reset($unknownOptions),
+    ], 200, 2);
+}
+
 if ($cliOptions['health'] || (!$isCli && in_array(strtolower((string) get('health', '')), ['1', 'true', 'yes'], true))) {
     $respond([
         'ok' => true,
@@ -104,54 +154,24 @@ if ($cliOptions['health'] || (!$isCli && in_array(strtolower((string) get('healt
     ]);
 }
 
-$requestedLimit = $isCli ? ($cliOptions['bot_limit'] ?? 20) : get('bot_limit', 20);
-$botLimit = max(1, min(100, (int) $requestedLimit));
-$requestedCleanupBatch = $isCli ? ($cliOptions['cleanup_batch'] ?? 500) : get('cleanup_batch', 500);
-$cleanupBatch = cleanup_batch_size($requestedCleanupBatch);
+$taskContext = static function (string $task) use ($isCli, $cliOptions, $taskDefinitions): array {
+    $options = [];
 
-$taskRunners = [
-    'feeds' => static function () use ($botLimit): array {
-        $results = bot_run_due_sources($botLimit);
-        $summary = [];
+    foreach ((array) ($taskDefinitions[$task]['options'] ?? []) as $name => $default) {
+        $options[$name] = $isCli
+            ? ($cliOptions['options'][$name] ?? $default)
+            : get((string) $name, $default);
+    }
 
-        foreach ($results as $result) {
-            $status = (string) ($result['status'] ?? 'unknown');
-            $summary[$status] = (int) ($summary[$status] ?? 0) + 1;
-        }
-
-        return [
-            'ok' => true,
-            'status' => 'completed',
-            'limit' => $botLimit,
-            'count' => count($results),
-            'summary' => $summary,
-            'results' => $results,
-        ];
-    },
-    'cleanup' => static function () use ($cleanupBatch): array {
-        $result = cron_cleanup_run($cleanupBatch);
-        $hasErrors = array_any(
-            (array) ($result['results'] ?? []),
-            static fn (array $task): bool => isset($task['error'])
-        );
-        $status = $hasErrors
-            ? 'failed'
-            : (empty($result['due'])
-                ? 'not_due'
-                : (!empty($result['has_more']) ? 'has_more' : 'completed'));
-
-        return [
-            'ok' => !$hasErrors,
-            'status' => $status,
-            'batch_size' => $cleanupBatch,
-            ...$result,
-        ];
-    },
-];
+    return [
+        'mode' => $isCli ? 'cli' : 'http',
+        'options' => $options,
+    ];
+};
 
 $lockSuffix = substr(hash('sha256', base_path()), 0, 24);
 $debug = (bool) config('app.debug', false);
-$runTask = static function (string $name, callable $runner) use ($lockSuffix, $debug): array {
+$runTask = static function (string $name, callable $runner, array $context) use ($lockSuffix, $debug): array {
     $lockName = 'tinycat_scheduled_' . $name . '_' . $lockSuffix;
     $locked = false;
 
@@ -166,7 +186,7 @@ $runTask = static function (string $name, callable $runner) use ($lockSuffix, $d
             ];
         }
 
-        return $runner();
+        return $runner($context);
     } catch (Throwable $exception) {
         return [
             'ok' => false,
@@ -183,11 +203,14 @@ $runTask = static function (string $name, callable $runner) use ($lockSuffix, $d
     }
 };
 
-$selectedTasks = $requestedTask === 'all' ? $availableTasks : [$requestedTask];
 $results = [];
 
 foreach ($selectedTasks as $task) {
-    $results[$task] = $runTask($task, $taskRunners[$task]);
+    $results[$task] = $runTask(
+        $task,
+        $taskDefinitions[$task]['runner'],
+        $taskContext($task)
+    );
 }
 
 $ok = !array_any($results, static fn (array $result): bool => empty($result['ok']));

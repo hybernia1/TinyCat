@@ -7,7 +7,6 @@ if (!defined('TINYCAT')) {
 }
 
 require_admin();
-require_once base_path('App/BotAdmin.php');
 
 layout('layout', [
     'title' => t('bots.accounts_title'),
@@ -23,7 +22,7 @@ layout('layout', [
             </button>
         </div>
         <div class="card-body" id="bot-accounts-list">
-            <?= part('admin/bots/accounts', BotAdmin::accountsViewData()) ?>
+            <?= ExtensionRegistry::render('bots', 'parts/accounts', BotAdmin::accountsViewData()) ?>
         </div>
     </section>
     <?php

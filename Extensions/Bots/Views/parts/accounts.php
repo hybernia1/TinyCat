@@ -91,6 +91,6 @@ $hasFilters = (bool) ($has_filters ?? false);
             'history_path' => '/admin/bots/accounts',
         ]) ?>
     <?php endif; ?>
-    <?= render('modals/bot-account-create') ?>
-    <?= render('modals/bot-account-filter', ['filters' => $filters]) ?>
+    <?= ExtensionRegistry::render('bots', 'modals/account-create') ?>
+    <?= ExtensionRegistry::render('bots', 'modals/account-filter', ['filters' => $filters]) ?>
 </div>

@@ -42,21 +42,10 @@ final class Api
             require public_path('admin/users.php');
         });
 
-        api_route('ANY', '/admin/bots', static function (): void {
-            require public_path('admin/bots.php');
-        });
-
-        api_route('POST', '/admin/bots/{action:run|toggle}', static function (string $action): void {
-            $botAdminAction = $action;
-            require public_path('admin/bots.php');
-        });
+        ExtensionRegistry::registerApiRoutes();
 
         api_route('POST', '/admin/cron-token', static function (): void {
             require public_path('admin/cron.php');
-        });
-
-        api_route('ANY', '/admin/bot-accounts', static function (): void {
-            require public_path('admin/bot-accounts.php');
         });
 
         api_route('ANY', '/admin/moderation/reports', static function (): void {

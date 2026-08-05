@@ -23,17 +23,7 @@ if (!$siteIdentityPath) {
     Updater::enforceMaintenance($path);
 }
 
-route('GET', '/admin/bots', static function (): void {
-    $botId = max(0, (int) get('bot', 0));
-    redirect($botId > 0
-        ? '/admin/bots/list?' . http_build_query(['bot' => $botId])
-        : '/admin/bots/accounts');
-});
-
-route('GET', '/admin/bots/{bot_id:[0-9]+}', static function (string $bot_id): void {
-    $_GET['id'] = (string) max(0, (int) $bot_id);
-    require public_path('admin/bot.php');
-});
+ExtensionRegistry::registerRoutes();
 
 route('GET', '/admin/moderation', static function (): void {
     redirect('/admin/moderation/reports');

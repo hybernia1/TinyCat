@@ -21,7 +21,7 @@ final class BotAdmin
         $filterBotId = (int) $viewData['filter_bot_id'];
         $sources = (array) $viewData['sources'];
         $data = [
-            'items' => array_map('bot_source_resource', $sources),
+            'items' => array_map([Bots::class, 'sourceResource'], $sources),
             'bots' => array_map(static fn (array $user): array => [
                 'id' => (int) ($user['id'] ?? 0),
                 'username' => (string) ($user['username'] ?? ''),
@@ -31,13 +31,13 @@ final class BotAdmin
         ];
 
         if ($id !== null) {
-            $source = bot_source_find($id);
+            $source = Bots::findSource($id);
             $data['id'] = $id;
-            $data['item'] = $source !== null ? bot_source_resource($source) : null;
+            $data['item'] = $source !== null ? Bots::sourceResource($source) : null;
         }
 
         return api_payload($data, static function () use ($viewData, $id): array {
-            $partial = ['html' => part('admin/bots/sources', $viewData)];
+            $partial = ['html' => ExtensionRegistry::render('bots', 'parts/sources', $viewData)];
             if ($id !== null) {
                 $partial['id'] = $id;
             }
@@ -97,6 +97,52 @@ final class BotAdmin
             : null;
     }
 
+    public static function accountDetailData(int $id): ?array
+    {
+        $account = self::accountById($id);
+
+        if ($account === null) {
+            return null;
+        }
+
+        $sources = Bots::sources($id);
+        $runs = self::accountRuns($id);
+
+        return [
+            'account' => $account,
+            'sources' => $sources,
+            'runs' => $runs,
+            'stats' => [
+                ['label' => 'bots.detail_stat_sources', 'value' => count($sources)],
+                ['label' => 'bots.detail_stat_active_sources', 'value' => count(array_filter(
+                    $sources,
+                    static fn (array $source): bool => (bool) ($source['enabled'] ?? false)
+                ))],
+                ['label' => 'bots.detail_stat_posts', 'value' => moderation_user_post_count($id)],
+                ['label' => 'bots.detail_stat_runs', 'value' => count($runs)],
+            ],
+            'last_posts' => all(
+                'SELECT id, body, published_at FROM content WHERE author_id = ? ORDER BY published_at DESC, id DESC LIMIT 8',
+                [$id]
+            ),
+            'last_run' => $runs[0] ?? null,
+            'profile_url' => author_url($id),
+        ];
+    }
+
+    private static function accountRuns(int $id, int $limit = 30): array
+    {
+        return all(
+            'SELECT br.*, bs.name AS source_name
+             FROM bot_source_runs br
+             INNER JOIN bot_sources bs ON bs.id = br.source_id
+             WHERE br.bot_user_id = ?
+             ORDER BY br.started_at DESC, br.id DESC
+             LIMIT ' . max(1, min(100, $limit)),
+            [$id]
+        );
+    }
+
     public static function accountCreatePayload(): array
     {
         $username = username_normalize((string) input('username', ''));
@@ -145,7 +191,7 @@ final class BotAdmin
         }
 
         return api_payload($payload, static function () use ($viewData, $id): array {
-            $partial = ['html' => part('admin/bots/accounts', $viewData)];
+            $partial = ['html' => ExtensionRegistry::render('bots', 'parts/accounts', $viewData)];
             if ($id !== null) {
                 $partial['id'] = $id;
             }
@@ -287,10 +333,10 @@ final class BotAdmin
             $errors['name'][] = t('bots.validation.name');
         }
 
-        $feedHash = bot_feed_source_hash($feedUrl);
+        $feedHash = Bots::feedSourceHash($feedUrl);
         if (!LinkMetadata::isSafeRemoteUrl($feedUrl) || strlen($feedUrl) > 2048 || $feedHash === '') {
             $errors['feed_url'][] = t('bots.validation.feed_url');
-        } elseif (bot_source_duplicate_exists($feedUrl, max(0, (int) $sourceId))) {
+        } elseif (Bots::sourceDuplicateExists($feedUrl, max(0, (int) $sourceId))) {
             $errors['feed_url'][] = t('bots.validation.feed_duplicate');
         }
         if ($interval < 5 || $interval > 43200) {
@@ -319,6 +365,56 @@ final class BotAdmin
         ];
     }
 
+    public static function sourceForAction(int $sourceId, int $botId = 0): array
+    {
+        $source = Bots::findSource($sourceId);
+
+        if ($source === null || ($botId > 0 && (int) ($source['bot_user_id'] ?? 0) !== $botId)) {
+            api_error(t('bots.messages.not_found'), 404, 'bot_source_not_found');
+        }
+
+        $bot = one(
+            'SELECT id, status FROM users WHERE id = ? AND role = ? LIMIT 1',
+            [(int) ($source['bot_user_id'] ?? 0), 'bot']
+        );
+
+        if ($bot === null) {
+            api_error(t('bots.messages.not_found'), 404, 'bot_account_not_found');
+        }
+
+        $source['bot_status'] = (string) ($bot['status'] ?? '');
+
+        return $source;
+    }
+
+    public static function runSource(array $source): array
+    {
+        if ((string) ($source['bot_status'] ?? '') !== 'active') {
+            api_error(t('bots.detail_bot_inactive'), 409, 'bot_inactive');
+        }
+
+        if (!(bool) ($source['enabled'] ?? false)) {
+            api_error(t('bots.detail_source_disabled'), 409, 'bot_source_disabled');
+        }
+
+        return Bots::runSource($source, true);
+    }
+
+    public static function toggleSource(array $source): void
+    {
+        $enabled = (bool) ($source['enabled'] ?? false);
+
+        if (!$enabled && (string) ($source['bot_status'] ?? '') !== 'active') {
+            api_error(t('bots.detail_bot_inactive'), 409, 'bot_inactive');
+        }
+
+        update('bot_sources', [
+            'enabled' => $enabled ? 0 : 1,
+            'next_run_at' => $enabled ? null : date_db(),
+            'last_error' => null,
+        ], ['id' => (int) ($source['id'] ?? 0)]);
+    }
+
     public static function sourcesViewData(): array
     {
         $bots = self::bots();
@@ -327,7 +423,7 @@ final class BotAdmin
         return [
             'bots' => $bots,
             'filter_bot_id' => $filterBotId,
-            'sources' => bot_sources($filterBotId > 0 ? $filterBotId : null),
+            'sources' => Bots::sources($filterBotId > 0 ? $filterBotId : null),
         ];
     }
 

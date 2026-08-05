@@ -68,7 +68,12 @@ final class Notifications
         int $commentId = 0,
         string $key = ''
     ): void {
-        if ($userId < 1 || $actorId < 1 || $userId === $actorId || self::recipientRole($userId) === 'bot') {
+        if (
+            $userId < 1
+            || $actorId < 1
+            || $userId === $actorId
+            || !UserRoles::receivesNotifications(self::recipientRole($userId))
+        ) {
             return;
         }
 

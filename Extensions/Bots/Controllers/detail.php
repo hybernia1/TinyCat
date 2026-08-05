@@ -7,11 +7,10 @@ if (!defined('TINYCAT')) {
 }
 
 require_admin();
-require_once base_path('App/BotAdmin.php');
 $botId = max(0, (int) get('id', 0));
-$bot = BotAdmin::accountById($botId);
+$detail = BotAdmin::accountDetailData($botId);
 
-if ($bot === null) {
+if ($detail === null) {
     http_response_code(404);
     layout('layout', [
         'title' => t('bots.detail_not_found'),
@@ -22,15 +21,13 @@ if ($bot === null) {
     return;
 }
 
-$sources = bot_sources($botId);
-$runs = tc_admin_bot_detail_runs($botId);
-$stats = tc_admin_bot_detail_stats($botId, $sources, $runs);
-$lastPosts = all(
-    'SELECT id, body, published_at FROM content WHERE author_id = ? ORDER BY published_at DESC, id DESC LIMIT 8',
-    [$botId]
-);
-$lastRun = $runs[0] ?? null;
-$profileUrl = author_url($botId);
+$bot = (array) $detail['account'];
+$sources = (array) $detail['sources'];
+$runs = (array) $detail['runs'];
+$stats = (array) $detail['stats'];
+$lastPosts = (array) $detail['last_posts'];
+$lastRun = $detail['last_run'];
+$profileUrl = (string) $detail['profile_url'];
 
 layout('layout', [
     'title' => '@' . (string) $bot['username'],
@@ -190,26 +187,3 @@ layout('layout', [
     </section>
     <?php
 });
-
-function tc_admin_bot_detail_runs(int $botId, int $limit = 30): array
-{
-    return all(
-        'SELECT br.*, bs.name AS source_name
-         FROM bot_source_runs br
-         INNER JOIN bot_sources bs ON bs.id = br.source_id
-         WHERE br.bot_user_id = ?
-         ORDER BY br.started_at DESC, br.id DESC
-         LIMIT ' . max(1, min(100, $limit)),
-        [$botId]
-    );
-}
-
-function tc_admin_bot_detail_stats(int $botId, array $sources, array $runs): array
-{
-    return [
-        ['label' => 'bots.detail_stat_sources', 'value' => count($sources)],
-        ['label' => 'bots.detail_stat_active_sources', 'value' => count(array_filter($sources, static fn (array $source): bool => (bool) ($source['enabled'] ?? false)))],
-        ['label' => 'bots.detail_stat_posts', 'value' => moderation_user_post_count($botId)],
-        ['label' => 'bots.detail_stat_runs', 'value' => count($runs)],
-    ];
-}

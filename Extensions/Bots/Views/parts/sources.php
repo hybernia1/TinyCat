@@ -77,7 +77,7 @@ $activeSources = count(array_filter(
                 </table>
             </div>
             <?php foreach ($sources as $source): ?>
-                <?= render('modals/bot-source', BotAdmin::sourceFormData($source)) ?>
+                <?= ExtensionRegistry::render('bots', 'modals/source', BotAdmin::sourceFormData($source)) ?>
             <?php endforeach; ?>
         <?php endif; ?>
     <?php endif; ?>

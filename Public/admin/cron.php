@@ -32,21 +32,31 @@ if (method() !== 'GET') {
 $cronToken = cron_token(true);
 $cronUrl = absolute_url('/scheduled-tasks.php');
 $runnerPath = base_path('scheduled-tasks.php');
-$taskViews = [
-    'feeds' => [
-        'icon' => 'rss',
-        'title' => 'cron.tasks.feeds',
-        'help' => 'cron.tasks.feeds_help',
-        'schedule' => 'cron.tasks.feeds_schedule',
-        'cli_arguments' => '--bot-limit=20',
-    ],
-    'cleanup' => [
+$taskViews = [];
+
+foreach (ExtensionRegistry::scheduledTasks() as $task => $definition) {
+    $admin = $definition['admin'] ?? null;
+    if (!is_array($admin)) {
+        continue;
+    }
+
+    $arguments = [];
+    foreach ((array) ($definition['options'] ?? []) as $name => $default) {
+        $arguments[] = '--' . str_replace('_', '-', (string) $name) . '=' . (int) $default;
+    }
+
+    $taskViews[$task] = [
+        ...$admin,
+        'cli_arguments' => implode(' ', $arguments),
+    ];
+}
+
+$taskViews['cleanup'] = [
         'icon' => 'database',
         'title' => 'cron.tasks.cleanup',
         'help' => 'cron.tasks.cleanup_help',
         'schedule' => 'cron.tasks.cleanup_schedule',
         'cli_arguments' => '--cleanup-batch=500',
-    ],
 ];
 
 foreach ($taskViews as $task => &$view) {

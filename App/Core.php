@@ -14,7 +14,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '1.0.12';
+    public const string VERSION = '1.0.13';
 
     private static bool $booted = false;
     private static array $config = [];
@@ -229,6 +229,9 @@ final class Core
     public static function setDb(PDO $pdo): void
     {
         self::$pdo = $pdo;
+        self::$settings = null;
+        self::$locale = null;
+        self::$translations = [];
     }
 
     private static function query(string $sql, array $params = []): PDOStatement
@@ -545,7 +548,10 @@ final class Core
             throw new RuntimeException('Translation file must contain a JSON object: ' . $path);
         }
 
-        self::$translations[$locale] = $data;
+        self::$translations[$locale] = array_replace_recursive(
+            $data,
+            ExtensionRegistry::translations($locale)
+        );
 
         return self::$translations[$locale];
     }
@@ -1869,7 +1875,7 @@ final class Core
 
     private static function userIsActive(array $user): bool
     {
-        if ((string) ($user['role'] ?? '') === 'bot') {
+        if (!UserRoles::allowsLogin((string) ($user['role'] ?? ''))) {
             return false;
         }
 

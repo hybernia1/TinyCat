@@ -62,7 +62,7 @@ $authorStructuredData = [
     'dateCreated' => $memberSince !== '' ? date_iso($memberSince) : null,
     'dateModified' => (string) ($author['updated_at'] ?? '') !== '' ? date_iso((string) $author['updated_at']) : null,
     'mainEntity' => [
-        '@type' => (string) ($author['role'] ?? '') === 'bot' ? 'Organization' : 'Person',
+        '@type' => UserRoles::profileSchemaType((string) ($author['role'] ?? '')),
         '@id' => $authorEntityId,
         'name' => $authorName,
         'alternateName' => (string) ($author['username'] ?? ''),

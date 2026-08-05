@@ -41,14 +41,7 @@ foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', '
 $defaultAdminNav = [
     ['href' => '/admin', 'icon' => 'dashboard', 'label' => t('common.dashboard')],
     ['href' => '/admin/users', 'icon' => 'users', 'label' => t('users.list_title')],
-    [
-        'icon' => 'rss',
-        'label' => t('bots.title'),
-        'children' => [
-            ['href' => '/admin/bots/accounts', 'icon' => 'users', 'label' => t('bots.accounts_title')],
-            ['href' => '/admin/bots/list', 'icon' => 'list-unordered', 'label' => t('bots.sources_title')],
-        ],
-    ],
+    ...ExtensionRegistry::adminNavigation(),
     [
         'icon' => 'shield',
         'label' => t('moderation.title'),
@@ -58,6 +51,7 @@ $defaultAdminNav = [
         ],
     ],
     ['href' => '/admin/cron', 'icon' => 'clock', 'label' => t('cron.title')],
+    ['href' => '/admin/extensions', 'icon' => 'file', 'label' => t('extensions.title')],
     ['href' => '/admin/updates', 'icon' => 'download', 'label' => t('updates.title')],
     ['href' => '/admin/settings', 'icon' => 'settings', 'label' => t('settings.title')],
     ['href' => '/admin/email-templates', 'icon' => 'mail', 'label' => t('settings.email_templates_title')],

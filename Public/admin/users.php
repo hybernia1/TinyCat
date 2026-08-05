@@ -36,7 +36,7 @@ if ($adminUsersApi === 'update') {
         $id = max(1, (int) input('id'));
         $existing = tc_admin_user_by_id($id);
 
-        if ($existing === null || (string) ($existing['role'] ?? '') === 'bot') {
+        if ($existing === null || !UserRoles::managedByCoreAdmin((string) ($existing['role'] ?? ''))) {
             api_error(t('users.messages.not_found'), 404, 'user_not_found');
         }
 
@@ -75,7 +75,7 @@ if ($adminUsersApi === 'delete') {
         $id = max(1, (int) input('id'));
         $user = tc_admin_user_by_id($id);
 
-        if ($user === null || (string) ($user['role'] ?? '') === 'bot') {
+        if ($user === null || !UserRoles::managedByCoreAdmin((string) ($user['role'] ?? ''))) {
             api_error(t('users.messages.not_found'), 404, 'user_not_found');
         }
 
@@ -111,10 +111,7 @@ layout('layout', [
 
 function tc_admin_roles(): array
 {
-    return [
-        'admin' => t('users.roles.admin'),
-        'user' => t('users.roles.user'),
-    ];
+    return UserRoles::coreAdminLabels();
 }
 
 function tc_admin_users_api_url(array $params = [], bool $withFilters = true): string
@@ -188,8 +185,9 @@ function tc_admin_users_active_filters(array $filters, bool $includeSearch = tru
 
 function tc_admin_users_filter_sql(array $filters): array
 {
-    $clauses = ['role <> ?'];
-    $params = ['bot'];
+    $managedRoles = array_keys(tc_admin_roles());
+    $clauses = ['role IN (' . implode(', ', array_fill(0, count($managedRoles), '?')) . ')'];
+    $params = $managedRoles;
 
     if ($filters['q'] !== '') {
         $like = admin_search_like($filters['q']);
@@ -245,14 +243,15 @@ function tc_admin_users_page(?array $filters = null): array
 
 function tc_admin_users_stats(): array
 {
+    $managedRoles = array_keys(tc_admin_roles());
     $stats = one(
         'SELECT COUNT(*) AS total,
             SUM(status = ?) AS active,
             SUM(status = ?) AS waiting,
             SUM(status = ?) AS ban
         FROM users
-        WHERE role <> ?',
-        ['active', 'waiting', 'ban', 'bot']
+        WHERE role IN (' . implode(', ', array_fill(0, count($managedRoles), '?')) . ')',
+        ['active', 'waiting', 'ban', ...$managedRoles]
     ) ?? [];
 
     return [

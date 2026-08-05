@@ -21,7 +21,7 @@ ob_start();
     </div>
     <label class="field"><span class="label"><?= et('bots.feed_url') ?></span><input class="input" type="url" name="feed_url" maxlength="2048" value="<?= e((string) ($source['feed_url'] ?? '')) ?>" placeholder="https://example.com/feed/" required></label>
     <label class="field"><span class="label"><?= et('bots.interval') ?></span><input class="input" type="number" name="interval_minutes" min="5" max="43200" value="<?= e((int) ($source['interval_minutes'] ?? 60)) ?>" required><span class="help"><?= et('bots.interval_help') ?></span></label>
-    <label class="field"><span class="label"><?= et('bots.template') ?></span><textarea class="textarea" name="post_template" rows="8" maxlength="2000" required><?= e((string) ($source['post_template'] ?? bot_source_default_template())) ?></textarea><span class="help"><?= et('bots.template_help') ?></span></label>
+        <label class="field"><span class="label"><?= et('bots.template') ?></span><textarea class="textarea" name="post_template" rows="8" maxlength="2000" required><?= e((string) ($source['post_template'] ?? Bots::defaultSourceTemplate())) ?></textarea><span class="help"><?= et('bots.template_help') ?></span></label>
     <label class="check"><input type="checkbox" name="enabled" value="1"<?= $create || (bool) ($source['enabled'] ?? false) ? ' checked' : '' ?>> <span><?= et('bots.enabled') ?></span></label>
 </div>
 <?php

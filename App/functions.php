@@ -14,12 +14,24 @@ if (PHP_VERSION_ID < 80400) {
 require_once __DIR__ . '/Core.php';
 require_once __DIR__ . '/Cache.php';
 require_once __DIR__ . '/Minifier.php';
+require_once __DIR__ . '/MigrationRegistry.php';
 require_once __DIR__ . '/Updater.php';
 require_once __DIR__ . '/Avatar.php';
 require_once __DIR__ . '/SiteIdentity.php';
 require_once __DIR__ . '/StatusLinks.php';
 require_once __DIR__ . '/LinkMetadata.php';
 require_once __DIR__ . '/Notifications.php';
+require_once __DIR__ . '/UserRoles.php';
+require_once __DIR__ . '/ExtensionRegistry.php';
+require_once __DIR__ . '/ExtensionLoader.php';
+require_once __DIR__ . '/ExtensionLifecycle.php';
+
+$extensionStateOverrides = Core::setting('extensions.states', []);
+ExtensionLoader::boot(
+    dirname(__DIR__) . '/Extensions',
+    is_array($extensionStateOverrides) ? $extensionStateOverrides : []
+);
+unset($extensionStateOverrides);
 
 function config(?string $key = null, mixed $default = null): mixed
 {
@@ -77,7 +89,7 @@ function db_transaction(callable $callback): mixed
 
 function app_required_tables(): array
 {
-    return [
+    $tables = [
         'users',
         'content',
         'terms',
@@ -94,12 +106,15 @@ function app_required_tables(): array
         'ip_action_limits',
         'email_templates',
         'password_reset_tokens',
-        'bot_sources',
-        'bot_feed_items',
-        'bot_feed_history',
-        'bot_source_runs',
+        ...ExtensionRegistry::requiredTables(),
         'settings',
     ];
+
+    if (count($tables) !== count(array_unique($tables))) {
+        throw new LogicException('Required database table names must be unique.');
+    }
+
+    return $tables;
 }
 
 function site_name(): string
@@ -1388,7 +1403,7 @@ function moderation_action_count(array $user, string $action): int
 
 function user_can_be_muted(array $user): bool
 {
-    return !in_array((string) ($user['role'] ?? ''), ['admin', 'bot'], true);
+    return UserRoles::canBeMuted((string) ($user['role'] ?? ''));
 }
 
 function user_muted_until(array $user): string
@@ -3187,7 +3202,7 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
 {
     $limit = max(1, min(20, $limit));
     $days = max(1, min(365, $days));
-    $cacheKey = 'public_top_authors_human_' . $limit . '_' . $days;
+    $cacheKey = 'public_top_authors_ranked_' . $limit . '_' . $days;
 
     $cached = Cache::get($cacheKey, 3600);
 
@@ -3204,6 +3219,8 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
     $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
         ? ' FORCE INDEX (content_feed_index)'
         : '';
+    $rankedRoles = UserRoles::rolesWith('appears_in_people_rankings');
+    $rolePlaceholders = implode(', ', array_fill(0, count($rankedRoles), '?'));
     $authors = db_select(
         'SELECT u.id,
                 u.username,
@@ -3217,7 +3234,7 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
     )
         ->where('c.published_at >= ?', date_db('-' . $days . ' days'))
         ->where('u.status = ?', 'active')
-        ->where('u.role <> ?', 'bot')
+        ->where('u.role IN (' . $rolePlaceholders . ')', ...$rankedRoles)
         ->group('u.id, u.username, u.avatar_config, u.bio')
         ->order('posts_count DESC, latest_at DESC, u.username ASC')
         ->limit($limit)
@@ -3235,7 +3252,7 @@ function public_sidebar(?string $activeTag = null, bool $compute = false): strin
     $authors = public_top_authors(5, 7, $compute);
     $needsRefresh = !$compute && (
         !Cache::fresh('public_trending_tags_8_7', 3600)
-        || !Cache::fresh('public_top_authors_human_5_7', 3600)
+        || !Cache::fresh('public_top_authors_ranked_5_7', 3600)
     );
     $sidebarUrl = '/api/sidebar' . ($activeTag !== '' ? '?tag=' . rawurlencode($activeTag) : '');
 
@@ -4785,14 +4802,14 @@ function status_link_apply_cached_metadata(array $link, array $cached, bool $pre
     return $link;
 }
 
-function bot_link_image_cache(string $imageUrl): string
+function status_link_image_cache(string $imageUrl): string
 {
     $imageUrl = trim($imageUrl);
     if ($imageUrl === '' || !extension_loaded('gd') || !function_exists('imagewebp')) {
         return '';
     }
     if (str_starts_with($imageUrl, '/uploads/links/')) {
-        return bot_link_image_exists($imageUrl) ? $imageUrl : '';
+        return status_link_image_exists($imageUrl) ? $imageUrl : '';
     }
     if (!LinkMetadata::isSafeRemoteUrl($imageUrl)) {
         return '';
@@ -4893,7 +4910,7 @@ function bot_link_image_cache(string $imageUrl): string
     return $localUrl;
 }
 
-function bot_link_image_exists(string $url): bool
+function status_link_image_exists(string $url): bool
 {
     $relative = str_replace('\\', '/', trim(substr($url, strlen('/uploads/links/')), '/'));
     if (!preg_match('~^[0-9]{4}/[0-9]{2}/[a-f0-9]{40}\.webp$~', $relative) || str_contains($relative, '..')) {
@@ -4918,7 +4935,7 @@ function status_link_prepare_metadata(array $link, ?array $cached, bool $localiz
 
     if ($localizeImage) {
         $imageUrl = $localImageSource ?: (string) ($prepared['image_url'] ?? '');
-        $prepared['image_url'] = bot_link_image_cache($imageUrl);
+        $prepared['image_url'] = status_link_image_cache($imageUrl);
     }
 
     return $prepared;
@@ -5988,135 +6005,6 @@ function status_feed_cursor_params(array $items): array
     ];
 }
 
-function bot_feed_url_normalize(string $url): string
-{
-    $parts = parse_url(trim($url));
-    if (!is_array($parts)) {
-        return '';
-    }
-
-    $scheme = strtolower((string) ($parts['scheme'] ?? ''));
-    $host = strtolower(rtrim((string) ($parts['host'] ?? ''), '.'));
-    if (!in_array($scheme, ['http', 'https'], true) || $host === '') {
-        return '';
-    }
-
-    $portNumber = isset($parts['port']) ? (int) $parts['port'] : 0;
-    $isDefaultPort = ($scheme === 'http' && $portNumber === 80)
-        || ($scheme === 'https' && $portNumber === 443);
-    $port = $portNumber > 0 && !$isDefaultPort ? ':' . $portNumber : '';
-    $path = (string) ($parts['path'] ?? '/');
-    $path = $path === '/' ? '/' : rtrim($path, '/');
-    $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
-
-    return $scheme . '://' . $host . $port . $path . $query;
-}
-
-function bot_feed_source_hash(string $url): string
-{
-    $url = bot_feed_url_normalize($url);
-    return $url !== '' ? hash('sha256', $url) : '';
-}
-
-function bot_source_duplicate_exists(string $feedUrl, int $excludeId = 0): bool
-{
-    $feedHash = bot_feed_source_hash($feedUrl);
-
-    if ($feedHash === '') {
-        return false;
-    }
-
-    $sql = 'SELECT COUNT(*) FROM bot_sources WHERE feed_hash = ?';
-    $params = [$feedHash];
-
-    if ($excludeId > 0) {
-        $sql .= ' AND id <> ?';
-        $params[] = $excludeId;
-    }
-
-    return (int) val($sql, $params) > 0;
-}
-
-function bot_source_duplicate_exception(Throwable $exception): bool
-{
-    return $exception instanceof PDOException
-        && (string) $exception->getCode() === '23000'
-        && (int) ($exception->errorInfo[1] ?? 0) === 1062;
-}
-
-function bot_feed_history_has(int $botUserId, string $feedUrl, string $itemGuid): bool
-{
-    $feedHash = bot_feed_source_hash($feedUrl);
-    $itemHash = $itemGuid !== '' ? hash('sha256', $itemGuid) : '';
-
-    return $botUserId > 0
-        && $feedHash !== ''
-        && $itemHash !== ''
-        && (int) val(
-            'SELECT COUNT(*) FROM bot_feed_history WHERE bot_user_id = ? AND feed_hash = ? AND item_hash = ?',
-            [$botUserId, $feedHash, $itemHash]
-        ) > 0;
-}
-
-function bot_feed_history_record(
-    int $botUserId,
-    string $feedUrl,
-    string $itemGuid,
-    int $contentId,
-    string $publishedAt = '',
-    string $createdAt = ''
-): void {
-    $feedHash = bot_feed_source_hash($feedUrl);
-    $itemHash = $itemGuid !== '' ? hash('sha256', $itemGuid) : '';
-    if ($botUserId < 1 || $feedHash === '' || $itemHash === '') {
-        return;
-    }
-
-    try {
-        insert('bot_feed_history', [
-            'bot_user_id' => $botUserId,
-            'feed_hash' => $feedHash,
-            'item_hash' => $itemHash,
-            'content_id' => $contentId > 0 ? $contentId : null,
-            'item_guid' => $itemGuid,
-            'item_published_at' => $publishedAt !== '' ? $publishedAt : null,
-            'created_at' => $createdAt !== '' ? $createdAt : date_db(),
-        ]);
-    } catch (Throwable) {
-        // The global history key is intentionally immutable and race-safe.
-    }
-
-    bot_feed_history_prune($botUserId, $feedHash);
-}
-
-function bot_feed_history_prune(int $botUserId, string $feedHash, int $keep = 100): void
-{
-    if ($botUserId < 1 || !preg_match('/^[a-f0-9]{64}$/', $feedHash)) {
-        return;
-    }
-
-    $keep = max(10, min(500, $keep));
-    run(
-        'DELETE FROM bot_feed_history
-            WHERE bot_user_id = ? AND feed_hash = ?
-                AND item_hash NOT IN (
-                    SELECT item_hash FROM (
-                        SELECT item_hash
-                        FROM bot_feed_history
-                        WHERE bot_user_id = ? AND feed_hash = ?
-                        ORDER BY COALESCE(item_published_at, created_at) DESC, created_at DESC, item_hash DESC
-                        LIMIT ' . $keep . '
-                    ) recent_items
-                )',
-        [$botUserId, $feedHash, $botUserId, $feedHash]
-    );
-}
-
-function bot_source_default_template(): string
-{
-    return "{{title}}\n\n{{description}}\n\n{{url}}";
-}
-
 function cron_token(bool $create = false): string
 {
     $token = trim((string) setting('cron.token', config('cron.token', '')));
@@ -6151,449 +6039,6 @@ function cron_request_token(): string
     }
 
     return trim((string) get('bearer', ''));
-}
-
-function bot_source_find(int $id): ?array
-{
-    return $id > 0
-        ? one(
-            'SELECT bs.*, u.username
-             FROM bot_sources bs
-             LEFT JOIN users u ON u.id = bs.bot_user_id AND u.role = ?
-             WHERE bs.id = ?
-             LIMIT 1',
-            ['bot', $id]
-        )
-        : null;
-}
-
-function bot_sources(?int $botUserId = null): array
-{
-    $sql = 'SELECT bs.*, u.username FROM bot_sources bs INNER JOIN users u ON u.id = bs.bot_user_id WHERE u.role = ?';
-    $params = ['bot'];
-
-    if ($botUserId !== null && $botUserId > 0) {
-        $sql .= ' AND bs.bot_user_id = ?';
-        $params[] = $botUserId;
-    }
-
-    return all($sql . ' ORDER BY u.username ASC, bs.name ASC, bs.id ASC', $params);
-}
-
-function bot_source_resource(array $source): array
-{
-    return [
-        'id' => (int) ($source['id'] ?? 0),
-        'bot_user_id' => (int) ($source['bot_user_id'] ?? 0),
-        'bot_username' => (string) ($source['username'] ?? ''),
-        'name' => (string) ($source['name'] ?? ''),
-        'feed_url' => (string) ($source['feed_url'] ?? ''),
-        'interval_minutes' => (int) ($source['interval_minutes'] ?? 60),
-        'post_template' => (string) ($source['post_template'] ?? ''),
-        'enabled' => (bool) ($source['enabled'] ?? false),
-        'last_checked_at' => (string) ($source['last_checked_at'] ?? ''),
-        'last_imported_at' => (string) ($source['last_imported_at'] ?? ''),
-        'next_run_at' => (string) ($source['next_run_at'] ?? ''),
-        'last_error' => (string) ($source['last_error'] ?? ''),
-    ];
-}
-
-function bot_source_run_create(int $sourceId, int $botUserId): int
-{
-    if ($sourceId < 1 || $botUserId < 1) {
-        return 0;
-    }
-
-    try {
-        return (int) insert('bot_source_runs', [
-            'source_id' => $sourceId,
-            'bot_user_id' => $botUserId,
-            'status' => 'running',
-            'started_at' => date_db(),
-        ]);
-    } catch (Throwable) {
-        return 0;
-    }
-}
-
-function bot_source_run_finish(int $runId, string $status, int $itemsSeen = 0, int $itemsImported = 0, int $contentId = 0, ?int $httpStatus = null, string $error = ''): void
-{
-    if ($runId < 1) {
-        return;
-    }
-
-    try {
-        update('bot_source_runs', [
-            'status' => $status,
-            'finished_at' => date_db(),
-            'items_seen' => max(0, $itemsSeen),
-            'items_imported' => max(0, $itemsImported),
-            'content_id' => $contentId > 0 ? $contentId : null,
-            'http_status' => $httpStatus !== null && $httpStatus > 0 ? $httpStatus : null,
-            'error' => $error !== '' ? bot_feed_text($error, 500) : null,
-        ], ['id' => $runId]);
-    } catch (Throwable) {
-        // Run history is diagnostic and must never break the import.
-    }
-}
-
-function bot_delete_source(int $sourceId): void
-{
-    if ($sourceId < 1) {
-        return;
-    }
-
-    db_transaction(static function () use ($sourceId): void {
-        delete('bot_source_runs', ['source_id' => $sourceId]);
-        delete('bot_feed_items', ['source_id' => $sourceId]);
-        delete('bot_sources', ['id' => $sourceId]);
-    });
-}
-
-function bot_feed_parse(string $xml): array
-{
-    if ($xml === '' || !function_exists('simplexml_load_string')) {
-        return [];
-    }
-
-    $previous = libxml_use_internal_errors(true);
-    $feed = simplexml_load_string($xml, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
-    libxml_clear_errors();
-    libxml_use_internal_errors($previous);
-
-    if (!$feed instanceof SimpleXMLElement) {
-        return [];
-    }
-
-    $nodes = isset($feed->channel->item) ? $feed->channel->item : $feed->entry;
-    $items = [];
-
-    foreach ($nodes as $node) {
-        $namespaces = $node->getNamespaces(true);
-        $link = trim((string) $node->link);
-
-        if ($node->getName() === 'entry') {
-            foreach ($node->link as $linkNode) {
-                $attributes = $linkNode->attributes();
-                $rel = strtolower((string) ($attributes['rel'] ?? 'alternate'));
-
-                if ($rel === '' || $rel === 'alternate') {
-                    $link = trim((string) ($attributes['href'] ?? $linkNode));
-                    break;
-                }
-            }
-        }
-
-        $creator = '';
-        if (isset($namespaces['dc'])) {
-            $creator = trim((string) $node->children($namespaces['dc'])->creator);
-        }
-        if ($creator === '') {
-            $creator = trim((string) ($node->author->name ?? $node->author));
-        }
-
-        $categories = [];
-        foreach ($node->category as $category) {
-            $value = trim((string) ($category['term'] ?? $category));
-            if ($value !== '') {
-                $categories[] = $value;
-            }
-        }
-
-        $title = bot_feed_text((string) $node->title, 500);
-        $descriptionSource = (string) ($node->description ?: $node->summary ?: $node->content);
-        $description = bot_feed_description_text($descriptionSource, 1200);
-        $guid = trim((string) ($node->guid ?: $node->id ?: $link));
-        $published = trim((string) ($node->pubDate ?: $node->published ?: $node->updated));
-
-        if ($guid === '' || ($title === '' && $link === '')) {
-            continue;
-        }
-
-        $timestamp = $published !== '' ? strtotime($published) : false;
-        $items[] = [
-            'guid' => $guid,
-            'title' => $title,
-            'description' => $description,
-            'url' => LinkMetadata::isSafeRemoteUrl($link) ? $link : '',
-            'image_url' => bot_feed_image_url($node, $namespaces, $descriptionSource),
-            'author' => bot_feed_text($creator, 200),
-            'categories' => array_values(array_unique($categories)),
-            'published_at' => $timestamp !== false ? date('Y-m-d H:i:s', $timestamp) : null,
-            '_timestamp' => $timestamp !== false ? $timestamp : 0,
-        ];
-
-        if (count($items) >= 100) {
-            break;
-        }
-    }
-
-    usort($items, static fn (array $a, array $b): int => ((int) $a['_timestamp']) <=> ((int) $b['_timestamp']));
-    return $items;
-}
-
-function bot_feed_text(string $value, int $limit): string
-{
-    $value = strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-    $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
-    return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
-}
-
-function bot_feed_description_text(string $value, int $limit): string
-{
-    $value = preg_replace_callback(
-        '~<a\b([^>]*)>(.*?)</a\s*>~is',
-        static function (array $match): string {
-            $label = (string) ($match[2] ?? '');
-            $videoUrl = bot_feed_html_video_url((string) ($match[1] ?? ''), 'href');
-            if ($videoUrl === '') {
-                return $label;
-            }
-
-            $labelText = strip_html_tags_preserving_text(html_entity_decode($label, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-            foreach (StatusLinks::extract($labelText) as $labelLink) {
-                if ((string) ($labelLink['normalized_url'] ?? '') === $videoUrl) {
-                    return $label;
-                }
-            }
-
-            return $label . ' ' . $videoUrl;
-        },
-        $value
-    ) ?? $value;
-    $value = preg_replace_callback(
-        '~<(?:iframe|embed)\b([^>]*)>(?:\s*</iframe\s*>)?~is',
-        static fn (array $match): string => bot_feed_html_video_url((string) ($match[1] ?? ''), 'src'),
-        $value
-    ) ?? $value;
-    $value = strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-    $value = preg_replace_callback(
-        StatusLinks::pattern(),
-        static function (array $match): string {
-            [$url, $tail] = StatusLinks::splitTail((string) ($match[0] ?? ''));
-            $videoUrl = bot_feed_supported_video_url($url);
-            return ($videoUrl !== '' ? $videoUrl : '') . $tail;
-        },
-        $value
-    ) ?? '';
-    $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
-    $value = preg_replace('/\s+([.,;:!?])/u', '$1', $value) ?? $value;
-    $value = preg_replace('/(?:^|\s)The post\b.*?\bappeared first on\s*[.!?]*\s*$/iu', '', $value) ?? $value;
-    $value = trim($value);
-
-    return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
-}
-
-function bot_feed_html_video_url(string $attributes, string $name): string
-{
-    $name = preg_quote($name, '~');
-    if (preg_match('~\b' . $name . '\s*=\s*(["\'])(.*?)\1~is', $attributes, $match) === 1) {
-        return bot_feed_supported_video_url(html_entity_decode((string) ($match[2] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-    }
-    if (preg_match('~\b' . $name . '\s*=\s*([^\s>]+)~i', $attributes, $match) === 1) {
-        return bot_feed_supported_video_url(html_entity_decode(trim((string) ($match[1] ?? ''), "\"'"), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-    }
-
-    return '';
-}
-
-function bot_feed_supported_video_url(string $url): string
-{
-    $link = StatusLinks::fromRaw(trim($url));
-    return ($link['link_type'] ?? '') === 'video' ? (string) ($link['normalized_url'] ?? '') : '';
-}
-
-function bot_feed_image_url(SimpleXMLElement $node, array $namespaces, string $description = ''): string
-{
-    $candidates = [];
-
-    if (isset($namespaces['media'])) {
-        $media = $node->children((string) $namespaces['media']);
-        foreach (['content', 'thumbnail'] as $element) {
-            foreach ($media->{$element} as $image) {
-                $candidates[] = (string) ($image->attributes()['url'] ?? '');
-            }
-        }
-    }
-
-    foreach ($node->enclosure as $enclosure) {
-        $attributes = $enclosure->attributes();
-        $type = strtolower((string) ($attributes['type'] ?? ''));
-        if ($type === '' || str_starts_with($type, 'image/')) {
-            $candidates[] = (string) ($attributes['url'] ?? '');
-        }
-    }
-
-    if (preg_match('~<img\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1~is', $description, $match) === 1) {
-        $candidates[] = (string) ($match[2] ?? '');
-    } elseif (preg_match('~<img\b[^>]*\bsrc\s*=\s*([^\s>]+)~is', $description, $match) === 1) {
-        $candidates[] = trim((string) ($match[1] ?? ''), "\"'");
-    }
-
-    foreach ($candidates as $candidate) {
-        $url = html_entity_decode(trim((string) $candidate), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        if (strlen($url) <= 2048 && LinkMetadata::isSafeRemoteUrl($url)) {
-            return $url;
-        }
-    }
-
-    return '';
-}
-
-function bot_render_post(array $source, array $item): string
-{
-    $values = [
-        '{{title}}' => (string) ($item['title'] ?? ''),
-        '{{description}}' => (string) ($item['description'] ?? ''),
-        '{{url}}' => (string) ($item['url'] ?? ''),
-        '{{author}}' => (string) ($item['author'] ?? ''),
-        '{{source}}' => (string) ($source['name'] ?? ''),
-        '{{categories}}' => implode(', ', (array) ($item['categories'] ?? [])),
-        '#{categories}' => bot_feed_category_tags((array) ($item['categories'] ?? [])),
-    ];
-    $body = trim(preg_replace("/\n{3,}/", "\n\n", strtr((string) ($source['post_template'] ?? bot_source_default_template()), $values)) ?? '');
-    return function_exists('mb_substr') ? mb_substr($body, 0, 2000, 'UTF-8') : substr($body, 0, 2000);
-}
-
-function bot_feed_category_tags(array $categories): string
-{
-    $tags = [];
-
-    foreach ($categories as $category) {
-        $tag = status_tag_normalize((string) $category);
-        if ($tag !== '') {
-            $tags[$tag] = '#' . $tag;
-        }
-
-        if (count($tags) >= status_tag_max_count()) {
-            break;
-        }
-    }
-
-    return implode(' ', array_values($tags));
-}
-
-function bot_run_due_sources(int $limit = 10): array
-{
-    $limit = max(1, min(100, $limit));
-    $sources = all(
-        'SELECT bs.*, u.username, u.status AS user_status
-            FROM bot_sources bs
-            INNER JOIN users u ON u.id = bs.bot_user_id
-            WHERE bs.enabled = 1 AND u.role = ? AND u.status = ?
-                AND (bs.next_run_at IS NULL OR bs.next_run_at <= ?)
-            ORDER BY COALESCE(bs.next_run_at, bs.created_at) ASC, bs.id ASC
-            LIMIT ' . $limit,
-        ['bot', 'active', date_db()]
-    );
-    $results = [];
-
-    foreach ($sources as $source) {
-        $results[] = bot_run_source($source);
-    }
-
-    return $results;
-}
-
-function bot_run_source(array $source, bool $force = false): array
-{
-    $sourceId = (int) ($source['id'] ?? 0);
-    $botUserId = (int) ($source['bot_user_id'] ?? 0);
-    $feedUrl = (string) ($source['feed_url'] ?? '');
-    $interval = max(5, min(43200, (int) ($source['interval_minutes'] ?? 60)));
-    $now = date_db();
-    $next = date('Y-m-d H:i:s', time() + $interval * 60);
-    $claimed = $force
-        ? run(
-            'UPDATE bot_sources SET next_run_at = ?, last_checked_at = ?, last_error = NULL WHERE id = ? AND enabled = 1',
-            [$next, $now, $sourceId]
-        )
-        : run(
-            'UPDATE bot_sources SET next_run_at = ?, last_checked_at = ?, last_error = NULL WHERE id = ? AND enabled = 1 AND (next_run_at IS NULL OR next_run_at <= ?)',
-            [$next, $now, $sourceId, $now]
-        );
-
-    if ($sourceId < 1 || $claimed < 1) {
-        return ['source_id' => $sourceId, 'status' => 'skipped'];
-    }
-
-    $runId = bot_source_run_create($sourceId, $botUserId);
-    $itemsSeen = 0;
-    $httpStatus = null;
-
-    try {
-        $response = LinkMetadata::fetchDocument((string) ($source['feed_url'] ?? ''));
-        if ($response === null) {
-            throw new RuntimeException('RSS feed could not be downloaded.');
-        }
-
-        $httpStatus = (int) ($response['status'] ?? 0);
-        $items = bot_feed_parse((string) ($response['body'] ?? ''));
-        $itemsSeen = count($items);
-        if ($items === []) {
-            throw new RuntimeException('RSS feed contains no usable items.');
-        }
-
-        foreach ($items as $item) {
-            $itemGuid = (string) ($item['guid'] ?? '');
-            $hash = hash('sha256', $itemGuid);
-            if (
-                (int) val('SELECT COUNT(*) FROM bot_feed_items WHERE source_id = ? AND item_hash = ?', [$sourceId, $hash]) > 0
-                || bot_feed_history_has($botUserId, $feedUrl, $itemGuid)
-            ) {
-                continue;
-            }
-
-            $body = bot_render_post($source, $item);
-            if ($body === '') {
-                throw new RuntimeException('Post template produced an empty post.');
-            }
-
-            $publishedAt = date_db();
-            $contentId = (int) insert('content', [
-                'body' => $body,
-                'author_id' => $botUserId,
-                'published_at' => $publishedAt,
-                'created_at' => $publishedAt,
-            ]);
-            status_sync_tags($contentId, status_tags_from_text($body));
-            $feedLink = StatusLinks::fromRaw((string) ($item['url'] ?? ''));
-            status_sync_links(
-                $contentId,
-                status_links_from_text($body),
-                (string) ($feedLink['url_hash'] ?? ''),
-                (string) ($item['image_url'] ?? '')
-            );
-            insert('bot_feed_items', [
-                'source_id' => $sourceId,
-                'item_hash' => $hash,
-                'content_id' => $contentId,
-                'item_guid' => (string) ($item['guid'] ?? ''),
-                'item_published_at' => $item['published_at'] ?? null,
-                'created_at' => $publishedAt,
-            ]);
-            bot_feed_history_record(
-                $botUserId,
-                $feedUrl,
-                $itemGuid,
-                $contentId,
-                (string) ($item['published_at'] ?? ''),
-                $publishedAt
-            );
-            update('bot_sources', ['last_imported_at' => $publishedAt], ['id' => $sourceId]);
-            bot_source_run_finish($runId, 'posted', $itemsSeen, 1, $contentId, $httpStatus);
-
-            return ['source_id' => $sourceId, 'status' => 'posted', 'content_id' => $contentId];
-        }
-
-        bot_source_run_finish($runId, 'current', $itemsSeen, 0, 0, $httpStatus);
-        return ['source_id' => $sourceId, 'status' => 'current'];
-    } catch (Throwable $exception) {
-        $error = bot_feed_text($exception->getMessage(), 500);
-        update('bot_sources', ['last_error' => $error], ['id' => $sourceId]);
-        bot_source_run_finish($runId, 'error', $itemsSeen, 0, 0, $httpStatus, $error);
-        return ['source_id' => $sourceId, 'status' => 'error', 'error' => $error];
-    }
 }
 
 function status_feed_payload(string $context, int $limit, int $offset, array $params = [], ?array $user = null): array
