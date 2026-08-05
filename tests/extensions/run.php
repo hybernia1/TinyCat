@@ -51,7 +51,7 @@ $test('module classes are autoloaded from their namespaces', static function () 
     $expect(class_exists(Loader::class));
     $expect(class_exists(Store::class));
     $expect(class_exists(TinyCat\Update\Manager::class));
-    $expect(class_exists('ExtensionRegistry'));
+    $expect(!class_exists('ExtensionRegistry', false));
     $expect(!class_exists('ExtensionLoader', false));
     $expect(!class_exists('ExtensionStore', false));
 });
