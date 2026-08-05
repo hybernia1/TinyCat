@@ -33,19 +33,19 @@ signed with a replacement key. CI can provide the base64 private key through the
 Set `Core::VERSION`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=1.0.6 --minimum-version=1.0.4
+php tools/build-update.php --version=1.0.7 --minimum-version=1.0.4
 php tools/verify-update.php dist
 ```
 
 The builder creates:
 
 ```text
-dist/tinycat-1.0.6.zip
+dist/tinycat-1.0.7.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v1.0.6` tag and upload all three files
+Create a GitHub release for the matching `v1.0.7` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -53,6 +53,12 @@ Only managed application and documentation files are packaged. Configuration,
 uploads, storage, tests, tools, and Git metadata are excluded. Removed runtime files are
 listed by target version in `tools/update-deletions.json`; this prevents legacy
 PHP files from surviving an overlay update.
+
+`--without-migrations` is reserved for an updater compatibility bridge: it
+ships authenticated migration files but leaves the manifest migration list
+empty so an older updater can replace itself safely. Follow such a bridge with
+a normal release that applies every pending migration. Never use this option to
+skip an application migration permanently.
 
 ## Migrations
 
@@ -108,7 +114,7 @@ site.
 Backups are stored under a directory such as:
 
 ```text
-storage/updates/backups/1.0.4-to-1.0.6-20260805-120000/
+storage/updates/backups/1.0.6-to-1.0.7-20260805-120000/
 ```
 
 `files/` contains the previous managed files, `database.sql` (or
