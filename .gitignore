@@ -6,6 +6,7 @@
 !/storage/.gitkeep
 /uploads/*
 !/uploads/.gitkeep
+/dist/
 
 # Tooling
 /.idea/

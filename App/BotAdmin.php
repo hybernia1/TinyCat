@@ -17,17 +17,9 @@ final class BotAdmin
 
     public static function payload(?int $id = null): array
     {
-        if (wants_partial()) {
-            $payload = ['html' => part('admin/bots/sources', self::sourcesViewData())];
-            if ($id !== null) {
-                $payload['id'] = $id;
-            }
-
-            return $payload;
-        }
-
-        $filterBotId = self::filterId();
-        $sources = bot_sources($filterBotId > 0 ? $filterBotId : null);
+        $viewData = self::sourcesViewData();
+        $filterBotId = (int) $viewData['filter_bot_id'];
+        $sources = (array) $viewData['sources'];
         $data = [
             'items' => array_map('bot_source_resource', $sources),
             'bots' => array_map(static fn (array $user): array => [
@@ -44,10 +36,17 @@ final class BotAdmin
             $data['item'] = $source !== null ? bot_source_resource($source) : null;
         }
 
-        return $data;
+        return api_payload($data, static function () use ($viewData, $id): array {
+            $partial = ['html' => part('admin/bots/sources', $viewData)];
+            if ($id !== null) {
+                $partial['id'] = $id;
+            }
+
+            return $partial;
+        });
     }
 
-    public static function filterId(): int
+    private static function filterId(): int
     {
         if (self::$filterBotId !== null) {
             return self::$filterBotId;
@@ -64,13 +63,23 @@ final class BotAdmin
 
     public static function apiUrl(): string
     {
-        $query = ['view' => 'html'];
+        return self::sourceActionUrl();
+    }
+
+    public static function sourceActionUrl(string $action = ''): string
+    {
+        $query = [];
         $filterBotId = self::filterId();
         if ($filterBotId > 0) {
             $query['bot'] = $filterBotId;
         }
 
-        return '/api/admin/bots?' . http_build_query($query);
+        $path = '/api/admin/bots';
+        if (in_array($action, ['run', 'toggle'], true)) {
+            $path .= '/' . $action;
+        }
+
+        return admin_list_url($path, $query);
     }
 
     public static function accountById(int $id): ?array
@@ -122,22 +131,12 @@ final class BotAdmin
 
     public static function accountsPayload(?int $id = null): array
     {
-        if (wants_partial()) {
-            $payload = ['html' => part('admin/bots/accounts', self::accountsViewData())];
-            if ($id !== null) {
-                $payload['id'] = $id;
-            }
-
-            return $payload;
-        }
-
-        $filters = self::accountFilters();
-        $page = self::accountsPage($filters);
+        $viewData = self::accountsViewData();
         $payload = [
-            'items' => array_map([self::class, 'accountResource'], $page['items']),
-            'pagination' => $page['pagination'],
+            'items' => array_map([self::class, 'accountResource'], $viewData['accounts']),
+            'pagination' => $viewData['pagination'],
             'statuses' => admin_user_statuses(),
-            'filters' => $filters,
+            'filters' => $viewData['filters'],
         ];
 
         if ($id !== null) {
@@ -145,7 +144,14 @@ final class BotAdmin
             $payload['item'] = self::accountResource(self::accountById($id) ?? []);
         }
 
-        return $payload;
+        return api_payload($payload, static function () use ($viewData, $id): array {
+            $partial = ['html' => part('admin/bots/accounts', $viewData)];
+            if ($id !== null) {
+                $partial['id'] = $id;
+            }
+
+            return $partial;
+        });
     }
 
     public static function accountsViewData(): array
@@ -165,7 +171,7 @@ final class BotAdmin
 
     public static function accountsApiUrl(array $params = [], bool $withFilters = true): string
     {
-        $query = ['view' => 'html'];
+        $query = [];
 
         if ($withFilters) {
             foreach (self::accountListParams() as $key => $value) {
@@ -181,10 +187,10 @@ final class BotAdmin
             }
         }
 
-        return '/api/admin/bot-accounts?' . http_build_query($query);
+        return admin_list_url('/api/admin/bot-accounts', $query);
     }
 
-    public static function accountResource(array $account): array
+    private static function accountResource(array $account): array
     {
         if ($account === []) {
             return [];
@@ -194,6 +200,8 @@ final class BotAdmin
             'id' => (int) ($account['id'] ?? 0),
             'username' => (string) ($account['username'] ?? ''),
             'status' => (string) ($account['status'] ?? ''),
+            'bio' => (string) ($account['bio'] ?? ''),
+            'avatar_url' => user_avatar_url($account),
             'source_count' => (int) ($account['source_count'] ?? 0),
             'post_count' => (int) ($account['post_count'] ?? 0),
             'created_at' => (string) ($account['created_at'] ?? ''),

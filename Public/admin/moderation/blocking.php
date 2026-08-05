@@ -8,17 +8,34 @@ if (!defined('TINYCAT')) {
 
 require_admin();
 
-if (is_post()) {
-    csrf_require();
+$moderationBlockingApi = route_path() === '/api/admin/moderation/blocking';
 
-    if ((string) post('action', '') === 'url_blocker_save') {
-        ModerationAdmin::saveUrlBlocker();
-    }
-
-    redirect('/admin/moderation/blocking');
+if (!$moderationBlockingApi && method() !== 'GET') {
+    header('Allow: GET');
+    http_response_code(405);
+    echo 'Method not allowed.';
+    return;
 }
 
-$blockedUrls = ModerationAdmin::blockedUrlsValue();
+if ($moderationBlockingApi && method() === 'GET') {
+    api_ok(tc_admin_moderation_blocking_payload());
+}
+
+if ($moderationBlockingApi && method() === 'POST') {
+    api_endpoint('POST', static function (): never {
+        csrf_require();
+        $rules = moderation_blocked_url_rules((string) input('blocked_urls', ''));
+        setting_set('moderation.blocked_urls', implode(', ', $rules), 'string', 'moderation');
+        flash('success', t('moderation.messages.url_blocker_saved'));
+        api_ok(tc_admin_moderation_blocking_payload(true), t('moderation.messages.url_blocker_saved'));
+    });
+}
+
+if ($moderationBlockingApi) {
+    api_error('Method not allowed.', 405, 'method_not_allowed');
+}
+
+$blockedUrls = tc_admin_moderation_blocked_urls_value();
 
 layout('layout', [
     'title' => t('moderation.url_blocker_title'),
@@ -29,9 +46,8 @@ layout('layout', [
         <div class="card-header">
             <h2 class="text-lg m-0 cluster gap-2"><?= icon('lock') ?> <?= et('moderation.url_blocker_title') ?></h2>
         </div>
-        <form method="post" action="/admin/moderation/blocking">
+        <form method="post" action="/api/admin/moderation/blocking" data-ajax-form>
             <?= csrf_field() ?>
-            <input type="hidden" name="action" value="url_blocker_save">
             <div class="card-body stack">
                 <label class="field">
                     <span class="label"><?= et('moderation.url_blocker_label') ?></span>
@@ -46,3 +62,24 @@ layout('layout', [
     </section>
     <?php
 });
+
+function tc_admin_moderation_blocked_urls_value(): string
+{
+    return implode(', ', moderation_blocked_url_rules());
+}
+
+function tc_admin_moderation_blocking_payload(bool $redirect = false): array
+{
+    $rules = moderation_blocked_url_rules();
+
+    $payload = [
+        'items' => $rules,
+        'value' => implode(', ', $rules),
+    ];
+
+    if ($redirect) {
+        $payload['redirect'] = '/admin/moderation/blocking';
+    }
+
+    return $payload;
+}

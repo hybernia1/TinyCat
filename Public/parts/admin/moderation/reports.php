@@ -27,6 +27,7 @@ $reports = is_array($reports ?? null) ? $reports : [];
                         <?php
                         $reportId = (int) ($report['id'] ?? 0);
                         $openCount = (int) ($report['open_count'] ?? 0);
+                        $permalinkUrl = (string) ($report['permalink_url'] ?? '');
                         ?>
                         <tr>
                             <td>
@@ -49,9 +50,11 @@ $reports = is_array($reports ?? null) ? $reports : [];
                             </td>
                             <td>
                                 <div class="table-actions">
-                                    <a class="btn btn-sm btn-ghost btn-icon" href="<?= e((string) ($report['permalink_url'] ?? '')) ?>" title="<?= e((string) ($report['permalink_label'] ?? '')) ?>" aria-label="<?= e((string) ($report['permalink_label'] ?? '')) ?>">
-                                        <?= icon('link') ?>
-                                    </a>
+                                    <?php if ($permalinkUrl !== ''): ?>
+                                        <a class="btn btn-sm btn-ghost btn-icon" href="<?= e($permalinkUrl) ?>" title="<?= e((string) ($report['permalink_label'] ?? '')) ?>" aria-label="<?= e((string) ($report['permalink_label'] ?? '')) ?>">
+                                            <?= icon('link') ?>
+                                        </a>
+                                    <?php endif; ?>
                                     <?php if ($openCount > 0): ?>
                                         <?= part('admin/moderation/report-action', [
                                             'report_id' => $reportId,
