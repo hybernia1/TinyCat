@@ -3,10 +3,15 @@ declare(strict_types=1);
 
 namespace TinyCat\Extension;
 
+use Cache;
 use Core;
+use FilesystemIterator;
 use JsonException;
 use LogicException;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use RuntimeException;
+use SplFileInfo;
 use TinyCat\Update\MigrationRegistry;
 
 if (!defined('TINYCAT')) {
@@ -20,23 +25,31 @@ final class Loader
     private static array $available = [];
     private static array $loaded = [];
     private static array $stateOverrides = [];
+    private static array $installedVersions = [];
+    private const string MIGRATION_CHECKSUM_CACHE_PREFIX = 'extension_migration_checksums_';
+    private const int MIGRATION_CHECKSUM_CACHE_TTL = 86400;
 
     private function __construct()
     {
     }
 
-    public static function boot(string $directory, array $stateOverrides = []): void
+    public static function boot(string $directory, array $stateOverrides = [], array $installedVersions = []): void
     {
         if (self::$booted) {
             return;
         }
 
-        $available = self::discover($directory);
+        $cachedChecksums = self::cachedMigrationChecksums($directory);
+        $available = self::discoverWithCachedMigrationChecksums($directory, $cachedChecksums['checksums']);
+        self::cacheMigrationChecksums($directory, $available, $cachedChecksums['fingerprint']);
         self::$stateOverrides = self::normalizeStateOverrides($stateOverrides);
+        self::$installedVersions = self::normalizeInstalledVersions($installedVersions);
         $resolved = [];
 
         foreach ($available as $slug => $manifest) {
-            $shouldLoad = self::$stateOverrides[$slug] ?? $manifest['autoload'];
+            $installedVersion = self::$installedVersions[$slug] ?? '';
+            $isInstalled = $installedVersion !== '' && hash_equals($installedVersion, (string) $manifest['version']);
+            $shouldLoad = $isInstalled && (self::$stateOverrides[$slug] ?? $manifest['autoload']);
             $publicManifest = [
                 ...self::publicManifest($manifest),
                 'enabled' => false,
@@ -76,6 +89,14 @@ final class Loader
 
     public static function discover(string $directory): array
     {
+        return self::discoverWithCachedMigrationChecksums($directory);
+    }
+
+    private static function discoverWithCachedMigrationChecksums(
+        string $directory,
+        array $cachedMigrationChecksums = []
+    ): array
+    {
         if (!file_exists($directory)) {
             return [];
         }
@@ -109,7 +130,7 @@ final class Loader
                 continue;
             }
 
-            $manifest = self::readManifest($manifestPath, $extensionRoot, $entry);
+            $manifest = self::readManifest($manifestPath, $extensionRoot, $entry, $cachedMigrationChecksums);
             $slug = $manifest['slug'];
 
             if (isset($extensions[$slug])) {
@@ -138,7 +159,12 @@ final class Loader
         return self::$stateOverrides;
     }
 
-    private static function readManifest(string $path, string $root, string $directoryName): array
+    private static function readManifest(
+        string $path,
+        string $root,
+        string $directoryName,
+        array $cachedMigrationChecksums = []
+    ): array
     {
         $json = file_get_contents($path);
         if ($json === false) {
@@ -211,11 +237,15 @@ final class Loader
             }
 
             $migrationPath = self::resolvePhpFile($root, $migrationFile, $slug, 'migration');
+            $checksum = (string) ($cachedMigrationChecksums[$slug . '/' . $migrationFile] ?? '');
+            if (preg_match('/^[a-f0-9]{64}$/', $checksum) !== 1) {
+                $checksum = MigrationRegistry::checksum($migrationPath);
+            }
             $migrations[] = [
                 'id' => 'extension:' . $slug . ':' . $migrationName,
                 'file' => $migrationFile,
                 'path' => $migrationPath,
-                'checksum' => MigrationRegistry::checksum($migrationPath),
+                'checksum' => $checksum,
             ];
             $migrationNames[$migrationName] = true;
         }
@@ -361,6 +391,112 @@ final class Loader
         return str_starts_with($path, $prefix);
     }
 
+    private static function cachedMigrationChecksums(string $directory): array
+    {
+        $fingerprint = self::extensionDirectoryFingerprint($directory);
+
+        if ($fingerprint === '' || !self::isManagedExtensionsDirectory($directory) || !class_exists(Cache::class)) {
+            return ['fingerprint' => $fingerprint, 'checksums' => []];
+        }
+
+        $cached = Cache::get(self::migrationChecksumCacheKey($directory), self::MIGRATION_CHECKSUM_CACHE_TTL);
+        if (!is_array($cached) || !hash_equals($fingerprint, (string) ($cached['fingerprint'] ?? ''))) {
+            return ['fingerprint' => $fingerprint, 'checksums' => []];
+        }
+
+        $checksums = [];
+        foreach ((array) ($cached['checksums'] ?? []) as $key => $checksum) {
+            $key = trim((string) $key);
+            $checksum = strtolower(trim((string) $checksum));
+
+            if (
+                preg_match('~^[a-z][a-z0-9_-]{0,63}/migrations/[0-9]{8}_[0-9]{3}_[a-z][a-z0-9_-]{0,79}\.php$~', $key) === 1
+                && preg_match('/^[a-f0-9]{64}$/', $checksum) === 1
+            ) {
+                $checksums[$key] = $checksum;
+            }
+        }
+
+        return ['fingerprint' => $fingerprint, 'checksums' => $checksums];
+    }
+
+    private static function cacheMigrationChecksums(string $directory, array $extensions, string $fingerprint): void
+    {
+        if ($fingerprint === '' || !self::isManagedExtensionsDirectory($directory) || !class_exists(Cache::class)) {
+            return;
+        }
+
+        $checksums = [];
+        foreach ($extensions as $slug => $extension) {
+            foreach ((array) ($extension['migrations'] ?? []) as $migration) {
+                $file = (string) ($migration['file'] ?? '');
+                $checksum = strtolower((string) ($migration['checksum'] ?? ''));
+
+                if (
+                    preg_match('~^migrations/[0-9]{8}_[0-9]{3}_[a-z][a-z0-9_-]{0,79}\.php$~', $file) === 1
+                    && preg_match('/^[a-f0-9]{64}$/', $checksum) === 1
+                ) {
+                    $checksums[(string) $slug . '/' . $file] = $checksum;
+                }
+            }
+        }
+
+        ksort($checksums, SORT_STRING);
+        Cache::put(self::migrationChecksumCacheKey($directory), [
+            'fingerprint' => $fingerprint,
+            'checksums' => $checksums,
+        ]);
+    }
+
+    private static function extensionDirectoryFingerprint(string $directory): string
+    {
+        $root = realpath($directory);
+        if ($root === false || !is_dir($root)) {
+            return '';
+        }
+
+        try {
+            $entries = ['.' => [filemtime($root), filesize($root)]];
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+
+            foreach ($iterator as $entry) {
+                if (!$entry instanceof SplFileInfo) {
+                    continue;
+                }
+
+                $path = $entry->getPathname();
+                $relative = str_replace('\\', '/', substr($path, strlen(rtrim($root, DIRECTORY_SEPARATOR)) + 1));
+                $entries[$relative] = [$entry->getType(), $entry->getMTime(), $entry->isFile() ? $entry->getSize() : 0];
+            }
+
+            ksort($entries, SORT_STRING);
+            return hash('sha256', serialize($entries));
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    private static function isManagedExtensionsDirectory(string $directory): bool
+    {
+        $root = realpath($directory);
+        $managedDirectory = function_exists('base_path')
+            ? \base_path('Extensions')
+            : dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'Extensions';
+        $managedRoot = realpath($managedDirectory);
+
+        return $root !== false && $managedRoot !== false
+            && strtolower(rtrim($root, DIRECTORY_SEPARATOR)) === strtolower(rtrim($managedRoot, DIRECTORY_SEPARATOR));
+    }
+
+    private static function migrationChecksumCacheKey(string $directory): string
+    {
+        $root = realpath($directory);
+        return self::MIGRATION_CHECKSUM_CACHE_PREFIX . hash('sha256', $root === false ? $directory : $root);
+    }
+
     private static function normalizeStateOverrides(array $states): array
     {
         $normalized = [];
@@ -372,6 +508,27 @@ final class Loader
             }
 
             $normalized[$slug] = $enabled;
+        }
+
+        return $normalized;
+    }
+
+    private static function normalizeInstalledVersions(array $versions): array
+    {
+        $normalized = [];
+
+        foreach ($versions as $slug => $version) {
+            $slug = strtolower(trim((string) $slug));
+            $version = trim((string) $version);
+
+            if (
+                preg_match('/^[a-z][a-z0-9_-]{0,63}$/', $slug) !== 1
+                || !self::validVersion($version)
+            ) {
+                continue;
+            }
+
+            $normalized[$slug] = $version;
         }
 
         return $normalized;

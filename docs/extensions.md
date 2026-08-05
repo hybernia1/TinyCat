@@ -1,8 +1,10 @@
 # TinyCat extensions
 
 Extensions are self-contained directories below `Extensions/`. Runtime discovery
-does not install code or execute database changes. Only extensions enabled by
-their manifest default or a stored administrator override are booted.
+does not install code or execute database changes. Only extensions whose exact
+version is recorded in `extensions.installed_versions` are eligible to boot;
+their manifest default or a stored administrator override then decides whether
+they are enabled. Discovery alone never executes extension code.
 
 ## Manifest
 
@@ -108,6 +110,10 @@ normalized SHA-256 checksum and rejects changes to an applied migration.
 Migration files return a callable accepting `PDO`, just like core migrations.
 They must be restart-safe because MySQL schema changes can commit implicitly.
 Never edit a published migration; add a new one.
+
+At runtime TinyCat caches migration checksums for up to one day. The cache is
+discarded whenever the contents of `Extensions/` change; manifests and all
+executable paths are still read and validated directly from disk on every boot.
 
 The lifecycle service does not expose a standalone web action for migrations.
 Only the verified store installer can install authenticated files and then call

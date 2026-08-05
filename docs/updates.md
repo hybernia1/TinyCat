@@ -33,19 +33,19 @@ signed with a replacement key. CI can provide the base64 private key through the
 Set `Core::VERSION`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=2.0.0 --minimum-version=1.0.14
+php tools/build-update.php --version=2.0.1 --minimum-version=1.0.14
 php tools/verify-update.php dist
 ```
 
 The builder creates:
 
 ```text
-dist/tinycat-2.0.0.zip
+dist/tinycat-2.0.1.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v2.0.0` tag and upload all three files
+Create a GitHub release for the matching `v2.0.1` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
