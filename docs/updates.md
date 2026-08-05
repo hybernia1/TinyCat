@@ -33,19 +33,19 @@ signed with a replacement key. CI can provide the base64 private key through the
 Set `Core::VERSION`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=1.0.7 --minimum-version=1.0.4
+php tools/build-update.php --version=1.0.8 --minimum-version=1.0.4
 php tools/verify-update.php dist
 ```
 
 The builder creates:
 
 ```text
-dist/tinycat-1.0.7.zip
+dist/tinycat-1.0.8.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v1.0.7` tag and upload all three files
+Create a GitHub release for the matching `v1.0.8` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -114,7 +114,7 @@ site.
 Backups are stored under a directory such as:
 
 ```text
-storage/updates/backups/1.0.6-to-1.0.7-20260805-120000/
+storage/updates/backups/1.0.7-to-1.0.8-20260805-120000/
 ```
 
 `files/` contains the previous managed files, `database.sql` (or
