@@ -33,19 +33,19 @@ signed with a replacement key. CI can provide the base64 private key through the
 Set `Core::VERSION`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=1.0.10 --minimum-version=1.0.9
+php tools/build-update.php --version=1.0.11 --minimum-version=1.0.9
 php tools/verify-update.php dist
 ```
 
 The builder creates:
 
 ```text
-dist/tinycat-1.0.10.zip
+dist/tinycat-1.0.11.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v1.0.10` tag and upload all three files
+Create a GitHub release for the matching `v1.0.11` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -81,6 +81,8 @@ return static function (PDO $database): void {
 Every migration is authenticated by the release manifest and recorded with its
 checksum in `schema_migrations`. A previously applied migration whose checksum
 changes is rejected. Never edit a published migration; create a new one.
+The package builder normalizes migration files to LF before hashing and archiving
+them so the checksum stays stable across Windows and Linux release worktrees.
 
 MySQL schema changes can commit implicitly. Migrations must therefore be safe to
 restart and should inspect existing columns, indexes, and constraints before
@@ -114,7 +116,7 @@ site.
 Backups are stored under a directory such as:
 
 ```text
-storage/updates/backups/1.0.9-to-1.0.10-20260805-120000/
+storage/updates/backups/1.0.10-to-1.0.11-20260805-120000/
 ```
 
 `files/` contains the previous managed files, `database.sql` (or
