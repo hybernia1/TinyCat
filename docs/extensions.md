@@ -21,7 +21,7 @@ Every extension contains `extension.json`:
     "homepage": "https://github.com/example/example-extension",
     "version": "1.0.0",
     "requires": {
-        "tinycat": "2.0.0",
+        "tinycat": "2.0.2",
         "php": "8.4.0"
     },
     "entry": "bootstrap.php",
@@ -54,10 +54,8 @@ directly by the bundled Apache configuration; public behavior must be exposed
 through registered TinyCat routes.
 
 Core extension services use the `TinyCat\Extension\` namespace. Register an
-extension through `TinyCat\Extension\Registry`; TinyCat 2.x also exposes the
-former global `ExtensionRegistry` name as a narrow compatibility alias for
-already installed 1.x extension packages. This alias is temporary and will be
-removed once all official packages use `TinyCat\Extension\Registry` directly.
+extension through `TinyCat\Extension\Registry`. TinyCat 2.0.2 and newer do not
+expose the former global `ExtensionRegistry` compatibility name.
 
 From TinyCat 1.0.14 onward, Bots is distributed by the official extension
 store. Extension installation state is always explicit in

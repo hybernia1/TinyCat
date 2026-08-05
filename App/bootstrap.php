@@ -23,12 +23,6 @@ require_once __DIR__ . '/Notifications.php';
 require_once __DIR__ . '/UserRoles.php';
 require_once __DIR__ . '/functions.php';
 
-// TinyCat 2.0 bridge for already published 1.x extension packages.
-// Remove after all official packages use TinyCat\Extension\Registry directly.
-if (!class_exists('ExtensionRegistry', false)) {
-    class_alias(TinyCat\Extension\Registry::class, 'ExtensionRegistry');
-}
-
 $extensionStateOverrides = Core::setting('extensions.states', []);
 $extensionInstalledVersions = Core::setting('extensions.installed_versions', []);
 TinyCat\Extension\Loader::boot(
