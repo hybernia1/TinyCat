@@ -537,6 +537,72 @@ a:hover {
   color: var(--muted);
 }
 
+.scheduled-task-list {
+  display: grid;
+  gap: 8px;
+}
+
+.scheduled-task-item {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.scheduled-task-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.scheduled-task-summary::-webkit-details-marker {
+  display: none;
+}
+
+.scheduled-task-summary:hover,
+.scheduled-task-summary:focus-visible {
+  background: var(--primary-soft);
+}
+
+.scheduled-task-heading {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 10px;
+}
+
+.scheduled-task-heading > .icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--primary-strong);
+}
+
+.scheduled-task-heading small {
+  color: var(--muted);
+}
+
+.scheduled-task-chevron {
+  flex: 0 0 auto;
+  transition: transform 160ms ease;
+}
+
+.scheduled-task-item[open] > .scheduled-task-summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.scheduled-task-item[open] > .scheduled-task-summary .scheduled-task-chevron {
+  transform: rotate(180deg);
+}
+
+.scheduled-task-body {
+  padding: 12px;
+  background: var(--surface-soft);
+}
+
 .admin-list-toolbar {
   display: flex;
   flex-direction: column;

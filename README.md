@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **1.0.8**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
+Current release: **1.0.10**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
 
 ## Features
 
@@ -14,7 +14,7 @@ Current release: **1.0.8**. TinyCat uses [Semantic Versioning](https://semver.or
 - Search across posts, users, tags, and metadata extracted from linked pages.
 - HTML5 link previews with Open Graph, video embeds, and cached metadata.
 - Optional email recovery and localized email notifications through PHP mail or SMTP.
-- Administration for users, site settings, email templates, maintenance, moderation reports, account muting, and blocked domains.
+- Administration for users, site settings, email templates, scheduled tasks, moderation reports, account muting, and blocked domains.
 - Passwordless bot accounts that publish from independently scheduled RSS or Atom sources without duplicating imported items.
 - Author and tag feeds, XML sitemaps, `robots.txt`, `llms.txt`, and a generated web app manifest.
 - English and Czech interfaces with mobile-first CSS and lightweight JavaScript.
@@ -54,26 +54,35 @@ Before applying files, TinyCat enables maintenance mode and creates application 
 
 Database changes are versioned PHP migrations recorded in `schema_migrations`. Fresh installations always receive the current schema directly; migrations exist only to move already running installations forward. See [`docs/updates.md`](docs/updates.md) for package creation, signing, publishing, recovery, and migration rules.
 
-## RSS and Atom bots
+## Scheduled tasks and RSS bots
 
 Create bot accounts under **Admin → Bots → Accounts**, then add one or more sources under **Admin → Bots → Sources**. Each source has its own interval and post template. Bot accounts have no password and cannot sign in.
 
 The recommended scheduler is the command-line runner:
 
 ```bash
-php cron.php --health
-php cron.php --limit=20
+php scheduled-tasks.php --health
+php scheduled-tasks.php --task=feeds --bot-limit=20
+php scheduled-tasks.php --task=cleanup --cleanup-batch=500
 ```
 
-Run `php cron.php` once per minute. Source intervals decide which feeds are due, and a database lock prevents overlapping runs. Each run publishes at most one new item per due source and retains a bounded GUID history to prevent duplicates.
+Keep the tasks in separate scheduler entries so a slow feed request cannot hold up cleanup. For example, poll feeds every two minutes and run cleanup hourly:
 
-When command-line scheduling is unavailable, use the protected HTTP endpoint shown in **Admin → Bots → Cron**:
+```cron
+*/2 * * * * php /path/to/tinycat/scheduled-tasks.php --task=feeds --bot-limit=20
+17 * * * * php /path/to/tinycat/scheduled-tasks.php --task=cleanup --cleanup-batch=500
+```
+
+Source intervals still decide which feeds are due, and routine database cleanup runs at most once per hour. Each task has its own database lock. Feed runs publish at most one new item per due source and retain a bounded GUID history to prevent duplicates. `--task=all` remains available for simple installations that prefer one scheduler entry.
+
+When command-line scheduling is unavailable, use the protected HTTP endpoint shown in **Admin → Scheduled tasks**:
 
 ```bash
-curl -X POST -H "Authorization: Bearer TOKEN" https://example.test/cron.php
+curl -X POST -H "Authorization: Bearer TOKEN" "https://example.test/scheduled-tasks.php?task=feeds"
+curl -X POST -H "Authorization: Bearer TOKEN" "https://example.test/scheduled-tasks.php?task=cleanup"
 ```
 
-An authenticated `POST /cron.php?health=1` checks connectivity without importing anything. Services that cannot send custom headers may use `cron.php?bearer=TOKEN`, but query-string tokens can appear in server access logs and should be treated as a last resort.
+An authenticated `POST /scheduled-tasks.php?health=1` checks connectivity without running a task. Services that cannot send custom headers may add `bearer=TOKEN` to either task URL, but query-string tokens can appear in server access logs and should be treated as a last resort.
 
 ## Privacy and security defaults
 
@@ -88,7 +97,7 @@ See `/privacy` on an installed site for the user-facing data and cookie policy g
 ## Project layout
 
 - `index.php` is the HTTP front controller and route registry.
-- `cron.php` runs scheduled bot imports from CLI or an authenticated HTTP request.
+- `scheduled-tasks.php` runs bot imports and routine data cleanup from CLI or an authenticated HTTP request.
 - `App/` contains the runtime, database layer, routing, authentication, caching, metadata extraction, and administration modules.
 - `Public/` contains pages, layouts, modals, reusable view parts, and the installer.
 - `assets/` contains the source CSS, JavaScript, and SVG icon sprite.

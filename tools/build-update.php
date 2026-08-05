@@ -24,7 +24,7 @@ $withoutMigrations = array_key_exists('without-migrations', $options);
 $validVersion = static fn (string $value): bool => preg_match('/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/', $value) === 1;
 
 if (!$validVersion($version) || !$validVersion($minimumVersion) || !$validVersion($minimumPhp)) {
-    fwrite(STDERR, "Usage: php tools/build-update.php --version=1.0.8 [--minimum-version=1.0.4] [--output=dist] [--without-migrations]\n");
+    fwrite(STDERR, "Usage: php tools/build-update.php --version=1.0.10 [--minimum-version=1.0.9] [--output=dist] [--without-migrations]\n");
     exit(1);
 }
 
@@ -66,7 +66,7 @@ if (!is_string($secretKey) || strlen($secretKey) !== SODIUM_CRYPTO_SIGN_SECRETKE
 }
 
 $allowedRoots = ['App', 'Public', 'assets', 'docs', 'lang', 'migrations'];
-$rootFiles = ['index.php', 'cron.php', '.htaccess', 'LICENSE', 'README.md'];
+$rootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
 $files = [];
 
 foreach ($rootFiles as $file) {

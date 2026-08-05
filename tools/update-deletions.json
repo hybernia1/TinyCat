@@ -2,5 +2,12 @@
     "1.0.5": [
         "App/ModerationAdmin.php",
         "Public/admin/moderation.php"
+    ],
+    "1.0.10": [
+        "cron.php",
+        "Public/admin/bots/cron.php",
+        "Public/admin/maintenance.php",
+        "Public/parts/admin/maintenance/result-details.php",
+        "Public/parts/admin/maintenance/result-status.php"
     ]
 }

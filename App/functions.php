@@ -6117,26 +6117,26 @@ function bot_source_default_template(): string
     return "{{title}}\n\n{{description}}\n\n{{url}}";
 }
 
-function bot_cron_token(bool $create = false): string
+function cron_token(bool $create = false): string
 {
-    $token = trim((string) setting('bots.cron_token', config('bots.cron_token', '')));
+    $token = trim((string) setting('cron.token', config('cron.token', '')));
 
     if ($token === '' && $create) {
         $token = bin2hex(random_bytes(32));
-        setting_set('bots.cron_token', $token, 'string', 'bots');
+        setting_set('cron.token', $token, 'string', 'cron');
     }
 
     return $token;
 }
 
-function bot_cron_token_rotate(): string
+function cron_token_rotate(): string
 {
     $token = bin2hex(random_bytes(32));
-    setting_set('bots.cron_token', $token, 'string', 'bots');
+    setting_set('cron.token', $token, 'string', 'cron');
     return $token;
 }
 
-function bot_cron_request_token(): string
+function cron_request_token(): string
 {
     $bearer = Core::bearerToken();
 
@@ -6720,7 +6720,7 @@ function app_existing_tables(array $tables): array
     return array_values(array_map(static fn (array $row): string => (string) ($row['TABLE_NAME'] ?? ''), $rows));
 }
 
-function maintenance_cleanup_batch_size(mixed $value): int
+function cleanup_batch_size(mixed $value): int
 {
     $size = (int) $value;
     $allowed = [500, 1000, 2500, 5000];
@@ -6728,106 +6728,86 @@ function maintenance_cleanup_batch_size(mixed $value): int
     return in_array($size, $allowed, true) ? $size : 1000;
 }
 
-function maintenance_cleanup_tasks(): array
+function cron_cleanup_tasks(): array
 {
     return [
-        'orphan_tag_relations' => [
-            'icon' => 'tag',
-            'label' => t('maintenance.tasks.orphan_tag_relations'),
-            'description' => t('maintenance.tasks.orphan_tag_relations_help'),
-        ],
-        'orphan_terms' => [
-            'icon' => 'tag',
-            'label' => t('maintenance.tasks.orphan_terms'),
-            'description' => t('maintenance.tasks.orphan_terms_help'),
-        ],
-        'orphan_content_links' => [
-            'icon' => 'link',
-            'label' => t('maintenance.tasks.orphan_content_links'),
-            'description' => t('maintenance.tasks.orphan_content_links_help'),
-        ],
-        'orphan_links' => [
-            'icon' => 'link',
-            'label' => t('maintenance.tasks.orphan_links'),
-            'description' => t('maintenance.tasks.orphan_links_help'),
-        ],
-        'old_action_limits' => [
-            'icon' => 'clock',
-            'label' => t('maintenance.tasks.old_action_limits'),
-            'description' => t('maintenance.tasks.old_action_limits_help'),
-        ],
-        'old_password_reset_tokens' => [
-            'icon' => 'key',
-            'label' => t('maintenance.tasks.old_password_reset_tokens'),
-            'description' => t('maintenance.tasks.old_password_reset_tokens_help'),
-        ],
-        'old_read_notifications' => [
-            'icon' => 'bell',
-            'label' => t('maintenance.tasks.old_read_notifications'),
-            'description' => t('maintenance.tasks.old_read_notifications_help'),
-        ],
+        'orphan_terms',
+        'orphan_links',
+        'old_action_limits',
+        'old_password_reset_tokens',
+        'old_read_notifications',
     ];
 }
 
-function maintenance_cleanup_run(array $selected, int $batchSize = 1000): array
+function cron_cleanup_run(int $batchSize = 500, bool $force = false): array
 {
-    $tasks = maintenance_cleanup_tasks();
-    $batchSize = maintenance_cleanup_batch_size($batchSize);
+    $batchSize = cleanup_batch_size($batchSize);
+    $now = time();
+    $interval = 3600;
+    $lastRun = max(0, (int) setting('cron.cleanup_last_run', 0));
+
+    if (!$force && $lastRun > $now - $interval) {
+        return [
+            'due' => false,
+            'last_run' => $lastRun,
+            'next_run' => $lastRun + $interval,
+            'has_more' => false,
+            'results' => [],
+        ];
+    }
+
     $results = [];
 
-    foreach (array_unique($selected) as $task) {
-        $task = trim((string) $task);
-
-        if (!isset($tasks[$task])) {
-            continue;
-        }
-
+    foreach (cron_cleanup_tasks() as $task) {
         try {
-            $results[$task] = maintenance_cleanup_task_run($task, $batchSize);
+            $results[$task] = cleanup_task_run($task, $batchSize);
         } catch (Throwable $exception) {
             $results[$task] = [
                 'task' => $task,
                 'changed' => 0,
                 'has_more' => false,
-                'stalled' => false,
                 'batch_size' => $batchSize,
                 'error' => $exception->getMessage(),
             ];
         }
     }
 
-    return $results;
+    $hasMore = array_any($results, static fn (array $result): bool => !empty($result['has_more']));
+    $hasErrors = array_any($results, static fn (array $result): bool => isset($result['error']));
+
+    if (!$hasMore && !$hasErrors) {
+        setting_set('cron.cleanup_last_run', $now, 'int', 'cron');
+    }
+
+    return [
+        'due' => true,
+        'last_run' => $lastRun > 0 ? $lastRun : null,
+        'next_run' => !$hasMore && !$hasErrors ? $now + $interval : null,
+        'has_more' => $hasMore,
+        'results' => $results,
+    ];
 }
 
-function maintenance_cleanup_task_run(string $task, int $batchSize): array
+function cleanup_task_run(string $task, int $batchSize): array
 {
-    $batchSize = maintenance_cleanup_batch_size($batchSize);
+    $batchSize = cleanup_batch_size($batchSize);
     $startedAt = hrtime(true);
-    $changed = maintenance_cleanup_delete($task, $batchSize);
-    $hasMore = $changed >= $batchSize && maintenance_cleanup_has_rows($task);
+    $changed = cleanup_delete($task, $batchSize);
+    $hasMore = $changed >= $batchSize && cleanup_has_rows($task);
 
     return [
         'task' => $task,
         'changed' => $changed,
         'has_more' => $hasMore,
-        'stalled' => $hasMore && $changed < 1,
         'batch_size' => $batchSize,
         'duration_ms' => max(0, (int) round((hrtime(true) - $startedAt) / 1_000_000)),
         'done' => !$hasMore,
     ];
 }
 
-function maintenance_cleanup_has_rows(string $task): bool
+function cleanup_has_rows(string $task): bool
 {
     $value = match ($task) {
-        'orphan_tag_relations' => val(
-            'SELECT 1
-                FROM content_tags ct
-                LEFT JOIN content c ON c.id = ct.content_id
-                LEFT JOIN terms t ON t.id = ct.term_id
-                WHERE c.id IS NULL OR t.id IS NULL
-                LIMIT 1'
-        ),
         'orphan_terms' => val(
             'SELECT 1
                 FROM terms t
@@ -6836,14 +6816,6 @@ function maintenance_cleanup_has_rows(string $task): bool
                     FROM content_tags ct
                     WHERE ct.term_id = t.id
                 )
-                LIMIT 1'
-        ),
-        'orphan_content_links' => val(
-            'SELECT 1
-                FROM content_links cl
-                LEFT JOIN content c ON c.id = cl.content_id
-                LEFT JOIN links l ON l.id = cl.link_id
-                WHERE c.id IS NULL OR l.id IS NULL
                 LIMIT 1'
         ),
         'orphan_links' => val(
@@ -6883,13 +6855,12 @@ function maintenance_cleanup_has_rows(string $task): bool
     return $value !== null && $value !== false;
 }
 
-function maintenance_cleanup_delete(string $task, int $batchSize): int
+function cleanup_delete(string $task, int $batchSize): int
 {
-    $batchSize = maintenance_cleanup_batch_size($batchSize);
+    $batchSize = cleanup_batch_size($batchSize);
 
     return match ($task) {
-        'orphan_tag_relations' => maintenance_cleanup_delete_orphan_tag_relations($batchSize),
-        'orphan_terms' => maintenance_cleanup_delete_limited(
+        'orphan_terms' => cleanup_delete_limited(
             'DELETE FROM terms
                 WHERE NOT EXISTS (
                     SELECT 1
@@ -6898,8 +6869,7 @@ function maintenance_cleanup_delete(string $task, int $batchSize): int
                 )
                 LIMIT ' . $batchSize
         ),
-        'orphan_content_links' => maintenance_cleanup_delete_orphan_content_links($batchSize),
-        'orphan_links' => maintenance_cleanup_delete_limited(
+        'orphan_links' => cleanup_delete_limited(
             'DELETE FROM links
                 WHERE NOT EXISTS (
                     SELECT 1
@@ -6908,19 +6878,19 @@ function maintenance_cleanup_delete(string $task, int $batchSize): int
                 )
                 LIMIT ' . $batchSize
         ),
-        'old_action_limits' => maintenance_cleanup_delete_limited(
+        'old_action_limits' => cleanup_delete_limited(
             'DELETE FROM ip_action_limits
                 WHERE bucket_start < ?
                 LIMIT ' . $batchSize,
             [date_db('-30 days')]
         ),
-        'old_password_reset_tokens' => maintenance_cleanup_delete_limited(
+        'old_password_reset_tokens' => cleanup_delete_limited(
             'DELETE FROM password_reset_tokens
                 WHERE used_at IS NOT NULL OR expires_at < ?
                 LIMIT ' . $batchSize,
             [date_db()]
         ),
-        'old_read_notifications' => maintenance_cleanup_delete_limited(
+        'old_read_notifications' => cleanup_delete_limited(
             'DELETE FROM notifications
                 WHERE read_at IS NOT NULL AND read_at < ?
                 LIMIT ' . $batchSize,
@@ -6930,50 +6900,12 @@ function maintenance_cleanup_delete(string $task, int $batchSize): int
     };
 }
 
-function maintenance_cleanup_delete_limited(string $sql, array $params = []): int
+function cleanup_delete_limited(string $sql, array $params = []): int
 {
     $stmt = db()->prepare($sql);
     $stmt->execute($params);
 
     return $stmt->rowCount();
-}
-
-function maintenance_cleanup_delete_orphan_tag_relations(int $batchSize): int
-{
-    $sql = 'DELETE ct
-            FROM content_tags ct
-            INNER JOIN (
-                SELECT content_id, term_id
-                FROM (
-                    SELECT ct.content_id, ct.term_id
-                    FROM content_tags ct
-                    LEFT JOIN content c ON c.id = ct.content_id
-                    LEFT JOIN terms t ON t.id = ct.term_id
-                    WHERE c.id IS NULL OR t.id IS NULL
-                    LIMIT ' . $batchSize . '
-                ) orphan_rows
-            ) x ON x.content_id = ct.content_id AND x.term_id = ct.term_id';
-
-    return maintenance_cleanup_delete_limited($sql);
-}
-
-function maintenance_cleanup_delete_orphan_content_links(int $batchSize): int
-{
-    $sql = 'DELETE cl
-            FROM content_links cl
-            INNER JOIN (
-                SELECT content_id, link_id
-                FROM (
-                    SELECT cl.content_id, cl.link_id
-                    FROM content_links cl
-                    LEFT JOIN content c ON c.id = cl.content_id
-                    LEFT JOIN links l ON l.id = cl.link_id
-                    WHERE c.id IS NULL OR l.id IS NULL
-                    LIMIT ' . $batchSize . '
-                ) orphan_rows
-            ) x ON x.content_id = cl.content_id AND x.link_id = cl.link_id';
-
-    return maintenance_cleanup_delete_limited($sql);
 }
 
 function app_apply_user_locale(): void

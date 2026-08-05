@@ -189,24 +189,11 @@
         "detail_stat_posts": "Published posts",
         "detail_stat_runs": "Recorded runs",
         "delete_confirm": "Really delete this RSS source? Recent import history will be retained to prevent duplicates.",
-        "cron_title": "Production cron",
-        "cron_intro": "Trigger due bot sources from the server scheduler or an external web-cron service.",
-        "cron_url": "Endpoint URL",
-        "cron_token": "Bearer token",
-        "cron_query_url": "Simple web-cron URL",
-        "cron_query_help": "Compatibility option for services without custom headers. The token may be stored in server access logs.",
-        "cron_example": "Example command",
-        "cron_cli_example": "Direct server cron",
-        "cron_cli_help": "CLI execution does not need a bearer token. Optionally add --limit=20 or use --health for a check.",
-        "cron_help": "Run once per minute. Send the token in the Authorization header; do not put it in the URL or public logs.",
-        "cron_rotate": "Rotate token",
-        "cron_rotate_confirm": "Rotate the cron token? Existing scheduled calls will stop working until they are updated.",
         "messages": {
             "created": "The RSS source was created.",
             "saved": "The RSS source was saved.",
             "deleted": "The RSS source was deleted.",
             "not_found": "The RSS source was not found.",
-            "token_rotated": "The cron token was rotated.",
             "account_created": "The bot account was created.",
             "account_deleted": "The bot account was deleted.",
             "account_not_found": "The bot account was not found."
@@ -218,6 +205,31 @@
             "feed_duplicate": "This RSS or Atom source has already been added.",
             "interval": "The interval must be between 5 and 43200 minutes.",
             "template": "Enter a post template of at most 2000 characters."
+        }
+    },
+    "cron": {
+        "title": "Scheduled tasks",
+        "intro": "One small runner exposes independently scheduled RSS and cleanup tasks.",
+        "access_title": "Access and token",
+        "access_help": "Shared endpoint and authentication used by every scheduled task.",
+        "url": "Endpoint URL",
+        "token": "Bearer token",
+        "task_url": "Simple web-cron URL",
+        "query_help": "Compatibility option for services without custom headers. The token may be stored in server access logs.",
+        "http_command": "HTTP command",
+        "cli_command": "Server command",
+        "rotate": "Rotate token",
+        "rotate_confirm": "Rotate the cron token? Existing scheduled calls will stop working until they are updated.",
+        "tasks": {
+            "feeds": "RSS and Atom sources",
+            "feeds_help": "Publishes items from active sources whose interval is due.",
+            "feeds_schedule": "Schedule according to the required polling frequency, typically every two minutes.",
+            "cleanup": "Automatic cleanup",
+            "cleanup_help": "Removes unused tags and links, old rate-limit buckets, expired reset tokens, and read notifications.",
+            "cleanup_schedule": "Schedule hourly. Internal due checks prevent cleanup from running too often."
+        },
+        "messages": {
+            "token_rotated": "The cron token was rotated."
         }
     },
     "moderation": {
@@ -718,54 +730,6 @@
             "failed": "The update could not be completed.",
             "maintenance_disabled": "Maintenance mode was disabled.",
             "invalid_action": "Invalid update action."
-        }
-    },
-    "maintenance": {
-        "title": "Maintenance",
-        "intro": "Remove technical rows that no longer help the app.",
-        "run": "Run cleanup",
-        "run_next_batch": "Run next batch",
-        "batch_size": "Rows per batch",
-        "results": "Last cleanup",
-        "task": "Task",
-        "changed": "Changed",
-        "status": "Status",
-        "duration": "Duration",
-        "details": "Details",
-        "unknown": "Unknown",
-        "status_done": "Done",
-        "status_more": "More rows",
-        "status_stalled": "No progress",
-        "status_error": "Error",
-        "no_results": "No cleanup has been run in this session.",
-        "no_details": "No details",
-        "production_title": "Production helper",
-        "production_intro": "These tasks are safe to run repeatedly after moving TinyCat to another server or after heavier traffic.",
-        "production_normalize": "Unused records are removed without manual SQL.",
-        "production_repeatable": "Cleanup can be repeated without manual SQL.",
-        "production_no_ip": "No IP tracking is used by these tasks.",
-        "production_batched": "Large deletes run in small batches to avoid PHP timeouts.",
-        "tasks": {
-            "orphan_tag_relations": "Remove orphan tag relations",
-            "orphan_tag_relations_help": "Deletes tag relations pointing to missing posts or missing tags.",
-            "orphan_terms": "Remove unused tags",
-            "orphan_terms_help": "Deletes tags that are not connected to any post.",
-            "orphan_content_links": "Remove orphan link relations",
-            "orphan_content_links_help": "Deletes post-link relations pointing to missing posts or links.",
-            "orphan_links": "Remove unused links",
-            "orphan_links_help": "Deletes links that are not connected to any post.",
-            "old_action_limits": "Remove old action limits",
-            "old_action_limits_help": "Deletes IP action-limit buckets older than 30 days.",
-            "old_password_reset_tokens": "Remove old password reset links",
-            "old_password_reset_tokens_help": "Deletes password reset tokens that were used or have expired.",
-            "old_read_notifications": "Remove old read notifications",
-            "old_read_notifications_help": "Deletes read notifications older than 30 days."
-        },
-        "messages": {
-            "done": "Cleanup finished. {count} rows were changed.",
-            "batch_done": "Cleanup batch finished. {count} rows were changed; more rows are available.",
-            "done_with_errors": "Cleanup finished with errors. {count} rows were changed.",
-            "nothing_selected": "Select at least one cleanup task."
         }
     },
     "admin": {

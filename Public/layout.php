@@ -47,7 +47,6 @@ $defaultAdminNav = [
         'children' => [
             ['href' => '/admin/bots/accounts', 'icon' => 'users', 'label' => t('bots.accounts_title')],
             ['href' => '/admin/bots/list', 'icon' => 'list-unordered', 'label' => t('bots.sources_title')],
-            ['href' => '/admin/bots/cron', 'icon' => 'clock', 'label' => t('bots.cron_title')],
         ],
     ],
     [
@@ -58,7 +57,7 @@ $defaultAdminNav = [
             ['href' => '/admin/moderation/blocking', 'icon' => 'lock', 'label' => t('moderation.url_blocker_title')],
         ],
     ],
-    ['href' => '/admin/maintenance', 'icon' => 'database', 'label' => t('maintenance.title')],
+    ['href' => '/admin/cron', 'icon' => 'clock', 'label' => t('cron.title')],
     ['href' => '/admin/updates', 'icon' => 'download', 'label' => t('updates.title')],
     ['href' => '/admin/settings', 'icon' => 'settings', 'label' => t('settings.title')],
     ['href' => '/admin/email-templates', 'icon' => 'mail', 'label' => t('settings.email_templates_title')],

@@ -51,8 +51,8 @@ final class Api
             require public_path('admin/bots.php');
         });
 
-        api_route('POST', '/admin/bots/cron-token', static function (): void {
-            require public_path('admin/bots/cron.php');
+        api_route('POST', '/admin/cron-token', static function (): void {
+            require public_path('admin/cron.php');
         });
 
         api_route('ANY', '/admin/bot-accounts', static function (): void {

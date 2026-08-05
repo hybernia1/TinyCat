@@ -701,7 +701,7 @@ function tc_install_default_settings(array $state): void
         ['datetime.date', (string) config('datetime.date', 'd.m.Y'), 'string', 'localization'],
         ['datetime.time', (string) config('datetime.time', 'H:i'), 'string', 'localization'],
         ['datetime.datetime', (string) config('datetime.datetime', 'd.m.Y H:i'), 'string', 'localization'],
-        ['bots.cron_token', bin2hex(random_bytes(32)), 'string', 'bots'],
+        ['cron.token', bin2hex(random_bytes(32)), 'string', 'cron'],
         ['datetime.relative', (bool) config('datetime.relative', false), 'bool', 'localization'],
         ['security.captcha.enabled', (bool) config('security.captcha.enabled', true), 'bool', 'security'],
         ['auth.registration.enabled', (bool) config('auth.registration.enabled', false), 'bool', 'security'],
