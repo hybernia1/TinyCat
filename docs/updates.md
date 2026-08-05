@@ -111,7 +111,7 @@ The web updater performs these steps:
 3. Validate every archive path and extracted file hash in a staging directory.
 4. Check version, PHP extensions, disk paths, and write permissions.
 5. Enable maintenance mode and acquire the update lock.
-6. Back up managed application files and the database.
+6. Back up only managed application files that will change or be removed. Create a database backup only when the release has pending migrations.
 7. Replace managed files, run unapplied migrations, and remove declared legacy files.
 8. Clear runtime caches and disable maintenance mode.
 
@@ -128,11 +128,12 @@ Backups are stored under a directory such as:
 storage/updates/backups/1.0.12-to-1.0.13-20260805-120000/
 ```
 
-`files/` contains the previous managed files, `database.sql` (or
-`database.sqlite`) contains the database snapshot, and `backup.json` identifies
-the source and target versions. After restoring both code and database, remove
-`storage/maintenance.json` or use the guarded maintenance button on the update
-page.
+`files/` contains the previous versions of files changed by the update. For a
+release with pending database migrations, `database.sql` (or `database.sqlite`) also
+contains the database snapshot. `backup.json` identifies the source and target
+versions and whether a database backup was required. After restoring the
+available snapshot, remove `storage/maintenance.json` or use the guarded
+maintenance button on the update page.
 
 Apache installations are protected by the bundled `.htaccess`. Other web
 servers must deny public access to all of `storage/`, including database backups

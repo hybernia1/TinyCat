@@ -94,6 +94,47 @@ final class MigrationRegistry
         return true;
     }
 
+    /**
+     * Reports whether a release would modify the database, without creating
+     * the migration registry as a side effect.
+     *
+     * @param array<string, string> $migrations migration ID => checksum
+     */
+    public static function hasPending(array $migrations): bool
+    {
+        if ($migrations === []) {
+            return false;
+        }
+
+        foreach ($migrations as $migration => $checksum) {
+            self::assertMigration((string) $migration, (string) $checksum);
+        }
+
+        $driver = (string) db()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+
+        if (!in_array($driver, ['mysql', 'sqlite'], true)) {
+            throw new RuntimeException('The migration registry requires MySQL, MariaDB or SQLite.');
+        }
+
+        $exists = $driver === 'mysql'
+            ? one("SHOW TABLES LIKE 'schema_migrations'") !== null
+            : one("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'schema_migrations' LIMIT 1") !== null;
+
+        if (!$exists) {
+            return true;
+        }
+
+        $applied = array_column(all('SELECT migration, checksum FROM schema_migrations'), 'checksum', 'migration');
+
+        foreach ($migrations as $migration => $checksum) {
+            if (!isset($applied[$migration]) || !hash_equals((string) $applied[$migration], (string) $checksum)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static function apply(string $migration, string $version, string $path, ?string $checksum = null): bool
     {
         $version = trim($version);

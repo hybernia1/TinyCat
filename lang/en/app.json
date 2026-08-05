@@ -676,7 +676,7 @@
         "install_confirm": "Install TinyCat {version}? The application will enter maintenance mode during the update.",
         "requirements": "Environment check",
         "signed_packages": "The manifest and package are cryptographically verified",
-        "automatic_backup": "Files and the database are backed up before changes",
+        "automatic_backup": "Only changed files are backed up; the database is backed up for pending migrations",
         "protected_runtime": "Configuration, uploads and runtime data are never overwritten",
         "missing_extensions": "Installation is unavailable until all required PHP extensions are loaded.",
         "incompatible": "This package requires at least TinyCat {version} and PHP {php}.",

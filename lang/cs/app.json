@@ -676,7 +676,7 @@
         "install_confirm": "Nainstalovat TinyCat {version}? Aplikace během aktualizace přejde do režimu údržby.",
         "requirements": "Kontrola prostředí",
         "signed_packages": "Manifest a balíček se kryptograficky ověřují",
-        "automatic_backup": "Před změnou vznikne záloha souborů a databáze",
+        "automatic_backup": "Zálohují se jen změněné soubory; databáze jen při čekajících migracích",
         "protected_runtime": "Konfigurace, uploady a runtime data se nepřepisují",
         "missing_extensions": "Instalace není dostupná, dokud nebudou načtena všechna požadovaná PHP rozšíření.",
         "incompatible": "Tento balíček vyžaduje nejméně TinyCat {version} a PHP {php}.",

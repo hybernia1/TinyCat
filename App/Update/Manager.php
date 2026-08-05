@@ -158,11 +158,18 @@ final class Manager
             $stageDirectory = $workDirectory . DIRECTORY_SEPARATOR . 'package';
             self::extractPackage($packagePath, $stageDirectory, $manifest);
             self::preflightManagedTargets($manifest);
+            $databaseBackupRequired = self::hasPendingMigrations($manifest);
 
             self::enableMaintenance($version);
-            $backupDirectory = self::createBackup($manifest, $version);
-            self::backupDatabase($backupDirectory);
-            self::ensureMigrationTable();
+            $backupDirectory = self::createBackup($manifest, $version, $databaseBackupRequired);
+
+            // Release packages contain the complete managed file tree. Back up
+            // only files that will actually be replaced or removed, and avoid
+            // an expensive database dump when every release migration is
+            // already applied.
+            if ($databaseBackupRequired) {
+                self::backupDatabase($backupDirectory);
+            }
 
             $filesChanged = true;
             self::applyFiles($stageDirectory, $manifest);
@@ -798,7 +805,7 @@ final class Manager
         }
     }
 
-    private static function createBackup(array $manifest, string $targetVersion): string
+    private static function createBackup(array $manifest, string $targetVersion, bool $databaseBackupRequired = false): string
     {
         $name = Core::VERSION . '-to-' . $targetVersion . '-' . date('Ymd-His');
         $backup = self::updateRoot() . DIRECTORY_SEPARATOR . 'backups' . DIRECTORY_SEPARATOR . $name;
@@ -818,6 +825,21 @@ final class Manager
                 continue;
             }
 
+            $targetFiles = (array) ($manifest['files'] ?? []);
+            $targetHash = (string) ($targetFiles[$path] ?? '');
+            $sourceHash = hash_file('sha256', $source);
+
+            if (!is_string($sourceHash)) {
+                throw new RuntimeException('Unable to hash application file for backup: ' . $path);
+            }
+
+            // Files present in the package are not necessarily changed: every
+            // signed release ships the complete managed tree. A deletion always
+            // needs a copy; a replacement only does when its contents differ.
+            if ($targetHash !== '' && hash_equals($targetHash, $sourceHash)) {
+                continue;
+            }
+
             $target = self::pathBelow($filesDirectory, $path);
             self::ensureDirectory(dirname($target));
 
@@ -825,7 +847,7 @@ final class Manager
                 throw new RuntimeException('Unable to back up application file: ' . $path);
             }
 
-            $backedUp[$path] = hash_file('sha256', $source);
+            $backedUp[$path] = $sourceHash;
         }
 
         $metadata = [
@@ -833,6 +855,7 @@ final class Manager
             'from_version' => Core::VERSION,
             'to_version' => $targetVersion,
             'files' => $backedUp,
+            'database_backup_required' => $databaseBackupRequired,
         ];
         self::writeJsonFile($backup . DIRECTORY_SEPARATOR . 'backup.json', $metadata);
 
@@ -960,11 +983,17 @@ final class Manager
 
     private static function applyMigrations(string $stageDirectory, array $manifest): array
     {
+        $paths = (array) ($manifest['migrations'] ?? []);
+
+        if ($paths === []) {
+            return [];
+        }
+
         self::ensureMigrationTable();
         $applied = [];
         $version = (string) ($manifest['version'] ?? '');
 
-        foreach ((array) ($manifest['migrations'] ?? []) as $path) {
+        foreach ($paths as $path) {
             $path = self::managedPath((string) $path);
             $migration = pathinfo($path, PATHINFO_FILENAME);
             $checksum = (string) ((array) $manifest['files'])[$path];
@@ -980,6 +1009,19 @@ final class Manager
     private static function ensureMigrationTable(): void
     {
         MigrationRegistry::ensure();
+    }
+
+    private static function hasPendingMigrations(array $manifest): bool
+    {
+        $pending = [];
+        $files = (array) ($manifest['files'] ?? []);
+
+        foreach ((array) ($manifest['migrations'] ?? []) as $path) {
+            $path = self::managedPath((string) $path);
+            $pending[pathinfo($path, PATHINFO_FILENAME)] = (string) ($files[$path] ?? '');
+        }
+
+        return MigrationRegistry::hasPending($pending);
     }
 
     private static function deleteLegacyFiles(array $manifest): void

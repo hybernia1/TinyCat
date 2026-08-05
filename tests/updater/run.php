@@ -75,6 +75,31 @@ $test('manifest rejects case collisions and write-delete overlap', static functi
     $expectFailure(static fn (): mixed => $invoke('validateManifest', $overlap));
 });
 
+$test('file backups exclude unchanged files from a complete release package', static function () use ($invoke, $expect): void {
+    $source = base_path('App/Core.php');
+    $sourceHash = hash_file('sha256', $source);
+
+    if (!is_string($sourceHash)) {
+        throw new RuntimeException('Unable to hash updater test fixture.');
+    }
+
+    $backup = $invoke('createBackup', [
+        'files' => ['App/Core.php' => $sourceHash],
+        'delete' => [],
+        'migrations' => [],
+    ], '9.9.9-test', false);
+
+    try {
+        $metadata = json_decode((string) file_get_contents($backup . DIRECTORY_SEPARATOR . 'backup.json'), true);
+        $expect(is_array($metadata));
+        $expect(($metadata['files'] ?? null) === []);
+        $expect(($metadata['database_backup_required'] ?? true) === false);
+        $expect(!is_file($backup . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'Core.php'));
+    } finally {
+        $invoke('removeDirectory', $backup);
+    }
+});
+
 $test('maintenance state is explicit and reversible', static function () use ($invoke, $expect): void {
     Manager::disableMaintenance();
     $invoke('enableMaintenance', '9.9.9');
@@ -141,6 +166,27 @@ if (is_file($keyFile)) {
 }
 
 if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
+    $test('database backup is required only for pending migrations', static function () use ($expect): void {
+        $database = new PDO('sqlite::memory:');
+        $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        Core::setDb($database);
+        $checksum = str_repeat('a', 64);
+
+        $expect(!\TinyCat\Update\MigrationRegistry::hasPending([]));
+        $expect(\TinyCat\Update\MigrationRegistry::hasPending(['test_001' => $checksum]));
+
+        \TinyCat\Update\MigrationRegistry::ensure();
+        insert('schema_migrations', [
+            'migration' => 'test_001',
+            'version' => '1.0.5',
+            'checksum' => $checksum,
+            'applied_at' => date_db(),
+        ]);
+        $expect(!\TinyCat\Update\MigrationRegistry::hasPending(['test_001' => $checksum]));
+        $expect(\TinyCat\Update\MigrationRegistry::hasPending(['test_001' => str_repeat('b', 64)]));
+    });
+
     $test('migration registry stores version and checksum', static function () use ($invoke, $expect): void {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
