@@ -43,6 +43,7 @@ $expectFailure = static function (callable $callback): void {
 $test('managed update paths accept runtime files', static function () use ($invoke, $expect): void {
     $expect($invoke('managedPath', 'App/Updater.php') === 'App/Updater.php');
     $expect($invoke('managedPath', 'docs/updates.md') === 'docs/updates.md');
+    $expect($invoke('managedPath', 'scheduled-tasks.php') === 'scheduled-tasks.php');
 });
 
 $test('managed update paths reject protected and traversal targets', static function () use ($invoke, $expectFailure): void {

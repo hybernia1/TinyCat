@@ -1282,7 +1282,8 @@ final class Updater
 
         $root = explode('/', $path, 2)[0];
         $allowedRoots = ['App', 'Public', 'assets', 'docs', 'lang', 'migrations'];
-        $allowedFiles = ['index.php', 'cron.php', '.htaccess', 'LICENSE', 'README.md'];
+        // cron.php remains managed so a later package can remove the legacy endpoint.
+        $allowedFiles = ['index.php', 'scheduled-tasks.php', 'cron.php', '.htaccess', 'LICENSE', 'README.md'];
 
         if (!in_array($root, $allowedRoots, true) && !in_array($path, $allowedFiles, true)) {
             throw new RuntimeException('Update package targets a protected path: ' . $path);
