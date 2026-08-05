@@ -129,17 +129,7 @@ layout('layout', [
 function tc_status_not_found(): void
 {
     http_response_code(404);
-    layout('layout', [
-        'title' => t('public.status_not_found'),
-        'current' => '/status',
-        'meta' => [
-            'description' => t('public.status_not_found'),
-            'url' => '/status',
-            'robots' => 'noindex,follow',
-        ],
-    ], static function (): void {
-        ?>
-        <div class="alert alert-info"><?= et('public.status_not_found') ?></div>
-        <?php
-    });
+    $notFoundTitle = t('public.status_not_found');
+    $notFoundCurrent = '/status';
+    require public_path('not-found.php');
 }

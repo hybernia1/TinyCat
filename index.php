@@ -164,5 +164,5 @@ if (!$handled && str_starts_with($path, '/api')) {
 
 if (!$handled) {
     http_response_code(404);
-    echo 'Not found.';
+    require public_path('not-found.php');
 }

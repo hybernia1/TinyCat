@@ -256,7 +256,11 @@
         "feed_following": "Following",
         "feed_following_login": "Sign in to see posts from profiles you follow.",
         "load_more_posts": "Load more",
-        "loading_posts": "Loading..."
+        "loading_posts": "Loading...",
+        "not_found_title": "Page not found",
+        "not_found_intro": "This address does not lead to a page. Check the URL or continue from the homepage.",
+        "not_found_home": "Go to homepage",
+        "not_found_search": "Search content"
     },
     "auth": {
         "login_title": "Login",

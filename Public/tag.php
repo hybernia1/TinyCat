@@ -10,19 +10,9 @@ $tag = status_tag_normalize((string) get('tag', ''));
 
 if ($tag === '') {
     http_response_code(404);
-    layout('layout', [
-        'title' => t('public.tag_not_found'),
-        'current' => '/tag',
-        'meta' => [
-            'description' => t('public.tag_not_found'),
-            'url' => '/tag',
-            'robots' => 'noindex,follow',
-        ],
-    ], static function (): void {
-        ?>
-        <div class="alert alert-info"><?= et('public.tag_not_found') ?></div>
-        <?php
-    });
+    $notFoundTitle = t('public.tag_not_found');
+    $notFoundCurrent = '/tag';
+    require public_path('not-found.php');
     return;
 }
 

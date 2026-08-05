@@ -10,19 +10,9 @@ $author = public_author_find((int) get('id', 0));
 
 if ($author === null) {
     http_response_code(404);
-    layout('layout', [
-        'title' => t('public.author_not_found'),
-        'current' => '/author',
-        'meta' => [
-            'description' => t('public.author_not_found'),
-            'url' => '/author',
-            'robots' => 'noindex,follow',
-        ],
-    ], static function (): void {
-        ?>
-        <div class="alert alert-info"><?= et('public.author_not_found') ?></div>
-        <?php
-    });
+    $notFoundTitle = t('public.author_not_found');
+    $notFoundCurrent = '/author';
+    require public_path('not-found.php');
     return;
 }
 

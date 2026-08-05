@@ -256,7 +256,11 @@
         "feed_following": "Sleduji",
         "feed_following_login": "Přihlas se pro zobrazení příspěvků od profilů, které sleduješ.",
         "load_more_posts": "Načíst další",
-        "loading_posts": "Načítám..."
+        "loading_posts": "Načítám...",
+        "not_found_title": "Stránka nenalezena",
+        "not_found_intro": "Tato adresa nevede na žádnou stránku. Zkontroluj URL nebo pokračuj z úvodní stránky.",
+        "not_found_home": "Na úvodní stránku",
+        "not_found_search": "Vyhledat obsah"
     },
     "auth": {
         "login_title": "Přihlášení",
