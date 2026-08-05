@@ -12,18 +12,19 @@ if (!function_exists('sodium_crypto_sign_detached')) {
 }
 
 $root = dirname(__DIR__);
-$options = getopt('', ['version:', 'minimum-version::', 'minimum-php::', 'output::', 'key::', 'allow-dirty']);
+$options = getopt('', ['version:', 'minimum-version::', 'minimum-php::', 'output::', 'key::', 'allow-dirty', 'without-migrations']);
 $version = trim((string) ($options['version'] ?? ''));
 $minimumVersion = trim((string) ($options['minimum-version'] ?? '1.0.4'));
 $minimumPhp = trim((string) ($options['minimum-php'] ?? '8.4.0'));
 $output = trim((string) ($options['output'] ?? ($root . DIRECTORY_SEPARATOR . 'dist')));
 $keyPath = trim((string) ($options['key'] ?? ($root . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'update-signing.key')));
 $allowDirty = array_key_exists('allow-dirty', $options);
+$withoutMigrations = array_key_exists('without-migrations', $options);
 
 $validVersion = static fn (string $value): bool => preg_match('/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/', $value) === 1;
 
 if (!$validVersion($version) || !$validVersion($minimumVersion) || !$validVersion($minimumPhp)) {
-    fwrite(STDERR, "Usage: php tools/build-update.php --version=1.0.6 [--minimum-version=1.0.4] [--output=dist]\n");
+    fwrite(STDERR, "Usage: php tools/build-update.php --version=1.0.7 [--minimum-version=1.0.4] [--output=dist] [--without-migrations]\n");
     exit(1);
 }
 
@@ -139,10 +140,12 @@ if (is_file($deletionsFile)) {
 
 $deletions = array_values(array_unique($deletions));
 sort($deletions, SORT_STRING);
-$migrations = array_values(array_filter(
-    array_keys($files),
-    static fn (string $path): bool => str_starts_with($path, 'migrations/') && str_ends_with($path, '.php')
-));
+$migrations = $withoutMigrations
+    ? []
+    : array_values(array_filter(
+        array_keys($files),
+        static fn (string $path): bool => str_starts_with($path, 'migrations/') && str_ends_with($path, '.php')
+    ));
 
 if (!is_dir($output) && !mkdir($output, 0775, true) && !is_dir($output)) {
     fwrite(STDERR, "Unable to create output directory.\n");

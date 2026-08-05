@@ -151,6 +151,36 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         ]);
         $expect((int) val('SELECT COUNT(*) FROM schema_migrations') === 1);
     });
+
+    $test('legacy migration registry is upgraded without losing history', static function () use ($invoke, $expect): void {
+        $database = new PDO('sqlite::memory:');
+        $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        Core::setDb($database);
+        run(
+            'CREATE TABLE schema_migrations (
+                version VARCHAR(80) NOT NULL,
+                applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (version)
+            )'
+        );
+        insert('schema_migrations', ['version' => '20260731_legacy']);
+
+        $invoke('ensureMigrationTable');
+        $invoke('ensureMigrationTable');
+        $legacy = one('SELECT migration, version, checksum FROM schema_migrations LIMIT 1');
+        $expect(($legacy['migration'] ?? '') === '20260731_legacy', 'Legacy migration identifier was not preserved.');
+        $expect(($legacy['version'] ?? '') === '20260731_legacy', 'Legacy version history was not preserved.');
+        $expect(preg_match('/^[a-f0-9]{64}$/', (string) ($legacy['checksum'] ?? '')) === 1, 'Legacy checksum was not backfilled.');
+
+        insert('schema_migrations', [
+            'migration' => '20260805_new',
+            'version' => '1.0.7',
+            'checksum' => str_repeat('b', 64),
+            'applied_at' => date_db(),
+        ]);
+        $expect((int) val('SELECT COUNT(*) FROM schema_migrations') === 2);
+    });
 } else {
     $skipped++;
     echo "SKIP migration registry test: pdo_sqlite is unavailable.\n";
