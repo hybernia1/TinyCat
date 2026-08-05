@@ -1281,7 +1281,7 @@ final class Updater
         }
 
         $root = explode('/', $path, 2)[0];
-        $allowedRoots = ['App', 'Public', 'assets', 'docs', 'lang', 'migrations'];
+        $allowedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
         // cron.php remains managed so a later package can remove the legacy endpoint.
         $allowedFiles = ['index.php', 'scheduled-tasks.php', 'cron.php', '.htaccess', 'LICENSE', 'README.md'];
 

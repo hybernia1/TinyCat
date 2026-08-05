@@ -65,7 +65,7 @@ if (!is_string($secretKey) || strlen($secretKey) !== SODIUM_CRYPTO_SIGN_SECRETKE
     exit(1);
 }
 
-$allowedRoots = ['App', 'Public', 'assets', 'docs', 'lang', 'migrations'];
+$allowedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
 $rootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
 $files = [];
 
