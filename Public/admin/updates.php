@@ -88,11 +88,11 @@ layout('layout', [
                 <h2 class="text-lg m-0 cluster gap-2"><?= icon('download') ?> <?= et('updates.release_title') ?></h2>
             </div>
             <div class="card-body stack">
-                <div class="split gap-3">
+                <div class="split">
                     <span><?= et('updates.current_version') ?></span>
                     <strong>v<?= e(Core::VERSION) ?></strong>
                 </div>
-                <div class="split gap-3">
+                <div class="split">
                     <span><?= et('updates.latest_version') ?></span>
                     <strong><?= is_array($release) ? 'v' . e((string) ($release['version'] ?? '?')) : et('updates.not_checked') ?></strong>
                 </div>

@@ -53,7 +53,7 @@ layout('layout', [
                 <div class="alert alert-info"><?= et('public.search_min') ?></div>
             <?php elseif ($searchBlocked !== null): ?>
                 <?php if (($searchBlocked['code'] ?? '') === 'captcha_required'): ?>
-                    <form class="card search-captcha-card" action="/search" method="post">
+                    <form class="card" action="/search" method="post">
                         <?= csrf_field() ?>
                         <input type="hidden" name="_search_captcha" value="1">
                         <input type="hidden" name="q" value="<?= e($query) ?>">

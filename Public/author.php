@@ -142,7 +142,7 @@ layout('layout', [
                         </div>
                         <div class="profile-details">
                             <?php if ($canSeeMute && $mutedUntil !== ''): ?>
-                                <div class="alert alert-warning profile-mute-alert">
+                                <div class="alert alert-warning">
                                     <?= icon('lock') ?>
                                     <span><?= et('moderation.profile_muted_until', ['until' => datetime($mutedUntil)]) ?></span>
                                 </div>

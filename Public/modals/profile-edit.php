@@ -120,7 +120,7 @@ echo render('modals/layout', [
     'id' => author_profile_edit_modal_id($authorId),
     'title' => t('account.profile_settings'),
     'icon' => 'edit',
-    'size' => 'modal-panel-lg profile-edit-modal-panel',
+    'size' => 'modal-panel-lg',
     'body' => $body,
     'footer' => $footer,
 ]);

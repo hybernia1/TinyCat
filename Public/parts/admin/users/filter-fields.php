@@ -10,7 +10,7 @@ $filters = is_array($filters ?? null) ? $filters : [];
 $roles = is_array($roles ?? null) ? $roles : [];
 $statuses = is_array($statuses ?? null) ? $statuses : [];
 ?>
-<div class="filter-modal-grid">
+<div class="grid">
     <input type="hidden" name="q" value="<?= e((string) ($filters['q'] ?? '')) ?>">
     <input type="hidden" name="per_page" value="<?= e((string) admin_per_page()) ?>">
     <input type="hidden" name="page" value="1">

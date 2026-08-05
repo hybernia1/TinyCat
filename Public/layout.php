@@ -63,7 +63,7 @@ $defaultAdminNav = [
         ],
     ],
     ['href' => '/admin/cron', 'icon' => 'clock', 'label' => t('cron.title')],
-    ['href' => '/admin/extensions', 'icon' => 'file', 'label' => t('extensions.title')],
+    ['href' => '/admin/extensions', 'icon' => 'puzzle', 'label' => t('extensions.title')],
     ['href' => '/admin/updates', 'icon' => 'download', 'label' => t('updates.title')],
     ['href' => '/admin/settings', 'icon' => 'settings', 'label' => t('settings.title')],
     ['href' => '/admin/email-templates', 'icon' => 'mail', 'label' => t('settings.email_templates_title')],
@@ -203,7 +203,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
         <div class="admin-shell" data-admin-shell>
             <aside class="admin-sidebar" id="admin-sidebar" data-admin-sidebar>
                 <div class="admin-sidebar-header">
-                    <a class="admin-brand" href="/admin">
+                    <a class="admin-brand" href="/">
                         <?php if ($siteLogoUrl !== ''): ?>
                             <img class="brand-logo" src="<?= e($siteLogoUrl) ?>" alt="<?= e($appName) ?>" loading="lazy">
                         <?php else: ?>
