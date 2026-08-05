@@ -21,7 +21,7 @@ Every extension contains `extension.json`:
     "homepage": "https://github.com/example/example-extension",
     "version": "1.0.0",
     "requires": {
-        "tinycat": "2.0.2",
+        "tinycat": "2.0.3",
         "php": "8.4.0"
     },
     "entry": "bootstrap.php",
@@ -56,6 +56,56 @@ through registered TinyCat routes.
 Core extension services use the `TinyCat\Extension\` namespace. Register an
 extension through `TinyCat\Extension\Registry`. TinyCat 2.0.2 and newer do not
 expose the former global `ExtensionRegistry` compatibility name.
+
+## Runtime capabilities
+
+The entry file registers only the integration points an extension needs. The
+registry intentionally exposes explicit capabilities instead of a generic
+event bus. Routes, API routes, admin navigation and scheduled tasks retain
+their existing contracts. TinyCat 2.0.3 adds sitemap and asset capabilities.
+
+An extension contributes one sitemap section under its own slug:
+
+```php
+Registry::register('example', [
+    'root' => __DIR__,
+    'sitemap' => [
+        'count' => [ExamplePages::class, 'publishedCount'],
+        'entries' => [ExamplePages::class, 'sitemapEntries'],
+    ],
+]);
+```
+
+The count provider returns a non-negative integer. The entries provider accepts
+`int $limit, int $offset` and returns no more than `$limit` records shaped as
+`['url' => '/page/example', 'last_modified' => '2026-08-05 12:00:00']`.
+`last_modified` is optional. URLs must be normalized local paths without a
+query or fragment. TinyCat adds the section to `/sitemap.xml` and exposes its
+pages as `/sitemap-example-1.xml`. The general `TinyCat\Sitemap` service owns
+both core and contributed sections; extensions register their contribution
+only through `Registry`.
+
+Private extension CSS and JavaScript can be selected per request:
+
+```php
+Registry::register('example', [
+    'root' => __DIR__,
+    'assets' => static fn (string $path): array => str_starts_with($path, '/page/')
+        ? [
+            'styles' => ['assets/pages.css'],
+            'scripts' => ['assets/pages.js'],
+        ]
+        : [],
+]);
+```
+
+Asset paths are relative to the registered extension root. TinyCat accepts only
+CSS and JavaScript files inside that root, limits each source to 2 MiB and each
+extension response to 20 files, then publishes content-addressed copies through
+`/cache/assets`. Existing CSS/JavaScript minification settings are honored.
+Because the published cache does not preserve the source directory structure,
+relative CSS references to images or fonts are not supported by this contract.
+Use a public root path, a data URI or an external HTTPS resource for those.
 
 From TinyCat 1.0.14 onward, Bots is distributed by the official extension
 store. Extension installation state is always explicit in

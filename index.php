@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use TinyCat\Extension\Registry;
+use TinyCat\Sitemap;
 use TinyCat\Update\Manager;
 
 define('TINYCAT', true);
@@ -44,10 +45,15 @@ route('GET', '/sitemap.xml', static function (): void {
     require public_path('sitemap.php');
 });
 
-route('GET', '/{sitemap_file:sitemap-(?:pages|authors|status|tags)-[1-9][0-9]*[.]xml}', static function (string $sitemap_file): void {
-    preg_match('/^sitemap-(pages|authors|status|tags)-([1-9][0-9]*)\.xml$/D', $sitemap_file, $matches);
-    $sitemapSection = (string) ($matches[1] ?? '');
-    $sitemapPage = (int) ($matches[2] ?? 0);
+route('GET', '/{sitemap_file:' . Sitemap::FILE_PATTERN . '}', static function (string $sitemap_file): void {
+    $sitemap = Sitemap::parseFile($sitemap_file);
+    if ($sitemap === null) {
+        http_response_code(404);
+        return;
+    }
+
+    $sitemapSection = $sitemap['section'];
+    $sitemapPage = $sitemap['page'];
     require public_path('sitemap.php');
 });
 

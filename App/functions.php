@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use TinyCat\Extension\Registry;
+use TinyCat\Sitemap;
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -165,17 +166,7 @@ function absolute_url(string $url = ''): string
 
 function sitemap_url(string $section = 'index', int $page = 1): string
 {
-    $section = strtolower(trim($section));
-
-    if ($section === 'index') {
-        return '/sitemap.xml';
-    }
-
-    if (!in_array($section, ['pages', 'authors', 'status', 'tags'], true)) {
-        return '';
-    }
-
-    return '/sitemap-' . $section . '-' . max(1, $page) . '.xml';
+    return Sitemap::url($section, $page);
 }
 
 function app_request_scheme(): string

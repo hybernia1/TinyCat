@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use TinyCat\Extension\Registry;
+use TinyCat\Extension\Assets;
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -25,6 +26,15 @@ $bodyClass = (string) ($bodyClass ?? '');
 $csrfToken = (string) ($csrfToken ?? csrf_token());
 $styles = $styles ?? ['css/tinycat.css'];
 $scripts = $scripts ?? ['js/tinycat.js'];
+$extensionAssets = Assets::forPath($current);
+$styleUrls = array_values(array_unique([
+    ...array_map(static fn (mixed $style): string => asset((string) $style), (array) $styles),
+    ...$extensionAssets['styles'],
+]));
+$scriptUrls = array_values(array_unique([
+    ...array_map(static fn (mixed $script): string => asset((string) $script), (array) $scripts),
+    ...$extensionAssets['scripts'],
+]));
 $actions = (string) ($actions ?? '');
 $meta = is_array($meta ?? null) ? $meta : [];
 $flashToasts = [];
@@ -161,11 +171,11 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php if (is_string($metaJsonLdJson) && $metaJsonLdJson !== ''): ?>
         <script type="application/ld+json"><?= $metaJsonLdJson ?></script>
     <?php endif; ?>
-    <?php foreach ((array) $styles as $style): ?>
-        <link rel="stylesheet" href="<?= e(asset((string) $style)) ?>">
+    <?php foreach ($styleUrls as $styleUrl): ?>
+        <link rel="stylesheet" href="<?= e($styleUrl) ?>">
     <?php endforeach; ?>
-    <?php foreach ((array) $scripts as $script): ?>
-        <script src="<?= e(asset((string) $script)) ?>" defer></script>
+    <?php foreach ($scriptUrls as $scriptUrl): ?>
+        <script src="<?= e($scriptUrl) ?>" defer></script>
     <?php endforeach; ?>
     <?php $googleMeasurementId = trim((string) config('analytics.google_measurement_id', '')); ?>
     <?php $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? ''); ?>
