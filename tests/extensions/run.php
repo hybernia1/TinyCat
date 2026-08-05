@@ -5,6 +5,7 @@ use TinyCat\Extension\Lifecycle;
 use TinyCat\Extension\Loader;
 use TinyCat\Extension\Registry;
 use TinyCat\Extension\Store;
+use TinyCat\Sitemap;
 
 define('TINYCAT', true);
 require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
@@ -50,6 +51,7 @@ $removeTree = static function (string $path) use (&$removeTree): void {
 $test('module classes are autoloaded from their namespaces', static function () use ($expect): void {
     $expect(class_exists(Loader::class));
     $expect(class_exists(Store::class));
+    $expect(class_exists(Sitemap::class));
     $expect(class_exists(TinyCat\Update\Manager::class));
     $expect(!class_exists('ExtensionRegistry', false));
     $expect(!class_exists('ExtensionLoader', false));
@@ -139,6 +141,12 @@ $test('only the recorded installed version may register an extension', static fu
 
 $test('extension lifecycle versions and migrations are restart-safe', static function () use ($expect): void {
     $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . 'lifecycle.php');
+    exec($command . ' 2>&1', $output, $exitCode);
+    $expect($exitCode === 0, implode(PHP_EOL, $output));
+});
+
+$test('extension sitemap and asset capabilities are validated', static function () use ($expect): void {
+    $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . 'capabilities.php');
     exec($command . ' 2>&1', $output, $exitCode);
     $expect($exitCode === 0, implode(PHP_EOL, $output));
 });

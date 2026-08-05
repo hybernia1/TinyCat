@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use JsonException;
 use LogicException;
 use RuntimeException;
+use TinyCat\Sitemap;
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -59,8 +60,15 @@ final class Registry
             throw new LogicException('Scheduled task is already registered: ' . reset($taskDuplicates));
         }
 
-        self::$extensions[$slug] = [
-            'root' => self::optionalDirectory($definition['root'] ?? null, 'root'),
+        $root = self::optionalDirectory($definition['root'] ?? null, 'root');
+        $assetProvider = self::optionalCallable($definition['assets'] ?? null, 'asset provider');
+
+        if ($assetProvider !== null && $root === null) {
+            throw new InvalidArgumentException('Extension assets require a registered root directory: ' . $slug);
+        }
+
+        $extension = [
+            'root' => $root,
             'views' => self::optionalDirectory($definition['views'] ?? null, 'views'),
             'translations' => self::optionalDirectory($definition['translations'] ?? null, 'translations'),
             'tables' => array_values(array_unique($tables)),
@@ -70,6 +78,10 @@ final class Registry
             'admin_navigation' => self::optionalCallable($definition['admin_navigation'] ?? null, 'admin navigation provider'),
             'scheduled_tasks' => $scheduledTasks,
         ];
+
+        Sitemap::registerExtension($slug, $definition['sitemap'] ?? null);
+        Assets::register($slug, $assetProvider);
+        self::$extensions[$slug] = $extension;
     }
 
     public static function has(string $slug): bool
