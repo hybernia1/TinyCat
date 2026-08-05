@@ -1,12 +1,20 @@
 <?php
 declare(strict_types=1);
 
+namespace TinyCat\Extension;
+
+use Core;
+use PDO;
+use RuntimeException;
+use Throwable;
+use TinyCat\Update\MigrationRegistry;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
 }
 
-final class ExtensionLifecycle
+final class Lifecycle
 {
     private const string VERSIONS_SETTING = 'extensions.installed_versions';
 
@@ -19,13 +27,8 @@ final class ExtensionLifecycle
         $versions = self::installedVersions();
         $extensions = [];
 
-        foreach (ExtensionLoader::available() as $slug => $manifest) {
+        foreach (Loader::available() as $slug => $manifest) {
             $installedVersion = (string) ($versions[$slug] ?? '');
-            $legacyAdopted = false;
-            if ($installedVersion === '' && (string) ($manifest['legacy_version'] ?? '') !== '') {
-                $installedVersion = (string) $manifest['legacy_version'];
-                $legacyAdopted = true;
-            }
             $pending = 0;
             $migrationError = '';
 
@@ -53,7 +56,6 @@ final class ExtensionLifecycle
                 ...$manifest,
                 'installed_version' => $installedVersion,
                 'installed' => $installedVersion !== '',
-                'legacy_adopted' => $legacyAdopted,
                 'update_available' => $installedVersion !== ''
                     && version_compare($codeVersion, $installedVersion, '>'),
                 'downgrade_detected' => $installedVersion !== ''
@@ -69,7 +71,7 @@ final class ExtensionLifecycle
     public static function migrate(string $slug): array
     {
         $slug = strtolower(trim($slug));
-        $extension = ExtensionLoader::available()[$slug] ?? null;
+        $extension = Loader::available()[$slug] ?? null;
 
         if (!is_array($extension)) {
             throw new RuntimeException('Extension was not found: ' . $slug);
@@ -81,7 +83,7 @@ final class ExtensionLifecycle
     public static function migrateDiscovered(string $slug, string $directory): array
     {
         $slug = strtolower(trim($slug));
-        $extension = ExtensionLoader::discover($directory)[$slug] ?? null;
+        $extension = Loader::discover($directory)[$slug] ?? null;
 
         if (!is_array($extension)) {
             throw new RuntimeException('Extension was not found after installation: ' . $slug);
@@ -99,7 +101,7 @@ final class ExtensionLifecycle
         }
 
         $versions = self::installedVersions();
-        $installedVersion = (string) ($versions[$slug] ?? $extension['legacy_version'] ?? '');
+        $installedVersion = (string) ($versions[$slug] ?? '');
         $codeVersion = (string) ($extension['version'] ?? '');
 
         if ($installedVersion !== '' && version_compare($installedVersion, $codeVersion, '>')) {
@@ -179,7 +181,7 @@ final class ExtensionLifecycle
     {
         $versions = [];
 
-        foreach (ExtensionLoader::loaded() as $slug => $extension) {
+        foreach (Loader::loaded() as $slug => $extension) {
             $version = trim((string) ($extension['version'] ?? ''));
             if ($version !== '') {
                 $versions[$slug] = $version;

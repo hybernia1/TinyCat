@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Update\Manager;
+
 define('TINYCAT', true);
-require_once dirname(__DIR__, 2) . '/App/functions.php';
+require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
 
 $passed = 0;
 $failed = 0;
@@ -26,7 +28,7 @@ $expect = static function (bool $condition, string $message = 'Expectation faile
 };
 
 $invoke = static function (string $method, mixed ...$arguments): mixed {
-    $reflection = new ReflectionMethod(Updater::class, $method);
+    $reflection = new ReflectionMethod(Manager::class, $method);
     return $reflection->invoke(null, ...$arguments);
 };
 
@@ -41,7 +43,7 @@ $expectFailure = static function (callable $callback): void {
 };
 
 $test('managed update paths accept runtime files', static function () use ($invoke, $expect): void {
-    $expect($invoke('managedPath', 'App/Updater.php') === 'App/Updater.php');
+    $expect($invoke('managedPath', 'App/Update/Manager.php') === 'App/Update/Manager.php');
     $expect($invoke('managedPath', 'Extensions/Bots/extension.json') === 'Extensions/Bots/extension.json');
     $expect($invoke('managedPath', 'docs/updates.md') === 'docs/updates.md');
     $expect($invoke('managedPath', 'scheduled-tasks.php') === 'scheduled-tasks.php');
@@ -74,17 +76,17 @@ $test('manifest rejects case collisions and write-delete overlap', static functi
 });
 
 $test('maintenance state is explicit and reversible', static function () use ($invoke, $expect): void {
-    Updater::disableMaintenance();
+    Manager::disableMaintenance();
     $invoke('enableMaintenance', '9.9.9');
 
     try {
-        $expect(Updater::maintenanceActive());
-        $expect((Updater::maintenanceState()['to_version'] ?? '') === '9.9.9');
+        $expect(Manager::maintenanceActive());
+        $expect((Manager::maintenanceState()['to_version'] ?? '') === '9.9.9');
     } finally {
-        Updater::disableMaintenance();
+        Manager::disableMaintenance();
     }
 
-    $expect(!Updater::maintenanceActive());
+    $expect(!Manager::maintenanceActive());
 });
 
 $test('Phar ZIP package extraction verifies every file hash', static function () use ($invoke, $expect): void {
@@ -154,7 +156,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $expect((int) val('SELECT COUNT(*) FROM schema_migrations') === 1);
     });
 
-    $test('legacy migration registry is upgraded without losing history', static function () use ($invoke, $expect): void {
+    $test('outdated migration registry is rejected by the major baseline', static function () use ($invoke, $expectFailure): void {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -167,21 +169,24 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             )'
         );
         insert('schema_migrations', ['version' => '20260731_legacy']);
+        $expectFailure(static fn (): mixed => $invoke('ensureMigrationTable'));
+    });
 
-        $invoke('ensureMigrationTable');
-        $invoke('ensureMigrationTable');
-        $legacy = one('SELECT migration, version, checksum FROM schema_migrations LIMIT 1');
-        $expect(($legacy['migration'] ?? '') === '20260731_legacy', 'Legacy migration identifier was not preserved.');
-        $expect(($legacy['version'] ?? '') === '20260731_legacy', 'Legacy version history was not preserved.');
-        $expect(preg_match('/^[a-f0-9]{64}$/', (string) ($legacy['checksum'] ?? '')) === 1, 'Legacy checksum was not backfilled.');
-
-        insert('schema_migrations', [
-            'migration' => '20260805_new',
-            'version' => '1.0.7',
-            'checksum' => str_repeat('b', 64),
-            'applied_at' => date_db(),
-        ]);
-        $expect((int) val('SELECT COUNT(*) FROM schema_migrations') === 2);
+    $test('malformed migration registry is not mistaken for the current schema', static function () use ($invoke, $expectFailure): void {
+        $database = new PDO('sqlite::memory:');
+        $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        Core::setDb($database);
+        run(
+            'CREATE TABLE schema_migrations (
+                migration VARCHAR(190) NOT NULL,
+                version VARCHAR(32) NOT NULL,
+                checksum CHAR(64) NOT NULL,
+                applied_at DATETIME NOT NULL,
+                PRIMARY KEY (version)
+            )'
+        );
+        $expectFailure(static fn (): mixed => $invoke('ensureMigrationTable'));
     });
 } else {
     $skipped++;

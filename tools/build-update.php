@@ -14,7 +14,7 @@ if (!function_exists('sodium_crypto_sign_detached')) {
 $root = dirname(__DIR__);
 $options = getopt('', ['version:', 'minimum-version::', 'minimum-php::', 'output::', 'key::', 'allow-dirty', 'without-migrations']);
 $version = trim((string) ($options['version'] ?? ''));
-$minimumVersion = trim((string) ($options['minimum-version'] ?? '1.0.4'));
+$minimumVersion = trim((string) ($options['minimum-version'] ?? '1.0.14'));
 $minimumPhp = trim((string) ($options['minimum-php'] ?? '8.4.0'));
 $output = trim((string) ($options['output'] ?? ($root . DIRECTORY_SEPARATOR . 'dist')));
 $keyPath = trim((string) ($options['key'] ?? ($root . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'update-signing.key')));

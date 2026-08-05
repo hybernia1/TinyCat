@@ -1,6 +1,20 @@
 <?php
 declare(strict_types=1);
 
+namespace TinyCat\Extension;
+
+use Cache;
+use Core;
+use FilesystemIterator;
+use JsonException;
+use PharData;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use RuntimeException;
+use SplFileInfo;
+use Throwable;
+use ZipArchive;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -9,7 +23,7 @@ if (!defined('TINYCAT')) {
 /**
  * Official signed extension catalog and package installer.
  */
-final class ExtensionStore
+final class Store
 {
     private const string DEFAULT_REPOSITORY = 'hybernia1/TinyCat-Extensions';
     private const string CATALOG_ASSET = 'tinycat-extensions.json';
@@ -95,9 +109,9 @@ final class ExtensionStore
             );
         }
 
-        $available = ExtensionLoader::available();
+        $available = Loader::available();
         $current = is_array($available[$slug] ?? null) ? $available[$slug] : null;
-        $installedVersions = ExtensionLifecycle::installedVersions();
+        $installedVersions = Lifecycle::installedVersions();
         $installedVersion = trim((string) ($installedVersions[$slug] ?? ''));
         $targetVersion = (string) $extension['version'];
 
@@ -141,7 +155,7 @@ final class ExtensionStore
             );
             self::verifyFile($package, (string) $extension['sha256'], (int) $extension['size']);
             self::extractPackage($package, $stage, (array) $extension['files']);
-            $discovered = ExtensionLoader::discover($stage)[$slug] ?? null;
+            $discovered = Loader::discover($stage)[$slug] ?? null;
 
             if (!is_array($discovered)
                 || (string) ($discovered['version'] ?? '') !== $targetVersion
@@ -165,7 +179,7 @@ final class ExtensionStore
             }
             $filesPromoted = true;
             $migrationStarted = true;
-            $migration = ExtensionLifecycle::migrateDiscovered($slug, $root);
+            $migration = Lifecycle::migrateDiscovered($slug, $root);
             $states = Core::setting('extensions.states', []);
             $states = is_array($states) ? $states : [];
             $states[$slug] = $wasEnabled;
@@ -191,6 +205,131 @@ final class ExtensionStore
             throw $exception;
         } finally {
             self::removeDirectory($work);
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    public static function uninstall(string $slug, string $mode): array
+    {
+        $slug = strtolower(trim($slug));
+        $mode = strtolower(trim($mode));
+        $extension = Lifecycle::all()[$slug] ?? null;
+
+        if (!is_array($extension) || empty($extension['installed'])) {
+            throw new RuntimeException('The selected extension is not installed.');
+        }
+        if (!empty($extension['enabled']) || !empty($extension['requested_enabled'])) {
+            throw new RuntimeException('Disable the extension before uninstalling it.');
+        }
+        if (!is_array($extension['uninstall'] ?? null)) {
+            throw new RuntimeException('This extension does not provide a verified uninstall handler.');
+        }
+
+        $root = base_path('Extensions');
+        $definition = Loader::discover($root)[$slug] ?? null;
+        $uninstall = is_array($definition['uninstall'] ?? null) ? $definition['uninstall'] : null;
+
+        if (!is_array($definition) || !is_array($uninstall)) {
+            throw new RuntimeException('The extension uninstall definition could not be verified.');
+        }
+
+        $options = [];
+        foreach ((array) ($uninstall['options'] ?? []) as $option) {
+            if (is_array($option)) {
+                $options[(string) ($option['id'] ?? '')] = $option;
+            }
+        }
+        if (!isset($options[$mode])) {
+            throw new RuntimeException('The selected extension uninstall mode is invalid.');
+        }
+
+        $target = (string) ($definition['root'] ?? '');
+        $targetReal = realpath($target);
+        $rootReal = realpath($root);
+        if ($targetReal === false || $rootReal === false
+            || strtolower(dirname($targetReal)) !== strtolower($rootReal)
+            || is_link($targetReal)
+        ) {
+            throw new RuntimeException('The installed extension path is not safe to remove.');
+        }
+
+        $runtime = base_path('storage/extensions');
+        self::ensureDirectory($runtime);
+        $lock = fopen($runtime . DIRECTORY_SEPARATOR . 'install.lock', 'c+');
+        if (!is_resource($lock) || !flock($lock, LOCK_EX | LOCK_NB)) {
+            if (is_resource($lock)) fclose($lock);
+            throw new RuntimeException('Another extension operation is already running.');
+        }
+
+        $backup = $runtime . DIRECTORY_SEPARATOR . 'backups' . DIRECTORY_SEPARATOR
+            . $slug . '-uninstall-' . (string) ($extension['installed_version'] ?? $extension['version'] ?? 'unknown')
+            . '-' . date('Ymd-His') . '-' . bin2hex(random_bytes(3));
+        $moved = false;
+
+        try {
+            self::ensureDirectory(dirname($backup));
+            if (!@rename($targetReal, $backup)) {
+                throw new RuntimeException('Unable to back up the extension before uninstalling it.');
+            }
+            $moved = true;
+
+            $handler = $backup . DIRECTORY_SEPARATOR . str_replace(
+                '/',
+                DIRECTORY_SEPARATOR,
+                self::packagePath((string) ($uninstall['handler'] ?? ''))
+            );
+            $handlerReal = realpath($handler);
+            $backupPrefix = strtolower(rtrim((string) realpath($backup), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
+            if ($handlerReal === false || !str_starts_with(strtolower($handlerReal), $backupPrefix)) {
+                throw new RuntimeException('The extension uninstall handler is unavailable.');
+            }
+
+            $callback = require $handlerReal;
+            if (!is_callable($callback)) {
+                throw new RuntimeException('The extension uninstall handler must return a callable.');
+            }
+
+            $result = $callback(db(), [
+                'slug' => $slug,
+                'mode' => $mode,
+                'option' => $options[$mode],
+            ]);
+            if (!is_array($result) || !is_bool($result['data_removed'] ?? null)) {
+                throw new RuntimeException('The extension uninstall handler returned an invalid result.');
+            }
+
+            db_transaction(static function () use ($slug, $result): void {
+                if ($result['data_removed']) {
+                    $migrationPrefix = strtr('extension:' . $slug . ':', ['!' => '!!', '%' => '!%', '_' => '!_']);
+                    run("DELETE FROM schema_migrations WHERE migration LIKE ? ESCAPE '!'", [$migrationPrefix . '%']);
+                }
+
+                $versions = Lifecycle::installedVersions();
+                unset($versions[$slug]);
+                ksort($versions, SORT_STRING);
+                Core::setSetting('extensions.installed_versions', $versions, 'json', 'extensions');
+
+                $states = Core::setting('extensions.states', []);
+                $states = is_array($states) ? $states : [];
+                unset($states[$slug]);
+                ksort($states, SORT_STRING);
+                Core::setSetting('extensions.states', $states, 'json', 'extensions');
+            });
+
+            return [
+                ...$result,
+                'slug' => $slug,
+                'name' => (string) ($extension['name'] ?? $slug),
+                'mode' => $mode,
+                'backup' => self::relativePath($backup),
+            ];
+        } catch (Throwable $exception) {
+            if ($moved && is_dir($backup) && !file_exists($targetReal)) {
+                @rename($backup, $targetReal);
+            }
+            throw $exception;
+        } finally {
             flock($lock, LOCK_UN);
             fclose($lock);
         }

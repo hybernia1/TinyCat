@@ -1,38 +1,12 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Extension\Registry;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
 }
-
-if (PHP_VERSION_ID < 80400) {
-    http_response_code(500);
-    exit('TinyCat requires PHP 8.4 or newer.');
-}
-
-require_once __DIR__ . '/Core.php';
-require_once __DIR__ . '/Cache.php';
-require_once __DIR__ . '/Minifier.php';
-require_once __DIR__ . '/MigrationRegistry.php';
-require_once __DIR__ . '/Updater.php';
-require_once __DIR__ . '/Avatar.php';
-require_once __DIR__ . '/SiteIdentity.php';
-require_once __DIR__ . '/StatusLinks.php';
-require_once __DIR__ . '/LinkMetadata.php';
-require_once __DIR__ . '/Notifications.php';
-require_once __DIR__ . '/UserRoles.php';
-require_once __DIR__ . '/ExtensionRegistry.php';
-require_once __DIR__ . '/ExtensionLoader.php';
-require_once __DIR__ . '/ExtensionLifecycle.php';
-require_once __DIR__ . '/ExtensionStore.php';
-
-$extensionStateOverrides = Core::setting('extensions.states', []);
-ExtensionLoader::boot(
-    dirname(__DIR__) . '/Extensions',
-    is_array($extensionStateOverrides) ? $extensionStateOverrides : []
-);
-unset($extensionStateOverrides);
 
 function config(?string $key = null, mixed $default = null): mixed
 {
@@ -107,7 +81,7 @@ function app_required_tables(): array
         'ip_action_limits',
         'email_templates',
         'password_reset_tokens',
-        ...ExtensionRegistry::requiredTables(),
+        ...Registry::requiredTables(),
         'settings',
     ];
 
@@ -1060,22 +1034,6 @@ function rate_limit_ip_action_record(string $action, int $window = 3600): void
     );
 }
 
-function user_relations_foreign_keys_ready(): bool
-{
-    if ((string) db()->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
-        return false;
-    }
-
-    return (int) val(
-        'SELECT COUNT(DISTINCT CONSTRAINT_NAME)
-         FROM information_schema.KEY_COLUMN_USAGE
-         WHERE TABLE_SCHEMA = DATABASE()
-           AND CONSTRAINT_NAME IN (?, ?, ?)
-           AND REFERENCED_TABLE_NAME IS NOT NULL',
-        ['fk_content_author', 'fk_content_comments_user', 'fk_content_likes_user']
-    ) === 3;
-}
-
 function user_delete_account(int $userId): ?array
 {
     if ($userId < 1) {
@@ -1086,10 +1044,6 @@ function user_delete_account(int $userId): ?array
 
     if ($user === null) {
         return null;
-    }
-
-    if (!user_relations_foreign_keys_ready()) {
-        throw new RuntimeException('Account deletion requires the TinyCat 1.0.6 database migration.');
     }
 
     $termIds = array_map(

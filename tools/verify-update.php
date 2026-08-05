@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Update\Manager;
+
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "This tool is available only from the command line.\n");
     exit(1);
@@ -32,10 +34,10 @@ try {
 
 $packagePath = $directory . DIRECTORY_SEPARATOR . basename((string) ($manifest['package'] ?? ''));
 define('TINYCAT', true);
-require_once $root . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'functions.php';
+require_once $root . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'bootstrap.php';
 
 try {
-    $verified = Updater::verifyLocalPackage($manifestPath, $signaturePath, $packagePath);
+    $verified = Manager::verifyLocalPackage($manifestPath, $signaturePath, $packagePath);
     fwrite(STDOUT, 'Verified TinyCat ' . (string) ($verified['version'] ?? '') . ' update package.' . PHP_EOL);
 } catch (Throwable $exception) {
     fwrite(STDERR, 'Verification failed: ' . $exception->getMessage() . PHP_EOL);

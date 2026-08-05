@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **1.0.14**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
+Current release: **2.0.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
 
 ## Features
 
@@ -40,11 +40,11 @@ The PHP `exif` extension improves JPEG orientation handling but is optional. Apa
 5. Open `/install` and select a language.
 6. Enter the database connection, create the schema, and create the first administrator account.
 
-The installer creates the complete TinyCat 1.0 schema and writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root only needs to remain writable when web updates are enabled.
+The installer creates the complete TinyCat 2.x schema and writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root only needs to remain writable when web updates are enabled.
 
-Use HTTPS in production. The supplied Apache rules prevent direct web access to `config.php`, `App/`, `Extensions/`, `lang/`, `migrations/`, and private `storage/` content; equivalent protection is required if the application is adapted to another web server.
+Use HTTPS in production. The supplied Apache rules prevent direct web access to `config.php`, `App/`, `Extensions/`, `lang/`, `migrations/`, `tests/`, `tools/`, and private `storage/` content; equivalent protection is required if the application is adapted to another web server.
 
-TinyCat 1.0 is a clean installation baseline. It contains no pre-1.0 database migrations or compatibility layer for older schemas; an existing installation must already match the 1.0 schema before this code is deployed.
+TinyCat 2.0 is a clean application baseline. Upgrade existing installations to 1.0.14 first; the 2.x runtime no longer contains schema or extension-adoption compatibility for older releases.
 
 ## Updates
 
@@ -58,7 +58,7 @@ Database changes are versioned PHP migrations recorded in `schema_migrations`. F
 
 Administrators install and update optional features under **Admin → Extensions**. TinyCat reads the signed official catalog from [TinyCat Extensions](https://github.com/hybernia1/TinyCat-Extensions), verifies the catalog signature, package checksum, exact file list, manifest identity, and compatibility requirements, then keeps extension files under `Extensions/`.
 
-The base release contains no functional extension. Existing installations upgraded from the 1.0.13 bridge retain their extension files and data; fresh installations add only the features they choose from the store.
+The base release contains no functional extension. Existing installations keep their installed extension files and data; fresh installations add only the features they choose from the store.
 
 The official Bots extension provides passwordless bot accounts that publish from independently scheduled RSS or Atom sources without duplicating imported items. After installing it, create accounts under **Admin → Bots → Accounts** and sources under **Admin → Bots → Sources**.
 
@@ -114,13 +114,16 @@ safety limits, and commands.
 
 - `index.php` is the HTTP front controller and route registry.
 - `scheduled-tasks.php` runs bot imports and routine data cleanup from CLI or an authenticated HTTP request.
-- `App/` contains the runtime, database layer, routing, authentication, caching, metadata extraction, and administration modules.
+- `App/bootstrap.php` initializes the runtime and the small `TinyCat\` PSR-4 autoloader.
+- `App/Extension/` contains extension discovery, lifecycle, registration, and the signed store.
+- `App/Update/` contains signed application updates and the shared migration registry.
+- The remaining files in `App/` are standalone runtime and domain services.
 - `Public/` contains pages, layouts, modals, reusable view parts, and the installer.
 - `assets/` contains the source CSS, JavaScript, and SVG icon sprite.
 - `lang/<locale>/` contains each language package: `app.json` for the interface and optional `emails.json` for email templates.
 - `storage/` contains private runtime state and generated asset caches.
 - `uploads/` contains user and site media.
-- `tools/build-update.php` creates signed production release assets.
+- `tools/` contains versioned development and release utilities; it is excluded from production packages and blocked from web access.
 
 ## License
 

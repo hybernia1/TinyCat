@@ -20,7 +20,7 @@ php tools/update-key.php
 
 The command writes the private key to the ignored
 `storage/update-signing.key` file and prints the public key. The public key is
-pinned in `App/Updater.php`; the private key must never be committed or uploaded
+pinned in `App/Update/Manager.php`; the private key must never be committed or uploaded
 to a web release.
 
 Back up the private key in a secret manager before publishing the first signed
@@ -33,19 +33,19 @@ signed with a replacement key. CI can provide the base64 private key through the
 Set `Core::VERSION`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=1.0.13 --minimum-version=1.0.12
+php tools/build-update.php --version=2.0.0 --minimum-version=1.0.14
 php tools/verify-update.php dist
 ```
 
 The builder creates:
 
 ```text
-dist/tinycat-1.0.13.zip
+dist/tinycat-2.0.0.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v1.0.13` tag and upload all three files
+Create a GitHub release for the matching `v2.0.0` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -53,6 +53,11 @@ Only managed application and documentation files are packaged. Configuration,
 uploads, storage, tests, tools, and Git metadata are excluded. Removed runtime files are
 listed by target version in `tools/update-deletions.json`; this prevents legacy
 PHP files from surviving an overlay update.
+
+TinyCat 2.x has a fixed 1.0.14 database and updater baseline. Install 1.0.14
+before entering the 2.x series. Historical 1.x migrations remain available in
+Git history and signed 1.x releases, but are no longer shipped as active runtime
+files.
 
 `--without-migrations` is reserved for an updater compatibility bridge: it
 ships authenticated migration files but leaves the manifest migration list

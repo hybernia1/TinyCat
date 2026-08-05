@@ -1,27 +1,13 @@
 {
-    "1.0.5": [
-        "App/ModerationAdmin.php",
-        "Public/admin/moderation.php"
-    ],
-    "1.0.10": [
-        "cron.php",
-        "Public/admin/bots/cron.php",
-        "Public/admin/maintenance.php",
-        "Public/parts/admin/maintenance/result-details.php",
-        "Public/parts/admin/maintenance/result-status.php"
-    ],
-    "1.0.13": [
-        "App/BotAdmin.php",
-        "Public/admin/bot-accounts.php",
-        "Public/admin/bot.php",
-        "Public/admin/bots.php",
-        "Public/admin/bots/accounts.php",
-        "Public/admin/bots/list.php",
-        "Public/modals/bot-account-create.php",
-        "Public/modals/bot-account-filter.php",
-        "Public/modals/bot-source-filter.php",
-        "Public/modals/bot-source.php",
-        "Public/parts/admin/bots/accounts.php",
-        "Public/parts/admin/bots/sources.php"
+    "2.0.0": [
+        "App/ExtensionLifecycle.php",
+        "App/ExtensionLoader.php",
+        "App/ExtensionRegistry.php",
+        "App/ExtensionStore.php",
+        "App/MigrationRegistry.php",
+        "App/Updater.php",
+        "migrations/20260805_001_user_relations.php",
+        "migrations/20260805_002_cron_settings.php",
+        "migrations/20260805_003_bots_extension_adoption.php"
     ]
 }

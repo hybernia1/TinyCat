@@ -19,13 +19,25 @@ Every extension contains `extension.json`:
     "homepage": "https://github.com/example/example-extension",
     "version": "1.0.0",
     "requires": {
-        "tinycat": "1.0.14",
+        "tinycat": "2.0.0",
         "php": "8.4.0"
     },
     "entry": "bootstrap.php",
     "migrations": [
         "migrations/20260805_001_create_example.php"
     ],
+    "uninstall": {
+        "handler": "uninstall.php",
+        "options": [
+            {
+                "id": "keep",
+                "labels": {"en": "Keep data"},
+                "descriptions": {"en": "Remove the extension files and retain its data."},
+                "danger": false,
+                "recommended": true
+            }
+        ]
+    },
     "autoload": false
 }
 ```
@@ -39,15 +51,16 @@ classes and registers its integration points. Extension files are never served
 directly by the bundled Apache configuration; public behavior must be exposed
 through registered TinyCat routes.
 
-`legacy_version` is reserved for a bundled feature that existed before the
-extension system. It provides a temporary data-version fallback while a signed
-core migration records the adopted version. New extensions must not use it.
+Core extension services use the `TinyCat\Extension\` namespace. Register an
+extension through `TinyCat\Extension\Registry`; TinyCat 2.x also exposes the
+former global `ExtensionRegistry` name as a narrow compatibility alias for
+already installed 1.x extension packages. This alias is temporary and will be
+removed once all official packages use `TinyCat\Extension\Registry` directly.
 
-TinyCat 1.0.13 used this bridge to adopt the formerly built-in Bots feature.
-From 1.0.14 onward, Bots is distributed by the official extension store.
-Existing bot accounts, sources, run history and imported-item history keep
-their original tables and IDs. The core updater deliberately leaves the bridge
-files in place until the store replaces them with the official package.
+From TinyCat 1.0.14 onward, Bots is distributed by the official extension
+store. Extension installation state is always explicit in
+`extensions.installed_versions`; manifests no longer provide legacy adoption
+fallbacks.
 
 ## Official store
 
@@ -71,6 +84,22 @@ Enabled state and installed data versions use the existing settings table:
 
 Disabling an extension removes its runtime registration, routes, navigation and
 scheduled tasks. Files, migration history and application data are retained.
+
+An extension can expose its own uninstall choices through the optional
+`uninstall` manifest block. Uninstall is available only after the extension is
+disabled. The declared PHP handler must return a callable accepting the shared
+`PDO` connection and a context array containing `slug`, selected `mode`, and
+the selected option. It returns an array with a required boolean
+`data_removed` value. When data is removed, TinyCat also clears that
+extension's migration history so a later installation can recreate its schema.
+When data is kept, the migration history remains intact.
+
+TinyCat moves the extension files into a private
+`storage/extensions/backups/` directory before invoking the handler and
+restores them when uninstall fails. Uninstall handlers own their data model and
+must be restart-safe, explicit about destructive choices, and avoid touching
+data outside their namespace unless that effect is clearly described to the
+administrator.
 
 Extension migrations use the shared `schema_migrations` registry with an ID such
 as `extension:example:20260805_001_create_example`. The registry verifies a

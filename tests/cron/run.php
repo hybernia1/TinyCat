@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 define('TINYCAT', true);
-require_once dirname(__DIR__, 2) . '/App/functions.php';
+require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
 
 $config = (array) config('database', []);
 
@@ -109,55 +109,6 @@ try {
         $database->exec($statement);
     }
 
-    $legacyToken = str_repeat('a', 64);
-    insert('settings', [
-        'setting_key' => 'bots.cron_token',
-        'setting_group' => 'bots',
-        'setting_value' => $legacyToken,
-        'setting_type' => 'string',
-        'autoload' => 1,
-    ]);
-
-    $migration = require base_path('migrations/20260805_002_cron_settings.php');
-
-    if (!is_callable($migration)) {
-        throw new RuntimeException('The cron settings migration is not callable.');
-    }
-
-    $migration($database);
-    $migration($database);
-
-    if (cron_token() !== $legacyToken
-        || val('SELECT setting_value FROM settings WHERE setting_key = ?', ['cron.token']) !== $legacyToken
-        || (int) val('SELECT COUNT(*) FROM settings WHERE setting_key = ?', ['bots.cron_token']) !== 0) {
-        throw new RuntimeException('The cron token setting was not cleanly renamed.');
-    }
-
-    $currentToken = str_repeat('c', 64);
-    run(
-        "UPDATE settings SET setting_value = ?, setting_group = 'general' WHERE setting_key = 'cron.token'",
-        [$currentToken]
-    );
-    insert('settings', [
-        'setting_key' => 'bots.cron_token',
-        'setting_group' => 'bots',
-        'setting_value' => str_repeat('b', 64),
-        'setting_type' => 'string',
-        'autoload' => 1,
-    ]);
-    $migration($database);
-
-    $normalizedToken = one(
-        'SELECT setting_value, setting_group FROM settings WHERE setting_key = ? LIMIT 1',
-        ['cron.token']
-    );
-
-    if (($normalizedToken['setting_value'] ?? '') !== $currentToken
-        || ($normalizedToken['setting_group'] ?? '') !== 'cron'
-        || (int) val('SELECT COUNT(*) FROM settings WHERE setting_key = ?', ['bots.cron_token']) !== 0) {
-        throw new RuntimeException('The cron token migration did not resolve duplicate settings safely.');
-    }
-
     insert('content', ['body' => 'test']);
     $contentId = (int) db()->lastInsertId();
     insert('terms', ['name' => 'used']);
@@ -220,7 +171,7 @@ try {
         throw new RuntimeException('The hourly cleanup interval was not recorded.');
     }
 
-    echo "PASS unified scheduled tasks: token migrated, orphan data cleaned, current rows retained.\n";
+    echo "PASS unified scheduled tasks: orphan data cleaned and current rows retained.\n";
 } finally {
     if ($created && preg_match('/^tinycat_cron_test_[a-f0-9]{10}$/', $databaseName) === 1) {
         $server->exec('DROP DATABASE IF EXISTS `' . $databaseName . '`');

@@ -1,11 +1,13 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Extension\Registry;
+
 define('TINYCAT', true);
-require_once __DIR__ . '/App/functions.php';
+require_once __DIR__ . '/App/bootstrap.php';
 
 $isCli = PHP_SAPI === 'cli';
-$taskDefinitions = ExtensionRegistry::scheduledTasks();
+$taskDefinitions = Registry::scheduledTasks();
 if (isset($taskDefinitions['cleanup'])) {
     throw new LogicException('The cleanup scheduled task name is reserved by TinyCat.');
 }

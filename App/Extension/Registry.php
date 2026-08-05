@@ -1,12 +1,20 @@
 <?php
 declare(strict_types=1);
 
+namespace TinyCat\Extension;
+
+use Core;
+use InvalidArgumentException;
+use JsonException;
+use LogicException;
+use RuntimeException;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
 }
 
-final class ExtensionRegistry
+final class Registry
 {
     private static array $extensions = [];
 
