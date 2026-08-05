@@ -1159,8 +1159,14 @@
         return;
       }
 
-      if (data.message) {
-        TinyCat.toast(data.message, data.type || (data.meta && data.meta.type) || (data.ok === false ? "danger" : "info"));
+      var message = data.message || (payload && typeof payload === "object" ? payload.message : "");
+      var type = data.type
+        || (data.meta && data.meta.type)
+        || (payload && typeof payload === "object" ? (payload.type || (payload.meta && payload.meta.type)) : "")
+        || (data.ok === false ? "danger" : "success");
+
+      if (message) {
+        TinyCat.toast(message, type);
       }
     }
 
@@ -1938,6 +1944,20 @@
 
     qsa("[data-tab-panel]", root).forEach(function (panel) {
       panel.hidden = panel.dataset.tabPanel !== name;
+    });
+
+    qsa("[data-tab-submit]", root.closest(".modal-panel") || root).forEach(function (button) {
+      var panel = qsa("[data-tab-panel]", root).find(function (item) {
+        return item.dataset.tabPanel === name;
+      });
+
+      if (panel && panel.tagName === "FORM" && panel.id) {
+        button.setAttribute("form", panel.id);
+        button.disabled = false;
+      } else {
+        button.removeAttribute("form");
+        button.disabled = true;
+      }
     });
 
     if (focus) {

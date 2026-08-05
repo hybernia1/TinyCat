@@ -353,6 +353,7 @@
     "account": {
         "title": "My account",
         "save_profile": "Save profile",
+        "save_email": "Save email",
         "profile_settings": "Profile",
         "email_notifications": "Send me email notifications",
         "email_notifications_email_required": "Add an email address to enable this.",

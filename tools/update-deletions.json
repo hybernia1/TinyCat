@@ -1,4 +1,7 @@
 {
+    "2.0.4": [
+        "Public/account.php"
+    ],
     "2.0.0": [
         "App/ExtensionLifecycle.php",
         "App/ExtensionLoader.php",

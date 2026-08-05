@@ -19,6 +19,11 @@ $themeChoices = [
     'light' => t('account.theme_light'),
     'dark' => t('account.theme_dark'),
 ];
+$activeTab = match ($focus) {
+    'email' => 'email',
+    'password', 'security' => 'security',
+    default => 'profile',
+};
 
 if ($authorId < 1 || $action === '') {
     http_response_code(404);
@@ -26,68 +31,96 @@ if ($authorId < 1 || $action === '') {
 }
 
 $autofocus = static fn (string $name): string => $focus === $name ? ' autofocus' : '';
+$formAttributes = ' data-confirm-unsaved="true"'
+    . ' data-confirm-unsaved-title="' . e(t('common.unsaved_title')) . '"'
+    . ' data-confirm-unsaved-message="' . e(t('common.unsaved_message')) . '"'
+    . ' data-confirm-unsaved-ok="' . e(t('common.leave')) . '"'
+    . ' data-confirm-unsaved-cancel="' . e(t('common.stay')) . '"';
 
 ob_start();
 ?>
-<input type="hidden" name="action" value="profile">
-<div class="profile-modal-grid">
-    <label class="field">
-        <span class="label"><?= et('common.language') ?></span>
-        <select class="select" name="locale" required<?= $autofocus('locale') ?>>
-            <?= language_options($selectedLocale) ?>
-        </select>
-    </label>
-    <label class="field">
-        <span class="label"><?= et('account.theme') ?></span>
-        <select class="select" name="theme" required<?= $autofocus('theme') ?>>
-            <?php foreach ($themeChoices as $value => $label): ?>
-                <option value="<?= e($value) ?>"<?= $value === $selectedTheme ? ' selected' : '' ?>><?= e($label) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </label>
-    <label class="field profile-modal-span">
-        <span class="label"><?= et('common.email') ?></span>
-        <input class="input" type="email" name="email" value="<?= e((string) ($user['email'] ?? '')) ?>" maxlength="<?= user_email_max_length() ?>" autocomplete="email"<?= $autofocus('email') ?>>
-        <span class="help"><?= et('account.email_optional') ?></span>
-    </label>
-    <label class="field profile-modal-span">
-        <span class="label"><?= et('account.bio') ?></span>
-        <textarea class="textarea" name="bio" rows="6" maxlength="500"<?= $autofocus('bio') ?>><?= e($bio) ?></textarea>
-    </label>
-    <?php if (email_notification_templates_enabled()): ?>
-        <label class="check-line profile-modal-span">
-            <input type="checkbox" name="email_notifications" value="1"<?= (bool) ($user['email_notifications'] ?? true) ? ' checked' : '' ?><?= user_email_valid((string) ($user['email'] ?? '')) ? '' : ' disabled' ?>>
-            <span><?= et('account.email_notifications') ?><?php if (!user_email_valid((string) ($user['email'] ?? ''))): ?> <small class="text-muted"><?= et('account.email_notifications_email_required') ?></small><?php endif; ?></span>
-        </label>
-    <?php endif; ?>
-    <section class="profile-modal-span stack">
-        <div>
-            <span class="label"><?= et('profile_links.title') ?></span>
-            <span class="help"><?= et('profile_links.help') ?></span>
+<div class="profile-edit-tabs" data-tabs>
+    <div class="tabs" role="tablist" aria-label="<?= et('account.profile_settings') ?>">
+        <?php foreach (['profile' => ['user', t('account.profile_settings')], 'email' => ['mail', t('common.email')], 'security' => ['key', t('account.security_settings')]] as $tab => [$icon, $label]): ?>
+            <?php $selected = $tab === $activeTab; ?>
+            <button class="tab" type="button" id="profile-edit-tab-<?= e($tab) ?>" role="tab" aria-controls="profile-edit-panel-<?= e($tab) ?>" aria-selected="<?= $selected ? 'true' : 'false' ?>" data-tab="<?= e($tab) ?>">
+                <?= icon($icon) ?> <span><?= e($label) ?></span>
+            </button>
+        <?php endforeach; ?>
+    </div>
+
+    <form class="tab-panel profile-edit-form" id="profile-edit-panel-profile" role="tabpanel" aria-labelledby="profile-edit-tab-profile" data-tab-panel="profile" action="/api/profile/update" method="post" data-ajax-form<?= $activeTab === 'profile' ? '' : ' hidden' ?><?= $formAttributes ?>>
+        <?= csrf_field() ?>
+        <div class="profile-modal-grid">
+            <label class="field">
+                <span class="label"><?= et('common.language') ?></span>
+                <select class="select" name="locale" required<?= $autofocus('locale') ?>>
+                    <?= language_options($selectedLocale) ?>
+                </select>
+            </label>
+            <label class="field">
+                <span class="label"><?= et('account.theme') ?></span>
+                <select class="select" name="theme" required<?= $autofocus('theme') ?>>
+                    <?php foreach ($themeChoices as $value => $label): ?>
+                        <option value="<?= e($value) ?>"<?= $value === $selectedTheme ? ' selected' : '' ?>><?= e($label) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label class="field profile-modal-span">
+                <span class="label"><?= et('account.bio') ?></span>
+                <textarea class="textarea" name="bio" rows="6" maxlength="500"<?= $autofocus('bio') ?>><?= e($bio) ?></textarea>
+            </label>
+            <section class="profile-modal-span stack">
+                <div>
+                    <span class="label"><?= et('profile_links.title') ?></span>
+                    <span class="help"><?= et('profile_links.help') ?></span>
+                </div>
+                <?= part('profile/link-fields', ['links' => $profileLinks]) ?>
+            </section>
         </div>
-        <?= part('profile/link-fields', ['links' => $profileLinks]) ?>
-    </section>
+    </form>
+
+    <form class="tab-panel profile-edit-form stack" id="profile-edit-panel-email" role="tabpanel" aria-labelledby="profile-edit-tab-email" data-tab-panel="email" action="/api/profile/email" method="post" data-ajax-form<?= $activeTab === 'email' ? '' : ' hidden' ?><?= $formAttributes ?>>
+        <?= csrf_field() ?>
+        <label class="field">
+            <span class="label"><?= et('common.email') ?></span>
+            <input class="input" type="email" name="email" value="<?= e((string) ($user['email'] ?? '')) ?>" maxlength="<?= user_email_max_length() ?>" autocomplete="email"<?= $autofocus('email') ?>>
+            <span class="help"><?= et('account.email_optional') ?></span>
+        </label>
+        <?php if (email_notification_templates_enabled()): ?>
+            <label class="check-line">
+                <input type="checkbox" name="email_notifications" value="1"<?= (bool) ($user['email_notifications'] ?? true) ? ' checked' : '' ?><?= user_email_valid((string) ($user['email'] ?? '')) ? '' : ' disabled' ?>>
+                <span><?= et('account.email_notifications') ?><?php if (!user_email_valid((string) ($user['email'] ?? ''))): ?> <small class="text-muted"><?= et('account.email_notifications_email_required') ?></small><?php endif; ?></span>
+            </label>
+        <?php endif; ?>
+    </form>
+
+    <form class="tab-panel profile-edit-form stack" id="profile-edit-panel-security" role="tabpanel" aria-labelledby="profile-edit-tab-security" data-tab-panel="security" action="/api/profile/password" method="post" data-ajax-form<?= $activeTab === 'security' ? '' : ' hidden' ?><?= $formAttributes ?>>
+        <?= csrf_field() ?>
+        <label class="field">
+            <span class="label"><?= et('common.current_password') ?></span>
+            <input class="input" type="password" name="current_password" autocomplete="current-password" maxlength="<?= auth_password_max_length() ?>" required<?= $autofocus('current_password') ?>>
+        </label>
+        <label class="field">
+            <span class="label"><?= et('common.new_password') ?></span>
+            <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required<?= $autofocus('password') ?>>
+        </label>
+        <label class="field">
+            <span class="label"><?= et('common.password_confirm') ?></span>
+            <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required<?= $autofocus('password_confirm') ?>>
+        </label>
+    </form>
 </div>
 <?php
 
 $body = trim((string) ob_get_clean());
-$footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . icon('close') . ' <span>' . et('common.cancel') . '</span></button>'
-    . '<button class="btn btn-primary" type="submit">' . icon('save') . ' <span>' . et('account.save_profile') . '</span></button>';
+$footer = '<button class="btn btn-primary" type="submit" form="profile-edit-panel-' . e($activeTab) . '" data-tab-submit>' . icon('save') . ' <span>' . et('common.save') . '</span></button>';
 
 echo render('modals/layout', [
     'id' => author_profile_edit_modal_id($authorId),
     'title' => t('account.profile_settings'),
     'icon' => 'edit',
-    'action' => $action,
-    'ajax' => true,
     'size' => 'modal-panel-lg profile-edit-modal-panel',
-    'formAttributes' => [
-        'data-confirm-unsaved' => 'true',
-        'data-confirm-unsaved-title' => t('common.unsaved_title'),
-        'data-confirm-unsaved-message' => t('common.unsaved_message'),
-        'data-confirm-unsaved-ok' => t('common.leave'),
-        'data-confirm-unsaved-cancel' => t('common.stay'),
-    ],
     'body' => $body,
     'footer' => $footer,
 ]);

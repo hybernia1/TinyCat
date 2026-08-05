@@ -185,11 +185,6 @@ layout('layout', [
                                     <?= icon('login') ?> <span><?= et('public.follow_login') ?></span>
                                 </a>
                             <?php endif; ?>
-                            <?php if ($canPost): ?>
-                                <a class="btn btn-secondary btn-sm" href="/account">
-                                    <?= icon('key') ?> <span><?= et('account.security_settings') ?></span>
-                                </a>
-                            <?php endif; ?>
                         </div>
                     </div>
                 </article>

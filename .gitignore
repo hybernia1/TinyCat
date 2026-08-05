@@ -13,6 +13,9 @@
 /.vscode/
 /.agents/
 
+# Local test suites
+/tests/security/
+
 # Logs and temporary files
 *.log
 *.tmp
