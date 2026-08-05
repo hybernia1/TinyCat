@@ -128,8 +128,8 @@ $test('extension state overrides accept only boolean slug maps', static function
     $expect($states === ['sample' => false, 'sample-plugin' => true]);
 });
 
-$test('extension state controls runtime registration', static function () use ($expect): void {
-    foreach (['enabled', 'disabled'] as $scenario) {
+$test('only the recorded installed version may register an extension', static function () use ($expect): void {
+    foreach (['enabled', 'disabled', 'uninstalled', 'version-mismatch'] as $scenario) {
         $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . 'state.php')
             . ' ' . escapeshellarg($scenario);
         exec($command . ' 2>&1', $output, $exitCode);

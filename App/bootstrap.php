@@ -30,8 +30,10 @@ if (!class_exists('ExtensionRegistry', false)) {
 }
 
 $extensionStateOverrides = Core::setting('extensions.states', []);
+$extensionInstalledVersions = Core::setting('extensions.installed_versions', []);
 TinyCat\Extension\Loader::boot(
     dirname(__DIR__) . '/Extensions',
-    is_array($extensionStateOverrides) ? $extensionStateOverrides : []
+    is_array($extensionStateOverrides) ? $extensionStateOverrides : [],
+    is_array($extensionInstalledVersions) ? $extensionInstalledVersions : []
 );
-unset($extensionStateOverrides);
+unset($extensionStateOverrides, $extensionInstalledVersions);
