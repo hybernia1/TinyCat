@@ -81,11 +81,7 @@ if ($adminUsersApi === 'delete') {
 
         tc_admin_user_require_deletable($user);
 
-        db_transaction(static function () use ($id): void {
-            delete('user_profile_links', ['user_id' => $id]);
-            delete('users', ['id' => $id]);
-        });
-        Avatar::delete($user['avatar_config'] ?? null);
+        user_delete_account($id);
         api_ok(tc_admin_users_response_payload(), t('users.messages.deleted'));
     });
 }

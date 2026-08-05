@@ -23,7 +23,7 @@ $allowDirty = array_key_exists('allow-dirty', $options);
 $validVersion = static fn (string $value): bool => preg_match('/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/', $value) === 1;
 
 if (!$validVersion($version) || !$validVersion($minimumVersion) || !$validVersion($minimumPhp)) {
-    fwrite(STDERR, "Usage: php tools/build-update.php --version=1.0.5 [--minimum-version=1.0.4] [--output=dist]\n");
+    fwrite(STDERR, "Usage: php tools/build-update.php --version=1.0.6 [--minimum-version=1.0.4] [--output=dist]\n");
     exit(1);
 }
 
