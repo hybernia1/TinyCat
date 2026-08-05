@@ -153,6 +153,7 @@ final class ExtensionLoader
         $version = trim((string) ($manifest['version'] ?? ''));
         $requires = $manifest['requires'] ?? null;
         $minimumTinycat = is_array($requires) ? trim((string) ($requires['tinycat'] ?? '')) : '';
+        $minimumPhp = is_array($requires) ? trim((string) ($requires['php'] ?? '8.4.0')) : '8.4.0';
         $entry = trim(str_replace('\\', '/', (string) ($manifest['entry'] ?? '')), '/');
         $autoload = $manifest['autoload'] ?? null;
         $migrationFiles = $manifest['migrations'] ?? [];
@@ -175,8 +176,10 @@ final class ExtensionLoader
         if (
             strlen($version) > 32
             || strlen($minimumTinycat) > 32
+            || strlen($minimumPhp) > 32
             || !self::validVersion($version)
             || !self::validVersion($minimumTinycat)
+            || !self::validVersion($minimumPhp)
         ) {
             throw new RuntimeException('Invalid extension version requirement: ' . $slug);
         }
@@ -226,7 +229,9 @@ final class ExtensionLoader
             'name' => $name,
             'version' => $version,
             'minimum_tinycat' => $minimumTinycat,
-            'compatible' => version_compare(Core::VERSION, $minimumTinycat, '>='),
+            'minimum_php' => $minimumPhp,
+            'compatible' => version_compare(Core::VERSION, $minimumTinycat, '>=')
+                && version_compare(PHP_VERSION, $minimumPhp, '>='),
             'entry' => $entry,
             'autoload' => $autoload,
             'legacy_version' => $legacyVersion,

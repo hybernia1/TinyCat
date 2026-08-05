@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **1.0.13**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
+Current release: **1.0.14**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
 
 ## Features
 
@@ -15,7 +15,7 @@ Current release: **1.0.13**. TinyCat uses [Semantic Versioning](https://semver.o
 - HTML5 link previews with Open Graph, video embeds, and cached metadata.
 - Optional email recovery and localized email notifications through PHP mail or SMTP.
 - Administration for users, site settings, email templates, scheduled tasks, moderation reports, account muting, and blocked domains.
-- An optional bundled Bots extension with passwordless accounts that publish from independently scheduled RSS or Atom sources without duplicating imported items.
+- A signed official extension store; optional features stay outside the clean CMS package.
 - Author and tag feeds, XML sitemaps, `robots.txt`, `llms.txt`, and a generated web app manifest.
 - English and Czech interfaces with mobile-first CSS and lightweight JavaScript.
 
@@ -25,7 +25,7 @@ Current release: **1.0.13**. TinyCat uses [Semantic Versioning](https://semver.o
 - MySQL or MariaDB with the `pdo_mysql` PHP extension.
 - Apache 2.4 with `mod_rewrite` and `.htaccess` overrides enabled.
 - The `mbstring`, `gd`, `dom`, and `simplexml` PHP extensions for the full feature set.
-- The `curl` and `sodium` extensions, plus either `zip` or `phar`, for signed web updates.
+- The `curl` and `sodium` extensions, plus either `zip` or `phar`, for signed web updates and extension installation.
 - Outbound HTTPS streams (`allow_url_fopen`) for link previews and remote images; cURL is recommended for feed downloads.
 - Write access to `storage/` and `uploads/`. The installer also needs temporary permission to create `config.php` in the project root.
 
@@ -54,26 +54,35 @@ Before applying files, TinyCat enables maintenance mode and creates application 
 
 Database changes are versioned PHP migrations recorded in `schema_migrations`. Fresh installations always receive the current schema directly; migrations exist only to move already running installations forward. See [`docs/updates.md`](docs/updates.md) for package creation, signing, publishing, recovery, and migration rules.
 
-## Scheduled tasks and RSS bots
+## Extensions
 
-The bundled Bots extension is enabled by default and can be disabled under **Admin → Extensions** without deleting its data. Create bot accounts under **Admin → Bots → Accounts**, then add one or more sources under **Admin → Bots → Sources**. Each source has its own interval and post template. Bot accounts have no password and cannot sign in.
+Administrators install and update optional features under **Admin → Extensions**. TinyCat reads the signed official catalog from [TinyCat Extensions](https://github.com/hybernia1/TinyCat-Extensions), verifies the catalog signature, package checksum, exact file list, manifest identity, and compatibility requirements, then keeps extension files under `Extensions/`.
+
+The base release contains no functional extension. Existing installations upgraded from the 1.0.13 bridge retain their extension files and data; fresh installations add only the features they choose from the store.
+
+The official Bots extension provides passwordless bot accounts that publish from independently scheduled RSS or Atom sources without duplicating imported items. After installing it, create accounts under **Admin → Bots → Accounts** and sources under **Admin → Bots → Sources**.
+
+## Scheduled tasks
+
+The scheduler always provides routine cleanup. Extensions may register independent tasks; Bots adds the `feeds` task when installed and enabled.
 
 The recommended scheduler is the command-line runner:
 
 ```bash
 php scheduled-tasks.php --health
-php scheduled-tasks.php --task=feeds --bot-limit=20
 php scheduled-tasks.php --task=cleanup --cleanup-batch=500
+# With Bots installed:
+php scheduled-tasks.php --task=feeds --bot-limit=20
 ```
 
-Keep the tasks in separate scheduler entries so a slow feed request cannot hold up cleanup. For example, poll feeds every two minutes and run cleanup hourly:
+Keep independent tasks in separate scheduler entries. With Bots installed, for example, poll feeds every two minutes and run cleanup hourly:
 
 ```cron
 */2 * * * * php /path/to/tinycat/scheduled-tasks.php --task=feeds --bot-limit=20
 17 * * * * php /path/to/tinycat/scheduled-tasks.php --task=cleanup --cleanup-batch=500
 ```
 
-Source intervals still decide which feeds are due, and routine database cleanup runs at most once per hour. Each task has its own database lock. Feed runs publish at most one new item per due source and retain a bounded GUID history to prevent duplicates. `--task=all` remains available for simple installations that prefer one scheduler entry.
+Routine database cleanup runs at most once per hour and every task has its own database lock. Bots source intervals decide which feeds are due; feed runs publish at most one new item per due source and retain a bounded GUID history to prevent duplicates. `--task=all` remains available for simple installations that prefer one scheduler entry.
 
 When command-line scheduling is unavailable, use the protected HTTP endpoint shown in **Admin → Scheduled tasks**:
 

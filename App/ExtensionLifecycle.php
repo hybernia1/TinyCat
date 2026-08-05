@@ -74,6 +74,24 @@ final class ExtensionLifecycle
         if (!is_array($extension)) {
             throw new RuntimeException('Extension was not found: ' . $slug);
         }
+
+        return self::migrateDefinition($slug, $extension);
+    }
+
+    public static function migrateDiscovered(string $slug, string $directory): array
+    {
+        $slug = strtolower(trim($slug));
+        $extension = ExtensionLoader::discover($directory)[$slug] ?? null;
+
+        if (!is_array($extension)) {
+            throw new RuntimeException('Extension was not found after installation: ' . $slug);
+        }
+
+        return self::migrateDefinition($slug, $extension);
+    }
+
+    private static function migrateDefinition(string $slug, array $extension): array
+    {
         if (empty($extension['compatible'])) {
             throw new RuntimeException(
                 'Extension ' . $slug . ' requires TinyCat ' . (string) ($extension['minimum_tinycat'] ?? '') . ' or newer.'

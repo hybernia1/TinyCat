@@ -25,6 +25,7 @@ require_once __DIR__ . '/UserRoles.php';
 require_once __DIR__ . '/ExtensionRegistry.php';
 require_once __DIR__ . '/ExtensionLoader.php';
 require_once __DIR__ . '/ExtensionLifecycle.php';
+require_once __DIR__ . '/ExtensionStore.php';
 
 $extensionStateOverrides = Core::setting('extensions.states', []);
 ExtensionLoader::boot(

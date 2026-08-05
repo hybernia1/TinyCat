@@ -10,43 +10,56 @@ require_admin();
 
 if (is_post()) {
     csrf_require();
+    $action = strtolower(trim((string) post('action', 'state')));
     $slug = strtolower(trim((string) post('slug', '')));
-    $enabledInput = (string) post('enabled', '');
-    $extensions = ExtensionLifecycle::all();
 
     try {
-        if (!isset($extensions[$slug])) {
-            throw new RuntimeException(t('extensions.messages.not_found'));
-        }
-
-        $extension = $extensions[$slug];
-        if (!in_array($enabledInput, ['0', '1'], true)) {
-            throw new RuntimeException(t('extensions.messages.invalid_state'));
-        }
-
-        $enabled = $enabledInput === '1';
-        if ($enabled && empty($extension['compatible'])) {
-            throw new RuntimeException(t('extensions.messages.incompatible', [
-                'version' => (string) ($extension['minimum_tinycat'] ?? ''),
+        if ($action === 'install') {
+            $result = ExtensionStore::install($slug);
+            flash('success', t(!empty($result['updated'])
+                ? 'extensions.messages.updated'
+                : 'extensions.messages.installed', [
+                'name' => (string) ($result['name'] ?? $slug),
+                'version' => (string) ($result['version'] ?? ''),
             ]));
-        }
-        if ($enabled && empty($extension['installed'])) {
-            throw new RuntimeException(t('extensions.messages.install_first'));
-        }
+        } elseif ($action === 'refresh') {
+            ExtensionStore::catalog(true);
+            flash('success', t('extensions.messages.refreshed'));
+        } elseif ($action === 'state') {
+            $enabledInput = (string) post('enabled', '');
+            $extensions = ExtensionLifecycle::all();
 
-        $states = ExtensionLoader::stateOverrides();
-        $defaultEnabled = !empty($extension['autoload']);
+            if (!isset($extensions[$slug])) {
+                throw new RuntimeException(t('extensions.messages.not_found'));
+            }
 
-        if ($enabled === $defaultEnabled) {
-            unset($states[$slug]);
+            $extension = $extensions[$slug];
+            if (!in_array($enabledInput, ['0', '1'], true)) {
+                throw new RuntimeException(t('extensions.messages.invalid_state'));
+            }
+
+            $enabled = $enabledInput === '1';
+            if ($enabled && empty($extension['compatible'])) {
+                throw new RuntimeException(t('extensions.messages.incompatible', [
+                    'version' => (string) ($extension['minimum_tinycat'] ?? ''),
+                ]));
+            }
+            if ($enabled && empty($extension['installed'])) {
+                throw new RuntimeException(t('extensions.messages.install_first'));
+            }
+
+            $states = ExtensionLoader::stateOverrides();
+            $defaultEnabled = !empty($extension['autoload']);
+            if ($enabled === $defaultEnabled) unset($states[$slug]);
+            else $states[$slug] = $enabled;
+
+            setting_set('extensions.states', $states, 'json', 'extensions');
+            flash('success', t($enabled ? 'extensions.messages.enabled' : 'extensions.messages.disabled', [
+                'name' => (string) ($extension['name'] ?? $slug),
+            ]));
         } else {
-            $states[$slug] = $enabled;
+            throw new RuntimeException(t('extensions.messages.invalid_action'));
         }
-
-        setting_set('extensions.states', $states, 'json', 'extensions');
-        flash('success', t($enabled ? 'extensions.messages.enabled' : 'extensions.messages.disabled', [
-            'name' => (string) ($extension['name'] ?? $slug),
-        ]));
     } catch (Throwable $exception) {
         flash('error', $exception->getMessage());
     }
@@ -54,106 +67,151 @@ if (is_post()) {
     redirect('/admin/extensions');
 }
 
-$extensions = ExtensionLifecycle::all();
+$installed = ExtensionLifecycle::all();
+$store = [];
+$storeMeta = [];
+$storeError = '';
+
+try {
+    $storeMeta = ExtensionStore::catalog();
+    $store = (array) ($storeMeta['extensions'] ?? []);
+} catch (Throwable $exception) {
+    $storeError = $exception->getMessage();
+}
+
+$slugs = array_values(array_unique([...array_keys($installed), ...array_keys($store)]));
+sort($slugs, SORT_STRING);
 
 layout('layout', [
     'title' => t('extensions.title'),
     'current' => '/admin/extensions',
-], static function () use ($extensions): void {
+], static function () use ($installed, $store, $storeMeta, $storeError, $slugs): void {
     ?>
     <section class="card">
-        <div class="card-header">
-            <h1 class="text-lg m-0 cluster gap-2"><?= icon('file') ?> <?= et('extensions.title') ?></h1>
-            <p class="text-muted mb-0"><?= et('extensions.intro') ?></p>
+        <div class="card-header split gap-3">
+            <div>
+                <h1 class="text-lg m-0 cluster gap-2"><?= icon('file') ?> <?= et('extensions.title') ?></h1>
+                <p class="text-muted mb-0"><?= et('extensions.intro') ?></p>
+            </div>
+            <form method="post" action="/admin/extensions">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="refresh">
+                <button class="btn btn-secondary btn-sm" type="submit"><?= icon('refresh') ?> <span><?= et('extensions.refresh') ?></span></button>
+            </form>
         </div>
         <div class="card-body stack">
-            <?php if ($extensions === []): ?>
+            <?php if ($storeError !== ''): ?>
+                <div class="alert alert-warning mb-0"><?= et('extensions.store_unavailable') ?> <code><?= e($storeError) ?></code></div>
+            <?php elseif (!empty($storeMeta['release_url'])): ?>
+                <p class="text-muted mb-0">
+                    <?= et('extensions.official_store') ?>
+                    <a href="<?= e((string) $storeMeta['release_url']) ?>" target="_blank" rel="noopener noreferrer"><?= e((string) ($storeMeta['repository'] ?? '')) ?></a>
+                </p>
+            <?php endif; ?>
+
+            <?php if ($slugs === []): ?>
                 <p class="text-muted m-0"><?= et('extensions.empty') ?></p>
             <?php else: ?>
-                <div class="grid md:grid-2">
-                    <?php foreach ($extensions as $slug => $extension): ?>
+                <div class="stack gap-2">
+                    <?php foreach ($slugs as $slug): ?>
                         <?php
-                        $enabled = !empty($extension['enabled']);
-                        $requestedEnabled = !empty($extension['requested_enabled']);
-                        $compatible = !empty($extension['compatible']);
-                        $installed = !empty($extension['installed']);
-                        $installedVersion = (string) ($extension['installed_version'] ?? '');
-                        $pendingMigrations = (int) ($extension['pending_migrations'] ?? 0);
-                        $migrationError = (string) ($extension['migration_error'] ?? '');
-                        $downgradeDetected = !empty($extension['downgrade_detected']);
-                        $updateAvailable = !empty($extension['update_available']);
+                        $local = is_array($installed[$slug] ?? null) ? $installed[$slug] : [];
+                        $remote = is_array($store[$slug] ?? null) ? $store[$slug] : [];
+                        $present = $local !== [];
+                        $enabled = $present && !empty($local['enabled']);
+                        $requestedEnabled = $present && !empty($local['requested_enabled']);
+                        $installedVersion = (string) ($local['installed_version'] ?? '');
+                        $codeVersion = (string) ($local['version'] ?? '');
+                        $storeVersion = (string) ($remote['version'] ?? '');
+                        $storeCompatible = $remote === [] || !empty($remote['compatible']);
+                        $updateAvailable = $present && $storeVersion !== '' && version_compare($storeVersion, $codeVersion, '>');
+                        $repairRequired = $present && (
+                            $installedVersion !== $codeVersion
+                            || (int) ($local['pending_migrations'] ?? 0) > 0
+                            || (string) ($local['migration_error'] ?? '') !== ''
+                        );
+                        $description = (string) (($remote['descriptions'][locale()] ?? null)
+                            ?? ($remote['descriptions']['en'] ?? null)
+                            ?? '');
+                        $name = (string) ($local['name'] ?? $remote['name'] ?? $slug);
                         ?>
-                        <article class="card">
-                            <div class="card-header split gap-3">
-                                <div>
-                                    <h2 class="text-lg m-0"><?= e((string) ($extension['name'] ?? $slug)) ?></h2>
-                                    <code><?= e((string) $slug) ?></code>
-                                </div>
-                                <span class="badge <?= $enabled ? 'badge-primary' : ($compatible ? '' : 'badge-danger') ?>">
-                                    <?= et($enabled
-                                        ? 'extensions.status_enabled'
-                                        : ($compatible ? 'extensions.status_disabled' : 'extensions.status_incompatible')) ?>
+                        <details class="card"<?= !$present || $updateAvailable || $repairRequired ? ' open' : '' ?>>
+                            <summary class="card-header split gap-3">
+                                <span>
+                                    <strong><?= e($name) ?></strong>
+                                    <code class="ml-2"><?= e((string) $slug) ?></code>
                                 </span>
-                            </div>
+                                <span class="cluster gap-2">
+                                    <?php if ($updateAvailable || $repairRequired): ?>
+                                        <span class="badge badge-primary"><?= et('extensions.status_update') ?></span>
+                                    <?php elseif (!$present): ?>
+                                        <span class="badge"><?= et('extensions.status_available') ?></span>
+                                    <?php else: ?>
+                                        <span class="badge <?= $enabled ? 'badge-primary' : '' ?>"><?= et($enabled ? 'extensions.status_enabled' : 'extensions.status_disabled') ?></span>
+                                    <?php endif; ?>
+                                </span>
+                            </summary>
                             <div class="card-body stack gap-2">
-                                <div class="split gap-3">
-                                    <span class="text-muted"><?= et('extensions.version') ?></span>
-                                    <strong>v<?= e((string) ($extension['version'] ?? '')) ?></strong>
-                                </div>
+                                <?php if ($description !== ''): ?><p class="mb-0"><?= e($description) ?></p><?php endif; ?>
                                 <div class="split gap-3">
                                     <span class="text-muted"><?= et('extensions.installed_version') ?></span>
                                     <strong><?= $installedVersion !== '' ? 'v' . e($installedVersion) : et('extensions.not_installed') ?></strong>
                                 </div>
-                                <div class="split gap-3">
-                                    <span class="text-muted"><?= et('extensions.minimum_tinycat') ?></span>
-                                    <strong>v<?= e((string) ($extension['minimum_tinycat'] ?? '')) ?></strong>
-                                </div>
-                                <div class="split gap-3">
-                                    <span class="text-muted"><?= et('extensions.entry') ?></span>
-                                    <code><?= e((string) ($extension['entry'] ?? '')) ?></code>
-                                </div>
-                                <?php if ($pendingMigrations > 0): ?>
+                                <?php if ($storeVersion !== ''): ?>
                                     <div class="split gap-3">
-                                        <span class="text-muted"><?= et('extensions.pending_migrations') ?></span>
-                                        <strong><?= e((string) $pendingMigrations) ?></strong>
+                                        <span class="text-muted"><?= et('extensions.store_version') ?></span>
+                                        <strong>v<?= e($storeVersion) ?></strong>
                                     </div>
                                 <?php endif; ?>
-                                <?php if ($migrationError !== ''): ?>
-                                    <div class="alert alert-danger mb-0"><code><?= e($migrationError) ?></code></div>
-                                <?php elseif ($downgradeDetected): ?>
-                                    <div class="alert alert-danger mb-0"><?= et('extensions.downgrade_help') ?></div>
-                                <?php elseif (!$compatible): ?>
+                                <div class="split gap-3">
+                                    <span class="text-muted"><?= et('extensions.minimum_tinycat') ?></span>
+                                    <strong>v<?= e((string) ($remote['minimum_tinycat'] ?? $local['minimum_tinycat'] ?? '')) ?></strong>
+                                </div>
+                                <?php if (!$storeCompatible): ?>
                                     <div class="alert alert-warning mb-0"><?= et('extensions.incompatible_help', [
-                                        'version' => (string) ($extension['minimum_tinycat'] ?? ''),
+                                        'version' => (string) ($remote['minimum_tinycat'] ?? ''),
                                     ]) ?></div>
-                                <?php elseif (!$installed): ?>
-                                    <div class="alert alert-warning mb-0"><?= et('extensions.not_installed_help') ?></div>
-                                <?php elseif ($updateAvailable || $pendingMigrations > 0): ?>
+                                <?php elseif (!empty($local['migration_error'])): ?>
+                                    <div class="alert alert-danger mb-0"><code><?= e((string) $local['migration_error']) ?></code></div>
+                                <?php elseif (!empty($local['downgrade_detected'])): ?>
+                                    <div class="alert alert-danger mb-0"><?= et('extensions.downgrade_help') ?></div>
+                                <?php elseif ($present && (int) ($local['pending_migrations'] ?? 0) > 0): ?>
                                     <div class="alert alert-warning mb-0"><?= et('extensions.update_required_help') ?></div>
-                                <?php elseif ($enabled): ?>
-                                    <p class="text-muted mb-0"><?= et('extensions.disable_help') ?></p>
-                                <?php else: ?>
-                                    <p class="text-muted mb-0"><?= et('extensions.enable_help') ?></p>
+                                <?php elseif ($present): ?>
+                                    <p class="text-muted mb-0"><?= et($enabled ? 'extensions.disable_help' : 'extensions.enable_help') ?></p>
                                 <?php endif; ?>
                             </div>
                             <div class="card-footer cluster justify-end">
-                                <form method="post" action="/admin/extensions"<?= $requestedEnabled
-                                    ? ' data-confirm="' . et('extensions.disable_confirm', ['name' => (string) ($extension['name'] ?? $slug)])
-                                        . '" data-confirm-title="' . et('extensions.disable_title')
-                                        . '" data-confirm-ok="' . et('extensions.disable')
-                                        . '" data-confirm-cancel="' . et('common.cancel')
-                                        . '" data-confirm-variant="danger"'
-                                    : '' ?>>
-                                    <?= csrf_field() ?>
-                                    <input type="hidden" name="slug" value="<?= e((string) $slug) ?>">
-                                    <input type="hidden" name="enabled" value="<?= $requestedEnabled ? '0' : '1' ?>">
-                                    <button class="btn <?= $requestedEnabled ? 'btn-danger' : 'btn-primary' ?>" type="submit"<?= !$requestedEnabled && (!$compatible || !$installed) ? ' disabled' : '' ?>>
-                                        <?= icon($requestedEnabled ? 'close' : 'check') ?>
-                                        <span><?= et($requestedEnabled ? 'extensions.disable' : 'extensions.enable') ?></span>
-                                    </button>
-                                </form>
+                                <?php if (!empty($remote['homepage'])): ?>
+                                    <a class="btn btn-ghost" href="<?= e((string) $remote['homepage']) ?>" target="_blank" rel="noopener noreferrer"><?= icon('external-link') ?> <span><?= et('extensions.details') ?></span></a>
+                                <?php endif; ?>
+                                <?php if ($remote !== [] && (!$present || $updateAvailable || $repairRequired)): ?>
+                                    <form method="post" action="/admin/extensions" data-confirm="<?= et($present ? 'extensions.update_confirm' : 'extensions.install_confirm', ['name' => $name]) ?>" data-confirm-title="<?= et($present ? 'extensions.update' : 'extensions.install') ?>" data-confirm-ok="<?= et($present ? 'extensions.update' : 'extensions.install') ?>" data-confirm-cancel="<?= et('common.cancel') ?>">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="action" value="install">
+                                        <input type="hidden" name="slug" value="<?= e((string) $slug) ?>">
+                                        <button class="btn btn-primary" type="submit"<?= !$storeCompatible ? ' disabled' : '' ?>><?= icon('download') ?> <span><?= et($present ? 'extensions.update' : 'extensions.install') ?></span></button>
+                                    </form>
+                                <?php elseif ($present): ?>
+                                    <form method="post" action="/admin/extensions"<?= $requestedEnabled
+                                        ? ' data-confirm="' . et('extensions.disable_confirm', ['name' => $name])
+                                            . '" data-confirm-title="' . et('extensions.disable_title')
+                                            . '" data-confirm-ok="' . et('extensions.disable')
+                                            . '" data-confirm-cancel="' . et('common.cancel')
+                                            . '" data-confirm-variant="danger"'
+                                        : '' ?>>
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="action" value="state">
+                                        <input type="hidden" name="slug" value="<?= e((string) $slug) ?>">
+                                        <input type="hidden" name="enabled" value="<?= $requestedEnabled ? '0' : '1' ?>">
+                                        <button class="btn <?= $requestedEnabled ? 'btn-danger' : 'btn-primary' ?>" type="submit"<?= !$requestedEnabled && (empty($local['compatible']) || empty($local['installed'])) ? ' disabled' : '' ?>>
+                                            <?= icon($requestedEnabled ? 'close' : 'check') ?>
+                                            <span><?= et($requestedEnabled ? 'extensions.disable' : 'extensions.enable') ?></span>
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
-                        </article>
+                        </details>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
