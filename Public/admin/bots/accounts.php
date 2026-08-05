@@ -7,6 +7,7 @@ if (!defined('TINYCAT')) {
 }
 
 require_admin();
+require_once base_path('App/BotAdmin.php');
 
 layout('layout', [
     'title' => t('bots.accounts_title'),

@@ -46,8 +46,25 @@ final class Api
             require public_path('admin/bots.php');
         });
 
+        api_route('POST', '/admin/bots/{action:run|toggle}', static function (string $action): void {
+            $botAdminAction = $action;
+            require public_path('admin/bots.php');
+        });
+
+        api_route('POST', '/admin/bots/cron-token', static function (): void {
+            require public_path('admin/bots/cron.php');
+        });
+
         api_route('ANY', '/admin/bot-accounts', static function (): void {
             require public_path('admin/bot-accounts.php');
+        });
+
+        api_route('ANY', '/admin/moderation/reports', static function (): void {
+            require public_path('admin/moderation/reports.php');
+        });
+
+        api_route('ANY', '/admin/moderation/blocking', static function (): void {
+            require public_path('admin/moderation/blocking.php');
         });
 
         api_route('POST', '/admin/settings', static function (): void {

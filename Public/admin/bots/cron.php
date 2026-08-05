@@ -8,15 +8,25 @@ if (!defined('TINYCAT')) {
 
 require_admin();
 
-if (is_post()) {
-    csrf_require();
+$botCronApi = route_path() === '/api/admin/bots/cron-token';
 
-    if ((string) post('action', '') === 'rotate_cron_token') {
+if ($botCronApi) {
+    api_endpoint('POST', static function (): never {
+        csrf_require();
         bot_cron_token_rotate();
         flash('success', t('bots.messages.token_rotated'));
-    }
+        api_ok([
+            'rotated' => true,
+            'redirect' => '/admin/bots/cron',
+        ], t('bots.messages.token_rotated'));
+    });
+}
 
-    redirect('/admin/bots/cron');
+if (method() !== 'GET') {
+    header('Allow: GET');
+    http_response_code(405);
+    echo 'Method not allowed.';
+    return;
 }
 
 $cronToken = bot_cron_token(true);
@@ -34,8 +44,8 @@ layout('layout', [
                 <h1 class="text-lg m-0 cluster gap-2"><?= icon('clock') ?> <?= et('bots.cron_title') ?></h1>
                 <p class="text-muted mb-0"><?= et('bots.cron_intro') ?></p>
             </div>
-            <form method="post" action="/admin/bots/cron" data-confirm="<?= et('bots.cron_rotate_confirm') ?>">
-                <?= csrf_field() ?><input type="hidden" name="action" value="rotate_cron_token">
+            <form method="post" action="/api/admin/bots/cron-token" data-ajax-form data-confirm="<?= et('bots.cron_rotate_confirm') ?>">
+                <?= csrf_field() ?>
                 <button class="btn btn-secondary btn-sm" type="submit"><?= icon('refresh') ?> <span><?= et('bots.cron_rotate') ?></span></button>
             </form>
         </div>

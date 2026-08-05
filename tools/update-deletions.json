@@ -1,0 +1,6 @@
+{
+    "1.0.5": [
+        "App/ModerationAdmin.php",
+        "Public/admin/moderation.php"
+    ]
+}

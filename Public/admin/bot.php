@@ -7,8 +7,9 @@ if (!defined('TINYCAT')) {
 }
 
 require_admin();
+require_once base_path('App/BotAdmin.php');
 $botId = max(0, (int) get('id', 0));
-$bot = $botId > 0 ? one('SELECT * FROM users WHERE id = ? AND role = ? LIMIT 1', [$botId, 'bot']) : null;
+$bot = BotAdmin::accountById($botId);
 
 if ($bot === null) {
     http_response_code(404);
@@ -19,87 +20,6 @@ if ($bot === null) {
         ?><div class="alert alert-info"><?= et('bots.detail_not_found') ?></div><?php
     });
     return;
-}
-
-if (is_post()) {
-    csrf_require();
-    $action = (string) post('action', '');
-
-    if ($action === 'save_bot') {
-        $status = (string) post('status', '');
-        $allowedStatuses = array_keys(admin_user_statuses());
-        $bio = plain_text_limit((string) post('bio', ''), 500);
-        if (!in_array($status, $allowedStatuses, true)) {
-            flash('error', t('users.validation.status_invalid'));
-        } else {
-            try {
-                $avatar = admin_user_avatar_change($bot);
-            } catch (InvalidArgumentException $exception) {
-                flash('error', $exception->getMessage());
-                redirect('/admin/bots/' . $botId);
-            }
-            $payload = ['status' => $status, 'bio' => $bio];
-            if ($avatar['changed']) {
-                $payload['avatar_config'] = $avatar['json'];
-            }
-
-            try {
-                db_transaction(static function () use ($payload, $botId, $status): void {
-                    update('users', $payload, ['id' => $botId]);
-                    if ($status !== 'active') {
-                        update('bot_sources', ['enabled' => 0], ['bot_user_id' => $botId]);
-                    }
-                });
-            } catch (Throwable $exception) {
-                if ($avatar['uploaded']) {
-                    Avatar::delete($avatar['config']);
-                }
-                throw $exception;
-            }
-
-            if ($avatar['changed']) {
-                Avatar::delete($bot['avatar_config'] ?? null, $avatar['config']);
-            }
-            flash('success', t('bots.messages.saved'));
-        }
-        redirect('/admin/bots/' . $botId);
-    }
-
-    $sourceId = max(0, (int) post('source_id', 0));
-    $source = $sourceId > 0 ? bot_source_find($sourceId) : null;
-
-    if ($source === null || (int) ($source['bot_user_id'] ?? 0) !== $botId) {
-        flash('error', t('bots.messages.not_found'));
-        redirect('/admin/bots/' . $botId);
-    }
-
-    if ($action === 'toggle_source') {
-        $enabled = (bool) ($source['enabled'] ?? false);
-        if (!$enabled && (string) ($bot['status'] ?? '') !== 'active') {
-            flash('error', t('bots.detail_bot_inactive'));
-        } else {
-            update('bot_sources', [
-                'enabled' => $enabled ? 0 : 1,
-                'next_run_at' => $enabled ? null : date_db(),
-                'last_error' => null,
-            ], ['id' => $sourceId]);
-            flash('success', t('bots.messages.saved'));
-        }
-    } elseif ($action === 'run_source') {
-        if ((string) ($bot['status'] ?? '') !== 'active') {
-            flash('error', t('bots.detail_bot_inactive'));
-        } elseif (!(bool) ($source['enabled'] ?? false)) {
-            flash('error', t('bots.detail_source_disabled'));
-        } else {
-            $result = bot_run_source($source, true);
-            $messageKey = (string) ($result['status'] ?? '') === 'error'
-                ? 'bots.detail_run_failed'
-                : 'bots.detail_run_finished';
-            flash((string) ($result['status'] ?? '') === 'error' ? 'error' : 'success', t($messageKey));
-        }
-    }
-
-    redirect('/admin/bots/' . $botId);
 }
 
 $sources = bot_sources($botId);
@@ -149,12 +69,12 @@ layout('layout', [
 
     <section class="card">
         <div class="card-header"><h2 class="text-lg m-0 cluster gap-2"><?= icon('settings') ?> <?= et('bots.detail_account') ?></h2></div>
-        <form method="post" action="/admin/bots/<?= e((int) ($bot['id'] ?? 0)) ?>" enctype="multipart/form-data">
-            <?= csrf_field() ?><input type="hidden" name="action" value="save_bot">
+        <form method="post" action="/api/admin/bot-accounts?id=<?= e((int) ($bot['id'] ?? 0)) ?>" enctype="multipart/form-data" data-ajax-form>
+            <?= csrf_field() ?><input type="hidden" name="_method" value="PATCH">
             <div class="card-body grid md:grid-2">
                 <label class="field"><span class="label"><?= et('common.status') ?></span><select class="select" name="status">
-                    <?php foreach (['active' => 'users.statuses.active', 'waiting' => 'users.statuses.waiting', 'ban' => 'users.statuses.ban'] as $value => $label): ?>
-                        <option value="<?= e($value) ?>"<?= (string) ($bot['status'] ?? '') === $value ? ' selected' : '' ?>><?= et($label) ?></option>
+                    <?php foreach (admin_user_statuses() as $value => $label): ?>
+                        <option value="<?= e($value) ?>"<?= (string) ($bot['status'] ?? '') === $value ? ' selected' : '' ?>><?= e($label) ?></option>
                     <?php endforeach; ?>
                 </select></label>
                 <div class="field"><span class="label"><?= et('bots.detail_identity') ?></span><div class="table-meta">@<?= e((string) ($bot['username'] ?? '')) ?> · <?= et('users.roles.bot') ?></div></div>
@@ -205,13 +125,13 @@ layout('layout', [
                                 <div><span class="label"><?= et('bots.template') ?></span><pre class="code-block"><code><?= e((string) ($source['post_template'] ?? '')) ?></code></pre></div>
                                 <?php if (!empty($source['last_error'])): ?><div class="text-danger"><?= e((string) $source['last_error']) ?></div><?php endif; ?>
                                 <div class="cluster gap-2">
-                                    <form method="post">
-                                        <?= csrf_field() ?><input type="hidden" name="action" value="toggle_source"><input type="hidden" name="source_id" value="<?= e($sourceId) ?>">
+                                    <form method="post" action="/api/admin/bots/toggle" data-ajax-form>
+                                        <?= csrf_field() ?><input type="hidden" name="source_id" value="<?= e($sourceId) ?>"><input type="hidden" name="bot_id" value="<?= e($botId) ?>"><input type="hidden" name="redirect" value="/admin/bots/<?= e($botId) ?>">
                                         <button class="btn btn-secondary btn-sm" type="submit"><?= icon($enabled ? 'minus' : 'play') ?> <span><?= et($enabled ? 'bots.detail_pause' : 'bots.detail_enable') ?></span></button>
                                     </form>
                                     <?php if ($enabled): ?>
-                                        <form method="post">
-                                            <?= csrf_field() ?><input type="hidden" name="action" value="run_source"><input type="hidden" name="source_id" value="<?= e($sourceId) ?>">
+                                        <form method="post" action="/api/admin/bots/run" data-ajax-form>
+                                            <?= csrf_field() ?><input type="hidden" name="source_id" value="<?= e($sourceId) ?>"><input type="hidden" name="bot_id" value="<?= e($botId) ?>"><input type="hidden" name="redirect" value="/admin/bots/<?= e($botId) ?>">
                                             <button class="btn btn-primary btn-sm" type="submit"><?= icon('refresh') ?> <span><?= et('bots.detail_run_now') ?></span></button>
                                         </form>
                                     <?php endif; ?>

@@ -61,8 +61,8 @@ $activeSources = count(array_filter(
                                 <td>
                                     <div class="table-actions">
                                         <button class="btn btn-sm btn-ghost btn-icon" type="button" data-modal-open="bot-source-edit-<?= e($id) ?>" aria-label="<?= et('bots.edit_source') ?>" title="<?= et('bots.edit_source') ?>"><?= icon('edit') ?></button>
-                                        <form class="inline-flex" method="post" action="/admin/bots/list">
-                                            <?= csrf_field() ?><input type="hidden" name="action" value="run_source"><input type="hidden" name="source_id" value="<?= e($id) ?>">
+                                        <form class="inline-flex" method="post" action="<?= e(BotAdmin::sourceActionUrl('run')) ?>" data-ajax-form data-ajax-target="#bots-list">
+                                            <?= csrf_field() ?><input type="hidden" name="source_id" value="<?= e($id) ?>">
                                             <button class="btn btn-sm btn-ghost btn-icon" type="submit" aria-label="<?= et('bots.detail_run_now') ?>" title="<?= et('bots.detail_run_now') ?>"><?= icon('refresh') ?></button>
                                         </form>
                                         <form class="inline-flex" method="post" action="<?= e(BotAdmin::apiUrl()) ?>" data-ajax-form data-ajax-target="#bots-list" data-confirm="<?= et('bots.delete_confirm') ?>">

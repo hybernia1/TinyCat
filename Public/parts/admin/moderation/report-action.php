@@ -11,10 +11,10 @@ $decision = (string) ($decision ?? '');
 $iconName = (string) ($icon_name ?? 'flag');
 $labelKey = (string) ($label_key ?? 'common.actions');
 $buttonClass = trim('btn btn-sm btn-ghost btn-icon ' . ((string) ($variant ?? '') === 'danger' ? 'text-danger' : ''));
+$confirmDelete = $decision === 'remove';
 ?>
-<form class="inline-flex" method="post" action="/admin/moderation/reports">
+<form class="inline-flex" method="post" action="/api/admin/moderation/reports?view=html" data-ajax-form data-ajax-target="#moderation-reports"<?= $confirmDelete ? ' data-confirm="' . et('account.status_delete_confirm') . '" data-confirm-title="' . et('account.status_delete_title') . '" data-confirm-ok="' . et('common.delete') . '" data-confirm-cancel="' . et('common.cancel') . '" data-confirm-variant="danger"' : '' ?>>
     <?= csrf_field() ?>
-    <input type="hidden" name="action" value="report_review">
     <input type="hidden" name="report_id" value="<?= e($reportId) ?>">
     <input type="hidden" name="decision" value="<?= e($decision) ?>">
     <button class="<?= e($buttonClass) ?>" type="submit" title="<?= et($labelKey) ?>" aria-label="<?= et($labelKey) ?>">

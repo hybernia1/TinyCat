@@ -556,6 +556,16 @@ function tc_install_create_tables(): void
     );
 
     run(
+        "CREATE TABLE IF NOT EXISTS schema_migrations (
+            migration VARCHAR(190) NOT NULL,
+            version VARCHAR(32) NOT NULL,
+            checksum CHAR(64) NOT NULL,
+            applied_at DATETIME NOT NULL,
+            PRIMARY KEY (migration)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
         "CREATE TABLE IF NOT EXISTS ip_action_limits (
             ip_address VARCHAR(45) NOT NULL,
             action_name VARCHAR(40) NOT NULL,

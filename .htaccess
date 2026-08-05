@@ -4,7 +4,7 @@ DirectoryIndex index.php
     Require all denied
 </FilesMatch>
 
-RedirectMatch 404 ^/(App|lang)(/|$)
+RedirectMatch 404 ^/(App|lang|migrations)(/|$)
 RedirectMatch 404 "^/storage(?:$|/(?!cache/assets/[A-Za-z0-9._-]+\.(?:css|js)$).*)"
 
 <IfModule mod_setenvif.c>

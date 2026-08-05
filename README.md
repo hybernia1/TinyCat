@@ -25,6 +25,7 @@ Current release: **1.0.4**. TinyCat uses [Semantic Versioning](https://semver.or
 - MySQL or MariaDB with the `pdo_mysql` PHP extension.
 - Apache 2.4 with `mod_rewrite` and `.htaccess` overrides enabled.
 - The `mbstring`, `gd`, `dom`, and `simplexml` PHP extensions for the full feature set.
+- The `curl` and `sodium` extensions, plus either `zip` or `phar`, for signed web updates.
 - Outbound HTTPS streams (`allow_url_fopen`) for link previews and remote images; cURL is recommended for feed downloads.
 - Write access to `storage/` and `uploads/`. The installer also needs temporary permission to create `config.php` in the project root.
 
@@ -39,11 +40,19 @@ The PHP `exif` extension improves JPEG orientation handling but is optional. Apa
 5. Open `/install` and select a language.
 6. Enter the database connection, create the schema, and create the first administrator account.
 
-The installer creates the complete TinyCat 1.0 schema and writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root no longer needs to remain writable.
+The installer creates the complete TinyCat 1.0 schema and writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root only needs to remain writable when web updates are enabled.
 
-Use HTTPS in production. The supplied Apache rules prevent direct web access to `config.php`, `App/`, `lang/`, and private `storage/` content; equivalent protection is required if the application is adapted to another web server.
+Use HTTPS in production. The supplied Apache rules prevent direct web access to `config.php`, `App/`, `lang/`, `migrations/`, and private `storage/` content; equivalent protection is required if the application is adapted to another web server.
 
 TinyCat 1.0 is a clean installation baseline. It contains no pre-1.0 database migrations or compatibility layer for older schemas; an existing installation must already match the 1.0 schema before this code is deployed.
+
+## Updates
+
+Administrators can check and install signed stable releases under **Admin → Updates**. The updater downloads three GitHub release assets: a curated application ZIP, its manifest, and an Ed25519 signature. It verifies the signature, package hash, every managed file, version compatibility, and safe archive paths before changing the installation.
+
+Before applying files, TinyCat enables maintenance mode and creates application and database backups below `storage/updates/backups/`. Updates never overwrite `config.php`, `storage/`, or `uploads/`. The web-server user needs write access to managed application files while an update is installed; deployments that keep source code read-only can continue to deploy release assets manually.
+
+Database changes are versioned PHP migrations recorded in `schema_migrations`. Fresh installations always receive the current schema directly; migrations exist only to move already running installations forward. See [`docs/updates.md`](docs/updates.md) for package creation, signing, publishing, recovery, and migration rules.
 
 ## RSS and Atom bots
 
@@ -86,6 +95,7 @@ See `/privacy` on an installed site for the user-facing data and cookie policy g
 - `lang/<locale>/` contains each language package: `app.json` for the interface and optional `emails.json` for email templates.
 - `storage/` contains private runtime state and generated asset caches.
 - `uploads/` contains user and site media.
+- `tools/build-update.php` creates signed production release assets.
 
 ## License
 
