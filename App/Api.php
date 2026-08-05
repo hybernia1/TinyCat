@@ -22,6 +22,8 @@ final class Api
 
         api_route('POST', '/author/follow', [self::class, 'followAuthor']);
         api_route('POST', '/profile/update', [self::class, 'profileUpdate']);
+        api_route('POST', '/profile/email', [self::class, 'profileEmailUpdate']);
+        api_route('POST', '/profile/password', [self::class, 'profilePasswordUpdate']);
         api_route('POST', '/avatar/update', [self::class, 'avatarUpdate']);
 
         api_route('POST', '/status/{action:[a-z-]+}', [self::class, 'statusAction']);
@@ -183,6 +185,22 @@ final class Api
         csrf_require();
 
         return user_profile_update_request($user);
+    }
+
+    public static function profileEmailUpdate(): array
+    {
+        $user = require_auth('/login');
+        csrf_require();
+
+        return user_email_update_request($user);
+    }
+
+    public static function profilePasswordUpdate(): array
+    {
+        $user = require_auth('/login');
+        csrf_require();
+
+        return user_password_update_request($user);
     }
 
     public static function avatarUpdate(): array

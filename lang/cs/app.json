@@ -353,6 +353,7 @@
     "account": {
         "title": "Můj účet",
         "save_profile": "Uložit profil",
+        "save_email": "Uložit e-mail",
         "profile_settings": "Profil",
         "email_notifications": "Posílat mi emailové notifikace",
         "email_notifications_email_required": "Pro zapnutí nejdřív přidej email.",

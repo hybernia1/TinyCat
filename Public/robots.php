@@ -13,7 +13,6 @@ header('X-Content-Type-Options: nosniff');
 echo "User-agent: *\n";
 echo "Disallow: /admin\n";
 echo "Disallow: /api\n";
-echo "Disallow: /account\n";
 echo "Disallow: /install\n";
 echo "Disallow: /login\n";
 echo "Disallow: /logout\n";

@@ -3109,6 +3109,30 @@ img.status-editor-suggestion-avatar {
   gap: 12px;
 }
 
+.profile-edit-tabs {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-edit-tabs .tabs {
+  margin: -2px -2px 0;
+}
+
+.profile-edit-tabs .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-edit-tabs .tab .icon {
+  width: 1em;
+  height: 1em;
+}
+
+.profile-edit-form {
+  margin: 0;
+}
+
 .avatar-upload {
   display: grid;
   gap: 14px;

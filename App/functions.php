@@ -576,7 +576,7 @@ function auth_landing_url(?array $user = null): string
 
     $id = (int) ($user['id'] ?? 0);
 
-    return $id > 0 ? author_url($id) : '/account';
+    return $id > 0 ? author_url($id) : '/';
 }
 
 function auth_next_path(string $next): string
@@ -1726,7 +1726,74 @@ function user_profile_update_request(array $user): array
     return [
         'user' => user_public_payload(auth() ?: $user),
         'message' => t('account.messages.profile_saved'),
-        'redirect' => author_url($id),
+    ];
+}
+
+function user_email_update_request(array $user): array
+{
+    $id = (int) ($user['id'] ?? 0);
+    $email = user_email_normalize((string) post('email', ''));
+    $errors = [];
+
+    if ($id < 1) {
+        api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
+    }
+
+    if ($email !== '' && !user_email_valid($email)) {
+        $errors[] = t('account.messages.email_invalid');
+    } elseif ($email !== '' && user_email_taken($email, $id)) {
+        $errors[] = t('account.messages.email_taken');
+    }
+
+    if ($errors !== []) {
+        api_error(implode(' ', $errors), 422, 'validation_error', ['errors' => $errors]);
+    }
+
+    $data = ['email' => $email !== '' ? $email : null];
+
+    if (input('email_notifications', null) !== null) {
+        $data['email_notifications'] = $email !== '' && (string) input('email_notifications', '') === '1' ? 1 : 0;
+    } elseif ($email === '') {
+        $data['email_notifications'] = 0;
+    }
+
+    update('users', $data, ['id' => $id]);
+
+    return [
+        'user' => user_public_payload(auth() ?: $user),
+        'message' => t('account.messages.profile_saved'),
+    ];
+}
+
+function user_password_update_request(array $user): array
+{
+    $id = (int) ($user['id'] ?? 0);
+    $currentPassword = (string) post('current_password', '');
+    $password = (string) post('password', '');
+    $passwordConfirm = (string) post('password_confirm', '');
+    $hash = (string) ($user['password'] ?? '');
+    $errors = [];
+
+    if ($id < 1) {
+        api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
+    }
+
+    if (auth_password_too_long($currentPassword) || $hash === '' || !password_verify($currentPassword, $hash)) {
+        $errors[] = t('account.messages.current_password_invalid');
+    }
+
+    $errors = array_merge($errors, auth_password_validation_errors($password, $passwordConfirm));
+
+    if ($errors !== []) {
+        api_error(implode(' ', $errors), 422, 'validation_error', ['errors' => $errors]);
+    }
+
+    update('users', [
+        'password' => auth_password($password),
+    ], ['id' => $id]);
+
+    return [
+        'message' => t('account.messages.password_saved'),
     ];
 }
 
