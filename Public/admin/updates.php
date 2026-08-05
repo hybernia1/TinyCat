@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Update\Manager;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -14,17 +16,17 @@ if (is_post()) {
 
     try {
         if ($action === 'check') {
-            $release = Updater::check(true);
+            $release = Manager::check(true);
             flash('updater_release', $release);
             flash('success', !empty($release['available'])
                 ? t('updates.messages.available', ['version' => (string) ($release['version'] ?? '')])
                 : t('updates.messages.current'));
         } elseif ($action === 'install') {
-            $result = Updater::installLatest();
+            $result = Manager::installLatest();
             flash('updater_result', $result);
             flash('success', t('updates.messages.installed', ['version' => (string) ($result['version'] ?? Core::VERSION)]));
         } elseif ($action === 'disable-maintenance') {
-            Updater::disableMaintenance();
+            Manager::disableMaintenance();
             flash('success', t('updates.messages.maintenance_disabled'));
         } else {
             throw new RuntimeException(t('updates.messages.invalid_action'));
@@ -38,11 +40,11 @@ if (is_post()) {
 }
 
 $release = flash('updater_release');
-$release = is_array($release) ? $release : Updater::cachedRelease();
+$release = is_array($release) ? $release : Manager::cachedRelease();
 $result = flash('updater_result');
 $result = is_array($result) ? $result : [];
 $error = trim((string) flash('updater_error'));
-$maintenance = Updater::maintenanceState();
+$maintenance = Manager::maintenanceState();
 $extensions = [
     'cURL' => extension_loaded('curl'),
     'Sodium' => extension_loaded('sodium'),
@@ -50,7 +52,7 @@ $extensions = [
 ];
 $releaseCompatible = !is_array($release) || !array_key_exists('compatible', $release) || !empty($release['compatible']);
 $canInstall = !in_array(false, $extensions, true) && $releaseCompatible;
-$history = Updater::migrationHistory();
+$history = Manager::migrationHistory();
 
 layout('layout', [
     'title' => t('updates.title'),

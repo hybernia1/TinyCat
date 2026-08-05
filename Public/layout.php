@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Extension\Registry;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -41,7 +43,7 @@ foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', '
 $defaultAdminNav = [
     ['href' => '/admin', 'icon' => 'dashboard', 'label' => t('common.dashboard')],
     ['href' => '/admin/users', 'icon' => 'users', 'label' => t('users.list_title')],
-    ...ExtensionRegistry::adminNavigation(),
+    ...Registry::adminNavigation(),
     [
         'icon' => 'shield',
         'label' => t('moderation.title'),

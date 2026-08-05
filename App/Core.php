@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Extension\Registry;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -14,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '1.0.14';
+    public const string VERSION = '2.0.0';
 
     private static bool $booted = false;
     private static array $config = [];
@@ -550,7 +552,7 @@ final class Core
 
         self::$translations[$locale] = array_replace_recursive(
             $data,
-            ExtensionRegistry::translations($locale)
+            Registry::translations($locale)
         );
 
         return self::$translations[$locale];

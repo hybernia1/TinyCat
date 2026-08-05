@@ -1,12 +1,14 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Extension\Loader;
+use TinyCat\Extension\Registry;
+
 define('TINYCAT', true);
 
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core.php';
-require_once $root . '/App/ExtensionRegistry.php';
-require_once $root . '/App/ExtensionLoader.php';
+require_once $root . '/App/autoload.php';
 
 $scenario = (string) ($argv[1] ?? '');
 if (!in_array($scenario, ['enabled', 'disabled'], true)) {
@@ -21,7 +23,7 @@ try {
     mkdir($sample, 0777, true);
     file_put_contents($sample . DIRECTORY_SEPARATOR . 'bootstrap.php', <<<'PHP'
 <?php
-ExtensionRegistry::register('sample', [
+TinyCat\Extension\Registry::register('sample', [
     'root' => __DIR__,
     'required_tables' => ['sample_data'],
 ]);
@@ -38,12 +40,12 @@ PHP);
     ], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
 
     $expected = $scenario === 'enabled';
-    ExtensionLoader::boot($temporary, ['sample' => $expected]);
-    $available = ExtensionLoader::available()['sample'] ?? [];
+    Loader::boot($temporary, ['sample' => $expected]);
+    $available = Loader::available()['sample'] ?? [];
     $valid = ($available['requested_enabled'] ?? null) === $expected
         && ($available['enabled'] ?? null) === $expected
-        && ExtensionRegistry::has('sample') === $expected
-        && in_array('sample_data', ExtensionRegistry::requiredTables(), true) === $expected;
+        && Registry::has('sample') === $expected
+        && in_array('sample_data', Registry::requiredTables(), true) === $expected;
 
     if (!$valid) {
         throw new RuntimeException('Extension state did not produce the expected runtime registration.');

@@ -1,10 +1,15 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Extension\Lifecycle;
+use TinyCat\Extension\Loader;
+use TinyCat\Update\MigrationRegistry;
+
 define('TINYCAT', true);
 
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core.php';
+require_once $root . '/App/autoload.php';
 
 function db(): PDO
 {
@@ -54,11 +59,7 @@ function db_transaction(callable $callback): mixed
     }
 }
 
-require_once $root . '/App/MigrationRegistry.php';
 require_once $root . '/App/UserRoles.php';
-require_once $root . '/App/ExtensionRegistry.php';
-require_once $root . '/App/ExtensionLoader.php';
-require_once $root . '/App/ExtensionLifecycle.php';
 
 if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     echo "SKIP extension lifecycle: pdo_sqlite is unavailable.\n";
@@ -81,26 +82,6 @@ run(
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )'
 );
-
-insert('settings', [
-    'setting_key' => 'extensions.installed_versions',
-    'setting_group' => 'extensions',
-    'setting_value' => json_encode(['sample-existing' => '2.0.0'], JSON_THROW_ON_ERROR),
-    'setting_type' => 'json',
-    'autoload' => 1,
-]);
-$adoptBots = require $root . '/migrations/20260805_003_bots_extension_adoption.php';
-$adoptBots($database);
-$adoptBots($database);
-$adoptedVersions = Core::setting('extensions.installed_versions', []);
-
-if (
-    ($adoptedVersions['bots'] ?? '') !== '1.0.0'
-    || ($adoptedVersions['sample-existing'] ?? '') !== '2.0.0'
-    || (int) Core::value("SELECT COUNT(*) FROM settings WHERE setting_key = 'extensions.installed_versions'") !== 1
-) {
-    throw new RuntimeException('Legacy Bots extension adoption is not restart-safe.');
-}
 
 $temporaryRoot = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'tinycat-extension-lifecycle-' . bin2hex(random_bytes(8));
 $sampleRoot = $temporaryRoot . DIRECTORY_SEPARATOR . 'Sample';
@@ -129,13 +110,13 @@ PHP);
         'autoload' => false,
     ], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
 
-    ExtensionLoader::boot($temporaryRoot, ['sample' => false]);
-    $before = ExtensionLifecycle::all()['sample'] ?? [];
+    Loader::boot($temporaryRoot, ['sample' => false]);
+    $before = Lifecycle::all()['sample'] ?? [];
     if (!empty($before['installed']) || (int) ($before['pending_migrations'] ?? 0) !== 1) {
         throw new RuntimeException('Uninstalled extension status was not detected.');
     }
 
-    $result = ExtensionLifecycle::migrate('sample');
+    $result = Lifecycle::migrate('sample');
     $migrationId = 'extension:sample:20260805_001_create_sample';
     if (
         ($result['version'] ?? '') !== '1.2.0'
@@ -145,8 +126,8 @@ PHP);
         throw new RuntimeException('Extension migration was not applied.');
     }
 
-    $restarted = ExtensionLifecycle::migrate('sample');
-    $after = ExtensionLifecycle::all()['sample'] ?? [];
+    $restarted = Lifecycle::migrate('sample');
+    $after = Lifecycle::all()['sample'] ?? [];
     if (
         ($restarted['migrations'] ?? []) !== []
         || ($after['installed_version'] ?? '') !== '1.2.0'
@@ -157,7 +138,7 @@ PHP);
     }
 
     file_put_contents($migrationPath, "<?php return static function (PDO \$database): void {};\n");
-    $tampered = ExtensionLifecycle::all()['sample'] ?? [];
+    $tampered = Lifecycle::all()['sample'] ?? [];
     if (trim((string) ($tampered['migration_error'] ?? '')) === '') {
         throw new RuntimeException('Applied extension migration tampering was not detected.');
     }

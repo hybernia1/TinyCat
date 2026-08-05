@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Update\Manager;
+
 define('TINYCAT', true);
-require_once dirname(__DIR__, 2) . '/App/functions.php';
+require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
 
 $config = (array) config('database', []);
 
@@ -59,54 +61,17 @@ try {
     insert('schema_migrations', ['version' => '20260731_email_analytics_ip_limits']);
     insert('schema_migrations', ['version' => '20260801_bot_sources']);
 
-    $method = new ReflectionMethod(Updater::class, 'ensureMigrationTable');
-    $method->invoke(null);
-    $method->invoke(null);
-
-    $columns = array_column(all('SHOW COLUMNS FROM schema_migrations'), null, 'Field');
-    $primary = array_map(
-        static fn (array $index): string => (string) ($index['COLUMN_NAME'] ?? ''),
-        all(
-            "SELECT COLUMN_NAME
-             FROM information_schema.STATISTICS
-             WHERE TABLE_SCHEMA = DATABASE()
-               AND TABLE_NAME = 'schema_migrations'
-               AND INDEX_NAME = 'PRIMARY'
-             ORDER BY SEQ_IN_INDEX"
-        )
-    );
-    $history = all('SELECT migration, version, checksum FROM schema_migrations ORDER BY migration');
-
-    if (!isset($columns['migration'], $columns['version'], $columns['checksum'], $columns['applied_at'])) {
-        throw new RuntimeException('The upgraded registry is missing required columns.');
-    }
-
-    if ($primary !== ['migration']) {
-        throw new RuntimeException('The upgraded registry primary key is not migration.');
-    }
-
-    if (count($history) !== 2 || ($history[0]['migration'] ?? '') !== '20260731_email_analytics_ip_limits') {
-        throw new RuntimeException('Legacy migration history was not preserved.');
-    }
-
-    foreach ($history as $row) {
-        if (preg_match('/^[a-f0-9]{64}$/', (string) ($row['checksum'] ?? '')) !== 1) {
-            throw new RuntimeException('A legacy migration checksum was not backfilled.');
+    $method = new ReflectionMethod(Manager::class, 'ensureMigrationTable');
+    try {
+        $method->invoke(null);
+    } catch (RuntimeException $exception) {
+        if (str_contains($exception->getMessage(), 'Update TinyCat to 1.0.14')) {
+            echo "PASS MySQL outdated migration registry rejected by 2.x baseline.\n";
+            return;
         }
+        throw $exception;
     }
-
-    insert('schema_migrations', [
-        'migration' => '20260805_001_user_relations',
-        'version' => '1.0.7',
-        'checksum' => str_repeat('c', 64),
-        'applied_at' => date_db(),
-    ]);
-
-    if ((int) val('SELECT COUNT(*) FROM schema_migrations') !== 3) {
-        throw new RuntimeException('The upgraded registry rejected a new migration.');
-    }
-
-    echo "PASS MySQL legacy migration registry upgrade: history preserved and new migrations accepted.\n";
+    throw new RuntimeException('The outdated MySQL migration registry was accepted.');
 } finally {
     if ($created && preg_match('/^tinycat_registry_test_[a-f0-9]{10}$/', $databaseName) === 1) {
         $server->exec('DROP DATABASE IF EXISTS `' . $databaseName . '`');

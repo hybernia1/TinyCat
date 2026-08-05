@@ -1,9 +1,12 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Extension\Registry;
+use TinyCat\Update\Manager;
+
 define('TINYCAT', true);
 
-require_once __DIR__ . '/App/functions.php';
+require_once __DIR__ . '/App/bootstrap.php';
 require_once __DIR__ . '/App/Api.php';
 
 Core::securityHeaders();
@@ -20,10 +23,10 @@ $siteIdentityPath = in_array($path, [
 ], true);
 
 if (!$siteIdentityPath) {
-    Updater::enforceMaintenance($path);
+    Manager::enforceMaintenance($path);
 }
 
-ExtensionRegistry::registerRoutes();
+Registry::registerRoutes();
 
 route('GET', '/admin/moderation', static function (): void {
     redirect('/admin/moderation/reports');

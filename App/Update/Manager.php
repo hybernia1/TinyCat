@@ -1,6 +1,21 @@
 <?php
 declare(strict_types=1);
 
+namespace TinyCat\Update;
+
+use Cache;
+use Core;
+use FilesystemIterator;
+use JsonException;
+use PDO;
+use PharData;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use RuntimeException;
+use SplFileInfo;
+use Throwable;
+use ZipArchive;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -12,7 +27,7 @@ if (!defined('TINYCAT')) {
  * Runtime data is deliberately kept outside the managed file set. An update
  * can replace application files, but never config.php, storage or uploads.
  */
-final class Updater
+final class Manager
 {
     private const string DEFAULT_REPOSITORY = 'hybernia1/TinyCat';
     private const string MANIFEST_ASSET = 'tinycat-update.json';
@@ -1061,8 +1076,7 @@ final class Updater
 
         $root = explode('/', $path, 2)[0];
         $allowedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
-        // cron.php remains managed so a later package can remove the legacy endpoint.
-        $allowedFiles = ['index.php', 'scheduled-tasks.php', 'cron.php', '.htaccess', 'LICENSE', 'README.md'];
+        $allowedFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
 
         if (!in_array($root, $allowedRoots, true) && !in_array($path, $allowedFiles, true)) {
             throw new RuntimeException('Update package targets a protected path: ' . $path);

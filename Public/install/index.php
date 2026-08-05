@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Extension\Lifecycle;
+use TinyCat\Extension\Registry;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -602,7 +605,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    ExtensionRegistry::installSchemas();
+    Registry::installSchemas();
 }
 
 function tc_install_default_settings(array $state): void
@@ -624,7 +627,7 @@ function tc_install_default_settings(array $state): void
         ['datetime.datetime', (string) config('datetime.datetime', 'd.m.Y H:i'), 'string', 'localization'],
         ['cron.token', bin2hex(random_bytes(32)), 'string', 'cron'],
         ['extensions.states', [], 'json', 'extensions'],
-        ['extensions.installed_versions', ExtensionLifecycle::freshInstallVersions(), 'json', 'extensions'],
+        ['extensions.installed_versions', Lifecycle::freshInstallVersions(), 'json', 'extensions'],
         ['datetime.relative', (bool) config('datetime.relative', false), 'bool', 'localization'],
         ['security.captcha.enabled', (bool) config('security.captcha.enabled', true), 'bool', 'security'],
         ['auth.registration.enabled', (bool) config('auth.registration.enabled', false), 'bool', 'security'],

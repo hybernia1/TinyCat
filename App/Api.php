@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Extension\Registry;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -42,7 +44,7 @@ final class Api
             require public_path('admin/users.php');
         });
 
-        ExtensionRegistry::registerApiRoutes();
+        Registry::registerApiRoutes();
 
         api_route('POST', '/admin/cron-token', static function (): void {
             require public_path('admin/cron.php');

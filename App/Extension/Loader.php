@@ -1,12 +1,20 @@
 <?php
 declare(strict_types=1);
 
+namespace TinyCat\Extension;
+
+use Core;
+use JsonException;
+use LogicException;
+use RuntimeException;
+use TinyCat\Update\MigrationRegistry;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
 }
 
-final class ExtensionLoader
+final class Loader
 {
     private static bool $booted = false;
     private static array $available = [];
@@ -45,13 +53,13 @@ final class ExtensionLoader
                 continue;
             }
 
-            if (ExtensionRegistry::has($slug)) {
+            if (Registry::has($slug)) {
                 throw new LogicException('Extension was registered before its manifest was loaded: ' . $slug);
             }
 
-            $registeredBefore = ExtensionRegistry::slugs();
+            $registeredBefore = Registry::slugs();
             require $manifest['entry_path'];
-            $registered = array_values(array_diff(ExtensionRegistry::slugs(), $registeredBefore));
+            $registered = array_values(array_diff(Registry::slugs(), $registeredBefore));
 
             if ($registered !== [$slug]) {
                 throw new RuntimeException('Extension entry must register exactly its manifest slug: ' . $slug);
@@ -157,9 +165,7 @@ final class ExtensionLoader
         $entry = trim(str_replace('\\', '/', (string) ($manifest['entry'] ?? '')), '/');
         $autoload = $manifest['autoload'] ?? null;
         $migrationFiles = $manifest['migrations'] ?? [];
-        $legacyVersion = isset($manifest['legacy_version'])
-            ? trim((string) $manifest['legacy_version'])
-            : '';
+        $uninstall = $manifest['uninstall'] ?? null;
 
         if ($schema !== 1) {
             throw new RuntimeException('Unsupported extension manifest schema: ' . $path);
@@ -185,9 +191,6 @@ final class ExtensionLoader
         }
         if (!is_bool($autoload)) {
             throw new RuntimeException('Extension manifest autoload must be boolean: ' . $slug);
-        }
-        if ($legacyVersion !== '' && (strlen($legacyVersion) > 32 || !self::validVersion($legacyVersion))) {
-            throw new RuntimeException('Invalid extension legacy version: ' . $slug);
         }
         if (!is_array($migrationFiles) || !array_is_list($migrationFiles)) {
             throw new RuntimeException('Extension manifest migrations must be a list: ' . $slug);
@@ -223,6 +226,8 @@ final class ExtensionLoader
             throw new RuntimeException('Extension migrations must be sorted: ' . $slug);
         }
 
+        $uninstall = self::uninstallDefinition($uninstall, $root, $slug);
+
         return [
             'schema' => 1,
             'slug' => $slug,
@@ -234,11 +239,95 @@ final class ExtensionLoader
                 && version_compare(PHP_VERSION, $minimumPhp, '>='),
             'entry' => $entry,
             'autoload' => $autoload,
-            'legacy_version' => $legacyVersion,
             'migrations' => $migrations,
+            'uninstall' => $uninstall,
             'root' => $root,
             'entry_path' => self::resolvePhpFile($root, $entry, $slug, 'entry'),
         ];
+    }
+
+    private static function uninstallDefinition(mixed $definition, string $root, string $slug): ?array
+    {
+        if ($definition === null) {
+            return null;
+        }
+        if (!is_array($definition) || array_is_list($definition)) {
+            throw new RuntimeException('Invalid extension uninstall definition: ' . $slug);
+        }
+
+        $handler = trim(str_replace('\\', '/', (string) ($definition['handler'] ?? '')), '/');
+        $options = $definition['options'] ?? null;
+        if (!is_array($options) || !array_is_list($options) || $options === [] || count($options) > 10) {
+            throw new RuntimeException('Invalid extension uninstall options: ' . $slug);
+        }
+
+        $normalized = [];
+        $recommended = false;
+
+        foreach ($options as $option) {
+            if (!is_array($option) || array_is_list($option)) {
+                throw new RuntimeException('Invalid extension uninstall option: ' . $slug);
+            }
+
+            $id = strtolower(trim((string) ($option['id'] ?? '')));
+            $danger = $option['danger'] ?? false;
+            $isRecommended = $option['recommended'] ?? false;
+
+            if (preg_match('/^[a-z][a-z0-9_-]{0,63}$/', $id) !== 1
+                || isset($normalized[$id])
+                || !is_bool($danger)
+                || !is_bool($isRecommended)
+                || ($isRecommended && $recommended)
+            ) {
+                throw new RuntimeException('Invalid extension uninstall option: ' . $slug);
+            }
+
+            $labels = self::localizedManifestText($option['labels'] ?? null, 120, $slug, 'uninstall label');
+            $descriptions = self::localizedManifestText(
+                $option['descriptions'] ?? null,
+                500,
+                $slug,
+                'uninstall description'
+            );
+
+            $normalized[$id] = [
+                'id' => $id,
+                'labels' => $labels,
+                'descriptions' => $descriptions,
+                'danger' => $danger,
+                'recommended' => $isRecommended,
+            ];
+            $recommended = $recommended || $isRecommended;
+        }
+
+        return [
+            'handler' => $handler,
+            'handler_path' => self::resolvePhpFile($root, $handler, $slug, 'uninstall handler'),
+            'options' => array_values($normalized),
+        ];
+    }
+
+    private static function localizedManifestText(mixed $value, int $limit, string $slug, string $label): array
+    {
+        if (!is_array($value) || array_is_list($value) || $value === []) {
+            throw new RuntimeException('Invalid extension ' . $label . ': ' . $slug);
+        }
+
+        $localized = [];
+        foreach ($value as $locale => $text) {
+            $locale = strtolower(str_replace('_', '-', trim((string) $locale)));
+            $text = trim((string) $text);
+            if (preg_match('/^[a-z]{2}(?:-[a-z]{2})?$/', $locale) !== 1
+                || $text === ''
+                || strlen($text) > $limit
+            ) {
+                throw new RuntimeException('Invalid extension ' . $label . ': ' . $slug);
+            }
+            $localized[$locale] = $text;
+        }
+
+        ksort($localized, SORT_STRING);
+        return $localized;
     }
 
     private static function resolvePhpFile(string $root, string $relative, string $slug, string $label): string
@@ -296,6 +385,9 @@ final class ExtensionLoader
     private static function publicManifest(array $manifest): array
     {
         unset($manifest['entry_path']);
+        if (is_array($manifest['uninstall'] ?? null)) {
+            unset($manifest['uninstall']['handler_path']);
+        }
         return $manifest;
     }
 }
