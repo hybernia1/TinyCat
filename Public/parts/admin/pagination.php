@@ -39,7 +39,7 @@ $url = static function (int $targetPage, bool $ajax) use ($path, $historyPath, $
     return admin_list_url($ajax ? $path : $historyPath, $query, $ajax);
 };
 ?>
-<nav class="pagination admin-pagination" aria-label="<?= et('common.pagination') ?>">
+<nav class="pagination" aria-label="<?= et('common.pagination') ?>">
     <div class="pagination-summary"><?= et('common.pagination_summary', ['from' => (string) $from, 'to' => (string) $to, 'total' => (string) $total]) ?></div>
     <div class="pagination-list">
         <?php if ($page <= 1): ?>

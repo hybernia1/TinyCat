@@ -8,7 +8,7 @@ if (!defined('TINYCAT')) {
 
 $links = is_array($links ?? null) ? $links : [];
 ?>
-<div class="grid sm:grid-2 profile-links-fields">
+<div class="grid sm:grid-2">
     <?php foreach (profile_link_types() as $type => $label): ?>
         <label class="field">
             <span class="label"><?= e($label) ?></span>

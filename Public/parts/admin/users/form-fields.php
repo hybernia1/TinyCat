@@ -17,7 +17,7 @@ $profileLinks = (array) ($user['profile_links'] ?? []);
 ?>
 <div class="user-editor-layout">
     <div class="user-editor-main stack">
-        <section class="user-editor-panel">
+        <section class="card card-body">
             <div class="grid sm:grid-2">
                 <label class="field">
                     <span class="label"><?= et('common.username') ?></span>
@@ -38,19 +38,19 @@ $profileLinks = (array) ($user['profile_links'] ?? []);
         </section>
 
         <?php if (!$create): ?>
-            <section class="user-editor-panel stack">
+            <section class="card card-body stack stack-gap-12">
                 <label class="field">
                     <span class="label"><?= et('account.bio') ?></span>
                     <textarea class="textarea" name="bio" rows="5" maxlength="500"><?= e((string) ($user['bio'] ?? '')) ?></textarea>
                 </label>
             </section>
-            <section class="user-editor-panel stack">
+            <section class="card card-body stack stack-gap-12">
                 <div><span class="label"><?= et('profile_links.title') ?></span><span class="help"><?= et('profile_links.help') ?></span></div>
                 <?= part('profile/link-fields', ['links' => $profileLinks]) ?>
             </section>
         <?php endif; ?>
 
-        <section class="user-editor-panel">
+        <section class="card card-body">
             <label class="field">
                 <span class="label"><?= $create ? et('common.password') : et('common.new_password') ?></span>
                 <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" placeholder="<?= $create ? '' : et('users.password_keep') ?>">
@@ -60,7 +60,7 @@ $profileLinks = (array) ($user['profile_links'] ?? []);
 
     <aside class="user-editor-sidebar">
         <?php if (!$create): ?>
-            <section class="user-editor-panel stack">
+            <section class="card card-body stack stack-gap-12">
                 <span class="label"><?= et('account.avatar') ?></span>
                 <div class="avatar avatar-xl"><?= part('user/avatar', ['user' => $user, 'alt' => (string) ($user['username'] ?? '')]) ?></div>
                 <label class="field"><span class="label"><?= et('account.avatar_upload_label') ?></span><input class="input" type="file" name="avatar" accept="image/png,image/jpeg,image/webp"></label>
@@ -69,8 +69,8 @@ $profileLinks = (array) ($user['profile_links'] ?? []);
                 <?php endif; ?>
             </section>
         <?php endif; ?>
-        <section class="user-editor-panel">
-            <div class="user-editor-settings-grid">
+        <section class="card card-body">
+            <div class="stack stack-gap-12">
                 <label class="field">
                     <span class="label"><?= et('common.role') ?></span>
                     <?php if ($superAdminLocked): ?>

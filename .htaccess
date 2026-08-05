@@ -16,6 +16,8 @@ RedirectMatch 404 "^/storage(?:$|/(?!cache/assets/[A-Za-z0-9._-]+\.(?:css|js)$).
 </IfModule>
 
 <IfModule mod_headers.c>
+    # Send HSTS only over a direct HTTPS connection. All subdomains must support HTTPS.
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" "expr=%{HTTPS} == 'on'"
     Header always set X-Content-Type-Options "nosniff" env=tinycat_static_asset
     Header set Cache-Control "public, max-age=31536000, immutable" env=tinycat_versioned_asset
     Header set Cache-Control "public, max-age=2592000, stale-while-revalidate=86400" env=tinycat_upload_asset

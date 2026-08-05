@@ -105,9 +105,9 @@ layout('layout', [
 ], static function () use ($installed, $store, $storeMeta, $storeError, $slugs, $localizedManifestText): void {
     ?>
     <section class="card">
-        <div class="card-header split gap-3">
+        <div class="card-header split">
             <div>
-                <h1 class="text-lg m-0 cluster gap-2"><?= icon('file') ?> <?= et('extensions.title') ?></h1>
+                <h1 class="text-lg m-0 cluster gap-2"><?= icon('puzzle') ?> <?= et('extensions.title') ?></h1>
                 <p class="text-muted mb-0"><?= et('extensions.intro') ?></p>
             </div>
             <form method="post" action="/admin/extensions">
@@ -129,7 +129,7 @@ layout('layout', [
             <?php if ($slugs === []): ?>
                 <p class="text-muted m-0"><?= et('extensions.empty') ?></p>
             <?php else: ?>
-                <div class="stack gap-2">
+                <div class="disclosure-list">
                     <?php foreach ($slugs as $slug): ?>
                         <?php
                         $local = is_array($installed[$slug] ?? null) ? $installed[$slug] : [];
@@ -157,11 +157,14 @@ layout('layout', [
                             ?? '');
                         $name = (string) ($local['name'] ?? $remote['name'] ?? $slug);
                         ?>
-                        <details class="card"<?= !$present || $updateAvailable || $repairRequired ? ' open' : '' ?>>
-                            <summary class="card-header split gap-3">
-                                <span>
-                                    <strong><?= e($name) ?></strong>
-                                    <code class="ml-2"><?= e((string) $slug) ?></code>
+                        <details class="disclosure-item"<?= !$present || $updateAvailable || $repairRequired ? ' open' : '' ?>>
+                            <summary class="disclosure-summary">
+                                <span class="disclosure-heading">
+                                    <?= icon('puzzle') ?>
+                                    <span class="stack stack-gap-4">
+                                        <strong><?= e($name) ?></strong>
+                                        <small><code><?= e((string) $slug) ?></code></small>
+                                    </span>
                                 </span>
                                 <span class="cluster gap-2">
                                     <?php if ($updateAvailable || $repairRequired): ?>
@@ -173,19 +176,19 @@ layout('layout', [
                                     <?php endif; ?>
                                 </span>
                             </summary>
-                            <div class="card-body stack gap-2">
+                            <div class="disclosure-body stack stack-gap-8">
                                 <?php if ($description !== ''): ?><p class="mb-0"><?= e($description) ?></p><?php endif; ?>
-                                <div class="split gap-3">
+                                <div class="split">
                                     <span class="text-muted"><?= et('extensions.installed_version') ?></span>
                                     <strong><?= $installedVersion !== '' ? 'v' . e($installedVersion) : et('extensions.not_installed') ?></strong>
                                 </div>
                                 <?php if ($storeVersion !== ''): ?>
-                                    <div class="split gap-3">
+                                    <div class="split">
                                         <span class="text-muted"><?= et('extensions.store_version') ?></span>
                                         <strong>v<?= e($storeVersion) ?></strong>
                                     </div>
                                 <?php endif; ?>
-                                <div class="split gap-3">
+                                <div class="split">
                                     <span class="text-muted"><?= et('extensions.minimum_tinycat') ?></span>
                                     <strong>v<?= e((string) ($remote['minimum_tinycat'] ?? $local['minimum_tinycat'] ?? '')) ?></strong>
                                 </div>
@@ -258,7 +261,7 @@ layout('layout', [
         <input type="hidden" name="action" value="uninstall">
         <input type="hidden" name="slug" value="<?= e((string) $slug) ?>">
         <p class="mb-0"><?= et('extensions.uninstall_intro', ['name' => (string) ($extension['name'] ?? $slug)]) ?></p>
-        <div class="stack gap-2">
+        <div class="stack stack-gap-8">
             <?php foreach ($options as $index => $option): ?>
                 <?php
                 $recommended = !empty($option['recommended']);

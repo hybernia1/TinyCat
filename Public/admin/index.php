@@ -57,7 +57,7 @@ layout('layout', [
                 <div class="stack">
                     <?php foreach ($recentComments as $comment): ?>
                         <article class="card-body px-0 py-2 border-b">
-                            <div class="split gap-3">
+                            <div class="split">
                                 <strong><?= e('@' . (string) ($comment['username'] ?? '')) ?></strong>
                                 <time class="table-meta" datetime="<?= e(date_iso((string) ($comment['created_at'] ?? ''))) ?>"><?= e(datetime((string) ($comment['created_at'] ?? ''))) ?></time>
                             </div>

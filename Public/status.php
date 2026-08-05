@@ -79,7 +79,7 @@ layout('layout', [
     <section class="public-layout">
         <div class="home-feed-section stack stack-gap-14">
             <h1 class="sr-only"><?= et('public.status_title') ?></h1>
-            <article class="card status-card status-permalink-card" id="<?= e(status_anchor($contentId)) ?>">
+            <article class="card status-card" id="<?= e(status_anchor($contentId)) ?>">
                 <div class="card-body stack stack-gap-12">
                     <div class="status-header">
                         <a class="avatar" href="<?= e($authorId > 0 ? author_url($authorId) : '#') ?>" aria-label="<?= e($authorName) ?>">

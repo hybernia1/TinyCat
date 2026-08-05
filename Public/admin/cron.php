@@ -86,37 +86,37 @@ layout('layout', [
             </form>
         </div>
         <div class="card-body stack">
-            <div class="scheduled-task-list">
-                <details class="scheduled-task-item" name="scheduled-task">
-                    <summary class="scheduled-task-summary">
-                        <span class="scheduled-task-heading">
+            <div class="disclosure-list">
+                <details class="disclosure-item" name="scheduled-task">
+                    <summary class="disclosure-summary">
+                        <span class="disclosure-heading">
                             <?= icon('key') ?>
-                            <span class="stack gap-1">
+                            <span class="stack stack-gap-4">
                                 <strong><?= et('cron.access_title') ?></strong>
                                 <small><?= et('cron.access_help') ?></small>
                             </span>
                         </span>
-                        <?= icon('chevron-down', 'icon scheduled-task-chevron') ?>
+                        <?= icon('chevron-down', 'icon disclosure-chevron') ?>
                     </summary>
-                    <div class="scheduled-task-body stack">
+                    <div class="disclosure-body stack">
                         <label class="field"><span class="label"><?= et('cron.url') ?></span><input class="input" value="<?= e($cronUrl) ?>" readonly></label>
                         <label class="field"><span class="label"><?= et('cron.token') ?></span><input class="input" value="<?= e($cronToken) ?>" readonly></label>
                     </div>
                 </details>
 
                 <?php foreach ($taskViews as $view): ?>
-                    <details class="scheduled-task-item" name="scheduled-task">
-                        <summary class="scheduled-task-summary">
-                            <span class="scheduled-task-heading">
+                    <details class="disclosure-item" name="scheduled-task">
+                        <summary class="disclosure-summary">
+                            <span class="disclosure-heading">
                                 <?= icon((string) $view['icon']) ?>
-                                <span class="stack gap-1">
+                                <span class="stack stack-gap-4">
                                     <strong><?= et((string) $view['title']) ?></strong>
                                     <small><?= et((string) $view['help']) ?></small>
                                 </span>
                             </span>
-                            <?= icon('chevron-down', 'icon scheduled-task-chevron') ?>
+                            <?= icon('chevron-down', 'icon disclosure-chevron') ?>
                         </summary>
-                        <div class="scheduled-task-body stack">
+                        <div class="disclosure-body stack">
                             <label class="field"><span class="label"><?= et('cron.task_url') ?></span><input class="input" value="<?= e((string) $view['query_url']) ?>" readonly><span class="help"><?= et('cron.query_help') ?></span></label>
                             <div class="field"><span class="label"><?= et('cron.http_command') ?></span><pre class="code-block"><code><?= e((string) $view['http_command']) ?></code></pre></div>
                             <div class="field"><span class="label"><?= et('cron.cli_command') ?></span><pre class="code-block"><code><?= e((string) $view['cli_command']) ?></code></pre></div>

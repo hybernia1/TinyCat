@@ -66,7 +66,7 @@ layout('layout', [
                 <?php foreach ($sections as $key => $section): ?>
                     <?php $selected = $key === $active; ?>
                     <div class="tab-panel stack" id="settings-panel-<?= e($key) ?>" role="tabpanel" aria-labelledby="settings-tab-<?= e($key) ?>" data-tab-panel="<?= e($key) ?>"<?= $selected ? '' : ' hidden' ?>>
-                        <div class="settings-grid settings-grid-<?= e($key) ?>">
+                        <div class="settings-grid">
                             <?php foreach ((array) $section['fields'] as $field): ?>
                                 <?= part('admin/settings/field', ['field' => $field]) ?>
                             <?php endforeach; ?>
