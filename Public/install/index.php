@@ -341,7 +341,8 @@ function tc_install_create_tables(): void
             PRIMARY KEY (id),
             UNIQUE KEY users_username_unique (username),
             UNIQUE KEY users_email_unique (email),
-            KEY users_role_status_index (role, status)
+            KEY users_role_status_index (role, status),
+            CONSTRAINT fk_users_muted_by FOREIGN KEY (muted_by) REFERENCES users (id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -349,7 +350,7 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS content (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             body VARCHAR(2000) NOT NULL,
-            author_id INT UNSIGNED NULL,
+            author_id INT UNSIGNED NOT NULL,
             published_at DATETIME NOT NULL,
             edit_locked_at DATETIME NULL,
             edit_locked_by INT UNSIGNED NULL,
@@ -359,7 +360,9 @@ function tc_install_create_tables(): void
             KEY content_feed_index (published_at, id),
             KEY content_sidebar_index (published_at, author_id, id),
             KEY content_author_index (author_id, published_at, id),
-            FULLTEXT KEY content_body_fulltext (body)
+            FULLTEXT KEY content_body_fulltext (body),
+            CONSTRAINT fk_content_author FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE,
+            CONSTRAINT fk_content_edit_locked_by FOREIGN KEY (edit_locked_by) REFERENCES users (id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -377,7 +380,9 @@ function tc_install_create_tables(): void
             content_id BIGINT UNSIGNED NOT NULL,
             term_id BIGINT UNSIGNED NOT NULL,
             PRIMARY KEY (content_id, term_id),
-            KEY content_tags_term_index (term_id, content_id)
+            KEY content_tags_term_index (term_id, content_id),
+            CONSTRAINT fk_content_tags_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,
+            CONSTRAINT fk_content_tags_term FOREIGN KEY (term_id) REFERENCES terms (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -409,7 +414,9 @@ function tc_install_create_tables(): void
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (content_id, link_id),
             KEY content_links_content_index (content_id, position_index),
-            KEY content_links_link_index (link_id)
+            KEY content_links_link_index (link_id),
+            CONSTRAINT fk_content_links_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,
+            CONSTRAINT fk_content_links_link FOREIGN KEY (link_id) REFERENCES links (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -419,7 +426,9 @@ function tc_install_create_tables(): void
             user_id INT UNSIGNED NOT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (content_id, user_id),
-            KEY content_likes_user_index (user_id, content_id)
+            KEY content_likes_user_index (user_id, content_id),
+            CONSTRAINT fk_content_likes_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,
+            CONSTRAINT fk_content_likes_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -434,7 +443,10 @@ function tc_install_create_tables(): void
             PRIMARY KEY (id),
             KEY content_comments_content_index (content_id, parent_id, created_at),
             KEY content_comments_user_index (user_id, created_at),
-            KEY content_comments_parent_index (parent_id)
+            KEY content_comments_parent_index (parent_id),
+            CONSTRAINT fk_content_comments_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,
+            CONSTRAINT fk_content_comments_parent FOREIGN KEY (parent_id) REFERENCES content_comments (id) ON DELETE CASCADE,
+            CONSTRAINT fk_content_comments_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -444,7 +456,9 @@ function tc_install_create_tables(): void
             user_id INT UNSIGNED NOT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (comment_id, user_id),
-            KEY comment_likes_user_index (user_id, comment_id)
+            KEY comment_likes_user_index (user_id, comment_id),
+            CONSTRAINT fk_comment_likes_comment FOREIGN KEY (comment_id) REFERENCES content_comments (id) ON DELETE CASCADE,
+            CONSTRAINT fk_comment_likes_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -454,7 +468,9 @@ function tc_install_create_tables(): void
             follower_id INT UNSIGNED NOT NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (user_id, follower_id),
-            KEY user_followers_follower_index (follower_id, user_id)
+            KEY user_followers_follower_index (follower_id, user_id),
+            CONSTRAINT fk_user_followers_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+            CONSTRAINT fk_user_followers_follower FOREIGN KEY (follower_id) REFERENCES users (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -467,7 +483,8 @@ function tc_install_create_tables(): void
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (user_id, link_type),
-            KEY user_profile_links_type_index (link_type, user_id)
+            KEY user_profile_links_type_index (link_type, user_id),
+            CONSTRAINT fk_user_profile_links_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -475,7 +492,7 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS notifications (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id INT UNSIGNED NOT NULL,
-            actor_id INT UNSIGNED NOT NULL,
+            actor_id INT UNSIGNED NULL,
             content_id BIGINT UNSIGNED NULL,
             comment_id BIGINT UNSIGNED NULL,
             type VARCHAR(40) NOT NULL,
@@ -488,7 +505,11 @@ function tc_install_create_tables(): void
             KEY notifications_user_index (user_id, read_at, created_at),
             KEY notifications_actor_index (actor_id, created_at),
             KEY notifications_content_index (content_id),
-            KEY notifications_comment_index (comment_id)
+            KEY notifications_comment_index (comment_id),
+            CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+            CONSTRAINT fk_notifications_actor FOREIGN KEY (actor_id) REFERENCES users (id) ON DELETE SET NULL,
+            CONSTRAINT fk_notifications_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,
+            CONSTRAINT fk_notifications_comment FOREIGN KEY (comment_id) REFERENCES content_comments (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -496,7 +517,7 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS content_reports (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             content_id BIGINT UNSIGNED NOT NULL,
-            reporter_id INT UNSIGNED NOT NULL,
+            reporter_id INT UNSIGNED NULL,
             reason VARCHAR(40) NOT NULL DEFAULT 'other',
             note TEXT NULL,
             status VARCHAR(20) NOT NULL DEFAULT 'open',
@@ -507,7 +528,10 @@ function tc_install_create_tables(): void
             PRIMARY KEY (id),
             UNIQUE KEY content_reports_unique (content_id, reporter_id),
             KEY content_reports_status_index (status, created_at),
-            KEY content_reports_reporter_index (reporter_id)
+            KEY content_reports_reporter_index (reporter_id),
+            CONSTRAINT fk_content_reports_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,
+            CONSTRAINT fk_content_reports_reporter FOREIGN KEY (reporter_id) REFERENCES users (id) ON DELETE SET NULL,
+            CONSTRAINT fk_content_reports_reviewer FOREIGN KEY (reviewed_by) REFERENCES users (id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -551,7 +575,8 @@ function tc_install_create_tables(): void
             PRIMARY KEY (id),
             UNIQUE KEY password_reset_tokens_hash_unique (token_hash),
             KEY password_reset_tokens_user_index (user_id, expires_at),
-            KEY password_reset_tokens_expiry_index (expires_at)
+            KEY password_reset_tokens_expiry_index (expires_at),
+            CONSTRAINT fk_password_reset_tokens_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -596,7 +621,8 @@ function tc_install_create_tables(): void
             PRIMARY KEY (id),
             UNIQUE KEY bot_sources_feed_hash_unique (feed_hash),
             KEY bot_sources_due_index (enabled, next_run_at, id),
-            KEY bot_sources_user_index (bot_user_id, id)
+            KEY bot_sources_user_index (bot_user_id, id),
+            CONSTRAINT fk_bot_sources_user FOREIGN KEY (bot_user_id) REFERENCES users (id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -610,7 +636,9 @@ function tc_install_create_tables(): void
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (source_id, item_hash),
             KEY bot_feed_items_content_index (content_id),
-            KEY bot_feed_items_created_index (created_at)
+            KEY bot_feed_items_created_index (created_at),
+            CONSTRAINT fk_bot_feed_items_source FOREIGN KEY (source_id) REFERENCES bot_sources (id) ON DELETE CASCADE,
+            CONSTRAINT fk_bot_feed_items_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -625,7 +653,9 @@ function tc_install_create_tables(): void
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (bot_user_id, feed_hash, item_hash),
             KEY bot_feed_history_content_index (content_id),
-            KEY bot_feed_history_created_index (created_at)
+            KEY bot_feed_history_created_index (created_at),
+            CONSTRAINT fk_bot_feed_history_user FOREIGN KEY (bot_user_id) REFERENCES users (id) ON DELETE CASCADE,
+            CONSTRAINT fk_bot_feed_history_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
@@ -646,7 +676,10 @@ function tc_install_create_tables(): void
             PRIMARY KEY (id),
             KEY bot_source_runs_source_index (source_id, started_at),
             KEY bot_source_runs_bot_index (bot_user_id, started_at),
-            KEY bot_source_runs_status_index (status, started_at)
+            KEY bot_source_runs_status_index (status, started_at),
+            CONSTRAINT fk_bot_source_runs_source FOREIGN KEY (source_id) REFERENCES bot_sources (id) ON DELETE CASCADE,
+            CONSTRAINT fk_bot_source_runs_user FOREIGN KEY (bot_user_id) REFERENCES users (id) ON DELETE CASCADE,
+            CONSTRAINT fk_bot_source_runs_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 }

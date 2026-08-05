@@ -85,12 +85,7 @@ if (method() === 'DELETE') {
             api_error(t('bots.messages.account_not_found'), 404, 'bot_account_not_found');
         }
 
-        db_transaction(static function () use ($id): void {
-            bot_delete_sources_for_user($id);
-            delete('user_profile_links', ['user_id' => $id]);
-            delete('users', ['id' => $id]);
-        });
-        Avatar::delete($account['avatar_config'] ?? null);
+        user_delete_account($id);
         api_ok(BotAdmin::accountsPayload(), t('bots.messages.account_deleted'));
     });
 }

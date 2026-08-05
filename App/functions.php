@@ -1044,6 +1044,70 @@ function rate_limit_ip_action_record(string $action, int $window = 3600): void
     );
 }
 
+function user_relations_foreign_keys_ready(): bool
+{
+    if ((string) db()->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
+        return false;
+    }
+
+    return (int) val(
+        'SELECT COUNT(DISTINCT CONSTRAINT_NAME)
+         FROM information_schema.KEY_COLUMN_USAGE
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND CONSTRAINT_NAME IN (?, ?, ?)
+           AND REFERENCED_TABLE_NAME IS NOT NULL',
+        ['fk_content_author', 'fk_content_comments_user', 'fk_content_likes_user']
+    ) === 3;
+}
+
+function user_delete_account(int $userId): ?array
+{
+    if ($userId < 1) {
+        return null;
+    }
+
+    $user = one('SELECT * FROM users WHERE id = ? LIMIT 1', [$userId]);
+
+    if ($user === null) {
+        return null;
+    }
+
+    if (!user_relations_foreign_keys_ready()) {
+        throw new RuntimeException('Account deletion requires the TinyCat 1.0.6 database migration.');
+    }
+
+    $termIds = array_map(
+        static fn (array $row): int => (int) ($row['term_id'] ?? 0),
+        all(
+            'SELECT DISTINCT ct.term_id
+             FROM content_tags ct
+             INNER JOIN content c ON c.id = ct.content_id
+             WHERE c.author_id = ?',
+            [$userId]
+        )
+    );
+    $linkIds = array_map(
+        static fn (array $row): int => (int) ($row['link_id'] ?? 0),
+        all(
+            'SELECT DISTINCT cl.link_id
+             FROM content_links cl
+             INNER JOIN content c ON c.id = cl.content_id
+             WHERE c.author_id = ?',
+            [$userId]
+        )
+    );
+
+    db_transaction(static function () use ($userId, $termIds, $linkIds): void {
+        delete('users', ['id' => $userId]);
+        status_cleanup_unused_term_ids($termIds);
+        status_cleanup_unused_link_ids($linkIds);
+    });
+
+    Avatar::delete($user['avatar_config'] ?? null);
+
+    return $user;
+}
+
 function email_user(int $userId): ?array
 {
     if ($userId < 1) {
@@ -6171,26 +6235,6 @@ function bot_source_run_finish(int $runId, string $status, int $itemsSeen = 0, i
     } catch (Throwable) {
         // Run history is diagnostic and must never break the import.
     }
-}
-
-function bot_delete_sources_for_user(int $botUserId): void
-{
-    if ($botUserId < 1) {
-        return;
-    }
-
-    db_transaction(static function () use ($botUserId): void {
-        $ids = array_map(
-            static fn (array $row): int => (int) ($row['id'] ?? 0),
-            all('SELECT id FROM bot_sources WHERE bot_user_id = ?', [$botUserId])
-        );
-
-        foreach ($ids as $id) {
-            bot_delete_source($id);
-        }
-
-        delete('bot_feed_history', ['bot_user_id' => $botUserId]);
-    });
 }
 
 function bot_delete_source(int $sourceId): void
