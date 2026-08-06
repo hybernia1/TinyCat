@@ -795,7 +795,9 @@
   function hydrateDynamic(root) {
     initUserAvatarImages(root || document);
     qsa("[data-captcha]", root || document).forEach(initCaptchaRoot);
+    qsa("[data-client-image-input]", root || document).forEach(initClientImageInput);
     qsa("[data-avatar-upload]", root || document).forEach(initAvatarUploadRoot);
+    qsa("[data-status-image]", root || document).forEach(initStatusImageRoot);
     qsa("[data-status-video]", root || document).forEach(initStatusVideoRoot);
     qsa("[data-status-link-image]", root || document).forEach(initStatusLinkImageRoot);
 
@@ -893,6 +895,155 @@
     });
   }
 
+  function clientImageFile(file, maxDimension, maxBytes) {
+    return new Promise(function (resolve, reject) {
+      var bitmapPromise;
+
+      if (!file || ["image/png", "image/jpeg", "image/webp"].indexOf(file.type) === -1) {
+        reject(new Error("unsupported_image"));
+        return;
+      }
+
+      if (maxBytes && file.size > maxBytes) {
+        reject(new Error("image_too_large"));
+        return;
+      }
+
+      if (typeof window.createImageBitmap !== "function" || typeof window.DataTransfer !== "function") {
+        reject(new Error("image_resize_unavailable"));
+        return;
+      }
+
+      bitmapPromise = window.createImageBitmap(file, { imageOrientation: "from-image" }).catch(function () {
+        return window.createImageBitmap(file);
+      });
+
+      bitmapPromise.then(function (bitmap) {
+        var sourceWidth = bitmap.width;
+        var sourceHeight = bitmap.height;
+        var scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+        var width = Math.max(1, Math.round(sourceWidth * scale));
+        var height = Math.max(1, Math.round(sourceHeight * scale));
+        var canvas = document.createElement("canvas");
+        var context = canvas.getContext("2d", { alpha: true });
+
+        if (!context) {
+          if (typeof bitmap.close === "function") {
+            bitmap.close();
+          }
+          reject(new Error("image_resize_unavailable"));
+          return;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = "high";
+        context.drawImage(bitmap, 0, 0, width, height);
+        if (typeof bitmap.close === "function") {
+          bitmap.close();
+        }
+
+        canvas.toBlob(function (blob) {
+          var extension;
+          var filename;
+
+          if (!blob || blob.size < 1) {
+            reject(new Error("image_resize_failed"));
+            return;
+          }
+
+          extension = blob.type === "image/webp" ? "webp" : "png";
+          filename = String(file.name || "image").replace(/\.[^.]+$/, "") + "." + extension;
+          resolve(new File([blob], filename, { type: blob.type, lastModified: Date.now() }));
+        }, "image/webp", 0.9);
+      }).catch(function () {
+        reject(new Error("image_resize_failed"));
+      });
+    });
+  }
+
+  function replaceImageInputFile(input, file) {
+    var transfer = new DataTransfer();
+
+    transfer.items.add(file);
+    input.files = transfer.files;
+  }
+
+  function clientImagePreparing(input, preparing) {
+    var form = input.form;
+    var active;
+
+    input.disabled = preparing;
+
+    if (!form) {
+      return;
+    }
+
+    active = Math.max(0, parseInt(form.dataset.clientImagePreparing || "0", 10) || 0) + (preparing ? 1 : -1);
+    form.dataset.clientImagePreparing = String(active);
+    qsa('button[type="submit"], input[type="submit"]', form).forEach(function (button) {
+      if (preparing) {
+        if (button.dataset.clientImageWasDisabled === undefined) {
+          button.dataset.clientImageWasDisabled = button.disabled ? "1" : "0";
+        }
+        button.disabled = true;
+      } else if (active === 0) {
+        if (button.dataset.clientImageWasDisabled !== "1") {
+          button.disabled = false;
+        }
+        delete button.dataset.clientImageWasDisabled;
+      }
+    });
+  }
+
+  function prepareClientImageInput(input, file) {
+    var maxDimension = parseInt(input.dataset.clientImageMaxDimension || "0", 10) || 0;
+    var maxBytes = parseInt(input.dataset.clientImageMaxBytes || "0", 10) || 0;
+
+    if (!maxDimension || !maxBytes) {
+      return Promise.resolve(file);
+    }
+
+    clientImagePreparing(input, true);
+    return clientImageFile(file, maxDimension, maxBytes).finally(function () {
+      clientImagePreparing(input, false);
+    });
+  }
+
+  function initClientImageInput(input) {
+    var selectionRequestId = 0;
+
+    if (!input || input.dataset.clientImageInputReady === "true") {
+      return;
+    }
+
+    input.dataset.clientImageInputReady = "true";
+    input.addEventListener("change", async function () {
+      var file = input.files && input.files[0] ? input.files[0] : null;
+      var requestId = ++selectionRequestId;
+      var prepared;
+
+      if (!file) {
+        return;
+      }
+
+      try {
+        prepared = await prepareClientImageInput(input, file);
+        if (requestId !== selectionRequestId) {
+          return;
+        }
+        replaceImageInputFile(input, prepared);
+      } catch (error) {
+        if (requestId !== selectionRequestId) {
+          return;
+        }
+        input.value = "";
+        TinyCat.toast("The selected image could not be prepared for upload.", "danger");
+      }
+    });
+  }
+
   function initAvatarUploadRoot(root) {
     var input = qs("[data-avatar-upload-input]", root);
     var preview = qs("[data-avatar-upload-preview]", root);
@@ -902,7 +1053,8 @@
     var action = form ? qs("[data-avatar-upload-action]", form) : null;
     var remove = form ? qs("[data-avatar-upload-remove]", form) : null;
     var originalSrc = preview ? String(preview.getAttribute("src") || "") : "";
-    var objectUrl = "";
+    var previewRequestId = 0;
+    var selectionRequestId = 0;
 
     if (!input || !preview || root.dataset.avatarUploadReady === "true") {
       return;
@@ -929,13 +1081,7 @@
     }
 
     preview.addEventListener("error", function () {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-        objectUrl = "";
-      } else {
-        originalSrc = "";
-      }
-
+      originalSrc = "";
       showOriginal();
     });
 
@@ -944,26 +1090,20 @@
       showOriginal();
     }
 
-    input.addEventListener("change", function () {
-      var file = input.files && input.files[0] ? input.files[0] : null;
+    function showFile(file) {
+      var reader = new FileReader();
+      var requestId = ++previewRequestId;
 
-      if (action) {
-        action.value = "upload";
-      }
+      reader.addEventListener("load", function () {
+        if (requestId !== previewRequestId || typeof reader.result !== "string") {
+          return;
+        }
 
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-        objectUrl = "";
-      }
-
-      if (!file || ["image/png", "image/jpeg", "image/webp"].indexOf(file.type) === -1) {
-        showOriginal();
-        return;
-      }
-
-      objectUrl = URL.createObjectURL(file);
-      preview.src = objectUrl;
-      preview.hidden = false;
+        preview.src = reader.result;
+        preview.hidden = false;
+      });
+      reader.addEventListener("error", showOriginal);
+      reader.readAsDataURL(file);
 
       if (empty) {
         empty.hidden = true;
@@ -971,6 +1111,37 @@
 
       if (emptyNote) {
         emptyNote.hidden = true;
+      }
+    }
+
+    input.addEventListener("change", async function () {
+      var file = input.files && input.files[0] ? input.files[0] : null;
+      var requestId = ++selectionRequestId;
+      var prepared;
+
+      if (action) {
+        action.value = "upload";
+      }
+
+      if (!file || ["image/png", "image/jpeg", "image/webp"].indexOf(file.type) === -1) {
+        showOriginal();
+        return;
+      }
+
+      try {
+        prepared = await prepareClientImageInput(input, file);
+        if (requestId !== selectionRequestId) {
+          return;
+        }
+        replaceImageInputFile(input, prepared);
+        showFile(prepared);
+      } catch (error) {
+        if (requestId !== selectionRequestId) {
+          return;
+        }
+        input.value = "";
+        TinyCat.toast("The selected image could not be prepared for upload.", "danger");
+        showOriginal();
       }
     });
 
@@ -988,11 +1159,156 @@
           return;
         }
 
+        selectionRequestId++;
+        input.value = "";
         if (action) {
           action.value = "remove";
         }
 
         form.requestSubmit();
+      });
+    }
+  }
+
+  function initStatusImageRoot(root) {
+    var input = qs("[data-status-image-input]", root);
+    var preview = qs("[data-status-image-preview]", root);
+    var previewWrap = qs("[data-status-image-preview-wrap]", root);
+    var picker = qs("[data-status-image-picker]", root);
+    var removeButton = qs("[data-status-image-remove]", root);
+    var removeInput = qs("[data-status-image-remove-input]", root);
+    var altWrap = qs("[data-status-image-alt-wrap]", root);
+    var originalSrc = preview ? String(preview.getAttribute("src") || "") : "";
+    var originalAlt = preview ? String(preview.getAttribute("alt") || "") : "";
+    var previewRequestId = 0;
+    var selectionRequestId = 0;
+
+    if (!input || !preview || root.dataset.statusImageReady === "true") {
+      return;
+    }
+
+    root.dataset.statusImageReady = "true";
+
+    function revokePreview() {
+      previewRequestId++;
+    }
+
+    function showOriginal() {
+      revokePreview();
+      previewWrap.hidden = !originalSrc;
+      preview.hidden = !originalSrc;
+      if (originalSrc) {
+        preview.src = originalSrc;
+      } else {
+        preview.removeAttribute("src");
+      }
+      preview.alt = originalAlt;
+      if (altWrap) {
+        altWrap.hidden = !originalSrc;
+      }
+      if (picker) {
+        picker.hidden = Boolean(originalSrc);
+      }
+    }
+
+    function showFile(file) {
+      var reader;
+      var requestId;
+
+      revokePreview();
+      requestId = previewRequestId;
+      preview.removeAttribute("src");
+      preview.alt = "";
+      preview.hidden = false;
+      previewWrap.hidden = false;
+      if (altWrap) {
+        altWrap.hidden = false;
+      }
+      if (removeInput) {
+        removeInput.value = "0";
+      }
+      if (picker) {
+        picker.hidden = true;
+      }
+
+      reader = new FileReader();
+      reader.addEventListener("load", function () {
+        if (requestId !== previewRequestId || typeof reader.result !== "string") {
+          return;
+        }
+
+        preview.src = reader.result;
+        preview.alt = originalAlt;
+      });
+      reader.addEventListener("error", function () {
+        if (requestId === previewRequestId) {
+          preview.hidden = true;
+          previewWrap.hidden = true;
+          if (picker) {
+            picker.hidden = false;
+          }
+        }
+      });
+      reader.readAsDataURL(file);
+    }
+
+    input.addEventListener("change", async function () {
+      var file = input.files && input.files[0] ? input.files[0] : null;
+      var requestId = ++selectionRequestId;
+      var prepared;
+
+      if (!file) {
+        showOriginal();
+        return;
+      }
+
+      if (["image/jpeg", "image/png", "image/webp"].indexOf(file.type) === -1) {
+        input.value = "";
+        TinyCat.toast("The selected image is not supported or exceeds the size limit.", "danger");
+        showOriginal();
+        return;
+      }
+
+      try {
+        prepared = await prepareClientImageInput(input, file);
+        if (requestId !== selectionRequestId) {
+          return;
+        }
+        replaceImageInputFile(input, prepared);
+        showFile(prepared);
+      } catch (error) {
+        if (requestId !== selectionRequestId) {
+          return;
+        }
+        input.value = "";
+        TinyCat.toast("The selected image could not be prepared for upload.", "danger");
+        showOriginal();
+      }
+    });
+
+    if (removeButton) {
+      removeButton.addEventListener("click", function () {
+        selectionRequestId++;
+        revokePreview();
+        input.value = "";
+        preview.removeAttribute("src");
+        preview.hidden = true;
+        previewWrap.hidden = true;
+        if (altWrap) {
+          altWrap.hidden = true;
+        }
+        if (removeInput) {
+          removeInput.value = "1";
+        }
+        if (picker) {
+          picker.hidden = false;
+        }
+      });
+    }
+
+    if (root.closest("form")) {
+      root.closest("form").addEventListener("reset", function () {
+        window.setTimeout(showOriginal, 0);
       });
     }
   }
@@ -4736,6 +5052,7 @@
     TinyCat.initToasts();
     TinyCat.initTabs();
     TinyCat.initStatusEditors();
+    qsa("[data-status-image]", document).forEach(initStatusImageRoot);
     qsa("[data-status-video]", document).forEach(initStatusVideoRoot);
     qsa("[data-status-link-image]", document).forEach(initStatusLinkImageRoot);
     TinyCat.initStatusFeedLazy();

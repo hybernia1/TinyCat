@@ -68,6 +68,7 @@ function app_required_tables(): array
     $tables = [
         'users',
         'content',
+        'content_images',
         'terms',
         'content_tags',
         'links',
@@ -213,7 +214,9 @@ function status_meta_title(array $item, int $limit = 110): string
     }
 
     if ($author !== '') {
-        return t('public.status_title_by', ['author' => $author]);
+        return status_image_url($item) !== ''
+            ? t('public.status_title_image_by', ['author' => $author])
+            : t('public.status_title_by', ['author' => $author]);
     }
 
     return t('public.status_title');
@@ -270,6 +273,53 @@ function status_meta_link_image(array $item): string
     return '';
 }
 
+function status_image_record(int $contentId): ?array
+{
+    return $contentId > 0 ? one('SELECT * FROM content_images WHERE content_id = ? LIMIT 1', [$contentId]) : null;
+}
+
+function status_image_url(array $item): string
+{
+    $path = trim((string) ($item['image_path'] ?? $item['path'] ?? ''));
+
+    if ($path === '') {
+        $record = status_image_record((int) ($item['id'] ?? $item['content_id'] ?? 0));
+        $path = (string) ($record['path'] ?? '');
+    }
+
+    return StatusImage::url($path);
+}
+
+function status_image_alt_text(array $item): string
+{
+    $author = trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? ''));
+    $author = $author !== '' ? $author : site_name();
+    $body = meta_text(status_strip_external_urls((string) ($item['body'] ?? '')), 120);
+
+    return $body !== ''
+        ? t('public.status_image_alt', ['author' => $author, 'text' => $body])
+        : t('public.status_image_alt_empty', ['author' => $author]);
+}
+
+function status_image_jsonld(array $item): ?array
+{
+    $url = status_image_url($item);
+
+    if ($url === '') {
+        return null;
+    }
+
+    return array_filter([
+        '@type' => 'ImageObject',
+        'contentUrl' => absolute_url($url),
+        'url' => absolute_url($url),
+        'width' => max(0, (int) ($item['image_width'] ?? $item['width'] ?? 0)) ?: null,
+        'height' => max(0, (int) ($item['image_height'] ?? $item['height'] ?? 0)) ?: null,
+        'encodingFormat' => 'image/webp',
+        'caption' => status_image_alt_text($item),
+    ], static fn (mixed $value): bool => $value !== null && $value !== '');
+}
+
 function status_link_title_is_placeholder(string $title): bool
 {
     return in_array(strtolower(trim($title)), [
@@ -288,6 +338,12 @@ function status_meta_description(array $item): string
         return $body;
     }
 
+    $imageAlt = status_image_alt_text($item);
+
+    if (status_image_url($item) !== '' && $imageAlt !== '') {
+        return $imageAlt;
+    }
+
     return t('public.status_meta_description', [
         'author' => (string) ($item['author_name'] ?? site_name()),
     ]);
@@ -295,7 +351,29 @@ function status_meta_description(array $item): string
 
 function status_meta_image(array $item): string
 {
-    return user_avatar_url($item) ?: site_meta_image_url();
+    return status_image_url($item) ?: status_meta_link_image($item) ?: user_avatar_url($item) ?: site_meta_image_url();
+}
+
+function status_images_enabled(): bool
+{
+    return (bool) config('content_images.enabled', true);
+}
+
+function status_image_max_upload_kb(): int
+{
+    return max(20, min(1024, (int) config('content_images.max_upload_kb', 100)));
+}
+
+function status_image_max_upload_bytes(): int
+{
+    return status_image_max_upload_kb() * 1024;
+}
+
+function status_image_uploaded_file(): ?array
+{
+    $file = $_FILES['image'] ?? null;
+
+    return is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE ? $file : null;
 }
 
 function user_avatar_url(?array $user): string
@@ -1076,6 +1154,16 @@ function user_delete_account(int $userId): ?array
             [$userId]
         )
     );
+    $imagePaths = array_map(
+        static fn (array $row): string => (string) ($row['path'] ?? ''),
+        all(
+            'SELECT ci.path
+             FROM content_images ci
+             INNER JOIN content c ON c.id = ci.content_id
+             WHERE c.author_id = ?',
+            [$userId]
+        )
+    );
 
     db_transaction(static function () use ($userId, $termIds, $linkIds): void {
         delete('users', ['id' => $userId]);
@@ -1084,6 +1172,9 @@ function user_delete_account(int $userId): ?array
     });
 
     Avatar::delete($user['avatar_config'] ?? null);
+    foreach ($imagePaths as $path) {
+        StatusImage::delete($path);
+    }
 
     return $user;
 }
@@ -3022,6 +3113,10 @@ function public_status_select_sql(): string
                 c.published_at,
                 c.created_at,
                 c.edit_locked_at,
+                ci.path AS image_path,
+                ci.width AS image_width,
+                ci.height AS image_height,
+                ci.bytes AS image_bytes,
                 u.username AS author_username,
                 u.username AS author_name,
                 u.avatar_config AS author_avatar_config,
@@ -3036,7 +3131,8 @@ function public_status_select_sql(): string
                     WHERE cc.content_id = c.id
                 ) AS comments_count
             FROM content c
-            INNER JOIN users u ON u.id = c.author_id";
+            INNER JOIN users u ON u.id = c.author_id
+            LEFT JOIN content_images ci ON ci.content_id = c.id";
 }
 
 function public_status_id_query(): CoreQuery
@@ -5729,11 +5825,17 @@ function status_json_create(array $user, string $redirect = '/'): array
     $payload = status_payload();
     $userId = (int) ($user['id'] ?? 0);
     $body = (string) ($payload['body'] ?? '');
+    $imageFile = status_image_uploaded_file();
+    $hasImage = $imageFile !== null;
 
-    if (trim($body) === '') {
+    if (trim($body) === '' && !$hasImage) {
         api_error(t('account.messages.status_required'), 422, 'status_required', [
             'errors' => ['body' => [t('account.messages.status_required')]],
         ]);
+    }
+
+    if ($hasImage && !status_images_enabled()) {
+        api_error(t('account.messages.status_image_disabled'), 403, 'status_image_disabled');
     }
 
     status_json_require_not_muted($user);
@@ -5741,14 +5843,48 @@ function status_json_create(array $user, string $redirect = '/'): array
     status_json_require_unique_body($user, $body);
 
     $now = date_db();
-    $contentId = (int) insert('content', [
-        'body' => $body,
-        'author_id' => $userId,
-        'published_at' => $now,
-        'created_at' => $now,
-    ]);
-    status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
-    status_sync_links($contentId, (array) ($payload['links'] ?? []));
+    $contentId = 0;
+    $image = null;
+
+    try {
+        $image = $hasImage ? StatusImage::upload((array) $imageFile) : null;
+    } catch (LengthException) {
+        api_error(t('account.messages.status_image_compression'), 422, 'status_image_compression');
+    } catch (Throwable) {
+        api_error(t('account.messages.status_image_invalid', ['size' => status_image_max_upload_kb()]), 422, 'status_image_invalid');
+    }
+
+    try {
+        db_transaction(static function () use (&$contentId, $body, $userId, $now, $payload, $image): void {
+            $contentId = (int) insert('content', [
+                'body' => $body,
+                'author_id' => $userId,
+                'published_at' => $now,
+                'created_at' => $now,
+            ]);
+
+            if ($image !== null) {
+                insert('content_images', [
+                    'content_id' => $contentId,
+                    'path' => (string) $image['path'],
+                    'width' => (int) $image['width'],
+                    'height' => (int) $image['height'],
+                    'bytes' => (int) $image['bytes'],
+                    'created_at' => $now,
+                ]);
+            }
+
+            status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
+            status_sync_links($contentId, (array) ($payload['links'] ?? []));
+        });
+    } catch (Throwable $exception) {
+        if ($image !== null) {
+            StatusImage::delete((string) ($image['path'] ?? ''));
+        }
+
+        throw $exception;
+    }
+
     moderation_record_action($user, 'post');
     Notifications::notifyMentions($body, $user, $contentId);
 
@@ -6088,14 +6224,15 @@ function status_report_dismissal_lock(int $contentId): ?array
     );
 }
 
-function status_delete_content(int $contentId, bool $deleteReports = true, bool $deleteNotifications = true): void
+function status_delete_content(int $contentId, bool $deleteReports = true, bool $deleteNotifications = true, bool $deleteImageFile = true): string
 {
     if ($contentId < 1) {
-        return;
+        return '';
     }
 
     $termIds = status_term_ids_for_content($contentId);
     $linkIds = status_link_ids_for_content($contentId);
+    $image = status_image_record($contentId);
 
     delete('content_likes', ['content_id' => $contentId]);
     foreach (db_select('SELECT id FROM content_comments')->where('content_id = ?', $contentId)->all() as $comment) {
@@ -6109,6 +6246,7 @@ function status_delete_content(int $contentId, bool $deleteReports = true, bool 
     delete('content_comments', ['content_id' => $contentId]);
     delete('content_tags', ['content_id' => $contentId]);
     delete('content_links', ['content_id' => $contentId]);
+    delete('content_images', ['content_id' => $contentId]);
 
     if ($deleteReports) {
         delete('content_reports', ['content_id' => $contentId]);
@@ -6117,6 +6255,13 @@ function status_delete_content(int $contentId, bool $deleteReports = true, bool 
     status_cleanup_unused_term_ids($termIds);
     status_cleanup_unused_link_ids($linkIds);
     delete('content', ['id' => $contentId]);
+    $imagePath = (string) ($image['path'] ?? '');
+
+    if ($deleteImageFile) {
+        StatusImage::delete($imagePath);
+    }
+
+    return $imagePath;
 }
 
 function public_status_page_limit(): int
@@ -6307,11 +6452,20 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
 
     $payload = status_payload();
     $body = (string) ($payload['body'] ?? '');
+    $existingImage = status_image_record($contentId);
+    $imageFile = status_image_uploaded_file();
+    $hasNewImage = $imageFile !== null;
+    $removeImage = in_array(input('remove_image', null), [true, 1, '1', 'true', 'on'], true);
+    $willHaveImage = $hasNewImage || (!$removeImage && $existingImage !== null);
 
-    if (trim($body) === '') {
+    if (trim($body) === '' && !$willHaveImage) {
         api_error(t('account.messages.status_required'), 422, 'status_required', [
             'errors' => ['body' => [t('account.messages.status_required')]],
         ]);
+    }
+
+    if ($hasNewImage && !status_images_enabled()) {
+        api_error(t('account.messages.status_image_disabled'), 403, 'status_image_disabled');
     }
 
     $author = (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0)
@@ -6319,12 +6473,58 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
         : find('users', ['id' => (int) ($item['author_id'] ?? 0)]);
     status_json_require_unique_body($author ?: $user, $body, $contentId);
     $oldMentionIds = Notifications::mentionedUserIds((string) ($item['body'] ?? ''));
+    $newImage = null;
+    $oldPath = '';
 
-    update('content', [
-        'body' => $body,
-    ], ['id' => $contentId]);
-    status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
-    status_sync_links($contentId, (array) ($payload['links'] ?? []));
+    try {
+        $newImage = $hasNewImage ? StatusImage::upload((array) $imageFile) : null;
+    } catch (LengthException) {
+        api_error(t('account.messages.status_image_compression'), 422, 'status_image_compression');
+    } catch (Throwable) {
+        api_error(t('account.messages.status_image_invalid', ['size' => status_image_max_upload_kb()]), 422, 'status_image_invalid');
+    }
+
+    try {
+        db_transaction(static function () use ($contentId, $body, $payload, $newImage, $removeImage, $existingImage, &$oldPath): void {
+            update('content', ['body' => $body], ['id' => $contentId]);
+            status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
+            status_sync_links($contentId, (array) ($payload['links'] ?? []));
+
+            if ($newImage !== null) {
+                $oldPath = (string) ($existingImage['path'] ?? '');
+                if ($existingImage === null) {
+                    insert('content_images', [
+                        'content_id' => $contentId,
+                        'path' => (string) $newImage['path'],
+                        'width' => (int) $newImage['width'],
+                        'height' => (int) $newImage['height'],
+                        'bytes' => (int) $newImage['bytes'],
+                        'created_at' => date_db(),
+                    ]);
+                } else {
+                    update('content_images', [
+                        'path' => (string) $newImage['path'],
+                        'width' => (int) $newImage['width'],
+                        'height' => (int) $newImage['height'],
+                        'bytes' => (int) $newImage['bytes'],
+                    ], ['content_id' => $contentId]);
+                }
+            } elseif ($removeImage && $existingImage !== null) {
+                $oldPath = (string) ($existingImage['path'] ?? '');
+                delete('content_images', ['content_id' => $contentId]);
+            }
+        });
+    } catch (Throwable $exception) {
+        if ($newImage !== null) {
+            StatusImage::delete((string) ($newImage['path'] ?? ''));
+        }
+
+        throw $exception;
+    }
+
+    if ($oldPath !== '') {
+        StatusImage::delete($oldPath);
+    }
     Notifications::notifyMentions($body, $user, $contentId, 0, $oldMentionIds);
 
     $data = [
@@ -6599,15 +6799,19 @@ function cron_cleanup_tasks(): array
     return [
         'orphan_terms',
         'orphan_links',
+        'orphan_status_image_files',
         'old_action_limits',
         'old_password_reset_tokens',
         'old_read_notifications',
     ];
 }
 
-function cron_cleanup_run(int $batchSize = 500, bool $force = false): array
+function cron_cleanup_run(int $batchSize = 500, bool $force = false, ?array $tasks = null): array
 {
     $batchSize = cleanup_batch_size($batchSize);
+    $tasks = $tasks === null
+        ? cron_cleanup_tasks()
+        : array_values(array_intersect(cron_cleanup_tasks(), $tasks));
     $now = time();
     $interval = 3600;
     $lastRun = max(0, (int) setting('cron.cleanup_last_run', 0));
@@ -6624,7 +6828,7 @@ function cron_cleanup_run(int $batchSize = 500, bool $force = false): array
 
     $results = [];
 
-    foreach (cron_cleanup_tasks() as $task) {
+    foreach ($tasks as $task) {
         try {
             $results[$task] = cleanup_task_run($task, $batchSize);
         } catch (Throwable $exception) {
@@ -6658,8 +6862,14 @@ function cleanup_task_run(string $task, int $batchSize): array
 {
     $batchSize = cleanup_batch_size($batchSize);
     $startedAt = hrtime(true);
-    $changed = cleanup_delete($task, $batchSize);
-    $hasMore = $changed >= $batchSize && cleanup_has_rows($task);
+    if ($task === 'orphan_status_image_files') {
+        $result = StatusImage::cleanupOrphans($batchSize);
+        $changed = (int) ($result['changed'] ?? 0);
+        $hasMore = !empty($result['has_more']);
+    } else {
+        $changed = cleanup_delete($task, $batchSize);
+        $hasMore = $changed >= $batchSize && cleanup_has_rows($task);
+    }
 
     return [
         'task' => $task,

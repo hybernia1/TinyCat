@@ -64,12 +64,12 @@ $authorStructuredData = [
         'sameAs' => array_values(array_filter(array_map(static fn (string $url): string => absolute_url($url), array_map('strval', $profileLinks)))),
     ],
     'hasPart' => array_values(array_map(static function (array $item) use ($authorEntityId): array {
-        $image = status_meta_link_image($item);
+        $image = status_image_jsonld($item) ?? (status_meta_link_image($item) ?: null);
 
         return array_filter([
             '@type' => 'DiscussionForumPosting',
             'url' => absolute_url(status_url((int) ($item['id'] ?? 0))),
-            'image' => $image !== '' ? $image : null,
+            'image' => $image,
             'headline' => status_meta_title($item),
             'datePublished' => date_iso((string) ($item['published_at'] ?? $item['created_at'] ?? '')),
             'author' => ['@id' => $authorEntityId],

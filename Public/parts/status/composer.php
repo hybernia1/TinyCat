@@ -17,7 +17,7 @@ $user = is_array($user ?? null) ? $user : [];
                 <button class="btn btn-secondary btn-sm" type="button" data-modal-open="<?= e(author_profile_edit_modal_id((int) ($user['id'] ?? 0))) ?>" data-modal-url="<?= e(author_profile_edit_modal_url((int) ($user['id'] ?? 0), 'email')) ?>"><?= icon('edit') ?> <span><?= et('account.profile_settings') ?></span></button>
             </div>
         <?php endif; ?>
-        <form method="post" action="<?= e(status_api_url('create')) ?>" data-status-form data-status-scope="feed">
+        <form method="post" action="<?= e(status_api_url('create')) ?>" enctype="multipart/form-data" data-status-form data-status-scope="feed">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="create">
             <div class="status-compose-row">
@@ -29,7 +29,8 @@ $user = is_array($user ?? null) ? $user : [];
                     <div class="status-compose-footer">
                         <div class="status-compose-counter" data-status-editor-meta-slot></div>
                         <div class="status-compose-actions">
-                            <button class="btn btn-primary" type="submit"><?= icon('plus') ?> <span><?= et('account.status_create') ?></span></button>
+                            <?= part('status/image-field') ?>
+                            <button class="btn btn-primary btn-icon" type="submit" title="<?= et('account.status_create') ?>" aria-label="<?= et('account.status_create') ?>"><?= icon('send') ?></button>
                         </div>
                     </div>
                 </div>

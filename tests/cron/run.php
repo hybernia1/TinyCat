@@ -87,6 +87,16 @@ try {
             link_id BIGINT UNSIGNED NOT NULL,
             PRIMARY KEY (content_id, link_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
+        'CREATE TABLE content_images (
+            content_id BIGINT UNSIGNED NOT NULL,
+            path VARCHAR(190) NOT NULL,
+            width INT UNSIGNED NOT NULL,
+            height INT UNSIGNED NOT NULL,
+            bytes INT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL,
+            PRIMARY KEY (content_id),
+            UNIQUE KEY content_images_path_unique (path)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
         'CREATE TABLE ip_action_limits (
             ip_address VARCHAR(45) NOT NULL,
             action_name VARCHAR(40) NOT NULL,
@@ -111,6 +121,28 @@ try {
 
     insert('content', ['body' => 'test']);
     $contentId = (int) db()->lastInsertId();
+    $imageDirectory = base_path('uploads/status-images/2099/01');
+    $orphanImagePath = '2099/01/' . bin2hex(random_bytes(16)) . '.webp';
+    $storedImagePath = '2099/01/' . bin2hex(random_bytes(16)) . '.webp';
+    $orphanImageFile = base_path('uploads/status-images/' . $orphanImagePath);
+    $storedImageFile = base_path('uploads/status-images/' . $storedImagePath);
+
+    if (!is_dir($imageDirectory) && !mkdir($imageDirectory, 0775, true) && !is_dir($imageDirectory)) {
+        throw new RuntimeException('Could not create the temporary status image directory.');
+    }
+
+    file_put_contents($orphanImageFile, 'orphan');
+    file_put_contents($storedImageFile, 'stored');
+    touch($orphanImageFile, time() - 7200);
+    touch($storedImageFile, time() - 7200);
+    insert('content_images', [
+        'content_id' => $contentId,
+        'path' => $storedImagePath,
+        'width' => 1,
+        'height' => 1,
+        'bytes' => 6,
+        'created_at' => date_db(),
+    ]);
     insert('terms', ['name' => 'used']);
     $usedTermId = (int) db()->lastInsertId();
     insert('terms', ['name' => 'orphan']);
@@ -139,7 +171,12 @@ try {
     insert('notifications', ['read_at' => date_db('-1 day')]);
     insert('notifications', ['read_at' => null]);
 
-    $result = cron_cleanup_run(500, true);
+    $databaseCleanupTasks = array_values(array_filter(
+        cron_cleanup_tasks(),
+        static fn (string $task): bool => $task !== 'orphan_status_image_files'
+    ));
+    $result = cron_cleanup_run(500, true, $databaseCleanupTasks);
+    $imageCleanup = StatusImage::cleanupOrphans(500, '2099/01');
     $changed = array_map(
         static fn (array $task): int => (int) ($task['changed'] ?? 0),
         (array) ($result['results'] ?? [])
@@ -152,7 +189,11 @@ try {
         'old_password_reset_tokens' => 2,
         'old_read_notifications' => 1,
     ]) {
-        throw new RuntimeException('Scheduled cleanup changed an unexpected number of rows.');
+        throw new RuntimeException('Scheduled database cleanup changed an unexpected number of rows.');
+    }
+
+    if ((int) ($imageCleanup['changed'] ?? 0) !== 1 || !empty($imageCleanup['has_more'])) {
+        throw new RuntimeException('Scheduled status image cleanup changed an unexpected number of files.');
     }
 
     if ((int) val('SELECT COUNT(*) FROM terms') !== 1
@@ -161,11 +202,13 @@ try {
         || (int) val('SELECT COUNT(*) FROM content_links') !== 1
         || (int) val('SELECT COUNT(*) FROM ip_action_limits') !== 1
         || (int) val('SELECT COUNT(*) FROM password_reset_tokens') !== 1
-        || (int) val('SELECT COUNT(*) FROM notifications') !== 2) {
+        || (int) val('SELECT COUNT(*) FROM notifications') !== 2
+        || !is_file($storedImageFile)
+        || is_file($orphanImageFile)) {
         throw new RuntimeException('Scheduled cleanup did not preserve current rows.');
     }
 
-    $deferred = cron_cleanup_run(500);
+    $deferred = cron_cleanup_run(500, false, $databaseCleanupTasks);
 
     if (!empty($deferred['due']) || (int) setting('cron.cleanup_last_run', 0) < time() - 5) {
         throw new RuntimeException('The hourly cleanup interval was not recorded.');
@@ -173,6 +216,20 @@ try {
 
     echo "PASS unified scheduled tasks: orphan data cleaned and current rows retained.\n";
 } finally {
+    foreach ([$orphanImageFile ?? '', $storedImageFile ?? ''] as $file) {
+        if ($file !== '' && is_file($file)) {
+            unlink($file);
+        }
+    }
+
+    if (isset($imageDirectory) && is_dir($imageDirectory) && !(new FilesystemIterator($imageDirectory))->valid()) {
+        rmdir($imageDirectory);
+        $yearDirectory = dirname($imageDirectory);
+        if (is_dir($yearDirectory) && !(new FilesystemIterator($yearDirectory))->valid()) {
+            rmdir($yearDirectory);
+        }
+    }
+
     if ($created && preg_match('/^tinycat_cron_test_[a-f0-9]{10}$/', $databaseName) === 1) {
         $server->exec('DROP DATABASE IF EXISTS `' . $databaseName . '`');
     }

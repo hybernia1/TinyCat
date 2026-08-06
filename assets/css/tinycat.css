@@ -2566,6 +2566,81 @@ a:hover {
   justify-content: flex-end;
 }
 
+.status-image-field {
+  display: grid;
+  gap: 8px;
+}
+
+.status-compose-actions .status-image-field {
+  display: contents;
+}
+
+.status-image-preview {
+  position: relative;
+  width: min(100%, 360px);
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+
+.status-image-field[hidden],
+.status-image-preview[hidden],
+.status-image-alt-wrap[hidden] {
+  display: none !important;
+}
+
+.status-image-preview img {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.status-compose-actions .status-image-preview {
+  width: 38px;
+  height: 38px;
+}
+
+.status-image-picker {
+  width: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  padding: 8px;
+}
+
+.status-compose-main .status-image-picker {
+  padding: 0;
+}
+
+.status-image-picker .icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.status-compose-actions .status-image-preview img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.status-image {
+  width: 100%;
+  margin: 2px 0;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+}
+
+.status-image img {
+  width: 100%;
+  max-height: min(72vh, 720px);
+  object-fit: contain;
+}
+
+.status-image-link {
+  display: block;
+  color: inherit;
+}
+
 .status-field {
   position: relative;
   margin: 0;

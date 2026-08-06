@@ -51,7 +51,7 @@ header('X-Content-Type-Options: nosniff');
 
 echo '<?xml version="1.0" encoding="UTF-8"?>';
 ?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 <?php foreach ($rows as $row):
     $lastModified = (string) ($row['last_modified'] ?? '');
     $timestamp = $lastModified !== '' ? strtotime($lastModified) : false;
@@ -60,6 +60,9 @@ echo '<?xml version="1.0" encoding="UTF-8"?>';
         <loc><?= $xmlEscape(absolute_url((string) $row['url'])) ?></loc>
 <?php if ($timestamp !== false): ?>
         <lastmod><?= $xmlEscape(date('c', $timestamp)) ?></lastmod>
+<?php endif; ?>
+<?php if (($row['image_url'] ?? '') !== ''): ?>
+        <image:image><image:loc><?= $xmlEscape(absolute_url((string) $row['image_url'])) ?></image:loc></image:image>
 <?php endif; ?>
     </url>
 <?php endforeach; ?>

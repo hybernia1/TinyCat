@@ -84,6 +84,10 @@ $metaDescription = meta_text((string) ($meta['description'] ?? site_meta_descrip
 $metaUrl = absolute_url((string) ($meta['url'] ?? ($_SERVER['REQUEST_URI'] ?? $current)));
 $metaImageRaw = trim((string) ($meta['image'] ?? site_meta_image_url()));
 $metaImage = $metaImageRaw !== '' ? absolute_url($metaImageRaw) : '';
+$metaImageType = trim((string) ($meta['image_type'] ?? ''));
+$metaImageWidth = max(0, (int) ($meta['image_width'] ?? 0));
+$metaImageHeight = max(0, (int) ($meta['image_height'] ?? 0));
+$metaImageAlt = trim((string) ($meta['image_alt'] ?? $metaTitle));
 $metaType = (string) ($meta['type'] ?? 'website');
 $metaRss = trim((string) ($meta['rss'] ?? ''));
 $metaPrev = trim((string) ($meta['prev'] ?? ''));
@@ -149,7 +153,10 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php endif; ?>
     <?php if ($metaImage !== ''): ?>
         <meta property="og:image" content="<?= e($metaImage) ?>">
-        <meta property="og:image:alt" content="<?= e($metaTitle) ?>">
+        <?php if ($metaImageType !== ''): ?><meta property="og:image:type" content="<?= e($metaImageType) ?>"><?php endif; ?>
+        <?php if ($metaImageWidth > 0): ?><meta property="og:image:width" content="<?= e($metaImageWidth) ?>"><?php endif; ?>
+        <?php if ($metaImageHeight > 0): ?><meta property="og:image:height" content="<?= e($metaImageHeight) ?>"><?php endif; ?>
+        <meta property="og:image:alt" content="<?= e($metaImageAlt) ?>">
     <?php endif; ?>
     <meta name="twitter:card" content="<?= $metaImage !== '' ? 'summary_large_image' : 'summary' ?>">
     <meta name="twitter:title" content="<?= e($metaTitle) ?>">
@@ -158,6 +165,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php endif; ?>
     <?php if ($metaImage !== ''): ?>
         <meta name="twitter:image" content="<?= e($metaImage) ?>">
+        <meta name="twitter:image:alt" content="<?= e($metaImageAlt) ?>">
     <?php endif; ?>
     <?php if ($siteFaviconUrl !== ''): ?>
         <link rel="icon" type="image/webp" href="<?= e($siteFaviconUrl) ?>">

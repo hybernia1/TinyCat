@@ -17,6 +17,7 @@ require_once __DIR__ . '/Captcha.php';
 require_once __DIR__ . '/Cache.php';
 require_once __DIR__ . '/Minifier.php';
 require_once __DIR__ . '/Avatar.php';
+require_once __DIR__ . '/StatusImage.php';
 require_once __DIR__ . '/SiteIdentity.php';
 require_once __DIR__ . '/StatusLinks.php';
 require_once __DIR__ . '/LinkMetadata.php';

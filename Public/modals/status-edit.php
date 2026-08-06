@@ -22,6 +22,7 @@ ob_start();
 <input type="hidden" name="action" value="update">
 <input type="hidden" name="id" value="<?= e($contentId) ?>">
 <?= part('status/field', ['item' => $item]) ?>
+<?= part('status/image-field', ['item' => $item]) ?>
 <?php
 $body = trim((string) ob_get_clean());
 $footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . icon('close') . ' <span>' . et('common.cancel') . '</span></button>'
@@ -33,6 +34,7 @@ echo render('modals/layout', [
     'icon' => 'edit',
     'action' => $action,
     'ajax' => false,
+    'multipart' => true,
     'size' => 'modal-panel-lg status-edit-modal-panel',
     'formAttributes' => [
         'data-status-form' => true,
