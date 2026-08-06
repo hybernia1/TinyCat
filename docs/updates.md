@@ -20,7 +20,7 @@ php tools/update-key.php
 
 The command writes the private key to the ignored
 `storage/update-signing.key` file and prints the public key. The public key is
-pinned in `App/Update/Manager.php`; the private key must never be committed or uploaded
+pinned in `App/PackageManager.php`; the private key must never be committed or uploaded
 to a web release.
 
 Back up the private key in a secret manager before publishing the first signed

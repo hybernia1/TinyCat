@@ -1,4 +1,13 @@
 {
+    "2.0.14": [
+        "App/Extension/Assets.php",
+        "App/Extension/Lifecycle.php",
+        "App/Extension/Loader.php",
+        "App/Extension/Registry.php",
+        "App/Extension/Store.php",
+        "App/Update/Manager.php",
+        "App/Update/MigrationRegistry.php"
+    ],
     "2.0.4": [
         "Public/account.php"
     ],

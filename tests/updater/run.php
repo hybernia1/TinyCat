@@ -42,8 +42,17 @@ $expectFailure = static function (callable $callback): void {
     throw new RuntimeException('Expected operation was accepted.');
 };
 
+$test('shared package manager validates remote package inputs', static function () use ($invoke, $expect, $expectFailure): void {
+    $expect($invoke('httpsUrl', ' https://github.com/hybernia1/TinyCat ') === 'https://github.com/hybernia1/TinyCat');
+    $expect($invoke('httpsUrl', 'https://user@example.test/package.zip') === '');
+    $expect($invoke('validVersion', '2.0.14'));
+    $expect(!$invoke('validVersion', '2.0'));
+    $expect($invoke('decodeJson', '{"package":"tinycat.zip"}', 'package') === ['package' => 'tinycat.zip']);
+    $expectFailure(static fn (): string => $invoke('githubUrl', 'https://example.test/package.zip', 'Invalid package host.'));
+});
+
 $test('managed update paths accept runtime files', static function () use ($invoke, $expect): void {
-    $expect($invoke('managedPath', 'App/Update/Manager.php') === 'App/Update/Manager.php');
+    $expect($invoke('managedPath', 'App/PackageManager.php') === 'App/PackageManager.php');
     $expect($invoke('managedPath', 'Extensions/Bots/extension.json') === 'Extensions/Bots/extension.json');
     $expect($invoke('managedPath', 'docs/updates.md') === 'docs/updates.md');
     $expect($invoke('managedPath', 'scheduled-tasks.php') === 'scheduled-tasks.php');
@@ -187,12 +196,12 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $expect(\TinyCat\Update\MigrationRegistry::hasPending(['test_001' => str_repeat('b', 64)]));
     });
 
-    $test('migration registry stores version and checksum', static function () use ($invoke, $expect): void {
+    $test('migration registry stores version and checksum', static function () use ($expect): void {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         Core::setDb($database);
-        $invoke('ensureMigrationTable');
+        \TinyCat\Update\MigrationRegistry::ensure();
         insert('schema_migrations', [
             'migration' => 'test_001',
             'version' => '1.0.5',
@@ -202,7 +211,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $expect((int) val('SELECT COUNT(*) FROM schema_migrations') === 1);
     });
 
-    $test('outdated migration registry is rejected by the major baseline', static function () use ($invoke, $expectFailure): void {
+    $test('outdated migration registry is rejected by the major baseline', static function () use ($expectFailure): void {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -215,10 +224,10 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             )'
         );
         insert('schema_migrations', ['version' => '20260731_legacy']);
-        $expectFailure(static fn (): mixed => $invoke('ensureMigrationTable'));
+        $expectFailure(static fn (): mixed => \TinyCat\Update\MigrationRegistry::ensure());
     });
 
-    $test('malformed migration registry is not mistaken for the current schema', static function () use ($invoke, $expectFailure): void {
+    $test('malformed migration registry is not mistaken for the current schema', static function () use ($expectFailure): void {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -232,7 +241,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
                 PRIMARY KEY (version)
             )'
         );
-        $expectFailure(static fn (): mixed => $invoke('ensureMigrationTable'));
+        $expectFailure(static fn (): mixed => \TinyCat\Update\MigrationRegistry::ensure());
     });
 } else {
     $skipped++;

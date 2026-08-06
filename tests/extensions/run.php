@@ -5,6 +5,7 @@ use TinyCat\Extension\Lifecycle;
 use TinyCat\Extension\Loader;
 use TinyCat\Extension\Registry;
 use TinyCat\Extension\Store;
+use TinyCat\Extension\Assets;
 use TinyCat\Sitemap;
 
 define('TINYCAT', true);
@@ -52,7 +53,11 @@ $test('module classes are autoloaded from their namespaces', static function () 
     $expect(class_exists(Loader::class));
     $expect(class_exists(Store::class));
     $expect(class_exists(Sitemap::class));
+    $expect(class_exists(Assets::class));
+    $expect(class_exists(Lifecycle::class));
+    $expect(class_exists(Registry::class));
     $expect(class_exists(TinyCat\Update\Manager::class));
+    $expect(class_exists(TinyCat\Update\MigrationRegistry::class));
     $expect(!class_exists('ExtensionRegistry', false));
     $expect(!class_exists('ExtensionLoader', false));
     $expect(!class_exists('ExtensionStore', false));

@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.13';
+    public const string VERSION = '2.0.14';
 
     private static bool $booted = false;
     private static array $config = [];
@@ -984,6 +984,17 @@ final class Core
         return in_array($view, $values, true) || in_array($header, $values, true);
     }
 
+    public static function requestScheme(): string
+    {
+        $https = strtolower((string) ($_SERVER['HTTPS'] ?? ''));
+
+        return in_array($https, ['on', '1'], true)
+            || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443
+            || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https'
+            ? 'https'
+            : 'http';
+    }
+
     private static function isJson(): bool
     {
         $contentType = strtolower((string) ($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? ''));
@@ -1000,21 +1011,6 @@ final class Core
         }
 
         return null;
-    }
-
-    public static function captchaField(string $context = 'form'): string
-    {
-        return Captcha::field($context);
-    }
-
-    public static function captchaCheck(string $context = 'form'): bool
-    {
-        return Captcha::check($context);
-    }
-
-    public static function captchaRefresh(string $context = 'form'): string
-    {
-        return Captcha::refresh($context);
     }
 
     private static function validate(array $data, array $rules, array $messages = []): array
@@ -1119,7 +1115,7 @@ final class Core
             'lifetime' => (int) ($cookie['lifetime'] ?? 0),
             'path' => (string) ($cookie['path'] ?? '/'),
             'domain' => (string) ($cookie['domain'] ?? ''),
-            'secure' => (bool) ($cookie['secure'] ?? false) || self::isHttpsRequest(),
+            'secure' => (bool) ($cookie['secure'] ?? false) || self::requestScheme() === 'https',
             'httponly' => true,
             'samesite' => 'Lax',
         ]);
@@ -1739,7 +1735,7 @@ final class Core
         return [
             'expires' => $expires,
             'path' => '/',
-            'secure' => self::isHttpsRequest(),
+            'secure' => self::requestScheme() === 'https',
             'httponly' => true,
             'samesite' => 'Lax',
         ];
@@ -1762,15 +1758,6 @@ final class Core
         $decoded = base64_decode($value, true);
 
         return is_string($decoded) ? $decoded : null;
-    }
-
-    private static function isHttpsRequest(): bool
-    {
-        $https = strtolower((string) ($_SERVER['HTTPS'] ?? ''));
-
-        return in_array($https, ['on', '1'], true)
-            || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443
-            || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
     }
 
     private static function findUserById(mixed $id): ?array

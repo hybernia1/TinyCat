@@ -34,7 +34,7 @@ final class Captcha
 
     public static function field(string $context = 'form'): string
     {
-        if (!self::enabled()) {
+        if (!self::isActive()) {
             return '';
         }
 
@@ -48,7 +48,7 @@ final class Captcha
 
     public static function check(string $context = 'form'): bool
     {
-        if (!self::enabled()) {
+        if (!self::isActive()) {
             return true;
         }
 
@@ -78,7 +78,7 @@ final class Captcha
 
     public static function loginRequired(): bool
     {
-        if (!self::enabled()) {
+        if (!self::isActive()) {
             return false;
         }
 
@@ -125,11 +125,6 @@ final class Captcha
     }
 
     public static function isActive(): bool
-    {
-        return self::enabled();
-    }
-
-    private static function enabled(): bool
     {
         return (bool) Core::config('security.captcha.enabled', false)
             && self::provider() !== ''
