@@ -171,13 +171,7 @@ function sitemap_url(string $section = 'index', int $page = 1): string
 
 function app_request_scheme(): string
 {
-    $https = strtolower((string) ($_SERVER['HTTPS'] ?? ''));
-
-    return in_array($https, ['on', '1'], true)
-        || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443
-        || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https'
-        ? 'https'
-        : 'http';
+    return Core::requestScheme();
 }
 
 function meta_text(string $text, int $limit = 180): string

@@ -1,33 +1,102 @@
 <?php
 declare(strict_types=1);
 
-namespace TinyCat\Update;
+namespace TinyCat {
+    use JsonException;
+    use RuntimeException;
+    use ZipArchive;
 
-use Cache;
-use Core;
-use FilesystemIterator;
-use JsonException;
-use PDO;
-use PharData;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use RuntimeException;
-use SplFileInfo;
-use Throwable;
-use ZipArchive;
+    if (!defined('TINYCAT')) {
+        http_response_code(403);
+        exit('Forbidden');
+    }
 
-if (!defined('TINYCAT')) {
-    http_response_code(403);
-    exit('Forbidden');
+    /**
+     * Shared validation primitives for signed core and extension packages.
+     */
+    abstract class PackageManager
+    {
+        protected static function githubUrl(string $url, string $errorMessage): string
+        {
+            $url = self::httpsUrl($url);
+            $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+            $allowed = $host === 'github.com'
+                || $host === 'api.github.com'
+                || str_ends_with($host, '.githubusercontent.com');
+
+            if ($url === '' || !$allowed) {
+                throw new RuntimeException($errorMessage);
+            }
+
+            return $url;
+        }
+
+        protected static function httpsUrl(string $url): string
+        {
+            $url = trim($url);
+            $parts = parse_url($url);
+
+            if (
+                !is_array($parts)
+                || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+                || trim((string) ($parts['host'] ?? '')) === ''
+                || isset($parts['user'])
+                || isset($parts['pass'])
+            ) {
+                return '';
+            }
+
+            return $url;
+        }
+
+        protected static function decodeJson(string $json, string $label, int $depth = 512): array
+        {
+            try {
+                $decoded = json_decode($json, true, $depth, JSON_THROW_ON_ERROR);
+            } catch (JsonException $exception) {
+                throw new RuntimeException('Invalid ' . $label . ': ' . $exception->getMessage(), 0, $exception);
+            }
+
+            if (!is_array($decoded)) {
+                throw new RuntimeException('Invalid ' . $label . '.');
+            }
+
+            return $decoded;
+        }
+
+        protected static function validVersion(string $version): bool
+        {
+            return preg_match('/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/', $version) === 1;
+        }
+
+        protected static function zipEntryIsSymlink(ZipArchive $zip, int $index): bool
+        {
+            $operations = 0;
+            $attributes = 0;
+
+            return $zip->getExternalAttributesIndex($index, $operations, $attributes)
+                && $operations === ZipArchive::OPSYS_UNIX
+                && (($attributes >> 16) & 0170000) === 0120000;
+        }
+    }
 }
 
-/**
- * Signed release updates and one-shot database migrations.
- *
- * Runtime data is deliberately kept outside the managed file set. An update
- * can replace application files, but never config.php, storage or uploads.
- */
-final class Manager
+namespace TinyCat\Update {
+    use Cache;
+    use Core;
+    use FilesystemIterator;
+    use InvalidArgumentException;
+    use JsonException;
+    use PDO;
+    use PharData;
+    use RecursiveDirectoryIterator;
+    use RecursiveIteratorIterator;
+    use RuntimeException;
+    use SplFileInfo;
+    use Throwable;
+    use ZipArchive;
+
+final class Manager extends \TinyCat\PackageManager
 {
     private const string DEFAULT_REPOSITORY = 'hybernia1/TinyCat';
     private const string MANIFEST_ASSET = 'tinycat-update.json';
@@ -101,7 +170,7 @@ final class Manager
             'available' => version_compare($version, Core::VERSION, '>'),
             'compatible' => $compatible,
             'published_at' => trim((string) ($release['published_at'] ?? '')),
-            'release_url' => self::validatedHttpsUrl((string) ($release['html_url'] ?? '')),
+            'release_url' => self::httpsUrl((string) ($release['html_url'] ?? '')),
             'notes' => trim((string) ($release['body'] ?? '')),
             'manifest' => $manifest,
             'package_url' => $packageUrl,
@@ -312,7 +381,7 @@ final class Manager
             }
 
             $name = trim((string) ($asset['name'] ?? ''));
-            $url = self::validatedHttpsUrl((string) ($asset['browser_download_url'] ?? ''));
+            $url = self::httpsUrl((string) ($asset['browser_download_url'] ?? ''));
 
             if ($name !== '' && $url !== '') {
                 $assets[$name] = $url;
@@ -507,7 +576,7 @@ final class Manager
 
     private static function downloadToFile(string $url, string $target, int $maxBytes, string $accept = 'application/octet-stream'): void
     {
-        self::validatedGithubUrl($url);
+        self::githubUrl($url, 'The update source host is not allowed.');
         $directory = dirname($target);
         self::ensureDirectory($directory);
         $handle = fopen($target, 'wb');
@@ -556,7 +625,7 @@ final class Manager
         fclose($handle);
 
         try {
-            self::validatedGithubUrl($effectiveUrl);
+            self::githubUrl($effectiveUrl, 'The update source host is not allowed.');
         } catch (Throwable $exception) {
             @unlink($target);
             throw $exception;
@@ -745,18 +814,6 @@ final class Manager
         if ($missing !== []) {
             throw new RuntimeException('The update package is missing files: ' . implode(', ', array_slice($missing, 0, 5)));
         }
-    }
-
-    private static function zipEntryIsSymlink(ZipArchive $zip, int $index): bool
-    {
-        $operations = 0;
-        $attributes = 0;
-
-        if (!$zip->getExternalAttributesIndex($index, $operations, $attributes)) {
-            return false;
-        }
-
-        return $operations === ZipArchive::OPSYS_UNIX && (($attributes >> 16) & 0170000) === 0120000;
     }
 
     private static function preflightManagedTargets(array $manifest): void
@@ -989,7 +1046,7 @@ final class Manager
             return [];
         }
 
-        self::ensureMigrationTable();
+        MigrationRegistry::ensure();
         $applied = [];
         $version = (string) ($manifest['version'] ?? '');
 
@@ -1004,11 +1061,6 @@ final class Manager
         }
 
         return $applied;
-    }
-
-    private static function ensureMigrationTable(): void
-    {
-        MigrationRegistry::ensure();
     }
 
     private static function hasPendingMigrations(array $manifest): bool
@@ -1143,54 +1195,6 @@ final class Manager
             . str_replace('/', DIRECTORY_SEPARATOR, $relative);
     }
 
-    private static function validatedGithubUrl(string $url): string
-    {
-        $url = self::validatedHttpsUrl($url);
-        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
-        $allowed = $host === 'github.com'
-            || $host === 'api.github.com'
-            || str_ends_with($host, '.githubusercontent.com');
-
-        if (!$allowed) {
-            throw new RuntimeException('The update source host is not allowed.');
-        }
-
-        return $url;
-    }
-
-    private static function validatedHttpsUrl(string $url): string
-    {
-        $url = trim($url);
-        $parts = parse_url($url);
-
-        if (
-            !is_array($parts)
-            || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
-            || trim((string) ($parts['host'] ?? '')) === ''
-            || isset($parts['user'])
-            || isset($parts['pass'])
-        ) {
-            return '';
-        }
-
-        return $url;
-    }
-
-    private static function decodeJson(string $json, string $label): array
-    {
-        try {
-            $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $exception) {
-            throw new RuntimeException('Invalid ' . $label . ': ' . $exception->getMessage(), 0, $exception);
-        }
-
-        if (!is_array($decoded)) {
-            throw new RuntimeException('Invalid ' . $label . '.');
-        }
-
-        return $decoded;
-    }
-
     private static function verifyFileHash(string $file, string $expected): void
     {
         $actual = hash_file('sha256', $file);
@@ -1198,11 +1202,6 @@ final class Manager
         if (!is_string($actual) || !hash_equals(strtolower($expected), strtolower($actual))) {
             throw new RuntimeException('Update file integrity verification failed: ' . basename($file));
         }
-    }
-
-    private static function validVersion(string $version): bool
-    {
-        return preg_match('/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/', $version) === 1;
     }
 
     private static function ensureDirectory(string $directory): void
@@ -1276,4 +1275,928 @@ final class Manager
             ? str_replace(DIRECTORY_SEPARATOR, '/', substr($path, strlen($base)))
             : $path;
     }
+}
+
+final class MigrationRegistry
+{
+    private const array REQUIRED_COLUMNS = ['migration', 'version', 'checksum', 'applied_at'];
+    private const string OUTDATED_SCHEMA_MESSAGE =
+        'The migration registry is outdated. Update TinyCat to 1.0.14 before installing TinyCat 2.x.';
+
+    private function __construct()
+    {
+    }
+
+    public static function ensure(): void
+    {
+        $driver = (string) db()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        $suffix = $driver === 'mysql'
+            ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            : '';
+
+        if (!in_array($driver, ['mysql', 'sqlite'], true)) {
+            throw new RuntimeException('The migration registry requires MySQL, MariaDB or SQLite.');
+        }
+
+        run(
+            'CREATE TABLE IF NOT EXISTS schema_migrations (
+                migration VARCHAR(190) NOT NULL,
+                version VARCHAR(32) NOT NULL,
+                checksum CHAR(64) NOT NULL,
+                applied_at DATETIME NOT NULL,
+                PRIMARY KEY (migration)
+            )' . $suffix
+        );
+
+        self::assertCurrentSchema($driver);
+    }
+
+    public static function history(?string $prefix = null): array
+    {
+        self::ensure();
+        $rows = all(
+            'SELECT migration, version, checksum, applied_at
+             FROM schema_migrations
+             ORDER BY applied_at DESC, migration DESC'
+        );
+
+        if ($prefix === null || $prefix === '') {
+            return $rows;
+        }
+
+        return array_values(array_filter(
+            $rows,
+            static fn (array $row): bool => str_starts_with((string) ($row['migration'] ?? ''), $prefix)
+        ));
+    }
+
+    public static function checksum(string $path): string
+    {
+        if (!is_file($path)) {
+            throw new RuntimeException('Migration file was not found: ' . $path);
+        }
+
+        $content = file_get_contents($path);
+        if ($content === false) {
+            throw new RuntimeException('Migration file could not be read: ' . $path);
+        }
+
+        return hash('sha256', str_replace(["\r\n", "\r"], "\n", $content));
+    }
+
+    public static function applied(string $migration, string $checksum): bool
+    {
+        self::assertMigration($migration, $checksum);
+        self::ensure();
+        $existing = one('SELECT checksum FROM schema_migrations WHERE migration = ? LIMIT 1', [$migration]);
+
+        if ($existing === null) {
+            return false;
+        }
+        if (!hash_equals((string) ($existing['checksum'] ?? ''), $checksum)) {
+            throw new RuntimeException('Applied migration checksum mismatch: ' . $migration);
+        }
+
+        return true;
+    }
+
+    /**
+     * Reports whether a release would modify the database, without creating
+     * the migration registry as a side effect.
+     *
+     * @param array<string, string> $migrations migration ID => checksum
+     */
+    public static function hasPending(array $migrations): bool
+    {
+        if ($migrations === []) {
+            return false;
+        }
+
+        foreach ($migrations as $migration => $checksum) {
+            self::assertMigration((string) $migration, (string) $checksum);
+        }
+
+        $driver = (string) db()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+
+        if (!in_array($driver, ['mysql', 'sqlite'], true)) {
+            throw new RuntimeException('The migration registry requires MySQL, MariaDB or SQLite.');
+        }
+
+        $exists = $driver === 'mysql'
+            ? one("SHOW TABLES LIKE 'schema_migrations'") !== null
+            : one("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'schema_migrations' LIMIT 1") !== null;
+
+        if (!$exists) {
+            return true;
+        }
+
+        $applied = array_column(all('SELECT migration, checksum FROM schema_migrations'), 'checksum', 'migration');
+
+        foreach ($migrations as $migration => $checksum) {
+            if (!isset($applied[$migration]) || !hash_equals((string) $applied[$migration], (string) $checksum)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function apply(string $migration, string $version, string $path, ?string $checksum = null): bool
+    {
+        $version = trim($version);
+        $path = realpath($path) ?: '';
+        $checksum ??= $path !== '' ? self::checksum($path) : '';
+        self::assertMigration($migration, $checksum);
+
+        if ($version === '' || strlen($version) > 32) {
+            throw new InvalidArgumentException('Invalid migration version.');
+        }
+        if ($path === '' || !is_file($path) || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'php') {
+            throw new RuntimeException('Migration file was not found: ' . $migration);
+        }
+        if (!hash_equals($checksum, self::checksum($path))) {
+            throw new RuntimeException('Migration file checksum mismatch: ' . $migration);
+        }
+        if (self::applied($migration, $checksum)) {
+            return false;
+        }
+
+        $callback = require $path;
+        if (!is_callable($callback)) {
+            throw new RuntimeException('Migration must return a callable: ' . $migration);
+        }
+
+        $callback(db());
+        insert('schema_migrations', [
+            'migration' => $migration,
+            'version' => $version,
+            'checksum' => $checksum,
+            'applied_at' => date_db(),
+        ]);
+
+        return true;
+    }
+
+    private static function assertCurrentSchema(string $driver): void
+    {
+        if ($driver === 'mysql') {
+            $columns = array_column(all('SHOW COLUMNS FROM schema_migrations'), null, 'Field');
+            $primary = [];
+
+            foreach ($columns as $name => $column) {
+                if (strtoupper((string) ($column['Key'] ?? '')) === 'PRI') {
+                    $primary[] = (string) $name;
+                }
+            }
+
+            self::assertRequiredColumns($columns, 'Null', $primary);
+            return;
+        }
+
+        $columns = array_column(all('PRAGMA table_info(schema_migrations)'), null, 'name');
+        $primary = [];
+
+        foreach ($columns as $name => $column) {
+            $position = (int) ($column['pk'] ?? 0);
+            if ($position > 0) {
+                $primary[$position] = (string) $name;
+            }
+        }
+
+        ksort($primary);
+        self::assertRequiredColumns($columns, 'notnull', array_values($primary));
+    }
+
+    private static function assertRequiredColumns(array $columns, string $nullableKey, array $primary): void
+    {
+        $current = $primary === ['migration'];
+
+        foreach (self::REQUIRED_COLUMNS as $column) {
+            $current = $current
+                && isset($columns[$column])
+                && ($nullableKey === 'Null'
+                    ? strtoupper((string) ($columns[$column][$nullableKey] ?? 'YES')) === 'NO'
+                    : (int) ($columns[$column][$nullableKey] ?? 0) === 1);
+        }
+
+        if (!$current) {
+            throw new RuntimeException(self::OUTDATED_SCHEMA_MESSAGE);
+        }
+    }
+
+    private static function assertMigration(string $migration, string $checksum): void
+    {
+        if (preg_match('/^[a-z0-9][a-z0-9._:-]{0,189}$/', $migration) !== 1
+            || preg_match('/^[a-f0-9]{64}$/', $checksum) !== 1
+        ) {
+            throw new InvalidArgumentException('Invalid migration metadata.');
+        }
+    }
+}
+}
+
+namespace TinyCat\Extension {
+    use Cache;
+    use Core;
+    use FilesystemIterator;
+    use PharData;
+    use RecursiveDirectoryIterator;
+    use RecursiveIteratorIterator;
+    use RuntimeException;
+    use SplFileInfo;
+    use Throwable;
+    use ZipArchive;
+
+final class Store extends \TinyCat\PackageManager
+{
+    private const string DEFAULT_REPOSITORY = 'hybernia1/TinyCat-Extensions';
+    private const string CATALOG_ASSET = 'tinycat-extensions.json';
+    private const string SIGNATURE_ASSET = 'tinycat-extensions.sig';
+    private const string CACHE_KEY = 'extension_store_catalog';
+    private const int CACHE_TTL = 900;
+    private const int MAX_METADATA_BYTES = 1048576;
+    private const int MAX_PACKAGE_BYTES = 26214400;
+    private const int MAX_PACKAGE_FILES = 1000;
+    private const string DEFAULT_PUBLIC_KEY = 'zyqmqAwPK6K+c5V/cCifO4dP4s2rVDfzhoUST5Wqjcw=';
+
+    private function __construct()
+    {
+    }
+
+    public static function repository(): string
+    {
+        $repository = trim((string) config('extensions.repository', self::DEFAULT_REPOSITORY));
+
+        return preg_match('/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/', $repository) === 1
+            ? $repository
+            : self::DEFAULT_REPOSITORY;
+    }
+
+    public static function cachedCatalog(): ?array
+    {
+        $catalog = Cache::get(self::CACHE_KEY, self::CACHE_TTL);
+
+        return is_array($catalog) ? $catalog : null;
+    }
+
+    public static function catalog(bool $force = false): array
+    {
+        if (!$force && ($cached = self::cachedCatalog()) !== null) {
+            return $cached;
+        }
+
+        self::requireRuntimeExtensions(false);
+        $releaseJson = self::requestText(
+            'https://api.github.com/repos/' . self::repository() . '/releases/latest',
+            self::MAX_METADATA_BYTES,
+            'application/vnd.github+json'
+        );
+        $release = self::decodeJson($releaseJson, 'GitHub extension release', 128);
+        $assets = self::releaseAssets($release);
+        $catalogUrl = $assets[self::CATALOG_ASSET] ?? '';
+        $signatureUrl = $assets[self::SIGNATURE_ASSET] ?? '';
+
+        if ($catalogUrl === '' || $signatureUrl === '') {
+            throw new RuntimeException('The official extension release does not contain a catalog and signature.');
+        }
+
+        $catalogJson = self::requestText($catalogUrl, self::MAX_METADATA_BYTES, 'application/octet-stream');
+        $signature = self::requestText($signatureUrl, 4096, 'application/octet-stream');
+        self::verifyCatalogSignature($catalogJson, $signature);
+        $catalog = self::validateCatalog(self::decodeJson($catalogJson, 'extension catalog', 128), $assets);
+        $result = [
+            'repository' => self::repository(),
+            'release_url' => self::httpsUrl((string) ($release['html_url'] ?? '')),
+            'published_at' => trim((string) ($release['published_at'] ?? '')),
+            'extensions' => $catalog,
+        ];
+
+        Cache::put(self::CACHE_KEY, $result);
+
+        return $result;
+    }
+
+    public static function install(string $slug): array
+    {
+        self::requireRuntimeExtensions(true);
+        $slug = strtolower(trim($slug));
+        $catalog = self::catalog(true);
+        $extension = (array) (($catalog['extensions'] ?? [])[$slug] ?? []);
+
+        if ($extension === []) {
+            throw new RuntimeException('The selected extension is not available in the official catalog.');
+        }
+        if (empty($extension['compatible'])) {
+            throw new RuntimeException(
+                'Extension ' . $slug . ' requires TinyCat ' . (string) $extension['minimum_tinycat']
+                . ' and PHP ' . (string) $extension['minimum_php'] . ' or newer.'
+            );
+        }
+
+        $available = Loader::available();
+        $current = is_array($available[$slug] ?? null) ? $available[$slug] : null;
+        $installedVersions = Lifecycle::installedVersions();
+        $installedVersion = trim((string) ($installedVersions[$slug] ?? ''));
+        $targetVersion = (string) $extension['version'];
+
+        if ($installedVersion !== '' && version_compare($installedVersion, $targetVersion, '>')) {
+            throw new RuntimeException('Extension downgrades are not supported.');
+        }
+
+        $wasEnabled = $current === null || !array_key_exists('requested_enabled', $current)
+            ? true
+            : !empty($current['requested_enabled']);
+        $root = base_path('Extensions');
+        self::ensureDirectory($root);
+        self::assertWritableExtensionRoot($root, (string) $extension['directory']);
+        $runtime = base_path('storage/extensions');
+        self::ensureDirectory($runtime);
+        $lock = fopen($runtime . DIRECTORY_SEPARATOR . 'install.lock', 'c+');
+
+        if (!is_resource($lock) || !flock($lock, LOCK_EX | LOCK_NB)) {
+            if (is_resource($lock)) {
+                fclose($lock);
+            }
+            throw new RuntimeException('Another extension installation is already running.');
+        }
+
+        $work = $runtime . DIRECTORY_SEPARATOR . 'staging' . DIRECTORY_SEPARATOR
+            . date('Ymd-His') . '-' . bin2hex(random_bytes(4));
+        $package = $work . DIRECTORY_SEPARATOR . (string) $extension['package'];
+        $stage = $work . DIRECTORY_SEPARATOR . 'package';
+        $source = $stage . DIRECTORY_SEPARATOR . (string) $extension['directory'];
+        $target = $root . DIRECTORY_SEPARATOR . (string) $extension['directory'];
+        $backup = '';
+        $filesPromoted = false;
+        $migrationStarted = false;
+
+        try {
+            self::ensureDirectory($work);
+            self::downloadToFile(
+                (string) $extension['package_url'],
+                $package,
+                min(self::MAX_PACKAGE_BYTES, max(1, (int) $extension['size']))
+            );
+            self::verifyFile($package, (string) $extension['sha256'], (int) $extension['size']);
+            self::extractPackage($package, $stage, (array) $extension['files']);
+            $discovered = Loader::discover($stage)[$slug] ?? null;
+
+            if (!is_array($discovered)
+                || (string) ($discovered['version'] ?? '') !== $targetVersion
+                || (string) ($discovered['minimum_tinycat'] ?? '') !== (string) $extension['minimum_tinycat']
+                || (string) ($discovered['minimum_php'] ?? '') !== (string) $extension['minimum_php']
+            ) {
+                throw new RuntimeException('The downloaded extension manifest does not match the signed catalog.');
+            }
+
+            if (is_dir($target)) {
+                $backup = $runtime . DIRECTORY_SEPARATOR . 'backups' . DIRECTORY_SEPARATOR
+                    . $slug . '-' . ($installedVersion !== '' ? $installedVersion : 'unregistered') . '-' . date('Ymd-His');
+                self::ensureDirectory(dirname($backup));
+                if (!@rename($target, $backup)) {
+                    throw new RuntimeException('Unable to back up the installed extension.');
+                }
+            }
+
+            if (!@rename($source, $target)) {
+                throw new RuntimeException('Unable to move the verified extension into place.');
+            }
+            $filesPromoted = true;
+            $migrationStarted = true;
+            $migration = Lifecycle::migrateDiscovered($slug, $root);
+            $states = Core::setting('extensions.states', []);
+            $states = is_array($states) ? $states : [];
+            $states[$slug] = $wasEnabled;
+            ksort($states, SORT_STRING);
+            Core::setSetting('extensions.states', $states, 'json', 'extensions');
+
+            return [
+                'slug' => $slug,
+                'name' => (string) $extension['name'],
+                'version' => $targetVersion,
+                'updated' => $installedVersion !== '',
+                'enabled' => $wasEnabled,
+                'backup' => $backup !== '' ? self::relativePath($backup) : '',
+                'migrations' => (array) ($migration['migrations'] ?? []),
+            ];
+        } catch (Throwable $exception) {
+            if (!$migrationStarted && $filesPromoted && is_dir($target)) {
+                self::removeDirectory($target);
+            }
+            if (!$migrationStarted && $backup !== '' && is_dir($backup) && !file_exists($target)) {
+                @rename($backup, $target);
+            }
+            throw $exception;
+        } finally {
+            self::removeDirectory($work);
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    public static function uninstall(string $slug, string $mode): array
+    {
+        $slug = strtolower(trim($slug));
+        $mode = strtolower(trim($mode));
+        $extension = Lifecycle::all()[$slug] ?? null;
+
+        if (!is_array($extension) || empty($extension['installed'])) {
+            throw new RuntimeException('The selected extension is not installed.');
+        }
+        if (!empty($extension['enabled']) || !empty($extension['requested_enabled'])) {
+            throw new RuntimeException('Disable the extension before uninstalling it.');
+        }
+        if (!is_array($extension['uninstall'] ?? null)) {
+            throw new RuntimeException('This extension does not provide a verified uninstall handler.');
+        }
+
+        $root = base_path('Extensions');
+        $definition = Loader::discover($root)[$slug] ?? null;
+        $uninstall = is_array($definition['uninstall'] ?? null) ? $definition['uninstall'] : null;
+
+        if (!is_array($definition) || !is_array($uninstall)) {
+            throw new RuntimeException('The extension uninstall definition could not be verified.');
+        }
+
+        $options = [];
+        foreach ((array) ($uninstall['options'] ?? []) as $option) {
+            if (is_array($option)) {
+                $options[(string) ($option['id'] ?? '')] = $option;
+            }
+        }
+        if (!isset($options[$mode])) {
+            throw new RuntimeException('The selected extension uninstall mode is invalid.');
+        }
+
+        $target = (string) ($definition['root'] ?? '');
+        $targetReal = realpath($target);
+        $rootReal = realpath($root);
+        if ($targetReal === false || $rootReal === false
+            || strtolower(dirname($targetReal)) !== strtolower($rootReal)
+            || is_link($targetReal)
+        ) {
+            throw new RuntimeException('The installed extension path is not safe to remove.');
+        }
+
+        $runtime = base_path('storage/extensions');
+        self::ensureDirectory($runtime);
+        $lock = fopen($runtime . DIRECTORY_SEPARATOR . 'install.lock', 'c+');
+        if (!is_resource($lock) || !flock($lock, LOCK_EX | LOCK_NB)) {
+            if (is_resource($lock)) fclose($lock);
+            throw new RuntimeException('Another extension operation is already running.');
+        }
+
+        $backup = $runtime . DIRECTORY_SEPARATOR . 'backups' . DIRECTORY_SEPARATOR
+            . $slug . '-uninstall-' . (string) ($extension['installed_version'] ?? $extension['version'] ?? 'unknown')
+            . '-' . date('Ymd-His') . '-' . bin2hex(random_bytes(3));
+        $moved = false;
+
+        try {
+            self::ensureDirectory(dirname($backup));
+            if (!@rename($targetReal, $backup)) {
+                throw new RuntimeException('Unable to back up the extension before uninstalling it.');
+            }
+            $moved = true;
+
+            $handler = $backup . DIRECTORY_SEPARATOR . str_replace(
+                '/',
+                DIRECTORY_SEPARATOR,
+                self::packagePath((string) ($uninstall['handler'] ?? ''))
+            );
+            $handlerReal = realpath($handler);
+            $backupPrefix = strtolower(rtrim((string) realpath($backup), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
+            if ($handlerReal === false || !str_starts_with(strtolower($handlerReal), $backupPrefix)) {
+                throw new RuntimeException('The extension uninstall handler is unavailable.');
+            }
+
+            $callback = require $handlerReal;
+            if (!is_callable($callback)) {
+                throw new RuntimeException('The extension uninstall handler must return a callable.');
+            }
+
+            $result = $callback(db(), [
+                'slug' => $slug,
+                'mode' => $mode,
+                'option' => $options[$mode],
+            ]);
+            if (!is_array($result) || !is_bool($result['data_removed'] ?? null)) {
+                throw new RuntimeException('The extension uninstall handler returned an invalid result.');
+            }
+
+            db_transaction(static function () use ($slug, $result): void {
+                if ($result['data_removed']) {
+                    $migrationPrefix = strtr('extension:' . $slug . ':', ['!' => '!!', '%' => '!%', '_' => '!_']);
+                    run("DELETE FROM schema_migrations WHERE migration LIKE ? ESCAPE '!'", [$migrationPrefix . '%']);
+                }
+
+                $versions = Lifecycle::installedVersions();
+                unset($versions[$slug]);
+                ksort($versions, SORT_STRING);
+                Core::setSetting('extensions.installed_versions', $versions, 'json', 'extensions');
+
+                $states = Core::setting('extensions.states', []);
+                $states = is_array($states) ? $states : [];
+                unset($states[$slug]);
+                ksort($states, SORT_STRING);
+                Core::setSetting('extensions.states', $states, 'json', 'extensions');
+            });
+
+            return [
+                ...$result,
+                'slug' => $slug,
+                'name' => (string) ($extension['name'] ?? $slug),
+                'mode' => $mode,
+                'backup' => self::relativePath($backup),
+            ];
+        } catch (Throwable $exception) {
+            if ($moved && is_dir($backup) && !file_exists($targetReal)) {
+                @rename($backup, $targetReal);
+            }
+            throw $exception;
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    private static function validateCatalog(array $catalog, array $assets): array
+    {
+        if (($catalog['schema'] ?? null) !== 1 || !is_array($catalog['extensions'] ?? null)) {
+            throw new RuntimeException('The official extension catalog has an unsupported format.');
+        }
+
+        $validated = [];
+
+        foreach ($catalog['extensions'] as $item) {
+            if (!is_array($item) || array_is_list($item)) {
+                throw new RuntimeException('The official extension catalog contains an invalid entry.');
+            }
+
+            $slug = strtolower(trim((string) ($item['slug'] ?? '')));
+            $name = trim((string) ($item['name'] ?? ''));
+            $directory = trim((string) ($item['directory'] ?? ''));
+            $version = trim((string) ($item['version'] ?? ''));
+            $requires = is_array($item['requires'] ?? null) ? $item['requires'] : [];
+            $minimumTinycat = trim((string) ($requires['tinycat'] ?? ''));
+            $minimumPhp = trim((string) ($requires['php'] ?? '8.4.0'));
+            $package = basename(trim((string) ($item['package'] ?? '')));
+            $sha256 = strtolower(trim((string) ($item['sha256'] ?? '')));
+            $size = (int) ($item['size'] ?? 0);
+            $descriptions = is_array($item['descriptions'] ?? null) ? $item['descriptions'] : [];
+            $homepage = self::httpsUrl((string) ($item['homepage'] ?? ''));
+            $files = self::validateFiles((array) ($item['files'] ?? []), $directory);
+
+            if (preg_match('/^[a-z][a-z0-9_-]{0,63}$/', $slug) !== 1
+                || preg_match('/^[A-Za-z][A-Za-z0-9_-]{0,63}$/', $directory) !== 1
+                || strtolower($directory) !== $slug
+                || $name === '' || strlen($name) > 120
+                || !self::validVersion($version)
+                || !self::validVersion($minimumTinycat)
+                || !self::validVersion($minimumPhp)
+                || preg_match('/^[A-Za-z0-9._-]+\.zip$/', $package) !== 1
+                || preg_match('/^[a-f0-9]{64}$/', $sha256) !== 1
+                || $size < 1 || $size > self::MAX_PACKAGE_BYTES
+                || !isset($files[$directory . '/extension.json'])
+                || isset($validated[$slug])
+                || !isset($assets[$package])
+            ) {
+                throw new RuntimeException('The official extension catalog contains an invalid entry.');
+            }
+
+            $normalizedDescriptions = [];
+            foreach ($descriptions as $locale => $description) {
+                $locale = strtolower(trim((string) $locale));
+                $description = trim((string) $description);
+                if (preg_match('/^[a-z]{2}(?:-[a-z]{2})?$/', $locale) === 1 && strlen($description) <= 500) {
+                    $normalizedDescriptions[$locale] = $description;
+                }
+            }
+
+            $validated[$slug] = [
+                'slug' => $slug,
+                'name' => $name,
+                'directory' => $directory,
+                'version' => $version,
+                'minimum_tinycat' => $minimumTinycat,
+                'minimum_php' => $minimumPhp,
+                'compatible' => version_compare(Core::VERSION, $minimumTinycat, '>=')
+                    && version_compare(PHP_VERSION, $minimumPhp, '>='),
+                'package' => $package,
+                'package_url' => $assets[$package],
+                'sha256' => $sha256,
+                'size' => $size,
+                'files' => $files,
+                'descriptions' => $normalizedDescriptions,
+                'homepage' => $homepage,
+            ];
+        }
+
+        ksort($validated, SORT_STRING);
+        return $validated;
+    }
+
+    private static function validateFiles(array $files, string $directory): array
+    {
+        if ($files === [] || array_is_list($files) || count($files) > self::MAX_PACKAGE_FILES) {
+            throw new RuntimeException('The extension package file list is invalid.');
+        }
+
+        $validated = [];
+        $prefix = $directory . '/';
+
+        foreach ($files as $path => $hash) {
+            $path = self::packagePath((string) $path);
+            $hash = strtolower(trim((string) $hash));
+            if (!str_starts_with($path, $prefix) || preg_match('/^[a-f0-9]{64}$/', $hash) !== 1 || isset($validated[$path])) {
+                throw new RuntimeException('The extension package file list is invalid.');
+            }
+            $validated[$path] = $hash;
+        }
+
+        ksort($validated, SORT_STRING);
+        return $validated;
+    }
+
+    private static function releaseAssets(array $release): array
+    {
+        $assets = [];
+        foreach ((array) ($release['assets'] ?? []) as $asset) {
+            $name = basename(trim((string) ($asset['name'] ?? '')));
+            $url = self::httpsUrl((string) ($asset['browser_download_url'] ?? ''));
+            if ($name !== '' && $url !== '' && !isset($assets[$name])) {
+                $assets[$name] = $url;
+            }
+        }
+        return $assets;
+    }
+
+    private static function verifyCatalogSignature(string $catalog, string $signature): void
+    {
+        $encoded = trim((string) config('extensions.public_key', self::DEFAULT_PUBLIC_KEY));
+        $publicKey = base64_decode($encoded, true);
+        $signatureRaw = base64_decode(trim($signature), true);
+
+        if (!is_string($publicKey) || strlen($publicKey) !== SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES
+            || !is_string($signatureRaw) || strlen($signatureRaw) !== SODIUM_CRYPTO_SIGN_BYTES
+            || !sodium_crypto_sign_verify_detached($signatureRaw, $catalog, $publicKey)
+        ) {
+            throw new RuntimeException('The official extension catalog signature could not be verified.');
+        }
+    }
+
+    private static function requestText(string $url, int $maxBytes, string $accept): string
+    {
+        $directory = base_path('storage/extensions/downloads');
+        self::ensureDirectory($directory);
+        $temporary = tempnam($directory, '.tinycat-extension-');
+        if ($temporary === false) {
+            throw new RuntimeException('Unable to create an extension download file.');
+        }
+        try {
+            self::downloadToFile($url, $temporary, $maxBytes, $accept);
+            $content = file_get_contents($temporary);
+            if (!is_string($content)) {
+                throw new RuntimeException('Unable to read extension metadata.');
+            }
+            return $content;
+        } finally {
+            @unlink($temporary);
+        }
+    }
+
+    private static function downloadToFile(string $url, string $target, int $maxBytes, string $accept = 'application/octet-stream'): void
+    {
+        self::githubUrl($url, 'The extension download URL is not an allowed GitHub URL.');
+        self::ensureDirectory(dirname($target));
+        $handle = fopen($target, 'wb');
+        $curl = curl_init($url);
+        if (!is_resource($handle) || $curl === false) {
+            if (is_resource($handle)) fclose($handle);
+            throw new RuntimeException('Unable to initialize the extension download.');
+        }
+
+        $written = 0;
+        curl_setopt_array($curl, [
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 5,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT => 180,
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_USERAGENT => 'TinyCat/' . Core::VERSION . ' extension-store',
+            CURLOPT_HTTPHEADER => ['Accept: ' . $accept, 'X-GitHub-Api-Version: 2022-11-28'],
+            CURLOPT_WRITEFUNCTION => static function ($resource, string $chunk) use ($handle, $maxBytes, &$written): int {
+                $length = strlen($chunk);
+                $written += $length;
+                if ($written > $maxBytes) return 0;
+                $result = fwrite($handle, $chunk);
+                return $result === false ? 0 : $result;
+            },
+        ]);
+        $ok = curl_exec($curl);
+        $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+        $effectiveUrl = (string) curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
+        $error = curl_error($curl);
+        curl_close($curl);
+        fclose($handle);
+
+        try {
+            self::githubUrl($effectiveUrl, 'The extension download URL is not an allowed GitHub URL.');
+        } catch (Throwable $exception) {
+            @unlink($target);
+            throw $exception;
+        }
+        if ($ok !== true || $status < 200 || $status >= 300 || $written > $maxBytes) {
+            @unlink($target);
+            throw new RuntimeException($written > $maxBytes
+                ? 'The extension download exceeded the signed package size.'
+                : 'The extension download failed with HTTP ' . $status . ($error !== '' ? ': ' . $error : '.'));
+        }
+        @chmod($target, 0600);
+    }
+
+    private static function extractPackage(string $package, string $stage, array $expected): void
+    {
+        self::ensureDirectory($stage);
+        if (!class_exists('ZipArchive')) {
+            self::extractPackageWithPhar($package, $stage, $expected);
+            return;
+        }
+        $zip = new ZipArchive();
+        if ($zip->open($package) !== true) {
+            throw new RuntimeException('Unable to open the extension package.');
+        }
+        try {
+            if ($zip->numFiles < 1 || $zip->numFiles > self::MAX_PACKAGE_FILES) {
+                throw new RuntimeException('The extension package contains an invalid number of files.');
+            }
+            $seen = [];
+            $total = 0;
+            for ($index = 0; $index < $zip->numFiles; $index++) {
+                $stat = $zip->statIndex($index);
+                if (!is_array($stat)) throw new RuntimeException('Unable to inspect the extension package.');
+                $raw = str_replace('\\', '/', (string) ($stat['name'] ?? ''));
+                if (str_ends_with($raw, '/')) {
+                    self::packagePath(rtrim($raw, '/'));
+                    continue;
+                }
+                $path = self::packagePath($raw);
+                if (!isset($expected[$path]) || isset($seen[$path]) || self::zipEntryIsSymlink($zip, $index)) {
+                    throw new RuntimeException('Unexpected file in the extension package: ' . $path);
+                }
+                $size = max(0, (int) ($stat['size'] ?? 0));
+                $total += $size;
+                if ($total > self::MAX_PACKAGE_BYTES) throw new RuntimeException('The extracted extension is too large.');
+                $target = self::pathBelow($stage, $path);
+                self::ensureDirectory(dirname($target));
+                $input = $zip->getStream((string) $stat['name']);
+                $output = fopen($target, 'wb');
+                if (!is_resource($input) || !is_resource($output)) {
+                    if (is_resource($input)) fclose($input);
+                    if (is_resource($output)) fclose($output);
+                    throw new RuntimeException('Unable to extract extension file: ' . $path);
+                }
+                $copied = stream_copy_to_stream($input, $output, self::MAX_PACKAGE_BYTES + 1);
+                fclose($input);
+                fclose($output);
+                if (!is_int($copied) || $copied !== $size) throw new RuntimeException('Invalid extension file size: ' . $path);
+                self::verifyFile($target, (string) $expected[$path], $size);
+                $seen[$path] = true;
+            }
+            $missing = array_diff(array_keys($expected), array_keys($seen));
+            if ($missing !== []) throw new RuntimeException('The extension package is incomplete.');
+        } finally {
+            $zip->close();
+        }
+    }
+
+    private static function extractPackageWithPhar(string $package, string $stage, array $expected): void
+    {
+        try {
+            $archive = new PharData($package);
+        } catch (Throwable $exception) {
+            throw new RuntimeException('Unable to open the extension package.', 0, $exception);
+        }
+
+        $real = realpath($package);
+        if ($real === false) throw new RuntimeException('Unable to resolve the extension package.');
+        $prefix = 'phar://' . str_replace('\\', '/', $real) . '/';
+        $seen = [];
+        $total = 0;
+        $count = 0;
+
+        foreach (new RecursiveIteratorIterator($archive, RecursiveIteratorIterator::LEAVES_ONLY) as $entry) {
+            if (!$entry instanceof SplFileInfo || $entry->isDir()) continue;
+            $count++;
+            if ($count > self::MAX_PACKAGE_FILES || $entry->isLink()) {
+                throw new RuntimeException('The extension package contains too many files or a symbolic link.');
+            }
+            $uri = str_replace('\\', '/', $entry->getPathname());
+            if (!str_starts_with($uri, $prefix)) throw new RuntimeException('Unable to resolve an extension package file.');
+            $path = self::packagePath(substr($uri, strlen($prefix)));
+            if (!isset($expected[$path]) || isset($seen[$path])) {
+                throw new RuntimeException('Unexpected file in the extension package: ' . $path);
+            }
+            $size = max(0, $entry->getSize());
+            $total += $size;
+            if ($total > self::MAX_PACKAGE_BYTES) throw new RuntimeException('The extracted extension is too large.');
+            $target = self::pathBelow($stage, $path);
+            self::ensureDirectory(dirname($target));
+            $input = fopen($uri, 'rb');
+            $output = fopen($target, 'wb');
+            if (!is_resource($input) || !is_resource($output)) {
+                if (is_resource($input)) fclose($input);
+                if (is_resource($output)) fclose($output);
+                throw new RuntimeException('Unable to extract extension file: ' . $path);
+            }
+            $copied = stream_copy_to_stream($input, $output, self::MAX_PACKAGE_BYTES + 1);
+            fclose($input);
+            fclose($output);
+            if (!is_int($copied) || $copied !== $size) throw new RuntimeException('Invalid extension file size: ' . $path);
+            self::verifyFile($target, (string) $expected[$path], $size);
+            $seen[$path] = true;
+        }
+        if ($count < 1 || array_diff(array_keys($expected), array_keys($seen)) !== []) {
+            throw new RuntimeException('The extension package is incomplete.');
+        }
+    }
+
+    private static function verifyFile(string $path, string $sha256, int $size): void
+    {
+        if (filesize($path) !== $size || !hash_equals($sha256, (string) hash_file('sha256', $path))) {
+            throw new RuntimeException('The downloaded extension package failed integrity verification.');
+        }
+    }
+
+    private static function packagePath(string $path): string
+    {
+        $path = str_replace('\\', '/', trim($path));
+        if ($path === '' || strlen($path) > 240 || str_starts_with($path, '/')
+            || preg_match('/^[A-Za-z0-9._\/-]+$/', $path) !== 1
+        ) {
+            throw new RuntimeException('Invalid extension package path.');
+        }
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.' || $segment === '..' || str_starts_with($segment, '.')) {
+                throw new RuntimeException('Invalid extension package path.');
+            }
+        }
+        return $path;
+    }
+
+    private static function assertWritableExtensionRoot(string $root, string $directory): void
+    {
+        if (!is_writable($root) || is_link($root)) {
+            throw new RuntimeException('The TinyCat Extensions directory is not writable.');
+        }
+        $target = $root . DIRECTORY_SEPARATOR . $directory;
+        if (is_link($target)) {
+            throw new RuntimeException('An extension cannot be installed through a symbolic link.');
+        }
+    }
+
+    private static function requireRuntimeExtensions(bool $install): void
+    {
+        $missing = array_values(array_filter(['curl', 'sodium'], static fn (string $name): bool => !extension_loaded($name)));
+        if ($install && !class_exists('ZipArchive') && !class_exists('PharData')) $missing[] = 'zip or phar';
+        if ($missing !== []) throw new RuntimeException('Missing PHP extensions required by the extension store: ' . implode(', ', $missing) . '.');
+    }
+
+    private static function pathBelow(string $root, string $relative): string
+    {
+        return rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR
+            . str_replace('/', DIRECTORY_SEPARATOR, self::packagePath($relative));
+    }
+
+    private static function ensureDirectory(string $directory): void
+    {
+        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+            throw new RuntimeException('Unable to create the extension working directory.');
+        }
+    }
+
+    private static function removeDirectory(string $directory): void
+    {
+        if (!is_dir($directory) || is_link($directory)) return;
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($iterator as $entry) {
+            if ($entry->isLink() || $entry->isFile()) @unlink($entry->getPathname());
+            elseif ($entry->isDir()) @rmdir($entry->getPathname());
+        }
+        @rmdir($directory);
+    }
+
+    private static function relativePath(string $path): string
+    {
+        $base = rtrim(base_path(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        return str_starts_with(strtolower($path), strtolower($base))
+            ? str_replace('\\', '/', substr($path, strlen($base)))
+            : '';
+    }
+}
 }

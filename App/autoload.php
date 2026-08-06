@@ -7,6 +7,21 @@ if (!defined('TINYCAT')) {
 }
 
 spl_autoload_register(static function (string $class): void {
+    $combinedClasses = [
+        'TinyCat\\Update\\Manager' => 'PackageManager.php',
+        'TinyCat\\Update\\MigrationRegistry' => 'PackageManager.php',
+        'TinyCat\\Extension\\Store' => 'PackageManager.php',
+        'TinyCat\\Extension\\Assets' => 'Extension.php',
+        'TinyCat\\Extension\\Lifecycle' => 'Extension.php',
+        'TinyCat\\Extension\\Loader' => 'Extension.php',
+        'TinyCat\\Extension\\Registry' => 'Extension.php',
+    ];
+
+    if (isset($combinedClasses[$class])) {
+        require_once __DIR__ . DIRECTORY_SEPARATOR . $combinedClasses[$class];
+        return;
+    }
+
     $prefix = 'TinyCat\\';
     if (!str_starts_with($class, $prefix)) {
         return;

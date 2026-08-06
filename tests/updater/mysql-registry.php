@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Update\Manager;
+use TinyCat\Update\MigrationRegistry;
 
 define('TINYCAT', true);
 require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
@@ -61,9 +61,8 @@ try {
     insert('schema_migrations', ['version' => '20260731_email_analytics_ip_limits']);
     insert('schema_migrations', ['version' => '20260801_bot_sources']);
 
-    $method = new ReflectionMethod(Manager::class, 'ensureMigrationTable');
     try {
-        $method->invoke(null);
+        MigrationRegistry::ensure();
     } catch (RuntimeException $exception) {
         if (str_contains($exception->getMessage(), 'Update TinyCat to 1.0.14')) {
             echo "PASS MySQL outdated migration registry rejected by 2.x baseline.\n";
