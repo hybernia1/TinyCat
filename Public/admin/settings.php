@@ -131,7 +131,10 @@ function tc_admin_settings_sections(): array
             'label' => t('settings.sections.security'),
             'icon' => 'shield',
             'fields' => [
-                ['key' => 'security.captcha.enabled', 'label' => t('settings.fields.captcha_enabled'), 'type' => 'bool', 'default' => true],
+                ['key' => 'security.captcha.enabled', 'label' => t('settings.fields.captcha_enabled'), 'type' => 'bool', 'default' => false],
+                ['key' => 'security.captcha.provider', 'label' => t('settings.fields.captcha_provider'), 'type' => 'select', 'default' => 'recaptcha', 'options' => ['recaptcha' => 'Google reCAPTCHA v2 Checkbox', 'turnstile' => 'Cloudflare Turnstile', 'hcaptcha' => 'hCaptcha'], 'help' => t('settings.fields.captcha_provider_help')],
+                ['key' => 'security.captcha.site_key', 'label' => t('settings.fields.captcha_site_key'), 'type' => 'optional_text', 'default' => '', 'max' => 512],
+                ['key' => 'security.captcha.secret_key', 'label' => t('settings.fields.captcha_secret_key'), 'type' => 'password', 'default' => '', 'max' => 512, 'help' => t('settings.fields.captcha_secret_key_help')],
                 ['key' => 'security.captcha.login_attempts', 'label' => t('settings.fields.captcha_login_attempts'), 'type' => 'int', 'default' => 3, 'min' => 1, 'max' => 10],
                 ['key' => 'auth.registration.enabled', 'label' => t('settings.fields.registration_enabled'), 'type' => 'bool', 'default' => false],
                 ['key' => 'auth.registration.auto_approve', 'label' => t('settings.fields.registration_auto_approve'), 'type' => 'bool', 'default' => false],
@@ -195,6 +198,17 @@ function tc_admin_settings_value_from_post(array $field, array $posted): array
         }
 
         return [$code, 'string'];
+    }
+
+    if ($type === 'select') {
+        $value = (string) $raw;
+        $options = array_map('strval', array_keys((array) ($field['options'] ?? [])));
+
+        if (!in_array($value, $options, true)) {
+            throw new InvalidArgumentException(t('settings.messages.required'));
+        }
+
+        return [$value, 'string'];
     }
 
     if ($type === 'timezone') {
