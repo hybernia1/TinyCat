@@ -19,7 +19,9 @@ $authorId = (int) ($comment['user_id'] ?? 0);
 $authorName = trim((string) ($comment['author_name'] ?? ''));
 $createdAt = (string) ($comment['created_at'] ?? '');
 $replies = $depth === 0 ? (array) ($comment['replies'] ?? []) : [];
+$canEdit = status_comment_can_edit($comment, $user);
 $canDelete = status_comment_can_delete($comment, $user);
+$hasMenuActions = $canEdit || $canDelete;
 $userId = (int) ($user['id'] ?? 0);
 $likesCount = array_key_exists('likes_count', $comment)
     ? (int) ($comment['likes_count'] ?? 0)
@@ -38,32 +40,55 @@ if ($commentId < 1 || $contentId < 1) {
     </a>
     <div class="status-comment-main">
         <div class="status-comment-bubble">
-            <?php if ($authorName !== ''): ?>
-                <a class="status-comment-author" href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
+            <?php if ($authorName !== '' || $hasMenuActions): ?>
+                <div class="status-comment-heading">
+                    <?php if ($authorName !== ''): ?>
+                        <a class="status-comment-author" href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
+                    <?php endif; ?>
+                    <?php if ($createdAt !== ''): ?>
+                        <time class="status-comment-heading-time" datetime="<?= e(date_iso($createdAt)) ?>"> · <?= e(datetime($createdAt)) ?></time>
+                    <?php endif; ?>
+                    <?php if ($hasMenuActions): ?>
+                        <details class="context-menu status-comment-menu" data-dismissible-menu>
+                            <summary class="btn btn-ghost btn-icon btn-sm" aria-label="<?= et('common.actions') ?>">
+                                <?= icon('more') ?>
+                            </summary>
+                            <div class="context-menu-popover">
+                                <?php if ($canEdit): ?>
+                                    <button class="context-menu-action" type="button" data-dismissible-menu-action data-modal-open="<?= e(status_comment_edit_modal_id($commentId)) ?>" data-modal-url="<?= e(status_comment_edit_modal_url($commentId)) ?>">
+                                        <?= et('common.edit') ?>
+                                    </button>
+                                    <button class="context-menu-action" type="button" data-dismissible-menu-action data-modal-open="<?= e(status_comment_history_modal_id($commentId)) ?>" data-modal-url="<?= e(status_comment_history_modal_url($commentId)) ?>" data-modal-refresh="true">
+                                        <?= et('account.status_comment_history') ?>
+                                    </button>
+                                <?php endif; ?>
+                                <?php if ($canDelete): ?>
+                                    <?= part('status/comment-delete-form', [
+                                        'comment_id' => $commentId,
+                                        'content_id' => $contentId,
+                                        'menu' => true,
+                                    ]) ?>
+                                <?php endif; ?>
+                            </div>
+                        </details>
+                    <?php endif; ?>
+                </div>
             <?php endif; ?>
             <div class="status-comment-body"><?= render_mentions((string) ($comment['body'] ?? '')) ?></div>
         </div>
         <div class="status-comment-meta">
-            <?php if ($createdAt !== ''): ?>
-                <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
-            <?php endif; ?>
             <?= part('status/comment-like-control', [
                 'comment_id' => $commentId,
                 'likes_count' => $likesCount,
                 'liked' => $liked,
                 'user' => $user,
                 'content_id' => $contentId,
+                'comment' => $comment,
             ]) ?>
             <?php if ($user !== null && $showReplyForm): ?>
                 <details class="status-reply-details">
                     <summary><?= et('account.status_reply') ?></summary>
                 </details>
-            <?php endif; ?>
-            <?php if ($canDelete): ?>
-                <?= part('status/comment-delete-form', [
-                    'comment_id' => $commentId,
-                    'content_id' => $contentId,
-                ]) ?>
             <?php endif; ?>
         </div>
 

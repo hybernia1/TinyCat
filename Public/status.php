@@ -94,6 +94,7 @@ layout('layout', [
                                     'created_at' => $createdAt,
                                     'content_id' => $contentId,
                                     'open_modal' => false,
+                                    'item' => $item,
                                 ]) ?>
                             <?php endif; ?>
                         </div>

@@ -35,6 +35,7 @@ if ($contentId < 1) {
                         'created_at' => $createdAt,
                         'content_id' => $contentId,
                         'open_modal' => true,
+                        'item' => $item,
                     ]) ?>
                 <?php endif; ?>
             </div>

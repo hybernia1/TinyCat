@@ -1866,6 +1866,7 @@ a:hover {
   color: var(--text);
   font-size: 1rem;
   font-weight: 800;
+  justify-self: start;
   line-height: 1.25;
   text-decoration: none;
 }
@@ -2227,6 +2228,133 @@ a:hover {
   color: var(--text);
   font-size: 0.875rem;
   font-weight: 800;
+  text-decoration: none;
+}
+
+.status-comment-heading {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.status-comment-heading-time {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.context-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.status-comment-heading > .context-menu {
+  margin-left: auto;
+}
+
+.context-menu > summary {
+  width: 24px;
+  min-height: 24px;
+  padding: 3px;
+  color: var(--muted);
+  list-style: none;
+}
+
+.status-manage-menu > summary {
+  width: 34px;
+  min-height: 32px;
+}
+
+.context-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.context-menu-popover {
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 4px);
+  right: 0;
+  display: none;
+  min-width: 132px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.context-menu[open] .context-menu-popover {
+  display: grid;
+}
+
+.context-menu-popover form {
+  display: block;
+}
+
+.context-menu-action {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.context-menu-action:hover,
+.context-menu-action:focus-visible {
+  background: var(--surface-soft);
+  color: var(--primary-strong);
+}
+
+.context-menu-action.is-danger {
+  color: var(--danger);
+}
+
+.status-comment-history {
+  display: grid;
+  gap: 12px;
+}
+
+.status-comment-history-entry {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+
+.status-comment-history-meta {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+
+.status-comment-history-diff {
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  padding: 7px 9px;
+}
+
+.status-comment-diff-removed,
+.status-comment-diff-added {
+  border-radius: 3px;
+  padding: 1px 2px;
+  text-decoration-thickness: 1px;
+}
+
+.status-comment-diff-removed {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.status-comment-diff-added {
+  background: var(--success-soft);
+  color: var(--success);
   text-decoration: none;
 }
 
