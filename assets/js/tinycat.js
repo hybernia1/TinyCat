@@ -286,19 +286,7 @@
       return null;
     }
 
-    if (data.errors) {
-      return data.errors;
-    }
-
-    if (data.error && data.error.details && data.error.details.errors && typeof data.error.details.errors === "object") {
-      return data.error.details.errors;
-    }
-
-    if (data.error && data.error.code === "validation_error" && data.error.details) {
-      return data.error.details;
-    }
-
-    return null;
+    return data.errors && typeof data.errors === "object" ? data.errors : null;
   }
 
   function resultErrorDetails(data) {
@@ -4248,6 +4236,7 @@
       var doc;
       var responseUrl;
       var responsePath;
+      var invalidField = null;
 
       if (!form) {
         return;
@@ -4303,7 +4292,9 @@
           jsonData = await response.json();
 
           if (!response.ok) {
-            throw new Error(jsonData.message || (jsonData.error && jsonData.error.message) || response.statusText || uiText("requestFailed", "Request failed"));
+            var requestError = new Error(jsonData.message || (jsonData.error && jsonData.error.message) || response.statusText || uiText("requestFailed", "Request failed"));
+            requestError.data = jsonData;
+            throw requestError;
           }
 
           handleStatusJsonResponse(form, jsonData);
@@ -4323,10 +4314,20 @@
           window.location.assign(responseUrl || url);
         }
       } catch (error) {
+        var errors = resultErrors(error.data);
+
+        if (errors) {
+          invalidField = applyErrors(form, errors);
+        }
+
         TinyCat.toast(error.message || uiText("requestFailed", "Request failed"), "danger");
       } finally {
         delete form.dataset.statusBusy;
         setLoading(form, false);
+
+        if (invalidField && invalidField.isConnected && invalidField.focus) {
+          invalidField.focus();
+        }
       }
     });
 

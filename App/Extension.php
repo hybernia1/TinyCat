@@ -29,9 +29,6 @@ final class Assets
 {
     private const int MAX_SOURCE_BYTES = 2 * 1024 * 1024;
     private const int MAX_ASSETS_PER_EXTENSION = 20;
-    private const string CACHE_VERSION = '1';
-    private const string CACHE_NAMESPACE = 'assets';
-    private const string CACHE_URL = '/cache/assets';
 
     private static array $providers = [];
 
@@ -134,33 +131,18 @@ final class Assets
         }
 
         $minified = (bool) Core::setting('performance.minify_' . $type, false);
-        $content = $minified
-            ? ($type === 'css' ? Minifier::minifyCss($source) : Minifier::minifyJavaScript($source))
-            : $source;
-
         $baseName = strtolower((string) pathinfo($relativePath, PATHINFO_FILENAME));
         $baseName = trim((string) preg_replace('/[^a-z0-9_-]+/', '-', $baseName), '-');
         $baseName = substr($baseName !== '' ? $baseName : 'asset', 0, 40);
         $identity = substr(hash('sha256', $slug . "\0" . $relativePath), 0, 10);
         $prefix = 'ext-' . $slug . '-' . $baseName . '-' . $identity;
-        $hash = substr(hash('sha256', self::CACHE_VERSION . "\0" . ($minified ? 'min' : 'raw') . "\0" . $content), 0, 20);
-        $fileName = $prefix . '.' . $hash . ($minified ? '.min' : '') . '.' . $type;
-        $target = Cache::file($fileName, self::CACHE_NAMESPACE);
+        $url = Minifier::cachedAssetUrl($slug . "\0" . $relativePath, $prefix, $source, $type, $minified);
 
-        if (!is_file($target)) {
-            if (!Cache::writeFile($fileName, $content, self::CACHE_NAMESPACE)) {
-                throw new RuntimeException('Could not publish extension asset: ' . $slug . '/' . $relativePath);
-            }
-
-            $pattern = '/^' . preg_quote($prefix, '/') . '\\.[a-f0-9]{20}(?:\\.min)?\\.' . preg_quote($type, '/') . '$/';
-            Cache::prune(
-                self::CACHE_NAMESPACE,
-                static fn (string $candidate): bool => $candidate !== $fileName
-                    && preg_match($pattern, $candidate) === 1
-            );
+        if ($url === null) {
+            throw new RuntimeException('Could not publish extension asset: ' . $slug . '/' . $relativePath);
         }
 
-        return self::CACHE_URL . '/' . rawurlencode($fileName);
+        return $url;
     }
 }
 

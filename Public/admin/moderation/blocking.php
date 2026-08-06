@@ -22,17 +22,11 @@ if ($moderationBlockingApi && method() === 'GET') {
 }
 
 if ($moderationBlockingApi && method() === 'POST') {
-    api_endpoint('POST', static function (): never {
-        csrf_require();
-        $rules = moderation_blocked_url_rules((string) input('blocked_urls', ''));
-        setting_set('moderation.blocked_urls', implode(', ', $rules), 'string', 'moderation');
-        flash('success', t('moderation.messages.url_blocker_saved'));
-        api_ok(tc_admin_moderation_blocking_payload(true), t('moderation.messages.url_blocker_saved'));
-    });
-}
-
-if ($moderationBlockingApi) {
-    api_error('Method not allowed.', 405, 'method_not_allowed');
+    csrf_require();
+    $rules = moderation_blocked_url_rules((string) input('blocked_urls', ''));
+    setting_set('moderation.blocked_urls', implode(', ', $rules), 'string', 'moderation');
+    flash('success', t('moderation.messages.url_blocker_saved'));
+    api_ok(tc_admin_moderation_blocking_payload(true), t('moderation.messages.url_blocker_saved'));
 }
 
 $blockedUrls = tc_admin_moderation_blocked_urls_value();

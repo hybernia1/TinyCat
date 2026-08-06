@@ -1673,11 +1673,11 @@ function user_profile_links_sync(int $userId, array $links): void
 function user_profile_update_request(array $user): array
 {
     $id = (int) ($user['id'] ?? 0);
-    $bio = plain_text_limit((string) post('bio', ''), 500);
+    $bio = plain_text_limit((string) input('bio', ''), 500);
     $emailProvided = input('email', null) !== null;
-    $email = $emailProvided ? user_email_normalize((string) post('email', '')) : user_email_normalize((string) ($user['email'] ?? ''));
-    $locale = language_code((string) post('locale', ''));
-    $theme = theme_normalize((string) post('theme', 'system'));
+    $email = $emailProvided ? user_email_normalize((string) input('email', '')) : user_email_normalize((string) ($user['email'] ?? ''));
+    $locale = language_code((string) input('locale', ''));
+    $theme = theme_normalize((string) input('theme', 'system'));
     $errors = [];
     $profileLinks = profile_links_from_input();
 
@@ -1686,16 +1686,16 @@ function user_profile_update_request(array $user): array
     }
 
     if ($locale === '' || !array_key_exists($locale, language_packages())) {
-        $errors[] = t('settings.messages.invalid_language');
+        $errors['locale'][] = t('settings.messages.invalid_language');
     }
     if ($emailProvided && $email !== '' && !user_email_valid($email)) {
-        $errors[] = t('account.messages.email_invalid');
+        $errors['email'][] = t('account.messages.email_invalid');
     } elseif ($email !== '' && user_email_taken($email, $id)) {
-        $errors[] = t('account.messages.email_taken');
+        $errors['email'][] = t('account.messages.email_taken');
     }
 
     if ($errors !== []) {
-        api_error(implode(' ', $errors), 422, 'validation_error', ['errors' => $errors]);
+        api_validation($errors, implode(' ', array_merge(...array_values($errors))));
     }
 
     $data = [
@@ -1726,7 +1726,7 @@ function user_profile_update_request(array $user): array
 function user_email_update_request(array $user): array
 {
     $id = (int) ($user['id'] ?? 0);
-    $email = user_email_normalize((string) post('email', ''));
+    $email = user_email_normalize((string) input('email', ''));
     $errors = [];
 
     if ($id < 1) {
@@ -1734,13 +1734,13 @@ function user_email_update_request(array $user): array
     }
 
     if ($email !== '' && !user_email_valid($email)) {
-        $errors[] = t('account.messages.email_invalid');
+        $errors['email'][] = t('account.messages.email_invalid');
     } elseif ($email !== '' && user_email_taken($email, $id)) {
-        $errors[] = t('account.messages.email_taken');
+        $errors['email'][] = t('account.messages.email_taken');
     }
 
     if ($errors !== []) {
-        api_error(implode(' ', $errors), 422, 'validation_error', ['errors' => $errors]);
+        api_validation($errors, implode(' ', array_merge(...array_values($errors))));
     }
 
     $data = ['email' => $email !== '' ? $email : null];
@@ -1762,9 +1762,9 @@ function user_email_update_request(array $user): array
 function user_password_update_request(array $user): array
 {
     $id = (int) ($user['id'] ?? 0);
-    $currentPassword = (string) post('current_password', '');
-    $password = (string) post('password', '');
-    $passwordConfirm = (string) post('password_confirm', '');
+    $currentPassword = (string) input('current_password', '');
+    $password = (string) input('password', '');
+    $passwordConfirm = (string) input('password_confirm', '');
     $hash = (string) ($user['password'] ?? '');
     $errors = [];
 
@@ -1773,13 +1773,15 @@ function user_password_update_request(array $user): array
     }
 
     if (auth_password_too_long($currentPassword) || $hash === '' || !password_verify($currentPassword, $hash)) {
-        $errors[] = t('account.messages.current_password_invalid');
+        $errors['current_password'][] = t('account.messages.current_password_invalid');
     }
 
-    $errors = array_merge($errors, auth_password_validation_errors($password, $passwordConfirm));
+    foreach (auth_password_validation_field_errors($password, $passwordConfirm) as $field => $messages) {
+        $errors[$field] = array_merge((array) ($errors[$field] ?? []), $messages);
+    }
 
     if ($errors !== []) {
-        api_error(implode(' ', $errors), 422, 'validation_error', ['errors' => $errors]);
+        api_validation($errors, implode(' ', array_merge(...array_values($errors))));
     }
 
     update('users', [
@@ -5401,7 +5403,9 @@ function status_json_create(array $user, string $redirect = '/'): array
     $body = (string) ($payload['body'] ?? '');
 
     if (trim($body) === '') {
-        api_error(t('account.messages.status_required'), 422, 'status_required');
+        api_error(t('account.messages.status_required'), 422, 'status_required', [
+            'errors' => ['body' => [t('account.messages.status_required')]],
+        ]);
     }
 
     status_json_require_not_muted($user);
@@ -5492,7 +5496,9 @@ function status_json_comment(int $contentId, int $parentId, array $user, string 
     }
 
     if ($body === '') {
-        api_error(t('account.messages.comment_required'), 422, 'comment_required');
+        api_error(t('account.messages.comment_required'), 422, 'comment_required', [
+            'errors' => ['comment' => [t('account.messages.comment_required')]],
+        ]);
     }
 
     status_json_require_not_muted($user);
@@ -5882,7 +5888,9 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
     $body = (string) ($payload['body'] ?? '');
 
     if (trim($body) === '') {
-        api_error(t('account.messages.status_required'), 422, 'status_required');
+        api_error(t('account.messages.status_required'), 422, 'status_required', [
+            'errors' => ['body' => [t('account.messages.status_required')]],
+        ]);
     }
 
     status_json_require_unique_body($user, $body, $contentId);
@@ -7082,11 +7090,6 @@ function api_error(string $message = 'Request failed.', int $status = 400, strin
 function api_validation(array $errors, string $message = 'Validation failed.'): never
 {
     Core::apiValidation($errors, $message);
-}
-
-function api_endpoint(array|string $methods, callable $handler): never
-{
-    Core::apiEndpoint($methods, $handler);
 }
 
 function route(array|string $methods, string $path, callable $handler): void

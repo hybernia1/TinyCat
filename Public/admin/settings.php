@@ -9,17 +9,15 @@ if (!defined('TINYCAT')) {
 require_admin();
 
 if (route_path() === '/api/admin/settings') {
-    api_endpoint('POST', static function (): never {
-        csrf_require();
+    csrf_require();
 
-        try {
-            tc_admin_settings_save();
-        } catch (Throwable $exception) {
-            api_error($exception->getMessage(), 422, 'settings_save_failed');
-        }
+    try {
+        tc_admin_settings_save();
+    } catch (Throwable $exception) {
+        api_error($exception->getMessage(), 422, 'settings_save_failed');
+    }
 
-        api_ok(tc_admin_settings_payload(), t('settings.messages.saved'), 200, ['type' => 'success']);
-    });
+    api_ok(tc_admin_settings_payload(), t('settings.messages.saved'), 200, ['type' => 'success']);
 }
 
 if (is_post()) {
@@ -166,7 +164,7 @@ function tc_admin_settings_sections(): array
 
 function tc_admin_settings_save(): void
 {
-    $posted = post('settings', []);
+    $posted = input('settings', []);
     $posted = is_array($posted) ? $posted : [];
 
     foreach (tc_admin_settings_sections() as $group => $section) {
@@ -316,7 +314,7 @@ function tc_admin_settings_site_image_value(array $field, string $currentUrl): a
     $pathKey = (string) ($field['path_key'] ?? '');
     $variant = (string) ($field['variant'] ?? 'logo');
     $uploadedFile = tc_admin_settings_uploaded_file($key);
-    $remove = post('settings_remove', []);
+    $remove = input('settings_remove', []);
 
     if (is_array($remove) && isset($remove[$key])) {
         if ($pathKey !== '') {

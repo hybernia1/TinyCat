@@ -13,15 +13,13 @@ require_admin();
 $cronApi = route_path() === '/api/admin/cron-token';
 
 if ($cronApi) {
-    api_endpoint('POST', static function (): never {
-        csrf_require();
-        cron_token_rotate();
-        flash('success', t('cron.messages.token_rotated'));
-        api_ok([
-            'rotated' => true,
-            'redirect' => '/admin/cron',
-        ], t('cron.messages.token_rotated'));
-    });
+    csrf_require();
+    cron_token_rotate();
+    flash('success', t('cron.messages.token_rotated'));
+    api_ok([
+        'rotated' => true,
+        'redirect' => '/admin/cron',
+    ], t('cron.messages.token_rotated'));
 }
 
 if (method() !== 'GET') {
