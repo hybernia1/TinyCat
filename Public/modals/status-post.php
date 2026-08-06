@@ -44,7 +44,12 @@ ob_start();
         <div class="status-body"><?= $bodyHtml ?></div>
     <?php endif; ?>
     <?= part('status/links', ['item' => $item]) ?>
-    <?= part('status/actions', ['item' => $item, 'user' => $user, 'action' => $action]) ?>
+    <?= part('status/actions', [
+        'item' => $item,
+        'user' => $user,
+        'action' => $action,
+        'open_comments_modal' => false,
+    ]) ?>
     <?= part('status/comments-thread', [
         'item' => $item,
         'user' => $user,
@@ -58,7 +63,7 @@ $body = trim((string) ob_get_clean());
 echo render('modals/layout', [
     'id' => $modalId,
     'title' => t('account.status_thread_title'),
-    'modalClass' => 'status-post-modal',
+    'modalClass' => 'status-post-modal modal-mobile-fullscreen',
     'size' => 'modal-panel-lg status-post-modal-panel',
     'bodyClass' => 'status-post-modal-body',
     'body' => $body,

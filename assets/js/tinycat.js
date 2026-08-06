@@ -181,44 +181,6 @@
     return document.getElementById(target);
   }
 
-  function mobileStatusUrl(trigger) {
-    var parent;
-    var modalTarget;
-    var card;
-    var href;
-    var statusId;
-
-    if (!trigger || !window.matchMedia || !window.matchMedia("(max-width: 760px), (hover: none) and (pointer: coarse)").matches) {
-      return "";
-    }
-
-    parent = trigger.closest("[data-modal-parent-open]");
-    modalTarget = String(trigger.dataset.modalOpen || (parent ? parent.dataset.modalParentOpen : ""));
-    if (modalTarget.indexOf("status-post-modal-") !== 0) {
-      return "";
-    }
-
-    href = String(trigger.getAttribute("href") || "");
-    if (href.indexOf("/status/") === 0) {
-      return mobileStatusPageUrl(href);
-    }
-
-    card = trigger.closest(".status-card");
-    if (card && card.dataset.statusUrl) {
-      return mobileStatusPageUrl(String(card.dataset.statusUrl));
-    }
-
-    statusId = parseInt(modalTarget.slice("status-post-modal-".length), 10) || 0;
-    return statusId > 0 ? mobileStatusPageUrl("/status/" + statusId) : "";
-  }
-
-  function mobileStatusPageUrl(value) {
-    var url = new URL(value, window.location.origin);
-
-    url.searchParams.set("compact", "1");
-    return compactUrl(url);
-  }
-
   function uiText(name, fallback) {
     var body = document.body;
     var key = "ui" + name.charAt(0).toUpperCase() + name.slice(1);
@@ -1468,6 +1430,47 @@
     }
   }
 
+  function modalAnchorId(trigger) {
+    var href = trigger ? String(trigger.getAttribute("href") || "") : "";
+    var hash = "";
+
+    if (!href) {
+      return "";
+    }
+
+    try {
+      hash = decodeURIComponent(new URL(href, window.location.href).hash.slice(1));
+    } catch (_error) {
+      return "";
+    }
+
+    return /^status-comments-thread-[1-9][0-9]*$/.test(hash) ? hash : "";
+  }
+
+  function scrollModalToAnchor(modal, id) {
+    var target;
+    var scroller;
+    var offset;
+
+    if (!modal || !id) {
+      return;
+    }
+
+    target = qsa("[id]", modal).find(function (element) {
+      return element.id === id;
+    });
+    scroller = modalScrollElement(modal);
+
+    if (!target || !scroller) {
+      return;
+    }
+
+    window.requestAnimationFrame(function () {
+      offset = target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+      scroller.scrollTop = Math.max(0, offset - 12);
+    });
+  }
+
   function toastIconName(type) {
     if (type === "success") {
       return "check-circle";
@@ -1720,20 +1723,31 @@
     document.addEventListener("click", function (event) {
       var target = event.target;
       var open = target.closest && target.closest("[data-modal-open]");
+      var modalScroll = target.closest && target.closest("[data-modal-scroll]");
       var close = target.closest && target.closest("[data-modal-close]");
-      var statusUrl;
+      var anchorId;
 
       if (open) {
-        statusUrl = mobileStatusUrl(open);
         event.preventDefault();
-        if (statusUrl) {
-          window.location.assign(statusUrl);
+        anchorId = modalAnchorId(open);
+        openRemoteModal(open)
+          .then(function (modal) {
+            scrollModalToAnchor(modal, anchorId);
+          })
+          .catch(function (error) {
+            TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
+          });
+        return;
+      }
+
+      if (modalScroll) {
+        anchorId = modalAnchorId(modalScroll);
+
+        if (anchorId && modalScroll.closest(".modal[data-open='true']")) {
+          event.preventDefault();
+          scrollModalToAnchor(modalScroll.closest(".modal[data-open='true']"), anchorId);
           return;
         }
-        openRemoteModal(open).catch(function (error) {
-          TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
-        });
-        return;
       }
 
       if (close || (target.classList && target.classList.contains("modal-backdrop"))) {
@@ -3110,6 +3124,55 @@
     });
   };
 
+  function keepModalReplyVisible(field) {
+    var form = field && field.closest ? field.closest(".status-comment-form.is-reply") : null;
+    var modal = form ? form.closest(".modal[data-open='true']") : null;
+    var scroller = modal ? modalScrollElement(modal) : null;
+    var viewport = window.visualViewport || null;
+    var formRect;
+    var scrollRect;
+    var visibleTop;
+    var visibleBottom;
+    var adjustment = 0;
+
+    if (!form || !modal || !scroller) {
+      return;
+    }
+
+    formRect = form.getBoundingClientRect();
+    scrollRect = scroller.getBoundingClientRect();
+    visibleTop = Math.max(scrollRect.top, viewport ? viewport.offsetTop : 0) + 12;
+    visibleBottom = Math.min(scrollRect.bottom, viewport ? viewport.offsetTop + viewport.height : window.innerHeight) - 12;
+
+    if (formRect.bottom > visibleBottom) {
+      adjustment = formRect.bottom - visibleBottom;
+    } else if (formRect.top < visibleTop) {
+      adjustment = formRect.top - visibleTop;
+    }
+
+    if (adjustment !== 0) {
+      scroller.scrollTop += adjustment;
+    }
+  }
+
+  function scheduleModalReplyVisibility(field) {
+    if (!field || !field.closest || !field.closest(".status-comment-form.is-reply")) {
+      return;
+    }
+
+    TinyCat.__modalReplyField = field;
+
+    if (TinyCat.__modalReplyVisibilityQueued === true) {
+      return;
+    }
+
+    TinyCat.__modalReplyVisibilityQueued = true;
+    window.requestAnimationFrame(function () {
+      TinyCat.__modalReplyVisibilityQueued = false;
+      keepModalReplyVisible(TinyCat.__modalReplyField);
+    });
+  }
+
   TinyCat.initCommentReplies = function () {
     if (TinyCat.__commentReplyEventsBound === true) {
       return;
@@ -3127,8 +3190,8 @@
         return;
       }
 
-      editorRoot = qs("[data-status-editor]", details);
-      input = (editorRoot ? statusEditorInput(editorRoot) : null) || qs(".status-comment-input", details);
+      editorRoot = qs("[data-status-editor]", details.closest(".status-comment-main"));
+      input = (editorRoot ? statusEditorInput(editorRoot) : null) || qs(".status-reply-form-container .status-comment-input", details.closest(".status-comment-main"));
 
       if (!input) {
         return;
@@ -3143,7 +3206,21 @@
         input.setSelectionRange(length, length);
       }
 
+      scheduleModalReplyVisibility(input);
+
     }, true);
+
+    document.addEventListener("focusin", function (event) {
+      scheduleModalReplyVisibility(event.target);
+    });
+
+    if (window.visualViewport) {
+      ["resize", "scroll"].forEach(function (eventName) {
+        window.visualViewport.addEventListener(eventName, function () {
+          scheduleModalReplyVisibility(document.activeElement);
+        }, { passive: true });
+      });
+    }
   };
 
   function statusFormActionField(form) {
@@ -3908,6 +3985,7 @@
   }
 
   function resetStatusCommentForm(form) {
+    var replyContainer;
     var fields;
     var details;
     var parentField;
@@ -3919,6 +3997,10 @@
     if (statusFormAction(form) === "comment") {
       parentField = qs('input[name="parent_id"]', form);
       details = form.closest(".status-reply-details");
+      replyContainer = form.closest(".status-reply-form-container");
+      if (!details && replyContainer && replyContainer.previousElementSibling) {
+        details = qs(".status-reply-details", replyContainer.previousElementSibling);
+      }
       form.reset();
       fields = qsa("textarea.status-comment-input", form);
       fields.forEach(function (field) {

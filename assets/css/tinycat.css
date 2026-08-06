@@ -2345,11 +2345,14 @@ a:hover {
   display: none;
 }
 
-.status-reply-details[open] {
-  display: grid;
-  flex-basis: 100%;
-  gap: 8px;
+.status-reply-form-container {
+  display: none;
   margin-top: 6px;
+  padding-left: 10px;
+}
+
+.status-comment-main:has(> .status-comment-meta > .status-reply-details[open]) > .status-reply-form-container {
+  display: block;
 }
 
 .status-comment-replies {
@@ -4114,6 +4117,29 @@ body.admin-nav-open .admin-backdrop {
   .home-feed-section > .alert {
     border-inline: 0;
     border-radius: 0;
+  }
+}
+
+@media (max-width: 760px), (hover: none) and (pointer: coarse) {
+  .modal.modal-mobile-fullscreen {
+    padding: 0;
+  }
+
+  .modal.modal-mobile-fullscreen > .modal-panel {
+    display: grid;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+    border-radius: 0;
+  }
+
+  .modal.modal-mobile-fullscreen > .modal-panel > .modal-body {
+    min-height: 0;
+    overflow: auto;
   }
 }
 

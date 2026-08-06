@@ -57,14 +57,6 @@ if ($commentId < 1 || $contentId < 1) {
             <?php if ($user !== null && $showReplyForm): ?>
                 <details class="status-reply-details">
                     <summary><?= et('account.status_reply') ?></summary>
-                    <?= part('status/comment-form', [
-                        'content_id' => $contentId,
-                        'action' => $action,
-                        'user' => $user,
-                        'parent_id' => $commentId,
-                        'mention' => $depth > 0 ? status_comment_mention($authorName) : '',
-                        'context' => $context,
-                    ]) ?>
                 </details>
             <?php endif; ?>
             <?php if ($canDelete): ?>
@@ -74,6 +66,19 @@ if ($commentId < 1 || $contentId < 1) {
                 ]) ?>
             <?php endif; ?>
         </div>
+
+        <?php if ($user !== null && $showReplyForm): ?>
+            <div class="status-reply-form-container">
+                <?= part('status/comment-form', [
+                    'content_id' => $contentId,
+                    'action' => $action,
+                    'user' => $user,
+                    'parent_id' => $commentId,
+                    'mention' => $depth > 0 ? status_comment_mention($authorName) : '',
+                    'context' => $context,
+                ]) ?>
+            </div>
+        <?php endif; ?>
 
         <?php if ($showReplies && $replies !== []): ?>
             <div class="status-comment-replies" data-comment-replies data-comment-id="<?= e($commentId) ?>">

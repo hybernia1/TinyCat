@@ -43,7 +43,7 @@ if ($contentId < 1) {
             <?= icon('message-circle') ?> <span class="sr-only"><?= et('account.status_comments') ?>:</span> <span data-status-count="comments"><?= e($commentsCount) ?></span>
         </a>
     <?php else: ?>
-        <a class="btn btn-ghost btn-sm status-reaction" href="#status-comments-thread-<?= e($contentId) ?>" title="<?= et('account.status_comments') ?>">
+        <a class="btn btn-ghost btn-sm status-reaction" href="#status-comments-thread-<?= e($contentId) ?>" data-modal-scroll title="<?= et('account.status_comments') ?>">
             <?= icon('message-circle') ?> <span class="sr-only"><?= et('account.status_comments') ?>:</span> <span data-status-count="comments"><?= e($commentsCount) ?></span>
         </a>
     <?php endif; ?>
