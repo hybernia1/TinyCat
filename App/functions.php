@@ -1971,30 +1971,48 @@ function author_follow_counts(int $authorId): array
         return ['followers' => 0, 'following' => 0];
     }
 
+    $counts = one(
+        'SELECT
+                (
+                    SELECT COUNT(*)
+                    FROM user_followers
+                    WHERE user_id = ?
+                ) AS followers,
+                (
+                    SELECT COUNT(*)
+                    FROM user_followers
+                    WHERE follower_id = ?
+                ) AS following',
+        [$authorId, $authorId]
+    ) ?? [];
+
     return [
-        'followers' => (int) val(
-            'SELECT COUNT(*)
-                FROM user_followers
-                WHERE user_id = ?',
-            [$authorId]
-        ),
-        'following' => (int) val(
-            'SELECT COUNT(*)
-                FROM user_followers
-                WHERE follower_id = ?',
-            [$authorId]
-        ),
+        'followers' => (int) ($counts['followers'] ?? 0),
+        'following' => (int) ($counts['following'] ?? 0),
     ];
 }
 
-function author_following_profiles(int $authorId, int $limit = 12, int $offset = 0): array
+function author_following_profiles(int $authorId, int $limit = 12, string $cursorAt = '', int $cursorId = 0): array
 {
     if ($authorId < 1) {
         return [];
     }
 
     $limit = max(1, min(100, $limit));
-    $offset = max(0, $offset);
+    $cursorAt = trim($cursorAt);
+    $cursorId = max(0, $cursorId);
+    $params = [$authorId, 'active'];
+    $cursorSql = '';
+
+    if ($cursorId > 0 && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $cursorAt) === 1) {
+        $cursorSql = '
+                AND (
+                    uf.created_at < ?
+                    OR (uf.created_at = ? AND uf.user_id > ?)
+                )';
+        array_push($params, $cursorAt, $cursorAt, $cursorId);
+    }
+
     return all(
         'SELECT u.id,
                 u.username,
@@ -2009,27 +2027,27 @@ function author_following_profiles(int $authorId, int $limit = 12, int $offset =
             FROM user_followers uf
             INNER JOIN users u ON u.id = uf.user_id
             WHERE uf.follower_id = ?
-                AND u.status = ?
-            ORDER BY uf.created_at DESC, u.username ASC
-            LIMIT ' . $limit . ' OFFSET ' . $offset,
-        [$authorId, 'active']
+                AND u.status = ?' . $cursorSql . '
+            ORDER BY uf.created_at DESC, uf.user_id ASC
+            LIMIT ' . $limit,
+        $params
     );
 }
 
-function author_following_profiles_count(int $authorId): int
+function author_following_cursor_params(array $profiles): array
 {
-    if ($authorId < 1) {
-        return 0;
+    $last = $profiles !== [] ? end($profiles) : null;
+
+    if (!is_array($last)) {
+        return [];
     }
 
-    return (int) val(
-        'SELECT COUNT(*)
-            FROM user_followers uf
-            INNER JOIN users u ON u.id = uf.user_id
-            WHERE uf.follower_id = ?
-                AND u.status = ?',
-        [$authorId, 'active']
-    );
+    $followedAt = trim((string) ($last['followed_at'] ?? ''));
+    $id = max(0, (int) ($last['id'] ?? 0));
+
+    return preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $followedAt) === 1 && $id > 0
+        ? ['cursor_at' => $followedAt, 'cursor_id' => $id]
+        : [];
 }
 
 function author_following_profile_payload(array $profile): array
@@ -2061,47 +2079,46 @@ function author_activity_stats(int $authorId): array
     }
 
     try {
+        $stats = one(
+            'SELECT
+                    (
+                        SELECT COUNT(*)
+                        FROM content
+                        WHERE author_id = ?
+                    ) AS posts,
+                    (
+                        SELECT COUNT(*)
+                        FROM content_likes
+                        WHERE user_id = ?
+                    ) + (
+                        SELECT COUNT(*)
+                        FROM comment_likes
+                        WHERE user_id = ?
+                    ) AS likes_given,
+                    (
+                        SELECT COUNT(*)
+                        FROM content_likes cl
+                        INNER JOIN content c ON c.id = cl.content_id
+                        WHERE c.author_id = ?
+                    ) + (
+                        SELECT COUNT(*)
+                        FROM comment_likes cl
+                        INNER JOIN content_comments cc ON cc.id = cl.comment_id
+                        WHERE cc.user_id = ?
+                    ) AS likes_received,
+                    (
+                        SELECT COUNT(*)
+                        FROM content_comments
+                        WHERE user_id = ?
+                    ) AS comments',
+            [$authorId, $authorId, $authorId, $authorId, $authorId, $authorId]
+        ) ?? [];
+
         return [
-            'posts' => (int) val(
-                'SELECT COUNT(*)
-                    FROM content
-                    WHERE author_id = ?',
-                [$authorId]
-            ),
-            'likes_given' => (int) val(
-                'SELECT
-                        (
-                            SELECT COUNT(*)
-                            FROM content_likes
-                            WHERE user_id = ?
-                        ) + (
-                            SELECT COUNT(*)
-                            FROM comment_likes
-                            WHERE user_id = ?
-                        )',
-                [$authorId, $authorId]
-            ),
-            'likes_received' => (int) val(
-                'SELECT
-                        (
-                            SELECT COUNT(*)
-                            FROM content_likes cl
-                            INNER JOIN content c ON c.id = cl.content_id
-                            WHERE c.author_id = ?
-                        ) + (
-                            SELECT COUNT(*)
-                            FROM comment_likes cl
-                            INNER JOIN content_comments cc ON cc.id = cl.comment_id
-                            WHERE cc.user_id = ?
-                        )',
-                [$authorId, $authorId]
-            ),
-            'comments' => (int) val(
-                'SELECT COUNT(*)
-                    FROM content_comments
-                    WHERE user_id = ?',
-                [$authorId]
-            ),
+            'posts' => (int) ($stats['posts'] ?? 0),
+            'likes_given' => (int) ($stats['likes_given'] ?? 0),
+            'likes_received' => (int) ($stats['likes_received'] ?? 0),
+            'comments' => (int) ($stats['comments'] ?? 0),
         ];
     } catch (Throwable) {
         return $empty;
@@ -2867,44 +2884,62 @@ function public_status_query(): CoreQuery
         ->where('u.status = ?', 'active');
 }
 
-function public_status_page(CoreQuery $query, int $limit = 24, int $offset = 0): array
+function public_status_ids_page(CoreQuery $query, int $limit = 24): array
 {
     $limit = max(1, min(100, $limit));
-    $offset = max(0, $offset);
 
-    $ids = array_map(
+    return array_values(array_filter(array_map(
         static fn (array $row): int => (int) ($row['id'] ?? 0),
         $query
             ->order('c.published_at DESC, c.id DESC')
-            ->limit($limit, $offset)
+            ->limit($limit)
             ->all()
-    );
-
-    return public_status_items_by_ids($ids);
+    ), static fn (int $id): bool => $id > 0));
 }
 
-function public_status_items(int $limit = 24, int $offset = 0): array
+function public_status_cursor_page(CoreQuery $query, int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
 {
-    return public_status_page(public_status_id_query(), $limit, $offset);
+    $cursorAt = trim($cursorAt);
+    $cursorId = max(0, $cursorId);
+
+    if ($cursorId > 0 && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $cursorAt) === 1) {
+        $query->where(
+            '(
+                    c.published_at < ?
+                    OR (c.published_at = ? AND c.id < ?)
+                )',
+            $cursorAt,
+            $cursorAt,
+            $cursorId
+        );
+    }
+
+    return public_status_items_by_ids(public_status_ids_page($query, $limit));
 }
 
-function public_status_items_for_user(int $userId, int $limit = 24, int $offset = 0): array
+function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
+{
+    return public_status_cursor_page(public_status_id_query(), $limit, $cursorAt, $cursorId);
+}
+
+function public_status_items_for_user_cursor(int $userId, int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
 {
     if ($userId < 1) {
-        return public_status_items($limit, $offset);
+        return public_status_items_cursor($limit, $cursorAt, $cursorId);
     }
 
     $authorIds = public_following_author_ids($userId);
 
     if (count($authorIds) <= 1000) {
-        return public_status_page(
+        return public_status_cursor_page(
             public_status_author_id_query()->whereIn('c.author_id', $authorIds),
             $limit,
-            $offset
+            $cursorAt,
+            $cursorId
         );
     }
 
-    return public_status_page(
+    return public_status_cursor_page(
         public_status_id_query()->where(
             '(
                     c.author_id = ?
@@ -2919,7 +2954,8 @@ function public_status_items_for_user(int $userId, int $limit = 24, int $offset 
             $userId
         ),
         $limit,
-        $offset
+        $cursorAt,
+        $cursorId
     );
 }
 
@@ -2945,16 +2981,29 @@ function public_following_author_ids(int $userId): array
     return $cache[$userId] = $ids;
 }
 
-function public_status_items_by_author(int $authorId, int $limit = 24, int $offset = 0): array
+function public_status_items_by_author_cursor(int $authorId, int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
 {
     if ($authorId < 1) {
         return [];
     }
 
-    return public_status_page(
+    return public_status_cursor_page(
         public_status_author_id_query()->where('c.author_id = ?', $authorId),
         $limit,
-        $offset
+        $cursorAt,
+        $cursorId
+    );
+}
+
+function public_status_ids_by_author(int $authorId, int $limit = 24): array
+{
+    if ($authorId < 1) {
+        return [];
+    }
+
+    return public_status_ids_page(
+        public_status_author_id_query()->where('c.author_id = ?', $authorId),
+        $limit
     );
 }
 
@@ -2981,77 +3030,23 @@ function public_status_items_by_tag(
         ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
         ->where('ct.term_id = ?', $termId);
 
-    if ($cursorAt !== '' && $cursorId > 0) {
-        return public_status_page(
-            $query->where(
-                '(
-                        c.published_at < ?
-                        OR (c.published_at = ? AND c.id < ?)
-                    )',
-                $cursorAt,
-                $cursorAt,
-                $cursorId
-            ),
-            $limit
-        );
-    }
-
-    return public_status_page($query, $limit);
+    return public_status_cursor_page($query, $limit, $cursorAt, $cursorId);
 }
 
-function public_status_items_by_tag_offset(string $tag, int $limit = 24, int $offset = 0): array
+function public_status_ids_by_tag(string $tag, int $limit = 24): array
 {
     $tag = status_tag_normalize($tag);
-
-    if ($tag === '') {
-        return [];
-    }
-
     $termId = status_term_id_exact($tag);
 
     if ($termId < 1) {
         return [];
     }
 
-    return public_status_page(
+    return public_status_ids_page(
         public_status_id_query()
             ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
             ->where('ct.term_id = ?', $termId),
-        $limit,
-        $offset
-    );
-}
-
-function public_status_count_by_author(int $authorId): int
-{
-    if ($authorId < 1) {
-        return 0;
-    }
-
-    return (int) val(
-        'SELECT COUNT(*)
-            FROM content c
-            INNER JOIN users u ON u.id = c.author_id
-            WHERE c.author_id = ? AND u.status = ?',
-        [$authorId, 'active']
-    );
-}
-
-function public_status_count_by_tag(string $tag): int
-{
-    $termId = status_term_id_exact($tag);
-
-    if ($termId < 1) {
-        return 0;
-    }
-
-    return (int) val(
-        'SELECT COUNT(*)
-            FROM content c
-            INNER JOIN users u ON u.id = c.author_id
-            INNER JOIN content_tags ct ON ct.content_id = c.id
-            WHERE ct.term_id = ? AND u.status = ?',
-        [$termId, 'active']
+        $limit
     );
 }
 
@@ -3697,8 +3692,11 @@ function public_search_content_rows(string $query, int $limit): array
                 ->where('MATCH(c.body) AGAINST (? IN BOOLEAN MODE)', $fulltext)
                 ->where('u.status = ?', 'active');
 
+            // The recent-content pass above already prioritizes new posts.
+            // Keep this full-text fallback index-ordered: sorting every match
+            // by publication time forces MySQL to read and sort the whole
+            // match set before it can honour LIMIT.
             foreach ($fulltextQuery
-                ->order('c.published_at DESC, c.id DESC')
                 ->limit(max($limit, min(100, $limit * 4)))
                 ->all() as $item) {
                 $id = (int) ($item['id'] ?? 0);
@@ -3913,12 +3911,16 @@ function public_search_results(string $query, int $limit = 6): array
     $contentIds = [];
 
     foreach (db_select(
-        'SELECT t.id, t.name, COUNT(ct.content_id) AS posts_count
-            FROM terms t
-            LEFT JOIN content_tags ct ON ct.term_id = t.id'
+        'SELECT t.id,
+                t.name,
+                (
+                    SELECT COUNT(*)
+                    FROM content_tags ct
+                    WHERE ct.term_id = t.id
+                ) AS posts_count
+            FROM terms t'
     )
         ->where('t.name LIKE ?', $tagLike)
-        ->group('t.id, t.name')
         ->order('posts_count DESC, t.name ASC')
         ->limit($limit)
         ->all() as $tag) {
@@ -5254,17 +5256,19 @@ function author_following_modal_id(int $authorId): string
     return 'following-modal-' . max(0, $authorId);
 }
 
-function author_following_modal_url(int $authorId, int $page = 1): string
+function author_following_modal_url(int $authorId, string $cursorAt = '', int $cursorId = 0): string
 {
-    return author_following_api_url($authorId, $page, true);
+    return author_following_api_url($authorId, $cursorAt, $cursorId, true);
 }
 
-function author_following_api_url(int $authorId, int $page = 1, bool $html = false): string
+function author_following_api_url(int $authorId, string $cursorAt = '', int $cursorId = 0, bool $html = false): string
 {
     $query = ['author_id' => max(0, $authorId)];
+    $cursorAt = trim($cursorAt);
 
-    if ($page > 1) {
-        $query['page'] = $page;
+    if ($cursorId > 0 && preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $cursorAt) === 1) {
+        $query['cursor_at'] = $cursorAt;
+        $query['cursor_id'] = $cursorId;
     }
 
     if ($html) {
@@ -5701,27 +5705,25 @@ function public_status_page_limit(): int
     return max(1, min(50, (int) config('public.status_limit', 20)));
 }
 
-function status_feed_context_items(string $context, int $limit, int $offset, array $params = [], ?array $user = null): array
+function status_feed_context_items(string $context, int $limit, array $params = [], ?array $user = null): array
 {
     $limit = max(1, min(50, $limit));
-    $offset = max(0, $offset);
     $context = in_array($context, ['home', 'author', 'tag'], true) ? $context : 'home';
     $user ??= auth();
+    $cursorAt = trim((string) ($params['cursor_at'] ?? ''));
+    $cursorId = max(0, (int) ($params['cursor_id'] ?? 0));
 
     if ($context === 'author') {
         $authorId = max(0, (int) ($params['author_id'] ?? 0));
 
         return [
-            'items' => public_status_items_by_author($authorId, $limit, $offset),
+            'items' => public_status_items_by_author_cursor($authorId, $limit, $cursorAt, $cursorId),
             'action' => author_url($authorId),
         ];
     }
 
     if ($context === 'tag') {
         $tag = status_tag_normalize((string) ($params['tag'] ?? ''));
-        $cursorAt = trim((string) ($params['cursor_at'] ?? ''));
-        $cursorAt = preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $cursorAt) === 1 ? $cursorAt : '';
-        $cursorId = max(0, (int) ($params['cursor_id'] ?? 0));
 
         return [
             'items' => public_status_items_by_tag($tag, $limit, $cursorAt, $cursorId),
@@ -5735,13 +5737,13 @@ function status_feed_context_items(string $context, int $limit, int $offset, arr
         $userId = (int) ($user['id'] ?? 0);
 
         return [
-            'items' => $userId > 0 ? public_status_items_for_user($userId, $limit, $offset) : [],
+            'items' => $userId > 0 ? public_status_items_for_user_cursor($userId, $limit, $cursorAt, $cursorId) : [],
             'action' => '/?feed=following',
         ];
     }
 
     return [
-        'items' => public_status_items($limit, $offset),
+        'items' => public_status_items_cursor($limit, $cursorAt, $cursorId),
         'action' => '/',
     ];
 }
@@ -5758,8 +5760,8 @@ function public_home_feed_data(string $feed = 'all', ?array $user = null, ?array
         $items = $followingLoginRequired
             ? []
             : ($feed === 'following'
-                ? public_status_items_for_user((int) ($user['id'] ?? 0), $limit)
-                : public_status_items($limit));
+                ? public_status_items_for_user_cursor((int) ($user['id'] ?? 0), $limit)
+                : public_status_items_cursor($limit));
     }
 
     $feedId = 'status-feed-' . $feed;
@@ -5960,8 +5962,8 @@ function public_home_feed_payload(string $feed = 'all', ?array $user = null): ar
     $feed = $feed === 'following' ? 'following' : 'all';
     $limit = public_status_page_limit();
     $items = $feed === 'following'
-        ? ((int) ($user['id'] ?? 0) > 0 ? public_status_items_for_user((int) ($user['id'] ?? 0), $limit) : [])
-        : public_status_items($limit);
+        ? ((int) ($user['id'] ?? 0) > 0 ? public_status_items_for_user_cursor((int) ($user['id'] ?? 0), $limit) : [])
+        : public_status_items_cursor($limit);
     $history = $feed === 'following' ? '/?feed=following' : '/';
     $data = [
         'feed' => $feed,
@@ -5977,18 +5979,14 @@ function public_home_feed_payload(string $feed = 'all', ?array $user = null): ar
     ]);
 }
 
-function status_feed_next_url(string $context, int $offset, int $limit, array $params = [], bool $html = true): string
+function status_feed_next_url(string $context, int $limit, array $params = [], bool $html = true): string
 {
     $query = array_merge($params, [
         'context' => $context,
         'limit' => max(1, min(50, $limit)),
     ]);
 
-    if ($context !== 'tag') {
-        $query['offset'] = max(0, $offset);
-    } else {
-        unset($query['offset']);
-    }
+    unset($query['offset']);
 
     if ($html) {
         $query['view'] = 'html';
@@ -6054,33 +6052,24 @@ function cron_request_token(): string
     return trim((string) get('bearer', ''));
 }
 
-function status_feed_payload(string $context, int $limit, int $offset, array $params = [], ?array $user = null): array
+function status_feed_payload(string $context, int $limit, array $params = [], ?array $user = null): array
 {
-    $feed = status_feed_context_items($context, $limit, $offset, $params, $user);
+    $feed = status_feed_context_items($context, $limit, $params, $user);
     $items = (array) ($feed['items'] ?? []);
     $action = (string) ($feed['action'] ?? '/');
     $count = count($items);
-    $nextOffset = $offset + $count;
     $done = $count < $limit;
     $nextParams = $params;
-
-    if ($context === 'tag') {
-        unset($nextParams['cursor_at'], $nextParams['cursor_id']);
-        $nextParams += status_feed_cursor_params($items);
-    }
+    unset($nextParams['cursor_at'], $nextParams['cursor_id'], $nextParams['offset']);
+    $nextParams += status_feed_cursor_params($items);
 
     $data = [
         'context' => $context,
         'items' => $items,
         'count' => $count,
         'done' => $done,
-        'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $nextParams, false),
+        'next_url' => $done ? '' : status_feed_next_url($context, $limit, $nextParams, false),
     ];
-
-    if ($context !== 'tag') {
-        $data['offset'] = $offset;
-        $data['next_offset'] = $nextOffset;
-    }
 
     return api_payload($data, static function () use (
         $items,
@@ -6089,10 +6078,8 @@ function status_feed_payload(string $context, int $limit, int $offset, array $pa
         $count,
         $done,
         $context,
-        $nextOffset,
         $limit,
-        $nextParams,
-        $offset
+        $nextParams
     ): array {
         $htmlData = [
             'html' => part('status/feed', [
@@ -6102,13 +6089,8 @@ function status_feed_payload(string $context, int $limit, int $offset, array $pa
             ]),
             'count' => $count,
             'done' => $done,
-            'next_url' => $done ? '' : status_feed_next_url($context, $nextOffset, $limit, $nextParams, true),
+            'next_url' => $done ? '' : status_feed_next_url($context, $limit, $nextParams, true),
         ];
-
-        if ($context !== 'tag') {
-            $htmlData['offset'] = $offset;
-            $htmlData['next_offset'] = $nextOffset;
-        }
 
         return $htmlData;
     });

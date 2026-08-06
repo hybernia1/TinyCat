@@ -51,6 +51,6 @@ $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
         'context' => 'home',
         'loaded' => count($items),
         'limit' => $limit,
-        'params' => ['feed' => $feed],
+        'params' => ['feed' => $feed] + status_feed_cursor_params($items),
     ]) ?>
 <?php endif; ?>

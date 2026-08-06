@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.12';
+    public const string VERSION = '2.0.13';
 
     private static bool $booted = false;
     private static array $config = [];

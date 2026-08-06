@@ -320,7 +320,6 @@ final class Api
     {
         $context = (string) get('context', 'home');
         $limit = max(1, min(50, (int) get('limit', public_status_page_limit())));
-        $offset = $context === 'tag' ? 0 : max(0, (int) get('offset', 0));
         $params = [
             'feed' => (string) get('feed', 'all'),
             'author_id' => max(0, (int) get('author_id', 0)),
@@ -329,7 +328,7 @@ final class Api
             'cursor_id' => max(0, (int) get('cursor_id', 0)),
         ];
 
-        return status_feed_payload($context, $limit, $offset, $params, auth());
+        return status_feed_payload($context, $limit, $params, auth());
     }
 
     public static function statusCard(): array
@@ -475,24 +474,27 @@ final class Api
             api_error(t('public.author_not_found'), 404, 'not_found');
         }
 
-        $perPage = 36;
-        $total = author_following_profiles_count($authorId);
-        $lastPage = max(1, (int) ceil($total / $perPage));
-        $page = min($lastPage, max(1, (int) get('page', 1)));
-
-        $profiles = author_following_profiles($authorId, $perPage, ($page - 1) * $perPage);
+        $limit = 36;
+        $cursorAt = trim((string) get('cursor_at', ''));
+        $cursorId = max(0, (int) get('cursor_id', 0));
+        $profiles = author_following_profiles($authorId, $limit, $cursorAt, $cursorId);
+        $done = count($profiles) < $limit;
+        $next = author_following_cursor_params($profiles);
+        $nextUrl = $done ? '' : author_following_api_url(
+            $authorId,
+            (string) ($next['cursor_at'] ?? ''),
+            (int) ($next['cursor_id'] ?? 0)
+        );
         $data = [
             'author' => author_following_profile_payload($author),
             'items' => array_map('author_following_profile_payload', $profiles),
-            'pagination' => [
-                'page' => $page,
-                'per_page' => $perPage,
-                'pages' => $lastPage,
-                'total' => $total,
-                'count' => count($profiles),
-                'previous_url' => $page > 1 ? author_following_api_url($authorId, $page - 1) : null,
-                'next_url' => $page < $lastPage ? author_following_api_url($authorId, $page + 1) : null,
-            ],
+            'count' => count($profiles),
+            'done' => $done,
+            'next_url' => $nextUrl,
+            'items_html' => implode('', array_map(
+                static fn (array $profile): string => part('author/following-profile', ['profile' => $profile]),
+                $profiles
+            )),
         ];
 
         return api_payload($data, static fn (): array => [
@@ -500,11 +502,13 @@ final class Api
                 'author' => $author,
                 'author_id' => $authorId,
                 'profiles' => $profiles,
-                'page' => $page,
-                'last_page' => $lastPage,
-                'total' => $total,
+                'done' => $done,
+                'next_url' => $nextUrl,
             ]),
-            'pagination' => $data['pagination'],
+            'count' => $data['count'],
+            'done' => $data['done'],
+            'next_url' => $data['next_url'],
+            'items_html' => $data['items_html'],
         ]);
     }
 

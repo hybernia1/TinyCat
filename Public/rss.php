@@ -36,7 +36,7 @@ if ($rssType === 'tag') {
     $rssTitle = $authorName;
     $rssDescription = 'Public posts by ' . $authorName;
     $rssLink = author_url((int) $author['id']);
-    $rssItems = public_status_items_by_author((int) $author['id'], 50);
+    $rssItems = public_status_items_by_author_cursor((int) $author['id'], 50);
 } else {
     http_response_code(404);
     exit('Feed not found.');

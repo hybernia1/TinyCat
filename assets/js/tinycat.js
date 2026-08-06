@@ -3365,11 +3365,7 @@
   function statusFeedFirstPageUrl(url) {
     var next = new URL(url || window.location.href, window.location.href);
 
-    if (next.searchParams.get("context") === "tag") {
-      next.searchParams.delete("offset");
-    } else {
-      next.searchParams.set("offset", "0");
-    }
+    next.searchParams.delete("offset");
     next.searchParams.delete("cursor_at");
     next.searchParams.delete("cursor_id");
 
@@ -3596,6 +3592,41 @@
       window.setTimeout(function () {
         loadStatusFeedMore(control);
       }, 120);
+    }
+  }
+
+  async function loadFollowingMore(button) {
+    var modal = button ? button.closest(".modal") : null;
+    var grid = modal ? qs(".following-modal-grid", modal) : null;
+    var url = button ? button.dataset.followingUrl : "";
+    var data;
+    var payload;
+    var template;
+
+    if (!button || !grid || !url || button.dataset.followingBusy === "true") {
+      return;
+    }
+
+    button.dataset.followingBusy = "true";
+    button.disabled = true;
+
+    try {
+      data = await TinyCat.request(url, { method: "GET" });
+      payload = data && data.data ? data.data : data;
+      template = htmlTemplate(String((payload && payload.items_html) || ""));
+      grid.appendChild(template.content);
+
+      if (payload && payload.next_url && payload.done !== true) {
+        button.dataset.followingUrl = String(payload.next_url);
+        button.disabled = false;
+      } else {
+        button.remove();
+      }
+    } catch (error) {
+      TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
+      button.disabled = false;
+    } finally {
+      delete button.dataset.followingBusy;
     }
   }
 
@@ -3904,29 +3935,6 @@
     return (scope ? qs("[data-status-feed]", scope) : null) || qs("[data-status-feed]");
   }
 
-  function bumpStatusFeedOffset(form, target, amount) {
-    var scope = statusFeedScope(form) || document;
-
-    qsa("[data-status-feed-more]", scope).forEach(function (control) {
-      var url;
-      var offset;
-
-      if (statusFeedTarget(control) !== target || !control.dataset.statusFeedUrl) {
-        return;
-      }
-
-      url = new URL(control.dataset.statusFeedUrl, window.location.href);
-
-      if (url.searchParams.get("context") === "tag") {
-        return;
-      }
-
-      offset = parseInt(url.searchParams.get("offset") || "0", 10) || 0;
-      url.searchParams.set("offset", String(Math.max(0, offset + amount)));
-      control.dataset.statusFeedUrl = compactUrl(url);
-    });
-  }
-
   function prependStatusCard(form, html) {
     var target = statusFeedForForm(form);
     var node = elementFromHtml(html);
@@ -3949,7 +3957,6 @@
     }
 
     hydrateDynamic(node);
-    bumpStatusFeedOffset(form, target, 1);
   }
 
   function replaceStatusCard(form, html) {
@@ -4379,6 +4386,17 @@
 
       event.preventDefault();
       loadStatusFeedMore(trigger.closest("[data-status-feed-more]"));
+    });
+
+    document.addEventListener("click", function (event) {
+      var trigger = event.target.closest && event.target.closest("[data-following-load]");
+
+      if (!trigger) {
+        return;
+      }
+
+      event.preventDefault();
+      loadFollowingMore(trigger);
     });
   };
 

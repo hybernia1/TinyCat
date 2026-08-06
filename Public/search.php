@@ -90,7 +90,6 @@ layout('layout', [
 function tc_search_status_items(array $results): array
 {
     $ids = [];
-    $items = [];
 
     foreach ((array) ($results['content'] ?? []) as $item) {
         $id = (int) ($item['id'] ?? 0);
@@ -100,23 +99,13 @@ function tc_search_status_items(array $results): array
         }
     }
 
-    foreach (public_status_items_by_ids(array_keys($ids)) as $item) {
-        $id = (int) ($item['id'] ?? 0);
-
-        if ($id > 0) {
-            $items[$id] = $item;
-        }
-    }
-
     foreach (array_slice((array) ($results['users'] ?? []), 0, 3) as $user) {
-        foreach (public_status_items_by_author((int) ($user['id'] ?? 0), 4) as $item) {
-            $id = (int) ($item['id'] ?? 0);
-
-            if ($id > 0 && !isset($items[$id])) {
-                $items[$id] = $item;
+        foreach (public_status_ids_by_author((int) ($user['id'] ?? 0), 4) as $id) {
+            if ($id > 0 && !isset($ids[$id])) {
+                $ids[$id] = true;
             }
 
-            if (count($items) >= 48) {
+            if (count($ids) >= 48) {
                 break 2;
             }
         }
@@ -125,18 +114,16 @@ function tc_search_status_items(array $results): array
     foreach (array_slice((array) ($results['tags'] ?? []), 0, 3) as $tag) {
         $name = trim((string) ($tag['title'] ?? ''), '# ');
 
-        foreach (public_status_items_by_tag($name, 4) as $item) {
-            $id = (int) ($item['id'] ?? 0);
-
-            if ($id > 0 && !isset($items[$id])) {
-                $items[$id] = $item;
+        foreach (public_status_ids_by_tag($name, 4) as $id) {
+            if ($id > 0 && !isset($ids[$id])) {
+                $ids[$id] = true;
             }
 
-            if (count($items) >= 48) {
+            if (count($ids) >= 48) {
                 break 2;
             }
         }
     }
 
-    return array_slice(array_values($items), 0, 48);
+    return public_status_items_by_ids(array_slice(array_keys($ids), 0, 48));
 }

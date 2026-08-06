@@ -22,14 +22,14 @@ if (method() === 'GET' && route_path() !== $current) {
     redirect($current, 301);
 }
 
+if (method() === 'GET' && (int) get('page', 0) > 1) {
+    redirect($current, 301);
+}
+
 $statusLimit = public_status_page_limit();
-$publicPostCount = public_status_count_by_tag($tag);
-$pagination = pagination_meta($publicPostCount, (int) get('page', 1), $statusLimit);
-$page = (int) ($pagination['page'] ?? 1);
-$pageUrl = $current . ($page > 1 ? '?page=' . $page : '');
-$statusItems = public_status_items_by_tag_offset($tag, $statusLimit, (int) ($pagination['offset'] ?? 0));
-$prevUrl = ($pagination['has_prev'] ?? false) ? $current . '?page=' . ((int) $page - 1) : '';
-$nextUrl = ($pagination['has_next'] ?? false) ? $current . '?page=' . ((int) $page + 1) : '';
+$statusItems = public_status_items_by_tag($tag, $statusLimit);
+$indexableItems = $statusLimit >= 2 ? $statusItems : public_status_items_by_tag($tag, 2);
+$pageUrl = $current;
 $tagStructuredData = [
     '@context' => 'https://schema.org',
     '@type' => 'CollectionPage',
@@ -57,12 +57,10 @@ layout('layout', [
         'url' => $pageUrl,
         'image' => site_meta_image_url(),
         'rss' => tag_feed_url($tag),
-        'prev' => $prevUrl,
-        'next' => $nextUrl,
-        'robots' => $publicPostCount >= 2 ? '' : 'noindex,follow',
+        'robots' => count($indexableItems) >= 2 ? '' : 'noindex,follow',
         'jsonld' => $tagStructuredData,
     ],
-], static function () use ($tag, $statusItems, $statusLimit, $current, $pagination): void {
+], static function () use ($tag, $statusItems, $statusLimit, $current): void {
     $feedId = 'status-feed-tag-' . slug($tag);
     ?>
     <section class="public-layout">
@@ -89,7 +87,6 @@ layout('layout', [
                     'limit' => $statusLimit,
                     'params' => ['tag' => $tag] + status_feed_cursor_params($statusItems),
                 ]) ?>
-                <?= pagination($pagination, $current) ?>
             <?php endif; ?>
         </div>
         <?= public_sidebar($tag) ?>

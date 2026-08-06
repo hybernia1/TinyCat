@@ -9,9 +9,8 @@ if (!defined('TINYCAT')) {
 $author = (array) ($author ?? []);
 $authorId = (int) ($author_id ?? 0);
 $profiles = (array) ($profiles ?? []);
-$page = max(1, (int) ($page ?? 1));
-$lastPage = max(1, (int) ($last_page ?? 1));
-$total = max(0, (int) ($total ?? 0));
+$done = (bool) ($done ?? true);
+$nextUrl = (string) ($next_url ?? '');
 
 if ($authorId < 1) {
     http_response_code(404);
@@ -30,15 +29,9 @@ $body = trim((string) ob_get_clean());
 
 ob_start();
 ?>
-<span class="following-modal-page"><?= et('public.following_profiles_page', ['page' => $page, 'pages' => $lastPage, 'total' => $total]) ?></span>
-<?php if ($page > 1): ?>
-    <button class="btn btn-secondary btn-sm" type="button" data-modal-open="<?= e(author_following_modal_id($authorId)) ?>" data-modal-url="<?= e(author_following_modal_url($authorId, $page - 1)) ?>">
-        <?= icon('arrow-left') ?> <span><?= et('common.previous') ?></span>
-    </button>
-<?php endif; ?>
-<?php if ($page < $lastPage): ?>
-    <button class="btn btn-primary btn-sm" type="button" data-modal-open="<?= e(author_following_modal_id($authorId)) ?>" data-modal-url="<?= e(author_following_modal_url($authorId, $page + 1)) ?>">
-        <span><?= et('common.next') ?></span> <?= icon('arrow-right') ?>
+<?php if (!$done && $nextUrl !== ''): ?>
+    <button class="btn btn-primary btn-sm" type="button" data-following-load data-following-url="<?= e($nextUrl) ?>">
+        <?= icon('plus') ?> <span><?= et('public.load_more_posts') ?></span>
     </button>
 <?php endif; ?>
 <?php

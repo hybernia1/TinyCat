@@ -22,14 +22,14 @@ $bio = trim((string) ($author['bio'] ?? ''));
 $avatarUrl = user_avatar_url($author);
 $memberSince = (string) ($author['created_at'] ?? '');
 $current = author_url($authorId);
+
+if (method() === 'GET' && (int) get('page', 0) > 1) {
+    redirect($current, 301);
+}
+
 $statusLimit = public_status_page_limit();
-$pagination = pagination_meta(public_status_count_by_author($authorId), (int) get('page', 1), $statusLimit);
-$publicPostCount = (int) ($pagination['total'] ?? public_status_count_by_author($authorId));
-$page = (int) ($pagination['page'] ?? 1);
-$pageUrl = $current . ($page > 1 ? '?page=' . $page : '');
-$statusItems = public_status_items_by_author($authorId, $statusLimit, (int) ($pagination['offset'] ?? 0));
-$prevUrl = ($pagination['has_prev'] ?? false) ? $current . '?page=' . ($page - 1) : '';
-$nextUrl = ($pagination['has_next'] ?? false) ? $current . '?page=' . ($page + 1) : '';
+$pageUrl = $current;
+$statusItems = public_status_items_by_author_cursor($authorId, $statusLimit);
 $authUser = auth();
 $canPost = $authUser !== null && (int) ($authUser['id'] ?? 0) === $authorId;
 $canSeeMute = $authUser !== null && ($canPost || (string) ($authUser['role'] ?? '') === 'admin');
@@ -38,6 +38,7 @@ $canFollow = $authUser !== null && (int) ($authUser['id'] ?? 0) !== $authorId;
 $isFollowing = $canFollow && author_is_followed((int) ($authUser['id'] ?? 0), $authorId);
 $followCounts = author_follow_counts($authorId);
 $activityStats = author_activity_stats($authorId);
+$publicPostCount = (int) ($activityStats['posts'] ?? 0);
 $presence = author_presence($author);
 $profileLinks = user_profile_links($authorId);
 $followingProfiles = author_following_profiles($authorId, 10);
@@ -88,12 +89,10 @@ layout('layout', [
         'image' => $avatarUrl ?: site_meta_image_url(),
         'type' => 'profile',
         'rss' => author_feed_url($authorId),
-        'prev' => $prevUrl,
-        'next' => $nextUrl,
         'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
         'jsonld' => $authorStructuredData,
     ],
-], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $pagination, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing): void {
+], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -231,9 +230,8 @@ layout('layout', [
                     'context' => 'author',
                     'loaded' => count($statusItems),
                     'limit' => $statusLimit,
-                    'params' => ['author_id' => $authorId],
+                    'params' => ['author_id' => $authorId] + status_feed_cursor_params($statusItems),
                 ]) ?>
-                <?= pagination($pagination, author_url($authorId)) ?>
             </section>
         </div>
     </section>

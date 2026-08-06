@@ -34,7 +34,7 @@ echo "Only publicly visible content should be indexed. Do not index private acco
 if ($full) {
     echo "\n## Latest public posts\n\n";
 
-    foreach (public_status_items(100) as $item) {
+    foreach (public_status_items_cursor(100) as $item) {
         $statusId = (int) ($item['id'] ?? 0);
         $author = trim((string) ($item['author_name'] ?? $item['author_username'] ?? ''));
         $body = trim((string) ($item['body'] ?? ''));

@@ -16,7 +16,7 @@ if ($loaded < $limit) {
     return '';
 }
 
-$nextUrl = status_feed_next_url($context, $loaded, $limit, $params);
+$nextUrl = status_feed_next_url($context, $limit, $params);
 ?>
 <div class="status-feed-more" data-status-feed-more data-status-feed-target="#<?= e($feedId) ?>" data-status-feed-url="<?= e($nextUrl) ?>">
     <button class="btn btn-secondary status-feed-more-button" type="button" data-status-feed-load>
