@@ -1265,6 +1265,47 @@
     return data;
   };
 
+  function modalUsesVisualViewport(modal) {
+    return Boolean(modal && modal.matches && modal.matches(".modal-mobile-fullscreen, .modal-form"));
+  }
+
+  function syncModalVisualViewport(modal) {
+    var viewport = window.visualViewport;
+
+    if (!modalUsesVisualViewport(modal)) {
+      return;
+    }
+
+    if (!viewport || viewport.width <= 0 || viewport.height <= 0) {
+      modal.style.removeProperty("--tinycat-modal-viewport-left");
+      modal.style.removeProperty("--tinycat-modal-viewport-top");
+      modal.style.removeProperty("--tinycat-modal-viewport-width");
+      modal.style.removeProperty("--tinycat-modal-viewport-height");
+      return;
+    }
+
+    modal.style.setProperty("--tinycat-modal-viewport-left", Math.round(viewport.offsetLeft) + "px");
+    modal.style.setProperty("--tinycat-modal-viewport-top", Math.round(viewport.offsetTop) + "px");
+    modal.style.setProperty("--tinycat-modal-viewport-width", Math.round(viewport.width) + "px");
+    modal.style.setProperty("--tinycat-modal-viewport-height", Math.round(viewport.height) + "px");
+  }
+
+  function syncOpenModalVisualViewports() {
+    modalStack.forEach(syncModalVisualViewport);
+  }
+
+  function scheduleOpenModalViewportSync() {
+    if (TinyCat.__modalViewportSyncQueued === true) {
+      return;
+    }
+
+    TinyCat.__modalViewportSyncQueued = true;
+    window.requestAnimationFrame(function () {
+      TinyCat.__modalViewportSyncQueued = false;
+      syncOpenModalVisualViewports();
+    });
+  }
+
   TinyCat.openModal = function (target) {
     var modal = getModal(target);
     var index;
@@ -1293,6 +1334,7 @@
     modal.setAttribute("aria-hidden", "false");
     modal.__tinycatPreviousFocus = previousModal === modal ? modal.__tinycatPreviousFocus : document.activeElement;
     document.body.classList.add("has-modal");
+    syncModalVisualViewport(modal);
     focusFirst(modal);
     emit(modal, "tinycat:modal-open");
 
@@ -1314,6 +1356,10 @@
 
     modal.dataset.open = "false";
     modal.setAttribute("aria-hidden", "true");
+    modal.style.removeProperty("--tinycat-modal-viewport-left");
+    modal.style.removeProperty("--tinycat-modal-viewport-top");
+    modal.style.removeProperty("--tinycat-modal-viewport-width");
+    modal.style.removeProperty("--tinycat-modal-viewport-height");
 
     index = modalStack.indexOf(modal);
     if (index !== -1) {
@@ -1770,6 +1816,15 @@
         focusFirst(activeModal);
       }
     });
+
+    if (window.visualViewport) {
+      ["resize", "scroll"].forEach(function (eventName) {
+        window.visualViewport.addEventListener(eventName, scheduleOpenModalViewportSync, { passive: true });
+      });
+    }
+
+    window.addEventListener("orientationchange", scheduleOpenModalViewportSync, { passive: true });
+    window.addEventListener("resize", scheduleOpenModalViewportSync, { passive: true });
   };
 
   TinyCat.initAjax = function () {
