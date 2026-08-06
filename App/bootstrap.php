@@ -13,6 +13,7 @@ if (PHP_VERSION_ID < 80400) {
 
 require_once __DIR__ . '/autoload.php';
 require_once __DIR__ . '/Core.php';
+require_once __DIR__ . '/Captcha.php';
 require_once __DIR__ . '/Cache.php';
 require_once __DIR__ . '/Minifier.php';
 require_once __DIR__ . '/Avatar.php';

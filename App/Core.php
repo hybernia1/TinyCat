@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.7';
+    public const string VERSION = '2.0.8';
 
     private static bool $booted = false;
     private static array $config = [];
@@ -994,92 +994,17 @@ final class Core
 
     public static function captchaField(string $context = 'form'): string
     {
-        if (!(bool) self::config('security.captcha.enabled', true)) {
-            return '';
-        }
-
-        $name = 'tc_captcha';
-        $challenge = self::captchaChallenge($context, true);
-        $pieceTop = (int) ($challenge['piece_top'] ?? 42);
-        $boardImage = self::captchaBoardDataUri($challenge);
-        $pieceImage = self::captchaPieceDataUri($challenge);
-
-        return '<div class="field captcha-puzzle" data-captcha data-captcha-hint="' . self::e(self::t('security.captcha_hint')) . '" style="--captcha-y: ' . self::e($pieceTop) . '%;">'
-            . '<span class="label">' . self::e(self::t('security.captcha_label')) . '</span>'
-            . '<input type="hidden" name="' . self::e($name) . '" value="" data-captcha-answer required>'
-            . '<div class="captcha-board" aria-hidden="true">'
-            . '<img class="captcha-image" src="' . self::e($boardImage) . '" alt="" draggable="false">'
-            . '<img class="captcha-piece" src="' . self::e($pieceImage) . '" alt="" draggable="false">'
-            . '</div>'
-            . '<label class="captcha-slider-label">'
-            . '<span class="sr-only">' . self::e(self::t('security.captcha_slider')) . '</span>'
-            . '<input class="captcha-slider" type="range" min="8" max="92" step="1" value="8" data-captcha-slider>'
-            . '</label>'
-            . '<span class="captcha-hint" data-captcha-status>' . self::e(self::t('security.captcha_hint')) . '</span>'
-            . '</div>';
+        return Captcha::field($context);
     }
 
     public static function captchaCheck(string $context = 'form'): bool
     {
-        if (!(bool) self::config('security.captcha.enabled', true)) {
-            return true;
-        }
-
-        $name = 'tc_captcha';
-        $answer = trim((string) self::payload($name, ''));
-        $challenge = self::captchaStoredChallenge($context);
-
-        if (self::captchaFailureLocked($context)) {
-            unset($_SESSION[self::captchaSessionKey($context)]);
-
-            return false;
-        }
-
-        if ($challenge === [] || $answer === '') {
-            unset($_SESSION[self::captchaSessionKey($context)]);
-            self::captchaRecordFailure($context);
-
-            return false;
-        }
-
-        [$position, $elapsed, $moves, $method] = array_pad(explode(':', $answer, 4), 4, '');
-        $target = (int) ($challenge['target'] ?? -1);
-        $expires = (int) ($challenge['expires'] ?? 0);
-        $issuedAt = (float) ($challenge['issued_at'] ?? 0);
-        $tolerance = 2;
-        $minInteractionMs = 500;
-        $minMoves = 1;
-        $serverElapsedMs = $issuedAt > 0 ? (int) floor((microtime(true) - $issuedAt) * 1000) : 0;
-        $valid = $expires >= time()
-            && is_numeric($position)
-            && abs((float) $position - $target) <= $tolerance
-            && is_numeric($elapsed)
-            && (int) $elapsed >= $minInteractionMs
-            && $serverElapsedMs >= $minInteractionMs
-            && is_numeric($moves)
-            && (int) $moves >= $minMoves
-            && in_array($method, ['pointer', 'mouse', 'touch', 'keyboard'], true);
-
-        unset($_SESSION[self::captchaSessionKey($context)]);
-
-        if ($valid) {
-            self::captchaClearFailures($context);
-        } else {
-            self::captchaRecordFailure($context);
-        }
-
-        return $valid;
+        return Captcha::check($context);
     }
 
     public static function captchaRefresh(string $context = 'form'): string
     {
-        if (!(bool) self::config('security.captcha.enabled', true)) {
-            return '';
-        }
-
-        $challenge = self::captchaChallenge($context, true);
-
-        return (string) ($challenge['token'] ?? '');
+        return Captcha::refresh($context);
     }
 
     private static function validate(array $data, array $rules, array $messages = []): array
@@ -2026,6 +1951,9 @@ final class Core
         return (string) ($messages[$field . '.' . $rule] ?? $messages[$rule] ?? 'validation.' . $field . '.' . $rule);
     }
 
+    /* CAPTCHA implementation moved to Captcha. Retained below only as a
+     * source-compatible record until the next major cleanup. */
+    /*
     private static function captchaChallenge(string $context, bool $refresh = false): array
     {
         self::session();
@@ -2355,6 +2283,7 @@ final class Core
     {
         return self::captchaSessionKey($context) . '_failures';
     }
+    */
 
     private static function limitString(string $value, int $limit): string
     {

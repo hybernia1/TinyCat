@@ -352,14 +352,30 @@
     var template;
     var replacement;
 
-    if (!current || !captchaHtml) {
+    if (!captchaHtml) {
       return;
     }
 
     template = htmlTemplate(captchaHtml);
     replacement = qs("[data-captcha]", template.content);
 
-    if (!replacement || !current.parentNode) {
+    if (!replacement) {
+      return;
+    }
+
+    if (!current) {
+      current = qs('button[type="submit"]', form);
+
+      if (!current || !current.parentNode) {
+        return;
+      }
+
+      current.parentNode.insertBefore(replacement, current);
+      hydrateDynamic(form);
+      return;
+    }
+
+    if (!current.parentNode) {
       return;
     }
 

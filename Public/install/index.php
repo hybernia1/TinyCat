@@ -630,6 +630,7 @@ function tc_install_default_settings(array $state): void
         ['extensions.installed_versions', Lifecycle::freshInstallVersions(), 'json', 'extensions'],
         ['datetime.relative', (bool) config('datetime.relative', false), 'bool', 'localization'],
         ['security.captcha.enabled', (bool) config('security.captcha.enabled', true), 'bool', 'security'],
+        ['security.captcha.login_attempts', 3, 'int', 'security'],
         ['auth.registration.enabled', (bool) config('auth.registration.enabled', false), 'bool', 'security'],
         ['auth.registration.auto_approve', (bool) config('auth.registration.auto_approve', false), 'bool', 'security'],
         ['performance.minify_css', (bool) config('performance.minify_css', false), 'bool', 'performance'],

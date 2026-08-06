@@ -728,7 +728,7 @@ function auth_form_text_input(string $key, int $maxLength): string
 
 function auth_login_request(): array
 {
-    if (!captcha_check('login')) {
+    if (auth_login_captcha_required() && !captcha_check('login')) {
         captcha_refresh('login');
         api_error(t('auth.invalid_captcha'), 422, 'captcha_invalid', [
             'errors' => ['tc_captcha' => [t('auth.invalid_captcha')]],
@@ -737,14 +737,14 @@ function auth_login_request(): array
     }
 
     if (!auth_attempt(auth_login_credentials())) {
-        captcha_refresh('login');
+        auth_login_failure();
         api_error(t('auth.invalid_login'), 422, 'invalid_login', [
             'errors' => ['username' => [t('auth.invalid_login')]],
-            'captcha_html' => captcha_field('login'),
+            'captcha_html' => auth_login_captcha_required() ? captcha_field('login') : '',
         ]);
     }
 
-    captcha_refresh('login');
+    auth_login_success();
 
     $user = auth();
     $next = auth_request_next_url();
@@ -7279,15 +7279,30 @@ function csrf_require(?string $token = null): void
 
 function captcha_field(string $context = 'form'): string
 {
-    return Core::captchaField($context);
+    return Captcha::field($context);
 }
 
 function captcha_check(string $context = 'form'): bool
 {
-    return Core::captchaCheck($context);
+    return Captcha::check($context);
 }
 
 function captcha_refresh(string $context = 'form'): string
 {
-    return Core::captchaRefresh($context);
+    return Captcha::refresh($context);
+}
+
+function auth_login_captcha_required(): bool
+{
+    return Captcha::loginRequired();
+}
+
+function auth_login_failure(): void
+{
+    Captcha::recordLoginFailure();
+}
+
+function auth_login_success(): void
+{
+    Captcha::clearLoginFailures();
 }

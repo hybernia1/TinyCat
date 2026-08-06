@@ -13,7 +13,7 @@ if (is_post()) {
 
     $credentials = auth_login_credentials();
 
-    if (!captcha_check('login')) {
+    if (auth_login_captcha_required() && !captcha_check('login')) {
         captcha_refresh('login');
         auth_form_state_remember('login');
         flash('error', t('auth.invalid_captcha'));
@@ -21,11 +21,11 @@ if (is_post()) {
     }
 
     if (auth_attempt($credentials)) {
-        captcha_refresh('login');
+        auth_login_success();
         redirect(auth_redirect_after_login(auth(), $next));
     }
 
-    captcha_refresh('login');
+    auth_login_failure();
     auth_form_state_remember('login');
     flash('error', t('auth.invalid_login'));
     redirect(auth_url_with_next('/login', $next));
@@ -79,7 +79,9 @@ layout('layout', [
                         <input type="checkbox" name="remember" value="1"<?= !empty($old['remember']) ? ' checked' : '' ?>>
                         <span><?= et('auth.remember_me') ?></span>
                     </label>
-                    <?= captcha_field('login') ?>
+                    <?php if (auth_login_captcha_required()): ?>
+                        <?= captcha_field('login') ?>
+                    <?php endif; ?>
                     <button class="btn btn-primary" type="submit"><?= icon('login') ?> <span><?= et('common.login') ?></span></button>
                 </form>
                 <div class="cluster gap-2">
