@@ -32,6 +32,7 @@ $pageUrl = $current;
 $statusItems = public_status_items_by_author_cursor($authorId, $statusLimit);
 $authUser = auth();
 $canPost = $authUser !== null && (int) ($authUser['id'] ?? 0) === $authorId;
+$canEditProfile = user_can_edit_profile($author, $authUser);
 $canSeeMute = $authUser !== null && ($canPost || (string) ($authUser['role'] ?? '') === 'admin');
 $mutedUntil = user_muted_until($author);
 $canFollow = $authUser !== null && (int) ($authUser['id'] ?? 0) !== $authorId;
@@ -92,7 +93,7 @@ layout('layout', [
         'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
         'jsonld' => $authorStructuredData,
     ],
-], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $canPost, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing): void {
+], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $canPost, $canEditProfile, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -100,7 +101,7 @@ layout('layout', [
             <div class="profile-sidebar-stack">
                 <article class="card profile-card">
                     <div class="card-body profile-card-body">
-                        <?php if ($canPost): ?>
+                        <?php if ($canEditProfile): ?>
                             <button class="btn btn-secondary btn-sm btn-icon profile-edit-toggle" type="button" data-modal-open="<?= e(author_profile_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_profile_edit_modal_url($authorId, 'bio')) ?>" title="<?= et('common.edit') ?>" aria-label="<?= et('common.edit') ?>">
                                 <?= icon('edit') ?>
                             </button>
@@ -136,7 +137,7 @@ layout('layout', [
                                     <span><?= et('moderation.profile_muted_until', ['until' => datetime($mutedUntil)]) ?></span>
                                 </div>
                             <?php endif; ?>
-                            <?php if ($canPost): ?>
+                            <?php if ($canEditProfile): ?>
                                 <button class="profile-editable-text" type="button" data-modal-open="<?= e(author_profile_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_profile_edit_modal_url($authorId, 'bio')) ?>">
                                     <?php if ($bio !== ''): ?>
                                         <?= nl2br(e($bio)) ?>

@@ -11,6 +11,11 @@ $likesCount = (int) ($likes_count ?? 0);
 $liked = (bool) ($liked ?? false);
 $user = is_array($user ?? null) ? $user : null;
 $contentId = (int) ($content_id ?? 0);
+$comment = is_array($comment ?? null) ? $comment : ['id' => $commentId];
+$commentContext = status_accessible_context($comment, true);
+$likeLabel = t('account.status_comment_like_for', ['context' => $commentContext]);
+$unlikeLabel = t('account.status_comment_unlike_for', ['context' => $commentContext]);
+$currentLikeLabel = $liked ? $unlikeLabel : $likeLabel;
 
 if ($commentId < 1) {
     return '';
@@ -21,12 +26,12 @@ if ($commentId < 1) {
         <?= csrf_field() ?>
         <input type="hidden" name="action" value="comment_like">
         <input type="hidden" name="comment_id" value="<?= e($commentId) ?>">
-        <button class="link-button status-comment-like-button<?= $liked ? ' is-active' : '' ?>" type="submit" data-comment-like-button data-comment-id="<?= e($commentId) ?>">
-            <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span class="sr-only"><?= et('account.status_like') ?>:</span> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
+        <button class="link-button status-comment-like-button<?= $liked ? ' is-active' : '' ?>" type="submit" title="<?= e($currentLikeLabel) ?>" aria-label="<?= e($currentLikeLabel) ?>" aria-pressed="<?= $liked ? 'true' : 'false' ?>" data-like-label="<?= e($likeLabel) ?>" data-unlike-label="<?= e($unlikeLabel) ?>" data-comment-like-button data-comment-id="<?= e($commentId) ?>">
+            <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>" aria-hidden="true"><?= e($likesCount) ?></span>
         </button>
     </form>
 <?php else: ?>
     <span class="status-comment-like-button" data-comment-like-button data-comment-id="<?= e($commentId) ?>">
-        <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span class="sr-only"><?= et('account.status_like') ?>:</span> <span data-comment-like-count data-comment-id="<?= e($commentId) ?>"><?= e($likesCount) ?></span>
+        <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span class="sr-only"><?= et('account.status_comment_likes_for', ['context' => $commentContext, 'count' => $likesCount]) ?></span><span data-comment-like-count data-comment-id="<?= e($commentId) ?>" aria-hidden="true"><?= e($likesCount) ?></span>
     </span>
 <?php endif; ?>

@@ -1726,7 +1726,7 @@
           return;
         }
         anchorId = modalAnchorId(open);
-        openRemoteModal(open)
+        openRemoteModal(open, open.dataset.modalRefresh === "true")
           .then(function (modal) {
             scrollModalToAnchor(modal, anchorId);
           })
@@ -3178,6 +3178,65 @@
     });
   }
 
+  TinyCat.initDismissibleMenus = function () {
+    if (TinyCat.__dismissibleMenuEventsBound === true) {
+      return;
+    }
+
+    TinyCat.__dismissibleMenuEventsBound = true;
+
+    function closeMenus(except) {
+      qsa("[data-dismissible-menu][open]").forEach(function (openMenu) {
+        if (openMenu !== except) {
+          openMenu.open = false;
+        }
+      });
+    }
+
+    document.addEventListener("click", function (event) {
+      var menu = event.target.closest && event.target.closest("[data-dismissible-menu]");
+      var action = event.target.closest && event.target.closest("[data-dismissible-menu-action]");
+
+      closeMenus(menu);
+
+      if (menu && action) {
+        menu.open = false;
+      }
+    });
+
+    document.addEventListener("keydown", function (event) {
+      var activeMenu;
+      var summary;
+
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      activeMenu = document.activeElement && document.activeElement.closest
+        ? document.activeElement.closest("[data-dismissible-menu][open]")
+        : null;
+      closeMenus(null);
+
+      if (activeMenu) {
+        summary = qs("summary", activeMenu);
+
+        if (summary) {
+          summary.focus();
+        }
+      }
+    });
+
+    document.addEventListener("toggle", function (event) {
+      var menu = event.target;
+
+      if (!menu || !menu.matches || !menu.matches("[data-dismissible-menu]") || !menu.open) {
+        return;
+      }
+
+      closeMenus(menu);
+    }, true);
+  };
+
   TinyCat.initCommentReplies = function () {
     if (TinyCat.__commentReplyEventsBound === true) {
       return;
@@ -3817,7 +3876,16 @@
     });
 
     qsa(dataSelector("data-status-id", id) + " [data-status-like-button]").forEach(function (button) {
-      button.classList.toggle("is-active", Boolean(summary.liked));
+      var liked = Boolean(summary.liked);
+      var label = liked ? button.dataset.unlikeLabel : button.dataset.likeLabel;
+
+      button.classList.toggle("is-active", liked);
+      button.setAttribute("aria-pressed", liked ? "true" : "false");
+
+      if (label) {
+        button.setAttribute("aria-label", label);
+        button.setAttribute("title", label);
+      }
     });
 
     if (summary.comments_label) {
@@ -3839,7 +3907,19 @@
     });
 
     qsa("[data-comment-like-button]" + dataSelector("data-comment-id", id)).forEach(function (button) {
-      button.classList.toggle("is-active", Boolean(payload.liked));
+      var liked = Boolean(payload.liked);
+      var label = liked ? button.dataset.unlikeLabel : button.dataset.likeLabel;
+
+      button.classList.toggle("is-active", liked);
+
+      if (button.matches("button")) {
+        button.setAttribute("aria-pressed", liked ? "true" : "false");
+
+        if (label) {
+          button.setAttribute("aria-label", label);
+          button.setAttribute("title", label);
+        }
+      }
     });
   }
 
@@ -3908,6 +3988,20 @@
 
     qsa("[data-comment-id]" + dataSelector("data-comment-id", id)).forEach(function (node) {
       node.remove();
+    });
+  }
+
+  function updateStatusComment(comment) {
+    var id = comment && comment.comment_id ? String(comment.comment_id) : "";
+    var html = comment && comment.body_html ? String(comment.body_html) : "";
+
+    if (!id || !html) {
+      return;
+    }
+
+    qsa("[data-comment-id]" + dataSelector("data-comment-id", id) + " .status-comment-body").forEach(function (body) {
+      body.innerHTML = "";
+      body.appendChild(htmlTemplate(html).content);
     });
   }
 
@@ -4056,6 +4150,10 @@
     if (payload && payload.comment) {
       appendStatusComment(payload.comment, form.closest(".modal") || document);
       resetStatusCommentForm(form);
+    }
+
+    if (payload && payload.updated_comment) {
+      updateStatusComment(payload.updated_comment);
     }
 
     if (payload && payload.card_html) {
@@ -4646,6 +4744,7 @@
     TinyCat.initCaptcha();
     TinyCat.initDirtyForms();
     TinyCat.initAutoSubmit();
+    TinyCat.initDismissibleMenus();
     TinyCat.initCommentReplies();
     TinyCat.initStatusForms();
     TinyCat.initFollowForms();

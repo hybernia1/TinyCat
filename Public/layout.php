@@ -205,12 +205,12 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                 <div class="admin-sidebar-header">
                     <a class="admin-brand" href="/">
                         <?php if ($siteLogoUrl !== ''): ?>
-                            <img class="brand-logo" src="<?= e($siteLogoUrl) ?>" alt="<?= e($appName) ?>" loading="lazy">
+                            <img class="brand-logo" src="<?= e($siteLogoUrl) ?>" alt="<?= et('common.site_logo_alt', ['site' => $appName]) ?>">
                         <?php else: ?>
                             <?= icon('dashboard', 'icon-lg') ?>
                         <?php endif; ?>
                         <span>
-                            <strong><?= e($appName) ?></strong>
+                            <strong<?= $siteLogoUrl !== '' ? ' aria-hidden="true"' : '' ?>><?= e($appName) ?></strong>
                             <small><?= et('common.admin') ?></small>
                         </span>
                     </a>
@@ -315,9 +315,9 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
             <div class="container navbar-inner">
                 <a class="navbar-brand" href="/">
                     <?php if ($siteLogoUrl !== ''): ?>
-                        <img class="brand-logo" src="<?= e($siteLogoUrl) ?>" alt="<?= e($appName) ?>" loading="lazy">
+                        <img class="brand-logo" src="<?= e($siteLogoUrl) ?>" alt="<?= et('common.site_logo_alt', ['site' => $appName]) ?>">
                     <?php endif; ?>
-                    <strong><?= e($appName) ?></strong>
+                    <strong<?= $siteLogoUrl !== '' ? ' aria-hidden="true"' : '' ?>><?= e($appName) ?></strong>
                 </a>
                 <form class="global-search" action="/search" method="get" role="search" data-global-search data-search-api="/api/search" data-search-tags="<?= et('public.search_tags') ?>" data-search-users="<?= et('public.search_users') ?>" data-search-content="<?= et('public.search_content') ?>" data-search-all="<?= et('public.search_all') ?>" data-search-empty="<?= et('public.search_empty') ?>" data-search-min="<?= et('public.search_min') ?>" data-search-captcha-title="<?= et('public.search_captcha_title') ?>" data-search-captcha-required="<?= et('public.search_captcha_required') ?>" data-search-captcha-submit="<?= et('common.confirm') ?>" autocomplete="off">
                     <label class="sr-only" for="global-search-input"><?= et('common.search') ?></label>

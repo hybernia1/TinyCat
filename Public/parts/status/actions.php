@@ -18,6 +18,10 @@ $commentsCount = array_key_exists('comments_count', $item)
 $userId = (int) ($user['id'] ?? 0);
 $liked = $userId > 0 && status_user_liked($contentId, $userId);
 $loginUrl = status_login_url($contentId > 0 ? '#' . status_anchor($contentId) : '', $action);
+$statusContext = status_accessible_context($item);
+$likeLabel = t('account.status_like_for', ['context' => $statusContext]);
+$unlikeLabel = t('account.status_unlike_for', ['context' => $statusContext]);
+$currentLikeLabel = $liked ? $unlikeLabel : $likeLabel;
 
 if ($contentId < 1) {
     return '';
@@ -29,13 +33,13 @@ if ($contentId < 1) {
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="react">
             <input type="hidden" name="id" value="<?= e($contentId) ?>">
-            <button class="btn btn-ghost btn-sm status-reaction<?= $liked ? ' is-active' : '' ?>" type="submit" title="<?= et('account.status_like') ?>" data-status-like-button>
-                <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span class="sr-only"><?= et('account.status_like') ?>:</span> <span data-status-count="likes"><?= e($likesCount) ?></span>
+            <button class="btn btn-ghost btn-sm status-reaction<?= $liked ? ' is-active' : '' ?>" type="submit" title="<?= e($currentLikeLabel) ?>" aria-label="<?= e($currentLikeLabel) ?>" aria-pressed="<?= $liked ? 'true' : 'false' ?>" data-like-label="<?= e($likeLabel) ?>" data-unlike-label="<?= e($unlikeLabel) ?>" data-status-like-button>
+                <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?><?= icon('thumb-up-filled', 'icon status-like-icon status-like-icon-filled') ?> <span data-status-count="likes" aria-hidden="true"><?= e($likesCount) ?></span>
             </button>
         </form>
     <?php else: ?>
-        <a class="btn btn-ghost btn-sm status-reaction" href="<?= e($loginUrl) ?>" title="<?= et('account.status_like') ?>">
-            <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span class="sr-only"><?= et('account.status_like') ?>:</span> <span data-status-count="likes"><?= e($likesCount) ?></span>
+        <a class="btn btn-ghost btn-sm status-reaction" href="<?= e($loginUrl) ?>" title="<?= e($likeLabel) ?>" aria-label="<?= e($likeLabel) ?>">
+            <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span data-status-count="likes" aria-hidden="true"><?= e($likesCount) ?></span>
         </a>
     <?php endif; ?>
     <?php if ($openCommentsModal): ?>

@@ -368,6 +368,31 @@ function user_public_payload(?array $user): ?array
     ];
 }
 
+function user_can_edit_profile(?array $target, ?array $actor): bool
+{
+    if ($target === null || $actor === null) {
+        return false;
+    }
+
+    $targetId = (int) ($target['id'] ?? 0);
+    $actorId = (int) ($actor['id'] ?? 0);
+
+    return $targetId > 0
+        && $actorId > 0
+        && ($targetId === $actorId || (string) ($actor['role'] ?? '') === 'admin');
+}
+
+function user_profile_require_edit_target(array $actor, int $authorId): array
+{
+    $target = $authorId > 0 ? find('users', ['id' => $authorId]) : null;
+
+    if (!user_can_edit_profile($target, $actor)) {
+        api_error(t('auth.forbidden'), 403, 'forbidden');
+    }
+
+    return $target;
+}
+
 function theme_normalize(string $theme): string
 {
     $theme = strtolower(trim($theme));
@@ -1453,7 +1478,7 @@ function status_session_interval_rule(string $action): array
 
     return match ($action) {
         'react', 'like', 'comment_like' => ['rating', 500],
-        'comment', 'comment_delete' => ['comment', 1000],
+        'comment', 'comment_update', 'comment_delete' => ['comment', 1000],
         'create', 'update', 'delete' => ['post', 5000],
         'report' => ['report', 60_000],
         default => ['status_mutation', 500],
@@ -1670,7 +1695,7 @@ function user_profile_links_sync(int $userId, array $links): void
     }
 }
 
-function user_profile_update_request(array $user): array
+function user_profile_update_request(array $user, array $actor): array
 {
     $id = (int) ($user['id'] ?? 0);
     $bio = plain_text_limit((string) input('bio', ''), 500);
@@ -1715,10 +1740,12 @@ function user_profile_update_request(array $user): array
     update('users', $data, ['id' => $id]);
     user_profile_links_sync($id, $profileLinks);
 
-    locale($locale);
+    if ((int) ($actor['id'] ?? 0) === $id) {
+        locale($locale);
+    }
 
     return [
-        'user' => user_public_payload(auth() ?: $user),
+        'user' => user_public_payload(array_replace($user, $data)),
         'message' => t('account.messages.profile_saved'),
     ];
 }
@@ -1754,7 +1781,7 @@ function user_email_update_request(array $user): array
     update('users', $data, ['id' => $id]);
 
     return [
-        'user' => user_public_payload(auth() ?: $user),
+        'user' => user_public_payload(array_replace($user, $data)),
         'message' => t('account.messages.profile_saved'),
     ];
 }
@@ -2179,11 +2206,22 @@ function status_url(int $id): string
     return $id > 0 ? '/status/' . $id : '/';
 }
 
-function status_permalink_label(array $item): string
+function status_accessible_identity(array $item): array
 {
     $author = trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? ''));
     $body = status_strip_external_urls((string) ($item['body'] ?? ''));
     $excerpt = meta_text($body, 80);
+
+    return [
+        'author' => $author,
+        'excerpt' => $excerpt,
+        'id' => max(0, (int) ($item['id'] ?? $item['content_id'] ?? 0)),
+    ];
+}
+
+function status_permalink_label(array $item): string
+{
+    ['author' => $author, 'excerpt' => $excerpt, 'id' => $id] = status_accessible_identity($item);
 
     if ($author !== '' && $excerpt !== '') {
         return t('account.status_permalink_context', [
@@ -2200,9 +2238,30 @@ function status_permalink_label(array $item): string
         return t('account.status_permalink_excerpt', ['excerpt' => $excerpt]);
     }
 
-    $id = max(0, (int) ($item['id'] ?? $item['content_id'] ?? 0));
-
     return t('account.status_permalink_for', ['id' => $id]);
+}
+
+function status_accessible_context(array $item, bool $comment = false): string
+{
+    ['author' => $author, 'excerpt' => $excerpt, 'id' => $id] = status_accessible_identity($item);
+    $prefix = $comment ? 'account.status_comment_context' : 'account.status_context';
+
+    if ($author !== '' && $excerpt !== '') {
+        return t($prefix . '_author_excerpt', [
+            'author' => $author,
+            'excerpt' => $excerpt,
+        ]);
+    }
+
+    if ($author !== '') {
+        return t($prefix . '_author', ['author' => $author]);
+    }
+
+    if ($excerpt !== '') {
+        return t($prefix . '_excerpt', ['excerpt' => $excerpt]);
+    }
+
+    return t($prefix . '_for', ['id' => $id]);
 }
 
 function status_url_host_key(string $url): string
@@ -4030,7 +4089,10 @@ function status_can_edit(?array $item, ?array $user): bool
     return $item !== null
         && $user !== null
         && !status_edit_locked($item)
-        && (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0);
+        && (
+            (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0)
+            || (string) ($user['role'] ?? '') === 'admin'
+        );
 }
 
 function status_can_delete(?array $item, ?array $user): bool
@@ -4315,6 +4377,114 @@ function status_comment_can_delete(?array $comment, ?array $user): bool
     $status = status_find((int) ($comment['content_id'] ?? 0));
 
     return $status !== null && (int) ($status['author_id'] ?? 0) === $userId;
+}
+
+function status_comment_can_edit(?array $comment, ?array $user): bool
+{
+    if ($comment === null || $user === null) {
+        return false;
+    }
+
+    $userId = (int) ($user['id'] ?? 0);
+
+    return $userId > 0
+        && ((string) ($user['role'] ?? '') === 'admin' || (int) ($comment['user_id'] ?? 0) === $userId);
+}
+
+function status_comment_history(array $comment): array
+{
+    $json = trim((string) ($comment['comments_diff'] ?? ''));
+
+    if ($json === '') {
+        return [];
+    }
+
+    try {
+        $history = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+    } catch (JsonException) {
+        return [];
+    }
+
+    if (!is_array($history)) {
+        return [];
+    }
+
+    return array_values(array_filter($history, static function (mixed $entry): bool {
+        return is_array($entry)
+            && is_array($entry['changes'] ?? null)
+            && is_array(($entry['changes'] ?? [])['body'] ?? null);
+    }));
+}
+
+function status_comment_history_append(array $comment, string $body, array $actor): ?string
+{
+    $before = (string) ($comment['body'] ?? '');
+
+    if ($body === $before) {
+        return null;
+    }
+
+    $history = status_comment_history($comment);
+    $history[] = [
+        'at' => date_db(),
+        'actor' => [
+            'id' => (int) ($actor['id'] ?? 0),
+            'username' => plain_text_limit((string) ($actor['username'] ?? ''), 32),
+            'role' => (string) ($actor['role'] ?? ''),
+        ],
+        'changes' => [
+            'body' => [
+                'from' => $before,
+                'to' => $body,
+            ],
+        ],
+    ];
+
+    return json_encode($history, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+}
+
+function status_comment_history_diff_html(string $before, string $after): string
+{
+    $beforeChars = preg_split('//u', $before, -1, PREG_SPLIT_NO_EMPTY);
+    $afterChars = preg_split('//u', $after, -1, PREG_SPLIT_NO_EMPTY);
+
+    if ($beforeChars === false || $afterChars === false) {
+        $beforeChars = str_split($before);
+        $afterChars = str_split($after);
+    }
+
+    $beforeLength = count($beforeChars);
+    $afterLength = count($afterChars);
+    $prefixLength = 0;
+
+    while ($prefixLength < $beforeLength
+        && $prefixLength < $afterLength
+        && $beforeChars[$prefixLength] === $afterChars[$prefixLength]) {
+        $prefixLength++;
+    }
+
+    $suffixLength = 0;
+    while ($suffixLength < $beforeLength - $prefixLength
+        && $suffixLength < $afterLength - $prefixLength
+        && $beforeChars[$beforeLength - 1 - $suffixLength] === $afterChars[$afterLength - 1 - $suffixLength]) {
+        $suffixLength++;
+    }
+
+    $prefix = implode('', array_slice($beforeChars, 0, $prefixLength));
+    $removed = implode('', array_slice($beforeChars, $prefixLength, $beforeLength - $prefixLength - $suffixLength));
+    $added = implode('', array_slice($afterChars, $prefixLength, $afterLength - $prefixLength - $suffixLength));
+    $suffix = $suffixLength > 0 ? implode('', array_slice($beforeChars, -$suffixLength)) : '';
+    $html = e($prefix);
+
+    if ($removed !== '') {
+        $html .= '<del class="status-comment-diff-removed">' . e($removed) . '</del>';
+    }
+
+    if ($added !== '') {
+        $html .= '<ins class="status-comment-diff-added">' . e($added) . '</ins>';
+    }
+
+    return $html . e($suffix);
 }
 
 function status_comment_user_liked(int $commentId, int $userId): bool
@@ -5174,6 +5344,16 @@ function status_edit_modal_id(int $contentId): string
     return 'status-edit-modal-' . max(0, $contentId);
 }
 
+function status_comment_edit_modal_id(int $commentId): string
+{
+    return 'status-comment-edit-modal-' . max(0, $commentId);
+}
+
+function status_comment_history_modal_id(int $commentId): string
+{
+    return 'status-comment-history-modal-' . max(0, $commentId);
+}
+
 function status_post_modal_url(int $contentId, string $action = ''): string
 {
     $query = ['id' => max(0, $contentId)];
@@ -5195,6 +5375,20 @@ function status_action_modal_url(string $type, int $contentId, string $action = 
     }
 
     return '/api/status-' . $type . '-modal?' . http_build_query($query);
+}
+
+function status_comment_edit_modal_url(int $commentId): string
+{
+    return '/api/status-comment-edit-modal?' . http_build_query([
+        'comment_id' => max(0, $commentId),
+    ]);
+}
+
+function status_comment_history_modal_url(int $commentId): string
+{
+    return '/api/status-comment-history-modal?' . http_build_query([
+        'comment_id' => max(0, $commentId),
+    ]);
 }
 
 function status_api_url(string $action, array $params = [], bool $html = true): string
@@ -5479,17 +5673,22 @@ function status_json_react(int $contentId, array $user): array
     ];
 }
 
-function status_json_comment(int $contentId, int $parentId, array $user, string $redirect = '/', string $context = ''): array
+function status_comment_input_body(): string
 {
-    $userId = (int) ($user['id'] ?? 0);
-    $status = status_find($contentId);
     $body = plain_text_limit((string) input('comment', ''), 2000);
     moderation_require_allowed_urls($body);
     $body = status_strip_external_urls($body);
     $body = normalize_mentions_for_storage($body);
     status_require_valid_tags($body);
-    $body = normalize_tags_for_storage($body);
-    $body = plain_text_limit($body, 2000);
+
+    return plain_text_limit(normalize_tags_for_storage($body), 2000);
+}
+
+function status_json_comment(int $contentId, int $parentId, array $user, string $redirect = '/', string $context = ''): array
+{
+    $userId = (int) ($user['id'] ?? 0);
+    $status = status_find($contentId);
+    $body = status_comment_input_body();
 
     if ($contentId < 1 || $userId < 1 || $status === null) {
         api_error(t('account.messages.status_not_found'), 404, 'status_not_found');
@@ -5580,6 +5779,92 @@ function status_json_comment_like(int $commentId, array $user): array
             'likes_count' => status_comment_like_count($commentId),
             'liked' => !$liked,
         ],
+    ];
+}
+
+function status_json_comment_update(int $commentId, array $user): array
+{
+    $comment = status_comment_find($commentId);
+
+    if ($comment === null) {
+        api_error(t('account.messages.comment_not_found'), 404, 'comment_not_found');
+    }
+
+    if (!status_comment_can_edit($comment, $user)) {
+        api_error(t('account.messages.comment_edit_forbidden'), 403, 'comment_edit_forbidden');
+    }
+
+    if ((string) ($user['role'] ?? '') !== 'admin') {
+        status_json_require_not_muted($user);
+    }
+    $body = status_comment_input_body();
+
+    if ($body === '') {
+        api_error(t('account.messages.comment_required'), 422, 'comment_required', [
+            'errors' => ['comment' => [t('account.messages.comment_required')]],
+        ]);
+    }
+
+    $result = db_transaction(static function () use ($commentId, $body, $user): array {
+        $lockedComment = one('SELECT * FROM content_comments WHERE id = ? FOR UPDATE', [$commentId]);
+
+        if ($lockedComment === null) {
+            api_error(t('account.messages.comment_not_found'), 404, 'comment_not_found');
+        }
+
+        if (!status_comment_can_edit($lockedComment, $user)) {
+            api_error(t('account.messages.comment_edit_forbidden'), 403, 'comment_edit_forbidden');
+        }
+
+        $contentId = (int) ($lockedComment['content_id'] ?? 0);
+        $status = one('SELECT * FROM content WHERE id = ? FOR UPDATE', [$contentId]);
+        $history = status_comment_history_append($lockedComment, $body, $user);
+
+        if ($history === null) {
+            return [
+                'changed' => false,
+                'content_id' => $contentId,
+                'status_author_id' => (int) ($status['author_id'] ?? 0),
+                'old_mention_ids' => [],
+            ];
+        }
+
+        update('content_comments', [
+            'body' => $body,
+            'comments_diff' => $history,
+        ], ['id' => $commentId]);
+
+        if ((string) ($user['role'] ?? '') === 'admin' && !status_edit_locked($status)) {
+            status_edit_lock($contentId, $user, 'admin_comment_edit');
+        }
+
+        return [
+            'changed' => true,
+            'content_id' => $contentId,
+            'status_author_id' => (int) ($status['author_id'] ?? 0),
+            'old_mention_ids' => Notifications::mentionedUserIds((string) ($lockedComment['body'] ?? '')),
+        ];
+    });
+
+    $contentId = (int) ($result['content_id'] ?? 0);
+
+    if ((bool) ($result['changed'] ?? false)) {
+        $skipUserIds = array_merge(
+            (array) ($result['old_mention_ids'] ?? []),
+            [(int) ($result['status_author_id'] ?? 0)]
+        );
+        Notifications::notifyMentions($body, $user, $contentId, $commentId, $skipUserIds);
+    }
+
+    return [
+        'action' => 'comment_update',
+        'status' => status_json_summary($contentId, $user),
+        'updated_comment' => [
+            'comment_id' => $commentId,
+            'body_html' => render_mentions($body),
+        ],
+        'modal_close' => true,
+        'message' => t('account.messages.comment_saved'),
     ];
 }
 
@@ -5882,7 +6167,9 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
         api_error(t('account.messages.status_forbidden'), 403, 'status_forbidden');
     }
 
-    status_json_require_not_muted($user);
+    if ((string) ($user['role'] ?? '') !== 'admin') {
+        status_json_require_not_muted($user);
+    }
 
     $payload = status_payload();
     $body = (string) ($payload['body'] ?? '');
@@ -5893,7 +6180,10 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
         ]);
     }
 
-    status_json_require_unique_body($user, $body, $contentId);
+    $author = (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0)
+        ? $user
+        : find('users', ['id' => (int) ($item['author_id'] ?? 0)]);
+    status_json_require_unique_body($author ?: $user, $body, $contentId);
     $oldMentionIds = Notifications::mentionedUserIds((string) ($item['body'] ?? ''));
 
     update('content', [

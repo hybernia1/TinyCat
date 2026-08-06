@@ -38,6 +38,8 @@ final class Api
         api_route('GET', '/status-modal', [self::class, 'statusModal']);
         api_route('GET', '/status-report-modal', [self::class, 'statusReportModal']);
         api_route('GET', '/status-edit-modal', [self::class, 'statusEditModal']);
+        api_route('GET', '/status-comment-edit-modal', [self::class, 'statusCommentEditModal']);
+        api_route('GET', '/status-comment-history-modal', [self::class, 'statusCommentHistoryModal']);
         api_route('GET', '/profile-edit-modal', [self::class, 'profileEditModal']);
         api_route('GET', '/avatar-edit-modal', [self::class, 'avatarEditModal']);
         api_route('GET', '/author/following', [self::class, 'authorFollowing']);
@@ -181,16 +183,20 @@ final class Api
 
     public static function profileUpdate(): array
     {
-        $user = require_auth('/login');
+        $actor = require_auth('/login');
         csrf_require();
+        $authorId = max(0, (int) input('author_id', (int) ($actor['id'] ?? 0)));
+        $user = user_profile_require_edit_target($actor, $authorId);
 
-        return user_profile_update_request($user);
+        return user_profile_update_request($user, $actor);
     }
 
     public static function profileEmailUpdate(): array
     {
-        $user = require_auth('/login');
+        $actor = require_auth('/login');
         csrf_require();
+        $authorId = max(0, (int) input('author_id', (int) ($actor['id'] ?? 0)));
+        $user = user_profile_require_edit_target($actor, $authorId);
 
         return user_email_update_request($user);
     }
@@ -235,6 +241,7 @@ final class Api
             'react', 'like' => status_json_react($id, $user),
             'comment' => status_json_comment($id, max(0, (int) input('parent_id', 0)), $user, $redirect, (string) input('context', '')),
             'comment_like' => status_json_comment_like($commentId, $user),
+            'comment_update' => status_json_comment_update($commentId, $user),
             'comment_delete' => status_json_comment_delete($commentId, $user),
             'report' => status_json_report($id, $user),
             'update' => status_json_update($id, $user, $redirect),
@@ -418,23 +425,75 @@ final class Api
         ];
     }
 
-    public static function profileEditModal(): array
+    public static function statusCommentEditModal(): array
     {
         $user = auth();
-        $authorId = max(0, (int) get('author_id', 0));
-        $userId = (int) ($user['id'] ?? 0);
+        $commentId = max(0, (int) get('comment_id', 0));
+        $comment = status_comment_find($commentId);
 
         if ($user === null) {
             api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
         }
 
-        if ($authorId < 1 || $userId !== $authorId) {
+        if ($comment === null) {
+            api_error(t('account.messages.comment_not_found'), 404, 'comment_not_found');
+        }
+
+        if (!status_comment_can_edit($comment, $user)) {
+            api_error(t('account.messages.comment_edit_forbidden'), 403, 'comment_edit_forbidden');
+        }
+
+        $comment['body'] = mentions_for_editing((string) ($comment['body'] ?? ''));
+
+        return [
+            'html' => render('modals/status-comment-edit', [
+                'comment' => $comment,
+                'action' => status_api_url('comment-update', ['comment_id' => $commentId]),
+            ]),
+        ];
+    }
+
+    public static function statusCommentHistoryModal(): array
+    {
+        $user = auth();
+        $commentId = max(0, (int) get('comment_id', 0));
+        $comment = status_comment_find($commentId);
+
+        if ($user === null) {
+            api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
+        }
+
+        if ($comment === null) {
+            api_error(t('account.messages.comment_not_found'), 404, 'comment_not_found');
+        }
+
+        if (!status_comment_can_edit($comment, $user)) {
             api_error(t('auth.forbidden'), 403, 'forbidden');
         }
 
         return [
+            'html' => render('modals/status-comment-history', [
+                'comment' => $comment,
+                'history' => status_comment_history($comment),
+            ]),
+        ];
+    }
+
+    public static function profileEditModal(): array
+    {
+        $actor = auth();
+        $authorId = max(0, (int) get('author_id', 0));
+
+        if ($actor === null) {
+            api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
+        }
+
+        $user = user_profile_require_edit_target($actor, $authorId);
+
+        return [
             'html' => render('modals/profile-edit', [
                 'user' => $user,
+                'actor' => $actor,
                 'author_id' => $authorId,
                 'action' => '/api/profile/update',
                 'focus' => (string) get('focus', ''),

@@ -442,6 +442,7 @@ function tc_install_create_tables(): void
             parent_id BIGINT UNSIGNED NULL,
             user_id INT UNSIGNED NOT NULL,
             body VARCHAR(2000) NOT NULL,
+            comments_diff JSON NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY content_comments_content_index (content_id, parent_id, created_at),

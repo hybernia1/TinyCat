@@ -7,6 +7,7 @@ if (!defined('TINYCAT')) {
 }
 
 $user = (array) ($user ?? []);
+$actor = (array) ($actor ?? []);
 $authorId = (int) ($author_id ?? 0);
 $action = (string) ($action ?? '');
 $focus = (string) ($focus ?? '');
@@ -19,9 +20,14 @@ $themeChoices = [
     'light' => t('account.theme_light'),
     'dark' => t('account.theme_dark'),
 ];
+$canManageSecurity = (int) ($actor['id'] ?? 0) === $authorId;
+$tabs = ['profile' => ['user', t('account.profile_settings')], 'email' => ['mail', t('common.email')]];
+if ($canManageSecurity) {
+    $tabs['security'] = ['key', t('account.security_settings')];
+}
 $activeTab = match ($focus) {
     'email' => 'email',
-    'password', 'security' => 'security',
+    'password', 'security' => $canManageSecurity ? 'security' : 'profile',
     default => 'profile',
 };
 
@@ -41,7 +47,7 @@ ob_start();
 ?>
 <div class="profile-edit-tabs" data-tabs>
     <div class="tabs" role="tablist" aria-label="<?= et('account.profile_settings') ?>">
-        <?php foreach (['profile' => ['user', t('account.profile_settings')], 'email' => ['mail', t('common.email')], 'security' => ['key', t('account.security_settings')]] as $tab => [$icon, $label]): ?>
+        <?php foreach ($tabs as $tab => [$icon, $label]): ?>
             <?php $selected = $tab === $activeTab; ?>
             <button class="tab" type="button" id="profile-edit-tab-<?= e($tab) ?>" role="tab" aria-controls="profile-edit-panel-<?= e($tab) ?>" aria-selected="<?= $selected ? 'true' : 'false' ?>" data-tab="<?= e($tab) ?>">
                 <?= icon($icon) ?> <span><?= e($label) ?></span>
@@ -51,6 +57,7 @@ ob_start();
 
     <form class="tab-panel profile-edit-form" id="profile-edit-panel-profile" role="tabpanel" aria-labelledby="profile-edit-tab-profile" data-tab-panel="profile" action="/api/profile/update" method="post" data-ajax-form<?= $activeTab === 'profile' ? '' : ' hidden' ?><?= $formAttributes ?>>
         <?= csrf_field() ?>
+        <input type="hidden" name="author_id" value="<?= $authorId ?>">
         <div class="profile-modal-grid">
             <label class="field">
                 <span class="label"><?= et('common.language') ?></span>
@@ -82,6 +89,7 @@ ob_start();
 
     <form class="tab-panel profile-edit-form stack" id="profile-edit-panel-email" role="tabpanel" aria-labelledby="profile-edit-tab-email" data-tab-panel="email" action="/api/profile/email" method="post" data-ajax-form<?= $activeTab === 'email' ? '' : ' hidden' ?><?= $formAttributes ?>>
         <?= csrf_field() ?>
+        <input type="hidden" name="author_id" value="<?= $authorId ?>">
         <label class="field">
             <span class="label"><?= et('common.email') ?></span>
             <input class="input" type="email" name="email" value="<?= e((string) ($user['email'] ?? '')) ?>" maxlength="<?= user_email_max_length() ?>" autocomplete="email"<?= $autofocus('email') ?>>
@@ -95,6 +103,7 @@ ob_start();
         <?php endif; ?>
     </form>
 
+    <?php if ($canManageSecurity): ?>
     <form class="tab-panel profile-edit-form stack" id="profile-edit-panel-security" role="tabpanel" aria-labelledby="profile-edit-tab-security" data-tab-panel="security" action="/api/profile/password" method="post" data-ajax-form<?= $activeTab === 'security' ? '' : ' hidden' ?><?= $formAttributes ?>>
         <?= csrf_field() ?>
         <label class="field">
@@ -110,6 +119,7 @@ ob_start();
             <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required<?= $autofocus('password_confirm') ?>>
         </label>
     </form>
+    <?php endif; ?>
 </div>
 <?php
 

@@ -8,6 +8,7 @@ if (!defined('TINYCAT')) {
 
 $commentId = (int) ($comment_id ?? 0);
 $contentId = (int) ($content_id ?? 0);
+$menu = (bool) ($menu ?? false);
 
 if ($commentId < 1) {
     return '';
@@ -17,5 +18,5 @@ if ($commentId < 1) {
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="comment_delete">
     <input type="hidden" name="comment_id" value="<?= e($commentId) ?>">
-    <button class="link-button text-danger" type="submit"><?= et('account.status_comment_delete') ?></button>
+    <button class="<?= $menu ? 'context-menu-action is-danger' : 'link-button text-danger' ?>" type="submit"<?= $menu ? ' data-dismissible-menu-action' : '' ?>><?= et('account.status_comment_delete') ?></button>
 </form>
