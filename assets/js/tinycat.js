@@ -1476,6 +1476,44 @@
     }
   }
 
+  function mobileStatusUrl(trigger) {
+    var parent;
+    var modalTarget;
+    var card;
+    var href;
+    var statusId;
+
+    if (!trigger || !window.matchMedia || !window.matchMedia("(max-width: 760px), (hover: none) and (pointer: coarse)").matches) {
+      return "";
+    }
+
+    parent = trigger.closest("[data-modal-parent-open]");
+    modalTarget = String(trigger.dataset.modalOpen || (parent ? parent.dataset.modalParentOpen : ""));
+    if (modalTarget.indexOf("status-post-modal-") !== 0) {
+      return "";
+    }
+
+    href = String(trigger.getAttribute("href") || "");
+    if (href.indexOf("/status/") === 0) {
+      return mobileStatusPageUrl(href);
+    }
+
+    card = trigger.closest(".status-card");
+    if (card && card.dataset.statusUrl) {
+      return mobileStatusPageUrl(String(card.dataset.statusUrl));
+    }
+
+    statusId = parseInt(modalTarget.slice("status-post-modal-".length), 10) || 0;
+    return statusId > 0 ? mobileStatusPageUrl("/status/" + statusId) : "";
+  }
+
+  function mobileStatusPageUrl(value) {
+    var url = new URL(value, window.location.origin);
+
+    url.searchParams.set("compact", "1");
+    return compactUrl(url);
+  }
+
   function modalAnchorId(trigger) {
     var href = trigger ? String(trigger.getAttribute("href") || "") : "";
     var hash = "";
@@ -1772,9 +1810,15 @@
       var modalScroll = target.closest && target.closest("[data-modal-scroll]");
       var close = target.closest && target.closest("[data-modal-close]");
       var anchorId;
+      var statusUrl;
 
       if (open) {
+        statusUrl = mobileStatusUrl(open);
         event.preventDefault();
+        if (statusUrl) {
+          window.location.assign(statusUrl);
+          return;
+        }
         anchorId = modalAnchorId(open);
         openRemoteModal(open)
           .then(function (modal) {
