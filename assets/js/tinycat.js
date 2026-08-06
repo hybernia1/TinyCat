@@ -497,12 +497,6 @@
         return;
       }
 
-      if (input.type === "hidden") {
-        container = input.closest("[data-captcha]");
-        input = container ? qs("[data-captcha-slider]", container) : input;
-        fields = [input];
-      }
-
       fieldErrorCounterId += 1;
       error = document.createElement("span");
       error.id = "field-error-" + fieldErrorCounterId;
@@ -552,12 +546,6 @@
     qsa("[data-status-editor]", form).forEach(function (root) {
       if (TinyCat.resetStatusEditor) {
         TinyCat.resetStatusEditor(root);
-      }
-    });
-
-    qsa("[data-captcha]", form).forEach(function (root) {
-      if (root.__tinycatCaptchaSync) {
-        root.__tinycatCaptchaSync();
       }
     });
 
@@ -627,197 +615,127 @@
     });
   }
 
-  function parsePercent(value, fallback) {
-    var parsed = parseFloat(String(value || "").replace("%", ""));
+  var captchaProviderLoads = {};
 
-    return Number.isFinite(parsed) ? parsed : fallback;
+  function captchaProviderApi(provider) {
+    if (provider === "recaptcha") {
+      return window.grecaptcha;
+    }
+
+    if (provider === "turnstile") {
+      return window.turnstile;
+    }
+
+    if (provider === "hcaptcha") {
+      return window.hcaptcha;
+    }
+
+    return null;
   }
 
-  function initCaptchaRoot(root) {
-    var slider = qs("[data-captcha-slider]", root);
-    var answer = qs("[data-captcha-answer]", root);
-    var status = qs("[data-captcha-status]", root);
-    var board = qs(".captcha-board", root);
-    var piece = qs(".captcha-piece", root);
-    var sliderLabel = qs(".captcha-slider-label", root);
-    var startedAt = 0;
-    var moves = 0;
-    var method = "";
-    var lastValue = String(slider ? slider.value : "");
-    var form = root.closest ? root.closest("form") : null;
-    var activePointer = null;
+  function captchaProviderScript(provider) {
+    if (provider === "recaptcha") {
+      return "https://www.google.com/recaptcha/api.js?render=explicit";
+    }
 
-    if (root.dataset.captchaReady === "true") {
+    if (provider === "turnstile") {
+      return "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    }
+
+    if (provider === "hcaptcha") {
+      return "https://js.hcaptcha.com/1/api.js?render=explicit";
+    }
+
+    return "";
+  }
+
+  function loadCaptchaProvider(provider) {
+    var source = captchaProviderScript(provider);
+
+    if (captchaProviderApi(provider)) {
+      return Promise.resolve(captchaProviderApi(provider));
+    }
+
+    if (captchaProviderLoads[provider]) {
+      return captchaProviderLoads[provider];
+    }
+
+    if (!source) {
+      return Promise.reject(new Error("Unknown CAPTCHA provider"));
+    }
+
+    captchaProviderLoads[provider] = new Promise(function (resolve, reject) {
+      var script = document.createElement("script");
+
+      script.src = source;
+      script.async = true;
+      script.defer = true;
+      script.onload = function () {
+        var api = captchaProviderApi(provider);
+
+        if (api) {
+          resolve(api);
+          return;
+        }
+
+        reject(new Error("CAPTCHA provider did not initialize"));
+      };
+      script.onerror = function () {
+        reject(new Error("CAPTCHA provider could not be loaded"));
+      };
+      document.head.appendChild(script);
+    });
+
+    return captchaProviderLoads[provider];
+  }
+
+  function initExternalCaptchaRoot(root) {
+    var provider = root.dataset.captchaProvider || "";
+    var sitekey = root.dataset.captchaSitekey || "";
+    var theme = root.dataset.captchaTheme || "auto";
+    var context = root.dataset.captchaContext || "form";
+    var widget = qs("[data-captcha-widget]", root);
+
+    if (root.dataset.captchaReady || !provider || !sitekey || !widget) {
       return;
     }
 
-    if (!slider || !answer) {
-      return;
-    }
+    root.dataset.captchaReady = "loading";
+    loadCaptchaProvider(provider).then(function (api) {
+      var options;
 
-    function noteInteraction(type) {
-      if (!startedAt) {
-        startedAt = Date.now();
-      }
-
-      if (!method && type) {
-        method = type;
-      }
-    }
-
-    function sync(event) {
-      var value = parsePercent(slider.value, 0);
-      var moved = String(slider.value) !== String(slider.defaultValue || "");
-      var currentValue = String(slider.value);
-      var elapsed = startedAt ? Math.max(0, Date.now() - startedAt) : 0;
-      var boardWidth = board ? board.clientWidth : 0;
-      var offset = boardWidth * (value / 100);
-
-      if (event && event.type === "input" && currentValue !== lastValue) {
-        moves += 1;
-      }
-
-      lastValue = currentValue;
-
-      root.style.setProperty("--captcha-offset", Math.round(offset) + "px");
-      root.dataset.captchaState = moved ? "active" : "idle";
-      answer.value = [
-        String(Math.round(value)),
-        String(Math.round(elapsed)),
-        String(moves),
-        method
-      ].join(":");
-
-      if (status && !status.__tinycatCaptchaHintSet) {
-        status.textContent = root.dataset.captchaHint || status.textContent || "";
-        status.__tinycatCaptchaHintSet = true;
-      }
-    }
-
-    function sliderNumber(name, fallback) {
-      var value = parseFloat(slider.getAttribute(name));
-
-      return Number.isFinite(value) ? value : fallback;
-    }
-
-    function captchaPointerType(event) {
-      if (event.pointerType === "touch") {
-        return "touch";
-      }
-
-      if (event.pointerType === "mouse") {
-        return "mouse";
-      }
-
-      return "pointer";
-    }
-
-    function setSliderFromClientX(clientX) {
-      var target = sliderLabel || slider;
-      var rect = target.getBoundingClientRect();
-      var min = sliderNumber("min", 0);
-      var max = sliderNumber("max", 100);
-      var step = Math.max(0.01, sliderNumber("step", 1));
-      var ratio;
-      var raw;
-      var next;
-
-      if (!rect.width) {
+      if (!root.isConnected || root.dataset.captchaReady !== "loading") {
         return;
       }
 
-      ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      raw = min + ((max - min) * ratio);
-      next = Math.round(raw / step) * step;
-      next = Math.max(min, Math.min(max, next));
-      slider.value = String(Math.round(next * 1000) / 1000);
-      sync({ type: "input" });
-    }
+      options = {
+        sitekey: sitekey,
+        theme: theme,
+        callback: function () {
+          root.dataset.captchaState = "verified";
+        },
+        "expired-callback": function () {
+          root.dataset.captchaState = "expired";
+        },
+        "error-callback": function () {
+          root.dataset.captchaState = "error";
+        }
+      };
 
-    function focusSlider() {
-      try {
-        slider.focus({ preventScroll: true });
-      } catch (error) {
-        slider.focus();
+      if (provider === "turnstile") {
+        options.action = context;
       }
-    }
 
-    function captureSliderPointer(pointerId) {
-      try {
-        sliderLabel.setPointerCapture(pointerId);
-      } catch (error) {
-        // Pointer capture is an enhancement; the native range still works without it.
-      }
-    }
-
-    function releaseSliderPointer(pointerId) {
-      try {
-        if (sliderLabel.hasPointerCapture(pointerId)) {
-          sliderLabel.releasePointerCapture(pointerId);
-        }
-      } catch (error) {
-        // Ignore unsupported capture APIs.
-      }
-    }
-
-    root.dataset.captchaReady = "true";
-    root.__tinycatCaptchaSync = sync;
-    if (sliderLabel && window.PointerEvent) {
-      sliderLabel.addEventListener("pointerdown", function (event) {
-        if (event.button !== undefined && event.button !== 0) {
-          return;
-        }
-
-        activePointer = event.pointerId;
-        event.preventDefault();
-        noteInteraction(captchaPointerType(event));
-        focusSlider();
-        captureSliderPointer(event.pointerId);
-        setSliderFromClientX(event.clientX);
-      });
-      sliderLabel.addEventListener("pointermove", function (event) {
-        if (activePointer !== event.pointerId) {
-          return;
-        }
-
-        event.preventDefault();
-        setSliderFromClientX(event.clientX);
-      });
-      sliderLabel.addEventListener("pointerup", function (event) {
-        if (activePointer !== event.pointerId) {
-          return;
-        }
-
-        event.preventDefault();
-        setSliderFromClientX(event.clientX);
-        releaseSliderPointer(event.pointerId);
-        activePointer = null;
-      });
-      sliderLabel.addEventListener("pointercancel", function (event) {
-        if (activePointer === event.pointerId) {
-          releaseSliderPointer(event.pointerId);
-          activePointer = null;
-        }
-      });
-    }
-    slider.addEventListener("pointerdown", function () {
-      noteInteraction("pointer");
+      api.render(widget, options);
+      root.dataset.captchaReady = "true";
+    }).catch(function () {
+      root.dataset.captchaReady = "";
+      root.dataset.captchaState = "error";
     });
-    slider.addEventListener("mousedown", function () {
-      noteInteraction("mouse");
-    });
-    slider.addEventListener("touchstart", function () {
-      noteInteraction("touch");
-    }, { passive: true });
-    slider.addEventListener("keydown", function () {
-      noteInteraction("keyboard");
-    });
-    slider.addEventListener("input", sync);
-    slider.addEventListener("change", sync);
-    if (form) {
-      form.addEventListener("submit", sync);
-    }
-    sync();
+  }
+
+  function initCaptchaRoot(root) {
+    initExternalCaptchaRoot(root);
   }
 
   function markStatusLinkImageMissing(image) {

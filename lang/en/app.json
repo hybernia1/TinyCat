@@ -443,9 +443,7 @@
         }
     },
     "security": {
-        "captcha_label": "Security check",
-        "captcha_slider": "Move the piece to the marked position",
-        "captcha_hint": "Move the piece into the marked slot."
+        "captcha_label": "Security check"
     },
     "relative": {
         "now": "now",
@@ -564,6 +562,11 @@
             "datetime_format": "Date and time format",
             "relative_datetime": "Relative date and time",
             "captcha_enabled": "CAPTCHA protection",
+            "captcha_provider": "CAPTCHA provider",
+            "captcha_provider_help": "Choose the provider whose site key and secret key are configured below.",
+            "captcha_site_key": "Site key",
+            "captcha_secret_key": "Secret key",
+            "captcha_secret_key_help": "Leave empty to keep the saved secret key. It is never shown again.",
             "captcha_login_attempts": "Failed logins before CAPTCHA",
             "registration_enabled": "Allow registrations",
             "registration_auto_approve": "Automatically approve new accounts",

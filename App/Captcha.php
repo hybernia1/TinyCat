@@ -7,15 +7,30 @@ if (!defined('TINYCAT')) {
 }
 
 /**
- * Session-bound slider CAPTCHA challenges.
+ * External CAPTCHA provider integration.
+ *
+ * Supported providers use their public widget client-side and validate every
+ * response token server-side. No challenge state or answer is stored locally.
  */
 final class Captcha
 {
-    private const string ANSWER_FIELD = 'tc_captcha';
-    private const string TOKEN_FIELD = 'tc_captcha_token';
-    private const int CHALLENGE_TTL = 600;
     private const int FAILURE_WINDOW = 900;
-    private const int MAX_ACTIVE_CHALLENGES = 5;
+
+    /** @var array<string, array{response_field: string, verify_url: string}> */
+    private const array PROVIDERS = [
+        'recaptcha' => [
+            'response_field' => 'g-recaptcha-response',
+            'verify_url' => 'https://www.google.com/recaptcha/api/siteverify',
+        ],
+        'turnstile' => [
+            'response_field' => 'cf-turnstile-response',
+            'verify_url' => 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+        ],
+        'hcaptcha' => [
+            'response_field' => 'h-captcha-response',
+            'verify_url' => 'https://api.hcaptcha.com/siteverify',
+        ],
+    ];
 
     public static function field(string $context = 'form'): string
     {
@@ -23,22 +38,11 @@ final class Captcha
             return '';
         }
 
-        $challenge = self::challenge($context, true);
-        $pieceTop = (int) ($challenge['piece_top'] ?? 42);
-
-        return '<div class="field captcha-puzzle" data-captcha data-captcha-hint="' . Core::e(Core::t('security.captcha_hint')) . '" style="--captcha-y: ' . Core::e($pieceTop) . '%;">'
+        return '<div class="field captcha-provider" data-captcha data-captcha-provider="' . Core::e(self::provider())
+            . '" data-captcha-sitekey="' . Core::e(self::siteKey())
+            . '" data-captcha-theme="auto" data-captcha-context="' . Core::e(self::contextName($context)) . '">'
             . '<span class="label">' . Core::e(Core::t('security.captcha_label')) . '</span>'
-            . '<input type="hidden" name="' . self::ANSWER_FIELD . '" value="" data-captcha-answer required>'
-            . '<input type="hidden" name="' . self::TOKEN_FIELD . '" value="' . Core::e((string) $challenge['token']) . '">'
-            . '<div class="captcha-board" aria-hidden="true">'
-            . '<img class="captcha-image" src="' . Core::e(self::boardDataUri($challenge)) . '" alt="" draggable="false">'
-            . '<img class="captcha-piece" src="' . Core::e(self::pieceDataUri($challenge)) . '" alt="" draggable="false">'
-            . '</div>'
-            . '<label class="captcha-slider-label">'
-            . '<span class="sr-only">' . Core::e(Core::t('security.captcha_slider')) . '</span>'
-            . '<input class="captcha-slider" type="range" min="8" max="92" step="1" value="8" data-captcha-slider>'
-            . '</label>'
-            . '<span class="captcha-hint" data-captcha-status>' . Core::e(Core::t('security.captcha_hint')) . '</span>'
+            . '<div class="captcha-widget" data-captcha-widget></div>'
             . '</div>';
     }
 
@@ -48,41 +52,28 @@ final class Captcha
             return true;
         }
 
-        $answer = trim((string) Core::payload(self::ANSWER_FIELD, ''));
-        $token = trim((string) Core::payload(self::TOKEN_FIELD, ''));
-        $challenge = self::storedChallenge($context, $token);
+        $provider = self::provider();
+        $responseField = self::PROVIDERS[$provider]['response_field'];
+        $token = trim((string) Core::input($responseField, ''));
 
-        if (self::failureLocked($context) || $challenge === [] || $answer === '') {
-            self::forgetChallenge($context, $token);
-            self::recordFailure($context);
+        if ($token === '' || strlen($token) > 4096) {
             return false;
         }
 
-        [$position, $elapsed, $moves, $method] = array_pad(explode(':', $answer, 4), 4, '');
-        $target = (int) ($challenge['target'] ?? -1);
-        $issuedAt = (float) ($challenge['issued_at'] ?? 0);
-        $serverElapsedMs = $issuedAt > 0 ? (int) floor((microtime(true) - $issuedAt) * 1000) : 0;
-        $valid = (int) ($challenge['expires'] ?? 0) >= time()
-            && is_numeric($position)
-            && abs((float) $position - $target) <= 2
-            && is_numeric($elapsed) && (int) $elapsed >= 500
-            && $serverElapsedMs >= 500
-            && is_numeric($moves) && (int) $moves >= 1
-            && in_array($method, ['pointer', 'mouse', 'touch', 'keyboard'], true);
+        $result = self::verify($provider, $token);
 
-        self::forgetChallenge($context, $token);
-        $valid ? self::clearFailures($context) : self::recordFailure($context);
-
-        return $valid;
+        return (bool) ($result['success'] ?? false)
+            && self::hostnameMatches($result)
+            && self::actionMatches($provider, $context, $result);
     }
 
+    /**
+     * Kept for the existing form error contract. Third-party tokens are
+     * single-use, so the browser renders a fresh widget from captcha_field().
+     */
     public static function refresh(string $context = 'form'): string
     {
-        if (!self::enabled()) {
-            return '';
-        }
-
-        return (string) (self::challenge($context, true)['token'] ?? '');
+        return '';
     }
 
     public static function loginRequired(): bool
@@ -126,9 +117,34 @@ final class Captcha
         unset($_SESSION['_tinycat_login_guard']);
     }
 
+    public static function provider(): string
+    {
+        $provider = strtolower(trim((string) Core::config('security.captcha.provider', 'recaptcha')));
+
+        return array_key_exists($provider, self::PROVIDERS) ? $provider : '';
+    }
+
+    public static function isActive(): bool
+    {
+        return self::enabled();
+    }
+
     private static function enabled(): bool
     {
-        return (bool) Core::config('security.captcha.enabled', true);
+        return (bool) Core::config('security.captcha.enabled', false)
+            && self::provider() !== ''
+            && self::siteKey() !== ''
+            && self::secretKey() !== '';
+    }
+
+    private static function siteKey(): string
+    {
+        return trim((string) Core::config('security.captcha.site_key', ''));
+    }
+
+    private static function secretKey(): string
+    {
+        return trim((string) Core::config('security.captcha.secret_key', ''));
     }
 
     private static function loginFailureLimit(): int
@@ -136,192 +152,93 @@ final class Captcha
         return max(1, min(10, (int) Core::config('security.captcha.login_attempts', 3)));
     }
 
-    private static function challenge(string $context, bool $refresh): array
-    {
-        Core::session();
-        $key = self::sessionKey($context);
-        $challenges = self::activeChallenges($context);
-
-        if (!$refresh && $challenges !== []) {
-            return reset($challenges) ?: [];
-        }
-
-        $target = random_int(18, 82);
-        $pieceTop = random_int(24, 62);
-        $challenge = [
-            'token' => bin2hex(random_bytes(16)),
-            'target' => $target,
-            'piece_top' => $pieceTop,
-            'decoys' => self::decoys($target, $pieceTop),
-            'issued_at' => microtime(true),
-            'expires' => time() + self::CHALLENGE_TTL,
-        ];
-        $challenges[(string) $challenge['token']] = $challenge;
-        uasort($challenges, static fn (array $a, array $b): int => (float) ($b['issued_at'] ?? 0) <=> (float) ($a['issued_at'] ?? 0));
-        $_SESSION[$key] = array_slice($challenges, 0, self::MAX_ACTIVE_CHALLENGES, true);
-
-        return $challenge;
-    }
-
-    private static function storedChallenge(string $context, string $token): array
-    {
-        if (preg_match('/^[a-f0-9]{32}$/', $token) !== 1) {
-            return [];
-        }
-
-        $challenge = self::activeChallenges($context)[$token] ?? null;
-
-        return self::validChallenge($challenge) ? $challenge : [];
-    }
-
-    private static function activeChallenges(string $context): array
-    {
-        Core::session();
-        $key = self::sessionKey($context);
-        $stored = $_SESSION[$key] ?? [];
-
-        // Upgrade an in-flight challenge created before multi-tab support.
-        if (self::validChallenge($stored)) {
-            $stored = [(string) $stored['token'] => $stored];
-        }
-
-        $challenges = [];
-        foreach ((array) $stored as $token => $challenge) {
-            if (is_string($token) && self::validChallenge($challenge) && hash_equals($token, (string) $challenge['token'])) {
-                $challenges[$token] = $challenge;
-            }
-        }
-
-        if ($challenges === []) {
-            unset($_SESSION[$key]);
-        } else {
-            $_SESSION[$key] = $challenges;
-        }
-
-        return $challenges;
-    }
-
-    private static function forgetChallenge(string $context, string $token): void
-    {
-        if ($token === '') {
-            return;
-        }
-
-        $challenges = self::activeChallenges($context);
-        unset($challenges[$token]);
-
-        $key = self::sessionKey($context);
-        if ($challenges === []) {
-            unset($_SESSION[$key]);
-            return;
-        }
-
-        $_SESSION[$key] = $challenges;
-    }
-
-    private static function validChallenge(mixed $challenge): bool
-    {
-        return is_array($challenge)
-            && (int) ($challenge['expires'] ?? 0) >= time()
-            && is_string($challenge['token'] ?? null);
-    }
-
-    private static function failureLocked(string $context): bool
-    {
-        Core::session();
-        $state = $_SESSION[self::failureKey($context)] ?? [];
-
-        if (!is_array($state) || (int) ($state['updated_at'] ?? 0) < time() - self::FAILURE_WINDOW) {
-            unset($_SESSION[self::failureKey($context)]);
-            return false;
-        }
-
-        return (int) ($state['lock_until'] ?? 0) > time();
-    }
-
-    private static function recordFailure(string $context): void
-    {
-        Core::session();
-        $key = self::failureKey($context);
-        $state = $_SESSION[$key] ?? [];
-        $now = time();
-        $count = is_array($state) && (int) ($state['updated_at'] ?? 0) >= $now - self::FAILURE_WINDOW
-            ? (int) ($state['count'] ?? 0) + 1
-            : 1;
-
-        $_SESSION[$key] = [
-            'count' => $count,
-            'updated_at' => $now,
-            'lock_until' => $count >= 4 ? $now + min(20, 2 * ($count - 3)) : 0,
-        ];
-    }
-
-    private static function clearFailures(string $context): void
-    {
-        Core::session();
-        unset($_SESSION[self::failureKey($context)]);
-    }
-
-    private static function boardDataUri(array $challenge): string
-    {
-        $targetX = (int) round(420 * ((int) ($challenge['target'] ?? 50)) / 100);
-        $targetY = (int) round(128 * ((int) ($challenge['piece_top'] ?? 42)) / 100);
-        $slots = '';
-
-        foreach ((array) ($challenge['decoys'] ?? []) as $decoy) {
-            $x = (int) round(420 * ((int) ($decoy['x'] ?? 50)) / 100);
-            $y = (int) round(128 * ((int) ($decoy['y'] ?? 42)) / 100);
-            $slots .= '<rect x="' . ($x - 21) . '" y="' . ($y - 21) . '" width="42" height="42" rx="9" fill="#f8fcfc" stroke="#86aaa7" stroke-width="3" stroke-dasharray="6 5"/>';
-        }
-
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="128" viewBox="0 0 420 128">'
-            . '<defs><pattern id="g" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#d4e4e3"/></pattern></defs>'
-            . '<rect width="420" height="128" fill="#e7f0f4"/><rect width="420" height="128" fill="url(#g)"/>' . $slots
-            . '<rect x="' . ($targetX - 21) . '" y="' . ($targetY - 21) . '" width="42" height="42" rx="9" fill="#f8fcfc" stroke="#0f766e" stroke-width="4"/>'
-            . '</svg>';
-
-        return 'data:image/svg+xml;base64,' . base64_encode($svg);
-    }
-
-    private static function pieceDataUri(array $challenge): string
-    {
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><rect x="11" y="11" width="42" height="42" rx="9" fill="#0f766e" stroke="#0d5f58" stroke-width="4"/></svg>';
-
-        return 'data:image/svg+xml;base64,' . base64_encode($svg);
-    }
-
-    private static function decoys(int $target, int $pieceTop): array
-    {
-        $decoys = [];
-
-        while (count($decoys) < 3) {
-            $x = random_int(18, 82);
-            $y = random_int(22, 76);
-            if (abs($x - $target) < 17 && abs($y - $pieceTop) < 20) {
-                continue;
-            }
-
-            foreach ($decoys as $decoy) {
-                if (abs($x - (int) $decoy['x']) < 17 && abs($y - (int) $decoy['y']) < 20) {
-                    continue 2;
-                }
-            }
-
-            $decoys[] = ['x' => $x, 'y' => $y];
-        }
-
-        return $decoys;
-    }
-
-    private static function sessionKey(string $context): string
+    private static function contextName(string $context): string
     {
         $context = preg_replace('/[^A-Za-z0-9_-]+/', '_', $context) ?? 'form';
         $context = trim($context, '_-');
-        return '_captcha_' . ($context !== '' ? $context : 'form');
+
+        return $context !== '' ? substr($context, 0, 32) : 'form';
     }
 
-    private static function failureKey(string $context): string
+    private static function verify(string $provider, string $token): array
     {
-        return self::sessionKey($context) . '_failures';
+        $data = [
+            'secret' => self::secretKey(),
+            'response' => $token,
+            'remoteip' => rate_limit_ip(),
+        ];
+
+        if ($provider === 'hcaptcha') {
+            $data['sitekey'] = self::siteKey();
+        }
+
+        return self::postForm(self::PROVIDERS[$provider]['verify_url'], $data);
+    }
+
+    private static function postForm(string $url, array $data): array
+    {
+        $body = http_build_query($data, '', '&', PHP_QUERY_RFC1738);
+
+        if (function_exists('curl_init')) {
+            $curl = curl_init($url);
+
+            if ($curl === false) {
+                return [];
+            }
+
+            curl_setopt_array($curl, [
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => $body,
+                CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CONNECTTIMEOUT => 5,
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_FAILONERROR => false,
+            ]);
+            $response = curl_exec($curl);
+            $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+            curl_close($curl);
+
+            return $status >= 200 && $status < 300 && is_string($response) ? self::decodeResponse($response) : [];
+        }
+
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-Type: application/x-www-form-urlencoded\r\nContent-Length: " . strlen($body),
+                'content' => $body,
+                'timeout' => 10,
+                'ignore_errors' => true,
+            ],
+        ]);
+        $response = @file_get_contents($url, false, $context);
+
+        return is_string($response) ? self::decodeResponse($response) : [];
+    }
+
+    private static function decodeResponse(string $response): array
+    {
+        $decoded = json_decode($response, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private static function hostnameMatches(array $result): bool
+    {
+        $verifiedHostname = strtolower(trim((string) ($result['hostname'] ?? '')));
+        $requestHostname = strtolower((string) preg_replace('/:\\d+$/', '', (string) ($_SERVER['HTTP_HOST'] ?? '')));
+
+        return $verifiedHostname === '' || $requestHostname === '' || hash_equals($verifiedHostname, $requestHostname);
+    }
+
+    private static function actionMatches(string $provider, string $context, array $result): bool
+    {
+        if ($provider !== 'turnstile') {
+            return true;
+        }
+
+        $action = trim((string) ($result['action'] ?? ''));
+
+        return $action !== '' && hash_equals(self::contextName($context), $action);
     }
 }

@@ -443,9 +443,7 @@
         }
     },
     "security": {
-        "captcha_label": "Bezpečnostní ověření",
-        "captcha_slider": "Posuň dílek na vyznačené místo",
-        "captcha_hint": "Posuň dílek do vyznačeného otvoru."
+        "captcha_label": "Bezpečnostní ověření"
     },
     "relative": {
         "now": "teď",
@@ -564,6 +562,11 @@
             "datetime_format": "Formát data a času",
             "relative_datetime": "Relativní datum a čas",
             "captcha_enabled": "Ochrana CAPTCHA",
+            "captcha_provider": "Poskytovatel CAPTCHA",
+            "captcha_provider_help": "Vyber poskytovatele, pro kterého jsou níže nastavené site key a secret key.",
+            "captcha_site_key": "Site key",
+            "captcha_secret_key": "Secret key",
+            "captcha_secret_key_help": "Prázdné pole ponechá uložený secret key. Jeho hodnota se znovu nezobrazuje.",
             "captcha_login_attempts": "Neúspěšná přihlášení před CAPTCHA",
             "registration_enabled": "Povolit registrace",
             "registration_auto_approve": "Automaticky schvalovat nové účty",

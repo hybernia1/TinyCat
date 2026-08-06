@@ -37,6 +37,12 @@ if (!empty($field['compact'])) {
         </span>
     <?php elseif ($type === 'language'): ?>
         <select class="select" name="<?= e($name) ?>"><?= language_options((string) $value) ?></select>
+    <?php elseif ($type === 'select'): ?>
+        <select class="select" name="<?= e($name) ?>" required>
+            <?php foreach ((array) ($field['options'] ?? []) as $optionValue => $optionLabel): ?>
+                <option value="<?= e((string) $optionValue) ?>"<?= (string) $value === (string) $optionValue ? ' selected' : '' ?>><?= e((string) $optionLabel) ?></option>
+            <?php endforeach; ?>
+        </select>
     <?php elseif ($type === 'timezone'): ?>
         <select class="select" name="<?= e($name) ?>" required><?= timezone_options((string) $value) ?></select>
     <?php elseif ($type === 'date_format'): ?>

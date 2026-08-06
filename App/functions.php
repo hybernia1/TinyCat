@@ -731,7 +731,7 @@ function auth_login_request(): array
     if (auth_login_captcha_required() && !captcha_check('login')) {
         captcha_refresh('login');
         api_error(t('auth.invalid_captcha'), 422, 'captcha_invalid', [
-            'errors' => ['tc_captcha' => [t('auth.invalid_captcha')]],
+            'errors' => ['captcha' => [t('auth.invalid_captcha')]],
             'captcha_html' => captcha_field('login'),
         ]);
     }
@@ -872,7 +872,7 @@ function registration_request(): array
     if (!captcha_check('register')) {
         captcha_refresh('register');
         api_error(t('auth.invalid_captcha'), 422, 'captcha_invalid', [
-            'errors' => ['tc_captcha' => [t('auth.invalid_captcha')]],
+            'errors' => ['captcha' => [t('auth.invalid_captcha')]],
             'captcha_html' => captcha_field('register'),
         ]);
     }
@@ -3412,7 +3412,7 @@ function public_search_guard(string $query, bool $increment = true): ?array
         return null;
     }
 
-    if (!(bool) config('security.captcha.enabled', true)) {
+    if (!Captcha::isActive()) {
         return null;
     }
 
