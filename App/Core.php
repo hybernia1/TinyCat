@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.14';
+    public const string VERSION = '2.0.15';
 
     private static bool $booted = false;
     private static array $config = [];
@@ -760,21 +760,21 @@ final class Core
 
     public static function apiError(string $message = 'Request failed.', int $status = 400, string $code = 'error', array $details = []): never
     {
-        self::json(self::apiEnvelope(false, $status, $message, null, [], [
+        $payload = self::apiEnvelope(false, $status, $message, null, [], [
             'code' => $code,
             'details' => $details,
-        ]), $status);
+        ]);
+
+        if (isset($details['errors']) && is_array($details['errors'])) {
+            $payload['errors'] = $details['errors'];
+        }
+
+        self::json($payload, $status);
     }
 
     public static function apiValidation(array $errors, string $message = 'Validation failed.'): never
     {
-        $payload = self::apiEnvelope(false, 422, $message, null, [], [
-            'code' => 'validation_error',
-            'details' => $errors,
-        ]);
-        $payload['errors'] = $errors;
-
-        self::json($payload, 422);
+        self::apiError($message, 422, 'validation_error', ['errors' => $errors]);
     }
 
     private static function apiException(Throwable $exception): never
@@ -799,22 +799,6 @@ final class Core
         }
 
         self::apiError($message, $status, $code, $details);
-    }
-
-    public static function apiEndpoint(array|string $methods, callable $handler): never
-    {
-        try {
-            self::requireMethod($methods);
-            $result = $handler();
-
-            if ($result === null) {
-                self::apiOk();
-            }
-
-            self::apiOk($result);
-        } catch (Throwable $exception) {
-            self::apiException($exception);
-        }
     }
 
     public static function route(array|string $methods, string $path, callable $handler): void

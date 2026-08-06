@@ -42,7 +42,7 @@ final class Api
         api_route('GET', '/avatar-edit-modal', [self::class, 'avatarEditModal']);
         api_route('GET', '/author/following', [self::class, 'authorFollowing']);
 
-        api_route('ANY', '/admin/users', static function (): void {
+        api_route(['GET', 'POST', 'PATCH', 'DELETE'], '/admin/users', static function (): void {
             require public_path('admin/users.php');
         });
 
@@ -52,11 +52,11 @@ final class Api
             require public_path('admin/cron.php');
         });
 
-        api_route('ANY', '/admin/moderation/reports', static function (): void {
+        api_route(['GET', 'POST'], '/admin/moderation/reports', static function (): void {
             require public_path('admin/moderation/reports.php');
         });
 
-        api_route('ANY', '/admin/moderation/blocking', static function (): void {
+        api_route(['GET', 'POST'], '/admin/moderation/blocking', static function (): void {
             require public_path('admin/moderation/blocking.php');
         });
 

@@ -22,18 +22,12 @@ if ($moderationReportsApi && method() === 'GET') {
 }
 
 if ($moderationReportsApi && method() === 'POST') {
-    api_endpoint('POST', static function (): never {
-        csrf_require();
-        tc_admin_moderation_review_report(
-            max(1, (int) input('report_id', 0)),
-            (string) input('decision', '')
-        );
-        api_ok(tc_admin_moderation_reports_payload(), t('moderation.messages.report_reviewed'));
-    });
-}
-
-if ($moderationReportsApi) {
-    api_error('Method not allowed.', 405, 'method_not_allowed');
+    csrf_require();
+    tc_admin_moderation_review_report(
+        max(1, (int) input('report_id', 0)),
+        (string) input('decision', '')
+    );
+    api_ok(tc_admin_moderation_reports_payload(), t('moderation.messages.report_reviewed'));
 }
 
 layout('layout', [

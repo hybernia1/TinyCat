@@ -23,67 +23,61 @@ if ($adminUsersApi === 'list') {
 }
 
 if ($adminUsersApi === 'create') {
-    api_endpoint('POST', static function (): never {
-        csrf_require();
-        $id = insert('users', tc_admin_user_payload());
-        api_created(tc_admin_users_response_payload((int) $id), t('users.messages.created'));
-    });
+    csrf_require();
+    $id = insert('users', tc_admin_user_payload());
+    api_created(tc_admin_users_response_payload((int) $id), t('users.messages.created'));
 }
 
 if ($adminUsersApi === 'update') {
-    api_endpoint('PATCH', static function (): never {
-        csrf_require();
-        $id = max(1, (int) input('id'));
-        $existing = tc_admin_user_by_id($id);
+    csrf_require();
+    $id = max(1, (int) input('id'));
+    $existing = tc_admin_user_by_id($id);
 
-        if ($existing === null || !UserRoles::managedByCoreAdmin((string) ($existing['role'] ?? ''))) {
-            api_error(t('users.messages.not_found'), 404, 'user_not_found');
-        }
+    if ($existing === null || !UserRoles::managedByCoreAdmin((string) ($existing['role'] ?? ''))) {
+        api_error(t('users.messages.not_found'), 404, 'user_not_found');
+    }
 
-        $profileLinks = profile_links_from_input();
-        try {
-            $avatar = admin_user_avatar_change($existing);
-        } catch (InvalidArgumentException $exception) {
-            api_error($exception->getMessage(), 422, 'avatar_invalid');
-        }
-        $payload = tc_admin_user_payload($id);
+    $profileLinks = profile_links_from_input();
+    try {
+        $avatar = admin_user_avatar_change($existing);
+    } catch (InvalidArgumentException $exception) {
+        api_error($exception->getMessage(), 422, 'avatar_invalid');
+    }
+    $payload = tc_admin_user_payload($id);
 
-        if ($avatar['changed']) {
-            $payload['avatar_config'] = $avatar['json'];
-        }
+    if ($avatar['changed']) {
+        $payload['avatar_config'] = $avatar['json'];
+    }
 
-        try {
-            update('users', $payload, ['id' => $id]);
-            user_profile_links_sync($id, $profileLinks);
-        } catch (Throwable $exception) {
-            if ($avatar['uploaded']) {
-                Avatar::delete($avatar['config']);
-            }
-            throw $exception;
+    try {
+        update('users', $payload, ['id' => $id]);
+        user_profile_links_sync($id, $profileLinks);
+    } catch (Throwable $exception) {
+        if ($avatar['uploaded']) {
+            Avatar::delete($avatar['config']);
         }
+        throw $exception;
+    }
 
-        if ($avatar['changed']) {
-            Avatar::delete($existing['avatar_config'] ?? null, $avatar['config']);
-        }
-        api_ok(tc_admin_users_response_payload($id), t('users.messages.saved'));
-    });
+    if ($avatar['changed']) {
+        Avatar::delete($existing['avatar_config'] ?? null, $avatar['config']);
+    }
+    api_ok(tc_admin_users_response_payload($id), t('users.messages.saved'));
 }
 
 if ($adminUsersApi === 'delete') {
-    api_endpoint('DELETE', static function (): never {
-        csrf_require();
-        $id = max(1, (int) input('id'));
-        $user = tc_admin_user_by_id($id);
+    csrf_require();
+    $id = max(1, (int) input('id'));
+    $user = tc_admin_user_by_id($id);
 
-        if ($user === null || !UserRoles::managedByCoreAdmin((string) ($user['role'] ?? ''))) {
-            api_error(t('users.messages.not_found'), 404, 'user_not_found');
-        }
+    if ($user === null || !UserRoles::managedByCoreAdmin((string) ($user['role'] ?? ''))) {
+        api_error(t('users.messages.not_found'), 404, 'user_not_found');
+    }
 
-        tc_admin_user_require_deletable($user);
+    tc_admin_user_require_deletable($user);
 
-        user_delete_account($id);
-        api_ok(tc_admin_users_response_payload(), t('users.messages.deleted'));
-    });
+    user_delete_account($id);
+    api_ok(tc_admin_users_response_payload(), t('users.messages.deleted'));
 }
 
 $csrfToken = csrf_token();

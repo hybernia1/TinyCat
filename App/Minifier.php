@@ -36,23 +36,44 @@ final class Minifier
             return null;
         }
 
-        $hash = substr(hash('sha256', self::CACHE_VERSION . "\0" . $relativePath . "\0" . $source), 0, 20);
         $baseName = pathinfo(str_replace('\\', '/', $relativePath), PATHINFO_FILENAME);
         $baseName = trim((string) preg_replace('/[^a-z0-9_-]+/i', '-', $baseName), '-');
         $baseName = $baseName !== '' ? strtolower($baseName) : 'asset';
-        $fileName = $baseName . '.' . $hash . '.min.' . $type;
+
+        return self::cachedAssetUrl($relativePath, $baseName, $source, $type, true);
+    }
+
+    public static function cachedAssetUrl(
+        string $identity,
+        string $prefix,
+        string $source,
+        string $type,
+        bool $minify
+    ): ?string {
+        $type = strtolower(trim($type));
+        $prefix = strtolower(trim($prefix));
+
+        if (
+            !in_array($type, ['css', 'js'], true)
+            || $prefix === ''
+            || preg_match('/^[a-z0-9_-]{1,120}$/', $prefix) !== 1
+        ) {
+            return null;
+        }
+
+        $content = $minify
+            ? ($type === 'css' ? self::minifyCss($source) : self::minifyJavaScript($source))
+            : $source;
+        $hash = substr(hash('sha256', self::CACHE_VERSION . "\0" . $identity . "\0" . ($minify ? 'min' : 'raw') . "\0" . $content), 0, 20);
+        $fileName = $prefix . '.' . $hash . ($minify ? '.min' : '') . '.' . $type;
         $target = Cache::file($fileName, self::CACHE_NAMESPACE);
 
         if (!is_file($target)) {
-            $minified = $type === 'css'
-                ? self::minifyCss($source)
-                : self::minifyJavaScript($source);
-
-            if (!Cache::writeFile($fileName, $minified, self::CACHE_NAMESPACE)) {
+            if (!Cache::writeFile($fileName, $content, self::CACHE_NAMESPACE)) {
                 return null;
             }
 
-            self::pruneAssetVariants($baseName, $type, $fileName);
+            self::pruneAssetVariants($prefix, $type, $fileName);
         }
 
         return self::CACHE_URL . '/' . rawurlencode($fileName);
@@ -798,9 +819,9 @@ final class Minifier
             && !str_contains('{}:;,>~)', $next);
     }
 
-    private static function pruneAssetVariants(string $baseName, string $type, string $keep): void
+    private static function pruneAssetVariants(string $prefix, string $type, string $keep): void
     {
-        $pattern = '/^' . preg_quote($baseName, '/') . '\\.[a-f0-9]{20}\\.min\\.' . preg_quote($type, '/') . '$/';
+        $pattern = '/^' . preg_quote($prefix, '/') . '\\.[a-f0-9]{20}(?:\\.min)?\\.' . preg_quote($type, '/') . '$/';
 
         Cache::prune(
             self::CACHE_NAMESPACE,
