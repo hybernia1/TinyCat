@@ -28,7 +28,8 @@ if ($item === null) {
 }
 
 $statusTitle = status_meta_title($item);
-$statusStructuredImage = status_meta_link_image($item);
+$statusStructuredImage = status_image_jsonld($item) ?? (status_meta_link_image($item) ?: null);
+$statusImageUrl = status_image_url($item);
 
 layout('layout', [
     'title' => $statusTitle,
@@ -38,6 +39,10 @@ layout('layout', [
         'description' => status_meta_description($item),
         'url' => $current,
         'image' => status_meta_image($item),
+        'image_type' => $statusImageUrl !== '' ? 'image/webp' : '',
+        'image_width' => (int) ($item['image_width'] ?? 0),
+        'image_height' => (int) ($item['image_height'] ?? 0),
+        'image_alt' => $statusImageUrl !== '' ? status_image_alt_text($item) : '',
         'type' => 'article',
         'published_time' => (string) ($item['published_at'] ?? $item['created_at'] ?? ''),
         'author' => (string) ($item['author_name'] ?? ''),
@@ -46,9 +51,9 @@ layout('layout', [
             '@type' => 'DiscussionForumPosting',
             '@id' => absolute_url($current),
             'url' => absolute_url($current),
-            'image' => $statusStructuredImage !== '' ? $statusStructuredImage : null,
+            'image' => $statusStructuredImage,
             'headline' => $statusTitle,
-            'articleBody' => (string) ($item['body'] ?? ''),
+            'articleBody' => trim((string) ($item['body'] ?? '')) !== '' ? (string) ($item['body'] ?? '') : null,
             'keywords' => status_tags_from_text((string) ($item['body'] ?? '')),
             'datePublished' => date_iso((string) ($item['published_at'] ?? $item['created_at'] ?? '')),
             'author' => [
@@ -105,6 +110,7 @@ layout('layout', [
                     <?php if ($bodyHtml !== ''): ?>
                         <div class="status-body"><?= $bodyHtml ?></div>
                     <?php endif; ?>
+                    <?= part('status/image', ['item' => $item]) ?>
                     <?= part('status/links', ['item' => $item]) ?>
 
                     <?= part('status/actions', [

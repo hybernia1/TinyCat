@@ -9,10 +9,10 @@ if (!defined('TINYCAT')) {
 $activeTag = status_tag_normalize((string) ($active_tag ?? ''));
 $tags = is_array($tags ?? null) ? $tags : [];
 $authors = is_array($authors ?? null) ? $authors : [];
-$needsRefresh = (bool) ($needs_refresh ?? false);
 $sidebarUrl = (string) ($sidebar_url ?? '/api/sidebar');
+$siteFooterHtml = (string) ($site_footer_html ?? site_footer_html());
 ?>
-<aside class="public-sidebar" aria-label="<?= et('public.sidebar_title') ?>"<?= $needsRefresh ? ' data-public-sidebar data-sidebar-url="' . e($sidebarUrl) . '"' : '' ?>>
+<aside class="public-sidebar" aria-label="<?= et('public.sidebar_title') ?>" data-public-sidebar-url="<?= e($sidebarUrl) ?>">
     <article class="card public-sidebar-card">
         <div class="card-header">
             <h2 class="text-base m-0 cluster gap-2"><?= icon('hash') ?> <?= et('public.favorite_topics') ?></h2>
@@ -66,4 +66,11 @@ $sidebarUrl = (string) ($sidebar_url ?? '/api/sidebar');
             <?php endif; ?>
         </div>
     </article>
+    <?php if ($siteFooterHtml !== ''): ?>
+        <footer class="public-sidebar-footer">
+            <div class="public-sidebar-footer-inner">
+                <?= $siteFooterHtml ?>
+            </div>
+        </footer>
+    <?php endif; ?>
 </aside>

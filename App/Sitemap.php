@@ -115,7 +115,7 @@ final class Sitemap
     }
 
     /**
-     * @return list<array{url: string, last_modified: ?string}>
+     * @return list<array{url: string, last_modified: ?string, image_url?: string}>
      */
     public static function entries(string $section, int $limit, int $offset): array
     {
@@ -152,9 +152,10 @@ final class Sitemap
                     LIMIT ' . $limit . ' OFFSET ' . $offset
             ),
             'status' => Core::all(
-                'SELECT c.id, c.published_at AS last_modified
+                'SELECT c.id, c.published_at AS last_modified, ci.path AS image_path
                     FROM content c
                     INNER JOIN users u ON u.id = c.author_id
+                    LEFT JOIN content_images ci ON ci.content_id = c.id
                     WHERE u.status = ?
                     ORDER BY c.id ASC
                     LIMIT ' . $limit . ' OFFSET ' . $offset,
@@ -173,10 +174,15 @@ final class Sitemap
             };
 
             if ($url !== '') {
-                $entries[] = [
+                $entry = [
                     'url' => $url,
                     'last_modified' => isset($row['last_modified']) ? (string) $row['last_modified'] : null,
                 ];
+                $imageUrl = \StatusImage::url((string) ($row['image_path'] ?? ''));
+                if ($imageUrl !== '') {
+                    $entry['image_url'] = $imageUrl;
+                }
+                $entries[] = $entry;
             }
         }
 
@@ -219,7 +225,7 @@ final class Sitemap
             throw new RuntimeException('Invalid extension sitemap entry: ' . $section);
         }
 
-        $unknown = array_diff(array_keys($entry), ['url', 'last_modified']);
+        $unknown = array_diff(array_keys($entry), ['url', 'last_modified', 'image_url']);
         $url = $entry['url'] ?? null;
         if ($unknown !== [] || !is_string($url) || $url === '' || preg_match('/[\x00-\x1F\x7F]/', $url) === 1) {
             throw new RuntimeException('Invalid extension sitemap entry: ' . $section);
@@ -241,9 +247,25 @@ final class Sitemap
             throw new RuntimeException('Invalid extension sitemap last-modified value: ' . $section);
         }
 
-        return [
+        $imageUrl = $entry['image_url'] ?? null;
+        if ($imageUrl !== null && (
+            !is_string($imageUrl)
+            || $imageUrl === ''
+            || str_starts_with($imageUrl, '//')
+            || Core::path($imageUrl) !== $imageUrl
+        )) {
+            throw new RuntimeException('Invalid extension sitemap image URL: ' . $section);
+        }
+
+        $validated = [
             'url' => $url,
             'last_modified' => $lastModified,
         ];
+
+        if ($imageUrl !== null) {
+            $validated['image_url'] = $imageUrl;
+        }
+
+        return $validated;
     }
 }

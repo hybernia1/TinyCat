@@ -29,7 +29,7 @@ ob_start();
     </div>
     <small class="avatar-upload-empty-note" data-avatar-upload-empty-note<?= $avatarUrl !== '' ? ' hidden' : '' ?>><?= et('account.avatar_upload_empty') ?></small>
     <label class="avatar-upload-drop">
-        <input class="sr-only" type="file" name="avatar" accept="image/png,image/jpeg,image/webp" data-avatar-upload-input>
+        <input class="sr-only" type="file" name="avatar" accept="image/png,image/jpeg,image/webp" data-avatar-upload-input data-client-image-max-dimension="400" data-client-image-max-bytes="26214400">
         <?= icon('upload') ?>
         <span><?= et('account.avatar_upload_label') ?></span>
     </label>

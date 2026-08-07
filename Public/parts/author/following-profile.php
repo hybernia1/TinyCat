@@ -20,6 +20,5 @@ if ($profileId < 1) {
     </span>
     <span class="profile-following-main">
         <strong><?= e($profileName) ?></strong>
-        <small><?= et('public.active_user_posts', ['count' => (int) ($profile['posts_count'] ?? 0)]) ?></small>
     </span>
 </a>

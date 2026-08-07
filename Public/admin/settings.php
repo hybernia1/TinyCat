@@ -113,6 +113,14 @@ function tc_admin_settings_sections(): array
                 ['key' => 'performance.minify_html', 'label' => t('settings.fields.minify_html'), 'type' => 'bool', 'default' => false, 'help' => t('settings.fields.minify_html_help')],
             ],
         ],
+        'content_images' => [
+            'label' => t('settings.sections.content_images'),
+            'icon' => 'image',
+            'fields' => [
+                ['key' => 'content_images.enabled', 'label' => t('settings.fields.content_images_enabled'), 'type' => 'bool', 'default' => true, 'help' => t('settings.fields.content_images_enabled_help')],
+                ['key' => 'content_images.max_upload_kb', 'label' => t('settings.fields.content_images_max_upload_kb'), 'type' => 'int', 'default' => 100, 'min' => 20, 'max' => 1024, 'help' => t('settings.fields.content_images_max_upload_kb_help')],
+            ],
+        ],
         'localization' => [
             'label' => t('settings.sections.localization'),
             'icon' => 'globe',

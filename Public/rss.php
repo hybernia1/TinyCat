@@ -76,13 +76,17 @@ echo '<?xml version="1.0" encoding="UTF-8"?>';
     $publishedAt = (string) ($item['published_at'] ?? $item['created_at'] ?? '');
     $publishedTimestamp = $publishedAt !== '' ? strtotime($publishedAt) : false;
     $publishedDate = $publishedTimestamp !== false ? date(DATE_RSS, $publishedTimestamp) : date(DATE_RSS);
+    $imageUrl = status_image_url($item);
+    $imageBytes = max(0, (int) ($item['image_bytes'] ?? 0));
+    $rssBody = $body !== '' ? $body : status_image_alt_text($item);
 ?>
         <item>
             <title><?= $xmlEscape($itemTitle) ?></title>
             <link><?= $xmlEscape($itemUrl) ?></link>
             <guid isPermaLink="true"><?= $xmlEscape($itemUrl) ?></guid>
             <pubDate><?= $xmlEscape($publishedDate) ?></pubDate>
-            <description><?= $cdata($body) ?></description>
+            <?php if ($imageUrl !== ''): ?><enclosure url="<?= $xmlEscape(absolute_url($imageUrl)) ?>" length="<?= $imageBytes ?>" type="image/webp" /><?php endif; ?>
+            <description><?= $cdata($rssBody) ?></description>
         </item>
 <?php endforeach; ?>
     </channel>

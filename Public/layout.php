@@ -18,7 +18,6 @@ $appName = site_name();
 $siteLogoUrl = site_logo_url();
 $siteFaviconUrl = site_favicon_url();
 $siteIdentity = SiteIdentity::metadata();
-$siteFooterHtml = site_footer_html();
 $searchQuery = trim((string) ($search_query ?? get('q', '')));
 $title = (string) ($title ?? $appName);
 $current = route_path((string) ($current ?? route_path()));
@@ -84,6 +83,10 @@ $metaDescription = meta_text((string) ($meta['description'] ?? site_meta_descrip
 $metaUrl = absolute_url((string) ($meta['url'] ?? ($_SERVER['REQUEST_URI'] ?? $current)));
 $metaImageRaw = trim((string) ($meta['image'] ?? site_meta_image_url()));
 $metaImage = $metaImageRaw !== '' ? absolute_url($metaImageRaw) : '';
+$metaImageType = trim((string) ($meta['image_type'] ?? ''));
+$metaImageWidth = max(0, (int) ($meta['image_width'] ?? 0));
+$metaImageHeight = max(0, (int) ($meta['image_height'] ?? 0));
+$metaImageAlt = trim((string) ($meta['image_alt'] ?? $metaTitle));
 $metaType = (string) ($meta['type'] ?? 'website');
 $metaRss = trim((string) ($meta['rss'] ?? ''));
 $metaPrev = trim((string) ($meta['prev'] ?? ''));
@@ -149,7 +152,10 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php endif; ?>
     <?php if ($metaImage !== ''): ?>
         <meta property="og:image" content="<?= e($metaImage) ?>">
-        <meta property="og:image:alt" content="<?= e($metaTitle) ?>">
+        <?php if ($metaImageType !== ''): ?><meta property="og:image:type" content="<?= e($metaImageType) ?>"><?php endif; ?>
+        <?php if ($metaImageWidth > 0): ?><meta property="og:image:width" content="<?= e($metaImageWidth) ?>"><?php endif; ?>
+        <?php if ($metaImageHeight > 0): ?><meta property="og:image:height" content="<?= e($metaImageHeight) ?>"><?php endif; ?>
+        <meta property="og:image:alt" content="<?= e($metaImageAlt) ?>">
     <?php endif; ?>
     <meta name="twitter:card" content="<?= $metaImage !== '' ? 'summary_large_image' : 'summary' ?>">
     <meta name="twitter:title" content="<?= e($metaTitle) ?>">
@@ -158,6 +164,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php endif; ?>
     <?php if ($metaImage !== ''): ?>
         <meta name="twitter:image" content="<?= e($metaImage) ?>">
+        <meta name="twitter:image:alt" content="<?= e($metaImageAlt) ?>">
     <?php endif; ?>
     <?php if ($siteFaviconUrl !== ''): ?>
         <link rel="icon" type="image/webp" href="<?= e($siteFaviconUrl) ?>">
@@ -179,7 +186,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php endforeach; ?>
     <?php $googleMeasurementId = trim((string) config('analytics.google_measurement_id', '')); ?>
     <?php $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? ''); ?>
-    <?php $analyticsConfigured = preg_match('/^G-[A-Z0-9]+$/i', $googleMeasurementId) === 1; ?>
+    <?php $analyticsConfigured = site_google_analytics_configured(); ?>
     <?php if ($analyticsConfigured && $analyticsConsent === 'granted'): ?>
         <script async src="https://www.googletagmanager.com/gtag/js?id=<?= e($googleMeasurementId) ?>"></script>
         <script>
@@ -368,14 +375,9 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                             </button>
                         </form>
                     <?php else: ?>
-                        <a class="nav-link nav-link-icon" href="/login"<?= $current === '/login' ? ' aria-current="page"' : '' ?> aria-label="<?= et('common.login') ?>" title="<?= et('common.login') ?>">
-                            <?= icon('login') ?>
+                        <a class="nav-link nav-link-icon" href="/login"<?= $current === '/login' ? ' aria-current="page"' : '' ?> data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e(auth_modal_url()) ?>" aria-label="<?= et('common.login') ?>" title="<?= et('common.login') ?>">
+                            <?= icon('user') ?>
                         </a>
-                        <?php if (registration_enabled()): ?>
-                            <a class="nav-link nav-link-icon" href="/register"<?= $current === '/register' ? ' aria-current="page"' : '' ?> aria-label="<?= et('common.register') ?>" title="<?= et('common.register') ?>">
-                                <?= icon('user-plus') ?>
-                            </a>
-                        <?php endif; ?>
                     <?php endif; ?>
                 </nav>
             </div>
@@ -388,10 +390,10 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
         </main>
 
         <?php if ($analyticsConfigured && !in_array($analyticsConsent, ['granted', 'denied'], true)): ?>
-        <aside class="cookie-consent" data-cookie-consent aria-labelledby="cookie-consent-title">
+        <aside class="cookie-consent" data-cookie-consent data-google-measurement-id="<?= e($googleMeasurementId) ?>" aria-labelledby="cookie-consent-title">
             <div class="cookie-consent-copy">
                 <strong id="cookie-consent-title"><?= et('privacy.cookie_consent_title') ?></strong>
-                <span><?= et('privacy.cookie_consent_text') ?></span>
+                <span><?= et(site_captcha_enabled() ? 'privacy.cookie_consent_text_captcha' : 'privacy.cookie_consent_text') ?></span>
             </div>
             <div class="cookie-consent-actions">
                 <button class="btn btn-primary btn-sm" type="button" data-cookie-consent-choice="granted"><?= et('privacy.cookie_consent_accept') ?></button>
@@ -400,13 +402,6 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
         </aside>
     <?php endif; ?>
 
-    <?php if ($siteFooterHtml !== ''): ?>
-            <footer class="site-footer">
-                <div class="container site-footer-inner">
-                    <?= $siteFooterHtml ?>
-                </div>
-            </footer>
-        <?php endif; ?>
     <?php endif; ?>
 </body>
 </html>

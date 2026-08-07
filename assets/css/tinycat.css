@@ -129,6 +129,7 @@ body {
 
 body.has-modal {
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 img,
@@ -958,6 +959,13 @@ a:hover {
 
 .check-line input {
   accent-color: var(--primary);
+}
+
+.login-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .navbar {
@@ -2138,7 +2146,6 @@ a:hover {
 }
 
 .status-reactions {
-  border-top: 1px solid var(--border);
   padding-block-start: 7px;
 }
 
@@ -2564,6 +2571,86 @@ a:hover {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.status-image-field {
+  display: grid;
+  gap: 8px;
+}
+
+.status-compose-actions .status-image-field {
+  display: contents;
+}
+
+.status-image-preview {
+  position: relative;
+  width: min(100%, 360px);
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+
+.status-image-field[hidden],
+.status-image-preview[hidden],
+.status-image-alt-wrap[hidden] {
+  display: none !important;
+}
+
+.status-image-preview img {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.status-compose-actions .status-image-preview {
+  width: 38px;
+  height: 38px;
+}
+
+.status-image-picker {
+  width: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  padding: 8px;
+}
+
+.status-compose-main .status-image-picker {
+  padding: 0;
+}
+
+.status-image-picker .icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.status-compose-actions .status-image-preview img {
+  height: 100%;
+  object-fit: cover;
+}
+
+.status-image {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  margin: 2px 0;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+}
+
+.status-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.status-image-link {
+  display: block;
+  height: 100%;
+  color: inherit;
 }
 
 .status-field {
@@ -3322,26 +3409,21 @@ img.status-editor-suggestion-avatar {
   font-size: 1rem;
 }
 
-.site-footer {
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.site-footer-inner {
-  padding-block: 22px;
+.public-sidebar-footer {
+  padding: 2px 2px 0;
   color: var(--muted);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
 }
 
-.site-footer-inner > *:first-child {
+.public-sidebar-footer-inner > *:first-child {
   margin-block-start: 0;
 }
 
-.site-footer-inner > *:last-child {
+.public-sidebar-footer-inner > *:last-child {
   margin-block-end: 0;
 }
 
-.site-footer-inner a {
+.public-sidebar-footer-inner a {
   color: var(--primary-strong);
   font-weight: 650;
 }
@@ -3720,6 +3802,14 @@ body.admin-nav-open .admin-backdrop {
   width: min(100%, 920px);
 }
 
+.auth-modal-panel {
+  width: min(100%, 460px);
+}
+
+.auth-modal-body {
+  padding: 16px;
+}
+
 .modal-panel-full {
   display: grid;
   width: 100vw;
@@ -3748,6 +3838,8 @@ body.admin-nav-open .admin-backdrop {
 .modal-body {
   min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-header {
@@ -3758,7 +3850,6 @@ body.admin-nav-open .admin-backdrop {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
 
@@ -3767,7 +3858,6 @@ body.admin-nav-open .admin-backdrop {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 6px;
-  border-top: 1px solid var(--border);
 }
 
 .modal-confirm-panel {
@@ -4320,9 +4410,10 @@ body.admin-nav-open .admin-backdrop {
     gap: 24px;
   }
 
-  .profile-sidebar-stack {
+  .profile-sidebar-stack,
+  .public-sidebar {
     position: sticky;
-    top: 76px;
+    top: var(--sidebar-sticky-top, 76px);
   }
 
   .profile-main {
@@ -4335,12 +4426,8 @@ body.admin-nav-open .admin-backdrop {
     justify-content: center;
   }
 
-  .public-sidebar {
-    position: sticky;
-    top: 76px;
-  }
-
-  .user-modal-panel.modal-panel-full {
+  .user-modal-panel.modal-panel-full,
+  .following-modal-panel.modal-panel-full {
     width: 80vw;
     height: 80vh;
     max-height: 80vh;

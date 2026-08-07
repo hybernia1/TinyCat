@@ -64,12 +64,12 @@ $authorStructuredData = [
         'sameAs' => array_values(array_filter(array_map(static fn (string $url): string => absolute_url($url), array_map('strval', $profileLinks)))),
     ],
     'hasPart' => array_values(array_map(static function (array $item) use ($authorEntityId): array {
-        $image = status_meta_link_image($item);
+        $image = status_image_jsonld($item) ?? (status_meta_link_image($item) ?: null);
 
         return array_filter([
             '@type' => 'DiscussionForumPosting',
             'url' => absolute_url(status_url((int) ($item['id'] ?? 0))),
-            'image' => $image !== '' ? $image : null,
+            'image' => $image,
             'headline' => status_meta_title($item),
             'datePublished' => date_iso((string) ($item['published_at'] ?? $item['created_at'] ?? '')),
             'author' => ['@id' => $authorEntityId],
@@ -171,7 +171,7 @@ layout('layout', [
                                     'is_following' => $isFollowing,
                                 ]) ?>
                             <?php elseif ($authUser === null): ?>
-                                <a class="btn btn-secondary btn-sm" href="/login">
+                                <a class="btn btn-secondary btn-sm" href="/login" data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e(auth_modal_url()) ?>">
                                     <?= icon('login') ?> <span><?= et('public.follow_login') ?></span>
                                 </a>
                             <?php endif; ?>
@@ -218,13 +218,11 @@ layout('layout', [
                     <div class="alert alert-info" data-status-empty><?= et('public.author_feed_empty') ?></div>
                 <?php endif; ?>
                 <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
-                    <?php foreach ($statusItems as $item): ?>
-                        <?= part('status/card', [
-                            'item' => $item,
-                            'action' => author_url($authorId),
-                            'user' => auth(),
-                        ]) ?>
-                    <?php endforeach; ?>
+                    <?= part('status/feed', [
+                        'items' => $statusItems,
+                        'action' => author_url($authorId),
+                        'user' => $authUser,
+                    ]) ?>
                 </div>
                 <?= part('status/feed-more', [
                     'feed_id' => $feedId,

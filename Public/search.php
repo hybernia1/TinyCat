@@ -65,7 +65,7 @@ layout('layout', [
                             <?= captcha_field('search') ?>
                         </div>
                         <div class="card-footer justify-end">
-                            <a class="btn btn-ghost" href="/login"><?= icon('login') ?> <span><?= et('auth.login_title') ?></span></a>
+                            <a class="btn btn-ghost" href="/login" data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e(auth_modal_url()) ?>"><?= icon('login') ?> <span><?= et('auth.login_title') ?></span></a>
                             <button class="btn btn-primary" type="submit"><?= icon('confirm') ?> <span><?= et('common.confirm') ?></span></button>
                         </div>
                     </form>
@@ -76,9 +76,11 @@ layout('layout', [
                 <div class="alert alert-info"><?= et('public.search_empty') ?></div>
             <?php else: ?>
                 <div class="status-feed">
-                    <?php foreach ($statusItems as $item): ?>
-                        <?= part('status/card', ['item' => $item, 'action' => $current, 'user' => auth()]) ?>
-                    <?php endforeach; ?>
+                    <?= part('status/feed', [
+                        'items' => $statusItems,
+                        'action' => $current,
+                        'user' => auth(),
+                    ]) ?>
                 </div>
             <?php endif; ?>
         </div>

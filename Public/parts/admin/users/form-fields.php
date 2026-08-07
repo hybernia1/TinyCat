@@ -63,7 +63,7 @@ $profileLinks = (array) ($user['profile_links'] ?? []);
             <section class="card card-body stack stack-gap-12">
                 <span class="label"><?= et('account.avatar') ?></span>
                 <div class="avatar avatar-xl"><?= part('user/avatar', ['user' => $user, 'alt' => (string) ($user['username'] ?? '')]) ?></div>
-                <label class="field"><span class="label"><?= et('account.avatar_upload_label') ?></span><input class="input" type="file" name="avatar" accept="image/png,image/jpeg,image/webp"></label>
+                <label class="field"><span class="label"><?= et('account.avatar_upload_label') ?></span><input class="input" type="file" name="avatar" accept="image/png,image/jpeg,image/webp" data-client-image-input data-client-image-max-dimension="400" data-client-image-max-bytes="26214400"></label>
                 <?php if (user_avatar_url($user) !== ''): ?>
                     <label class="check"><input type="checkbox" name="remove_avatar" value="1"> <span><?= et('account.remove_avatar') ?></span></label>
                 <?php endif; ?>

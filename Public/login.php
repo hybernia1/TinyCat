@@ -56,44 +56,8 @@ layout('layout', [
             <div class="card-header">
                 <h1 class="text-lg m-0 cluster gap-2"><?= icon('login') ?> <?= et('auth.login_title') ?></h1>
             </div>
-            <div class="card-body stack">
-                <p class="text-muted mb-0"><?= et('auth.login_intro') ?></p>
-                <?php if ($error): ?>
-                    <div class="alert alert-danger"><?= e($error) ?></div>
-                <?php endif; ?>
-                <?php if ($message): ?>
-                    <div class="alert alert-success"><?= e($message) ?></div>
-                <?php endif; ?>
-                <form class="stack" method="post" action="<?= e(auth_url_with_next('/login', $next)) ?>" data-ajax-form data-ajax-action="/api/auth/login">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="next" value="<?= e($next) ?>">
-                    <label class="field">
-                        <span class="label"><?= et('auth.login_identifier') ?></span>
-                        <input class="input" name="username" value="<?= e((string) ($old['username'] ?? '')) ?>" autocomplete="username" autocapitalize="none" spellcheck="false" required>
-                    </label>
-                    <label class="field">
-                        <span class="label"><?= et('common.password') ?></span>
-                        <input class="input" type="password" name="password" autocomplete="current-password" maxlength="<?= auth_password_max_length() ?>" required>
-                    </label>
-                    <label class="check-line">
-                        <input type="checkbox" name="remember" value="1"<?= !empty($old['remember']) ? ' checked' : '' ?>>
-                        <span><?= et('auth.remember_me') ?></span>
-                    </label>
-                    <?php if (auth_login_captcha_required()): ?>
-                        <?= captcha_field('login') ?>
-                    <?php endif; ?>
-                    <button class="btn btn-primary" type="submit"><?= icon('login') ?> <span><?= et('common.login') ?></span></button>
-                </form>
-                <div class="cluster gap-2">
-                    <a class="btn btn-ghost btn-sm" href="/recovery"><?= icon('key') ?> <span><?= et('auth.recovery_link') ?></span></a>
-                    <a class="btn btn-ghost btn-sm" href="/privacy"><?= icon('shield') ?> <span><?= et('privacy.title') ?></span></a>
-                </div>
-                <?php if (registration_enabled()): ?>
-                    <div class="cluster gap-2">
-                        <span class="text-muted"><?= et('auth.no_account') ?></span>
-                        <a class="btn btn-secondary btn-sm" href="<?= e(auth_url_with_next('/register', $next)) ?>"><?= icon('user-plus') ?> <span><?= et('auth.register_link') ?></span></a>
-                    </div>
-                <?php endif; ?>
+            <div class="card-body">
+                <?= part('auth/content', ['mode' => 'login', 'next' => $next, 'old' => $old, 'error' => $error, 'message' => $message]) ?>
             </div>
         </article>
     </section>

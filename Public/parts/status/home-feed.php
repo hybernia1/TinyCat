@@ -17,14 +17,6 @@ $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
 ?>
 <h1 class="sr-only"><?= et($feed === 'following' ? 'public.feed_title_following' : 'public.feed_title') ?></h1>
 
-<?php if ($user !== null && user_is_muted($user)): ?>
-    <div class="alert alert-warning">
-        <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime(user_muted_until($user))]) ?></span>
-    </div>
-<?php elseif ($user !== null): ?>
-    <?= part('status/composer', ['action' => $currentFeedUrl, 'user' => $user]) ?>
-<?php endif; ?>
-
 <nav class="feed-switch home-feed-switch" aria-label="<?= et('public.feed_title') ?>">
     <a class="feed-switch-link" href="/" data-ajax data-url="<?= e(public_home_feed_api_url('all', true)) ?>" data-ajax-target=".home-feed-section" data-history="/"<?= $feed === 'all' ? ' aria-current="page"' : '' ?>>
         <?= et('public.feed_all') ?>
@@ -35,9 +27,10 @@ $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
 </nav>
 
 <?php if ($followingLoginRequired): ?>
+    <?php $loginUrl = status_login_url('', $currentFeedUrl); ?>
     <div class="alert alert-info cluster">
         <span><?= et('public.feed_following_login') ?></span>
-        <a class="btn btn-secondary btn-sm" href="<?= e(status_login_url('', $currentFeedUrl)) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
+        <a class="btn btn-secondary btn-sm" href="<?= e($loginUrl) ?>" data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e(auth_modal_url('login', auth_next_from_url($loginUrl))) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
     </div>
 <?php else: ?>
     <?php if ($items === []): ?>

@@ -77,11 +77,7 @@ ob_start();
                 <span class="label"><?= et('account.bio') ?></span>
                 <textarea class="textarea" name="bio" rows="6" maxlength="500"<?= $autofocus('bio') ?>><?= e($bio) ?></textarea>
             </label>
-            <section class="profile-modal-span stack">
-                <div>
-                    <span class="label"><?= et('profile_links.title') ?></span>
-                    <span class="help"><?= et('profile_links.help') ?></span>
-                </div>
+            <section class="profile-modal-span">
                 <?= part('profile/link-fields', ['links' => $profileLinks]) ?>
             </section>
         </div>

@@ -370,6 +370,20 @@ function tc_install_create_tables(): void
     );
 
     run(
+        "CREATE TABLE IF NOT EXISTS content_images (
+            content_id BIGINT UNSIGNED NOT NULL,
+            path VARCHAR(190) NOT NULL,
+            width INT UNSIGNED NOT NULL,
+            height INT UNSIGNED NOT NULL,
+            bytes INT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (content_id),
+            UNIQUE KEY content_images_path_unique (path),
+            CONSTRAINT fk_content_images_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+
+    run(
         "CREATE TABLE IF NOT EXISTS terms (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             name VARCHAR(120) NOT NULL,
@@ -640,6 +654,8 @@ function tc_install_default_settings(array $state): void
         ['performance.minify_css', (bool) config('performance.minify_css', false), 'bool', 'performance'],
         ['performance.minify_js', (bool) config('performance.minify_js', false), 'bool', 'performance'],
         ['performance.minify_html', (bool) config('performance.minify_html', false), 'bool', 'performance'],
+        ['content_images.enabled', (bool) config('content_images.enabled', true), 'bool', 'content_images'],
+        ['content_images.max_upload_kb', (int) config('content_images.max_upload_kb', 100), 'int', 'content_images'],
         ['moderation.blocked_urls', (string) config('moderation.blocked_urls', ''), 'string', 'moderation'],
         ['email.smtp.host', '', 'string', 'email'],
         ['email.smtp.port', 587, 'int', 'email'],

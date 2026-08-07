@@ -43,6 +43,7 @@ ob_start();
     <?php if ($bodyHtml !== ''): ?>
         <div class="status-body"><?= $bodyHtml ?></div>
     <?php endif; ?>
+    <?= part('status/image', ['item' => $item]) ?>
     <?= part('status/links', ['item' => $item]) ?>
     <?= part('status/actions', [
         'item' => $item,

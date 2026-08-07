@@ -52,8 +52,10 @@ function tc_admin_moderation_review_report(int $reportId, string $decision): arr
         api_validation(['decision' => [t('common.request_failed')]]);
     }
 
+    $deletedImagePath = '';
+
     try {
-        return db_transaction(static function () use ($reportId, $decision): array {
+        $result = db_transaction(static function () use ($reportId, $decision, &$deletedImagePath): array {
             $report = one(
                 'SELECT * FROM content_reports WHERE id = ? AND status = ? LIMIT 1 FOR UPDATE',
                 [$reportId, 'open']
@@ -95,7 +97,7 @@ function tc_admin_moderation_review_report(int $reportId, string $decision): arr
             );
 
             if ($decision === 'remove') {
-                status_delete_content($contentId, false, false);
+                $deletedImagePath = status_delete_content($contentId, false, false, false);
             }
 
             return [
@@ -105,6 +107,9 @@ function tc_admin_moderation_review_report(int $reportId, string $decision): arr
                 'status' => $status,
             ];
         });
+        StatusImage::delete($deletedImagePath);
+
+        return $result;
     } catch (DomainException $exception) {
         api_error(
             t('moderation.messages.report_not_found'),
