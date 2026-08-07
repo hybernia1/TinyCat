@@ -354,8 +354,8 @@
         "cookies_analytics": "Google Analytics is enabled on this website. Analytics cookies are stored only after consent; when declined, analytics is not loaded.",
         "cookies_no_analytics": "{site} does not use analytics or advertising cookies on this website.",
         "cookie_consent_title": "Cookies",
-        "cookie_consent_text": "We use necessary cookies for sessions and CSRF protection. Analytics cookies start only after consent; when declined, analytics is not loaded.",
-        "cookie_consent_text_captcha": "We use necessary cookies for sessions, CSRF protection, and security captcha. Analytics cookies start only after consent; when declined, analytics is not loaded.",
+        "cookie_consent_text": "We use necessary cookies. You can allow analytics.",
+        "cookie_consent_text_captcha": "We use necessary cookies. You can allow analytics.",
         "cookie_consent_accept": "Allow analytics",
         "cookie_consent_necessary": "Necessary only"
     },

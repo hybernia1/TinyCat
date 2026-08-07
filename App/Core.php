@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.21';
+    public const string VERSION = '2.0.22';
 
     private static bool $booted = false;
     private static array $config = [];
@@ -633,8 +633,8 @@ final class Core
 
         $analyticsId = trim((string) self::config('analytics.google_measurement_id', ''));
         $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? '');
-        $analyticsEnabled = $analyticsConsent === 'granted'
-            && preg_match('/^G-[A-Z0-9]+$/i', $analyticsId) === 1;
+        $analyticsConfigured = preg_match('/^G-[A-Z0-9]+$/i', $analyticsId) === 1;
+        $analyticsInlineAllowed = $analyticsConfigured && $analyticsConsent === 'granted';
         $captchaProvider = strtolower(trim((string) self::config('security.captcha.provider', '')));
         $captchaEnabled = (bool) self::config('security.captcha.enabled', false)
             && trim((string) self::config('security.captcha.site_key', '')) !== ''
@@ -651,12 +651,12 @@ final class Core
             "form-action 'self'",
             "frame-ancestors 'self'",
             "object-src 'none'",
-            "script-src 'self'" . ($analyticsEnabled ? " https://www.googletagmanager.com 'unsafe-inline'" : '') . $captchaCsp['script'],
+            "script-src 'self'" . ($analyticsConfigured ? ' https://www.googletagmanager.com' : '') . ($analyticsInlineAllowed ? " 'unsafe-inline'" : '') . $captchaCsp['script'],
             "script-src-attr 'none'",
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: https:",
             "font-src 'self' data:",
-            "connect-src 'self'" . ($analyticsEnabled ? ' https://www.google-analytics.com https://region1.google-analytics.com' : '') . $captchaCsp['connect'],
+            "connect-src 'self'" . ($analyticsConfigured ? ' https://www.google-analytics.com https://region1.google-analytics.com' : '') . $captchaCsp['connect'],
             "frame-src https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.youtube.com https://youtube.com https://player.vimeo.com https://www.dailymotion.com https://dailymotion.com" . $captchaCsp['frame'],
             "media-src 'self'",
             "worker-src 'self'",

@@ -3578,6 +3578,7 @@ function public_sidebar(?string $activeTag = null, bool $compute = false): strin
         'tags' => $tags,
         'authors' => $authors,
         'sidebar_url' => $sidebarUrl,
+        'site_footer_html' => site_footer_html(),
     ]);
 }
 

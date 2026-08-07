@@ -354,8 +354,8 @@
         "cookies_analytics": "Google Analytics je na tomto webu zapnuté. Analytické cookies se ukládají až po souhlasu; při odmítnutí se analytika nenačítá.",
         "cookies_no_analytics": "{site} na tomto webu nepoužívá analytické ani reklamní cookies.",
         "cookie_consent_title": "Cookies",
-        "cookie_consent_text": "Používáme nezbytné cookies pro session a CSRF ochranu. Analytické cookies se spustí až po souhlasu; při odmítnutí se analytika nenačítá.",
-        "cookie_consent_text_captcha": "Používáme nezbytné cookies pro session, CSRF ochranu a bezpečnostní captchu. Analytické cookies se spustí až po souhlasu; při odmítnutí se analytika nenačítá.",
+        "cookie_consent_text": "Používáme nezbytné cookies. Analytiku můžete povolit.",
+        "cookie_consent_text_captcha": "Používáme nezbytné cookies. Analytiku můžete povolit.",
         "cookie_consent_accept": "Povolit analytiku",
         "cookie_consent_necessary": "Jen nezbytné"
     },

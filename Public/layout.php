@@ -18,7 +18,6 @@ $appName = site_name();
 $siteLogoUrl = site_logo_url();
 $siteFaviconUrl = site_favicon_url();
 $siteIdentity = SiteIdentity::metadata();
-$siteFooterHtml = site_footer_html();
 $searchQuery = trim((string) ($search_query ?? get('q', '')));
 $title = (string) ($title ?? $appName);
 $current = route_path((string) ($current ?? route_path()));
@@ -391,7 +390,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
         </main>
 
         <?php if ($analyticsConfigured && !in_array($analyticsConsent, ['granted', 'denied'], true)): ?>
-        <aside class="cookie-consent" data-cookie-consent aria-labelledby="cookie-consent-title">
+        <aside class="cookie-consent" data-cookie-consent data-google-measurement-id="<?= e($googleMeasurementId) ?>" aria-labelledby="cookie-consent-title">
             <div class="cookie-consent-copy">
                 <strong id="cookie-consent-title"><?= et('privacy.cookie_consent_title') ?></strong>
                 <span><?= et(site_captcha_enabled() ? 'privacy.cookie_consent_text_captcha' : 'privacy.cookie_consent_text') ?></span>
@@ -403,13 +402,6 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
         </aside>
     <?php endif; ?>
 
-    <?php if ($siteFooterHtml !== ''): ?>
-            <footer class="site-footer">
-                <div class="container site-footer-inner">
-                    <?= $siteFooterHtml ?>
-                </div>
-            </footer>
-        <?php endif; ?>
     <?php endif; ?>
 </body>
 </html>
