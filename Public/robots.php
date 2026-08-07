@@ -10,6 +10,8 @@ header('Content-Type: text/plain; charset=UTF-8');
 header('Cache-Control: public, max-age=3600');
 header('X-Content-Type-Options: nosniff');
 
+echo '# AI and LLM context: ' . absolute_url('/llms.txt') . "\n";
+echo '# Recent public-post sample for LLMs: ' . absolute_url('/llms-full.txt') . "\n";
 echo "User-agent: *\n";
 echo "Disallow: /admin\n";
 echo "Disallow: /api\n";

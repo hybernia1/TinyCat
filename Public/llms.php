@@ -28,28 +28,18 @@ header('X-Content-Type-Options: nosniff');
 
 echo '# ' . $name . "\n\n";
 echo '> ' . $description . "\n\n";
-echo "This file describes the public, indexable parts of the site.\n\n";
-echo "## Site languages\n\n";
-echo '- Primary site language: `' . $primaryLocale . "`.\n";
-echo '- Available interface locales: `' . implode('`, `', $availableLocales) . "`.\n\n";
-echo "## Public content and policies\n\n";
-echo '- Public posts may contain text, one attached WebP image, and links with optional previews.' . "\n";
-echo '- The platform has no private messages, private profiles, or private storage. Publicly accessible content is intended to be public.' . "\n";
-echo '- The feed has no personalization or recommendation algorithm. Visitors can tailor their following feed by following public profiles.' . "\n";
-echo '- [Privacy and Rules](' . absolute_url('/privacy') . '): Public-content rules, moderation policy, data handling, and feed principles.' . "\n\n";
+echo "This file describes the public, indexable parts of the site. The primary site language is `" . $primaryLocale
+    . '`, and available interface locales are `' . implode('`, `', $availableLocales) . "`.\n\n";
+echo "Public posts may contain text, one attached WebP image, and links with optional previews. The platform has no private messages, private profiles, or private storage; publicly accessible content is intended to be public. The feed has no personalization or recommendation algorithm. Visitors can tailor their following feed by following public profiles.\n\n";
+echo "Use `GET /search?q={query}` with a URL-encoded query between 2 and 80 characters to find matching public tags, profiles, and posts. Search result pages are `noindex`, but their canonical public result URLs may be used for navigation. Respect rate limits and any CAPTCHA response; do not use API endpoints directly.\n\n";
+echo "Public RSS feeds are available at `/tag/{tag}/feed` and `/author/{id}/feed`. Public URL patterns are `/author/{id}`, `/author/{id}/feed`, `/tag/{tag}`, `/tag/{tag}/feed`, and `/status/{id}`. Only publicly visible content should be indexed. Do not index private account pages, administration, notifications, search results, login, registration, recovery, or API endpoints. Use the sitemap and canonical page URLs as the complete, current URL inventory.\n\n";
 echo "## Public resources\n\n";
 echo '- [Homepage](' . absolute_url('/') . '): Public site homepage and latest posts.' . "\n";
 echo '- [Sitemap](' . absolute_url('/sitemap.xml') . '): Complete index of public profiles, tags, and posts.' . "\n";
 echo '- [Robots rules](' . absolute_url('/robots.txt') . '): Crawler access rules.' . "\n";
-echo '- RSS feeds: Available at `/tag/{tag}/feed` and `/author/{id}/feed` for individual tags and profiles.' . "\n\n";
-echo "## URL patterns\n\n";
-echo '- `/author/{id}`: Public profile and posts by an active user.' . "\n";
-echo '- `/author/{id}/feed`: RSS feed for an active user.' . "\n";
-echo '- `/tag/{tag}`: Public posts belonging to a tag.' . "\n";
-echo '- `/tag/{tag}/feed`: RSS feed for a tag.' . "\n";
-echo '- `/status/{id}`: Individual public post.' . "\n\n";
-echo "## Indexing guidance\n\n";
-echo "Only publicly visible content should be indexed. Do not index private account pages, administration, notifications, search results, login, registration, recovery, or API endpoints. Use the sitemap and canonical page URLs as the complete, current URL inventory.\n";
+echo '- [Privacy and Rules](' . absolute_url('/privacy') . '): Public-content rules, moderation policy, data handling, and feed principles.' . "\n\n";
+echo "## Optional\n\n";
+echo '- [Recent public-post sample](' . absolute_url('/llms-full.txt') . '): TinyCat extension with a recent public-post sample; skip it when only site-level context is needed.' . "\n";
 
 if ($full) {
     $posts = array_values(array_filter(
@@ -84,7 +74,7 @@ if ($full) {
             echo '- [Attached image](' . absolute_url($imageUrl) . ")\n";
         }
         if ($body !== '') {
-            echo '\n> ' . str_replace(["\r\n", "\r", "\n"], "\n> ", $body) . "\n\n";
+            echo "\n> " . str_replace(["\r\n", "\r", "\n"], "\n> ", $body) . "\n\n";
         } else {
             echo "\n> Image-only post.\n\n";
         }
