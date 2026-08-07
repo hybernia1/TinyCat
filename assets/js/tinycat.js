@@ -640,6 +640,35 @@
     });
   }
 
+  function navigateAfterDiscard(url) {
+    // The user has already explicitly chosen to discard this draft in our
+    // modal. Let this one intentional navigation pass the native beforeunload
+    // guard without asking the same question again.
+    TinyCat.__discardingDirtyForms = true;
+    window.location.assign(url);
+
+    // A failed/cancelled navigation must not disable the protection for a
+    // later, unrelated attempt to leave the page.
+    window.setTimeout(function () {
+      TinyCat.__discardingDirtyForms = false;
+    }, 1000);
+  }
+
+  function navigateWithDirtyCheck(url) {
+    var forms = dirtyForms(document);
+
+    if (forms.length === 0) {
+      window.location.assign(url);
+      return;
+    }
+
+    confirmDirtyForms(forms).then(function (confirmed) {
+      if (confirmed) {
+        navigateAfterDiscard(url);
+      }
+    });
+  }
+
   function confirmDirtyNavigation(event) {
     var link = event.target.closest && event.target.closest("a[href]");
     var forms;
@@ -674,20 +703,22 @@
     event.preventDefault();
     confirmDirtyForms(forms).then(function (confirmed) {
       if (confirmed) {
-        // The user has already explicitly chosen to discard this draft in our
-        // modal. Let this one intentional navigation pass the native
-        // beforeunload guard without asking the same question again.
-        TinyCat.__discardingDirtyForms = true;
-        window.location.assign(url.href);
-
-        // A failed/cancelled navigation must not disable the protection for a
-        // later, unrelated attempt to leave the page.
-        window.setTimeout(function () {
-          TinyCat.__discardingDirtyForms = false;
-        }, 1000);
+        navigateAfterDiscard(url.href);
       }
     });
   }
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "F1" || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (window.location.pathname !== "/privacy") {
+      navigateWithDirtyCheck("/privacy");
+    }
+  }, true);
 
   async function confirmModalClose(modal) {
     var forms = dirtyForms(modal);
