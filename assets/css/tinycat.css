@@ -960,6 +960,13 @@ a:hover {
   accent-color: var(--primary);
 }
 
+.login-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .navbar {
   position: sticky;
   z-index: 45;
@@ -2138,7 +2145,6 @@ a:hover {
 }
 
 .status-reactions {
-  border-top: 1px solid var(--border);
   padding-block-start: 7px;
 }
 
@@ -3833,7 +3839,6 @@ body.admin-nav-open .admin-backdrop {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
 
@@ -3842,7 +3847,6 @@ body.admin-nav-open .admin-backdrop {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 6px;
-  border-top: 1px solid var(--border);
 }
 
 .modal-confirm-panel {
@@ -4395,9 +4399,10 @@ body.admin-nav-open .admin-backdrop {
     gap: 24px;
   }
 
-  .profile-sidebar-stack {
+  .profile-sidebar-stack,
+  .public-sidebar {
     position: sticky;
-    top: 76px;
+    top: var(--sidebar-sticky-top, 76px);
   }
 
   .profile-main {
@@ -4408,11 +4413,6 @@ body.admin-nav-open .admin-backdrop {
     grid-template-columns: minmax(0, 820px) minmax(230px, 300px);
     gap: 24px;
     justify-content: center;
-  }
-
-  .public-sidebar {
-    position: sticky;
-    top: 76px;
   }
 
   .user-modal-panel.modal-panel-full {

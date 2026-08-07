@@ -99,6 +99,18 @@ function site_name(): string
     return (string) config('site.name', 'TinyCat');
 }
 
+function site_google_analytics_configured(): bool
+{
+    $measurementId = trim((string) config('analytics.google_measurement_id', ''));
+
+    return preg_match('/^G-[A-Z0-9]+$/i', $measurementId) === 1;
+}
+
+function site_captcha_enabled(): bool
+{
+    return (bool) config('security.captcha.enabled', false);
+}
+
 function site_home_title(): string
 {
     $title = trim((string) config('site.home_title', ''));
@@ -2266,12 +2278,7 @@ function author_following_profiles(int $authorId, int $limit = 12, string $curso
                 u.username,
                 u.username AS name,
                 u.avatar_config,
-                uf.created_at AS followed_at,
-                (
-                    SELECT COUNT(*)
-                    FROM content c
-                    WHERE c.author_id = u.id
-                ) AS posts_count
+                uf.created_at AS followed_at
             FROM user_followers uf
             INNER JOIN users u ON u.id = uf.user_id
             WHERE uf.follower_id = ?
@@ -2308,7 +2315,6 @@ function author_following_profile_payload(array $profile): array
         'name' => user_display_name($profile),
         'url' => author_url($id),
         'avatar_url' => user_avatar_url($profile),
-        'posts_count' => (int) ($profile['posts_count'] ?? 0),
         'followed_at' => (string) ($profile['followed_at'] ?? ''),
     ];
 }
@@ -3408,23 +3414,11 @@ function status_preload_feed(array $items): void
     }
 
     author_mention_users_by_ids(array_values($mentionIds));
-    status_preload_latest_parent_comments($ids);
 
     $userId = (int) (auth()['id'] ?? 0);
 
     if ($userId > 0) {
         status_preload_user_likes($ids, $userId);
-        $commentIds = [];
-
-        foreach ($ids as $contentId) {
-            $commentId = (int) (status_latest_parent_comment($contentId)['id'] ?? 0);
-
-            if ($commentId > 0) {
-                $commentIds[] = $commentId;
-            }
-        }
-
-        status_preload_comment_user_likes($commentIds, $userId);
     }
 
     status_links_cache($ids);
@@ -3541,19 +3535,19 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
 function public_sidebar(?string $activeTag = null, bool $compute = false): string
 {
     $activeTag = status_tag_normalize((string) $activeTag);
+    $sidebarUrl = '/api/sidebar' . ($activeTag !== '' ? '?tag=' . rawurlencode($activeTag) : '');
+
+    if (!$compute) {
+        return part('sidebar-slot', ['sidebar_url' => $sidebarUrl]);
+    }
+
     $tags = public_trending_tags(8, 7, $compute);
     $authors = public_top_authors(5, 7, $compute);
-    $needsRefresh = !$compute && (
-        !Cache::fresh('public_trending_tags_8_7', 3600)
-        || !Cache::fresh('public_top_authors_ranked_5_7', 3600)
-    );
-    $sidebarUrl = '/api/sidebar' . ($activeTag !== '' ? '?tag=' . rawurlencode($activeTag) : '');
 
     return part('sidebar', [
         'active_tag' => $activeTag,
         'tags' => $tags,
         'authors' => $authors,
-        'needs_refresh' => $needsRefresh,
         'sidebar_url' => $sidebarUrl,
     ]);
 }
@@ -4316,13 +4310,16 @@ function status_edit_lock(int $contentId, array $actor, string $reason = ''): vo
 
 function status_can_edit(?array $item, ?array $user): bool
 {
-    return $item !== null
-        && $user !== null
-        && !status_edit_locked($item)
-        && (
-            (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0)
-            || (string) ($user['role'] ?? '') === 'admin'
-        );
+    if ($item === null || $user === null) {
+        return false;
+    }
+
+    if ((string) ($user['role'] ?? '') === 'admin') {
+        return true;
+    }
+
+    return !status_edit_locked($item)
+        && (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0);
 }
 
 function status_can_delete(?array $item, ?array $user): bool
@@ -4503,89 +4500,6 @@ function status_comment_count(int $contentId): int
     return db_select('SELECT id FROM content_comments')
         ->where('content_id = ?', $contentId)
         ->count();
-}
-
-function &status_latest_parent_comment_cache(): array
-{
-    static $cache = [];
-
-    return $cache;
-}
-
-function status_latest_parent_comment(int $contentId): ?array
-{
-    if ($contentId < 1) {
-        return null;
-    }
-
-    $cache =& status_latest_parent_comment_cache();
-
-    if (!array_key_exists($contentId, $cache)) {
-        $comment = status_comments_query()
-            ->where('cc.content_id = ?', $contentId)
-            ->where('cc.parent_id IS NULL')
-            ->order('cc.created_at DESC, cc.id DESC')
-            ->limit(1)
-            ->one();
-
-        if ($comment !== null) {
-            $comment['replies'] = [];
-        }
-
-        $cache[$contentId] = $comment;
-    }
-
-    return $cache[$contentId];
-}
-
-function status_preload_latest_parent_comments(array $contentIds): void
-{
-    $contentIds = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
-
-    if ($contentIds === []) {
-        return;
-    }
-
-    $cache =& status_latest_parent_comment_cache();
-    $missing = [];
-
-    foreach ($contentIds as $contentId) {
-        if (!array_key_exists($contentId, $cache)) {
-            $cache[$contentId] = null;
-            $missing[] = $contentId;
-        }
-    }
-
-    if ($missing === []) {
-        return;
-    }
-
-    foreach (status_comments_query()
-        ->whereIn('cc.content_id', $missing)
-        ->where('cc.parent_id IS NULL')
-        ->where(
-            'NOT EXISTS (
-                    SELECT 1
-                    FROM content_comments newer
-                    WHERE newer.content_id = cc.content_id
-                        AND newer.parent_id IS NULL
-                        AND (
-                            newer.created_at > cc.created_at
-                            OR (newer.created_at = cc.created_at AND newer.id > cc.id)
-                        )
-                )'
-        )
-        ->order('cc.content_id ASC, cc.created_at DESC, cc.id DESC')
-        ->all() as $comment) {
-        $contentId = (int) ($comment['content_id'] ?? 0);
-
-        if ($contentId < 1 || $cache[$contentId] !== null) {
-            continue;
-        }
-
-        $comment['replies'] = [];
-        $cache[$contentId] = $comment;
-    }
 }
 
 function status_comment_can_delete(?array $comment, ?array $user): bool
@@ -5771,7 +5685,6 @@ function status_json_summary(int $contentId, array $user): array
         'id' => $contentId,
         'likes_count' => status_like_count($contentId),
         'comments_count' => $commentsCount,
-        'comments_label' => t('account.status_view_comments', ['count' => $commentsCount]),
         'liked' => $liked,
     ];
 }
@@ -6438,7 +6351,7 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
 {
     $item = status_find($contentId);
 
-    if (status_edit_locked($item)) {
+    if (status_edit_locked($item) && (string) ($user['role'] ?? '') !== 'admin') {
         api_error(t('account.messages.status_edit_locked'), 423, 'status_edit_locked');
     }
 

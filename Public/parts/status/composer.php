@@ -17,7 +17,7 @@ $user = is_array($user ?? null) ? $user : [];
                 <button class="btn btn-secondary btn-sm" type="button" data-modal-open="<?= e(author_profile_edit_modal_id((int) ($user['id'] ?? 0))) ?>" data-modal-url="<?= e(author_profile_edit_modal_url((int) ($user['id'] ?? 0), 'email')) ?>"><?= icon('edit') ?> <span><?= et('account.profile_settings') ?></span></button>
             </div>
         <?php endif; ?>
-        <form method="post" action="<?= e(status_api_url('create')) ?>" enctype="multipart/form-data" data-status-form data-status-scope="feed">
+        <form method="post" action="<?= e(status_api_url('create')) ?>" enctype="multipart/form-data" data-status-form data-status-scope="feed" data-confirm-unsaved="true" data-confirm-unsaved-title="<?= et('common.unsaved_title') ?>" data-confirm-unsaved-message="<?= et('common.unsaved_message') ?>" data-confirm-unsaved-ok="<?= et('common.leave') ?>" data-confirm-unsaved-cancel="<?= et('common.stay') ?>">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="create">
             <div class="status-compose-row">

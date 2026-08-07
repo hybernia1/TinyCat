@@ -47,6 +47,5 @@ if ($contentId < 1) {
         <?= part('status/image', ['item' => $item, 'open_modal' => true]) ?>
         <?= part('status/links', ['item' => $item]) ?>
         <?= part('status/actions', ['item' => $item, 'user' => $user, 'action' => $action]) ?>
-        <?= part('status/comments-preview', ['item' => $item, 'user' => $user, 'action' => $action]) ?>
     </div>
 </article>

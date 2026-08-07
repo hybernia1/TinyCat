@@ -75,14 +75,16 @@ layout('layout', [
                         <span class="label"><?= et('common.password') ?></span>
                         <input class="input" type="password" name="password" autocomplete="current-password" maxlength="<?= auth_password_max_length() ?>" required>
                     </label>
-                    <label class="check-line">
-                        <input type="checkbox" name="remember" value="1"<?= !empty($old['remember']) ? ' checked' : '' ?>>
-                        <span><?= et('auth.remember_me') ?></span>
-                    </label>
                     <?php if (auth_login_captcha_required()): ?>
                         <?= captcha_field('login') ?>
                     <?php endif; ?>
-                    <button class="btn btn-primary" type="submit"><?= icon('login') ?> <span><?= et('common.login') ?></span></button>
+                    <div class="login-submit-row">
+                        <label class="check-line">
+                            <input type="checkbox" name="remember" value="1"<?= !empty($old['remember']) ? ' checked' : '' ?>>
+                            <span><?= et('auth.remember_me') ?></span>
+                        </label>
+                        <button class="btn btn-primary" type="submit"><?= icon('login') ?> <span><?= et('common.login') ?></span></button>
+                    </div>
                 </form>
                 <div class="cluster gap-2">
                     <a class="btn btn-ghost btn-sm" href="/recovery"><?= icon('key') ?> <span><?= et('auth.recovery_link') ?></span></a>

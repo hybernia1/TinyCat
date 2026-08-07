@@ -10,7 +10,7 @@ layout('layout', [
     'title' => t('privacy.title'),
     'current' => '/privacy',
     'meta' => [
-        'description' => t('privacy.meta'),
+        'description' => t('privacy.meta', ['site' => site_name()]),
         'url' => '/privacy',
         'image' => site_meta_image_url(),
         'type' => 'article',
@@ -23,7 +23,7 @@ layout('layout', [
                 <h1 class="text-xl m-0 cluster gap-2"><?= icon('shield') ?> <?= et('privacy.title') ?></h1>
             </div>
             <div class="card-body stack">
-                <p class="text-muted mb-0"><?= et('privacy.intro') ?></p>
+                <p class="text-muted mb-0"><?= et('privacy.intro', ['site' => site_name()]) ?></p>
             </div>
         </article>
 
@@ -31,8 +31,15 @@ layout('layout', [
             <?= part('privacy/card', ['title_key' => 'privacy.public_title', 'icon_name' => 'globe', 'paragraph_keys' => [
                 'privacy.public_open',
                 'privacy.public_content',
+                'privacy.public_images',
                 'privacy.public_no_private',
                 'privacy.public_no_personal',
+            ]]) ?>
+
+            <?= part('privacy/card', ['title_key' => 'privacy.feed_title', 'icon_name' => 'rss', 'paragraph_keys' => [
+                'privacy.feed_no_algorithm',
+                'privacy.feed_following',
+                'privacy.feed_no_shadow_bans',
             ]]) ?>
 
             <?= part('privacy/card', ['title_key' => 'privacy.data_title', 'icon_name' => 'database', 'paragraph_keys' => [
@@ -53,7 +60,6 @@ layout('layout', [
             <?= part('privacy/card', ['title_key' => 'privacy.reporting_title', 'icon_name' => 'flag', 'paragraph_keys' => [
                 'privacy.reporting_how',
                 'privacy.reporting_duplicate',
-                'privacy.reporting_result',
                 'privacy.reporting_notification',
             ]]) ?>
 
@@ -105,8 +111,14 @@ layout('layout', [
             </div>
             <div class="card-body stack">
                 <p class="mb-0"><?= et('privacy.cookies_session') ?></p>
+                <?php if (site_captcha_enabled()): ?>
+                    <p class="mb-0"><?= et('privacy.cookies_captcha') ?></p>
+                <?php endif; ?>
                 <p class="mb-0"><?= et('privacy.cookies_remember') ?></p>
-                <p class="mb-0"><?= et('privacy.cookies_no_ads') ?></p>
+                <p class="mb-0"><?= et(
+                    site_google_analytics_configured() ? 'privacy.cookies_analytics' : 'privacy.cookies_no_analytics',
+                    ['site' => site_name()],
+                ) ?></p>
             </div>
         </article>
     </section>

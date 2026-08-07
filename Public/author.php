@@ -218,13 +218,11 @@ layout('layout', [
                     <div class="alert alert-info" data-status-empty><?= et('public.author_feed_empty') ?></div>
                 <?php endif; ?>
                 <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
-                    <?php foreach ($statusItems as $item): ?>
-                        <?= part('status/card', [
-                            'item' => $item,
-                            'action' => author_url($authorId),
-                            'user' => auth(),
-                        ]) ?>
-                    <?php endforeach; ?>
+                    <?= part('status/feed', [
+                        'items' => $statusItems,
+                        'action' => author_url($authorId),
+                        'user' => $authUser,
+                    ]) ?>
                 </div>
                 <?= part('status/feed-more', [
                     'feed_id' => $feedId,

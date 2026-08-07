@@ -76,9 +76,11 @@ layout('layout', [
                 <div class="alert alert-info"><?= et('public.tag_feed_empty') ?></div>
             <?php else: ?>
                 <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
-                    <?php foreach ($statusItems as $item): ?>
-                        <?= part('status/card', ['item' => $item, 'action' => $current, 'user' => auth()]) ?>
-                    <?php endforeach; ?>
+                    <?= part('status/feed', [
+                        'items' => $statusItems,
+                        'action' => $current,
+                        'user' => auth(),
+                    ]) ?>
                 </div>
                 <?= part('status/feed-more', [
                     'feed_id' => $feedId,

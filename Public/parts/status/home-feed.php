@@ -17,14 +17,6 @@ $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
 ?>
 <h1 class="sr-only"><?= et($feed === 'following' ? 'public.feed_title_following' : 'public.feed_title') ?></h1>
 
-<?php if ($user !== null && user_is_muted($user)): ?>
-    <div class="alert alert-warning">
-        <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime(user_muted_until($user))]) ?></span>
-    </div>
-<?php elseif ($user !== null): ?>
-    <?= part('status/composer', ['action' => $currentFeedUrl, 'user' => $user]) ?>
-<?php endif; ?>
-
 <nav class="feed-switch home-feed-switch" aria-label="<?= et('public.feed_title') ?>">
     <a class="feed-switch-link" href="/" data-ajax data-url="<?= e(public_home_feed_api_url('all', true)) ?>" data-ajax-target=".home-feed-section" data-history="/"<?= $feed === 'all' ? ' aria-current="page"' : '' ?>>
         <?= et('public.feed_all') ?>

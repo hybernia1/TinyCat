@@ -10,7 +10,7 @@ $item = is_array($item ?? null) ? $item : [];
 $user = is_array($user ?? null) ? $user : null;
 $action = (string) ($action ?? '/');
 $contentId = (int) ($item['id'] ?? 0);
-$isLocked = status_edit_locked($item);
+$isLocked = status_edit_locked($item) && (string) ($user['role'] ?? '') !== 'admin';
 $canEdit = status_can_edit($item, $user);
 $canDelete = status_can_delete($item, $user);
 $canReport = $user !== null

@@ -21,8 +21,17 @@ layout('layout', [
 ], static function () use ($authUser, $feed): void {
     ?>
     <section class="public-layout">
-        <div class="home-feed-section home-feed-app stack">
-            <?= part('status/home-feed', public_home_feed_data($feed, $authUser)) ?>
+        <div class="home-feed-app stack">
+            <?php if ($authUser !== null && user_is_muted($authUser)): ?>
+                <div class="alert alert-warning">
+                    <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime(user_muted_until($authUser))]) ?></span>
+                </div>
+            <?php elseif ($authUser !== null): ?>
+                <?= part('status/composer', ['action' => $feed === 'following' ? '/?feed=following' : '/', 'user' => $authUser]) ?>
+            <?php endif; ?>
+            <div class="home-feed-section stack">
+                <?= part('status/home-feed', public_home_feed_data($feed, $authUser)) ?>
+            </div>
         </div>
         <?= public_sidebar() ?>
     </section>

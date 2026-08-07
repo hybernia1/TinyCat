@@ -187,7 +187,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
     <?php endforeach; ?>
     <?php $googleMeasurementId = trim((string) config('analytics.google_measurement_id', '')); ?>
     <?php $analyticsConsent = (string) ($_COOKIE['tinycat_analytics_consent'] ?? ''); ?>
-    <?php $analyticsConfigured = preg_match('/^G-[A-Z0-9]+$/i', $googleMeasurementId) === 1; ?>
+    <?php $analyticsConfigured = site_google_analytics_configured(); ?>
     <?php if ($analyticsConfigured && $analyticsConsent === 'granted'): ?>
         <script async src="https://www.googletagmanager.com/gtag/js?id=<?= e($googleMeasurementId) ?>"></script>
         <script>
@@ -399,7 +399,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
         <aside class="cookie-consent" data-cookie-consent aria-labelledby="cookie-consent-title">
             <div class="cookie-consent-copy">
                 <strong id="cookie-consent-title"><?= et('privacy.cookie_consent_title') ?></strong>
-                <span><?= et('privacy.cookie_consent_text') ?></span>
+                <span><?= et(site_captcha_enabled() ? 'privacy.cookie_consent_text_captcha' : 'privacy.cookie_consent_text') ?></span>
             </div>
             <div class="cookie-consent-actions">
                 <button class="btn btn-primary btn-sm" type="button" data-cookie-consent-choice="granted"><?= et('privacy.cookie_consent_accept') ?></button>

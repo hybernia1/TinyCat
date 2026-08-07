@@ -584,23 +584,79 @@
     return qsa('form[data-confirm-unsaved="true"][data-dirty="true"]', modal);
   }
 
+  function confirmDirtyForms(forms) {
+    var form = forms[0];
+
+    if (!form) {
+      return Promise.resolve(true);
+    }
+
+    return TinyCat.confirm({
+      title: form.dataset.confirmUnsavedTitle || "Unsaved changes",
+      message: form.dataset.confirmUnsavedMessage || "Discard unsaved changes?",
+      confirmLabel: form.dataset.confirmUnsavedOk || "Leave",
+      cancelLabel: form.dataset.confirmUnsavedCancel || "Stay",
+      variant: "danger"
+    });
+  }
+
+  function confirmDirtyNavigation(event) {
+    var link = event.target.closest && event.target.closest("a[href]");
+    var forms;
+    var url;
+
+    if (event.defaultPrevented || !link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+
+    if (link.target || link.hasAttribute("download") || link.hasAttribute("data-ajax") || link.hasAttribute("data-modal-open")) {
+      return;
+    }
+
+    try {
+      url = new URL(link.href, window.location.href);
+    } catch (_error) {
+      return;
+    }
+
+    if (url.origin === window.location.origin
+      && url.pathname === window.location.pathname
+      && url.search === window.location.search
+      && url.hash !== "") {
+      return;
+    }
+
+    forms = dirtyForms(document);
+    if (forms.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    confirmDirtyForms(forms).then(function (confirmed) {
+      if (confirmed) {
+        // The user has already explicitly chosen to discard this draft in our
+        // modal. Let this one intentional navigation pass the native
+        // beforeunload guard without asking the same question again.
+        TinyCat.__discardingDirtyForms = true;
+        window.location.assign(url.href);
+
+        // A failed/cancelled navigation must not disable the protection for a
+        // later, unrelated attempt to leave the page.
+        window.setTimeout(function () {
+          TinyCat.__discardingDirtyForms = false;
+        }, 1000);
+      }
+    });
+  }
+
   async function confirmModalClose(modal) {
     var forms = dirtyForms(modal);
-    var form;
 
     if (forms.length === 0) {
       return true;
     }
 
-    form = forms[0];
-
-    return TinyCat.confirm({
-      title: form.dataset.confirmUnsavedTitle || "Unsaved changes",
-      message: form.dataset.confirmUnsavedMessage || "Discard unsaved changes?",
-      confirmLabel: form.dataset.confirmUnsavedOk || "Discard",
-      cancelLabel: form.dataset.confirmUnsavedCancel || "Stay",
-      variant: "danger"
-    });
+    return confirmDirtyForms(forms);
   }
 
   var captchaProviderLoads = {};
@@ -811,6 +867,10 @@
 
     if (TinyCat.initGlobalSearch) {
       TinyCat.initGlobalSearch(root || document);
+    }
+
+    if (TinyCat.initStickySidebars) {
+      TinyCat.initStickySidebars(root || document);
     }
 
     if (TinyCat.initPublicSidebar) {
@@ -2171,6 +2231,11 @@
 
     document.addEventListener("click", async function (event) {
       var link = event.target.closest && event.target.closest("[data-ajax]");
+      var url;
+      var target;
+      var method;
+      var headers;
+      var nextHistory;
 
       if (!link) {
         return;
@@ -2182,11 +2247,15 @@
         return;
       }
 
-      var url = link.dataset.ajaxCurrent === "true" ? currentAjaxUrl(link) : (link.dataset.url || link.getAttribute("href"));
-      var target = link.dataset.ajaxTarget ? qs(link.dataset.ajaxTarget) : null;
-      var method = (link.dataset.method || "GET").toUpperCase();
-      var headers = {};
-      var nextHistory = historyUrl(link, url);
+      url = link.dataset.ajaxCurrent === "true" ? currentAjaxUrl(link) : (link.dataset.url || link.getAttribute("href"));
+      target = link.dataset.ajaxTarget ? qs(link.dataset.ajaxTarget) : null;
+      method = (link.dataset.method || "GET").toUpperCase();
+      headers = {};
+      nextHistory = historyUrl(link, url);
+
+      if (target && !await confirmDirtyForms(dirtyForms(target))) {
+        return;
+      }
 
       if (target) {
         headers["X-TinyCat-View"] = "partial";
@@ -3349,8 +3418,142 @@
     });
   };
 
+  function stickySidebarNodes(scope) {
+    var root = scope || document;
+    var selector = ".public-sidebar, .profile-sidebar-stack";
+    var nodes = qsa(selector, root);
+
+    if (root.nodeType === 1 && root.matches(selector)) {
+      nodes.unshift(root);
+    }
+
+    return nodes;
+  }
+
+  function refreshStickySidebars(direction) {
+    var desktop = window.matchMedia && window.matchMedia("(min-width: 900px)").matches;
+    var topOffset = 76;
+    var bottomOffset = 16;
+
+    if (direction === "up" || direction === "down") {
+      TinyCat.__stickySidebarDirection = direction;
+    }
+
+    qsa(".public-sidebar, .profile-sidebar-stack").forEach(function (sidebar) {
+      var sidebarHeight;
+      var stickyOffset;
+
+      if (!desktop) {
+        sidebar.style.removeProperty("--sidebar-sticky-top");
+        return;
+      }
+
+      sidebarHeight = Math.ceil(sidebar.getBoundingClientRect().height);
+      stickyOffset = TinyCat.__stickySidebarDirection === "up"
+        ? topOffset
+        : Math.min(topOffset, window.innerHeight - sidebarHeight - bottomOffset);
+      sidebar.style.setProperty("--sidebar-sticky-top", stickyOffset + "px");
+    });
+  }
+
+  TinyCat.initStickySidebars = function (scope) {
+    var nodes = stickySidebarNodes(scope);
+
+    if (nodes.length === 0) {
+      return;
+    }
+
+    if (TinyCat.__stickySidebarObserver == null && window.ResizeObserver) {
+      TinyCat.__stickySidebarObserver = new ResizeObserver(function () {
+        refreshStickySidebars();
+      });
+    }
+
+    nodes.forEach(function (sidebar) {
+      if (sidebar.dataset.stickySidebarReady === "true") {
+        return;
+      }
+
+      sidebar.dataset.stickySidebarReady = "true";
+
+      if (TinyCat.__stickySidebarObserver) {
+        TinyCat.__stickySidebarObserver.observe(sidebar);
+      }
+    });
+
+    if (TinyCat.__stickySidebarEventsBound !== true) {
+      TinyCat.__stickySidebarEventsBound = true;
+      TinyCat.__stickySidebarDirection = "down";
+      TinyCat.__stickySidebarLastScrollY = window.scrollY || 0;
+      window.addEventListener("resize", refreshStickySidebars, { passive: true });
+      window.addEventListener("scroll", function () {
+        var nextScrollY = window.scrollY || 0;
+
+        if (nextScrollY === TinyCat.__stickySidebarLastScrollY) {
+          return;
+        }
+
+        refreshStickySidebars(nextScrollY < TinyCat.__stickySidebarLastScrollY ? "up" : "down");
+        TinyCat.__stickySidebarLastScrollY = nextScrollY;
+      }, { passive: true });
+
+      if (window.matchMedia) {
+        window.matchMedia("(min-width: 900px)").addEventListener("change", refreshStickySidebars);
+      }
+    }
+
+    refreshStickySidebars();
+  };
+
   TinyCat.initPublicSidebar = function (scope) {
-    qsa("[data-public-sidebar][data-sidebar-url]", scope || document).forEach(function (sidebar) {
+    var desktopMedia = window.matchMedia ? window.matchMedia("(min-width: 900px)") : null;
+
+    function publicSidebarSlot(url) {
+      var slot = document.createElement("template");
+
+      slot.dataset.publicSidebarSlot = "";
+      slot.dataset.sidebarUrl = url;
+
+      return slot;
+    }
+
+    function unloadPublicSidebars() {
+      qsa("[data-public-sidebar-url]", document).forEach(function (sidebar) {
+        if (TinyCat.__stickySidebarObserver) {
+          TinyCat.__stickySidebarObserver.unobserve(sidebar);
+        }
+
+        sidebar.replaceWith(publicSidebarSlot(sidebar.dataset.publicSidebarUrl || ""));
+      });
+    }
+
+    if (TinyCat.__publicSidebarViewportBound !== true && desktopMedia) {
+      TinyCat.__publicSidebarViewportBound = true;
+
+      if (typeof desktopMedia.addEventListener === "function") {
+        desktopMedia.addEventListener("change", function (event) {
+          if (event.matches) {
+            TinyCat.initPublicSidebar();
+          } else {
+            unloadPublicSidebars();
+          }
+        });
+      } else if (typeof desktopMedia.addListener === "function") {
+        desktopMedia.addListener(function (event) {
+          if (event.matches) {
+            TinyCat.initPublicSidebar();
+          } else {
+            unloadPublicSidebars();
+          }
+        });
+      }
+    }
+
+    if (desktopMedia && !desktopMedia.matches) {
+      return;
+    }
+
+    qsa("[data-public-sidebar-slot][data-sidebar-url]", scope || document).forEach(function (sidebar) {
       var url = sidebar.dataset.sidebarUrl || "";
 
       if (!url || sidebar.dataset.sidebarLoading === "true") {
@@ -3374,6 +3577,10 @@
           next = template.content.firstElementChild;
 
           if (!next) {
+            return;
+          }
+
+          if (desktopMedia && !desktopMedia.matches) {
             return;
           }
 
@@ -3419,6 +3626,21 @@
 
     document.addEventListener("tinycat:editor-sync", function (event) {
       updateDirtyForm(event.target.closest && event.target.closest('form[data-confirm-unsaved="true"]'));
+    });
+
+    document.addEventListener("click", confirmDirtyNavigation);
+
+    window.addEventListener("beforeunload", function (event) {
+      if (TinyCat.__discardingDirtyForms === true) {
+        return;
+      }
+
+      if (dirtyForms(document).length === 0) {
+        return;
+      }
+
+      event.preventDefault();
+      event.returnValue = "";
     });
   };
 
@@ -4204,11 +4426,6 @@
       }
     });
 
-    if (summary.comments_label) {
-      qsa(dataSelector("data-status-id", id) + " [data-status-comments-label]").forEach(function (node) {
-        node.textContent = String(summary.comments_label);
-      });
-    }
   }
 
   function updateCommentLike(payload) {
@@ -5057,6 +5274,7 @@
     qsa("[data-status-link-image]", document).forEach(initStatusLinkImageRoot);
     TinyCat.initStatusFeedLazy();
     TinyCat.initGlobalSearch();
+    TinyCat.initStickySidebars();
     TinyCat.initPublicSidebar();
     TinyCat.initCaptcha();
     TinyCat.initDirtyForms();
