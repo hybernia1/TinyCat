@@ -18,6 +18,7 @@ $commentsCount = array_key_exists('comments_count', $item)
 $userId = (int) ($user['id'] ?? 0);
 $liked = $userId > 0 && status_user_liked($contentId, $userId);
 $loginUrl = status_login_url($contentId > 0 ? '#' . status_anchor($contentId) : '', $action);
+$loginModalUrl = auth_modal_url('login', auth_next_from_url($loginUrl));
 $statusContext = status_accessible_context($item);
 $likeLabel = t('account.status_like_for', ['context' => $statusContext]);
 $unlikeLabel = t('account.status_unlike_for', ['context' => $statusContext]);
@@ -38,7 +39,7 @@ if ($contentId < 1) {
             </button>
         </form>
     <?php else: ?>
-        <a class="btn btn-ghost btn-sm status-reaction" href="<?= e($loginUrl) ?>" title="<?= e($likeLabel) ?>" aria-label="<?= e($likeLabel) ?>">
+        <a class="btn btn-ghost btn-sm status-reaction" href="<?= e($loginUrl) ?>" data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e($loginModalUrl) ?>" title="<?= e($likeLabel) ?>" aria-label="<?= e($likeLabel) ?>">
             <?= icon('thumb-up', 'icon status-like-icon status-like-icon-outline') ?> <span data-status-count="likes" aria-hidden="true"><?= e($likesCount) ?></span>
         </a>
     <?php endif; ?>

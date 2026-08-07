@@ -3801,6 +3801,14 @@ body.admin-nav-open .admin-backdrop {
   width: min(100%, 920px);
 }
 
+.auth-modal-panel {
+  width: min(100%, 460px);
+}
+
+.auth-modal-body {
+  padding: 16px;
+}
+
 .modal-panel-full {
   display: grid;
   width: 100vw;

@@ -16,6 +16,7 @@ final class Api
         api_route('GET', '/status-suggest', [self::class, 'statusSuggest']);
         api_route('POST', '/search-captcha', [self::class, 'searchCaptcha']);
 
+        api_route('GET', '/auth-modal', [self::class, 'authModal']);
         api_route('POST', '/auth/login', [self::class, 'login']);
         api_route('POST', '/auth/register', [self::class, 'registerAccount']);
         api_route('POST', '/auth/logout', [self::class, 'logout']);
@@ -114,6 +115,18 @@ final class Api
         csrf_require();
 
         return auth_login_request();
+    }
+
+    public static function authModal(): array
+    {
+        $mode = auth_modal_mode((string) get('mode', 'login'));
+
+        return [
+            'html' => render('modals/auth', [
+                'mode' => $mode,
+                'next' => auth_request_next_url(),
+            ]),
+        ];
     }
 
     public static function registerAccount(): array

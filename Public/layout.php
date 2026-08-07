@@ -376,14 +376,9 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                             </button>
                         </form>
                     <?php else: ?>
-                        <a class="nav-link nav-link-icon" href="/login"<?= $current === '/login' ? ' aria-current="page"' : '' ?> aria-label="<?= et('common.login') ?>" title="<?= et('common.login') ?>">
-                            <?= icon('login') ?>
+                        <a class="nav-link nav-link-icon" href="/login"<?= $current === '/login' ? ' aria-current="page"' : '' ?> data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e(auth_modal_url()) ?>" aria-label="<?= et('common.login') ?>" title="<?= et('common.login') ?>">
+                            <?= icon('user') ?>
                         </a>
-                        <?php if (registration_enabled()): ?>
-                            <a class="nav-link nav-link-icon" href="/register"<?= $current === '/register' ? ' aria-current="page"' : '' ?> aria-label="<?= et('common.register') ?>" title="<?= et('common.register') ?>">
-                                <?= icon('user-plus') ?>
-                            </a>
-                        <?php endif; ?>
                     <?php endif; ?>
                 </nav>
             </div>

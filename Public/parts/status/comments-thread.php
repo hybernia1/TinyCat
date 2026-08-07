@@ -42,7 +42,8 @@ if ($contentId < 1 || ($comments === [] && $user === null)) {
     </div>
 
     <?php if ($user === null): ?>
-        <a class="btn btn-secondary btn-sm status-comment-login" href="<?= e(status_login_url('#status-comments-thread-' . $contentId, $action)) ?>">
+        <?php $loginUrl = status_login_url('#status-comments-thread-' . $contentId, $action); ?>
+        <a class="btn btn-secondary btn-sm status-comment-login" href="<?= e($loginUrl) ?>" data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e(auth_modal_url('login', auth_next_from_url($loginUrl))) ?>">
             <?= icon('login') ?> <span><?= et('account.status_comment_login') ?></span>
         </a>
     <?php endif; ?>

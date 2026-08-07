@@ -80,44 +80,8 @@ layout('layout', [
             <div class="card-header">
                 <h1 class="text-lg m-0 cluster gap-2"><?= icon('user-plus') ?> <?= et('auth.register_title') ?></h1>
             </div>
-            <div class="card-body stack">
-                <?php if (!registration_enabled()): ?>
-                    <div class="alert alert-info"><?= et('auth.registration_disabled') ?></div>
-                    <a class="btn btn-secondary" href="<?= e(auth_url_with_next('/login', $next)) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
-                <?php else: ?>
-                    <form class="stack" method="post" action="<?= e(auth_url_with_next('/register', $next)) ?>" data-ajax-form data-ajax-action="/api/auth/register">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="next" value="<?= e($next) ?>">
-                        <label class="field">
-                            <span class="label"><?= et('common.username') ?></span>
-                            <input class="input" name="username" value="<?= e((string) ($old['username'] ?? '')) ?>" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_]{2,31}" maxlength="32" required>
-                            <span class="help"><?= e(username_hint()) ?></span>
-                        </label>
-                        <label class="field">
-                            <span class="label"><?= et('common.email') ?></span>
-                            <input class="input" type="email" name="email" value="<?= e((string) ($old['email'] ?? '')) ?>" autocomplete="email" maxlength="<?= user_email_max_length() ?>">
-                            <span class="help"><?= et('auth.email_optional') ?></span>
-                        </label>
-                        <label class="field">
-                            <span class="label"><?= et('common.password') ?></span>
-                            <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
-                        </label>
-                        <label class="field">
-                            <span class="label"><?= et('common.password_confirm') ?></span>
-                            <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
-                        </label>
-                        <label class="check-line">
-                            <input type="checkbox" name="platform_terms" value="1" required<?= !empty($old['platform_terms']) ? ' checked' : '' ?>>
-                            <span><?= et('auth.platform_terms_agree') ?> <a href="/privacy" target="_blank" rel="noopener"><?= et('privacy.title') ?></a></span>
-                        </label>
-                        <?= captcha_field('register') ?>
-                        <button class="btn btn-primary" type="submit"><?= icon('user-plus') ?> <span><?= et('common.register') ?></span></button>
-                    </form>
-                    <div class="cluster gap-2">
-                        <span class="text-muted"><?= et('auth.has_account') ?></span>
-                        <a class="btn btn-secondary btn-sm" href="<?= e(auth_url_with_next('/login', $next)) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
-                    </div>
-                <?php endif; ?>
+            <div class="card-body">
+                <?= part('auth/content', ['mode' => 'register', 'next' => $next, 'old' => $old]) ?>
             </div>
         </article>
     </section>

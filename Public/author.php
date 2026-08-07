@@ -171,7 +171,7 @@ layout('layout', [
                                     'is_following' => $isFollowing,
                                 ]) ?>
                             <?php elseif ($authUser === null): ?>
-                                <a class="btn btn-secondary btn-sm" href="/login">
+                                <a class="btn btn-secondary btn-sm" href="/login" data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e(auth_modal_url()) ?>">
                                     <?= icon('login') ?> <span><?= et('public.follow_login') ?></span>
                                 </a>
                             <?php endif; ?>

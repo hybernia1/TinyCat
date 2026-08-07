@@ -65,7 +65,7 @@ layout('layout', [
                             <?= captcha_field('search') ?>
                         </div>
                         <div class="card-footer justify-end">
-                            <a class="btn btn-ghost" href="/login"><?= icon('login') ?> <span><?= et('auth.login_title') ?></span></a>
+                            <a class="btn btn-ghost" href="/login" data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e(auth_modal_url()) ?>"><?= icon('login') ?> <span><?= et('auth.login_title') ?></span></a>
                             <button class="btn btn-primary" type="submit"><?= icon('confirm') ?> <span><?= et('common.confirm') ?></span></button>
                         </div>
                     </form>

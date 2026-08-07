@@ -1681,6 +1681,35 @@ function sanitize_html(string $value): string
     return $html;
 }
 
+function auth_modal_id(): string
+{
+    return 'auth-modal';
+}
+
+function auth_modal_mode(string $mode): string
+{
+    return $mode === 'register' ? 'register' : 'login';
+}
+
+function auth_modal_url(string $mode = 'login', string $next = ''): string
+{
+    $query = ['mode' => auth_modal_mode($mode)];
+    $next = auth_safe_next_url($next);
+
+    if ($next !== '') {
+        $query['next'] = $next;
+    }
+
+    return '/api/auth-modal?' . http_build_query($query);
+}
+
+function auth_next_from_url(string $url): string
+{
+    parse_str((string) (parse_url($url, PHP_URL_QUERY) ?: ''), $query);
+
+    return auth_safe_next_url(is_string($query['next'] ?? null) ? $query['next'] : '');
+}
+
 function sanitize_html_node(DOMNode $node): string
 {
     if ($node instanceof DOMText) {

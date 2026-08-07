@@ -27,9 +27,10 @@ $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
 </nav>
 
 <?php if ($followingLoginRequired): ?>
+    <?php $loginUrl = status_login_url('', $currentFeedUrl); ?>
     <div class="alert alert-info cluster">
         <span><?= et('public.feed_following_login') ?></span>
-        <a class="btn btn-secondary btn-sm" href="<?= e(status_login_url('', $currentFeedUrl)) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
+        <a class="btn btn-secondary btn-sm" href="<?= e($loginUrl) ?>" data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e(auth_modal_url('login', auth_next_from_url($loginUrl))) ?>"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
     </div>
 <?php else: ?>
     <?php if ($items === []): ?>
