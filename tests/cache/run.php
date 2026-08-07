@@ -1,0 +1,72 @@
+<?php
+declare(strict_types=1);
+
+define('TINYCAT', true);
+require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
+
+$passed = 0;
+$failed = 0;
+
+$test = static function (string $name, callable $callback) use (&$passed, &$failed): void {
+    try {
+        $callback();
+        $passed++;
+        echo "PASS {$name}\n";
+    } catch (Throwable $exception) {
+        $failed++;
+        echo "FAIL {$name}: {$exception->getMessage()}\n";
+    }
+};
+
+$expect = static function (bool $condition, string $message = 'Expectation failed.'): void {
+    if (!$condition) {
+        throw new RuntimeException($message);
+    }
+};
+
+$test('Cache facade preserves fresh and stale values', static function () use ($expect): void {
+    $key = 'cache_test_' . bin2hex(random_bytes(12));
+
+    try {
+        $expect(Cache::put($key, ['value' => 'cache']));
+        $expect(Cache::read($key) === ['value' => 'cache']);
+        $expect(Cache::fresh($key));
+    } finally {
+        Cache::forget($key);
+    }
+});
+
+$test('generated cache files remain disk-backed', static function () use ($expect): void {
+    $namespace = 'cache-test-' . bin2hex(random_bytes(8));
+    $fileName = 'asset.txt';
+    $file = Cache::file($fileName, $namespace);
+
+    try {
+        $expect(Cache::writeFile($fileName, 'generated', $namespace));
+        $expect(is_file($file));
+        $expect(file_get_contents($file) === 'generated');
+    } finally {
+        @unlink($file);
+        @rmdir(dirname($file));
+    }
+});
+
+$test('cache diagnostics expose a supported driver', static function () use ($expect): void {
+    $diagnostics = Cache::diagnostics();
+
+    $expect(in_array($diagnostics['driver'], ['filesystem', 'memcached'], true));
+    $expect(is_bool($diagnostics['available']));
+});
+
+$test('cached autoload settings omit secret values', static function () use ($expect): void {
+    $settings = Cache::read('core_autoload_settings');
+
+    $expect(is_array($settings), 'Expected the autoload settings cache to be populated.');
+
+    foreach (['cron.token', 'security.captcha.secret_key', 'email.smtp.password'] as $key) {
+        $expect(!array_key_exists($key, $settings), 'Sensitive setting was stored in the cache.');
+    }
+});
+
+echo "\nCache tests: {$passed} passed, {$failed} failed.\n";
+exit($failed === 0 ? 0 : 1);

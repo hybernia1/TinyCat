@@ -27,6 +27,7 @@ layout('layout', [
         static fn (array $item): string => (string) $item['table'],
         $stats
     ));
+    $cache = Cache::diagnostics();
     $recentComments = tc_admin_dashboard_recent_comments();
     ?>
     <section class="grid sm:grid-2 md:grid-4">
@@ -44,6 +45,21 @@ layout('layout', [
                 </div>
             </article>
         <?php endforeach; ?>
+    </section>
+    <section class="card mt-6">
+        <div class="card-header split">
+            <h2 class="text-lg m-0 cluster gap-2"><?= icon('database') ?> <?= et('admin.cache.title') ?></h2>
+            <?php if ($cache['available']): ?>
+                <span class="badge badge-primary"><?= et('admin.cache.available') ?></span>
+            <?php else: ?>
+                <span class="badge badge-danger"><?= et('admin.cache.fallback') ?></span>
+            <?php endif; ?>
+        </div>
+        <div class="card-body">
+            <p class="m-0 text-muted">
+                <?= e($cache['driver'] === 'memcached' ? t('admin.cache.memcached') : t('admin.cache.filesystem')) ?>
+            </p>
+        </div>
     </section>
     <section class="card mt-6">
         <div class="card-header split">

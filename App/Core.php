@@ -16,7 +16,9 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.24';
+    public const string VERSION = '2.0.25';
+    private const string SETTINGS_CACHE_KEY = 'core_autoload_settings';
+    private const int SETTINGS_CACHE_TTL = 3600;
 
     private static bool $booted = false;
     private static array $config = [];
@@ -26,6 +28,7 @@ final class Core
     private static ?array $payload = null;
     private static array $routes = [];
     private static ?array $settings = null;
+    private static array $sensitiveSettings = [];
     private static bool $settingsLoading = false;
 
     private function __construct()
@@ -84,7 +87,11 @@ final class Core
             return $settings;
         }
 
-        return array_key_exists($key, $settings) ? $settings[$key] : $default;
+        if (array_key_exists($key, $settings)) {
+            return $settings[$key];
+        }
+
+        return self::isSensitiveSetting($key) ? self::sensitiveSettingValue($key, $default) : $default;
     }
 
     private static function settings(): array
@@ -99,6 +106,12 @@ final class Core
             return self::$settings;
         }
 
+        $cached = self::cachedAutoloadSettings();
+
+        if ($cached !== null) {
+            return self::$settings = $cached;
+        }
+
         self::$settingsLoading = true;
 
         try {
@@ -107,11 +120,19 @@ final class Core
             );
 
             foreach ($rows as $row) {
-                self::$settings[(string) $row['setting_key']] = self::castSettingValue(
+                $key = (string) ($row['setting_key'] ?? '');
+
+                if ($key === '' || self::isSensitiveSetting($key)) {
+                    continue;
+                }
+
+                self::$settings[$key] = self::castSettingValue(
                     $row['setting_value'] ?? null,
                     (string) ($row['setting_type'] ?? 'string')
                 );
             }
+
+            self::cacheAutoloadSettings(self::$settings);
         } catch (Throwable) {
             self::$settings = [];
         } finally {
@@ -148,6 +169,8 @@ final class Core
         }
 
         self::$settings = null;
+        unset(self::$sensitiveSettings[$key]);
+        self::forgetCachedAutoloadSettings();
 
         if ($key === 'i18n.locale') {
             self::$locale = null;
@@ -1950,6 +1973,72 @@ final class Core
         }
 
         return self::setting($key, $default);
+    }
+
+    private static function isSensitiveSetting(string $key): bool
+    {
+        return in_array($key, [
+            'cron.token',
+            'security.captcha.secret_key',
+            'email.smtp.password',
+        ], true);
+    }
+
+    private static function sensitiveSettingValue(string $key, mixed $default): mixed
+    {
+        if (array_key_exists($key, self::$sensitiveSettings)) {
+            $cached = self::$sensitiveSettings[$key];
+
+            return $cached['found'] ? $cached['value'] : $default;
+        }
+
+        if (self::$settingsLoading || !self::settingsTableReady()) {
+            return $default;
+        }
+
+        try {
+            $row = self::one(
+                'SELECT setting_value, setting_type FROM settings WHERE setting_key = ? LIMIT 1',
+                [$key]
+            );
+        } catch (Throwable) {
+            self::$sensitiveSettings[$key] = ['found' => false, 'value' => null];
+            return $default;
+        }
+
+        self::$sensitiveSettings[$key] = [
+            'found' => $row !== null,
+            'value' => $row === null
+                ? null
+                : self::castSettingValue($row['setting_value'] ?? null, (string) ($row['setting_type'] ?? 'string')),
+        ];
+
+        return self::$sensitiveSettings[$key]['found'] ? self::$sensitiveSettings[$key]['value'] : $default;
+    }
+
+    private static function cachedAutoloadSettings(): ?array
+    {
+        if (!class_exists('Cache', false)) {
+            return null;
+        }
+
+        $settings = Cache::get(self::SETTINGS_CACHE_KEY, self::SETTINGS_CACHE_TTL);
+
+        return is_array($settings) ? $settings : null;
+    }
+
+    private static function cacheAutoloadSettings(array $settings): void
+    {
+        if (class_exists('Cache', false)) {
+            Cache::put(self::SETTINGS_CACHE_KEY, $settings);
+        }
+    }
+
+    private static function forgetCachedAutoloadSettings(): void
+    {
+        if (class_exists('Cache', false)) {
+            Cache::forget(self::SETTINGS_CACHE_KEY);
+        }
     }
 
     private static function settingCanOverrideConfig(string $key): bool

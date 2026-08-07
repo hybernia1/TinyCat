@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **2.0.24**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
+Current release: **2.0.25**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
 
 ## Features
 
@@ -30,6 +30,30 @@ Current release: **2.0.24**. TinyCat uses [Semantic Versioning](https://semver.o
 - Write access to `storage/` and `uploads/`. The installer also needs temporary permission to create `config.php` in the project root.
 
 The PHP `exif` extension improves JPEG orientation handling but is optional. Apache modules such as `mod_headers` and `mod_deflate` enable the cache headers and compression rules already included in `.htaccess`.
+
+### Optional Memcached cache
+
+TinyCat uses the filesystem cache by default. Hosts with the PHP `memcached`
+extension can use Memcached for computed JSON cache entries while generated
+assets remain on disk. Add this to the private `config.php` file:
+
+```php
+'cache' => [
+    'driver' => 'memcached',
+    'memcached' => [
+        'servers' => [
+            ['host' => '127.0.0.1', 'port' => 11211],
+        ],
+        'prefix' => 'tinycat:example:',
+        'timeout_ms' => 100,
+    ],
+],
+```
+
+Use a unique prefix for each installation. If the extension or server is not
+available, TinyCat safely falls back to its filesystem cache.
+Memcached must be bound to loopback or a private network and must never be
+exposed directly to the public internet.
 
 ## Installation
 

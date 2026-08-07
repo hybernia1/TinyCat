@@ -772,7 +772,14 @@
             "notifications": "Notifikace",
             "reports": "Nahlášení"
         },
-        "table_missing": "Tabulka zatím není vytvořená."
+        "table_missing": "Tabulka zatím není vytvořená.",
+        "cache": {
+            "title": "Cache",
+            "available": "Dostupná",
+            "fallback": "Nedostupná — používá se disk",
+            "filesystem": "Aktivní úložiště: filesystem cache.",
+            "memcached": "Aktivní úložiště: Memcached."
+        }
     },
     "install": {
         "language_label": "Čeština",

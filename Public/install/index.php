@@ -709,6 +709,9 @@ function tc_install_write_config(array $state): void
     unset($database['driver']);
 
     $config = [
+        'cache' => [
+            'driver' => 'filesystem',
+        ],
         'database' => [
             'host' => (string) ($database['host'] ?? 'localhost'),
             'name' => (string) ($database['name'] ?? ''),

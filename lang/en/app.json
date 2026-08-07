@@ -772,7 +772,14 @@
             "notifications": "Notifications",
             "reports": "Reports"
         },
-        "table_missing": "The table has not been created yet."
+        "table_missing": "The table has not been created yet.",
+        "cache": {
+            "title": "Cache",
+            "available": "Available",
+            "fallback": "Unavailable — using disk",
+            "filesystem": "Active storage: filesystem cache.",
+            "memcached": "Active storage: Memcached."
+        }
     },
     "install": {
         "language_label": "English",
