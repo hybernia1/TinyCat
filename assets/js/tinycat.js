@@ -4,6 +4,7 @@
   var TinyCat = window.TinyCat || {};
   var activeModal = null;
   var modalStack = [];
+  var modalPageLock = null;
   var modalCounterId = 0;
   var fieldErrorCounterId = 0;
   var statusEditorCounterId = 0;
@@ -1551,6 +1552,58 @@
     return Boolean(modal && modal.matches && modal.matches(".modal-mobile-fullscreen, .modal-form"));
   }
 
+  function modalNeedsMobilePageLock(modal) {
+    return modalUsesVisualViewport(modal)
+      && window.matchMedia
+      && window.matchMedia("(max-width: 760px), (hover: none) and (pointer: coarse)").matches;
+  }
+
+  function lockPageForModal(modal) {
+    var body;
+    var scrollY;
+
+    if (modalPageLock !== null || !modalNeedsMobilePageLock(modal)) {
+      return;
+    }
+
+    body = document.body;
+    scrollY = window.scrollY || window.pageYOffset || 0;
+    modalPageLock = {
+      scrollY: scrollY,
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width
+    };
+
+    body.style.position = "fixed";
+    body.style.top = "-" + Math.round(scrollY) + "px";
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+  }
+
+  function unlockPageForModal() {
+    var body = document.body;
+    var lock = modalPageLock;
+
+    if (lock === null) {
+      return;
+    }
+
+    body.style.position = lock.position;
+    body.style.top = lock.top;
+    body.style.left = lock.left;
+    body.style.right = lock.right;
+    body.style.width = lock.width;
+    modalPageLock = null;
+
+    window.requestAnimationFrame(function () {
+      window.scrollTo(0, lock.scrollY);
+    });
+  }
+
   function syncModalVisualViewport(modal) {
     var viewport = window.visualViewport;
 
@@ -1588,6 +1641,16 @@
     });
   }
 
+  function scheduleModalViewportSettles() {
+    [120, 360].forEach(function (delay) {
+      window.setTimeout(function () {
+        if (activeModal && modalUsesVisualViewport(activeModal)) {
+          scheduleOpenModalViewportSync();
+        }
+      }, delay);
+    });
+  }
+
   TinyCat.openModal = function (target) {
     var modal = getModal(target);
     var index;
@@ -1616,7 +1679,9 @@
     modal.setAttribute("aria-hidden", "false");
     modal.__tinycatPreviousFocus = previousModal === modal ? modal.__tinycatPreviousFocus : document.activeElement;
     document.body.classList.add("has-modal");
+    lockPageForModal(modal);
     syncModalVisualViewport(modal);
+    scheduleModalViewportSettles();
     focusFirst(modal);
     emit(modal, "tinycat:modal-open");
 
@@ -1650,6 +1715,10 @@
 
     activeModal = modalStack.length > 0 ? modalStack[modalStack.length - 1] : null;
     document.body.classList.toggle("has-modal", activeModal !== null);
+
+    if (activeModal === null) {
+      unlockPageForModal();
+    }
 
     if (activeModal) {
       activeModal.setAttribute("aria-hidden", "false");
@@ -2140,6 +2209,8 @@
     document.addEventListener("focusin", function (event) {
       if (activeModal && !activeModal.contains(event.target)) {
         focusFirst(activeModal);
+      } else if (activeModal && modalUsesVisualViewport(activeModal)) {
+        scheduleModalViewportSettles();
       }
     });
 

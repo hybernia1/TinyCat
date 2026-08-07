@@ -129,6 +129,7 @@ body {
 
 body.has-modal {
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 img,
@@ -2631,19 +2632,24 @@ a:hover {
 
 .status-image {
   width: 100%;
+  aspect-ratio: 16 / 10;
   margin: 2px 0;
   overflow: hidden;
   border-radius: var(--radius-sm);
+  background: var(--surface-muted);
 }
 
 .status-image img {
+  display: block;
   width: 100%;
-  max-height: min(72vh, 720px);
-  object-fit: contain;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .status-image-link {
   display: block;
+  height: 100%;
   color: inherit;
 }
 
@@ -3837,6 +3843,8 @@ body.admin-nav-open .admin-backdrop {
 .modal-body {
   min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-header {
