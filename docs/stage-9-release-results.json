@@ -1,0 +1,71 @@
+{
+    "stage": 9,
+    "release": "2.0.26",
+    "source_minimum": "2.0.25",
+    "minimum_php": "8.4.0",
+    "decision": "pass",
+    "published": false,
+    "artifact": {
+        "directory": "dist/release-2.0.26",
+        "package": "tinycat-2.0.26.zip",
+        "size": 1431323,
+        "sha256": "ac548bef4db7418332506c5d2767cdf8924d7b81c5f010a789191e4cc775137e",
+        "manifest_sha256": "fcf85e979b9e8c97e00a0ed9402513f95fa6f4b346c83863011e4341819fd90a",
+        "signature_sha256": "1b715246a8b59bcfed1552c6e99154dd62098329ae25f971c1c2967a887f9051",
+        "files": 122,
+        "deletions": 0,
+        "migrations": [
+            "migrations/20260806_001_comment_history.php",
+            "migrations/20260806_003_content_images.php"
+        ],
+        "signature_verified_with_pinned_key": true,
+        "same_source_builds_byte_identical": true,
+        "clean_worktree_rebuild_identical": true
+    },
+    "update_rehearsal": {
+        "source": "v2.0.25",
+        "checks": 18,
+        "pending_migrations": 0,
+        "applied_migrations": 0,
+        "database_unchanged": true,
+        "configuration_unchanged": true,
+        "uploads_unchanged": true,
+        "storage_unchanged": true,
+        "compatible_extension_loaded": true,
+        "rollback_exact": true,
+        "rows": {
+            "users": 61,
+            "content": 247,
+            "content_comments": 2704,
+            "content_likes": 995,
+            "comment_likes": 5432,
+            "user_followers": 320,
+            "notifications": 5824,
+            "content_tags": 1200,
+            "terms": 40,
+            "content_links": 31,
+            "settings": 40,
+            "schema_migrations": 2
+        }
+    },
+    "artifact_preflight": {
+        "checks": 363,
+        "inventory_and_hashes": true,
+        "packaged_php_lint": true,
+        "public_route_checks": 34,
+        "fresh_mysql_checks": 14
+    },
+    "repository_preflight": {
+        "groups": 20,
+        "phpstan_level": 8,
+        "app_php_files": 18,
+        "class_bearing_files": 15,
+        "query_counts": {
+            "feed": 3,
+            "status": 6,
+            "tag": 4,
+            "author": 8,
+            "search": 7
+        }
+    }
+}

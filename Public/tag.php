@@ -29,6 +29,15 @@ if (method() === 'GET' && (int) get('page', 0) > 1) {
 $statusLimit = public_status_page_limit();
 $statusItems = public_status_items_by_tag($tag, $statusLimit);
 $indexableItems = $statusLimit >= 2 ? $statusItems : public_status_items_by_tag($tag, 2);
+$authUser = auth();
+$statusItems = status_prepare_items_view($statusItems, $authUser);
+$feedMore = status_feed_more_view_data(
+    'status-feed-tag-' . slug($tag),
+    'tag',
+    $statusItems,
+    $statusLimit,
+    ['tag' => $tag]
+);
 $pageUrl = $current;
 $tagStructuredData = [
     '@context' => 'https://schema.org',
@@ -60,7 +69,7 @@ layout('layout', [
         'robots' => count($indexableItems) >= 2 ? '' : 'noindex,follow',
         'jsonld' => $tagStructuredData,
     ],
-], static function () use ($tag, $statusItems, $statusLimit, $current): void {
+], static function () use ($tag, $statusItems, $current, $authUser, $feedMore): void {
     $feedId = 'status-feed-tag-' . slug($tag);
     ?>
     <section class="public-layout">
@@ -79,16 +88,10 @@ layout('layout', [
                     <?= part('status/feed', [
                         'items' => $statusItems,
                         'action' => $current,
-                        'user' => auth(),
+                        'user' => $authUser,
                     ]) ?>
                 </div>
-                <?= part('status/feed-more', [
-                    'feed_id' => $feedId,
-                    'context' => 'tag',
-                    'loaded' => count($statusItems),
-                    'limit' => $statusLimit,
-                    'params' => ['tag' => $tag] + status_feed_cursor_params($statusItems),
-                ]) ?>
+                <?= part('status/feed-more', $feedMore) ?>
             <?php endif; ?>
         </div>
         <?= public_sidebar($tag) ?>

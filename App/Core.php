@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.25';
+    public const string VERSION = '2.0.26';
     private const string SETTINGS_CACHE_KEY = 'core_autoload_settings';
     private const int SETTINGS_CACHE_TTL = 3600;
 
@@ -30,6 +30,9 @@ final class Core
     private static ?array $settings = null;
     private static array $sensitiveSettings = [];
     private static bool $settingsLoading = false;
+    private static bool $authResolved = false;
+    /** @var array<string, mixed>|null */
+    private static ?array $authUser = null;
 
     private function __construct()
     {
@@ -257,6 +260,8 @@ final class Core
         self::$settings = null;
         self::$locale = null;
         self::$translations = [];
+        self::$authResolved = false;
+        self::$authUser = null;
     }
 
     private static function query(string $sql, array $params = []): PDOStatement
@@ -940,16 +945,6 @@ final class Core
         return $path === '/' ? '/' : rtrim($path, '/');
     }
 
-    private static function requireMethod(array|string $methods): void
-    {
-        $allowed = self::normalizeMethods($methods);
-
-        if (!in_array('ANY', $allowed, true) && !in_array(self::method(), $allowed, true)) {
-            header('Allow: ' . implode(', ', $allowed));
-            self::apiError('Method not allowed.', 405, 'method_not_allowed', ['allowed' => $allowed]);
-        }
-    }
-
     private static function payload(?string $key = null, mixed $default = null): mixed
     {
         if (self::$payload === null) {
@@ -1146,6 +1141,14 @@ final class Core
 
     public static function auth(?string $key = null, mixed $default = null): mixed
     {
+        if (self::$authResolved) {
+            if ($key === null) {
+                return self::$authUser;
+            }
+
+            return self::$authUser === null ? $default : self::dataGet(self::$authUser, $key, $default);
+        }
+
         self::session();
 
         $id = $_SESSION['auth_user_id'] ?? null;
@@ -1154,8 +1157,14 @@ final class Core
             $remembered = self::authRememberUser();
 
             if ($remembered !== null) {
+                self::$authResolved = true;
+                self::$authUser = $remembered;
+
                 return $key === null ? $remembered : self::dataGet($remembered, $key, $default);
             }
+
+            self::$authResolved = true;
+            self::$authUser = null;
 
             return $key === null ? null : $default;
         }
@@ -1164,8 +1173,14 @@ final class Core
 
         if ($user === null || !self::userIsActive($user)) {
             unset($_SESSION['auth_user_id']);
+            self::$authResolved = true;
+            self::$authUser = null;
+
             return $key === null ? null : $default;
         }
+
+        self::$authResolved = true;
+        self::$authUser = $user;
 
         return $key === null ? $user : self::dataGet($user, $key, $default);
     }
@@ -1232,6 +1247,8 @@ final class Core
         self::session();
         $_SESSION['auth_user_id'] = $id;
         session_regenerate_id(true);
+        self::$authResolved = true;
+        self::$authUser = $user;
 
         if ($remember) {
             self::authRemember($user);
@@ -1248,6 +1265,8 @@ final class Core
     {
         self::session();
         unset($_SESSION['auth_user_id']);
+        self::$authResolved = true;
+        self::$authUser = null;
         self::authForget();
         session_regenerate_id(true);
     }

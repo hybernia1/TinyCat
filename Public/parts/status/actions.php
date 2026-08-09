@@ -12,14 +12,11 @@ $action = (string) ($action ?? '/');
 $openCommentsModal = (bool) ($open_comments_modal ?? true);
 $contentId = (int) ($item['id'] ?? 0);
 $likesCount = (int) ($item['likes_count'] ?? 0);
-$commentsCount = array_key_exists('comments_count', $item)
-    ? (int) ($item['comments_count'] ?? 0)
-    : status_comment_count($contentId);
-$userId = (int) ($user['id'] ?? 0);
-$liked = $userId > 0 && status_user_liked($contentId, $userId);
+$commentsCount = (int) ($item['comments_count'] ?? 0);
+$liked = (bool) ($item['viewer_liked'] ?? false);
 $loginUrl = status_login_url($contentId > 0 ? '#' . status_anchor($contentId) : '', $action);
 $loginModalUrl = auth_modal_url('login', auth_next_from_url($loginUrl));
-$statusContext = status_accessible_context($item);
+$statusContext = (string) (($item['_view'] ?? [])['context'] ?? '');
 $likeLabel = t('account.status_like_for', ['context' => $statusContext]);
 $unlikeLabel = t('account.status_unlike_for', ['context' => $statusContext]);
 $currentLikeLabel = $liked ? $unlikeLabel : $likeLabel;

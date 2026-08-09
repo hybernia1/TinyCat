@@ -7,7 +7,8 @@ if (!defined('TINYCAT')) {
 }
 
 $item = is_array($item ?? null) ? $item : [];
-$url = status_image_url($item);
+$image = is_array(($item['_view'] ?? [])['image'] ?? null) ? $item['_view']['image'] : [];
+$url = (string) ($image['url'] ?? '');
 $contentId = max(0, (int) ($item['id'] ?? 0));
 $openModal = (bool) ($open_modal ?? false);
 
@@ -17,6 +18,6 @@ if ($url === '') {
 ?>
 <figure class="status-image">
     <?php if ($contentId > 0 && $openModal): ?><a class="status-image-link" href="<?= e(status_url($contentId)) ?>" data-modal-open><?php endif; ?>
-        <img src="<?= e($url) ?>" alt="<?= e(status_image_alt_text($item)) ?>" loading="lazy"<?= (int) ($item['image_width'] ?? 0) > 0 ? ' width="' . e((int) $item['image_width']) . '"' : '' ?><?= (int) ($item['image_height'] ?? 0) > 0 ? ' height="' . e((int) $item['image_height']) . '"' : '' ?>>
+        <img src="<?= e($url) ?>" alt="<?= e((string) ($image['alt'] ?? '')) ?>" loading="lazy"<?= (int) ($item['image_width'] ?? 0) > 0 ? ' width="' . e((int) $item['image_width']) . '"' : '' ?><?= (int) ($item['image_height'] ?? 0) > 0 ? ' height="' . e((int) $item['image_height']) . '"' : '' ?>>
     <?php if ($contentId > 0 && $openModal): ?></a><?php endif; ?>
 </figure>

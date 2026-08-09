@@ -13,8 +13,9 @@ $contentId = (int) ($item['id'] ?? 0);
 $authorId = (int) ($item['author_id'] ?? 0);
 $authorName = trim((string) ($item['author_name'] ?? ''));
 $createdAt = (string) ($item['created_at'] ?? '');
-$url = $authorId > 0 ? author_url($authorId) . '#' . status_anchor($contentId) : '#';
-$bodyHtml = render_status_body($item);
+$view = is_array($item['_view'] ?? null) ? $item['_view'] : [];
+$url = $authorId > 0 ? (string) ($view['author_url'] ?? '#') . '#' . status_anchor($contentId) : '#';
+$bodyHtml = (string) ($view['body_html'] ?? '');
 
 if ($contentId < 1) {
     return '';
@@ -28,7 +29,7 @@ if ($contentId < 1) {
             </a>
             <div class="status-author">
                 <?php if ($authorId > 0 && $authorName !== ''): ?>
-                    <a href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
+                    <a href="<?= e((string) ($view['author_url'] ?? '#')) ?>"><?= e($authorName) ?></a>
                 <?php endif; ?>
                 <?php if ($createdAt !== ''): ?>
                     <?= part('status/time-link', [

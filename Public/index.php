@@ -8,6 +8,7 @@ if (!defined('TINYCAT')) {
 
 $authUser = auth();
 $feed = (string) get('feed', 'all') === 'following' ? 'following' : 'all';
+$editor = $authUser !== null ? status_editor_view_data() : [];
 
 layout('layout', [
     'title' => site_home_title(),
@@ -18,7 +19,7 @@ layout('layout', [
         'image' => site_meta_image_url(),
         'type' => 'website',
     ],
-], static function () use ($authUser, $feed): void {
+], static function () use ($authUser, $feed, $editor): void {
     ?>
     <section class="public-layout">
         <div class="home-feed-app stack">
@@ -27,7 +28,11 @@ layout('layout', [
                     <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime(user_muted_until($authUser))]) ?></span>
                 </div>
             <?php elseif ($authUser !== null): ?>
-                <?= part('status/composer', ['action' => $feed === 'following' ? '/?feed=following' : '/', 'user' => $authUser]) ?>
+                <?= part('status/composer', [
+                    'action' => $feed === 'following' ? '/?feed=following' : '/',
+                    'user' => $authUser,
+                    'editor' => $editor,
+                ]) ?>
             <?php endif; ?>
             <div class="home-feed-section stack">
                 <?= part('status/home-feed', public_home_feed_data($feed, $authUser)) ?>

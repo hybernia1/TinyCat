@@ -350,16 +350,18 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                     <?php if ($authUser !== null): ?>
                         <?php $profileUrl = author_url((int) ($authUser['id'] ?? 0)); ?>
                         <?php $profileNeedsEmail = trim((string) ($authUser['email'] ?? '')) === ''; ?>
-                        <?php if ((string) ($authUser['role'] ?? '') === 'admin'): ?>
+                        <?php if (user_is_admin($authUser)): ?>
                             <a class="nav-link nav-link-icon" href="/admin" aria-label="<?= et('common.admin') ?>" title="<?= et('common.admin') ?>">
                                 <?= icon('dashboard') ?>
                             </a>
                         <?php endif; ?>
                         <?php $notificationUserId = (int) ($authUser['id'] ?? 0); ?>
+                        <?php $notificationState = Notifications::state($notificationUserId); ?>
+                        <?php $notificationItems = Notifications::viewItems(Notifications::items($notificationUserId, Notifications::PREVIEW_LIMIT), 90); ?>
                         <?= part('notifications/menu', [
                             'current' => $current,
-                            'state' => Notifications::state($notificationUserId),
-                            'notifications' => Notifications::items($notificationUserId, Notifications::PREVIEW_LIMIT),
+                            'state' => $notificationState,
+                            'notifications' => $notificationItems,
                         ]) ?>
                         <a class="nav-link nav-link-icon profile-nav-link" href="<?= e($profileUrl) ?>"<?= $current === $profileUrl ? ' aria-current="page"' : '' ?> aria-label="<?= e($profileNeedsEmail ? t('account.email_missing_title') : t('account.public_profile')) ?>" title="<?= e($profileNeedsEmail ? t('account.email_missing_title') : t('account.public_profile')) ?>">
                             <?= icon('user') ?>

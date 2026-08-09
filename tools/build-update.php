@@ -67,6 +67,14 @@ if (!is_string($secretKey) || strlen($secretKey) !== SODIUM_CRYPTO_SIGN_SECRETKE
 
 $allowedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
 $rootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
+$excludedDocumentation = [
+    'docs/baseline-2.0.25.md',
+    'docs/performance-benchmark.md',
+    'docs/release-2.0.26-monolith-plan.md',
+];
+$excludedDocumentationPatterns = [
+    '~^docs/stage-[0-9]+(?:-[A-Za-z0-9._-]+)?\.(?:json|md)$~',
+];
 $files = [];
 
 foreach ($rootFiles as $file) {
@@ -98,6 +106,15 @@ foreach ($allowedRoots as $directory) {
         if (preg_match('/^[A-Za-z0-9._\/-]+$/', $relative) !== 1) {
             fwrite(STDERR, "Unsupported package path: {$relative}\n");
             exit(1);
+        }
+
+        if (in_array($relative, $excludedDocumentation, true)
+            || array_any(
+                $excludedDocumentationPatterns,
+                static fn (string $pattern): bool => preg_match($pattern, $relative) === 1
+            )
+        ) {
+            continue;
         }
 
         $files[$relative] = $entry->getPathname();
@@ -168,6 +185,67 @@ if (!is_dir($output) && !mkdir($output, 0775, true) && !is_dir($output)) {
 
 $packageName = 'tinycat-' . $version . '.zip';
 $packagePath = $output . DIRECTORY_SEPARATOR . $packageName;
+$sourceDateEpoch = trim((string) getenv('SOURCE_DATE_EPOCH'));
+
+if ($sourceDateEpoch === '') {
+    $sourceDateEpoch = '315532800';
+}
+
+if (preg_match('/^[0-9]+$/', $sourceDateEpoch) !== 1) {
+    fwrite(STDERR, "SOURCE_DATE_EPOCH must be a non-negative Unix timestamp.\n");
+    exit(1);
+}
+
+$archiveTimestamp = max(315532800, (int) $sourceDateEpoch);
+$normalizeZipTimestamps = static function (string $path, int $timestamp): void {
+    $data = file_get_contents($path);
+
+    if (!is_string($data)) {
+        throw new RuntimeException('Unable to read the completed update archive.');
+    }
+
+    $end = strrpos($data, "PK\x05\x06");
+
+    if ($end === false || strlen($data) - $end < 22) {
+        throw new RuntimeException('Unable to locate the update archive directory.');
+    }
+
+    $read16 = static fn (string $bytes, int $offset): int => (int) unpack('vvalue', substr($bytes, $offset, 2))['value'];
+    $read32 = static fn (string $bytes, int $offset): int => (int) unpack('Vvalue', substr($bytes, $offset, 4))['value'];
+    $entries = $read16($data, $end + 10);
+    $central = $read32($data, $end + 16);
+    $year = min(2107, max(1980, (int) gmdate('Y', $timestamp)));
+    $dosTime = ((int) gmdate('H', $timestamp) << 11)
+        | ((int) gmdate('i', $timestamp) << 5)
+        | intdiv((int) gmdate('s', $timestamp), 2);
+    $dosDate = (($year - 1980) << 9)
+        | ((int) gmdate('n', $timestamp) << 5)
+        | (int) gmdate('j', $timestamp);
+    $packedTimestamp = pack('vv', $dosTime, $dosDate);
+
+    for ($index = 0; $index < $entries; $index++) {
+        if (substr($data, $central, 4) !== "PK\x01\x02") {
+            throw new RuntimeException('Invalid update archive central directory.');
+        }
+
+        $local = $read32($data, $central + 42);
+
+        if (substr($data, $local, 4) !== "PK\x03\x04") {
+            throw new RuntimeException('Invalid update archive local directory.');
+        }
+
+        $data = substr_replace($data, $packedTimestamp, $local + 10, 4);
+        $data = substr_replace($data, $packedTimestamp, $central + 12, 4);
+        $central += 46
+            + $read16($data, $central + 28)
+            + $read16($data, $central + 30)
+            + $read16($data, $central + 32);
+    }
+
+    if (file_put_contents($path, $data, LOCK_EX) !== strlen($data)) {
+        throw new RuntimeException('Unable to normalize update archive timestamps.');
+    }
+};
 @unlink($packagePath);
 
 if (class_exists('ZipArchive')) {
@@ -179,12 +257,22 @@ if (class_exists('ZipArchive')) {
     }
 
     foreach ($files as $relative => $path) {
-        $added = isset($normalizedContents[$relative])
-            ? $archive->addFromString($relative, $normalizedContents[$relative])
-            : $archive->addFile($path, $relative);
+        $content = $normalizedContents[$relative] ?? file_get_contents($path);
+
+        if (!is_string($content)) {
+            fwrite(STDERR, "Unable to read {$relative} for the update archive.\n");
+            exit(1);
+        }
+
+        $added = $archive->addFromString($relative, $content);
 
         if (!$added) {
             fwrite(STDERR, "Unable to add {$relative} to the update archive.\n");
+            exit(1);
+        }
+
+        if (method_exists($archive, 'setMtimeName') && !$archive->setMtimeName($relative, $archiveTimestamp)) {
+            fwrite(STDERR, "Unable to normalize the archive timestamp for {$relative}.\n");
             exit(1);
         }
     }
@@ -195,11 +283,13 @@ if (class_exists('ZipArchive')) {
         $archive = new PharData($packagePath, 0, null, Phar::ZIP);
 
         foreach ($files as $relative => $path) {
-            if (isset($normalizedContents[$relative])) {
-                $archive->addFromString($relative, $normalizedContents[$relative]);
-            } else {
-                $archive->addFile($path, $relative);
+            $content = $normalizedContents[$relative] ?? file_get_contents($path);
+
+            if (!is_string($content)) {
+                throw new RuntimeException("Unable to read {$relative} for the update archive.");
             }
+
+            $archive->addFromString($relative, $content);
         }
 
         unset($archive);
@@ -207,6 +297,13 @@ if (class_exists('ZipArchive')) {
         fwrite(STDERR, "Unable to create the update archive: {$exception->getMessage()}\n");
         exit(1);
     }
+}
+
+try {
+    $normalizeZipTimestamps($packagePath, $archiveTimestamp);
+} catch (Throwable $exception) {
+    fwrite(STDERR, "Unable to normalize the update archive: {$exception->getMessage()}\n");
+    exit(1);
 }
 
 $packageHash = hash_file('sha256', $packagePath);

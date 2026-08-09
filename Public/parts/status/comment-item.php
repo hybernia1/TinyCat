@@ -15,18 +15,15 @@ $showReplies = (bool) ($show_replies ?? true);
 $showReplyForm = (bool) ($show_reply_form ?? true);
 $commentId = (int) ($comment['id'] ?? 0);
 $contentId = (int) ($comment['content_id'] ?? 0);
-$authorId = (int) ($comment['user_id'] ?? 0);
 $authorName = trim((string) ($comment['author_name'] ?? ''));
 $createdAt = (string) ($comment['created_at'] ?? '');
 $replies = $depth === 0 ? (array) ($comment['replies'] ?? []) : [];
-$canEdit = status_comment_can_edit($comment, $user);
-$canDelete = status_comment_can_delete($comment, $user);
+$view = is_array($comment['_view'] ?? null) ? $comment['_view'] : [];
+$canEdit = (bool) ($comment['can_edit'] ?? false);
+$canDelete = (bool) ($comment['can_delete'] ?? false);
 $hasMenuActions = $canEdit || $canDelete;
-$userId = (int) ($user['id'] ?? 0);
-$likesCount = array_key_exists('likes_count', $comment)
-    ? (int) ($comment['likes_count'] ?? 0)
-    : status_comment_like_count($commentId);
-$liked = $userId > 0 && status_comment_user_liked($commentId, $userId);
+$likesCount = (int) ($comment['likes_count'] ?? 0);
+$liked = (bool) ($comment['viewer_liked'] ?? false);
 $commentDomId = 'comment-' . ($context !== '' ? preg_replace('/[^A-Za-z0-9_-]/', '', $context) . '-' : '') . $commentId;
 $preview = !$showReplies && !$showReplyForm;
 
@@ -35,7 +32,7 @@ if ($commentId < 1 || $contentId < 1) {
 }
 ?>
 <article class="status-comment<?= $depth > 0 ? ' is-child' : '' ?>"<?= $preview ? '' : ' id="' . e($commentDomId) . '"' ?> data-comment-id="<?= e($commentId) ?>"<?= $preview ? '' : ' data-content-id="' . e($contentId) . '" data-parent-id="' . e((int) ($comment['parent_id'] ?? 0)) . '"' ?>>
-    <a class="avatar avatar-sm" href="<?= e(author_url($authorId)) ?>" aria-label="<?= e($authorName) ?>">
+    <a class="avatar avatar-sm" href="<?= e((string) ($view['author_url'] ?? '#')) ?>" aria-label="<?= e($authorName) ?>">
         <?= part('user/avatar', ['user' => $comment, 'alt' => $authorName]) ?>
     </a>
     <div class="status-comment-main">
@@ -43,10 +40,10 @@ if ($commentId < 1 || $contentId < 1) {
             <?php if ($authorName !== '' || $hasMenuActions): ?>
                 <div class="status-comment-heading">
                     <?php if ($authorName !== ''): ?>
-                        <a class="status-comment-author" href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
+                        <a class="status-comment-author" href="<?= e((string) ($view['author_url'] ?? '#')) ?>"><?= e($authorName) ?></a>
                     <?php endif; ?>
                     <?php if ($createdAt !== ''): ?>
-                        <time class="status-comment-heading-time" datetime="<?= e(date_iso($createdAt)) ?>"> · <?= e(datetime($createdAt)) ?></time>
+                        <time class="status-comment-heading-time" datetime="<?= e((string) (($view['time'] ?? [])['iso'] ?? '')) ?>"> · <?= e((string) (($view['time'] ?? [])['label'] ?? '')) ?></time>
                     <?php endif; ?>
                     <?php if ($hasMenuActions): ?>
                         <details class="context-menu status-comment-menu" data-dismissible-menu>
@@ -74,7 +71,7 @@ if ($commentId < 1 || $contentId < 1) {
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
-            <div class="status-comment-body"><?= render_mentions((string) ($comment['body'] ?? '')) ?></div>
+            <div class="status-comment-body"><?= (string) ($view['body_html'] ?? '') ?></div>
         </div>
         <div class="status-comment-meta">
             <?= part('status/comment-like-control', [
@@ -99,7 +96,7 @@ if ($commentId < 1 || $contentId < 1) {
                     'action' => $action,
                     'user' => $user,
                     'parent_id' => $commentId,
-                    'mention' => $depth > 0 ? status_comment_mention($authorName) : '',
+                    'mention' => $depth > 0 ? (string) ($view['mention'] ?? '') : '',
                     'context' => $context,
                 ]) ?>
             </div>

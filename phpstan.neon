@@ -1,0 +1,16 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 8
+    paths:
+        - App
+        - Public
+        - index.php
+        - scheduled-tasks.php
+    tmpDir: storage/phpstan
+    reportUnmatchedIgnoredErrors: true
+    treatPhpDocTypesAsCertain: true
+    excludePaths:
+        analyse:
+            - config.php

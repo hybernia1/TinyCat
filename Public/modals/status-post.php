@@ -7,6 +7,7 @@ if (!defined('TINYCAT')) {
 }
 
 $item = (array) ($item ?? []);
+$comments = is_array($comments ?? null) ? $comments : [];
 $user = isset($user) && is_array($user) ? $user : null;
 $action = (string) ($action ?? '');
 $contentId = (int) ($item['id'] ?? 0);
@@ -19,24 +20,25 @@ if ($contentId < 1) {
 $authorId = (int) ($item['author_id'] ?? 0);
 $authorName = trim((string) ($item['author_name'] ?? ''));
 $createdAt = (string) ($item['created_at'] ?? '');
+$view = is_array($item['_view'] ?? null) ? $item['_view'] : [];
 $modalId = status_post_modal_id($contentId);
-$bodyHtml = render_status_body($item);
+$bodyHtml = (string) ($view['body_html'] ?? '');
 
 ob_start();
 ?>
 <article class="status-post-detail">
     <div class="status-header">
-        <a class="avatar" href="<?= e($authorId > 0 ? author_url($authorId) : '#') ?>" aria-label="<?= e($authorName) ?>">
+        <a class="avatar" href="<?= e($authorId > 0 ? (string) ($view['author_url'] ?? '#') : '#') ?>" aria-label="<?= e($authorName) ?>">
             <?= part('user/avatar', ['user' => $item, 'alt' => $authorName]) ?>
         </a>
         <div class="status-author">
             <?php if ($authorId > 0 && $authorName !== ''): ?>
-                <a href="<?= e(author_url($authorId)) ?>"><?= e($authorName) ?></a>
+                <a href="<?= e((string) ($view['author_url'] ?? '#')) ?>"><?= e($authorName) ?></a>
             <?php elseif ($authorName !== ''): ?>
                 <strong><?= e($authorName) ?></strong>
             <?php endif; ?>
             <?php if ($createdAt !== ''): ?>
-                <time class="public-content-meta" datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
+                <time class="public-content-meta" datetime="<?= e((string) (($view['time'] ?? [])['iso'] ?? '')) ?>"><?= e((string) (($view['time'] ?? [])['label'] ?? '')) ?></time>
             <?php endif; ?>
         </div>
     </div>
@@ -53,6 +55,7 @@ ob_start();
     ]) ?>
     <?= part('status/comments-thread', [
         'item' => $item,
+        'comments' => $comments,
         'user' => $user,
         'action' => $action,
         'context' => 'modal-' . $contentId,

@@ -12,7 +12,7 @@ $liked = (bool) ($liked ?? false);
 $user = is_array($user ?? null) ? $user : null;
 $contentId = (int) ($content_id ?? 0);
 $comment = is_array($comment ?? null) ? $comment : ['id' => $commentId];
-$commentContext = status_accessible_context($comment, true);
+$commentContext = (string) (($comment['_view'] ?? [])['context'] ?? '');
 $likeLabel = t('account.status_comment_like_for', ['context' => $commentContext]);
 $unlikeLabel = t('account.status_comment_unlike_for', ['context' => $commentContext]);
 $currentLikeLabel = $liked ? $unlikeLabel : $likeLabel;

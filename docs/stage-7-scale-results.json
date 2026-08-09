@@ -1,0 +1,327 @@
+{
+    "ok": true,
+    "generated_at": "2026-08-09T14:34:33+00:00",
+    "php_version": "8.4.12",
+    "database_version": "8.4.3",
+    "memory_limit": "128M",
+    "resume_verified": true,
+    "import": {
+        "ok": true,
+        "complete": true,
+        "database": "tinycat_scale_test_47a37214e414",
+        "profile": "million",
+        "fingerprint": "62ee4551de3e990615ab5e5396c481a191524f01abd4cab8ec5cf2890014c734",
+        "batches": 1999,
+        "duration_seconds": 315,
+        "counts": {
+            "users": 2501,
+            "content": 17485,
+            "terms": 40,
+            "content_tags": 87240,
+            "links": 2432,
+            "content_links": 2432,
+            "content_likes": 175649,
+            "content_comments": 419468,
+            "comment_likes": 1259052,
+            "user_followers": 45245,
+            "user_profile_links": 2200,
+            "notifications": 1127209,
+            "content_reports": 529
+        },
+        "relational_rows": 3141482,
+        "nested_level_three_comments": 95139,
+        "nested_level_four_comments": 50529,
+        "memory_limit": "128M",
+        "peak_memory_bytes": 18874368,
+        "stats": {
+            "admins": 1,
+            "comment_likes": 1259052,
+            "comments": 419468,
+            "content_links": 2432,
+            "content_tags": 87240,
+            "follows": 45245,
+            "links": 2432,
+            "notifications": 1127209,
+            "post_likes": 175649,
+            "posts": 17485,
+            "profile_links": 2200,
+            "reports": 529,
+            "settings": 5,
+            "tags": 40,
+            "users": 2500
+        },
+        "configuration": {
+            "database": "tinycat_scale_test_47a37214e414",
+            "import_format": 2,
+            "profile": "million",
+            "users": 2500,
+            "min_posts": 6,
+            "max_posts": 8,
+            "min_comments": 20,
+            "max_comments": 28,
+            "min_follows": 12,
+            "max_follows": 24,
+            "min_post_likes": 5,
+            "max_post_likes": 15,
+            "min_comment_likes": 2,
+            "max_comment_likes": 4,
+            "batch_size": 250,
+            "seed": 250,
+            "prefix": "bench",
+            "anchor": "2026-08-01 12:00:00"
+        },
+        "state_path": "C:\\Users\\Nikola\\AppData\\Local\\Temp\\tinycat_scale_test_47a37214e414\\state.json"
+    },
+    "scenarios": {
+        "feed": {
+            "cold": {
+                "ok": true,
+                "scenario": "feed",
+                "mode": "cold",
+                "memory_limit": "128M",
+                "iterations": 1,
+                "warmup_iterations": 0,
+                "p50_ms": 8.265,
+                "p95_ms": 8.265,
+                "max_ms": 8.265,
+                "questions_total": 3,
+                "questions_per_iteration": 3,
+                "peak_memory_bytes": 6291456
+            },
+            "warm": {
+                "ok": true,
+                "scenario": "feed",
+                "mode": "warm",
+                "memory_limit": "128M",
+                "iterations": 10,
+                "warmup_iterations": 2,
+                "p50_ms": 3.78,
+                "p95_ms": 4.627,
+                "max_ms": 4.627,
+                "questions_total": 20,
+                "questions_per_iteration": 2,
+                "peak_memory_bytes": 6291456
+            }
+        },
+        "status": {
+            "cold": {
+                "ok": true,
+                "scenario": "status",
+                "mode": "cold",
+                "memory_limit": "128M",
+                "iterations": 1,
+                "warmup_iterations": 0,
+                "p50_ms": 7.771,
+                "p95_ms": 7.771,
+                "max_ms": 7.771,
+                "questions_total": 3,
+                "questions_per_iteration": 3,
+                "peak_memory_bytes": 6291456
+            },
+            "warm": {
+                "ok": true,
+                "scenario": "status",
+                "mode": "warm",
+                "memory_limit": "128M",
+                "iterations": 10,
+                "warmup_iterations": 2,
+                "p50_ms": 0.937,
+                "p95_ms": 1.024,
+                "max_ms": 1.024,
+                "questions_total": 10,
+                "questions_per_iteration": 1,
+                "peak_memory_bytes": 6291456
+            }
+        },
+        "tag": {
+            "cold": {
+                "ok": true,
+                "scenario": "tag",
+                "mode": "cold",
+                "memory_limit": "128M",
+                "iterations": 1,
+                "warmup_iterations": 0,
+                "p50_ms": 20.094,
+                "p95_ms": 20.094,
+                "max_ms": 20.094,
+                "questions_total": 4,
+                "questions_per_iteration": 4,
+                "peak_memory_bytes": 6291456
+            },
+            "warm": {
+                "ok": true,
+                "scenario": "tag",
+                "mode": "warm",
+                "memory_limit": "128M",
+                "iterations": 10,
+                "warmup_iterations": 2,
+                "p50_ms": 4.506,
+                "p95_ms": 5.733,
+                "max_ms": 5.733,
+                "questions_total": 30,
+                "questions_per_iteration": 3,
+                "peak_memory_bytes": 6291456
+            }
+        },
+        "author": {
+            "cold": {
+                "ok": true,
+                "scenario": "author",
+                "mode": "cold",
+                "memory_limit": "128M",
+                "iterations": 1,
+                "warmup_iterations": 0,
+                "p50_ms": 14.56,
+                "p95_ms": 14.56,
+                "max_ms": 14.56,
+                "questions_total": 8,
+                "questions_per_iteration": 8,
+                "peak_memory_bytes": 6291456
+            },
+            "warm": {
+                "ok": true,
+                "scenario": "author",
+                "mode": "warm",
+                "memory_limit": "128M",
+                "iterations": 10,
+                "warmup_iterations": 2,
+                "p50_ms": 5.324,
+                "p95_ms": 6.22,
+                "max_ms": 6.22,
+                "questions_total": 70,
+                "questions_per_iteration": 7,
+                "peak_memory_bytes": 6291456
+            }
+        },
+        "search": {
+            "cold": {
+                "ok": true,
+                "scenario": "search",
+                "mode": "cold",
+                "memory_limit": "128M",
+                "iterations": 1,
+                "warmup_iterations": 0,
+                "p50_ms": 30.04,
+                "p95_ms": 30.04,
+                "max_ms": 30.04,
+                "questions_total": 3,
+                "questions_per_iteration": 3,
+                "peak_memory_bytes": 6291456
+            },
+            "warm": {
+                "ok": true,
+                "scenario": "search",
+                "mode": "warm",
+                "memory_limit": "128M",
+                "iterations": 10,
+                "warmup_iterations": 2,
+                "p50_ms": 6.416,
+                "p95_ms": 8.98,
+                "max_ms": 8.98,
+                "questions_total": 30,
+                "questions_per_iteration": 3,
+                "peak_memory_bytes": 6291456
+            }
+        },
+        "write": {
+            "cold": {
+                "ok": true,
+                "scenario": "write",
+                "mode": "cold",
+                "memory_limit": "128M",
+                "iterations": 1,
+                "warmup_iterations": 0,
+                "p50_ms": 16.515,
+                "p95_ms": 16.515,
+                "max_ms": 16.515,
+                "questions_total": 26,
+                "questions_per_iteration": 26,
+                "peak_memory_bytes": 6291456
+            },
+            "warm": {
+                "ok": true,
+                "scenario": "write",
+                "mode": "warm",
+                "memory_limit": "128M",
+                "iterations": 10,
+                "warmup_iterations": 2,
+                "p50_ms": 22.893,
+                "p95_ms": 35.393,
+                "max_ms": 35.393,
+                "questions_total": 260,
+                "questions_per_iteration": 26,
+                "peak_memory_bytes": 6291456
+            }
+        },
+        "maintenance": {
+            "cold": {
+                "ok": true,
+                "scenario": "maintenance",
+                "mode": "cold",
+                "memory_limit": "128M",
+                "iterations": 1,
+                "warmup_iterations": 0,
+                "p50_ms": 33.889,
+                "p95_ms": 33.889,
+                "max_ms": 33.889,
+                "questions_total": 2,
+                "questions_per_iteration": 2,
+                "peak_memory_bytes": 6291456
+            },
+            "warm": {
+                "ok": true,
+                "scenario": "maintenance",
+                "mode": "warm",
+                "memory_limit": "128M",
+                "iterations": 10,
+                "warmup_iterations": 2,
+                "p50_ms": 59.508,
+                "p95_ms": 74.003,
+                "max_ms": 74.003,
+                "questions_total": 20,
+                "questions_per_iteration": 2,
+                "peak_memory_bytes": 6291456
+            }
+        }
+    },
+    "query_plans": {
+        "feed": {
+            "mode": "EXPLAIN ANALYZE",
+            "plan": [
+                "-> Limit: 24 row(s)  (cost=4302 rows=23.9) (actual time=0.199..0.368 rows=24 loops=1)\n    -> Nested loop inner join  (cost=4302 rows=23.9) (actual time=0.198..0.365 rows=24 loops=1)\n        -> Index scan on c using content_feed_index (reverse)  (cost=60.1 rows=239) (actual time=0.174..0.244 rows=24 loops=1)\n        -> Filter: (u.`status` = 'active')  (cost=0.25 rows=0.1) (actual time=0.00459..0.00472 rows=1 loops=24)\n            -> Single-row index lookup on u using PRIMARY (id=c.author_id)  (cost=0.25 rows=1) (actual time=0.00407..0.00412 rows=1 loops=24)\n"
+            ]
+        },
+        "status_comments": {
+            "mode": "EXPLAIN ANALYZE",
+            "plan": [
+                "-> Nested loop inner join  (cost=36.5 rows=2.8) (actual time=0.165..0.273 rows=28 loops=1)\n    -> Sort: cc.created_at, cc.id  (cost=26.7 rows=28) (actual time=0.152..0.159 rows=28 loops=1)\n        -> Filter: (cc.user_id is not null)  (cost=26.7 rows=28) (actual time=0.0596..0.125 rows=28 loops=1)\n            -> Index lookup on cc using content_comments_content_index (content_id=(select #3))  (cost=26.7 rows=28) (actual time=0.0589..0.122 rows=28 loops=1)\n    -> Filter: (u.`status` = 'active')  (cost=0.25 rows=0.1) (actual time=0.00377..0.00386 rows=1 loops=28)\n        -> Single-row index lookup on u using PRIMARY (id=cc.user_id)  (cost=0.25 rows=1) (actual time=0.00331..0.00335 rows=1 loops=28)\n-> Select #2 (subquery in projection; dependent)\n    -> Aggregate: count(0)  (cost=1.5 rows=1) (actual time=0.0053..0.00534 rows=1 loops=28)\n        -> Covering index lookup on cl using PRIMARY (comment_id=cc.id)  (cost=1.24 rows=2.67) (actual time=0.00367..0.00466 rows=3 loops=28)\n"
+            ]
+        },
+        "tag": {
+            "mode": "EXPLAIN ANALYZE",
+            "plan": [
+                "-> Limit: 24 row(s)  (actual time=8.38..8.38 rows=24 loops=1)\n    -> Sort: c.published_at DESC, c.id DESC, limit input to 24 row(s) per chunk  (actual time=8.38..8.38 rows=24 loops=1)\n        -> Stream results  (cost=1858 rows=232) (actual time=0.0761..7.9 rows=2317 loops=1)\n            -> Nested loop inner join  (cost=1858 rows=232) (actual time=0.0706..7.5 rows=2317 loops=1)\n                -> Nested loop inner join  (cost=1048 rows=2317) (actual time=0.0622..4.53 rows=2317 loops=1)\n                    -> Covering index lookup on ct using content_tags_term_index (term_id='21')  (cost=237 rows=2317) (actual time=0.0507..0.561 rows=2317 loops=1)\n                    -> Single-row index lookup on c using PRIMARY (id=ct.content_id)  (cost=0.25 rows=1) (actual time=0.00158..0.0016 rows=1 loops=2317)\n                -> Filter: (u.`status` = 'active')  (cost=0.25 rows=0.1) (actual time=0.00107..0.00116 rows=1 loops=2317)\n                    -> Single-row index lookup on u using PRIMARY (id=c.author_id)  (cost=0.25 rows=1) (actual time=914e-6..934e-6 rows=1 loops=2317)\n"
+            ]
+        },
+        "author": {
+            "mode": "EXPLAIN ANALYZE",
+            "plan": [
+                "-> Limit: 24 row(s)  (cost=1.06 rows=8) (actual time=0.0078..0.016 rows=8 loops=1)\n    -> Covering index lookup on c using content_author_index (author_id=(select #2)) (reverse)  (cost=1.06 rows=8) (actual time=0.0075..0.0151 rows=8 loops=1)\n"
+            ]
+        },
+        "search": {
+            "mode": "EXPLAIN ANALYZE",
+            "plan": [
+                "-> Limit: 12 row(s)  (cost=0.7 rows=0.1) (actual time=17.6..17.7 rows=12 loops=1)\n    -> Nested loop inner join  (cost=0.7 rows=0.1) (actual time=17.6..17.7 rows=12 loops=1)\n        -> Sort row IDs: c.published_at DESC, c.id DESC  (cost=0.35 rows=1) (actual time=17.6..17.6 rows=12 loops=1)\n            -> Filter: (match c.body against ('performance'))  (cost=0.35 rows=1) (actual time=0.817..16.1 rows=4739 loops=1)\n                -> Full-text index search on c using content_body_fulltext (body='performance')  (cost=0.35 rows=1) (actual time=0.816..15.6 rows=4739 loops=1)\n        -> Filter: (u.`status` = 'active')  (cost=0.26 rows=0.1) (actual time=0.00408..0.00417 rows=1 loops=12)\n            -> Single-row index lookup on u using PRIMARY (id=c.author_id)  (cost=0.26 rows=1) (actual time=0.00362..0.00365 rows=1 loops=12)\n"
+            ]
+        }
+    },
+    "slow_query_log": {
+        "slow_query_log": "OFF",
+        "long_query_time": "10.000000",
+        "log_output": "FILE",
+        "inspection": "Global slow-log settings were read only; EXPLAIN supplied per-query evidence without changing server state."
+    },
+    "index_changes": [],
+    "index_decision": "No production index change was justified by the measured latency and access plans."
+}

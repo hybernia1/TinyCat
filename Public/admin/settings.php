@@ -35,13 +35,15 @@ if (is_post()) {
     redirect('/admin/settings');
 }
 
+$settingsSections = tc_admin_settings_view_sections();
+
 layout('layout', [
     'title' => t('settings.meta_title'),
     'current' => '/admin/settings',
     'styles' => ['css/tinycat.css'],
     'scripts' => ['js/tinycat.js'],
-], static function (): void {
-    $sections = tc_admin_settings_sections();
+], static function () use ($settingsSections): void {
+    $sections = $settingsSections;
     $active = array_key_first($sections) ?: 'general';
     ?>
     <section class="card" data-tabs>
@@ -167,6 +169,22 @@ function tc_admin_settings_sections(): array
             ],
         ],
     ];
+}
+
+/** @return array<string, array<string, mixed>> */
+function tc_admin_settings_view_sections(): array
+{
+    $sections = tc_admin_settings_sections();
+
+    foreach ($sections as &$section) {
+        foreach ($section['fields'] as &$field) {
+            $field['value'] = config((string) ($field['key'] ?? ''), $field['default'] ?? '');
+        }
+        unset($field);
+    }
+    unset($section);
+
+    return $sections;
 }
 
 

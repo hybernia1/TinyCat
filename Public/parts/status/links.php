@@ -7,12 +7,7 @@ if (!defined('TINYCAT')) {
 }
 
 $item = is_array($item ?? null) ? $item : [];
-$contentId = (int) ($item['id'] ?? 0);
-$links = $contentId > 0 ? status_links_for_content($contentId) : [];
-$links = array_values(array_filter(
-    $links,
-    static fn (array $link): bool => !status_link_is_internal($link)
-));
+$links = is_array(($item['_view'] ?? [])['links'] ?? null) ? $item['_view']['links'] : [];
 
 if ($links === []) {
     return '';

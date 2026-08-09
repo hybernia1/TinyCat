@@ -25,6 +25,7 @@ if (is_post()) {
 
 $batch = Notifications::page($userId);
 $unread = Notifications::unreadCount($userId);
+$viewItems = Notifications::viewItems((array) $batch['items']);
 
 layout('layout', [
     'title' => t('notifications.title'),
@@ -34,11 +35,11 @@ layout('layout', [
         'url' => '/notifications',
         'robots' => 'noindex,nofollow',
     ],
-], static function () use ($batch, $unread): void {
+], static function () use ($batch, $unread, $viewItems): void {
     ?>
     <div id="notifications-view">
         <?= part('notifications/page', [
-            'notifications' => (array) $batch['items'],
+            'notifications' => $viewItems,
             'unread' => $unread,
             'next_url' => (string) $batch['next_url'],
         ]) ?>

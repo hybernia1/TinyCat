@@ -124,6 +124,20 @@ $test('store catalog rejects paths outside an extension package', static functio
     ], [$package => 'https://github.com/example/sample.zip']));
 });
 
+$test('store catalog rejects case and file-directory path collisions', static function () use ($expectFailure): void {
+    $validate = new ReflectionMethod(Store::class, 'validateFiles');
+    $hash = str_repeat('b', 64);
+
+    $expectFailure(static fn () => $validate->invoke(null, [
+        'Sample/extension.json' => $hash,
+        'Sample/EXTENSION.json' => $hash,
+    ], 'Sample'));
+    $expectFailure(static fn () => $validate->invoke(null, [
+        'Sample/extension.json' => $hash,
+        'Sample/extension.json/config.php' => $hash,
+    ], 'Sample'));
+});
+
 $test('extension state overrides accept only boolean slug maps', static function () use ($expect): void {
     $method = new ReflectionMethod(Loader::class, 'normalizeStateOverrides');
     $states = $method->invoke(null, [

@@ -11,7 +11,7 @@ $user = is_array($user ?? null) ? $user : null;
 $action = (string) ($action ?? '/');
 $context = (string) ($context ?? '');
 $contentId = (int) ($item['id'] ?? 0);
-$comments = $contentId > 0 ? status_comments($contentId) : [];
+$comments = is_array($comments ?? null) ? $comments : [];
 
 if ($contentId < 1 || ($comments === [] && $user === null)) {
     return '';

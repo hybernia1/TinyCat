@@ -50,8 +50,7 @@ if ($adminUsersApi === 'update') {
     }
 
     try {
-        update('users', $payload, ['id' => $id]);
-        user_profile_links_sync($id, $profileLinks);
+        user_profile_save($id, $payload, $profileLinks);
     } catch (Throwable $exception) {
         if ($avatar['uploaded']) {
             Avatar::delete($avatar['config']);
@@ -281,12 +280,35 @@ function tc_admin_users_view_data(): array
         $user['profile_links'] = $profileLinks[(int) ($user['id'] ?? 0)] ?? [];
     }
     unset($user);
+    $pagination = $page['pagination'];
+    $params = tc_admin_users_list_params($filters, $pagination);
+    $perPage = (int) ($pagination['per_page'] ?? admin_per_page());
 
     return [
         'filters' => $filters,
         'users' => $users,
-        'pagination' => $page['pagination'],
-        'params' => tc_admin_users_list_params($filters, $page['pagination']),
+        'pagination' => $pagination,
+        'params' => $params,
+        'per_page' => $perPage,
+        'search_url' => tc_admin_users_api_url([], false),
+        'clear_url' => tc_admin_users_api_url(['per_page' => $perPage, 'page' => 1], false),
+        'clear_history_url' => admin_list_url('/admin/users', ['per_page' => $perPage, 'page' => 1], false),
+        'per_page_view' => admin_per_page_view_data(
+            '/api/admin/users',
+            '#users-list',
+            $params,
+            $perPage,
+            '/admin/users'
+        ),
+        'pagination_view' => admin_pagination_view_data(
+            $pagination,
+            '/api/admin/users',
+            '#users-list',
+            $params,
+            'page',
+            2,
+            '/admin/users'
+        ),
         'roles' => tc_admin_roles(),
         'statuses' => admin_user_statuses(),
         'has_filters' => tc_admin_users_active_filters($filters) !== [],

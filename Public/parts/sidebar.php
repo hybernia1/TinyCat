@@ -10,7 +10,7 @@ $activeTag = status_tag_normalize((string) ($active_tag ?? ''));
 $tags = is_array($tags ?? null) ? $tags : [];
 $authors = is_array($authors ?? null) ? $authors : [];
 $sidebarUrl = (string) ($sidebar_url ?? '/api/sidebar');
-$siteFooterHtml = (string) ($site_footer_html ?? site_footer_html());
+$siteFooterHtml = (string) ($site_footer_html ?? '');
 ?>
 <aside class="public-sidebar" aria-label="<?= et('public.sidebar_title') ?>" data-public-sidebar-url="<?= e($sidebarUrl) ?>">
     <article class="card public-sidebar-card">

@@ -1,0 +1,4231 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method Api\:\:authModal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:authorFollowing\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:avatarEditModal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:avatarUpdate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:followAuthor\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:homeFeed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:login\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:logout\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:notificationAction\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:notifications\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:notificationsPage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:profileEditModal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:profileEmailUpdate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:profilePasswordUpdate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:profileUpdate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:registerAccount\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:search\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:searchCaptcha\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:sidebar\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:statusAction\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:statusCard\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:statusCommentEditModal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:statusCommentHistoryModal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:statusEditModal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:statusFeed\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:statusModal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:statusReportModal\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Api\:\:statusSuggest\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Api.php
+
+		-
+			message: '#^Method Avatar\:\:configJson\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Avatar.php
+
+		-
+			message: '#^Method Avatar\:\:delete\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Avatar.php
+
+		-
+			message: '#^Method Avatar\:\:delete\(\) has parameter \$except with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Avatar.php
+
+		-
+			message: '#^Method Avatar\:\:normalizeConfig\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Avatar.php
+
+		-
+			message: '#^Method Avatar\:\:normalizeConfig\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Avatar.php
+
+		-
+			message: '#^Method Avatar\:\:upload\(\) has parameter \$file with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Avatar.php
+
+		-
+			message: '#^Method Avatar\:\:upload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Avatar.php
+
+		-
+			message: '#^Method Avatar\:\:url\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Avatar.php
+
+		-
+			message: '#^Parameter \#4 \$color of function imagefill expects int, int\<0, max\>\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: App/Avatar.php
+
+		-
+			message: '#^Call to an undefined method object\:\:delete\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: App/Cache.php
+
+		-
+			message: '#^Call to an undefined method object\:\:get\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: App/Cache.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getResultCode\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: App/Cache.php
+
+		-
+			message: '#^Call to an undefined method object\:\:getVersion\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: App/Cache.php
+
+		-
+			message: '#^Call to an undefined method object\:\:set\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: App/Cache.php
+
+		-
+			message: '#^Method Cache\:\:diagnostics\(\) should return array\{driver\: ''filesystem''\|''memcached'', available\: bool\} but returns array\{driver\: string, available\: bool\}\.$#'
+			identifier: return.type
+			count: 1
+			path: App/Cache.php
+
+		-
+			message: '#^Method Cache\:\:memcachedConfig\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Cache.php
+
+		-
+			message: '#^Property Cache\:\:\$memcachedConfig type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Cache.php
+
+		-
+			message: '#^Method Captcha\:\:actionMatches\(\) has parameter \$result with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Captcha.php
+
+		-
+			message: '#^Method Captcha\:\:decodeResponse\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Captcha.php
+
+		-
+			message: '#^Method Captcha\:\:hostnameMatches\(\) has parameter \$result with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Captcha.php
+
+		-
+			message: '#^Method Captcha\:\:postForm\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Captcha.php
+
+		-
+			message: '#^Method Captcha\:\:postForm\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Captcha.php
+
+		-
+			message: '#^Method Captcha\:\:verify\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Captcha.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<int\|string, array\<mixed\>\|string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:all\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:all\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:apiCreated\(\) has parameter \$meta with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:apiEnvelope\(\) has parameter \$error with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:apiEnvelope\(\) has parameter \$meta with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:apiEnvelope\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:apiError\(\) has parameter \$details with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:apiOk\(\) has parameter \$meta with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:apiRoute\(\) has parameter \$methods with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:apiValidation\(\) has parameter \$errors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:authAttempt\(\) has parameter \$credentials with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:authIs\(\) has parameter \$roles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:authLogin\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:authRemember\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:authRememberCookieOptions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:authRememberDecode\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:authRememberSignature\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:authRememberUser\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:cacheAutoloadSettings\(\) has parameter \$settings with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:cachedAutoloadSettings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:columns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:columns\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:count\(\) has parameter \$where with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:dataGet\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:dataHas\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:delete\(\) has parameter \$where with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:exec\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:find\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:find\(\) has parameter \$where with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:find\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:findUserById\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:findUserByLoginIdentifier\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:findUserByUsername\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:hasAnyRule\(\) has parameter \$needles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:hasAnyRule\(\) has parameter \$rules with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:htmlAttributes\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:icon\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:insert\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:insert\(\) should return string but returns string\|false\.$#'
+			identifier: return.type
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:json\(\) has parameter \$headers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:layout\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:normalizeMethods\(\) has parameter \$methods with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:normalizeMethods\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:normalizeRules\(\) has parameter \$rules with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:normalizeRules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:one\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:one\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:pagination\(\) has parameter \$pagination with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:paginationMeta\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:paginationPages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:parsePayload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:parseRule\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:passesRule\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:passesRule\(\) has parameter \$rules with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:query\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:render\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:replacePlaceholders\(\) has parameter \$replace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:requireAuth\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:requireData\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:route\(\) has parameter \$methods with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:routeMatch\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:runRoute\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:runRoute\(\) has parameter \$route with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:selectColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:settings\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:settings\(\) should return array but returns array\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:t\(\) has parameter \$replace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:translations\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:update\(\) has parameter \$where with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:userHasRole\(\) has parameter \$roles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:userHasRole\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:userIsActive\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:validate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:validate\(\) has parameter \$messages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:validate\(\) has parameter \$rules with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:validate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:validated\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:validated\(\) has parameter \$messages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:validated\(\) has parameter \$rules with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:validated\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:validationMessage\(\) has parameter \$messages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:value\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:where\(\) has parameter \$where with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method Core\:\:where\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method CoreQuery\:\:addParams\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method CoreQuery\:\:all\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method CoreQuery\:\:one\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method CoreQuery\:\:whereIn\(\) has parameter \$values with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Offset ''domain'' on array\{lifetime\: int\<0, max\>, path\: non\-falsy\-string, domain\: string, secure\: bool, httponly\: bool, samesite\: ''Lax''\|''lax''\|''None''\|''none''\|''Strict''\|''strict''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Offset ''lifetime'' on array\{lifetime\: int\<0, max\>, path\: non\-falsy\-string, domain\: string, secure\: bool, httponly\: bool, samesite\: ''Lax''\|''lax''\|''None''\|''none''\|''Strict''\|''strict''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Offset ''path'' on array\{lifetime\: int\<0, max\>, path\: non\-falsy\-string, domain\: string, secure\: bool, httponly\: bool, samesite\: ''Lax''\|''lax''\|''None''\|''none''\|''Strict''\|''strict''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Offset ''secure'' on array\{lifetime\: int\<0, max\>, path\: non\-falsy\-string, domain\: string, secure\: bool, httponly\: bool, samesite\: ''Lax''\|''lax''\|''None''\|''none''\|''Strict''\|''strict''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Parameter \#1 \$string of function strtolower expects string, string\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Property Core\:\:\$config type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Property Core\:\:\$payload type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Property Core\:\:\$routes type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Property Core\:\:\$sensitiveSettings type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Property Core\:\:\$settings type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Property Core\:\:\$translations type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Property CoreQuery\:\:\$joins type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Property CoreQuery\:\:\$params type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Property CoreQuery\:\:\$wheres type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Core.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Lifecycle\:\:all\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Lifecycle\:\:freshInstallVersions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Lifecycle\:\:installedVersions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Lifecycle\:\:migrate\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Lifecycle\:\:migrateDefinition\(\) has parameter \$extension with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Lifecycle\:\:migrateDefinition\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Lifecycle\:\:migrateDiscovered\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:available\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:boot\(\) has parameter \$installedVersions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:boot\(\) has parameter \$stateOverrides with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:cacheMigrationChecksums\(\) has parameter \$extensions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:cachedMigrationChecksums\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:discover\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:discoverWithCachedMigrationChecksums\(\) has parameter \$cachedMigrationChecksums with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:discoverWithCachedMigrationChecksums\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:loaded\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:localizedManifestText\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:normalizeInstalledVersions\(\) has parameter \$versions with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:normalizeInstalledVersions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:normalizeStateOverrides\(\) has parameter \$states with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:normalizeStateOverrides\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:publicManifest\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:publicManifest\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:readManifest\(\) has parameter \$cachedMigrationChecksums with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:readManifest\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:stateOverrides\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Loader\:\:uninstallDefinition\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Registry\:\:adminNavigation\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Registry\:\:register\(\) has parameter \$definition with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Registry\:\:render\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Registry\:\:requiredTables\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Registry\:\:scheduledTasks\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Registry\:\:slugs\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Registry\:\:translations\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Registry\:\:validateScheduledTasks\(\) has parameter \$tasks with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Registry\:\:validateScheduledTasks\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Property TinyCat\\Extension\\Assets\:\:\$providers type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Property TinyCat\\Extension\\Loader\:\:\$available type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Property TinyCat\\Extension\\Loader\:\:\$installedVersions type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Property TinyCat\\Extension\\Loader\:\:\$loaded type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Property TinyCat\\Extension\\Loader\:\:\$stateOverrides type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Property TinyCat\\Extension\\Registry\:\:\$extensions type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-array\<mixed, mixed\> and array\{\} will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: App/Extension.php
+
+		-
+			message: '#^Method LinkMetadata\:\:enrich\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:enrich\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:fetch\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:fetchDocument\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:fetchImage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:fetchVideo\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:fetchVideo\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:headers\(\) has parameter \$raw with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:headers\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:parseHtml\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:requestCurl\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Method LinkMetadata\:\:shouldFetch\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-falsy\-string&numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: App/LinkMetadata.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: App/Minifier.php
+
+		-
+			message: '#^Method Notifications\:\:items\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:mentionedUserIds\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:message\(\) has parameter \$notification with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:notifyCommentOwner\(\) has parameter \$actor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:notifyContentOwner\(\) has parameter \$actor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:notifyMentions\(\) has parameter \$actor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:notifyMentions\(\) has parameter \$skipUserIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:notifyReporters\(\) has parameter \$actor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:page\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:state\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:targetUrl\(\) has parameter \$notification with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Method Notifications\:\:url\(\) has parameter \$notification with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Offset 1 on array\{non\-empty\-list\<string\>, non\-empty\-list\<non\-falsy\-string&numeric\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/Notifications.php
+
+		-
+			message: '#^Call to function is_int\(\) with float\|false will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Cannot call method fetch\(\) on PDOStatement\|false\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:cachedCatalog\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:catalog\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:extractPackage\(\) has parameter \$expected with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:extractPackageWithPhar\(\) has parameter \$expected with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:install\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:releaseAssets\(\) has parameter \$release with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:releaseAssets\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:uninstall\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:validateCatalog\(\) has parameter \$assets with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:validateCatalog\(\) has parameter \$catalog with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:validateCatalog\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:validateFiles\(\) has parameter \$files with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Extension\\Store\:\:validateFiles\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\PackageManager\:\:decodeJson\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:applyFiles\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:applyMigrations\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:applyMigrations\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:assertCompatibility\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:cachedRelease\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:check\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:createBackup\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:deleteLegacyFiles\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:extractPackage\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:extractPackageWithPhar\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:hasPendingMigrations\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:installLatest\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:maintenanceState\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:migrationHistory\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:preflightManagedTargets\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:releaseAssets\(\) has parameter \$release with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:releaseAssets\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:validateManifest\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:validateManifest\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:verifyLocalPackage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\Manager\:\:writeJsonFile\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\MigrationRegistry\:\:assertRequiredColumns\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\MigrationRegistry\:\:assertRequiredColumns\(\) has parameter \$primary with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method TinyCat\\Update\\MigrationRegistry\:\:history\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Offset ''name'' on array\{name\: string, index\: int, crc\: int, size\: int, mtime\: int, comp_size\: int, comp_method\: int, encryption_method\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: App/PackageManager.php
+
+		-
+			message: '#^Offset ''size'' on array\{name\: string, index\: int, crc\: int, size\: int, mtime\: int, comp_size\: int, comp_method\: int, encryption_method\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: App/PackageManager.php
+
+		-
+			message: '#^Parameter \#1 \$callback of function array_map expects \(callable\(int\|string\)\: mixed\)\|null, Closure\(string\)\: non\-falsy\-string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Parameter \#3 \$depth of function json_decode expects int\<1, max\>, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: App/PackageManager.php
+
+		-
+			message: '#^Method SiteIdentity\:\:metadata\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/SiteIdentity.php
+
+		-
+			message: '#^Method SiteIdentity\:\:renderVariant\(\) has parameter \$variant with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/SiteIdentity.php
+
+		-
+			message: '#^Method SiteIdentity\:\:source\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/SiteIdentity.php
+
+		-
+			message: '#^Method SiteIdentity\:\:variant\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/SiteIdentity.php
+
+		-
+			message: '#^Parameter \#6 \$color of function imagefilledrectangle expects int, int\<0, max\>\|false given\.$#'
+			identifier: argument.type
+			count: 2
+			path: App/SiteIdentity.php
+
+		-
+			message: '#^Method TinyCat\\Sitemap\:\:entries\(\) should return list\<array\{url\: string, last_modified\: string\|null, image_url\?\: string\}\> but returns list\<array\>\.$#'
+			identifier: return.type
+			count: 1
+			path: App/Sitemap.php
+
+		-
+			message: '#^Method TinyCat\\Sitemap\:\:sections\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Sitemap.php
+
+		-
+			message: '#^Method TinyCat\\Sitemap\:\:validateExtensionEntry\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Sitemap.php
+
+		-
+			message: '#^Property TinyCat\\Sitemap\:\:\$extensionSections type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/Sitemap.php
+
+		-
+			message: '#^Method StatusImage\:\:upload\(\) has parameter \$file with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusImage.php
+
+		-
+			message: '#^Method StatusImage\:\:upload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusImage.php
+
+		-
+			message: '#^Offset 0 on array\{0, 0\}\|array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/StatusImage.php
+
+		-
+			message: '#^Offset 1 on array\{0, 0\}\|array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/StatusImage.php
+
+		-
+			message: '#^Parameter \#4 \$color of function imagefill expects int, int\<0, max\>\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: App/StatusImage.php
+
+		-
+			message: '#^Cannot cast array\<mixed\>\|string to string\.$#'
+			identifier: cast.string
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method StatusLinks\:\:dailymotionId\(\) has parameter \$parts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method StatusLinks\:\:extract\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method StatusLinks\:\:fromRaw\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method StatusLinks\:\:hostMatches\(\) has parameter \$domains with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method StatusLinks\:\:normalizeUrl\(\) has parameter \$parts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method StatusLinks\:\:splitTail\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method StatusLinks\:\:video\(\) has parameter \$parts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method StatusLinks\:\:video\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method StatusLinks\:\:vimeoId\(\) has parameter \$parts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method StatusLinks\:\:youtubeId\(\) has parameter \$parts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Offset 0 on array\{non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Offset 0 on array\{string, int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-empty\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-falsy\-string&numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Offset 1 on array\{string, int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/StatusLinks.php
+
+		-
+			message: '#^Method UserRoles\:\:coreAdminLabels\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/UserRoles.php
+
+		-
+			message: '#^Method UserRoles\:\:register\(\) has parameter \$capabilities with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/UserRoles.php
+
+		-
+			message: '#^Method UserRoles\:\:rolesWith\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/UserRoles.php
+
+		-
+			message: '#^Property UserRoles\:\:\$roles type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/UserRoles.php
+
+		-
+			message: '#^Comparison operation "\<" between int\<80400, 80599\> and 80400 is always false\.$#'
+			identifier: smaller.alwaysFalse
+			count: 1
+			path: App/bootstrap.php
+
+		-
+			message: '#^Call to function captcha_refresh\(\) on a separate line has no effect\.$#'
+			identifier: function.resultUnused
+			count: 7
+			path: App/functions.php
+
+		-
+			message: '#^Call to function is_int\(\) with 0\|1\|2\|3\|4\|5\|6\|7\|8\|9\|10\|11\|12\|13\|14\|15\|16 will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: App/functions.php
+
+		-
+			message: '#^Comparison operation "\<" between int\<1, max\> and 1 is always false\.$#'
+			identifier: smaller.alwaysFalse
+			count: 2
+			path: App/functions.php
+
+		-
+			message: '#^Function admin_list_query\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function admin_list_query\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function admin_list_url\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function admin_per_page_options\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function admin_user_avatar_change\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function admin_user_avatar_change\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function admin_user_statuses\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function all\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function all\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_created\(\) has parameter \$meta with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_error\(\) has parameter \$details with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_ok\(\) has parameter \$meta with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_payload\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_payload\(\) has parameter \$html with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_route\(\) has parameter \$methods with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_validated\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_validated\(\) has parameter \$messages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_validated\(\) has parameter \$rules with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_validated\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function api_validation\(\) has parameter \$errors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function app_db_ready\(\) has parameter \$requiredTables with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function app_db_status\(\) has parameter \$requiredTables with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function app_db_status\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function app_existing_tables\(\) has parameter \$tables with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function app_existing_tables\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function app_required_tables\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function app_touch_user_activity\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_attempt\(\) has parameter \$credentials with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_form_state_from_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_form_state_previous\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_is\(\) has parameter \$roles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_landing_url\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_login\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_login_credentials\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_login_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_password_validation_errors\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_password_validation_field_errors\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function auth_redirect_after_login\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_activity_stats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_api_url\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_follow_counts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_following_cursor_params\(\) has parameter \$profiles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_following_cursor_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_following_profile_payload\(\) has parameter \$profile with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_following_profile_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_following_profiles\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_mention_user_cache\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_mention_users_by_ids\(\) has parameter \$userIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_mention_users_by_ids\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_presence\(\) has parameter \$author with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function author_presence\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function cleanup_delete_limited\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function cleanup_task_run\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function cron_cleanup_run\(\) has parameter \$tasks with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function cron_cleanup_run\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function cron_cleanup_tasks\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function date_format_presets\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function datetime_format_presets\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function delete\(\) has parameter \$where with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function email_catalog\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function email_template_keys\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function email_template_send\(\) has parameter \$vars with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function email_user\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function et\(\) has parameter \$replace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function find\(\) has parameter \$columns with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function find\(\) has parameter \$where with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function find\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function icon\(\) has parameter \$attributes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function insert\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function language_names\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function language_options\(\) has parameter \$codes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function language_packages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function languages\(\) has parameter \$codes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function languages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function layout\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function moderation_action_count\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function moderation_action_rule\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function moderation_action_rule\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function moderation_action_rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function moderation_blocked_url_rules\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function moderation_host_blocked_by\(\) has parameter \$blockedRules with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function moderation_record_action\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function moderation_user_reputation\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function one\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function one\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function pagination\(\) has parameter \$pagination with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function pagination_meta\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function pagination_sql\(\) has parameter \$pagination with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function part\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function profile_link_social_domains\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function profile_link_types\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function profile_links_from_input\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_author_find\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_following_author_ids\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_home_feed_data\(\) has parameter \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_home_feed_data\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_home_feed_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_home_feed_payload\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_home_feed_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_content_result\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_content_result\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_content_rows\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_empty_result\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_guard\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_guest_limits\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_guest_state\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_link_content_rows\(\) has parameter \$excludeIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_link_content_rows\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_recent_content_scan\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_results\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_suggestion_tags\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_suggestion_users\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_search_suggestions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_cursor_page\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_ids_by_author\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_ids_by_tag\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_ids_page\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_item\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_items_by_author_cursor\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_items_by_ids\(\) has parameter \$ids with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_items_by_ids\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_items_by_tag\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_items_cursor\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_status_items_for_user_cursor\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_top_authors\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function public_trending_tags\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function registration_create_user\(\) has parameter \$registration with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function registration_create_user\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function registration_input\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function registration_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function render\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function render_status_body\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function render_status_text\(\) has parameter \$hiddenLinkHashes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function require_admin\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function require_auth\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function require_role\(\) has parameter \$roles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function require_role\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function route\(\) has parameter \$methods with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function run\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function site_image_upload\(\) has parameter \$file with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function site_image_upload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_accessible_context\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_accessible_identity\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_accessible_identity\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_api_url\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_can_delete\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_can_delete\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_can_edit\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_can_edit\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_cleanup_unused_link_ids\(\) has parameter \$linkIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_cleanup_unused_term_ids\(\) has parameter \$termIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_can_delete\(\) has parameter \$comment with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_can_delete\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_can_edit\(\) has parameter \$comment with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_can_edit\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_find\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_history\(\) has parameter \$comment with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_history\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_history_append\(\) has parameter \$actor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_history_append\(\) has parameter \$comment with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_item_find\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_rows_to_tree\(\) has parameter \$rows with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_rows_to_tree\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comment_user_liked_cache\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comments\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_comments_cache\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_edit_lock\(\) has parameter \$actor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_edit_locked\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_editor_suggestions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_feed_context_items\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_feed_context_items\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_feed_context_items\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_feed_cursor_params\(\) has parameter \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_feed_cursor_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_feed_next_url\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_feed_payload\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_feed_payload\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_feed_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_find\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_image_alt_text\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_image_jsonld\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_image_jsonld\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_image_record\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_image_uploaded_file\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_image_url\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_comment\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_comment\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_comment_delete\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_comment_delete\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_comment_like\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_comment_like\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_comment_payload\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_comment_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_comment_update\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_comment_update\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_create\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_create\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_delete\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_delete\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_react\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_react\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_report\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_report\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_require_action\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_require_not_muted\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_require_unique_body\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_summary\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_summary\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_update\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_json_update\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_apply_cached_metadata\(\) has parameter \$cached with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_apply_cached_metadata\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_apply_cached_metadata\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_data\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_display_url\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_find_by_hash\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_ids_for_content\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_is_internal\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_metadata_cache\(\) has parameter \$links with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_metadata_cache\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_metadata_fresh\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_metadata_has_content\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_prepare_metadata\(\) has parameter \$cached with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_prepare_metadata\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_prepare_metadata\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_link_upsert\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_links_cache\(\) has parameter \$contentIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_links_cache\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_links_for_content\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_links_from_text\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_meta_description\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_meta_image\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_meta_link_image\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_meta_link_title\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_meta_title\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_permalink_label\(\) has parameter \$item with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_preload_comment_user_likes\(\) has parameter \$commentIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_preload_feed\(\) has parameter \$items with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_preload_user_likes\(\) has parameter \$contentIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_report_dismissal_lock\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_report_reasons\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_require_valid_tags\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_session_interval_rule\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_sync_links\(\) has parameter \$links with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_sync_tags\(\) has parameter \$tags with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_tag_suggestions\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_tag_tokens_from_text\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_tags_from_text\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_term_ids_for_content\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_user_liked_cache\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_video_embed_url\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_video_thumbnail_sources\(\) has parameter \$link with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function status_video_thumbnail_sources\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function t\(\) has parameter \$replace with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function time_format_presets\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function timezone_presets\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function total\(\) has parameter \$where with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function update\(\) has parameter \$where with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_avatar_update_request\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_avatar_update_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_avatar_url\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_can_be_muted\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_can_edit_profile\(\) has parameter \$actor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_can_edit_profile\(\) has parameter \$target with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_delete_account\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_display_name\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_email_update_request\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_email_update_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_is_muted\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_mute\(\) has parameter \$actor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_muted_until\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_password_update_request\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_password_update_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_profile_links\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_profile_links_for_users\(\) has parameter \$userIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_profile_links_for_users\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_profile_links_sync\(\) has parameter \$links with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_profile_require_edit_target\(\) has parameter \$actor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_profile_require_edit_target\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_profile_require_edit_target\(\) should return array but returns array\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_profile_update_request\(\) has parameter \$actor with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_profile_update_request\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_profile_update_request\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_public_payload\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_public_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function user_theme\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function val\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^If condition is always false\.$#'
+			identifier: if.alwaysFalse
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset ''changed'' on array\{changed\: int, has_more\: bool\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset ''changes'' on non\-empty\-array\<mixed\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset ''mime'' on array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 0 on array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 0 on array\{non\-falsy\-string, non\-falsy\-string&numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 0 on array\{non\-falsy\-string, non\-falsy\-string\|numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 0 on array\{non\-falsy\-string, non\-falsy\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: App/functions.php
+
+		-
+			message: '#^Offset 0 on array\{string, int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: App/functions.php
+
+		-
+			message: '#^Offset 1 on array\{0\: int\<0, max\>, 1\: int\<0, max\>, 2\: int, 3\: string, mime\: string, channels\?\: int, bits\?\: int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 1 on array\{non\-empty\-list\<string\>, non\-empty\-list\<non\-falsy\-string&numeric\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 1 on array\{non\-empty\-list\<string\>, non\-empty\-list\<non\-falsy\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 1 on array\{non\-empty\-list\<string\>, non\-empty\-list\<non\-falsy\-string\|numeric\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-falsy\-string&numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-falsy\-string\|numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, non\-falsy\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 3
+			path: App/functions.php
+
+		-
+			message: '#^Offset 1 on array\{non\-falsy\-string, numeric\-string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Offset 1 on array\{string, int\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: App/functions.php
+
+		-
+			message: '#^Parameter \#4 \$color of function imagefill expects int, int\<0, max\>\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Parameter \#6 \$color of function imagefilledrectangle expects int, int\<0, max\>\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-falsy\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 3
+			path: App/functions.php
+
+		-
+			message: '#^Variable \$config on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: App/functions.php
+
+		-
+			message: '#^Function tc_admin_dashboard_counts\(\) has parameter \$tables with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/index.php
+
+		-
+			message: '#^Function tc_admin_dashboard_counts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/index.php
+
+		-
+			message: '#^Function tc_admin_dashboard_recent_comments\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/index.php
+
+		-
+			message: '#^Function tc_admin_moderation_blocking_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/moderation/blocking.php
+
+		-
+			message: '#^Function tc_admin_moderation_report_view_data\(\) has parameter \$report with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/moderation/reports.php
+
+		-
+			message: '#^Function tc_admin_moderation_report_view_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/moderation/reports.php
+
+		-
+			message: '#^Function tc_admin_moderation_reports\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/moderation/reports.php
+
+		-
+			message: '#^Function tc_admin_moderation_reports_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/moderation/reports.php
+
+		-
+			message: '#^Function tc_admin_moderation_reports_view_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/moderation/reports.php
+
+		-
+			message: '#^Function tc_admin_moderation_review_report\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/moderation/reports.php
+
+		-
+			message: '#^Function tc_admin_settings_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/settings.php
+
+		-
+			message: '#^Function tc_admin_settings_sections\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/settings.php
+
+		-
+			message: '#^Function tc_admin_settings_site_image_value\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/settings.php
+
+		-
+			message: '#^Function tc_admin_settings_site_image_value\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/settings.php
+
+		-
+			message: '#^Function tc_admin_settings_uploaded_file\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/settings.php
+
+		-
+			message: '#^Function tc_admin_settings_value_from_post\(\) has parameter \$field with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/settings.php
+
+		-
+			message: '#^Function tc_admin_settings_value_from_post\(\) has parameter \$posted with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/settings.php
+
+		-
+			message: '#^Function tc_admin_settings_value_from_post\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/settings.php
+
+		-
+			message: '#^Function tc_admin_options\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_roles\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_user_by_id\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_user_is_super_admin\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_user_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_user_require_deletable\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_user_resource\(\) has parameter \$user with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_user_resource\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_user_validation_messages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_active_filters\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_active_filters\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_api_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_api_url\(\) has parameter \$params with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_filter_sql\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_filter_sql\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_filters\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_list_params\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_list_params\(\) has parameter \$pagination with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_list_params\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_page\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_page\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_response_payload\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_stats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Function tc_admin_users_view_data\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between list\{0\: literal\-string&non\-falsy\-string, 1\?\: ''\(username LIKE \?…''\|''role \= \?''\|''status \= \?''\|''updated_at \<\= \?''\|''updated_at \>\= \?'', 2\?\: ''role \= \?''\|''status \= \?''\|''updated_at \<\= \?''\|''updated_at \>\= \?'', 3\?\: ''status \= \?''\|''updated_at \<\= \?''\|''updated_at \>\= \?'', 4\?\: ''updated_at \<\= \?''\|''updated_at \>\= \?'', 5\?\: ''updated_at \<\= \?''\} and array\{\} will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: Public/admin/users.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 2
+			path: Public/author.php
+
+		-
+			message: '#^Function tc_install_config_content\(\) has parameter \$config with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_database_from_post\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_database_view\(\) has parameter \$state with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_default_settings\(\) has parameter \$state with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_handle_post\(\) has parameter \$languages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_language_view\(\) has parameter \$languages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_language_view\(\) has parameter \$state with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_languages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_locale\(\) has parameter \$languages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_locale\(\) has parameter \$state with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_locale\(\) should return string but returns int\<min, \-1\>\|int\<1, max\>\|string\.$#'
+			identifier: return.type
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_missing_tables\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_pdo\(\) has parameter \$database with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_render\(\) has parameter \$languages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_render\(\) has parameter \$state with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_schema_tables\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_state\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_step\(\) has parameter \$state with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_store_language\(\) has parameter \$languages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_tables_view\(\) has parameter \$state with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Function tc_install_write_config\(\) has parameter \$state with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: Public/install/index.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: Public/layout.php
+
+		-
+			message: '#^Call to function captcha_refresh\(\) on a separate line has no effect\.$#'
+			identifier: function.resultUnused
+			count: 1
+			path: Public/login.php
+
+		-
+			message: '#^Function tc_admin_settings_bytes_to_mb not found\.$#'
+			identifier: function.notFound
+			count: 1
+			path: Public/parts/admin/settings/field.php
+
+		-
+			message: '#^Function tc_privacy_limit_label\(\) has parameter \$rule with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/privacy.php
+
+		-
+			message: '#^Function tc_privacy_limit_rows\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/privacy.php
+
+		-
+			message: '#^Call to function captcha_refresh\(\) on a separate line has no effect\.$#'
+			identifier: function.resultUnused
+			count: 4
+			path: Public/recovery.php
+
+		-
+			message: '#^Call to function captcha_refresh\(\) on a separate line has no effect\.$#'
+			identifier: function.resultUnused
+			count: 4
+			path: Public/register.php
+
+		-
+			message: '#^Function tc_search_status_items\(\) has parameter \$results with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/search.php
+
+		-
+			message: '#^Function tc_search_status_items\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: Public/search.php
+
+		-
+			message: '#^Anonymous function has an unused use \$current\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: Public/status.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\{''@type''\: ''ListItem'', position\: int, url\: string\}\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: Public/tag.php

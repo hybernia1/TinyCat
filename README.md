@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **2.0.25**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
+Current release: **2.0.26**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
 
 ## Features
 
@@ -135,6 +135,26 @@ TinyCat includes dependency-free security regression checks and a strictly
 bounded, read-only resilience profile. See
 [`tests/security/README.md`](tests/security/README.md) for the threat coverage,
 safety limits, and commands.
+
+## Development quality gates
+
+Production does not use Composer or load `vendor/`. Composer installs only the
+development analyzer used by the local and CI preflight:
+
+```bash
+composer install
+composer preflight
+```
+
+The preflight validates Composer metadata and advisories, deterministic source
+style, PHP 8.4 syntax, PHPStan level 8, repository secrets and managed update
+paths. It then runs the monolith boundary, HTML, view, route, archived query,
+cache, minifier, extension, updater, cron, importer, signed artifact, rollback
+and restart-safe MySQL installer suites.
+
+PHPStan covers all production PHP against the frozen 2.0.25 legacy baseline.
+New findings fail the build; the baseline must not grow to make a change pass.
+Tests and development tools are excluded from signed production packages.
 
 ## Project layout
 

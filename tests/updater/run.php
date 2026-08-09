@@ -82,6 +82,14 @@ $test('manifest rejects case collisions and write-delete overlap', static functi
     $overlap = $base;
     $overlap['delete'] = ['App/Core.php'];
     $expectFailure(static fn (): mixed => $invoke('validateManifest', $overlap));
+
+    $fileDirectoryCollision = $base;
+    $fileDirectoryCollision['files']['App/Core.php/bootstrap.php'] = str_repeat('d', 64);
+    $expectFailure(static fn (): mixed => $invoke('validateManifest', $fileDirectoryCollision));
+
+    $deleteCollision = $base;
+    $deleteCollision['delete'] = ['Public/old.php', 'public/OLD.php'];
+    $expectFailure(static fn (): mixed => $invoke('validateManifest', $deleteCollision));
 });
 
 $test('file backups exclude unchanged files from a complete release package', static function () use ($invoke, $expect): void {

@@ -9,7 +9,7 @@ if (!defined('TINYCAT')) {
 $field = is_array($field ?? null) ? $field : [];
 $key = (string) ($field['key'] ?? '');
 $type = (string) ($field['type'] ?? 'text');
-$value = config($key, $field['default'] ?? '');
+$value = $field['value'] ?? $field['default'] ?? '';
 $displayValue = $type === 'password' ? '' : $value;
 $name = 'settings[' . $key . ']';
 $tag = $type === 'site_image' ? 'div' : 'label';
