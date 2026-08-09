@@ -153,6 +153,33 @@ try {
     if ((int) $database->query("SELECT COUNT(*) FROM settings WHERE setting_key LIKE 'email.smtp.%' OR setting_key IN ('email.from_address', 'email.from_name', 'email.welcome_message')")->fetchColumn() !== 0) {
         throw new RuntimeException('The SMTP settings migration did not remove legacy email settings.');
     }
+    $database->exec(
+        'CREATE TABLE user_followers (
+            user_id INT UNSIGNED NOT NULL,
+            follower_id INT UNSIGNED NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, follower_id),
+            KEY user_followers_follower_index (follower_id, user_id)
+        ) ENGINE=InnoDB'
+    );
+    $optimizeFollowerIndex = require dirname(__DIR__, 2) . '/migrations/20260809_006_optimize_user_followers_recent_index.php';
+
+    if (!is_callable($optimizeFollowerIndex)) {
+        throw new RuntimeException('The follower index migration is not callable.');
+    }
+
+    $optimizeFollowerIndex($database);
+    $newFollowerIndex = (int) $database->query(
+        "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_followers' AND INDEX_NAME = 'user_followers_follower_recent_index'"
+    )->fetchColumn();
+    $oldFollowerIndex = (int) $database->query(
+        "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_followers' AND INDEX_NAME = 'user_followers_follower_index'"
+    )->fetchColumn();
+
+    if ($newFollowerIndex !== 3 || $oldFollowerIndex !== 0) {
+        throw new RuntimeException('The follower index migration did not replace the obsolete index.');
+    }
+    $optimizeFollowerIndex($database);
     run(
         'CREATE TABLE schema_migrations (
             version VARCHAR(80) NOT NULL,
