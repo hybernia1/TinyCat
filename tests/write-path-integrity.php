@@ -56,7 +56,6 @@ $value = static fn (string $sql): mixed => $database->query($sql)->fetchColumn()
 
 foreach ([
     'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, role TEXT NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT, muted_until TEXT)',
-    'CREATE TABLE user_profile_links (user_id INTEGER NOT NULL, link_type TEXT NOT NULL, link_url TEXT NOT NULL, position_index INTEGER NOT NULL, created_at TEXT NOT NULL, UNIQUE (user_id, link_type))',
     "CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL DEFAULT '', author_id INTEGER NOT NULL, published_at TEXT NOT NULL DEFAULT '2026-01-01 00:00:00', created_at TEXT NOT NULL DEFAULT '2026-01-01 00:00:00', edit_locked_at TEXT)",
     'CREATE TABLE content_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at TEXT)',
     'CREATE TABLE content_comments (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT, created_at TEXT)',
@@ -75,29 +74,6 @@ foreach ([
 }
 
 $database->exec("INSERT INTO users (id, username, email, locale, role, bio, password, status, created_at) VALUES (1, 'owner', NULL, 'en', 'user', 'old bio', 'old-password', 'active', '2025-01-01 00:00:00'), (2, 'actor', NULL, 'en', 'user', '', 'actor-password', 'active', '2025-01-01 00:00:00')");
-$database->exec("INSERT INTO user_profile_links (user_id, link_type, link_url, position_index, created_at) VALUES (1, 'website', 'https://old.example', 0, '2026-01-01 00:00:00')");
-$database->exec('CREATE TRIGGER fail_profile_link BEFORE INSERT ON user_profile_links WHEN NEW.link_type = \'x\' BEGIN SELECT RAISE(ABORT, \'forced profile failure\'); END');
-
-$profileFailed = false;
-try {
-    user_profile_save(1, ['bio' => 'new bio'], [
-        'website' => ['url' => 'https://new.example', 'position' => 0],
-        'x' => ['url' => 'https://x.com/tinycat', 'position' => 1],
-    ]);
-} catch (PDOException) {
-    $profileFailed = true;
-}
-$assert($profileFailed, 'A profile-link failure is propagated.');
-$assert($value('SELECT bio FROM users WHERE id = 1') === 'old bio', 'A failed profile save rolls back the user row.');
-$assert($value('SELECT link_url FROM user_profile_links WHERE user_id = 1') === 'https://old.example', 'A failed profile save restores old links.');
-$database->exec('DROP TRIGGER fail_profile_link');
-user_profile_save(1, ['bio' => 'new bio'], [
-    'website' => ['url' => 'https://new.example', 'position' => 0],
-    'x' => ['url' => 'https://x.com/tinycat', 'position' => 1],
-]);
-$assert($value('SELECT bio FROM users WHERE id = 1') === 'new bio', 'A valid profile save updates the user row.');
-$assert((int) $value('SELECT COUNT(*) FROM user_profile_links WHERE user_id = 1') === 2, 'A valid profile save replaces all profile links.');
-
 $database->exec("INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (1, 'old-token', '2030-01-01 00:00:00')");
 $database->exec('CREATE TRIGGER fail_recovery_token BEFORE INSERT ON password_reset_tokens WHEN NEW.token_hash = \'new-token\' BEGIN SELECT RAISE(ABORT, \'forced recovery failure\'); END');
 $recoveryFailed = false;

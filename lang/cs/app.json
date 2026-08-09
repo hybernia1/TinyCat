@@ -359,13 +359,6 @@
         "cookie_consent_accept": "Povolit analytiku",
         "cookie_consent_necessary": "Jen nezbytné"
     },
-    "profile_links": {
-        "title": "Web a sociální profily",
-        "website": "Webová stránka",
-        "help": "Přidej pouze odkazy, které mají být veřejně viditelné na profilu.",
-        "invalid": "Adresa pro {type} není platná.",
-        "validation_failed": "Zkontroluj profilové odkazy."
-    },
     "account": {
         "title": "Můj účet",
         "save_profile": "Uložit profil",
@@ -822,7 +815,6 @@
         "purpose_ip_action_limits": "IP bucket limity pro vybrané akce.",
         "purpose_email_templates": "Nastavitelné emailové šablony a přepínače odesílání.",
         "purpose_password_reset_tokens": "Krátkodobé tokeny obnovy hesla posílané emailem.",
-        "purpose_user_profile_links": "Veřejný web a odkazy na sociální profily.",
         "purpose_settings": "Databázová nastavení aplikace.",
         "admin_title": "První admin účet",
         "admin_password_confirm": "Potvrzení hesla",

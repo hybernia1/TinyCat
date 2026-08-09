@@ -150,7 +150,6 @@ function createFixture(PDO $database): void
         'CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, embed_url TEXT, created_at TEXT, updated_at TEXT)',
         'CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, position_index INTEGER NOT NULL, PRIMARY KEY (content_id, link_id))',
         'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (user_id, follower_id))',
-        'CREATE TABLE user_profile_links (user_id INTEGER NOT NULL, link_type TEXT NOT NULL, link_url TEXT NOT NULL, position_index INTEGER NOT NULL, PRIMARY KEY (user_id, link_type))',
     ] as $sql) {
         $database->exec($sql);
     }
@@ -181,7 +180,6 @@ function createFixture(PDO $database): void
     $database->exec('INSERT INTO content_likes (content_id, user_id) VALUES (1, 2)');
     $database->exec('INSERT INTO comment_likes (comment_id, user_id) VALUES (1, 2)');
     $database->exec("INSERT INTO user_followers (user_id, follower_id, created_at) VALUES (1, 2, '2026-01-02 00:00:00')");
-    $database->exec("INSERT INTO user_profile_links (user_id, link_type, link_url, position_index) VALUES (1, 'website', 'https://example.test', 0)");
 }
 
 function exerciseFeed(): void
@@ -231,7 +229,6 @@ function exerciseAuthor(): void
     $items = public_status_items_by_author_cursor(1, 20);
     author_follow_counts(1);
     author_activity_stats(1);
-    user_profile_links(1);
     author_following_profiles(1, 10);
     exerciseStatusImages($items);
 }

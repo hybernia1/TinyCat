@@ -4,13 +4,13 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **2.0.26**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
+Current release: **2.0.27**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
 
 ## Features
 
 - Public and following-only feeds with incremental loading.
 - Posts with hashtags, mentions, likes, threaded comments, comment likes, and notifications.
-- Profiles with avatars, bios, validated profile links, language and appearance preferences, activity statistics, and following lists.
+- Profiles with avatars, bios, language and appearance preferences, activity statistics, and following lists.
 - Search across posts, users, tags, and metadata extracted from linked pages.
 - HTML5 link previews with Open Graph, video embeds, and cached metadata.
 - Optional email recovery and localized email notifications through PHP mail or SMTP.

@@ -359,13 +359,6 @@
         "cookie_consent_accept": "Allow analytics",
         "cookie_consent_necessary": "Necessary only"
     },
-    "profile_links": {
-        "title": "Website and social profiles",
-        "website": "Website",
-        "help": "Add only links that should be publicly visible on the profile.",
-        "invalid": "The {type} URL is not valid.",
-        "validation_failed": "Check the profile links."
-    },
     "account": {
         "title": "My account",
         "save_profile": "Save profile",
@@ -822,7 +815,6 @@
         "purpose_ip_action_limits": "IP-based rate-limit buckets for selected actions.",
         "purpose_email_templates": "Configurable email message templates and delivery switches.",
         "purpose_password_reset_tokens": "Short-lived password-reset tokens sent by email.",
-        "purpose_user_profile_links": "Public website and social profile links.",
         "purpose_settings": "Database-backed application settings.",
         "admin_title": "First admin account",
         "admin_password_confirm": "Confirm password",

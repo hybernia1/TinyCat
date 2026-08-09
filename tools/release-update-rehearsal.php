@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
 
 $root = dirname(__DIR__);
 $options = getopt('', ['artifact::']);
-$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.26')));
+$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.27')));
 $configPath = $root . '/config.php';
 $temporaryRoot = $root . '/storage/release-update-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . '/install';
@@ -261,7 +261,10 @@ PHP;
     exec($importCommand . ' 2>&1', $importOutput, $importExit);
     $assert($importExit === 0, 'Batched deterministic representative import completes: ' . implode(' ', array_slice($importOutput, -3)));
 
-    foreach ((array) ($manifest['migrations'] ?? []) as $migrationPath) {
+    foreach (array_filter(
+        (array) ($manifest['migrations'] ?? []),
+        static fn (mixed $path): bool => basename((string) $path) !== '20260809_001_remove_user_profile_links.php',
+    ) as $migrationPath) {
         $migration = pathinfo((string) $migrationPath, PATHINFO_FILENAME);
         $checksum = (string) ((array) ($manifest['files'] ?? []))[$migrationPath];
         $statement = $database->prepare(
@@ -298,6 +301,9 @@ $stage = __ROOT__ . '/storage/updates/release-stage';
 $invoke('extractPackage', __PACKAGE__, $stage, $manifest);
 $invoke('preflightManagedTargets', $manifest);
 $backup = $invoke('createBackup', $manifest, (string) $manifest['version'], $pending);
+if ($pending) {
+    $invoke('backupDatabase', $backup);
+}
 $invoke('enableMaintenance', (string) $manifest['version']);
 $invoke('applyFiles', $stage, $manifest);
 $applied = $invoke('applyMigrations', $stage, $manifest);
@@ -319,10 +325,13 @@ PHP;
     [$updateExit, $updateOutput] = $run($updateRunner);
     $update = json_decode(implode("\n", $updateOutput), true);
     $assert($updateExit === 0 && is_array($update), 'Signed production update completes: ' . implode(' ', $updateOutput));
-    $assert(($update['pending_migrations'] ?? null) === false, 'Exact 2.0.25 database has no pending 2.0.26 migration.');
-    $assert(($update['applied_migrations'] ?? null) === [], 'Update does not alter the schema.');
+    $assert(($update['pending_migrations'] ?? null) === true, 'Exact 2.0.25 database has the profile links removal migration pending.');
+    $assert(($update['applied_migrations'] ?? null) === ['20260809_001_remove_user_profile_links'], 'Update removes the obsolete profile links table.');
     $assert(($update['extension_loaded'] ?? null) === true, 'Compatible extension remains loaded during update.');
-    $assert($databaseFingerprint($database) === $beforeDatabase, 'Representative database content and schema remain byte-equivalent.');
+    $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() === 0,
+        'Update removes the obsolete profile links table from the representative database.'
+    );
 
     foreach ($protectedHashes as $label => $hash) {
         $path = match ($label) {
@@ -335,14 +344,15 @@ PHP;
     }
 
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (Core::VERSION !== '2.0.26' || !isset(TinyCat\\Extension\\Loader::loaded()['release_probe'])) exit(2);";
+        . "; if (Core::VERSION !== '2.0.27' || !isset(TinyCat\\Extension\\Loader::loaded()['release_probe'])) exit(2);";
     [$newBootExit, $newBootOutput] = $run($newBootRunner);
-    $assert($newBootExit === 0, 'Updated 2.0.26 runtime and compatible extension boot: ' . implode(' ', $newBootOutput));
+    $assert($newBootExit === 0, 'Updated 2.0.27 runtime and compatible extension boot: ' . implode(' ', $newBootOutput));
 
     $backup = is_array($update) ? (string) ($update['backup'] ?? '') : '';
     $metadata = json_decode((string) @file_get_contents($backup . '/backup.json'), true);
     $assert(is_array($metadata) && ($metadata['from_version'] ?? null) === '2.0.25', 'Rollback backup records exact source version.');
-    $assert(($metadata['database_backup_required'] ?? null) === false, 'No unnecessary database backup is created without pending migrations.');
+    $assert(($metadata['database_backup_required'] ?? null) === true, 'A database backup is created before removing the obsolete table.');
+    $assert(is_file($backup . '/database.sql'), 'Rollback backup contains the pre-migration MySQL database.');
 
     foreach ((array) ($metadata['files'] ?? []) as $relative => $hash) {
         $source = $backup . '/files/' . str_replace('/', DIRECTORY_SEPARATOR, (string) $relative);
@@ -369,7 +379,6 @@ PHP;
     }
 
     $assert($inventory($installRoot) === $beforeInventory, 'Rollback restores the exact managed 2.0.25 tree.');
-    $assert($databaseFingerprint($database) === $beforeDatabase, 'Rollback leaves representative database content and schema unchanged.');
     [$oldBootExit, $oldBootOutput] = $run($probeRunner);
     $assert($oldBootExit === 0, 'Rolled-back 2.0.25 runtime and extension boot: ' . implode(' ', $oldBootOutput));
 

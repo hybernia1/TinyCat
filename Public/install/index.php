@@ -493,20 +493,6 @@ function tc_install_create_tables(): void
     );
 
     run(
-        "CREATE TABLE IF NOT EXISTS user_profile_links (
-            user_id INT UNSIGNED NOT NULL,
-            link_type VARCHAR(32) NOT NULL,
-            link_url VARCHAR(2048) NOT NULL,
-            position_index INT UNSIGNED NOT NULL DEFAULT 0,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (user_id, link_type),
-            KEY user_profile_links_type_index (link_type, user_id),
-            CONSTRAINT fk_user_profile_links_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    run(
         "CREATE TABLE IF NOT EXISTS notifications (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id INT UNSIGNED NOT NULL,

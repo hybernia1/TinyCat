@@ -97,6 +97,10 @@ try {
     Core::setDb($database);
     tc_install_create_tables();
     $assert(tc_install_missing_tables() === [], 'Fresh installer creates every required table.');
+    $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() === 0,
+        'Fresh installer does not create the obsolete profile links table.'
+    );
     $firstTableCount = (int) $database->query('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()')->fetchColumn();
 
     Core::setDb(new PDO(
