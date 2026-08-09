@@ -21,6 +21,7 @@ final readonly class Options
         public int $maxFollows,
         public int $minPostLikes,
         public int $maxPostLikes,
+        public int $minCommentLikes,
         public int $maxCommentLikes,
         public int $batchSize,
         public int $seed,
@@ -45,13 +46,14 @@ final readonly class Options
 
         $profile = strtolower(trim((string) ($raw['profile'] ?? 'medium')));
         $profiles = [
-            'small' => [200, 2, 4, 3, 7, 2, 8, 0, 8, 2, 100],
-            'medium' => [3000, 4, 8, 6, 14, 8, 24, 3, 20, 4, 250],
-            'large' => [25000, 5, 10, 10, 24, 12, 36, 5, 30, 6, 500],
+            'small' => [200, 2, 4, 3, 7, 2, 8, 0, 8, 0, 2, 100],
+            'medium' => [3000, 4, 8, 6, 14, 8, 24, 3, 20, 0, 4, 250],
+            'large' => [25000, 5, 10, 10, 24, 12, 36, 5, 30, 0, 6, 500],
+            'million' => [2500, 6, 8, 20, 28, 12, 24, 5, 15, 2, 4, 250],
         ];
 
         if (!isset($profiles[$profile])) {
-            throw new InvalidArgumentException('Profile must be small, medium, or large.');
+            throw new InvalidArgumentException('Profile must be small, medium, large, or million.');
         }
 
         [
@@ -64,6 +66,7 @@ final readonly class Options
             $defaultMaxFollows,
             $defaultMinPostLikes,
             $defaultMaxPostLikes,
+            $defaultMinCommentLikes,
             $defaultMaxCommentLikes,
             $defaultBatchSize,
         ] = $profiles[$profile];
@@ -79,6 +82,7 @@ final readonly class Options
         $minComments = self::integer($raw, 'min-comments', $defaultMinComments, 0, 100);
         $minFollows = self::integer($raw, 'min-follows', $defaultMinFollows, 0, 200);
         $minPostLikes = self::integer($raw, 'min-post-likes', $defaultMinPostLikes, 0, 200);
+        $minCommentLikes = self::integer($raw, 'min-comment-likes', $defaultMinCommentLikes, 0, 50);
         $prefix = preg_replace('/[^a-z0-9_]+/', '', strtolower(trim((string) ($raw['prefix'] ?? 'bench')))) ?: 'bench';
         $prefix = substr($prefix, 0, 16);
         $password = (string) ($raw['password'] ?? 'tinycat123');
@@ -106,7 +110,8 @@ final readonly class Options
             self::integer($raw, 'max-follows', $defaultMaxFollows, $minFollows, 300),
             $minPostLikes,
             self::integer($raw, 'max-post-likes', $defaultMaxPostLikes, $minPostLikes, 300),
-            self::integer($raw, 'max-comment-likes', $defaultMaxCommentLikes, 0, 50),
+            $minCommentLikes,
+            self::integer($raw, 'max-comment-likes', $defaultMaxCommentLikes, $minCommentLikes, 50),
             self::integer($raw, 'batch-size', $defaultBatchSize, 10, 2000),
             self::integer($raw, 'seed', 250, 1, PHP_INT_MAX),
             self::integer($raw, 'max-batches', 0, 0, PHP_INT_MAX),
@@ -123,7 +128,7 @@ final readonly class Options
     public function fingerprintData(): array
     {
         return [
-            'import_format' => 1,
+            'import_format' => 2,
             'profile' => $this->profile,
             'users' => $this->users,
             'min_posts' => $this->minPosts,
@@ -134,6 +139,7 @@ final readonly class Options
             'max_follows' => $this->maxFollows,
             'min_post_likes' => $this->minPostLikes,
             'max_post_likes' => $this->maxPostLikes,
+            'min_comment_likes' => $this->minCommentLikes,
             'max_comment_likes' => $this->maxCommentLikes,
             'batch_size' => $this->batchSize,
             'seed' => $this->seed,
@@ -151,7 +157,8 @@ Usage:
   php tools/demo-import.php --config=/path/config.php [options]
 
 Profiles:
-  --profile=small|medium|large        Dataset size preset (default: medium)
+  --profile=small|medium|large|million
+                                      Dataset size preset (default: medium)
 
 Dataset overrides:
   --users=N                          Generated users, excluding admin
@@ -159,7 +166,7 @@ Dataset overrides:
   --min-comments=N --max-comments=N  Comments and replies per post
   --min-follows=N --max-follows=N    Follows per generated user
   --min-post-likes=N --max-post-likes=N
-  --max-comment-likes=N
+  --min-comment-likes=N --max-comment-likes=N
 
 Execution:
   --batch-size=N                     Checkpointed source rows per transaction

@@ -21,13 +21,20 @@ php tools/demo-import.php \
   --reset=1
 ```
 
-The `small`, `medium` and `large` profiles are starting points and every size
-can be overridden. The medium profile currently produces 3,000 generated
-users, 4-8 posts per user, 6-14 comments per post, 8-24 follows per user and
-multiple reactions per post and comment.
+The `small`, `medium`, `large` and `million` profiles are starting points and
+every size can be overridden. The medium profile currently produces 3,000
+generated users, 4-8 posts per user, 6-14 comments per post, 8-24 follows per
+user and multiple reactions per post and comment.
+
+The `million` profile is the bounded release-scale fixture. It produces 2,500
+generated users, 6-8 posts per user, 20-28 comments per post across four tree
+levels, 12-24 follows per user and 2-4 likes per comment. The importer rejects
+a completed `million` run that contains fewer than one million relational
+rows.
 
 Each source batch is its own transaction. After it commits, the importer
-writes an atomic checkpoint and reports the phase, cursor, row rate and ETA.
+writes an atomic checkpoint and reports the phase, cursor, row rate, memory
+use, recorded peak and ETA.
 An interrupted import resumes without repeating committed work:
 
 ```bash
@@ -45,6 +52,18 @@ entry point for the former seeder name.
 
 Only use `--reset=1` against a disposable benchmark installation. It clears
 TinyCat content and account tables while preserving the installed schema.
+
+For a disposable MySQL scale rehearsal with a fixed memory ceiling, isolated
+cold/warm application workers, write and maintenance samples, slow-log setting
+inspection and `EXPLAIN ANALYZE`, run:
+
+```bash
+php -d memory_limit=128M tools/scale-benchmark.php \
+  --output=docs/stage-7-scale-results.json
+```
+
+The Stage 7 results and index decision are documented in
+[`stage-7-scale-validation.md`](stage-7-scale-validation.md).
 
 ## HTTP comparison
 

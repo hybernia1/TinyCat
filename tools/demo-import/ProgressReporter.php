@@ -45,15 +45,17 @@ final readonly class ProgressReporter
         $duration = max(0.001, (float) ($data['duration_ms'] ?? 0) / 1000);
         $rate = $rows / $duration;
         $eta = isset($data['eta_seconds']) ? max(0, (int) $data['eta_seconds']) : 0;
+        $memory = max(0, (int) ($data['memory_bytes'] ?? 0)) / 1048576;
 
         return sprintf(
-            '%-15s %d/%d (%5.1f%%), rows=%d, %.0f rows/s, ETA %s',
+            '%-15s %d/%d (%5.1f%%), rows=%d, %.0f rows/s, memory=%.1f MiB, ETA %s',
             $phase,
             $cursor,
             $total,
             $percent,
             $rows,
             $rate,
+            $memory,
             self::duration($eta),
         );
     }

@@ -47,7 +47,15 @@ try {
     $expect($options->prefix === 'benchtest', 'Prefix was not normalized.');
     $expect(!$options->reset && $options->jsonLines, 'Boolean options were not parsed.');
     $expect($options->minComments === 3 && $options->maxComments === 7, 'Small profile defaults changed unexpectedly.');
-    $expect($options->fingerprintData()['import_format'] === 1, 'Import format is missing from the fingerprint.');
+    $expect($options->fingerprintData()['import_format'] === 2, 'Import format is missing from the fingerprint.');
+
+    $million = Options::fromArgv([
+        'demo-import.php',
+        '--config=' . $baseline . DIRECTORY_SEPARATOR . 'config.php',
+        '--profile=million',
+    ], $root);
+    $expect($million->users === 2500 && $million->batchSize === 250, 'Million profile sizing changed unexpectedly.');
+    $expect($million->minComments === 20 && $million->minCommentLikes === 2, 'Million profile relation density changed unexpectedly.');
 
     $generatorA = new DeterministicGenerator(250, '2026-08-01 12:00:00');
     $generatorB = new DeterministicGenerator(250, '2026-08-01 12:00:00');

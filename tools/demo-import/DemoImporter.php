@@ -9,6 +9,8 @@ use Throwable;
 
 final class DemoImporter
 {
+    private const int MILLION_ROW_TARGET = 1_000_000;
+
     private const array PHASES = [
         'prepare',
         'users',
@@ -153,6 +155,10 @@ final class DemoImporter
             $state['cursor'] = $result['cursor'];
             $state['batches'] = (int) ($state['batches'] ?? 0) + 1;
             $state['stats'] = $this->mergeStats((array) ($state['stats'] ?? []), $result['stats']);
+            $state['peak_memory_bytes'] = max(
+                (int) ($state['peak_memory_bytes'] ?? 0),
+                memory_get_peak_usage(true),
+            );
             $this->checkpoints->save($state);
             $batchesThisRun++;
 
@@ -166,6 +172,8 @@ final class DemoImporter
                 'rows' => $result['rows'],
                 'duration_ms' => $durationMs,
                 'eta_seconds' => (int) ceil($remaining / max(0.001, $sourceRate)),
+                'memory_bytes' => memory_get_usage(true),
+                'peak_memory_bytes' => (int) $state['peak_memory_bytes'],
                 'stats' => $result['stats'],
             ]);
 
@@ -192,6 +200,13 @@ final class DemoImporter
         $this->checkpoints->save($state);
         $this->clearFilesystemCache();
         $report = $this->report($state);
+        if ($this->options->profile === 'million' && (int) $report['relational_rows'] < self::MILLION_ROW_TARGET) {
+            throw new RuntimeException(sprintf(
+                'Million profile generated only %d relational rows; expected at least %d.',
+                (int) $report['relational_rows'],
+                self::MILLION_ROW_TARGET,
+            ));
+        }
         $this->writeReport($report);
         $this->progress->event('complete', $report);
 
@@ -208,6 +223,7 @@ final class DemoImporter
         $state['cursor'] = 0;
         $state['batches'] = 0;
         $state['stats'] = [];
+        $state['peak_memory_bytes'] = memory_get_peak_usage(true);
         $state['started_at'] = gmdate('c');
         $state['updated_at'] = gmdate('c');
         $state['complete'] = false;
@@ -512,11 +528,13 @@ final class DemoImporter
         foreach ($posts as $post) {
             $contentId = (int) $post['id'];
             $commentCount = $this->generator->integer('comment-count', (string) $contentId, $this->options->minComments, $this->options->maxComments);
-            $rootCount = $commentCount > 0 ? max(1, (int) ceil($commentCount * 0.35)) : 0;
+            $rootCount = $commentCount > 0 ? max(1, (int) ceil($commentCount * 0.30)) : 0;
             $remaining = $commentCount - $rootCount;
-            $levelThree = $remaining > 1 ? max(1, (int) round($remaining * 0.35)) : 0;
-            $levelTwo = $remaining - $levelThree;
-            $levelCounts[$contentId] = [$levelTwo, $levelThree];
+            $levelTwo = $remaining > 0 ? max(1, (int) ceil($remaining * 0.45)) : 0;
+            $afterTwo = $remaining - $levelTwo;
+            $levelThree = $afterTwo > 0 ? max(1, (int) ceil($afterTwo * 0.60)) : 0;
+            $levelFour = $afterTwo - $levelThree;
+            $levelCounts[$contentId] = [$levelTwo, $levelThree, $levelFour];
             for ($index = 1; $index <= $rootCount; $index++) {
                 $key = $contentId . ':root:' . $index;
                 $actorId = $this->actor('comment-root-actor', $key, $allUsers, (int) $post['author_id']);
@@ -583,18 +601,44 @@ final class DemoImporter
             }
         }
         $levelThreeResult = $this->writer->insert('content_comments', ['content_id', 'parent_id', 'user_id', 'body', 'created_at'], $levelThreeRows, false, true);
+        $levelThreeByPost = [];
         foreach ($levelThreeResult['ids'] as $offset => $commentId) {
             $meta = $levelThreeMeta[$offset];
+            $levelThreeByPost[(int) $meta['post']['id']][] = ['id' => $commentId, 'actor_id' => $meta['actor_id'], 'created_at' => $meta['created_at']];
             if ((int) $meta['parent']['actor_id'] !== (int) $meta['actor_id']) {
                 $notifications[] = $this->notificationRow((int) $meta['parent']['actor_id'], (int) $meta['actor_id'], (int) $meta['post']['id'], $commentId, 'content_comment', 'content_comment_nested:' . $commentId, (string) $meta['created_at']);
             }
         }
+
+        $levelFourRows = [];
+        $levelFourMeta = [];
+        foreach ($posts as $post) {
+            $contentId = (int) $post['id'];
+            [, , $levelFour] = $levelCounts[$contentId];
+            $parents = $levelThreeByPost[$contentId] ?? [];
+            for ($index = 1; $index <= $levelFour && $parents !== []; $index++) {
+                $key = $contentId . ':deep:' . $index;
+                $parent = $parents[$this->generator->integer('comment-deep-parent', $key, 0, count($parents) - 1)];
+                $actorId = $this->actor('comment-deep-actor', $key, $allUsers, (int) $parent['actor_id']);
+                $created = $this->generator->dateAfter('comment-deep-date', $key, (string) $parent['created_at']);
+                $body = '@' . $this->username((int) $parent['actor_id']) . ' ' . $this->generator->pick('comment-deep-body', $key, self::REPLIES);
+                $levelFourRows[] = [$contentId, (int) $parent['id'], $actorId, $body, $created];
+                $levelFourMeta[] = ['post' => $post, 'parent' => $parent, 'actor_id' => $actorId, 'created_at' => $created];
+            }
+        }
+        $levelFourResult = $this->writer->insert('content_comments', ['content_id', 'parent_id', 'user_id', 'body', 'created_at'], $levelFourRows, false, true);
+        foreach ($levelFourResult['ids'] as $offset => $commentId) {
+            $meta = $levelFourMeta[$offset];
+            if ((int) $meta['parent']['actor_id'] !== (int) $meta['actor_id']) {
+                $notifications[] = $this->notificationRow((int) $meta['parent']['actor_id'], (int) $meta['actor_id'], (int) $meta['post']['id'], $commentId, 'content_comment', 'content_comment_deep:' . $commentId, (string) $meta['created_at']);
+            }
+        }
         $notificationResult = $this->writer->insert('notifications', $this->notificationColumns(), $notifications, true);
         $last = (int) end($posts)['id'];
-        $comments = count($rootRows) + count($levelTwoRows) + count($levelThreeRows);
+        $comments = count($rootRows) + count($levelTwoRows) + count($levelThreeRows) + count($levelFourRows);
 
         return $this->result($cursor, $last, $total, $comments + count($notifications), [
-            'comments' => $rootResult['affected'] + $levelTwoResult['affected'] + $levelThreeResult['affected'],
+            'comments' => $rootResult['affected'] + $levelTwoResult['affected'] + $levelThreeResult['affected'] + $levelFourResult['affected'],
             'notifications' => $notificationResult['affected'],
         ]);
     }
@@ -613,7 +657,7 @@ final class DemoImporter
         foreach ($comments as $comment) {
             $commentId = (int) $comment['id'];
             $authorId = (int) $comment['user_id'];
-            $count = $this->generator->integer('comment-like-count', (string) $commentId, 0, $this->options->maxCommentLikes);
+            $count = $this->generator->integer('comment-like-count', (string) $commentId, $this->options->minCommentLikes, $this->options->maxCommentLikes);
             $actors = $this->generator->uniqueIntegers('comment-like-actors', (string) $commentId, $count, 1, $allUsers, $authorId);
             foreach ($actors as $actorId) {
                 $created = $this->generator->dateAfter('comment-like-date', $commentId . ':' . $actorId, (string) $comment['created_at']);
@@ -874,12 +918,24 @@ final class DemoImporter
         $depthStatement = $this->database->query(
             'SELECT COUNT(*) FROM content_comments child
              INNER JOIN content_comments parent ON parent.id = child.parent_id
-             WHERE parent.parent_id IS NOT NULL'
+             INNER JOIN content_comments grandparent ON grandparent.id = parent.parent_id
+             WHERE grandparent.parent_id IS NULL'
         );
         if ($depthStatement === false) {
             throw new RuntimeException('Unable to count nested comments.');
         }
         $depth = (int) $depthStatement->fetchColumn();
+        $deepStatement = $this->database->query(
+            'SELECT COUNT(*) FROM content_comments child
+             INNER JOIN content_comments parent ON parent.id = child.parent_id
+             INNER JOIN content_comments grandparent ON grandparent.id = parent.parent_id
+             WHERE grandparent.parent_id IS NOT NULL'
+        );
+        if ($deepStatement === false) {
+            throw new RuntimeException('Unable to count deep comments.');
+        }
+        $deep = (int) $deepStatement->fetchColumn();
+        $relationalRows = array_sum($counts);
 
         return [
             'ok' => true,
@@ -890,7 +946,11 @@ final class DemoImporter
             'batches' => (int) ($state['batches'] ?? 0),
             'duration_seconds' => max(0, $completed - $started),
             'counts' => $counts,
+            'relational_rows' => $relationalRows,
             'nested_level_three_comments' => $depth,
+            'nested_level_four_comments' => $deep,
+            'memory_limit' => (string) ini_get('memory_limit'),
+            'peak_memory_bytes' => max((int) ($state['peak_memory_bytes'] ?? 0), memory_get_peak_usage(true)),
             'stats' => (array) ($state['stats'] ?? []),
             'configuration' => $state['configuration'] ?? [],
             'state_path' => $this->options->statePath,

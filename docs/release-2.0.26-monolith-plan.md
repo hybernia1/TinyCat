@@ -480,3 +480,30 @@ repeatable performance proof—not hundreds of production types.
   query budgets remain `3/6/4/8/7`, and `App/` remains 18 files with 15
   class-bearing files. Detailed decisions are in
   [the Stage 6 runtime hardening report](stage-6-runtime-hardening.md).
+
+### Stage 7 — completed 2026-08-09
+
+- Added a deterministic `million` importer profile with 2,500 generated users,
+  6-8 posts per user, 20-28 comments per post, four comment levels, dense
+  reactions, follows and notifications. Import format 2 fingerprints every
+  density option so an incompatible checkpoint cannot be resumed.
+- Verified an intentional pause after three committed batches and resumed the
+  same run. The disposable MySQL 8.4.3 database reached 3,141,482 relational
+  rows in 1,999 batches and 315 seconds, including 419,468 comments, 1,259,052
+  comment likes and 1,127,209 notifications.
+- Ran the importer at `memory_limit=128M`. Peak importer memory stayed at 18
+  MiB, while every isolated application worker peaked at 6 MiB. Progress and
+  the final report now record current/peak memory in addition to cursor,
+  throughput and ETA.
+- Measured cold and warm feed, status, tag, author and search reads plus a full
+  status write/delete cycle and bounded 500-row orphan cleanup. All scenarios
+  completed without warnings, fatals, timeouts or unbounded PHP
+  materialization.
+- Inspected the disabled local slow-log configuration without mutating global
+  server state and captured `EXPLAIN ANALYZE` for feed, comment, tag, author
+  and FULLTEXT search shapes. Every plan used its intended existing index; the
+  measured evidence did not justify extra write/storage cost, so no production
+  SQL or index changed.
+- Recorded the complete measurements and plan text in
+  [the Stage 7 scale report](stage-7-scale-validation.md) and its linked JSON
+  evidence. Comparative 2.0.25-versus-2.0.26 HTTP acceptance remains Stage 8.
