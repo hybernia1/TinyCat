@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.31';
+    public const string VERSION = '2.0.32';
     private const string SETTINGS_CACHE_KEY = 'core_autoload_settings';
     private const int SETTINGS_CACHE_TTL = 3600;
 
@@ -294,11 +294,6 @@ final class Core
         $value = self::query($sql, $params)->fetchColumn();
 
         return $value === false ? null : $value;
-    }
-
-    public static function select(string $sql): CoreQuery
-    {
-        return new CoreQuery($sql);
     }
 
     public static function insert(string $table, array $data): string
@@ -2518,11 +2513,6 @@ final class CoreQuery
     public function value(): mixed
     {
         return Core::value($this->sql(), $this->params);
-    }
-
-    public function count(): int
-    {
-        return (int) Core::value('SELECT COUNT(*) FROM (' . $this->buildSql(false) . ') core_count', $this->params);
     }
 
     private function sql(): string

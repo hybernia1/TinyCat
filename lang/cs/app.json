@@ -768,7 +768,15 @@
             "available": "Dostupná",
             "fallback": "Nedostupná — používá se disk",
             "filesystem": "Aktivní úložiště: filesystem cache.",
-            "memcached": "Aktivní úložiště: Memcached."
+            "memcached": "Aktivní úložiště: Memcached.",
+            "memcached_label": "Memcached",
+            "memcached_disabled": "Není zapnutý v konfiguraci aplikace.",
+            "memcached_running": "Běží a obsluhuje aplikační cache.",
+            "memcached_extension_missing": "PHP rozšíření memcached není nainstalované.",
+            "memcached_unreachable": "Je nastavený, ale server není dostupný. Používá se filesystem cache.",
+            "opcache_label": "PHP OPcache",
+            "opcache_running": "Běží — PHP bytecode je cachovaný.",
+            "opcache_disabled": "Neběží — zapněte jej v konfiguraci webového PHP."
         }
     },
     "install": {

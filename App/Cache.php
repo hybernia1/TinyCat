@@ -183,15 +183,52 @@ final class Cache
     }
 
     /**
-     * @return array{driver: 'filesystem'|'memcached', available: bool}
+     * @return array{
+     *     driver: 'filesystem'|'memcached',
+     *     available: bool,
+     *     memcached: array{configured: bool, extension: bool, available: bool},
+     *     opcache: array{loaded: bool, enabled: bool}
+     * }
      */
     public static function diagnostics(): array
     {
         $driver = self::driver();
+        $memcachedConfigured = $driver === 'memcached';
+        $memcachedExtension = class_exists('Memcached');
+        $memcachedAvailable = $memcachedConfigured && $memcachedExtension && self::memcachedAvailable();
 
         return [
             'driver' => $driver,
-            'available' => $driver !== 'memcached' || self::memcachedAvailable(),
+            'available' => !$memcachedConfigured || $memcachedAvailable,
+            'memcached' => [
+                'configured' => $memcachedConfigured,
+                'extension' => $memcachedExtension,
+                'available' => $memcachedAvailable,
+            ],
+            'opcache' => self::opcacheDiagnostics(),
+        ];
+    }
+
+    /**
+     * @return array{loaded: bool, enabled: bool}
+     */
+    private static function opcacheDiagnostics(): array
+    {
+        $loaded = extension_loaded('Zend OPcache') || extension_loaded('opcache');
+
+        if (!$loaded || !function_exists('opcache_get_status')) {
+            return ['loaded' => $loaded, 'enabled' => false];
+        }
+
+        try {
+            $status = @opcache_get_status(false);
+        } catch (Throwable) {
+            $status = false;
+        }
+
+        return [
+            'loaded' => true,
+            'enabled' => is_array($status) && !empty($status['opcache_enabled']),
         ];
     }
 
@@ -432,10 +469,13 @@ final class Cache
         );
     }
 
+    /**
+     * @return 'filesystem'|'memcached'
+     */
     private static function driver(): string
     {
         if (self::$driver !== null) {
-            return self::$driver;
+            return self::$driver === 'memcached' ? 'memcached' : 'filesystem';
         }
 
         $config = Core::config('cache', []);

@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **2.0.31**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
+Current release: **2.0.32**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
 
 ## Features
 
@@ -30,6 +30,25 @@ Current release: **2.0.31**. TinyCat uses [Semantic Versioning](https://semver.o
 - Write access to `storage/` and `uploads/`. The installer also needs temporary permission to create `config.php` in the project root.
 
 The PHP `exif` extension improves JPEG orientation handling but is optional. Apache modules such as `mod_headers` and `mod_deflate` enable the cache headers and compression rules already included in `.htaccess`.
+
+### Recommended PHP OPcache
+
+Enable OPcache in the PHP configuration used by Apache or PHP-FPM. It caches
+compiled PHP bytecode, so every request avoids parsing TinyCat's PHP files
+again. A safe baseline for TinyCat is:
+
+```ini
+opcache.enable=1
+opcache.memory_consumption=128
+opcache.max_accelerated_files=10000
+opcache.validate_timestamps=1
+opcache.revalidate_freq=2
+```
+
+TinyCat resets OPcache after a successful web update. Keep timestamp validation
+enabled unless the deployment process always reloads PHP after every release.
+The administration dashboard reports whether OPcache is active in the web PHP
+runtime.
 
 ### Optional Memcached cache
 

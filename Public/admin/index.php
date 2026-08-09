@@ -55,9 +55,25 @@ layout('layout', [
                 <span class="badge badge-danger"><?= et('admin.cache.fallback') ?></span>
             <?php endif; ?>
         </div>
-        <div class="card-body">
+        <div class="card-body stack gap-2">
             <p class="m-0 text-muted">
                 <?= e($cache['driver'] === 'memcached' ? t('admin.cache.memcached') : t('admin.cache.filesystem')) ?>
+            </p>
+            <p class="m-0 text-muted">
+                <strong><?= et('admin.cache.memcached_label') ?>:</strong>
+                <?php if (!$cache['memcached']['configured']): ?>
+                    <?= et('admin.cache.memcached_disabled') ?>
+                <?php elseif ($cache['memcached']['available']): ?>
+                    <?= et('admin.cache.memcached_running') ?>
+                <?php elseif (!$cache['memcached']['extension']): ?>
+                    <?= et('admin.cache.memcached_extension_missing') ?>
+                <?php else: ?>
+                    <?= et('admin.cache.memcached_unreachable') ?>
+                <?php endif; ?>
+            </p>
+            <p class="m-0 text-muted">
+                <strong><?= et('admin.cache.opcache_label') ?>:</strong>
+                <?= et($cache['opcache']['enabled'] ? 'admin.cache.opcache_running' : 'admin.cache.opcache_disabled') ?>
             </p>
         </div>
     </section>

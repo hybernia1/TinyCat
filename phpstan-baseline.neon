@@ -253,12 +253,6 @@ parameters:
 			path: App/Cache.php
 
 		-
-			message: '#^Method Cache\:\:diagnostics\(\) should return array\{driver\: ''filesystem''\|''memcached'', available\: bool\} but returns array\{driver\: string, available\: bool\}\.$#'
-			identifier: return.type
-			count: 1
-			path: App/Cache.php
-
-		-
 			message: '#^Method Cache\:\:memcachedConfig\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
