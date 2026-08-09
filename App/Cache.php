@@ -16,6 +16,7 @@ final class Cache
 {
     private const int MEMCACHED_TIMEOUT_MS = 100;
     private const int MEMCACHED_MAX_ITEM_BYTES = 900000;
+    private const int OPCACHE_SOURCE_LIMIT = 20;
 
     private static ?\Memcached $memcachedClient = null;
     private static bool $memcachedInitialized = false;
@@ -197,7 +198,8 @@ final class Cache
      *         enabled: bool,
      *         resettable: bool,
      *         configuration: array{memory_bytes: int, max_scripts: int, validate_timestamps: bool, revalidate_freq: int, file_cache: bool},
-     *         stats: array{cached_scripts: int, hits: int, misses: int, used_memory: int, free_memory: int, wasted_memory: int, cache_full: bool, restart_pending: bool}
+     *         stats: array{cached_scripts: int, hits: int, misses: int, used_memory: int, free_memory: int, wasted_memory: int, cache_full: bool, restart_pending: bool},
+     *         sources: list<array{directory: string, scripts: int, memory_bytes: int, hits: int}>
      *     }
      * }
      */
@@ -227,7 +229,8 @@ final class Cache
      *     enabled: bool,
      *     resettable: bool,
      *     configuration: array{memory_bytes: int, max_scripts: int, validate_timestamps: bool, revalidate_freq: int, file_cache: bool},
-     *     stats: array{cached_scripts: int, hits: int, misses: int, used_memory: int, free_memory: int, wasted_memory: int, cache_full: bool, restart_pending: bool}
+     *     stats: array{cached_scripts: int, hits: int, misses: int, used_memory: int, free_memory: int, wasted_memory: int, cache_full: bool, restart_pending: bool},
+     *     sources: list<array{directory: string, scripts: int, memory_bytes: int, hits: int}>
      * }
      */
     private static function opcacheDiagnostics(): array
@@ -250,6 +253,7 @@ final class Cache
             'cache_full' => false,
             'restart_pending' => false,
         ];
+        $sources = [];
 
         if (!$loaded || !function_exists('opcache_get_status')) {
             return [
@@ -258,6 +262,7 @@ final class Cache
                 'resettable' => false,
                 'configuration' => $configuration,
                 'stats' => $stats,
+                'sources' => $sources,
             ];
         }
 
@@ -271,13 +276,13 @@ final class Cache
             }
         }
         $configuration = [
-            'memory_bytes' => max(0, (int) ($directives['opcache.memory_consumption'] ?? 0)) * 1024 * 1024,
+            'memory_bytes' => max(0, (int) ($directives['opcache.memory_consumption'] ?? 0)),
             'max_scripts' => max(0, (int) ($directives['opcache.max_accelerated_files'] ?? 0)),
             'validate_timestamps' => !empty($directives['opcache.validate_timestamps']),
             'revalidate_freq' => max(0, (int) ($directives['opcache.revalidate_freq'] ?? 0)),
             'file_cache' => trim((string) ($directives['opcache.file_cache'] ?? '')) !== '',
         ];
-        $status = @opcache_get_status(false);
+        $status = @opcache_get_status(true);
         $memory = is_array($status) && is_array($status['memory_usage'] ?? null) ? $status['memory_usage'] : [];
         $statistics = is_array($status) && is_array($status['opcache_statistics'] ?? null) ? $status['opcache_statistics'] : [];
         $stats = [
@@ -290,6 +295,7 @@ final class Cache
             'cache_full' => !empty($status['cache_full']),
             'restart_pending' => !empty($status['restart_pending']),
         ];
+        $sources = self::opcacheSources(is_array($status) && is_array($status['scripts'] ?? null) ? $status['scripts'] : []);
 
         return [
             'loaded' => true,
@@ -297,7 +303,53 @@ final class Cache
             'resettable' => function_exists('opcache_reset'),
             'configuration' => $configuration,
             'stats' => $stats,
+            'sources' => $sources,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $scripts
+     * @return list<array{directory: string, scripts: int, memory_bytes: int, hits: int}>
+     */
+    private static function opcacheSources(array $scripts): array
+    {
+        $sources = [];
+
+        foreach ($scripts as $path => $script) {
+            if (!is_array($script)) {
+                continue;
+            }
+
+            $fullPath = trim((string) ($script['full_path'] ?? $path));
+
+            if ($fullPath === '') {
+                continue;
+            }
+
+            $directory = dirname($fullPath);
+
+            if (!isset($sources[$directory])) {
+                $sources[$directory] = [
+                    'directory' => $directory,
+                    'scripts' => 0,
+                    'memory_bytes' => 0,
+                    'hits' => 0,
+                ];
+            }
+
+            $sources[$directory]['scripts']++;
+            $sources[$directory]['memory_bytes'] += max(0, (int) ($script['memory_consumption'] ?? 0));
+            $sources[$directory]['hits'] += max(0, (int) ($script['hits'] ?? 0));
+        }
+
+        $sources = array_values($sources);
+        usort($sources, static function (array $left, array $right): int {
+            $byUsage = [$right['scripts'], $right['memory_bytes'], $right['hits']] <=> [$left['scripts'], $left['memory_bytes'], $left['hits']];
+
+            return $byUsage !== 0 ? $byUsage : $left['directory'] <=> $right['directory'];
+        });
+
+        return array_slice($sources, 0, self::OPCACHE_SOURCE_LIMIT);
     }
 
     public static function resetOpcache(): bool
