@@ -1625,7 +1625,7 @@
   function modalNeedsMobilePageLock(modal) {
     return modalUsesVisualViewport(modal)
       && window.matchMedia
-      && window.matchMedia("(max-width: 760px), (hover: none) and (pointer: coarse)").matches;
+      && window.matchMedia("(max-width: 759px), (hover: none) and (pointer: coarse)").matches;
   }
 
   function lockPageForModal(modal) {
@@ -3597,6 +3597,25 @@
     });
   }
 
+  function scheduleStickySidebarRefresh(direction) {
+    if (direction === "up" || direction === "down") {
+      TinyCat.__stickySidebarPendingDirection = direction;
+    }
+
+    if (TinyCat.__stickySidebarRefreshQueued === true) {
+      return;
+    }
+
+    TinyCat.__stickySidebarRefreshQueued = true;
+    window.requestAnimationFrame(function () {
+      var pendingDirection = TinyCat.__stickySidebarPendingDirection;
+
+      TinyCat.__stickySidebarRefreshQueued = false;
+      TinyCat.__stickySidebarPendingDirection = "";
+      refreshStickySidebars(pendingDirection);
+    });
+  }
+
   TinyCat.initStickySidebars = function (scope) {
     var nodes = stickySidebarNodes(scope);
 
@@ -3606,7 +3625,7 @@
 
     if (TinyCat.__stickySidebarObserver == null && window.ResizeObserver) {
       TinyCat.__stickySidebarObserver = new ResizeObserver(function () {
-        refreshStickySidebars();
+        scheduleStickySidebarRefresh();
       });
     }
 
@@ -3626,20 +3645,31 @@
       TinyCat.__stickySidebarEventsBound = true;
       TinyCat.__stickySidebarDirection = "down";
       TinyCat.__stickySidebarLastScrollY = window.scrollY || 0;
-      window.addEventListener("resize", refreshStickySidebars, { passive: true });
+      window.addEventListener("resize", function () {
+        scheduleStickySidebarRefresh();
+      }, { passive: true });
       window.addEventListener("scroll", function () {
         var nextScrollY = window.scrollY || 0;
+        var direction;
 
         if (nextScrollY === TinyCat.__stickySidebarLastScrollY) {
           return;
         }
 
-        refreshStickySidebars(nextScrollY < TinyCat.__stickySidebarLastScrollY ? "up" : "down");
+        direction = nextScrollY < TinyCat.__stickySidebarLastScrollY ? "up" : "down";
         TinyCat.__stickySidebarLastScrollY = nextScrollY;
+
+        if (direction === TinyCat.__stickySidebarDirection && TinyCat.__stickySidebarRefreshQueued !== true) {
+          return;
+        }
+
+        scheduleStickySidebarRefresh(direction);
       }, { passive: true });
 
       if (window.matchMedia) {
-        window.matchMedia("(min-width: 900px)").addEventListener("change", refreshStickySidebars);
+        window.matchMedia("(min-width: 900px)").addEventListener("change", function () {
+          scheduleStickySidebarRefresh();
+        });
       }
     }
 

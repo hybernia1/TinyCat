@@ -27,7 +27,7 @@ layout('layout', [
             </div>
         </article>
 
-        <div class="grid lg:grid-2">
+        <div class="grid">
             <?= part('privacy/card', ['title_key' => 'privacy.public_title', 'icon_name' => 'globe', 'paragraph_keys' => [
                 'privacy.public_open',
                 'privacy.public_content',
