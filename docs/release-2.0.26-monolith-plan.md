@@ -455,3 +455,28 @@ repeatable performance proof—not hundreds of production types.
   contracts, signed update/rollback, disposable MySQL installation and query
   budgets `3/6/4/8/7` all passed. Detailed decisions are recorded in
   [the Stage 5 write-path report](stage-5-write-paths.md).
+
+### Stage 6 — completed 2026-08-09
+
+- Audited `LinkMetadata` against the archived `Host`, `PublicUrlGuard` and
+  metadata fetcher. Preserved bounded manual redirects and all-address DNS
+  validation, restored credential rejection and added explicit protection for
+  IPv4-mapped private IPv6 without copying either 2.5 guard class.
+- Consolidated pre-decode upload checks in one small procedural helper. Avatar,
+  status and site images now verify actual temporary-file bytes, reported-size
+  agreement, MIME, dimensions and pixel-memory bounds; malformed GD warnings
+  stay suppressed and successful EXIF rotations release replaced allocations.
+- Compared `Cache`/`Minifier` line by line with 2.5. The only differences were
+  namespacing and dependencies on the split runtime, so no behavior-free port
+  was accepted and the stable lazy monolithic owners remain unchanged.
+- Hardened the combined package manager against case-insensitive and
+  file-versus-directory path collisions in core files, deletion lists and
+  extension inventories. No package, updater or migration class was added.
+- Expanded the signed exact-2.0.25 update rehearsal with repeat-safe application
+  and persisted-maintenance interruption recovery. Exact rollback, fresh
+  artifact boot and the 14-check disposable MySQL installer remain green.
+- Completed the full 20-group preflight. URL/raster hardening passes 23 focused
+  checks, PHPStan level 8 has no new errors and its baseline shrank to 733,
+  query budgets remain `3/6/4/8/7`, and `App/` remains 18 files with 15
+  class-bearing files. Detailed decisions are in
+  [the Stage 6 runtime hardening report](stage-6-runtime-hardening.md).

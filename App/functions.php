@@ -544,6 +544,53 @@ function user_theme(?array $user): string
     return theme_normalize((string) ($user['theme'] ?? 'system'));
 }
 
+/**
+ * Returns the first unsafe raster property without decoding attacker-controlled
+ * data. The actual temporary-file size is authoritative; the browser-provided
+ * size must agree with it.
+ *
+ * @param array<int|string, mixed>|false $info
+ * @param list<string> $allowedMimes
+ */
+function image_source_error(
+    array|false $info,
+    int $reportedBytes,
+    int $actualBytes,
+    array $allowedMimes,
+    int $maxBytes,
+    int $maxDimension,
+    int $maxPixels
+): string {
+    if ($reportedBytes < 1 || $actualBytes < 1 || $reportedBytes !== $actualBytes || $actualBytes > $maxBytes) {
+        return 'size';
+    }
+
+    if (!is_array($info) || empty($info['mime'])) {
+        return 'not_image';
+    }
+
+    if (!in_array(strtolower((string) $info['mime']), $allowedMimes, true)) {
+        return 'mime';
+    }
+
+    $width = (int) ($info[0] ?? 0);
+    $height = (int) ($info[1] ?? 0);
+
+    if ($width < 1 || $height < 1) {
+        return 'empty';
+    }
+
+    if (
+        $width > $maxDimension
+        || $height > $maxDimension
+        || $height > intdiv($maxPixels, $width)
+    ) {
+        return 'dimensions';
+    }
+
+    return '';
+}
+
 function site_image_upload(array $file, string $name, string $variant): array
 {
     if (!extension_loaded('gd') || !function_exists('imagewebp')) {
@@ -560,25 +607,38 @@ function site_image_upload(array $file, string $name, string $variant): array
         throw new RuntimeException('Uploaded image is not valid.');
     }
 
-    $maxSize = 64 * 1024 * 1024;
-    $size = (int) ($file['size'] ?? 0);
+    clearstatcache(true, $tmpName);
+    $actualSize = @filesize($tmpName);
+    $info = @getimagesize($tmpName);
+    $sourceError = image_source_error(
+        $info,
+        (int) ($file['size'] ?? 0),
+        is_int($actualSize) ? $actualSize : 0,
+        ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+        64 * 1024 * 1024,
+        8192,
+        16_777_216
+    );
 
-    if ($maxSize > 0 && $size > $maxSize) {
-        throw new RuntimeException('Uploaded image is too large.');
+    if ($sourceError !== '') {
+        throw new RuntimeException(match ($sourceError) {
+            'size' => 'Uploaded image is too large or has an invalid size.',
+            'empty' => 'Uploaded image is empty.',
+            'dimensions' => 'Uploaded image dimensions are too large.',
+            default => 'Only JPEG, PNG, GIF, and WebP images can be uploaded.',
+        });
     }
 
-    $info = @getimagesize($tmpName);
-
-    if ($info === false || empty($info['mime'])) {
+    if (!is_array($info)) {
         throw new RuntimeException('Uploaded image is not valid.');
     }
 
     $mime = strtolower((string) $info['mime']);
     $source = match ($mime) {
-        'image/jpeg' => imagecreatefromjpeg($tmpName),
-        'image/png' => imagecreatefrompng($tmpName),
-        'image/gif' => imagecreatefromgif($tmpName),
-        'image/webp' => imagecreatefromwebp($tmpName),
+        'image/jpeg' => @imagecreatefromjpeg($tmpName),
+        'image/png' => @imagecreatefrompng($tmpName),
+        'image/gif' => @imagecreatefromgif($tmpName),
+        'image/webp' => @imagecreatefromwebp($tmpName),
         default => false,
     };
 
@@ -701,7 +761,12 @@ function image_apply_orientation(GdImage $image, string $path): GdImage
     $rotate = static function (GdImage $source, int $angle): GdImage {
         $rotated = imagerotate($source, $angle, 0);
 
-        return $rotated instanceof GdImage ? $rotated : $source;
+        if (!$rotated instanceof GdImage) {
+            return $source;
+        }
+
+        imagedestroy($source);
+        return $rotated;
     };
 
     $flip = static function (GdImage $source, int $mode): GdImage {

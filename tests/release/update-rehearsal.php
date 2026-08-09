@@ -270,6 +270,53 @@ PHP;
     [$newBootExit, $newBootOutput] = $run($bootNew);
     $assert($newBootExit === 0, 'Updated candidate runtime boots: ' . implode(' ', $newBootOutput));
 
+    $updatedInventory = $inventory($installRoot);
+    $repeatRunner = <<<'PHP'
+define('TINYCAT', true);
+$root = __INSTALL_ROOT__;
+require $root . '/App/bootstrap.php';
+$invoke = static function (string $method, mixed ...$arguments): mixed {
+    return (new ReflectionMethod(TinyCat\Update\Manager::class, $method))->invoke(null, ...$arguments);
+};
+$manifest = TinyCat\Update\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
+$stage = $root . '/storage/updates/rehearsal-repeat-stage';
+$invoke('extractPackage', __PACKAGE__, $stage, $manifest);
+$backup = $invoke('createBackup', $manifest, __VERSION__, false);
+$invoke('enableMaintenance', __VERSION__);
+$invoke('applyFiles', $stage, $manifest);
+$invoke('deleteLegacyFiles', $manifest);
+TinyCat\Update\Manager::disableMaintenance();
+echo json_encode(['backup' => $backup], JSON_THROW_ON_ERROR);
+PHP;
+    $repeatRunner = str_replace(
+        ['__INSTALL_ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__VERSION__'],
+        [
+            var_export($installRoot, true),
+            var_export($manifestPath, true),
+            var_export($signaturePath, true),
+            var_export($packagePath, true),
+            var_export($candidateVersion, true),
+        ],
+        $repeatRunner
+    );
+    [$repeatExit, $repeatOutput] = $run($repeatRunner);
+    $repeatResult = json_decode(implode("\n", $repeatOutput), true);
+    $repeatBackup = is_array($repeatResult) ? (string) ($repeatResult['backup'] ?? '') : '';
+    $repeatMetadata = json_decode((string) @file_get_contents($repeatBackup . '/backup.json'), true);
+    $assert($repeatExit === 0 && is_array($repeatResult), 'Repeated signed update completes: ' . implode(' ', $repeatOutput));
+    $assert($inventory($installRoot) === $updatedInventory, 'Repeated signed update leaves the candidate inventory unchanged.');
+    $assert(is_array($repeatMetadata) && ($repeatMetadata['files'] ?? null) === [], 'Repeated signed update does not back up unchanged files.');
+
+    $interruptRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
+        . "; (new ReflectionMethod(TinyCat\\Update\\Manager::class, 'enableMaintenance'))->invoke(null, "
+        . var_export($candidateVersion, true) . "); exit(23);";
+    [$interruptExit] = $run($interruptRunner);
+    $assert($interruptExit === 23, 'Synthetic update interruption occurs after maintenance is persisted.');
+    $recoverRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
+        . "; if (!TinyCat\\Update\\Manager::maintenanceActive()) exit(2); TinyCat\\Update\\Manager::disableMaintenance();";
+    [$recoverExit, $recoverOutput] = $run($recoverRunner);
+    $assert($recoverExit === 0, 'Interrupted update is detected and maintenance can be recovered: ' . implode(' ', $recoverOutput));
+
     $backup = is_array($updateResult) ? (string) ($updateResult['backup'] ?? '') : '';
     $metadata = json_decode((string) @file_get_contents($backup . '/backup.json'), true);
     $assert(is_array($metadata) && ($metadata['from_version'] ?? '') === '2.0.25', 'Rollback backup records source version 2.0.25.');
@@ -332,4 +379,4 @@ if ($failures !== []) {
     exit(1);
 }
 
-echo "PASS signed 2.0.25 update, exact rollback and fresh-artifact rehearsal\n";
+echo "PASS signed 2.0.25 update, repeat/interruption recovery, exact rollback and fresh-artifact rehearsal\n";

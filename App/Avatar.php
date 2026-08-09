@@ -104,25 +104,33 @@ final class Avatar
             throw new RuntimeException('Uploaded avatar is not valid.');
         }
 
-        $size = (int) ($file['size'] ?? 0);
+        clearstatcache(true, $tmpName);
+        $actualSize = @filesize($tmpName);
+        $info = @getimagesize($tmpName);
+        $sourceError = image_source_error(
+            $info,
+            (int) ($file['size'] ?? 0),
+            is_int($actualSize) ? $actualSize : 0,
+            self::ALLOWED_MIMES,
+            self::MAX_UPLOAD_SIZE,
+            self::MAX_SOURCE_DIMENSION,
+            self::MAX_SOURCE_PIXELS
+        );
 
-        if ($size < 1 || $size > self::MAX_UPLOAD_SIZE) {
-            throw new RuntimeException('Avatar image is too large.');
+        if ($sourceError !== '') {
+            throw new RuntimeException(match ($sourceError) {
+                'size' => 'Avatar image is too large or has an invalid size.',
+                'not_image', 'empty' => 'Uploaded avatar is not an image.',
+                'mime' => 'Only JPEG, PNG, and WebP avatars are allowed.',
+                default => 'Avatar image dimensions are too large.',
+            });
         }
 
-        $info = @getimagesize($tmpName);
-
-        if ($info === false || empty($info['mime'])) {
+        if (!is_array($info)) {
             throw new RuntimeException('Uploaded avatar is not an image.');
         }
 
-        self::assertSourceDimensions($info);
-
         $mime = strtolower((string) $info['mime']);
-
-        if (!in_array($mime, self::ALLOWED_MIMES, true)) {
-            throw new RuntimeException('Only JPEG, PNG, and WebP avatars are allowed.');
-        }
 
         $source = self::createSource($tmpName, $mime);
 
@@ -216,29 +224,11 @@ final class Avatar
     private static function createSource(string $path, string $mime): GdImage|false
     {
         return match ($mime) {
-            'image/jpeg' => imagecreatefromjpeg($path),
-            'image/png' => imagecreatefrompng($path),
-            'image/webp' => imagecreatefromwebp($path),
+            'image/jpeg' => @imagecreatefromjpeg($path),
+            'image/png' => @imagecreatefrompng($path),
+            'image/webp' => @imagecreatefromwebp($path),
             default => false,
         };
-    }
-
-    private static function assertSourceDimensions(array $info): void
-    {
-        $width = (int) ($info[0] ?? 0);
-        $height = (int) ($info[1] ?? 0);
-
-        if ($width < 1 || $height < 1) {
-            throw new RuntimeException('Uploaded avatar is not an image.');
-        }
-
-        if (
-            $width > self::MAX_SOURCE_DIMENSION
-            || $height > self::MAX_SOURCE_DIMENSION
-            || $height > intdiv(self::MAX_SOURCE_PIXELS, $width)
-        ) {
-            throw new RuntimeException('Avatar image dimensions are too large.');
-        }
     }
 
     private static function resizeSquare(GdImage $source): GdImage
@@ -270,7 +260,12 @@ final class Avatar
         $rotate = static function (GdImage $source, int $angle): GdImage {
             $rotated = imagerotate($source, $angle, 0);
 
-            return $rotated instanceof GdImage ? $rotated : $source;
+            if (!$rotated instanceof GdImage) {
+                return $source;
+            }
+
+            imagedestroy($source);
+            return $rotated;
         };
         $flip = static function (GdImage $source, int $mode): GdImage {
             if (function_exists('imageflip')) {

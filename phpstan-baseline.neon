@@ -169,12 +169,6 @@ parameters:
 			path: App/Api.php
 
 		-
-			message: '#^Method Avatar\:\:assertSourceDimensions\(\) has parameter \$info with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/Avatar.php
-
-		-
 			message: '#^Method Avatar\:\:configJson\(\) has parameter \$config with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1687,12 +1681,6 @@ parameters:
 			path: App/Sitemap.php
 
 		-
-			message: '#^Method StatusImage\:\:assertSourceDimensions\(\) has parameter \$info with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/StatusImage.php
-
-		-
 			message: '#^Method StatusImage\:\:upload\(\) has parameter \$file with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1876,12 +1864,6 @@ parameters:
 			message: '#^Comparison operation "\<" between int\<1, max\> and 1 is always false\.$#'
 			identifier: smaller.alwaysFalse
 			count: 2
-			path: App/functions.php
-
-		-
-			message: '#^Comparison operation "\>" between 67108864 and 0 is always true\.$#'
-			identifier: greater.alwaysTrue
-			count: 1
 			path: App/functions.php
 
 		-

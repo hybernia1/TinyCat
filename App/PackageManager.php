@@ -78,6 +78,34 @@ namespace TinyCat {
                 && $operations === ZipArchive::OPSYS_UNIX
                 && (($attributes >> 16) & 0170000) === 0120000;
         }
+
+        /** @param list<string> $paths */
+        protected static function assertDistinctPackagePaths(array $paths, string $errorMessage): void
+        {
+            $normalized = [];
+
+            foreach ($paths as $path) {
+                $key = strtolower($path);
+
+                if (isset($normalized[$key])) {
+                    throw new RuntimeException($errorMessage . ': ' . $path);
+                }
+
+                $normalized[$key] = $path;
+            }
+
+            foreach ($normalized as $key => $path) {
+                $ancestor = $key;
+
+                while (($separator = strrpos($ancestor, '/')) !== false) {
+                    $ancestor = substr($ancestor, 0, $separator);
+
+                    if (isset($normalized[$ancestor])) {
+                        throw new RuntimeException($errorMessage . ': ' . $path);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -444,6 +472,11 @@ final class Manager extends \TinyCat\PackageManager
             $normalizedFileKeys[$pathKey] = true;
         }
 
+        self::assertDistinctPackagePaths(
+            array_keys($normalizedFiles),
+            'Colliding paths in the update manifest'
+        );
+
         $normalizedDelete = [];
 
         foreach ($delete as $path) {
@@ -455,6 +488,11 @@ final class Manager extends \TinyCat\PackageManager
 
             $normalizedDelete[] = $path;
         }
+
+        self::assertDistinctPackagePaths(
+            $normalizedDelete,
+            'Colliding deletion paths in the update manifest'
+        );
 
         $normalizedMigrations = [];
 
@@ -1912,6 +1950,11 @@ final class Store extends \TinyCat\PackageManager
             }
             $validated[$path] = $hash;
         }
+
+        self::assertDistinctPackagePaths(
+            array_keys($validated),
+            'Colliding paths in the extension package file list'
+        );
 
         ksort($validated, SORT_STRING);
         return $validated;

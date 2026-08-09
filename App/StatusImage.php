@@ -28,21 +28,38 @@ final class StatusImage
         }
 
         $tmpName = (string) ($file['tmp_name'] ?? '');
-        $size = (int) ($file['size'] ?? 0);
         $maxSize = status_image_max_upload_bytes();
 
-        if ($tmpName === '' || !is_uploaded_file($tmpName) || $size < 1 || $size > self::MAX_SOURCE_UPLOAD_SIZE) {
+        if ($tmpName === '' || !is_uploaded_file($tmpName)) {
             throw new RuntimeException('Uploaded image is too large or not valid.');
         }
 
+        clearstatcache(true, $tmpName);
+        $actualSize = @filesize($tmpName);
         $info = @getimagesize($tmpName);
-        $mime = strtolower((string) ($info['mime'] ?? ''));
+        $sourceError = image_source_error(
+            $info,
+            (int) ($file['size'] ?? 0),
+            is_int($actualSize) ? $actualSize : 0,
+            self::ALLOWED_MIMES,
+            self::MAX_SOURCE_UPLOAD_SIZE,
+            self::MAX_SOURCE_DIMENSION,
+            self::MAX_SOURCE_PIXELS
+        );
 
-        if ($info === false || !in_array($mime, self::ALLOWED_MIMES, true)) {
+        if ($sourceError !== '') {
+            throw new RuntimeException(match ($sourceError) {
+                'size' => 'Uploaded image is too large or has an invalid size.',
+                'not_image', 'mime' => 'Only JPEG, PNG, and WebP images are allowed.',
+                default => 'Image dimensions are too large.',
+            });
+        }
+
+        if (!is_array($info)) {
             throw new RuntimeException('Only JPEG, PNG, and WebP images are allowed.');
         }
 
-        self::assertSourceDimensions($info);
+        $mime = strtolower((string) $info['mime']);
         $source = self::createSource($tmpName, $mime);
 
         if (!$source instanceof GdImage) {
@@ -214,16 +231,6 @@ final class StatusImage
         };
     }
 
-    private static function assertSourceDimensions(array $info): void
-    {
-        $width = (int) ($info[0] ?? 0);
-        $height = (int) ($info[1] ?? 0);
-
-        if ($width < 1 || $height < 1 || $width > self::MAX_SOURCE_DIMENSION || $height > self::MAX_SOURCE_DIMENSION || $height > intdiv(self::MAX_SOURCE_PIXELS, $width)) {
-            throw new RuntimeException('Image dimensions are too large.');
-        }
-    }
-
     private static function resize(GdImage $source): GdImage
     {
         $sourceWidth = imagesx($source);
@@ -252,7 +259,13 @@ final class StatusImage
         $orientation = is_array($exif) ? (int) ($exif['Orientation'] ?? 1) : 1;
         $rotate = static function (GdImage $source, int $angle): GdImage {
             $rotated = imagerotate($source, $angle, 0);
-            return $rotated instanceof GdImage ? $rotated : $source;
+
+            if (!$rotated instanceof GdImage) {
+                return $source;
+            }
+
+            imagedestroy($source);
+            return $rotated;
         };
         $flip = static function (GdImage $source, int $mode): GdImage {
             if (function_exists('imageflip')) {

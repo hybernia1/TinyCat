@@ -435,6 +435,8 @@ final class LinkMetadata
 
         return in_array($scheme, ['http', 'https'], true)
             && $host !== ''
+            && !isset($parts['user'])
+            && !isset($parts['pass'])
             && !StatusLinks::isSocialHost($host)
             && self::publicHost($host);
     }
@@ -442,16 +444,19 @@ final class LinkMetadata
     private static function publicHost(string $host): bool
     {
         $host = trim($host, '[]');
-        $flags = FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE;
 
         if (filter_var($host, FILTER_VALIDATE_IP)) {
-            return filter_var($host, FILTER_VALIDATE_IP, $flags) !== false;
+            return self::publicAddress($host);
         }
 
         $ips = [];
 
-        foreach ((array) gethostbynamel($host) as $ip) {
-            $ips[] = $ip;
+        $ipv4Addresses = gethostbynamel($host);
+
+        if (is_array($ipv4Addresses)) {
+            foreach ($ipv4Addresses as $ip) {
+                $ips[] = $ip;
+            }
         }
 
         foreach ((array) @dns_get_record($host, DNS_AAAA) as $record) {
@@ -465,12 +470,36 @@ final class LinkMetadata
         }
 
         foreach ($ips as $ip) {
-            if (filter_var($ip, FILTER_VALIDATE_IP, $flags) === false) {
+            if (!self::publicAddress($ip)) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    private static function publicAddress(string $address): bool
+    {
+        $packed = @inet_pton($address);
+
+        if (!is_string($packed)) {
+            return false;
+        }
+
+        // PHP's reserved-range filter has varied for IPv4-mapped IPv6. Always
+        // validate the embedded address as IPv4 so ::ffff:127.0.0.1 cannot
+        // bypass the private-range policy.
+        if (strlen($packed) === 16 && substr($packed, 0, 12) === str_repeat("\0", 10) . "\xff\xff") {
+            $mapped = @inet_ntop(substr($packed, 12));
+
+            return is_string($mapped) && self::publicAddress($mapped);
+        }
+
+        return filter_var(
+            $address,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) !== false;
     }
 
     private static function isHtml(string $contentType): bool

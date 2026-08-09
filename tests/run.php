@@ -11,6 +11,7 @@ $tests = [
     'Monolith boundaries' => 'tests/quality/monolith-boundaries.php',
     'Monolith API inventory' => 'tests/quality/monolith-inventory.php',
     'Write-path integrity' => 'tests/write-path-integrity.php',
+    'Runtime URL and raster hardening' => 'tests/runtime-hardening.php',
     'Render-only partials' => 'tests/quality/render-only-partials.php',
     'HTML sanitizer' => 'tests/html-sanitizer.php',
     'Presentation templates' => 'tests/presentation/view-templates.php',
