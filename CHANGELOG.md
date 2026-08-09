@@ -3,6 +3,13 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.29 - 2026-08-09
+
+### Fixed
+
+- Made the email-template migration self-contained so updates run correctly
+  while the pre-update runtime is still loaded.
+
 ## 2.0.28 - 2026-08-09
 
 ### Simplification

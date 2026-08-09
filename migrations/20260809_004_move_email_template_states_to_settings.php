@@ -20,7 +20,18 @@ return static function (PDO $database): void {
         return;
     }
 
-    $states = email_template_default_states();
+    $states = array_fill_keys([
+        'welcome',
+        'password_reset',
+        'notification_content_like',
+        'notification_content_comment',
+        'notification_comment_like',
+        'notification_follow',
+        'notification_content_mention',
+        'notification_comment_mention',
+        'notification_report_resolved',
+        'notification_report_dismissed',
+    ], true);
     $rows = $database->query('SELECT template_key, enabled FROM email_templates')->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($rows as $row) {
