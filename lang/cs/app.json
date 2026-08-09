@@ -462,7 +462,6 @@
             "status_image_disabled": "Nahrávání obrázků je nyní vypnuté.",
             "status_image_compression": "Tento obrázek nelze zkomprimovat do nastaveného limitu.",
             "status_tag_too_long": "Tag může obsahovat nejvýše {max} znaků.",
-            "status_tags_limit": "Příspěvek nebo komentář může obsahovat nejvýše {max} unikátních tagů.",
             "status_not_found": "Příspěvek nebyl nalezen.",
             "status_forbidden": "Na tuto akci nemáš oprávnění.",
             "status_edit_locked": "Příspěvek je po moderaci zamčený a nelze ho upravit.",

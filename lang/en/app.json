@@ -462,7 +462,6 @@
             "status_image_disabled": "Image uploads are currently disabled.",
             "status_image_compression": "This image cannot be compressed to the configured size limit.",
             "status_tag_too_long": "A tag can contain at most {max} characters.",
-            "status_tags_limit": "A post or comment can contain at most {max} unique tags.",
             "status_not_found": "The post was not found.",
             "status_forbidden": "You are not allowed to perform this action.",
             "status_edit_locked": "This post is locked after moderation and cannot be edited.",

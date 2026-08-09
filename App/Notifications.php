@@ -236,7 +236,8 @@ final class Notifications
         int $contentId,
         string $type,
         array $actor,
-        string $reportStatus = ''
+        string $reportStatus = '',
+        bool $retainContentTarget = true
     ): void {
         if ($contentId < 1) {
             return;
@@ -263,7 +264,7 @@ final class Notifications
                     $reporterId,
                     $type,
                     $actorId,
-                    $contentId,
+                    $retainContentTarget ? $contentId : 0,
                     0,
                     $type . ':' . $contentId . ':' . $reporterId
                 );

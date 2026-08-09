@@ -50,8 +50,7 @@ if ($adminUsersApi === 'update') {
     }
 
     try {
-        update('users', $payload, ['id' => $id]);
-        user_profile_links_sync($id, $profileLinks);
+        user_profile_save($id, $payload, $profileLinks);
     } catch (Throwable $exception) {
         if ($avatar['uploaded']) {
             Avatar::delete($avatar['config']);

@@ -425,3 +425,33 @@ repeatable performance proof—not hundreds of production types.
 - Completed the full 18-group preflight: deterministic style and PHP 8.4 lint,
   PHPStan level 8, security, route/presentation/query tests, signed update and
   rollback, and disposable MySQL installer rehearsal all passed.
+
+### Stage 5 — completed 2026-08-09
+
+- Differentially audited status/comment/reaction, tag, link, image, follow,
+  profile, recovery and moderation mutations against the archived 2.5
+  behavior. Kept only procedural outcomes; no application service, repository,
+  port, controller or compatibility class was transferred.
+- Made status and comment aggregate deletion, direct tag/link synchronization,
+  profile plus profile-link changes, and password-reset token replacement and
+  consumption atomic in their existing monolithic owners. Database failures
+  now roll back all related rows while external image/avatar deletion remains
+  after commit.
+- Removed the arbitrary maximum-ten-unique-tags validation and both dead
+  translations. Individual tags remain bounded to 32 characters and complete
+  post/comment input remains bounded by the 2,000-character storage contract.
+- Replaced broad duplicate-race catches with a narrow unique-constraint check;
+  non-unique trigger, foreign-key and connectivity failures now propagate.
+  Recovery token consumption is conditional, so the same token cannot change
+  the password twice.
+- Fixed moderation removal notifications that were previously erased by the
+  deleted content's foreign-key cascade. Removal notifications now survive
+  without a dead content target; dismissal notifications retain their target.
+- Added 74 SQLite policy/rollback checks, including forced failures during
+  profile, token, tag, link, comment and status mutations plus create/edit/
+  delete, reactions, nested comments and follow cycles. Auth, CSRF, interval,
+  ownership and moderation boundaries remain locked.
+- Completed the full 19-group preflight. PHPStan level 8, route and output
+  contracts, signed update/rollback, disposable MySQL installation and query
+  budgets `3/6/4/8/7` all passed. Detailed decisions are recorded in
+  [the Stage 5 write-path report](stage-5-write-paths.md).

@@ -86,7 +86,8 @@ function tc_admin_moderation_review_report(int $reportId, string $decision): arr
                 $contentId,
                 $decision === 'remove' ? 'report_resolved' : 'report_dismissed',
                 $actor,
-                'open'
+                'open',
+                $decision !== 'remove'
             );
 
             run(

@@ -65,6 +65,25 @@ function db_transaction(callable $callback): mixed
     }
 }
 
+function db_unique_violation(Throwable $exception): bool
+{
+    if (!$exception instanceof PDOException) {
+        return false;
+    }
+
+    $sqlState = (string) $exception->getCode();
+    $driverCode = (int) ($exception->errorInfo[1] ?? 0);
+    $message = strtolower($exception->getMessage());
+
+    return $sqlState === '23505'
+        || $driverCode === 1062
+        || in_array($driverCode, [1555, 2067], true)
+        || ($sqlState === '23000' && (
+            str_contains($message, 'unique constraint')
+            || str_contains($message, 'duplicate entry')
+        ));
+}
+
 /**
  * @param array<mixed> $values
  * @return list<int>
@@ -1980,19 +1999,39 @@ function user_profile_links_sync(int $userId, array $links): void
         return;
     }
 
-    delete('user_profile_links', ['user_id' => $userId]);
-    foreach ($links as $type => $link) {
-        if (!array_key_exists((string) $type, profile_link_types())) {
-            continue;
+    db_transaction(static function () use ($userId, $links): void {
+        delete('user_profile_links', ['user_id' => $userId]);
+
+        foreach ($links as $type => $link) {
+            if (!array_key_exists((string) $type, profile_link_types())) {
+                continue;
+            }
+
+            insert('user_profile_links', [
+                'user_id' => $userId,
+                'link_type' => (string) $type,
+                'link_url' => (string) ($link['url'] ?? ''),
+                'position_index' => (int) ($link['position'] ?? 0),
+                'created_at' => date_db(),
+            ]);
         }
-        insert('user_profile_links', [
-            'user_id' => $userId,
-            'link_type' => (string) $type,
-            'link_url' => (string) ($link['url'] ?? ''),
-            'position_index' => (int) ($link['position'] ?? 0),
-            'created_at' => date_db(),
-        ]);
+    });
+}
+
+/**
+ * @param array<string, mixed> $data
+ * @param array<string, array{url?: mixed, position?: mixed}> $links
+ */
+function user_profile_save(int $userId, array $data, array $links): void
+{
+    if ($userId < 1) {
+        return;
     }
+
+    db_transaction(static function () use ($userId, $data, $links): void {
+        update('users', $data, ['id' => $userId]);
+        user_profile_links_sync($userId, $links);
+    });
 }
 
 function user_profile_update_request(array $user, array $actor): array
@@ -2037,8 +2076,7 @@ function user_profile_update_request(array $user, array $actor): array
         $data['email_notifications'] = 0;
     }
 
-    update('users', $data, ['id' => $id]);
-    user_profile_links_sync($id, $profileLinks);
+    user_profile_save($id, $data, $profileLinks);
 
     if ((int) ($actor['id'] ?? 0) === $id) {
         locale($locale);
@@ -2120,6 +2158,57 @@ function user_password_update_request(array $user): array
     ];
 }
 
+function auth_recovery_replace_token(int $userId, string $tokenHash, string $expiresAt): void
+{
+    if ($userId < 1 || $tokenHash === '' || $expiresAt === '') {
+        return;
+    }
+
+    db_transaction(static function () use ($userId, $tokenHash, $expiresAt): void {
+        delete('password_reset_tokens', ['user_id' => $userId]);
+        insert('password_reset_tokens', [
+            'user_id' => $userId,
+            'token_hash' => $tokenHash,
+            'expires_at' => $expiresAt,
+        ]);
+    });
+}
+
+function auth_recovery_consume_token(
+    int $userId,
+    string $tokenHash,
+    string $passwordHash,
+    string $usedAt
+): bool {
+    if ($userId < 1 || $tokenHash === '' || $passwordHash === '' || $usedAt === '') {
+        return false;
+    }
+
+    return db_transaction(static function () use ($userId, $tokenHash, $passwordHash, $usedAt): bool {
+        $consumed = run(
+            'UPDATE password_reset_tokens
+                SET used_at = ?
+                WHERE user_id = ? AND token_hash = ? AND used_at IS NULL AND expires_at > ?',
+            [$usedAt, $userId, $tokenHash, $usedAt]
+        );
+
+        if ($consumed !== 1) {
+            return false;
+        }
+
+        $updated = run(
+            'UPDATE users SET password = ? WHERE id = ? AND status = ?',
+            [$passwordHash, $userId, 'active']
+        );
+
+        if ($updated !== 1) {
+            throw new RuntimeException('Password recovery user changed before token consumption.');
+        }
+
+        return true;
+    });
+}
+
 function user_avatar_update_request(array $user): array
 {
     $id = (int) ($user['id'] ?? 0);
@@ -2165,7 +2254,12 @@ function user_avatar_update_request(array $user): array
         api_error(t('account.messages.avatar_invalid'), 422, 'avatar_invalid');
     }
 
-    update('users', ['avatar_config' => $json], ['id' => $id]);
+    try {
+        update('users', ['avatar_config' => $json], ['id' => $id]);
+    } catch (Throwable $exception) {
+        Avatar::delete($config);
+        throw $exception;
+    }
     Avatar::delete($oldConfig ?? null, $config ?? null);
 
     $updated = auth() ?: $user;
@@ -4997,11 +5091,6 @@ function status_tag_max_length(): int
     return 32;
 }
 
-function status_tag_max_count(): int
-{
-    return 10;
-}
-
 function status_tag_tokens_from_text(string $text): array
 {
     if (!preg_match_all('/(?<![\\p{L}\\p{N}_])#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)/u', $text, $matches)) {
@@ -5023,7 +5112,7 @@ function status_tags_from_text(string $text): array
         }
     }
 
-    return array_slice(array_values($tags), 0, status_tag_max_count());
+    return array_values($tags);
 }
 
 function status_require_valid_tags(string $text): array
@@ -5042,12 +5131,6 @@ function status_require_valid_tags(string $text): array
         if ($normalized !== '') {
             $tags[$normalized] = $normalized;
         }
-    }
-
-    if (count($tags) > status_tag_max_count()) {
-        api_error(t('account.messages.status_tags_limit', [
-            'max' => (string) status_tag_max_count(),
-        ]), 422, 'status_tags_limit');
     }
 
     return array_values($tags);
@@ -5137,7 +5220,11 @@ function status_term_id(string $tag): int
 
     try {
         return (int) insert('terms', ['name' => $tag]);
-    } catch (Throwable) {
+    } catch (Throwable $exception) {
+        if (!db_unique_violation($exception)) {
+            throw $exception;
+        }
+
         $term = db_select('SELECT id, name FROM terms')
             ->where('name = ?', $tag)
             ->limit(1)
@@ -5175,28 +5262,32 @@ function status_sync_tags(int $contentId, array $tags): void
         return;
     }
 
-    $previousTermIds = status_term_ids_for_content($contentId);
+    db_transaction(static function () use ($contentId, $tags): void {
+        $previousTermIds = status_term_ids_for_content($contentId);
+        delete('content_tags', ['content_id' => $contentId]);
 
-    delete('content_tags', ['content_id' => $contentId]);
+        foreach ($tags as $tag) {
+            $termId = status_term_id((string) $tag);
 
-    foreach ($tags as $tag) {
-        $termId = status_term_id((string) $tag);
+            if ($termId < 1) {
+                continue;
+            }
 
-        if ($termId < 1) {
-            continue;
+            try {
+                insert('content_tags', [
+                    'content_id' => $contentId,
+                    'term_id' => $termId,
+                ]);
+            } catch (Throwable $exception) {
+                if (!db_unique_violation($exception)) {
+                    throw $exception;
+                }
+                // A duplicate pair can happen under a concurrent attach.
+            }
         }
 
-        try {
-            insert('content_tags', [
-                'content_id' => $contentId,
-                'term_id' => $termId,
-            ]);
-        } catch (Throwable) {
-            // Duplicate pairs can happen only under a race or manual data edit.
-        }
-    }
-
-    status_cleanup_unused_term_ids($previousTermIds);
+        status_cleanup_unused_term_ids($previousTermIds);
+    });
 }
 
 function status_term_ids_for_content(int $contentId): array
@@ -5355,7 +5446,11 @@ function status_link_upsert(array $link): int
             $id = insert('links', $data + ['created_at' => date_db()]);
 
             return max(0, (int) $id);
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            if (!db_unique_violation($exception)) {
+                throw $exception;
+            }
+
             $existing = status_link_find_by_hash((string) $data['url_hash']);
         }
     }
@@ -5572,45 +5667,49 @@ function status_sync_links(int $contentId, array $links, string $localImageLinkH
         return;
     }
 
-    $previousLinkIds = status_link_ids_for_content($contentId);
-    $metadataCache = status_link_metadata_cache($links);
+    db_transaction(static function () use ($contentId, $links, $localImageLinkHash, $localImageSource): void {
+        $previousLinkIds = status_link_ids_for_content($contentId);
+        $metadataCache = status_link_metadata_cache($links);
+        delete('content_links', ['content_id' => $contentId]);
 
-    delete('content_links', ['content_id' => $contentId]);
+        foreach ($links as $link) {
+            $link = (array) $link;
+            $hash = (string) ($link['url_hash'] ?? '');
 
-    foreach ($links as $link) {
-        $link = (array) $link;
-        $hash = (string) ($link['url_hash'] ?? '');
+            if (plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048) === '' || $hash === '') {
+                continue;
+            }
 
-        if (plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048) === '' || $hash === '') {
-            continue;
+            $cacheImage = $localImageLinkHash !== '' && hash_equals($localImageLinkHash, $hash);
+            $link = status_link_prepare_metadata(
+                $link,
+                $metadataCache[$hash] ?? null,
+                $cacheImage,
+                $cacheImage ? $localImageSource : ''
+            );
+            $linkId = status_link_upsert($link);
+
+            if ($linkId < 1) {
+                continue;
+            }
+
+            try {
+                insert('content_links', [
+                    'content_id' => $contentId,
+                    'link_id' => $linkId,
+                    'position_index' => max(0, (int) ($link['position'] ?? 0)),
+                    'created_at' => date_db(),
+                ]);
+            } catch (Throwable $exception) {
+                if (!db_unique_violation($exception)) {
+                    throw $exception;
+                }
+                // A duplicate URL relation is harmless under a concurrent attach.
+            }
         }
 
-        $cacheImage = $localImageLinkHash !== '' && hash_equals($localImageLinkHash, $hash);
-        $link = status_link_prepare_metadata(
-            $link,
-            $metadataCache[$hash] ?? null,
-            $cacheImage,
-            $cacheImage ? $localImageSource : ''
-        );
-        $linkId = status_link_upsert($link);
-
-        if ($linkId < 1) {
-            continue;
-        }
-
-        try {
-            insert('content_links', [
-                'content_id' => $contentId,
-                'link_id' => $linkId,
-                'position_index' => max(0, (int) ($link['position'] ?? 0)),
-                'created_at' => date_db(),
-            ]);
-        } catch (Throwable) {
-            // Duplicate links inside one post are ignored by the unique relation key.
-        }
-    }
-
-    status_cleanup_unused_link_ids($previousLinkIds);
+        status_cleanup_unused_link_ids($previousLinkIds);
+    });
 }
 
 function status_link_ids_for_content(int $contentId): array
@@ -6103,8 +6202,6 @@ function status_json_create(array $user, string $redirect = '/'): array
     moderation_record_action($user, 'post');
     Notifications::notifyMentions($body, $user, $contentId);
 
-    $item = public_status_item($contentId);
-
     $data = [
         'action' => 'create',
         'status' => status_json_summary($contentId, $user),
@@ -6113,6 +6210,7 @@ function status_json_create(array $user, string $redirect = '/'): array
     ];
 
     if (wants_partial()) {
+        $item = public_status_item($contentId);
         $prepared = $item !== null ? status_prepare_items_view([$item], $user) : [];
         $data['card_html'] = $prepared !== [] ? part('status/card', [
             'item' => $prepared[0],
@@ -6368,16 +6466,7 @@ function status_json_comment_delete(int $commentId, array $user): array
         api_error(t('account.messages.comment_forbidden'), 403, 'comment_forbidden');
     }
 
-    foreach (db_select('SELECT id FROM content_comments')->where('parent_id = ?', $commentId)->all() as $child) {
-        $childId = (int) ($child['id'] ?? 0);
-        delete('comment_likes', ['comment_id' => $childId]);
-        Notifications::removeForComment($childId);
-    }
-
-    delete('comment_likes', ['comment_id' => $commentId]);
-    Notifications::removeForComment($commentId);
-    delete('content_comments', ['parent_id' => $commentId]);
-    delete('content_comments', ['id' => $commentId]);
+    status_delete_comment_rows($commentId);
 
     return [
         'action' => 'comment_delete',
@@ -6385,6 +6474,26 @@ function status_json_comment_delete(int $commentId, array $user): array
         'deleted_comment_id' => $commentId,
         'message' => t('account.messages.comment_deleted'),
     ];
+}
+
+function status_delete_comment_rows(int $commentId): void
+{
+    if ($commentId < 1) {
+        return;
+    }
+
+    db_transaction(static function () use ($commentId): void {
+        foreach (db_select('SELECT id FROM content_comments')->where('parent_id = ?', $commentId)->all() as $child) {
+            $childId = (int) ($child['id'] ?? 0);
+            delete('comment_likes', ['comment_id' => $childId]);
+            Notifications::removeForComment($childId);
+        }
+
+        delete('comment_likes', ['comment_id' => $commentId]);
+        Notifications::removeForComment($commentId);
+        delete('content_comments', ['parent_id' => $commentId]);
+        delete('content_comments', ['id' => $commentId]);
+    });
 }
 
 function status_payload(): array
@@ -6450,27 +6559,29 @@ function status_delete_content(int $contentId, bool $deleteReports = true, bool 
     $linkIds = status_link_ids_for_content($contentId);
     $image = status_image_record($contentId);
 
-    delete('content_likes', ['content_id' => $contentId]);
-    foreach (db_select('SELECT id FROM content_comments')->where('content_id = ?', $contentId)->all() as $comment) {
-        delete('comment_likes', ['comment_id' => (int) ($comment['id'] ?? 0)]);
-    }
+    db_transaction(static function () use ($contentId, $deleteReports, $deleteNotifications, $termIds, $linkIds): void {
+        delete('content_likes', ['content_id' => $contentId]);
+        foreach (db_select('SELECT id FROM content_comments')->where('content_id = ?', $contentId)->all() as $comment) {
+            delete('comment_likes', ['comment_id' => (int) ($comment['id'] ?? 0)]);
+        }
 
-    if ($deleteNotifications) {
-        Notifications::removeForContent($contentId);
-    }
+        if ($deleteNotifications) {
+            Notifications::removeForContent($contentId);
+        }
 
-    delete('content_comments', ['content_id' => $contentId]);
-    delete('content_tags', ['content_id' => $contentId]);
-    delete('content_links', ['content_id' => $contentId]);
-    delete('content_images', ['content_id' => $contentId]);
+        delete('content_comments', ['content_id' => $contentId]);
+        delete('content_tags', ['content_id' => $contentId]);
+        delete('content_links', ['content_id' => $contentId]);
+        delete('content_images', ['content_id' => $contentId]);
 
-    if ($deleteReports) {
-        delete('content_reports', ['content_id' => $contentId]);
-    }
+        if ($deleteReports) {
+            delete('content_reports', ['content_id' => $contentId]);
+        }
 
-    status_cleanup_unused_term_ids($termIds);
-    status_cleanup_unused_link_ids($linkIds);
-    delete('content', ['id' => $contentId]);
+        status_cleanup_unused_term_ids($termIds);
+        status_cleanup_unused_link_ids($linkIds);
+        delete('content', ['id' => $contentId]);
+    });
     $imagePath = (string) ($image['path'] ?? '');
 
     if ($deleteImageFile) {
@@ -6616,8 +6727,11 @@ function status_json_report(int $contentId, array $user): array
                 'reviewed_by' => (int) ($dismissed['reviewed_by'] ?? 0) ?: null,
                 'action_note' => 'already_dismissed',
             ]);
-        } catch (Throwable) {
-            // A race on the unique report key should behave like an already reviewed report.
+        } catch (Throwable $exception) {
+            if (!db_unique_violation($exception)) {
+                throw $exception;
+            }
+            // A race on the unique report key behaves like an already reviewed report.
         }
 
         return [

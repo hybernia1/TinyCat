@@ -98,10 +98,19 @@ function tc_recovery_update_password(): void
 
     $id = (int) ($user['id'] ?? 0);
 
-    update('users', [
-        'password' => auth_password($password),
-    ], ['id' => $id]);
-    run('UPDATE password_reset_tokens SET used_at = ? WHERE token_hash = ?', [date_db(), hash('sha256', $token)]);
+    $usedAt = date_db();
+    $consumed = auth_recovery_consume_token(
+        $id,
+        hash('sha256', $token),
+        auth_password($password),
+        $usedAt
+    );
+
+    if (!$consumed) {
+        $refreshedCaptcha = captcha_refresh('recovery');
+        flash('error', t('auth.recovery_invalid'));
+        redirect('/recovery');
+    }
     captcha_refresh('recovery');
 
     flash('success', t('auth.recovery_done'));
@@ -114,13 +123,12 @@ function tc_recovery_send_link(): void
     if (user_email_valid($email)) {
         $user = one('SELECT id, username FROM users WHERE email = ? AND status = ? LIMIT 1', [$email, 'active']);
         if ($user !== null) {
-            delete('password_reset_tokens', ['user_id' => (int) $user['id']]);
             $token = bin2hex(random_bytes(32));
-            insert('password_reset_tokens', [
-                'user_id' => (int) $user['id'],
-                'token_hash' => hash('sha256', $token),
-                'expires_at' => date_db('+60 minutes'),
-            ]);
+            auth_recovery_replace_token(
+                (int) $user['id'],
+                hash('sha256', $token),
+                date_db('+60 minutes')
+            );
             email_template_send('password_reset', (int) $user['id'], [
                 'reset_url' => absolute_url('/recovery?token=' . rawurlencode($token)),
             ]);
