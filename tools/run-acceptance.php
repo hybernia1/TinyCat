@@ -190,7 +190,7 @@ try {
             '--candidate-root=' . $candidateRoot,
             '--candidate-url=http://127.0.0.1:8097',
             '--baseline-label=2.0.25',
-            '--candidate-label=2.0.28',
+            '--candidate-label=2.0.29',
             '--order=' . $entry['order'],
             '--sequential-requests=20',
             '--load-requests=60',

@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.28';
+    public const string VERSION = '2.0.29';
     private const string SETTINGS_CACHE_KEY = 'core_autoload_settings';
     private const int SETTINGS_CACHE_TTL = 3600;
 

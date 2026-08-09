@@ -89,7 +89,7 @@ try {
     $expect($comparison->concurrency === 4 && $comparison->loadRequests === 20, 'Benchmark options were not parsed.');
     $expect(
         $comparison->baselineLabel === '2.0.25'
-            && $comparison->candidateLabel === '2.0.28'
+            && $comparison->candidateLabel === '2.0.29'
             && $comparison->order === 'baseline-first',
         'Acceptance labels or default order changed unexpectedly.',
     );
