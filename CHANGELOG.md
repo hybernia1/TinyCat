@@ -3,6 +3,20 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.34 - 2026-08-09
+
+### Operations
+
+- Added an administrator-only OPcache source report with the 20 largest cached
+  script directories, including script count, bytecode memory and hit count.
+  This makes unexpected shared or historical cache entries identifiable without
+  rendering thousands of script rows.
+
+### Fixed
+
+- Corrected the OPcache memory-limit display. PHP reports this directive in
+  bytes, so the dashboard no longer inflates a 256 MB limit to 256 TB.
+
 ## 2.0.33 - 2026-08-09
 
 ### Operations
