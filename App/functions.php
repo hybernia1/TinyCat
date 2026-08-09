@@ -2427,6 +2427,12 @@ function author_activity_stats(int $authorId): array
     }
 
     try {
+        // Drive received-like counts from this author's rows. Starting from
+        // the global likes tables can make MySQL scan every like before it
+        // filters by the post or comment owner.
+        $receivedLikesJoin = (string) config('database.driver', 'mysql') === 'mysql'
+            ? 'STRAIGHT_JOIN'
+            : 'INNER JOIN';
         $stats = one(
             'SELECT
                     (
@@ -2445,13 +2451,11 @@ function author_activity_stats(int $authorId): array
                     ) AS likes_given,
                     (
                         SELECT COUNT(*)
-                        FROM content_likes cl
-                        INNER JOIN content c ON c.id = cl.content_id
+                        FROM content c ' . $receivedLikesJoin . ' content_likes cl ON cl.content_id = c.id
                         WHERE c.author_id = ?
                     ) + (
                         SELECT COUNT(*)
-                        FROM comment_likes cl
-                        INNER JOIN content_comments cc ON cc.id = cl.comment_id
+                        FROM content_comments cc ' . $receivedLikesJoin . ' comment_likes cl ON cl.comment_id = cc.id
                         WHERE cc.user_id = ?
                     ) AS likes_received,
                     (

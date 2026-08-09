@@ -228,7 +228,17 @@ function exerciseAuthor(): void
     public_author_find(1);
     $items = public_status_items_by_author_cursor(1, 20);
     author_follow_counts(1);
-    author_activity_stats(1);
+    $stats = author_activity_stats(1);
+
+    if ($stats !== [
+        'posts' => 24,
+        'likes_given' => 0,
+        'likes_received' => 2,
+        'comments' => 12,
+    ]) {
+        throw new RuntimeException('Author activity stats returned unexpected values.');
+    }
+
     author_following_profiles(1, 10);
     exerciseStatusImages($items);
 }
