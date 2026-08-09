@@ -306,3 +306,28 @@ repeatable performance proof—not hundreds of production types.
   [the 2.0.25 baseline](baseline-2.0.25.md).
 - Verified all 124 shipped PHP files and all four shipped cache tests. The tag
   contains no general test/preflight runner; creating it belongs to Stage 1.
+
+### Stage 1 — completed 2026-08-09
+
+- Added a development-only Composer toolchain and one preflight covering
+  metadata/advisories, deterministic style, PHP 8.4 lint, PHPStan level 8,
+  repository security and the complete behavioral suite. Production Composer
+  dependencies remain forbidden and `vendor/` is not packaged.
+- Froze the existing monolith's static-analysis debt in a baseline of 740
+  findings. All production PHP is analyzed; new findings fail and the baseline
+  may not grow.
+- Added monolith boundary checks that lock the 18 `App/` files, 15
+  class-bearing files and rejected 2.5 namespaces, plus render snapshots and
+  anonymous/authenticated route smoke checks.
+- Locked the measured 2.0.25 SQL-question baseline for five routes under both
+  cache drivers. Live candidate budgets remain Stage 2 work.
+- Added signed-package inventory/hash/signature verification and a disposable
+  synthetic 2.0.25-to-2.0.26 update that verifies maintenance mode, protected
+  runtime data, exact rollback and fresh-artifact boot.
+- Ran the existing and new MySQL tests locally. The fresh installer created its
+  schema, admin, settings and email defaults twice in a disposable database,
+  passed 14 restart-safety checks and removed the database. CI provisions
+  MySQL 8.4 so these tests do not silently skip there.
+- Verified that no production file below `App/`, `Public/`, `assets/`,
+  `Extensions/`, `migrations/` or the root entry points changed from
+  `v2.0.25`.

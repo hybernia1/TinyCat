@@ -9,6 +9,8 @@
 /dist/
 
 # Tooling
+/.phpunit.cache/
+/vendor/
 /.idea/
 /.vscode/
 /.agents/
