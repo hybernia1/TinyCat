@@ -399,3 +399,29 @@ repeatable performance proof—not hundreds of production types.
 - Completed the full 17-group preflight. PHPStan level 8 reported no new
   findings, all 152 PHP files passed lint, the disposable MySQL installer was
   removed cleanly and signed update/rollback rehearsal remained green.
+
+### Stage 4 — completed 2026-08-09
+
+- Added a development-only token inventory for every production global
+  function, class and method. It locks the 18-file/15-class-bearing `App/`
+  boundary and distinguishes the tested `sitemap_url()` and `sanitize_html()`
+  contracts from genuinely unreferenced code.
+- Removed the only proven dead private method, `Core::requireMethod()`, and
+  reduced the PHPStan baseline by three obsolete findings. No extension facade,
+  state owner or security boundary was removed.
+- Consolidated repeated positive-ID normalization, comment-tree traversal and
+  administrator-role checks into three procedural owners. Removed one
+  statically impossible pagination branch and organized `functions.php` with
+  named responsibility sections; no production file or class was added.
+- Query budgets remained `3/6/4/8/7`. Stage 3 and Stage 4 produced identical
+  normalized HTML on all five hot routes, with the same 6 MiB peak memory,
+  34-36 included files and 270 loaded classes.
+- The three-round directional HTTP sample completed 1,200 requests without a
+  failure or detected warning/fatal. Its geometric p50/p95 moved by
+  `-10.36%/-16.05%`, but route-level p95 was too noisy for an acceptance claim;
+  feed and tag are explicitly deferred to the full alternating Stage 8 matrix.
+  Detailed method and measurements are in
+  [the Stage 4 cleanup report](stage-4-monolith-cleanup.md).
+- Completed the full 18-group preflight: deterministic style and PHP 8.4 lint,
+  PHPStan level 8, security, route/presentation/query tests, signed update and
+  rollback, and disposable MySQL installer rehearsal all passed.

@@ -945,16 +945,6 @@ final class Core
         return $path === '/' ? '/' : rtrim($path, '/');
     }
 
-    private static function requireMethod(array|string $methods): void
-    {
-        $allowed = self::normalizeMethods($methods);
-
-        if (!in_array('ANY', $allowed, true) && !in_array(self::method(), $allowed, true)) {
-            header('Allow: ' . implode(', ', $allowed));
-            self::apiError('Method not allowed.', 405, 'method_not_allowed', ['allowed' => $allowed]);
-        }
-    }
-
     private static function payload(?string $key = null, mixed $default = null): mixed
     {
         if (self::$payload === null) {

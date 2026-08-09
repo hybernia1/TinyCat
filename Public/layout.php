@@ -350,7 +350,7 @@ $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
                     <?php if ($authUser !== null): ?>
                         <?php $profileUrl = author_url((int) ($authUser['id'] ?? 0)); ?>
                         <?php $profileNeedsEmail = trim((string) ($authUser['email'] ?? '')) === ''; ?>
-                        <?php if ((string) ($authUser['role'] ?? '') === 'admin'): ?>
+                        <?php if (user_is_admin($authUser)): ?>
                             <a class="nav-link nav-link-icon" href="/admin" aria-label="<?= et('common.admin') ?>" title="<?= et('common.admin') ?>">
                                 <?= icon('dashboard') ?>
                             </a>

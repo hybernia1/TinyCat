@@ -9,6 +9,8 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
+// Bootstrap, runtime, configuration, site identity and media.
+
 function config(?string $key = null, mixed $default = null): mixed
 {
     return Core::config($key, $default);
@@ -61,6 +63,25 @@ function db_transaction(callable $callback): mixed
 
         throw $exception;
     }
+}
+
+/**
+ * @param array<mixed> $values
+ * @return list<int>
+ */
+function positive_int_ids(array $values): array
+{
+    $ids = [];
+
+    foreach ($values as $value) {
+        $id = (int) $value;
+
+        if ($id > 0) {
+            $ids[$id] = $id;
+        }
+    }
+
+    return array_values($ids);
 }
 
 function app_required_tables(): array
@@ -389,6 +410,8 @@ function status_image_uploaded_file(): ?array
     return is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE ? $file : null;
 }
 
+// Users, authentication, profiles, email and the social graph.
+
 function user_avatar_url(?array $user): string
 {
     if ($user === null) {
@@ -442,6 +465,12 @@ function user_display_name(?array $user): string
     return trim((string) ($user['username'] ?? ''));
 }
 
+/** @param array<string, mixed>|null $user */
+function user_is_admin(?array $user): bool
+{
+    return $user !== null && (string) ($user['role'] ?? '') === 'admin';
+}
+
 function user_public_payload(?array $user): ?array
 {
     if ($user === null || (int) ($user['id'] ?? 0) < 1) {
@@ -470,7 +499,7 @@ function user_can_edit_profile(?array $target, ?array $actor): bool
 
     return $targetId > 0
         && $actorId > 0
-        && ($targetId === $actorId || (string) ($actor['role'] ?? '') === 'admin');
+        && ($targetId === $actorId || user_is_admin($actor));
 }
 
 function user_profile_require_edit_target(array $actor, int $authorId): array
@@ -680,7 +709,7 @@ function auth_landing_url(?array $user = null): string
 {
     $user ??= auth();
 
-    if ($user !== null && (string) ($user['role'] ?? '') === 'admin') {
+    if (user_is_admin($user)) {
         return '/admin';
     }
 
@@ -775,7 +804,7 @@ function auth_redirect_after_login(?array $user, string $next = ''): string
         return $fallback;
     }
 
-    if (str_starts_with(route_path($next), '/admin') && (string) ($user['role'] ?? '') !== 'admin') {
+    if (str_starts_with(route_path($next), '/admin') && !user_is_admin($user)) {
         return $fallback;
     }
 
@@ -1380,6 +1409,8 @@ function email_smtp_send(string $to, string $subject, string $body): bool
     return true;
 }
 
+// Moderation, abuse limits and input sanitization.
+
 function moderation_user_post_count(int $userId): int
 {
     if ($userId < 1) {
@@ -1397,7 +1428,7 @@ function moderation_user_reputation(array $user): string
 {
     $userId = (int) ($user['id'] ?? 0);
 
-    if ((string) ($user['role'] ?? '') === 'admin') {
+    if (user_is_admin($user)) {
         return 'trusted';
     }
 
@@ -1610,6 +1641,8 @@ function status_json_require_session_interval(string $action): void
         );
     }
 }
+
+// Plain-text and restricted-HTML normalization shared by write boundaries.
 
 function plain_text_limit(string $value, int $limit): string
 {
@@ -1920,7 +1953,7 @@ function user_profile_links(int $userId): array
 
 function user_profile_links_for_users(array $userIds): array
 {
-    $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds), static fn (int $id): bool => $id > 0)));
+    $userIds = positive_int_ids($userIds);
     if ($userIds === []) {
         return [];
     }
@@ -2457,6 +2490,8 @@ function author_presence(array $author): array
     ];
 }
 
+// Public status read model, rendering preparation and feed queries.
+
 function status_anchor(int $id): string
 {
     return $id > 0 ? 'status-' . $id : '';
@@ -2789,7 +2824,7 @@ function &author_mention_user_cache(): array
 
 function author_mention_users_by_ids(array $userIds): array
 {
-    $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds), static fn (int $id): bool => $id > 0)));
+    $userIds = positive_int_ids($userIds);
 
     if ($userIds === []) {
         return [];
@@ -2925,10 +2960,7 @@ function mentions_for_editing(string $text): string
         return $text;
     }
 
-    $ids = array_values(array_unique(array_filter(array_map(
-        'intval',
-        (array) ($matches[1] ?? [])
-    ), static fn (int $id): bool => $id > 0)));
+    $ids = positive_int_ids($matches[1]);
     $users = author_mention_users_by_ids($ids);
 
     return (string) preg_replace_callback(
@@ -3385,7 +3417,7 @@ function public_status_item(int $id): ?array
 
 function public_status_items_by_ids(array $ids, bool $preload = true): array
 {
-    $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)));
+    $ids = positive_int_ids($ids);
 
     if ($ids === []) {
         return [];
@@ -3418,10 +3450,7 @@ function public_status_items_by_ids(array $ids, bool $preload = true): array
 
 function status_preload_feed(array $items): void
 {
-    $ids = array_values(array_unique(array_filter(array_map(
-        static fn (array $item): int => (int) ($item['id'] ?? 0),
-        $items
-    ), static fn (int $id): bool => $id > 0)));
+    $ids = positive_int_ids(array_column($items, 'id'));
 
     if ($ids === []) {
         return;
@@ -3467,10 +3496,7 @@ function status_prepare_items_view(array $items, ?array $user): array
 
     status_preload_feed($items);
     $userId = (int) ($user['id'] ?? 0);
-    $ids = array_values(array_unique(array_filter(array_map(
-        static fn (array $item): int => (int) ($item['id'] ?? 0),
-        $items
-    ), static fn (int $id): bool => $id > 0)));
+    $ids = positive_int_ids(array_column($items, 'id'));
 
     if ($userId > 0) {
         status_preload_user_likes($ids, $userId);
@@ -3505,7 +3531,7 @@ function status_prepare_items_view(array $items, ?array $user): array
             ],
             'links' => array_map('status_prepare_link_view', $links),
             'manage' => [
-                'is_locked' => status_edit_locked($item) && (string) ($user['role'] ?? '') !== 'admin',
+                'is_locked' => status_edit_locked($item) && !user_is_admin($user),
                 'can_edit' => status_can_edit($item, $user),
                 'can_delete' => status_can_delete($item, $user),
                 'can_report' => $user !== null
@@ -3670,6 +3696,8 @@ function public_sidebar(?string $activeTag = null, bool $compute = false): strin
     ]);
 }
 
+// Public search, suggestions and bounded fallback scans.
+
 function public_search_excerpt(string $text, string $query, int $limit = 120): string
 {
     $text = trim((string) preg_replace('/\s+/u', ' ', $text));
@@ -3783,7 +3811,7 @@ function public_search_guard(string $query, bool $increment = true): ?array
     $user = auth();
 
     if ($user !== null) {
-        if ((string) ($user['role'] ?? '') === 'admin') {
+        if (user_is_admin($user)) {
             return null;
         }
 
@@ -3982,7 +4010,7 @@ function public_search_recent_content_scan(string $query, int $limit): array
 function public_search_link_content_rows(string $query, int $limit, array $excludeIds = []): array
 {
     $limit = max(1, min(50, $limit));
-    $excludeIds = array_values(array_unique(array_filter(array_map('intval', $excludeIds), static fn (int $id): bool => $id > 0)));
+    $excludeIds = positive_int_ids($excludeIds);
     $fulltext = public_search_fulltext_query($query);
     $rows = [];
 
@@ -4393,6 +4421,8 @@ function public_search_results(string $query, int $limit = 6): array
     ];
 }
 
+// Status, comment and reaction policies plus transactional write paths.
+
 function status_find(int $id): ?array
 {
     if ($id < 1) {
@@ -4432,7 +4462,7 @@ function status_can_edit(?array $item, ?array $user): bool
         return false;
     }
 
-    if ((string) ($user['role'] ?? '') === 'admin') {
+    if (user_is_admin($user)) {
         return true;
     }
 
@@ -4447,7 +4477,7 @@ function status_can_delete(?array $item, ?array $user): bool
     }
 
     return (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0)
-        || (string) ($user['role'] ?? '') === 'admin';
+        || user_is_admin($user);
 }
 
 function status_user_liked(int $contentId, int $userId): bool
@@ -4478,7 +4508,7 @@ function status_preload_user_likes(array $contentIds, int $userId): void
         return;
     }
 
-    $contentIds = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
+    $contentIds = positive_int_ids($contentIds);
     $cache =& status_user_liked_cache();
     $cache[$userId] ??= [];
     $missing = array_values(array_filter($contentIds, static fn (int $id): bool => !array_key_exists($id, $cache[$userId])));
@@ -4599,24 +4629,19 @@ function status_comments(int $contentId): array
     return $cache[$contentId];
 }
 
-/** @param array<int, array<string, mixed>> $comments */
-function status_preload_comment_tree_user_likes(array $comments, int $userId): void
+/**
+ * @param array<int, array<string, mixed>> $comments
+ * @return list<array<string, mixed>>
+ */
+function status_comment_tree_rows(array $comments): array
 {
-    if ($userId < 1 || $comments === []) {
-        return;
-    }
-
-    $ids = [];
+    $rows = [];
     $pending = $comments;
 
     while ($pending !== []) {
         $comment = array_pop($pending);
 
-        $commentId = (int) ($comment['id'] ?? 0);
-
-        if ($commentId > 0) {
-            $ids[$commentId] = $commentId;
-        }
+        $rows[] = $comment;
 
         foreach ((array) ($comment['replies'] ?? []) as $reply) {
             if (is_array($reply)) {
@@ -4625,7 +4650,20 @@ function status_preload_comment_tree_user_likes(array $comments, int $userId): v
         }
     }
 
-    status_preload_comment_user_likes(array_values($ids), $userId);
+    return $rows;
+}
+
+/** @param array<int, array<string, mixed>> $comments */
+function status_preload_comment_tree_user_likes(array $comments, int $userId): void
+{
+    if ($userId < 1 || $comments === []) {
+        return;
+    }
+
+    status_preload_comment_user_likes(
+        positive_int_ids(array_column(status_comment_tree_rows($comments), 'id')),
+        $userId
+    );
 }
 
 /**
@@ -4638,11 +4676,8 @@ function status_prepare_comments_view(array $comments, ?array $user): array
     $userId = (int) ($user['id'] ?? 0);
     status_preload_comment_tree_user_likes($comments, $userId);
     $mentionIds = [];
-    $pending = $comments;
 
-    while ($pending !== []) {
-        $comment = array_pop($pending);
-
+    foreach (status_comment_tree_rows($comments) as $comment) {
         if (preg_match_all('/(?<![A-Za-z0-9_])@([1-9][0-9]*)/', (string) ($comment['body'] ?? ''), $matches)) {
             foreach ($matches[1] as $mentionId) {
                 $mentionId = (int) $mentionId;
@@ -4650,12 +4685,6 @@ function status_prepare_comments_view(array $comments, ?array $user): array
                 if ($mentionId > 0) {
                     $mentionIds[$mentionId] = $mentionId;
                 }
-            }
-        }
-
-        foreach ((array) ($comment['replies'] ?? []) as $reply) {
-            if (is_array($reply)) {
-                $pending[] = $reply;
             }
         }
     }
@@ -4759,7 +4788,7 @@ function status_comment_can_delete(?array $comment, ?array $user): bool
         return false;
     }
 
-    if ((string) ($user['role'] ?? '') === 'admin' || (int) ($comment['user_id'] ?? 0) === $userId) {
+    if (user_is_admin($user) || (int) ($comment['user_id'] ?? 0) === $userId) {
         return true;
     }
 
@@ -4781,7 +4810,7 @@ function status_comment_can_edit(?array $comment, ?array $user): bool
     $userId = (int) ($user['id'] ?? 0);
 
     return $userId > 0
-        && ((string) ($user['role'] ?? '') === 'admin' || (int) ($comment['user_id'] ?? 0) === $userId);
+        && (user_is_admin($user) || (int) ($comment['user_id'] ?? 0) === $userId);
 }
 
 function status_comment_history(array $comment): array
@@ -4908,7 +4937,7 @@ function status_preload_comment_user_likes(array $commentIds, int $userId): void
         return;
     }
 
-    $commentIds = array_values(array_unique(array_filter(array_map('intval', $commentIds), static fn (int $id): bool => $id > 0)));
+    $commentIds = positive_int_ids($commentIds);
     $cache =& status_comment_user_liked_cache();
     $cache[$userId] ??= [];
     $missing = array_values(array_filter($commentIds, static fn (int $id): bool => !array_key_exists($id, $cache[$userId])));
@@ -5176,15 +5205,15 @@ function status_term_ids_for_content(int $contentId): array
         return [];
     }
 
-    return array_values(array_unique(array_filter(array_map(
-        static fn (array $row): int => (int) ($row['term_id'] ?? 0),
-        all('SELECT term_id FROM content_tags WHERE content_id = ?', [$contentId])
-    ), static fn (int $id): bool => $id > 0)));
+    return positive_int_ids(array_column(
+        all('SELECT term_id FROM content_tags WHERE content_id = ?', [$contentId]),
+        'term_id'
+    ));
 }
 
 function status_cleanup_unused_term_ids(array $termIds): void
 {
-    $termIds = array_values(array_unique(array_filter(array_map('intval', $termIds), static fn (int $id): bool => $id > 0)));
+    $termIds = positive_int_ids($termIds);
 
     if ($termIds === []) {
         return;
@@ -5590,15 +5619,15 @@ function status_link_ids_for_content(int $contentId): array
         return [];
     }
 
-    return array_values(array_unique(array_filter(array_map(
-        static fn (array $row): int => (int) ($row['link_id'] ?? 0),
-        all('SELECT link_id FROM content_links WHERE content_id = ?', [$contentId])
-    ), static fn (int $id): bool => $id > 0)));
+    return positive_int_ids(array_column(
+        all('SELECT link_id FROM content_links WHERE content_id = ?', [$contentId]),
+        'link_id'
+    ));
 }
 
 function status_cleanup_unused_link_ids(array $linkIds): void
 {
-    $linkIds = array_values(array_unique(array_filter(array_map('intval', $linkIds), static fn (int $id): bool => $id > 0)));
+    $linkIds = positive_int_ids($linkIds);
 
     if ($linkIds === []) {
         return;
@@ -5628,7 +5657,7 @@ function status_links_cache(array $contentIds): array
 {
     static $cache = [];
 
-    $ids = array_values(array_unique(array_filter(array_map('intval', $contentIds), static fn (int $id): bool => $id > 0)));
+    $ids = positive_int_ids($contentIds);
 
     if ($ids === []) {
         return [];
@@ -5894,7 +5923,7 @@ function status_json_require_not_muted(array $user): void
 
 function status_json_require_action(array $user, string $action): void
 {
-    if ((string) ($user['role'] ?? '') === 'admin') {
+    if (user_is_admin($user)) {
         return;
     }
 
@@ -6251,7 +6280,7 @@ function status_json_comment_update(int $commentId, array $user): array
         api_error(t('account.messages.comment_edit_forbidden'), 403, 'comment_edit_forbidden');
     }
 
-    if ((string) ($user['role'] ?? '') !== 'admin') {
+    if (!user_is_admin($user)) {
         status_json_require_not_muted($user);
     }
     $body = status_comment_input_body();
@@ -6291,7 +6320,7 @@ function status_json_comment_update(int $commentId, array $user): array
             'comments_diff' => $history,
         ], ['id' => $commentId]);
 
-        if ((string) ($user['role'] ?? '') === 'admin' && !status_edit_locked($status)) {
+        if (user_is_admin($user) && !status_edit_locked($status)) {
             status_edit_lock($contentId, $user, 'admin_comment_edit');
         }
 
@@ -6633,7 +6662,7 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
 {
     $item = status_find($contentId);
 
-    if (status_edit_locked($item) && (string) ($user['role'] ?? '') !== 'admin') {
+    if (status_edit_locked($item) && !user_is_admin($user)) {
         api_error(t('account.messages.status_edit_locked'), 423, 'status_edit_locked');
     }
 
@@ -6641,7 +6670,7 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
         api_error(t('account.messages.status_forbidden'), 403, 'status_forbidden');
     }
 
-    if ((string) ($user['role'] ?? '') !== 'admin') {
+    if (!user_is_admin($user)) {
         status_json_require_not_muted($user);
     }
 
@@ -6971,6 +7000,8 @@ function status_login_url(string $fragment = '', string $fallback = ''): string
 
     return '/login?next=' . rawurlencode($next);
 }
+
+// Scheduled maintenance, runtime health and request-lifetime activity.
 
 function app_existing_tables(array $tables): array
 {
@@ -7311,6 +7342,8 @@ function app_db_ready(?array $requiredTables = null): bool
     return (bool) app_db_status($requiredTables)['ready'];
 }
 
+// Stable 2.0.x procedural facades retained for routes and extensions.
+
 function asset(string $path, ?bool $version = null): string
 {
     return Core::asset($path, $version);
@@ -7389,6 +7422,8 @@ function pagination_sql(array $pagination): string
     return ' LIMIT ' . $perPage . ' OFFSET ' . $offset;
 }
 
+// Administration filtering, pagination and prepared list controls.
+
 function admin_user_statuses(): array
 {
     return [
@@ -7423,10 +7458,6 @@ function admin_per_page_options(): array
     foreach ($configured as $option) {
         $value = max(1, min(200, (int) $option));
         $options[$value] = $value;
-    }
-
-    if ($options === []) {
-        $options = [10 => 10, 25 => 25, 50 => 50, 100 => 100];
     }
 
     ksort($options);
@@ -7564,6 +7595,8 @@ function admin_pagination_view_data(
         'pages' => $pages,
     ];
 }
+
+// Escaping, localization, date/time and HTTP/request facades.
 
 function e(mixed $value): string
 {

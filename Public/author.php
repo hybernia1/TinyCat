@@ -42,7 +42,7 @@ $feedMore = status_feed_more_view_data(
 $canPost = $authUser !== null && (int) ($authUser['id'] ?? 0) === $authorId;
 $editor = $canPost ? status_editor_view_data() : [];
 $canEditProfile = user_can_edit_profile($author, $authUser);
-$canSeeMute = $authUser !== null && ($canPost || (string) ($authUser['role'] ?? '') === 'admin');
+$canSeeMute = $authUser !== null && ($canPost || user_is_admin($authUser));
 $mutedUntil = user_muted_until($author);
 $canFollow = $authUser !== null && (int) ($authUser['id'] ?? 0) !== $authorId;
 $isFollowing = $canFollow && author_is_followed((int) ($authUser['id'] ?? 0), $authorId);
