@@ -54,7 +54,6 @@ layout('layout', [
     $opcache = $cache['opcache'];
     $opcacheStats = $opcache['stats'];
     $opcacheConfig = $opcache['configuration'];
-    $opcacheSources = $opcache['sources'];
     $recentComments = tc_admin_dashboard_recent_comments();
     ?>
     <section class="grid sm:grid-2 md:grid-4">
@@ -129,34 +128,6 @@ layout('layout', [
                             <p class="m-0 table-meta"><?= et('admin.cache.memory', ['used' => tc_admin_dashboard_bytes($opcacheStats['used_memory']), 'limit' => tc_admin_dashboard_bytes($opcacheConfig['memory_bytes'])]) ?> · <?= et('admin.cache.wasted_memory', ['value' => tc_admin_dashboard_bytes($opcacheStats['wasted_memory'])]) ?></p>
                             <p class="m-0 table-meta"><?= et('admin.cache.hit_rate', ['value' => tc_admin_dashboard_hit_rate($opcacheStats['hits'], $opcacheStats['misses'])]) ?> · <?= et('admin.cache.timestamp_checks', ['value' => $opcacheConfig['validate_timestamps'] ? t('admin.cache.enabled') : t('admin.cache.disabled')]) ?></p>
                             <p class="m-0 table-meta"><?= et('admin.cache.revalidate_frequency', ['value' => tc_admin_dashboard_number($opcacheConfig['revalidate_freq'])]) ?> · <?= et($opcacheConfig['file_cache'] ? 'admin.cache.file_cache_enabled' : 'admin.cache.file_cache_disabled') ?></p>
-                            <?php if ($opcacheSources !== []): ?>
-                                <div class="mt-3">
-                                    <strong><?= et('admin.cache.cached_sources') ?></strong>
-                                    <p class="m-0 mb-2 table-meta"><?= et('admin.cache.cached_sources_hint') ?></p>
-                                    <div class="table-scroll">
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th><?= et('admin.cache.source_directory') ?></th>
-                                                    <th><?= et('admin.cache.scripts') ?></th>
-                                                    <th><?= et('admin.cache.memory_used') ?></th>
-                                                    <th><?= et('admin.cache.hits') ?></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($opcacheSources as $source): ?>
-                                                    <tr>
-                                                        <td><code><?= e($source['directory']) ?></code></td>
-                                                        <td><?= e(tc_admin_dashboard_number($source['scripts'])) ?></td>
-                                                        <td><?= e(tc_admin_dashboard_bytes($source['memory_bytes'])) ?></td>
-                                                        <td><?= e(tc_admin_dashboard_number($source['hits'])) ?></td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
                 </div>

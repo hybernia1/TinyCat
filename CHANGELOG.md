@@ -3,6 +3,14 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.35 - 2026-08-09
+
+### Simplification
+
+- Removed the detailed OPcache source report after confirming that the observed
+  large cache came from shared hosting. The dashboard keeps its lightweight
+  runtime summary and correctly reported memory limit.
+
 ## 2.0.34 - 2026-08-09
 
 ### Operations

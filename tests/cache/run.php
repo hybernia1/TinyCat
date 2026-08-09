@@ -77,13 +77,6 @@ $test('cache diagnostics expose a supported driver', static function () use ($ex
     foreach (['cache_full', 'restart_pending'] as $key) {
         $expect(is_bool($diagnostics['opcache']['stats'][$key] ?? null));
     }
-    $expect(is_array($diagnostics['opcache']['sources'] ?? null));
-    foreach ($diagnostics['opcache']['sources'] as $source) {
-        $expect(is_string($source['directory'] ?? null));
-        foreach (['scripts', 'memory_bytes', 'hits'] as $key) {
-            $expect(is_int($source[$key] ?? null));
-        }
-    }
     $expect(is_bool(Cache::resetOpcache()));
 });
 
