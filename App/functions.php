@@ -3454,6 +3454,93 @@ function status_preload_feed(array $items): void
     status_links_cache($ids);
 }
 
+/**
+ * @param array<int, array<string, mixed>> $items
+ * @param array<string, mixed>|null $user
+ * @return array<int, array<string, mixed>>
+ */
+function status_prepare_items_view(array $items, ?array $user): array
+{
+    if ($items === []) {
+        return [];
+    }
+
+    status_preload_feed($items);
+    $userId = (int) ($user['id'] ?? 0);
+    $ids = array_values(array_unique(array_filter(array_map(
+        static fn (array $item): int => (int) ($item['id'] ?? 0),
+        $items
+    ), static fn (int $id): bool => $id > 0)));
+
+    if ($userId > 0) {
+        status_preload_user_likes($ids, $userId);
+    }
+
+    foreach ($items as &$item) {
+        $contentId = (int) ($item['id'] ?? 0);
+        $createdAt = (string) ($item['created_at'] ?? '');
+        $links = array_values(array_filter(
+            status_links_for_content($contentId),
+            static fn (array $link): bool => !status_link_is_internal($link)
+        ));
+
+        $item['likes_count'] = (int) ($item['likes_count'] ?? 0);
+        $item['comments_count'] = array_key_exists('comments_count', $item)
+            ? (int) ($item['comments_count'] ?? 0)
+            : status_comment_count($contentId);
+        $item['viewer_liked'] = $userId > 0 && status_user_liked($contentId, $userId);
+        $item['_view'] = [
+            'body_html' => render_status_body($item),
+            'author_url' => author_url((int) ($item['author_id'] ?? 0)),
+            'status_url' => status_url($contentId),
+            'permalink_label' => status_permalink_label($item),
+            'context' => status_accessible_context($item),
+            'time' => [
+                'iso' => $createdAt !== '' ? date_iso($createdAt) : '',
+                'label' => $createdAt !== '' ? datetime($createdAt) : '',
+            ],
+            'image' => [
+                'url' => status_image_url($item),
+                'alt' => status_image_alt_text($item),
+            ],
+            'links' => array_map('status_prepare_link_view', $links),
+            'manage' => [
+                'is_locked' => status_edit_locked($item) && (string) ($user['role'] ?? '') !== 'admin',
+                'can_edit' => status_can_edit($item, $user),
+                'can_delete' => status_can_delete($item, $user),
+                'can_report' => $user !== null
+                    && (int) ($item['author_id'] ?? 0) !== $userId,
+            ],
+        ];
+    }
+    unset($item);
+
+    return $items;
+}
+
+/**
+ * @param array<string, mixed> $link
+ * @return array<string, mixed>
+ */
+function status_prepare_link_view(array $link): array
+{
+    $url = (string) ($link['normalized_url'] ?? '');
+    $displayUrl = status_link_display_url($link);
+    $title = trim((string) ($link['title'] ?? ''));
+    $embedUrl = status_video_embed_url($link);
+    $thumbnail = status_video_thumbnail_sources($link);
+
+    return $link + [
+        'display_url' => $displayUrl,
+        'resolved_title' => $title !== '' ? $title : ($displayUrl !== '' ? $displayUrl : $url),
+        'embed_url_resolved' => $embedUrl,
+        'embed_allowed' => (string) ($link['link_type'] ?? 'link') === 'video'
+            && status_video_embed_allowed($embedUrl),
+        'thumbnail_url' => (string) ($thumbnail['fallback'] ?? ''),
+        'thumbnail_webp_url' => (string) ($thumbnail['webp'] ?? ''),
+    ];
+}
+
 function public_trending_tags(int $limit = 8, int $days = 7, bool $compute = true): array
 {
     $limit = max(1, min(30, $limit));
@@ -4541,6 +4628,102 @@ function status_preload_comment_tree_user_likes(array $comments, int $userId): v
     status_preload_comment_user_likes(array_values($ids), $userId);
 }
 
+/**
+ * @param array<int, array<string, mixed>> $comments
+ * @param array<string, mixed>|null $user
+ * @return array<int, array<string, mixed>>
+ */
+function status_prepare_comments_view(array $comments, ?array $user): array
+{
+    $userId = (int) ($user['id'] ?? 0);
+    status_preload_comment_tree_user_likes($comments, $userId);
+    $mentionIds = [];
+    $pending = $comments;
+
+    while ($pending !== []) {
+        $comment = array_pop($pending);
+
+        if (preg_match_all('/(?<![A-Za-z0-9_])@([1-9][0-9]*)/', (string) ($comment['body'] ?? ''), $matches)) {
+            foreach ($matches[1] as $mentionId) {
+                $mentionId = (int) $mentionId;
+
+                if ($mentionId > 0) {
+                    $mentionIds[$mentionId] = $mentionId;
+                }
+            }
+        }
+
+        foreach ((array) ($comment['replies'] ?? []) as $reply) {
+            if (is_array($reply)) {
+                $pending[] = $reply;
+            }
+        }
+    }
+
+    author_mention_users_by_ids(array_values($mentionIds));
+
+    return array_map(
+        static fn (array $comment): array => status_prepare_comment_view($comment, $user),
+        $comments
+    );
+}
+
+/**
+ * @param array<string, mixed> $comment
+ * @param array<string, mixed>|null $user
+ * @return array<string, mixed>
+ */
+function status_prepare_comment_view(array $comment, ?array $user): array
+{
+    $commentId = (int) ($comment['id'] ?? 0);
+    $userId = (int) ($user['id'] ?? 0);
+    $createdAt = (string) ($comment['created_at'] ?? '');
+    $replies = [];
+
+    foreach ((array) ($comment['replies'] ?? []) as $reply) {
+        if (is_array($reply)) {
+            $replies[] = status_prepare_comment_view($reply, $user);
+        }
+    }
+
+    $comment['replies'] = $replies;
+    $comment['likes_count'] = array_key_exists('likes_count', $comment)
+        ? (int) ($comment['likes_count'] ?? 0)
+        : status_comment_like_count($commentId);
+    $comment['viewer_liked'] = $userId > 0 && status_comment_user_liked($commentId, $userId);
+    $comment['can_edit'] = status_comment_can_edit($comment, $user);
+    $comment['can_delete'] = status_comment_can_delete($comment, $user);
+    $comment['_view'] = [
+        'body_html' => render_mentions((string) ($comment['body'] ?? '')),
+        'author_url' => author_url((int) ($comment['user_id'] ?? 0)),
+        'context' => status_accessible_context($comment, true),
+        'mention' => status_comment_mention((string) ($comment['author_name'] ?? '')),
+        'time' => [
+            'iso' => $createdAt !== '' ? date_iso($createdAt) : '',
+            'label' => $createdAt !== '' ? datetime($createdAt) : '',
+        ],
+    ];
+
+    return $comment;
+}
+
+/**
+ * @param array<string, mixed> $item
+ * @param array<string, mixed>|null $user
+ * @return array{item: array<string, mixed>, comments: array<int, array<string, mixed>>}
+ */
+function status_prepare_detail_view(array $item, ?array $user): array
+{
+    $items = status_prepare_items_view([$item], $user);
+    $prepared = $items[0] ?? $item;
+    $comments = status_comments((int) ($item['id'] ?? 0));
+
+    return [
+        'item' => $prepared,
+        'comments' => status_prepare_comments_view($comments, $user),
+    ];
+}
+
 function status_comment_find(int $id): ?array
 {
     if ($id < 1) {
@@ -4877,6 +5060,28 @@ function status_tag_suggestions(): array
     }
 
     return array_values($tags);
+}
+
+/**
+ * @param array<string, mixed> $item
+ * @return array<string, mixed>
+ */
+function status_editor_view_data(array $item = []): array
+{
+    $tags = json_encode(
+        status_tag_suggestions(),
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+    );
+
+    return [
+        'item' => $item,
+        'tags_json' => is_string($tags) ? $tags : '[]',
+        'image' => [
+            'enabled' => status_images_enabled(),
+            'url' => status_image_url($item),
+            'alt' => status_image_alt_text($item),
+        ],
+    ];
 }
 
 function status_term_id(string $tag): int
@@ -5782,6 +5987,8 @@ function status_json_comment_payload(int $commentId, array $user, string $action
     }
 
     $depth = (int) ($comment['parent_id'] ?? 0) > 0 ? 1 : 0;
+    $preparedComments = status_prepare_comments_view([$comment], $user);
+    $comment = $preparedComments[0] ?? $comment;
 
     return [
         'id' => $commentId,
@@ -5877,8 +6084,9 @@ function status_json_create(array $user, string $redirect = '/'): array
     ];
 
     if (wants_partial()) {
-        $data['card_html'] = $item !== null ? part('status/card', [
-            'item' => $item,
+        $prepared = $item !== null ? status_prepare_items_view([$item], $user) : [];
+        $data['card_html'] = $prepared !== [] ? part('status/card', [
+            'item' => $prepared[0],
             'action' => $redirect,
             'user' => $user,
         ]) : '';
@@ -6308,6 +6516,7 @@ function public_home_feed_data(string $feed = 'all', ?array $user = null, ?array
     }
 
     $feedId = 'status-feed-' . $feed;
+    $items = status_prepare_items_view($items, $user);
 
     return [
         'feed' => $feed,
@@ -6317,6 +6526,13 @@ function public_home_feed_data(string $feed = 'all', ?array $user = null, ?array
         'limit' => $limit,
         'items' => $items,
         'feed_id' => $feedId,
+        'feed_more' => status_feed_more_view_data(
+            $feedId,
+            'home',
+            $items,
+            $limit,
+            ['feed' => $feed]
+        ),
     ];
 }
 
@@ -6516,8 +6732,9 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
 
     if (wants_partial()) {
         $updated = public_status_item($contentId);
-        $data['card_html'] = $updated !== null ? part('status/card', [
-            'item' => $updated,
+        $prepared = $updated !== null ? status_prepare_items_view([$updated], $user) : [];
+        $data['card_html'] = $prepared !== [] ? part('status/card', [
+            'item' => $prepared[0],
             'action' => $redirect,
             'user' => $user,
         ]) : '';
@@ -6598,6 +6815,29 @@ function status_feed_next_url(string $context, int $limit, array $params = [], b
     }
 
     return '/api/status-feed?' . http_build_query($query);
+}
+
+/**
+ * @param array<int, array<string, mixed>> $items
+ * @param array<string, mixed> $params
+ * @return array<string, mixed>
+ */
+function status_feed_more_view_data(
+    string $feedId,
+    string $context,
+    array $items,
+    int $limit,
+    array $params = []
+): array {
+    $loaded = count($items);
+    $params += status_feed_cursor_params($items);
+
+    return [
+        'feed_id' => $feedId,
+        'loaded' => $loaded,
+        'limit' => $limit,
+        'next_url' => $loaded >= $limit ? status_feed_next_url($context, $limit, $params) : '',
+    ];
 }
 
 function status_feed_cursor_params(array $items): array
@@ -6686,9 +6926,10 @@ function status_feed_payload(string $context, int $limit, array $params = [], ?a
         $limit,
         $nextParams
     ): array {
+        $viewItems = status_prepare_items_view($items, $user);
         $htmlData = [
             'html' => part('status/feed', [
-                'items' => $items,
+                'items' => $viewItems,
                 'action' => $action,
                 'user' => $user,
             ]),
@@ -7233,6 +7474,95 @@ function admin_list_url(string $path, array $params = [], bool $ajax = true): st
     $query = admin_list_query($params, $ajax);
 
     return $path . ($query !== [] ? '?' . http_build_query($query) : '');
+}
+
+/**
+ * @param array<string, mixed> $params
+ * @return array<string, mixed>
+ */
+function admin_per_page_view_data(
+    string $path,
+    string $target,
+    array $params,
+    int $selected,
+    string $historyPath
+): array {
+    $params['page'] = 1;
+
+    return [
+        'path' => $path,
+        'target' => $target,
+        'params' => $params,
+        'selected' => admin_per_page($selected),
+        'history_path' => $historyPath,
+        'options' => admin_per_page_options(),
+    ];
+}
+
+/**
+ * @param array<string, mixed> $pagination
+ * @param array<string, mixed> $params
+ * @return array<string, mixed>
+ */
+function admin_pagination_view_data(
+    array $pagination,
+    string $path,
+    string $target,
+    array $params = [],
+    string $pageName = 'page',
+    int $window = 2,
+    string $historyPath = ''
+): array {
+    $page = max(1, (int) ($pagination['page'] ?? 1));
+    $lastPage = max(1, (int) ($pagination['last_page'] ?? 1));
+    $window = max(1, $window);
+    $historyPath = $historyPath !== '' ? $historyPath : $path;
+    $pageNumbers = [1, $lastPage];
+
+    for ($number = max(1, $page - $window); $number <= min($lastPage, $page + $window); $number++) {
+        $pageNumbers[] = $number;
+    }
+
+    $pageNumbers = array_values(array_unique($pageNumbers));
+    sort($pageNumbers);
+    $url = static function (int $targetPage, bool $ajax) use ($path, $historyPath, $params, $pageName): string {
+        $query = $params;
+        $query[$pageName] = $targetPage;
+
+        return admin_list_url($ajax ? $path : $historyPath, $query, $ajax);
+    };
+    $pages = [];
+    $previous = null;
+
+    foreach ($pageNumbers as $number) {
+        $pages[] = [
+            'number' => $number,
+            'current' => $number === $page,
+            'gap_before' => $previous !== null && $number > $previous + 1,
+            'url' => $url($number, true),
+            'history_url' => $url($number, false),
+        ];
+        $previous = $number;
+    }
+
+    return [
+        'visible' => $lastPage > 1,
+        'target' => $target,
+        'page' => $page,
+        'last_page' => $lastPage,
+        'total' => max(0, (int) ($pagination['total'] ?? 0)),
+        'from' => max(0, (int) ($pagination['from'] ?? 0)),
+        'to' => max(0, (int) ($pagination['to'] ?? 0)),
+        'previous' => $page > 1 ? [
+            'url' => $url($page - 1, true),
+            'history_url' => $url($page - 1, false),
+        ] : null,
+        'next' => $page < $lastPage ? [
+            'url' => $url($page + 1, true),
+            'history_url' => $url($page + 1, false),
+        ] : null,
+        'pages' => $pages,
+    ];
 }
 
 function e(mixed $value): string

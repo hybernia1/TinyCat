@@ -9,6 +9,7 @@ if (PHP_SAPI !== 'cli') {
 $root = dirname(__DIR__);
 $tests = [
     'Monolith boundaries' => 'tests/quality/monolith-boundaries.php',
+    'Render-only partials' => 'tests/quality/render-only-partials.php',
     'HTML sanitizer' => 'tests/html-sanitizer.php',
     'Presentation templates' => 'tests/presentation/view-templates.php',
     'Public route smoke' => 'tests/http/public-route-smoke.php',

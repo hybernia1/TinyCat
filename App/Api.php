@@ -273,10 +273,14 @@ final class Api
 
         $userId = (int) ($user['id'] ?? 0);
         $state = Notifications::state($userId);
+        $notifications = Notifications::viewItems(
+            Notifications::items($userId, Notifications::PREVIEW_LIMIT),
+            90
+        );
 
         return api_payload($state, static fn (): array => $state + [
             'html' => part('notifications/preview', [
-                'notifications' => Notifications::items($userId, Notifications::PREVIEW_LIMIT),
+                'notifications' => $notifications,
             ]),
         ]);
     }
@@ -290,6 +294,7 @@ final class Api
         $action = str_replace('-', '_', strtolower($action));
         $message = Notifications::applyAction($userId, $action, max(0, (int) input('id', 0)));
         $batch = Notifications::page($userId);
+        $viewItems = Notifications::viewItems((array) $batch['items']);
         $unread = Notifications::unreadCount($userId);
         $data = [
             'action' => $action,
@@ -300,7 +305,7 @@ final class Api
 
         return api_payload($data, static fn (): array => $data + [
             'html' => part('notifications/page', [
-                'notifications' => (array) $batch['items'],
+                'notifications' => $viewItems,
                 'unread' => $unread,
                 'next_url' => (string) $batch['next_url'],
             ]),
@@ -315,9 +320,10 @@ final class Api
             (string) get('cursor_at', ''),
             max(0, (int) get('cursor_id', 0))
         );
+        $viewItems = Notifications::viewItems((array) $batch['items']);
 
         return [
-            'html' => part('notifications/items', ['notifications' => (array) $batch['items']]),
+            'html' => part('notifications/items', ['notifications' => $viewItems]),
             'count' => (int) $batch['count'],
             'done' => (bool) $batch['done'],
             'next_url' => (string) $batch['next_url'],
@@ -355,16 +361,19 @@ final class Api
     {
         $contentId = max(0, (int) get('id', 0));
         $item = public_status_item($contentId);
+        $user = auth();
 
         if ($item === null) {
             api_error(t('account.messages.status_not_found'), 404, 'not_found');
         }
 
+        $items = status_prepare_items_view([$item], $user);
+
         return [
             'html' => part('status/card', [
-                'item' => $item,
+                'item' => $items[0],
                 'action' => self::statusPageAction($contentId),
-                'user' => auth(),
+                'user' => $user,
             ]),
         ];
     }
@@ -373,15 +382,19 @@ final class Api
     {
         $contentId = max(0, (int) get('id', 0));
         $item = public_status_item($contentId);
+        $user = auth();
 
         if ($item === null) {
             api_error(t('account.messages.status_not_found'), 404, 'not_found');
         }
 
+        $detail = status_prepare_detail_view($item, $user);
+
         return [
             'html' => render('modals/status-post', [
-                'item' => $item,
-                'user' => auth(),
+                'item' => $detail['item'],
+                'comments' => $detail['comments'],
+                'user' => $user,
                 'action' => self::statusPageAction($contentId),
             ]),
         ];
@@ -429,10 +442,12 @@ final class Api
         }
 
         $item['body'] = mentions_for_editing((string) ($item['body'] ?? ''));
+        $editor = status_editor_view_data((array) $item);
 
         return [
             'html' => render('modals/status-edit', [
                 'item' => (array) $item,
+                'editor' => $editor,
                 'action' => status_api_url('update', ['id' => $contentId]),
             ]),
         ];

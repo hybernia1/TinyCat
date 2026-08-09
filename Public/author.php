@@ -31,7 +31,16 @@ $statusLimit = public_status_page_limit();
 $pageUrl = $current;
 $statusItems = public_status_items_by_author_cursor($authorId, $statusLimit);
 $authUser = auth();
+$statusItems = status_prepare_items_view($statusItems, $authUser);
+$feedMore = status_feed_more_view_data(
+    'status-feed-author-' . $authorId,
+    'author',
+    $statusItems,
+    $statusLimit,
+    ['author_id' => $authorId]
+);
 $canPost = $authUser !== null && (int) ($authUser['id'] ?? 0) === $authorId;
+$editor = $canPost ? status_editor_view_data() : [];
 $canEditProfile = user_can_edit_profile($author, $authUser);
 $canSeeMute = $authUser !== null && ($canPost || (string) ($authUser['role'] ?? '') === 'admin');
 $mutedUntil = user_muted_until($author);
@@ -93,7 +102,7 @@ layout('layout', [
         'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
         'jsonld' => $authorStructuredData,
     ],
-], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $statusLimit, $canPost, $canEditProfile, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing): void {
+], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $canPost, $canEditProfile, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing, $feedMore, $editor): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -211,7 +220,11 @@ layout('layout', [
                         <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime($mutedUntil)]) ?></span>
                     </div>
                 <?php elseif ($canPost && $authUser !== null): ?>
-                    <?= part('status/composer', ['action' => author_url($authorId), 'user' => $authUser]) ?>
+                    <?= part('status/composer', [
+                        'action' => author_url($authorId),
+                        'user' => $authUser,
+                        'editor' => $editor,
+                    ]) ?>
                 <?php endif; ?>
 
                 <?php if ($statusItems === []): ?>
@@ -224,13 +237,7 @@ layout('layout', [
                         'user' => $authUser,
                     ]) ?>
                 </div>
-                <?= part('status/feed-more', [
-                    'feed_id' => $feedId,
-                    'context' => 'author',
-                    'loaded' => count($statusItems),
-                    'limit' => $statusLimit,
-                    'params' => ['author_id' => $authorId] + status_feed_cursor_params($statusItems),
-                ]) ?>
+                <?= part('status/feed-more', $feedMore) ?>
             </section>
         </div>
     </section>

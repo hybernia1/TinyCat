@@ -27,7 +27,10 @@ $results = $hasQuery && $searchBlocked === null ? public_search_results($query, 
     'users' => [],
     'content' => [],
 ];
-$statusItems = $hasQuery && $searchBlocked === null ? tc_search_status_items($results) : [];
+$authUser = auth();
+$statusItems = $hasQuery && $searchBlocked === null
+    ? status_prepare_items_view(tc_search_status_items($results), $authUser)
+    : [];
 
 layout('layout', [
     'title' => $hasQuery ? t('public.search_title_query', ['query' => $query]) : t('public.search_title'),
@@ -41,7 +44,7 @@ layout('layout', [
         'robots' => 'noindex,follow',
     ],
     'search_query' => $query,
-], static function () use ($query, $hasQuery, $searchBlocked, $statusItems, $current): void {
+], static function () use ($query, $hasQuery, $searchBlocked, $statusItems, $current, $authUser): void {
     ?>
     <section class="public-layout">
         <div class="home-feed-section stack stack-gap-16">
@@ -79,7 +82,7 @@ layout('layout', [
                     <?= part('status/feed', [
                         'items' => $statusItems,
                         'action' => $current,
-                        'user' => auth(),
+                        'user' => $authUser,
                     ]) ?>
                 </div>
             <?php endif; ?>

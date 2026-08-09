@@ -10,12 +10,15 @@ $createdAt = (string) ($created_at ?? '');
 $contentId = max(0, (int) ($content_id ?? 0));
 $openModal = (bool) ($open_modal ?? true);
 $item = is_array($item ?? null) ? $item : ['id' => $contentId];
-$label = status_permalink_label($item);
+$view = is_array($item['_view'] ?? null) ? $item['_view'] : [];
+$url = (string) ($view['status_url'] ?? '');
+$label = (string) ($view['permalink_label'] ?? '');
+$time = is_array($view['time'] ?? null) ? $view['time'] : [];
 
-if ($createdAt === '' || $contentId < 1) {
+if ($createdAt === '' || $contentId < 1 || $url === '') {
     return '';
 }
 ?>
-<a class="link-button public-content-meta status-time-button" href="<?= e(status_url($contentId)) ?>" aria-label="<?= e($label) ?>" title="<?= e($label) ?>"<?= $openModal ? ' data-modal-open' : '' ?>>
-    <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
+<a class="link-button public-content-meta status-time-button" href="<?= e($url) ?>" aria-label="<?= e($label) ?>" title="<?= e($label) ?>"<?= $openModal ? ' data-modal-open' : '' ?>>
+    <time datetime="<?= e((string) ($time['iso'] ?? '')) ?>"><?= e((string) ($time['label'] ?? '')) ?></time>
 </a>

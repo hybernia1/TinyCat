@@ -10,21 +10,22 @@ $item = is_array($item ?? null) ? $item : [];
 $user = is_array($user ?? null) ? $user : null;
 $action = (string) ($action ?? '/');
 $contentId = (int) ($item['id'] ?? 0);
-$isLocked = status_edit_locked($item) && (string) ($user['role'] ?? '') !== 'admin';
-$canEdit = status_can_edit($item, $user);
-$canDelete = status_can_delete($item, $user);
-$canReport = $user !== null
-    && (int) ($item['author_id'] ?? 0) !== (int) ($user['id'] ?? 0);
+$view = is_array($item['_view'] ?? null) ? $item['_view'] : [];
+$manage = is_array($view['manage'] ?? null) ? $view['manage'] : [];
+$isLocked = (bool) ($manage['is_locked'] ?? false);
+$canEdit = (bool) ($manage['can_edit'] ?? false);
+$canDelete = (bool) ($manage['can_delete'] ?? false);
+$canReport = (bool) ($manage['can_report'] ?? false);
 $hasMenuActions = $canReport || $canEdit || $canDelete;
 
 if ($contentId < 1) {
     return '';
 }
 
-$permalinkLabel = status_permalink_label($item);
+$permalinkLabel = (string) ($view['permalink_label'] ?? '');
 ?>
 <div class="status-manage status-manage-top">
-    <a class="btn btn-ghost btn-icon btn-sm status-manage-icon" href="<?= e(status_url($contentId)) ?>" title="<?= e($permalinkLabel) ?>" aria-label="<?= e($permalinkLabel) ?>">
+    <a class="btn btn-ghost btn-icon btn-sm status-manage-icon" href="<?= e((string) ($view['status_url'] ?? '/')) ?>" title="<?= e($permalinkLabel) ?>" aria-label="<?= e($permalinkLabel) ?>">
         <?= icon('link') ?>
     </a>
     <?php if ($isLocked): ?>

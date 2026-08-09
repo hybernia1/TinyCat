@@ -8,11 +8,11 @@ if (!defined('TINYCAT')) {
 
 $notification = is_array($notification ?? null) ? $notification : [];
 $id = (int) ($notification['id'] ?? 0);
-$isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
+$isUnread = (bool) ($notification['view_unread'] ?? false);
 $actorName = trim((string) ($notification['actor_name'] ?? ''));
-$createdAt = (string) ($notification['created_at'] ?? '');
-$contentText = meta_text((string) ($notification['content_body'] ?? ''), 120);
-$url = Notifications::url($notification);
+$createdAt = (string) ($notification['view_created_iso'] ?? '');
+$contentText = (string) ($notification['view_content_text'] ?? '');
+$url = (string) ($notification['view_url'] ?? '/notifications');
 ?>
 <article class="notification-item<?= $isUnread ? ' is-unread' : '' ?>">
     <a class="notification-main" href="<?= e($url) ?>">
@@ -20,16 +20,16 @@ $url = Notifications::url($notification);
             <?= part('user/avatar', [
                 'user' => $notification,
                 'alt' => $actorName,
-                'fallback_icon' => Notifications::iconName((string) ($notification['type'] ?? '')),
+                'fallback_icon' => (string) ($notification['view_icon'] ?? 'bell'),
             ]) ?>
         </span>
         <span class="notification-copy">
-            <strong><?= e(Notifications::message($notification)) ?></strong>
+            <strong><?= e((string) ($notification['view_message'] ?? '')) ?></strong>
             <?php if ($contentText !== ''): ?>
                 <span><?= e($contentText) ?></span>
             <?php endif; ?>
             <?php if ($createdAt !== ''): ?>
-                <time datetime="<?= e(date_iso($createdAt)) ?>"><?= e(datetime($createdAt)) ?></time>
+                <time datetime="<?= e($createdAt) ?>"><?= e((string) ($notification['view_created_label'] ?? '')) ?></time>
             <?php endif; ?>
         </span>
     </a>

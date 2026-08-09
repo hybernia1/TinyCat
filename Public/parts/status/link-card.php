@@ -13,22 +13,18 @@ $url = (string) ($link['normalized_url'] ?? '');
 $title = trim((string) ($link['title'] ?? ''));
 $description = trim((string) ($link['description'] ?? ''));
 $imageUrl = trim((string) ($link['image_url'] ?? ''));
-$displayUrl = status_link_display_url($link);
+$displayUrl = (string) ($link['display_url'] ?? '');
 
 if ($url === '') {
     return '';
 }
 
-if ($title === '') {
-    $title = $displayUrl !== '' ? $displayUrl : $url;
-}
-
-$embedUrl = status_video_embed_url($link);
-$thumbnailSources = status_video_thumbnail_sources($link);
-$thumbnailUrl = (string) ($thumbnailSources['fallback'] ?? '');
-$thumbnailWebpUrl = (string) ($thumbnailSources['webp'] ?? '');
+$title = (string) ($link['resolved_title'] ?? $title);
+$embedUrl = (string) ($link['embed_url_resolved'] ?? '');
+$thumbnailUrl = (string) ($link['thumbnail_url'] ?? '');
+$thumbnailWebpUrl = (string) ($link['thumbnail_webp_url'] ?? '');
 ?>
-<?php if ($type === 'video' && status_video_embed_allowed($embedUrl)): ?>
+<?php if ((bool) ($link['embed_allowed'] ?? false)): ?>
     <div class="status-video-card" data-status-video data-embed-url="<?= e($embedUrl) ?>">
         <button class="status-video-placeholder" type="button" data-status-video-load aria-label="<?= e($title) ?>">
             <?php if ($thumbnailUrl !== ''): ?>

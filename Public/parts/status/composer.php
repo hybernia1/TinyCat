@@ -7,6 +7,7 @@ if (!defined('TINYCAT')) {
 }
 
 $user = is_array($user ?? null) ? $user : [];
+$editor = is_array($editor ?? null) ? $editor : [];
 ?>
 <section class="card status-composer">
     <div class="card-body">
@@ -25,11 +26,14 @@ $user = is_array($user ?? null) ? $user : [];
                     <?= part('user/avatar', ['user' => $user, 'alt' => user_display_name($user)]) ?>
                 </div>
                 <div class="status-compose-main">
-                    <?= part('status/field') ?>
+                    <?= part('status/field', [
+                        'item' => (array) ($editor['item'] ?? []),
+                        'tags_json' => (string) ($editor['tags_json'] ?? '[]'),
+                    ]) ?>
                     <div class="status-compose-footer">
                         <div class="status-compose-counter" data-status-editor-meta-slot></div>
                         <div class="status-compose-actions">
-                            <?= part('status/image-field') ?>
+                            <?= part('status/image-field', ['image' => (array) ($editor['image'] ?? [])]) ?>
                             <button class="btn btn-primary btn-icon" type="submit" title="<?= et('account.status_create') ?>" aria-label="<?= et('account.status_create') ?>"><?= icon('send') ?></button>
                         </div>
                     </div>

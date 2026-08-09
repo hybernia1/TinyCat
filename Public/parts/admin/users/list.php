@@ -13,17 +13,23 @@ $params = is_array($params ?? null) ? $params : [];
 $roles = is_array($roles ?? null) ? $roles : [];
 $statuses = is_array($statuses ?? null) ? $statuses : [];
 $hasFilters = (bool) ($has_filters ?? false);
+$perPage = (int) ($per_page ?? 25);
+$perPageView = is_array($per_page_view ?? null) ? $per_page_view : [];
+$paginationView = is_array($pagination_view ?? null) ? $pagination_view : [];
+$searchUrl = (string) ($search_url ?? '/api/admin/users');
+$clearUrl = (string) ($clear_url ?? '/admin/users');
+$clearHistoryUrl = (string) ($clear_history_url ?? '/admin/users');
 ?>
 <div class="stack stack-gap-14">
     <div class="admin-list-toolbar">
-        <form class="admin-search-form" action="<?= e(tc_admin_users_api_url([], false)) ?>" method="get" data-ajax-form data-ajax-target="#users-list" data-history="/admin/users">
+        <form class="admin-search-form" action="<?= e($searchUrl) ?>" method="get" data-ajax-form data-ajax-target="#users-list" data-history="/admin/users">
             <input type="hidden" name="view" value="html">
             <?php foreach ($filters as $key => $value): ?>
                 <?php if ($key !== 'q' && $value !== ''): ?>
                     <input type="hidden" name="<?= e((string) $key) ?>" value="<?= e((string) $value) ?>">
                 <?php endif; ?>
             <?php endforeach; ?>
-            <input type="hidden" name="per_page" value="<?= e((string) admin_per_page()) ?>">
+            <input type="hidden" name="per_page" value="<?= e((string) $perPage) ?>">
             <label class="sr-only" for="users-search"><?= et('common.search') ?></label>
             <span class="input-icon">
                 <?= icon('search') ?>
@@ -33,18 +39,12 @@ $hasFilters = (bool) ($has_filters ?? false);
         </form>
         <?php if ($hasFilters): ?>
             <div class="admin-filter-actions">
-                <a class="btn btn-ghost" href="<?= e(tc_admin_users_api_url(['per_page' => admin_per_page(), 'page' => 1], false)) ?>" data-ajax data-ajax-target="#users-list" data-history="<?= e(admin_list_url('/admin/users', ['per_page' => admin_per_page(), 'page' => 1], false)) ?>">
+                <a class="btn btn-ghost" href="<?= e($clearUrl) ?>" data-ajax data-ajax-target="#users-list" data-history="<?= e($clearHistoryUrl) ?>">
                     <?= icon('close') ?> <span><?= et('common.clear_filters') ?></span>
                 </a>
             </div>
         <?php endif; ?>
-        <?= part('admin/per-page', [
-            'path' => '/api/admin/users',
-            'target' => '#users-list',
-            'params' => $params,
-            'selected' => (int) ($pagination['per_page'] ?? admin_per_page()),
-            'history_path' => '/admin/users',
-        ]) ?>
+        <?= part('admin/per-page', $perPageView) ?>
     </div>
 
     <?php if ($users === []): ?>
@@ -93,15 +93,7 @@ $hasFilters = (bool) ($has_filters ?? false);
                 </tbody>
             </table>
         </div>
-        <?= part('admin/pagination', [
-            'pagination' => $pagination,
-            'path' => '/api/admin/users',
-            'target' => '#users-list',
-            'params' => $params,
-            'page_name' => 'page',
-            'window' => 2,
-            'history_path' => '/admin/users',
-        ]) ?>
+        <?= part('admin/pagination', ['view' => $paginationView, 'target' => '#users-list']) ?>
         <?php foreach ($users as $user): ?>
             <?= render('modals/user-edit', [
                 'user' => $user,
@@ -112,5 +104,5 @@ $hasFilters = (bool) ($has_filters ?? false);
     <?php endif; ?>
 
     <?= render('modals/user-create') ?>
-    <?= render('modals/user-filter') ?>
+    <?= render('modals/user-filter', ['per_page' => $perPage]) ?>
 </div>

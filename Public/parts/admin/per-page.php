@@ -9,9 +9,9 @@ if (!defined('TINYCAT')) {
 $path = (string) ($path ?? '');
 $target = (string) ($target ?? '');
 $params = is_array($params ?? null) ? $params : [];
-$selected = (int) ($selected ?? admin_per_page());
+$selected = (int) ($selected ?? 25);
 $historyPath = (string) ($history_path ?? $path);
-$params['page'] = 1;
+$options = is_array($options ?? null) ? $options : [];
 ?>
 <form class="admin-per-page-form" action="<?= e($path) ?>" method="get" data-ajax-form data-ajax-target="<?= e($target) ?>" data-history="<?= e($historyPath) ?>">
     <input type="hidden" name="view" value="html">
@@ -24,7 +24,7 @@ $params['page'] = 1;
     <label class="field-inline">
         <span class="label"><?= et('common.per_page') ?></span>
         <select class="select select-sm" name="per_page" data-submit-on-change>
-            <?php foreach (admin_per_page_options() as $option): ?>
+            <?php foreach ($options as $option): ?>
                 <option value="<?= e((string) $option) ?>"<?= $selected === $option ? ' selected' : '' ?>><?= e((string) $option) ?></option>
             <?php endforeach; ?>
         </select>

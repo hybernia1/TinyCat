@@ -9,10 +9,11 @@ if (!defined('TINYCAT')) {
 $filters = is_array($filters ?? null) ? $filters : [];
 $roles = is_array($roles ?? null) ? $roles : [];
 $statuses = is_array($statuses ?? null) ? $statuses : [];
+$perPage = max(1, (int) ($per_page ?? 25));
 ?>
 <div class="grid">
     <input type="hidden" name="q" value="<?= e((string) ($filters['q'] ?? '')) ?>">
-    <input type="hidden" name="per_page" value="<?= e((string) admin_per_page()) ?>">
+    <input type="hidden" name="per_page" value="<?= e((string) $perPage) ?>">
     <input type="hidden" name="page" value="1">
     <label class="field">
         <span class="label"><?= et('common.role') ?></span>

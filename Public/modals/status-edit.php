@@ -7,6 +7,7 @@ if (!defined('TINYCAT')) {
 }
 
 $item = (array) ($item ?? []);
+$editor = is_array($editor ?? null) ? $editor : [];
 $action = (string) ($action ?? '');
 $contentId = (int) ($item['id'] ?? 0);
 
@@ -21,8 +22,11 @@ ob_start();
 ?>
 <input type="hidden" name="action" value="update">
 <input type="hidden" name="id" value="<?= e($contentId) ?>">
-<?= part('status/field', ['item' => $item]) ?>
-<?= part('status/image-field', ['item' => $item]) ?>
+<?= part('status/field', [
+    'item' => $item,
+    'tags_json' => (string) ($editor['tags_json'] ?? '[]'),
+]) ?>
+<?= part('status/image-field', ['image' => (array) ($editor['image'] ?? [])]) ?>
 <?php
 $body = trim((string) ob_get_clean());
 $footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . icon('close') . ' <span>' . et('common.cancel') . '</span></button>'

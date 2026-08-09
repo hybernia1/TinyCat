@@ -11,9 +11,10 @@ $feed = $feed === 'following' ? 'following' : 'all';
 $user = is_array($user ?? null) ? $user : null;
 $currentFeedUrl = (string) ($current_feed_url ?? ($feed === 'following' ? '/?feed=following' : '/'));
 $followingLoginRequired = (bool) ($following_login_required ?? false);
-$limit = (int) ($limit ?? public_status_page_limit());
+$limit = max(0, (int) ($limit ?? 0));
 $items = is_array($items ?? null) ? $items : [];
 $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
+$feedMore = is_array($feed_more ?? null) ? $feed_more : [];
 ?>
 <h1 class="sr-only"><?= et($feed === 'following' ? 'public.feed_title_following' : 'public.feed_title') ?></h1>
 
@@ -39,11 +40,5 @@ $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
     <div class="status-feed" id="<?= e($feedId) ?>" data-status-feed>
         <?= part('status/feed', ['items' => $items, 'action' => $currentFeedUrl, 'user' => $user]) ?>
     </div>
-    <?= part('status/feed-more', [
-        'feed_id' => $feedId,
-        'context' => 'home',
-        'loaded' => count($items),
-        'limit' => $limit,
-        'params' => ['feed' => $feed] + status_feed_cursor_params($items),
-    ]) ?>
+    <?= part('status/feed-more', $feedMore) ?>
 <?php endif; ?>

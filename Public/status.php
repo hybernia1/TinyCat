@@ -28,9 +28,9 @@ if ($item === null) {
     return;
 }
 
-status_preload_feed([$item]);
-$comments = status_comments($statusId);
-status_preload_comment_tree_user_likes($comments, (int) ($authUser['id'] ?? 0));
+$detail = status_prepare_detail_view($item, $authUser);
+$item = $detail['item'];
+$comments = $detail['comments'];
 
 $statusTitle = status_meta_title($item);
 $statusStructuredImage = status_image_jsonld($item) ?? (status_meta_link_image($item) ?: null);
@@ -80,7 +80,7 @@ layout('layout', [
             ],
         ], static fn (mixed $value): bool => $value !== null),
     ],
-], static function () use ($item, $authUser, $current, $compact, $pageAction): void {
+], static function () use ($item, $comments, $authUser, $current, $compact, $pageAction): void {
     $authorId = (int) ($item['author_id'] ?? 0);
     $authorName = trim((string) ($item['author_name'] ?? ''));
     $createdAt = (string) ($item['created_at'] ?? '');
@@ -126,6 +126,7 @@ layout('layout', [
                     ]) ?>
                     <?= part('status/comments-thread', [
                         'item' => $item,
+                        'comments' => $comments,
                         'user' => $authUser,
                         'action' => $pageAction,
                         'context' => 'status-' . $contentId,

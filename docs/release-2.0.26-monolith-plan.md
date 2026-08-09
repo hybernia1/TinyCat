@@ -368,3 +368,34 @@ repeatable performance proof—not hundreds of production types.
 - Completed the full 16-group preflight: PHPStan level 8 introduced no new
   baseline entries, MySQL rehearsals passed and the signed update/rollback
   rehearsal remained green.
+
+### Stage 3 — completed 2026-08-09
+
+- Added plain-array preparation in the existing procedural and notification
+  owners for status cards, comment trees, editor fields, links, images, time
+  labels, feed cursors, notification text and administration pagination. No
+  production class or compatibility layer was added.
+- Status and comment partials now consume preloaded counts, viewer reactions,
+  permissions, rendered mentions and the already loaded comment tree. Numeric
+  comment mentions are collected across the tree and resolved in one bounded
+  preload before any comment is rendered.
+- Removed configuration, cache, database and service lookups from
+  `Public/parts`, including the less obvious editor-tag, image-setting,
+  settings-field, sidebar-footer and per-page fallbacks. Routes and existing
+  application owners now pass all required values explicitly.
+- Added a token-based boundary test over every PHP partial. It rejects direct
+  database primitives, service owners and the known query-capable or repeated
+  preparation helpers, while preserving reusable escaping, translation, icon
+  and pure URL helpers.
+- Expanded presentation snapshots for prepared time links, video cards,
+  comments, notifications and pagination. The public route smoke suite passed
+  34 checks including eight authenticated/admin renders with no skipped
+  scenarios.
+- Query budgets remained feed/status/tag/author/search = `3/6/4/8/7` against
+  `4/7/5/17/8`. On the deterministic medium MySQL installation, normalized
+  HTML for `/`, `/status/4`, `/tag/benchmark`, `/author/11` and
+  `/search?q=performance` matched Stage 2 exactly; only template whitespace
+  and random CSRF values were normalized.
+- Completed the full 17-group preflight. PHPStan level 8 reported no new
+  findings, all 152 PHP files passed lint, the disposable MySQL installer was
+  removed cleanly and signed update/rollback rehearsal remained green.

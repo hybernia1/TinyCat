@@ -427,12 +427,44 @@ final class Notifications
             'unread' => $unread,
             'latest_id' => self::latestId($userId),
             'message' => $message,
+            'badge_text' => self::badgeText($unread),
         ];
     }
 
     public static function badgeText(int $count): string
     {
         return $count > 99 ? '99+' : (string) max(0, $count);
+    }
+
+    /**
+     * @param array<string, mixed> $notification
+     * @return array<string, mixed>
+     */
+    public static function viewItem(array $notification, int $excerptLimit = 120): array
+    {
+        $createdAt = (string) ($notification['created_at'] ?? '');
+
+        return $notification + [
+            'view_unread' => trim((string) ($notification['read_at'] ?? '')) === '',
+            'view_url' => self::url($notification),
+            'view_icon' => self::iconName((string) ($notification['type'] ?? '')),
+            'view_message' => self::message($notification),
+            'view_content_text' => meta_text((string) ($notification['content_body'] ?? ''), $excerptLimit),
+            'view_created_iso' => $createdAt !== '' ? date_iso($createdAt) : '',
+            'view_created_label' => $createdAt !== '' ? datetime($createdAt) : '',
+        ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $notifications
+     * @return array<int, array<string, mixed>>
+     */
+    public static function viewItems(array $notifications, int $excerptLimit = 120): array
+    {
+        return array_map(
+            static fn (array $notification): array => self::viewItem($notification, $excerptLimit),
+            $notifications
+        );
     }
 
     private static function recipientRole(int $userId): string
