@@ -3,6 +3,17 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.33 - 2026-08-09
+
+### Operations
+
+- Added live, read-only OPcache and Memcached diagnostics to the administration
+  dashboard: cache memory, hit rate, item and script counts, evictions, uptime
+  and relevant runtime configuration.
+- Added a CSRF-protected administrator action to reset the active web PHP
+  OPcache. Memcached remains read-only; TinyCat does not flush or restart a
+  shared cache server.
+
 ## 2.0.32 - 2026-08-09
 
 ### Simplification

@@ -17,7 +17,7 @@ final class Cache
     private const int MEMCACHED_TIMEOUT_MS = 100;
     private const int MEMCACHED_MAX_ITEM_BYTES = 900000;
 
-    private static ?object $memcachedClient = null;
+    private static ?\Memcached $memcachedClient = null;
     private static bool $memcachedInitialized = false;
     private static ?string $driver = null;
     private static ?array $memcachedConfig = null;
@@ -186,8 +186,19 @@ final class Cache
      * @return array{
      *     driver: 'filesystem'|'memcached',
      *     available: bool,
-     *     memcached: array{configured: bool, extension: bool, available: bool},
-     *     opcache: array{loaded: bool, enabled: bool}
+     *     memcached: array{
+     *         configured: bool,
+     *         extension: bool,
+     *         available: bool,
+     *         stats: array{servers: int, version: string, uptime: int, items: int, bytes: int, limit_bytes: int, hits: int, misses: int, evictions: int}
+     *     },
+     *     opcache: array{
+     *         loaded: bool,
+     *         enabled: bool,
+     *         resettable: bool,
+     *         configuration: array{memory_bytes: int, max_scripts: int, validate_timestamps: bool, revalidate_freq: int, file_cache: bool},
+     *         stats: array{cached_scripts: int, hits: int, misses: int, used_memory: int, free_memory: int, wasted_memory: int, cache_full: bool, restart_pending: bool}
+     *     }
      * }
      */
     public static function diagnostics(): array
@@ -204,32 +215,159 @@ final class Cache
                 'configured' => $memcachedConfigured,
                 'extension' => $memcachedExtension,
                 'available' => $memcachedAvailable,
+                'stats' => self::memcachedDiagnostics($memcachedConfigured && $memcachedExtension),
             ],
             'opcache' => self::opcacheDiagnostics(),
         ];
     }
 
     /**
-     * @return array{loaded: bool, enabled: bool}
+     * @return array{
+     *     loaded: bool,
+     *     enabled: bool,
+     *     resettable: bool,
+     *     configuration: array{memory_bytes: int, max_scripts: int, validate_timestamps: bool, revalidate_freq: int, file_cache: bool},
+     *     stats: array{cached_scripts: int, hits: int, misses: int, used_memory: int, free_memory: int, wasted_memory: int, cache_full: bool, restart_pending: bool}
+     * }
      */
     private static function opcacheDiagnostics(): array
     {
         $loaded = extension_loaded('Zend OPcache') || extension_loaded('opcache');
+        $configuration = [
+            'memory_bytes' => 0,
+            'max_scripts' => 0,
+            'validate_timestamps' => false,
+            'revalidate_freq' => 0,
+            'file_cache' => false,
+        ];
+        $stats = [
+            'cached_scripts' => 0,
+            'hits' => 0,
+            'misses' => 0,
+            'used_memory' => 0,
+            'free_memory' => 0,
+            'wasted_memory' => 0,
+            'cache_full' => false,
+            'restart_pending' => false,
+        ];
 
         if (!$loaded || !function_exists('opcache_get_status')) {
-            return ['loaded' => $loaded, 'enabled' => false];
+            return [
+                'loaded' => $loaded,
+                'enabled' => false,
+                'resettable' => false,
+                'configuration' => $configuration,
+                'stats' => $stats,
+            ];
         }
 
-        try {
-            $status = @opcache_get_status(false);
-        } catch (Throwable) {
-            $status = false;
+        $directives = [];
+
+        if (function_exists('opcache_get_configuration')) {
+            $rawConfiguration = @opcache_get_configuration();
+
+            if (is_array($rawConfiguration)) {
+                $directives = $rawConfiguration['directives'];
+            }
         }
+        $configuration = [
+            'memory_bytes' => max(0, (int) ($directives['opcache.memory_consumption'] ?? 0)) * 1024 * 1024,
+            'max_scripts' => max(0, (int) ($directives['opcache.max_accelerated_files'] ?? 0)),
+            'validate_timestamps' => !empty($directives['opcache.validate_timestamps']),
+            'revalidate_freq' => max(0, (int) ($directives['opcache.revalidate_freq'] ?? 0)),
+            'file_cache' => trim((string) ($directives['opcache.file_cache'] ?? '')) !== '',
+        ];
+        $status = @opcache_get_status(false);
+        $memory = is_array($status) && is_array($status['memory_usage'] ?? null) ? $status['memory_usage'] : [];
+        $statistics = is_array($status) && is_array($status['opcache_statistics'] ?? null) ? $status['opcache_statistics'] : [];
+        $stats = [
+            'cached_scripts' => max(0, (int) ($statistics['num_cached_scripts'] ?? 0)),
+            'hits' => max(0, (int) ($statistics['hits'] ?? 0)),
+            'misses' => max(0, (int) ($statistics['misses'] ?? 0)),
+            'used_memory' => max(0, (int) ($memory['used_memory'] ?? 0)),
+            'free_memory' => max(0, (int) ($memory['free_memory'] ?? 0)),
+            'wasted_memory' => max(0, (int) ($memory['wasted_memory'] ?? 0)),
+            'cache_full' => !empty($status['cache_full']),
+            'restart_pending' => !empty($status['restart_pending']),
+        ];
 
         return [
             'loaded' => true,
             'enabled' => is_array($status) && !empty($status['opcache_enabled']),
+            'resettable' => function_exists('opcache_reset'),
+            'configuration' => $configuration,
+            'stats' => $stats,
         ];
+    }
+
+    public static function resetOpcache(): bool
+    {
+        if (!function_exists('opcache_reset')) {
+            return false;
+        }
+
+        return @opcache_reset();
+    }
+
+    /**
+     * @return array{servers: int, version: string, uptime: int, items: int, bytes: int, limit_bytes: int, hits: int, misses: int, evictions: int}
+     */
+    private static function memcachedDiagnostics(bool $enabled): array
+    {
+        $metrics = [
+            'servers' => 0,
+            'version' => '',
+            'uptime' => 0,
+            'items' => 0,
+            'bytes' => 0,
+            'limit_bytes' => 0,
+            'hits' => 0,
+            'misses' => 0,
+            'evictions' => 0,
+        ];
+
+        if (!$enabled || ($client = self::memcachedClient()) === null) {
+            return $metrics;
+        }
+
+        try {
+            $serverStats = $client->getStats();
+
+            if ($client->getResultCode() !== \Memcached::RES_SUCCESS) {
+                return $metrics;
+            }
+
+            $versions = $client->getVersion();
+        } catch (Throwable) {
+            return $metrics;
+        }
+
+        $versionValues = [];
+
+        foreach ($serverStats as $endpoint => $server) {
+            if (!is_array($server)) {
+                continue;
+            }
+
+            $metrics['servers']++;
+            $metrics['uptime'] = max($metrics['uptime'], max(0, (int) ($server['uptime'] ?? 0)));
+            $metrics['items'] += max(0, (int) ($server['curr_items'] ?? 0));
+            $metrics['bytes'] += max(0, (int) ($server['bytes'] ?? 0));
+            $metrics['limit_bytes'] += max(0, (int) ($server['limit_maxbytes'] ?? 0));
+            $metrics['hits'] += max(0, (int) ($server['get_hits'] ?? 0));
+            $metrics['misses'] += max(0, (int) ($server['get_misses'] ?? 0));
+            $metrics['evictions'] += max(0, (int) ($server['evictions'] ?? 0));
+            $version = trim((string) ($server['version'] ?? ($versions[$endpoint] ?? '')));
+
+            if ($version !== '') {
+                $versionValues[] = $version;
+            }
+        }
+
+        $versionValues = array_values(array_unique($versionValues));
+        $metrics['version'] = implode(', ', $versionValues);
+
+        return $metrics;
     }
 
     /**
@@ -404,7 +542,7 @@ final class Cache
             return false;
         }
 
-        if (!is_array($versions) || $versions === []) {
+        if ($versions === []) {
             return false;
         }
 
@@ -417,7 +555,7 @@ final class Cache
         return false;
     }
 
-    private static function memcachedClient(): ?object
+    private static function memcachedClient(): ?\Memcached
     {
         if (self::$memcachedInitialized) {
             return self::$memcachedClient;
