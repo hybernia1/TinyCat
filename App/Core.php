@@ -30,6 +30,9 @@ final class Core
     private static ?array $settings = null;
     private static array $sensitiveSettings = [];
     private static bool $settingsLoading = false;
+    private static bool $authResolved = false;
+    /** @var array<string, mixed>|null */
+    private static ?array $authUser = null;
 
     private function __construct()
     {
@@ -257,6 +260,8 @@ final class Core
         self::$settings = null;
         self::$locale = null;
         self::$translations = [];
+        self::$authResolved = false;
+        self::$authUser = null;
     }
 
     private static function query(string $sql, array $params = []): PDOStatement
@@ -1146,6 +1151,14 @@ final class Core
 
     public static function auth(?string $key = null, mixed $default = null): mixed
     {
+        if (self::$authResolved) {
+            if ($key === null) {
+                return self::$authUser;
+            }
+
+            return self::$authUser === null ? $default : self::dataGet(self::$authUser, $key, $default);
+        }
+
         self::session();
 
         $id = $_SESSION['auth_user_id'] ?? null;
@@ -1154,8 +1167,14 @@ final class Core
             $remembered = self::authRememberUser();
 
             if ($remembered !== null) {
+                self::$authResolved = true;
+                self::$authUser = $remembered;
+
                 return $key === null ? $remembered : self::dataGet($remembered, $key, $default);
             }
+
+            self::$authResolved = true;
+            self::$authUser = null;
 
             return $key === null ? null : $default;
         }
@@ -1164,8 +1183,14 @@ final class Core
 
         if ($user === null || !self::userIsActive($user)) {
             unset($_SESSION['auth_user_id']);
+            self::$authResolved = true;
+            self::$authUser = null;
+
             return $key === null ? null : $default;
         }
+
+        self::$authResolved = true;
+        self::$authUser = $user;
 
         return $key === null ? $user : self::dataGet($user, $key, $default);
     }
@@ -1232,6 +1257,8 @@ final class Core
         self::session();
         $_SESSION['auth_user_id'] = $id;
         session_regenerate_id(true);
+        self::$authResolved = true;
+        self::$authUser = $user;
 
         if ($remember) {
             self::authRemember($user);
@@ -1248,6 +1275,8 @@ final class Core
     {
         self::session();
         unset($_SESSION['auth_user_id']);
+        self::$authResolved = true;
+        self::$authUser = null;
         self::authForget();
         session_regenerate_id(true);
     }

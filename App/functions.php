@@ -292,9 +292,10 @@ function status_image_record(int $contentId): ?array
 
 function status_image_url(array $item): string
 {
+    $hasSelectedPath = array_key_exists('image_path', $item) || array_key_exists('path', $item);
     $path = trim((string) ($item['image_path'] ?? $item['path'] ?? ''));
 
-    if ($path === '') {
+    if (!$hasSelectedPath) {
         $record = status_image_record((int) ($item['id'] ?? $item['content_id'] ?? 0));
         $path = (string) ($record['path'] ?? '');
     }
@@ -4478,13 +4479,15 @@ function status_comments_query(): CoreQuery
                 u.username AS author_name,
                 u.username AS author_username,
                 u.avatar_config AS author_avatar_config,
+                c.author_id AS content_author_id,
                 (
                     SELECT COUNT(*)
                     FROM comment_likes cl
                     WHERE cl.comment_id = cc.id
                 ) AS likes_count
             FROM content_comments cc
-            INNER JOIN users u ON u.id = cc.user_id'
+            INNER JOIN users u ON u.id = cc.user_id
+            INNER JOIN content c ON c.id = cc.content_id'
     )
         ->where('u.status = ?', 'active');
 }
@@ -4507,6 +4510,35 @@ function status_comments(int $contentId): array
     }
 
     return $cache[$contentId];
+}
+
+/** @param array<int, array<string, mixed>> $comments */
+function status_preload_comment_tree_user_likes(array $comments, int $userId): void
+{
+    if ($userId < 1 || $comments === []) {
+        return;
+    }
+
+    $ids = [];
+    $pending = $comments;
+
+    while ($pending !== []) {
+        $comment = array_pop($pending);
+
+        $commentId = (int) ($comment['id'] ?? 0);
+
+        if ($commentId > 0) {
+            $ids[$commentId] = $commentId;
+        }
+
+        foreach ((array) ($comment['replies'] ?? []) as $reply) {
+            if (is_array($reply)) {
+                $pending[] = $reply;
+            }
+        }
+    }
+
+    status_preload_comment_user_likes(array_values($ids), $userId);
 }
 
 function status_comment_find(int $id): ?array
@@ -4546,6 +4578,10 @@ function status_comment_can_delete(?array $comment, ?array $user): bool
 
     if ((string) ($user['role'] ?? '') === 'admin' || (int) ($comment['user_id'] ?? 0) === $userId) {
         return true;
+    }
+
+    if (array_key_exists('content_author_id', $comment)) {
+        return (int) ($comment['content_author_id'] ?? 0) === $userId;
     }
 
     $status = status_find((int) ($comment['content_id'] ?? 0));

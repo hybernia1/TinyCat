@@ -331,3 +331,40 @@ repeatable performance proof—not hundreds of production types.
 - Verified that no production file below `App/`, `Public/`, `assets/`,
   `Extensions/`, `migrations/` or the root entry points changed from
   `v2.0.25`.
+
+### Stage 2 — completed 2026-08-09
+
+- Traced every application SQL statement for feed, status, tag, author and
+  search against the deterministic medium MySQL dataset. The dominant N+1 was
+  `status_image_url()`: a selected `NULL image_path` was treated as if the
+  column had not been selected, causing one `content_images` lookup per
+  image-less card and four repeated lookups on status detail metadata.
+- Kept the fix in `functions.php`: selected empty image values are now final,
+  while legacy callers that do not provide either image-path key retain the
+  single-record fallback. No repository, presenter, service or production
+  class was added.
+- Cached the resolved authenticated user for the lifetime of one request.
+  Status-detail comments now select the owning status author in their existing
+  query, preload all viewer comment reactions in one bounded query and reuse
+  the same authenticated-user array throughout the route. This removes both
+  per-comment permission reads and per-comment reaction reads.
+- Added live SQLite query-budget scenarios using the production SQL owners and
+  cardinalities large enough to expose N+1 behavior. They pass at
+  feed/status/tag/author/search = `3/6/4/8/7` application statements against
+  budgets `4/7/5/17/8`; status is intentionally authenticated and includes
+  batched status and comment viewer reactions.
+- Repeated the anonymous trace on the medium MySQL installation. Application
+  statements fell from `23/7/24/24/19` to `3/3/4/8/7`; the HTTP benchmark's
+  MySQL `Questions` metric adds its one status-probe statement. The comment
+  query retained the same indexed execution plan; MySQL eliminated the
+  primary-key owner join from the physical plan, so no new index was justified.
+- After CSRF-token normalization, all five HTTP responses were byte-equivalent
+  to exact `v2.0.25`. Peak CLI memory remained 6 MiB, included files remained
+  35–37 and declared classes remained 270 on every route. A contemporaneous
+  directional Apache sample improved geometric mean request time by 4.66%; its
+  geometric p95 moved by +1.47%. This directional run is not the release
+  acceptance result; the full alternating filesystem/Memcached/OPCache matrix
+  and its per-route gates remain Stage 8 work.
+- Completed the full 16-group preflight: PHPStan level 8 introduced no new
+  baseline entries, MySQL rehearsals passed and the signed update/rollback
+  rehearsal remained green.

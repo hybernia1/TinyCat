@@ -20,12 +20,17 @@ if (method() === 'GET' && route_path() !== $current) {
     redirect($current, 301);
 }
 
+$authUser = auth();
 $item = public_status_item($statusId);
 
 if ($item === null) {
     tc_status_not_found();
     return;
 }
+
+status_preload_feed([$item]);
+$comments = status_comments($statusId);
+status_preload_comment_tree_user_likes($comments, (int) ($authUser['id'] ?? 0));
 
 $statusTitle = status_meta_title($item);
 $statusStructuredImage = status_image_jsonld($item) ?? (status_meta_link_image($item) ?: null);
@@ -75,7 +80,7 @@ layout('layout', [
             ],
         ], static fn (mixed $value): bool => $value !== null),
     ],
-], static function () use ($item, $current, $compact, $pageAction): void {
+], static function () use ($item, $authUser, $current, $compact, $pageAction): void {
     $authorId = (int) ($item['author_id'] ?? 0);
     $authorName = trim((string) ($item['author_name'] ?? ''));
     $createdAt = (string) ($item['created_at'] ?? '');
@@ -103,7 +108,7 @@ layout('layout', [
                                 ]) ?>
                             <?php endif; ?>
                         </div>
-                        <?= part('status/manage-actions', ['item' => $item, 'user' => auth(), 'action' => $pageAction]) ?>
+                        <?= part('status/manage-actions', ['item' => $item, 'user' => $authUser, 'action' => $pageAction]) ?>
                     </div>
 
                     <?php $bodyHtml = render_status_body($item); ?>
@@ -115,13 +120,13 @@ layout('layout', [
 
                     <?= part('status/actions', [
                         'item' => $item,
-                        'user' => auth(),
+                        'user' => $authUser,
                         'action' => $pageAction,
                         'open_comments_modal' => false,
                     ]) ?>
                     <?= part('status/comments-thread', [
                         'item' => $item,
-                        'user' => auth(),
+                        'user' => $authUser,
                         'action' => $pageAction,
                         'context' => 'status-' . $contentId,
                     ]) ?>

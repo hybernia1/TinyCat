@@ -13,6 +13,7 @@ $tests = [
     'Presentation templates' => 'tests/presentation/view-templates.php',
     'Public route smoke' => 'tests/http/public-route-smoke.php',
     'Performance query baseline' => 'tests/performance-baseline.php',
+    'Hot-read query budgets' => 'tests/hot-read-query-budgets.php',
     'Cache' => 'tests/cache/run.php',
     'Asset optimizer' => 'tests/asset-optimizer/run.php',
     'Extensions' => 'tests/extensions/run.php',
