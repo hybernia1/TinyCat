@@ -59,8 +59,25 @@ $test('cache diagnostics expose a supported driver', static function () use ($ex
     $expect(is_bool($diagnostics['memcached']['configured'] ?? null));
     $expect(is_bool($diagnostics['memcached']['extension'] ?? null));
     $expect(is_bool($diagnostics['memcached']['available'] ?? null));
+    foreach (['servers', 'uptime', 'items', 'bytes', 'limit_bytes', 'hits', 'misses', 'evictions'] as $key) {
+        $expect(is_int($diagnostics['memcached']['stats'][$key] ?? null));
+    }
     $expect(is_bool($diagnostics['opcache']['loaded'] ?? null));
     $expect(is_bool($diagnostics['opcache']['enabled'] ?? null));
+    $expect(is_bool($diagnostics['opcache']['resettable'] ?? null));
+    foreach (['memory_bytes', 'max_scripts', 'revalidate_freq'] as $key) {
+        $expect(is_int($diagnostics['opcache']['configuration'][$key] ?? null));
+    }
+    foreach (['validate_timestamps', 'file_cache'] as $key) {
+        $expect(is_bool($diagnostics['opcache']['configuration'][$key] ?? null));
+    }
+    foreach (['cached_scripts', 'hits', 'misses', 'used_memory', 'free_memory', 'wasted_memory'] as $key) {
+        $expect(is_int($diagnostics['opcache']['stats'][$key] ?? null));
+    }
+    foreach (['cache_full', 'restart_pending'] as $key) {
+        $expect(is_bool($diagnostics['opcache']['stats'][$key] ?? null));
+    }
+    $expect(is_bool(Cache::resetOpcache()));
 });
 
 $test('cached autoload settings omit secret values', static function () use ($expect): void {

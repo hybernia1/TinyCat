@@ -223,36 +223,6 @@ parameters:
 			path: App/Avatar.php
 
 		-
-			message: '#^Call to an undefined method object\:\:delete\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: App/Cache.php
-
-		-
-			message: '#^Call to an undefined method object\:\:get\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: App/Cache.php
-
-		-
-			message: '#^Call to an undefined method object\:\:getResultCode\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: App/Cache.php
-
-		-
-			message: '#^Call to an undefined method object\:\:getVersion\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: App/Cache.php
-
-		-
-			message: '#^Call to an undefined method object\:\:set\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: App/Cache.php
-
-		-
 			message: '#^Method Cache\:\:memcachedConfig\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
