@@ -5,13 +5,16 @@ namespace TinyCat\Tools\DemoImport;
 
 final readonly class ProgressReporter
 {
-    public function __construct(private bool $jsonLines)
+    public function __construct(private bool $jsonLines, private bool $quiet = false)
     {
     }
 
     /** @param array<string, mixed> $data */
     public function event(string $event, array $data = []): void
     {
+        if ($this->quiet) {
+            return;
+        }
         $payload = ['event' => $event, 'time' => gmdate('c'), ...$data];
 
         if ($this->jsonLines) {

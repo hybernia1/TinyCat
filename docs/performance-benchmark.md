@@ -74,12 +74,14 @@ anchor and batch size into both, then run:
 php tools/compare-performance.php \
   --baseline-root=/path/to/tinycat-2.0.25 \
   --baseline-url=http://127.0.0.1:8098 \
-  --candidate-root=/path/to/tinycat-2.5.0 \
+  --candidate-root=/path/to/tinycat-2.0.26 \
   --candidate-url=http://127.0.0.1:8097 \
   --sequential-requests=40 \
   --load-requests=120 \
   --concurrency=8 \
   --warmup-requests=8 \
+  --candidate-label=2.0.26 \
+  --order=baseline-first \
   --output=storage/performance/comparison.json
 ```
 
@@ -105,3 +107,28 @@ local run as directional rather than a universal capacity claim.
 The measurements led to keeping 2.5 as an experiment and backporting only its
 proven improvements into the released monolithic line. That work is tracked in
 the [2.0.26 monolith backport plan](release-2.0.26-monolith-plan.md).
+
+## Release acceptance matrix
+
+The Stage 8 tooling supports alternating version order, actual FCGI OPCache
+telemetry, PHP peak memory, loaded source/class counts and a median-of-rounds
+gate report. It is intentionally development-only and restarts the explicitly
+selected local Apache while preserving and restoring `php.ini`:
+
+```bash
+php -d memory_limit=128M tools/prepare-acceptance.php
+
+php tools/run-acceptance.php \
+  --php-ini=/path/to/php.ini \
+  --apache=/path/to/httpd \
+  --round-start=1 \
+  --round-end=5
+
+php tools/aggregate-acceptance.php
+php tools/cleanup-acceptance.php
+```
+
+The application roots supplied to preparation must be disposable exports of
+the exact baseline and candidate commits, already served by the two local
+benchmark vhosts. The accepted 2.0.25/2.0.26 matrix is documented in
+[`stage-8-acceptance.md`](stage-8-acceptance.md).

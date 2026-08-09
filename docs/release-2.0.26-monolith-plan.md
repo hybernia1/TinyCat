@@ -507,3 +507,26 @@ repeatable performance proof—not hundreds of production types.
 - Recorded the complete measurements and plan text in
   [the Stage 7 scale report](stage-7-scale-validation.md) and its linked JSON
   evidence. Comparative 2.0.25-versus-2.0.26 HTTP acceptance remains Stage 8.
+
+### Stage 8 — completed 2026-08-09
+
+- Compared exact `v2.0.25` (`d80c09e`) and candidate `3645c26` through two
+  isolated Apache/FastCGI installations backed by byte-identical copies of the
+  3,141,482-row deterministic graph.
+- Ran five alternating-order rounds with OPCache enabled and five disabled.
+  Every round covered filesystem and Memcached cache, five public routes, a
+  cold request, warmed sequential requests and 60 requests at concurrency 8;
+  the accepted set contains 16,200 measured responses plus warmups.
+- Added development-only request telemetry for actual web OPCache state, PHP
+  peak memory, loaded files/classes and CPU time. Original PHP configuration
+  was recoverably backed up and restored after the matrix.
+- With OPCache, candidate geometric sequential/load p95 improved by
+  `12.74%/9.17%` on filesystem and `14.18%/18.23%` on Memcached. Every route
+  passed the +5% limit. PHP memory, files and classes did not grow; maximum
+  FastCGI working-set change was +4.26%.
+- Query budgets passed at `4/4/5/9/8`. OPCache-disabled sequential aggregates
+  improved by 9.66%/14.32%; filesystem concurrent load changed +2.69% in
+  aggregate and the candidate retained identical source-loading counts.
+- All five release gates pass. The full method, transparent infrastructure
+  retry and accept decision are recorded in
+  [the Stage 8 acceptance report](stage-8-acceptance.md) and linked JSON.

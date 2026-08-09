@@ -17,6 +17,9 @@ final readonly class ComparisonOptions
         public int $loadRequests,
         public int $concurrency,
         public int $warmupRequests,
+        public string $baselineLabel,
+        public string $candidateLabel,
+        public string $order,
     ) {
     }
 
@@ -37,7 +40,7 @@ final readonly class ComparisonOptions
         $baselineRoot = self::directory($values, 'baseline-root', $workspace . '/storage/performance-2.0.25/app', $workspace);
         $candidateRoot = self::directory($values, 'candidate-root', $workspace . '/storage/apache-release-stage/app', $workspace);
         $output = self::absolute(
-            (string) ($values['output'] ?? ($workspace . '/storage/performance/comparison-2.0.25-vs-2.5.0.json')),
+            (string) ($values['output'] ?? ($workspace . '/storage/performance/comparison-2.0.25-vs-2.0.26.json')),
             $workspace,
         );
 
@@ -51,6 +54,9 @@ final readonly class ComparisonOptions
             self::integer($values, 'load-requests', 120, 5, 10000),
             self::integer($values, 'concurrency', 8, 1, 100),
             self::integer($values, 'warmup-requests', 5, 0, 1000),
+            self::label($values, 'baseline-label', '2.0.25'),
+            self::label($values, 'candidate-label', '2.0.26'),
+            self::order($values),
         );
     }
 
@@ -65,8 +71,11 @@ Usage:
 Installations:
   --baseline-root=/path/app   TinyCat 2.0.25 root
   --baseline-url=http://...   TinyCat 2.0.25 URL
-  --candidate-root=/path/app  TinyCat 2.5.0 root
-  --candidate-url=http://...  TinyCat 2.5.0 URL
+  --candidate-root=/path/app  TinyCat candidate root
+  --candidate-url=http://...  TinyCat candidate URL
+  --baseline-label=2.0.25
+  --candidate-label=2.0.26
+  --order=baseline-first|candidate-first
 
 Load:
   --sequential-requests=40
@@ -114,6 +123,28 @@ TEXT;
         }
 
         return $value;
+    }
+
+    /** @param array<string, string|bool> $values */
+    private static function label(array $values, string $key, string $default): string
+    {
+        $label = trim((string) ($values[$key] ?? $default));
+        if ($label === '' || preg_match('/^[A-Za-z0-9._-]{1,30}$/', $label) !== 1) {
+            throw new InvalidArgumentException($key . ' contains unsupported characters.');
+        }
+
+        return $label;
+    }
+
+    /** @param array<string, string|bool> $values */
+    private static function order(array $values): string
+    {
+        $order = strtolower(trim((string) ($values['order'] ?? 'baseline-first')));
+        if (!in_array($order, ['baseline-first', 'candidate-first'], true)) {
+            throw new InvalidArgumentException('order must be baseline-first or candidate-first.');
+        }
+
+        return $order;
     }
 
     private static function absolute(string $path, string $workspace): string

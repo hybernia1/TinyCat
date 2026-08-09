@@ -35,11 +35,14 @@ final class ComparisonRunner
     public function run(): array
     {
         $installations = [
-            '2.0.25' => $this->installation($this->options->baselineRoot, $this->options->baselineUrl),
-            '2.5.0' => $this->installation($this->options->candidateRoot, $this->options->candidateUrl),
+            $this->options->baselineLabel => $this->installation($this->options->baselineRoot, $this->options->baselineUrl),
+            $this->options->candidateLabel => $this->installation($this->options->candidateRoot, $this->options->candidateUrl),
         ];
+        if ($this->options->order === 'candidate-first') {
+            $installations = array_reverse($installations, true);
+        }
         $this->assertDatasetParity($installations);
-        $representative = $installations['2.0.25']['dataset']['representative'];
+        $representative = $installations[$this->options->baselineLabel]['dataset']['representative'];
         $routes = [
             'feed' => '/',
             'status_thread' => '/status/' . $representative['content_id'],
@@ -128,6 +131,11 @@ final class ComparisonRunner
             'run_id' => $runId,
             'generated_at' => gmdate(DATE_ATOM),
             'environment' => $this->environment(),
+            'labels' => [
+                'baseline' => $this->options->baselineLabel,
+                'candidate' => $this->options->candidateLabel,
+                'order' => $this->options->order,
+            ],
             'load' => [
                 'sequential_requests' => $this->options->sequentialRequests,
                 'load_requests' => $this->options->loadRequests,
@@ -221,8 +229,8 @@ final class ComparisonRunner
     /** @param array<string, array<string, mixed>> $installations */
     private function assertDatasetParity(array $installations): void
     {
-        $baseline = $installations['2.0.25']['dataset'];
-        $candidate = $installations['2.5.0']['dataset'];
+        $baseline = $installations[$this->options->baselineLabel]['dataset'];
+        $candidate = $installations[$this->options->candidateLabel]['dataset'];
         if ($baseline !== $candidate) {
             throw new RuntimeException('Datasets differ. Import the same profile and seed into both installations first.');
         }
@@ -349,7 +357,19 @@ final class ComparisonRunner
     {
         foreach ($runs as $run) {
             if ((int) $run['failures'] > 0 || (int) $run['fatal_responses'] > 0) {
-                throw new RuntimeException(sprintf('HTTP failure in %s / %s / %s.', $version, $mode, $route));
+                throw new RuntimeException(sprintf(
+                    'HTTP failure in %s / %s / %s: %s',
+                    $version,
+                    $mode,
+                    $route,
+                    json_encode([
+                        'requests' => $run['requests'] ?? null,
+                        'failures' => $run['failures'] ?? null,
+                        'fatal_responses' => $run['fatal_responses'] ?? null,
+                        'status_codes' => $run['status_codes'] ?? null,
+                        'errors' => $run['errors'] ?? null,
+                    ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+                ));
             }
         }
     }
@@ -425,8 +445,8 @@ POWERSHELL;
     {
         $comparison = [];
         foreach (['filesystem', 'memcached'] as $mode) {
-            foreach ($results['2.0.25'][$mode] as $route => $baseline) {
-                $candidate = $results['2.5.0'][$mode][$route];
+            foreach ($results[$this->options->baselineLabel][$mode] as $route => $baseline) {
+                $candidate = $results[$this->options->candidateLabel][$mode][$route];
                 foreach (['cold', 'sequential', 'load'] as $kind) {
                     $baselineP95 = (float) $baseline[$kind]['latency_ms']['p95'];
                     $candidateP95 = (float) $candidate[$kind]['latency_ms']['p95'];
@@ -455,7 +475,7 @@ POWERSHELL;
     private function cacheImpact(array $results): array
     {
         $impact = [];
-        foreach (['2.0.25', '2.5.0'] as $version) {
+        foreach ([$this->options->baselineLabel, $this->options->candidateLabel] as $version) {
             foreach ($results[$version]['filesystem'] as $route => $filesystem) {
                 $memcached = $results[$version]['memcached'][$route];
                 foreach (['cold', 'sequential', 'load'] as $kind) {
@@ -493,7 +513,7 @@ POWERSHELL;
     private function markdown(array $report): string
     {
         $lines = [
-            '# TinyCat 2.0.25 vs 2.5.0 performance',
+            '# TinyCat ' . $this->options->baselineLabel . ' vs ' . $this->options->candidateLabel . ' performance',
             '',
             'Generated: ' . $report['generated_at'],
             '',
@@ -502,7 +522,7 @@ POWERSHELL;
         ];
         foreach (['filesystem', 'memcached'] as $mode) {
             foreach ($report['routes'] as $route => $_path) {
-                foreach (['2.0.25', '2.5.0'] as $version) {
+                foreach ([$this->options->baselineLabel, $this->options->candidateLabel] as $version) {
                     $row = $report['results'][$version][$mode][$route];
                     $lines[] = sprintf(
                         '| %s | %s | %s | %.2f | %.2f / %.2f | %.2f | %.2f | %.2f | %d |',
@@ -521,11 +541,12 @@ POWERSHELL;
             }
         }
         $lines[] = '';
-        $lines[] = 'Negative latency change favors 2.5.0; positive throughput change favors 2.5.0.';
+        $lines[] = 'Negative latency change favors ' . $this->options->candidateLabel
+            . '; positive throughput change favors ' . $this->options->candidateLabel . '.';
         $lines[] = '';
         $lines[] = '## Load comparison';
         $lines[] = '';
-        $lines[] = '| Cache | Route | 2.5 p95 change | 2.5 throughput change |';
+        $lines[] = '| Cache | Route | Candidate p95 change | Candidate throughput change |';
         $lines[] = '|---|---|---:|---:|';
         foreach (['filesystem', 'memcached'] as $mode) {
             foreach ($report['routes'] as $route => $_path) {
@@ -544,7 +565,7 @@ POWERSHELL;
         $lines[] = '';
         $lines[] = '| Version | Route | p95 change vs filesystem | Throughput change |';
         $lines[] = '|---:|---|---:|---:|';
-        foreach (['2.0.25', '2.5.0'] as $version) {
+        foreach ([$this->options->baselineLabel, $this->options->candidateLabel] as $version) {
             foreach ($report['routes'] as $route => $_path) {
                 $change = $report['cache_impact'][$version][$route]['load'];
                 $lines[] = sprintf(

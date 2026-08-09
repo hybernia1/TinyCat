@@ -29,6 +29,13 @@ final class HttpLoadRunner
         $statuses = [];
         $errors = [];
         $fatalResponses = 0;
+        $runtimeMetrics = [
+            'peak_memory_bytes' => [],
+            'included_files' => [],
+            'loaded_classes' => [],
+            'user_cpu_ms' => [],
+            'opcache_enabled' => [],
+        ];
         $started = hrtime(true);
 
         try {
@@ -49,6 +56,25 @@ final class HttpLoadRunner
                             'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                             'User-Agent: TinyCat-Comparative-Benchmark/1.0',
                         ],
+                        CURLOPT_HEADERFUNCTION => static function ($curl, string $header) use (&$runtimeMetrics): int {
+                            $parts = explode(':', trim($header), 2);
+                            if (count($parts) !== 2) {
+                                return strlen($header);
+                            }
+                            $map = [
+                                'x-tinycat-benchmark-peak-memory' => 'peak_memory_bytes',
+                                'x-tinycat-benchmark-included-files' => 'included_files',
+                                'x-tinycat-benchmark-loaded-classes' => 'loaded_classes',
+                                'x-tinycat-benchmark-user-cpu-ms' => 'user_cpu_ms',
+                                'x-tinycat-benchmark-opcache' => 'opcache_enabled',
+                            ];
+                            $name = strtolower(trim($parts[0]));
+                            if (isset($map[$name]) && is_numeric(trim($parts[1]))) {
+                                $runtimeMetrics[$map[$name]][] = (float) trim($parts[1]);
+                            }
+
+                            return strlen($header);
+                        },
                     ]);
                     curl_multi_add_handle($multi, $handle);
                     $active[spl_object_id($handle)] = $handle;
@@ -121,6 +147,7 @@ final class HttpLoadRunner
             'latency_ms' => $this->distribution($durations),
             'ttfb_ms' => $this->distribution($timeToFirstByte),
             'response_bytes' => $this->distribution(array_map('floatval', $sizes)),
+            'runtime' => array_map(fn (array $values): array => $this->distribution($values), $runtimeMetrics),
         ];
     }
 

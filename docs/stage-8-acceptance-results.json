@@ -1,0 +1,1313 @@
+{
+    "ok": true,
+    "accepted": true,
+    "generated_at": "2026-08-09T15:24:31+00:00",
+    "baseline": "2.0.25",
+    "candidate": "2.0.26",
+    "method": {
+        "rounds_per_opcache_mode": 5,
+        "cache_modes": [
+            "filesystem",
+            "memcached"
+        ],
+        "sequential_requests": 20,
+        "load_requests": 60,
+        "concurrency": 8,
+        "warmup_requests": 5,
+        "orders": [
+            "baseline-first",
+            "candidate-first",
+            "baseline-first",
+            "candidate-first",
+            "baseline-first",
+            "candidate-first",
+            "baseline-first",
+            "candidate-first",
+            "baseline-first",
+            "candidate-first"
+        ]
+    },
+    "gates": {
+        "zero_errors_and_dataset_parity": {
+            "pass": true,
+            "failures": 0,
+            "fatal_responses": 0,
+            "dataset_parity": true,
+            "error_logs_clean": true
+        },
+        "production_latency": {
+            "pass": true,
+            "route_checks": {
+                "filesystem": {
+                    "feed": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "status_thread": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "tag_feed": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "author_profile": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "search": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    }
+                },
+                "memcached": {
+                    "feed": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "status_thread": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "tag_feed": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "author_profile": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "search": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    }
+                }
+            },
+            "geometric_aggregate": {
+                "filesystem": {
+                    "sequential_p95_change_percent": -12.74,
+                    "load_p95_change_percent": -9.17
+                },
+                "memcached": {
+                    "sequential_p95_change_percent": -14.18,
+                    "load_p95_change_percent": -18.23
+                }
+            }
+        },
+        "memory": {
+            "pass": true,
+            "checks": {
+                "on": {
+                    "filesystem": {
+                        "feed": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "status_thread": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "tag_feed": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "author_profile": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "search": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        }
+                    },
+                    "memcached": {
+                        "feed": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "status_thread": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "tag_feed": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "author_profile": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "search": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        }
+                    }
+                },
+                "off": {
+                    "filesystem": {
+                        "feed": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "status_thread": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "tag_feed": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "author_profile": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "search": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        }
+                    },
+                    "memcached": {
+                        "feed": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "status_thread": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "tag_feed": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "author_profile": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        },
+                        "search": {
+                            "peak_memory_pass": true,
+                            "fastcgi_working_set_pass": true
+                        }
+                    }
+                }
+            }
+        },
+        "query_budgets": {
+            "pass": true,
+            "checks": {
+                "on": {
+                    "filesystem": {
+                        "feed": {
+                            "actual": 4,
+                            "budget": 4,
+                            "pass": true
+                        },
+                        "status_thread": {
+                            "actual": 4,
+                            "budget": 7,
+                            "pass": true
+                        },
+                        "tag_feed": {
+                            "actual": 5,
+                            "budget": 5,
+                            "pass": true
+                        },
+                        "author_profile": {
+                            "actual": 9,
+                            "budget": 17,
+                            "pass": true
+                        },
+                        "search": {
+                            "actual": 8,
+                            "budget": 8,
+                            "pass": true
+                        }
+                    },
+                    "memcached": {
+                        "feed": {
+                            "actual": 4,
+                            "budget": 4,
+                            "pass": true
+                        },
+                        "status_thread": {
+                            "actual": 4,
+                            "budget": 7,
+                            "pass": true
+                        },
+                        "tag_feed": {
+                            "actual": 5,
+                            "budget": 5,
+                            "pass": true
+                        },
+                        "author_profile": {
+                            "actual": 9,
+                            "budget": 17,
+                            "pass": true
+                        },
+                        "search": {
+                            "actual": 8,
+                            "budget": 8,
+                            "pass": true
+                        }
+                    }
+                },
+                "off": {
+                    "filesystem": {
+                        "feed": {
+                            "actual": 4,
+                            "budget": 4,
+                            "pass": true
+                        },
+                        "status_thread": {
+                            "actual": 4,
+                            "budget": 7,
+                            "pass": true
+                        },
+                        "tag_feed": {
+                            "actual": 5,
+                            "budget": 5,
+                            "pass": true
+                        },
+                        "author_profile": {
+                            "actual": 9,
+                            "budget": 17,
+                            "pass": true
+                        },
+                        "search": {
+                            "actual": 8,
+                            "budget": 8,
+                            "pass": true
+                        }
+                    },
+                    "memcached": {
+                        "feed": {
+                            "actual": 4,
+                            "budget": 4,
+                            "pass": true
+                        },
+                        "status_thread": {
+                            "actual": 4,
+                            "budget": 7,
+                            "pass": true
+                        },
+                        "tag_feed": {
+                            "actual": 5,
+                            "budget": 5,
+                            "pass": true
+                        },
+                        "author_profile": {
+                            "actual": 9,
+                            "budget": 17,
+                            "pass": true
+                        },
+                        "search": {
+                            "actual": 8,
+                            "budget": 8,
+                            "pass": true
+                        }
+                    }
+                }
+            }
+        },
+        "opcache_sensitivity": {
+            "pass": true,
+            "runtime_mode_correct": true,
+            "sequential_routes_pass": true,
+            "aggregate_pass": true,
+            "route_checks": {
+                "filesystem": {
+                    "feed": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "status_thread": {
+                        "sequential_pass": true,
+                        "load_pass": false
+                    },
+                    "tag_feed": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "author_profile": {
+                        "sequential_pass": true,
+                        "load_pass": false
+                    },
+                    "search": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    }
+                },
+                "memcached": {
+                    "feed": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "status_thread": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "tag_feed": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "author_profile": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    },
+                    "search": {
+                        "sequential_pass": true,
+                        "load_pass": true
+                    }
+                }
+            },
+            "source_checks": {
+                "filesystem": {
+                    "feed": {
+                        "included_files_pass": true,
+                        "loaded_classes_pass": true
+                    },
+                    "status_thread": {
+                        "included_files_pass": true,
+                        "loaded_classes_pass": true
+                    },
+                    "tag_feed": {
+                        "included_files_pass": true,
+                        "loaded_classes_pass": true
+                    },
+                    "author_profile": {
+                        "included_files_pass": true,
+                        "loaded_classes_pass": true
+                    },
+                    "search": {
+                        "included_files_pass": true,
+                        "loaded_classes_pass": true
+                    }
+                },
+                "memcached": {
+                    "feed": {
+                        "included_files_pass": true,
+                        "loaded_classes_pass": true
+                    },
+                    "status_thread": {
+                        "included_files_pass": true,
+                        "loaded_classes_pass": true
+                    },
+                    "tag_feed": {
+                        "included_files_pass": true,
+                        "loaded_classes_pass": true
+                    },
+                    "author_profile": {
+                        "included_files_pass": true,
+                        "loaded_classes_pass": true
+                    },
+                    "search": {
+                        "included_files_pass": true,
+                        "loaded_classes_pass": true
+                    }
+                }
+            },
+            "geometric_aggregate": {
+                "filesystem": {
+                    "sequential_p95_change_percent": -9.66,
+                    "load_p95_change_percent": 2.69
+                },
+                "memcached": {
+                    "sequential_p95_change_percent": -14.32,
+                    "load_p95_change_percent": -8.28
+                }
+            }
+        },
+        "overall": {
+            "pass": true
+        }
+    },
+    "matrix": {
+        "on": {
+            "filesystem": {
+                "feed": {
+                    "2.0.25": {
+                        "cold_ms": 78.945,
+                        "sequential_p50_ms": 48.16,
+                        "sequential_p95_ms": 85.856,
+                        "load_p95_ms": 82.853,
+                        "load_p99_ms": 1094.56,
+                        "load_requests_per_second": 54.783,
+                        "questions_per_request": 24,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 46.875,
+                        "fastcgi_working_set_mb": 239.527
+                    },
+                    "2.0.26": {
+                        "cold_ms": 100.432,
+                        "sequential_p50_ms": 46.496,
+                        "sequential_p95_ms": 67.907,
+                        "load_p95_ms": 74.025,
+                        "load_p99_ms": 1077.62,
+                        "load_requests_per_second": 55.602,
+                        "questions_per_request": 4,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 249.727
+                    },
+                    "change_percent": {
+                        "sequential_p95": -20.91,
+                        "load_p95": -10.66,
+                        "throughput": 1.49,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 4.26,
+                        "user_cpu_p95": -33.33
+                    }
+                },
+                "status_thread": {
+                    "2.0.25": {
+                        "cold_ms": 30.284,
+                        "sequential_p50_ms": 31.125,
+                        "sequential_p95_ms": 49.806,
+                        "load_p95_ms": 74.445,
+                        "load_p99_ms": 1062.267,
+                        "load_requests_per_second": 56.43,
+                        "questions_per_request": 8,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 15.625,
+                        "fastcgi_working_set_mb": 250.602
+                    },
+                    "2.0.26": {
+                        "cold_ms": 31.324,
+                        "sequential_p50_ms": 27.62,
+                        "sequential_p95_ms": 46.579,
+                        "load_p95_ms": 60.113,
+                        "load_p99_ms": 1064.041,
+                        "load_requests_per_second": 56.275,
+                        "questions_per_request": 4,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 15.625,
+                        "fastcgi_working_set_mb": 251.367
+                    },
+                    "change_percent": {
+                        "sequential_p95": -6.48,
+                        "load_p95": -19.25,
+                        "throughput": -0.27,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0.31,
+                        "user_cpu_p95": 0
+                    }
+                },
+                "tag_feed": {
+                    "2.0.25": {
+                        "cold_ms": 88.158,
+                        "sequential_p50_ms": 56.241,
+                        "sequential_p95_ms": 93.917,
+                        "load_p95_ms": 87.029,
+                        "load_p99_ms": 1102.77,
+                        "load_requests_per_second": 54.37,
+                        "questions_per_request": 25,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 35,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 46.875,
+                        "fastcgi_working_set_mb": 251.777
+                    },
+                    "2.0.26": {
+                        "cold_ms": 47.99,
+                        "sequential_p50_ms": 48.096,
+                        "sequential_p95_ms": 70.166,
+                        "load_p95_ms": 83.596,
+                        "load_p99_ms": 1074.805,
+                        "load_requests_per_second": 55.792,
+                        "questions_per_request": 5,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 35,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 46.875,
+                        "fastcgi_working_set_mb": 252.051
+                    },
+                    "change_percent": {
+                        "sequential_p95": -25.29,
+                        "load_p95": -3.94,
+                        "throughput": 2.62,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0.11,
+                        "user_cpu_p95": 0
+                    }
+                },
+                "author_profile": {
+                    "2.0.25": {
+                        "cold_ms": 53.593,
+                        "sequential_p50_ms": 43.989,
+                        "sequential_p95_ms": 61.629,
+                        "load_p95_ms": 62.95,
+                        "load_p99_ms": 1069.154,
+                        "load_requests_per_second": 56.078,
+                        "questions_per_request": 25,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 253.199
+                    },
+                    "2.0.26": {
+                        "cold_ms": 44.909,
+                        "sequential_p50_ms": 40.955,
+                        "sequential_p95_ms": 59.993,
+                        "load_p95_ms": 57.474,
+                        "load_p99_ms": 1068.164,
+                        "load_requests_per_second": 56.121,
+                        "questions_per_request": 9,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 253.902
+                    },
+                    "change_percent": {
+                        "sequential_p95": -2.65,
+                        "load_p95": -8.7,
+                        "throughput": 0.08,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0.28,
+                        "user_cpu_p95": 0
+                    }
+                },
+                "search": {
+                    "2.0.25": {
+                        "cold_ms": 72.893,
+                        "sequential_p50_ms": 50.608,
+                        "sequential_p95_ms": 79.442,
+                        "load_p95_ms": 100.882,
+                        "load_p99_ms": 1107.681,
+                        "load_requests_per_second": 54.143,
+                        "questions_per_request": 20,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 254.828
+                    },
+                    "2.0.26": {
+                        "cold_ms": 52.972,
+                        "sequential_p50_ms": 52.371,
+                        "sequential_p95_ms": 74.719,
+                        "load_p95_ms": 98.55,
+                        "load_p99_ms": 1088.148,
+                        "load_requests_per_second": 55.114,
+                        "questions_per_request": 8,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 255.34
+                    },
+                    "change_percent": {
+                        "sequential_p95": -5.95,
+                        "load_p95": -2.31,
+                        "throughput": 1.79,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0.2,
+                        "user_cpu_p95": 0
+                    }
+                }
+            },
+            "memcached": {
+                "feed": {
+                    "2.0.25": {
+                        "cold_ms": 62.894,
+                        "sequential_p50_ms": 43.124,
+                        "sequential_p95_ms": 66.634,
+                        "load_p95_ms": 76.241,
+                        "load_p99_ms": 1081.85,
+                        "load_requests_per_second": 55.416,
+                        "questions_per_request": 24,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 46.875,
+                        "fastcgi_working_set_mb": 256.625
+                    },
+                    "2.0.26": {
+                        "cold_ms": 38.767,
+                        "sequential_p50_ms": 37.07,
+                        "sequential_p95_ms": 59.499,
+                        "load_p95_ms": 60.188,
+                        "load_p99_ms": 1089.14,
+                        "load_requests_per_second": 55.048,
+                        "questions_per_request": 4,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 46.875,
+                        "fastcgi_working_set_mb": 256.734
+                    },
+                    "change_percent": {
+                        "sequential_p95": -10.71,
+                        "load_p95": -21.06,
+                        "throughput": -0.66,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0.04,
+                        "user_cpu_p95": 0
+                    }
+                },
+                "status_thread": {
+                    "2.0.25": {
+                        "cold_ms": 23.256,
+                        "sequential_p50_ms": 32.328,
+                        "sequential_p95_ms": 50.201,
+                        "load_p95_ms": 57.291,
+                        "load_p99_ms": 1038.65,
+                        "load_requests_per_second": 57.684,
+                        "questions_per_request": 8,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 15.625,
+                        "fastcgi_working_set_mb": 256.762
+                    },
+                    "2.0.26": {
+                        "cold_ms": 41.118,
+                        "sequential_p50_ms": 31.024,
+                        "sequential_p95_ms": 45.775,
+                        "load_p95_ms": 53.908,
+                        "load_p99_ms": 1042.708,
+                        "load_requests_per_second": 57.47,
+                        "questions_per_request": 4,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 256.762
+                    },
+                    "change_percent": {
+                        "sequential_p95": -8.82,
+                        "load_p95": -5.9,
+                        "throughput": -0.37,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0,
+                        "user_cpu_p95": 100
+                    }
+                },
+                "tag_feed": {
+                    "2.0.25": {
+                        "cold_ms": 84.255,
+                        "sequential_p50_ms": 49.678,
+                        "sequential_p95_ms": 81.018,
+                        "load_p95_ms": 74.99,
+                        "load_p99_ms": 1077.579,
+                        "load_requests_per_second": 55.616,
+                        "questions_per_request": 25,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 35,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 46.875,
+                        "fastcgi_working_set_mb": 256.789
+                    },
+                    "2.0.26": {
+                        "cold_ms": 55.864,
+                        "sequential_p50_ms": 47.795,
+                        "sequential_p95_ms": 66.139,
+                        "load_p95_ms": 58.668,
+                        "load_p99_ms": 1070.244,
+                        "load_requests_per_second": 55.993,
+                        "questions_per_request": 5,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 35,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 256.797
+                    },
+                    "change_percent": {
+                        "sequential_p95": -18.37,
+                        "load_p95": -21.77,
+                        "throughput": 0.68,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0,
+                        "user_cpu_p95": -33.33
+                    }
+                },
+                "author_profile": {
+                    "2.0.25": {
+                        "cold_ms": 49.813,
+                        "sequential_p50_ms": 47.504,
+                        "sequential_p95_ms": 66.799,
+                        "load_p95_ms": 75.535,
+                        "load_p99_ms": 1069.069,
+                        "load_requests_per_second": 56.049,
+                        "questions_per_request": 25,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 256.816
+                    },
+                    "2.0.26": {
+                        "cold_ms": 31.732,
+                        "sequential_p50_ms": 45.084,
+                        "sequential_p95_ms": 54.522,
+                        "load_p95_ms": 58.278,
+                        "load_p99_ms": 1069.428,
+                        "load_requests_per_second": 56.014,
+                        "questions_per_request": 9,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 256.48
+                    },
+                    "change_percent": {
+                        "sequential_p95": -18.38,
+                        "load_p95": -22.85,
+                        "throughput": -0.06,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": -0.13,
+                        "user_cpu_p95": 0
+                    }
+                },
+                "search": {
+                    "2.0.25": {
+                        "cold_ms": 84.068,
+                        "sequential_p50_ms": 49.105,
+                        "sequential_p95_ms": 78.478,
+                        "load_p95_ms": 96.029,
+                        "load_p99_ms": 1073.284,
+                        "load_requests_per_second": 55.819,
+                        "questions_per_request": 20,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 256.48
+                    },
+                    "2.0.26": {
+                        "cold_ms": 42.159,
+                        "sequential_p50_ms": 39.783,
+                        "sequential_p95_ms": 67.335,
+                        "load_p95_ms": 78.314,
+                        "load_p99_ms": 1065.013,
+                        "load_requests_per_second": 56.302,
+                        "questions_per_request": 8,
+                        "peak_memory_bytes": 2097152,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 31.25,
+                        "fastcgi_working_set_mb": 256.508
+                    },
+                    "change_percent": {
+                        "sequential_p95": -14.2,
+                        "load_p95": -18.45,
+                        "throughput": 0.87,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0.01,
+                        "user_cpu_p95": 0
+                    }
+                }
+            }
+        },
+        "off": {
+            "filesystem": {
+                "feed": {
+                    "2.0.25": {
+                        "cold_ms": 114.142,
+                        "sequential_p50_ms": 94.346,
+                        "sequential_p95_ms": 132.865,
+                        "load_p95_ms": 123.256,
+                        "load_p99_ms": 1145.802,
+                        "load_requests_per_second": 52.169,
+                        "questions_per_request": 24,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 93.75,
+                        "fastcgi_working_set_mb": 232.375
+                    },
+                    "2.0.26": {
+                        "cold_ms": 76.065,
+                        "sequential_p50_ms": 75.173,
+                        "sequential_p95_ms": 95.11,
+                        "load_p95_ms": 122.376,
+                        "load_p99_ms": 1097.162,
+                        "load_requests_per_second": 54.648,
+                        "questions_per_request": 4,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 230.402
+                    },
+                    "change_percent": {
+                        "sequential_p95": -28.42,
+                        "load_p95": -0.71,
+                        "throughput": 4.75,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": -0.85,
+                        "user_cpu_p95": -33.33
+                    }
+                },
+                "status_thread": {
+                    "2.0.25": {
+                        "cold_ms": 59.863,
+                        "sequential_p50_ms": 59.701,
+                        "sequential_p95_ms": 84.004,
+                        "load_p95_ms": 82.494,
+                        "load_p99_ms": 1090.328,
+                        "load_requests_per_second": 54.986,
+                        "questions_per_request": 8,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 46.875,
+                        "fastcgi_working_set_mb": 232.512
+                    },
+                    "2.0.26": {
+                        "cold_ms": 59.768,
+                        "sequential_p50_ms": 59.538,
+                        "sequential_p95_ms": 84.921,
+                        "load_p95_ms": 91.261,
+                        "load_p99_ms": 1106.823,
+                        "load_requests_per_second": 54.166,
+                        "questions_per_request": 4,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 46.875,
+                        "fastcgi_working_set_mb": 232.508
+                    },
+                    "change_percent": {
+                        "sequential_p95": 1.09,
+                        "load_p95": 10.63,
+                        "throughput": -1.49,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": -0,
+                        "user_cpu_p95": 0
+                    }
+                },
+                "tag_feed": {
+                    "2.0.25": {
+                        "cold_ms": 100.322,
+                        "sequential_p50_ms": 89.814,
+                        "sequential_p95_ms": 105.226,
+                        "load_p95_ms": 129.318,
+                        "load_p99_ms": 1122.406,
+                        "load_requests_per_second": 53.413,
+                        "questions_per_request": 25,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 35,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 232.73
+                    },
+                    "2.0.26": {
+                        "cold_ms": 80.267,
+                        "sequential_p50_ms": 75.434,
+                        "sequential_p95_ms": 101.991,
+                        "load_p95_ms": 115.196,
+                        "load_p99_ms": 1129.578,
+                        "load_requests_per_second": 53.073,
+                        "questions_per_request": 5,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 35,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 78.125,
+                        "fastcgi_working_set_mb": 232.59
+                    },
+                    "change_percent": {
+                        "sequential_p95": -3.07,
+                        "load_p95": -10.92,
+                        "throughput": -0.64,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": -0.06,
+                        "user_cpu_p95": 25
+                    }
+                },
+                "author_profile": {
+                    "2.0.25": {
+                        "cold_ms": 78.984,
+                        "sequential_p50_ms": 68.156,
+                        "sequential_p95_ms": 95.671,
+                        "load_p95_ms": 104.478,
+                        "load_p99_ms": 1129.421,
+                        "load_requests_per_second": 53.092,
+                        "questions_per_request": 25,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 233.301
+                    },
+                    "2.0.26": {
+                        "cold_ms": 67.89,
+                        "sequential_p50_ms": 59.07,
+                        "sequential_p95_ms": 87.385,
+                        "load_p95_ms": 118.728,
+                        "load_p99_ms": 1113.287,
+                        "load_requests_per_second": 53.817,
+                        "questions_per_request": 9,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 233.008
+                    },
+                    "change_percent": {
+                        "sequential_p95": -8.66,
+                        "load_p95": 13.64,
+                        "throughput": 1.37,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": -0.13,
+                        "user_cpu_p95": 0
+                    }
+                },
+                "search": {
+                    "2.0.25": {
+                        "cold_ms": 91.716,
+                        "sequential_p50_ms": 79.779,
+                        "sequential_p95_ms": 109.828,
+                        "load_p95_ms": 124.635,
+                        "load_p99_ms": 1131.774,
+                        "load_requests_per_second": 52.992,
+                        "questions_per_request": 20,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 233.23
+                    },
+                    "2.0.26": {
+                        "cold_ms": 75.315,
+                        "sequential_p50_ms": 77.143,
+                        "sequential_p95_ms": 103.133,
+                        "load_p95_ms": 128.021,
+                        "load_p99_ms": 1124.41,
+                        "load_requests_per_second": 53.338,
+                        "questions_per_request": 8,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 233.238
+                    },
+                    "change_percent": {
+                        "sequential_p95": -6.1,
+                        "load_p95": 2.72,
+                        "throughput": 0.65,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0,
+                        "user_cpu_p95": 0
+                    }
+                }
+            },
+            "memcached": {
+                "feed": {
+                    "2.0.25": {
+                        "cold_ms": 121.063,
+                        "sequential_p50_ms": 85.923,
+                        "sequential_p95_ms": 132.22,
+                        "load_p95_ms": 157.149,
+                        "load_p99_ms": 1133.74,
+                        "load_requests_per_second": 52.849,
+                        "questions_per_request": 24,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 78.125,
+                        "fastcgi_working_set_mb": 234.418
+                    },
+                    "2.0.26": {
+                        "cold_ms": 71.512,
+                        "sequential_p50_ms": 84.686,
+                        "sequential_p95_ms": 116.172,
+                        "load_p95_ms": 142.725,
+                        "load_p99_ms": 1135.587,
+                        "load_requests_per_second": 52.799,
+                        "questions_per_request": 4,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 234.422
+                    },
+                    "change_percent": {
+                        "sequential_p95": -12.14,
+                        "load_p95": -9.18,
+                        "throughput": -0.09,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0,
+                        "user_cpu_p95": -20
+                    }
+                },
+                "status_thread": {
+                    "2.0.25": {
+                        "cold_ms": 68.745,
+                        "sequential_p50_ms": 59.826,
+                        "sequential_p95_ms": 85.771,
+                        "load_p95_ms": 112.675,
+                        "load_p99_ms": 1095.577,
+                        "load_requests_per_second": 54.721,
+                        "questions_per_request": 8,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 46.875,
+                        "fastcgi_working_set_mb": 234.164
+                    },
+                    "2.0.26": {
+                        "cold_ms": 83.401,
+                        "sequential_p50_ms": 68.728,
+                        "sequential_p95_ms": 87.06,
+                        "load_p95_ms": 108.426,
+                        "load_p99_ms": 1096.368,
+                        "load_requests_per_second": 54.688,
+                        "questions_per_request": 4,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 234.258
+                    },
+                    "change_percent": {
+                        "sequential_p95": 1.5,
+                        "load_p95": -3.77,
+                        "throughput": -0.06,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0.04,
+                        "user_cpu_p95": 33.33
+                    }
+                },
+                "tag_feed": {
+                    "2.0.25": {
+                        "cold_ms": 140.393,
+                        "sequential_p50_ms": 82.964,
+                        "sequential_p95_ms": 138.601,
+                        "load_p95_ms": 152.334,
+                        "load_p99_ms": 1151.801,
+                        "load_requests_per_second": 52.052,
+                        "questions_per_request": 25,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 35,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 93.75,
+                        "fastcgi_working_set_mb": 234.039
+                    },
+                    "2.0.26": {
+                        "cold_ms": 107.847,
+                        "sequential_p50_ms": 81.679,
+                        "sequential_p95_ms": 104.151,
+                        "load_p95_ms": 126.615,
+                        "load_p99_ms": 1143.46,
+                        "load_requests_per_second": 52.438,
+                        "questions_per_request": 5,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 35,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 78.125,
+                        "fastcgi_working_set_mb": 234.152
+                    },
+                    "change_percent": {
+                        "sequential_p95": -24.86,
+                        "load_p95": -16.88,
+                        "throughput": 0.74,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0.05,
+                        "user_cpu_p95": -16.67
+                    }
+                },
+                "author_profile": {
+                    "2.0.25": {
+                        "cold_ms": 89.781,
+                        "sequential_p50_ms": 77.931,
+                        "sequential_p95_ms": 100.74,
+                        "load_p95_ms": 112.862,
+                        "load_p99_ms": 1115.251,
+                        "load_requests_per_second": 53.706,
+                        "questions_per_request": 25,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 234.07
+                    },
+                    "2.0.26": {
+                        "cold_ms": 112.266,
+                        "sequential_p50_ms": 63.912,
+                        "sequential_p95_ms": 88.231,
+                        "load_p95_ms": 115.204,
+                        "load_p99_ms": 1124.211,
+                        "load_requests_per_second": 53.311,
+                        "questions_per_request": 9,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 36,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 234.07
+                    },
+                    "change_percent": {
+                        "sequential_p95": -12.42,
+                        "load_p95": 2.08,
+                        "throughput": -0.74,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0,
+                        "user_cpu_p95": 0
+                    }
+                },
+                "search": {
+                    "2.0.25": {
+                        "cold_ms": 78,
+                        "sequential_p50_ms": 90.614,
+                        "sequential_p95_ms": 128.932,
+                        "load_p95_ms": 142.356,
+                        "load_p99_ms": 1131.982,
+                        "load_requests_per_second": 52.967,
+                        "questions_per_request": 20,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 62.5,
+                        "fastcgi_working_set_mb": 234.07
+                    },
+                    "2.0.26": {
+                        "cold_ms": 107.464,
+                        "sequential_p50_ms": 85.689,
+                        "sequential_p95_ms": 101.452,
+                        "load_p95_ms": 124.653,
+                        "load_p99_ms": 1116.257,
+                        "load_requests_per_second": 53.623,
+                        "questions_per_request": 8,
+                        "peak_memory_bytes": 6291456,
+                        "included_files": 34,
+                        "loaded_classes": 270,
+                        "user_cpu_p95_ms": 78.125,
+                        "fastcgi_working_set_mb": 234.07
+                    },
+                    "change_percent": {
+                        "sequential_p95": -21.31,
+                        "load_p95": -12.44,
+                        "throughput": 1.24,
+                        "peak_memory": 0,
+                        "included_files": 0,
+                        "loaded_classes": 0,
+                        "fastcgi_working_set": 0,
+                        "user_cpu_p95": 25
+                    }
+                }
+            }
+        }
+    },
+    "manifest": {
+        "ok": true,
+        "generated_at": "2026-08-09T15:17:06+00:00",
+        "rounds": [
+            {
+                "opcache": "on",
+                "round": 1,
+                "order": "baseline-first",
+                "run_id": "20260809145743-ed9413"
+            },
+            {
+                "opcache": "on",
+                "round": 2,
+                "order": "candidate-first",
+                "run_id": "20260809145904-717915"
+            },
+            {
+                "opcache": "on",
+                "round": 3,
+                "order": "baseline-first",
+                "run_id": "20260809150023-8e54f8"
+            },
+            {
+                "opcache": "on",
+                "round": 4,
+                "order": "candidate-first",
+                "run_id": "20260809151007-54f8ab"
+            },
+            {
+                "opcache": "on",
+                "round": 5,
+                "order": "baseline-first",
+                "run_id": "20260809151129-1caa47"
+            },
+            {
+                "opcache": "off",
+                "round": 1,
+                "order": "candidate-first",
+                "run_id": "20260809150142-4df22b"
+            },
+            {
+                "opcache": "off",
+                "round": 2,
+                "order": "baseline-first",
+                "run_id": "20260809150319-e6e1fa"
+            },
+            {
+                "opcache": "off",
+                "round": 3,
+                "order": "candidate-first",
+                "run_id": "20260809150509-7834b9"
+            },
+            {
+                "opcache": "off",
+                "round": 4,
+                "order": "baseline-first",
+                "run_id": "20260809151247-ea8181"
+            },
+            {
+                "opcache": "off",
+                "round": 5,
+                "order": "candidate-first",
+                "run_id": "20260809151538-c01037"
+            }
+        ],
+        "error_logs": {
+            "baseline": {
+                "missing": false,
+                "matches": []
+            },
+            "candidate": {
+                "missing": false,
+                "matches": []
+            }
+        }
+    }
+}
