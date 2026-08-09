@@ -56,6 +56,11 @@ $test('cache diagnostics expose a supported driver', static function () use ($ex
 
     $expect(in_array($diagnostics['driver'], ['filesystem', 'memcached'], true));
     $expect(is_bool($diagnostics['available']));
+    $expect(is_bool($diagnostics['memcached']['configured'] ?? null));
+    $expect(is_bool($diagnostics['memcached']['extension'] ?? null));
+    $expect(is_bool($diagnostics['memcached']['available'] ?? null));
+    $expect(is_bool($diagnostics['opcache']['loaded'] ?? null));
+    $expect(is_bool($diagnostics['opcache']['enabled'] ?? null));
 });
 
 $test('cached autoload settings omit secret values', static function () use ($expect): void {

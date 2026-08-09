@@ -273,6 +273,7 @@ final class Manager extends \TinyCat\PackageManager
             $migrations = self::applyMigrations($stageDirectory, $manifest);
             self::deleteLegacyFiles($manifest);
             self::clearRuntimeCache();
+            self::resetOpcache();
             self::disableMaintenance();
             Cache::forget(self::CACHE_KEY);
 
@@ -1154,6 +1155,15 @@ final class Manager extends \TinyCat\PackageManager
                 @unlink($path);
             }
         }
+    }
+
+    private static function resetOpcache(): void
+    {
+        if (!function_exists('opcache_reset')) {
+            return;
+        }
+
+        @opcache_reset();
     }
 
     private static function enableMaintenance(string $version): void

@@ -768,7 +768,15 @@
             "available": "Available",
             "fallback": "Unavailable — using disk",
             "filesystem": "Active storage: filesystem cache.",
-            "memcached": "Active storage: Memcached."
+            "memcached": "Active storage: Memcached.",
+            "memcached_label": "Memcached",
+            "memcached_disabled": "Not enabled in the application configuration.",
+            "memcached_running": "Running and serving the application cache.",
+            "memcached_extension_missing": "The PHP memcached extension is not installed.",
+            "memcached_unreachable": "Configured, but the server cannot be reached. Filesystem fallback is active.",
+            "opcache_label": "PHP OPcache",
+            "opcache_running": "Running — PHP bytecode is cached.",
+            "opcache_disabled": "Not running — enable it in the web PHP configuration."
         }
     },
     "install": {

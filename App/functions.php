@@ -4805,9 +4805,7 @@ function status_comment_count(int $contentId): int
         return 0;
     }
 
-    return db_select('SELECT id FROM content_comments')
-        ->where('content_id = ?', $contentId)
-        ->count();
+    return total('content_comments', ['content_id' => $contentId]);
 }
 
 function status_comment_can_delete(?array $comment, ?array $user): bool
@@ -5012,9 +5010,7 @@ function status_comment_like_count(int $commentId): int
         return 0;
     }
 
-    return db_select('SELECT comment_id FROM comment_likes')
-        ->where('comment_id = ?', $commentId)
-        ->count();
+    return total('comment_likes', ['comment_id' => $commentId]);
 }
 
 function status_tag_normalize(string $tag): string
@@ -7434,7 +7430,7 @@ function val(string $sql, array $params = []): mixed
 
 function db_select(string $sql): CoreQuery
 {
-    return Core::select($sql);
+    return new CoreQuery($sql);
 }
 
 function insert(string $table, array $data): string

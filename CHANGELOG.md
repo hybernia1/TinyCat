@@ -3,6 +3,22 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.32 - 2026-08-09
+
+### Simplification
+
+- Removed the unused `Core::select()` compatibility facade and the query
+  builder's derived `count()` terminal. The remaining database API stays small
+  and direct.
+
+### Operations
+
+- Added OPcache diagnostics to the administration dashboard and reset OPcache
+  after a successful signed web update, preventing stale PHP bytecode after a
+  release.
+- Expanded cache diagnostics to distinguish disabled, unreachable and active
+  Memcached, alongside the active OPcache state.
+
 ## 2.0.29 - 2026-08-09
 
 ### Fixed

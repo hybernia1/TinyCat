@@ -278,10 +278,7 @@ final class Notifications
             return 0;
         }
 
-        return db_select('SELECT id FROM notifications')
-            ->where('user_id = ?', $userId)
-            ->where('read_at IS NULL')
-            ->count();
+        return total('notifications', ['user_id' => $userId, 'read_at' => null]);
     }
 
     public static function latestId(int $userId): int
