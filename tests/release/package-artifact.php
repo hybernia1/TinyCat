@@ -6,7 +6,8 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/App/bootstrap.php';
 
 $temporaryRoot = $root . '/storage/package-artifact-' . bin2hex(random_bytes(6));
-$output = $temporaryRoot . '/dist';
+$output = $temporaryRoot . '/dist-a';
+$repeatedOutput = $temporaryRoot . '/dist-b';
 $keyPath = $temporaryRoot . '/signing.key';
 $failures = [];
 $names = [];
@@ -67,9 +68,21 @@ try {
         throw new RuntimeException('Package builder failed: ' . implode(' ', $buildOutput));
     }
 
+    $repeatedCommand = str_replace(
+        '--output=' . escapeshellarg($output),
+        '--output=' . escapeshellarg($repeatedOutput),
+        $command
+    );
+    exec($repeatedCommand . ' 2>&1', $repeatedBuildOutput, $repeatedExitCode);
+
+    if ($repeatedExitCode !== 0) {
+        throw new RuntimeException('Repeated package build failed: ' . implode(' ', $repeatedBuildOutput));
+    }
+
     $package = $output . '/tinycat-' . $version . '.zip';
     $manifestPath = $output . '/tinycat-update.json';
     $signaturePath = $output . '/tinycat-update.sig';
+    $repeatedPackage = $repeatedOutput . '/tinycat-' . $version . '.zip';
     $manifestJson = (string) file_get_contents($manifestPath);
     $signature = base64_decode(trim((string) file_get_contents($signaturePath)), true);
 
@@ -78,6 +91,10 @@ try {
     }
 
     $manifest = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+
+    if (hash_file('sha256', $package) !== hash_file('sha256', $repeatedPackage)) {
+        $failures[] = 'Repeated builds from the same source are not byte-identical.';
+    }
 
     if (($manifest['version'] ?? null) !== $version || ($manifest['minimum_version'] ?? null) !== $version) {
         $failures[] = 'Artifact version boundary does not match the monolith baseline.';
@@ -124,6 +141,12 @@ try {
     foreach (['composer.json', 'composer.lock', 'phpstan.neon', 'phpstan-baseline.neon', 'config.php'] as $file) {
         if (in_array($file, $names, true)) {
             $failures[] = "Development or private file in artifact: {$file}";
+        }
+    }
+
+    foreach ($names as $name) {
+        if (preg_match('~^docs/(?:baseline-|performance-benchmark|release-2\.0\.26-monolith-plan|stage-[0-9]+)~', $name) === 1) {
+            $failures[] = "Internal release evidence in artifact: {$name}";
         }
     }
 

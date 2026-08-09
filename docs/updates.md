@@ -33,24 +33,26 @@ signed with a replacement key. CI can provide the base64 private key through the
 Set `Core::VERSION`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=2.0.4 --minimum-version=2.0.3
+php tools/build-update.php --version=2.0.26 --minimum-version=2.0.25
 php tools/verify-update.php dist
 ```
 
 The builder creates:
 
 ```text
-dist/tinycat-2.0.4.zip
+dist/tinycat-2.0.26.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v2.0.4` tag and upload all three files
+Create a GitHub release for the matching `v2.0.26` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
-Only managed application and documentation files are packaged. Configuration,
-uploads, storage, tests, tools, and Git metadata are excluded. Removed runtime files are
+Only managed application and end-user documentation files are packaged.
+Configuration, uploads, storage, tests, tools, Git metadata, benchmark results,
+internal release reports and the repository-level changelog are excluded. A
+new top-level managed file requires a prior updater bridge release. Removed runtime files are
 listed by target version in `tools/update-deletions.json`; this prevents legacy
 PHP files from surviving an overlay update.
 
@@ -92,6 +94,9 @@ checksum in `schema_migrations`. A previously applied migration whose checksum
 changes is rejected. Never edit a published migration; create a new one.
 The package builder normalizes migration files to LF before hashing and archiving
 them so the checksum stays stable across Windows and Linux release worktrees.
+It also uses `SOURCE_DATE_EPOCH` for every ZIP entry (or the ZIP epoch when the
+variable is absent), allowing the same source and toolchain to produce the same
+archive bytes.
 
 MySQL schema changes can commit implicitly. Migrations must therefore be safe to
 restart and should inspect existing columns, indexes, and constraints before

@@ -1,7 +1,15 @@
 <?php
 declare(strict_types=1);
 
-$root = dirname(__DIR__, 2);
+$workspaceRoot = dirname(__DIR__, 2);
+$options = getopt('', ['root::']);
+$requestedRoot = trim((string) ($options['root'] ?? $workspaceRoot));
+$root = realpath($requestedRoot);
+
+if (!is_string($root) || !is_file($root . DIRECTORY_SEPARATOR . 'index.php')) {
+    fwrite(STDERR, "Public route smoke root is invalid.\n");
+    exit(1);
+}
 $checks = 0;
 $failures = [];
 $adminRendered = 0;

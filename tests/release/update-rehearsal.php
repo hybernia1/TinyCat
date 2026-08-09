@@ -9,7 +9,7 @@ $installRoot = $temporaryRoot . '/install';
 $freshRoot = $temporaryRoot . '/fresh';
 $artifactRoot = $temporaryRoot . '/dist';
 $signingKey = $temporaryRoot . '/signing.key';
-$candidateVersion = '2.0.26-stage1';
+$candidateVersion = '2.0.26';
 $failures = [];
 $managedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
 $managedRootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
@@ -168,15 +168,11 @@ try {
 
     $copyTree($root . '/tools/build-update.php', $candidateRoot . '/tools/build-update.php');
     $copyTree($root . '/tools/update-deletions.json', $candidateRoot . '/tools/update-deletions.json');
-    $corePath = $candidateRoot . '/App/Core.php';
-    $core = (string) file_get_contents($corePath);
-    $updatedCore = str_replace("public const string VERSION = '2.0.25';", "public const string VERSION = '{$candidateVersion}';", $core, $replacements);
+    $core = (string) file_get_contents($candidateRoot . '/App/Core.php');
 
-    if ($replacements !== 1) {
-        throw new RuntimeException('Unable to create the synthetic 2.0.26 candidate version.');
+    if (!str_contains($core, "public const string VERSION = '{$candidateVersion}';")) {
+        throw new RuntimeException('Candidate Core::VERSION does not match the release rehearsal.');
     }
-
-    file_put_contents($corePath, $updatedCore, LOCK_EX);
     $keyPair = sodium_crypto_sign_keypair();
     $secretKey = sodium_crypto_sign_secretkey($keyPair);
     $publicKey = base64_encode(sodium_crypto_sign_publickey($keyPair));
@@ -212,8 +208,28 @@ try {
         }
     }
 
+    $extensionRoot = $installRoot . '/Extensions/rehearsal_probe';
+    mkdir($extensionRoot, 0775, true);
+    file_put_contents($extensionRoot . '/bootstrap.php', <<<'PHP'
+<?php
+declare(strict_types=1);
+
+TinyCat\Extension\Registry::register('rehearsal_probe', ['root' => __DIR__]);
+PHP);
+    file_put_contents($extensionRoot . '/extension.json', json_encode([
+        'schema' => 1,
+        'slug' => 'rehearsal_probe',
+        'name' => 'Release rehearsal probe',
+        'version' => '1.0.0',
+        'requires' => ['tinycat' => '2.0.25', 'php' => '8.4.0'],
+        'entry' => 'bootstrap.php',
+        'migrations' => [],
+        'autoload' => false,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), LOCK_EX);
     file_put_contents($installRoot . '/storage/rehearsal-sentinel.txt', 'storage-preserved');
     file_put_contents($installRoot . '/uploads/rehearsal-sentinel.txt', 'uploads-preserved');
+    $configHash = hash_file('sha256', $installRoot . '/config.php');
+    $extensionHash = hash_file('sha256', $extensionRoot . '/bootstrap.php');
     $baselineInventory = $inventory($installRoot);
     $manifestPath = $artifactRoot . '/tinycat-update.json';
     $signaturePath = $artifactRoot . '/tinycat-update.sig';
@@ -264,11 +280,17 @@ PHP;
     $assert((int) ($updateResult['deletions'] ?? -1) === 0, 'Patch candidate does not inherit 2.5 deletion entries.');
     $assert((string) file_get_contents($installRoot . '/storage/rehearsal-sentinel.txt') === 'storage-preserved', 'Storage survives update.');
     $assert((string) file_get_contents($installRoot . '/uploads/rehearsal-sentinel.txt') === 'uploads-preserved', 'Uploads survive update.');
-    $assert(str_contains((string) file_get_contents($installRoot . '/config.php'), $publicKey), 'Configuration survives update.');
+    $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash, 'Configuration survives update byte-for-byte.');
+    $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Compatible unmanaged extension survives update.');
     $bootNew = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; if (Core::VERSION !== " . var_export($candidateVersion, true) . ") exit(2);";
     [$newBootExit, $newBootOutput] = $run($bootNew);
     $assert($newBootExit === 0, 'Updated candidate runtime boots: ' . implode(' ', $newBootOutput));
+    $extensionProbe = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
+        . "; \$found=TinyCat\\Extension\\Loader::discover(" . var_export($installRoot . '/Extensions', true)
+        . "); if (!(\$found['rehearsal_probe']['compatible'] ?? false)) exit(2);";
+    [$extensionExit, $extensionOutput] = $run($extensionProbe);
+    $assert($extensionExit === 0, 'Compatible 2.0.25 extension remains discoverable after update: ' . implode(' ', $extensionOutput));
 
     $updatedInventory = $inventory($installRoot);
     $repeatRunner = <<<'PHP'
@@ -350,6 +372,8 @@ PHP;
 
     $restoredInventory = $inventory($installRoot);
     $assert($restoredInventory === $baselineInventory, 'Rollback restores the exact v2.0.25 managed inventory.');
+    $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash, 'Rollback leaves configuration unchanged.');
+    $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Rollback leaves the compatible extension unchanged.');
     $bootOld = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; if (Core::VERSION !== '2.0.25') exit(2);";
     [$oldBootExit, $oldBootOutput] = $run($bootOld);

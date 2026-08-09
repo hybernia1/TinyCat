@@ -530,3 +530,24 @@ repeatable performance proof—not hundreds of production types.
 - All five release gates pass. The full method, transparent infrastructure
   retry and accept decision are recorded in
   [the Stage 8 acceptance report](stage-8-acceptance.md) and linked JSON.
+
+### Stage 9 — completed 2026-08-09
+
+- Set the runtime and documented release version to 2.0.26 and added a
+  correctness, performance, security and compatibility changelog without
+  presenting the rejected 2.5 architecture as released history.
+- Made the signed ZIP byte-reproducible, excluded internal benchmark/release
+  evidence and retained the exact top-level path contract understood by the
+  released 2.0.25 updater.
+- Built and verified the 122-file production artifact with minimum version
+  2.0.25, no deletions and the two already-published migration files. The
+  production signing key matches the updater's pinned public key.
+- Updated an exact `v2.0.25` installation containing representative MySQL data,
+  configuration, nested uploads/storage and an enabled compatible extension.
+  Data and schema remained unchanged; rollback restored the exact 2.0.25 tree.
+- Extracted the signed artifact and ran its own PHP lint, public-route smoke and
+  restart-safe fresh MySQL installation before completing the full 20-group
+  repository preflight.
+- Recorded hashes, inventories and all decisions in
+  [the Stage 9 release report](stage-9-release.md) and linked JSON. The release
+  candidate remains local and unpublished.

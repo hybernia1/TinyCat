@@ -1,8 +1,19 @@
 <?php
 declare(strict_types=1);
 
-$root = dirname(__DIR__, 2);
-$configPath = $root . '/config.php';
+$workspaceRoot = dirname(__DIR__, 2);
+$options = getopt('', ['root::']);
+$requestedRoot = trim((string) ($options['root'] ?? $workspaceRoot));
+$root = realpath($requestedRoot);
+$configPath = $workspaceRoot . '/config.php';
+
+if (!is_string($root)
+    || !is_file($root . '/App/bootstrap.php')
+    || !is_file($root . '/Public/install/index.php')
+) {
+    fwrite(STDERR, "MySQL installer rehearsal root is invalid.\n");
+    exit(1);
+}
 
 if (!is_file($configPath)) {
     echo "SKIP MySQL installer rehearsal: local database configuration is unavailable.\n";
