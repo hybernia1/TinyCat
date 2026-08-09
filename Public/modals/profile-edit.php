@@ -12,7 +12,6 @@ $authorId = (int) ($author_id ?? 0);
 $action = (string) ($action ?? '');
 $focus = (string) ($focus ?? '');
 $bio = trim((string) ($user['bio'] ?? ''));
-$profileLinks = user_profile_links($authorId);
 $selectedLocale = language_code((string) ($user['locale'] ?? '')) ?: locale();
 $selectedTheme = user_theme($user);
 $themeChoices = [
@@ -77,9 +76,6 @@ ob_start();
                 <span class="label"><?= et('account.bio') ?></span>
                 <textarea class="textarea" name="bio" rows="6" maxlength="500"<?= $autofocus('bio') ?>><?= e($bio) ?></textarea>
             </label>
-            <section class="profile-modal-span">
-                <?= part('profile/link-fields', ['links' => $profileLinks]) ?>
-            </section>
         </div>
     </form>
 

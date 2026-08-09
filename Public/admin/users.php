@@ -37,7 +37,6 @@ if ($adminUsersApi === 'update') {
         api_error(t('users.messages.not_found'), 404, 'user_not_found');
     }
 
-    $profileLinks = profile_links_from_input();
     try {
         $avatar = admin_user_avatar_change($existing);
     } catch (InvalidArgumentException $exception) {
@@ -50,7 +49,7 @@ if ($adminUsersApi === 'update') {
     }
 
     try {
-        user_profile_save($id, $payload, $profileLinks);
+        update('users', $payload, ['id' => $id]);
     } catch (Throwable $exception) {
         if ($avatar['uploaded']) {
             Avatar::delete($avatar['config']);
@@ -274,12 +273,6 @@ function tc_admin_users_view_data(): array
     $filters = tc_admin_users_filters();
     $page = tc_admin_users_page($filters);
     $users = $page['items'];
-    $profileLinks = user_profile_links_for_users(array_column($users, 'id'));
-
-    foreach ($users as &$user) {
-        $user['profile_links'] = $profileLinks[(int) ($user['id'] ?? 0)] ?? [];
-    }
-    unset($user);
     $pagination = $page['pagination'];
     $params = tc_admin_users_list_params($filters, $pagination);
     $perPage = (int) ($pagination['per_page'] ?? admin_per_page());
@@ -319,11 +312,6 @@ function tc_admin_users_api_payload(?int $id = null): array
 {
     $filters = tc_admin_users_filters();
     $page = tc_admin_users_page($filters);
-    $profileLinks = user_profile_links_for_users(array_column($page['items'], 'id'));
-    foreach ($page['items'] as &$user) {
-        $user['profile_links'] = $profileLinks[(int) ($user['id'] ?? 0)] ?? [];
-    }
-    unset($user);
     $users = array_map('tc_admin_user_resource', $page['items']);
     $payload = [
         'items' => $users,
@@ -337,9 +325,6 @@ function tc_admin_users_api_payload(?int $id = null): array
     if ($id !== null) {
         $payload['id'] = $id;
         $item = tc_admin_user_by_id($id) ?? [];
-        if ($item !== []) {
-            $item['profile_links'] = user_profile_links($id);
-        }
         $payload['item'] = tc_admin_user_resource($item);
     }
 
@@ -395,7 +380,6 @@ function tc_admin_user_resource(array $user): array
         'status' => (string) ($user['status'] ?? ''),
         'bio' => (string) ($user['bio'] ?? ''),
         'avatar_url' => user_avatar_url($user),
-        'profile_links' => (array) ($user['profile_links'] ?? []),
         'created_at' => (string) ($user['created_at'] ?? ''),
         'updated_at' => (string) ($user['updated_at'] ?? ''),
         'created_at_iso' => tc_admin_datetime_iso((string) ($user['created_at'] ?? '')),

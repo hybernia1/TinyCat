@@ -15,7 +15,6 @@ final class DemoImporter
         'prepare',
         'users',
         'posts',
-        'profile_links',
         'follows',
         'content_links',
         'post_likes',
@@ -276,7 +275,6 @@ final class DemoImporter
         return match ($phase) {
             'users' => $this->usersBatch($cursor),
             'posts' => $this->postsBatch($cursor),
-            'profile_links' => $this->profileLinksBatch($cursor),
             'follows' => $this->followsBatch($cursor),
             'content_links' => $this->contentLinksBatch($cursor),
             'post_likes' => $this->postLikesBatch($cursor),
@@ -373,38 +371,6 @@ final class DemoImporter
             'posts' => $inserted['affected'],
             'content_tags' => $tagResult['affected'],
         ]);
-    }
-
-    /** @return array{previous_cursor: int, cursor: int, total: int, rows: int, done: bool, stats: array<string, int>} */
-    private function profileLinksBatch(int $cursor): array
-    {
-        $users = $this->usersAfter($cursor);
-        $total = $this->maximumId('users', "role = 'user'");
-        if ($users === []) {
-            return $this->result($cursor, $total, $total, 0, []);
-        }
-        $rows = [];
-        $types = ['website', 'x', 'instagram', 'facebook'];
-        foreach ($users as $user) {
-            $userId = (int) $user['id'];
-            if (!$this->generator->chance('profile-link-user', (string) $userId, 45)) {
-                continue;
-            }
-            $count = $this->generator->integer('profile-link-count', (string) $userId, 1, 3);
-            $indexes = $this->generator->uniqueIntegers('profile-link-types', (string) $userId, $count, 0, count($types) - 1);
-            foreach ($indexes as $position => $index) {
-                $type = $types[$index];
-                $host = $type === 'website' ? 'example.invalid/profile/' : $type . '.example.invalid/';
-                $created = (string) $user['created_at'];
-                $rows[] = [$userId, $type, 'https://' . $host . $user['username'], $position, $created, $created];
-            }
-        }
-        $inserted = $this->writer->insert('user_profile_links', [
-            'user_id', 'link_type', 'link_url', 'position_index', 'created_at', 'updated_at',
-        ], $rows, true);
-        $last = (int) end($users)['id'];
-
-        return $this->result($cursor, $last, $total, count($rows), ['profile_links' => $inserted['affected']]);
     }
 
     /** @return array{previous_cursor: int, cursor: int, total: int, rows: int, done: bool, stats: array<string, int>} */
@@ -910,7 +876,7 @@ final class DemoImporter
         $counts = [];
         foreach ([
             'users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_likes',
-            'content_comments', 'comment_likes', 'user_followers', 'user_profile_links', 'notifications',
+            'content_comments', 'comment_likes', 'user_followers', 'notifications',
             'content_reports',
         ] as $table) {
             $counts[$table] = $this->tableCount($table);

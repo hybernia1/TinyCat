@@ -2407,24 +2407,6 @@ parameters:
 			path: App/functions.php
 
 		-
-			message: '#^Function profile_link_social_domains\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
-			message: '#^Function profile_link_types\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
-			message: '#^Function profile_links_from_input\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
 			message: '#^Function public_author_find\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -3524,30 +3506,6 @@ parameters:
 
 		-
 			message: '#^Function user_password_update_request\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
-			message: '#^Function user_profile_links\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
-			message: '#^Function user_profile_links_for_users\(\) has parameter \$userIds with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
-			message: '#^Function user_profile_links_for_users\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
-			message: '#^Function user_profile_links_sync\(\) has parameter \$links with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: App/functions.php

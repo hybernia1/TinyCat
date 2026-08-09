@@ -50,7 +50,6 @@ $followCounts = author_follow_counts($authorId);
 $activityStats = author_activity_stats($authorId);
 $publicPostCount = (int) ($activityStats['posts'] ?? 0);
 $presence = author_presence($author);
-$profileLinks = user_profile_links($authorId);
 $followingProfiles = author_following_profiles($authorId, 10);
 $hasMoreFollowing = count($followingProfiles) > 9;
 $followingProfiles = array_slice($followingProfiles, 0, 9);
@@ -70,7 +69,6 @@ $authorStructuredData = [
         'identifier' => (string) $authorId,
         'description' => $bio !== '' ? $bio : null,
         'image' => $avatarUrl !== '' ? absolute_url($avatarUrl) : null,
-        'sameAs' => array_values(array_filter(array_map(static fn (string $url): string => absolute_url($url), array_map('strval', $profileLinks)))),
     ],
     'hasPart' => array_values(array_map(static function (array $item) use ($authorEntityId): array {
         $image = status_image_jsonld($item) ?? (status_meta_link_image($item) ?: null);
@@ -86,7 +84,7 @@ $authorStructuredData = [
     }, $statusItems)),
 ];
 $authorStructuredData = array_filter($authorStructuredData, static fn (mixed $value): bool => $value !== null && $value !== []);
-$authorStructuredData['mainEntity'] = array_filter($authorStructuredData['mainEntity'], static fn (mixed $value): bool => $value !== null && $value !== [] && $value !== '');
+$authorStructuredData['mainEntity'] = array_filter($authorStructuredData['mainEntity']);
 
 layout('layout', [
     'title' => t('public.author_archive_title', ['author' => $authorName]),
@@ -102,7 +100,7 @@ layout('layout', [
         'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
         'jsonld' => $authorStructuredData,
     ],
-], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $canPost, $canEditProfile, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $profileLinks, $followingProfiles, $hasMoreFollowing, $feedMore, $editor): void {
+], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $canPost, $canEditProfile, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles, $hasMoreFollowing, $feedMore, $editor): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -157,7 +155,6 @@ layout('layout', [
                             <?php elseif ($bio !== ''): ?>
                                 <p class="text-muted mb-0"><?= nl2br(e($bio)) ?></p>
                             <?php endif; ?>
-                            <?= part('profile/links', ['links' => $profileLinks]) ?>
                         </div>
                         <div class="profile-stats">
                             <span class="profile-stat"><strong data-author-stat="followers" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['followers'] ?? 0)) ?></strong> <span><?= et('public.followers') ?></span></span>

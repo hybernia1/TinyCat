@@ -13,7 +13,6 @@ $create = (bool) ($create ?? false);
 $role = (string) ($user['role'] ?? 'user');
 $status = (string) ($user['status'] ?? 'active');
 $superAdminLocked = !$create && $user !== null && tc_admin_user_is_super_admin($user);
-$profileLinks = (array) ($user['profile_links'] ?? []);
 ?>
 <div class="user-editor-layout">
     <div class="user-editor-main stack">
@@ -43,10 +42,6 @@ $profileLinks = (array) ($user['profile_links'] ?? []);
                     <span class="label"><?= et('account.bio') ?></span>
                     <textarea class="textarea" name="bio" rows="5" maxlength="500"><?= e((string) ($user['bio'] ?? '')) ?></textarea>
                 </label>
-            </section>
-            <section class="card card-body stack stack-gap-12">
-                <div><span class="label"><?= et('profile_links.title') ?></span><span class="help"><?= et('profile_links.help') ?></span></div>
-                <?= part('profile/link-fields', ['links' => $profileLinks]) ?>
             </section>
         <?php endif; ?>
 

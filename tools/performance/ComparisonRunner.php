@@ -13,7 +13,7 @@ final class ComparisonRunner
 {
     private const array TABLES = [
         'users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_likes',
-        'content_comments', 'comment_likes', 'user_followers', 'user_profile_links', 'notifications',
+        'content_comments', 'comment_likes', 'user_followers', 'notifications',
         'content_reports',
     ];
 

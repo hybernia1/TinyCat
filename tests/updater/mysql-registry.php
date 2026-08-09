@@ -51,6 +51,17 @@ try {
         $options
     );
     Core::setDb($database);
+    $database->exec('CREATE TABLE user_profile_links (id INT UNSIGNED NOT NULL PRIMARY KEY) ENGINE=InnoDB');
+    $removeProfileLinks = require dirname(__DIR__, 2) . '/migrations/20260809_001_remove_user_profile_links.php';
+
+    if (!is_callable($removeProfileLinks)) {
+        throw new RuntimeException('The profile links removal migration is not callable.');
+    }
+
+    $removeProfileLinks($database);
+    if ((int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() !== 0) {
+        throw new RuntimeException('The profile links removal migration did not drop its table.');
+    }
     run(
         'CREATE TABLE schema_migrations (
             version VARCHAR(80) NOT NULL,

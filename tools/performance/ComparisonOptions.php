@@ -40,7 +40,7 @@ final readonly class ComparisonOptions
         $baselineRoot = self::directory($values, 'baseline-root', $workspace . '/storage/performance-2.0.25/app', $workspace);
         $candidateRoot = self::directory($values, 'candidate-root', $workspace . '/storage/apache-release-stage/app', $workspace);
         $output = self::absolute(
-            (string) ($values['output'] ?? ($workspace . '/storage/performance/comparison-2.0.25-vs-2.0.26.json')),
+            (string) ($values['output'] ?? ($workspace . '/storage/performance/comparison-2.0.25-vs-2.0.27.json')),
             $workspace,
         );
 
@@ -55,7 +55,7 @@ final readonly class ComparisonOptions
             self::integer($values, 'concurrency', 8, 1, 100),
             self::integer($values, 'warmup-requests', 5, 0, 1000),
             self::label($values, 'baseline-label', '2.0.25'),
-            self::label($values, 'candidate-label', '2.0.26'),
+            self::label($values, 'candidate-label', '2.0.27'),
             self::order($values),
         );
     }
@@ -74,7 +74,7 @@ Installations:
   --candidate-root=/path/app  TinyCat candidate root
   --candidate-url=http://...  TinyCat candidate URL
   --baseline-label=2.0.25
-  --candidate-label=2.0.26
+  --candidate-label=2.0.27
   --order=baseline-first|candidate-first
 
 Load:

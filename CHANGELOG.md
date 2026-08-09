@@ -3,6 +3,16 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.27 - 2026-08-09
+
+### Simplification
+
+- Removed public profile links completely: their UI, validation, API payloads,
+  structured-data output, demo-data generation, styles, translations and
+  `user_profile_links` schema are no longer part of TinyCat.
+- Existing installations remove the obsolete table through a forward migration;
+  fresh installations do not create it.
+
 ## 2.0.26 - 2026-08-09
 
 ### Performance

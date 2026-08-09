@@ -117,7 +117,6 @@ function app_required_tables(): array
         'content_comments',
         'comment_likes',
         'user_followers',
-        'user_profile_links',
         'notifications',
         'content_reports',
         'ip_action_limits',
@@ -1918,187 +1917,6 @@ function sanitize_html_url(string $value): string
     return '';
 }
 
-function profile_link_types(): array
-{
-    return [
-        'website' => t('profile_links.website'),
-        'x' => 'X',
-        'instagram' => 'Instagram',
-        'facebook' => 'Facebook',
-    ];
-}
-
-function profile_link_social_domains(): array
-{
-    return [
-        'x' => ['x.com', 'twitter.com'],
-        'instagram' => ['instagram.com'],
-        'facebook' => ['facebook.com', 'fb.com'],
-    ];
-}
-
-function profile_link_normalize(string $url, ?string $type = null): string
-{
-    $url = trim((string) preg_replace('/[\x00-\x1F\x7F]+/', '', $url));
-    if ($url === '') {
-        return '';
-    }
-    if (!preg_match('~^[a-z][a-z0-9+.-]*://~i', $url)) {
-        $url = 'https://' . ltrim($url, '/');
-    }
-    if (strlen($url) > 2048 || filter_var($url, FILTER_VALIDATE_URL) === false) {
-        return '';
-    }
-
-    $parts = parse_url($url);
-    if (!is_array($parts)) {
-        return '';
-    }
-
-    $scheme = strtolower((string) ($parts['scheme'] ?? ''));
-    $host = moderation_url_host($url);
-    $port = isset($parts['port']) ? (int) $parts['port'] : null;
-    if (
-        !in_array($scheme, ['http', 'https'], true)
-        || $host === ''
-        || filter_var($host, FILTER_VALIDATE_IP) !== false
-        || filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) === false
-        || isset($parts['user'])
-        || isset($parts['pass'])
-        || ($port !== null && !in_array($port, [80, 443], true))
-    ) {
-        return '';
-    }
-
-    $allowedDomains = profile_link_social_domains()[$type ?? ''] ?? [];
-    if ($allowedDomains !== []) {
-        $allowed = false;
-        foreach ($allowedDomains as $domain) {
-            if ($host === $domain || str_ends_with($host, '.' . $domain)) {
-                $allowed = true;
-                break;
-            }
-        }
-        if (!$allowed) {
-            return '';
-        }
-    }
-
-    return $url;
-}
-
-function profile_links_from_input(): array
-{
-    $links = [];
-    $errors = [];
-    $types = profile_link_types();
-
-    foreach (array_keys($types) as $position => $type) {
-        $raw = trim((string) input('profile_link_' . $type, ''));
-        if ($raw === '') {
-            continue;
-        }
-        $url = profile_link_normalize($raw, $type);
-        if ($url === '') {
-            $errors['profile_link_' . $type][] = t('profile_links.invalid', ['type' => $types[$type]]);
-            continue;
-        }
-        $blockedBy = moderation_host_blocked_by(moderation_url_host($url), moderation_blocked_url_rules());
-        if ($blockedBy !== '') {
-            $errors['profile_link_' . $type][] = t('moderation.messages.blocked_url', ['host' => $blockedBy]);
-            continue;
-        }
-        $links[$type] = ['url' => $url, 'position' => $position];
-    }
-
-    if ($errors !== []) {
-        api_validation($errors, t('profile_links.validation_failed'));
-    }
-    return $links;
-}
-
-function user_profile_links(int $userId): array
-{
-    if ($userId < 1) {
-        return [];
-    }
-    $rows = all('SELECT link_type, link_url FROM user_profile_links WHERE user_id = ? ORDER BY position_index ASC, link_type ASC', [$userId]);
-
-    $links = [];
-    $types = profile_link_types();
-    foreach ($rows as $row) {
-        $type = (string) ($row['link_type'] ?? '');
-        if (array_key_exists($type, $types)) {
-            $links[$type] = (string) ($row['link_url'] ?? '');
-        }
-    }
-    return $links;
-}
-
-function user_profile_links_for_users(array $userIds): array
-{
-    $userIds = positive_int_ids($userIds);
-    if ($userIds === []) {
-        return [];
-    }
-    $rows = db_select('SELECT user_id, link_type, link_url FROM user_profile_links')
-        ->whereIn('user_id', $userIds)
-        ->order('position_index ASC, link_type ASC')
-        ->all();
-
-    $result = [];
-    $types = profile_link_types();
-    foreach ($rows as $row) {
-        $userId = (int) ($row['user_id'] ?? 0);
-        $type = (string) ($row['link_type'] ?? '');
-        if ($userId > 0 && array_key_exists($type, $types)) {
-            $result[$userId][$type] = (string) ($row['link_url'] ?? '');
-        }
-    }
-    return $result;
-}
-
-function user_profile_links_sync(int $userId, array $links): void
-{
-    if ($userId < 1) {
-        return;
-    }
-
-    db_transaction(static function () use ($userId, $links): void {
-        delete('user_profile_links', ['user_id' => $userId]);
-
-        foreach ($links as $type => $link) {
-            if (!array_key_exists((string) $type, profile_link_types())) {
-                continue;
-            }
-
-            insert('user_profile_links', [
-                'user_id' => $userId,
-                'link_type' => (string) $type,
-                'link_url' => (string) ($link['url'] ?? ''),
-                'position_index' => (int) ($link['position'] ?? 0),
-                'created_at' => date_db(),
-            ]);
-        }
-    });
-}
-
-/**
- * @param array<string, mixed> $data
- * @param array<string, array{url?: mixed, position?: mixed}> $links
- */
-function user_profile_save(int $userId, array $data, array $links): void
-{
-    if ($userId < 1) {
-        return;
-    }
-
-    db_transaction(static function () use ($userId, $data, $links): void {
-        update('users', $data, ['id' => $userId]);
-        user_profile_links_sync($userId, $links);
-    });
-}
-
 function user_profile_update_request(array $user, array $actor): array
 {
     $id = (int) ($user['id'] ?? 0);
@@ -2108,7 +1926,6 @@ function user_profile_update_request(array $user, array $actor): array
     $locale = language_code((string) input('locale', ''));
     $theme = theme_normalize((string) input('theme', 'system'));
     $errors = [];
-    $profileLinks = profile_links_from_input();
 
     if ($id < 1) {
         api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
@@ -2141,7 +1958,7 @@ function user_profile_update_request(array $user, array $actor): array
         $data['email_notifications'] = 0;
     }
 
-    user_profile_save($id, $data, $profileLinks);
+    update('users', $data, ['id' => $id]);
 
     if ((int) ($actor['id'] ?? 0) === $id) {
         locale($locale);
