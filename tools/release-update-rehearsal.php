@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
 
 $root = dirname(__DIR__);
 $options = getopt('', ['artifact::']);
-$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.30')));
+$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.31')));
 $configPath = $root . '/config.php';
 $temporaryRoot = $root . '/storage/release-update-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . '/install';
@@ -372,9 +372,9 @@ PHP;
     }
 
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (Core::VERSION !== '2.0.30' || !isset(TinyCat\\Extension\\Loader::loaded()['release_probe'])) exit(2);";
+        . "; if (Core::VERSION !== '2.0.31' || !isset(TinyCat\\Extension\\Loader::loaded()['release_probe'])) exit(2);";
     [$newBootExit, $newBootOutput] = $run($newBootRunner);
-    $assert($newBootExit === 0, 'Updated 2.0.30 runtime and compatible extension boot: ' . implode(' ', $newBootOutput));
+    $assert($newBootExit === 0, 'Updated 2.0.31 runtime and compatible extension boot: ' . implode(' ', $newBootOutput));
 
     $backup = is_array($update) ? (string) ($update['backup'] ?? '') : '';
     $metadata = json_decode((string) @file_get_contents($backup . '/backup.json'), true);
