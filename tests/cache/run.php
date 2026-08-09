@@ -59,12 +59,39 @@ $test('cache diagnostics expose a supported driver', static function () use ($ex
 });
 
 $test('cached autoload settings omit secret values', static function () use ($expect): void {
-    $settings = Cache::read('core_autoload_settings');
+    $database = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    $database->exec(
+        'CREATE TABLE settings (
+            setting_key TEXT PRIMARY KEY,
+            setting_group TEXT NOT NULL,
+            setting_value TEXT NULL,
+            setting_type TEXT NOT NULL,
+            autoload INTEGER NOT NULL
+        )'
+    );
+    $insert = $database->prepare(
+        'INSERT INTO settings (setting_key, setting_group, setting_value, setting_type, autoload)
+         VALUES (?, ?, ?, ?, 1)'
+    );
+    $insert->execute(['site.name', 'site', 'Cache fixture', 'string']);
+    $insert->execute(['cron.token', 'security', 'cron-secret', 'string']);
+    $insert->execute(['security.captcha.secret_key', 'security', 'captcha-secret', 'string']);
+    $insert->execute(['email.smtp.password', 'email', 'smtp-secret', 'string']);
+    Cache::forget('core_autoload_settings');
+    Core::setDb($database);
 
-    $expect(is_array($settings), 'Expected the autoload settings cache to be populated.');
+    try {
+        $expect(Core::setting('site.name') === 'Cache fixture');
+        $settings = Cache::read('core_autoload_settings');
 
-    foreach (['cron.token', 'security.captcha.secret_key', 'email.smtp.password'] as $key) {
-        $expect(!array_key_exists($key, $settings), 'Sensitive setting was stored in the cache.');
+        $expect(is_array($settings), 'Expected the autoload settings cache to be populated.');
+        $expect(($settings['site.name'] ?? null) === 'Cache fixture', 'Public autoload setting was not cached.');
+
+        foreach (['cron.token', 'security.captcha.secret_key', 'email.smtp.password'] as $key) {
+            $expect(!array_key_exists($key, $settings), 'Sensitive setting was stored in the cache.');
+        }
+    } finally {
+        Cache::forget('core_autoload_settings');
     }
 });
 
