@@ -56,13 +56,13 @@ $value = static fn (string $sql): mixed => $database->query($sql)->fetchColumn()
 
 foreach ([
     'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, role TEXT NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT, muted_until TEXT)',
-    "CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL DEFAULT '', author_id INTEGER NOT NULL, published_at TEXT NOT NULL DEFAULT '2026-01-01 00:00:00', created_at TEXT NOT NULL DEFAULT '2026-01-01 00:00:00', edit_locked_at TEXT)",
+    "CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL DEFAULT '', author_id INTEGER NOT NULL, published_at TEXT NOT NULL DEFAULT '2026-01-01 00:00:00', edit_locked_at TEXT)",
     'CREATE TABLE content_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at TEXT)',
     'CREATE TABLE content_comments (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT, created_at TEXT)',
     'CREATE TABLE comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at TEXT)',
     'CREATE TABLE terms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)',
     'CREATE TABLE content_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, UNIQUE (content_id, term_id))',
-    'CREATE TABLE links (id INTEGER PRIMARY KEY AUTOINCREMENT, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, embed_url TEXT, created_at TEXT, updated_at TEXT)',
+    'CREATE TABLE links (id INTEGER PRIMARY KEY AUTOINCREMENT, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)',
     'CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, position_index INTEGER NOT NULL, created_at TEXT, UNIQUE (content_id, link_id))',
     'CREATE TABLE content_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER, created_at TEXT)',
     'CREATE TABLE content_reports (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, reporter_id INTEGER, status TEXT)',
@@ -102,6 +102,14 @@ $assert(count(status_tags_from_text($tagText)) === 12, 'Tag parsing does not tru
 $assert(count(status_require_valid_tags($tagText)) === 12, 'Tag validation accepts more than ten unique tags.');
 $assert(status_tag_normalize(str_repeat('a', 33)) === '', 'The storage-backed per-tag length bound remains.');
 
+$youtube = StatusLinks::fromRaw('https://youtu.be/abc123');
+$assert(is_array($youtube) && !array_key_exists('embed_url', $youtube), 'Video parser retains only the canonical video identifier.');
+$assert(status_video_embed_url(['provider' => 'youtube', 'video_id' => 'abc123']) === 'https://www.youtube.com/embed/abc123', 'YouTube embed URL is derived from its canonical identifier.');
+$assert(status_video_embed_url(['provider' => 'vimeo', 'video_id' => '987654']) === 'https://player.vimeo.com/video/987654', 'Vimeo embed URL is derived from its canonical identifier.');
+$assert(status_video_embed_url(['provider' => 'dailymotion', 'video_id' => 'x9demo']) === 'https://www.dailymotion.com/embed/video/x9demo', 'Dailymotion embed URL is derived from its canonical identifier.');
+$assert(status_video_embed_url(['provider' => 'unknown', 'video_id' => 'abc123']) === '', 'Unknown video providers cannot produce an embed URL.');
+$assert(!array_key_exists('embed_url', status_link_data((array) $youtube)), 'Link persistence excludes the derived embed URL.');
+
 $database->exec('INSERT INTO content (id, author_id) VALUES (100, 1), (200, 1), (300, 2)');
 $database->exec("INSERT INTO terms (id, name) VALUES (1, 'old')");
 $database->exec('INSERT INTO content_tags (content_id, term_id) VALUES (100, 1)');
@@ -120,11 +128,11 @@ status_sync_tags(100, status_tags_from_text($tagText));
 $assert((int) $value('SELECT COUNT(*) FROM content_tags WHERE content_id = 100') === 12, 'Successful tag synchronization persists every valid tag.');
 
 $now = date_db();
-$linkColumns = 'normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, embed_url, created_at, updated_at';
-$insertLink = $database->prepare('INSERT INTO links (' . $linkColumns . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-$insertLink->execute(['https://old.example', 'old', 'web', 'link', 'Old', '', '', '', '', $now, $now]);
-$insertLink->execute(['https://alpha.example', 'alpha', 'web', 'link', 'Alpha title', '', '', '', '', $now, $now]);
-$insertLink->execute(['https://beta.example', 'beta', 'web', 'link', 'Beta title', '', '', '', '', $now, $now]);
+$linkColumns = 'normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at';
+$insertLink = $database->prepare('INSERT INTO links (' . $linkColumns . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+$insertLink->execute(['https://old.example', 'old', 'web', 'link', 'Old', '', '', '', $now, $now]);
+$insertLink->execute(['https://alpha.example', 'alpha', 'web', 'link', 'Alpha title', '', '', '', $now, $now]);
+$insertLink->execute(['https://beta.example', 'beta', 'web', 'link', 'Beta title', '', '', '', $now, $now]);
 $database->exec("INSERT INTO content_links (content_id, link_id, position_index, created_at) VALUES (100, 1, 0, '$now')");
 $database->exec('CREATE TRIGGER fail_link_attach BEFORE INSERT ON content_links WHEN NEW.link_id = 3 BEGIN SELECT RAISE(ABORT, \'forced link failure\'); END');
 $links = [

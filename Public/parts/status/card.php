@@ -12,7 +12,7 @@ $action = (string) ($action ?? '/');
 $contentId = (int) ($item['id'] ?? 0);
 $authorId = (int) ($item['author_id'] ?? 0);
 $authorName = trim((string) ($item['author_name'] ?? ''));
-$createdAt = (string) ($item['created_at'] ?? '');
+$publishedAt = (string) ($item['published_at'] ?? '');
 $view = is_array($item['_view'] ?? null) ? $item['_view'] : [];
 $url = $authorId > 0 ? (string) ($view['author_url'] ?? '#') . '#' . status_anchor($contentId) : '#';
 $bodyHtml = (string) ($view['body_html'] ?? '');
@@ -31,9 +31,9 @@ if ($contentId < 1) {
                 <?php if ($authorId > 0 && $authorName !== ''): ?>
                     <a href="<?= e((string) ($view['author_url'] ?? '#')) ?>"><?= e($authorName) ?></a>
                 <?php endif; ?>
-                <?php if ($createdAt !== ''): ?>
+                <?php if ($publishedAt !== ''): ?>
                     <?= part('status/time-link', [
-                        'created_at' => $createdAt,
+                        'published_at' => $publishedAt,
                         'content_id' => $contentId,
                         'open_modal' => true,
                         'item' => $item,

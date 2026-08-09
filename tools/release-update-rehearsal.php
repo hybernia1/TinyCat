@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
 
 $root = dirname(__DIR__);
 $options = getopt('', ['artifact::']);
-$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.27')));
+$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.28')));
 $configPath = $root . '/config.php';
 $temporaryRoot = $root . '/storage/release-update-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . '/install';
@@ -263,7 +263,13 @@ PHP;
 
     foreach (array_filter(
         (array) ($manifest['migrations'] ?? []),
-        static fn (mixed $path): bool => basename((string) $path) !== '20260809_001_remove_user_profile_links.php',
+        static fn (mixed $path): bool => !in_array(basename((string) $path), [
+            '20260809_001_remove_user_profile_links.php',
+            '20260809_002_remove_content_created_at.php',
+            '20260809_003_remove_link_embed_url.php',
+            '20260809_004_move_email_template_states_to_settings.php',
+            '20260809_005_move_smtp_settings_to_json.php',
+        ], true),
     ) as $migrationPath) {
         $migration = pathinfo((string) $migrationPath, PATHINFO_FILENAME);
         $checksum = (string) ((array) ($manifest['files'] ?? []))[$migrationPath];
@@ -325,12 +331,34 @@ PHP;
     [$updateExit, $updateOutput] = $run($updateRunner);
     $update = json_decode(implode("\n", $updateOutput), true);
     $assert($updateExit === 0 && is_array($update), 'Signed production update completes: ' . implode(' ', $updateOutput));
-    $assert(($update['pending_migrations'] ?? null) === true, 'Exact 2.0.25 database has the profile links removal migration pending.');
-    $assert(($update['applied_migrations'] ?? null) === ['20260809_001_remove_user_profile_links'], 'Update removes the obsolete profile links table.');
+    $assert(($update['pending_migrations'] ?? null) === true, 'Exact 2.0.25 database has all cleanup migrations pending.');
+    $assert(($update['applied_migrations'] ?? null) === [
+        '20260809_001_remove_user_profile_links',
+        '20260809_002_remove_content_created_at',
+        '20260809_003_remove_link_embed_url',
+        '20260809_004_move_email_template_states_to_settings',
+        '20260809_005_move_smtp_settings_to_json',
+    ], 'Update removes obsolete tables and consolidates redundant email settings.');
     $assert(($update['extension_loaded'] ?? null) === true, 'Compatible extension remains loaded during update.');
     $assert(
         (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() === 0,
         'Update removes the obsolete profile links table from the representative database.'
+    );
+    $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'content' AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
+        'Update removes the redundant content creation timestamp from the representative database.'
+    );
+    $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'links' AND COLUMN_NAME = 'embed_url'")->fetchColumn() === 0,
+        'Update removes the redundant link embed URL from the representative database.'
+    );
+    $emailTemplateStates = json_decode((string) $database->query("SELECT setting_value FROM settings WHERE setting_key = 'email.templates'")->fetchColumn(), true);
+    $assert(is_array($emailTemplateStates) && count($emailTemplateStates) === 10, 'Update preserves email delivery switches in settings.');
+    $smtp = json_decode((string) $database->query("SELECT setting_value FROM settings WHERE setting_key = 'email.smtp'")->fetchColumn(), true);
+    $assert(is_array($smtp) && array_key_exists('password', $smtp), 'Update preserves SMTP configuration in its sensitive JSON setting.');
+    $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'email_templates'")->fetchColumn() === 0,
+        'Update removes the obsolete email template table from the representative database.'
     );
 
     foreach ($protectedHashes as $label => $hash) {
@@ -344,9 +372,9 @@ PHP;
     }
 
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (Core::VERSION !== '2.0.27' || !isset(TinyCat\\Extension\\Loader::loaded()['release_probe'])) exit(2);";
+        . "; if (Core::VERSION !== '2.0.28' || !isset(TinyCat\\Extension\\Loader::loaded()['release_probe'])) exit(2);";
     [$newBootExit, $newBootOutput] = $run($newBootRunner);
-    $assert($newBootExit === 0, 'Updated 2.0.27 runtime and compatible extension boot: ' . implode(' ', $newBootOutput));
+    $assert($newBootExit === 0, 'Updated 2.0.28 runtime and compatible extension boot: ' . implode(' ', $newBootOutput));
 
     $backup = is_array($update) ? (string) ($update['backup'] ?? '') : '';
     $metadata = json_decode((string) @file_get_contents($backup . '/backup.json'), true);

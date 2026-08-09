@@ -3,6 +3,9 @@
         "Public/parts/profile/link-fields.php",
         "Public/parts/profile/links.php"
     ],
+    "2.0.28": [
+        "Public/admin/email-templates.php"
+    ],
     "2.0.14": [
         "App/Extension/Assets.php",
         "App/Extension/Lifecycle.php",

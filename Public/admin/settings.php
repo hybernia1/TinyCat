@@ -152,13 +152,8 @@ function tc_admin_settings_sections(): array
             'label' => t('settings.sections.email'),
             'icon' => 'mail',
             'fields' => [
-                ['key' => 'email.smtp.host', 'label' => t('settings.fields.smtp_host'), 'type' => 'optional_text', 'default' => '', 'max' => 190],
-                ['key' => 'email.smtp.port', 'label' => t('settings.fields.smtp_port'), 'type' => 'int', 'default' => 587, 'min' => 1, 'max' => 65535],
-                ['key' => 'email.smtp.username', 'label' => t('settings.fields.smtp_username'), 'type' => 'optional_text', 'default' => '', 'max' => 190],
-                ['key' => 'email.smtp.password', 'label' => t('settings.fields.smtp_password'), 'type' => 'password', 'default' => '', 'max' => 190],
-                ['key' => 'email.smtp.encryption', 'label' => t('settings.fields.smtp_encryption'), 'type' => 'optional_text', 'default' => 'tls', 'max' => 20],
-                ['key' => 'email.from_address', 'label' => t('settings.fields.email_from'), 'type' => 'email', 'default' => '', 'max' => 190],
-                ['key' => 'email.from_name', 'label' => t('settings.fields.email_from_name'), 'type' => 'optional_text', 'default' => 'TinyCat', 'max' => 120],
+                ['key' => 'email.smtp', 'label' => t('settings.fields.smtp'), 'type' => 'email_smtp', 'default' => email_smtp_default_config(), 'span' => true],
+                ['key' => 'email.templates', 'label' => t('settings.fields.email_templates'), 'type' => 'email_templates', 'default' => email_template_default_states(), 'span' => true],
             ],
         ],
         'analytics' => [
@@ -212,6 +207,42 @@ function tc_admin_settings_value_from_post(array $field, array $posted): array
 
     if ($type === 'bool') {
         return [$raw !== null, 'bool'];
+    }
+
+    if ($type === 'email_templates') {
+        $states = is_array($raw) ? $raw : [];
+        $value = [];
+
+        foreach (email_template_keys() as $templateKey) {
+            $value[$templateKey] = array_key_exists($templateKey, $states);
+        }
+
+        return [$value, 'json'];
+    }
+
+    if ($type === 'email_smtp') {
+        $smtp = is_array($raw) ? $raw : [];
+        $current = email_smtp_config();
+        $host = trim((string) ($smtp['host'] ?? ''));
+        $username = trim((string) ($smtp['username'] ?? ''));
+        $password = (string) ($smtp['password'] ?? '');
+        $encryption = strtolower(trim((string) ($smtp['encryption'] ?? 'tls')));
+        $fromAddress = trim((string) ($smtp['from_address'] ?? ''));
+        $fromName = trim((string) ($smtp['from_name'] ?? 'TinyCat'));
+
+        if ($fromAddress !== '' && !user_email_valid($fromAddress)) {
+            throw new InvalidArgumentException(t('account.messages.email_invalid'));
+        }
+
+        return [[
+            'host' => plain_text_limit($host, 190),
+            'port' => max(1, min(65535, (int) ($smtp['port'] ?? 587))),
+            'username' => plain_text_limit($username, 190),
+            'password' => $password !== '' ? plain_text_limit($password, 190) : $current['password'],
+            'encryption' => plain_text_limit($encryption, 20),
+            'from_address' => plain_text_limit($fromAddress, 190),
+            'from_name' => plain_text_limit($fromName, 120),
+        ], 'json'];
     }
 
     if ($type === 'language') {

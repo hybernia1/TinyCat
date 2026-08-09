@@ -140,14 +140,14 @@ function createFixture(PDO $database): void
 {
     foreach ([
         'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT, avatar_config TEXT, bio TEXT, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, last_login_at TEXT, last_seen_at TEXT, created_at TEXT, updated_at TEXT)',
-        'CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL, author_id INTEGER NOT NULL, published_at TEXT NOT NULL, edit_locked_at TEXT, created_at TEXT NOT NULL)',
+        'CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL, author_id INTEGER NOT NULL, published_at TEXT NOT NULL, edit_locked_at TEXT)',
         'CREATE TABLE content_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL)',
         'CREATE TABLE content_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (content_id, user_id))',
         'CREATE TABLE content_comments (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL)',
         'CREATE TABLE comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (comment_id, user_id))',
         'CREATE TABLE terms (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE)',
         'CREATE TABLE content_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, PRIMARY KEY (content_id, term_id))',
-        'CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, embed_url TEXT, created_at TEXT, updated_at TEXT)',
+        'CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)',
         'CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, position_index INTEGER NOT NULL, PRIMARY KEY (content_id, link_id))',
         'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (user_id, follower_id))',
     ] as $sql) {
@@ -159,13 +159,13 @@ function createFixture(PDO $database): void
     $user->execute([2, 'benchmark_viewer', password_hash('benchmark', PASSWORD_DEFAULT), 'user', 'active', 'en', 'system', null, '', '2026-01-01 00:00:00', '2026-01-01 00:00:00', '2026-01-01 00:00:00']);
     $database->exec("INSERT INTO terms (id, name) VALUES (1, 'benchmark'), (2, 'performance')");
 
-    $content = $database->prepare('INSERT INTO content (id, body, author_id, published_at, created_at) VALUES (?, ?, 1, ?, ?)');
+    $content = $database->prepare('INSERT INTO content (id, body, author_id, published_at) VALUES (?, ?, 1, ?)');
     $tag = $database->prepare('INSERT INTO content_tags (content_id, term_id) VALUES (?, ?)');
 
     for ($id = 1; $id <= 24; $id++) {
         $day = str_pad((string) $id, 2, '0', STR_PAD_LEFT);
         $createdAt = '2026-01-' . $day . ' 12:00:00';
-        $content->execute([$id, "Performance benchmark status {$id} #benchmark", $createdAt, $createdAt]);
+        $content->execute([$id, "Performance benchmark status {$id} #benchmark", $createdAt]);
         $tag->execute([$id, 1]);
         $tag->execute([$id, 2]);
     }

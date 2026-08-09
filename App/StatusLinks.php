@@ -145,7 +145,6 @@ final class StatusLinks
                 'title' => $video['title'],
                 'description' => $video['description'],
                 'video_id' => $video['video_id'],
-                'embed_url' => $video['embed_url'],
                 'display_url' => self::displayUrl($normalizedUrl),
             ];
         }
@@ -165,7 +164,6 @@ final class StatusLinks
             'title' => self::title($normalizedUrl),
             'description' => self::displayUrl($normalizedUrl),
             'video_id' => '',
-            'embed_url' => '',
             'display_url' => self::displayUrl($normalizedUrl),
         ];
     }
@@ -213,7 +211,6 @@ final class StatusLinks
                 'description' => 'youtube.com',
                 'video_id' => $youtubeId,
                 'normalized_url' => 'https://www.youtube.com/watch?v=' . rawurlencode($youtubeId),
-                'embed_url' => 'https://www.youtube.com/embed/' . rawurlencode($youtubeId),
             ];
         }
 
@@ -226,7 +223,6 @@ final class StatusLinks
                 'description' => 'vimeo.com',
                 'video_id' => $vimeoId,
                 'normalized_url' => 'https://vimeo.com/' . rawurlencode($vimeoId),
-                'embed_url' => 'https://player.vimeo.com/video/' . rawurlencode($vimeoId),
             ];
         }
 
@@ -239,7 +235,6 @@ final class StatusLinks
                 'description' => 'dailymotion.com',
                 'video_id' => $dailymotionId,
                 'normalized_url' => 'https://www.dailymotion.com/video/' . rawurlencode($dailymotionId),
-                'embed_url' => 'https://www.dailymotion.com/embed/video/' . rawurlencode($dailymotionId),
             ];
         }
 

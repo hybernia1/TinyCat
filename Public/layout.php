@@ -65,7 +65,6 @@ $defaultAdminNav = [
     ['href' => '/admin/extensions', 'icon' => 'puzzle', 'label' => t('extensions.title')],
     ['href' => '/admin/updates', 'icon' => 'download', 'label' => t('updates.title')],
     ['href' => '/admin/settings', 'icon' => 'settings', 'label' => t('settings.title')],
-    ['href' => '/admin/email-templates', 'icon' => 'mail', 'label' => t('settings.email_templates_title')],
 ];
 $authUser = auth();
 $isAdminShell = $authUser !== null && (bool) ($adminShell ?? str_starts_with($current, '/admin'));

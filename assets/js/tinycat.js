@@ -3232,7 +3232,7 @@
     var title = createElement("strong", "global-search-title", item.title || "");
     var metaText = item.type === "tag"
       ? (item.excerpt || "")
-      : (item.type === "user" ? "@" + (item.title || "") : (item.created_label || item.excerpt || ""));
+      : (item.type === "user" ? "@" + (item.title || "") : (item.published_label || item.excerpt || ""));
     var meta = createElement("span", "global-search-meta", metaText);
     var excerpt = createElement("span", "global-search-excerpt", item.excerpt || "");
     var avatar = createElement("span", "global-search-avatar");

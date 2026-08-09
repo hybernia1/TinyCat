@@ -358,7 +358,6 @@ function tc_install_create_tables(): void
             edit_locked_at DATETIME NULL,
             edit_locked_by INT UNSIGNED NULL,
             edit_lock_reason VARCHAR(80) NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY content_feed_index (published_at, id),
             KEY content_sidebar_index (published_at, author_id, id),
@@ -414,7 +413,6 @@ function tc_install_create_tables(): void
             description VARCHAR(500) NULL,
             image_url VARCHAR(2048) NULL,
             video_id VARCHAR(80) NULL,
-            embed_url VARCHAR(2048) NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -557,18 +555,6 @@ function tc_install_create_tables(): void
     );
 
     run(
-        "CREATE TABLE IF NOT EXISTS email_templates (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            template_key VARCHAR(80) NOT NULL,
-            enabled TINYINT(1) NOT NULL DEFAULT 1,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY email_templates_key_unique (template_key)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    );
-
-    run(
         "CREATE TABLE IF NOT EXISTS password_reset_tokens (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id INT UNSIGNED NOT NULL,
@@ -643,22 +629,13 @@ function tc_install_default_settings(array $state): void
         ['content_images.enabled', (bool) config('content_images.enabled', true), 'bool', 'content_images'],
         ['content_images.max_upload_kb', (int) config('content_images.max_upload_kb', 100), 'int', 'content_images'],
         ['moderation.blocked_urls', (string) config('moderation.blocked_urls', ''), 'string', 'moderation'],
-        ['email.smtp.host', '', 'string', 'email'],
-        ['email.smtp.port', 587, 'int', 'email'],
-        ['email.smtp.username', '', 'string', 'email'],
-        ['email.smtp.password', '', 'string', 'email'],
-        ['email.smtp.encryption', 'tls', 'string', 'email'],
-        ['email.from_address', '', 'string', 'email'],
-        ['email.from_name', 'TinyCat', 'string', 'email'],
+        ['email.smtp', email_smtp_default_config(), 'json', 'email'],
+        ['email.templates', email_template_default_states(), 'json', 'email'],
         ['analytics.google_measurement_id', '', 'string', 'analytics'],
     ];
 
     foreach ($defaults as [$key, $value, $type, $group]) {
         setting_set((string) $key, $value, (string) $type, (string) $group);
-    }
-
-    foreach (email_template_keys() as $key) {
-        run('INSERT IGNORE INTO email_templates (template_key, enabled) VALUES (?, 1)', [$key]);
     }
 }
 

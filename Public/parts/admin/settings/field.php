@@ -12,7 +12,7 @@ $type = (string) ($field['type'] ?? 'text');
 $value = $field['value'] ?? $field['default'] ?? '';
 $displayValue = $type === 'password' ? '' : $value;
 $name = 'settings[' . $key . ']';
-$tag = $type === 'site_image' ? 'div' : 'label';
+$tag = in_array($type, ['site_image', 'email_smtp'], true) ? 'div' : 'label';
 $classes = ['field', 'settings-field'];
 
 if ($type === 'site_image') {
@@ -35,6 +35,27 @@ if (!empty($field['compact'])) {
             <input type="checkbox" name="<?= e($name) ?>" value="1"<?= (bool) $value ? ' checked' : '' ?>>
             <span><?= et('settings.enabled') ?></span>
         </span>
+    <?php elseif ($type === 'email_templates'): ?>
+        <?php $states = is_array($value) ? $value : []; ?>
+        <div class="stack gap-2">
+            <?php foreach (email_template_keys() as $templateKey): ?>
+                <label class="check-line">
+                    <input type="checkbox" name="<?= e($name . '[' . $templateKey . ']') ?>" value="1"<?= !empty($states[$templateKey]) ? ' checked' : '' ?>>
+                    <span><?= e(ucwords(str_replace('_', ' ', $templateKey))) ?></span>
+                </label>
+            <?php endforeach; ?>
+        </div>
+    <?php elseif ($type === 'email_smtp'): ?>
+        <?php $smtp = is_array($value) ? $value : []; ?>
+        <div class="settings-grid">
+            <label class="field"><span class="label"><?= et('settings.fields.smtp_host') ?></span><input class="input" name="<?= e($name . '[host]') ?>" value="<?= e((string) ($smtp['host'] ?? '')) ?>" maxlength="190"></label>
+            <label class="field"><span class="label"><?= et('settings.fields.smtp_port') ?></span><input class="input" type="number" name="<?= e($name . '[port]') ?>" value="<?= e((int) ($smtp['port'] ?? 587)) ?>" min="1" max="65535" required></label>
+            <label class="field"><span class="label"><?= et('settings.fields.smtp_username') ?></span><input class="input" name="<?= e($name . '[username]') ?>" value="<?= e((string) ($smtp['username'] ?? '')) ?>" maxlength="190"></label>
+            <label class="field"><span class="label"><?= et('settings.fields.smtp_password') ?></span><input class="input" type="password" name="<?= e($name . '[password]') ?>" value="" maxlength="190" autocomplete="new-password"></label>
+            <label class="field"><span class="label"><?= et('settings.fields.smtp_encryption') ?></span><input class="input" name="<?= e($name . '[encryption]') ?>" value="<?= e((string) ($smtp['encryption'] ?? 'tls')) ?>" maxlength="20"></label>
+            <label class="field"><span class="label"><?= et('settings.fields.email_from') ?></span><input class="input" type="email" name="<?= e($name . '[from_address]') ?>" value="<?= e((string) ($smtp['from_address'] ?? '')) ?>" maxlength="190"></label>
+            <label class="field"><span class="label"><?= et('settings.fields.email_from_name') ?></span><input class="input" name="<?= e($name . '[from_name]') ?>" value="<?= e((string) ($smtp['from_name'] ?? 'TinyCat')) ?>" maxlength="120"></label>
+        </div>
     <?php elseif ($type === 'language'): ?>
         <select class="select" name="<?= e($name) ?>"><?= language_options((string) $value) ?></select>
     <?php elseif ($type === 'select'): ?>

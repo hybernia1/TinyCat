@@ -85,7 +85,7 @@ foreach (['on', 'off'] as $opcache) {
 }
 
 $baselineLabel = '2.0.25';
-$candidateLabel = '2.0.27';
+$candidateLabel = '2.0.28';
 $routes = ['feed', 'status_thread', 'tag_feed', 'author_profile', 'search'];
 $budgets = ['feed' => 4, 'status_thread' => 7, 'tag_feed' => 5, 'author_profile' => 17, 'search' => 8];
 $matrix = [];

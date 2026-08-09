@@ -76,7 +76,7 @@ $test('cached autoload settings omit secret values', static function () use ($ex
     $insert->execute(['site.name', 'site', 'Cache fixture', 'string']);
     $insert->execute(['cron.token', 'security', 'cron-secret', 'string']);
     $insert->execute(['security.captcha.secret_key', 'security', 'captcha-secret', 'string']);
-    $insert->execute(['email.smtp.password', 'email', 'smtp-secret', 'string']);
+    $insert->execute(['email.smtp', 'email', '{"password":"smtp-secret"}', 'json']);
     Cache::forget('core_autoload_settings');
     Core::setDb($database);
 
@@ -87,7 +87,7 @@ $test('cached autoload settings omit secret values', static function () use ($ex
         $expect(is_array($settings), 'Expected the autoload settings cache to be populated.');
         $expect(($settings['site.name'] ?? null) === 'Cache fixture', 'Public autoload setting was not cached.');
 
-        foreach (['cron.token', 'security.captcha.secret_key', 'email.smtp.password'] as $key) {
+        foreach (['cron.token', 'security.captcha.secret_key', 'email.smtp'] as $key) {
             $expect(!array_key_exists($key, $settings), 'Sensitive setting was stored in the cache.');
         }
     } finally {

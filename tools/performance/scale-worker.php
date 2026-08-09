@@ -170,7 +170,6 @@ try {
                 'body' => 'Scale benchmark write ' . $writeSequence . ' #benchmark #performance',
                 'author_id' => $authorId,
                 'published_at' => $created,
-                'created_at' => $created,
             ]);
             status_sync_tags($contentId, ['benchmark', 'performance']);
             insert('content_comments', [

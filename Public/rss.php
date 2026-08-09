@@ -73,7 +73,7 @@ echo '<?xml version="1.0" encoding="UTF-8"?>';
         $itemTitle .= '…';
     }
     $itemUrl = absolute_url(status_url((int) ($item['id'] ?? 0)));
-    $publishedAt = (string) ($item['published_at'] ?? $item['created_at'] ?? '');
+    $publishedAt = (string) ($item['published_at'] ?? '');
     $publishedTimestamp = $publishedAt !== '' ? strtotime($publishedAt) : false;
     $publishedDate = $publishedTimestamp !== false ? date(DATE_RSS, $publishedTimestamp) : date(DATE_RSS);
     $imageUrl = status_image_url($item);

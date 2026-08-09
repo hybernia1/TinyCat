@@ -62,6 +62,97 @@ try {
     if ((int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() !== 0) {
         throw new RuntimeException('The profile links removal migration did not drop its table.');
     }
+    $database->exec('CREATE TABLE content (id BIGINT UNSIGNED NOT NULL PRIMARY KEY, created_at DATETIME NOT NULL) ENGINE=InnoDB');
+    $removeContentCreatedAt = require dirname(__DIR__, 2) . '/migrations/20260809_002_remove_content_created_at.php';
+
+    if (!is_callable($removeContentCreatedAt)) {
+        throw new RuntimeException('The content timestamp removal migration is not callable.');
+    }
+
+    $removeContentCreatedAt($database);
+    if ((int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'content' AND COLUMN_NAME = 'created_at'")->fetchColumn() !== 0) {
+        throw new RuntimeException('The content timestamp removal migration did not drop its column.');
+    }
+    $database->exec('CREATE TABLE links (id BIGINT UNSIGNED NOT NULL PRIMARY KEY, embed_url VARCHAR(2048) NULL) ENGINE=InnoDB');
+    $removeLinkEmbedUrl = require dirname(__DIR__, 2) . '/migrations/20260809_003_remove_link_embed_url.php';
+
+    if (!is_callable($removeLinkEmbedUrl)) {
+        throw new RuntimeException('The link embed URL removal migration is not callable.');
+    }
+
+    $removeLinkEmbedUrl($database);
+    if ((int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'links' AND COLUMN_NAME = 'embed_url'")->fetchColumn() !== 0) {
+        throw new RuntimeException('The link embed URL removal migration did not drop its column.');
+    }
+    $database->exec(
+        'CREATE TABLE settings (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            setting_key VARCHAR(120) NOT NULL,
+            setting_group VARCHAR(60) NOT NULL,
+            setting_value LONGTEXT NULL,
+            setting_type VARCHAR(20) NOT NULL,
+            autoload TINYINT(1) NOT NULL DEFAULT 1,
+            PRIMARY KEY (id),
+            UNIQUE KEY settings_key_unique (setting_key)
+        ) ENGINE=InnoDB'
+    );
+    $database->exec(
+        'CREATE TABLE email_templates (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            template_key VARCHAR(80) NOT NULL,
+            enabled TINYINT(1) NOT NULL DEFAULT 1,
+            PRIMARY KEY (id),
+            UNIQUE KEY email_templates_key_unique (template_key)
+        ) ENGINE=InnoDB'
+    );
+    $database->exec("INSERT INTO email_templates (template_key, enabled) VALUES ('welcome', 0)");
+    $moveEmailTemplateStates = require dirname(__DIR__, 2) . '/migrations/20260809_004_move_email_template_states_to_settings.php';
+
+    if (!is_callable($moveEmailTemplateStates)) {
+        throw new RuntimeException('The email template settings migration is not callable.');
+    }
+
+    $moveEmailTemplateStates($database);
+    $emailTemplateStates = json_decode((string) $database->query("SELECT setting_value FROM settings WHERE setting_key = 'email.templates'")->fetchColumn(), true);
+    if (!is_array($emailTemplateStates) || ($emailTemplateStates['welcome'] ?? true) !== false) {
+        throw new RuntimeException('The email template settings migration did not preserve disabled states.');
+    }
+    if ((int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'email_templates'")->fetchColumn() !== 0) {
+        throw new RuntimeException('The email template settings migration did not drop its table.');
+    }
+    $legacySmtp = $database->prepare(
+        'INSERT INTO settings (setting_key, setting_group, setting_value, setting_type, autoload) VALUES (?, ?, ?, ?, 1)'
+    );
+    foreach ([
+        ['email.smtp.host', 'smtp.registry.test'],
+        ['email.smtp.port', '2525'],
+        ['email.smtp.username', 'registry-user'],
+        ['email.smtp.password', 'registry-password'],
+        ['email.smtp.encryption', 'ssl'],
+        ['email.from_address', 'registry@example.test'],
+        ['email.from_name', 'Registry sender'],
+        ['email.welcome_message', 'unused'],
+    ] as [$key, $value]) {
+        $legacySmtp->execute([$key, 'email', $value, 'string']);
+    }
+    $moveSmtpSettings = require dirname(__DIR__, 2) . '/migrations/20260809_005_move_smtp_settings_to_json.php';
+
+    if (!is_callable($moveSmtpSettings)) {
+        throw new RuntimeException('The SMTP settings migration is not callable.');
+    }
+
+    $moveSmtpSettings($database);
+    $smtp = json_decode((string) $database->query("SELECT setting_value FROM settings WHERE setting_key = 'email.smtp'")->fetchColumn(), true);
+    if (!is_array($smtp)
+        || ($smtp['host'] ?? null) !== 'smtp.registry.test'
+        || ($smtp['port'] ?? null) !== 2525
+        || ($smtp['password'] ?? null) !== 'registry-password'
+    ) {
+        throw new RuntimeException('The SMTP settings migration did not preserve its configuration.');
+    }
+    if ((int) $database->query("SELECT COUNT(*) FROM settings WHERE setting_key LIKE 'email.smtp.%' OR setting_key IN ('email.from_address', 'email.from_name', 'email.welcome_message')")->fetchColumn() !== 0) {
+        throw new RuntimeException('The SMTP settings migration did not remove legacy email settings.');
+    }
     run(
         'CREATE TABLE schema_migrations (
             version VARCHAR(80) NOT NULL,
