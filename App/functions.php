@@ -120,7 +120,6 @@ function app_required_tables(): array
         'notifications',
         'content_reports',
         'ip_action_limits',
-        'email_templates',
         'password_reset_tokens',
         ...Registry::requiredTables(),
         'settings',
@@ -1330,6 +1329,21 @@ function email_template_keys(): array
     return $keys;
 }
 
+/** @return array<string, bool> */
+function email_template_default_states(): array
+{
+    return array_fill_keys(email_template_keys(), true);
+}
+
+function email_template_enabled(string $templateKey): bool
+{
+    $states = setting('email.templates', email_template_default_states());
+
+    return is_array($states) && array_key_exists($templateKey, $states)
+        ? (bool) $states[$templateKey]
+        : true;
+}
+
 function email_catalog(string $requestedLocale = ''): array
 {
     static $cache = [];
@@ -1368,8 +1382,7 @@ function email_template_send(string $templateKey, int $userId, array $vars = [])
         $address = user_email_normalize((string) ($user['email'] ?? ''));
         if (!user_email_valid($address)) return false;
         if (str_starts_with($templateKey, 'notification_') && !(bool) ($user['email_notifications'] ?? false)) return false;
-        $templateState = one('SELECT enabled FROM email_templates WHERE template_key = ? LIMIT 1', [$templateKey]);
-        if ($templateState === null || !(bool) $templateState['enabled']) return false;
+        if (!email_template_enabled($templateKey)) return false;
         $catalog = email_catalog((string) ($user['locale'] ?? ''));
         $template = (array) (($catalog['templates'] ?? [])[$templateKey] ?? []);
         if ($template === []) return false;
@@ -1390,23 +1403,65 @@ function email_template_send(string $templateKey, int $userId, array $vars = [])
 
 function email_notification_templates_enabled(): bool
 {
-    try {
-        return (int) val("SELECT COUNT(*) FROM email_templates WHERE template_key LIKE 'notification_%' AND enabled = 1") > 0;
-    } catch (Throwable) {
-        return false;
+    foreach (email_template_keys() as $templateKey) {
+        if (str_starts_with($templateKey, 'notification_') && email_template_enabled($templateKey)) {
+            return true;
+        }
     }
+
+    return false;
+}
+
+/**
+ * @return array{host: string, port: int, username: string, password: string, encryption: string, from_address: string, from_name: string}
+ */
+function email_smtp_default_config(): array
+{
+    return [
+        'host' => trim((string) config('email.smtp.host', '')),
+        'port' => max(1, min(65535, (int) config('email.smtp.port', 587))),
+        'username' => trim((string) config('email.smtp.username', '')),
+        'password' => (string) config('email.smtp.password', ''),
+        'encryption' => strtolower(trim((string) config('email.smtp.encryption', 'tls'))),
+        'from_address' => trim((string) config('email.from_address', '')),
+        'from_name' => trim((string) config('email.from_name', 'TinyCat')),
+    ];
+}
+
+/**
+ * @return array{host: string, port: int, username: string, password: string, encryption: string, from_address: string, from_name: string}
+ */
+function email_smtp_config(): array
+{
+    $defaults = email_smtp_default_config();
+    $stored = setting('email.smtp', $defaults);
+
+    if (!is_array($stored)) {
+        return $defaults;
+    }
+
+    return [
+        'host' => trim((string) ($stored['host'] ?? $defaults['host'])),
+        'port' => max(1, min(65535, (int) ($stored['port'] ?? $defaults['port']))),
+        'username' => trim((string) ($stored['username'] ?? $defaults['username'])),
+        'password' => (string) ($stored['password'] ?? $defaults['password']),
+        'encryption' => strtolower(trim((string) ($stored['encryption'] ?? $defaults['encryption']))),
+        'from_address' => trim((string) ($stored['from_address'] ?? $defaults['from_address'])),
+        'from_name' => trim((string) ($stored['from_name'] ?? $defaults['from_name'])),
+    ];
 }
 
 function email_smtp_send(string $to, string $subject, string $body): bool
 {
-    $host = trim((string) config('email.smtp.host', ''));
-    $from = user_email_normalize((string) config('email.from_address', ''));
+    $smtp = email_smtp_config();
+    $host = $smtp['host'];
+    $from = user_email_normalize($smtp['from_address']);
     if ($host === '' || !user_email_valid($to) || !user_email_valid($from)) {
         return false;
     }
 
-    $port = (int) config('email.smtp.port', 587);
-    $encryption = strtolower(trim((string) config('email.smtp.encryption', 'tls')));
+    $port = $smtp['port'];
+    $encryption = $smtp['encryption'];
     $transport = $encryption === 'ssl' ? 'ssl://' . $host : $host;
     $socket = @stream_socket_client($transport . ':' . $port, $errno, $error, 10);
     if (!is_resource($socket)) {
@@ -1457,13 +1512,13 @@ function email_smtp_send(string $to, string $subject, string $body): bool
         if (!$expect([250])) return $fail();
     }
 
-    $username = (string) config('email.smtp.username', '');
+    $username = $smtp['username'];
     if ($username !== '') {
         $write('AUTH LOGIN');
         if (!$expect([334])) return $fail();
         $write(base64_encode($username));
         if (!$expect([334])) return $fail();
-        $write(base64_encode((string) config('email.smtp.password', '')));
+        $write(base64_encode($smtp['password']));
         if (!$expect([235])) return $fail();
     }
 
@@ -1474,7 +1529,7 @@ function email_smtp_send(string $to, string $subject, string $body): bool
     $write('DATA');
     if (!$expect([354])) return $fail();
 
-    $fromName = str_replace(["\r", "\n"], '', (string) config('email.from_name', 'TinyCat'));
+    $fromName = str_replace(["\r", "\n"], '', $smtp['from_name']);
     $subject = str_replace(["\r", "\n"], '', $subject);
     $encodedSubject = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($subject, 'UTF-8') : $subject;
     $body = preg_replace('/\r\n|\r|\n/', "\r\n", $body) ?? $body;
@@ -3155,7 +3210,6 @@ function public_status_select_sql(): string
                 c.body,
                 c.author_id,
                 c.published_at,
-                c.created_at,
                 c.edit_locked_at,
                 ci.path AS image_path,
                 ci.width AS image_width,
@@ -3480,7 +3534,7 @@ function status_prepare_items_view(array $items, ?array $user): array
 
     foreach ($items as &$item) {
         $contentId = (int) ($item['id'] ?? 0);
-        $createdAt = (string) ($item['created_at'] ?? '');
+        $publishedAt = (string) ($item['published_at'] ?? '');
         $links = array_values(array_filter(
             status_links_for_content($contentId),
             static fn (array $link): bool => !status_link_is_internal($link)
@@ -3498,8 +3552,8 @@ function status_prepare_items_view(array $items, ?array $user): array
             'permalink_label' => status_permalink_label($item),
             'context' => status_accessible_context($item),
             'time' => [
-                'iso' => $createdAt !== '' ? date_iso($createdAt) : '',
-                'label' => $createdAt !== '' ? datetime($createdAt) : '',
+                'iso' => $publishedAt !== '' ? date_iso($publishedAt) : '',
+                'label' => $publishedAt !== '' ? datetime($publishedAt) : '',
             ],
             'image' => [
                 'url' => status_image_url($item),
@@ -3935,7 +3989,7 @@ function public_search_content_result(array $item, string $query, ?string $excer
 {
     $id = (int) ($item['id'] ?? 0);
     $authorId = (int) ($item['author_id'] ?? 0);
-    $createdAt = (string) ($item['created_at'] ?? '');
+    $publishedAt = (string) ($item['published_at'] ?? '');
     $excerptText ??= (string) ($item['body'] ?? '');
 
     return [
@@ -3945,8 +3999,8 @@ function public_search_content_result(array $item, string $query, ?string $excer
         'excerpt' => public_search_excerpt($excerptText, $query, 120),
         'url' => status_url($id),
         'author_url' => author_url($authorId),
-        'created_at' => $createdAt,
-        'created_label' => datetime($createdAt),
+        'published_at' => $publishedAt,
+        'published_label' => datetime($publishedAt),
         'avatar_url' => user_avatar_url($item),
     ];
 }
@@ -3963,7 +4017,7 @@ function public_search_recent_content_scan(string $query, int $limit): array
         'SELECT c.id,
                 c.body,
                 c.author_id,
-                c.created_at,
+                c.published_at,
                 u.username AS author_name,
                 u.username AS author_username,
                 u.avatar_config AS author_avatar_config
@@ -3995,7 +4049,7 @@ function public_search_link_content_rows(string $query, int $limit, array $exclu
             'SELECT c.id,
                     c.body,
                     c.author_id,
-                    c.created_at,
+                    c.published_at,
                     u.username AS author_name,
                     u.username AS author_username,
                     u.avatar_config AS author_avatar_config,
@@ -4083,7 +4137,7 @@ function public_search_content_rows(string $query, int $limit): array
                 'SELECT c.id,
                         c.body,
                         c.author_id,
-                        c.created_at,
+                        c.published_at,
                         u.username AS author_name,
                         u.username AS author_username,
                         u.avatar_config AS author_avatar_config
@@ -5294,7 +5348,6 @@ function status_link_data(array $link): array
         'description' => plain_text_limit((string) ($link['description'] ?? ''), 500),
         'image_url' => plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
         'video_id' => plain_text_limit((string) ($link['video_id'] ?? ''), 80),
-        'embed_url' => plain_text_limit((string) ($link['embed_url'] ?? ''), 2048),
         'updated_at' => (string) ($link['_metadata_updated_at'] ?? date_db()),
     ];
 }
@@ -5390,7 +5443,7 @@ function status_link_metadata_has_content(array $link): bool
 
 function status_link_apply_cached_metadata(array $link, array $cached, bool $preserveTimestamp): array
 {
-    foreach (['provider', 'link_type', 'title', 'description', 'image_url', 'video_id', 'embed_url'] as $key) {
+    foreach (['provider', 'link_type', 'title', 'description', 'image_url', 'video_id'] as $key) {
         $value = (string) ($cached[$key] ?? '');
 
         if ($value !== '') {
@@ -5663,7 +5716,6 @@ function status_links_cache(array $contentIds): array
                     l.description,
                     l.image_url,
                     l.video_id,
-                    l.embed_url,
                     l.created_at,
                     l.updated_at
                 FROM content_links cl
@@ -5731,11 +5783,18 @@ function status_video_embed_url(array $link): string
     $provider = (string) ($link['provider'] ?? '');
     $videoId = trim((string) ($link['video_id'] ?? ''));
 
-    if ($provider === 'youtube' && $videoId !== '') {
-        return 'https://www.youtube.com/embed/' . rawurlencode($videoId);
+    if ($videoId === '') {
+        return '';
     }
 
-    return (string) ($link['embed_url'] ?? '');
+    $encodedId = rawurlencode($videoId);
+
+    return match ($provider) {
+        'youtube' => 'https://www.youtube.com/embed/' . $encodedId,
+        'vimeo' => 'https://player.vimeo.com/video/' . $encodedId,
+        'dailymotion' => 'https://www.dailymotion.com/embed/video/' . $encodedId,
+        default => '',
+    };
 }
 
 function status_video_thumbnail_sources(array $link): array
@@ -5926,7 +5985,7 @@ function status_json_require_unique_body(array $user, string $body, int $ignoreI
 
     try {
         $rows = all(
-            'SELECT id, body FROM content WHERE author_id = ? AND created_at >= ? ORDER BY id DESC LIMIT 30',
+            'SELECT id, body FROM content WHERE author_id = ? AND published_at >= ? ORDER BY id DESC LIMIT 30',
             [$userId, date_db('-1 day')]
         );
     } catch (Throwable) {
@@ -6056,7 +6115,6 @@ function status_json_create(array $user, string $redirect = '/'): array
                 'body' => $body,
                 'author_id' => $userId,
                 'published_at' => $now,
-                'created_at' => $now,
             ]);
 
             if ($image !== null) {

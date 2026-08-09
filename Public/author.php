@@ -78,7 +78,7 @@ $authorStructuredData = [
             'url' => absolute_url(status_url((int) ($item['id'] ?? 0))),
             'image' => $image,
             'headline' => status_meta_title($item),
-            'datePublished' => date_iso((string) ($item['published_at'] ?? $item['created_at'] ?? '')),
+            'datePublished' => date_iso((string) ($item['published_at'] ?? '')),
             'author' => ['@id' => $authorEntityId],
         ], static fn (mixed $value): bool => $value !== null);
     }, $statusItems)),

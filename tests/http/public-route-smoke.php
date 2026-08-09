@@ -138,7 +138,6 @@ foreach ([
     '/admin/moderation/blocking',
     '/admin/extensions',
     '/admin/updates',
-    '/admin/email-templates',
 ] as $uri) {
     $pipes = [];
     $process = proc_open(

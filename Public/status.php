@@ -49,7 +49,7 @@ layout('layout', [
         'image_height' => (int) ($item['image_height'] ?? 0),
         'image_alt' => $statusImageUrl !== '' ? status_image_alt_text($item) : '',
         'type' => 'article',
-        'published_time' => (string) ($item['published_at'] ?? $item['created_at'] ?? ''),
+        'published_time' => (string) ($item['published_at'] ?? ''),
         'author' => (string) ($item['author_name'] ?? ''),
         'jsonld' => array_filter([
             '@context' => 'https://schema.org',
@@ -60,7 +60,7 @@ layout('layout', [
             'headline' => $statusTitle,
             'articleBody' => trim((string) ($item['body'] ?? '')) !== '' ? (string) ($item['body'] ?? '') : null,
             'keywords' => status_tags_from_text((string) ($item['body'] ?? '')),
-            'datePublished' => date_iso((string) ($item['published_at'] ?? $item['created_at'] ?? '')),
+            'datePublished' => date_iso((string) ($item['published_at'] ?? '')),
             'author' => [
                 '@type' => 'Person',
                 'name' => (string) ($item['author_name'] ?? ''),
@@ -83,7 +83,7 @@ layout('layout', [
 ], static function () use ($item, $comments, $authUser, $current, $compact, $pageAction): void {
     $authorId = (int) ($item['author_id'] ?? 0);
     $authorName = trim((string) ($item['author_name'] ?? ''));
-    $createdAt = (string) ($item['created_at'] ?? '');
+    $publishedAt = (string) ($item['published_at'] ?? '');
     $contentId = (int) ($item['id'] ?? 0);
     ?>
     <section class="public-layout">
@@ -99,9 +99,9 @@ layout('layout', [
                             <?php if ($authorId > 0 && $authorName !== ''): ?>
                                 <a href="<?= e(author_url($authorId)) ?>" rel="author"><?= e($authorName) ?></a>
                             <?php endif; ?>
-                            <?php if ($createdAt !== ''): ?>
+                            <?php if ($publishedAt !== ''): ?>
                                 <?= part('status/time-link', [
-                                    'created_at' => $createdAt,
+                                    'published_at' => $publishedAt,
                                     'content_id' => $contentId,
                                     'open_modal' => false,
                                     'item' => $item,

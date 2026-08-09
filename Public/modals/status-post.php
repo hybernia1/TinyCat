@@ -19,7 +19,7 @@ if ($contentId < 1) {
 
 $authorId = (int) ($item['author_id'] ?? 0);
 $authorName = trim((string) ($item['author_name'] ?? ''));
-$createdAt = (string) ($item['created_at'] ?? '');
+$publishedAt = (string) ($item['published_at'] ?? '');
 $view = is_array($item['_view'] ?? null) ? $item['_view'] : [];
 $modalId = status_post_modal_id($contentId);
 $bodyHtml = (string) ($view['body_html'] ?? '');
@@ -37,7 +37,7 @@ ob_start();
             <?php elseif ($authorName !== ''): ?>
                 <strong><?= e($authorName) ?></strong>
             <?php endif; ?>
-            <?php if ($createdAt !== ''): ?>
+            <?php if ($publishedAt !== ''): ?>
                 <time class="public-content-meta" datetime="<?= e((string) (($view['time'] ?? [])['iso'] ?? '')) ?>"><?= e((string) (($view['time'] ?? [])['label'] ?? '')) ?></time>
             <?php endif; ?>
         </div>

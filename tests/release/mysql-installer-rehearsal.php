@@ -101,6 +101,18 @@ try {
         (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() === 0,
         'Fresh installer does not create the obsolete profile links table.'
     );
+    $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'content' AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
+        'Fresh installer does not create the redundant content creation timestamp.'
+    );
+    $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'links' AND COLUMN_NAME = 'embed_url'")->fetchColumn() === 0,
+        'Fresh installer does not create the redundant link embed URL.'
+    );
+    $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'email_templates'")->fetchColumn() === 0,
+        'Fresh installer does not create the redundant email template table.'
+    );
     $firstTableCount = (int) $database->query('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()')->fetchColumn();
 
     Core::setDb(new PDO(
@@ -125,11 +137,11 @@ try {
 
     tc_install_default_settings(['locale' => 'en']);
     $settingsCount = (int) val('SELECT COUNT(*) FROM settings');
-    $templateCount = (int) val('SELECT COUNT(*) FROM email_templates');
+    $emailTemplateStates = setting('email.templates', []);
     tc_install_default_settings(['locale' => 'cs']);
     $assert((int) val('SELECT COUNT(*) FROM settings') === $settingsCount, 'Default settings are idempotent.');
     $assert((int) val('SELECT COUNT(DISTINCT setting_key) FROM settings') === $settingsCount, 'Default settings remain unique.');
-    $assert((int) val('SELECT COUNT(*) FROM email_templates') === $templateCount, 'Email template activation is idempotent.');
+    $assert(setting('email.templates', []) === $emailTemplateStates, 'Email delivery switches are idempotent settings.');
     $assert((string) val("SELECT setting_value FROM settings WHERE setting_key = 'i18n.locale'") === 'cs', 'Repeated defaults update the selected locale.');
 
     $status = app_db_status();

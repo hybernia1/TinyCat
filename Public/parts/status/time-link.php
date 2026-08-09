@@ -6,7 +6,7 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-$createdAt = (string) ($created_at ?? '');
+$publishedAt = (string) ($published_at ?? '');
 $contentId = max(0, (int) ($content_id ?? 0));
 $openModal = (bool) ($open_modal ?? true);
 $item = is_array($item ?? null) ? $item : ['id' => $contentId];
@@ -15,7 +15,7 @@ $url = (string) ($view['status_url'] ?? '');
 $label = (string) ($view['permalink_label'] ?? '');
 $time = is_array($view['time'] ?? null) ? $view['time'] : [];
 
-if ($createdAt === '' || $contentId < 1 || $url === '') {
+if ($publishedAt === '' || $contentId < 1 || $url === '') {
     return '';
 }
 ?>

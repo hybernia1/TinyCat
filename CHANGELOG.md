@@ -3,6 +3,19 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.28 - 2026-08-09
+
+### Simplification
+
+- Removed the redundant `content.created_at` column. Post publication is now
+  represented solely by `published_at` across the schema, application and UI.
+- Removed the redundant `links.embed_url` column. Video iframe URLs are now
+  derived safely from the provider and canonical `video_id`.
+- Moved email delivery switches into the autoloaded `email.templates` setting
+  and removed the redundant `email_templates` table and its timestamps.
+- Consolidated SMTP configuration into the sensitive `email.smtp` JSON setting
+  and removed the unused `email.welcome_message` setting.
+
 ## 2.0.27 - 2026-08-09
 
 ### Simplification

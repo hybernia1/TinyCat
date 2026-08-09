@@ -26,7 +26,7 @@ $assert(str_contains($modal, 'data-snapshot="a&amp;b"'), 'Prepared modal attribu
 $assert(str_contains($modal, '<p id="snapshot-body">Safe body</p>'), 'Prepared modal body HTML is preserved.');
 
 $time = part('status/time-link', [
-    'created_at' => '2026-08-09 12:00:00',
+    'published_at' => '2026-08-09 12:00:00',
     'content_id' => 7,
     'open_modal' => false,
     'item' => [

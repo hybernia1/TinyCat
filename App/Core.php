@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.27';
+    public const string VERSION = '2.0.28';
     private const string SETTINGS_CACHE_KEY = 'core_autoload_settings';
     private const int SETTINGS_CACHE_TTL = 3600;
 
@@ -1999,7 +1999,7 @@ final class Core
         return in_array($key, [
             'cron.token',
             'security.captcha.secret_key',
-            'email.smtp.password',
+            'email.smtp',
         ], true);
     }
 
@@ -2088,13 +2088,8 @@ final class Core
             'performance.minify_js' => true,
             'performance.minify_html' => true,
             'moderation.blocked_urls' => true,
-            'email.smtp.host' => true,
-            'email.smtp.port' => true,
-            'email.smtp.username' => true,
-            'email.smtp.password' => true,
-            'email.smtp.encryption' => true,
-            'email.from_address' => true,
-            'email.from_name' => true,
+            'email.smtp' => true,
+            'email.templates' => true,
             'analytics.google_measurement_id' => true,
         ];
 

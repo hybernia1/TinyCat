@@ -352,12 +352,12 @@ final class DemoImporter
                     ? ' https://benchmark.invalid/demo/' . $userId . '-' . $post
                     : '';
                 $body = $topic . $mention . '. ' . implode(' ', array_map(static fn (string $tag): string => '#' . $tag, $tags)) . $link;
-                $postRows[] = [$body, $userId, $created, $created];
+                $postRows[] = [$body, $userId, $created];
                 $postTags[] = $tags;
             }
         }
 
-        $inserted = $this->writer->insert('content', ['body', 'author_id', 'published_at', 'created_at'], $postRows, false, true);
+        $inserted = $this->writer->insert('content', ['body', 'author_id', 'published_at'], $postRows, false, true);
         $tagRows = [];
         foreach ($inserted['ids'] as $offset => $contentId) {
             foreach ($postTags[$offset] as $tag) {
@@ -422,7 +422,7 @@ final class DemoImporter
                 continue;
             }
             $url = $match[0];
-            $created = (string) $post['created_at'];
+            $created = (string) $post['published_at'];
             $links[] = [$url, hash('sha256', $url), 'web', 'link', 'TinyCat benchmark link', 'Deterministic local metadata.', $created, $created];
             $contentIds[] = (int) $post['id'];
             $contentCreated[(int) $post['id']] = $created;
@@ -461,7 +461,7 @@ final class DemoImporter
             $count = $this->generator->integer('post-like-count', (string) $contentId, $this->options->minPostLikes, $this->options->maxPostLikes);
             $actors = $this->generator->uniqueIntegers('post-like-actors', (string) $contentId, $count, 1, $allUsers, $authorId);
             foreach ($actors as $actorId) {
-                $created = $this->generator->dateAfter('post-like-date', $contentId . ':' . $actorId, (string) $post['created_at']);
+                $created = $this->generator->dateAfter('post-like-date', $contentId . ':' . $actorId, (string) $post['published_at']);
                 $likes[] = [$contentId, $actorId, $created];
                 if ($this->generator->chance('post-like-notification', $contentId . ':' . $actorId, 35)) {
                     $notifications[] = $this->notificationRow($authorId, $actorId, $contentId, null, 'content_like', 'content_like:' . $contentId . ':' . $actorId, $created);
@@ -504,7 +504,7 @@ final class DemoImporter
             for ($index = 1; $index <= $rootCount; $index++) {
                 $key = $contentId . ':root:' . $index;
                 $actorId = $this->actor('comment-root-actor', $key, $allUsers, (int) $post['author_id']);
-                $created = $this->generator->dateAfter('comment-root-date', $key, (string) $post['created_at']);
+                $created = $this->generator->dateAfter('comment-root-date', $key, (string) $post['published_at']);
                 $body = $this->generator->pick('comment-root-body', $key, self::COMMENTS);
                 $rootRows[] = [$contentId, null, $actorId, $body, $created];
                 $rootMeta[] = ['post' => $post, 'actor_id' => $actorId, 'created_at' => $created];
@@ -661,7 +661,7 @@ final class DemoImporter
             }
             $reporter = $this->actor('reporter', (string) $contentId, $allUsers, (int) $post['author_id']);
             $status = $this->generator->pick('report-status', (string) $contentId, ['open', 'resolved', 'dismissed']);
-            $created = $this->generator->dateAfter('report-date', (string) $contentId, (string) $post['created_at']);
+            $created = $this->generator->dateAfter('report-date', (string) $contentId, (string) $post['published_at']);
             $reviewed = $status === 'open' ? null : $this->generator->dateAfter('report-review', (string) $contentId, $created);
             $rows[] = [
                 $contentId,
@@ -703,7 +703,7 @@ final class DemoImporter
     /** @return list<array<string, mixed>> */
     private function postsAfter(int $cursor): array
     {
-        return $this->fetchAfter('content', 'id, body, author_id, created_at', '1 = 1', $cursor);
+        return $this->fetchAfter('content', 'id, body, author_id, published_at', '1 = 1', $cursor);
     }
 
     /** @return list<array<string, mixed>> */
