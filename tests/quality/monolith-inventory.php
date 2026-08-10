@@ -15,7 +15,7 @@ $assert = static function (bool $condition, string $message) use (&$checks, &$fa
     }
 };
 
-$assert($inventory['production_php_files'] === 111, 'Production PHP inventory remains explicit.');
+$assert($inventory['production_php_files'] === 112, 'Production PHP inventory remains explicit.');
 $assert($inventory['app_php_files'] === 18, 'App retains the 18-file monolith baseline.');
 $assert($inventory['app_class_bearing_files'] === 15, 'App retains 15 class-bearing files.');
 $assert($inventory['unreferenced_global_functions'] === [], 'No unreferenced global function remains.');

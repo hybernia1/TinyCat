@@ -82,7 +82,7 @@ final class StatusLinks
     {
         $limit = max(1, min(10, $limit));
 
-        if ($text === '' || !preg_match_all(self::pattern(), $text, $matches, PREG_OFFSET_CAPTURE)) {
+        if ($text === '' || !preg_match_all(self::pattern(), $text, $matches)) {
             return [];
         }
 
@@ -90,10 +90,9 @@ final class StatusLinks
         $seen = [];
 
         foreach ((array) ($matches[0] ?? []) as $match) {
-            $raw = (string) ($match[0] ?? '');
-            $position = (int) ($match[1] ?? 0);
+            $raw = (string) $match;
             [$url] = self::splitTail($raw);
-            $link = self::fromRaw($url, $position);
+            $link = self::fromRaw($url);
 
             if ($link === null || isset($seen[$link['url_hash']])) {
                 continue;
@@ -110,7 +109,7 @@ final class StatusLinks
         return $links;
     }
 
-    public static function fromRaw(string $raw, int $position = 0): ?array
+    public static function fromRaw(string $raw): ?array
     {
         $url = self::withScheme($raw);
 
@@ -137,7 +136,6 @@ final class StatusLinks
             $normalizedUrl = $video['normalized_url'];
 
             return [
-                'position' => $position,
                 'normalized_url' => $normalizedUrl,
                 'url_hash' => self::hash($normalizedUrl),
                 'provider' => $video['provider'],
@@ -156,7 +154,6 @@ final class StatusLinks
         }
 
         return [
-            'position' => $position,
             'normalized_url' => $normalizedUrl,
             'url_hash' => self::hash($normalizedUrl),
             'provider' => 'web',

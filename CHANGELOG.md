@@ -3,6 +3,13 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.36 - 2026-08-10
+
+### Simplification
+
+- Removed the unused `content_links.position_index` column, index and offset
+  propagation. Link previews continue to render as status-card attachments.
+
 ## 2.0.35 - 2026-08-09
 
 ### Simplification

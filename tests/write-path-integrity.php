@@ -63,7 +63,7 @@ foreach ([
     'CREATE TABLE terms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)',
     'CREATE TABLE content_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, UNIQUE (content_id, term_id))',
     'CREATE TABLE links (id INTEGER PRIMARY KEY AUTOINCREMENT, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)',
-    'CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, position_index INTEGER NOT NULL, created_at TEXT, UNIQUE (content_id, link_id))',
+    'CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, UNIQUE (content_id, link_id))',
     'CREATE TABLE content_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER, created_at TEXT)',
     'CREATE TABLE content_reports (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, reporter_id INTEGER, status TEXT)',
     'CREATE TABLE notifications (id INTEGER PRIMARY KEY, content_id INTEGER, comment_id INTEGER)',
@@ -133,11 +133,11 @@ $insertLink = $database->prepare('INSERT INTO links (' . $linkColumns . ') VALUE
 $insertLink->execute(['https://old.example', 'old', 'web', 'link', 'Old', '', '', '', $now, $now]);
 $insertLink->execute(['https://alpha.example', 'alpha', 'web', 'link', 'Alpha title', '', '', '', $now, $now]);
 $insertLink->execute(['https://beta.example', 'beta', 'web', 'link', 'Beta title', '', '', '', $now, $now]);
-$database->exec("INSERT INTO content_links (content_id, link_id, position_index, created_at) VALUES (100, 1, 0, '$now')");
+$database->exec("INSERT INTO content_links (content_id, link_id, created_at) VALUES (100, 1, '$now')");
 $database->exec('CREATE TRIGGER fail_link_attach BEFORE INSERT ON content_links WHEN NEW.link_id = 3 BEGIN SELECT RAISE(ABORT, \'forced link failure\'); END');
 $links = [
-    ['normalized_url' => 'https://alpha.example', 'url_hash' => 'alpha', 'position' => 0],
-    ['normalized_url' => 'https://beta.example', 'url_hash' => 'beta', 'position' => 1],
+    ['normalized_url' => 'https://alpha.example', 'url_hash' => 'alpha'],
+    ['normalized_url' => 'https://beta.example', 'url_hash' => 'beta'],
 ];
 $linkFailed = false;
 try {
