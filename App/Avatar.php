@@ -142,7 +142,7 @@ final class Avatar
         imagedestroy($source);
 
         if ($mime === 'image/jpeg') {
-            $canvas = self::applyOrientation($canvas, $tmpName);
+            $canvas = image_apply_orientation($canvas, $tmpName);
         }
 
         $username = self::username($username) ?: 'avatar';
@@ -247,44 +247,6 @@ final class Avatar
         imagecopyresampled($canvas, $source, 0, 0, $sourceX, $sourceY, self::SIZE, self::SIZE, $crop, $crop);
 
         return $canvas;
-    }
-
-    private static function applyOrientation(GdImage $image, string $path): GdImage
-    {
-        if (!function_exists('exif_read_data')) {
-            return $image;
-        }
-
-        $exif = @exif_read_data($path);
-        $orientation = is_array($exif) ? (int) ($exif['Orientation'] ?? 1) : 1;
-        $rotate = static function (GdImage $source, int $angle): GdImage {
-            $rotated = imagerotate($source, $angle, 0);
-
-            if (!$rotated instanceof GdImage) {
-                return $source;
-            }
-
-            imagedestroy($source);
-            return $rotated;
-        };
-        $flip = static function (GdImage $source, int $mode): GdImage {
-            if (function_exists('imageflip')) {
-                imageflip($source, $mode);
-            }
-
-            return $source;
-        };
-
-        return match ($orientation) {
-            2 => $flip($image, IMG_FLIP_HORIZONTAL),
-            3 => $rotate($image, 180),
-            4 => $flip($image, IMG_FLIP_VERTICAL),
-            5 => $flip($rotate($image, -90), IMG_FLIP_HORIZONTAL),
-            6 => $rotate($image, -90),
-            7 => $flip($rotate($image, 90), IMG_FLIP_HORIZONTAL),
-            8 => $rotate($image, 90),
-            default => $image,
-        };
     }
 
     private static function absolutePath(string $path): string

@@ -36,4 +36,4 @@ foreach ($commands as $label => $command) {
     }
 }
 
-echo "\nPASS TinyCat 2.0.37 monolith preflight\n";
+echo "\nPASS TinyCat 2.0.38 monolith preflight\n";

@@ -7456,11 +7456,6 @@ function total(string $table, array $where = []): int
     return Core::count($table, $where);
 }
 
-function pagination(array $pagination, ?string $baseUrl = null, string $pageName = 'page', int $window = 2): string
-{
-    return Core::pagination($pagination, $baseUrl, $pageName, $window);
-}
-
 function pagination_meta(int $total, ?int $page = null, int $perPage = 15): array
 {
     return Core::paginationMeta($total, $page, $perPage);

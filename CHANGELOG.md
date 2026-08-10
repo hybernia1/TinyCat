@@ -3,6 +3,15 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.38 - 2026-08-10
+
+### Simplification
+
+- Removed the unused frontend pagination facade and its unreferenced rendering
+  implementation.
+- Unified JPEG EXIF-orientation handling for avatars and status images through
+  the shared image helper.
+
 ## 2.0.37 - 2026-08-10
 
 ### Fixed

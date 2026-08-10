@@ -559,19 +559,7 @@ parameters:
 			path: App/Core.php
 
 		-
-			message: '#^Method Core\:\:pagination\(\) has parameter \$pagination with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/Core.php
-
-		-
 			message: '#^Method Core\:\:paginationMeta\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/Core.php
-
-		-
-			message: '#^Method Core\:\:paginationPages\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: App/Core.php
@@ -2330,12 +2318,6 @@ parameters:
 
 		-
 			message: '#^Function one\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
-			message: '#^Function pagination\(\) has parameter \$pagination with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: App/functions.php
