@@ -148,7 +148,7 @@ function createFixture(PDO $database): void
         'CREATE TABLE terms (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE)',
         'CREATE TABLE content_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, PRIMARY KEY (content_id, term_id))',
         'CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)',
-        'CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, position_index INTEGER NOT NULL, PRIMARY KEY (content_id, link_id))',
+        'CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, PRIMARY KEY (content_id, link_id))',
         'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (user_id, follower_id))',
     ] as $sql) {
         $database->exec($sql);

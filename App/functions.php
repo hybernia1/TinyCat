@@ -3041,7 +3041,7 @@ function render_status_text(string $text, array $hiddenLinkHashes = []): string
             $href = status_internal_url_path($url);
             $html .= '<a class="status-inline-link" href="' . e($href !== '' ? $href : $url) . '">' . e($url) . '</a>';
         } else {
-            $link = StatusLinks::fromRaw($url, $position);
+            $link = StatusLinks::fromRaw($url);
 
             if ($link !== null) {
                 $hash = (string) ($link['url_hash'] ?? '');
@@ -5632,7 +5632,6 @@ function status_sync_links(int $contentId, array $links, string $localImageLinkH
                 insert('content_links', [
                     'content_id' => $contentId,
                     'link_id' => $linkId,
-                    'position_index' => max(0, (int) ($link['position'] ?? 0)),
                     'created_at' => date_db(),
                 ]);
             } catch (Throwable $exception) {
@@ -5706,7 +5705,6 @@ function status_links_cache(array $contentIds): array
     if ($missing !== []) {
         foreach (db_select(
             'SELECT cl.content_id,
-                    cl.position_index,
                     l.id AS link_id,
                     l.normalized_url,
                     l.url_hash,
@@ -5722,7 +5720,7 @@ function status_links_cache(array $contentIds): array
                 INNER JOIN links l ON l.id = cl.link_id'
         )
             ->whereIn('cl.content_id', $missing)
-            ->order('cl.content_id ASC, cl.position_index ASC, l.id ASC')
+            ->order('cl.content_id ASC, l.id ASC')
             ->all() as $row) {
             $contentId = (int) ($row['content_id'] ?? 0);
 

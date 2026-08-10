@@ -433,9 +433,9 @@ final class DemoImporter
         $relations = [];
         foreach ($inserted['ids'] as $offset => $linkId) {
             $contentId = $contentIds[$offset];
-            $relations[] = [$contentId, $linkId, 0, $contentCreated[$contentId]];
+            $relations[] = [$contentId, $linkId, $contentCreated[$contentId]];
         }
-        $relationResult = $this->writer->insert('content_links', ['content_id', 'link_id', 'position_index', 'created_at'], $relations, true);
+        $relationResult = $this->writer->insert('content_links', ['content_id', 'link_id', 'created_at'], $relations, true);
         $last = (int) end($posts)['id'];
 
         return $this->result($cursor, $last, $total, count($links) + count($relations), [

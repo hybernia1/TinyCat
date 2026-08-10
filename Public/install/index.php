@@ -425,10 +425,8 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS content_links (
             content_id BIGINT UNSIGNED NOT NULL,
             link_id BIGINT UNSIGNED NOT NULL,
-            position_index INT UNSIGNED NOT NULL DEFAULT 0,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (content_id, link_id),
-            KEY content_links_content_index (content_id, position_index),
             KEY content_links_link_index (link_id),
             CONSTRAINT fk_content_links_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,
             CONSTRAINT fk_content_links_link FOREIGN KEY (link_id) REFERENCES links (id) ON DELETE CASCADE
