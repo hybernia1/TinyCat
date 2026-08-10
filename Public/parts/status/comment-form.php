@@ -19,7 +19,7 @@ if ($contentId < 1 || $user === []) {
     return '';
 }
 ?>
-<form class="status-comment-form<?= $isReply ? ' is-reply' : '' ?>" method="post" action="<?= e(status_api_url('comment', ['id' => $contentId])) ?>" data-status-form data-status-id="<?= e($contentId) ?>">
+<form class="status-comment-form<?= $isReply ? ' is-reply' : '' ?>" method="post" action="<?= e(status_api_url('comment', ['id' => $contentId])) ?>" data-status-form data-status-id="<?= e($contentId) ?>" data-confirm-unsaved="true" data-confirm-unsaved-title="<?= et('common.unsaved_title') ?>" data-confirm-unsaved-message="<?= et('common.unsaved_message') ?>" data-confirm-unsaved-ok="<?= et('common.leave') ?>" data-confirm-unsaved-cancel="<?= et('common.stay') ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="action" value="comment">
     <input type="hidden" name="id" value="<?= e($contentId) ?>">

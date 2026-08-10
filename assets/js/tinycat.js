@@ -644,6 +644,7 @@
     // The user has already explicitly chosen to discard this draft in our
     // modal. Let this one intentional navigation pass the native beforeunload
     // guard without asking the same question again.
+    resetDiscardedForms(document);
     TinyCat.__discardingDirtyForms = true;
     window.location.assign(url);
 
@@ -728,6 +729,29 @@
     }
 
     return confirmDirtyForms(forms);
+  }
+
+  function resetDiscardedForms(scope) {
+    qsa('form[data-confirm-unsaved="true"][data-dirty="true"]', scope).forEach(function (form) {
+      form.reset();
+      clearErrors(form);
+
+      qsa("[data-status-editor]", form).forEach(function (root) {
+        if (TinyCat.resetStatusEditor) {
+          TinyCat.resetStatusEditor(root);
+        }
+      });
+
+      markFormClean(form);
+      emit(form, "tinycat:discard");
+    });
+  }
+
+  function shouldDisposeModal(modal) {
+    // Remote modals are a server-rendered snapshot. Keeping that snapshot
+    // after the user discards a form would make the next open reuse stale
+    // fields (and, for card-hosted modals, leave the form inside the card).
+    return Boolean(modal && (modal.dataset.remoteLoaded === "true" || modal.dataset.modalDisposeOnClose === "true"));
   }
 
   var captchaProviderLoads = {};
@@ -1763,11 +1787,13 @@
     var index;
     var wasActive;
     var previousFocus;
+    var dispose;
 
     if (!modal) {
       return;
     }
 
+    dispose = shouldDisposeModal(modal);
     wasActive = modal === activeModal;
     previousFocus = modal.__tinycatPreviousFocus;
 
@@ -1803,17 +1829,28 @@
     delete modal.__tinycatPreviousFocus;
 
     emit(modal, "tinycat:modal-close");
+
+    if (dispose && modal.parentNode) {
+      modal.remove();
+    }
   };
 
   TinyCat.requestCloseModal = async function (target) {
     var modal = getModal(target) || activeModal;
+    var hasUnsavedChanges;
 
     if (!modal) {
       return false;
     }
 
+    hasUnsavedChanges = dirtyForms(modal).length > 0;
+
     if (!await confirmModalClose(modal)) {
       return false;
+    }
+
+    if (hasUnsavedChanges) {
+      resetDiscardedForms(modal);
     }
 
     TinyCat.closeModal(modal);

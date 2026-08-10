@@ -11,7 +11,7 @@ $next = auth_safe_next_url((string) ($next ?? ''));
 $old = is_array($old ?? null) ? $old : [];
 $isRegister = $mode === 'register';
 ?>
-<form class="stack" method="post" action="<?= e(auth_url_with_next('/' . $mode, $next)) ?>" data-ajax-form data-ajax-action="<?= e($isRegister ? '/api/auth/register' : '/api/auth/login') ?>"<?= $isRegister ? ' data-confirm-unsaved="true" data-confirm-unsaved-title="' . e(t('common.unsaved_title')) . '" data-confirm-unsaved-message="' . e(t('common.unsaved_message')) . '" data-confirm-unsaved-ok="' . e(t('common.leave')) . '" data-confirm-unsaved-cancel="' . e(t('common.stay')) . '"' : '' ?>>
+<form class="stack" method="post" action="<?= e(auth_url_with_next('/' . $mode, $next)) ?>" data-ajax-form data-ajax-action="<?= e($isRegister ? '/api/auth/register' : '/api/auth/login') ?>" data-confirm-unsaved="true" data-confirm-unsaved-title="<?= e(t('common.unsaved_title')) ?>" data-confirm-unsaved-message="<?= e(t('common.unsaved_message')) ?>" data-confirm-unsaved-ok="<?= e(t('common.leave')) ?>" data-confirm-unsaved-cancel="<?= e(t('common.stay')) ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="next" value="<?= e($next) ?>">
     <?php if ($isRegister): ?>

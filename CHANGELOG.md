@@ -3,6 +3,14 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.37 - 2026-08-10
+
+### Fixed
+
+- Applied one consistent unsaved-form rule to comments, authentication and
+  dynamically loaded modals. Leaving a draft now asks for confirmation, resets
+  it before navigation, and removes stale remote modal DOM.
+
 ## 2.0.36 - 2026-08-10
 
 ### Simplification

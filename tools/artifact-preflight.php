@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
 
 $root = dirname(__DIR__);
 $options = getopt('', ['artifact::']);
-$artifact = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.36')));
+$artifact = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.37')));
 
 if (!str_starts_with($artifact, DIRECTORY_SEPARATOR) && preg_match('~^[A-Za-z]:[\\\\/]~', $artifact) !== 1) {
     $artifact = $root . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $artifact);
@@ -65,8 +65,8 @@ try {
     $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
     $packageName = basename((string) ($manifest['package'] ?? ''));
     $packagePath = $artifact . DIRECTORY_SEPARATOR . $packageName;
-    $assert($packageName === 'tinycat-2.0.36.zip' && is_file($packagePath), 'The 2.0.36 package is present.');
-    $assert(($manifest['version'] ?? null) === '2.0.36', 'Manifest targets 2.0.36.');
+    $assert($packageName === 'tinycat-2.0.37.zip' && is_file($packagePath), 'The 2.0.37 package is present.');
+    $assert(($manifest['version'] ?? null) === '2.0.37', 'Manifest targets 2.0.37.');
     $assert(($manifest['minimum_version'] ?? null) === '2.0.25', 'Manifest accepts exact 2.0.25 as its minimum.');
     $assert(($manifest['minimum_php'] ?? null) === '8.4.0', 'Manifest retains the PHP 8.4 runtime floor.');
     $assert(in_array('Public/parts/profile/link-fields.php', (array) ($manifest['delete'] ?? []), true), 'Patch release removes the obsolete profile link fields.');
@@ -127,7 +127,7 @@ try {
     }
 
     $core = (string) file_get_contents($installRoot . '/App/Core.php');
-    $assert(str_contains($core, "public const string VERSION = '2.0.36';"), 'Extracted runtime reports 2.0.36.');
+    $assert(str_contains($core, "public const string VERSION = '2.0.37';"), 'Extracted runtime reports 2.0.37.');
     $run([PHP_BINARY, $root . '/tests/http/public-route-smoke.php', '--root=' . $installRoot]);
     $run([PHP_BINARY, $root . '/tests/release/mysql-installer-rehearsal.php', '--root=' . $installRoot]);
 } catch (Throwable $exception) {
@@ -147,4 +147,4 @@ if ($failures !== []) {
     exit(1);
 }
 
-echo "PASS extracted 2.0.36 artifact preflight ({$checks} checks, signed inventory, routes and fresh MySQL install)\n";
+echo "PASS extracted 2.0.37 artifact preflight ({$checks} checks, signed inventory, routes and fresh MySQL install)\n";
