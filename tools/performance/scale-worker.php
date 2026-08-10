@@ -158,7 +158,6 @@ try {
             public_status_items_by_author_cursor($authorId, 24);
             author_follow_counts($authorId);
             author_activity_stats($authorId);
-            author_following_profiles($authorId, 10);
         },
         'search' => static function (): void {
             public_search_results('performance', 12);

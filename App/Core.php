@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.38';
+    public const string VERSION = '2.0.39';
     private const string SETTINGS_CACHE_KEY = 'core_autoload_settings';
     private const int SETTINGS_CACHE_TTL = 3600;
 
@@ -1211,8 +1211,6 @@ final class Core
             self::authForget();
         }
 
-        self::authTouchUser($id, true);
-
         return true;
     }
 
@@ -1587,26 +1585,6 @@ final class Core
     private static function loginUrl(): string
     {
         return '/login';
-    }
-
-    private static function authTouchUser(mixed $id, bool $login = false): void
-    {
-        if ($id === null || $id === '') {
-            return;
-        }
-
-        $now = self::dateDb();
-        $data = ['last_seen_at' => $now];
-
-        if ($login) {
-            $data['last_login_at'] = $now;
-        }
-
-        try {
-            self::update('users', $data, ['id' => $id]);
-        } catch (Throwable) {
-            // Auth must not fail because activity tracking failed.
-        }
     }
 
     private static function authRememberUser(): ?array

@@ -139,7 +139,7 @@ function configureTestCore(PDO $database): void
 function createFixture(PDO $database): void
 {
     foreach ([
-        'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT, avatar_config TEXT, bio TEXT, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, last_login_at TEXT, last_seen_at TEXT, created_at TEXT, updated_at TEXT)',
+        'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT, avatar_config TEXT, bio TEXT, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at TEXT, updated_at TEXT)',
         'CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL, author_id INTEGER NOT NULL, published_at TEXT NOT NULL, edit_locked_at TEXT)',
         'CREATE TABLE content_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL)',
         'CREATE TABLE content_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (content_id, user_id))',
@@ -154,9 +154,9 @@ function createFixture(PDO $database): void
         $database->exec($sql);
     }
 
-    $user = $database->prepare('INSERT INTO users (id, username, password, role, status, locale, theme, avatar_config, bio, created_at, updated_at, last_seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    $user->execute([1, 'benchmark_author', password_hash('benchmark', PASSWORD_DEFAULT), 'user', 'active', 'en', 'system', null, 'Performance author', '2026-01-01 00:00:00', '2026-01-01 00:00:00', '2026-01-01 00:00:00']);
-    $user->execute([2, 'benchmark_viewer', password_hash('benchmark', PASSWORD_DEFAULT), 'user', 'active', 'en', 'system', null, '', '2026-01-01 00:00:00', '2026-01-01 00:00:00', '2026-01-01 00:00:00']);
+    $user = $database->prepare('INSERT INTO users (id, username, password, role, status, locale, theme, avatar_config, bio, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $user->execute([1, 'benchmark_author', password_hash('benchmark', PASSWORD_DEFAULT), 'user', 'active', 'en', 'system', null, 'Performance author', '2026-01-01 00:00:00', '2026-01-01 00:00:00']);
+    $user->execute([2, 'benchmark_viewer', password_hash('benchmark', PASSWORD_DEFAULT), 'user', 'active', 'en', 'system', null, '', '2026-01-01 00:00:00', '2026-01-01 00:00:00']);
     $database->exec("INSERT INTO terms (id, name) VALUES (1, 'benchmark'), (2, 'performance')");
 
     $content = $database->prepare('INSERT INTO content (id, body, author_id, published_at) VALUES (?, ?, 1, ?)');
@@ -239,7 +239,6 @@ function exerciseAuthor(): void
         throw new RuntimeException('Author activity stats returned unexpected values.');
     }
 
-    author_following_profiles(1, 10);
     exerciseStatusImages($items);
 }
 

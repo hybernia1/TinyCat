@@ -149,7 +149,6 @@ if (!$installPath && !(bool) config('install.complete', false) && !app_db_ready(
 
 if (!$installPath && !$siteIdentityPath) {
     app_apply_user_locale();
-    app_touch_user_activity();
 }
 
 $handled = dispatch_routes($path);

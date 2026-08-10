@@ -114,6 +114,10 @@ try {
         'Fresh installer does not create the redundant email template table.'
     );
     $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME IN ('last_login_at', 'last_seen_at')")->fetchColumn() === 0,
+        'Fresh installer does not create activity timestamps.'
+    );
+    $assert(
         (int) $database->query("SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_followers' AND INDEX_NAME = 'user_followers_follower_recent_index'")->fetchColumn() === 3,
         'Fresh installer creates the recent-followers index.'
     );

@@ -337,8 +337,6 @@ function tc_install_create_tables(): void
             muted_until DATETIME NULL,
             muted_by INT UNSIGNED NULL,
             muted_reason VARCHAR(80) NULL,
-            last_login_at DATETIME NULL,
-            last_seen_at DATETIME NULL,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),

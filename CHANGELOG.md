@@ -3,6 +3,22 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.39 - 2026-08-10
+
+### Simplification
+
+- Removed the private privacy-card fragment and rendered its local content from
+  the privacy page.
+- Replaced profile-sidebar following previews with the existing on-demand
+  following modal, opened from the following count.
+- Removed public online and last-seen status, including both obsolete user
+  activity timestamp columns and their data through a restart-safe migration.
+
+### Performance
+
+- Removed the periodic authenticated-request write to the `users` table and
+  the eager following-profile lookup on author pages.
+
 ## 2.0.38 - 2026-08-10
 
 ### Simplification

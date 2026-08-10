@@ -49,10 +49,6 @@ $isFollowing = $canFollow && author_is_followed((int) ($authUser['id'] ?? 0), $a
 $followCounts = author_follow_counts($authorId);
 $activityStats = author_activity_stats($authorId);
 $publicPostCount = (int) ($activityStats['posts'] ?? 0);
-$presence = author_presence($author);
-$followingProfiles = author_following_profiles($authorId, 10);
-$hasMoreFollowing = count($followingProfiles) > 9;
-$followingProfiles = array_slice($followingProfiles, 0, 9);
 $authorEntityId = absolute_url($current) . '#author';
 $authorStructuredData = [
     '@context' => 'https://schema.org',
@@ -100,7 +96,7 @@ layout('layout', [
         'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
         'jsonld' => $authorStructuredData,
     ],
-], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $canPost, $canEditProfile, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $presence, $followingProfiles, $hasMoreFollowing, $feedMore, $editor): void {
+], static function () use ($author, $authorId, $authorName, $bio, $memberSince, $statusItems, $canPost, $canEditProfile, $authUser, $canSeeMute, $mutedUntil, $canFollow, $isFollowing, $followCounts, $activityStats, $feedMore, $editor): void {
     $feedId = 'status-feed-author-' . $authorId;
     ?>
     <section class="profile-layout">
@@ -127,14 +123,6 @@ layout('layout', [
                             <?php endif; ?>
                             <div class="profile-identity-main">
                                 <h1 class="profile-name m-0"><?= e($authorName) ?></h1>
-                                <div class="profile-presence<?= ($presence['online'] ?? false) ? ' is-online' : '' ?>">
-                                    <span class="profile-presence-dot" aria-hidden="true"></span>
-                                    <?php if ((string) ($presence['datetime'] ?? '') !== ''): ?>
-                                        <time datetime="<?= e((string) $presence['datetime']) ?>"><?= e((string) ($presence['label'] ?? '')) ?></time>
-                                    <?php else: ?>
-                                        <span><?= e((string) ($presence['label'] ?? '')) ?></span>
-                                    <?php endif; ?>
-                                </div>
                             </div>
                         </div>
                         <div class="profile-details">
@@ -158,7 +146,10 @@ layout('layout', [
                         </div>
                         <div class="profile-stats">
                             <span class="profile-stat"><strong data-author-stat="followers" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['followers'] ?? 0)) ?></strong> <span><?= et('public.followers') ?></span></span>
-                            <span class="profile-stat"><strong data-author-stat="following" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['following'] ?? 0)) ?></strong> <span><?= et('public.following') ?></span></span>
+                            <button class="profile-stat profile-stat-button" type="button" data-modal-open="<?= e(author_following_modal_id($authorId)) ?>" data-modal-url="<?= e(author_following_modal_url($authorId)) ?>" aria-label="<?= et('public.following_profiles_title', ['author' => $authorName]) ?>" title="<?= et('public.following_profiles_title', ['author' => $authorName]) ?>">
+                                <strong data-author-stat="following" data-author-id="<?= e($authorId) ?>"><?= e((int) ($followCounts['following'] ?? 0)) ?></strong>
+                                <span><?= et('public.following') ?></span>
+                            </button>
                             <span class="profile-stat"><strong><?= e((int) ($activityStats['posts'] ?? 0)) ?></strong> <span><?= et('public.profile_posts') ?></span></span>
                             <span class="profile-stat"><strong><?= e((int) ($activityStats['likes_given'] ?? 0)) ?></strong> <span><?= et('public.profile_likes_given') ?></span></span>
                             <span class="profile-stat"><strong><?= e((int) ($activityStats['likes_received'] ?? 0)) ?></strong> <span><?= et('public.profile_likes_received') ?></span></span>
@@ -178,35 +169,13 @@ layout('layout', [
                                 ]) ?>
                             <?php elseif ($authUser === null): ?>
                                 <a class="btn btn-secondary btn-sm" href="/login" data-modal-open="<?= e(auth_modal_id()) ?>" data-modal-url="<?= e(auth_modal_url()) ?>">
-                                    <?= icon('login') ?> <span><?= et('public.follow_login') ?></span>
+                                    <?= icon('login') ?> <span><?= et('public.follow') ?></span>
                                 </a>
                             <?php endif; ?>
                         </div>
                     </div>
                 </article>
 
-                <article class="card profile-following-card">
-                    <div class="card-header">
-                        <h2 class="text-base m-0 cluster gap-2"><?= icon('users') ?> <?= et('public.following_profiles') ?></h2>
-                        <span class="badge profile-following-count"><?= e((int) ($followCounts['following'] ?? 0)) ?></span>
-                    </div>
-                    <div class="card-body">
-                        <?php if ($followingProfiles === []): ?>
-                            <p class="text-muted m-0"><?= et('public.following_profiles_empty') ?></p>
-                        <?php else: ?>
-                            <nav class="profile-following-grid" aria-label="<?= et('public.following_profiles') ?>">
-                                <?php foreach ($followingProfiles as $profile): ?>
-                                    <?= part('author/following-profile', ['profile' => $profile]) ?>
-                                <?php endforeach; ?>
-                            </nav>
-                            <?php if ($hasMoreFollowing): ?>
-                                <button class="btn btn-secondary btn-sm profile-following-more" type="button" data-modal-open="<?= e(author_following_modal_id($authorId)) ?>" data-modal-url="<?= e(author_following_modal_url($authorId)) ?>">
-                                    <?= icon('users') ?> <span><?= et('public.following_profiles_all') ?></span>
-                                </button>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                    </div>
-                </article>
             </div>
         </aside>
 

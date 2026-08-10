@@ -16,6 +16,44 @@ layout('layout', [
         'type' => 'article',
     ],
 ], static function (): void {
+    $translationVars = ['site' => site_name()];
+    $privacyCards = [
+        ['privacy.public_title', 'globe', [
+            'privacy.public_open',
+            'privacy.public_content',
+            'privacy.public_images',
+            'privacy.public_no_private',
+            'privacy.public_no_personal',
+        ]],
+        ['privacy.feed_title', 'rss', [
+            'privacy.feed_no_algorithm',
+            'privacy.feed_following',
+            'privacy.feed_no_shadow_bans',
+        ]],
+        ['privacy.data_title', 'database', [
+            'privacy.data_account',
+            'privacy.data_email',
+            'privacy.data_content',
+            'privacy.data_technical',
+            'privacy.data_server_logs',
+        ]],
+        ['privacy.recovery_title', 'key', [
+            'privacy.recovery_email',
+            'privacy.recovery_no_contact',
+            'privacy.recovery_lost',
+            'privacy.recovery_rotation',
+        ]],
+        ['privacy.reporting_title', 'flag', [
+            'privacy.reporting_how',
+            'privacy.reporting_duplicate',
+            'privacy.reporting_notification',
+        ]],
+        ['privacy.moderation_title', 'lock', [
+            'privacy.moderation_right',
+            'privacy.moderation_actions',
+            'privacy.moderation_mute',
+        ]],
+    ];
     ?>
     <section class="stack max-w-prose mx-auto">
         <article class="card">
@@ -28,46 +66,18 @@ layout('layout', [
         </article>
 
         <div class="grid">
-            <?= part('privacy/card', ['title_key' => 'privacy.public_title', 'icon_name' => 'globe', 'paragraph_keys' => [
-                'privacy.public_open',
-                'privacy.public_content',
-                'privacy.public_images',
-                'privacy.public_no_private',
-                'privacy.public_no_personal',
-            ]]) ?>
-
-            <?= part('privacy/card', ['title_key' => 'privacy.feed_title', 'icon_name' => 'rss', 'paragraph_keys' => [
-                'privacy.feed_no_algorithm',
-                'privacy.feed_following',
-                'privacy.feed_no_shadow_bans',
-            ]]) ?>
-
-            <?= part('privacy/card', ['title_key' => 'privacy.data_title', 'icon_name' => 'database', 'paragraph_keys' => [
-                'privacy.data_account',
-                'privacy.data_email',
-                'privacy.data_content',
-                'privacy.data_technical',
-                'privacy.data_server_logs',
-            ]]) ?>
-
-            <?= part('privacy/card', ['title_key' => 'privacy.recovery_title', 'icon_name' => 'key', 'paragraph_keys' => [
-                'privacy.recovery_email',
-                'privacy.recovery_no_contact',
-                'privacy.recovery_lost',
-                'privacy.recovery_rotation',
-            ]]) ?>
-
-            <?= part('privacy/card', ['title_key' => 'privacy.reporting_title', 'icon_name' => 'flag', 'paragraph_keys' => [
-                'privacy.reporting_how',
-                'privacy.reporting_duplicate',
-                'privacy.reporting_notification',
-            ]]) ?>
-
-            <?= part('privacy/card', ['title_key' => 'privacy.moderation_title', 'icon_name' => 'lock', 'paragraph_keys' => [
-                'privacy.moderation_right',
-                'privacy.moderation_actions',
-                'privacy.moderation_mute',
-            ]]) ?>
+            <?php foreach ($privacyCards as [$titleKey, $iconName, $paragraphKeys]): ?>
+                <article class="card">
+                    <div class="card-header">
+                        <h2 class="text-lg m-0 cluster gap-2"><?= icon($iconName) ?> <?= et($titleKey, $translationVars) ?></h2>
+                    </div>
+                    <div class="card-body stack">
+                        <?php foreach ($paragraphKeys as $paragraphKey): ?>
+                            <p class="mb-0"><?= et($paragraphKey, $translationVars) ?></p>
+                        <?php endforeach; ?>
+                    </div>
+                </article>
+            <?php endforeach; ?>
         </div>
 
         <article class="card">

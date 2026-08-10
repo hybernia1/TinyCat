@@ -2246,8 +2246,6 @@ function public_author_find(int $id): ?array
                 muted_until,
                 muted_by,
                 muted_reason,
-                last_login_at,
-                last_seen_at,
                 created_at,
                 updated_at
             FROM users'
@@ -2475,54 +2473,6 @@ function author_activity_stats(int $authorId): array
     } catch (Throwable) {
         return $empty;
     }
-}
-
-function author_is_online(string $lastSeen): bool
-{
-    $lastSeen = trim($lastSeen);
-
-    if ($lastSeen === '') {
-        return false;
-    }
-
-    try {
-        $seen = relative_datetime_value($lastSeen);
-        $now = relative_datetime_value();
-    } catch (Throwable) {
-        return false;
-    }
-
-    return ($now->getTimestamp() - $seen->getTimestamp()) <= 300;
-}
-
-function author_presence(array $author): array
-{
-    $lastSeen = trim((string) ($author['last_seen_at'] ?? ''));
-    $lastLogin = trim((string) ($author['last_login_at'] ?? ''));
-    $value = $lastSeen !== '' ? $lastSeen : $lastLogin;
-    $online = author_is_online($value);
-
-    if ($online) {
-        return [
-            'online' => true,
-            'label' => t('public.online_now'),
-            'datetime' => $value !== '' ? date_iso($value) : '',
-        ];
-    }
-
-    if ($value !== '') {
-        return [
-            'online' => false,
-            'label' => t('public.last_seen', ['time' => relative_time($value)]),
-            'datetime' => date_iso($value),
-        ];
-    }
-
-    return [
-        'online' => false,
-        'label' => t('public.offline'),
-        'datetime' => '',
-    ];
 }
 
 // Public status read model, rendering preparation and feed queries.
@@ -7299,33 +7249,6 @@ function app_apply_user_locale(): void
 
     if ($locale !== '' && array_key_exists($locale, language_packages())) {
         locale($locale);
-    }
-}
-
-function app_touch_user_activity(?array $user = null): void
-{
-    $user ??= auth();
-    $id = (int) ($user['id'] ?? 0);
-
-    if ($id < 1) {
-        return;
-    }
-
-    Core::session();
-
-    $key = '_last_seen_touch_' . $id;
-    $now = time();
-    $interval = 60;
-
-    if ((int) ($_SESSION[$key] ?? 0) > $now - $interval) {
-        return;
-    }
-
-    try {
-        update('users', ['last_seen_at' => date_db()], ['id' => $id]);
-        $_SESSION[$key] = $now;
-    } catch (Throwable) {
-        // Activity tracking is optional and must not interrupt the request.
     }
 }
 

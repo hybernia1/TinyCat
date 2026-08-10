@@ -1969,12 +1969,6 @@ parameters:
 			path: App/functions.php
 
 		-
-			message: '#^Function app_touch_user_activity\(\) has parameter \$user with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
 			message: '#^Function auth_attempt\(\) has parameter \$credentials with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -2102,18 +2096,6 @@ parameters:
 
 		-
 			message: '#^Function author_mention_users_by_ids\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
-			message: '#^Function author_presence\(\) has parameter \$author with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/functions.php
-
-		-
-			message: '#^Function author_presence\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: App/functions.php

@@ -248,12 +248,9 @@ final class DemoImporter
             'TinyCat benchmark administrator.',
             $anchor,
             $anchor,
-            $anchor,
-            $anchor,
         ]];
         $inserted = $this->writer->insert('users', [
-            'username', 'password', 'role', 'status', 'locale', 'bio', 'last_login_at', 'last_seen_at',
-            'created_at', 'updated_at',
+            'username', 'password', 'role', 'status', 'locale', 'bio', 'created_at', 'updated_at',
         ], $admin, false, true);
         if (($inserted['ids'][0] ?? 0) !== 1) {
             throw new RuntimeException('Benchmark admin must receive user ID 1. Reset the dataset.');
@@ -296,8 +293,7 @@ final class DemoImporter
         for ($index = $cursor + 1; $index <= $to; $index++) {
             $username = $this->username($index + 1);
             $created = $this->generator->dateBeforeAnchor('user-created', (string) $index, 180, 5);
-            $lastSeen = $this->generator->dateBeforeAnchor('user-seen', (string) $index, 21, 0);
-            $lastLogin = $this->generator->dateAfter('user-login', (string) $index, $created);
+            $updated = $this->generator->dateAfter('user-updated', (string) $index, $created);
             $rows[] = [
                 $username,
                 $hash,
@@ -305,16 +301,13 @@ final class DemoImporter
                 'active',
                 $this->generator->chance('user-locale', (string) $index, 65) ? 'cs' : 'en',
                 'Benchmark profile ' . $username . ' with posts, follows, reactions, and nested discussions.',
-                $lastLogin,
-                $lastSeen,
                 $created,
-                $lastSeen,
+                $updated,
             ];
         }
 
         $result = $this->writer->insert('users', [
-            'username', 'password', 'role', 'status', 'locale', 'bio', 'last_login_at', 'last_seen_at',
-            'created_at', 'updated_at',
+            'username', 'password', 'role', 'status', 'locale', 'bio', 'created_at', 'updated_at',
         ], $rows, false, true);
 
         return $this->result($cursor, $to, $this->options->users, count($rows), ['users' => $result['affected']]);

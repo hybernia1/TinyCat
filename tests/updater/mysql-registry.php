@@ -180,6 +180,26 @@ try {
         throw new RuntimeException('The follower index migration did not replace the obsolete index.');
     }
     $optimizeFollowerIndex($database);
+    $database->exec(
+        'CREATE TABLE users (
+            id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+            last_login_at DATETIME NULL,
+            last_seen_at DATETIME NULL
+        ) ENGINE=InnoDB'
+    );
+    $removeUserActivityTimestamps = require dirname(__DIR__, 2) . '/migrations/20260810_002_remove_user_activity_timestamps.php';
+
+    if (!is_callable($removeUserActivityTimestamps)) {
+        throw new RuntimeException('The user activity timestamp removal migration is not callable.');
+    }
+
+    $removeUserActivityTimestamps($database);
+    if ((int) $database->query(
+        "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME IN ('last_login_at', 'last_seen_at')"
+    )->fetchColumn() !== 0) {
+        throw new RuntimeException('The user activity timestamp removal migration did not drop both columns.');
+    }
+    $removeUserActivityTimestamps($database);
     run(
         'CREATE TABLE schema_migrations (
             version VARCHAR(80) NOT NULL,

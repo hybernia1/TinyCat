@@ -20,9 +20,13 @@ if ($authorId < 1) {
 ob_start();
 ?>
 <div class="following-modal-grid">
-    <?php foreach ($profiles as $profile): ?>
-        <?= part('author/following-profile', ['profile' => (array) $profile]) ?>
-    <?php endforeach; ?>
+    <?php if ($profiles === []): ?>
+        <p class="text-muted m-0"><?= et('public.following_profiles_empty') ?></p>
+    <?php else: ?>
+        <?php foreach ($profiles as $profile): ?>
+            <?= part('author/following-profile', ['profile' => (array) $profile]) ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
 </div>
 <?php
 $body = trim((string) ob_get_clean());

@@ -2794,6 +2794,18 @@ img.status-editor-suggestion-avatar {
   height: 1em;
 }
 
+.profile-stat-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.profile-stat-button:hover,
+.profile-stat-button:focus-visible {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
 .profile-member-since {
   display: flex;
   grid-column: 1 / -1;
@@ -2820,33 +2832,6 @@ img.status-editor-suggestion-avatar {
 .profile-actions > * {
   flex: 1 1 auto;
   justify-content: center;
-}
-
-.profile-following-card .card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.profile-following-card .card-header h2 {
-  min-width: 0;
-}
-
-.profile-following-count {
-  flex: 0 0 auto;
-}
-
-.profile-following-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2px;
-}
-
-.profile-following-grid .avatar {
-  width: calc(100% - 4px);
-  height: auto;
-  aspect-ratio: 1;
 }
 
 .profile-following-link {
@@ -2888,12 +2873,6 @@ img.status-editor-suggestion-avatar {
 .profile-following-main small {
   color: var(--muted);
   font-size: 0.68rem;
-}
-
-.profile-following-more {
-  width: 100%;
-  justify-content: center;
-  margin-top: 10px;
 }
 
 .following-modal-grid {
@@ -2938,31 +2917,6 @@ img.status-editor-suggestion-avatar {
   color: var(--text);
   font-size: 1rem;
   line-height: 1.1;
-}
-
-.profile-presence {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 7px;
-  color: var(--muted);
-  font-size: 0.875rem;
-}
-
-.profile-presence-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  background: var(--muted);
-  opacity: 0.55;
-}
-
-.profile-presence.is-online {
-  color: var(--success);
-}
-
-.profile-presence.is-online .profile-presence-dot {
-  background: var(--success);
 }
 
 .profile-editable-text {
