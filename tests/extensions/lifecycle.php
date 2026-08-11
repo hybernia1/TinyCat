@@ -112,8 +112,11 @@ PHP);
 
     Loader::boot($temporaryRoot, ['sample' => false]);
     $before = Lifecycle::all()['sample'] ?? [];
-    if (!empty($before['installed']) || (int) ($before['pending_migrations'] ?? 0) !== 1) {
-        throw new RuntimeException('Uninstalled extension status was not detected.');
+    if (
+        !empty($before['installed'])
+        || (int) Core::value("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'schema_migrations'") !== 0
+    ) {
+        throw new RuntimeException('Extension status unexpectedly inspected the migration registry.');
     }
 
     $result = Lifecycle::migrate('sample');
@@ -131,18 +134,20 @@ PHP);
     if (
         ($restarted['migrations'] ?? []) !== []
         || ($after['installed_version'] ?? '') !== '1.2.0'
-        || (int) ($after['pending_migrations'] ?? -1) !== 0
         || count(MigrationRegistry::history('extension:sample:')) !== 1
     ) {
         throw new RuntimeException('Extension migration is not restart-safe.');
     }
 
     file_put_contents($migrationPath, "<?php return static function (PDO \$database): void {};\n");
-    $tampered = Lifecycle::all()['sample'] ?? [];
-    if (trim((string) ($tampered['migration_error'] ?? '')) === '') {
-        throw new RuntimeException('Applied extension migration tampering was not detected.');
+    try {
+        Lifecycle::migrate('sample');
+        throw new RuntimeException('Tampered extension migration was accepted.');
+    } catch (RuntimeException $exception) {
+        if ($exception->getMessage() === 'Tampered extension migration was accepted.') {
+            throw $exception;
+        }
     }
-
     echo "PASS extension lifecycle: version stored, migration namespaced, restart-safe, checksum enforced.\n";
 } finally {
     if (is_dir($temporaryRoot)) {

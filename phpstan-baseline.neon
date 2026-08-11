@@ -1339,18 +1339,6 @@ parameters:
 			path: App/PackageManager.php
 
 		-
-			message: '#^Method TinyCat\\Extension\\Store\:\:extractPackage\(\) has parameter \$expected with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/PackageManager.php
-
-		-
-			message: '#^Method TinyCat\\Extension\\Store\:\:extractPackageWithPhar\(\) has parameter \$expected with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/PackageManager.php
-
-		-
 			message: '#^Method TinyCat\\Extension\\Store\:\:install\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1460,12 +1448,6 @@ parameters:
 
 		-
 			message: '#^Method TinyCat\\Update\\Manager\:\:extractPackage\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: App/PackageManager.php
-
-		-
-			message: '#^Method TinyCat\\Update\\Manager\:\:extractPackageWithPhar\(\) has parameter \$manifest with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: App/PackageManager.php

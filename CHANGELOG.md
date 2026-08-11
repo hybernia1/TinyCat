@@ -3,6 +3,18 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.40 - 2026-08-11
+
+### Simplification
+
+- Removed the inactive extension `install_schema` hook; verified extension
+  migrations remain the single schema-installation path.
+- Unified signed GitHub package download and secure archive extraction for
+  core updates and extension packages.
+- Made the extension administration overview read only installed versions and
+  states. Migration checksums are now verified only when an extension is
+  installed or updated.
+
 ## 2.0.39 - 2026-08-10
 
 ### Simplification

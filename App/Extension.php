@@ -161,28 +161,6 @@ final class Lifecycle
 
         foreach (Loader::available() as $slug => $manifest) {
             $installedVersion = (string) ($versions[$slug] ?? '');
-            $pending = 0;
-            $migrationError = '';
-
-            try {
-                foreach ((array) ($manifest['migrations'] ?? []) as $migration) {
-                    $checksum = (string) ($migration['checksum'] ?? '');
-                    if (!hash_equals($checksum, MigrationRegistry::checksum((string) ($migration['path'] ?? '')))) {
-                        throw new RuntimeException(
-                            'Migration file checksum mismatch: ' . (string) ($migration['id'] ?? '')
-                        );
-                    }
-                    if (!MigrationRegistry::applied(
-                        (string) ($migration['id'] ?? ''),
-                        $checksum
-                    )) {
-                        $pending++;
-                    }
-                }
-            } catch (Throwable $exception) {
-                $migrationError = $exception->getMessage();
-            }
-
             $codeVersion = (string) ($manifest['version'] ?? '');
             $extensions[$slug] = [
                 ...$manifest,
@@ -192,8 +170,6 @@ final class Lifecycle
                     && version_compare($codeVersion, $installedVersion, '>'),
                 'downgrade_detected' => $installedVersion !== ''
                     && version_compare($codeVersion, $installedVersion, '<'),
-                'pending_migrations' => $pending,
-                'migration_error' => $migrationError,
             ];
         }
 

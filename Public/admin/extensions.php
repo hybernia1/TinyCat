@@ -142,11 +142,7 @@ layout('layout', [
                         $storeVersion = (string) ($remote['version'] ?? '');
                         $storeCompatible = $remote === [] || !empty($remote['compatible']);
                         $updateAvailable = $present && $storeVersion !== '' && version_compare($storeVersion, $codeVersion, '>');
-                        $repairRequired = $present && (
-                            $installedVersion !== $codeVersion
-                            || (int) ($local['pending_migrations'] ?? 0) > 0
-                            || (string) ($local['migration_error'] ?? '') !== ''
-                        );
+                        $repairRequired = $present && $installedVersion !== $codeVersion;
                         $uninstall = is_array($local['uninstall'] ?? null) ? $local['uninstall'] : null;
                         $canUninstall = $present
                             && !empty($local['installed'])
@@ -196,11 +192,9 @@ layout('layout', [
                                     <div class="alert alert-warning mb-0"><?= et('extensions.incompatible_help', [
                                         'version' => (string) ($remote['minimum_tinycat'] ?? ''),
                                     ]) ?></div>
-                                <?php elseif (!empty($local['migration_error'])): ?>
-                                    <div class="alert alert-danger mb-0"><code><?= e((string) $local['migration_error']) ?></code></div>
                                 <?php elseif (!empty($local['downgrade_detected'])): ?>
                                     <div class="alert alert-danger mb-0"><?= et('extensions.downgrade_help') ?></div>
-                                <?php elseif ($present && (int) ($local['pending_migrations'] ?? 0) > 0): ?>
+                                <?php elseif ($present && $repairRequired): ?>
                                     <div class="alert alert-warning mb-0"><?= et('extensions.update_required_help') ?></div>
                                 <?php elseif ($present): ?>
                                     <p class="text-muted mb-0"><?= et($enabled ? 'extensions.disable_help' : 'extensions.enable_help') ?></p>
