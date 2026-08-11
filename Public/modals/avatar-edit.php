@@ -20,6 +20,7 @@ if ($authorId < 1 || $action === '' || !username_valid($username)) {
 ob_start();
 ?>
 <input type="hidden" name="avatar_action" value="upload" data-avatar-upload-action>
+<input type="hidden" name="author_id" value="<?= $authorId ?>">
 <div class="avatar-upload" data-avatar-upload data-avatar-remove-title="<?= et('account.remove_avatar_title') ?>" data-avatar-remove-message="<?= et('account.remove_avatar_confirm') ?>" data-avatar-remove-ok="<?= et('account.remove_avatar') ?>" data-avatar-remove-cancel="<?= et('common.cancel') ?>">
     <div class="avatar avatar-xl avatar-upload-preview" aria-label="<?= et('account.avatar_preview') ?>">
         <img<?= $avatarUrl !== '' ? ' src="' . e($avatarUrl) . '"' : '' ?> alt="" data-avatar-upload-preview<?= $avatarUrl === '' ? ' hidden' : '' ?>>

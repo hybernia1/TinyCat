@@ -110,13 +110,13 @@ layout('layout', [
                             </button>
                         <?php endif; ?>
                         <div class="profile-identity">
-                            <?php if ($canPost): ?>
+                            <?php if ($canEditProfile): ?>
                                 <button class="avatar avatar-xl profile-avatar-button" type="button" data-modal-open="<?= e(author_avatar_edit_modal_id($authorId)) ?>" data-modal-url="<?= e(author_avatar_edit_modal_url($authorId)) ?>" title="<?= et('account.avatar_edit') ?>" aria-label="<?= et('account.avatar_edit') ?>">
                             <?php else: ?>
                                 <div class="avatar avatar-xl">
                             <?php endif; ?>
                                 <?= part('user/avatar', ['user' => $author, 'alt' => $authorName]) ?>
-                            <?php if ($canPost): ?>
+                            <?php if ($canEditProfile): ?>
                                 </button>
                             <?php else: ?>
                                 </div>
