@@ -588,7 +588,6 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    Registry::installSchemas();
 }
 
 function tc_install_default_settings(array $state): void

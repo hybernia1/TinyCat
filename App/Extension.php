@@ -912,7 +912,6 @@ final class Registry
             'views' => self::optionalDirectory($definition['views'] ?? null, 'views'),
             'translations' => self::optionalDirectory($definition['translations'] ?? null, 'translations'),
             'tables' => array_values(array_unique($tables)),
-            'install_schema' => self::optionalCallable($definition['install_schema'] ?? null, 'install schema'),
             'routes' => self::optionalCallable($definition['routes'] ?? null, 'route registrar'),
             'api_routes' => self::optionalCallable($definition['api_routes'] ?? null, 'API route registrar'),
             'admin_navigation' => self::optionalCallable($definition['admin_navigation'] ?? null, 'admin navigation provider'),
@@ -1062,17 +1061,6 @@ final class Registry
             static fn (array $extension): array => (array) ($extension['tables'] ?? []),
             array_values(self::$extensions)
         )));
-    }
-
-    public static function installSchemas(): void
-    {
-        foreach (self::$extensions as $extension) {
-            $installer = $extension['install_schema'] ?? null;
-
-            if (is_callable($installer)) {
-                $installer();
-            }
-        }
     }
 
     private static function invokeRegistrars(string $key): void

@@ -2,8 +2,14 @@
 declare(strict_types=1);
 
 namespace TinyCat {
+    use FilesystemIterator;
     use JsonException;
+    use PharData;
+    use RecursiveDirectoryIterator;
+    use RecursiveIteratorIterator;
     use RuntimeException;
+    use SplFileInfo;
+    use Throwable;
     use ZipArchive;
 
     if (!defined('TINYCAT')) {
@@ -104,6 +110,301 @@ namespace TinyCat {
                         throw new RuntimeException($errorMessage . ': ' . $path);
                     }
                 }
+            }
+        }
+
+        protected static function ensureDirectory(string $directory): void
+        {
+            if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+                throw new RuntimeException('Unable to create package working directory.');
+            }
+        }
+
+        protected static function downloadGitHubFile(
+            string $url,
+            string $target,
+            int $maxBytes,
+            string $accept,
+            string $userAgent,
+            string $label
+        ): void {
+            self::githubUrl($url, 'The ' . $label . ' source host is not allowed.');
+            self::ensureDirectory(dirname($target));
+            $handle = fopen($target, 'wb');
+
+            if (!is_resource($handle)) {
+                throw new RuntimeException('Unable to create the ' . $label . ' download file.');
+            }
+
+            $curl = curl_init($url);
+
+            if ($curl === false) {
+                fclose($handle);
+                throw new RuntimeException('Unable to initialize the ' . $label . ' download.');
+            }
+
+            $written = 0;
+            curl_setopt_array($curl, [
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_MAXREDIRS => 5,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT => 180,
+                CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+                CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+                CURLOPT_USERAGENT => 'TinyCat/' . \Core::VERSION . ' ' . $userAgent,
+                CURLOPT_HTTPHEADER => ['Accept: ' . $accept, 'X-GitHub-Api-Version: 2022-11-28'],
+                CURLOPT_WRITEFUNCTION => static function ($resource, string $chunk) use ($handle, $maxBytes, &$written): int {
+                    $length = strlen($chunk);
+                    $written += $length;
+
+                    if ($written > $maxBytes) {
+                        return 0;
+                    }
+
+                    $result = fwrite($handle, $chunk);
+                    return $result === false ? 0 : $result;
+                },
+            ]);
+
+            $ok = curl_exec($curl);
+            $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+            $effectiveUrl = (string) curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
+            $error = curl_error($curl);
+            curl_close($curl);
+            fclose($handle);
+
+            try {
+                self::githubUrl($effectiveUrl, 'The ' . $label . ' source host is not allowed.');
+            } catch (Throwable $exception) {
+                @unlink($target);
+                throw $exception;
+            }
+
+            if ($ok !== true || $status < 200 || $status >= 300 || $written > $maxBytes) {
+                @unlink($target);
+                throw new RuntimeException(
+                    $written > $maxBytes
+                        ? 'The ' . $label . ' download exceeded the allowed size.'
+                        : 'The ' . $label . ' download failed with HTTP ' . $status . ($error !== '' ? ': ' . $error : '.')
+                );
+            }
+
+            @chmod($target, 0600);
+        }
+
+        /**
+         * @param array<string, string> $expectedFiles relative path => SHA-256
+         * @param callable(string, bool): string $normalizePath
+         */
+        protected static function extractVerifiedPackage(
+            string $package,
+            string $stage,
+            array $expectedFiles,
+            callable $normalizePath,
+            int $maxFiles,
+            int $maxBytes,
+            string $label
+        ): void {
+            self::ensureDirectory($stage);
+
+            if (!class_exists('ZipArchive')) {
+                self::extractVerifiedPackageWithPhar(
+                    $package,
+                    $stage,
+                    $expectedFiles,
+                    $normalizePath,
+                    $maxFiles,
+                    $maxBytes,
+                    $label
+                );
+                return;
+            }
+
+            $zip = new ZipArchive();
+
+            if ($zip->open($package) !== true) {
+                throw new RuntimeException('Unable to open the ' . $label . ' package.');
+            }
+
+            try {
+                if ($zip->numFiles < 1 || $zip->numFiles > $maxFiles) {
+                    throw new RuntimeException('The ' . $label . ' package contains an invalid number of files.');
+                }
+
+                $seen = [];
+                $totalSize = 0;
+
+                for ($index = 0; $index < $zip->numFiles; $index++) {
+                    $stat = $zip->statIndex($index);
+
+                    if (!is_array($stat)) {
+                        throw new RuntimeException('Unable to inspect the ' . $label . ' package.');
+                    }
+
+                    $rawPath = str_replace('\\', '/', (string) $stat['name']);
+
+                    if (str_ends_with($rawPath, '/')) {
+                        $normalizePath($rawPath, true);
+                        continue;
+                    }
+
+                    $path = $normalizePath($rawPath, false);
+
+                    if (!isset($expectedFiles[$path]) || isset($seen[$path]) || self::zipEntryIsSymlink($zip, $index)) {
+                        throw new RuntimeException('Unexpected file in the ' . $label . ' package: ' . $path);
+                    }
+
+                    $size = max(0, (int) $stat['size']);
+                    $totalSize += $size;
+
+                    if ($totalSize > $maxBytes) {
+                        throw new RuntimeException('The extracted ' . $label . ' package exceeds the allowed size.');
+                    }
+
+                    self::extractVerifiedFile(
+                        $zip->getStream((string) $stat['name']),
+                        rtrim($stage, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path),
+                        $size,
+                        (string) $expectedFiles[$path],
+                        $label,
+                        $path
+                    );
+                    $seen[$path] = true;
+                }
+
+                self::assertPackageComplete($expectedFiles, $seen, $label);
+            } finally {
+                $zip->close();
+            }
+        }
+
+        /**
+         * @param array<string, string> $expectedFiles
+         * @param callable(string, bool): string $normalizePath
+         */
+        private static function extractVerifiedPackageWithPhar(
+            string $package,
+            string $stage,
+            array $expectedFiles,
+            callable $normalizePath,
+            int $maxFiles,
+            int $maxBytes,
+            string $label
+        ): void {
+            try {
+                $archive = new PharData($package);
+            } catch (Throwable $exception) {
+                throw new RuntimeException('Unable to open the ' . $label . ' package.', 0, $exception);
+            }
+
+            $realPackage = realpath($package);
+            if ($realPackage === false) {
+                throw new RuntimeException('Unable to resolve the ' . $label . ' package.');
+            }
+
+            $prefix = 'phar://' . str_replace('\\', '/', $realPackage) . '/';
+            $seen = [];
+            $totalSize = 0;
+            $count = 0;
+
+            foreach (new RecursiveIteratorIterator($archive, RecursiveIteratorIterator::LEAVES_ONLY) as $entry) {
+                if (!$entry instanceof SplFileInfo || $entry->isDir()) {
+                    continue;
+                }
+
+                $count++;
+
+                if ($count > $maxFiles || $entry->isLink()) {
+                    throw new RuntimeException('The ' . $label . ' package contains too many files or a symbolic link.');
+                }
+
+                $uri = str_replace('\\', '/', $entry->getPathname());
+
+                if (!str_starts_with($uri, $prefix)) {
+                    throw new RuntimeException('Unable to resolve a file inside the ' . $label . ' package.');
+                }
+
+                $path = $normalizePath(substr($uri, strlen($prefix)), false);
+
+                if (!isset($expectedFiles[$path]) || isset($seen[$path])) {
+                    throw new RuntimeException('Unexpected file in the ' . $label . ' package: ' . $path);
+                }
+
+                $size = max(0, $entry->getSize());
+                $totalSize += $size;
+
+                if ($totalSize > $maxBytes) {
+                    throw new RuntimeException('The extracted ' . $label . ' package exceeds the allowed size.');
+                }
+
+                $input = fopen($uri, 'rb');
+                self::extractVerifiedFile(
+                    $input,
+                    rtrim($stage, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path),
+                    $size,
+                    (string) $expectedFiles[$path],
+                    $label,
+                    $path
+                );
+                $seen[$path] = true;
+            }
+
+            if ($count < 1) {
+                throw new RuntimeException('The ' . $label . ' package is empty.');
+            }
+
+            self::assertPackageComplete($expectedFiles, $seen, $label);
+        }
+
+        private static function extractVerifiedFile(
+            mixed $input,
+            string $target,
+            int $size,
+            string $expectedHash,
+            string $label,
+            string $path
+        ): void {
+            self::ensureDirectory(dirname($target));
+            $output = fopen($target, 'wb');
+
+            if (!is_resource($input) || !is_resource($output)) {
+                if (is_resource($input)) {
+                    fclose($input);
+                }
+                if (is_resource($output)) {
+                    fclose($output);
+                }
+                throw new RuntimeException('Unable to extract ' . $label . ' file: ' . $path);
+            }
+
+            $copied = stream_copy_to_stream($input, $output, $size + 1);
+            fclose($input);
+            fclose($output);
+
+            $actualHash = hash_file('sha256', $target);
+            if (
+                !is_int($copied)
+                || $copied !== $size
+                || filesize($target) !== $size
+                || !is_string($actualHash)
+                || !hash_equals(strtolower($expectedHash), strtolower($actualHash))
+            ) {
+                throw new RuntimeException('The extracted ' . $label . ' file failed integrity verification: ' . $path);
+            }
+        }
+
+        /**
+         * @param array<string, string> $expectedFiles
+         * @param array<string, true> $seen
+         */
+        private static function assertPackageComplete(array $expectedFiles, array $seen, string $label): void
+        {
+            $missing = array_diff(array_keys($expectedFiles), array_keys($seen));
+
+            if ($missing !== []) {
+                throw new RuntimeException('The ' . $label . ' package is incomplete.');
             }
         }
     }
@@ -249,7 +550,14 @@ final class Manager extends \TinyCat\PackageManager
 
         try {
             self::ensureDirectory($workDirectory);
-            self::downloadToFile((string) $release['package_url'], $packagePath, self::MAX_PACKAGE_BYTES);
+            self::downloadGitHubFile(
+                (string) $release['package_url'],
+                $packagePath,
+                self::MAX_PACKAGE_BYTES,
+                'application/octet-stream',
+                'updater',
+                'update'
+            );
             self::verifyFileHash($packagePath, (string) $manifest['sha256']);
 
             $stageDirectory = $workDirectory . DIRECTORY_SEPARATOR . 'package';
@@ -600,7 +908,7 @@ final class Manager extends \TinyCat\PackageManager
         }
 
         try {
-            self::downloadToFile($url, $temporary, $maxBytes, $accept);
+            self::downloadGitHubFile($url, $temporary, $maxBytes, $accept, 'updater', 'update');
             $content = file_get_contents($temporary);
 
             if (!is_string($content)) {
@@ -613,246 +921,19 @@ final class Manager extends \TinyCat\PackageManager
         }
     }
 
-    private static function downloadToFile(string $url, string $target, int $maxBytes, string $accept = 'application/octet-stream'): void
-    {
-        self::githubUrl($url, 'The update source host is not allowed.');
-        $directory = dirname($target);
-        self::ensureDirectory($directory);
-        $handle = fopen($target, 'wb');
-
-        if (!is_resource($handle)) {
-            throw new RuntimeException('Unable to create the update download file.');
-        }
-
-        $curl = curl_init($url);
-
-        if ($curl === false) {
-            fclose($handle);
-            throw new RuntimeException('Unable to initialize the update download.');
-        }
-
-        $written = 0;
-        curl_setopt_array($curl, [
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 5,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_TIMEOUT => 180,
-            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-            CURLOPT_USERAGENT => 'TinyCat/' . Core::VERSION . ' updater',
-            CURLOPT_HTTPHEADER => ['Accept: ' . $accept, 'X-GitHub-Api-Version: 2022-11-28'],
-            CURLOPT_WRITEFUNCTION => static function ($resource, string $chunk) use ($handle, $maxBytes, &$written): int {
-                $length = strlen($chunk);
-                $written += $length;
-
-                if ($written > $maxBytes) {
-                    return 0;
-                }
-
-                $result = fwrite($handle, $chunk);
-                return $result === false ? 0 : $result;
-            },
-        ]);
-
-        $ok = curl_exec($curl);
-        $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
-        $effectiveUrl = (string) curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
-        $error = curl_error($curl);
-        curl_close($curl);
-        fclose($handle);
-
-        try {
-            self::githubUrl($effectiveUrl, 'The update source host is not allowed.');
-        } catch (Throwable $exception) {
-            @unlink($target);
-            throw $exception;
-        }
-
-        if ($ok !== true || $status < 200 || $status >= 300 || $written > $maxBytes) {
-            @unlink($target);
-            throw new RuntimeException(
-                $written > $maxBytes
-                    ? 'The update download exceeded the allowed size.'
-                    : 'The update download failed with HTTP ' . $status . ($error !== '' ? ': ' . $error : '.')
-            );
-        }
-
-        @chmod($target, 0600);
-    }
-
     private static function extractPackage(string $packagePath, string $stageDirectory, array $manifest): void
     {
-        self::ensureDirectory($stageDirectory);
-
-        if (!class_exists('ZipArchive')) {
-            self::extractPackageWithPhar($packagePath, $stageDirectory, $manifest);
-            return;
-        }
-
-        $zip = new ZipArchive();
-
-        if ($zip->open($packagePath) !== true) {
-            throw new RuntimeException('Unable to open the downloaded update package.');
-        }
-
-        try {
-            if ($zip->numFiles < 1 || $zip->numFiles > self::MAX_PACKAGE_FILES) {
-                throw new RuntimeException('The update package contains an invalid number of files.');
-            }
-
-            $expected = (array) ($manifest['files'] ?? []);
-            $seen = [];
-            $totalSize = 0;
-
-            for ($index = 0; $index < $zip->numFiles; $index++) {
-                $stat = $zip->statIndex($index);
-
-                if (!is_array($stat)) {
-                    throw new RuntimeException('Unable to inspect the update package.');
-                }
-
-                $rawName = str_replace('\\', '/', (string) ($stat['name'] ?? ''));
-
-                if (str_ends_with($rawName, '/')) {
-                    self::managedDirectoryPath($rawName);
-                    continue;
-                }
-
-                $path = self::managedPath($rawName);
-
-                if (!array_key_exists($path, $expected) || isset($seen[$path])) {
-                    throw new RuntimeException('Unexpected or duplicate file in the update package: ' . $path);
-                }
-
-                if (self::zipEntryIsSymlink($zip, $index)) {
-                    throw new RuntimeException('Symbolic links are not allowed in update packages.');
-                }
-
-                $size = max(0, (int) ($stat['size'] ?? 0));
-                $totalSize += $size;
-
-                if ($totalSize > self::MAX_PACKAGE_BYTES) {
-                    throw new RuntimeException('The extracted update package exceeds the allowed size.');
-                }
-
-                $target = self::pathBelow($stageDirectory, $path);
-                self::ensureDirectory(dirname($target));
-                $input = $zip->getStream((string) $stat['name']);
-                $output = fopen($target, 'wb');
-
-                if (!is_resource($input) || !is_resource($output)) {
-                    if (is_resource($input)) fclose($input);
-                    if (is_resource($output)) fclose($output);
-                    throw new RuntimeException('Unable to extract update file: ' . $path);
-                }
-
-                $copied = stream_copy_to_stream($input, $output, self::MAX_PACKAGE_BYTES + 1);
-                fclose($input);
-                fclose($output);
-
-                if (!is_int($copied) || $copied !== $size) {
-                    throw new RuntimeException('The extracted update file has an invalid size: ' . $path);
-                }
-
-                self::verifyFileHash($target, (string) $expected[$path]);
-                $seen[$path] = true;
-            }
-
-            $missing = array_diff(array_keys($expected), array_keys($seen));
-
-            if ($missing !== []) {
-                throw new RuntimeException('The update package is missing files: ' . implode(', ', array_slice($missing, 0, 5)));
-            }
-        } finally {
-            $zip->close();
-        }
-    }
-
-    private static function extractPackageWithPhar(string $packagePath, string $stageDirectory, array $manifest): void
-    {
-        try {
-            $archive = new PharData($packagePath);
-        } catch (Throwable $exception) {
-            throw new RuntimeException('Unable to open the downloaded update package.', 0, $exception);
-        }
-
-        $expected = (array) ($manifest['files'] ?? []);
-        $seen = [];
-        $totalSize = 0;
-        $count = 0;
-        $realPackage = realpath($packagePath);
-
-        if ($realPackage === false) {
-            throw new RuntimeException('Unable to resolve the downloaded update package.');
-        }
-
-        $prefix = 'phar://' . str_replace('\\', '/', $realPackage) . '/';
-        $iterator = new RecursiveIteratorIterator($archive, RecursiveIteratorIterator::LEAVES_ONLY);
-
-        foreach ($iterator as $entry) {
-            if (!$entry instanceof SplFileInfo || $entry->isDir()) {
-                continue;
-            }
-
-            $count++;
-
-            if ($count > self::MAX_PACKAGE_FILES || $entry->isLink()) {
-                throw new RuntimeException('The update package contains too many files or a symbolic link.');
-            }
-
-            $uri = str_replace('\\', '/', $entry->getPathname());
-
-            if (!str_starts_with($uri, $prefix)) {
-                throw new RuntimeException('Unable to resolve a file inside the update package.');
-            }
-
-            $path = self::managedPath(substr($uri, strlen($prefix)));
-
-            if (!array_key_exists($path, $expected) || isset($seen[$path])) {
-                throw new RuntimeException('Unexpected or duplicate file in the update package: ' . $path);
-            }
-
-            $size = max(0, $entry->getSize());
-            $totalSize += $size;
-
-            if ($totalSize > self::MAX_PACKAGE_BYTES) {
-                throw new RuntimeException('The extracted update package exceeds the allowed size.');
-            }
-
-            $target = self::pathBelow($stageDirectory, $path);
-            self::ensureDirectory(dirname($target));
-            $input = fopen($uri, 'rb');
-            $output = fopen($target, 'wb');
-
-            if (!is_resource($input) || !is_resource($output)) {
-                if (is_resource($input)) fclose($input);
-                if (is_resource($output)) fclose($output);
-                throw new RuntimeException('Unable to extract update file: ' . $path);
-            }
-
-            $copied = stream_copy_to_stream($input, $output, self::MAX_PACKAGE_BYTES + 1);
-            fclose($input);
-            fclose($output);
-
-            if (!is_int($copied) || $copied !== $size) {
-                throw new RuntimeException('The extracted update file has an invalid size: ' . $path);
-            }
-
-            self::verifyFileHash($target, (string) $expected[$path]);
-            $seen[$path] = true;
-        }
-
-        if ($count < 1) {
-            throw new RuntimeException('The update package is empty.');
-        }
-
-        $missing = array_diff(array_keys($expected), array_keys($seen));
-
-        if ($missing !== []) {
-            throw new RuntimeException('The update package is missing files: ' . implode(', ', array_slice($missing, 0, 5)));
-        }
+        self::extractVerifiedPackage(
+            $packagePath,
+            $stageDirectory,
+            (array) ($manifest['files'] ?? []),
+            static fn (string $path, bool $directory): string => $directory
+                ? self::managedDirectoryPath($path)
+                : self::managedPath($path),
+            self::MAX_PACKAGE_FILES,
+            self::MAX_PACKAGE_BYTES,
+            'update'
+        );
     }
 
     private static function preflightManagedTargets(array $manifest): void
@@ -1240,13 +1321,6 @@ final class Manager extends \TinyCat\PackageManager
 
         if (!is_string($actual) || !hash_equals(strtolower($expected), strtolower($actual))) {
             throw new RuntimeException('Update file integrity verification failed: ' . basename($file));
-        }
-    }
-
-    private static function ensureDirectory(string $directory): void
-    {
-        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
-            throw new RuntimeException('Unable to create directory: ' . $directory);
         }
     }
 
@@ -1671,13 +1745,26 @@ final class Store extends \TinyCat\PackageManager
 
         try {
             self::ensureDirectory($work);
-            self::downloadToFile(
+            self::downloadGitHubFile(
                 (string) $extension['package_url'],
                 $package,
-                min(self::MAX_PACKAGE_BYTES, max(1, (int) $extension['size']))
+                min(self::MAX_PACKAGE_BYTES, max(1, (int) $extension['size'])),
+                'application/octet-stream',
+                'extension-store',
+                'extension'
             );
             self::verifyFile($package, (string) $extension['sha256'], (int) $extension['size']);
-            self::extractPackage($package, $stage, (array) $extension['files']);
+            self::extractVerifiedPackage(
+                $package,
+                $stage,
+                (array) $extension['files'],
+                static fn (string $path, bool $directory): string => self::packagePath(
+                    $directory ? rtrim($path, '/') : $path
+                ),
+                self::MAX_PACKAGE_FILES,
+                self::MAX_PACKAGE_BYTES,
+                'extension'
+            );
             $discovered = Loader::discover($stage)[$slug] ?? null;
 
             if (!is_array($discovered)
@@ -1997,7 +2084,7 @@ final class Store extends \TinyCat\PackageManager
             throw new RuntimeException('Unable to create an extension download file.');
         }
         try {
-            self::downloadToFile($url, $temporary, $maxBytes, $accept);
+            self::downloadGitHubFile($url, $temporary, $maxBytes, $accept, 'extension-store', 'extension');
             $content = file_get_contents($temporary);
             if (!is_string($content)) {
                 throw new RuntimeException('Unable to read extension metadata.');
@@ -2005,165 +2092,6 @@ final class Store extends \TinyCat\PackageManager
             return $content;
         } finally {
             @unlink($temporary);
-        }
-    }
-
-    private static function downloadToFile(string $url, string $target, int $maxBytes, string $accept = 'application/octet-stream'): void
-    {
-        self::githubUrl($url, 'The extension download URL is not an allowed GitHub URL.');
-        self::ensureDirectory(dirname($target));
-        $handle = fopen($target, 'wb');
-        $curl = curl_init($url);
-        if (!is_resource($handle) || $curl === false) {
-            if (is_resource($handle)) fclose($handle);
-            throw new RuntimeException('Unable to initialize the extension download.');
-        }
-
-        $written = 0;
-        curl_setopt_array($curl, [
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 5,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_TIMEOUT => 180,
-            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-            CURLOPT_USERAGENT => 'TinyCat/' . Core::VERSION . ' extension-store',
-            CURLOPT_HTTPHEADER => ['Accept: ' . $accept, 'X-GitHub-Api-Version: 2022-11-28'],
-            CURLOPT_WRITEFUNCTION => static function ($resource, string $chunk) use ($handle, $maxBytes, &$written): int {
-                $length = strlen($chunk);
-                $written += $length;
-                if ($written > $maxBytes) return 0;
-                $result = fwrite($handle, $chunk);
-                return $result === false ? 0 : $result;
-            },
-        ]);
-        $ok = curl_exec($curl);
-        $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
-        $effectiveUrl = (string) curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
-        $error = curl_error($curl);
-        curl_close($curl);
-        fclose($handle);
-
-        try {
-            self::githubUrl($effectiveUrl, 'The extension download URL is not an allowed GitHub URL.');
-        } catch (Throwable $exception) {
-            @unlink($target);
-            throw $exception;
-        }
-        if ($ok !== true || $status < 200 || $status >= 300 || $written > $maxBytes) {
-            @unlink($target);
-            throw new RuntimeException($written > $maxBytes
-                ? 'The extension download exceeded the signed package size.'
-                : 'The extension download failed with HTTP ' . $status . ($error !== '' ? ': ' . $error : '.'));
-        }
-        @chmod($target, 0600);
-    }
-
-    private static function extractPackage(string $package, string $stage, array $expected): void
-    {
-        self::ensureDirectory($stage);
-        if (!class_exists('ZipArchive')) {
-            self::extractPackageWithPhar($package, $stage, $expected);
-            return;
-        }
-        $zip = new ZipArchive();
-        if ($zip->open($package) !== true) {
-            throw new RuntimeException('Unable to open the extension package.');
-        }
-        try {
-            if ($zip->numFiles < 1 || $zip->numFiles > self::MAX_PACKAGE_FILES) {
-                throw new RuntimeException('The extension package contains an invalid number of files.');
-            }
-            $seen = [];
-            $total = 0;
-            for ($index = 0; $index < $zip->numFiles; $index++) {
-                $stat = $zip->statIndex($index);
-                if (!is_array($stat)) throw new RuntimeException('Unable to inspect the extension package.');
-                $raw = str_replace('\\', '/', (string) ($stat['name'] ?? ''));
-                if (str_ends_with($raw, '/')) {
-                    self::packagePath(rtrim($raw, '/'));
-                    continue;
-                }
-                $path = self::packagePath($raw);
-                if (!isset($expected[$path]) || isset($seen[$path]) || self::zipEntryIsSymlink($zip, $index)) {
-                    throw new RuntimeException('Unexpected file in the extension package: ' . $path);
-                }
-                $size = max(0, (int) ($stat['size'] ?? 0));
-                $total += $size;
-                if ($total > self::MAX_PACKAGE_BYTES) throw new RuntimeException('The extracted extension is too large.');
-                $target = self::pathBelow($stage, $path);
-                self::ensureDirectory(dirname($target));
-                $input = $zip->getStream((string) $stat['name']);
-                $output = fopen($target, 'wb');
-                if (!is_resource($input) || !is_resource($output)) {
-                    if (is_resource($input)) fclose($input);
-                    if (is_resource($output)) fclose($output);
-                    throw new RuntimeException('Unable to extract extension file: ' . $path);
-                }
-                $copied = stream_copy_to_stream($input, $output, self::MAX_PACKAGE_BYTES + 1);
-                fclose($input);
-                fclose($output);
-                if (!is_int($copied) || $copied !== $size) throw new RuntimeException('Invalid extension file size: ' . $path);
-                self::verifyFile($target, (string) $expected[$path], $size);
-                $seen[$path] = true;
-            }
-            $missing = array_diff(array_keys($expected), array_keys($seen));
-            if ($missing !== []) throw new RuntimeException('The extension package is incomplete.');
-        } finally {
-            $zip->close();
-        }
-    }
-
-    private static function extractPackageWithPhar(string $package, string $stage, array $expected): void
-    {
-        try {
-            $archive = new PharData($package);
-        } catch (Throwable $exception) {
-            throw new RuntimeException('Unable to open the extension package.', 0, $exception);
-        }
-
-        $real = realpath($package);
-        if ($real === false) throw new RuntimeException('Unable to resolve the extension package.');
-        $prefix = 'phar://' . str_replace('\\', '/', $real) . '/';
-        $seen = [];
-        $total = 0;
-        $count = 0;
-
-        foreach (new RecursiveIteratorIterator($archive, RecursiveIteratorIterator::LEAVES_ONLY) as $entry) {
-            if (!$entry instanceof SplFileInfo || $entry->isDir()) continue;
-            $count++;
-            if ($count > self::MAX_PACKAGE_FILES || $entry->isLink()) {
-                throw new RuntimeException('The extension package contains too many files or a symbolic link.');
-            }
-            $uri = str_replace('\\', '/', $entry->getPathname());
-            if (!str_starts_with($uri, $prefix)) throw new RuntimeException('Unable to resolve an extension package file.');
-            $path = self::packagePath(substr($uri, strlen($prefix)));
-            if (!isset($expected[$path]) || isset($seen[$path])) {
-                throw new RuntimeException('Unexpected file in the extension package: ' . $path);
-            }
-            $size = max(0, $entry->getSize());
-            $total += $size;
-            if ($total > self::MAX_PACKAGE_BYTES) throw new RuntimeException('The extracted extension is too large.');
-            $target = self::pathBelow($stage, $path);
-            self::ensureDirectory(dirname($target));
-            $input = fopen($uri, 'rb');
-            $output = fopen($target, 'wb');
-            if (!is_resource($input) || !is_resource($output)) {
-                if (is_resource($input)) fclose($input);
-                if (is_resource($output)) fclose($output);
-                throw new RuntimeException('Unable to extract extension file: ' . $path);
-            }
-            $copied = stream_copy_to_stream($input, $output, self::MAX_PACKAGE_BYTES + 1);
-            fclose($input);
-            fclose($output);
-            if (!is_int($copied) || $copied !== $size) throw new RuntimeException('Invalid extension file size: ' . $path);
-            self::verifyFile($target, (string) $expected[$path], $size);
-            $seen[$path] = true;
-        }
-        if ($count < 1 || array_diff(array_keys($expected), array_keys($seen)) !== []) {
-            throw new RuntimeException('The extension package is incomplete.');
         }
     }
 
@@ -2206,19 +2134,6 @@ final class Store extends \TinyCat\PackageManager
         $missing = array_values(array_filter(['curl', 'sodium'], static fn (string $name): bool => !extension_loaded($name)));
         if ($install && !class_exists('ZipArchive') && !class_exists('PharData')) $missing[] = 'zip or phar';
         if ($missing !== []) throw new RuntimeException('Missing PHP extensions required by the extension store: ' . implode(', ', $missing) . '.');
-    }
-
-    private static function pathBelow(string $root, string $relative): string
-    {
-        return rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR
-            . str_replace('/', DIRECTORY_SEPARATOR, self::packagePath($relative));
-    }
-
-    private static function ensureDirectory(string $directory): void
-    {
-        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
-            throw new RuntimeException('Unable to create the extension working directory.');
-        }
     }
 
     private static function removeDirectory(string $directory): void
