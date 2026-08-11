@@ -3,6 +3,20 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.42 - 2026-08-11
+
+### Simplification
+
+- Replaced avatar JSON configuration and randomized paths with one static
+  WebP file per user ID.
+- Kept only the `avatar_exists` flag in the user record; avatar URLs use the
+  existing update timestamp for cache invalidation.
+
+### Fixed
+
+- Applied JPEG orientation before avatar cropping, so phone photos retain the
+  intended centered crop.
+
 ## 2.0.41 - 2026-08-11
 
 ### Fixed

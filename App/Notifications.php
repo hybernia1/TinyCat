@@ -303,7 +303,8 @@ final class Notifications
             'SELECT n.*,
                     u.username AS actor_name,
                     u.username AS actor_username,
-                    u.avatar_config AS actor_avatar_config,
+                    u.avatar_exists AS actor_avatar_exists,
+                    u.updated_at AS actor_updated_at,
                     c.body AS content_body
                 FROM notifications n
                 LEFT JOIN users u ON u.id = n.actor_id

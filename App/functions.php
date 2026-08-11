@@ -435,15 +435,28 @@ function user_avatar_url(?array $user): string
         return '';
     }
 
-    foreach (['username', 'author_username', 'actor_username', 'author_name', 'actor_name', 'name'] as $key) {
-        $username = username_normalize((string) ($user[$key] ?? ''));
+    foreach ([
+        ['author_id', 'author_avatar_exists', 'author_updated_at'],
+        ['actor_id', 'actor_avatar_exists', 'actor_updated_at'],
+        ['user_id', 'user_avatar_exists', 'user_updated_at'],
+        ['id', 'avatar_exists', 'updated_at'],
+    ] as [$idKey, $existsKey, $updatedAtKey]) {
+        $userId = (int) ($user[$idKey] ?? 0);
 
-        if (username_valid($username)) {
-            return Avatar::url($username, $user['avatar_config'] ?? $user['author_avatar_config'] ?? $user['actor_avatar_config'] ?? null);
+        if ($userId > 0) {
+            return Avatar::url($userId, (int) ($user[$existsKey] ?? 0) === 1, $user[$updatedAtKey] ?? null);
         }
     }
 
     return '';
+}
+
+/** @param array<string, mixed> $user */
+function user_avatar_updated_at(array $user): string
+{
+    $updatedAt = date_db();
+
+    return $updatedAt > (string) ($user['updated_at'] ?? '') ? $updatedAt : date_db('+1 second');
 }
 
 function admin_user_avatar_change(array $user): array
@@ -451,7 +464,7 @@ function admin_user_avatar_change(array $user): array
     $file = $_FILES['avatar'] ?? null;
     $remove = in_array(input('remove_avatar', null), [true, 1, '1', 'true', 'on'], true);
     $hasUpload = is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
-    $result = ['changed' => false, 'uploaded' => false, 'json' => null, 'config' => null];
+    $result = ['changed' => false, 'uploaded' => false];
 
     if (!$hasUpload) {
         if ($remove) {
@@ -461,14 +474,9 @@ function admin_user_avatar_change(array $user): array
     }
 
     try {
-        $config = Avatar::upload((array) $file, (string) ($user['username'] ?? ''));
-        $json = Avatar::configJson($config);
-        if ($json === '') {
-            throw new RuntimeException('Avatar config could not be stored.');
-        }
-        return ['changed' => true, 'uploaded' => true, 'json' => $json, 'config' => $config];
+        Avatar::upload((array) $file, (int) ($user['id'] ?? 0));
+        return ['changed' => true, 'uploaded' => true];
     } catch (Throwable $exception) {
-        Avatar::delete($config ?? null);
         throw new InvalidArgumentException(t('account.messages.avatar_invalid'), 0, $exception);
     }
 }
@@ -1295,7 +1303,7 @@ function user_delete_account(int $userId): ?array
         status_cleanup_unused_link_ids($linkIds);
     });
 
-    Avatar::delete($user['avatar_config'] ?? null);
+    Avatar::delete($userId);
     foreach ($imagePaths as $path) {
         StatusImage::delete($path);
     }
@@ -2155,14 +2163,14 @@ function user_avatar_update_request(array $user): array
     }
 
     $action = strtolower(trim((string) input('avatar_action', 'upload')));
-    $oldConfig = $user['avatar_config'] ?? null;
+    $updatedAt = user_avatar_updated_at($user);
 
     if ($action === 'remove') {
-        update('users', ['avatar_config' => null], ['id' => $id]);
-        Avatar::delete($oldConfig);
+        update('users', ['avatar_exists' => 0, 'updated_at' => $updatedAt], ['id' => $id]);
+        Avatar::delete($id);
 
         $updated = $user;
-        $updated['avatar_config'] = null;
+        $updated['updated_at'] = $updatedAt;
 
         return [
             'user' => user_public_payload($updated),
@@ -2179,28 +2187,20 @@ function user_avatar_update_request(array $user): array
     }
 
     try {
-        $config = null;
-        $config = Avatar::upload($file, (string) ($user['username'] ?? ''));
-        $json = Avatar::configJson($config);
-
-        if ($json === '') {
-            throw new RuntimeException('Avatar config could not be stored.');
-        }
+        Avatar::upload($file, $id);
     } catch (Throwable) {
-        Avatar::delete($config ?? null);
         api_error(t('account.messages.avatar_invalid'), 422, 'avatar_invalid');
     }
 
     try {
-        update('users', ['avatar_config' => $json], ['id' => $id]);
+        update('users', ['avatar_exists' => 1, 'updated_at' => $updatedAt], ['id' => $id]);
     } catch (Throwable $exception) {
-        Avatar::delete($config);
         throw $exception;
     }
-    Avatar::delete($oldConfig ?? null, $config ?? null);
 
     $updated = auth() ?: $user;
-    $updated['avatar_config'] = $json !== '' ? $json : null;
+    $updated['avatar_exists'] = 1;
+    $updated['updated_at'] = $updatedAt;
 
     return [
         'user' => user_public_payload($updated),
@@ -2241,7 +2241,8 @@ function public_author_find(int $id): ?array
                 status,
                 locale,
                 theme,
-                avatar_config,
+                avatar_exists,
+                updated_at,
                 bio,
                 muted_until,
                 muted_by,
@@ -2369,7 +2370,8 @@ function author_following_profiles(int $authorId, int $limit = 12, string $curso
         'SELECT u.id,
                 u.username,
                 u.username AS name,
-                u.avatar_config,
+                u.avatar_exists,
+                u.updated_at,
                 uf.created_at AS followed_at
             FROM user_followers uf
             INNER JOIN users u ON u.id = uf.user_id
@@ -3171,7 +3173,8 @@ function public_status_select_sql(): string
                 ci.bytes AS image_bytes,
                 u.username AS author_username,
                 u.username AS author_name,
-                u.avatar_config AS author_avatar_config,
+                u.avatar_exists AS author_avatar_exists,
+                u.updated_at AS author_updated_at,
                 (
                     SELECT COUNT(*)
                     FROM content_likes cl
@@ -3639,7 +3642,8 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
         'SELECT u.id,
                 u.username,
                 u.username AS name,
-                u.avatar_config,
+                u.avatar_exists,
+                u.updated_at,
                 u.bio,
                 COUNT(*) AS posts_count,
                 MAX(c.published_at) AS latest_at
@@ -3649,7 +3653,7 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
         ->where('c.published_at >= ?', date_db('-' . $days . ' days'))
         ->where('u.status = ?', 'active')
         ->where('u.role IN (' . $rolePlaceholders . ')', ...$rankedRoles)
-        ->group('u.id, u.username, u.avatar_config, u.bio')
+        ->group('u.id, u.username, u.avatar_exists, u.updated_at, u.bio')
         ->order('posts_count DESC, latest_at DESC, u.username ASC')
         ->limit($limit)
         ->all();
@@ -3974,7 +3978,8 @@ function public_search_recent_content_scan(string $query, int $limit): array
                 c.published_at,
                 u.username AS author_name,
                 u.username AS author_username,
-                u.avatar_config AS author_avatar_config
+                u.avatar_exists AS author_avatar_exists,
+                u.updated_at AS author_updated_at
             FROM (
                 SELECT id, published_at
                 FROM content' . $feedIndex . '
@@ -4006,7 +4011,8 @@ function public_search_link_content_rows(string $query, int $limit, array $exclu
                     c.published_at,
                     u.username AS author_name,
                     u.username AS author_username,
-                    u.avatar_config AS author_avatar_config,
+                    u.avatar_exists AS author_avatar_exists,
+                    u.updated_at AS author_updated_at,
                     CONCAT_WS(" ", l.title, l.description, l.normalized_url) AS link_excerpt
                 FROM content_links cl
                 INNER JOIN links l ON l.id = cl.link_id
@@ -4094,7 +4100,8 @@ function public_search_content_rows(string $query, int $limit): array
                         c.published_at,
                         u.username AS author_name,
                         u.username AS author_username,
-                        u.avatar_config AS author_avatar_config
+                        u.avatar_exists AS author_avatar_exists,
+                        u.updated_at AS author_updated_at
                     FROM content c
                     INNER JOIN users u ON u.id = c.author_id'
             )
@@ -4186,7 +4193,7 @@ function public_search_suggestion_users(string $query, int $limit): array
     $users = [];
 
     foreach (db_select(
-        'SELECT u.id, u.username, u.username AS name, u.avatar_config, u.bio
+        'SELECT u.id, u.username, u.username AS name, u.avatar_exists, u.updated_at, u.bio
             FROM users u'
     )
         ->where('u.status = ?', 'active')
@@ -4350,7 +4357,7 @@ function public_search_results(string $query, int $limit = 6): array
     }
 
     $userQuery = db_select(
-        'SELECT u.id, u.username, u.username AS name, u.avatar_config, u.bio
+        'SELECT u.id, u.username, u.username AS name, u.avatar_exists, u.updated_at, u.bio
             FROM users u'
     )->where('u.status = ?', 'active');
     $usernameQuery = username_normalize(ltrim($query, '@'));
@@ -4579,7 +4586,8 @@ function status_comments_query(): CoreQuery
                 cc.created_at,
                 u.username AS author_name,
                 u.username AS author_username,
-                u.avatar_config AS author_avatar_config,
+                u.avatar_exists AS author_avatar_exists,
+                u.updated_at AS author_updated_at,
                 c.author_id AS content_author_id,
                 (
                     SELECT COUNT(*)

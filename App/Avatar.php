@@ -21,76 +21,20 @@ final class Avatar
         'image/webp',
     ];
 
-    public static function url(string $username, array|string|null $config = null): string
+    public static function url(int $userId, bool $exists, ?string $updatedAt = null): string
     {
-        $config = self::normalizeConfig($config);
-        $url = (string) ($config['url'] ?? '');
-
-        if ($url === '') {
+        if ($userId < 1 || !$exists) {
             return '';
         }
 
-        $version = (string) ($config['hash'] ?? '');
+        $version = trim((string) $updatedAt);
 
-        return $url . ($version !== '' ? '?v=' . rawurlencode($version) : '');
+        return self::BASE_URL . '/' . $userId . '.webp' . ($version !== '' ? '?v=' . rawurlencode($version) : '');
     }
 
-    public static function normalizeConfig(array|string|null $config): array
+    public static function upload(array $file, int $userId): void
     {
-        if (is_string($config)) {
-            $decoded = json_decode($config, true);
-            $config = is_array($decoded) ? $decoded : [];
-        }
-
-        if (!is_array($config)) {
-            return [];
-        }
-
-        $path = trim((string) ($config['path'] ?? ''));
-        $url = trim((string) ($config['url'] ?? ''));
-
-        if ($path === '' || $url === '') {
-            return [];
-        }
-
-        $path = str_replace('\\', '/', $path);
-
-        if (
-            str_contains($path, '..')
-            || !preg_match('~^[a-z0-9/_-]+\.webp$~i', $path)
-            || !str_starts_with($url, self::BASE_URL . '/')
-        ) {
-            return [];
-        }
-
-        return [
-            'path' => $path,
-            'url' => $url,
-            'hash' => preg_replace('/[^a-f0-9]/i', '', (string) ($config['hash'] ?? '')) ?: '',
-            'size' => max(0, (int) ($config['size'] ?? 0)),
-            'width' => self::SIZE,
-            'height' => self::SIZE,
-        ];
-    }
-
-    public static function configJson(array|string|null $config): string
-    {
-        $config = self::normalizeConfig($config);
-
-        if ($config === []) {
-            return '';
-        }
-
-        try {
-            return json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-        } catch (JsonException) {
-            return '';
-        }
-    }
-
-    public static function upload(array $file, string $username = ''): array
-    {
-        if (!extension_loaded('gd') || !function_exists('imagewebp')) {
+        if ($userId < 1 || !extension_loaded('gd') || !function_exists('imagewebp')) {
             throw new RuntimeException('WebP image conversion is not available.');
         }
 
@@ -138,57 +82,48 @@ final class Avatar
             throw new RuntimeException('Uploaded avatar could not be read.');
         }
 
+        if ($mime === 'image/jpeg') {
+            $source = image_apply_orientation($source, $tmpName);
+        }
+
         $canvas = self::resizeSquare($source);
         imagedestroy($source);
 
-        if ($mime === 'image/jpeg') {
-            $canvas = image_apply_orientation($canvas, $tmpName);
-        }
-
-        $username = self::username($username) ?: 'avatar';
-        $hash = substr(hash('sha256', $username . '|' . microtime(true) . '|' . bin2hex(random_bytes(16))), 0, 16);
-        $folder = substr($hash, 0, 2);
-        $directory = base_path(self::BASE_DIRECTORY . '/' . $folder);
+        $directory = base_path(self::BASE_DIRECTORY);
 
         if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
             imagedestroy($canvas);
             throw new RuntimeException('Could not create avatar directory.');
         }
 
-        $filename = $username . '-' . $hash . '.webp';
-        $target = $directory . DIRECTORY_SEPARATOR . $filename;
+        $temporary = tempnam($directory, 'avatar-');
 
-        if (!imagewebp($canvas, $target, self::QUALITY)) {
+        if ($temporary === false || !imagewebp($canvas, $temporary, self::QUALITY)) {
             imagedestroy($canvas);
+            if (is_string($temporary)) {
+                @unlink($temporary);
+            }
             throw new RuntimeException('Could not write avatar image.');
         }
 
         imagedestroy($canvas);
+        $target = self::path($userId);
 
-        $relativePath = $folder . '/' . $filename;
-        $newConfig = [
-            'path' => $relativePath,
-            'url' => self::BASE_URL . '/' . $relativePath,
-            'hash' => substr(hash_file('sha256', $target) ?: $hash, 0, 16),
-            'size' => (int) filesize($target),
-            'width' => self::SIZE,
-            'height' => self::SIZE,
-        ];
-
-        return $newConfig;
+        if (!@rename($temporary, $target)) {
+            if (!is_file($target) || !@unlink($target) || !@rename($temporary, $target)) {
+                @unlink($temporary);
+                throw new RuntimeException('Could not replace avatar image.');
+            }
+        }
     }
 
-    public static function delete(array|string|null $config, array|string|null $except = null): void
+    public static function delete(int $userId): void
     {
-        $config = self::normalizeConfig($config);
-        $except = self::normalizeConfig($except);
-        $path = (string) ($config['path'] ?? '');
-
-        if ($path === '' || ($except !== [] && $path === (string) ($except['path'] ?? ''))) {
+        if ($userId < 1) {
             return;
         }
 
-        $file = self::absolutePath($path);
+        $file = self::path($userId);
 
         if ($file !== '' && is_file($file)) {
             @unlink($file);
@@ -197,9 +132,9 @@ final class Avatar
 
     public static function respond(string $username): never
     {
-        $username = self::username($username);
+        $username = strtolower(trim($username));
 
-        if ($username === '' || !class_exists('Core')) {
+        if (preg_match('/^[a-z][a-z0-9_]{2,31}$/', $username) !== 1 || !class_exists('Core')) {
             http_response_code(404);
             exit;
         }
@@ -210,7 +145,7 @@ final class Avatar
             $user = null;
         }
 
-        $url = self::url($username, $user['avatar_config'] ?? null);
+        $url = self::url((int) ($user['id'] ?? 0), (int) ($user['avatar_exists'] ?? 0) === 1, $user['updated_at'] ?? null);
 
         if ($url === '') {
             http_response_code(404);
@@ -249,34 +184,8 @@ final class Avatar
         return $canvas;
     }
 
-    private static function absolutePath(string $path): string
+    private static function path(int $userId): string
     {
-        $path = str_replace('\\', '/', trim($path));
-
-        if ($path === '' || str_contains($path, '..') || !preg_match('~^[a-z0-9/_-]+\.webp$~i', $path)) {
-            return '';
-        }
-
-        $base = realpath(base_path(self::BASE_DIRECTORY));
-
-        if ($base === false) {
-            return '';
-        }
-
-        $file = base_path(self::BASE_DIRECTORY . '/' . $path);
-        $directory = realpath(dirname($file));
-
-        if ($directory === false || !str_starts_with($directory, $base)) {
-            return '';
-        }
-
-        return $file;
-    }
-
-    private static function username(string $username): string
-    {
-        $username = strtolower(trim($username));
-
-        return preg_match('/^[a-z][a-z0-9_]{2,31}$/', $username) === 1 ? $username : '';
+        return base_path(self::BASE_DIRECTORY . '/' . $userId . '.webp');
     }
 }
