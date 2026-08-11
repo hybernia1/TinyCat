@@ -46,6 +46,31 @@ $assert(image_source_error([0 => 9000, 1 => 1, 'mime' => 'image/png'], 10, 10, [
 $assert(image_source_error([0 => 4096, 1 => 4097, 'mime' => 'image/png'], 10, 10, ['image/png'], 100, 8192, 16_777_216) === 'dimensions', 'Raster pixel-memory limit was not enforced.');
 $assert(image_source_error(false, 10, 10, ['image/png'], 100, 8192, 16_777_216) === 'not_image', 'Malformed raster header was accepted.');
 
+$assert(
+    user_avatar_url(['id' => 7, 'avatar_exists' => 1, 'updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/7.webp?v=2026-08-11%2012%3A00%3A00',
+    'A complete user avatar record did not produce its fixed avatar URL.'
+);
+$assert(
+    user_avatar_url(['author_id' => 99, 'id' => 7, 'avatar_exists' => 1, 'updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/7.webp?v=2026-08-11%2012%3A00%3A00',
+    'An incomplete author avatar projection prevented the user avatar fallback.'
+);
+$assert(
+    user_avatar_url(['author_id' => 99, 'author_avatar_exists' => 1, 'author_updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/99.webp?v=2026-08-11%2012%3A00%3A00',
+    'A complete author avatar projection did not retain its avatar URL.'
+);
+$assert(
+    user_can_edit_profile(['id' => 7], ['id' => 7, 'role' => 'member']),
+    'Users may no longer edit their own avatar target.'
+);
+$assert(
+    user_can_edit_profile(['id' => 7], ['id' => 1, 'role' => 'admin']),
+    'Administrators may no longer edit another user avatar target.'
+);
+$assert(
+    !user_can_edit_profile(['id' => 7], ['id' => 8, 'role' => 'member']),
+    'A regular user may edit another user avatar target.'
+);
+
 if (extension_loaded('gd')) {
     $fixture = tempnam(sys_get_temp_dir(), 'tinycat-malformed-raster-');
 

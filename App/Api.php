@@ -224,8 +224,10 @@ final class Api
 
     public static function avatarUpdate(): array
     {
-        $user = require_auth('/login');
+        $actor = require_auth('/login');
         csrf_require();
+        $authorId = max(0, (int) input('author_id', (int) ($actor['id'] ?? 0)));
+        $user = user_profile_require_edit_target($actor, $authorId);
 
         return user_avatar_update_request($user);
     }
@@ -531,17 +533,14 @@ final class Api
 
     public static function avatarEditModal(): array
     {
-        $user = auth();
+        $actor = auth();
         $authorId = max(0, (int) get('author_id', 0));
-        $userId = (int) ($user['id'] ?? 0);
 
-        if ($user === null) {
+        if ($actor === null) {
             api_error(t('auth.login_required'), 401, 'unauthorized', ['redirect' => '/login']);
         }
 
-        if ($authorId < 1 || $userId !== $authorId) {
-            api_error(t('auth.forbidden'), 403, 'forbidden');
-        }
+        $user = user_profile_require_edit_target($actor, $authorId);
 
         return [
             'html' => render('modals/avatar-edit', [

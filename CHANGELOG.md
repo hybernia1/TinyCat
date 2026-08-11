@@ -3,6 +3,17 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.43 - 2026-08-11
+
+### Fixed
+
+- Restored avatar URLs when a partial author or actor projection is present in
+  a view payload.
+- Let a successful avatar-modal submission leave without an unsaved-form
+  confirmation.
+- Allowed administrators to upload or remove an avatar for another user from
+  that user's profile, using the same authorization rule as profile editing.
+
 ## 2.0.42 - 2026-08-11
 
 ### Simplification

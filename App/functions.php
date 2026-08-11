@@ -441,6 +441,10 @@ function user_avatar_url(?array $user): string
         ['user_id', 'user_avatar_exists', 'user_updated_at'],
         ['id', 'avatar_exists', 'updated_at'],
     ] as [$idKey, $existsKey, $updatedAtKey]) {
+        if (!array_key_exists($idKey, $user) || !array_key_exists($existsKey, $user)) {
+            continue;
+        }
+
         $userId = (int) ($user[$idKey] ?? 0);
 
         if ($userId > 0) {
@@ -2198,7 +2202,7 @@ function user_avatar_update_request(array $user): array
         throw $exception;
     }
 
-    $updated = auth() ?: $user;
+    $updated = $user;
     $updated['avatar_exists'] = 1;
     $updated['updated_at'] = $updatedAt;
 

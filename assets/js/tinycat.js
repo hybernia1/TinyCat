@@ -1512,6 +1512,10 @@
       var redirect = data.redirect || (payload && typeof payload === "object" ? payload.redirect : "");
 
       if (redirect) {
+        // A successful form submission may intentionally navigate to its
+        // canonical page. It is no longer an unsaved draft, so let the
+        // global beforeunload guard allow that redirect.
+        markFormClean(source);
         window.location.assign(redirect);
         return;
       }
