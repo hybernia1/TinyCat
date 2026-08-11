@@ -332,7 +332,7 @@ function tc_install_create_tables(): void
             status VARCHAR(20) NOT NULL DEFAULT 'active',
             locale VARCHAR(12) NULL,
             theme VARCHAR(12) NOT NULL DEFAULT 'system',
-            avatar_config TEXT NULL,
+            avatar_exists TINYINT(1) NOT NULL DEFAULT 0,
             bio VARCHAR(500) NULL,
             muted_until DATETIME NULL,
             muted_by INT UNSIGNED NULL,

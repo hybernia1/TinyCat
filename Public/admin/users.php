@@ -45,20 +45,14 @@ if ($adminUsersApi === 'update') {
     $payload = tc_admin_user_payload($id);
 
     if ($avatar['changed']) {
-        $payload['avatar_config'] = $avatar['json'];
+        $payload['avatar_exists'] = $avatar['uploaded'] ? 1 : 0;
+        $payload['updated_at'] = user_avatar_updated_at($existing);
     }
 
-    try {
-        update('users', $payload, ['id' => $id]);
-    } catch (Throwable $exception) {
-        if ($avatar['uploaded']) {
-            Avatar::delete($avatar['config']);
-        }
-        throw $exception;
-    }
+    update('users', $payload, ['id' => $id]);
 
-    if ($avatar['changed']) {
-        Avatar::delete($existing['avatar_config'] ?? null, $avatar['config']);
+    if ($avatar['changed'] && !$avatar['uploaded']) {
+        Avatar::delete($id);
     }
     api_ok(tc_admin_users_response_payload($id), t('users.messages.saved'));
 }
