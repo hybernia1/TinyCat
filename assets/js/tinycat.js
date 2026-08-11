@@ -13,6 +13,8 @@
   var statusFeedPruneMargin = 700;
   var statusFeedLastScrollY = window.scrollY || 0;
   var statusFeedScrollQueued = false;
+  var statusFeedRequests = new WeakMap();
+  var statusFeedAutoLoadQueued = new WeakMap();
 
   function qs(selector, root) {
     return (root || document).querySelector(selector);
@@ -4178,6 +4180,78 @@
     return null;
   }
 
+  function statusFeedStartRequest(target, type) {
+    var request;
+
+    if (!target || statusFeedRequests.has(target)) {
+      return null;
+    }
+
+    request = { type: type };
+    statusFeedRequests.set(target, request);
+
+    return request;
+  }
+
+  function statusFeedRequestActive(target, request) {
+    return statusFeedRequests.get(target) === request;
+  }
+
+  function statusFeedFinishRequest(target, request) {
+    if (statusFeedRequestActive(target, request)) {
+      statusFeedRequests.delete(target);
+    }
+  }
+
+  function appendStatusFeedItems(target, template) {
+    var seen = {};
+
+    qsa(".status-card[data-status-id]", target).forEach(function (card) {
+      var id = String(card.dataset.statusId || "");
+
+      if (id) {
+        seen[id] = true;
+      }
+    });
+
+    qsa(".status-card[data-status-id]", template.content).forEach(function (card) {
+      var id = String(card.dataset.statusId || "");
+
+      if (id && seen[id]) {
+        card.remove();
+        return;
+      }
+
+      if (id) {
+        seen[id] = true;
+      }
+    });
+
+    target.appendChild(template.content);
+  }
+
+  function queueStatusFeedMore(control) {
+    var target = statusFeedTarget(control);
+
+    if (!control || !target || !control.isConnected || control.hidden || statusFeedAutoLoadQueued.has(target)) {
+      return;
+    }
+
+    statusFeedAutoLoadQueued.set(target, true);
+
+    window.setTimeout(function () {
+      statusFeedAutoLoadQueued.delete(target);
+
+      if (
+        control.isConnected
+        && statusFeedControlForTarget(target) === control
+        && statusFeedNearViewport(control)
+      ) {
+        loadStatusFeedMore(control);
+      }
+    }, 120);
+  }
+
   function statusFeedCardProtected(card) {
     return Boolean(
       card.contains(document.activeElement)
@@ -4245,13 +4319,20 @@
   }
 
   async function refreshPrunedStatusFeed(target) {
-    var control = statusFeedControlForTarget(target);
+    var control;
     var url = target ? target.dataset.statusFeedRefreshUrl : "";
     var data;
     var payload;
     var template;
+    var request;
 
-    if (!target || !url || target.dataset.statusFeedRefreshing === "true" || activeModal || qs(".modal[data-open='true']", target)) {
+    if (!target || !url || activeModal || qs(".modal[data-open='true']", target)) {
+      return;
+    }
+
+    request = statusFeedStartRequest(target, "refresh");
+
+    if (!request) {
       return;
     }
 
@@ -4261,9 +4342,15 @@
       data = await TinyCat.request(url, { method: "GET", cache: "no-store" });
       payload = statusFeedPayload(data);
       template = htmlTemplate(payload.html || "");
+
+      if (!statusFeedRequestActive(target, request)) {
+        return;
+      }
+
       target.innerHTML = "";
       target.appendChild(template.content);
       delete target.dataset.statusFeedPruned;
+      control = statusFeedControlForTarget(target);
 
       if (control) {
         if (payload.next_url && payload.done !== true) {
@@ -4283,6 +4370,11 @@
       TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
     } finally {
       delete target.dataset.statusFeedRefreshing;
+      statusFeedFinishRequest(target, request);
+
+      if (control && control.isConnected && statusFeedNearViewport(control)) {
+        queueStatusFeedMore(control);
+      }
     }
   }
 
@@ -4291,7 +4383,7 @@
       var spacer = qs("[data-status-feed-spacer]", target);
       var rect;
 
-      if (!spacer || spacer.hidden || target.dataset.statusFeedRefreshing === "true") {
+      if (!spacer || spacer.hidden || statusFeedRequests.has(target)) {
         return;
       }
 
@@ -4328,8 +4420,15 @@
     var data;
     var payload;
     var template;
+    var request;
 
-    if (!control || !target || !url || control.dataset.statusFeedBusy === "true") {
+    if (!control || !target || !url || !control.isConnected || control.dataset.statusFeedBusy === "true") {
+      return;
+    }
+
+    request = statusFeedStartRequest(target, "more");
+
+    if (!request) {
       return;
     }
 
@@ -4348,9 +4447,13 @@
       data = await TinyCat.request(url, { method: "GET" });
       payload = statusFeedPayload(data);
 
+      if (!statusFeedRequestActive(target, request) || !control.isConnected) {
+        return;
+      }
+
       if (payload.html) {
         template = htmlTemplate(payload.html || "");
-        target.appendChild(template.content);
+        appendStatusFeedItems(target, template);
         pruneStatusFeed(target, url);
         hydrateDynamic(target);
       }
@@ -4379,12 +4482,13 @@
       if (state) {
         state.hidden = true;
       }
+
+      statusFeedFinishRequest(target, request);
+      maybeRefreshPrunedStatusFeeds();
     }
 
-    if (statusFeedNearViewport(control)) {
-      window.setTimeout(function () {
-        loadStatusFeedMore(control);
-      }, 120);
+    if (control.isConnected && statusFeedControlForTarget(target) === control && statusFeedNearViewport(control)) {
+      queueStatusFeedMore(control);
     }
   }
 

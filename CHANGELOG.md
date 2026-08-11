@@ -3,6 +3,14 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.41 - 2026-08-11
+
+### Fixed
+
+- Prevented duplicate status cards during long automatic scrolling. Feed loading
+  and pruned-feed refreshes now share one request state, and inserted cards are
+  deduplicated by status ID as a final safeguard.
+
 ## 2.0.40 - 2026-08-11
 
 ### Simplification
