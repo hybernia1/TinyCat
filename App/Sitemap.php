@@ -100,8 +100,9 @@ final class Sitemap
                 'SELECT COUNT(*)
                     FROM content c
                     INNER JOIN users u ON u.id = c.author_id
-                    WHERE u.status = ?',
-                ['active']
+                    WHERE u.status = ?
+                        AND c.published_at <= ?',
+                ['active', date_db()]
             ),
             default => throw new InvalidArgumentException('Sitemap section is not registered: ' . $section),
         };
@@ -157,9 +158,10 @@ final class Sitemap
                     INNER JOIN users u ON u.id = c.author_id
                     LEFT JOIN content_images ci ON ci.content_id = c.id
                     WHERE u.status = ?
+                        AND c.published_at <= ?
                     ORDER BY c.id ASC
                     LIMIT ' . $limit . ' OFFSET ' . $offset,
-                ['active']
+                ['active', date_db()]
             ),
             default => throw new InvalidArgumentException('Sitemap section is not registered: ' . $section),
         };

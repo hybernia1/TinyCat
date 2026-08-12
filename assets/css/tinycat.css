@@ -2339,6 +2339,10 @@ a:hover {
   margin: 0;
 }
 
+.modal-body.status-edit-modal-body {
+  padding: 14px;
+}
+
 .status-compose-row {
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr);
@@ -2382,6 +2386,12 @@ a:hover {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.status-compose-actions > .btn-icon {
+  width: 38px;
+  min-height: 38px;
+  padding-inline: 0;
 }
 
 .status-image-field {
@@ -3079,19 +3089,18 @@ img.status-editor-suggestion-avatar {
 }
 
 .modal-body.status-post-modal-body {
-  padding: 0;
+  padding: 14px;
   overscroll-behavior: contain;
   scroll-padding-block: 12px;
   -webkit-overflow-scrolling: touch;
 }
 
-.status-post-detail {
+.status-post-modal-content {
   display: grid;
   gap: 12px;
-  padding: 12px;
 }
 
-.status-post-detail .status-body {
+.status-post-modal-content .status-body {
   font-size: 1rem;
 }
 

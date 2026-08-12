@@ -21,24 +21,13 @@ $editor = is_array($editor ?? null) ? $editor : [];
         <form method="post" action="<?= e(status_api_url('create')) ?>" enctype="multipart/form-data" data-status-form data-status-scope="feed" data-confirm-unsaved="true" data-confirm-unsaved-title="<?= et('common.unsaved_title') ?>" data-confirm-unsaved-message="<?= et('common.unsaved_message') ?>" data-confirm-unsaved-ok="<?= et('common.leave') ?>" data-confirm-unsaved-cancel="<?= et('common.stay') ?>">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="create">
-            <div class="status-compose-row">
-                <div class="avatar">
-                    <?= part('user/avatar', ['user' => $user, 'alt' => user_display_name($user)]) ?>
-                </div>
-                <div class="status-compose-main">
-                    <?= part('status/field', [
-                        'item' => (array) ($editor['item'] ?? []),
-                        'tags_json' => (string) ($editor['tags_json'] ?? '[]'),
-                    ]) ?>
-                    <div class="status-compose-footer">
-                        <div class="status-compose-counter" data-status-editor-meta-slot></div>
-                        <div class="status-compose-actions">
-                            <?= part('status/image-field', ['image' => (array) ($editor['image'] ?? [])]) ?>
-                            <button class="btn btn-primary btn-icon" type="submit" title="<?= et('account.status_create') ?>" aria-label="<?= et('account.status_create') ?>"><?= icon('send') ?></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <?= part('status/composer-body', [
+                'user' => $user,
+                'editor' => $editor,
+                'submit_name' => 'publish_now',
+                'submit_label' => t('account.status_create'),
+                'submit_icon' => 'send',
+            ]) ?>
         </form>
     </div>
 </section>

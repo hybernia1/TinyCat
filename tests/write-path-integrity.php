@@ -202,6 +202,32 @@ $deletedStatus = status_json_delete($createdStatusId, $actor);
 $assert((int) ($deletedStatus['deleted_status_id'] ?? 0) === $createdStatusId, 'Status deletion returns the deleted aggregate identity.');
 $assert((int) $value("SELECT COUNT(*) FROM content WHERE id = {$createdStatusId}") === 0, 'Status deletion removes the created aggregate.');
 
+$_POST = [
+    'body' => 'Scheduled through the monolith write path #scheduled',
+    'schedule_post' => '1',
+    'scheduled_at' => '2030-01-02T03:04',
+];
+$payload->setValue(null, null);
+$scheduledStatus = status_json_create($actor);
+$scheduledStatusId = (int) ($scheduledStatus['status_id'] ?? 0);
+$scheduledItem = status_find($scheduledStatusId);
+$guestScheduledIds = public_status_ids_page(public_status_id_query(['id' => 1, 'role' => 'user']), 50);
+$authorScheduledIds = public_status_ids_page(public_status_id_query($actor), 50);
+$adminScheduledIds = public_status_ids_page(public_status_id_query(['id' => 9, 'role' => 'admin']), 50);
+$assert((string) $value("SELECT published_at FROM content WHERE id = {$scheduledStatusId}") === '2030-01-02 03:04:00', 'Scheduled status stores the requested future publication time.');
+$assert((string) ($scheduledStatus['message'] ?? '') === t('account.messages.status_scheduled'), 'Scheduled creation confirms scheduling rather than immediate publication.');
+$assert(status_is_scheduled($scheduledItem), 'Future publication time marks a status as scheduled.');
+$assert(!status_can_view($scheduledItem, ['id' => 1, 'role' => 'user']), 'Scheduled status is hidden from another member.');
+$assert(status_can_view($scheduledItem, $actor), 'Scheduled status remains visible to its author.');
+$assert(status_can_view($scheduledItem, ['id' => 9, 'role' => 'admin']), 'Scheduled status remains visible to administrators.');
+$assert(!in_array($scheduledStatusId, $guestScheduledIds, true), 'Public feed query excludes scheduled statuses.');
+$assert(in_array($scheduledStatusId, $authorScheduledIds, true), 'Author feed query includes the author scheduled statuses.');
+$assert(in_array($scheduledStatusId, $adminScheduledIds, true), 'Admin feed query includes scheduled statuses.');
+$_POST = ['body' => 'Edited scheduled post @1'];
+$payload->setValue(null, null);
+status_json_update($scheduledStatusId, $actor);
+$assert((int) $value('SELECT COUNT(*) FROM notifications') === 0, 'Editing a scheduled status does not send mention notifications before publication.');
+
 author_follow(2, 1);
 $assert(author_is_followed(2, 1), 'Following creates the social relation.');
 author_unfollow(2, 1);

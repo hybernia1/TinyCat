@@ -449,6 +449,7 @@ final class Api
         return [
             'html' => render('modals/status-edit', [
                 'item' => (array) $item,
+                'user' => $user,
                 'editor' => $editor,
                 'action' => status_api_url('update', ['id' => $contentId]),
             ]),

@@ -5201,6 +5201,10 @@
 
       clearErrors(form);
       body = new FormData(form);
+      if (event.submitter && event.submitter.name) {
+        body.append(event.submitter.name, event.submitter.value || "");
+      }
+
       action = statusFormAction(form, body);
       method = (form.getAttribute("method") || "POST").toUpperCase();
       url = form.getAttribute("action") || window.location.href;

@@ -3,6 +3,15 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.49 - 2026-08-12
+
+### Fixed
+
+- Kept future-published posts visible only to their author and administrators
+  until publication, including feeds, search, sitemaps, RSS and interactions.
+- Unified status-detail and edit modals with the standard status card and
+  composer components.
+
 ## 2.0.48 - 2026-08-12
 
 ### Fixed
