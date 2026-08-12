@@ -13,11 +13,6 @@ $editor = $authUser !== null ? status_editor_view_data() : [];
 layout('layout', [
     'title' => site_home_title(),
     'current' => '/',
-    'style_groups' => [
-        'feed',
-        'avatar',
-        ...($authUser !== null ? ['interaction'] : []),
-    ],
     'meta' => [
         'description' => site_meta_description(),
         'url' => '/',

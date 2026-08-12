@@ -3,6 +3,13 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.48 - 2026-08-12
+
+### Fixed
+
+- Reverted route-specific CSS splitting and restored the proven single,
+  minified TinyCat stylesheet on every route.
+
 ## 2.0.47 - 2026-08-12
 
 ### Fixed

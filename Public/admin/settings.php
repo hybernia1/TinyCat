@@ -40,6 +40,7 @@ $settingsSections = tc_admin_settings_view_sections();
 layout('layout', [
     'title' => t('settings.meta_title'),
     'current' => '/admin/settings',
+    'styles' => ['css/tinycat.css'],
     'scripts' => ['js/tinycat.js'],
 ], static function () use ($settingsSections): void {
     $sections = $settingsSections;

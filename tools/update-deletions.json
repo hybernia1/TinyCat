@@ -1,6 +1,13 @@
 {
-    "2.0.45": [
-        "assets/css/tinycat.css"
+    "2.0.48": [
+        "assets/css/tinycat-admin.css",
+        "assets/css/tinycat-avatar.css",
+        "assets/css/tinycat-core.css",
+        "assets/css/tinycat-feed.css",
+        "assets/css/tinycat-interaction.css",
+        "assets/css/tinycat-modal.css",
+        "assets/css/tinycat-profile.css",
+        "assets/css/tinycat-responsive.css"
     ],
     "2.0.27": [
         "Public/parts/profile/link-fields.php",

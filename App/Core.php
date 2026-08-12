@@ -16,7 +16,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.47';
+    public const string VERSION = '2.0.48';
     private const string SETTINGS_CACHE_KEY = 'core_autoload_settings';
     private const int SETTINGS_CACHE_TTL = 3600;
 
@@ -441,57 +441,6 @@ final class Core
         }
 
         return $url . '?v=' . filemtime($file);
-    }
-
-    /** @param array<int, string> $paths */
-    public static function assetBundle(array $paths, string $type): ?string
-    {
-        self::ensureBooted();
-        $type = strtolower(trim($type));
-
-        if (
-            !in_array($type, ['css', 'js'], true)
-            || !(bool) self::setting('performance.minify_' . $type, false)
-        ) {
-            return null;
-        }
-
-        $paths = array_values(array_unique(array_filter(array_map(
-            static fn (string $path): string => ltrim(str_replace('\\', '/', $path), '/'),
-            $paths
-        ))));
-
-        if (count($paths) < 2) {
-            return null;
-        }
-
-        $sources = [];
-
-        foreach ($paths as $path) {
-            if (strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== $type) {
-                return null;
-            }
-
-            $file = self::basePath('assets/' . str_replace('/', DIRECTORY_SEPARATOR, $path));
-            $source = is_file($file) ? file_get_contents($file) : false;
-
-            if (!is_string($source)) {
-                return null;
-            }
-
-            $sources[] = $source;
-        }
-
-        $identity = 'bundle' . "\0" . implode("\0", $paths);
-        $prefix = 'tinycat-' . $type . '-bundle-' . substr(hash('sha256', $identity), 0, 12);
-
-        return Minifier::cachedAssetUrl(
-            $identity,
-            $prefix,
-            implode("\n", $sources),
-            $type,
-            true
-        );
     }
 
     public static function icon(string $name, string $class = 'icon', ?string $label = null, array $attributes = []): string

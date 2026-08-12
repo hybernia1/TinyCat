@@ -742,9 +742,7 @@ function tc_install_render(string $step, array $languages, array $state): void
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
         <title><?= e($pageTitle) ?></title>
-        <?php foreach (['css/tinycat-core.css', 'css/tinycat-modal.css', 'css/tinycat-responsive.css'] as $style): ?>
-            <link rel="stylesheet" href="<?= e(asset($style)) ?>">
-        <?php endforeach; ?>
+        <link rel="stylesheet" href="<?= e(asset('css/tinycat.css')) ?>">
         <script src="<?= e(asset('js/tinycat.js')) ?>" defer></script>
     </head>
     <body data-icon-sprite="<?= e(asset('icons.svg')) ?>">

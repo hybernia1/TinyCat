@@ -7345,12 +7345,6 @@ function asset(string $path, ?bool $version = null): string
     return Core::asset($path, $version);
 }
 
-/** @param array<int, string> $paths */
-function asset_bundle(array $paths, string $type): ?string
-{
-    return Core::assetBundle($paths, $type);
-}
-
 function icon(string $name, string $class = 'icon', ?string $label = null, array $attributes = []): string
 {
     return Core::icon($name, $class, $label, $attributes);

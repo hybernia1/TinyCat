@@ -35,7 +35,6 @@ $statusItems = $hasQuery && $searchBlocked === null
 layout('layout', [
     'title' => $hasQuery ? t('public.search_title_query', ['query' => $query]) : t('public.search_title'),
     'current' => '/search',
-    'style_groups' => ['feed', 'avatar'],
     'meta' => [
         'description' => $hasQuery
             ? t('public.search_meta_query', ['query' => $query])

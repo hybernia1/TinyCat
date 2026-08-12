@@ -23,10 +23,17 @@ $title = (string) ($title ?? $appName);
 $current = route_path((string) ($current ?? route_path()));
 $bodyClass = (string) ($bodyClass ?? '');
 $csrfToken = (string) ($csrfToken ?? csrf_token());
-$styles = is_array($styles ?? null) ? $styles : [];
-$styleGroups = is_array($style_groups ?? null) ? $style_groups : [];
+$styles = $styles ?? ['css/tinycat.css'];
 $scripts = $scripts ?? ['js/tinycat.js'];
 $extensionAssets = Assets::forPath($current);
+$styleUrls = array_values(array_unique([
+    ...array_map(static fn (mixed $style): string => asset((string) $style), (array) $styles),
+    ...$extensionAssets['styles'],
+]));
+$scriptUrls = array_values(array_unique([
+    ...array_map(static fn (mixed $script): string => asset((string) $script), (array) $scripts),
+    ...$extensionAssets['scripts'],
+]));
 $actions = (string) ($actions ?? '');
 $meta = is_array($meta ?? null) ? $meta : [];
 $flashToasts = [];
@@ -92,40 +99,6 @@ $metaLocale = str_replace('-', '_', locale());
 $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
 $theme = user_theme($authUser);
 $themeAttribute = $theme !== 'system' ? ' data-theme="' . e($theme) . '"' : '';
-
-if ($styles === []) {
-    $styleGroupFiles = [
-        'feed' => 'css/tinycat-feed.css',
-        'interaction' => 'css/tinycat-interaction.css',
-        'avatar' => 'css/tinycat-avatar.css',
-        'profile' => 'css/tinycat-profile.css',
-        'admin' => 'css/tinycat-admin.css',
-    ];
-    $styleGroups = $styleGroups !== [] ? $styleGroups : ($isAdminShell ? ['admin'] : []);
-    $styles = ['css/tinycat-core.css'];
-
-    foreach ($styleGroups as $styleGroup) {
-        $styleFile = $styleGroupFiles[(string) $styleGroup] ?? '';
-
-        if ($styleFile !== '') {
-            $styles[] = $styleFile;
-        }
-    }
-
-    $styles[] = 'css/tinycat-modal.css';
-    $styles[] = 'css/tinycat-responsive.css';
-}
-
-$styles = array_values(array_unique($styles));
-$styleBundleUrl = asset_bundle($styles, 'css');
-$styleUrls = array_values(array_unique([
-    ...($styleBundleUrl !== null ? [$styleBundleUrl] : array_map(static fn (mixed $style): string => asset((string) $style), $styles)),
-    ...$extensionAssets['styles'],
-]));
-$scriptUrls = array_values(array_unique([
-    ...array_map(static fn (mixed $script): string => asset((string) $script), (array) $scripts),
-    ...$extensionAssets['scripts'],
-]));
 ?>
 <!doctype html>
 <html lang="<?= e(locale()) ?>"<?= $themeAttribute ?>>
