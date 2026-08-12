@@ -63,6 +63,7 @@ $tagStructuredData = [
 layout('layout', [
     'title' => t('public.tag_feed_title', ['tag' => '#' . $tag]),
     'current' => $current,
+    'style_groups' => ['feed', 'avatar'],
     'meta' => [
         'description' => t('public.tag_meta', ['tag' => '#' . $tag]),
         'url' => $pageUrl,

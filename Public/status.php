@@ -39,6 +39,7 @@ $statusImageUrl = status_image_url($item);
 layout('layout', [
     'title' => $statusTitle,
     'current' => $current,
+    'style_groups' => ['feed', 'interaction', 'avatar'],
     'meta' => [
         'title' => $statusTitle,
         'description' => status_meta_description($item),

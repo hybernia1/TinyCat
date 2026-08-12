@@ -1,4 +1,7 @@
 {
+    "2.0.45": [
+        "assets/css/tinycat.css"
+    ],
     "2.0.27": [
         "Public/parts/profile/link-fields.php",
         "Public/parts/profile/links.php"

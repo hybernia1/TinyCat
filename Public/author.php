@@ -87,6 +87,12 @@ $authorStructuredData['mainEntity'] = array_filter($authorStructuredData['mainEn
 layout('layout', [
     'title' => t('public.author_archive_title', ['author' => $authorName]),
     'current' => $current,
+    'style_groups' => [
+        'feed',
+        'avatar',
+        'profile',
+        ...($canPost ? ['interaction'] : []),
+    ],
     'meta' => [
         'description' => $bio !== ''
             ? $bio

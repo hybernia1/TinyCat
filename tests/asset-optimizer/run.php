@@ -123,5 +123,22 @@ if (is_string($tinyCatSource)) {
     $assertSame('tinycat.js is idempotent', $tinyCatMinified, Minifier::minifyJavaScript($tinyCatMinified));
 }
 
+$styleFiles = glob(dirname(__DIR__, 2) . '/assets/css/tinycat-*.css') ?: [];
+$assertTrue('split stylesheet sources are present', count($styleFiles) >= 8);
+
+foreach ($styleFiles as $styleFile) {
+    $styleSource = file_get_contents($styleFile);
+    $styleName = basename($styleFile);
+    $assertTrue($styleName . ' source is readable', is_string($styleSource));
+
+    if (!is_string($styleSource)) {
+        continue;
+    }
+
+    $styleMinified = Minifier::minifyCss($styleSource);
+    $assertTrue($styleName . ' is materially smaller', strlen($styleMinified) < (int) (strlen($styleSource) * 0.9));
+    $assertSame($styleName . ' is idempotent', $styleMinified, Minifier::minifyCss($styleMinified));
+}
+
 echo sprintf("\n%d checks, %d failures.\n", $checks, count($failures));
 exit($failures === [] ? 0 : 1);

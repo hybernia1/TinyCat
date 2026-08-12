@@ -3,6 +3,15 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.45 - 2026-08-12
+
+### Performance
+
+- Split first-party styles by page capability, then minify and bundle only the
+  groups required by the current route. Public feeds no longer download admin,
+  profile or editor styles, while each rendered page still uses one immutable
+  CSS request.
+
 ## 2.0.44 - 2026-08-12
 
 ### Performance
