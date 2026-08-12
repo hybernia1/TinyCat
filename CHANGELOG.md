@@ -3,6 +3,13 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.46 - 2026-08-12
+
+### Fixed
+
+- Restored the fixed site-logo dimensions on public pages, preventing the
+  header from expanding after the logo loads and avoiding layout shift.
+
 ## 2.0.45 - 2026-08-12
 
 ### Performance

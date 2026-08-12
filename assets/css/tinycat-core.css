@@ -996,6 +996,14 @@ a:hover {
   text-decoration: none;
 }
 
+.brand-logo {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+}
+
 .nav-links {
   display: flex;
   flex: 0 0 auto;
