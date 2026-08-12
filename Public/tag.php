@@ -26,7 +26,8 @@ if (method() === 'GET' && (int) get('page', 0) > 1) {
     redirect($current, 301);
 }
 
-$statusLimit = public_status_page_limit();
+$statusLimit = public_status_initial_page_limit();
+$nextStatusLimit = public_status_page_limit();
 $statusItems = public_status_items_by_tag($tag, $statusLimit);
 $indexableItems = $statusLimit >= 2 ? $statusItems : public_status_items_by_tag($tag, 2);
 $authUser = auth();
@@ -36,7 +37,8 @@ $feedMore = status_feed_more_view_data(
     'tag',
     $statusItems,
     $statusLimit,
-    ['tag' => $tag]
+    ['tag' => $tag],
+    $nextStatusLimit
 );
 $pageUrl = $current;
 $tagStructuredData = [

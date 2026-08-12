@@ -27,7 +27,8 @@ if (method() === 'GET' && (int) get('page', 0) > 1) {
     redirect($current, 301);
 }
 
-$statusLimit = public_status_page_limit();
+$statusLimit = public_status_initial_page_limit();
+$nextStatusLimit = public_status_page_limit();
 $pageUrl = $current;
 $statusItems = public_status_items_by_author_cursor($authorId, $statusLimit);
 $authUser = auth();
@@ -37,7 +38,8 @@ $feedMore = status_feed_more_view_data(
     'author',
     $statusItems,
     $statusLimit,
-    ['author_id' => $authorId]
+    ['author_id' => $authorId],
+    $nextStatusLimit
 );
 $canPost = $authUser !== null && (int) ($authUser['id'] ?? 0) === $authorId;
 $editor = $canPost ? status_editor_view_data() : [];

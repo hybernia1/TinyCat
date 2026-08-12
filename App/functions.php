@@ -6496,6 +6496,11 @@ function public_status_page_limit(): int
     return max(1, min(50, (int) config('public.status_limit', 20)));
 }
 
+function public_status_initial_page_limit(): int
+{
+    return min(5, public_status_page_limit());
+}
+
 function status_feed_context_items(string $context, int $limit, array $params = [], ?array $user = null): array
 {
     $limit = max(1, min(50, $limit));
@@ -6545,7 +6550,8 @@ function public_home_feed_data(string $feed = 'all', ?array $user = null, ?array
     $feed = $feed === 'following' ? 'following' : 'all';
     $currentFeedUrl = $feed === 'following' ? '/?feed=following' : '/';
     $followingLoginRequired = $feed === 'following' && $user === null;
-    $limit = public_status_page_limit();
+    $limit = public_status_initial_page_limit();
+    $nextLimit = public_status_page_limit();
 
     if ($items === null) {
         $items = $followingLoginRequired
@@ -6571,7 +6577,8 @@ function public_home_feed_data(string $feed = 'all', ?array $user = null, ?array
             'home',
             $items,
             $limit,
-            ['feed' => $feed]
+            ['feed' => $feed],
+            $nextLimit
         ),
     ];
 }
@@ -6825,7 +6832,7 @@ function public_home_feed_payload(string $feed = 'all', ?array $user = null): ar
 {
     $user ??= auth();
     $feed = $feed === 'following' ? 'following' : 'all';
-    $limit = public_status_page_limit();
+    $limit = public_status_initial_page_limit();
     $items = $feed === 'following'
         ? ((int) ($user['id'] ?? 0) > 0 ? public_status_items_for_user_cursor((int) ($user['id'] ?? 0), $limit) : [])
         : public_status_items_cursor($limit);
@@ -6870,16 +6877,18 @@ function status_feed_more_view_data(
     string $context,
     array $items,
     int $limit,
-    array $params = []
+    array $params = [],
+    ?int $nextLimit = null
 ): array {
     $loaded = count($items);
     $params += status_feed_cursor_params($items);
+    $nextLimit = $nextLimit === null ? $limit : max(1, min(50, $nextLimit));
 
     return [
         'feed_id' => $feedId,
         'loaded' => $loaded,
         'limit' => $limit,
-        'next_url' => $loaded >= $limit ? status_feed_next_url($context, $limit, $params) : '',
+        'next_url' => $loaded >= $limit ? status_feed_next_url($context, $nextLimit, $params) : '',
     ];
 }
 

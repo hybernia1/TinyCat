@@ -3,6 +3,15 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.44 - 2026-08-12
+
+### Performance
+
+- Reduced the first server-rendered page of home, following, author and tag
+  feeds to five posts. Cursor pagination continues with the configured
+  twenty-post page size, reducing initial response size without affecting
+  continuous scrolling.
+
 ## 2.0.43 - 2026-08-11
 
 ### Fixed
