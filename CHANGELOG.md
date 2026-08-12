@@ -3,6 +3,14 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.47 - 2026-08-12
+
+### Fixed
+
+- Restored the full public-feed width at tablet sizes after splitting route CSS.
+- Kept author, timestamp and avatar actions at 48px touch-target dimensions
+  without increasing the height of status-card headers.
+
 ## 2.0.46 - 2026-08-12
 
 ### Fixed

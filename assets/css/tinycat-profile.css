@@ -372,29 +372,8 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
 }
 
-.home-feed-section .status-feed,
 .profile-main .status-feed {
   max-width: 100%;
-}
-
-.public-content-meta {
-  color: var(--muted);
-  font-size: 0.875rem;
-  font-weight: 650;
-}
-
-.status-time-button {
-  display: inline-flex;
-  min-height: 24px;
-  align-items: center;
-  justify-self: start;
-  text-align: left;
-}
-
-.status-time-button:hover,
-.status-time-button:focus {
-  color: var(--primary-strong);
-  text-decoration: underline;
 }
 
 .status-comments-open {

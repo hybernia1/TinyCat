@@ -468,6 +468,12 @@ a:hover {
   text-decoration: underline;
 }
 
+.public-content-meta {
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
 .btn-group {
   display: inline-flex;
   flex-wrap: wrap;
