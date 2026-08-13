@@ -7,6 +7,7 @@ if (!defined('TINYCAT')) {
 }
 
 $item = (array) ($item ?? []);
+$user = is_array($user ?? null) ? $user : [];
 $editor = is_array($editor ?? null) ? $editor : [];
 $action = (string) ($action ?? '');
 $contentId = (int) ($item['id'] ?? 0);
@@ -22,15 +23,16 @@ ob_start();
 ?>
 <input type="hidden" name="action" value="update">
 <input type="hidden" name="id" value="<?= e($contentId) ?>">
-<?= part('status/field', [
-    'item' => $item,
-    'tags_json' => (string) ($editor['tags_json'] ?? '[]'),
+<?= part('status/composer-body', [
+    'user' => $user,
+    'editor' => $editor,
+    'submit_name' => 'save',
+    'submit_label' => t('account.status_save'),
+    'submit_icon' => 'save',
 ]) ?>
-<?= part('status/image-field', ['image' => (array) ($editor['image'] ?? [])]) ?>
 <?php
 $body = trim((string) ob_get_clean());
-$footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . icon('close') . ' <span>' . et('common.cancel') . '</span></button>'
-    . '<button class="btn btn-primary" type="submit">' . icon('save') . ' <span>' . et('account.status_save') . '</span></button>';
+$footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . icon('close') . ' <span>' . et('common.cancel') . '</span></button>';
 
 echo render('modals/layout', [
     'id' => $modalId,
@@ -40,6 +42,7 @@ echo render('modals/layout', [
     'ajax' => false,
     'multipart' => true,
     'size' => 'modal-panel-lg status-edit-modal-panel',
+    'bodyClass' => 'status-edit-modal-body',
     'formAttributes' => [
         'data-status-form' => true,
         'data-status-id' => $contentId,

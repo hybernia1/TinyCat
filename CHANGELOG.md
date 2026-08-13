@@ -3,6 +3,55 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.49 - 2026-08-12
+
+### Fixed
+
+- Kept future-published posts visible only to their author and administrators
+  until publication, including feeds, search, sitemaps, RSS and interactions.
+- Unified status-detail and edit modals with the standard status card and
+  composer components.
+
+## 2.0.48 - 2026-08-12
+
+### Fixed
+
+- Reverted route-specific CSS splitting and restored the proven single,
+  minified TinyCat stylesheet on every route.
+
+## 2.0.47 - 2026-08-12
+
+### Fixed
+
+- Restored the full public-feed width at tablet sizes after splitting route CSS.
+- Kept author, timestamp and avatar actions at 48px touch-target dimensions
+  without increasing the height of status-card headers.
+
+## 2.0.46 - 2026-08-12
+
+### Fixed
+
+- Restored the fixed site-logo dimensions on public pages, preventing the
+  header from expanding after the logo loads and avoiding layout shift.
+
+## 2.0.45 - 2026-08-12
+
+### Performance
+
+- Split first-party styles by page capability, then minify and bundle only the
+  groups required by the current route. Public feeds no longer download admin,
+  profile or editor styles, while each rendered page still uses one immutable
+  CSS request.
+
+## 2.0.44 - 2026-08-12
+
+### Performance
+
+- Reduced the first server-rendered page of home, following, author and tag
+  feeds to five posts. Cursor pagination continues with the configured
+  twenty-post page size, reducing initial response size without affecting
+  continuous scrolling.
+
 ## 2.0.43 - 2026-08-11
 
 ### Fixed

@@ -43,7 +43,7 @@ echo '- [Recent public-post sample](' . absolute_url('/llms-full.txt') . '): Tin
 
 if ($full) {
     $posts = array_values(array_filter(
-        public_status_items_cursor(100),
+        public_status_items_cursor(100, '', 0, false),
         static fn (array $item): bool => (int) ($item['id'] ?? 0) > 0
             && (trim((string) ($item['body'] ?? '')) !== '' || status_image_url($item) !== '')
     ));

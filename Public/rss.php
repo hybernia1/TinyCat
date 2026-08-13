@@ -23,7 +23,7 @@ if ($rssType === 'tag') {
     $rssTitle = '#' . $tag;
     $rssDescription = 'Public posts tagged #' . $tag;
     $rssLink = tag_url($tag);
-    $rssItems = public_status_items_by_tag($tag, 50);
+    $rssItems = public_status_items_by_tag($tag, 50, '', 0, false);
 } elseif ($rssType === 'author') {
     $author = public_author_find((int) ($rssAuthorId ?? 0));
 
@@ -36,7 +36,7 @@ if ($rssType === 'tag') {
     $rssTitle = $authorName;
     $rssDescription = 'Public posts by ' . $authorName;
     $rssLink = author_url((int) $author['id']);
-    $rssItems = public_status_items_by_author_cursor((int) $author['id'], 50);
+    $rssItems = public_status_items_by_author_cursor((int) $author['id'], 50, '', 0, false);
 } else {
     http_response_code(404);
     exit('Feed not found.');

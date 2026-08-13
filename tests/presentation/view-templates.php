@@ -25,6 +25,17 @@ $assert(str_contains($modal, 'Title &lt;unsafe&gt;'), 'Modal title is escaped.')
 $assert(str_contains($modal, 'data-snapshot="a&amp;b"'), 'Prepared modal attributes are escaped.');
 $assert(str_contains($modal, '<p id="snapshot-body">Safe body</p>'), 'Prepared modal body HTML is preserved.');
 
+$composerBody = part('status/composer-body', [
+    'user' => ['id' => 1, 'username' => 'alice', 'avatar_exists' => 0],
+    'editor' => ['item' => ['body' => 'Draft'], 'tags_json' => '[]', 'image' => []],
+    'submit_name' => 'save',
+    'submit_label' => 'Save',
+    'submit_icon' => 'save',
+]);
+$assert(str_contains($composerBody, 'class="status-compose-row"'), 'Composer body exposes the shared composer layout.');
+$assert(str_contains($composerBody, 'name="save"'), 'Composer body can render the edit submit action.');
+$assert(!str_contains($composerBody, 'status-schedule-modal'), 'The shared composer does not expose the scheduler modal.');
+
 $time = part('status/time-link', [
     'published_at' => '2026-08-09 12:00:00',
     'content_id' => 7,
@@ -43,6 +54,27 @@ $time = part('status/time-link', [
 $assert(str_contains($time, 'href="/status/7"'), 'Status time link uses the canonical permalink.');
 $assert(str_contains($time, '<time datetime="'), 'Status time link includes a machine-readable date.');
 $assert(!str_contains($time, 'data-modal-open'), 'Status time link respects the non-modal rendering option.');
+
+$statusCard = part('status/card', [
+    'item' => [
+        'id' => 7,
+        'author_id' => 1,
+        'author_name' => 'Alice',
+        'published_at' => '2026-08-09 12:00:00',
+        '_view' => [
+            'author_url' => '/author/1',
+            'body_html' => 'Post body',
+            'status_url' => '/status/7',
+            'permalink_label' => 'Alice, 9 August 2026 12:00',
+            'time' => ['iso' => '2026-08-09T12:00:00+00:00', 'label' => '9 August 2026 12:00'],
+        ],
+    ],
+    'anchor' => '',
+    'open_modal' => false,
+    'open_comments_modal' => false,
+]);
+$assert(!str_contains($statusCard, 'id="status-7"'), 'Modal status cards can omit the feed anchor.');
+$assert(preg_match('/status-time-button[^>]*data-modal-open/', $statusCard) !== 1, 'Modal status cards keep their time link in the current modal.');
 
 $link = part('status/link-card', ['link' => [
     'link_type' => 'video',

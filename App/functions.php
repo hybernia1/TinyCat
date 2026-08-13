@@ -2443,6 +2443,7 @@ function author_activity_stats(int $authorId): array
                         SELECT COUNT(*)
                         FROM content
                         WHERE author_id = ?
+                            AND published_at <= ?
                     ) AS posts,
                     (
                         SELECT COUNT(*)
@@ -2467,7 +2468,7 @@ function author_activity_stats(int $authorId): array
                         FROM content_comments
                         WHERE user_id = ?
                     ) AS comments',
-            [$authorId, $authorId, $authorId, $authorId, $authorId, $authorId]
+            [$authorId, date_db(), $authorId, $authorId, $authorId, $authorId, $authorId]
         ) ?? [];
 
         return [
@@ -3194,38 +3195,66 @@ function public_status_select_sql(): string
             LEFT JOIN content_images ci ON ci.content_id = c.id";
 }
 
-function public_status_id_query(): CoreQuery
+/** @param array<string, mixed>|null $viewer */
+function public_status_apply_visibility(CoreQuery $query, ?array $viewer = null, bool $allowScheduled = true): CoreQuery
+{
+    $now = date_db();
+
+    if (!$allowScheduled) {
+        return $query->where('c.published_at <= ?', $now);
+    }
+
+    $viewer ??= auth();
+
+    if (user_is_admin($viewer)) {
+        return $query;
+    }
+
+    $viewerId = (int) ($viewer['id'] ?? 0);
+
+    return $viewerId > 0
+        ? $query->where('(c.published_at <= ? OR c.author_id = ?)', $now, $viewerId)
+        : $query->where('c.published_at <= ?', $now);
+}
+
+/** @param array<string, mixed>|null $viewer */
+function public_status_id_query(?array $viewer = null, bool $allowScheduled = true): CoreQuery
 {
     $feedIndex = (string) config('database.driver', 'mysql') === 'mysql'
         ? ' FORCE INDEX (content_feed_index)'
         : '';
 
-    return db_select(
+    return public_status_apply_visibility(db_select(
         'SELECT c.id
             FROM content c' . $feedIndex . '
             INNER JOIN users u ON u.id = c.author_id'
     )
-        ->where('u.status = ?', 'active');
+        ->where('u.status = ?', 'active'), $viewer, $allowScheduled);
 }
 
-function public_status_author_id_query(): CoreQuery
+/** @param array<string, mixed>|null $viewer */
+function public_status_author_id_query(?array $viewer = null, bool $allowScheduled = true): CoreQuery
 {
     $authorIndex = (string) config('database.driver', 'mysql') === 'mysql'
         ? ' FORCE INDEX (content_author_index)'
         : '';
 
-    return db_select(
+    return public_status_apply_visibility(db_select(
         'SELECT c.id
             FROM content c' . $authorIndex . '
             INNER JOIN users u ON u.id = c.author_id'
     )
-        ->where('u.status = ?', 'active');
+        ->where('u.status = ?', 'active'), $viewer, $allowScheduled);
 }
 
-function public_status_query(): CoreQuery
+/** @param array<string, mixed>|null $viewer */
+function public_status_query(?array $viewer = null, bool $allowScheduled = true): CoreQuery
 {
-    return db_select(public_status_select_sql())
-        ->where('u.status = ?', 'active');
+    return public_status_apply_visibility(
+        db_select(public_status_select_sql())->where('u.status = ?', 'active'),
+        $viewer,
+        $allowScheduled
+    );
 }
 
 function public_status_ids_page(CoreQuery $query, int $limit = 24): array
@@ -3261,9 +3290,9 @@ function public_status_cursor_page(CoreQuery $query, int $limit = 24, string $cu
     return public_status_items_by_ids(public_status_ids_page($query, $limit));
 }
 
-function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
+function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0, bool $allowScheduled = true): array
 {
-    return public_status_cursor_page(public_status_id_query(), $limit, $cursorAt, $cursorId);
+    return public_status_cursor_page(public_status_id_query(null, $allowScheduled), $limit, $cursorAt, $cursorId);
 }
 
 function public_status_items_for_user_cursor(int $userId, int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
@@ -3325,14 +3354,14 @@ function public_following_author_ids(int $userId): array
     return $cache[$userId] = $ids;
 }
 
-function public_status_items_by_author_cursor(int $authorId, int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
+function public_status_items_by_author_cursor(int $authorId, int $limit = 24, string $cursorAt = '', int $cursorId = 0, bool $allowScheduled = true): array
 {
     if ($authorId < 1) {
         return [];
     }
 
     return public_status_cursor_page(
-        public_status_author_id_query()->where('c.author_id = ?', $authorId),
+        public_status_author_id_query(null, $allowScheduled)->where('c.author_id = ?', $authorId),
         $limit,
         $cursorAt,
         $cursorId
@@ -3355,7 +3384,8 @@ function public_status_items_by_tag(
     string $tag,
     int $limit = 24,
     string $cursorAt = '',
-    int $cursorId = 0
+    int $cursorId = 0,
+    bool $allowScheduled = true
 ): array
 {
     $tag = status_tag_normalize($tag);
@@ -3370,7 +3400,7 @@ function public_status_items_by_tag(
         return [];
     }
 
-    $query = public_status_id_query()
+    $query = public_status_id_query(null, $allowScheduled)
         ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
         ->where('ct.term_id = ?', $termId);
 
@@ -3394,13 +3424,14 @@ function public_status_ids_by_tag(string $tag, int $limit = 24): array
     );
 }
 
-function public_status_item(int $id): ?array
+/** @param array<string, mixed>|null $viewer */
+function public_status_item(int $id, ?array $viewer = null, bool $allowScheduled = true): ?array
 {
     if ($id < 1) {
         return null;
     }
 
-    return public_status_query()
+    return public_status_query($viewer, $allowScheduled)
         ->where('c.id = ?', $id)
         ->limit(1)
         ->one();
@@ -3591,6 +3622,7 @@ function public_trending_tags(int $limit = 8, int $days = 7, bool $compute = tru
             INNER JOIN terms t ON t.id = ct.term_id'
     )
         ->where('c.published_at >= ?', $since)
+        ->where('c.published_at <= ?', date_db())
         ->where('u.status = ?', 'active')
         ->group('t.id, t.name')
         ->order('posts_count DESC, latest_at DESC, t.name ASC')
@@ -3655,6 +3687,7 @@ function public_top_authors(int $limit = 5, int $days = 7, bool $compute = true)
             INNER JOIN users u ON u.id = c.author_id'
     )
         ->where('c.published_at >= ?', date_db('-' . $days . ' days'))
+        ->where('c.published_at <= ?', date_db())
         ->where('u.status = ?', 'active')
         ->where('u.role IN (' . $rolePlaceholders . ')', ...$rankedRoles)
         ->group('u.id, u.username, u.avatar_exists, u.updated_at, u.bio')
@@ -3987,6 +4020,7 @@ function public_search_recent_content_scan(string $query, int $limit): array
             FROM (
                 SELECT id, published_at
                 FROM content' . $feedIndex . '
+                WHERE published_at <= ?
                 ORDER BY published_at DESC, id DESC
                 LIMIT ' . $scanLimit . '
             ) recent
@@ -3996,7 +4030,7 @@ function public_search_recent_content_scan(string $query, int $limit): array
                 AND c.body LIKE ?
             ORDER BY recent.published_at DESC, recent.id DESC
             LIMIT ' . $limit,
-        ['active', '%' . $query . '%']
+        [date_db(), 'active', '%' . $query . '%']
     );
 }
 
@@ -4022,7 +4056,9 @@ function public_search_link_content_rows(string $query, int $limit, array $exclu
                 INNER JOIN links l ON l.id = cl.link_id
                 INNER JOIN content c ON c.id = cl.content_id
                 INNER JOIN users u ON u.id = c.author_id'
-        )->where('u.status = ?', 'active');
+        )
+            ->where('u.status = ?', 'active')
+            ->where('c.published_at <= ?', date_db());
 
         if ($fulltext !== '' && public_search_fulltext_ready('links', 'links_search_fulltext')) {
             $linkQuery->where('MATCH(l.normalized_url, l.title, l.description) AGAINST (? IN BOOLEAN MODE)', $fulltext);
@@ -4110,7 +4146,8 @@ function public_search_content_rows(string $query, int $limit): array
                     INNER JOIN users u ON u.id = c.author_id'
             )
                 ->where('MATCH(c.body) AGAINST (? IN BOOLEAN MODE)', $fulltext)
-                ->where('u.status = ?', 'active');
+                ->where('u.status = ?', 'active')
+                ->where('c.published_at <= ?', date_db());
 
             // The recent-content pass above already prioritizes new posts.
             // Keep this full-text fallback index-ordered: sorting every match
@@ -4428,6 +4465,29 @@ function status_find(int $id): ?array
         ->where('id = ?', $id)
         ->limit(1)
         ->one();
+}
+
+/** @param array<string, mixed>|null $item */
+function status_is_scheduled(?array $item): bool
+{
+    return $item !== null
+        && trim((string) ($item['published_at'] ?? '')) > date_db();
+}
+
+/**
+ * @param array<string, mixed>|null $item
+ * @param array<string, mixed>|null $user
+ */
+function status_can_view(?array $item, ?array $user = null): bool
+{
+    if ($item === null || !status_is_scheduled($item)) {
+        return $item !== null;
+    }
+
+    $user ??= auth();
+
+    return user_is_admin($user)
+        || (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0);
 }
 
 function status_edit_locked(?array $item): bool
@@ -6058,6 +6118,8 @@ function status_json_create(array $user, string $redirect = '/'): array
     status_json_require_unique_body($user, $body);
 
     $now = date_db();
+    $publishedAt = status_scheduled_published_at($now);
+    $scheduled = $publishedAt > $now;
     $contentId = 0;
     $image = null;
 
@@ -6070,11 +6132,11 @@ function status_json_create(array $user, string $redirect = '/'): array
     }
 
     try {
-        db_transaction(static function () use (&$contentId, $body, $userId, $now, $payload, $image): void {
+        db_transaction(static function () use (&$contentId, $body, $userId, $now, $publishedAt, $payload, $image): void {
             $contentId = (int) insert('content', [
                 'body' => $body,
                 'author_id' => $userId,
-                'published_at' => $now,
+                'published_at' => $publishedAt,
             ]);
 
             if ($image !== null) {
@@ -6100,13 +6162,15 @@ function status_json_create(array $user, string $redirect = '/'): array
     }
 
     moderation_record_action($user, 'post');
-    Notifications::notifyMentions($body, $user, $contentId);
+    if (!$scheduled) {
+        Notifications::notifyMentions($body, $user, $contentId);
+    }
 
     $data = [
         'action' => 'create',
         'status' => status_json_summary($contentId, $user),
         'status_id' => $contentId,
-        'message' => t('account.messages.status_created'),
+        'message' => t($scheduled ? 'account.messages.status_scheduled' : 'account.messages.status_created'),
     ];
 
     if (wants_partial()) {
@@ -6126,7 +6190,9 @@ function status_json_react(int $contentId, array $user): array
 {
     $userId = (int) ($user['id'] ?? 0);
 
-    if ($contentId < 1 || $userId < 1 || status_find($contentId) === null) {
+    $status = status_find($contentId);
+
+    if ($contentId < 1 || $userId < 1 || !status_can_view($status, $user)) {
         api_error(t('account.messages.status_not_found'), 404, 'status_not_found');
     }
 
@@ -6174,7 +6240,7 @@ function status_json_comment(int $contentId, int $parentId, array $user, string 
     $status = status_find($contentId);
     $body = status_comment_input_body();
 
-    if ($contentId < 1 || $userId < 1 || $status === null) {
+    if ($contentId < 1 || $userId < 1 || !status_can_view($status, $user)) {
         api_error(t('account.messages.status_not_found'), 404, 'status_not_found');
     }
 
@@ -6228,12 +6294,13 @@ function status_json_comment_like(int $commentId, array $user): array
 {
     $userId = (int) ($user['id'] ?? 0);
     $comment = status_comment_find($commentId);
+    $contentId = (int) ($comment['content_id'] ?? 0);
+    $status = status_find($contentId);
 
-    if ($comment === null || $userId < 1) {
+    if ($comment === null || $userId < 1 || !status_can_view($status, $user)) {
         api_error(t('account.messages.comment_not_found'), 404, 'comment_not_found');
     }
 
-    $contentId = (int) ($comment['content_id'] ?? 0);
     $liked = status_comment_user_liked($commentId, $userId);
 
     if (!$liked) {
@@ -6496,6 +6563,41 @@ function public_status_page_limit(): int
     return max(1, min(50, (int) config('public.status_limit', 20)));
 }
 
+function status_scheduled_published_at(string $now): string
+{
+    if ((string) input('schedule_post', '') !== '1') {
+        return $now;
+    }
+
+    $scheduledAt = trim((string) input('scheduled_at', ''));
+    $scheduled = DateTimeImmutable::createFromFormat('!Y-m-d\\TH:i', $scheduledAt, timezone());
+    $errors = DateTimeImmutable::getLastErrors();
+
+    if ($scheduled === false
+        || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))
+        || $scheduled->format('Y-m-d\\TH:i') !== $scheduledAt
+    ) {
+        api_error(t('account.messages.status_schedule_invalid'), 422, 'status_schedule_invalid', [
+            'errors' => ['scheduled_at' => [t('account.messages.status_schedule_invalid')]],
+        ]);
+    }
+
+    $publishedAt = date_db($scheduled);
+
+    if ($publishedAt <= $now) {
+        api_error(t('account.messages.status_schedule_future'), 422, 'status_schedule_future', [
+            'errors' => ['scheduled_at' => [t('account.messages.status_schedule_future')]],
+        ]);
+    }
+
+    return $publishedAt;
+}
+
+function public_status_initial_page_limit(): int
+{
+    return min(5, public_status_page_limit());
+}
+
 function status_feed_context_items(string $context, int $limit, array $params = [], ?array $user = null): array
 {
     $limit = max(1, min(50, $limit));
@@ -6545,7 +6647,8 @@ function public_home_feed_data(string $feed = 'all', ?array $user = null, ?array
     $feed = $feed === 'following' ? 'following' : 'all';
     $currentFeedUrl = $feed === 'following' ? '/?feed=following' : '/';
     $followingLoginRequired = $feed === 'following' && $user === null;
-    $limit = public_status_page_limit();
+    $limit = public_status_initial_page_limit();
+    $nextLimit = public_status_page_limit();
 
     if ($items === null) {
         $items = $followingLoginRequired
@@ -6571,7 +6674,8 @@ function public_home_feed_data(string $feed = 'all', ?array $user = null, ?array
             'home',
             $items,
             $limit,
-            ['feed' => $feed]
+            ['feed' => $feed],
+            $nextLimit
         ),
     ];
 }
@@ -6581,7 +6685,7 @@ function status_json_report(int $contentId, array $user): array
     $userId = (int) ($user['id'] ?? 0);
     $item = status_find($contentId);
 
-    if ($contentId < 1 || $userId < 1 || $item === null) {
+    if ($contentId < 1 || $userId < 1 || !status_can_view($item, $user)) {
         api_error(t('account.messages.status_not_found'), 404, 'status_not_found');
     }
 
@@ -6763,7 +6867,9 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
     if ($oldPath !== '') {
         StatusImage::delete($oldPath);
     }
-    Notifications::notifyMentions($body, $user, $contentId, 0, $oldMentionIds);
+    if (!status_is_scheduled($item)) {
+        Notifications::notifyMentions($body, $user, $contentId, 0, $oldMentionIds);
+    }
 
     $data = [
         'action' => 'update',
@@ -6825,7 +6931,7 @@ function public_home_feed_payload(string $feed = 'all', ?array $user = null): ar
 {
     $user ??= auth();
     $feed = $feed === 'following' ? 'following' : 'all';
-    $limit = public_status_page_limit();
+    $limit = public_status_initial_page_limit();
     $items = $feed === 'following'
         ? ((int) ($user['id'] ?? 0) > 0 ? public_status_items_for_user_cursor((int) ($user['id'] ?? 0), $limit) : [])
         : public_status_items_cursor($limit);
@@ -6870,16 +6976,18 @@ function status_feed_more_view_data(
     string $context,
     array $items,
     int $limit,
-    array $params = []
+    array $params = [],
+    ?int $nextLimit = null
 ): array {
     $loaded = count($items);
     $params += status_feed_cursor_params($items);
+    $nextLimit = $nextLimit === null ? $limit : max(1, min(50, $nextLimit));
 
     return [
         'feed_id' => $feedId,
         'loaded' => $loaded,
         'limit' => $limit,
-        'next_url' => $loaded >= $limit ? status_feed_next_url($context, $limit, $params) : '',
+        'next_url' => $loaded >= $limit ? status_feed_next_url($context, $nextLimit, $params) : '',
     ];
 }
 
