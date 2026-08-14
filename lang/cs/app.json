@@ -562,6 +562,7 @@
         "new": "Máš novou notifikaci.",
         "new_count": "Máš {count} nových notifikací.",
         "messages": {
+            "follow": "{actor} tě začal(a) sledovat.",
             "content_like": "{actor} lajknul/a tvůj příspěvek.",
             "comment_like": "{actor} lajknul/a tvůj komentář.",
             "content_comment": "{actor} okomentoval/a tvůj příspěvek.",
@@ -840,7 +841,7 @@
         "purpose_content_comments": "Vnořené komentáře k příspěvkům.",
         "purpose_comment_likes": "Lajky u komentářů.",
         "purpose_user_followers": "Sledování profilů uživateli.",
-        "purpose_notifications": "Upozornění na lajky, komentáře a označení.",
+        "purpose_notifications": "Upozornění na lajky, komentáře, označení a sledování.",
         "purpose_content_reports": "Uživatelská nahlášení pro moderaci.",
         "purpose_ip_action_limits": "IP bucket limity pro vybrané akce.",
         "purpose_password_reset_tokens": "Krátkodobé tokeny obnovy hesla posílané emailem.",

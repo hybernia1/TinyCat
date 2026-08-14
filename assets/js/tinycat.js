@@ -2718,7 +2718,9 @@
   function statusEditorText(editor) {
     var text = String(editor.innerText || "").replace(/\r\n/g, "\n").replace(/\u00a0/g, " ");
 
-    return text === "\n" ? "" : text;
+    // Browsers may retain one or more line breaks in an otherwise empty
+    // contenteditable editor. Treat that visual empty state as an empty draft.
+    return text.trim() === "" ? "" : text;
   }
 
   function setStatusEditorText(editor, text, caret) {

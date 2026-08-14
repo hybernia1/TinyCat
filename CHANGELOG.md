@@ -3,6 +3,20 @@
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 
+## 2.0.50 - 2026-08-14
+
+### Fixed
+
+- Reused a single notification and email for repeated likes or follows by the
+  same account, including after an unlike or unfollow.
+- Treated visually empty status editors as empty drafts, preventing an
+  unnecessary unsaved-changes prompt after deleting the text.
+
+### Simplification
+
+- Removed unused creation timestamps from post images, post likes and comment
+  likes, including through a migration for existing installations.
+
 ## 2.0.49 - 2026-08-12
 
 ### Fixed

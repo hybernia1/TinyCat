@@ -373,7 +373,6 @@ function tc_install_create_tables(): void
             width INT UNSIGNED NOT NULL,
             height INT UNSIGNED NOT NULL,
             bytes INT UNSIGNED NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (content_id),
             UNIQUE KEY content_images_path_unique (path),
             CONSTRAINT fk_content_images_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE
@@ -435,7 +434,6 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS content_likes (
             content_id BIGINT UNSIGNED NOT NULL,
             user_id INT UNSIGNED NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (content_id, user_id),
             KEY content_likes_user_index (user_id, content_id),
             CONSTRAINT fk_content_likes_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,
@@ -466,7 +464,6 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS comment_likes (
             comment_id BIGINT UNSIGNED NOT NULL,
             user_id INT UNSIGNED NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (comment_id, user_id),
             KEY comment_likes_user_index (user_id, comment_id),
             CONSTRAINT fk_comment_likes_comment FOREIGN KEY (comment_id) REFERENCES content_comments (id) ON DELETE CASCADE,

@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
 
 $root = dirname(__DIR__);
 $options = getopt('', ['artifact::']);
-$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.49')));
+$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.50')));
 $configPath = $root . '/config.php';
 $temporaryRoot = $root . '/storage/release-update-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . '/install';
@@ -269,6 +269,7 @@ PHP;
             '20260809_003_remove_link_embed_url.php',
             '20260809_004_move_email_template_states_to_settings.php',
             '20260809_005_move_smtp_settings_to_json.php',
+            '20260813_001_remove_relation_created_at.php',
         ], true),
     ) as $migrationPath) {
         $migration = pathinfo((string) $migrationPath, PATHINFO_FILENAME);
@@ -338,6 +339,7 @@ PHP;
         '20260809_003_remove_link_embed_url',
         '20260809_004_move_email_template_states_to_settings',
         '20260809_005_move_smtp_settings_to_json',
+        '20260813_001_remove_relation_created_at',
     ], 'Update removes obsolete tables and consolidates redundant email settings.');
     $assert(($update['extension_loaded'] ?? null) === true, 'Compatible extension remains loaded during update.');
     $assert(
@@ -347,6 +349,10 @@ PHP;
     $assert(
         (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'content' AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
         'Update removes the redundant content creation timestamp from the representative database.'
+    );
+    $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('content_images', 'content_likes', 'comment_likes') AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
+        'Update removes redundant relation creation timestamps from the representative database.'
     );
     $assert(
         (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'links' AND COLUMN_NAME = 'embed_url'")->fetchColumn() === 0,
@@ -372,9 +378,9 @@ PHP;
     }
 
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (Core::VERSION !== '2.0.49' || !isset(TinyCat\\Extension\\Loader::loaded()['release_probe'])) exit(2);";
+        . "; if (Core::VERSION !== '2.0.50' || !isset(TinyCat\\Extension\\Loader::loaded()['release_probe'])) exit(2);";
     [$newBootExit, $newBootOutput] = $run($newBootRunner);
-    $assert($newBootExit === 0, 'Updated 2.0.49 runtime and compatible extension boot: ' . implode(' ', $newBootOutput));
+    $assert($newBootExit === 0, 'Updated 2.0.50 runtime and compatible extension boot: ' . implode(' ', $newBootOutput));
 
     $backup = is_array($update) ? (string) ($update['backup'] ?? '') : '';
     $metadata = json_decode((string) @file_get_contents($backup . '/backup.json'), true);

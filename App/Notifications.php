@@ -12,6 +12,7 @@ final class Notifications
 
     private const PAGE_LIMIT = 40;
     private const TYPES = [
+        'follow' => ['icon' => 'user-plus', 'email' => 'notification_follow'],
         'content_like' => ['icon' => 'thumb-up', 'email' => 'notification_content_like'],
         'comment_like' => ['icon' => 'thumb-up', 'email' => 'notification_comment_like'],
         'content_comment' => ['icon' => 'message-circle', 'email' => 'notification_content_comment'],
@@ -46,8 +47,12 @@ final class Notifications
     public static function targetUrl(array $notification): string
     {
         $contentId = (int) ($notification['content_id'] ?? 0);
+        $actorId = (int) ($notification['actor_id'] ?? 0);
+        $type = (string) ($notification['type'] ?? '');
 
-        return $contentId > 0 ? status_url($contentId) : '/notifications';
+        return $contentId > 0
+            ? status_url($contentId)
+            : ($type === 'follow' && $actorId > 0 ? author_url($actorId) : '/notifications');
     }
 
     public static function url(array $notification): string
@@ -100,8 +105,11 @@ final class Notifications
             'updated_at' => $now,
         ];
 
+        $created = false;
+
         try {
             insert('notifications', $data);
+            $created = true;
         } catch (Throwable) {
             update('notifications', [
                 'actor_id' => $actorId,
@@ -112,7 +120,9 @@ final class Notifications
             ], ['user_id' => $userId, 'notification_key' => $key]);
         }
 
-        self::sendEmail($type, $userId, $actorId, $contentId);
+        if ($created) {
+            self::sendEmail($type, $userId, $actorId, $contentId);
+        }
     }
 
     public static function mentionedUserIds(string $text): array
@@ -205,6 +215,17 @@ final class Notifications
         };
 
         self::create($ownerId, $type, $actorId, $contentId, $commentId, $key);
+    }
+
+    public static function notifyFollowedUser(int $userId, array $actor): void
+    {
+        $actorId = (int) ($actor['id'] ?? 0);
+
+        if ($userId < 1 || $actorId < 1 || $userId === $actorId) {
+            return;
+        }
+
+        self::create($userId, 'follow', $actorId, 0, 0, 'follow:' . $userId . ':' . $actorId);
     }
 
     public static function notifyCommentOwner(int $commentId, array $actor): void

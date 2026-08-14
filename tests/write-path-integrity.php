@@ -57,16 +57,16 @@ $value = static fn (string $sql): mixed => $database->query($sql)->fetchColumn()
 foreach ([
     'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, role TEXT NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT, muted_until TEXT)',
     "CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL DEFAULT '', author_id INTEGER NOT NULL, published_at TEXT NOT NULL DEFAULT '2026-01-01 00:00:00', edit_locked_at TEXT)",
-    'CREATE TABLE content_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at TEXT)',
+    'CREATE TABLE content_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL)',
     'CREATE TABLE content_comments (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT, created_at TEXT)',
-    'CREATE TABLE comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, created_at TEXT)',
+    'CREATE TABLE comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL)',
     'CREATE TABLE terms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)',
     'CREATE TABLE content_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, UNIQUE (content_id, term_id))',
     'CREATE TABLE links (id INTEGER PRIMARY KEY AUTOINCREMENT, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)',
     'CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, UNIQUE (content_id, link_id))',
-    'CREATE TABLE content_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER, created_at TEXT)',
+    'CREATE TABLE content_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
     'CREATE TABLE content_reports (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, reporter_id INTEGER, status TEXT)',
-    'CREATE TABLE notifications (id INTEGER PRIMARY KEY, content_id INTEGER, comment_id INTEGER)',
+    'CREATE TABLE notifications (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, actor_id INTEGER, content_id INTEGER, comment_id INTEGER, type TEXT NOT NULL, notification_key TEXT NOT NULL, read_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE (user_id, notification_key))',
     'CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, token_hash TEXT NOT NULL UNIQUE, expires_at TEXT NOT NULL, used_at TEXT)',
     'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE (user_id, follower_id))',
 ] as $sql) {
@@ -165,6 +165,17 @@ $assert((bool) ($reaction['status']['liked'] ?? false), 'A status reaction is ad
 $reaction = status_json_react(300, $actor);
 $assert(!(bool) ($reaction['status']['liked'] ?? true), 'A status reaction is removed.');
 
+$reaction = status_json_react(200, $actor);
+$assert((bool) ($reaction['status']['liked'] ?? false), 'A status-owner notification is created for a new reaction.');
+$database->exec("UPDATE notifications SET read_at = '2026-08-14 12:00:00' WHERE content_id = 200");
+$reaction = status_json_react(200, $actor);
+$assert(!(bool) ($reaction['status']['liked'] ?? true), 'A notified reaction can be removed.');
+$reaction = status_json_react(200, $actor);
+$assert((bool) ($reaction['status']['liked'] ?? false), 'A removed reaction can be added again.');
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = 200') === 1, 'Repeated reactions reuse one notification.');
+$assert($value('SELECT read_at FROM notifications WHERE content_id = 200') === null, 'A repeated reaction restores the notification as unread.');
+$database->exec('DELETE FROM notifications WHERE content_id = 200');
+
 $payload = new ReflectionProperty(Core::class, 'payload');
 $setComment = static function (string $body) use ($payload): void {
     $_POST = ['comment' => $body];
@@ -230,12 +241,18 @@ $assert((int) $value('SELECT COUNT(*) FROM notifications') === 0, 'Editing a sch
 
 author_follow(2, 1);
 $assert(author_is_followed(2, 1), 'Following creates the social relation.');
+$assert((int) $value("SELECT COUNT(*) FROM notifications WHERE user_id = 1 AND notification_key = 'follow:1:2'") === 1, 'Following creates one notification for the followed profile.');
+$assert(Notifications::targetUrl(['type' => 'follow', 'actor_id' => 2]) === author_url(2), 'A follow notification links to the follower profile.');
 author_unfollow(2, 1);
 $assert(!author_is_followed(2, 1), 'Unfollowing removes the social relation.');
+author_follow(2, 1);
+$assert(author_is_followed(2, 1), 'Following can be restored after an unfollow.');
+$assert((int) $value("SELECT COUNT(*) FROM notifications WHERE user_id = 1 AND notification_key = 'follow:1:2'") === 1, 'Repeated follows reuse one notification and do not resend email.');
+$database->exec("DELETE FROM notifications WHERE user_id = 1 AND notification_key = 'follow:1:2'");
 
 $database->exec("INSERT INTO content_comments (id, content_id, parent_id, user_id, body) VALUES (10, 200, NULL, 2, 'parent'), (11, 200, 10, 3, 'reply'), (20, 100, NULL, 2, 'status comment')");
 $database->exec('INSERT INTO comment_likes (comment_id, user_id) VALUES (10, 4), (11, 4), (20, 4)');
-$database->exec('INSERT INTO notifications (id, content_id, comment_id) VALUES (1, 200, 10), (2, 200, 11), (3, 100, 20), (4, 100, NULL)');
+$database->exec("INSERT INTO notifications (id, user_id, content_id, comment_id, type, notification_key, created_at, updated_at) VALUES (1, 1, 200, 10, 'content_comment', 'test:1', '$now', '$now'), (2, 1, 200, 11, 'content_comment', 'test:2', '$now', '$now'), (3, 1, 100, 20, 'content_comment', 'test:3', '$now', '$now'), (4, 1, 100, NULL, 'content_like', 'test:4', '$now', '$now')");
 $database->exec('CREATE TRIGGER fail_comment_delete BEFORE DELETE ON content_comments WHEN OLD.id = 10 BEGIN SELECT RAISE(ABORT, \'forced comment failure\'); END');
 $commentFailed = false;
 try {

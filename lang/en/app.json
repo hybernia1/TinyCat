@@ -562,6 +562,7 @@
         "new": "You have a new notification.",
         "new_count": "You have {count} new notifications.",
         "messages": {
+            "follow": "{actor} followed you.",
             "content_like": "{actor} liked your post.",
             "comment_like": "{actor} liked your comment.",
             "content_comment": "{actor} commented on your post.",
@@ -840,7 +841,7 @@
         "purpose_content_comments": "Nested comments on posts.",
         "purpose_comment_likes": "Likes on comments.",
         "purpose_user_followers": "Profile follows between users.",
-        "purpose_notifications": "Alerts for likes, comments, and mentions.",
+        "purpose_notifications": "Alerts for likes, comments, mentions, and follows.",
         "purpose_content_reports": "User reports for moderation.",
         "purpose_ip_action_limits": "IP-based rate-limit buckets for selected actions.",
         "purpose_password_reset_tokens": "Short-lived password-reset tokens sent by email.",

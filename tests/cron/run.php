@@ -93,7 +93,6 @@ try {
             width INT UNSIGNED NOT NULL,
             height INT UNSIGNED NOT NULL,
             bytes INT UNSIGNED NOT NULL,
-            created_at DATETIME NOT NULL,
             PRIMARY KEY (content_id),
             UNIQUE KEY content_images_path_unique (path)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
@@ -141,7 +140,6 @@ try {
         'width' => 1,
         'height' => 1,
         'bytes' => 6,
-        'created_at' => date_db(),
     ]);
     insert('terms', ['name' => 'used']);
     $usedTermId = (int) db()->lastInsertId();

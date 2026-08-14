@@ -106,6 +106,10 @@ try {
         'Fresh installer does not create the redundant content creation timestamp.'
     );
     $assert(
+        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('content_images', 'content_likes', 'comment_likes') AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
+        'Fresh installer does not create redundant relation creation timestamps.'
+    );
+    $assert(
         (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'links' AND COLUMN_NAME = 'embed_url'")->fetchColumn() === 0,
         'Fresh installer does not create the redundant link embed URL.'
     );

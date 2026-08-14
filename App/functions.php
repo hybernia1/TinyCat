@@ -2304,10 +2304,7 @@ function author_follow(int $followerId, int $authorId): void
         'user_id' => $authorId,
         'follower_id' => $followerId,
     ]);
-    email_template_send('notification_follow', $authorId, [
-        'actor' => (string) (email_user($followerId)['username'] ?? 'Někdo'),
-        'actor_url' => absolute_url('/author/' . $followerId),
-    ]);
+    Notifications::notifyFollowedUser($authorId, ['id' => $followerId]);
 }
 
 function author_unfollow(int $followerId, int $authorId): void
@@ -6132,7 +6129,7 @@ function status_json_create(array $user, string $redirect = '/'): array
     }
 
     try {
-        db_transaction(static function () use (&$contentId, $body, $userId, $now, $publishedAt, $payload, $image): void {
+        db_transaction(static function () use (&$contentId, $body, $userId, $publishedAt, $payload, $image): void {
             $contentId = (int) insert('content', [
                 'body' => $body,
                 'author_id' => $userId,
@@ -6146,7 +6143,6 @@ function status_json_create(array $user, string $redirect = '/'): array
                     'width' => (int) $image['width'],
                     'height' => (int) $image['height'],
                     'bytes' => (int) $image['bytes'],
-                    'created_at' => $now,
                 ]);
             }
 
@@ -6209,7 +6205,6 @@ function status_json_react(int $contentId, array $user): array
         insert('content_likes', [
             'content_id' => $contentId,
             'user_id' => $userId,
-            'created_at' => date_db(),
         ]);
         moderation_record_action($user, 'like');
         Notifications::notifyContentOwner('content_like', $contentId, $user);
@@ -6314,7 +6309,6 @@ function status_json_comment_like(int $commentId, array $user): array
         insert('comment_likes', [
             'comment_id' => $commentId,
             'user_id' => $userId,
-            'created_at' => date_db(),
         ]);
         moderation_record_action($user, 'like');
         Notifications::notifyCommentOwner($commentId, $user);
@@ -6841,7 +6835,6 @@ function status_json_update(int $contentId, array $user, string $redirect = '/')
                         'width' => (int) $newImage['width'],
                         'height' => (int) $newImage['height'],
                         'bytes' => (int) $newImage['bytes'],
-                        'created_at' => date_db(),
                     ]);
                 } else {
                     update('content_images', [

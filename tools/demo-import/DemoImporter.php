@@ -455,13 +455,13 @@ final class DemoImporter
             $actors = $this->generator->uniqueIntegers('post-like-actors', (string) $contentId, $count, 1, $allUsers, $authorId);
             foreach ($actors as $actorId) {
                 $created = $this->generator->dateAfter('post-like-date', $contentId . ':' . $actorId, (string) $post['published_at']);
-                $likes[] = [$contentId, $actorId, $created];
+                $likes[] = [$contentId, $actorId];
                 if ($this->generator->chance('post-like-notification', $contentId . ':' . $actorId, 35)) {
                     $notifications[] = $this->notificationRow($authorId, $actorId, $contentId, null, 'content_like', 'content_like:' . $contentId . ':' . $actorId, $created);
                 }
             }
         }
-        $likeResult = $this->writer->insert('content_likes', ['content_id', 'user_id', 'created_at'], $likes, true);
+        $likeResult = $this->writer->insert('content_likes', ['content_id', 'user_id'], $likes, true);
         $notificationResult = $this->writer->insert('notifications', $this->notificationColumns(), $notifications, true);
         $last = (int) end($posts)['id'];
 
@@ -620,13 +620,13 @@ final class DemoImporter
             $actors = $this->generator->uniqueIntegers('comment-like-actors', (string) $commentId, $count, 1, $allUsers, $authorId);
             foreach ($actors as $actorId) {
                 $created = $this->generator->dateAfter('comment-like-date', $commentId . ':' . $actorId, (string) $comment['created_at']);
-                $likes[] = [$commentId, $actorId, $created];
+                $likes[] = [$commentId, $actorId];
                 if ($this->generator->chance('comment-like-notification', $commentId . ':' . $actorId, 50)) {
                     $notifications[] = $this->notificationRow($authorId, $actorId, (int) $comment['content_id'], $commentId, 'comment_like', 'comment_like:' . $commentId . ':' . $actorId, $created);
                 }
             }
         }
-        $likeResult = $this->writer->insert('comment_likes', ['comment_id', 'user_id', 'created_at'], $likes, true);
+        $likeResult = $this->writer->insert('comment_likes', ['comment_id', 'user_id'], $likes, true);
         $notificationResult = $this->writer->insert('notifications', $this->notificationColumns(), $notifications, true);
         $last = (int) end($comments)['id'];
 
