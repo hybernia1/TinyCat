@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Extension\Registry;
-use TinyCat\Extension\Assets;
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -25,14 +23,11 @@ $bodyClass = (string) ($bodyClass ?? '');
 $csrfToken = (string) ($csrfToken ?? csrf_token());
 $styles = $styles ?? ['css/tinycat.css'];
 $scripts = $scripts ?? ['js/tinycat.js'];
-$extensionAssets = Assets::forPath($current);
 $styleUrls = array_values(array_unique([
     ...array_map(static fn (mixed $style): string => asset((string) $style), (array) $styles),
-    ...$extensionAssets['styles'],
 ]));
 $scriptUrls = array_values(array_unique([
     ...array_map(static fn (mixed $script): string => asset((string) $script), (array) $scripts),
-    ...$extensionAssets['scripts'],
 ]));
 $actions = (string) ($actions ?? '');
 $meta = is_array($meta ?? null) ? $meta : [];
@@ -52,7 +47,7 @@ foreach (['success' => 'success', 'error' => 'danger', 'warning' => 'warning', '
 $defaultAdminNav = [
     ['href' => '/admin', 'icon' => 'dashboard', 'label' => t('common.dashboard')],
     ['href' => '/admin/users', 'icon' => 'users', 'label' => t('users.list_title')],
-    ...Registry::adminNavigation(),
+    Bots::adminNavigation(),
     [
         'icon' => 'shield',
         'label' => t('moderation.title'),
@@ -62,7 +57,6 @@ $defaultAdminNav = [
         ],
     ],
     ['href' => '/admin/cron', 'icon' => 'clock', 'label' => t('cron.title')],
-    ['href' => '/admin/extensions', 'icon' => 'puzzle', 'label' => t('extensions.title')],
     ['href' => '/admin/updates', 'icon' => 'download', 'label' => t('updates.title')],
     ['href' => '/admin/settings', 'icon' => 'settings', 'label' => t('settings.title')],
 ];

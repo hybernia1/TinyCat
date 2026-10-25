@@ -1,16 +1,12 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Extension\Registry;
 
 define('TINYCAT', true);
 require_once __DIR__ . '/App/bootstrap.php';
 
 $isCli = PHP_SAPI === 'cli';
-$taskDefinitions = Registry::scheduledTasks();
-if (isset($taskDefinitions['cleanup'])) {
-    throw new LogicException('The cleanup scheduled task name is reserved by TinyCat.');
-}
+$taskDefinitions = Bots::scheduledTasks();
 $taskDefinitions['cleanup'] = [
     'runner' => static function (array $context): array {
         $cleanupBatch = cleanup_batch_size($context['options']['cleanup_batch'] ?? 500);
@@ -65,7 +61,7 @@ if ($isCli) {
             $taskUsage = implode('|', ['all', ...$availableTasks]);
             $optionUsage = [];
             foreach ($taskDefinitions as $definition) {
-                foreach ((array) ($definition['options'] ?? []) as $name => $default) {
+                foreach ((array) $definition['options'] as $name => $default) {
                     $optionUsage[$name] = '[--' . str_replace('_', '-', (string) $name) . '=' . (int) $default . ']';
                 }
             }

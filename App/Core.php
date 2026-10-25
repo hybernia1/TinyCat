@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Extension\Registry;
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -16,7 +15,7 @@ if (!defined('TINYCAT')) {
  */
 final class Core
 {
-    public const string VERSION = '2.0.50';
+    public const string VERSION = '2.1.0';
     private const string SETTINGS_CACHE_KEY = 'core_autoload_settings';
     private const int SETTINGS_CACHE_TTL = 3600;
 
@@ -533,10 +532,7 @@ final class Core
             throw new RuntimeException('Translation file must contain a JSON object: ' . $path);
         }
 
-        self::$translations[$locale] = array_replace_recursive(
-            $data,
-            Registry::translations($locale)
-        );
+        self::$translations[$locale] = $data;
 
         return self::$translations[$locale];
     }

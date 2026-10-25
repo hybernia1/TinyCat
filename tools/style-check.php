@@ -9,7 +9,7 @@ if (PHP_SAPI !== 'cli') {
 $root = dirname(__DIR__);
 $fix = in_array('--fix', $argv, true);
 $files = [];
-$directories = ['App', 'Extensions', 'Public', 'migrations', 'tests', 'tools'];
+$directories = ['App', 'Public', 'migrations', 'tests', 'tools'];
 
 foreach ($directories as $directory) {
     $path = $root . DIRECTORY_SEPARATOR . $directory;

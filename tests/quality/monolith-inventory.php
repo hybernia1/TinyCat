@@ -15,9 +15,9 @@ $assert = static function (bool $condition, string $message) use (&$checks, &$fa
     }
 };
 
-$assert($inventory['production_php_files'] === 115, 'Production PHP inventory remains explicit.');
-$assert($inventory['app_php_files'] === 18, 'App retains the 18-file monolith baseline.');
-$assert($inventory['app_class_bearing_files'] === 15, 'App retains 15 class-bearing files.');
+$assert($inventory['production_php_files'] === 127, 'Production PHP inventory remains explicit.');
+$assert($inventory['app_php_files'] === 19, 'App retains the 19-file core boundary.');
+$assert($inventory['app_class_bearing_files'] === 16, 'App retains 16 class-bearing files.');
 $assert($inventory['unreferenced_global_functions'] === [], 'No unreferenced global function remains.');
 $assert($inventory['unreferenced_private_methods'] === [], 'No unreferenced private method remains.');
 
@@ -51,7 +51,7 @@ foreach ([
     'Public search, suggestions and bounded fallback scans.',
     'Status, comment and reaction policies plus transactional write paths.',
     'Scheduled maintenance, runtime health and request-lifetime activity.',
-    'Stable 2.0.x procedural facades retained for routes and extensions.',
+    'Procedural facades for application routes.',
     'Administration filtering, pagination and prepared list controls.',
     'Escaping, localization, date/time and HTTP/request facades.',
 ] as $section) {

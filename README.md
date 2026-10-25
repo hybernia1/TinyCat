@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **2.0.50**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
+Current release: **2.1.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
 
 ## Features
 
@@ -15,7 +15,7 @@ Current release: **2.0.50**. TinyCat uses [Semantic Versioning](https://semver.o
 - HTML5 link previews with Open Graph, video embeds, and cached metadata.
 - Optional email recovery and localized email notifications through PHP mail or SMTP.
 - Administration for users, site and email-delivery settings, scheduled tasks, moderation reports, account muting, and blocked domains.
-- A signed official extension store; optional features stay outside the clean CMS package.
+- Built-in passwordless bot accounts with scheduled RSS and Atom imports.
 - Author and tag feeds, XML sitemaps, `robots.txt`, `llms.txt`, and a generated web app manifest.
 - English and Czech interfaces with mobile-first CSS and lightweight JavaScript.
 
@@ -25,7 +25,7 @@ Current release: **2.0.50**. TinyCat uses [Semantic Versioning](https://semver.o
 - MySQL or MariaDB with the `pdo_mysql` PHP extension.
 - Apache 2.4 with `mod_rewrite` and `.htaccess` overrides enabled.
 - The `mbstring`, `gd`, `dom`, and `simplexml` PHP extensions for the full feature set.
-- The `curl` and `sodium` extensions, plus either `zip` or `phar`, for signed web updates and extension installation.
+- The `curl` and `sodium` extensions, plus either `zip` or `phar`, for signed web updates.
 - Outbound HTTPS streams (`allow_url_fopen`) for link previews and remote images; cURL is recommended for feed downloads.
 - Write access to `storage/` and `uploads/`. The installer also needs temporary permission to create `config.php` in the project root.
 
@@ -99,28 +99,25 @@ Before applying files, TinyCat enables maintenance mode and creates a rollback s
 
 Database changes are versioned PHP migrations recorded in `schema_migrations`. Fresh installations always receive the current schema directly; migrations exist only to move already running installations forward. See [`docs/updates.md`](docs/updates.md) for package creation, signing, publishing, recovery, and migration rules.
 
-## Extensions
+## Bots
 
-Administrators install and update optional features under **Admin → Extensions**. TinyCat reads the signed official catalog from [TinyCat Extensions](https://github.com/hybernia1/TinyCat-Extensions), verifies the catalog signature, package checksum, exact file list, manifest identity, and compatibility requirements, then keeps extension files under `Extensions/`.
+Bots are included in TinyCat. Create passwordless accounts under **Admin → Bots → Accounts** and RSS or Atom sources under **Admin → Bots → Sources**. Sources run on independent schedules and retain import history to prevent duplicate posts.
 
-The base release contains no functional extension. Existing installations keep their installed extension files and data; fresh installations add only the features they choose from the store.
-
-The official Bots extension provides passwordless bot accounts that publish from independently scheduled RSS or Atom sources without duplicating imported items. After installing it, create accounts under **Admin → Bots → Accounts** and sources under **Admin → Bots → Sources**.
+TinyCat 2.1 removes custom pages and the extension system, including the store and extension APIs. Existing Bots accounts, sources, posts and import history are adopted in place by the core update migration. Custom pages have no conversion migration. Legacy files under `Extensions/` are never loaded and remain blocked from web access; no extension installation or activation is required.
 
 ## Scheduled tasks
 
-The scheduler always provides routine cleanup. Extensions may register independent tasks; Bots adds the `feeds` task when installed and enabled.
+The scheduler provides the built-in `feeds` and `cleanup` tasks.
 
 The recommended scheduler is the command-line runner:
 
 ```bash
 php scheduled-tasks.php --health
 php scheduled-tasks.php --task=cleanup --cleanup-batch=500
-# With Bots installed:
 php scheduled-tasks.php --task=feeds --bot-limit=20
 ```
 
-Keep independent tasks in separate scheduler entries. With Bots installed, for example, poll feeds every two minutes and run cleanup hourly:
+Keep independent tasks in separate scheduler entries. For example, poll feeds every two minutes and run cleanup hourly:
 
 ```cron
 */2 * * * * php /path/to/tinycat/scheduled-tasks.php --task=feeds --bot-limit=20
@@ -168,7 +165,7 @@ composer preflight
 The preflight validates Composer metadata and advisories, deterministic source
 style, PHP 8.4 syntax, PHPStan level 8, repository secrets and managed update
 paths. It then runs the monolith boundary, HTML, view, route, archived query,
-cache, minifier, extension, updater, cron, importer, signed artifact, rollback
+cache, minifier, bots, updater, cron, importer, signed artifact, rollback
 and restart-safe MySQL installer suites.
 
 PHPStan covers all production PHP against the frozen 2.0.25 legacy baseline.
@@ -180,8 +177,8 @@ Tests and development tools are excluded from signed production packages.
 - `index.php` is the HTTP front controller and route registry.
 - `scheduled-tasks.php` runs bot imports and routine data cleanup from CLI or an authenticated HTTP request.
 - `App/bootstrap.php` initializes the runtime and the small `TinyCat\` PSR-4 autoloader.
-- `App/Extension/` contains extension discovery, lifecycle, registration, and the signed store.
-- `App/Update/` contains signed application updates and the shared migration registry.
+- `App/Bots.php` and `App/BotAdmin.php` own feed imports and bot administration.
+- `App/PackageManager.php` contains signed application updates and the migration registry.
 - The remaining files in `App/` are standalone runtime and domain services.
 - `Public/` contains pages, layouts, modals, reusable view parts, and the installer.
 - `assets/` contains the source CSS, JavaScript, and SVG icon sprite.

@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Extension\Registry;
 use TinyCat\Sitemap;
 
 if (!defined('TINYCAT')) {
@@ -121,7 +120,7 @@ function app_required_tables(): array
         'content_reports',
         'ip_action_limits',
         'password_reset_tokens',
-        ...Registry::requiredTables(),
+        ...Bots::requiredTables(),
         'settings',
     ];
 
@@ -7354,14 +7353,18 @@ function app_apply_user_locale(): void
 {
     $user = auth();
 
-    if ($user === null) {
+    $locale = language_code((string) ($user['locale'] ?? ''));
+    $packages = language_packages();
+
+    if ($locale !== '' && array_key_exists($locale, $packages)) {
+        locale($locale);
         return;
     }
 
-    $locale = language_code((string) ($user['locale'] ?? ''));
+    $detected = language_detect((string) ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? ''), array_keys($packages));
 
-    if ($locale !== '' && array_key_exists($locale, language_packages())) {
-        locale($locale);
+    if ($detected !== null) {
+        locale($detected);
     }
 }
 
@@ -7430,7 +7433,7 @@ function app_db_ready(?array $requiredTables = null): bool
     return (bool) app_db_status($requiredTables)['ready'];
 }
 
-// Stable 2.0.x procedural facades retained for routes and extensions.
+// Procedural facades for application routes.
 
 function asset(string $path, ?bool $version = null): string
 {
@@ -7706,6 +7709,42 @@ function language_code(string $code): string
     $code = strtolower(trim(str_replace('_', '-', $code)));
 
     return preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $code) ? $code : '';
+}
+
+/** @param list<string> $available */
+function language_detect(string $header, array $available): ?string
+{
+    $preferences = [];
+
+    foreach (explode(',', $header) as $entry) {
+        if (preg_match('/^\s*([a-z]{1,8}(?:-[a-z0-9]{1,8})*|\*)\s*(?:;\s*q\s*=\s*(0(?:\.\d{0,3})?|1(?:\.0{0,3})?))?\s*$/i', $entry, $match) !== 1) {
+            continue;
+        }
+
+        $quality = isset($match[2]) ? (float) $match[2] : 1.0;
+
+        if ($quality > 0 && $match[1] !== '*') {
+            $preferences[] = ['code' => strtolower($match[1]), 'quality' => $quality];
+        }
+    }
+
+    // Stable sorting preserves the browser's order for equally preferred languages.
+    usort($preferences, static fn (array $a, array $b): int => $b['quality'] <=> $a['quality']);
+
+    foreach ($preferences as $preference) {
+        $code = $preference['code'];
+
+        while ($code !== '') {
+            if (in_array($code, $available, true)) {
+                return $code;
+            }
+
+            $separator = strrpos($code, '-');
+            $code = $separator === false ? '' : substr($code, 0, $separator);
+        }
+    }
+
+    return null;
 }
 
 function language_names(): array

@@ -25,11 +25,5 @@ require_once __DIR__ . '/Notifications.php';
 require_once __DIR__ . '/UserRoles.php';
 require_once __DIR__ . '/functions.php';
 
-$extensionStateOverrides = Core::setting('extensions.states', []);
-$extensionInstalledVersions = Core::setting('extensions.installed_versions', []);
-TinyCat\Extension\Loader::boot(
-    dirname(__DIR__) . '/Extensions',
-    is_array($extensionStateOverrides) ? $extensionStateOverrides : [],
-    is_array($extensionInstalledVersions) ? $extensionInstalledVersions : []
-);
-unset($extensionStateOverrides, $extensionInstalledVersions);
+require_once __DIR__ . '/Bots.php';
+require_once __DIR__ . '/BotAdmin.php';

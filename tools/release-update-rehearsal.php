@@ -7,8 +7,8 @@ if (PHP_SAPI !== 'cli') {
 }
 
 $root = dirname(__DIR__);
-$options = getopt('', ['artifact::']);
-$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.0.50')));
+$options = getopt('', ['artifact::', 'key::']);
+$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.1.0')));
 $configPath = $root . '/config.php';
 $temporaryRoot = $root . '/storage/release-update-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . '/install';
@@ -163,7 +163,7 @@ try {
     $signaturePath = $artifactRoot . '/tinycat-update.sig';
     $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
     $packagePath = $artifactRoot . '/' . basename((string) ($manifest['package'] ?? ''));
-    $keyEncoded = trim((string) file_get_contents($root . '/storage/update-signing.key'));
+    $keyEncoded = trim((string) file_get_contents((string) ($options['key'] ?? ($root . '/storage/update-signing.key'))));
     $secretKey = base64_decode($keyEncoded, true);
 
     if (!is_string($secretKey) || strlen($secretKey) !== SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) {
@@ -270,6 +270,7 @@ PHP;
             '20260809_004_move_email_template_states_to_settings.php',
             '20260809_005_move_smtp_settings_to_json.php',
             '20260813_001_remove_relation_created_at.php',
+            '20261025_001_core_bots.php',
         ], true),
     ) as $migrationPath) {
         $migration = pathinfo((string) $migrationPath, PATHINFO_FILENAME);
@@ -340,6 +341,7 @@ PHP;
         '20260809_004_move_email_template_states_to_settings',
         '20260809_005_move_smtp_settings_to_json',
         '20260813_001_remove_relation_created_at',
+        '20261025_001_core_bots',
     ], 'Update removes obsolete tables and consolidates redundant email settings.');
     $assert(($update['extension_loaded'] ?? null) === true, 'Compatible extension remains loaded during update.');
     $assert(
@@ -378,9 +380,9 @@ PHP;
     }
 
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (Core::VERSION !== '2.0.50' || !isset(TinyCat\\Extension\\Loader::loaded()['release_probe'])) exit(2);";
+        . "; if (Core::VERSION !== '2.1.0' || !class_exists('Bots') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
     [$newBootExit, $newBootOutput] = $run($newBootRunner);
-    $assert($newBootExit === 0, 'Updated 2.0.50 runtime and compatible extension boot: ' . implode(' ', $newBootOutput));
+    $assert($newBootExit === 0, 'Updated 2.1.0 runtime boots with built-in Bots: ' . implode(' ', $newBootOutput));
 
     $backup = is_array($update) ? (string) ($update['backup'] ?? '') : '';
     $metadata = json_decode((string) @file_get_contents($backup . '/backup.json'), true);
@@ -456,4 +458,4 @@ if ($failures !== []) {
     exit(1);
 }
 
-echo "PASS exact 2.0.25 representative MySQL update, extension compatibility and rollback ({$checks} checks)\n";
+echo "PASS exact 2.0.25 representative MySQL update, built-in Bots and rollback ({$checks} checks)\n";

@@ -19,6 +19,15 @@ final class UserRoles
     ];
 
     private static array $roles = [
+        'bot' => [
+            'label' => 'users.roles.bot',
+            'allows_login' => false,
+            'receives_notifications' => false,
+            'managed_by_core_admin' => false,
+            'can_be_muted' => false,
+            'appears_in_people_rankings' => false,
+            'profile_schema_type' => 'Organization',
+        ],
         'admin' => [
             'label' => 'users.roles.admin',
             'allows_login' => true,
@@ -41,21 +50,6 @@ final class UserRoles
 
     private function __construct()
     {
-    }
-
-    public static function register(string $role, array $capabilities): void
-    {
-        $role = strtolower(trim($role));
-
-        if (preg_match('/^[a-z][a-z0-9_-]{0,39}$/', $role) !== 1) {
-            throw new InvalidArgumentException('Invalid user role name.');
-        }
-
-        if (isset(self::$roles[$role])) {
-            throw new LogicException('User role is already registered: ' . $role);
-        }
-
-        self::$roles[$role] = array_replace(self::DEFAULTS, $capabilities);
     }
 
     public static function allowsLogin(string $role): bool

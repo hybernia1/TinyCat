@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
 
 $root = dirname(__DIR__);
 $files = [];
-foreach (['App', 'Extensions', 'Public', 'migrations', 'tests', 'tools'] as $directory) {
+foreach (['App', 'Public', 'migrations', 'tests', 'tools'] as $directory) {
     $path = $root . DIRECTORY_SEPARATOR . $directory;
     if (!is_dir($path)) continue;
     $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS));

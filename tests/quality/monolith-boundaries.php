@@ -31,8 +31,8 @@ foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/
 
 ksort($appFiles, SORT_STRING);
 sort($classFiles, SORT_STRING);
-$assert(count($appFiles) === 18, 'App must retain the 18-file v2.0.25 production baseline.');
-$assert(count($classFiles) === 15, 'Production class-bearing files must retain the v2.0.25 baseline of 15.');
+$assert(count($appFiles) === 19, 'App must retain the 19-file production boundary.');
+$assert(count($classFiles) === 16, 'Production class-bearing files must retain the core boundary of 16.');
 
 foreach (['App/Core.php', 'App/functions.php', 'App/PackageManager.php'] as $required) {
     $assert(isset($appFiles[$required]), "Required monolith owner is missing: {$required}");
@@ -72,4 +72,4 @@ if ($failures !== []) {
     exit(1);
 }
 
-echo "PASS monolith boundaries ({$checks} checks, 18 App files, 15 class-bearing files)\n";
+echo "PASS monolith boundaries ({$checks} checks, 19 App files, 16 class-bearing files)\n";

@@ -150,9 +150,15 @@ try {
         }
     }
 
-    foreach (['App/Core.php', 'App/functions.php', 'App/PackageManager.php', 'index.php', 'scheduled-tasks.php'] as $required) {
+    foreach (['App/Core.php', 'App/functions.php', 'App/PackageManager.php', 'App/Bots.php', 'App/BotAdmin.php', 'Public/admin/bots/accounts-page.php', 'index.php', 'scheduled-tasks.php'] as $required) {
         if (!in_array($required, $names, true)) {
             $failures[] = "Required monolith runtime file missing from artifact: {$required}";
+        }
+    }
+
+    foreach ($names as $name) {
+        if (str_starts_with($name, 'Extensions/') || in_array($name, ['App/Extension.php', 'Public/admin/extensions.php', 'docs/extensions.md'], true)) {
+            $failures[] = 'Retired extension support in artifact: ' . $name;
         }
     }
 

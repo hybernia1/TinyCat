@@ -165,6 +165,62 @@ try {
     $assert(($status['missing_tables'] ?? null) === [], 'Installed database reports no missing tables.');
     $assert(($status['account_ready'] ?? false) === true, 'Installed database reports an active account.');
     $assert(($status['ready'] ?? false) === true, 'Installed database is application-ready.');
+
+    $botId = (int) insert('users', [
+        'username' => 'adopted_feedbot',
+        'role' => 'bot',
+        'status' => 'active',
+        'locale' => 'en',
+        'bio' => '',
+    ]);
+    $feedHash = Bots::feedSourceHash('https://93.184.216.34/feed');
+    $sourceId = (int) insert('bot_sources', [
+        'bot_user_id' => $botId,
+        'name' => 'Preserved source',
+        'feed_url' => 'https://93.184.216.34/feed',
+        'feed_hash' => $feedHash,
+        'post_template' => Bots::defaultSourceTemplate(),
+        'next_run_at' => date('Y-m-d H:i:s', time() + 86400),
+    ]);
+    $historyHash = hash('sha256', 'existing-item');
+    insert('bot_feed_history', ['bot_user_id' => $botId, 'feed_hash' => $feedHash, 'item_hash' => $historyHash]);
+    insert('bot_source_runs', ['source_id' => $sourceId, 'status' => 'imported', 'started_at' => date_db(), 'items_seen' => 1]);
+
+    // Simulate an older installed Bots package with per-source duplicate history.
+    run('CREATE TABLE bot_feed_items (source_id BIGINT UNSIGNED NOT NULL, item_hash CHAR(64) NOT NULL, PRIMARY KEY (source_id, item_hash)) ENGINE=InnoDB');
+    $legacyHash = hash('sha256', 'legacy-item');
+    insert('bot_feed_items', ['source_id' => $sourceId, 'item_hash' => $legacyHash]);
+    run('ALTER TABLE bot_sources ADD COLUMN updated_at DATETIME NULL');
+    $adoptBots = require $root . '/migrations/20261025_001_core_bots.php';
+    $adoptBots(db());
+    $adoptBots(db());
+    $assert(BotAdmin::accountById($botId)['username'] === 'adopted_feedbot', 'Core adoption preserves the bot account and ID.');
+    $assert(Bots::findSource($sourceId)['feed_hash'] === $feedHash, 'Core adoption preserves source identity and scheduling.');
+    $assert((int) val('SELECT COUNT(*) FROM bot_source_runs WHERE source_id = ?', [$sourceId]) === 1, 'Core adoption preserves run history.');
+    $knownHashes = (new ReflectionMethod(Bots::class, 'feedHistoryHashes'))->invoke(null, $botId, $feedHash, [$historyHash, $legacyHash]);
+    $assert(isset($knownHashes[$historyHash], $knownHashes[$legacyHash]), 'Repeated core adoption retains current and legacy duplicate protection.');
+    $assert((int) val("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'bot_feed_items'") === 0, 'Core adoption finishes legacy history consolidation.');
+    $feedTask = Bots::scheduledTasks()['feeds']['runner'];
+    $feedResult = $feedTask(['options' => ['bot_limit' => 20]]);
+    $assert($feedResult['ok'] && $feedResult['count'] === 0, 'Built-in scheduler respects a future source schedule.');
+
+    $_SERVER['REQUEST_METHOD'] = 'GET';
+    $_SERVER['HTTP_HOST'] = 'localhost';
+    Core::authLogin($firstAdmin);
+    foreach (['accounts-page.php', 'sources-page.php', 'detail.php'] as $botPage) {
+        $_GET = ['id' => $botId];
+        $_SERVER['REQUEST_URI'] = '/admin/bots/' . $botId;
+        ob_start();
+        try {
+            require $root . '/Public/admin/bots/' . $botPage;
+            $botHtml = (string) ob_get_contents();
+        } finally {
+            ob_end_clean();
+        }
+        $assert(str_contains($botHtml, 'adopted_feedbot'), 'Built-in bot admin renders adopted data: ' . $botPage);
+        $assert(!str_contains($botHtml, '/admin/extensions'), 'Built-in bot navigation omits the extension store: ' . $botPage);
+    }
+
     $assert(is_string($configHash) && hash_file('sha256', $configPath) === $configHash, 'Schema rehearsal does not replace application configuration.');
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();

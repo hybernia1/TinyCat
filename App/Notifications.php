@@ -217,6 +217,7 @@ final class Notifications
         self::create($ownerId, $type, $actorId, $contentId, $commentId, $key);
     }
 
+    /** @param array<string, mixed> $actor */
     public static function notifyFollowedUser(int $userId, array $actor): void
     {
         $actorId = (int) ($actor['id'] ?? 0);

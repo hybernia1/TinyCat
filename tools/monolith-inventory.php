@@ -10,8 +10,8 @@ if (PHP_SAPI !== 'cli') {
 function tc_inventory_php_files(string $root, bool $productionOnly): array
 {
     $directories = $productionOnly
-        ? ['App', 'Extensions', 'Public', 'migrations']
-        : ['App', 'Extensions', 'Public', 'migrations', 'tests', 'tools'];
+        ? ['App', 'Public', 'migrations']
+        : ['App', 'Public', 'migrations', 'tests', 'tools'];
     $files = [];
 
     foreach ($directories as $directory) {

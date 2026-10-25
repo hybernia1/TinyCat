@@ -136,7 +136,7 @@ foreach ([
     '/admin/settings',
     '/admin/moderation/reports',
     '/admin/moderation/blocking',
-    '/admin/extensions',
+    '/admin/cron',
     '/admin/updates',
 ] as $uri) {
     $pipes = [];

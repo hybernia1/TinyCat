@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Extension\Registry;
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -34,14 +33,11 @@ $cronUrl = absolute_url('/scheduled-tasks.php');
 $runnerPath = base_path('scheduled-tasks.php');
 $taskViews = [];
 
-foreach (Registry::scheduledTasks() as $task => $definition) {
-    $admin = $definition['admin'] ?? null;
-    if (!is_array($admin)) {
-        continue;
-    }
+foreach (Bots::scheduledTasks() as $task => $definition) {
+    $admin = $definition['admin'];
 
     $arguments = [];
-    foreach ((array) ($definition['options'] ?? []) as $name => $default) {
+    foreach ((array) $definition['options'] as $name => $default) {
         $arguments[] = '--' . str_replace('_', '-', (string) $name) . '=' . (int) $default;
     }
 

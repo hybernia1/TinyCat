@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0
+
+- Include Bots in core: passwordless accounts, source administration, RSS/Atom import, translations and the `feeds` scheduled task are always available.
+- Preserve existing Bots accounts, sources and import history during the update; initialize bot storage on installations that did not use Bots.
+- Remove custom pages, the extension store, loader, registration APIs and extension administration. Custom pages have no data conversion migration; legacy extension files remain private and are never loaded.
+- Detect interface language from browser preferences when no supported account language is stored; manual account selection keeps precedence.
+
+
 All notable TinyCat changes are documented here. TinyCat follows Semantic
 Versioning.
 

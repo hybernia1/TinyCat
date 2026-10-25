@@ -1,4 +1,9 @@
 {
+    "2.1.0": [
+        "App/Extension.php",
+        "Public/admin/extensions.php",
+        "docs/extensions.md"
+    ],
     "2.0.48": [
         "assets/css/tinycat-admin.css",
         "assets/css/tinycat-avatar.css",

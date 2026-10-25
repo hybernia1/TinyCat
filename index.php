@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Extension\Registry;
 use TinyCat\Sitemap;
 use TinyCat\Update\Manager;
 
@@ -27,7 +26,7 @@ if (!$siteIdentityPath) {
     Manager::enforceMaintenance($path);
 }
 
-Registry::registerRoutes();
+Bots::registerRoutes();
 
 route('GET', '/admin/moderation', static function (): void {
     redirect('/admin/moderation/reports');

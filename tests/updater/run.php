@@ -53,13 +53,13 @@ $test('shared package manager validates remote package inputs', static function 
 
 $test('managed update paths accept runtime files', static function () use ($invoke, $expect): void {
     $expect($invoke('managedPath', 'App/PackageManager.php') === 'App/PackageManager.php');
-    $expect($invoke('managedPath', 'Extensions/Bots/extension.json') === 'Extensions/Bots/extension.json');
+    $expect($invoke('managedPath', 'App/Bots.php') === 'App/Bots.php');
     $expect($invoke('managedPath', 'docs/updates.md') === 'docs/updates.md');
     $expect($invoke('managedPath', 'scheduled-tasks.php') === 'scheduled-tasks.php');
 });
 
 $test('managed update paths reject protected and traversal targets', static function () use ($invoke, $expectFailure): void {
-    foreach (['config.php', 'storage/cache.php', 'uploads/avatar.php', '../index.php', 'App//Core.php', '/App/Core.php'] as $path) {
+    foreach (['Extensions/Bots/extension.json', 'config.php', 'storage/cache.php', 'uploads/avatar.php', '../index.php', 'App//Core.php', '/App/Core.php'] as $path) {
         $expectFailure(static fn (): mixed => $invoke('managedPath', $path));
     }
 });

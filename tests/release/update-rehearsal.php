@@ -9,7 +9,7 @@ $installRoot = $temporaryRoot . '/install';
 $freshRoot = $temporaryRoot . '/fresh';
 $artifactRoot = $temporaryRoot . '/dist';
 $signingKey = $temporaryRoot . '/signing.key';
-$candidateVersion = '2.0.50';
+$candidateVersion = '2.1.0';
 $failures = [];
 $managedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
 $managedRootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
@@ -277,20 +277,19 @@ PHP;
     $assert($updateExit === 0 && is_array($updateResult), 'Updater rehearsal completes: ' . implode(' ', $updateOutput));
     $assert(($updateResult['maintenance_during'] ?? null) === true, 'Maintenance mode is active while files change.');
     $assert(($updateResult['maintenance_after'] ?? null) === false, 'Maintenance mode is disabled after success.');
-$assert((int) ($updateResult['deletions'] ?? -1) === 11, 'Patch candidate removes obsolete profile link partials, the email template page and split stylesheet files.');
+$assert((int) ($updateResult['deletions'] ?? -1) === 14, 'Candidate removes obsolete runtime files including extension support.');
     $assert((string) file_get_contents($installRoot . '/storage/rehearsal-sentinel.txt') === 'storage-preserved', 'Storage survives update.');
     $assert((string) file_get_contents($installRoot . '/uploads/rehearsal-sentinel.txt') === 'uploads-preserved', 'Uploads survive update.');
     $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash, 'Configuration survives update byte-for-byte.');
-    $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Compatible unmanaged extension survives update.');
+    $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Retired extension files remain private and untouched.');
     $bootNew = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; if (Core::VERSION !== " . var_export($candidateVersion, true) . ") exit(2);";
     [$newBootExit, $newBootOutput] = $run($bootNew);
     $assert($newBootExit === 0, 'Updated candidate runtime boots: ' . implode(' ', $newBootOutput));
-    $extensionProbe = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; \$found=TinyCat\\Extension\\Loader::discover(" . var_export($installRoot . '/Extensions', true)
-        . "); if (!(\$found['rehearsal_probe']['compatible'] ?? false)) exit(2);";
-    [$extensionExit, $extensionOutput] = $run($extensionProbe);
-    $assert($extensionExit === 0, 'Compatible 2.0.25 extension remains discoverable after update: ' . implode(' ', $extensionOutput));
+    $retiredProbe = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
+        . "; if (class_exists('TinyCat\\\\Extension\\\\Loader') || !class_exists('Bots')) exit(2);";
+    [$retiredExit, $retiredOutput] = $run($retiredProbe);
+    $assert($retiredExit === 0, 'Updated runtime provides Bots without an extension loader: ' . implode(' ', $retiredOutput));
 
     $updatedInventory = $inventory($installRoot);
     $repeatRunner = <<<'PHP'
@@ -373,7 +372,7 @@ PHP;
     $restoredInventory = $inventory($installRoot);
     $assert($restoredInventory === $baselineInventory, 'Rollback restores the exact v2.0.25 managed inventory.');
     $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash, 'Rollback leaves configuration unchanged.');
-    $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Rollback leaves the compatible extension unchanged.');
+    $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Rollback leaves legacy extension files unchanged.');
     $bootOld = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; if (Core::VERSION !== '2.0.25') exit(2);";
     [$oldBootExit, $oldBootOutput] = $run($bootOld);
