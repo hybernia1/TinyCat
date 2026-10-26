@@ -255,6 +255,14 @@ PHP;
     [$installExit, $installOutput] = $run(str_replace('__ROOT__', var_export($installRoot, true), $installRunner));
     $assert($installExit === 0, 'Exact 2.0.25 installer prepares the representative database: ' . implode(' ', $installOutput));
 
+    require_once $root . '/tools/demo-import/Schema.php';
+    $seedSchema = new \TinyCat\Tools\DemoImport\Schema($database);
+    $seedSchema->validate(false);
+    $uiRejected = false;
+    try { $seedSchema->validate(true); }
+    catch (RuntimeException $exception) { $uiRejected = str_contains($exception->getMessage(), 'bot_sources'); }
+    $assert($uiRejected, 'Legacy schemas allow representative data but reject unavailable UI fixture tables.');
+
     $importCommand = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/demo-import.php')
         . ' --config=' . escapeshellarg($installRoot . '/config.php')
         . ' --profile=small --users=60 --min-posts=3 --max-posts=5'

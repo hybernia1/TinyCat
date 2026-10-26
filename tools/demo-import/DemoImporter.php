@@ -91,7 +91,7 @@ final class DemoImporter
     /** @return array<string, mixed> */
     public function run(): array
     {
-        $this->schema->validate();
+        $this->schema->validate($this->options->uiFixtures);
         if ($this->options->uiFixtures && !function_exists('imagewebp')) { throw new RuntimeException('UI fixtures require GD with WebP support.'); }
         $configuration = ['database' => $this->databaseName, ...$this->options->fingerprintData()];
         $fingerprint = hash('sha256', json_encode($configuration, JSON_THROW_ON_ERROR));

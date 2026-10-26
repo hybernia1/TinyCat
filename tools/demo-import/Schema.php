@@ -10,10 +10,6 @@ use Throwable;
 final readonly class Schema
 {
     private const array REQUIRED_TABLES = [
-        'bot_sources',
-        'bot_source_runs',
-        'bot_feed_history',
-        'content_images',
         'users',
         'content',
         'terms',
@@ -28,6 +24,8 @@ final readonly class Schema
         'content_reports',
         'settings',
     ];
+
+    private const array UI_TABLES = ['bot_sources', 'bot_source_runs', 'bot_feed_history', 'content_images'];
 
     private const array RESET_TABLES = [
         'bot_source_runs',
@@ -54,7 +52,7 @@ final readonly class Schema
     {
     }
 
-    public function validate(): void
+    public function validate(bool $uiFixtures = false): void
     {
         $statement = $this->database->query(
             'SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()'
@@ -64,7 +62,7 @@ final readonly class Schema
         }
         $tables = array_fill_keys(array_map('strval', $statement->fetchAll(PDO::FETCH_COLUMN)), true);
         $missing = array_values(array_filter(
-            self::REQUIRED_TABLES,
+            $uiFixtures ? [...self::REQUIRED_TABLES, ...self::UI_TABLES] : self::REQUIRED_TABLES,
             static fn (string $table): bool => !isset($tables[$table]),
         ));
         if ($missing !== []) {
