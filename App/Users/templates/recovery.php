@@ -36,7 +36,7 @@ declare(strict_types=1);
             </form>
             <div class="cluster gap-2">
                 <a class="btn btn-secondary btn-sm" href="/login"><?= \TinyCat\Support\Html::icon('login') ?> <span><?= \TinyCat\Support\Html::et('common.login') ?></span></a>
-                <a class="btn btn-ghost btn-sm" href="/privacy"><?= \TinyCat\Support\Html::icon('shield') ?> <span><?= \TinyCat\Support\Html::et('privacy.title') ?></span></a>
+                <a class="btn btn-ghost btn-sm" href="/privacy" rel="privacy-policy"><?= \TinyCat\Support\Html::icon('shield') ?> <span><?= \TinyCat\Support\Html::et('privacy.title') ?></span></a>
             </div>
         </div>
     </article>

@@ -144,7 +144,7 @@ final class Avatar
         $username = \TinyCat\Users\Usernames::username_normalize($username);
 
         if (!\TinyCat\Users\Usernames::username_valid($username)) {
-            http_response_code(404);
+            \TinyCat\Site\Errors::respond(404);
             exit;
         }
 
@@ -157,7 +157,7 @@ final class Avatar
         $url = self::url((int) ($user['id'] ?? 0), (int) ($user['avatar_exists'] ?? 0) === 1, $user['updated_at'] ?? null);
 
         if ($url === '') {
-            http_response_code(404);
+            \TinyCat\Site\Errors::respond(404);
             exit;
         }
 

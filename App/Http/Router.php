@@ -86,10 +86,7 @@ final class Router
                 Response::error('Method not allowed.', 405, 'method_not_allowed', ['allowed' => $allowed]);
             }
 
-            http_response_code(405);
-            echo 'Method not allowed.';
-
-            return true;
+            throw new \RuntimeException('Method not allowed.', 405);
         }
 
         if (self::isApiPath($path)) {

@@ -15,6 +15,12 @@ final class Api
     {
         $api->get('/users/authentication', self::authentication(...));
         $api->post('/users/sessions', static fn (): Result => self::result(Login::auth_login_request()), 'public', 200);
+        $api->post('/users/registrations/email-checks', static function (): array {
+            if (!Accounts::registration_enabled()) { Response::error(\TinyCat\Support\Localization::t('auth.registration_disabled'), 403, 'registration_disabled'); }
+            return EmailAvailability::check();
+        }, 'public', 200);
+        $api->post('/users/me/email-checks', static fn (): array => EmailAvailability::check((int) self::actor()['id']), 'user', 200);
+        $api->post('/users/{id:[0-9]+}/email-checks', static fn (Request $r, array $p): array => EmailAvailability::check((int) self::target((int) $p['id'])['id']), 'user', 200);
         $api->post('/users/registrations', static fn (): Result => self::result(Actions::registration_request()), 'public');
         $api->post('/users/password-resets', static function (Request $request): Result {
             self::recoveryCaptcha();

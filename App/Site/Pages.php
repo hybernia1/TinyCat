@@ -23,8 +23,7 @@ final class Pages
             Csrf::requireToken();
 
             if ((string) Web::post('action') !== 'reset-opcache') {
-                http_response_code(400);
-                echo 'Invalid action.';
+                Errors::respond(400);
                 return;
             }
 
@@ -35,8 +34,7 @@ final class Pages
 
         if (Request::current()->method() !== 'GET') {
             header('Allow: GET, POST');
-            http_response_code(405);
-            echo 'Method not allowed.';
+            Errors::respond(405);
             return;
         }
 
@@ -59,7 +57,16 @@ final class Pages
                 'description' => Localization::t('privacy.meta', ['site' => Presentation::site_name()]),
                 'url' => '/privacy',
                 'image' => Presentation::site_meta_image_url(),
-                'type' => 'article',
+                'type' => 'website',
+                'jsonld' => [
+                    '@context' => 'https://schema.org', '@type' => 'WebPage',
+                    '@id' => Presentation::absolute_url('/privacy') . '#webpage',
+                    'url' => Presentation::absolute_url('/privacy'),
+                    'name' => Localization::t('privacy.title'),
+                    'description' => Localization::t('privacy.meta', ['site' => $siteName]),
+                    'inLanguage' => Localization::locale(),
+                    'isPartOf' => ['@type' => 'WebSite', 'url' => Presentation::absolute_url('/'), 'name' => $siteName],
+                ],
             ],
         ], View::render('privacy', compact('siteName', 'siteCaptchaEnabled', 'siteGoogleAnalyticsConfigured', 'privacyLimitRows'), __DIR__ . '/templates'));
     }
@@ -111,6 +118,9 @@ final class Pages
             http_response_code(404);
         }
 
+        $errorStatus = http_response_code();
+        header('Cache-Control: no-store, max-age=0');
+        header('X-Robots-Tag: noindex');
         Layout::render([
             'title' => $notFoundTitle,
             'current' => $notFoundCurrent,
@@ -118,6 +128,6 @@ final class Pages
                 'description' => $notFoundMessage,
                 'robots' => 'noindex,follow',
             ],
-        ], View::render('notFound', compact('notFoundTitle', 'notFoundMessage'), __DIR__ . '/templates'));
+        ], View::render('notFound', compact('notFoundTitle', 'notFoundMessage', 'errorStatus'), __DIR__ . '/templates'));
     }
 }

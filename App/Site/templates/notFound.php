@@ -1,12 +1,13 @@
 <?php
 declare(strict_types=1);
+/** @var int $errorStatus */
 /** @var string $notFoundTitle */
 /** @var string $notFoundMessage */
 ?>
 <section class="max-w-auth mx-auto" aria-labelledby="not-found-title">
     <article class="card">
         <div class="card-body stack stack-gap-16">
-            <p class="text-2xl text-primary m-0" aria-hidden="true">404</p>
+            <p class="text-2xl text-primary m-0" aria-hidden="true"><?= $errorStatus ?></p>
             <div class="stack stack-gap-8">
                 <h1 class="text-2xl m-0" id="not-found-title"><?= \TinyCat\Support\Html::icon('alert') ?> <?= \TinyCat\Support\Html::e($notFoundTitle) ?></h1>
                 <p class="text-muted m-0"><?= \TinyCat\Support\Html::e($notFoundMessage) ?></p>

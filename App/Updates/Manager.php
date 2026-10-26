@@ -283,26 +283,8 @@ final class Manager extends Package
             return;
         }
 
-        http_response_code(503);
         header('Retry-After: 300');
-        header('Cache-Control: no-store, max-age=0');
-
-        if (str_starts_with($path, '/api') || \TinyCat\Http\Request::current()->wantsJson()) {
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode([
-                'ok' => false,
-                'error' => 'maintenance',
-                'message' => 'TinyCat is being updated. Please try again shortly.',
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            exit;
-        }
-
-        header('Content-Type: text/html; charset=utf-8');
-        echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'
-            . '<meta name="viewport" content="width=device-width,initial-scale=1">'
-            . '<title>TinyCat maintenance</title></head><body>'
-            . '<main style="max-width:42rem;margin:10vh auto;padding:2rem;font:16px/1.5 system-ui,sans-serif">'
-            . '<h1>TinyCat is being updated</h1><p>Please try again shortly.</p></main></body></html>';
+        \TinyCat\Site\Errors::respond(503);
         exit;
     }
 

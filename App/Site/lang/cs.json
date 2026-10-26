@@ -176,5 +176,17 @@
       "file_cache_enabled": "Souborová cache: zapnutá",
       "file_cache_disabled": "Souborová cache: vypnutá"
     }
+  },
+  "errors": {
+    "bad_request": "Neplatný požadavek",
+    "unauthenticated": "Je nutné přihlášení",
+    "forbidden": "Přístup odepřen",
+    "not_found": "Stránka nebyla nalezena",
+    "method_not_allowed": "Nepovolená metoda",
+    "too_many_requests": "Příliš mnoho požadavků",
+    "maintenance": "Služba je dočasně nedostupná",
+    "server_error": "Chyba serveru",
+    "request_failed": "Požadavek se nezdařil",
+    "intro": "Požadavek se nepodařilo dokončit. Zkuste to znovu nebo se vraťte na úvodní stránku."
   }
 }

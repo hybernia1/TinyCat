@@ -28,8 +28,7 @@ final class Pages
 
         if (Request::current()->method() !== 'GET') {
             header('Allow: GET');
-            http_response_code(405);
-            echo 'Method not allowed.';
+            \TinyCat\Site\Errors::respond(405);
             return;
         }
 

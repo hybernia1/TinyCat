@@ -17,11 +17,12 @@ RedirectMatch 404 "^/storage(?:$|/(?!cache/assets/[A-Za-z0-9._-]+\.(?:css|js)$).
 </IfModule>
 
 <IfModule mod_headers.c>
+    Header always set Cache-Control "no-store, max-age=0" "expr=%{REQUEST_STATUS} >= 400"
     # Send HSTS only over a direct HTTPS connection. All subdomains must support HTTPS.
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" "expr=%{HTTPS} == 'on'"
     Header always set X-Content-Type-Options "nosniff" env=tinycat_static_asset
-    Header set Cache-Control "public, max-age=31536000, immutable" env=tinycat_versioned_asset
-    Header set Cache-Control "public, max-age=2592000, stale-while-revalidate=86400" env=tinycat_upload_asset
+    Header set Cache-Control "public, max-age=31536000, immutable" "expr=reqenv('tinycat_versioned_asset') == '1' && %{REQUEST_STATUS} < 400"
+    Header set Cache-Control "public, max-age=2592000, stale-while-revalidate=86400" "expr=reqenv('tinycat_upload_asset') == '1' && %{REQUEST_STATUS} < 400"
 </IfModule>
 
 <IfModule mod_deflate.c>

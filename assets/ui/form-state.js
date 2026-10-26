@@ -7,8 +7,9 @@ import "./forms.js";
   var TinyCat = window.TinyCat, qsa = TinyCat.dom.all, emit = TinyCat.dom.emit;
   var fieldErrorCounterId = 0, discarding = false;
   var confirmDiscard = function () { throw new Error("Discard confirmation is not configured."); };
-  function clearErrors(form) {
+  function clearErrors(form, name) {
     qsa('[aria-invalid="true"]', form).forEach(function (field) {
+      if (name && field.name !== name) { return; }
       var errorId = field.dataset.tinycatFieldErrorId || "";
       var describedBy;
 
@@ -32,7 +33,7 @@ import "./forms.js";
     });
 
     qsa("[data-field-error]", form).forEach(function (error) {
-      error.remove();
+      if (!name || error.dataset.fieldError === name) { error.remove(); }
     });
   }
   function applyErrors(form, errors) {

@@ -58,6 +58,11 @@ final class Identity
         ],
     ];
 
+    public static function handles(string $path): bool
+    {
+        return $path === '/site.webmanifest' || array_any(self::VARIANTS, static fn (array $variant): bool => $variant['route'] === $path);
+    }
+
     /**
      * @return array<mixed>
      */
@@ -137,6 +142,7 @@ final class Identity
         $etag = '"tinycat-icon-' . $kind . '-' . $version . '"';
         self::cacheHeaders($version, $etag);
         header('Content-Type: image/png');
+        if (\TinyCat\Http\Request::current()->method() === 'HEAD') { exit; }
 
         $variantPath = self::variantPath($source['path'], (string) $variant['suffix']);
 
@@ -170,9 +176,6 @@ final class Identity
     public static function respondManifest(): never
     {
         $version = self::version();
-        $etag = '"tinycat-manifest-' . $version . '"';
-        self::cacheHeaders($version, $etag);
-        header('Content-Type: application/manifest+json; charset=UTF-8');
 
         $name = trim((string) \TinyCat\Settings\Store::config('site.name', 'TinyCat')) ?: 'TinyCat';
         $description = trim((string) \TinyCat\Settings\Store::config('site.meta_description', ''));
@@ -200,7 +203,7 @@ final class Identity
             'name' => $name,
             'short_name' => self::shortName($name),
             'description' => $description,
-            'lang' => \TinyCat\Support\Localization::locale(),
+            'lang' => Discovery::locale(),
             'start_url' => '/',
             'scope' => '/',
             'display' => 'standalone',
@@ -209,10 +212,12 @@ final class Identity
             'icons' => $icons,
         ];
 
-        echo json_encode(
+        $body = json_encode(
             $manifest,
-            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PRETTY_PRINT
+            JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR
         );
+        $immutable = hash_equals($version, trim((string) ($_GET['v'] ?? '')));
+        \TinyCat\Http\Document::respond($body, 'application/manifest+json', $immutable ? 31536000 : 86400, $immutable);
         exit;
     }
 
@@ -353,21 +358,21 @@ final class Identity
         header_remove('Pragma');
         header('ETag: ' . $etag);
 
-        if (trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? '')) === $etag) {
-            http_response_code(304);
-            exit;
-        }
-
         $requestedVersion = trim((string) ($_GET['v'] ?? ''));
         header('Cache-Control: ' . ($requestedVersion !== '' && hash_equals($version, $requestedVersion)
             ? 'public, max-age=31536000, immutable'
             : 'public, max-age=86400'));
+        foreach (explode(',', (string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? '')) as $candidate) {
+            if (trim($candidate) === '*' || preg_replace('/^W\//', '', trim($candidate)) === $etag) {
+                http_response_code(304); exit;
+            }
+        }
+
     }
 
     private static function notFound(): never
     {
-        http_response_code(404);
-        header('Cache-Control: no-store');
+        Errors::respond(404);
         exit;
     }
 }

@@ -129,7 +129,11 @@
       "password_short": "Heslo musí mít alespoň 8 znaků.",
       "password_too_long": "Heslo je příliš dlouhé.",
       "password_mismatch": "Hesla se neshodují.",
-      "current_password_invalid": "Aktuální heslo není správné."
-    }
+      "current_password_invalid": "Aktuální heslo není správné.",
+      "email_check_limited": "Příliš mnoho kontrol e-mailu. Zkuste to prosím za chvíli."
+    },
+    "email_available": "Tuto e-mailovou adresu lze použít.",
+    "email_checking": "Ověřuji e-mailovou adresu…",
+    "email_check_failed": "Dostupnost e-mailu se nepodařilo ověřit. Formulář můžete odeslat."
   }
 }

@@ -73,7 +73,7 @@ final class Pages
         $statusStructuredImage = Images::status_image_jsonld($item) ?? (ViewData::status_meta_link_image($item) ?: null);
         $statusImageUrl = Images::status_image_url($item);
 
-        $publicSidebar = Presentation::public_sidebar();
+        $publicSidebar = $compact ? '' : Presentation::public_sidebar();
         Layout::render([
             'title' => $statusTitle,
             'current' => $current,

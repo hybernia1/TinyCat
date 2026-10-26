@@ -176,5 +176,17 @@
       "file_cache_enabled": "File cache: enabled",
       "file_cache_disabled": "File cache: disabled"
     }
+  },
+  "errors": {
+    "bad_request": "Invalid request",
+    "unauthenticated": "Sign in required",
+    "forbidden": "Access denied",
+    "not_found": "Page not found",
+    "method_not_allowed": "Method not allowed",
+    "too_many_requests": "Too many requests",
+    "maintenance": "Service temporarily unavailable",
+    "server_error": "Server error",
+    "request_failed": "Request failed",
+    "intro": "The request could not be completed. Please try again or return to the homepage."
   }
 }

@@ -41,7 +41,7 @@ import "../../ui/toasts.js";
     panel(form, "profile", "account.profile_settings");
     var email = U.form(data.capabilities.password ? "/api/users/me/email" : "/api/users/" + user.id, "PATCH");
     if (!data.capabilities.password) { ["bio", "locale", "theme"].forEach(function (name) { email.appendChild(U.hidden(name, user[name] || "")); }); }
-    email.appendChild(U.field("common.email", "email", user.email, "email", { maxlength: "254", autocomplete: "email" }));
+    email.appendChild(U.field("common.email", "email", user.email, "email", { maxlength: "254", autocomplete: "email", "data-email-check-url": "/api/users/" + user.id + "/email-checks" }));
     email.appendChild(e("span", { "class": "help" }, U.text("account.email_optional")));
     email.appendChild(U.hidden("email_notifications", "0")); check(email, "email_notifications", "account.email_notifications", user.email_notifications);
     panel(email, "email", "common.email");

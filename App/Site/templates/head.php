@@ -25,6 +25,7 @@ declare(strict_types=1);
 /** @var string $metaTitle */
 /** @var string $metaType */
 /** @var string $metaUrl */
+/** @var string $privacyUrl */
 /** @var string $pageTitle */
 /** @var list<string> $scriptUrls */
 /** @var string $siteFaviconUrl */
@@ -61,6 +62,7 @@ declare(strict_types=1);
         <meta name="robots" content="<?= \TinyCat\Support\Html::e($metaRobots) ?>">
     <?php endif; ?>
     <link rel="canonical" href="<?= \TinyCat\Support\Html::e($metaUrl) ?>">
+    <link rel="privacy-policy" href="<?= \TinyCat\Support\Html::e($privacyUrl) ?>">
     <?php if ($metaRss !== ''): ?>
         <link rel="alternate" type="application/rss+xml" title="<?= \TinyCat\Support\Html::e($pageTitle) ?>" href="<?= \TinyCat\Support\Html::e($metaRssUrl) ?>">
     <?php endif; ?>

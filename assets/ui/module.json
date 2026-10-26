@@ -6,7 +6,8 @@
     "entries": [
       "assets/ui/toasts.js",
       "assets/ui/tabs.js",
-      "assets/ui/menus.js"
+      "assets/ui/menus.js",
+      "assets/ui/image-placeholders.js"
     ],
     "components": [
       "ui/modal",

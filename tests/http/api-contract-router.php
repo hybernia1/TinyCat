@@ -10,6 +10,8 @@ if (preg_match('~^/uploads/avatars/[0-9]+[.]webp$~', $assetPath) === 1
     return false;
 }
 
+if (in_array($assetPath, ['/assets/fallback/image.svg', '/assets/fallback/avatar.svg'], true)) { return false; }
+
 // This router is used only by the isolated HTTP contract test, never by production.
 define('TINYCAT', true);
 ini_set('error_log', 'php://stderr');
@@ -44,8 +46,10 @@ if (($_SERVER['HTTP_X_TEST_CAPTCHA'] ?? '') === '1') {
     (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $configuration);
 }
 
-session_start();
-$_SESSION['_csrf'] = str_repeat('a', 64);
+if (!\TinyCat\Site\Discovery::handles($assetPath)) {
+    session_start();
+    $_SESSION['_csrf'] = str_repeat('a', 64);
+}
 $role = (string) ($_SERVER['HTTP_X_TEST_ROLE'] ?? '');
 $user = match ($role) {
     'admin' => ['id' => 1, 'username' => 'admin', 'role' => 'admin', 'status' => 'active'],
@@ -61,4 +65,13 @@ if (getenv('TINYCAT_API_FOUNDATION_TEST') === '1') {
     require dirname(__DIR__) . '/infrastructure/api-fixture.php';
 }
 
+
+\TinyCat\Http\Router::route('GET', '/fixture-failure', static function (): void {
+    echo 'PRIVATE_PARTIAL_OUTPUT';
+    \TinyCat\Database\Connection::set(new PDO('sqlite::memory:'));
+    throw new RuntimeException('PRIVATE_FAILURE_DETAIL');
+});
+\TinyCat\Http\Router::route(['GET', 'HEAD'], '/fixture-maintenance', static function (): void {
+    header('Retry-After: 300'); \TinyCat\Site\Errors::respond(503);
+});
 require dirname(__DIR__, 2) . '/index.php';

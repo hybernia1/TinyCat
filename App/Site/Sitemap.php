@@ -32,6 +32,20 @@ final class Sitemap
         return self::CORE_SECTIONS;
     }
 
+    /** @return array<string, int> */
+    public static function pageCounts(): array
+    {
+        // Only the directory is cached; document entries always recheck visibility.
+        $cached = \TinyCat\Support\Cache::rememberArray('sitemap-page-counts-v1', 60, static function (): array {
+            $pages = [];
+            foreach (self::CORE_SECTIONS as $section) { $pages[$section] = self::pageCount($section); }
+            return $pages;
+        });
+        $pages = [];
+        foreach (self::CORE_SECTIONS as $section) { $pages[$section] = max(0, (int) ($cached[$section] ?? 0)); }
+        return $pages;
+    }
+
     public static function hasSection(string $section): bool
     {
         $section = strtolower(trim($section));
@@ -44,12 +58,12 @@ final class Sitemap
         $section = strtolower(trim($section));
 
         return match ($section) {
-            'pages' => 1,
+            'pages' => 2,
             'authors' => (int) \TinyCat\Database\Connection::value(
                 'SELECT COUNT(*) FROM users WHERE status = ?',
                 ['active']
             ),
-            'tags' => (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM terms'),
+            'tags' => (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM terms t WHERE ' . self::publicTagPredicate(), [\TinyCat\Support\Dates::dateDb()]),
             'status' => (int) \TinyCat\Database\Connection::value(
                 'SELECT COUNT(*)
                     FROM content c
@@ -60,6 +74,14 @@ final class Sitemap
             ),
             default => throw new InvalidArgumentException('Sitemap section is not registered: ' . $section),
         };
+    }
+
+    private static function publicTagPredicate(): string
+    {
+        // Avoid indexing orphan tags and tags used only by hidden or future posts.
+        return "EXISTS (SELECT 1 FROM content_tags ct INNER JOIN content c ON c.id = ct.content_id
+            INNER JOIN users u ON u.id = c.author_id WHERE ct.term_id = t.id AND u.status = 'active'
+            AND c.published_at <= ?)";
     }
 
     public static function pageCount(string $section, int $pageSize = self::MAX_PAGE_SIZE): int
@@ -79,9 +101,9 @@ final class Sitemap
         $offset = max(0, $offset);
 
         $rows = match ($section) {
-            'pages' => $offset === 0 ? [['url' => '/', 'last_modified' => null]] : [],
+            'pages' => array_slice([['url' => '/', 'last_modified' => null], ['url' => '/privacy', 'last_modified' => null]], $offset, $limit),
             'authors' => \TinyCat\Database\Connection::all(
-                'SELECT u.id, u.updated_at AS last_modified
+                'SELECT u.id
                     FROM users u
                     WHERE u.status = ?
                     ORDER BY u.id ASC
@@ -90,12 +112,13 @@ final class Sitemap
             ),
             'tags' => \TinyCat\Database\Connection::all(
                 'SELECT t.id, t.name
-                    FROM terms t
+                    FROM terms t WHERE ' . self::publicTagPredicate() . '
                     ORDER BY t.id ASC
-                    LIMIT ' . $limit . ' OFFSET ' . $offset
+                    LIMIT ' . $limit . ' OFFSET ' . $offset,
+                [\TinyCat\Support\Dates::dateDb()]
             ),
             'status' => \TinyCat\Database\Connection::all(
-                'SELECT c.id, c.published_at AS last_modified, ci.path AS image_path
+                'SELECT c.id, ci.path AS image_path
                     FROM content c
                     INNER JOIN users u ON u.id = c.author_id
                     LEFT JOIN content_images ci ON ci.content_id = c.id

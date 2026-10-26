@@ -129,7 +129,11 @@
       "password_short": "Password must have at least 8 characters.",
       "password_too_long": "Password is too long.",
       "password_mismatch": "Passwords do not match.",
-      "current_password_invalid": "Current password is not correct."
-    }
+      "current_password_invalid": "Current password is not correct.",
+      "email_check_limited": "Too many email checks. Please try again shortly."
+    },
+    "email_available": "This email address can be used.",
+    "email_checking": "Checking email address…",
+    "email_check_failed": "Email availability could not be checked. You can still submit the form."
   }
 }

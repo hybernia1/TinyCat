@@ -30,6 +30,7 @@ final class Response
             header((string) $name . ': ' . (string) $value);
         }
 
+        if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'HEAD') { exit; }
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         exit;
     }
@@ -60,6 +61,7 @@ final class Response
      */
     public static function error(string $message = 'Request failed.', int $status = 400, string $code = 'error', array $details = [], array $params = []): never
     {
+        header('Cache-Control: no-store, max-age=0');
         if (isset($details['errors']) && is_array($details['errors'])) { $details['errors'] = self::issues($details['errors']); }
         self::assertData($details);
         self::assertData($params);

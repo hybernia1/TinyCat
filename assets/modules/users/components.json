@@ -184,7 +184,16 @@
                           "get": "user.email"
                         },
                         "maxlength": "254",
-                        "autocomplete": "email"
+                        "autocomplete": "email",
+                        "data-email-check-url": {
+                          "concat": [
+                            "/api/users/",
+                            {
+                              "get": "user.id"
+                            },
+                            "/email-checks"
+                          ]
+                        }
                       }
                     }
                   }
@@ -1003,7 +1012,8 @@
               "get": "old.email"
             },
             "maxlength": "254",
-            "autocomplete": "email"
+            "autocomplete": "email",
+            "data-email-check-url": "/api/users/registrations/email-checks"
           }
         },
         "when": {
@@ -1111,7 +1121,7 @@
                 "attrs": {
                   "href": "/privacy",
                   "target": "_blank",
-                  "rel": "noopener"
+                  "rel": "privacy-policy"
                 },
                 "children": [
                   {
@@ -1354,7 +1364,8 @@
             "tag": "a",
             "attrs": {
               "class": "btn btn-ghost btn-sm",
-              "href": "/privacy"
+              "href": "/privacy",
+              "rel": "privacy-policy"
             },
             "children": [
               {

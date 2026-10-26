@@ -2,6 +2,7 @@ import "../../core/modules.js";
 import "../../core/navigation.js";
 import "./avatar.js";
 import "./views.js";
+import "./email-availability.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

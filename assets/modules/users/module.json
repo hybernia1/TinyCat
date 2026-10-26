@@ -53,7 +53,11 @@
       "public.following",
       "public.unfollow",
       "users.edit_user",
-      "users.new_user"
+      "users.new_user",
+      "account.email_available",
+      "account.email_checking",
+      "account.email_check_failed",
+      "account.messages.email_taken"
     ],
     "messages": {
       "auth_recovery_done": "auth.recovery_done",
@@ -79,7 +83,8 @@
       "user_saved": "users.messages.saved",
       "user_super_admin_protected": "users.messages.super_admin_protected",
       "user_username_invalid": "users.messages.username_invalid",
-      "user_username_taken": "users.messages.username_taken"
+      "user_username_taken": "users.messages.username_taken",
+      "email_check_limited": "account.messages.email_check_limited"
     }
   },
   {
@@ -137,7 +142,11 @@
       "public.following",
       "public.unfollow",
       "users.edit_user",
-      "users.new_user"
+      "users.new_user",
+      "account.email_available",
+      "account.email_checking",
+      "account.email_check_failed",
+      "account.messages.email_taken"
     ],
     "messages": {
       "auth_recovery_done": "auth.recovery_done",
@@ -163,7 +172,8 @@
       "user_saved": "users.messages.saved",
       "user_super_admin_protected": "users.messages.super_admin_protected",
       "user_username_invalid": "users.messages.username_invalid",
-      "user_username_taken": "users.messages.username_taken"
+      "user_username_taken": "users.messages.username_taken",
+      "email_check_limited": "account.messages.email_check_limited"
     }
   }
 ]

@@ -13,21 +13,12 @@ final class Module implements \TinyCat\StorageModule
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
-        foreach ([['GET', '/rss', 'rss.php']] as [$methods, $pagePath, $file]) {
-            \TinyCat\Http\Router::route($methods, $pagePath, static function () use ($file): void {
-                require \TinyCat\Support\Paths::publicPath($file);
-            });
-        }
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/rss', static fn () => \TinyCat\Http\Document::notFound('Feed not found.'));
         \TinyCat\Http\Router::route(['GET', 'POST'], '/status/{status_id:[0-9]+}', static function (string $status_id): void {
             Pages::detail(max(0, (int) $status_id));
         });
 
-        \TinyCat\Http\Router::route('GET', '/tag/{tag}/feed', static function (string $tag): void {
-            $rssType = 'tag';
-            $rssTag = $tag;
-
-            require \TinyCat\Support\Paths::publicPath('rss.php');
-        });
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/tag/{tag}/feed', static fn (string $tag) => Syndication::respond('tag', $tag));
 
         \TinyCat\Http\Router::route(['GET', 'POST'], '/tag/{tag}', static function (string $tag): void {
             Pages::tag($tag);

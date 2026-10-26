@@ -85,6 +85,7 @@ declare(strict_types=1);
             <div class="cookie-consent-copy">
                 <strong id="cookie-consent-title"><?= \TinyCat\Support\Html::et('privacy.cookie_consent_title') ?></strong>
                 <span><?= \TinyCat\Support\Html::et($cookieConsentTextKey) ?></span>
+                <a href="/privacy" rel="privacy-policy"><?= \TinyCat\Support\Html::et('privacy.title') ?></a>
             </div>
             <div class="cookie-consent-actions">
                 <button class="btn btn-primary btn-sm" type="button" data-cookie-consent-choice="granted"><?= \TinyCat\Support\Html::et('privacy.cookie_consent_accept') ?></button>

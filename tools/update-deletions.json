@@ -202,5 +202,11 @@
         "migrations/20260805_001_user_relations.php",
         "migrations/20260805_002_cron_settings.php",
         "migrations/20260805_003_bots_extension_adoption.php"
+    ],
+    "4.1.1": [
+        "Public/rss.php",
+        "Public/robots.php",
+        "Public/sitemap.php",
+        "Public/llms.php"
     ]
 }

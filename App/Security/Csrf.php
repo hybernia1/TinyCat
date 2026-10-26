@@ -51,6 +51,9 @@ final class Csrf
     public static function requireToken(?string $token = null): void
     {
         if (!self::verify($token)) {
+            if (!\TinyCat\Http\Router::isApiPath(\TinyCat\Http\Request::current()->path()) && !\TinyCat\Http\Request::current()->wantsJson()) {
+                throw new \RuntimeException('Invalid CSRF token.', 403);
+            }
             Response::error('Invalid CSRF token.', 403, 'csrf_token_mismatch');
         }
     }
