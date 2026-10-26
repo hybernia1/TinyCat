@@ -20,7 +20,7 @@ php tools/update-key.php
 
 The command writes the private key to the ignored
 `storage/update-signing.key` file and prints the public key. The public key is
-pinned in `App/PackageManager.php`; the private key must never be committed or uploaded
+pinned in `App/Updates/Manager.php`; the private key must never be committed or uploaded
 to a web release.
 
 Back up the private key in a secret manager before publishing the first signed
@@ -30,22 +30,22 @@ signed with a replacement key. CI can provide the base64 private key through the
 
 ## Creating a release
 
-Set `Core::VERSION`, commit the release, and build from a clean worktree:
+Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=2.1.0 --minimum-version=2.0.25
+php tools/build-update.php --version=3.0.0 --minimum-version=2.0.25
 php tools/verify-update.php dist
 ```
 
 The builder creates:
 
 ```text
-dist/tinycat-2.1.0.zip
+dist/tinycat-3.0.0.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v2.1.0` tag and upload all three files
+Create a GitHub release for the matching `v3.0.0` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -60,6 +60,12 @@ TinyCat 2.x has a fixed 1.0.14 database and updater baseline. Install 1.0.14
 before entering the 2.x series. Historical 1.x migrations remain available in
 Git history and signed 1.x releases, but are no longer shipped as active runtime
 files.
+
+TinyCat 3.0.0 accepts signed upgrades from 2.0.25 and newer, including 2.1.0.
+It replaces legacy API routes and HTML fragment responses with module-owned
+JSON APIs. Update external integrations using `docs/api.md`; the built-in UI
+is updated with the application. The database baseline and PHP 8.4 requirement
+are retained.
 
 `--without-migrations` is reserved for an updater compatibility bridge: it
 ships authenticated migration files but leaves the manifest migration list

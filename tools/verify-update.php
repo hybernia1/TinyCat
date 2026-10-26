@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Update\Manager;
+use \TinyCat\Updates\Manager;
 
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "This tool is available only from the command line.\n");

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Tools\DemoImport\DemoImporter;
-use TinyCat\Tools\DemoImport\Options;
-use TinyCat\Tools\DemoImport\ProgressReporter;
+use \TinyCat\Tools\DemoImport\DemoImporter;
+use \TinyCat\Tools\DemoImport\Options;
+use \TinyCat\Tools\DemoImport\ProgressReporter;
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
@@ -79,7 +79,7 @@ try {
     } finally {
         ob_end_clean();
     }
-    Core::setDb($database);
+    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     tc_install_create_tables();
 
     $temporaryConfiguration = $baseConfig;

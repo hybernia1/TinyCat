@@ -6,17 +6,17 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-layout('layout', [
-    'title' => t('privacy.title'),
+\TinyCat\Support\View::layout('layout', [
+    'title' => \TinyCat\Support\Localization::t('privacy.title'),
     'current' => '/privacy',
     'meta' => [
-        'description' => t('privacy.meta', ['site' => site_name()]),
+        'description' => \TinyCat\Support\Localization::t('privacy.meta', ['site' => \TinyCat\Site\Presentation::site_name()]),
         'url' => '/privacy',
-        'image' => site_meta_image_url(),
+        'image' => \TinyCat\Site\Presentation::site_meta_image_url(),
         'type' => 'article',
     ],
 ], static function (): void {
-    $translationVars = ['site' => site_name()];
+    $translationVars = ['site' => \TinyCat\Site\Presentation::site_name()];
     $privacyCards = [
         ['privacy.public_title', 'globe', [
             'privacy.public_open',
@@ -58,10 +58,10 @@ layout('layout', [
     <section class="stack max-w-prose mx-auto">
         <article class="card">
             <div class="card-header">
-                <h1 class="text-xl m-0 cluster gap-2"><?= icon('shield') ?> <?= et('privacy.title') ?></h1>
+                <h1 class="text-xl m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('shield') ?> <?= \TinyCat\Support\Html::et('privacy.title') ?></h1>
             </div>
             <div class="card-body stack">
-                <p class="text-muted mb-0"><?= et('privacy.intro', ['site' => site_name()]) ?></p>
+                <p class="text-muted mb-0"><?= \TinyCat\Support\Html::et('privacy.intro', ['site' => \TinyCat\Site\Presentation::site_name()]) ?></p>
             </div>
         </article>
 
@@ -69,11 +69,11 @@ layout('layout', [
             <?php foreach ($privacyCards as [$titleKey, $iconName, $paragraphKeys]): ?>
                 <article class="card">
                     <div class="card-header">
-                        <h2 class="text-lg m-0 cluster gap-2"><?= icon($iconName) ?> <?= et($titleKey, $translationVars) ?></h2>
+                        <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon($iconName) ?> <?= \TinyCat\Support\Html::et($titleKey, $translationVars) ?></h2>
                     </div>
                     <div class="card-body stack">
                         <?php foreach ($paragraphKeys as $paragraphKey): ?>
-                            <p class="mb-0"><?= et($paragraphKey, $translationVars) ?></p>
+                            <p class="mb-0"><?= \TinyCat\Support\Html::et($paragraphKey, $translationVars) ?></p>
                         <?php endforeach; ?>
                     </div>
                 </article>
@@ -82,31 +82,31 @@ layout('layout', [
 
         <article class="card">
             <div class="card-header">
-                <h2 class="text-lg m-0 cluster gap-2"><?= icon('shield') ?> <?= et('privacy.limits_title') ?></h2>
+                <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('shield') ?> <?= \TinyCat\Support\Html::et('privacy.limits_title') ?></h2>
             </div>
             <div class="card-body stack">
-                <p class="text-muted mb-0"><?= et('privacy.limits_intro') ?></p>
+                <p class="text-muted mb-0"><?= \TinyCat\Support\Html::et('privacy.limits_intro') ?></p>
                 <div class="table-wrap">
                     <table class="table">
                         <thead>
                             <tr>
-                                <th><?= et('privacy.reputation') ?></th>
-                                <th><?= et('privacy.posts') ?></th>
-                                <th><?= et('privacy.comments') ?></th>
-                                <th><?= et('privacy.likes') ?></th>
-                                <th><?= et('privacy.reports') ?></th>
-                                <th><?= et('privacy.searches') ?></th>
+                                <th><?= \TinyCat\Support\Html::et('privacy.reputation') ?></th>
+                                <th><?= \TinyCat\Support\Html::et('privacy.posts') ?></th>
+                                <th><?= \TinyCat\Support\Html::et('privacy.comments') ?></th>
+                                <th><?= \TinyCat\Support\Html::et('privacy.likes') ?></th>
+                                <th><?= \TinyCat\Support\Html::et('privacy.reports') ?></th>
+                                <th><?= \TinyCat\Support\Html::et('privacy.searches') ?></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach (tc_privacy_limit_rows() as $row): ?>
                                 <tr>
-                                    <td><strong><?= e($row['label']) ?></strong></td>
-                                    <td><?= e($row['post']) ?></td>
-                                    <td><?= e($row['comment']) ?></td>
-                                    <td><?= e($row['like']) ?></td>
-                                    <td><?= e($row['report']) ?></td>
-                                    <td><?= e($row['search']) ?></td>
+                                    <td><strong><?= \TinyCat\Support\Html::e($row['label']) ?></strong></td>
+                                    <td><?= \TinyCat\Support\Html::e($row['post']) ?></td>
+                                    <td><?= \TinyCat\Support\Html::e($row['comment']) ?></td>
+                                    <td><?= \TinyCat\Support\Html::e($row['like']) ?></td>
+                                    <td><?= \TinyCat\Support\Html::e($row['report']) ?></td>
+                                    <td><?= \TinyCat\Support\Html::e($row['search']) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -117,17 +117,17 @@ layout('layout', [
 
         <article class="card">
             <div class="card-header">
-                <h2 class="text-lg m-0 cluster gap-2"><?= icon('info') ?> <?= et('privacy.cookies_title') ?></h2>
+                <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('info') ?> <?= \TinyCat\Support\Html::et('privacy.cookies_title') ?></h2>
             </div>
             <div class="card-body stack">
-                <p class="mb-0"><?= et('privacy.cookies_session') ?></p>
-                <?php if (site_captcha_enabled()): ?>
-                    <p class="mb-0"><?= et('privacy.cookies_captcha') ?></p>
+                <p class="mb-0"><?= \TinyCat\Support\Html::et('privacy.cookies_session') ?></p>
+                <?php if (\TinyCat\Site\Presentation::site_captcha_enabled()): ?>
+                    <p class="mb-0"><?= \TinyCat\Support\Html::et('privacy.cookies_captcha') ?></p>
                 <?php endif; ?>
-                <p class="mb-0"><?= et('privacy.cookies_remember') ?></p>
-                <p class="mb-0"><?= et(
-                    site_google_analytics_configured() ? 'privacy.cookies_analytics' : 'privacy.cookies_no_analytics',
-                    ['site' => site_name()],
+                <p class="mb-0"><?= \TinyCat\Support\Html::et('privacy.cookies_remember') ?></p>
+                <p class="mb-0"><?= \TinyCat\Support\Html::et(
+                    \TinyCat\Site\Presentation::site_google_analytics_configured() ? 'privacy.cookies_analytics' : 'privacy.cookies_no_analytics',
+                    ['site' => \TinyCat\Site\Presentation::site_name()],
                 ) ?></p>
             </div>
         </article>
@@ -135,15 +135,14 @@ layout('layout', [
     <?php
 });
 
-
 function tc_privacy_limit_rows(): array
 {
     $labels = [
-        'new' => t('privacy.reputation_new'),
-        'normal' => t('privacy.reputation_normal'),
-        'trusted' => t('privacy.reputation_trusted'),
+        'new' => \TinyCat\Support\Localization::t('privacy.reputation_new'),
+        'normal' => \TinyCat\Support\Localization::t('privacy.reputation_normal'),
+        'trusted' => \TinyCat\Support\Localization::t('privacy.reputation_trusted'),
     ];
-    $rules = moderation_action_rules();
+    $rules = \TinyCat\Moderation\Restrictions::moderation_action_rules();
     $rows = [];
 
     foreach ($labels as $key => $label) {
@@ -168,6 +167,6 @@ function tc_privacy_limit_label(array $rule): string
     $hours = max(1, (int) ceil($window / 3600));
 
     return $hours === 1
-        ? t('privacy.limit_per_hour', ['count' => $limit])
-        : t('privacy.limit_per_hours', ['count' => $limit, 'hours' => $hours]);
+        ? \TinyCat\Support\Localization::t('privacy.limit_per_hour', ['count' => $limit])
+        : \TinyCat\Support\Localization::t('privacy.limit_per_hours', ['count' => $limit, 'hours' => $hours]);
 }

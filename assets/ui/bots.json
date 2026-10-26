@@ -1,0 +1,1317 @@
+{
+  "bots/source-fields": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "grid sm:grid-2"
+        },
+        "children": [
+          {
+            "tag": "label",
+            "attrs": {
+              "class": "field"
+            },
+            "children": [
+              {
+                "tag": "span",
+                "attrs": {
+                  "class": "label"
+                },
+                "children": [
+                  {
+                    "t": "bots.bot",
+                    "values": {}
+                  }
+                ]
+              },
+              {
+                "tag": "select",
+                "attrs": {
+                  "class": "select",
+                  "name": "bot_user_id",
+                  "required": true
+                },
+                "children": [
+                  {
+                    "each": {
+                      "get": "bots"
+                    },
+                    "as": "bot",
+                    "children": [
+                      {
+                        "tag": "option",
+                        "attrs": {
+                          "value": {
+                            "get": "bot.id"
+                          },
+                          "selected": {
+                            "if": [
+                              {
+                                "eq": [
+                                  {
+                                    "string": {
+                                      "get": "bot.id"
+                                    }
+                                  },
+                                  {
+                                    "string": {
+                                      "get": "source.bot_user_id"
+                                    }
+                                  }
+                                ]
+                              },
+                              true,
+                              null
+                            ]
+                          }
+                        },
+                        "children": [
+                          {
+                            "concat": [
+                              "@",
+                              {
+                                "get": "bot.username"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "component": "ui/field",
+            "data": {
+              "label": {
+                "t": "bots.source_name",
+                "values": {}
+              },
+              "value": {
+                "get": "source.name"
+              },
+              "textarea": false,
+              "attributes": {
+                "class": "input",
+                "name": "name",
+                "type": "text",
+                "value": {
+                  "get": "source.name"
+                },
+                "required": true,
+                "maxlength": "120"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {
+            "t": "bots.feed_url",
+            "values": {}
+          },
+          "value": {
+            "get": "source.feed_url"
+          },
+          "textarea": false,
+          "attributes": {
+            "class": "input",
+            "name": "feed_url",
+            "type": "url",
+            "value": {
+              "get": "source.feed_url"
+            },
+            "required": true,
+            "maxlength": "2048"
+          }
+        }
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {
+            "t": "bots.interval",
+            "values": {}
+          },
+          "value": {
+            "or": [
+              {
+                "get": "source.interval_minutes"
+              },
+              60
+            ]
+          },
+          "textarea": false,
+          "attributes": {
+            "class": "input",
+            "name": "interval_minutes",
+            "type": "number",
+            "value": {
+              "or": [
+                {
+                  "get": "source.interval_minutes"
+                },
+                60
+              ]
+            },
+            "required": true,
+            "min": "5",
+            "max": "43200"
+          }
+        }
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {
+            "t": "bots.template",
+            "values": {}
+          },
+          "value": {
+            "get": "source.post_template"
+          },
+          "textarea": true,
+          "attributes": {
+            "class": "textarea",
+            "name": "post_template",
+            "required": true,
+            "maxlength": "2000",
+            "rows": "8"
+          }
+        }
+      },
+      {
+        "tag": "label",
+        "attrs": {
+          "class": "check"
+        },
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": "enabled",
+              "value": "0"
+            },
+            "children": []
+          },
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "checkbox",
+              "name": "enabled",
+              "value": "1",
+              "checked": {
+                "if": [
+                  {
+                    "get": "source.enabled"
+                  },
+                  true,
+                  null
+                ]
+              }
+            },
+            "children": []
+          },
+          {
+            "tag": "span",
+            "attrs": {},
+            "children": [
+              {
+                "t": "bots.enabled",
+                "values": {}
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "bots/sources": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14",
+      "data-bot-sources-view": "",
+      "data-bot-sources-state": {
+        "json": {
+          "get": "state"
+        }
+      }
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "admin-list-toolbar"
+        },
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "admin-filter-actions"
+            },
+            "children": [
+              {
+                "tag": "span",
+                "attrs": {
+                  "class": "badge"
+                },
+                "children": [
+                  {
+                    "t": "bots.sources_count",
+                    "values": {
+                      "count": {
+                        "count": {
+                          "get": "items"
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "tag": "span",
+                "attrs": {
+                  "class": "badge badge-primary"
+                },
+                "children": [
+                  {
+                    "t": "bots.active_sources_count",
+                    "values": {
+                      "count": {
+                        "count": {
+                          "get": "items"
+                        },
+                        "where": "enabled"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "alert alert-info"
+        },
+        "children": [
+          {
+            "t": "bots.no_sources",
+            "values": {}
+          }
+        ],
+        "when": {
+          "not": {
+            "get": "items"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table"
+            },
+            "children": [
+              {
+                "tag": "thead",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "bots.source_name",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "bots.bot",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "common.status",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "bots.schedule",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "bots.last_import",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "common.actions",
+                            "values": {}
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "attrs": {},
+                "children": [
+                  {
+                    "each": {
+                      "get": "items"
+                    },
+                    "as": "source",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "strong",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "get": "source.name"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-meta"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "a",
+                                    "attrs": {
+                                      "href": {
+                                        "get": "source.feed_url"
+                                      },
+                                      "target": "_blank",
+                                      "rel": "noopener noreferrer"
+                                    },
+                                    "children": [
+                                      {
+                                        "get": "source.feed_url"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-meta text-danger"
+                                },
+                                "children": [
+                                  {
+                                    "get": "source.last_error"
+                                  }
+                                ],
+                                "when": {
+                                  "get": "source.last_error"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "a",
+                                "attrs": {
+                                  "href": {
+                                    "concat": [
+                                      "/admin/bots/",
+                                      {
+                                        "get": "source.bot_user_id"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "concat": [
+                                      "@",
+                                      {
+                                        "get": "source.bot_username"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "span",
+                                "attrs": {
+                                  "class": {
+                                    "concat": [
+                                      "badge",
+                                      {
+                                        "if": [
+                                          {
+                                            "get": "source.enabled"
+                                          },
+                                          " badge-primary",
+                                          ""
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "if": [
+                                      {
+                                        "get": "source.enabled"
+                                      },
+                                      {
+                                        "t": "bots.enabled",
+                                        "values": {}
+                                      },
+                                      {
+                                        "t": "bots.disabled",
+                                        "values": {}
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "t": "bots.every_minutes",
+                                "values": {
+                                  "count": {
+                                    "get": "source.interval_minutes"
+                                  }
+                                }
+                              },
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-meta"
+                                },
+                                "children": [
+                                  {
+                                    "get": "source.next_run_label"
+                                  }
+                                ],
+                                "when": {
+                                  "get": "source.next_run_at"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {
+                              "class": "table-meta"
+                            },
+                            "children": [
+                              {
+                                "or": [
+                                  {
+                                    "get": "source.last_imported_label"
+                                  },
+                                  {
+                                    "t": "bots.never_imported",
+                                    "values": {}
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-actions"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "button",
+                                    "attrs": {
+                                      "class": "btn btn-sm btn-ghost",
+                                      "type": "button",
+                                      "data-bot-source-edit": {
+                                        "get": "source.id"
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "t": "bots.edit_source",
+                                        "values": {}
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "component": "ui/api-action",
+                                    "data": {
+                                      "url": {
+                                        "concat": [
+                                          "/api/bots/sources/",
+                                          {
+                                            "get": "source.id"
+                                          }
+                                        ]
+                                      },
+                                      "method": "PATCH",
+                                      "target": "#bots-list",
+                                      "fields": {
+                                        "enabled": {
+                                          "if": [
+                                            {
+                                              "get": "source.enabled"
+                                            },
+                                            "0",
+                                            "1"
+                                          ]
+                                        }
+                                      },
+                                      "label": {
+                                        "if": [
+                                          {
+                                            "get": "source.enabled"
+                                          },
+                                          {
+                                            "t": "bots.detail_pause",
+                                            "values": {}
+                                          },
+                                          {
+                                            "t": "bots.detail_enable",
+                                            "values": {}
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "component": "ui/api-action",
+                                    "data": {
+                                      "url": {
+                                        "concat": [
+                                          "/api/bots/sources/",
+                                          {
+                                            "get": "source.id"
+                                          },
+                                          "/runs"
+                                        ]
+                                      },
+                                      "method": "POST",
+                                      "target": "#bots-list",
+                                      "label": {
+                                        "t": "bots.detail_run_now",
+                                        "values": {}
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "component": "ui/api-action",
+                                    "data": {
+                                      "url": {
+                                        "concat": [
+                                          "/api/bots/sources/",
+                                          {
+                                            "get": "source.id"
+                                          }
+                                        ]
+                                      },
+                                      "method": "DELETE",
+                                      "target": "#bots-list",
+                                      "label": {
+                                        "t": "common.delete",
+                                        "values": {}
+                                      },
+                                      "confirm": {
+                                        "t": "bots.delete_confirm",
+                                        "values": {}
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "when": {
+          "get": "items"
+        }
+      }
+    ]
+  },
+  "bots/accounts": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14"
+    },
+    "children": [
+      {
+        "component": "ui/list-toolbar",
+        "data": {
+          "url": "/api/bots/accounts",
+          "target": "#bot-accounts-list",
+          "history": "/admin/bots/accounts",
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table"
+            },
+            "children": [
+              {
+                "tag": "thead",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "bots.account",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "common.status",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "bots.detail_stat_sources",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "bots.detail_stat_posts",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "common.updated",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "common.actions",
+                            "values": {}
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "attrs": {},
+                "children": [
+                  {
+                    "each": {
+                      "get": "items"
+                    },
+                    "as": "account",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "a",
+                                "attrs": {
+                                  "href": {
+                                    "concat": [
+                                      "/admin/bots/",
+                                      {
+                                        "get": "account.id"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "concat": [
+                                      "@",
+                                      {
+                                        "get": "account.username"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "get": "account.status_label"
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "get": "account.source_count"
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "get": "account.post_count"
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "time",
+                                "attrs": {
+                                  "datetime": {
+                                    "get": "account.updated_at"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "account.updated_label"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "component": "ui/api-action",
+                                "data": {
+                                  "url": {
+                                    "concat": [
+                                      "/api/bots/accounts/",
+                                      {
+                                        "get": "account.id"
+                                      }
+                                    ]
+                                  },
+                                  "method": "DELETE",
+                                  "target": "#bot-accounts-list",
+                                  "confirm": {
+                                    "t": "bots.account_delete_confirm",
+                                    "values": {
+                                      "username": {
+                                        "get": "account.username"
+                                      }
+                                    }
+                                  },
+                                  "label": {
+                                    "t": "common.delete",
+                                    "values": {}
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "td",
+                        "attrs": {
+                          "colspan": "6"
+                        },
+                        "children": [
+                          {
+                            "t": "bots.no_bots",
+                            "values": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "when": {
+                      "not": {
+                        "get": "items"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "component": "ui/pagination",
+        "data": {
+          "navigation": {
+            "get": "navigation"
+          },
+          "target": "#bot-accounts-list"
+        }
+      }
+    ]
+  },
+  "bots/runs": [
+    {
+      "tag": "p",
+      "attrs": {
+        "class": "text-muted mb-0"
+      },
+      "children": [
+        {
+          "t": "bots.detail_no_runs",
+          "values": {}
+        }
+      ],
+      "when": {
+        "not": {
+          "get": "runs"
+        }
+      }
+    },
+    {
+      "tag": "div",
+      "attrs": {
+        "class": "stack"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attrs": {
+            "class": "split"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attrs": {},
+              "children": [
+                {
+                  "t": "bots.detail_source",
+                  "values": {}
+                }
+              ]
+            },
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                {
+                  "get": "runs.0.source_name"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "attrs": {
+            "class": "split"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attrs": {},
+              "children": [
+                {
+                  "t": "bots.detail_status",
+                  "values": {}
+                }
+              ]
+            },
+            {
+              "tag": "span",
+              "attrs": {
+                "class": {
+                  "concat": [
+                    "badge",
+                    {
+                      "if": [
+                        {
+                          "eq": [
+                            {
+                              "get": "runs.0.status"
+                            },
+                            "error"
+                          ]
+                        },
+                        "",
+                        " badge-primary"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "children": [
+                {
+                  "get": "runs.0.status"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "attrs": {
+            "class": "split"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attrs": {},
+              "children": [
+                {
+                  "t": "bots.detail_started",
+                  "values": {}
+                }
+              ]
+            },
+            {
+              "tag": "time",
+              "attrs": {
+                "datetime": {
+                  "get": "runs.0.started_iso"
+                }
+              },
+              "children": [
+                {
+                  "get": "runs.0.started_label"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "attrs": {
+            "class": "split"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attrs": {},
+              "children": [
+                {
+                  "t": "bots.detail_items_seen",
+                  "values": {}
+                }
+              ]
+            },
+            {
+              "tag": "strong",
+              "attrs": {},
+              "children": [
+                {
+                  "get": "runs.0.items_seen"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "attrs": {
+            "class": "alert alert-danger mb-0"
+          },
+          "children": [
+            {
+              "get": "runs.0.error"
+            }
+          ],
+          "when": {
+            "get": "runs.0.error"
+          }
+        }
+      ],
+      "when": {
+        "and": [
+          {
+            "get": "latest"
+          },
+          {
+            "get": "runs"
+          }
+        ]
+      }
+    },
+    {
+      "tag": "div",
+      "attrs": {
+        "class": "table-wrap"
+      },
+      "children": [
+        {
+          "tag": "table",
+          "attrs": {
+            "class": "table"
+          },
+          "children": [
+            {
+              "tag": "thead",
+              "attrs": {},
+              "children": [
+                {
+                  "tag": "tr",
+                  "attrs": {},
+                  "children": [
+                    {
+                      "tag": "th",
+                      "attrs": {},
+                      "children": [
+                        {
+                          "t": "bots.detail_source",
+                          "values": {}
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "th",
+                      "attrs": {},
+                      "children": [
+                        {
+                          "t": "bots.detail_status",
+                          "values": {}
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "th",
+                      "attrs": {},
+                      "children": [
+                        {
+                          "t": "bots.detail_started",
+                          "values": {}
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "th",
+                      "attrs": {},
+                      "children": [
+                        {
+                          "t": "bots.detail_items_seen",
+                          "values": {}
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "tbody",
+              "attrs": {},
+              "children": [
+                {
+                  "each": {
+                    "get": "runs"
+                  },
+                  "as": "run",
+                  "children": [
+                    {
+                      "tag": "tr",
+                      "attrs": {},
+                      "children": [
+                        {
+                          "tag": "td",
+                          "attrs": {},
+                          "children": [
+                            {
+                              "get": "run.source_name"
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "td",
+                          "attrs": {},
+                          "children": [
+                            {
+                              "get": "run.status"
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "td",
+                          "attrs": {},
+                          "children": [
+                            {
+                              "tag": "time",
+                              "attrs": {
+                                "datetime": {
+                                  "get": "run.started_iso"
+                                }
+                              },
+                              "children": [
+                                {
+                                  "get": "run.started_label"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "td",
+                          "attrs": {},
+                          "children": [
+                            {
+                              "get": "run.items_seen"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "when": {
+        "and": [
+          {
+            "not": {
+              "get": "latest"
+            }
+          },
+          {
+            "get": "runs"
+          }
+        ]
+      }
+    }
+  ]
+}

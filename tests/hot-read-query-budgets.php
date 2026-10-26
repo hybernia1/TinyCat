@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/cache-isolation.php';
+
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "This test is available only from the command line.\n");
     exit(1);
@@ -21,6 +23,8 @@ if ($scenario !== '') {
 $budgets = [
     'feed' => 4,
     'status' => 7,
+    'json-feed' => 4,
+    'json-status' => 7,
     'tag' => 5,
     'author' => 17,
     'search' => 8,
@@ -69,18 +73,12 @@ function runScenario(string $scenario): void
     $root = dirname(__DIR__);
     define('TINYCAT', true);
     require_once $root . '/App/autoload.php';
-    require_once $root . '/App/Core.php';
-    require_once $root . '/App/Captcha.php';
-    require_once $root . '/App/Cache.php';
-    require_once $root . '/App/Minifier.php';
-    require_once $root . '/App/Avatar.php';
-    require_once $root . '/App/StatusImage.php';
-    require_once $root . '/App/SiteIdentity.php';
-    require_once $root . '/App/StatusLinks.php';
-    require_once $root . '/App/LinkMetadata.php';
-    require_once $root . '/App/Notifications.php';
-    require_once $root . '/App/UserRoles.php';
-    require_once $root . '/App/functions.php';
+require_once $root . '/App/autoload.php';
+    require_once $root . '/App/Users/Avatar.php';
+    require_once $root . '/App/Status/ImageStorage.php';
+    require_once $root . '/App/Status/LinkParser.php';
+    require_once $root . '/App/Status/Metadata.php';
+    require_once $root . '/App/Users/Roles.php';
 
     $database = new QueryCountingPdo('sqlite::memory:');
     $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -99,8 +97,8 @@ function runScenario(string $scenario): void
     $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
     $_SERVER['SCRIPT_NAME'] = '/index.php';
 
-    if ($scenario === 'status') {
-        Core::session();
+    if (in_array($scenario, ['status', 'json-status'], true)) {
+        \TinyCat\Http\Session::start();
         $_SESSION['auth_user_id'] = 2;
     }
 
@@ -109,6 +107,8 @@ function runScenario(string $scenario): void
     match ($scenario) {
         'feed' => exerciseFeed(),
         'status' => exerciseStatus(),
+        'json-feed' => \TinyCat\Status\Resource::posts(\TinyCat\Status\Feed::public_status_items_cursor(20), \TinyCat\Users\Authentication::auth()),
+        'json-status' => exerciseJsonStatus(),
         'tag' => exerciseTag(),
         'author' => exerciseAuthor(),
         'search' => exerciseSearch(),
@@ -120,9 +120,9 @@ function runScenario(string $scenario): void
 
 function configureTestCore(PDO $database): void
 {
-    $booted = new ReflectionProperty(Core::class, 'booted');
+    $booted = new ReflectionProperty(\TinyCat\Support\Config::class, 'booted');
     $booted->setValue(null, true);
-    $config = new ReflectionProperty(Core::class, 'config');
+    $config = new ReflectionProperty(\TinyCat\Support\Config::class, 'config');
     $config->setValue(null, [
         'app' => ['url' => 'http://localhost'],
         'database' => ['driver' => 'sqlite'],
@@ -130,9 +130,9 @@ function configureTestCore(PDO $database): void
         'cache' => ['driver' => 'filesystem'],
         'security' => ['captcha' => ['enabled' => false]],
     ]);
-    $settings = new ReflectionProperty(Core::class, 'settings');
+    $settings = new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings');
     $settings->setValue(null, []);
-    Core::setDb($database);
+    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     $settings->setValue(null, []);
 }
 
@@ -174,7 +174,9 @@ function createFixture(PDO $database): void
 
     for ($id = 1; $id <= 12; $id++) {
         $parentId = $id > 6 ? $id - 6 : null;
-        $comment->execute([$id, $parentId, "Benchmark comment {$id}", '2026-02-01 12:' . str_pad((string) $id, 2, '0', STR_PAD_LEFT) . ':00']);
+        $mentionId = 100 + $id;
+        $user->execute([$mentionId, 'mention_' . $id, '', 'user', 'active', 'en', 'system', '', '2026-01-01 00:00:00', '2026-01-01 00:00:00']);
+        $comment->execute([$id, $parentId, "Benchmark comment {$id} @{$mentionId}", '2026-02-01 12:' . str_pad((string) $id, 2, '0', STR_PAD_LEFT) . ':00']);
     }
 
     $database->exec('INSERT INTO content_likes (content_id, user_id) VALUES (1, 2)');
@@ -184,21 +186,30 @@ function createFixture(PDO $database): void
 
 function exerciseFeed(): void
 {
-    exerciseStatusImages(public_status_items_cursor(20));
+    exerciseStatusImages(\TinyCat\Status\Feed::public_status_items_cursor(20));
+}
+
+function exerciseJsonStatus(): void
+{
+    $user = \TinyCat\Users\Authentication::auth();
+    $item = \TinyCat\Status\Feed::public_status_item(1);
+    if ($item === null) { throw new RuntimeException('JSON status fixture was not found.'); }
+    \TinyCat\Status\Resource::posts([$item], $user);
+    \TinyCat\Status\Resource::comments(\TinyCat\Status\Comments::status_comments(1), $user);
 }
 
 function exerciseStatus(): void
 {
-    $user = auth();
-    $item = public_status_item(1);
+    $user = \TinyCat\Users\Authentication::auth();
+    $item = \TinyCat\Status\Feed::public_status_item(1);
 
     if ($item === null) {
         throw new RuntimeException('Status fixture was not found.');
     }
 
-    status_preload_feed([$item]);
-    $comments = status_comments(1);
-    status_preload_comment_tree_user_likes($comments, (int) ($user['id'] ?? 0));
+    \TinyCat\Status\Feed::status_preload_feed([$item]);
+    $comments = \TinyCat\Status\Comments::status_comments(1);
+    \TinyCat\Status\Comments::status_preload_comment_tree_user_likes($comments, (int) ($user['id'] ?? 0));
     exerciseStatusImages([$item]);
 
     $pending = $comments;
@@ -209,26 +220,29 @@ function exerciseStatus(): void
             continue;
         }
 
-        status_comment_can_delete($comment, $user);
-        status_comment_user_liked((int) ($comment['id'] ?? 0), (int) ($user['id'] ?? 0));
+        \TinyCat\Status\Comments::status_comment_can_delete($comment, $user);
+        \TinyCat\Status\Posts::status_api_url('comment-like', ['id' => (int) $comment['content_id'], 'comment_id' => (int) $comment['id']]);
+        \TinyCat\Status\ViewData::status_comment_edit_modal_url((int) $comment['id'], (int) $comment['content_id']);
+        \TinyCat\Status\ViewData::status_comment_history_modal_url((int) $comment['id'], (int) $comment['content_id']);
+        \TinyCat\Status\Comments::status_comment_user_liked((int) ($comment['id'] ?? 0), (int) ($user['id'] ?? 0));
         array_push($pending, ...(array) ($comment['replies'] ?? []));
     }
 
-    auth();
-    auth('id');
+    \TinyCat\Users\Authentication::auth();
+    \TinyCat\Users\Authentication::auth('id');
 }
 
 function exerciseTag(): void
 {
-    exerciseStatusImages(public_status_items_by_tag('benchmark', 20));
+    exerciseStatusImages(\TinyCat\Status\Feed::public_status_items_by_tag('benchmark', 20));
 }
 
 function exerciseAuthor(): void
 {
-    public_author_find(1);
-    $items = public_status_items_by_author_cursor(1, 20);
-    author_follow_counts(1);
-    $stats = author_activity_stats(1);
+    \TinyCat\Users\Repository::public_author_find(1);
+    $items = \TinyCat\Status\Feed::public_status_items_by_author_cursor(1, 20);
+    \TinyCat\Users\Following::author_follow_counts(1);
+    $stats = \TinyCat\Users\Repository::author_activity_stats(1);
 
     if ($stats !== [
         'posts' => 24,
@@ -244,7 +258,7 @@ function exerciseAuthor(): void
 
 function exerciseSearch(): void
 {
-    $results = public_search_results('performance', 12);
+    $results = \TinyCat\Search\Queries::public_search_results('performance', 12);
     $ids = [];
 
     foreach ((array) ($results['content'] ?? []) as $item) {
@@ -253,21 +267,21 @@ function exerciseSearch(): void
     }
 
     foreach (array_slice((array) ($results['users'] ?? []), 0, 3) as $user) {
-        foreach (public_status_ids_by_author((int) ($user['id'] ?? 0), 4) as $id) $ids[$id] = true;
+        foreach (\TinyCat\Status\Feed::public_status_ids_by_author((int) ($user['id'] ?? 0), 4) as $id) $ids[$id] = true;
     }
 
     foreach (array_slice((array) ($results['tags'] ?? []), 0, 3) as $tag) {
-        foreach (public_status_ids_by_tag(trim((string) ($tag['title'] ?? ''), '# '), 4) as $id) $ids[$id] = true;
+        foreach (\TinyCat\Status\Feed::public_status_ids_by_tag(trim((string) ($tag['title'] ?? ''), '# '), 4) as $id) $ids[$id] = true;
     }
 
-    exerciseStatusImages(public_status_items_by_ids(array_slice(array_keys($ids), 0, 48)));
+    exerciseStatusImages(\TinyCat\Status\Feed::public_status_items_by_ids(array_slice(array_keys($ids), 0, 48)));
 }
 
 function exerciseStatusImages(array $items): void
 {
     foreach ($items as $item) {
-        status_image_url((array) $item);
-        status_image_jsonld((array) $item);
+        \TinyCat\Status\Images::status_image_url((array) $item);
+        \TinyCat\Status\Images::status_image_jsonld((array) $item);
     }
 }
 

@@ -6,47 +6,47 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-$next = auth_request_next_url();
+$next = \TinyCat\Users\Login::auth_request_next_url();
 
-if (is_post()) {
-    csrf_require();
+if (\TinyCat\Http\Request::current()->isPost()) {
+    \TinyCat\Security\Csrf::requireToken();
 
-    $credentials = auth_login_credentials();
+    $credentials = \TinyCat\Users\Login::auth_login_credentials();
 
-    if (auth_login_captcha_required() && !captcha_check('login')) {
-        captcha_refresh('login');
-        auth_form_state_remember('login');
-        flash('error', t('auth.invalid_captcha'));
-        redirect(auth_url_with_next('/login', $next));
+    if (\TinyCat\Security\Captcha::loginRequired() && !\TinyCat\Security\Captcha::check('login')) {
+
+        \TinyCat\Users\Login::auth_form_state_remember('login');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('auth.invalid_captcha'));
+        \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_url_with_next('/login', $next));
     }
 
-    if (auth_attempt($credentials)) {
-        auth_login_success();
-        redirect(auth_redirect_after_login(auth(), $next));
+    if (\TinyCat\Users\Login::auth_attempt($credentials)) {
+        \TinyCat\Security\Captcha::clearLoginFailures();
+        \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_redirect_after_login(\TinyCat\Users\Authentication::auth(), $next));
     }
 
-    auth_login_failure();
-    auth_form_state_remember('login');
-    flash('error', t('auth.invalid_login'));
-    redirect(auth_url_with_next('/login', $next));
+    \TinyCat\Security\Captcha::recordLoginFailure();
+    \TinyCat\Users\Login::auth_form_state_remember('login');
+    \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('auth.invalid_login'));
+    \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_url_with_next('/login', $next));
 }
 
-if (auth_check()) {
-    redirect(auth_redirect_after_login(auth(), $next));
+if (\TinyCat\Users\Authentication::authCheck()) {
+    \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_redirect_after_login(\TinyCat\Users\Authentication::auth(), $next));
 }
 
-$error = flash('error');
-$message = flash('success');
-$old = auth_form_state_previous('login');
+$error = \TinyCat\Http\Session::flash('error');
+$message = \TinyCat\Http\Session::flash('success');
+$old = \TinyCat\Users\Login::auth_form_state_previous('login');
 
-layout('layout', [
-    'title' => t('auth.login_title'),
+\TinyCat\Support\View::layout('layout', [
+    'title' => \TinyCat\Support\Localization::t('auth.login_title'),
     'current' => '/login',
     'nav' => [],
     'meta' => [
-        'description' => t('auth.login_intro'),
+        'description' => \TinyCat\Support\Localization::t('auth.login_intro'),
         'url' => '/login',
-        'image' => site_meta_image_url(),
+        'image' => \TinyCat\Site\Presentation::site_meta_image_url(),
         'robots' => 'noindex,follow',
     ],
 ], static function () use ($error, $message, $next, $old): void {
@@ -54,10 +54,10 @@ layout('layout', [
     <section class="max-w-auth-sm mx-auto">
         <article class="card">
             <div class="card-header">
-                <h1 class="text-lg m-0 cluster gap-2"><?= icon('login') ?> <?= et('auth.login_title') ?></h1>
+                <h1 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('login') ?> <?= \TinyCat\Support\Html::et('auth.login_title') ?></h1>
             </div>
             <div class="card-body">
-                <?= part('auth/content', ['mode' => 'login', 'next' => $next, 'old' => $old, 'error' => $error, 'message' => $message]) ?>
+                <?= \TinyCat\Users\Views::authContent(['mode' => 'login', 'next' => $next, 'old' => $old, 'error' => $error, 'message' => $message]) ?>
             </div>
         </article>
     </section>

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Support\Html;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -17,7 +19,7 @@ $steps = [
 $currentIndex = array_search($current, array_keys($steps), true);
 $currentIndex = $currentIndex === false ? 0 : $currentIndex;
 ?>
-<ol class="steps" aria-label="<?= et('install.title') ?>">
+<ol class="steps" aria-label="<?= Html::et('install.title') ?>">
     <?php $index = 0; ?>
     <?php foreach ($steps as $step => $label): ?>
         <?php
@@ -25,9 +27,9 @@ $currentIndex = $currentIndex === false ? 0 : $currentIndex;
         $class .= $step === $current ? ' is-active' : '';
         $class .= $index < $currentIndex ? ' is-complete' : '';
         ?>
-        <li class="<?= e($class) ?>">
-            <span class="step-marker"><?= e($index + 1) ?></span>
-            <span><?= et($label) ?></span>
+        <li class="<?= Html::e($class) ?>">
+            <span class="step-marker"><?= Html::e($index + 1) ?></span>
+            <span><?= Html::et($label) ?></span>
         </li>
         <?php $index++; ?>
     <?php endforeach; ?>

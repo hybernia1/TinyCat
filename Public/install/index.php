@@ -1,24 +1,23 @@
 <?php
 declare(strict_types=1);
 
-
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
 }
 
-csrf_token();
+\TinyCat\Security\Csrf::token();
 
 $languages = tc_install_languages();
 $state = &tc_install_state();
 $locale = tc_install_locale($languages, $state);
-locale($locale);
+\TinyCat\Support\Localization::locale($locale);
 
-if (empty($state['database']) && is_array(config('database', []))) {
-    $state['database'] = config('database', []);
+if (empty($state['database']) && is_array(\TinyCat\Settings\Store::config('database', []))) {
+    $state['database'] = \TinyCat\Settings\Store::config('database', []);
 }
 
-if (is_post()) {
+if (\TinyCat\Http\Request::current()->isPost()) {
     tc_install_handle_post($languages);
 }
 
@@ -40,7 +39,7 @@ function tc_install_languages(): array
 {
     $languages = [];
 
-    foreach (language_packages() as $code => $label) {
+    foreach (\TinyCat\Support\Languages::language_packages() as $code => $label) {
         $languages[$code] = [
             'code' => $code,
             'label' => $label,
@@ -54,7 +53,7 @@ function tc_install_languages(): array
 
 function tc_install_locale(array $languages, array $state): string
 {
-    $configured = (string) ($state['locale'] ?? config('i18n.locale', config('install.locale', 'en')));
+    $configured = (string) ($state['locale'] ?? \TinyCat\Settings\Store::config('i18n.locale', \TinyCat\Settings\Store::config('install.locale', 'en')));
 
     if (isset($languages[$configured])) {
         return $configured;
@@ -65,7 +64,7 @@ function tc_install_locale(array $languages, array $state): string
 
 function tc_install_step(array $state): string
 {
-    $status = app_db_status();
+    $status = \TinyCat\Database\Schema::app_db_status();
 
     if ($status['ready']) {
         return 'done';
@@ -81,7 +80,7 @@ function tc_install_step(array $state): string
         }
     }
 
-    $step = (string) get('step', $defaultStep);
+    $step = (string) \TinyCat\Http\Web::get('step', $defaultStep);
     $allowed = ['language', 'db', 'tables', 'admin', 'done'];
 
     if (!in_array($step, $allowed, true)) {
@@ -89,20 +88,20 @@ function tc_install_step(array $state): string
     }
 
     if (in_array($step, ['tables', 'admin'], true) && empty($state['database'])) {
-        flash('error', t('install.messages.missing_db'));
-        redirect('/install?step=db');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.missing_db'));
+        \TinyCat\Http\Web::redirect('/install?step=db');
     }
 
     $tablesReady = $status['connected'] && $status['missing_tables'] === [];
 
     if ($step === 'admin' && empty($state['tables']) && !$tablesReady) {
-        flash('error', t('install.messages.missing_tables'));
-        redirect('/install?step=tables');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.missing_tables'));
+        \TinyCat\Http\Web::redirect('/install?step=tables');
     }
 
     if ($step === 'done' && !$status['ready']) {
-        flash('error', t('install.messages.db_not_ready'));
-        redirect('/install?step=' . $defaultStep);
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.db_not_ready'));
+        \TinyCat\Http\Web::redirect('/install?step=' . $defaultStep);
     }
 
     return $step;
@@ -110,34 +109,34 @@ function tc_install_step(array $state): string
 
 function tc_install_handle_post(array $languages): void
 {
-    csrf_require();
+    \TinyCat\Security\Csrf::requireToken();
 
-    $step = (string) post('_install_step', get('step', 'language'));
+    $step = (string) \TinyCat\Http\Web::post('_install_step', \TinyCat\Http\Web::get('step', 'language'));
 
     match ($step) {
         'language' => tc_install_store_language($languages),
         'db' => tc_install_store_database(),
         'tables' => tc_install_store_tables(),
         'admin' => tc_install_store_admin(),
-        default => redirect('/install'),
+        default => \TinyCat\Http\Web::redirect('/install'),
     };
 }
 
 function tc_install_store_language(array $languages): never
 {
-    $selected = (string) post('locale', '');
+    $selected = (string) \TinyCat\Http\Web::post('locale', '');
 
     if (!isset($languages[$selected])) {
-        flash('error', t('install.messages.invalid_language'));
-        redirect('/install?step=language');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.invalid_language'));
+        \TinyCat\Http\Web::redirect('/install?step=language');
     }
 
     $state = &tc_install_state();
     $state['locale'] = $selected;
-    locale($selected);
+    \TinyCat\Support\Localization::locale($selected);
 
-    flash('success', t('install.messages.language_saved'));
-    redirect('/install?step=db');
+    \TinyCat\Http\Session::flash('success', \TinyCat\Support\Localization::t('install.messages.language_saved'));
+    \TinyCat\Http\Web::redirect('/install?step=db');
 }
 
 function tc_install_store_database(): never
@@ -145,8 +144,8 @@ function tc_install_store_database(): never
     $database = tc_install_database_from_post();
 
     if (!preg_match('/^[A-Za-z0-9_]+$/', $database['name'])) {
-        flash('error', t('install.messages.invalid_database'));
-        redirect('/install?step=db');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.invalid_database'));
+        \TinyCat\Http\Web::redirect('/install?step=db');
     }
 
     try {
@@ -157,11 +156,11 @@ function tc_install_store_database(): never
         $state['database'] = $database;
         unset($state['tables']);
 
-        flash('success', t('install.messages.db_connected'));
-        redirect('/install?step=tables');
+        \TinyCat\Http\Session::flash('success', \TinyCat\Support\Localization::t('install.messages.db_connected'));
+        \TinyCat\Http\Web::redirect('/install?step=tables');
     } catch (Throwable $exception) {
-        flash('error', t('install.messages.db_failed', ['message' => $exception->getMessage()]));
-        redirect('/install?step=db');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.db_failed', ['message' => $exception->getMessage()]));
+        \TinyCat\Http\Web::redirect('/install?step=db');
     }
 }
 
@@ -170,26 +169,26 @@ function tc_install_store_tables(): never
     $state = &tc_install_state();
 
     if (empty($state['database']) || !is_array($state['database'])) {
-        flash('error', t('install.messages.missing_db'));
-        redirect('/install?step=db');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.missing_db'));
+        \TinyCat\Http\Web::redirect('/install?step=db');
     }
 
     try {
-        Core::setDb(tc_install_pdo($state['database']));
+        \TinyCat\Database\Connection::set(tc_install_pdo($state['database']));
         tc_install_create_tables();
 
         $missingTables = tc_install_missing_tables();
 
         if ($missingTables !== []) {
-            throw new RuntimeException(t('install.messages.missing_tables') . ' ' . implode(', ', $missingTables));
+            throw new RuntimeException(\TinyCat\Support\Localization::t('install.messages.missing_tables') . ' ' . implode(', ', $missingTables));
         }
 
         $state['tables'] = true;
-        flash('success', t('install.messages.tables_created'));
-        redirect('/install?step=admin');
+        \TinyCat\Http\Session::flash('success', \TinyCat\Support\Localization::t('install.messages.tables_created'));
+        \TinyCat\Http\Web::redirect('/install?step=admin');
     } catch (Throwable $exception) {
-        flash('error', t('install.messages.db_failed', ['message' => $exception->getMessage()]));
-        redirect('/install?step=tables');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.db_failed', ['message' => $exception->getMessage()]));
+        \TinyCat\Http\Web::redirect('/install?step=tables');
     }
 }
 
@@ -198,65 +197,65 @@ function tc_install_store_admin(): never
     $state = &tc_install_state();
 
     if (empty($state['database']) || !is_array($state['database'])) {
-        flash('error', t('install.messages.missing_db'));
-        redirect('/install?step=db');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.missing_db'));
+        \TinyCat\Http\Web::redirect('/install?step=db');
     }
 
     try {
-        Core::setDb(tc_install_pdo($state['database']));
+        \TinyCat\Database\Connection::set(tc_install_pdo($state['database']));
     } catch (Throwable $exception) {
-        flash('error', t('install.messages.db_failed', ['message' => $exception->getMessage()]));
-        redirect('/install?step=db');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.db_failed', ['message' => $exception->getMessage()]));
+        \TinyCat\Http\Web::redirect('/install?step=db');
     }
 
     $missingTables = tc_install_missing_tables();
 
     if ($missingTables !== []) {
-        flash('error', t('install.messages.missing_tables'));
-        redirect('/install?step=tables');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.missing_tables'));
+        \TinyCat\Http\Web::redirect('/install?step=tables');
     }
 
-    $username = username_normalize((string) post('username', ''));
-    $password = (string) post('password', '');
-    $confirm = (string) post('password_confirm', '');
+    $username = \TinyCat\Users\Usernames::username_normalize((string) \TinyCat\Http\Web::post('username', ''));
+    $password = (string) \TinyCat\Http\Web::post('password', '');
+    $confirm = (string) \TinyCat\Http\Web::post('password_confirm', '');
 
     if ($username === '' || $password === '') {
-        flash('error', t('install.messages.required_fields'));
-        redirect('/install?step=admin');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.required_fields'));
+        \TinyCat\Http\Web::redirect('/install?step=admin');
     }
 
-    if (!username_valid($username)) {
-        flash('error', t('install.messages.invalid_username'));
-        redirect('/install?step=admin');
+    if (!\TinyCat\Users\Usernames::username_valid($username)) {
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.invalid_username'));
+        \TinyCat\Http\Web::redirect('/install?step=admin');
     }
 
     if (strlen($password) < 8) {
-        flash('error', t('install.messages.password_length'));
-        redirect('/install?step=admin');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.password_length'));
+        \TinyCat\Http\Web::redirect('/install?step=admin');
     }
 
-    if (auth_password_too_long($password)) {
-        flash('error', t('account.messages.password_too_long'));
-        redirect('/install?step=admin');
+    if (\TinyCat\Users\Login::auth_password_too_long($password)) {
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('account.messages.password_too_long'));
+        \TinyCat\Http\Web::redirect('/install?step=admin');
     }
 
     if ($password !== $confirm) {
-        flash('error', t('install.messages.password_mismatch'));
-        redirect('/install?step=admin');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.password_mismatch'));
+        \TinyCat\Http\Web::redirect('/install?step=admin');
     }
 
     try {
-        $adminId = tc_install_create_admin_account($username, $password, (string) ($state['locale'] ?? locale()));
+        $adminId = tc_install_create_admin_account($username, $password, (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale()));
         tc_install_default_settings($state);
         tc_install_write_config($state);
         unset($_SESSION['tc_install']);
-        auth_login($adminId);
+        \TinyCat\Users\Authentication::authLogin($adminId);
 
-        flash('success', t('install.messages.admin_created'));
-        redirect('/install?step=done');
+        \TinyCat\Http\Session::flash('success', \TinyCat\Support\Localization::t('install.messages.admin_created'));
+        \TinyCat\Http\Web::redirect('/install?step=done');
     } catch (Throwable $exception) {
-        flash('error', $exception->getMessage());
-        redirect('/install?step=admin');
+        \TinyCat\Http\Session::flash('error', $exception->getMessage());
+        \TinyCat\Http\Web::redirect('/install?step=admin');
     }
 }
 
@@ -264,14 +263,14 @@ function tc_install_database_from_post(): array
 {
     $database = [
         'driver' => 'mysql',
-        'host' => trim((string) post('host', 'localhost')),
-        'name' => trim((string) post('name', '')),
-        'user' => trim((string) post('user', 'root')),
-        'password' => (string) post('password', ''),
-        'charset' => trim((string) post('charset', 'utf8mb4')) ?: 'utf8mb4',
+        'host' => trim((string) \TinyCat\Http\Web::post('host', 'localhost')),
+        'name' => trim((string) \TinyCat\Http\Web::post('name', '')),
+        'user' => trim((string) \TinyCat\Http\Web::post('user', 'root')),
+        'password' => (string) \TinyCat\Http\Web::post('password', ''),
+        'charset' => trim((string) \TinyCat\Http\Web::post('charset', 'utf8mb4')) ?: 'utf8mb4',
     ];
 
-    $port = (int) post('port', 0);
+    $port = (int) \TinyCat\Http\Web::post('port', 0);
 
     if ($port > 0) {
         $database['port'] = $port;
@@ -297,7 +296,7 @@ function tc_install_pdo(array $database, bool $createDatabase = false): PDO
     ];
 
     if ($name === '') {
-        throw new RuntimeException(t('install.messages.required_fields'));
+        throw new RuntimeException(\TinyCat\Support\Localization::t('install.messages.required_fields'));
     }
 
     $dsn = sprintf('mysql:host=%s%s;dbname=%s;charset=%s', $host, $port, $name, $charset);
@@ -319,7 +318,7 @@ function tc_install_pdo(array $database, bool $createDatabase = false): PDO
 
 function tc_install_create_tables(): void
 {
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS users (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,
             username VARCHAR(32) NOT NULL,
@@ -345,7 +344,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS content (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             body VARCHAR(2000) NOT NULL,
@@ -364,7 +363,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS content_images (
             content_id BIGINT UNSIGNED NOT NULL,
             path VARCHAR(190) NOT NULL,
@@ -377,7 +376,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS terms (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             name VARCHAR(120) NOT NULL,
@@ -386,7 +385,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS content_tags (
             content_id BIGINT UNSIGNED NOT NULL,
             term_id BIGINT UNSIGNED NOT NULL,
@@ -397,7 +396,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS links (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             normalized_url VARCHAR(2048) NOT NULL,
@@ -416,7 +415,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS content_links (
             content_id BIGINT UNSIGNED NOT NULL,
             link_id BIGINT UNSIGNED NOT NULL,
@@ -428,7 +427,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS content_likes (
             content_id BIGINT UNSIGNED NOT NULL,
             user_id INT UNSIGNED NOT NULL,
@@ -439,7 +438,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS content_comments (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             content_id BIGINT UNSIGNED NOT NULL,
@@ -458,7 +457,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS comment_likes (
             comment_id BIGINT UNSIGNED NOT NULL,
             user_id INT UNSIGNED NOT NULL,
@@ -469,7 +468,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS user_followers (
             user_id INT UNSIGNED NOT NULL,
             follower_id INT UNSIGNED NOT NULL,
@@ -481,7 +480,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS notifications (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id INT UNSIGNED NOT NULL,
@@ -506,7 +505,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS content_reports (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             content_id BIGINT UNSIGNED NOT NULL,
@@ -528,7 +527,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS settings (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             setting_key VARCHAR(120) NOT NULL,
@@ -545,7 +544,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS password_reset_tokens (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id INT UNSIGNED NOT NULL,
@@ -561,7 +560,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS schema_migrations (
             migration VARCHAR(190) NOT NULL,
             version VARCHAR(32) NOT NULL,
@@ -571,7 +570,7 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
-    run(
+    \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS ip_action_limits (
             ip_address VARCHAR(45) NOT NULL,
             action_name VARCHAR(40) NOT NULL,
@@ -629,60 +628,60 @@ function tc_install_create_tables(): void
     ];
 
     foreach ($statements as $statement) {
-        run($statement);
+        \TinyCat\Database\Connection::exec($statement);
     }
 
 }
 
 function tc_install_default_settings(array $state): void
 {
-    $locale = (string) ($state['locale'] ?? locale());
+    $locale = (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale());
     $defaults = [
-        ['site.name', (string) config('site.name', 'TinyCat'), 'string', 'site'],
-        ['site.home_title', (string) config('site.home_title', ''), 'string', 'site'],
-        ['site.meta_description', (string) config('site.meta_description', ''), 'string', 'site'],
-        ['site.logo_url', (string) config('site.logo_url', ''), 'string', 'site'],
-        ['site.logo_path', (string) config('site.logo_path', ''), 'string', 'site'],
-        ['site.favicon_url', (string) config('site.favicon_url', ''), 'string', 'site'],
-        ['site.favicon_path', (string) config('site.favicon_path', ''), 'string', 'site'],
-        ['site.footer_html', (string) config('site.footer_html', ''), 'string', 'site'],
+        ['site.name', (string) \TinyCat\Settings\Store::config('site.name', 'TinyCat'), 'string', 'site'],
+        ['site.home_title', (string) \TinyCat\Settings\Store::config('site.home_title', ''), 'string', 'site'],
+        ['site.meta_description', (string) \TinyCat\Settings\Store::config('site.meta_description', ''), 'string', 'site'],
+        ['site.logo_url', (string) \TinyCat\Settings\Store::config('site.logo_url', ''), 'string', 'site'],
+        ['site.logo_path', (string) \TinyCat\Settings\Store::config('site.logo_path', ''), 'string', 'site'],
+        ['site.favicon_url', (string) \TinyCat\Settings\Store::config('site.favicon_url', ''), 'string', 'site'],
+        ['site.favicon_path', (string) \TinyCat\Settings\Store::config('site.favicon_path', ''), 'string', 'site'],
+        ['site.footer_html', (string) \TinyCat\Settings\Store::config('site.footer_html', ''), 'string', 'site'],
         ['i18n.locale', $locale, 'string', 'localization'],
-        ['datetime.timezone', (string) config('datetime.timezone', 'Europe/Prague'), 'string', 'localization'],
-        ['datetime.date', (string) config('datetime.date', 'd.m.Y'), 'string', 'localization'],
-        ['datetime.time', (string) config('datetime.time', 'H:i'), 'string', 'localization'],
-        ['datetime.datetime', (string) config('datetime.datetime', 'd.m.Y H:i'), 'string', 'localization'],
+        ['datetime.timezone', (string) \TinyCat\Settings\Store::config('datetime.timezone', 'Europe/Prague'), 'string', 'localization'],
+        ['datetime.date', (string) \TinyCat\Settings\Store::config('datetime.date', 'd.m.Y'), 'string', 'localization'],
+        ['datetime.time', (string) \TinyCat\Settings\Store::config('datetime.time', 'H:i'), 'string', 'localization'],
+        ['datetime.datetime', (string) \TinyCat\Settings\Store::config('datetime.datetime', 'd.m.Y H:i'), 'string', 'localization'],
         ['cron.token', bin2hex(random_bytes(32)), 'string', 'cron'],
-        ['datetime.relative', (bool) config('datetime.relative', false), 'bool', 'localization'],
-        ['security.captcha.enabled', (bool) config('security.captcha.enabled', false), 'bool', 'security'],
-        ['security.captcha.provider', (string) config('security.captcha.provider', 'recaptcha'), 'string', 'security'],
-        ['security.captcha.site_key', (string) config('security.captcha.site_key', ''), 'string', 'security'],
-        ['security.captcha.secret_key', (string) config('security.captcha.secret_key', ''), 'string', 'security'],
+        ['datetime.relative', (bool) \TinyCat\Settings\Store::config('datetime.relative', false), 'bool', 'localization'],
+        ['security.captcha.enabled', (bool) \TinyCat\Settings\Store::config('security.captcha.enabled', false), 'bool', 'security'],
+        ['security.captcha.provider', (string) \TinyCat\Settings\Store::config('security.captcha.provider', 'recaptcha'), 'string', 'security'],
+        ['security.captcha.site_key', (string) \TinyCat\Settings\Store::config('security.captcha.site_key', ''), 'string', 'security'],
+        ['security.captcha.secret_key', (string) \TinyCat\Settings\Store::config('security.captcha.secret_key', ''), 'string', 'security'],
         ['security.captcha.login_attempts', 3, 'int', 'security'],
-        ['auth.registration.enabled', (bool) config('auth.registration.enabled', false), 'bool', 'security'],
-        ['auth.registration.auto_approve', (bool) config('auth.registration.auto_approve', false), 'bool', 'security'],
-        ['performance.minify_css', (bool) config('performance.minify_css', false), 'bool', 'performance'],
-        ['performance.minify_js', (bool) config('performance.minify_js', false), 'bool', 'performance'],
-        ['performance.minify_html', (bool) config('performance.minify_html', false), 'bool', 'performance'],
-        ['content_images.enabled', (bool) config('content_images.enabled', true), 'bool', 'content_images'],
-        ['content_images.max_upload_kb', (int) config('content_images.max_upload_kb', 100), 'int', 'content_images'],
-        ['moderation.blocked_urls', (string) config('moderation.blocked_urls', ''), 'string', 'moderation'],
-        ['email.smtp', email_smtp_default_config(), 'json', 'email'],
-        ['email.templates', email_template_default_states(), 'json', 'email'],
+        ['auth.registration.enabled', (bool) \TinyCat\Settings\Store::config('auth.registration.enabled', false), 'bool', 'security'],
+        ['auth.registration.auto_approve', (bool) \TinyCat\Settings\Store::config('auth.registration.auto_approve', false), 'bool', 'security'],
+        ['performance.minify_css', (bool) \TinyCat\Settings\Store::config('performance.minify_css', false), 'bool', 'performance'],
+        ['performance.minify_js', (bool) \TinyCat\Settings\Store::config('performance.minify_js', false), 'bool', 'performance'],
+        ['performance.minify_html', (bool) \TinyCat\Settings\Store::config('performance.minify_html', false), 'bool', 'performance'],
+        ['content_images.enabled', (bool) \TinyCat\Settings\Store::config('content_images.enabled', true), 'bool', 'content_images'],
+        ['content_images.max_upload_kb', (int) \TinyCat\Settings\Store::config('content_images.max_upload_kb', 100), 'int', 'content_images'],
+        ['moderation.blocked_urls', (string) \TinyCat\Settings\Store::config('moderation.blocked_urls', ''), 'string', 'moderation'],
+        ['email.smtp', \TinyCat\Mail\Smtp::email_smtp_default_config(), 'json', 'email'],
+        ['email.templates', \TinyCat\Mail\Templates::email_template_default_states(), 'json', 'email'],
         ['analytics.google_measurement_id', '', 'string', 'analytics'],
     ];
 
     foreach ($defaults as [$key, $value, $type, $group]) {
-        setting_set((string) $key, $value, (string) $type, (string) $group);
+        \TinyCat\Settings\Store::setSetting((string) $key, $value, (string) $type, (string) $group);
     }
 }
 
 function tc_install_create_admin_account(string $username, string $password, string $locale): int
 {
-    $username = username_normalize($username);
-    $existing = one('SELECT id FROM users WHERE username = ?', [$username]);
+    $username = \TinyCat\Users\Usernames::username_normalize($username);
+    $existing = \TinyCat\Database\Connection::one('SELECT id FROM users WHERE username = ?', [$username]);
     $data = [
         'username' => $username,
-        'password' => auth_password($password),
+        'password' => \TinyCat\Users\Authentication::authPassword($password),
         'role' => 'admin',
         'status' => 'active',
         'locale' => $locale,
@@ -690,20 +689,20 @@ function tc_install_create_admin_account(string $username, string $password, str
     ];
 
     if ($existing !== null) {
-        update('users', $data, ['id' => $existing['id']]);
+        \TinyCat\Database\Connection::update('users', $data, ['id' => $existing['id']]);
         return (int) $existing['id'];
     }
 
-    return (int) insert('users', $data);
+    return (int) \TinyCat\Database\Connection::insert('users', $data);
 }
 
 function tc_install_write_config(array $state): void
 {
-    $locale = (string) ($state['locale'] ?? locale());
+    $locale = (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale());
     $database = $state['database'] ?? [];
 
     if (!is_array($database) || $database === []) {
-        throw new RuntimeException(t('install.messages.missing_db'));
+        throw new RuntimeException(\TinyCat\Support\Localization::t('install.messages.missing_db'));
     }
 
     unset($database['driver']);
@@ -733,7 +732,7 @@ function tc_install_write_config(array $state): void
     $content = tc_install_config_content($config);
 
     if (file_put_contents($path, $content, LOCK_EX) === false) {
-        throw new RuntimeException(t('install.messages.config_write_failed'));
+        throw new RuntimeException(\TinyCat\Support\Localization::t('install.messages.config_write_failed'));
     }
 }
 
@@ -746,7 +745,7 @@ function tc_install_config_content(array $config): string
 
 function tc_install_schema_tables(): array
 {
-    $tables = app_required_tables();
+    $tables = \TinyCat\Database\Schema::app_required_tables();
 
     return array_combine(
         $tables,
@@ -756,7 +755,7 @@ function tc_install_schema_tables(): array
 
 function tc_install_table_exists(string $table): bool
 {
-    return (int) val(
+    return (int) \TinyCat\Database\Connection::value(
         'SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?',
         [$table]
     ) > 0;
@@ -773,41 +772,43 @@ function tc_install_missing_tables(): array
 function tc_install_render(string $step, array $languages, array $state): void
 {
     $appName = 'TinyCat';
-    $pageTitle = t('install.title') . ' | ' . $appName;
-    $error = flash('error');
-    $success = flash('success');
+    $pageTitle = \TinyCat\Support\Localization::t('install.title') . ' | ' . $appName;
+    $error = \TinyCat\Http\Session::flash('error');
+    $success = \TinyCat\Http\Session::flash('success');
     ?>
     <!doctype html>
-    <html lang="<?= e(locale()) ?>">
+    <html lang="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Localization::locale()) ?>">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="<?= e(csrf_token()) ?>">
-        <title><?= e($pageTitle) ?></title>
-        <link rel="stylesheet" href="<?= e(asset('css/tinycat.css')) ?>">
-        <script src="<?= e(asset('js/tinycat.js')) ?>" defer></script>
+        <meta name="csrf-token" content="<?= \TinyCat\Support\Html::e(\TinyCat\Security\Csrf::token()) ?>">
+        <title><?= \TinyCat\Support\Html::e($pageTitle) ?></title>
+        <link rel="stylesheet" href="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Assets::asset('css/tinycat.css')) ?>">
+        <?php foreach (\TinyCat\Support\ClientAssets::scripts('/install') as $scriptUrl): ?>
+            <script src="<?= \TinyCat\Support\Html::e($scriptUrl) ?>" defer></script>
+        <?php endforeach; ?>
     </head>
-    <body data-icon-sprite="<?= e(asset('icons.svg')) ?>">
+    <body data-icon-sprite="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Assets::asset('icons.svg')) ?>">
         <header class="navbar">
             <div class="container navbar-inner">
-                <strong><?= e($appName) ?></strong>
-                <span class="badge badge-primary"><?= icon('settings') ?> <?= et('install.title') ?></span>
+                <strong><?= \TinyCat\Support\Html::e($appName) ?></strong>
+                <span class="badge badge-primary"><?= \TinyCat\Support\Html::icon('settings') ?> <?= \TinyCat\Support\Html::et('install.title') ?></span>
             </div>
         </header>
 
         <main class="section">
             <div class="container-sm stack stack-gap-24">
                 <div class="stack stack-gap-8">
-                    <h1 class="text-2xl m-0"><?= et('install.title') ?></h1>
+                    <h1 class="text-2xl m-0"><?= \TinyCat\Support\Html::et('install.title') ?></h1>
                 </div>
 
-                <?= part('install/steps', ['current' => $step]) ?>
+                <?= \TinyCat\Support\View::part('install/steps', ['current' => $step]) ?>
 
                 <?php if ($error): ?>
-                    <div class="alert alert-danger"><?= e($error) ?></div>
+                    <div class="alert alert-danger"><?= \TinyCat\Support\Html::e($error) ?></div>
                 <?php endif; ?>
                 <?php if ($success): ?>
-                    <div class="alert alert-success"><?= e($success) ?></div>
+                    <div class="alert alert-success"><?= \TinyCat\Support\Html::e($success) ?></div>
                 <?php endif; ?>
 
                 <?php
@@ -827,34 +828,33 @@ function tc_install_render(string $step, array $languages, array $state): void
     <?php
 }
 
-
 function tc_install_language_view(array $languages, array $state): void
 {
-    $selected = (string) ($state['locale'] ?? locale());
+    $selected = (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale());
     ?>
     <article class="card">
         <div class="card-header">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon('globe') ?> <?= et('install.language_title') ?></h2>
+            <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('globe') ?> <?= \TinyCat\Support\Html::et('install.language_title') ?></h2>
         </div>
         <div class="card-body stack">
             <form class="stack" method="post" action="/install?step=language">
-                <?= csrf_field() ?>
+                <?= \TinyCat\Security\Csrf::field() ?>
                 <input type="hidden" name="_install_step" value="language">
                 <div class="choice-list">
                     <?php foreach ($languages as $language): ?>
                         <?php $checked = $language['code'] === $selected; ?>
                         <label class="choice-card">
-                            <input type="radio" name="locale" value="<?= e($language['code']) ?>"<?= $checked ? ' checked' : '' ?>>
+                            <input type="radio" name="locale" value="<?= \TinyCat\Support\Html::e($language['code']) ?>"<?= $checked ? ' checked' : '' ?>>
                             <span>
-                                <strong><?= e($language['label']) ?></strong>
-                                <small><?= e(strtoupper((string) $language['code'])) ?></small>
+                                <strong><?= \TinyCat\Support\Html::e($language['label']) ?></strong>
+                                <small><?= \TinyCat\Support\Html::e(strtoupper((string) $language['code'])) ?></small>
                             </span>
                         </label>
                     <?php endforeach; ?>
                 </div>
 
                 <div class="choice-row">
-                    <button class="btn btn-primary" type="submit"><?= icon('check') ?> <span><?= et('common.continue') ?></span></button>
+                    <button class="btn btn-primary" type="submit"><?= \TinyCat\Support\Html::icon('check') ?> <span><?= \TinyCat\Support\Html::et('common.continue') ?></span></button>
                 </div>
             </form>
         </div>
@@ -864,45 +864,45 @@ function tc_install_language_view(array $languages, array $state): void
 
 function tc_install_database_view(array $state): void
 {
-    $database = is_array($state['database'] ?? null) ? $state['database'] : (array) config('database', []);
+    $database = is_array($state['database'] ?? null) ? $state['database'] : (array) \TinyCat\Settings\Store::config('database', []);
     ?>
     <article class="card">
         <div class="card-header">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon('database') ?> <?= et('install.db_title') ?></h2>
+            <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('database') ?> <?= \TinyCat\Support\Html::et('install.db_title') ?></h2>
         </div>
         <div class="card-body stack">
             <form class="stack" method="post" action="/install?step=db">
-                <?= csrf_field() ?>
+                <?= \TinyCat\Security\Csrf::field() ?>
                 <input type="hidden" name="_install_step" value="db">
                 <div class="grid sm:grid-2">
                     <label class="field">
-                        <span class="label"><?= et('install.db_host') ?></span>
-                        <input class="input" name="host" value="<?= e($database['host'] ?? 'localhost') ?>" required>
+                        <span class="label"><?= \TinyCat\Support\Html::et('install.db_host') ?></span>
+                        <input class="input" name="host" value="<?= \TinyCat\Support\Html::e($database['host'] ?? 'localhost') ?>" required>
                     </label>
                     <label class="field">
-                        <span class="label"><?= et('install.db_port') ?></span>
-                        <input class="input" type="number" name="port" min="1" max="65535" value="<?= e($database['port'] ?? '') ?>">
+                        <span class="label"><?= \TinyCat\Support\Html::et('install.db_port') ?></span>
+                        <input class="input" type="number" name="port" min="1" max="65535" value="<?= \TinyCat\Support\Html::e($database['port'] ?? '') ?>">
                     </label>
                     <label class="field">
-                        <span class="label"><?= et('install.db_name') ?></span>
-                        <input class="input" name="name" value="<?= e($database['name'] ?? '') ?>" required>
+                        <span class="label"><?= \TinyCat\Support\Html::et('install.db_name') ?></span>
+                        <input class="input" name="name" value="<?= \TinyCat\Support\Html::e($database['name'] ?? '') ?>" required>
                     </label>
                     <label class="field">
-                        <span class="label"><?= et('install.db_user') ?></span>
-                        <input class="input" name="user" value="<?= e($database['user'] ?? 'root') ?>" required>
+                        <span class="label"><?= \TinyCat\Support\Html::et('install.db_user') ?></span>
+                        <input class="input" name="user" value="<?= \TinyCat\Support\Html::e($database['user'] ?? 'root') ?>" required>
                     </label>
                     <label class="field">
-                        <span class="label"><?= et('install.db_password') ?></span>
-                        <input class="input" type="password" name="password" value="<?= e($database['password'] ?? '') ?>">
+                        <span class="label"><?= \TinyCat\Support\Html::et('install.db_password') ?></span>
+                        <input class="input" type="password" name="password" value="<?= \TinyCat\Support\Html::e($database['password'] ?? '') ?>">
                     </label>
                     <label class="field">
-                        <span class="label"><?= et('install.db_charset') ?></span>
-                        <input class="input" name="charset" value="<?= e($database['charset'] ?? 'utf8mb4') ?>" required>
+                        <span class="label"><?= \TinyCat\Support\Html::et('install.db_charset') ?></span>
+                        <input class="input" name="charset" value="<?= \TinyCat\Support\Html::e($database['charset'] ?? 'utf8mb4') ?>" required>
                     </label>
                 </div>
                 <div class="choice-row">
-                    <a class="btn btn-secondary" href="/install?step=language"><?= icon('arrow-left') ?> <span><?= et('common.back') ?></span></a>
-                    <button class="btn btn-primary" type="submit"><?= icon('arrow-right') ?> <span><?= et('install.db_test') ?></span></button>
+                    <a class="btn btn-secondary" href="/install?step=language"><?= \TinyCat\Support\Html::icon('arrow-left') ?> <span><?= \TinyCat\Support\Html::et('common.back') ?></span></a>
+                    <button class="btn btn-primary" type="submit"><?= \TinyCat\Support\Html::icon('arrow-right') ?> <span><?= \TinyCat\Support\Html::et('install.db_test') ?></span></button>
                 </div>
             </form>
         </div>
@@ -917,7 +917,7 @@ function tc_install_tables_view(array $state): void
 
     if (!empty($state['database']) && is_array($state['database'])) {
         try {
-            Core::setDb(tc_install_pdo($state['database']));
+            \TinyCat\Database\Connection::set(tc_install_pdo($state['database']));
 
             foreach (array_keys(tc_install_schema_tables()) as $table) {
                 $tableStatuses[$table] = tc_install_table_exists($table);
@@ -929,31 +929,31 @@ function tc_install_tables_view(array $state): void
     ?>
     <article class="card">
         <div class="card-header">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon('database') ?> <?= et('install.tables_title') ?></h2>
+            <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('database') ?> <?= \TinyCat\Support\Html::et('install.tables_title') ?></h2>
         </div>
         <div class="card-body stack">
-            <p class="text-muted mb-0"><?= et('install.tables_intro') ?></p>
+            <p class="text-muted mb-0"><?= \TinyCat\Support\Html::et('install.tables_intro') ?></p>
             <?php if ($error !== null): ?>
-                <div class="alert alert-danger"><?= et('install.messages.db_failed', ['message' => $error]) ?></div>
+                <div class="alert alert-danger"><?= \TinyCat\Support\Html::et('install.messages.db_failed', ['message' => $error]) ?></div>
             <?php endif; ?>
             <div class="table-wrap">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th><?= et('install.table_name') ?></th>
-                            <th><?= et('install.table_purpose') ?></th>
-                            <th><?= et('install.table_state') ?></th>
+                            <th><?= \TinyCat\Support\Html::et('install.table_name') ?></th>
+                            <th><?= \TinyCat\Support\Html::et('install.table_purpose') ?></th>
+                            <th><?= \TinyCat\Support\Html::et('install.table_state') ?></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach (tc_install_schema_tables() as $table => $purpose): ?>
                             <?php $exists = (bool) ($tableStatuses[$table] ?? false); ?>
                             <tr>
-                                <td><code><?= e($table) ?></code></td>
-                                <td><?= et($purpose) ?></td>
+                                <td><code><?= \TinyCat\Support\Html::e($table) ?></code></td>
+                                <td><?= \TinyCat\Support\Html::et($purpose) ?></td>
                                 <td>
                                     <span class="badge<?= $exists ? ' badge-primary' : '' ?>">
-                                        <?= $exists ? et('install.state_exists') : et('install.state_missing') ?>
+                                        <?= $exists ? \TinyCat\Support\Html::et('install.state_exists') : \TinyCat\Support\Html::et('install.state_missing') ?>
                                     </span>
                                 </td>
                             </tr>
@@ -962,10 +962,10 @@ function tc_install_tables_view(array $state): void
                 </table>
             </div>
             <form method="post" action="/install?step=tables" class="choice-row">
-                <?= csrf_field() ?>
+                <?= \TinyCat\Security\Csrf::field() ?>
                 <input type="hidden" name="_install_step" value="tables">
-                <a class="btn btn-secondary" href="/install?step=db"><?= icon('arrow-left') ?> <span><?= et('common.back') ?></span></a>
-                <button class="btn btn-primary" type="submit"><?= icon('check') ?> <span><?= et('install.create_tables') ?></span></button>
+                <a class="btn btn-secondary" href="/install?step=db"><?= \TinyCat\Support\Html::icon('arrow-left') ?> <span><?= \TinyCat\Support\Html::et('common.back') ?></span></a>
+                <button class="btn btn-primary" type="submit"><?= \TinyCat\Support\Html::icon('check') ?> <span><?= \TinyCat\Support\Html::et('install.create_tables') ?></span></button>
             </form>
         </div>
     </article>
@@ -977,30 +977,30 @@ function tc_install_admin_view(): void
     ?>
     <article class="card">
         <div class="card-header">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon('shield') ?> <?= et('install.admin_title') ?></h2>
+            <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('shield') ?> <?= \TinyCat\Support\Html::et('install.admin_title') ?></h2>
         </div>
         <div class="card-body stack">
             <form class="stack" method="post" action="/install?step=admin">
-                <?= csrf_field() ?>
+                <?= \TinyCat\Security\Csrf::field() ?>
                 <input type="hidden" name="_install_step" value="admin">
                 <label class="field">
-                    <span class="label"><?= et('common.username') ?></span>
-                    <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_]{2,31}" maxlength="32" required>
-                    <span class="help"><?= e(username_hint()) ?></span>
+                    <span class="label"><?= \TinyCat\Support\Html::et('common.username') ?></span>
+                    <input class="input" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="<?= \TinyCat\Support\Html::e(\TinyCat\Users\Usernames::username_pattern()) ?>" minlength="2" maxlength="32" required>
+                    <span class="help"><?= \TinyCat\Support\Html::e(\TinyCat\Users\Usernames::username_hint()) ?></span>
                 </label>
                 <div class="grid sm:grid-2">
                     <label class="field">
-                        <span class="label"><?= et('common.password') ?></span>
-                        <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
+                        <span class="label"><?= \TinyCat\Support\Html::et('common.password') ?></span>
+                        <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= \TinyCat\Users\Login::auth_password_max_length() ?>" required>
                     </label>
                     <label class="field">
-                        <span class="label"><?= et('install.admin_password_confirm') ?></span>
-                        <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
+                        <span class="label"><?= \TinyCat\Support\Html::et('install.admin_password_confirm') ?></span>
+                        <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= \TinyCat\Users\Login::auth_password_max_length() ?>" required>
                     </label>
                 </div>
                 <div class="choice-row">
-                    <a class="btn btn-secondary" href="/install?step=tables"><?= icon('arrow-left') ?> <span><?= et('common.back') ?></span></a>
-                    <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('common.finish') ?></span></button>
+                    <a class="btn btn-secondary" href="/install?step=tables"><?= \TinyCat\Support\Html::icon('arrow-left') ?> <span><?= \TinyCat\Support\Html::et('common.back') ?></span></a>
+                    <button class="btn btn-primary" type="submit"><?= \TinyCat\Support\Html::icon('save') ?> <span><?= \TinyCat\Support\Html::et('common.finish') ?></span></button>
                 </div>
             </form>
         </div>
@@ -1013,18 +1013,18 @@ function tc_install_done_view(): void
     ?>
     <article class="card">
         <div class="card-header">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon('check-circle') ?> <?= et('install.done_title') ?></h2>
+            <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('check-circle') ?> <?= \TinyCat\Support\Html::et('install.done_title') ?></h2>
         </div>
         <div class="card-body stack">
-            <p class="text-muted mb-0"><?= et('install.done_intro') ?></p>
+            <p class="text-muted mb-0"><?= \TinyCat\Support\Html::et('install.done_intro') ?></p>
             <ul class="result-list">
-                <li class="result-item"><?= icon('globe') ?> <span><?= et('common.language') ?>: <strong><?= e(locale()) ?></strong></span></li>
-                <li class="result-item"><?= icon('database') ?> <span><?= et('common.tables') ?>: <strong><?= e(implode(', ', app_required_tables())) ?></strong></span></li>
-                <li class="result-item"><?= icon('shield') ?> <span><?= et('common.account') ?>: <strong><?= et('common.done') ?></strong></span></li>
+                <li class="result-item"><?= \TinyCat\Support\Html::icon('globe') ?> <span><?= \TinyCat\Support\Html::et('common.language') ?>: <strong><?= \TinyCat\Support\Html::e(\TinyCat\Support\Localization::locale()) ?></strong></span></li>
+                <li class="result-item"><?= \TinyCat\Support\Html::icon('database') ?> <span><?= \TinyCat\Support\Html::et('common.tables') ?>: <strong><?= \TinyCat\Support\Html::e(implode(', ', \TinyCat\Database\Schema::app_required_tables())) ?></strong></span></li>
+                <li class="result-item"><?= \TinyCat\Support\Html::icon('shield') ?> <span><?= \TinyCat\Support\Html::et('common.account') ?>: <strong><?= \TinyCat\Support\Html::et('common.done') ?></strong></span></li>
             </ul>
             <div class="btn-group">
-                <a class="btn btn-primary" href="/admin"><?= icon('dashboard') ?> <span><?= et('install.open_admin') ?></span></a>
-                <a class="btn btn-secondary" href="/"><?= icon('home') ?> <span><?= et('install.open_index') ?></span></a>
+                <a class="btn btn-primary" href="/admin"><?= \TinyCat\Support\Html::icon('dashboard') ?> <span><?= \TinyCat\Support\Html::et('install.open_admin') ?></span></a>
+                <a class="btn btn-secondary" href="/"><?= \TinyCat\Support\Html::icon('home') ?> <span><?= \TinyCat\Support\Html::et('install.open_index') ?></span></a>
             </div>
         </div>
     </article>

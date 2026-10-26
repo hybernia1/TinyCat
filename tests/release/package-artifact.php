@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../cache-isolation.php';
+
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/bootstrap.php';
@@ -54,7 +56,7 @@ try {
     $secretKey = sodium_crypto_sign_secretkey($keyPair);
     $publicKey = sodium_crypto_sign_publickey($keyPair);
     file_put_contents($keyPath, base64_encode($secretKey) . "\n", LOCK_EX);
-    $version = Core::VERSION;
+    $version = \TinyCat\Support\Version::CURRENT;
     $command = escapeshellarg(PHP_BINARY)
         . ' ' . escapeshellarg($root . '/tools/build-update.php')
         . ' --version=' . escapeshellarg($version)
@@ -145,14 +147,14 @@ try {
     }
 
     foreach ($names as $name) {
-        if (preg_match('~^docs/(?:baseline-|performance-benchmark|release-2\.0\.26-monolith-plan|stage-[0-9]+)~', $name) === 1) {
+        if (preg_match('~^docs/(?:development/|baseline-|performance-benchmark|release-2\.0\.26-monolith-plan|stage-[0-9]+)~', $name) === 1) {
             $failures[] = "Internal release evidence in artifact: {$name}";
         }
     }
 
-    foreach (['App/Core.php', 'App/functions.php', 'App/PackageManager.php', 'App/Bots.php', 'App/BotAdmin.php', 'Public/admin/bots/accounts-page.php', 'index.php', 'scheduled-tasks.php'] as $required) {
+    foreach (['App/Support/Version.php', 'App/Support/Localization.php', 'App/Updates/Manager.php', 'App/Bots/Importer.php', 'App/Bots/Administration.php', 'Public/admin/bots/accounts-page.php', 'index.php', 'scheduled-tasks.php'] as $required) {
         if (!in_array($required, $names, true)) {
-            $failures[] = "Required monolith runtime file missing from artifact: {$required}";
+            $failures[] = "Required modular runtime file missing from artifact: {$required}";
         }
     }
 
@@ -160,6 +162,19 @@ try {
         if (str_starts_with($name, 'Extensions/') || in_array($name, ['App/Extension.php', 'Public/admin/extensions.php', 'docs/extensions.md'], true)) {
             $failures[] = 'Retired extension support in artifact: ' . $name;
         }
+    }
+
+    foreach (['App/Http/Api.php', 'App/Http/Request.php', 'App/Http/Response.php', 'App/Http/Validator.php', 'App/Database/Connection.php', 'App/Support/Config.php', 'App/Module.php', 'App/modules.php', 'assets/js/core/api-client.js', 'assets/js/core/dom.js', 'assets/js/core/forms.js', 'assets/js/core/modal.js'] as $required) {
+        if (!in_array($required, $names, true)) {
+            $failures[] = "Required module infrastructure missing from artifact: {$required}";
+        }
+    }
+
+    foreach (['App/Users/Module.php', 'App/Users/Api.php', 'App/Users/Avatar.php', 'App/Users/Roles.php', 'App/Notifications/Module.php', 'App/Notifications/Api.php', 'App/Status/Module.php', 'App/Status/Api.php', 'App/Status/ImageStorage.php', 'App/Status/LinkParser.php', 'App/Status/Metadata.php', 'assets/js/core/ui.js', 'assets/js/modules/users.js', 'assets/js/modules/status.js', 'assets/js/modules/notifications.js'] as $required) {
+        if (!in_array($required, $names, true)) { $failures[] = 'Required domain runtime missing: ' . $required; }
+    }
+    foreach (['App/Core.php', 'App/functions.php', 'App/Api.php', 'App/Bots.php', 'App/BotAdmin.php', 'App/Captcha.php', 'App/Cache.php', 'App/Minifier.php', 'App/SiteIdentity.php', 'App/Sitemap.php', 'App/PackageManager.php', 'App/Notifications.php', 'App/Avatar.php', 'App/UserRoles.php', 'App/StatusImage.php', 'App/StatusLinks.php', 'App/LinkMetadata.php'] as $retired) {
+        if (in_array($retired, $names, true)) { $failures[] = 'Moved implementation remains in artifact: ' . $retired; }
     }
 
     unset($entry, $iterator, $archive);

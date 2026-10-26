@@ -1,39 +1,26 @@
 <?php
 declare(strict_types=1);
 
-
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
 }
 
-require_admin();
+\TinyCat\Users\Access::require_admin();
 
-$cronApi = route_path() === '/api/admin/cron-token';
-
-if ($cronApi) {
-    csrf_require();
-    cron_token_rotate();
-    flash('success', t('cron.messages.token_rotated'));
-    api_ok([
-        'rotated' => true,
-        'redirect' => '/admin/cron',
-    ], t('cron.messages.token_rotated'));
-}
-
-if (method() !== 'GET') {
+if (\TinyCat\Http\Request::current()->method() !== 'GET') {
     header('Allow: GET');
     http_response_code(405);
     echo 'Method not allowed.';
     return;
 }
 
-$cronToken = cron_token(true);
-$cronUrl = absolute_url('/scheduled-tasks.php');
-$runnerPath = base_path('scheduled-tasks.php');
+$cronToken = \TinyCat\Scheduler\Tokens::cron_token(true);
+$cronUrl = \TinyCat\Site\Presentation::absolute_url('/scheduled-tasks.php');
+$runnerPath = \TinyCat\Support\Paths::basePath('scheduled-tasks.php');
 $taskViews = [];
 
-foreach (Bots::scheduledTasks() as $task => $definition) {
+foreach (\TinyCat\Bots\Importer::scheduledTasks() as $task => $definition) {
     $admin = $definition['admin'];
 
     $arguments = [];
@@ -63,20 +50,20 @@ foreach ($taskViews as $task => &$view) {
 }
 unset($view);
 
-layout('layout', [
-    'title' => t('cron.title'),
+\TinyCat\Support\View::layout('layout', [
+    'title' => \TinyCat\Support\Localization::t('cron.title'),
     'current' => '/admin/cron',
 ], static function () use ($cronToken, $cronUrl, $taskViews): void {
     ?>
     <section class="card">
         <div class="card-header split">
             <div>
-                <h1 class="text-lg m-0 cluster gap-2"><?= icon('clock') ?> <?= et('cron.title') ?></h1>
-                <p class="text-muted mb-0"><?= et('cron.intro') ?></p>
+                <h1 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('clock') ?> <?= \TinyCat\Support\Html::et('cron.title') ?></h1>
+                <p class="text-muted mb-0"><?= \TinyCat\Support\Html::et('cron.intro') ?></p>
             </div>
-            <form method="post" action="/api/admin/cron-token" data-ajax-form data-confirm="<?= et('cron.rotate_confirm') ?>">
-                <?= csrf_field() ?>
-                <button class="btn btn-secondary btn-sm" type="submit"><?= icon('refresh') ?> <span><?= et('cron.rotate') ?></span></button>
+            <form method="post" action="/api/scheduler/tokens" data-ajax-form data-confirm="<?= \TinyCat\Support\Html::et('cron.rotate_confirm') ?>">
+                <?= \TinyCat\Security\Csrf::field() ?>
+                <button class="btn btn-secondary btn-sm" type="submit"><?= \TinyCat\Support\Html::icon('refresh') ?> <span><?= \TinyCat\Support\Html::et('cron.rotate') ?></span></button>
             </form>
         </div>
         <div class="card-body stack">
@@ -84,17 +71,17 @@ layout('layout', [
                 <details class="disclosure-item" name="scheduled-task">
                     <summary class="disclosure-summary">
                         <span class="disclosure-heading">
-                            <?= icon('key') ?>
+                            <?= \TinyCat\Support\Html::icon('key') ?>
                             <span class="stack stack-gap-4">
-                                <strong><?= et('cron.access_title') ?></strong>
-                                <small><?= et('cron.access_help') ?></small>
+                                <strong><?= \TinyCat\Support\Html::et('cron.access_title') ?></strong>
+                                <small><?= \TinyCat\Support\Html::et('cron.access_help') ?></small>
                             </span>
                         </span>
-                        <?= icon('chevron-down', 'icon disclosure-chevron') ?>
+                        <?= \TinyCat\Support\Html::icon('chevron-down', 'icon disclosure-chevron') ?>
                     </summary>
                     <div class="disclosure-body stack">
-                        <label class="field"><span class="label"><?= et('cron.url') ?></span><input class="input" value="<?= e($cronUrl) ?>" readonly></label>
-                        <label class="field"><span class="label"><?= et('cron.token') ?></span><input class="input" value="<?= e($cronToken) ?>" readonly></label>
+                        <label class="field"><span class="label"><?= \TinyCat\Support\Html::et('cron.url') ?></span><input class="input" value="<?= \TinyCat\Support\Html::e($cronUrl) ?>" data-scheduler-url readonly></label>
+                        <label class="field"><span class="label"><?= \TinyCat\Support\Html::et('cron.token') ?></span><input class="input" value="<?= \TinyCat\Support\Html::e($cronToken) ?>" data-scheduler-token readonly></label>
                     </div>
                 </details>
 
@@ -102,19 +89,19 @@ layout('layout', [
                     <details class="disclosure-item" name="scheduled-task">
                         <summary class="disclosure-summary">
                             <span class="disclosure-heading">
-                                <?= icon((string) $view['icon']) ?>
+                                <?= \TinyCat\Support\Html::icon((string) $view['icon']) ?>
                                 <span class="stack stack-gap-4">
-                                    <strong><?= et((string) $view['title']) ?></strong>
-                                    <small><?= et((string) $view['help']) ?></small>
+                                    <strong><?= \TinyCat\Support\Html::et((string) $view['title']) ?></strong>
+                                    <small><?= \TinyCat\Support\Html::et((string) $view['help']) ?></small>
                                 </span>
                             </span>
-                            <?= icon('chevron-down', 'icon disclosure-chevron') ?>
+                            <?= \TinyCat\Support\Html::icon('chevron-down', 'icon disclosure-chevron') ?>
                         </summary>
                         <div class="disclosure-body stack">
-                            <label class="field"><span class="label"><?= et('cron.task_url') ?></span><input class="input" value="<?= e((string) $view['query_url']) ?>" readonly><span class="help"><?= et('cron.query_help') ?></span></label>
-                            <div class="field"><span class="label"><?= et('cron.http_command') ?></span><pre class="code-block"><code><?= e((string) $view['http_command']) ?></code></pre></div>
-                            <div class="field"><span class="label"><?= et('cron.cli_command') ?></span><pre class="code-block"><code><?= e((string) $view['cli_command']) ?></code></pre></div>
-                            <p class="help m-0"><?= et((string) $view['schedule']) ?></p>
+                            <label class="field"><span class="label"><?= \TinyCat\Support\Html::et('cron.task_url') ?></span><input class="input" value="<?= \TinyCat\Support\Html::e((string) $view['query_url']) ?>" data-scheduler-url readonly><span class="help"><?= \TinyCat\Support\Html::et('cron.query_help') ?></span></label>
+                            <div class="field"><span class="label"><?= \TinyCat\Support\Html::et('cron.http_command') ?></span><pre class="code-block"><code data-scheduler-command><?= \TinyCat\Support\Html::e((string) $view['http_command']) ?></code></pre></div>
+                            <div class="field"><span class="label"><?= \TinyCat\Support\Html::et('cron.cli_command') ?></span><pre class="code-block"><code data-scheduler-command><?= \TinyCat\Support\Html::e((string) $view['cli_command']) ?></code></pre></div>
+                            <p class="help m-0"><?= \TinyCat\Support\Html::et((string) $view['schedule']) ?></p>
                         </div>
                     </details>
                 <?php endforeach; ?>

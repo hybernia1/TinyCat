@@ -6,15 +6,15 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-$notFoundTitle = trim((string) ($notFoundTitle ?? t('public.not_found_title')));
-$notFoundMessage = trim((string) ($notFoundMessage ?? t('public.not_found_intro')));
-$notFoundCurrent = route_path((string) ($notFoundCurrent ?? route_path()));
+$notFoundTitle = trim((string) ($notFoundTitle ?? \TinyCat\Support\Localization::t('public.not_found_title')));
+$notFoundMessage = trim((string) ($notFoundMessage ?? \TinyCat\Support\Localization::t('public.not_found_intro')));
+$notFoundCurrent = \TinyCat\Http\Request::current()->path((string) ($notFoundCurrent ?? \TinyCat\Http\Request::current()->path()));
 
 if (http_response_code() < 400) {
     http_response_code(404);
 }
 
-layout('layout', [
+\TinyCat\Support\View::layout('layout', [
     'title' => $notFoundTitle,
     'current' => $notFoundCurrent,
     'meta' => [
@@ -28,12 +28,12 @@ layout('layout', [
             <div class="card-body stack stack-gap-16">
                 <p class="text-2xl text-primary m-0" aria-hidden="true">404</p>
                 <div class="stack stack-gap-8">
-                    <h1 class="text-2xl m-0" id="not-found-title"><?= icon('alert') ?> <?= e($notFoundTitle) ?></h1>
-                    <p class="text-muted m-0"><?= e($notFoundMessage) ?></p>
+                    <h1 class="text-2xl m-0" id="not-found-title"><?= \TinyCat\Support\Html::icon('alert') ?> <?= \TinyCat\Support\Html::e($notFoundTitle) ?></h1>
+                    <p class="text-muted m-0"><?= \TinyCat\Support\Html::e($notFoundMessage) ?></p>
                 </div>
                 <div class="btn-group">
-                    <a class="btn btn-primary" href="/"><?= icon('home') ?> <span><?= et('public.not_found_home') ?></span></a>
-                    <a class="btn btn-secondary" href="/search"><?= icon('search') ?> <span><?= et('public.not_found_search') ?></span></a>
+                    <a class="btn btn-primary" href="/"><?= \TinyCat\Support\Html::icon('home') ?> <span><?= \TinyCat\Support\Html::et('public.not_found_home') ?></span></a>
+                    <a class="btn btn-secondary" href="/search"><?= \TinyCat\Support\Html::icon('search') ?> <span><?= \TinyCat\Support\Html::et('public.not_found_search') ?></span></a>
                 </div>
             </div>
         </article>

@@ -3080,7 +3080,7 @@ img.status-editor-suggestion-avatar {
   border-top: 1px solid var(--border);
 }
 
-.status-post-modal-panel {
+.modal-panel.status-post-modal-panel {
   width: min(100%, 740px);
 }
 
@@ -4310,4 +4310,10 @@ body.admin-nav-open .admin-backdrop {
     scroll-behavior: auto !important;
     transition-duration: 1ms !important;
   }
+}
+
+/* JSON resource text keeps the line breaks formerly supplied by server markup. */
+.is-resource-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

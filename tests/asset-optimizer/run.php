@@ -1,9 +1,11 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../cache-isolation.php';
+
 define('TINYCAT', true);
 
-require dirname(__DIR__, 2) . '/App/Minifier.php';
+require_once dirname(__DIR__, 2) . '/App/autoload.php';
 
 $failures = [];
 $checks = 0;
@@ -109,18 +111,18 @@ JS,
 ];
 
 foreach ($cases as $name => [$source, $expected]) {
-    $actual = Minifier::minifyJavaScript($source);
+    $actual = \TinyCat\Support\Minifier::minifyJavaScript($source);
     $assertSame($name, $expected, $actual);
-    $assertSame($name . ' is idempotent', $actual, Minifier::minifyJavaScript($actual));
+    $assertSame($name . ' is idempotent', $actual, \TinyCat\Support\Minifier::minifyJavaScript($actual));
 }
 
 $tinyCatSource = file_get_contents(dirname(__DIR__, 2) . '/assets/js/tinycat.js');
 $assertTrue('tinycat.js source is readable', is_string($tinyCatSource));
 
 if (is_string($tinyCatSource)) {
-    $tinyCatMinified = Minifier::minifyJavaScript($tinyCatSource);
+    $tinyCatMinified = \TinyCat\Support\Minifier::minifyJavaScript($tinyCatSource);
     $assertTrue('tinycat.js is materially smaller', strlen($tinyCatMinified) < (int) (strlen($tinyCatSource) * 0.8));
-    $assertSame('tinycat.js is idempotent', $tinyCatMinified, Minifier::minifyJavaScript($tinyCatMinified));
+    $assertSame('tinycat.js is idempotent', $tinyCatMinified, \TinyCat\Support\Minifier::minifyJavaScript($tinyCatMinified));
 }
 
 echo sprintf("\n%d checks, %d failures.\n", $checks, count($failures));

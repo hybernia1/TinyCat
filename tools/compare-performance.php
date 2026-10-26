@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Tools\Performance\ComparisonOptions;
-use TinyCat\Tools\Performance\ComparisonRunner;
+use \TinyCat\Tools\Performance\ComparisonOptions;
+use \TinyCat\Tools\Performance\ComparisonRunner;
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);

@@ -1,0 +1,20 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "status/card",
+      "status/thread",
+      "status/composer-body",
+      "status/editor",
+      "status/feed-more"
+    ],
+    "scripts": [
+      "js/modules/status.js"
+    ],
+    "translation_sources": [
+      "assets/js/modules/status.js"
+    ]
+  }
+]

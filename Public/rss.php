@@ -13,30 +13,30 @@ $rssLink = '/';
 $rssItems = [];
 
 if ($rssType === 'tag') {
-    $tag = status_tag_normalize((string) ($rssTag ?? ''));
+    $tag = \TinyCat\Status\Tags::status_tag_normalize((string) ($rssTag ?? ''));
 
-    if ($tag === '' || status_term_id_exact($tag) < 1) {
+    if ($tag === '' || \TinyCat\Status\Tags::status_term_id_exact($tag) < 1) {
         http_response_code(404);
         exit('Feed not found.');
     }
 
     $rssTitle = '#' . $tag;
     $rssDescription = 'Public posts tagged #' . $tag;
-    $rssLink = tag_url($tag);
-    $rssItems = public_status_items_by_tag($tag, 50, '', 0, false);
+    $rssLink = \TinyCat\Status\Tags::tag_url($tag);
+    $rssItems = \TinyCat\Status\Feed::public_status_items_by_tag($tag, 50, '', 0, false);
 } elseif ($rssType === 'author') {
-    $author = public_author_find((int) ($rssAuthorId ?? 0));
+    $author = \TinyCat\Users\Repository::public_author_find((int) ($rssAuthorId ?? 0));
 
     if ($author === null) {
         http_response_code(404);
         exit('Feed not found.');
     }
 
-    $authorName = user_display_name($author);
+    $authorName = \TinyCat\Users\Profiles::user_display_name($author);
     $rssTitle = $authorName;
     $rssDescription = 'Public posts by ' . $authorName;
-    $rssLink = author_url((int) $author['id']);
-    $rssItems = public_status_items_by_author_cursor((int) $author['id'], 50, '', 0, false);
+    $rssLink = \TinyCat\Users\Profiles::author_url((int) $author['id']);
+    $rssItems = \TinyCat\Status\Feed::public_status_items_by_author_cursor((int) $author['id'], 50, '', 0, false);
 } else {
     http_response_code(404);
     exit('Feed not found.');
@@ -49,8 +49,8 @@ $cleanXml = static function (string $value): string {
 };
 $xmlEscape = static fn (string $value): string => htmlspecialchars($cleanXml($value), ENT_XML1 | ENT_QUOTES, 'UTF-8');
 $cdata = static fn (string $value): string => '<![CDATA[' . str_replace(']]>', ']]]]><![CDATA[>', $cleanXml($value)) . ']]>';
-$requestUri = (string) ($_SERVER['REQUEST_URI'] ?? route_path());
-$siteName = site_name();
+$requestUri = (string) ($_SERVER['REQUEST_URI'] ?? \TinyCat\Http\Request::current()->path());
+$siteName = \TinyCat\Site\Presentation::site_name();
 
 header('Content-Type: application/rss+xml; charset=UTF-8');
 header('Cache-Control: public, max-age=300');
@@ -61,10 +61,10 @@ echo '<?xml version="1.0" encoding="UTF-8"?>';
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title><?= $xmlEscape($rssTitle . ' | ' . $siteName) ?></title>
-        <link><?= $xmlEscape(absolute_url($rssLink)) ?></link>
+        <link><?= $xmlEscape(\TinyCat\Site\Presentation::absolute_url($rssLink)) ?></link>
         <description><?= $cdata($rssDescription) ?></description>
-        <language><?= $xmlEscape(str_replace('_', '-', locale())) ?></language>
-        <atom:link href="<?= $xmlEscape(absolute_url($requestUri)) ?>" rel="self" type="application/rss+xml" />
+        <language><?= $xmlEscape(str_replace('_', '-', \TinyCat\Support\Localization::locale())) ?></language>
+        <atom:link href="<?= $xmlEscape(\TinyCat\Site\Presentation::absolute_url($requestUri)) ?>" rel="self" type="application/rss+xml" />
 <?php foreach ($rssItems as $item):
     $body = trim((string) ($item['body'] ?? ''));
     $plainBody = trim((string) preg_replace('/\s+/u', ' ', $body));
@@ -72,20 +72,20 @@ echo '<?xml version="1.0" encoding="UTF-8"?>';
     if (mb_strlen($plainBody) > 100) {
         $itemTitle .= '…';
     }
-    $itemUrl = absolute_url(status_url((int) ($item['id'] ?? 0)));
+    $itemUrl = \TinyCat\Site\Presentation::absolute_url(\TinyCat\Status\Posts::status_url((int) ($item['id'] ?? 0)));
     $publishedAt = (string) ($item['published_at'] ?? '');
     $publishedTimestamp = $publishedAt !== '' ? strtotime($publishedAt) : false;
     $publishedDate = $publishedTimestamp !== false ? date(DATE_RSS, $publishedTimestamp) : date(DATE_RSS);
-    $imageUrl = status_image_url($item);
+    $imageUrl = \TinyCat\Status\Images::status_image_url($item);
     $imageBytes = max(0, (int) ($item['image_bytes'] ?? 0));
-    $rssBody = $body !== '' ? $body : status_image_alt_text($item);
+    $rssBody = $body !== '' ? $body : \TinyCat\Status\Images::status_image_alt_text($item);
 ?>
         <item>
             <title><?= $xmlEscape($itemTitle) ?></title>
             <link><?= $xmlEscape($itemUrl) ?></link>
             <guid isPermaLink="true"><?= $xmlEscape($itemUrl) ?></guid>
             <pubDate><?= $xmlEscape($publishedDate) ?></pubDate>
-            <?php if ($imageUrl !== ''): ?><enclosure url="<?= $xmlEscape(absolute_url($imageUrl)) ?>" length="<?= $imageBytes ?>" type="image/webp" /><?php endif; ?>
+            <?php if ($imageUrl !== ''): ?><enclosure url="<?= $xmlEscape(\TinyCat\Site\Presentation::absolute_url($imageUrl)) ?>" length="<?= $imageBytes ?>" type="image/webp" /><?php endif; ?>
             <description><?= $cdata($rssBody) ?></description>
         </item>
 <?php endforeach; ?>

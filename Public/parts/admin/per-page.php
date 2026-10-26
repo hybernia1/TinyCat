@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Support\Html;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -13,19 +15,18 @@ $selected = (int) ($selected ?? 25);
 $historyPath = (string) ($history_path ?? $path);
 $options = is_array($options ?? null) ? $options : [];
 ?>
-<form class="admin-per-page-form" action="<?= e($path) ?>" method="get" data-ajax-form data-ajax-target="<?= e($target) ?>" data-history="<?= e($historyPath) ?>">
-    <input type="hidden" name="view" value="html">
+<form class="admin-per-page-form" action="<?= Html::e($path) ?>" method="get" data-ajax-form data-ajax-target="<?= Html::e($target) ?>" data-history="<?= Html::e($historyPath) ?>">
     <?php foreach ($params as $key => $value): ?>
         <?php if ($key === 'per_page' || $value === '' || $value === null) {
             continue;
         } ?>
-        <input type="hidden" name="<?= e((string) $key) ?>" value="<?= e((string) $value) ?>">
+        <input type="hidden" name="<?= Html::e((string) $key) ?>" value="<?= Html::e((string) $value) ?>">
     <?php endforeach; ?>
     <label class="field-inline">
-        <span class="label"><?= et('common.per_page') ?></span>
+        <span class="label"><?= Html::et('common.per_page') ?></span>
         <select class="select select-sm" name="per_page" data-submit-on-change>
             <?php foreach ($options as $option): ?>
-                <option value="<?= e((string) $option) ?>"<?= $selected === $option ? ' selected' : '' ?>><?= e((string) $option) ?></option>
+                <option value="<?= Html::e((string) $option) ?>"<?= $selected === $option ? ' selected' : '' ?>><?= Html::e((string) $option) ?></option>
             <?php endforeach; ?>
         </select>
     </label>

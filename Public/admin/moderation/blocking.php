@@ -6,74 +6,32 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-require_admin();
+\TinyCat\Users\Access::require_admin();
 
-$moderationBlockingApi = route_path() === '/api/admin/moderation/blocking';
+$blockedUrls = \TinyCat\Moderation\Blocking::tc_admin_moderation_blocked_urls_value();
 
-if (!$moderationBlockingApi && method() !== 'GET') {
-    header('Allow: GET');
-    http_response_code(405);
-    echo 'Method not allowed.';
-    return;
-}
-
-if ($moderationBlockingApi && method() === 'GET') {
-    api_ok(tc_admin_moderation_blocking_payload());
-}
-
-if ($moderationBlockingApi && method() === 'POST') {
-    csrf_require();
-    $rules = moderation_blocked_url_rules((string) input('blocked_urls', ''));
-    setting_set('moderation.blocked_urls', implode(', ', $rules), 'string', 'moderation');
-    flash('success', t('moderation.messages.url_blocker_saved'));
-    api_ok(tc_admin_moderation_blocking_payload(true), t('moderation.messages.url_blocker_saved'));
-}
-
-$blockedUrls = tc_admin_moderation_blocked_urls_value();
-
-layout('layout', [
-    'title' => t('moderation.url_blocker_title'),
+\TinyCat\Support\View::layout('layout', [
+    'title' => \TinyCat\Support\Localization::t('moderation.url_blocker_title'),
     'current' => '/admin/moderation/blocking',
 ], static function () use ($blockedUrls): void {
     ?>
     <section class="card">
         <div class="card-header">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon('lock') ?> <?= et('moderation.url_blocker_title') ?></h2>
+            <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('lock') ?> <?= \TinyCat\Support\Html::et('moderation.url_blocker_title') ?></h2>
         </div>
-        <form method="post" action="/api/admin/moderation/blocking" data-ajax-form>
-            <?= csrf_field() ?>
+        <form method="post" action="/api/moderation/blocked-urls" data-api-method="PUT" data-ajax-form>
+            <?= \TinyCat\Security\Csrf::field() ?>
             <div class="card-body stack">
                 <label class="field">
-                    <span class="label"><?= et('moderation.url_blocker_label') ?></span>
-                    <textarea class="textarea" name="blocked_urls" rows="6" placeholder="<?= et('moderation.url_blocker_placeholder') ?>"><?= e($blockedUrls) ?></textarea>
+                    <span class="label"><?= \TinyCat\Support\Html::et('moderation.url_blocker_label') ?></span>
+                    <textarea class="textarea" name="blocked_urls" rows="6" placeholder="<?= \TinyCat\Support\Html::et('moderation.url_blocker_placeholder') ?>"><?= \TinyCat\Support\Html::e($blockedUrls) ?></textarea>
                 </label>
-                <p class="text-muted m-0"><?= et('moderation.url_blocker_help') ?></p>
+                <p class="text-muted m-0"><?= \TinyCat\Support\Html::et('moderation.url_blocker_help') ?></p>
             </div>
             <div class="card-footer cluster justify-end">
-                <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('common.save') ?></span></button>
+                <button class="btn btn-primary" type="submit"><?= \TinyCat\Support\Html::icon('save') ?> <span><?= \TinyCat\Support\Html::et('common.save') ?></span></button>
             </div>
         </form>
     </section>
     <?php
 });
-
-function tc_admin_moderation_blocked_urls_value(): string
-{
-    return implode(', ', moderation_blocked_url_rules());
-}
-
-function tc_admin_moderation_blocking_payload(bool $redirect = false): array
-{
-    $rules = moderation_blocked_url_rules();
-
-    $payload = [
-        'items' => $rules,
-        'value' => implode(', ', $rules),
-    ];
-
-    if ($redirect) {
-        $payload['redirect'] = '/admin/moderation/blocking';
-    }
-
-    return $payload;
-}

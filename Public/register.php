@@ -6,71 +6,70 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-$next = auth_request_next_url();
+$next = \TinyCat\Users\Login::auth_request_next_url();
 
-if (auth_check()) {
-    redirect(auth_redirect_after_login(auth(), $next));
+if (\TinyCat\Users\Authentication::authCheck()) {
+    \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_redirect_after_login(\TinyCat\Users\Authentication::auth(), $next));
 }
 
-if (is_post()) {
-    csrf_require();
+if (\TinyCat\Http\Request::current()->isPost()) {
+    \TinyCat\Security\Csrf::requireToken();
 
-    if (!registration_enabled()) {
-        flash('error', t('auth.registration_disabled'));
-        redirect(auth_url_with_next('/register', $next));
+    if (!\TinyCat\Users\Accounts::registration_enabled()) {
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('auth.registration_disabled'));
+        \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_url_with_next('/register', $next));
     }
 
-    if (!captcha_check('register')) {
-        captcha_refresh('register');
-        auth_form_state_remember('register');
-        flash('error', t('auth.invalid_captcha'));
-        redirect(auth_url_with_next('/register', $next));
+    if (!\TinyCat\Security\Captcha::check('register')) {
+
+        \TinyCat\Users\Login::auth_form_state_remember('register');
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('auth.invalid_captcha'));
+        \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_url_with_next('/register', $next));
     }
 
-    $registration = registration_input();
+    $registration = \TinyCat\Users\Accounts::registration_input();
     $errors = (array) $registration['errors'];
 
     if ($errors !== []) {
-        captcha_refresh('register');
-        auth_form_state_remember('register');
-        flash('error', implode(' ', $errors));
-        redirect(auth_url_with_next('/register', $next));
+
+        \TinyCat\Users\Login::auth_form_state_remember('register');
+        \TinyCat\Http\Session::flash('error', implode(' ', $errors));
+        \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_url_with_next('/register', $next));
     }
 
     try {
-        $result = registration_create_user($registration);
+        $result = \TinyCat\Users\Accounts::registration_create_user($registration);
     } catch (Throwable $exception) {
-        captcha_refresh('register');
-        auth_form_state_remember('register');
+
+        \TinyCat\Users\Login::auth_form_state_remember('register');
         error_log('Registration failed: ' . $exception->getMessage());
-        flash('error', t('auth.registration_failed'));
-        redirect(auth_url_with_next('/register', $next));
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('auth.registration_failed'));
+        \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_url_with_next('/register', $next));
     }
 
     $id = (int) $result['user_id'];
     $status = (string) $result['status'];
 
-    captcha_refresh('register');
 
     if ($status === 'active') {
-        auth_login($id);
-        flash('success', t('auth.registration_done'));
-        redirect(auth_redirect_after_login(auth(), $next));
+        \TinyCat\Users\Authentication::authLogin($id);
+        \TinyCat\Http\Session::flash('success', \TinyCat\Support\Localization::t('auth.registration_done'));
+        \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_redirect_after_login(\TinyCat\Users\Authentication::auth(), $next));
     }
 
-    flash('success', t('auth.registration_waiting'));
-    redirect(auth_url_with_next('/login', $next));
+    \TinyCat\Http\Session::flash('success', \TinyCat\Support\Localization::t('auth.registration_waiting'));
+    \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_url_with_next('/login', $next));
 }
 
-$old = auth_form_state_previous('register');
+$old = \TinyCat\Users\Login::auth_form_state_previous('register');
 
-layout('layout', [
-    'title' => t('auth.register_title'),
+\TinyCat\Support\View::layout('layout', [
+    'title' => \TinyCat\Support\Localization::t('auth.register_title'),
     'current' => '/register',
     'meta' => [
-        'description' => t('auth.register_intro'),
+        'description' => \TinyCat\Support\Localization::t('auth.register_intro'),
         'url' => '/register',
-        'image' => site_meta_image_url(),
+        'image' => \TinyCat\Site\Presentation::site_meta_image_url(),
         'robots' => 'noindex,follow',
     ],
 ], static function () use ($next, $old): void {
@@ -78,10 +77,10 @@ layout('layout', [
     <section class="max-w-auth mx-auto">
         <article class="card">
             <div class="card-header">
-                <h1 class="text-lg m-0 cluster gap-2"><?= icon('user-plus') ?> <?= et('auth.register_title') ?></h1>
+                <h1 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('user-plus') ?> <?= \TinyCat\Support\Html::et('auth.register_title') ?></h1>
             </div>
             <div class="card-body">
-                <?= part('auth/content', ['mode' => 'register', 'next' => $next, 'old' => $old]) ?>
+                <?= \TinyCat\Users\Views::authContent(['mode' => 'register', 'next' => $next, 'old' => $old]) ?>
             </div>
         </article>
     </section>

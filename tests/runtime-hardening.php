@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/cache-isolation.php';
+
 define('TINYCAT', true);
 require_once dirname(__DIR__) . '/App/bootstrap.php';
 
@@ -26,48 +28,48 @@ foreach ([
     'http://[::ffff:127.0.0.1]/',
     'https://user:password@93.184.216.34/private',
 ] as $url) {
-    $assert(!LinkMetadata::isSafeRemoteUrl($url), 'Remote URL guard accepted: ' . $url);
+    $assert(!\TinyCat\Status\Metadata::isSafeRemoteUrl($url), 'Remote URL guard accepted: ' . $url);
 }
 
 $assert(
-    LinkMetadata::isSafeRemoteUrl('https://93.184.216.34/public'),
+    \TinyCat\Status\Metadata::isSafeRemoteUrl('https://93.184.216.34/public'),
     'Remote URL guard rejected a globally routable IPv4 literal.'
 );
 $assert(
-    LinkMetadata::isSafeRemoteUrl('https://[2606:4700:4700::1111]/public'),
+    \TinyCat\Status\Metadata::isSafeRemoteUrl('https://[2606:4700:4700::1111]/public'),
     'Remote URL guard rejected a globally routable IPv6 literal.'
 );
 
 $safeImage = [0 => 640, 1 => 480, 'mime' => 'image/png'];
-$assert(image_source_error($safeImage, 4096, 4096, ['image/png'], 8192, 8192, 16_777_216) === '', 'Safe raster metadata was rejected.');
-$assert(image_source_error($safeImage, 4096, 2048, ['image/png'], 8192, 8192, 16_777_216) === 'size', 'Reported and actual upload sizes may disagree.');
-$assert(image_source_error($safeImage, 4096, 4096, ['image/jpeg'], 8192, 8192, 16_777_216) === 'mime', 'Raster MIME allowlist was not enforced.');
-$assert(image_source_error([0 => 9000, 1 => 1, 'mime' => 'image/png'], 10, 10, ['image/png'], 100, 8192, 16_777_216) === 'dimensions', 'Raster dimension limit was not enforced.');
-$assert(image_source_error([0 => 4096, 1 => 4097, 'mime' => 'image/png'], 10, 10, ['image/png'], 100, 8192, 16_777_216) === 'dimensions', 'Raster pixel-memory limit was not enforced.');
-$assert(image_source_error(false, 10, 10, ['image/png'], 100, 8192, 16_777_216) === 'not_image', 'Malformed raster header was accepted.');
+$assert(\TinyCat\Security\Images::image_source_error($safeImage, 4096, 4096, ['image/png'], 8192, 8192, 16_777_216) === '', 'Safe raster metadata was rejected.');
+$assert(\TinyCat\Security\Images::image_source_error($safeImage, 4096, 2048, ['image/png'], 8192, 8192, 16_777_216) === 'size', 'Reported and actual upload sizes may disagree.');
+$assert(\TinyCat\Security\Images::image_source_error($safeImage, 4096, 4096, ['image/jpeg'], 8192, 8192, 16_777_216) === 'mime', 'Raster MIME allowlist was not enforced.');
+$assert(\TinyCat\Security\Images::image_source_error([0 => 9000, 1 => 1, 'mime' => 'image/png'], 10, 10, ['image/png'], 100, 8192, 16_777_216) === 'dimensions', 'Raster dimension limit was not enforced.');
+$assert(\TinyCat\Security\Images::image_source_error([0 => 4096, 1 => 4097, 'mime' => 'image/png'], 10, 10, ['image/png'], 100, 8192, 16_777_216) === 'dimensions', 'Raster pixel-memory limit was not enforced.');
+$assert(\TinyCat\Security\Images::image_source_error(false, 10, 10, ['image/png'], 100, 8192, 16_777_216) === 'not_image', 'Malformed raster header was accepted.');
 
 $assert(
-    user_avatar_url(['id' => 7, 'avatar_exists' => 1, 'updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/7.webp?v=2026-08-11%2012%3A00%3A00',
+    \TinyCat\Users\Avatars::user_avatar_url(['id' => 7, 'avatar_exists' => 1, 'updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/7.webp?v=2026-08-11%2012%3A00%3A00',
     'A complete user avatar record did not produce its fixed avatar URL.'
 );
 $assert(
-    user_avatar_url(['author_id' => 99, 'id' => 7, 'avatar_exists' => 1, 'updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/7.webp?v=2026-08-11%2012%3A00%3A00',
+    \TinyCat\Users\Avatars::user_avatar_url(['author_id' => 99, 'id' => 7, 'avatar_exists' => 1, 'updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/7.webp?v=2026-08-11%2012%3A00%3A00',
     'An incomplete author avatar projection prevented the user avatar fallback.'
 );
 $assert(
-    user_avatar_url(['author_id' => 99, 'author_avatar_exists' => 1, 'author_updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/99.webp?v=2026-08-11%2012%3A00%3A00',
+    \TinyCat\Users\Avatars::user_avatar_url(['author_id' => 99, 'author_avatar_exists' => 1, 'author_updated_at' => '2026-08-11 12:00:00']) === '/uploads/avatars/99.webp?v=2026-08-11%2012%3A00%3A00',
     'A complete author avatar projection did not retain its avatar URL.'
 );
 $assert(
-    user_can_edit_profile(['id' => 7], ['id' => 7, 'role' => 'member']),
+    \TinyCat\Users\Profiles::user_can_edit_profile(['id' => 7], ['id' => 7, 'role' => 'member']),
     'Users may no longer edit their own avatar target.'
 );
 $assert(
-    user_can_edit_profile(['id' => 7], ['id' => 1, 'role' => 'admin']),
+    \TinyCat\Users\Profiles::user_can_edit_profile(['id' => 7], ['id' => 1, 'role' => 'admin']),
     'Administrators may no longer edit another user avatar target.'
 );
 $assert(
-    !user_can_edit_profile(['id' => 7], ['id' => 8, 'role' => 'member']),
+    !\TinyCat\Users\Profiles::user_can_edit_profile(['id' => 7], ['id' => 8, 'role' => 'member']),
     'A regular user may edit another user avatar target.'
 );
 
@@ -88,7 +90,7 @@ if (extension_loaded('gd')) {
         });
 
         try {
-            foreach ([Avatar::class, StatusImage::class] as $owner) {
+            foreach ([\TinyCat\Users\Avatar::class, \TinyCat\Status\ImageStorage::class] as $owner) {
                 $decode = new ReflectionMethod($owner, 'createSource');
                 $decoded = $decode->invoke(null, $fixture, 'image/png');
                 $assert($decoded === false, $owner . ' accepted malformed PNG data.');
@@ -102,7 +104,7 @@ if (extension_loaded('gd')) {
     }
 }
 
-$linkSource = (string) file_get_contents(dirname(__DIR__) . '/App/LinkMetadata.php');
+$linkSource = (string) file_get_contents(dirname(__DIR__) . '/App/Status/Metadata.php');
 $assert(str_contains($linkSource, 'CURLOPT_FOLLOWLOCATION => false'), 'cURL redirects are not handled manually.');
 $assert(str_contains($linkSource, "'follow_location' => 0"), 'Stream redirects are not handled manually.');
 

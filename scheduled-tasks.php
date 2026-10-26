@@ -1,16 +1,15 @@
 <?php
 declare(strict_types=1);
 
-
 define('TINYCAT', true);
 require_once __DIR__ . '/App/bootstrap.php';
 
 $isCli = PHP_SAPI === 'cli';
-$taskDefinitions = Bots::scheduledTasks();
+$taskDefinitions = \TinyCat\Bots\Importer::scheduledTasks();
 $taskDefinitions['cleanup'] = [
     'runner' => static function (array $context): array {
-        $cleanupBatch = cleanup_batch_size($context['options']['cleanup_batch'] ?? 500);
-        $result = cron_cleanup_run($cleanupBatch);
+        $cleanupBatch = \TinyCat\Scheduler\Cleanup::cleanup_batch_size($context['options']['cleanup_batch'] ?? 500);
+        $result = \TinyCat\Scheduler\Cleanup::cron_cleanup_run($cleanupBatch);
         $hasErrors = array_any(
             (array) ($result['results'] ?? []),
             static fn (array $task): bool => isset($task['error'])
@@ -76,7 +75,7 @@ if ($isCli) {
         }
     }
 } else {
-    Core::securityHeaders();
+    \TinyCat\Http\Web::securityHeaders();
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store, private');
 }
@@ -91,21 +90,21 @@ $respond = static function (array $payload, int $status = 200, int $cliExitCode 
     exit($isCli ? $cliExitCode : 0);
 };
 
-if (!$isCli && method() === 'HEAD') {
+if (!$isCli && \TinyCat\Http\Request::current()->method() === 'HEAD') {
     header('Allow: GET, HEAD, POST');
     header('X-TinyCat-Scheduled-Tasks: available');
     http_response_code(204);
     exit;
 }
 
-if (!$isCli && !in_array(method(), ['GET', 'POST'], true)) {
+if (!$isCli && !in_array(\TinyCat\Http\Request::current()->method(), ['GET', 'POST'], true)) {
     header('Allow: GET, HEAD, POST');
     $respond(['ok' => false, 'error' => 'method_not_allowed'], 405, 2);
 }
 
 if (!$isCli) {
-    $configuredToken = cron_token();
-    $requestToken = cron_request_token();
+    $configuredToken = \TinyCat\Scheduler\Tokens::cron_token();
+    $requestToken = \TinyCat\Scheduler\Tokens::cron_request_token();
 
     if ($configuredToken === '') {
         $respond(['ok' => false, 'error' => 'scheduled_tasks_not_configured'], 503, 2);
@@ -117,7 +116,7 @@ if (!$isCli) {
     }
 }
 
-$requestedTask = trim((string) ($isCli ? $cliOptions['task'] : get('task', 'all')));
+$requestedTask = trim((string) ($isCli ? $cliOptions['task'] : \TinyCat\Http\Web::get('task', 'all')));
 
 if (!in_array($requestedTask, [...$availableTasks, 'all'], true)) {
     $respond([
@@ -141,7 +140,7 @@ if ($isCli && $unknownOptions !== []) {
     ], 200, 2);
 }
 
-if ($cliOptions['health'] || (!$isCli && in_array(strtolower((string) get('health', '')), ['1', 'true', 'yes'], true))) {
+if ($cliOptions['health'] || (!$isCli && in_array(strtolower((string) \TinyCat\Http\Web::get('health', '')), ['1', 'true', 'yes'], true))) {
     $respond([
         'ok' => true,
         'service' => 'tinycat_scheduled_tasks',
@@ -158,7 +157,7 @@ $taskContext = static function (string $task) use ($isCli, $cliOptions, $taskDef
     foreach ((array) ($taskDefinitions[$task]['options'] ?? []) as $name => $default) {
         $options[$name] = $isCli
             ? ($cliOptions['options'][$name] ?? $default)
-            : get((string) $name, $default);
+            : \TinyCat\Http\Web::get((string) $name, $default);
     }
 
     return [
@@ -167,14 +166,14 @@ $taskContext = static function (string $task) use ($isCli, $cliOptions, $taskDef
     ];
 };
 
-$lockSuffix = substr(hash('sha256', base_path()), 0, 24);
-$debug = (bool) config('app.debug', false);
+$lockSuffix = substr(hash('sha256', \TinyCat\Support\Paths::basePath()), 0, 24);
+$debug = (bool) \TinyCat\Settings\Store::config('app.debug', false);
 $runTask = static function (string $name, callable $runner, array $context) use ($lockSuffix, $debug): array {
     $lockName = 'tinycat_scheduled_' . $name . '_' . $lockSuffix;
     $locked = false;
 
     try {
-        $locked = (int) val('SELECT GET_LOCK(?, 0)', [$lockName]) === 1;
+        $locked = (int) \TinyCat\Database\Connection::value('SELECT GET_LOCK(?, 0)', [$lockName]) === 1;
 
         if (!$locked) {
             return [
@@ -194,7 +193,7 @@ $runTask = static function (string $name, callable $runner, array $context) use 
     } finally {
         if ($locked) {
             try {
-                val('SELECT RELEASE_LOCK(?)', [$lockName]);
+                \TinyCat\Database\Connection::value('SELECT RELEASE_LOCK(?)', [$lockName]);
             } catch (Throwable) {
             }
         }

@@ -1,0 +1,1281 @@
+[
+  {
+    "component": "users/avatar",
+    "data": {
+      "user": {
+        "id": 2,
+        "username": "Alice <unsafe>",
+        "url": "/author/2",
+        "avatar_url": "",
+        "bio": "Profile",
+        "email": "alice@example.test",
+        "role": "user",
+        "status": "active",
+        "can_delete": true,
+        "role_label": "User",
+        "status_label": "Active",
+        "updated_at": "2026-01-01T12:00:00+00:00",
+        "updated_at_formatted": "Today"
+      }
+    }
+  },
+  {
+    "component": "users/avatar",
+    "data": {
+      "user": {
+        "id": 2,
+        "username": "Alice <unsafe>",
+        "url": "/author/2",
+        "avatar_url": "/uploads/avatars/2.webp?v=2",
+        "bio": "Profile",
+        "email": "alice@example.test",
+        "role": "user",
+        "status": "active",
+        "can_delete": true,
+        "role_label": "User",
+        "status_label": "Active",
+        "updated_at": "2026-01-01T12:00:00+00:00",
+        "updated_at_formatted": "Today"
+      },
+      "small": true
+    }
+  },
+  {
+    "component": "users/following-profile",
+    "data": {
+      "user": {
+        "id": 2,
+        "username": "Alice <unsafe>",
+        "url": "/author/2",
+        "avatar_url": "",
+        "bio": "Profile",
+        "email": "alice@example.test",
+        "role": "user",
+        "status": "active",
+        "can_delete": true,
+        "role_label": "User",
+        "status_label": "Active",
+        "updated_at": "2026-01-01T12:00:00+00:00",
+        "updated_at_formatted": "Today"
+      }
+    }
+  },
+  {
+    "component": "status/card",
+    "data": {
+      "item": {
+        "id": 10,
+        "url": "/status/10",
+        "author": {
+          "id": 2,
+          "username": "Alice <unsafe>",
+          "url": "/author/2",
+          "avatar_url": "",
+          "bio": "Profile",
+          "email": "alice@example.test",
+          "role": "user",
+          "status": "active",
+          "can_delete": true,
+          "role_label": "User",
+          "status_label": "Active",
+          "updated_at": "2026-01-01T12:00:00+00:00",
+          "updated_at_formatted": "Today"
+        },
+        "segments": [
+          {
+            "type": "text",
+            "text": "Hello <unsafe>\n"
+          },
+          {
+            "type": "mention",
+            "text": "@Bob",
+            "url": "/author/3"
+          },
+          {
+            "type": "tag",
+            "text": "#tinycat",
+            "url": "/tag/tinycat"
+          }
+        ],
+        "published_at": "2026-01-01T12:00:00+00:00",
+        "published_label": "Today",
+        "permalink_label": "Post by Alice",
+        "image": {
+          "url": "",
+          "alt": ""
+        },
+        "links": [],
+        "likes_count": 1,
+        "comments_count": 2,
+        "liked": false,
+        "capabilities": {
+          "edit": true,
+          "delete": true,
+          "report": false,
+          "interact": true
+        },
+        "login_url": "/login?next=%2Fstatus%2F10",
+        "login_modal_url": "/api/users/authentication?mode=login&next=%2Fstatus%2F10"
+      },
+      "anchor": true,
+      "open_modal": true,
+      "action": "/"
+    }
+  },
+  {
+    "component": "status/card",
+    "data": {
+      "item": {
+        "id": 10,
+        "url": "/status/10",
+        "author": {
+          "id": 2,
+          "username": "Alice <unsafe>",
+          "url": "/author/2",
+          "avatar_url": "",
+          "bio": "Profile",
+          "email": "alice@example.test",
+          "role": "user",
+          "status": "active",
+          "can_delete": true,
+          "role_label": "User",
+          "status_label": "Active",
+          "updated_at": "2026-01-01T12:00:00+00:00",
+          "updated_at_formatted": "Today"
+        },
+        "segments": [
+          {
+            "type": "text",
+            "text": "Hello <unsafe>\n"
+          },
+          {
+            "type": "mention",
+            "text": "@Bob",
+            "url": "/author/3"
+          },
+          {
+            "type": "tag",
+            "text": "#tinycat",
+            "url": "/tag/tinycat"
+          }
+        ],
+        "published_at": "2026-01-01T12:00:00+00:00",
+        "published_label": "Today",
+        "permalink_label": "Post by Alice",
+        "image": {
+          "url": "/uploads/statuses/10.webp",
+          "alt": "Image"
+        },
+        "links": [],
+        "likes_count": 1,
+        "comments_count": 2,
+        "liked": true,
+        "capabilities": {
+          "edit": true,
+          "delete": true,
+          "report": false,
+          "interact": true
+        },
+        "login_url": "/login?next=%2Fstatus%2F10",
+        "login_modal_url": "/api/users/authentication?mode=login&next=%2Fstatus%2F10",
+        "edit_locked": true
+      },
+      "anchor": false,
+      "open_modal": false,
+      "action": "/status/10"
+    }
+  },
+  {
+    "component": "status/card",
+    "data": {
+      "item": {
+        "id": 10,
+        "url": "/status/10",
+        "author": {
+          "id": 2,
+          "username": "Alice <unsafe>",
+          "url": "/author/2",
+          "avatar_url": "",
+          "bio": "Profile",
+          "email": "alice@example.test",
+          "role": "user",
+          "status": "active",
+          "can_delete": true,
+          "role_label": "User",
+          "status_label": "Active",
+          "updated_at": "2026-01-01T12:00:00+00:00",
+          "updated_at_formatted": "Today"
+        },
+        "segments": [
+          {
+            "type": "text",
+            "text": "Hello <unsafe>\n"
+          },
+          {
+            "type": "mention",
+            "text": "@Bob",
+            "url": "/author/3"
+          },
+          {
+            "type": "tag",
+            "text": "#tinycat",
+            "url": "/tag/tinycat"
+          }
+        ],
+        "published_at": "2026-01-01T12:00:00+00:00",
+        "published_label": "Today",
+        "permalink_label": "Post by Alice",
+        "image": {
+          "url": "",
+          "alt": ""
+        },
+        "links": [],
+        "likes_count": 1,
+        "comments_count": 2,
+        "liked": false,
+        "capabilities": {
+          "interact": false
+        },
+        "login_url": "/login?next=%2Fstatus%2F10",
+        "login_modal_url": "/api/users/authentication?mode=login&next=%2Fstatus%2F10"
+      },
+      "anchor": true,
+      "open_modal": true
+    }
+  },
+  {
+    "component": "status/link",
+    "data": {
+      "link": {
+        "url": "https://example.test",
+        "title": "Title <unsafe>",
+        "description": "Description",
+        "image_url": "https://example.test/image.webp"
+      }
+    }
+  },
+  {
+    "component": "status/link",
+    "data": {
+      "link": {
+        "url": "https://example.test",
+        "title": "Video",
+        "embed_allowed": true,
+        "embed_url": "https://www.youtube-nocookie.com/embed/example",
+        "thumbnail_url": "https://example.test/thumb.jpg",
+        "thumbnail_webp_url": "https://example.test/thumb.webp",
+        "provider": "youtube"
+      }
+    }
+  },
+  {
+    "component": "status/comment",
+    "data": {
+      "item": {
+        "id": 7,
+        "content_id": 10,
+        "parent_id": 0,
+        "author": {
+          "id": 2,
+          "username": "Alice <unsafe>",
+          "url": "/author/2",
+          "avatar_url": "",
+          "bio": "Profile",
+          "email": "alice@example.test",
+          "role": "user",
+          "status": "active",
+          "can_delete": true,
+          "role_label": "User",
+          "status_label": "Active",
+          "updated_at": "2026-01-01T12:00:00+00:00",
+          "updated_at_formatted": "Today"
+        },
+        "segments": [
+          {
+            "type": "text",
+            "text": "Hello <unsafe>\n"
+          },
+          {
+            "type": "mention",
+            "text": "@Bob",
+            "url": "/author/3"
+          },
+          {
+            "type": "tag",
+            "text": "#tinycat",
+            "url": "/tag/tinycat"
+          }
+        ],
+        "created_at": "2026-01-01T12:00:00+00:00",
+        "created_label": "Today",
+        "likes_count": 1,
+        "liked": false,
+        "capabilities": {
+          "edit": true,
+          "delete": true,
+          "interact": true
+        },
+        "replies": []
+      },
+      "viewer": {
+        "id": 2,
+        "username": "Alice <unsafe>",
+        "url": "/author/2",
+        "avatar_url": "",
+        "bio": "Profile",
+        "email": "alice@example.test",
+        "role": "user",
+        "status": "active",
+        "can_delete": true,
+        "role_label": "User",
+        "status_label": "Active",
+        "updated_at": "2026-01-01T12:00:00+00:00",
+        "updated_at_formatted": "Today"
+      },
+      "context": "modal",
+      "show_replies": true,
+      "show_reply_form": true
+    }
+  },
+  {
+    "component": "status/comment",
+    "data": {
+      "item": {
+        "id": 7,
+        "content_id": 10,
+        "parent_id": 0,
+        "author": {
+          "id": 2,
+          "username": "Alice <unsafe>",
+          "url": "/author/2",
+          "avatar_url": "",
+          "bio": "Profile",
+          "email": "alice@example.test",
+          "role": "user",
+          "status": "active",
+          "can_delete": true,
+          "role_label": "User",
+          "status_label": "Active",
+          "updated_at": "2026-01-01T12:00:00+00:00",
+          "updated_at_formatted": "Today"
+        },
+        "segments": [
+          {
+            "type": "text",
+            "text": "Hello <unsafe>\n"
+          },
+          {
+            "type": "mention",
+            "text": "@Bob",
+            "url": "/author/3"
+          },
+          {
+            "type": "tag",
+            "text": "#tinycat",
+            "url": "/tag/tinycat"
+          }
+        ],
+        "created_at": "2026-01-01T12:00:00+00:00",
+        "created_label": "Today",
+        "likes_count": 1,
+        "liked": false,
+        "capabilities": {
+          "interact": false
+        },
+        "replies": []
+      },
+      "context": "",
+      "preview": true,
+      "show_replies": false,
+      "show_reply_form": false
+    }
+  },
+  {
+    "component": "status/thread",
+    "data": {
+      "item": {
+        "id": 10,
+        "url": "/status/10",
+        "author": {
+          "id": 2,
+          "username": "Alice <unsafe>",
+          "url": "/author/2",
+          "avatar_url": "",
+          "bio": "Profile",
+          "email": "alice@example.test",
+          "role": "user",
+          "status": "active",
+          "can_delete": true,
+          "role_label": "User",
+          "status_label": "Active",
+          "updated_at": "2026-01-01T12:00:00+00:00",
+          "updated_at_formatted": "Today"
+        },
+        "segments": [
+          {
+            "type": "text",
+            "text": "Hello <unsafe>\n"
+          },
+          {
+            "type": "mention",
+            "text": "@Bob",
+            "url": "/author/3"
+          },
+          {
+            "type": "tag",
+            "text": "#tinycat",
+            "url": "/tag/tinycat"
+          }
+        ],
+        "published_at": "2026-01-01T12:00:00+00:00",
+        "published_label": "Today",
+        "permalink_label": "Post by Alice",
+        "image": {
+          "url": "",
+          "alt": ""
+        },
+        "links": [],
+        "likes_count": 1,
+        "comments_count": 2,
+        "liked": false,
+        "capabilities": {
+          "edit": true,
+          "delete": true,
+          "report": false,
+          "interact": true
+        },
+        "login_url": "/login?next=%2Fstatus%2F10",
+        "login_modal_url": "/api/users/authentication?mode=login&next=%2Fstatus%2F10"
+      },
+      "comments": [
+        {
+          "id": 7,
+          "content_id": 10,
+          "parent_id": 0,
+          "author": {
+            "id": 2,
+            "username": "Alice <unsafe>",
+            "url": "/author/2",
+            "avatar_url": "",
+            "bio": "Profile",
+            "email": "alice@example.test",
+            "role": "user",
+            "status": "active",
+            "can_delete": true,
+            "role_label": "User",
+            "status_label": "Active",
+            "updated_at": "2026-01-01T12:00:00+00:00",
+            "updated_at_formatted": "Today"
+          },
+          "segments": [
+            {
+              "type": "text",
+              "text": "Hello <unsafe>\n"
+            },
+            {
+              "type": "mention",
+              "text": "@Bob",
+              "url": "/author/3"
+            },
+            {
+              "type": "tag",
+              "text": "#tinycat",
+              "url": "/tag/tinycat"
+            }
+          ],
+          "created_at": "2026-01-01T12:00:00+00:00",
+          "created_label": "Today",
+          "likes_count": 1,
+          "liked": false,
+          "capabilities": {
+            "edit": true,
+            "delete": true,
+            "interact": true
+          },
+          "replies": []
+        }
+      ],
+      "viewer": {
+        "id": 2,
+        "username": "Alice <unsafe>",
+        "url": "/author/2",
+        "avatar_url": "",
+        "bio": "Profile",
+        "email": "alice@example.test",
+        "role": "user",
+        "status": "active",
+        "can_delete": true,
+        "role_label": "User",
+        "status_label": "Active",
+        "updated_at": "2026-01-01T12:00:00+00:00",
+        "updated_at_formatted": "Today"
+      },
+      "context": "status-10"
+    }
+  },
+  {
+    "component": "status/thread",
+    "data": {
+      "item": {
+        "id": 10,
+        "url": "/status/10",
+        "author": {
+          "id": 2,
+          "username": "Alice <unsafe>",
+          "url": "/author/2",
+          "avatar_url": "",
+          "bio": "Profile",
+          "email": "alice@example.test",
+          "role": "user",
+          "status": "active",
+          "can_delete": true,
+          "role_label": "User",
+          "status_label": "Active",
+          "updated_at": "2026-01-01T12:00:00+00:00",
+          "updated_at_formatted": "Today"
+        },
+        "segments": [
+          {
+            "type": "text",
+            "text": "Hello <unsafe>\n"
+          },
+          {
+            "type": "mention",
+            "text": "@Bob",
+            "url": "/author/3"
+          },
+          {
+            "type": "tag",
+            "text": "#tinycat",
+            "url": "/tag/tinycat"
+          }
+        ],
+        "published_at": "2026-01-01T12:00:00+00:00",
+        "published_label": "Today",
+        "permalink_label": "Post by Alice",
+        "image": {
+          "url": "",
+          "alt": ""
+        },
+        "links": [],
+        "likes_count": 1,
+        "comments_count": 2,
+        "liked": false,
+        "capabilities": {
+          "edit": true,
+          "delete": true,
+          "report": false,
+          "interact": true
+        },
+        "login_url": "/login?next=%2Fstatus%2F10",
+        "login_modal_url": "/api/users/authentication?mode=login&next=%2Fstatus%2F10"
+      },
+      "comments": [
+        {
+          "id": 7,
+          "content_id": 10,
+          "parent_id": 0,
+          "author": {
+            "id": 2,
+            "username": "Alice <unsafe>",
+            "url": "/author/2",
+            "avatar_url": "",
+            "bio": "Profile",
+            "email": "alice@example.test",
+            "role": "user",
+            "status": "active",
+            "can_delete": true,
+            "role_label": "User",
+            "status_label": "Active",
+            "updated_at": "2026-01-01T12:00:00+00:00",
+            "updated_at_formatted": "Today"
+          },
+          "segments": [
+            {
+              "type": "text",
+              "text": "Hello <unsafe>\n"
+            },
+            {
+              "type": "mention",
+              "text": "@Bob",
+              "url": "/author/3"
+            },
+            {
+              "type": "tag",
+              "text": "#tinycat",
+              "url": "/tag/tinycat"
+            }
+          ],
+          "created_at": "2026-01-01T12:00:00+00:00",
+          "created_label": "Today",
+          "likes_count": 1,
+          "liked": false,
+          "capabilities": {
+            "edit": true,
+            "delete": true,
+            "interact": true
+          },
+          "replies": []
+        }
+      ],
+      "viewer": null,
+      "context": "status-10"
+    }
+  },
+  {
+    "component": "status/composer-body",
+    "data": {
+      "viewer": {
+        "id": 2,
+        "username": "Alice <unsafe>",
+        "url": "/author/2",
+        "avatar_url": "",
+        "bio": "Profile",
+        "email": "alice@example.test",
+        "role": "user",
+        "status": "active",
+        "can_delete": true,
+        "role_label": "User",
+        "status_label": "Active",
+        "updated_at": "2026-01-01T12:00:00+00:00",
+        "updated_at_formatted": "Today"
+      },
+      "value": "Draft <unsafe>",
+      "image": {
+        "url": "",
+        "alt": ""
+      },
+      "enabled": true,
+      "submit_label": "Save",
+      "submit_icon": "save"
+    }
+  },
+  {
+    "component": "status/composer-body",
+    "data": {
+      "viewer": {
+        "id": 2,
+        "username": "Alice <unsafe>",
+        "url": "/author/2",
+        "avatar_url": "",
+        "bio": "Profile",
+        "email": "alice@example.test",
+        "role": "user",
+        "status": "active",
+        "can_delete": true,
+        "role_label": "User",
+        "status_label": "Active",
+        "updated_at": "2026-01-01T12:00:00+00:00",
+        "updated_at_formatted": "Today"
+      },
+      "value": "Draft",
+      "image": {
+        "url": "/uploads/statuses/10.webp",
+        "alt": "Image"
+      },
+      "enabled": false,
+      "submit_name": "save",
+      "submit_value": "1",
+      "submit_label": "Save",
+      "submit_icon": "save"
+    }
+  },
+  {
+    "component": "notifications/items",
+    "data": {
+      "items": [
+        {
+          "id": 1,
+          "actor": {
+            "id": 2,
+            "username": "Alice <unsafe>",
+            "url": "/author/2",
+            "avatar_url": "",
+            "bio": "Profile",
+            "email": "alice@example.test",
+            "role": "user",
+            "status": "active",
+            "can_delete": true,
+            "role_label": "User",
+            "status_label": "Active",
+            "updated_at": "2026-01-01T12:00:00+00:00",
+            "updated_at_formatted": "Today"
+          },
+          "icon": "bell",
+          "message": "Mention <unsafe>",
+          "excerpt": "Excerpt",
+          "url": "/status/10",
+          "created_at": "2026-01-01T12:00:00+00:00",
+          "created_label": "Today",
+          "unread": true
+        },
+        {
+          "id": 2,
+          "actor": {
+            "id": 2,
+            "username": "Alice <unsafe>",
+            "url": "/author/2",
+            "avatar_url": "",
+            "bio": "Profile",
+            "email": "alice@example.test",
+            "role": "user",
+            "status": "active",
+            "can_delete": true,
+            "role_label": "User",
+            "status_label": "Active",
+            "updated_at": "2026-01-01T12:00:00+00:00",
+            "updated_at_formatted": "Today"
+          },
+          "icon": "bell",
+          "message": "Mention <unsafe>",
+          "excerpt": "Excerpt",
+          "url": "/status/10",
+          "created_at": "2026-01-01T12:00:00+00:00",
+          "created_label": "Today",
+          "unread": false
+        }
+      ],
+      "preview": false
+    }
+  },
+  {
+    "component": "notifications/items",
+    "data": {
+      "items": [
+        {
+          "id": 1,
+          "actor": {
+            "id": 2,
+            "username": "Alice <unsafe>",
+            "url": "/author/2",
+            "avatar_url": "",
+            "bio": "Profile",
+            "email": "alice@example.test",
+            "role": "user",
+            "status": "active",
+            "can_delete": true,
+            "role_label": "User",
+            "status_label": "Active",
+            "updated_at": "2026-01-01T12:00:00+00:00",
+            "updated_at_formatted": "Today"
+          },
+          "icon": "bell",
+          "message": "Mention <unsafe>",
+          "excerpt": "Excerpt",
+          "url": "/status/10",
+          "created_at": "2026-01-01T12:00:00+00:00",
+          "created_label": "Today",
+          "unread": true
+        }
+      ],
+      "preview": true
+    }
+  },
+  {
+    "component": "notifications/items",
+    "data": {
+      "items": [],
+      "preview": true
+    }
+  },
+  {
+    "component": "site/sidebar",
+    "data": {
+      "url": "/api/site/sidebar?tag=tinycat",
+      "active_tag": "tinycat",
+      "tags": [
+        {
+          "name": "tinycat",
+          "url": "/tag/tinycat",
+          "posts_count": 3
+        }
+      ],
+      "authors": [
+        {
+          "id": 2,
+          "username": "Alice <unsafe>",
+          "url": "/author/2",
+          "avatar_url": "",
+          "bio": "Profile",
+          "email": "alice@example.test",
+          "role": "user",
+          "status": "active",
+          "can_delete": true,
+          "role_label": "User",
+          "status_label": "Active",
+          "updated_at": "2026-01-01T12:00:00+00:00",
+          "updated_at_formatted": "Today",
+          "posts_count": 3
+        }
+      ],
+      "footer": [
+        {
+          "type": "element",
+          "name": "p",
+          "children": [
+            {
+              "type": "text",
+              "text": "Footer <unsafe>"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "component": "users/admin-fields",
+    "data": {
+      "user": {
+        "id": 2,
+        "username": "Alice <unsafe>",
+        "url": "/author/2",
+        "avatar_url": "",
+        "bio": "Profile",
+        "email": "alice@example.test",
+        "role": "admin",
+        "status": "active",
+        "can_delete": true,
+        "role_label": "User",
+        "status_label": "Active",
+        "updated_at": "2026-01-01T12:00:00+00:00",
+        "updated_at_formatted": "Today"
+      },
+      "options": {
+        "username_pattern": "[A-Za-z0-9._-]+",
+        "username_hint": "Letters and digits",
+        "password_max_length": 1024,
+        "roles": {
+          "admin": "Admin",
+          "user": "User"
+        },
+        "statuses": {
+          "active": "Active",
+          "ban": "Banned"
+        }
+      },
+      "create": false,
+      "protected": true
+    }
+  },
+  {
+    "component": "users/admin-fields",
+    "data": {
+      "user": {},
+      "options": {
+        "username_pattern": "[A-Za-z0-9._-]+",
+        "username_hint": "Letters and digits",
+        "password_max_length": 1024,
+        "roles": {
+          "admin": "Admin",
+          "user": "User"
+        },
+        "statuses": {
+          "active": "Active",
+          "ban": "Banned"
+        }
+      },
+      "create": true,
+      "protected": false
+    }
+  },
+  {
+    "component": "users/list",
+    "data": {
+      "items": [
+        {
+          "id": 2,
+          "username": "Alice <unsafe>",
+          "url": "/author/2",
+          "avatar_url": "",
+          "bio": "Profile",
+          "email": "alice@example.test",
+          "role": "user",
+          "status": "active",
+          "can_delete": true,
+          "role_label": "User",
+          "status_label": "Active",
+          "updated_at": "2026-01-01T12:00:00+00:00",
+          "updated_at_formatted": "Today"
+        }
+      ],
+      "filters": {
+        "q": "Alice",
+        "role": "user",
+        "status": "active",
+        "updated_from": "",
+        "updated_to": ""
+      },
+      "roles": {
+        "admin": "Admin",
+        "user": "User"
+      },
+      "statuses": {
+        "active": "Active",
+        "ban": "Banned"
+      },
+      "role_options": {
+        "": "All",
+        "admin": "Admin",
+        "user": "User"
+      },
+      "status_options": {
+        "": "All",
+        "active": "Active",
+        "ban": "Banned"
+      },
+      "pagination": {
+        "page": 1,
+        "per_page": 25
+      },
+      "navigation": {
+        "visible": true,
+        "target": "#users-list",
+        "pages": [
+          {
+            "number": 1,
+            "current": true
+          },
+          {
+            "number": 2,
+            "current": false,
+            "url": "/api/users?page=2",
+            "history_url": "/admin/users?page=2"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": 2,
+            "username": "Alice <unsafe>",
+            "url": "/author/2",
+            "avatar_url": "",
+            "bio": "Profile",
+            "email": "alice@example.test",
+            "role": "user",
+            "status": "active",
+            "can_delete": true,
+            "role_label": "User",
+            "status_label": "Active",
+            "updated_at": "2026-01-01T12:00:00+00:00",
+            "updated_at_formatted": "Today"
+          }
+        ],
+        "filters": {
+          "q": "Alice",
+          "role": "user",
+          "status": "active",
+          "updated_from": "",
+          "updated_to": ""
+        },
+        "roles": {
+          "admin": "Admin",
+          "user": "User"
+        },
+        "statuses": {
+          "active": "Active",
+          "ban": "Banned"
+        },
+        "role_options": {
+          "": "All",
+          "admin": "Admin",
+          "user": "User"
+        },
+        "status_options": {
+          "": "All",
+          "active": "Active",
+          "ban": "Banned"
+        },
+        "pagination": {
+          "page": 1,
+          "per_page": 25
+        },
+        "navigation": {
+          "visible": true,
+          "target": "#users-list",
+          "pages": [
+            {
+              "number": 1,
+              "current": true
+            },
+            {
+              "number": 2,
+              "current": false,
+              "url": "/api/users?page=2",
+              "history_url": "/admin/users?page=2"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "component": "users/auth-content",
+    "data": {
+      "mode": "login",
+      "register": false,
+      "next": "/",
+      "form_url": "/login?next=%2F",
+      "switch_url": "/register",
+      "switch_modal_url": "/api/users/authentication?mode=register",
+      "registration_enabled": true,
+      "options": {
+        "username_pattern": "[A-Za-z0-9._-]+",
+        "username_hint": "Letters and digits",
+        "password_max_length": 1024,
+        "roles": {
+          "admin": "Admin",
+          "user": "User"
+        },
+        "statuses": {
+          "active": "Active",
+          "ban": "Banned"
+        }
+      },
+      "captcha": {
+        "enabled": false
+      },
+      "old": {}
+    }
+  },
+  {
+    "component": "users/auth-content",
+    "data": {
+      "mode": "register",
+      "register": true,
+      "next": "/",
+      "form_url": "/login?next=%2F",
+      "switch_url": "/register",
+      "switch_modal_url": "/api/users/authentication?mode=register",
+      "registration_enabled": true,
+      "options": {
+        "username_pattern": "[A-Za-z0-9._-]+",
+        "username_hint": "Letters and digits",
+        "password_max_length": 1024,
+        "roles": {
+          "admin": "Admin",
+          "user": "User"
+        },
+        "statuses": {
+          "active": "Active",
+          "ban": "Banned"
+        }
+      },
+      "captcha": {
+        "enabled": true,
+        "provider": "turnstile",
+        "site_key": "test",
+        "context": "register"
+      },
+      "old": {}
+    }
+  },
+  {
+    "component": "bots/source-fields",
+    "data": {
+      "source": {
+        "id": 7,
+        "bot_user_id": 3,
+        "bot_username": "Bot",
+        "name": "Feed <unsafe>",
+        "feed_url": "https://example.test/feed",
+        "interval_minutes": 60,
+        "post_template": "{title}",
+        "enabled": true,
+        "last_error": "",
+        "last_imported_at": "",
+        "last_imported_label": "",
+        "next_run_at": "",
+        "next_run_label": ""
+      },
+      "bots": [
+        {
+          "id": 3,
+          "username": "Bot"
+        }
+      ]
+    }
+  },
+  {
+    "component": "bots/sources",
+    "data": {
+      "items": [
+        {
+          "id": 7,
+          "bot_user_id": 3,
+          "bot_username": "Bot",
+          "name": "Feed <unsafe>",
+          "feed_url": "https://example.test/feed",
+          "interval_minutes": 60,
+          "post_template": "{title}",
+          "enabled": true,
+          "last_error": "",
+          "last_imported_at": "",
+          "last_imported_label": "",
+          "next_run_at": "",
+          "next_run_label": ""
+        }
+      ],
+      "bots": [
+        {
+          "id": 3,
+          "username": "Bot"
+        }
+      ],
+      "state": {}
+    }
+  },
+  {
+    "component": "bots/accounts",
+    "data": {
+      "items": [
+        {
+          "id": 2,
+          "username": "Alice <unsafe>",
+          "url": "/author/2",
+          "avatar_url": "",
+          "bio": "Profile",
+          "email": "alice@example.test",
+          "role": "user",
+          "status": "active",
+          "can_delete": true,
+          "role_label": "User",
+          "status_label": "Active",
+          "updated_at": "2026-01-01T12:00:00+00:00",
+          "updated_at_formatted": "Today",
+          "source_count": 2,
+          "post_count": 3,
+          "updated_label": "Today"
+        }
+      ],
+      "status_options": {
+        "": "All",
+        "active": "Active"
+      },
+      "filters": {
+        "q": "",
+        "status": ""
+      },
+      "pagination": {
+        "per_page": 10
+      }
+    }
+  },
+  {
+    "component": "ui/modal",
+    "data": {
+      "root_attributes": {
+        "id": "parity-modal",
+        "class": "modal",
+        "role": "dialog",
+        "aria-hidden": "true",
+        "aria-modal": "true",
+        "aria-labelledby": "parity-modal-title"
+      },
+      "panel_attributes": {
+        "class": "modal-panel",
+        "tabindex": "-1"
+      },
+      "title_id": "parity-modal-title",
+      "title": "Title <unsafe>",
+      "close_label": "Close",
+      "has_footer": true
+    },
+    "slots": {
+      "body": "Body <unsafe>",
+      "close_icon": "x",
+      "footer": "Footer"
+    }
+  },
+  {
+    "component": "ui/modal",
+    "data": {
+      "root_attributes": {
+        "id": "parity-modal",
+        "class": "modal",
+        "role": "dialog",
+        "aria-hidden": "true",
+        "aria-modal": "true",
+        "aria-labelledby": "parity-modal-title"
+      },
+      "panel_attributes": {
+        "class": "modal-panel",
+        "method": "post",
+        "action": "/api/users/2"
+      },
+      "title_id": "parity-modal-title",
+      "title": "Title <unsafe>",
+      "close_label": "Close",
+      "has_footer": true,
+      "form": true,
+      "csrf": true,
+      "hidden_method": "PATCH"
+    },
+    "slots": {
+      "body": "Form body",
+      "close_icon": "x",
+      "footer": "Save"
+    }
+  },
+  {
+    "component": "moderation/reports",
+    "data": {
+      "items": [
+        {
+          "id": 1,
+          "content_id": 10,
+          "author_name": "Alice <unsafe>",
+          "open_count": 1,
+          "excerpt": "Post",
+          "note": "Report note <unsafe>",
+          "reason_label": "Spam",
+          "report_count_label": "2 reports",
+          "status": "open",
+          "status_label": "Open",
+          "reported_at_label": "Today",
+          "permalink_url": "/status/10",
+          "permalink_label": "Open post"
+        }
+      ]
+    }
+  },
+  {
+    "component": "bots/runs",
+    "data": {
+      "latest": true,
+      "runs": [
+        {
+          "source_name": "Feed",
+          "status": "error",
+          "started_iso": "2026-01-01T12:00:00Z",
+          "started_label": "Today",
+          "items_seen": 3,
+          "error": "Failure <unsafe>"
+        }
+      ]
+    }
+  },
+  {
+    "component": "bots/runs",
+    "data": {
+      "latest": false,
+      "runs": [
+        {
+          "source_name": "Feed",
+          "status": "error",
+          "started_iso": "2026-01-01T12:00:00Z",
+          "started_label": "Today",
+          "items_seen": 3,
+          "error": "Failure <unsafe>"
+        }
+      ]
+    }
+  },
+  {
+    "component": "status/feed-more",
+    "data": {
+      "target": "#feed",
+      "url": "/api/statuses?before_id=10"
+    }
+  }
+]

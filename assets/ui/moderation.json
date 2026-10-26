@@ -1,0 +1,321 @@
+{
+  "moderation/reports": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "alert alert-info"
+        },
+        "children": [
+          {
+            "t": "moderation.reports_empty",
+            "values": {}
+          }
+        ],
+        "when": {
+          "not": {
+            "get": "items"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table"
+            },
+            "children": [
+              {
+                "tag": "thead",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "moderation.reported_content",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "moderation.report_reason",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "common.status",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "common.actions",
+                            "values": {}
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "attrs": {},
+                "children": [
+                  {
+                    "each": {
+                      "get": "items"
+                    },
+                    "as": "report",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "strong",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "get": "report.excerpt"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-meta"
+                                },
+                                "children": [
+                                  {
+                                    "concat": [
+                                      "#",
+                                      {
+                                        "get": "report.content_id"
+                                      },
+                                      " · @",
+                                      {
+                                        "get": "report.author_name"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-meta"
+                                },
+                                "children": [
+                                  {
+                                    "get": "report.report_count_label"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-meta"
+                                },
+                                "children": [
+                                  {
+                                    "get": "report.note"
+                                  }
+                                ],
+                                "when": {
+                                  "get": "report.note"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "get": "report.reason_label"
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "span",
+                                "attrs": {
+                                  "class": {
+                                    "concat": [
+                                      "badge",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              {
+                                                "get": "report.status"
+                                              },
+                                              "open"
+                                            ]
+                                          },
+                                          " badge-primary",
+                                          ""
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "report.status_label"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-meta"
+                                },
+                                "children": [
+                                  {
+                                    "get": "report.reported_at_label"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-actions"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "a",
+                                    "attrs": {
+                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "href": {
+                                        "get": "report.permalink_url"
+                                      },
+                                      "aria-label": {
+                                        "get": "report.permalink_label"
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "icon": "link"
+                                      }
+                                    ],
+                                    "when": {
+                                      "get": "report.permalink_url"
+                                    }
+                                  },
+                                  {
+                                    "component": "ui/api-action",
+                                    "data": {
+                                      "url": {
+                                        "concat": [
+                                          "/api/moderation/reports/",
+                                          {
+                                            "get": "report.id"
+                                          }
+                                        ]
+                                      },
+                                      "method": "PATCH",
+                                      "target": "#moderation-reports",
+                                      "fields": {
+                                        "decision": "remove"
+                                      },
+                                      "label": {
+                                        "t": "moderation.remove_content",
+                                        "values": {}
+                                      },
+                                      "confirm": {
+                                        "t": "account.status_delete_confirm",
+                                        "values": {}
+                                      }
+                                    },
+                                    "when": {
+                                      "get": "report.open_count"
+                                    }
+                                  },
+                                  {
+                                    "component": "ui/api-action",
+                                    "data": {
+                                      "url": {
+                                        "concat": [
+                                          "/api/moderation/reports/",
+                                          {
+                                            "get": "report.id"
+                                          }
+                                        ]
+                                      },
+                                      "method": "PATCH",
+                                      "target": "#moderation-reports",
+                                      "fields": {
+                                        "decision": "dismiss"
+                                      },
+                                      "label": {
+                                        "t": "moderation.keep_and_lock",
+                                        "values": {}
+                                      }
+                                    },
+                                    "when": {
+                                      "get": "report.open_count"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "when": {
+          "get": "items"
+        }
+      }
+    ]
+  }
+}

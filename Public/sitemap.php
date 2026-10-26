@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Sitemap;
+use \TinyCat\Site\Sitemap;
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -26,7 +26,7 @@ if ($section === 'index') {
     for ($part = 1; $part <= $pages; $part++):
 ?>
     <sitemap>
-        <loc><?= $xmlEscape(absolute_url(Sitemap::url($name, $part))) ?></loc>
+        <loc><?= $xmlEscape(\TinyCat\Site\Presentation::absolute_url(Sitemap::url($name, $part))) ?></loc>
     </sitemap>
 <?php endfor; endforeach; ?>
 </sitemapindex>
@@ -57,12 +57,12 @@ echo '<?xml version="1.0" encoding="UTF-8"?>';
     $timestamp = $lastModified !== '' ? strtotime($lastModified) : false;
 ?>
     <url>
-        <loc><?= $xmlEscape(absolute_url((string) $row['url'])) ?></loc>
+        <loc><?= $xmlEscape(\TinyCat\Site\Presentation::absolute_url((string) $row['url'])) ?></loc>
 <?php if ($timestamp !== false): ?>
         <lastmod><?= $xmlEscape(date('c', $timestamp)) ?></lastmod>
 <?php endif; ?>
 <?php if (($row['image_url'] ?? '') !== ''): ?>
-        <image:image><image:loc><?= $xmlEscape(absolute_url((string) $row['image_url'])) ?></image:loc></image:image>
+        <image:image><image:loc><?= $xmlEscape(\TinyCat\Site\Presentation::absolute_url((string) $row['image_url'])) ?></image:loc></image:image>
 <?php endif; ?>
     </url>
 <?php endforeach; ?>

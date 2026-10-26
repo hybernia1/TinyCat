@@ -10,8 +10,8 @@ header('Content-Type: text/plain; charset=UTF-8');
 header('Cache-Control: public, max-age=3600');
 header('X-Content-Type-Options: nosniff');
 
-echo '# AI and LLM context: ' . absolute_url('/llms.txt') . "\n";
-echo '# Recent public-post sample for LLMs: ' . absolute_url('/llms-full.txt') . "\n";
+echo '# AI and LLM context: ' . \TinyCat\Site\Presentation::absolute_url('/llms.txt') . "\n";
+echo '# Recent public-post sample for LLMs: ' . \TinyCat\Site\Presentation::absolute_url('/llms-full.txt') . "\n";
 echo "User-agent: *\n";
 echo "Disallow: /admin\n";
 echo "Disallow: /api\n";
@@ -22,4 +22,4 @@ echo "Disallow: /notifications\n";
 echo "Disallow: /recovery\n";
 echo "Disallow: /register\n";
 echo "Disallow: /search\n";
-echo "Sitemap: " . absolute_url('/sitemap.xml') . "\n";
+echo "Sitemap: " . \TinyCat\Site\Presentation::absolute_url('/sitemap.xml') . "\n";

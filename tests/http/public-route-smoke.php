@@ -108,11 +108,11 @@ $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 $_SERVER['SCRIPT_NAME'] = '/index.php';
 require __BOOTSTRAP__;
 try {
-    if (!app_db_ready()) {
+    if (!TinyCat\Database\Schema::app_db_ready()) {
         echo 'SKIP no database';
         return;
     }
-    $admin = one("SELECT id FROM users WHERE role = 'admin' AND status = 'active' ORDER BY id LIMIT 1");
+    $admin = TinyCat\Database\Connection::one("SELECT id FROM users WHERE role = 'admin' AND status = 'active' ORDER BY id LIMIT 1");
 } catch (Throwable) {
     echo 'SKIP no database';
     return;
@@ -124,11 +124,9 @@ if (!is_array($admin) || (int) ($admin['id'] ?? 0) < 1) {
 session_id('tinycatsmoke' . getmypid());
 session_start();
 $_SESSION['auth_user_id'] = (int) $admin['id'];
-if (!autoroute($uri)) {
-    throw new RuntimeException('Admin route was not resolved: ' . $uri);
-}
+require __ENTRY__;
 PHP;
-$adminScript = str_replace('__BOOTSTRAP__', $bootstrap, $adminScript);
+$adminScript = str_replace(['__BOOTSTRAP__', '__ENTRY__'], [$bootstrap, $entry], $adminScript);
 
 foreach ([
     '/admin',

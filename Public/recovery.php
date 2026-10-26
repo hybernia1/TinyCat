@@ -6,32 +6,33 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-if (is_post()) {
-    csrf_require();
-
-    if (!captcha_check('recovery')) {
-        captcha_refresh('recovery');
-        flash('error', t('auth.invalid_captcha'));
-        redirect('/recovery');
+if (\TinyCat\Http\Request::current()->isPost()) {
+    \TinyCat\Security\Csrf::requireToken();
+    if (!\TinyCat\Security\Captcha::check('recovery')) {
+        \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('auth.invalid_captcha'));
+        \TinyCat\Http\Web::redirect('/recovery');
     }
-
-    if ((string) post('action', '') === 'reset') {
-        tc_recovery_update_password();
-    } else {
-        tc_recovery_send_link();
+    if ((string) \TinyCat\Http\Web::post('action', '') === 'reset') {
+        $errors = \TinyCat\Users\Recovery::confirm(trim((string) \TinyCat\Http\Web::post('token', '')), (string) \TinyCat\Http\Web::post('password', ''), (string) \TinyCat\Http\Web::post('password_confirm', ''));
+        if ($errors !== []) { \TinyCat\Http\Session::flash('error', implode(' ', array_merge(...array_values($errors)))); \TinyCat\Http\Web::redirect('/recovery'); }
+        \TinyCat\Http\Session::flash('success', \TinyCat\Support\Localization::t('auth.recovery_done'));
+        \TinyCat\Http\Web::redirect('/login');
     }
+    \TinyCat\Users\Recovery::send((string) \TinyCat\Http\Web::post('email', ''));
+    \TinyCat\Http\Session::flash('success', \TinyCat\Support\Localization::t('auth.recovery_sent'));
+    \TinyCat\Http\Web::redirect('/recovery');
 }
 
-$recoveryToken = trim((string) get('token', ''));
+$recoveryToken = trim((string) \TinyCat\Http\Web::get('token', ''));
 
-layout('layout', [
-    'title' => t('auth.recovery_title'),
+\TinyCat\Support\View::layout('layout', [
+    'title' => \TinyCat\Support\Localization::t('auth.recovery_title'),
     'current' => '/recovery',
     'nav' => [],
     'meta' => [
-        'description' => t($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro'),
+        'description' => \TinyCat\Support\Localization::t($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro'),
         'url' => '/recovery',
-        'image' => site_meta_image_url(),
+        'image' => \TinyCat\Site\Presentation::site_meta_image_url(),
         'robots' => 'noindex,nofollow',
     ],
 ], static function () use ($recoveryToken): void {
@@ -39,102 +40,39 @@ layout('layout', [
     <section class="max-w-auth mx-auto">
         <article class="card">
             <div class="card-header">
-                <h1 class="text-lg m-0 cluster gap-2"><?= icon('key') ?> <?= et('auth.recovery_title') ?></h1>
+                <h1 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('key') ?> <?= \TinyCat\Support\Html::et('auth.recovery_title') ?></h1>
             </div>
             <div class="card-body stack">
-                <p class="text-muted mb-0"><?= et($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro') ?></p>
-                <form class="stack" method="post" action="/recovery<?= $recoveryToken !== '' ? '?token=' . e(rawurlencode($recoveryToken)) : '' ?>">
-                    <?= csrf_field() ?>
+                <p class="text-muted mb-0"><?= \TinyCat\Support\Html::et($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro') ?></p>
+                <form data-ajax-form data-ajax-action="<?= $recoveryToken !== '' ? '/api/users/password-resets/confirm' : '/api/users/password-resets' ?>" class="stack" method="post" action="/recovery<?= $recoveryToken !== '' ? '?token=' . \TinyCat\Support\Html::e(rawurlencode($recoveryToken)) : '' ?>">
+                    <?= \TinyCat\Security\Csrf::field() ?>
                     <?php if ($recoveryToken !== ''): ?>
                         <input type="hidden" name="action" value="reset">
-                        <input type="hidden" name="token" value="<?= e($recoveryToken) ?>">
+                        <input type="hidden" name="token" value="<?= \TinyCat\Support\Html::e($recoveryToken) ?>">
                     <?php endif; ?>
                     <label class="field">
-                        <span class="label"><?= et($recoveryToken !== '' ? 'common.new_password' : 'common.email') ?></span>
+                        <span class="label"><?= \TinyCat\Support\Html::et($recoveryToken !== '' ? 'common.new_password' : 'common.email') ?></span>
                         <?php if ($recoveryToken !== ''): ?>
-                            <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
+                            <input class="input" type="password" name="password" autocomplete="new-password" minlength="8" maxlength="<?= \TinyCat\Users\Login::auth_password_max_length() ?>" required>
                         <?php else: ?>
                             <input class="input" type="email" name="email" autocomplete="email" required>
                         <?php endif; ?>
                     </label>
                     <?php if ($recoveryToken !== ''): ?>
                         <label class="field">
-                            <span class="label"><?= et('common.password_confirm') ?></span>
-                            <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= auth_password_max_length() ?>" required>
+                            <span class="label"><?= \TinyCat\Support\Html::et('common.password_confirm') ?></span>
+                            <input class="input" type="password" name="password_confirm" autocomplete="new-password" minlength="8" maxlength="<?= \TinyCat\Users\Login::auth_password_max_length() ?>" required>
                         </label>
                     <?php endif; ?>
-                    <?= captcha_field('recovery') ?>
-                    <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('auth.recovery_submit') ?></span></button>
+                    <?= \TinyCat\Security\Captcha::field('recovery') ?>
+                    <button class="btn btn-primary" type="submit"><?= \TinyCat\Support\Html::icon('save') ?> <span><?= \TinyCat\Support\Html::et('auth.recovery_submit') ?></span></button>
                 </form>
                 <div class="cluster gap-2">
-                    <a class="btn btn-secondary btn-sm" href="/login"><?= icon('login') ?> <span><?= et('common.login') ?></span></a>
-                    <a class="btn btn-ghost btn-sm" href="/privacy"><?= icon('shield') ?> <span><?= et('privacy.title') ?></span></a>
+                    <a class="btn btn-secondary btn-sm" href="/login"><?= \TinyCat\Support\Html::icon('login') ?> <span><?= \TinyCat\Support\Html::et('common.login') ?></span></a>
+                    <a class="btn btn-ghost btn-sm" href="/privacy"><?= \TinyCat\Support\Html::icon('shield') ?> <span><?= \TinyCat\Support\Html::et('privacy.title') ?></span></a>
                 </div>
             </div>
         </article>
     </section>
     <?php
 });
-
-function tc_recovery_update_password(): void
-{
-    $token = trim((string) post('token', ''));
-    $password = (string) post('password', '');
-    $passwordConfirm = (string) post('password_confirm', '');
-    $user = one('SELECT u.* FROM password_reset_tokens t INNER JOIN users u ON u.id = t.user_id WHERE t.token_hash = ? AND t.used_at IS NULL AND t.expires_at > ? AND u.status = ? LIMIT 1', [hash('sha256', $token), date_db(), 'active']);
-    $errors = [];
-
-    if ($user === null) {
-        $errors[] = t('auth.recovery_invalid');
-    }
-
-    $errors = array_merge($errors, auth_password_validation_errors($password, $passwordConfirm));
-
-    if ($errors !== []) {
-        captcha_refresh('recovery');
-        flash('error', implode(' ', $errors));
-        redirect('/recovery');
-    }
-
-    $id = (int) ($user['id'] ?? 0);
-
-    $usedAt = date_db();
-    $consumed = auth_recovery_consume_token(
-        $id,
-        hash('sha256', $token),
-        auth_password($password),
-        $usedAt
-    );
-
-    if (!$consumed) {
-        $refreshedCaptcha = captcha_refresh('recovery');
-        flash('error', t('auth.recovery_invalid'));
-        redirect('/recovery');
-    }
-    captcha_refresh('recovery');
-
-    flash('success', t('auth.recovery_done'));
-    redirect('/login');
-}
-
-function tc_recovery_send_link(): void
-{
-    $email = user_email_normalize((string) post('email', ''));
-    if (user_email_valid($email)) {
-        $user = one('SELECT id, username FROM users WHERE email = ? AND status = ? LIMIT 1', [$email, 'active']);
-        if ($user !== null) {
-            $token = bin2hex(random_bytes(32));
-            auth_recovery_replace_token(
-                (int) $user['id'],
-                hash('sha256', $token),
-                date_db('+60 minutes')
-            );
-            email_template_send('password_reset', (int) $user['id'], [
-                'reset_url' => absolute_url('/recovery?token=' . rawurlencode($token)),
-            ]);
-        }
-    }
-    captcha_refresh('recovery');
-    flash('success', t('auth.recovery_sent'));
-    redirect('/recovery');
-}

@@ -12,18 +12,12 @@ if (PHP_VERSION_ID < 80400) {
 }
 
 require_once __DIR__ . '/autoload.php';
-require_once __DIR__ . '/Core.php';
-require_once __DIR__ . '/Captcha.php';
-require_once __DIR__ . '/Cache.php';
-require_once __DIR__ . '/Minifier.php';
-require_once __DIR__ . '/Avatar.php';
-require_once __DIR__ . '/StatusImage.php';
-require_once __DIR__ . '/SiteIdentity.php';
-require_once __DIR__ . '/StatusLinks.php';
-require_once __DIR__ . '/LinkMetadata.php';
-require_once __DIR__ . '/Notifications.php';
-require_once __DIR__ . '/UserRoles.php';
-require_once __DIR__ . '/functions.php';
 
-require_once __DIR__ . '/Bots.php';
-require_once __DIR__ . '/BotAdmin.php';
+TinyCat\Http\Router::debug((bool) TinyCat\Settings\Store::config('app.debug', false));
+
+// Built-in modules own their routes; HTTP receives only the user resolver.
+$moduleApi = new \TinyCat\Http\Api(static fn (): ?array => \TinyCat\Users\Authentication::auth());
+foreach (require __DIR__ . '/modules.php' as $module) {
+    $module::register($moduleApi);
+}
+unset($moduleApi, $module);

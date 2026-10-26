@@ -1,0 +1,152 @@
+<?php
+declare(strict_types=1);
+
+// Runs against the same isolated HTTP server and disposable database as api-contract.php.
+$pure = static function (mixed $value) use (&$pure, $assert): void {
+    if (!is_array($value)) { return; }
+    foreach ($value as $key => $child) {
+        $assert(!is_string($key) || preg_match('/(?:^|_)html(?:$|_)/i', $key) !== 1, 'Converted resources and errors never contain presentation fields.');
+        $pure($child);
+    }
+};
+[$status, $payload] = $request('GET', '/api/users/authentication?mode=register&view=html');
+$assert($status === 200 && $payload['data']['registration_enabled'] && isset($payload['data']['captcha']['site_key']), 'Authentication options are JSON configuration even when HTML is requested: ' . json_encode($payload));
+$pure($payload);
+[$status, $payload] = $request('POST', '/api/users/sessions', ['username' => 'member', 'password' => 'bad'], '', $csrf);
+$assert($status === 422 && isset($payload['error']['details']['errors']['username']) && !isset($payload['errors']), 'Login errors have one canonical field-error location.');
+$pure($payload);
+[$status, $payload] = $request('POST', '/api/users/sessions', ['username' => 'member@example.test', 'password' => 'Example-password-42'], '', $csrf);
+$assert($status === 200 && $payload['data']['user']['id'] === 2 && !isset($payload['data']['user']['password']), 'Email login preserves session authentication without exposing password hashes.');
+[$status, $payload] = $request('POST', '/api/users/registrations', ['username' => 'Žaneta.Test', 'password' => 'Example-password-43', 'password_confirm' => 'Example-password-43', 'platform_terms' => '1'], '', $csrf);
+$assert($status === 201 && $payload['data']['user']['username'] === 'Žaneta.Test' && $payload['data']['approved'], 'Registration accepts Unicode and mixed case and returns the created account.');
+$pure($payload);
+[$status, $payload] = $request('GET', '/api/users/2');
+$assert($status === 200 && $payload['data']['user']['username'] === 'member', 'Public profiles are readable without authentication.');
+foreach (['password', 'email', 'email_notifications', 'muted_reason', 'theme', 'locale'] as $private) {
+    $assert(!array_key_exists($private, $payload['data']['user']), 'Public profile excludes private field: ' . $private);
+}
+[$status, $payload] = $request('GET', '/api/users/1/management', null, 'user');
+$assert($status === 403, 'A member cannot read another account management resource.');
+[$status, $payload] = $request('PATCH', '/api/users/1', ['author_id' => 2, 'bio' => 'must not change'], 'user', $csrf);
+$assert($status === 403, 'A body ID cannot override the path target or its authorization.');
+[$status, $payload] = $request('PATCH', '/api/users/me', ['bio' => 'Literal <script>profile</script>', 'locale' => 'en', 'theme' => 'dark', 'email' => 'member@example.test'], 'user', $csrf);
+$assert($status === 200 && $payload['data']['user']['theme'] === 'dark' && !isset($payload['data']['message']), 'Profile changes return the updated private resource with the message only in the envelope.');
+$pure($payload);
+[$status, $payload] = $request('PUT', '/api/users/me/password', ['current_password' => 'incorrect', 'password' => 'New-password-44', 'password_confirm' => 'New-password-44'], 'user', $csrf);
+$assert($status === 422 && isset($payload['error']['details']['errors']['current_password']), 'Password changes still verify the current password.');
+[$status, $payload] = $request('PUT', '/api/users/1/followers/me', [], 'user', $csrf);
+$assert($status === 200 && $payload['data']['following'] && $payload['data']['followers_count'] === 1, 'PUT creates the follow relationship.');
+[$status, $payload] = $request('PUT', '/api/users/1/followers/me', ['author_id' => 3], 'user', $csrf);
+$assert($status === 200 && $payload['data']['following'] && $payload['data']['followers_count'] === 1, 'Repeating PUT is idempotent and the body cannot change the target.');
+[$status, $payload] = $request('GET', '/api/users/2/following?view=html', null, 'user');
+$assert($status === 200 && count($payload['data']['items']) === 1 && isset($payload['meta']['pagination']), 'Following lists return profile resources and pagination without fragments.');
+$pure($payload);
+[$status] = $request('DELETE', '/api/users/1/followers/me', [], 'user', $csrf);
+$assert($status === 200, 'DELETE removes the follow relationship.');
+[$status, $payload] = $request('DELETE', '/api/users/1/followers/me', [], 'user', $csrf);
+$assert($status === 200 && !$payload['data']['following'], 'Repeating DELETE keeps the unfollowed state.');
+
+[$status, $payload] = $request('GET', '/api/notifications?view=html', null, 'user');
+$assert($status === 200 && $payload['data']['unread_count'] >= 1 && $payload['data']['items'][0]['id'] === 1, 'Inbox reads are scoped to the current user and expose unread_count.');
+$pure($payload);
+[$status] = $request('DELETE', '/api/notifications/2', ['id' => 1], 'user', $csrf);
+$assert($status === 404, 'A member cannot delete another inbox item by manipulating body IDs.');
+[$status, $payload] = $request('PATCH', '/api/notifications/1', [], 'user', $csrf);
+$assert($status === 200 && $payload['data']['unread_count'] === 0, 'A read mutation updates the unread badge state.');
+[$status] = $request('PATCH', '/api/notifications', ['read' => true], 'user', $csrf);
+$assert($status === 200, 'Bulk read accepts an explicit requested state.');
+[$status] = $request('PATCH', '/api/notifications', [], 'user', $csrf);
+$assert($status === 422, 'Bulk read rejects an absent requested state.');
+
+[$status, $payload] = $request('GET', '/api/statuses?limit=1&view=html');
+$assert($status === 200 && count($payload['data']['items']) === 1 && $payload['meta']['pagination']['next_url'] !== '', 'The feed returns bounded resources with a next cursor.');
+$firstId = $payload['data']['items'][0]['id'];
+$pure($payload);
+[$status, $next] = $request('GET', $payload['meta']['pagination']['next_url']);
+$assert($status === 200 && $next['data']['items'][0]['id'] !== $firstId, 'Cursor pagination does not repeat the previous item.');
+[$status, $payload] = $request('GET', '/api/statuses/10?view=html', null, 'user');
+$assert($status === 200 && count($payload['data']['comments']) === 1 && $payload['data']['item']['body'] === 'Hello @2 #test <img onerror=alert(1)>', 'Status detail returns literal user text and comment resources.');
+$assert(in_array('mention', array_column($payload['data']['item']['segments'], 'type'), true), 'Stable stored mention IDs are returned as structured mention segments.');
+$pure($payload);
+[$status, $payload] = $request('PUT', '/api/statuses/10/likes/me', ['id' => 11], 'user', $csrf);
+$assert($status === 200 && $payload['data']['status']['id'] === 10 && $payload['data']['status']['likes_count'] === 1, 'Status reactions target the path resource.');
+[$status, $payload] = $request('PUT', '/api/statuses/10/likes/me', [], 'user', $csrf);
+$assert($status === 200 && $payload['data']['status']['liked'] && $payload['data']['status']['likes_count'] === 1, 'Repeated status PUT preserves one like.');
+[$status, $payload] = $request('DELETE', '/api/statuses/10/likes/me', [], 'user', $csrf);
+$assert($status === 200 && !$payload['data']['status']['liked'], 'DELETE requests the unliked state.');
+[$status, $payload] = $request('PUT', '/api/statuses/11/comments/10/likes/me', [], 'user', $csrf);
+$assert($status === 404, 'Nested comment IDs must belong to the status in the path.');
+[$status, $payload] = $request('POST', '/api/statuses/10/comments', ['comment' => 'JSON reply <b>literal</b>', 'parent_id' => 10], 'user', $csrf);
+$assert($status === 201 && $payload['data']['comment']['parent_id'] === 10 && !isset($payload['data']['comment']['html']), 'AJAX replies return a complete comment resource instead of rendered markup.');
+$commentId = $payload['data']['comment']['id'];
+$pure($payload);
+[$status, $payload] = $request('PATCH', '/api/statuses/10/comments/' . $commentId, ['comment' => 'Edited JSON reply @1'], 'user', $csrf);
+$assert($status === 200 && $payload['data']['updated_comment']['editable_body'] === 'Edited JSON reply @admin', 'Comment edits preserve stable mention IDs and return an editable resource.');
+$pure($payload);
+[$status, $payload] = $request('GET', '/api/statuses/10/comments/' . $commentId . '/revisions', null, 'user');
+$assert($status === 200 && count($payload['data']['items']) === 1 && $payload['data']['items'][0]['changes']['body']['from'] === 'JSON reply literal', 'Revision history returns structured before/after text without an HTML diff.');
+$pure($payload);
+[$status, $payload] = $request('PUT', '/api/statuses/10/comments/' . $commentId . '/likes/me', [], 'user', $csrf);
+$assert($status === 200 && $payload['data']['comment_like']['likes_count'] === 1, 'Comment likes use desired state.');
+[$status, $payload] = $request('PUT', '/api/statuses/10/comments/' . $commentId . '/likes/me', [], 'user', $csrf);
+$assert($status === 200 && $payload['data']['comment_like']['likes_count'] === 1, 'Repeated comment PUT cannot undo the reaction.');
+[$status, $payload] = $request('POST', '/api/statuses/11/comments', ['comment' => 'Wrong parent', 'parent_id' => 10], 'user', $csrf);
+$assert($status === 404, 'Reply parents are checked against the target status.');
+[$status, $payload] = $request('POST', '/api/statuses', ['body' => 'Created through JSON @1 #modular'], 'user', $csrf);
+$assert($status === 201 && isset($payload['data']['item']['segments']), 'Status creation returns the newly created resource.');
+$postId = $payload['data']['item']['id'];
+$pure($payload);
+[$status, $payload] = $request('PATCH', '/api/statuses/' . $postId, ['body' => 'Updated through JSON #modular'], 'user', $csrf);
+$assert($status === 200 && $payload['data']['item']['body'] === 'Updated through JSON #modular', 'Status edits return the updated resource.');
+$pure($payload);
+[$status] = $request('PATCH', '/api/statuses/10', ['body' => 'Unauthorized edit'], 'user', $csrf);
+$assert($status === 403, 'Members cannot edit another author status.');
+[$status, $payload] = $request('DELETE', '/api/statuses/' . $postId, [], 'user', $csrf);
+$assert($status === 200 && $payload['data']['deleted_status_id'] === $postId, 'Deleting a status returns its removed resource ID.');
+[$status] = $request('DELETE', '/api/statuses/10/comments/' . $commentId, [], 'user', $csrf);
+$assert($status === 200, 'Comment deletion keeps ownership checks and returns JSON.');
+foreach (['/api/auth-modal', '/api/auth/login', '/api/profile/update', '/api/admin/users', '/api/notifications-page', '/api/status-feed', '/api/status-modal', '/api/status/create'] as $retired) {
+    [$status] = $request('GET', $retired);
+    $assert($status === 404, 'Converted domains expose one canonical URL; retired endpoint: ' . $retired);
+}
+[$status, $payload] = $request('POST', '/api/users/registrations', [], '', $csrf + ['X-Test-Captcha' => '1']);
+$assert($status === 422 && $payload['error']['code'] === 'captcha_invalid' && $payload['error']['details']['captcha']['site_key'] === 'test_public_key', 'CAPTCHA errors contain only public widget configuration.');
+$assert(!str_contains(json_encode($payload), 'test_private_key'), 'CAPTCHA secrets never enter a response.');
+$pure($payload);
+[$status, $payload] = $request('POST', '/api/users/password-resets', ['email' => 'unknown@example.test'], '', $csrf);
+$assert($status === 201 && $payload['data']['accepted'], 'Recovery acknowledges an unknown account without disclosing account existence.');
+[$status, $payload] = $request('POST', '/api/users/password-resets/confirm', ['token' => 'missing', 'password' => 'New-password-45', 'password_confirm' => 'New-password-45'], '', $csrf);
+$assert($status === 422 && isset($payload['error']['details']['errors']['token']), 'Recovery confirmation validates the token through the canonical error contract.');
+$seed = new PDO('sqlite:' . $databasePath);
+$seed->prepare('INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (2, ?, ?)')->execute([hash('sha256', 'fixture-recovery-token'), '2030-01-01 00:00:00']);
+[$status, $payload] = $request('POST', '/api/users/password-resets/confirm', ['token' => 'fixture-recovery-token', 'password' => 'New-password-45', 'password_confirm' => 'New-password-45'], '', $csrf);
+$assert($status === 200 && $payload['data']['password_changed'], 'Recovery consumes the token and updates the password atomically.');
+[$status] = $request('POST', '/api/users/password-resets/confirm', ['token' => 'fixture-recovery-token', 'password' => 'Other-password-46', 'password_confirm' => 'Other-password-46'], '', $csrf);
+$assert($status === 422, 'A consumed recovery token cannot be reused through the API.');
+$seed->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (1000, 2, 'Scheduled private post', '2030-01-01 12:00:00')");
+[$status] = $request('GET', '/api/statuses/1000');
+$assert($status === 404, 'Scheduled statuses remain hidden from anonymous API readers.');
+[$status, $payload] = $request('GET', '/api/statuses/1000', null, 'user');
+$assert($status === 200 && $payload['data']['item']['scheduled'], 'The author can read the scheduled resource.');
+$insert = $seed->prepare('INSERT INTO notifications (user_id, actor_id, type, notification_key, created_at, updated_at) VALUES (2, 1, ?, ?, ?, ?)');
+foreach (range(1, 45) as $number) { $insert->execute(['follow', 'page-fixture-' . $number, '2026-02-01 00:00:00', '2026-02-01 00:00:00']); }
+[$status, $payload] = $request('GET', '/api/notifications', null, 'user');
+$firstIds = array_column($payload['data']['items'], 'id');
+$assert($status === 200 && count($firstIds) === 40 && $payload['meta']['pagination']['next_url'] !== '', 'Inbox pagination preserves its bounded first page.');
+[$status, $payload] = $request('GET', $payload['meta']['pagination']['next_url'], null, 'user');
+$assert($status === 200 && array_intersect($firstIds, array_column($payload['data']['items'], 'id')) === [], 'Inbox cursors with equal timestamps never repeat items.');
+[$status, $payload] = $request('GET', '/api/users', null, 'admin');
+$protected = array_values(array_filter($payload['data']['items'], static fn (array $user): bool => $user['id'] === 1))[0];
+$assert($status === 200 && $protected['protected'] && !$protected['can_delete'], 'User administration resources expose protected-account capabilities.');
+[$status, $payload] = $request('POST', '/api/users', ['username' => 'Čistý.Api', 'password' => 'Managed-password-47', 'role' => 'user', 'status' => 'active'], 'admin', $csrf);
+$assert($status === 201 && $payload['data']['item']['username'] === 'Čistý.Api', 'Administrator creation uses the same relaxed username rules.');
+$managedId = $payload['data']['item']['id'];
+[$status, $payload] = $request('PATCH', '/api/users/' . $managedId, ['scope' => 'administration', 'id' => 1, 'role' => 'user', 'status' => 'active', 'bio' => 'Managed profile'], 'admin', $csrf);
+$assert($status === 200 && $payload['data']['item']['id'] === $managedId && $payload['data']['item']['bio'] === 'Managed profile', 'Administrator updates target the path ID and return the changed resource.');
+[$status] = $request('DELETE', '/api/users/1', [], 'admin', $csrf);
+$assert($status === 409, 'The protected administrator cannot be deleted through the new API.');
+$assert(!is_file($root . '/uploads/avatars/' . $managedId . '.webp'), 'Disposable account cleanup must never target a workspace avatar.');
+[$status] = $request('DELETE', '/api/users/' . $managedId, [], 'admin', $csrf);
+$assert($status === 200, 'Administrator deletion retains account cleanup.');
+unset($insert);
+$seed = null;

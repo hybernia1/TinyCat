@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/cache-isolation.php';
+
 define('TINYCAT', true);
 require_once dirname(__DIR__) . '/App/bootstrap.php';
 
@@ -22,7 +24,7 @@ $cases = [
 ];
 
 foreach ($cases as [$header, $available, $expected]) {
-    if (language_detect($header, $available) !== $expected) {
+    if (\TinyCat\Support\Languages::language_detect($header, $available) !== $expected) {
         fwrite(STDERR, 'FAIL language detection: ' . $header . "\n");
         exit(1);
     }

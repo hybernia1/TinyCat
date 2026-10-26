@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use TinyCat\Support\Html;
+
 if (!defined('TINYCAT')) {
     http_response_code(403);
     exit('Forbidden');
@@ -19,13 +21,13 @@ if (!(bool) ($view['visible'] ?? false)) {
     return '';
 }
 ?>
-<nav class="pagination" aria-label="<?= et('common.pagination') ?>">
-    <div class="pagination-summary"><?= et('common.pagination_summary', ['from' => (string) $from, 'to' => (string) $to, 'total' => (string) $total]) ?></div>
+<nav class="pagination" aria-label="<?= Html::et('common.pagination') ?>">
+    <div class="pagination-summary"><?= Html::et('common.pagination_summary', ['from' => (string) $from, 'to' => (string) $to, 'total' => (string) $total]) ?></div>
     <div class="pagination-list">
         <?php if ($previousPage === null): ?>
-            <span class="pagination-link pagination-prev" aria-disabled="true"><?= et('common.previous') ?></span>
+            <span class="pagination-link pagination-prev" aria-disabled="true"><?= Html::et('common.previous') ?></span>
         <?php else: ?>
-            <a class="pagination-link pagination-prev" href="<?= e((string) $previousPage['url']) ?>" data-ajax data-ajax-target="<?= e($target) ?>" data-history="<?= e((string) $previousPage['history_url']) ?>"><?= et('common.previous') ?></a>
+            <a class="pagination-link pagination-prev" href="<?= Html::e((string) $previousPage['url']) ?>" data-ajax data-ajax-target="<?= Html::e($target) ?>" data-history="<?= Html::e((string) $previousPage['history_url']) ?>"><?= Html::et('common.previous') ?></a>
         <?php endif; ?>
 
         <?php foreach ($pages as $pageData): ?>
@@ -34,16 +36,16 @@ if (!(bool) ($view['visible'] ?? false)) {
                 <span class="pagination-ellipsis" aria-hidden="true">...</span>
             <?php endif; ?>
             <?php if ((bool) ($pageData['current'] ?? false)): ?>
-                <span class="pagination-link is-active" aria-current="page"><?= e($pageNumber) ?></span>
+                <span class="pagination-link is-active" aria-current="page"><?= Html::e($pageNumber) ?></span>
             <?php else: ?>
-                <a class="pagination-link" href="<?= e((string) ($pageData['url'] ?? '')) ?>" data-ajax data-ajax-target="<?= e($target) ?>" data-history="<?= e((string) ($pageData['history_url'] ?? '')) ?>"><?= e($pageNumber) ?></a>
+                <a class="pagination-link" href="<?= Html::e((string) ($pageData['url'] ?? '')) ?>" data-ajax data-ajax-target="<?= Html::e($target) ?>" data-history="<?= Html::e((string) ($pageData['history_url'] ?? '')) ?>"><?= Html::e($pageNumber) ?></a>
             <?php endif; ?>
         <?php endforeach; ?>
 
         <?php if ($nextPage === null): ?>
-            <span class="pagination-link pagination-next" aria-disabled="true"><?= et('common.next') ?></span>
+            <span class="pagination-link pagination-next" aria-disabled="true"><?= Html::et('common.next') ?></span>
         <?php else: ?>
-            <a class="pagination-link pagination-next" href="<?= e((string) $nextPage['url']) ?>" data-ajax data-ajax-target="<?= e($target) ?>" data-history="<?= e((string) $nextPage['history_url']) ?>"><?= et('common.next') ?></a>
+            <a class="pagination-link pagination-next" href="<?= Html::e((string) $nextPage['url']) ?>" data-ajax data-ajax-target="<?= Html::e($target) ?>" data-history="<?= Html::e((string) $nextPage['history_url']) ?>"><?= Html::et('common.next') ?></a>
         <?php endif; ?>
     </div>
 </nav>

@@ -6,17 +6,25 @@ if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
+require_once __DIR__ . '/cache-isolation.php';
+
 $root = dirname(__DIR__);
 $tests = [
-    'Monolith boundaries' => 'tests/quality/monolith-boundaries.php',
+    'Module infrastructure boundaries' => 'tests/quality/module-boundaries.php',
+    'Shared infrastructure' => 'tests/infrastructure/run.php',
+    'JSON AJAX client' => 'tests/frontend/run.php',
     'Monolith API inventory' => 'tests/quality/monolith-inventory.php',
     'Write-path integrity' => 'tests/write-path-integrity.php',
     'Runtime URL and raster hardening' => 'tests/runtime-hardening.php',
     'Browser language detection' => 'tests/language-detection.php',
+    'Translation catalogs' => 'tests/presentation/localization.php',
+    'Relaxed usernames' => 'tests/usernames.php',
     'Render-only partials' => 'tests/quality/render-only-partials.php',
     'HTML sanitizer' => 'tests/html-sanitizer.php',
     'Presentation templates' => 'tests/presentation/view-templates.php',
+    'Module presentation components' => 'tests/presentation/components.php',
     'Public route smoke' => 'tests/http/public-route-smoke.php',
+    'API HTTP contract' => 'tests/http/api-contract.php',
     'Performance query baseline' => 'tests/performance-baseline.php',
     'Hot-read query budgets' => 'tests/hot-read-query-budgets.php',
     'Cache' => 'tests/cache/run.php',

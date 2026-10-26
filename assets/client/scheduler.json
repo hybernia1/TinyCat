@@ -1,0 +1,14 @@
+[
+  {
+    "routes": [
+      "/admin/cron"
+    ],
+    "components": [],
+    "scripts": [
+      "js/modules/scheduler.js"
+    ],
+    "translation_sources": [
+      "assets/js/modules/scheduler.js"
+    ]
+  }
+]

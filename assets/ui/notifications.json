@@ -1,0 +1,367 @@
+{
+  "notifications/copy": {
+    "tag": "span",
+    "attrs": {
+      "class": {
+        "if": [
+          {
+            "get": "preview"
+          },
+          "notification-popover-copy",
+          "notification-copy"
+        ]
+      }
+    },
+    "children": [
+      {
+        "tag": "strong",
+        "attrs": {},
+        "children": [
+          {
+            "get": "item.message"
+          }
+        ]
+      },
+      {
+        "tag": "span",
+        "attrs": {},
+        "children": [
+          {
+            "get": "item.excerpt"
+          }
+        ],
+        "when": {
+          "get": "item.excerpt"
+        }
+      },
+      {
+        "tag": "time",
+        "attrs": {
+          "datetime": {
+            "get": "item.created_at"
+          }
+        },
+        "children": [
+          {
+            "get": "item.created_label"
+          }
+        ],
+        "when": {
+          "get": "item.created_at"
+        }
+      }
+    ]
+  },
+  "notifications/action": {
+    "tag": "form",
+    "attrs": {
+      "method": "post",
+      "action": {
+        "concat": [
+          "/api/notifications/",
+          {
+            "get": "item.id"
+          }
+        ]
+      },
+      "data-api-method": {
+        "get": "method"
+      },
+      "data-ajax-form": "",
+      "data-ajax-target": "#notifications-view"
+    },
+    "children": [
+      {
+        "csrf": true
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "id",
+          "value": {
+            "get": "item.id"
+          }
+        },
+        "children": []
+      },
+      {
+        "tag": "button",
+        "attrs": {
+          "class": {
+            "concat": [
+              "btn btn-ghost btn-icon btn-sm",
+              {
+                "if": [
+                  {
+                    "eq": [
+                      {
+                        "get": "method"
+                      },
+                      "DELETE"
+                    ]
+                  },
+                  " text-danger",
+                  ""
+                ]
+              }
+            ]
+          },
+          "type": "submit",
+          "aria-label": {
+            "if": [
+              {
+                "eq": [
+                  {
+                    "get": "method"
+                  },
+                  "DELETE"
+                ]
+              },
+              {
+                "t": "notifications.delete",
+                "values": {}
+              },
+              {
+                "t": "notifications.mark_read",
+                "values": {}
+              }
+            ]
+          }
+        },
+        "children": [
+          {
+            "icon": {
+              "if": [
+                {
+                  "eq": [
+                    {
+                      "get": "method"
+                    },
+                    "DELETE"
+                  ]
+                },
+                "trash",
+                "check"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "notifications/item": {
+    "tag": "article",
+    "attrs": {
+      "class": {
+        "concat": [
+          "notification-item",
+          {
+            "if": [
+              {
+                "get": "item.unread"
+              },
+              " is-unread",
+              ""
+            ]
+          }
+        ]
+      },
+      "data-notification-id": {
+        "get": "item.id"
+      }
+    },
+    "children": [
+      {
+        "tag": "a",
+        "attrs": {
+          "class": "notification-main",
+          "href": {
+            "get": "item.url"
+          }
+        },
+        "children": [
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "notification-avatar"
+            },
+            "children": [
+              {
+                "component": "users/avatar-content",
+                "data": {
+                  "user": {
+                    "get": "item.actor"
+                  },
+                  "alt": {
+                    "get": "item.actor.username"
+                  },
+                  "fallback_icon": {
+                    "get": "item.icon"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "component": "notifications/copy",
+            "data": {
+              "item": {
+                "get": "item"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "notification-actions"
+        },
+        "children": [
+          {
+            "component": "notifications/action",
+            "data": {
+              "item": {
+                "get": "item"
+              },
+              "method": "PATCH"
+            },
+            "when": {
+              "get": "item.unread"
+            }
+          },
+          {
+            "component": "notifications/action",
+            "data": {
+              "item": {
+                "get": "item"
+              },
+              "method": "DELETE"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "notifications/preview-item": {
+    "tag": "a",
+    "attrs": {
+      "class": {
+        "concat": [
+          "notification-popover-item",
+          {
+            "if": [
+              {
+                "get": "item.unread"
+              },
+              " is-unread",
+              ""
+            ]
+          }
+        ]
+      },
+      "data-notification-id": {
+        "get": "item.id"
+      },
+      "href": {
+        "get": "item.url"
+      }
+    },
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "notification-popover-avatar"
+        },
+        "children": [
+          {
+            "component": "users/avatar-content",
+            "data": {
+              "user": {
+                "get": "item.actor"
+              },
+              "alt": {
+                "get": "item.actor.username"
+              },
+              "fallback_icon": {
+                "get": "item.icon"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "component": "notifications/copy",
+        "data": {
+          "item": {
+            "get": "item"
+          },
+          "preview": true
+        }
+      }
+    ]
+  },
+  "notifications/items": [
+    {
+      "tag": "div",
+      "attrs": {
+        "class": {
+          "if": [
+            {
+              "get": "preview"
+            },
+            "notification-popover-empty",
+            "notification-empty"
+          ]
+        }
+      },
+      "children": [
+        {
+          "icon": "bell"
+        },
+        {
+          "t": "notifications.empty",
+          "values": {}
+        }
+      ],
+      "when": {
+        "not": {
+          "get": "items"
+        }
+      }
+    },
+    {
+      "each": {
+        "get": "items"
+      },
+      "as": "item",
+      "children": [
+        {
+          "component": "notifications/preview-item",
+          "data": {
+            "item": {
+              "get": "item"
+            }
+          },
+          "when": {
+            "get": "preview"
+          }
+        },
+        {
+          "component": "notifications/item",
+          "data": {
+            "item": {
+              "get": "item"
+            }
+          },
+          "when": {
+            "not": {
+              "get": "preview"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

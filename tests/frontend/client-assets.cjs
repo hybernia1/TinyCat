@@ -1,0 +1,42 @@
+"use strict";
+const assert = require("node:assert/strict");
+const path = require("node:path");
+const vm = require("node:vm");
+const { execFileSync } = require("node:child_process");
+const fixture = path.resolve(__dirname, "../presentation/client-assets-fixture.php");
+let checks = 0;
+function check(value, message) { checks++; assert.ok(value, message); }
+function load(route, locale = "en") {
+  const bundle = JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || "php", [fixture, route, locale], { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }));
+  const document = { readyState: "loading", addEventListener() {}, querySelector() { return null; }, getElementById() { throw new Error("Catalogs must not be read from DOM"); } };
+  const window = { TinyCat: {}, location: new URL("https://tinycat.test" + route), addEventListener() {} };
+  const context = vm.createContext({ window, document, URL, URLSearchParams, console, Set, Map });
+  for (const asset of bundle.assets) vm.runInContext(asset.source, context, { filename: asset.url });
+  check(window.TinyCat.i18n.locale() === locale, route + " boots the requested locale with external assets in delivery order");
+  return { ...bundle, T: window.TinyCat };
+}
+const publicPage = load("/");
+check(publicPage.T.status && publicPage.T.users && !publicPage.T.bots && !publicPage.T.moderation, "Public pages load their own feature scripts");
+check(!publicPage.definitions.includes("users/admin-fields") && !publicPage.definitions.includes("bots/sources"), "Public bundles exclude administration components");
+const users = load("/admin/users");
+check(users.T.users && !users.T.status && !users.T.bots, "User administration boots independently");
+check(users.definitions.includes("users/admin-fields"), "User administration receives its form definitions");
+const bots = load("/admin/bots/accounts");
+check(bots.T.bots && !bots.T.users && !bots.T.status, "Bots boot independently");
+check(bots.definitions.includes("users/avatar"), "Component dependencies cross module boundaries without loading unrelated scripts");
+check(load("/admin/moderation/reports").T.moderation, "Moderation loads its module");
+check(load("/admin/cron").T.scheduler, "Scheduler loads its module");
+check(!load("/admin/settings").T.users, "Settings omit unrelated modules");
+check(!load("/install").T.status, "Installer boots without public modules");
+const cs = load("/", "cs");
+const asset = (page, name) => page.assets.find(item => item.url.includes("/client-" + name + ".") || item.url.includes("/client-" + name + "-")).url;
+check(asset(publicPage, "components") === asset(cs, "components"), "Component content hashes are independent of language");
+check(asset(publicPage, "i18n") !== asset(cs, "i18n"), "Translation URLs vary with language content");
+check(asset(publicPage, "components") === asset(load("/"), "components"), "Asset hashes are deterministic");
+const i18n = publicPage.T.i18n;
+check(i18n.format("{a} {b} :count :counter", { a: "{b}", b: "$&\\", count: 2, counter: 3 }) === "{b} $&\\ 2 3", "Interpolation is single-pass, longest-token first, with literal replacement values");
+check(i18n.format("{yes}/{no}/{nil}", { yes: true, no: false, nil: null }) === "1//", "Scalar interpolation agrees with PHP");
+check(i18n.t("missing.translation") === "missing.translation", "Unknown translations retain their key");
+i18n.register("test", { "test.label": "Test" });
+check(!i18n.has("common.close") && i18n.t("test.label") === "Test", "Changing locales clears stale messages");
+console.log("PASS scoped external client assets and translation runtime (" + checks + " checks)");

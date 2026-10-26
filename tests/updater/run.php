@@ -1,7 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Update\Manager;
+require_once __DIR__ . '/../cache-isolation.php';
+
+use \TinyCat\Updates\Manager;
 
 define('TINYCAT', true);
 require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
@@ -59,7 +61,7 @@ $test('managed update paths accept runtime files', static function () use ($invo
 });
 
 $test('managed update paths reject protected and traversal targets', static function () use ($invoke, $expectFailure): void {
-    foreach (['Extensions/Bots/extension.json', 'config.php', 'storage/cache.php', 'uploads/avatar.php', '../index.php', 'App//Core.php', '/App/Core.php'] as $path) {
+    foreach (['Extensions/Bots/extension.json', 'config.php', 'storage/cache.php', 'uploads/avatar.php', '../index.php', 'App//Core.php', '/App/Support/Version.php'] as $path) {
         $expectFailure(static fn (): mixed => $invoke('managedPath', $path));
     }
 });
@@ -72,19 +74,19 @@ $test('manifest rejects case collisions and write-delete overlap', static functi
         'package' => 'tinycat-1.0.5.zip',
         'sha256' => str_repeat('a', 64),
         'size' => 1024,
-        'files' => ['App/Core.php' => str_repeat('b', 64)],
+        'files' => ['App/Support/Version.php' => str_repeat('b', 64)],
         'delete' => [],
         'migrations' => [],
     ];
     $collision = $base;
-    $collision['files']['App/core.php'] = str_repeat('c', 64);
+    $collision['files']['App/Support/version.php'] = str_repeat('c', 64);
     $expectFailure(static fn (): mixed => $invoke('validateManifest', $collision));
     $overlap = $base;
-    $overlap['delete'] = ['App/Core.php'];
+    $overlap['delete'] = ['App/Support/Version.php'];
     $expectFailure(static fn (): mixed => $invoke('validateManifest', $overlap));
 
     $fileDirectoryCollision = $base;
-    $fileDirectoryCollision['files']['App/Core.php/bootstrap.php'] = str_repeat('d', 64);
+    $fileDirectoryCollision['files']['App/Support/Version.php/bootstrap.php'] = str_repeat('d', 64);
     $expectFailure(static fn (): mixed => $invoke('validateManifest', $fileDirectoryCollision));
 
     $deleteCollision = $base;
@@ -93,7 +95,7 @@ $test('manifest rejects case collisions and write-delete overlap', static functi
 });
 
 $test('file backups exclude unchanged files from a complete release package', static function () use ($invoke, $expect): void {
-    $source = base_path('App/Core.php');
+    $source = \TinyCat\Support\Paths::basePath('App/Support/Version.php');
     $sourceHash = hash_file('sha256', $source);
 
     if (!is_string($sourceHash)) {
@@ -101,7 +103,7 @@ $test('file backups exclude unchanged files from a complete release package', st
     }
 
     $backup = $invoke('createBackup', [
-        'files' => ['App/Core.php' => $sourceHash],
+        'files' => ['App/Support/Version.php' => $sourceHash],
         'delete' => [],
         'migrations' => [],
     ], '9.9.9-test', false);
@@ -111,7 +113,7 @@ $test('file backups exclude unchanged files from a complete release package', st
         $expect(is_array($metadata));
         $expect(($metadata['files'] ?? null) === []);
         $expect(($metadata['database_backup_required'] ?? true) === false);
-        $expect(!is_file($backup . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'Core.php'));
+        $expect(!is_file($backup . DIRECTORY_SEPARATOR . 'files' . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'Version.php'));
     } finally {
         $invoke('removeDirectory', $backup);
     }
@@ -132,7 +134,7 @@ $test('maintenance state is explicit and reversible', static function () use ($i
 });
 
 $test('Phar ZIP package extraction verifies every file hash', static function () use ($invoke, $expect): void {
-    $root = base_path('storage/updater-test-' . bin2hex(random_bytes(5)));
+    $root = \TinyCat\Support\Paths::basePath('storage/updater-test-' . bin2hex(random_bytes(5)));
     $package = $root . DIRECTORY_SEPARATOR . 'package.zip';
     $stage = $root . DIRECTORY_SEPARATOR . 'stage';
     mkdir($root, 0775, true);
@@ -161,7 +163,7 @@ $test('Phar ZIP package extraction verifies every file hash', static function ()
     }
 });
 
-$keyFile = base_path('storage/update-signing.key');
+$keyFile = \TinyCat\Support\Paths::basePath('storage/update-signing.key');
 
 if (is_file($keyFile)) {
     $test('release signature accepts authentic data and rejects tampering', static function () use ($invoke, $expectFailure, $keyFile): void {
@@ -187,60 +189,60 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        Core::setDb($database);
+        \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
         $checksum = str_repeat('a', 64);
 
-        $expect(!\TinyCat\Update\MigrationRegistry::hasPending([]));
-        $expect(\TinyCat\Update\MigrationRegistry::hasPending(['test_001' => $checksum]));
+        $expect(!\TinyCat\Updates\MigrationRegistry::hasPending([]));
+        $expect(\TinyCat\Updates\MigrationRegistry::hasPending(['test_001' => $checksum]));
 
-        \TinyCat\Update\MigrationRegistry::ensure();
-        insert('schema_migrations', [
+        \TinyCat\Updates\MigrationRegistry::ensure();
+        \TinyCat\Database\Connection::insert('schema_migrations', [
             'migration' => 'test_001',
             'version' => '1.0.5',
             'checksum' => $checksum,
-            'applied_at' => date_db(),
+            'applied_at' => \TinyCat\Support\Dates::dateDb(),
         ]);
-        $expect(!\TinyCat\Update\MigrationRegistry::hasPending(['test_001' => $checksum]));
-        $expect(\TinyCat\Update\MigrationRegistry::hasPending(['test_001' => str_repeat('b', 64)]));
+        $expect(!\TinyCat\Updates\MigrationRegistry::hasPending(['test_001' => $checksum]));
+        $expect(\TinyCat\Updates\MigrationRegistry::hasPending(['test_001' => str_repeat('b', 64)]));
     });
 
     $test('migration registry stores version and checksum', static function () use ($expect): void {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        Core::setDb($database);
-        \TinyCat\Update\MigrationRegistry::ensure();
-        insert('schema_migrations', [
+        \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+        \TinyCat\Updates\MigrationRegistry::ensure();
+        \TinyCat\Database\Connection::insert('schema_migrations', [
             'migration' => 'test_001',
             'version' => '1.0.5',
             'checksum' => str_repeat('a', 64),
-            'applied_at' => date_db(),
+            'applied_at' => \TinyCat\Support\Dates::dateDb(),
         ]);
-        $expect((int) val('SELECT COUNT(*) FROM schema_migrations') === 1);
+        $expect((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM schema_migrations') === 1);
     });
 
     $test('outdated migration registry is rejected by the major baseline', static function () use ($expectFailure): void {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        Core::setDb($database);
-        run(
+        \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+        \TinyCat\Database\Connection::exec(
             'CREATE TABLE schema_migrations (
                 version VARCHAR(80) NOT NULL,
                 applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (version)
             )'
         );
-        insert('schema_migrations', ['version' => '20260731_legacy']);
-        $expectFailure(static fn (): mixed => \TinyCat\Update\MigrationRegistry::ensure());
+        \TinyCat\Database\Connection::insert('schema_migrations', ['version' => '20260731_legacy']);
+        $expectFailure(static fn (): mixed => \TinyCat\Updates\MigrationRegistry::ensure());
     });
 
     $test('malformed migration registry is not mistaken for the current schema', static function () use ($expectFailure): void {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        Core::setDb($database);
-        run(
+        \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+        \TinyCat\Database\Connection::exec(
             'CREATE TABLE schema_migrations (
                 migration VARCHAR(190) NOT NULL,
                 version VARCHAR(32) NOT NULL,
@@ -249,7 +251,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
                 PRIMARY KEY (version)
             )'
         );
-        $expectFailure(static fn (): mixed => \TinyCat\Update\MigrationRegistry::ensure());
+        $expectFailure(static fn (): mixed => \TinyCat\Updates\MigrationRegistry::ensure());
     });
 } else {
     $skipped++;

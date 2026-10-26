@@ -1,0 +1,14 @@
+<?php
+declare(strict_types=1);
+namespace TinyCat\Search;
+
+final class Module implements \TinyCat\Module
+{
+    public static function register(\TinyCat\Http\Api $api): void
+    {
+        Api::register($api);
+        \TinyCat\Http\Router::route(['GET', 'POST'], '/search', static function (): void {
+            require \TinyCat\Support\Paths::publicPath('search.php');
+        });
+    }
+}

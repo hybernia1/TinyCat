@@ -1,0 +1,17 @@
+[
+  {
+    "routes": [
+      "*"
+    ],
+    "components": [
+      "ui/modal",
+      "ui/field",
+      "ui/select",
+      "ui/captcha"
+    ],
+    "translation_sources": [
+      "assets/js/core/ui.js",
+      "assets/js/tinycat.js"
+    ]
+  }
+]

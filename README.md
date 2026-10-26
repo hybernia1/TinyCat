@@ -4,7 +4,9 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **2.1.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `Core::VERSION`.
+Current release: **3.0.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+
+Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
 ## Features
 
@@ -105,6 +107,8 @@ Bots are included in TinyCat. Create passwordless accounts under **Admin → Bot
 
 TinyCat 2.1 removes custom pages and the extension system, including the store and extension APIs. Existing Bots accounts, sources, posts and import history are adopted in place by the core update migration. Custom pages have no conversion migration. Legacy files under `Extensions/` are never loaded and remain blocked from web access; no extension installation or activation is required.
 
+The 3.0.0 update removes the remaining extension settings and extension migration metadata without changing bot data. API routes now share one explicit route table, access and CSRF checks, and JSON response handling. See [`docs/api.md`](docs/api.md) for the API contract.
+
 ## Scheduled tasks
 
 The scheduler provides the built-in `feeds` and `cleanup` tasks.
@@ -157,6 +161,9 @@ safety limits, and commands.
 Production does not use Composer or load `vendor/`. Composer installs only the
 development analyzer used by the local and CI preflight:
 
+Development checks also require Node.js 24 for the JSON AJAX client tests.
+No Node.js runtime or npm dependency is required on production servers.
+
 ```bash
 composer install
 composer preflight
@@ -166,7 +173,8 @@ The preflight validates Composer metadata and advisories, deterministic source
 style, PHP 8.4 syntax, PHPStan level 8, repository secrets and managed update
 paths. It then runs the monolith boundary, HTML, view, route, archived query,
 cache, minifier, bots, updater, cron, importer, signed artifact, rollback
-and restart-safe MySQL installer suites.
+and restart-safe MySQL installer suites. Module boundaries and the endpoint/function
+migration map are documented in `docs/development/modular-api-inventory.md`.
 
 PHPStan covers all production PHP against the frozen 2.0.25 legacy baseline.
 New findings fail the build; the baseline must not grow to make a change pass.
@@ -174,14 +182,14 @@ Tests and development tools are excluded from signed production packages.
 
 ## Project layout
 
-- `index.php` is the HTTP front controller and route registry.
+- `index.php` is the HTTP front controller; built-in modules register their own routes.
 - `scheduled-tasks.php` runs bot imports and routine data cleanup from CLI or an authenticated HTTP request.
 - `App/bootstrap.php` initializes the runtime and the small `TinyCat\` PSR-4 autoloader.
-- `App/Bots.php` and `App/BotAdmin.php` own feed imports and bot administration.
-- `App/PackageManager.php` contains signed application updates and the migration registry.
-- The remaining files in `App/` are standalone runtime and domain services.
+- `App/Bots/` owns feed imports and bot administration.
+- `App/Updates/` contains signed application updates and the migration registry.
+- Other `App/` directories contain domain modules and shared infrastructure.
 - `Public/` contains pages, layouts, modals, reusable view parts, and the installer.
-- `assets/` contains the source CSS, JavaScript, and SVG icon sprite.
+- `assets/` contains source CSS, JavaScript, the SVG icon sprite, shared UI definitions and module-owned client manifests.
 - `lang/<locale>/` contains each language package: `app.json` for the interface and optional `emails.json` for email templates.
 - `storage/` contains private runtime state and generated asset caches.
 - `uploads/` contains user and site media.

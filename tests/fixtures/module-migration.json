@@ -1,0 +1,3682 @@
+{
+  "version": 1,
+  "phase": "stages-1-through-6-complete",
+  "routes": [
+    {
+      "current_method": "GET",
+      "current_path": "/api/search",
+      "current_handler": "search",
+      "access": "public",
+      "success_status": 200,
+      "owner": "Search",
+      "target": "GET /api/search",
+      "input": "q, type, limit",
+      "resource": "items, groups",
+      "presentation_dependency": false,
+      "direct_ui_references": [
+        {
+          "file": "Public/layout.php",
+          "line": 321
+        },
+        {
+          "file": "assets/js/tinycat.js",
+          "line": 3386
+        },
+        {
+          "file": "assets/js/tinycat.js",
+          "line": 3511
+        }
+      ],
+      "ui_areas": [
+        "Public/search.php",
+        "Public/parts/search",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/status-suggest",
+      "current_handler": "statusSuggest",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Search",
+      "target": "GET /api/search/suggestions",
+      "input": "q, type, limit",
+      "resource": "users, tags",
+      "presentation_dependency": false,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/status/comment-field.php",
+          "line": 16
+        },
+        {
+          "file": "Public/parts/status/field.php",
+          "line": 13
+        }
+      ],
+      "ui_areas": [
+        "Public/search.php",
+        "Public/parts/search",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/search-captcha",
+      "current_handler": "searchCaptcha",
+      "access": "public",
+      "success_status": 200,
+      "owner": "Security",
+      "target": "POST /api/security/challenges/search",
+      "input": "captcha response",
+      "resource": "verified, challenge configuration",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "assets/js/tinycat.js",
+          "line": 3386
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/search.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/auth-modal",
+      "current_handler": "authModal",
+      "access": "public",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "GET /api/users/authentication",
+      "input": "mode, next",
+      "resource": "registration policy, public CAPTCHA configuration",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/auth/login",
+      "current_handler": "login",
+      "access": "public",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "POST /api/users/sessions",
+      "input": "username, password, remember",
+      "resource": "session user",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/auth/form.php",
+          "line": 14
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/auth/register",
+      "current_handler": "registerAccount",
+      "access": "public",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "POST /api/users/registrations",
+      "input": "username, password, email, consents",
+      "resource": "account, approval status",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/auth/form.php",
+          "line": 14
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/auth/logout",
+      "current_handler": "logout",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "DELETE /api/users/sessions/current",
+      "input": "none",
+      "resource": "logged_out",
+      "presentation_dependency": false,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/author/follow",
+      "current_handler": "followAuthor",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "PUT/DELETE /api/users/{id}/followers/me",
+      "input": "id from path; requested state from method",
+      "resource": "following, followers_count",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/profile/update",
+      "current_handler": "profileUpdate",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "PATCH /api/users/me; PATCH /api/users/{id}",
+      "input": "profile fields",
+      "resource": "profile resource",
+      "presentation_dependency": false,
+      "direct_ui_references": [
+        {
+          "file": "Public/modals/profile-edit.php",
+          "line": 57
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/profile/email",
+      "current_handler": "profileEmailUpdate",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "PATCH /api/users/me/email",
+      "input": "email, current password where required",
+      "resource": "email state",
+      "presentation_dependency": false,
+      "direct_ui_references": [
+        {
+          "file": "Public/modals/profile-edit.php",
+          "line": 82
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/profile/password",
+      "current_handler": "profilePasswordUpdate",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "PUT /api/users/me/password",
+      "input": "current_password, password, confirmation",
+      "resource": "password_changed",
+      "presentation_dependency": false,
+      "direct_ui_references": [
+        {
+          "file": "Public/modals/profile-edit.php",
+          "line": 99
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/avatar/update",
+      "current_handler": "avatarUpdate",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "PUT/DELETE /api/users/{id}/avatar",
+      "input": "multipart image; id from path",
+      "resource": "avatar_url, updated_at",
+      "presentation_dependency": false,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/status/{action:create|react|like|comment|comment-like|comment-update|comment-delete|report|update|delete}",
+      "current_handler": "statusAction",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Status",
+      "target": "POST /api/statuses; PATCH/DELETE /api/statuses/{id}; /api/statuses/{id}/comments; /api/statuses/{id}/likes/me; /api/moderation/reports",
+      "input": "body, images, comment content, path IDs",
+      "resource": "status/comment resource, reaction state or report receipt",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/status",
+        "Public/modals/status-post.php",
+        "Public/modals/status-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 4,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/notifications",
+      "current_handler": "notifications",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Notifications",
+      "target": "GET /api/notifications",
+      "input": "cursor, limit, unread filter",
+      "resource": "items, unread_count, pagination",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/notifications/item.php",
+          "line": 38
+        },
+        {
+          "file": "Public/parts/notifications/item.php",
+          "line": 46
+        },
+        {
+          "file": "Public/parts/notifications/menu.php",
+          "line": 17
+        },
+        {
+          "file": "Public/parts/notifications/page.php",
+          "line": 18
+        },
+        {
+          "file": "assets/js/tinycat.js",
+          "line": 5529
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/notifications",
+        "Public/notifications.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/notifications-page",
+      "current_handler": "notificationsPage",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Notifications",
+      "target": "GET /api/notifications",
+      "input": "cursor, limit",
+      "resource": "items, unread_count, pagination",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/notifications",
+        "Public/notifications.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/notifications/{action:read|read-all|delete}",
+      "current_handler": "notificationAction",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Notifications",
+      "target": "PATCH/DELETE /api/notifications/{id}; PATCH /api/notifications",
+      "input": "read=true; own inbox scope",
+      "resource": "notification or bulk read result",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/notifications",
+        "Public/notifications.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/home-feed",
+      "current_handler": "homeFeed",
+      "access": "public",
+      "success_status": 200,
+      "owner": "Status",
+      "target": "GET /api/statuses",
+      "input": "feed, cursor, limit",
+      "resource": "items, pagination",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/status",
+        "Public/modals/status-post.php",
+        "Public/modals/status-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 4,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/sidebar",
+      "current_handler": "sidebar",
+      "access": "public",
+      "success_status": 200,
+      "owner": "Site",
+      "target": "GET /api/site/sidebar",
+      "input": "context",
+      "resource": "people, tags, counters",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/sidebar-slot.php",
+          "line": 9
+        },
+        {
+          "file": "Public/parts/sidebar.php",
+          "line": 12
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/sidebar.php",
+        "Public/parts/sidebar-slot.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/status-feed",
+      "current_handler": "statusFeed",
+      "access": "public",
+      "success_status": 200,
+      "owner": "Status",
+      "target": "GET /api/statuses",
+      "input": "author_id, tag, cursor, limit",
+      "resource": "items, pagination",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/status",
+        "Public/modals/status-post.php",
+        "Public/modals/status-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 4,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/status-card",
+      "current_handler": "statusCard",
+      "access": "public",
+      "success_status": 200,
+      "owner": "Status",
+      "target": "GET /api/statuses/{id}",
+      "input": "path id",
+      "resource": "status resource",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "assets/js/tinycat.js",
+          "line": 5049
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/status",
+        "Public/modals/status-post.php",
+        "Public/modals/status-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 4,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/status-modal",
+      "current_handler": "statusModal",
+      "access": "public",
+      "success_status": 200,
+      "owner": "Status",
+      "target": "GET /api/statuses/{id}",
+      "input": "path id",
+      "resource": "status resource, comments, capabilities",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/status",
+        "Public/modals/status-post.php",
+        "Public/modals/status-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 4,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/status-report-modal",
+      "current_handler": "statusReportModal",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Moderation",
+      "target": "GET /api/moderation/report-options",
+      "input": "subject ID/type",
+      "resource": "reason options and capabilities",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/admin/moderation",
+        "Public/parts/admin/moderation",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/status-edit-modal",
+      "current_handler": "statusEditModal",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Status",
+      "target": "GET /api/statuses/{id}",
+      "input": "path id",
+      "resource": "editable text, attachments, capabilities",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/status",
+        "Public/modals/status-post.php",
+        "Public/modals/status-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 4,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/status-comment-edit-modal",
+      "current_handler": "statusCommentEditModal",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Status",
+      "target": "GET /api/statuses/{id}/comments/{commentId}",
+      "input": "path IDs",
+      "resource": "comment, editable text, capabilities",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/status",
+        "Public/modals/status-post.php",
+        "Public/modals/status-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 4,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/status-comment-history-modal",
+      "current_handler": "statusCommentHistoryModal",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Status",
+      "target": "GET /api/statuses/{id}/comments/{commentId}/revisions",
+      "input": "path IDs",
+      "resource": "revision items",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/status",
+        "Public/modals/status-post.php",
+        "Public/modals/status-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 4,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/profile-edit-modal",
+      "current_handler": "profileEditModal",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "GET /api/users/me; GET /api/users/{id}/management",
+      "input": "path id, actor policy",
+      "resource": "editable profile and form options",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/avatar-edit-modal",
+      "current_handler": "avatarEditModal",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "GET /api/users/{id}/avatar",
+      "input": "path id",
+      "resource": "avatar_url, upload limits, capabilities",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/author/following",
+      "current_handler": "authorFollowing",
+      "access": "user",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "GET /api/users/{id}/following",
+      "input": "path id, cursor, limit",
+      "resource": "items, pagination",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/admin/users",
+      "current_handler": "adminUsers",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "GET /api/users",
+      "input": "filters, page, per_page",
+      "resource": "items, pagination, stats, allowed roles/statuses",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/admin/users/list.php",
+          "line": 19
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/admin/users",
+      "current_handler": "adminUserCreate",
+      "access": "admin",
+      "success_status": 201,
+      "owner": "Users",
+      "target": "POST /api/users",
+      "input": "account fields",
+      "resource": "private management resource",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/admin/users/list.php",
+          "line": 19
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "PATCH",
+      "current_path": "/api/admin/users",
+      "current_handler": "adminUserUpdate",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "PATCH /api/users/{id}",
+      "input": "path id, account fields",
+      "resource": "private management resource",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/admin/users/list.php",
+          "line": 19
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "DELETE",
+      "current_path": "/api/admin/users",
+      "current_handler": "adminUserDelete",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Users",
+      "target": "DELETE /api/users/{id}",
+      "input": "path id",
+      "resource": "id, deleted",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/admin/users/list.php",
+          "line": 19
+        }
+      ],
+      "ui_areas": [
+        "Public/parts/auth/form.php",
+        "Public/parts/admin/users",
+        "Public/modals/profile-edit.php",
+        "Public/modals/avatar-edit.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 3,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/admin/settings",
+      "current_handler": "adminSettingsSave",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Settings",
+      "target": "PATCH /api/settings",
+      "input": "settings, multipart site images",
+      "resource": "saved settings; secrets excluded",
+      "presentation_dependency": false,
+      "direct_ui_references": [
+        {
+          "file": "Public/admin/settings.php",
+          "line": 51
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/settings.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/admin/cron-token",
+      "current_handler": "adminCronToken",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Scheduler",
+      "target": "POST /api/scheduler/tokens",
+      "input": "none",
+      "resource": "rotation result; token admin-only",
+      "presentation_dependency": false,
+      "direct_ui_references": [
+        {
+          "file": "Public/admin/cron.php",
+          "line": 64
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/cron.php",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/admin/moderation/reports",
+      "current_handler": "adminReports",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Moderation",
+      "target": "GET /api/moderation/reports",
+      "input": "filters, page",
+      "resource": "items, pagination",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/admin/moderation/report-action.php",
+          "line": 16
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/moderation",
+        "Public/parts/admin/moderation",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/admin/moderation/reports",
+      "current_handler": "adminReportReview",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Moderation",
+      "target": "PATCH /api/moderation/reports/{id}",
+      "input": "path id, decision",
+      "resource": "report and affected status state",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/admin/moderation/report-action.php",
+          "line": 16
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/moderation",
+        "Public/parts/admin/moderation",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/admin/moderation/blocking",
+      "current_handler": "adminBlocking",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Moderation",
+      "target": "GET /api/moderation/blocked-urls",
+      "input": "none",
+      "resource": "items",
+      "presentation_dependency": false,
+      "direct_ui_references": [
+        {
+          "file": "Public/admin/moderation/blocking.php",
+          "line": 22
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/moderation",
+        "Public/parts/admin/moderation",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/admin/moderation/blocking",
+      "current_handler": "adminBlockingSave",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Moderation",
+      "target": "PUT /api/moderation/blocked-urls",
+      "input": "URL rules",
+      "resource": "items",
+      "presentation_dependency": false,
+      "direct_ui_references": [
+        {
+          "file": "Public/admin/moderation/blocking.php",
+          "line": 22
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/moderation",
+        "Public/parts/admin/moderation",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/admin/bot-accounts",
+      "current_handler": "adminBotAccounts",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Bots",
+      "target": "GET /api/bots/accounts",
+      "input": "filters, page",
+      "resource": "items, pagination",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/bots/modals/account-filter.php",
+          "line": 27
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 30
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 36
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 86
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 95
+        },
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 69
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/bots",
+        "Public/parts/bots",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/admin/bot-accounts",
+      "current_handler": "adminBotAccountCreate",
+      "access": "admin",
+      "success_status": 201,
+      "owner": "Bots",
+      "target": "POST /api/bots/accounts",
+      "input": "username, status",
+      "resource": "bot account resource",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/bots/modals/account-filter.php",
+          "line": 27
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 30
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 36
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 86
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 95
+        },
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 69
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/bots",
+        "Public/parts/bots",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "PATCH",
+      "current_path": "/api/admin/bot-accounts",
+      "current_handler": "adminBotAccountUpdate",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Bots",
+      "target": "PATCH /api/bots/accounts/{id}",
+      "input": "path id, account fields",
+      "resource": "bot account resource",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/bots/modals/account-filter.php",
+          "line": 27
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 30
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 36
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 86
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 95
+        },
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 69
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/bots",
+        "Public/parts/bots",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "DELETE",
+      "current_path": "/api/admin/bot-accounts",
+      "current_handler": "adminBotAccountDelete",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Bots",
+      "target": "DELETE /api/bots/accounts/{id}",
+      "input": "path id",
+      "resource": "id, deleted",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/parts/bots/modals/account-filter.php",
+          "line": 27
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 30
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 36
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 86
+        },
+        {
+          "file": "Public/parts/bots/parts/accounts.php",
+          "line": 95
+        },
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 69
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/bots",
+        "Public/parts/bots",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "GET",
+      "current_path": "/api/admin/bots",
+      "current_handler": "adminBotSources",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Bots",
+      "target": "GET /api/bots/sources",
+      "input": "bot_id, filters",
+      "resource": "items",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 125
+        },
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 130
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/bots",
+        "Public/parts/bots",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/admin/bots",
+      "current_handler": "adminBotSourceCreate",
+      "access": "admin",
+      "success_status": 201,
+      "owner": "Bots",
+      "target": "POST /api/bots/sources",
+      "input": "bot_id, source configuration",
+      "resource": "source resource",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 125
+        },
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 130
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/bots",
+        "Public/parts/bots",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "PATCH",
+      "current_path": "/api/admin/bots",
+      "current_handler": "adminBotSourceUpdate",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Bots",
+      "target": "PATCH /api/bots/sources/{id}",
+      "input": "path id, source configuration",
+      "resource": "source resource",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 125
+        },
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 130
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/bots",
+        "Public/parts/bots",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "DELETE",
+      "current_path": "/api/admin/bots",
+      "current_handler": "adminBotSourceDelete",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Bots",
+      "target": "DELETE /api/bots/sources/{id}",
+      "input": "path id",
+      "resource": "id, deleted",
+      "presentation_dependency": true,
+      "direct_ui_references": [
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 125
+        },
+        {
+          "file": "Public/admin/bots/detail.php",
+          "line": 130
+        }
+      ],
+      "ui_areas": [
+        "Public/admin/bots",
+        "Public/parts/bots",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    },
+    {
+      "current_method": "POST",
+      "current_path": "/api/admin/bots/{action:run|toggle}",
+      "current_handler": "adminBotSourceAction",
+      "access": "admin",
+      "success_status": 200,
+      "owner": "Bots",
+      "target": "POST /api/bots/sources/{id}/runs; PATCH /api/bots/sources/{id}",
+      "input": "path id; enabled for state change",
+      "resource": "run resource or source resource",
+      "presentation_dependency": true,
+      "direct_ui_references": [],
+      "ui_areas": [
+        "Public/admin/bots",
+        "Public/parts/bots",
+        "assets/js/tinycat.js"
+      ],
+      "stage": 5,
+      "migrated": true
+    }
+  ],
+  "functions": [
+    {
+      "name": "config",
+      "owner": "Support",
+      "implementation": "TinyCat\\Settings\\Store::config"
+    },
+    {
+      "name": "setting",
+      "owner": "Settings",
+      "implementation": "TinyCat\\Settings\\Store::setting"
+    },
+    {
+      "name": "setting_set",
+      "owner": "Settings",
+      "implementation": "TinyCat\\Settings\\Store::setSetting"
+    },
+    {
+      "name": "public_path",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Paths::publicPath"
+    },
+    {
+      "name": "base_path",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Paths::basePath"
+    },
+    {
+      "name": "db",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::get"
+    },
+    {
+      "name": "db_transaction",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Transactions::run"
+    },
+    {
+      "name": "db_unique_violation",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::uniqueViolation"
+    },
+    {
+      "name": "positive_int_ids",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Text::positive_int_ids"
+    },
+    {
+      "name": "app_required_tables",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Schema::app_required_tables"
+    },
+    {
+      "name": "site_name",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::site_name"
+    },
+    {
+      "name": "site_google_analytics_configured",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::site_google_analytics_configured"
+    },
+    {
+      "name": "site_captcha_enabled",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::site_captcha_enabled"
+    },
+    {
+      "name": "site_home_title",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::site_home_title"
+    },
+    {
+      "name": "site_meta_description",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::site_meta_description"
+    },
+    {
+      "name": "site_logo_url",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::site_logo_url"
+    },
+    {
+      "name": "site_favicon_url",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::site_favicon_url"
+    },
+    {
+      "name": "site_footer_html",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::site_footer_html"
+    },
+    {
+      "name": "site_meta_image_url",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::site_meta_image_url"
+    },
+    {
+      "name": "absolute_url",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::absolute_url"
+    },
+    {
+      "name": "sitemap_url",
+      "owner": "Site",
+      "implementation": "Sitemap::url"
+    },
+    {
+      "name": "app_request_scheme",
+      "owner": "Site",
+      "implementation": "TinyCat\\Http\\Request::current()->requestScheme"
+    },
+    {
+      "name": "meta_text",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::meta_text"
+    },
+    {
+      "name": "status_meta_title",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_meta_title"
+    },
+    {
+      "name": "status_meta_link_title",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_meta_link_title"
+    },
+    {
+      "name": "status_meta_link_image",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_meta_link_image"
+    },
+    {
+      "name": "status_image_record",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Images::status_image_record"
+    },
+    {
+      "name": "status_image_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Images::status_image_url"
+    },
+    {
+      "name": "status_image_alt_text",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Images::status_image_alt_text"
+    },
+    {
+      "name": "status_image_jsonld",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Images::status_image_jsonld"
+    },
+    {
+      "name": "status_link_title_is_placeholder",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_title_is_placeholder"
+    },
+    {
+      "name": "status_meta_description",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_meta_description"
+    },
+    {
+      "name": "status_meta_image",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_meta_image"
+    },
+    {
+      "name": "status_images_enabled",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Images::status_images_enabled"
+    },
+    {
+      "name": "status_image_max_upload_kb",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Images::status_image_max_upload_kb"
+    },
+    {
+      "name": "status_image_max_upload_bytes",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Images::status_image_max_upload_bytes"
+    },
+    {
+      "name": "status_image_uploaded_file",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Images::status_image_uploaded_file"
+    },
+    {
+      "name": "user_avatar_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Avatars::user_avatar_url"
+    },
+    {
+      "name": "user_avatar_updated_at",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Avatars::user_avatar_updated_at"
+    },
+    {
+      "name": "admin_user_avatar_change",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Users\\Avatars::admin_user_avatar_change"
+    },
+    {
+      "name": "user_display_name",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_display_name"
+    },
+    {
+      "name": "user_is_admin",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_is_admin"
+    },
+    {
+      "name": "user_public_payload",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_public_payload"
+    },
+    {
+      "name": "user_can_edit_profile",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_can_edit_profile"
+    },
+    {
+      "name": "user_profile_require_edit_target",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_profile_require_edit_target"
+    },
+    {
+      "name": "theme_normalize",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::theme_normalize"
+    },
+    {
+      "name": "user_theme",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_theme"
+    },
+    {
+      "name": "image_source_error",
+      "owner": "Security",
+      "implementation": "TinyCat\\Security\\Images::image_source_error"
+    },
+    {
+      "name": "site_image_upload",
+      "owner": "Site",
+      "implementation": "TinyCat\\Security\\Images::site_image_upload"
+    },
+    {
+      "name": "image_apply_orientation",
+      "owner": "Support",
+      "implementation": "TinyCat\\Security\\Images::image_apply_orientation"
+    },
+    {
+      "name": "auth_landing_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_landing_url"
+    },
+    {
+      "name": "auth_next_path",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_next_path"
+    },
+    {
+      "name": "auth_normalize_next_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_normalize_next_url"
+    },
+    {
+      "name": "auth_safe_next_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_safe_next_url"
+    },
+    {
+      "name": "auth_referer_next_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_referer_next_url"
+    },
+    {
+      "name": "auth_request_next_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_request_next_url"
+    },
+    {
+      "name": "auth_url_with_next",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_url_with_next"
+    },
+    {
+      "name": "auth_redirect_after_login",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_redirect_after_login"
+    },
+    {
+      "name": "auth_login_credentials",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_login_credentials"
+    },
+    {
+      "name": "auth_form_state_from_request",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_form_state_from_request"
+    },
+    {
+      "name": "auth_form_state_remember",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_form_state_remember"
+    },
+    {
+      "name": "auth_form_state_previous",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_form_state_previous"
+    },
+    {
+      "name": "auth_form_text_input",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_form_text_input"
+    },
+    {
+      "name": "auth_login_request",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_login_request"
+    },
+    {
+      "name": "auth_password_max_length",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_password_max_length"
+    },
+    {
+      "name": "auth_password_too_long",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_password_too_long"
+    },
+    {
+      "name": "auth_password_validation_field_errors",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_password_validation_field_errors"
+    },
+    {
+      "name": "auth_password_validation_errors",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_password_validation_errors"
+    },
+    {
+      "name": "registration_input",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::registration_input"
+    },
+    {
+      "name": "registration_create_user",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::registration_create_user"
+    },
+    {
+      "name": "registration_request",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::registration_request"
+    },
+    {
+      "name": "registration_enabled",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::registration_enabled"
+    },
+    {
+      "name": "registration_auto_approve",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::registration_auto_approve"
+    },
+    {
+      "name": "username_normalize",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Usernames::username_normalize"
+    },
+    {
+      "name": "username_key",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Usernames::username_key"
+    },
+    {
+      "name": "username_pattern",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Usernames::username_pattern"
+    },
+    {
+      "name": "username_valid",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Usernames::username_valid"
+    },
+    {
+      "name": "username_hint",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Usernames::username_hint"
+    },
+    {
+      "name": "user_username_taken",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Usernames::user_username_taken"
+    },
+    {
+      "name": "user_email_normalize",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_email_normalize"
+    },
+    {
+      "name": "user_email_max_length",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_email_max_length"
+    },
+    {
+      "name": "user_email_valid",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_email_valid"
+    },
+    {
+      "name": "user_email_taken",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_email_taken"
+    },
+    {
+      "name": "rate_limit_ip",
+      "owner": "Security",
+      "implementation": "TinyCat\\Security\\RateLimiter::rate_limit_ip"
+    },
+    {
+      "name": "rate_limit_ip_action_count",
+      "owner": "Security",
+      "implementation": "TinyCat\\Security\\RateLimiter::rate_limit_ip_action_count"
+    },
+    {
+      "name": "rate_limit_ip_action_record",
+      "owner": "Security",
+      "implementation": "TinyCat\\Security\\RateLimiter::rate_limit_ip_action_record"
+    },
+    {
+      "name": "user_delete_account",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::user_delete_account"
+    },
+    {
+      "name": "email_user",
+      "owner": "Mail",
+      "implementation": "TinyCat\\Mail\\Templates::email_user"
+    },
+    {
+      "name": "email_template_keys",
+      "owner": "Mail",
+      "implementation": "TinyCat\\Mail\\Templates::email_template_keys"
+    },
+    {
+      "name": "email_template_default_states",
+      "owner": "Mail",
+      "implementation": "TinyCat\\Mail\\Templates::email_template_default_states"
+    },
+    {
+      "name": "email_template_enabled",
+      "owner": "Mail",
+      "implementation": "TinyCat\\Mail\\Templates::email_template_enabled"
+    },
+    {
+      "name": "email_catalog",
+      "owner": "Mail",
+      "implementation": "TinyCat\\Mail\\Templates::email_catalog"
+    },
+    {
+      "name": "email_template_send",
+      "owner": "Mail",
+      "implementation": "TinyCat\\Mail\\Templates::email_template_send"
+    },
+    {
+      "name": "email_notification_templates_enabled",
+      "owner": "Mail",
+      "implementation": "TinyCat\\Mail\\Templates::email_notification_templates_enabled"
+    },
+    {
+      "name": "email_smtp_default_config",
+      "owner": "Mail",
+      "implementation": "TinyCat\\Mail\\Smtp::email_smtp_default_config"
+    },
+    {
+      "name": "email_smtp_config",
+      "owner": "Mail",
+      "implementation": "TinyCat\\Mail\\Smtp::email_smtp_config"
+    },
+    {
+      "name": "email_smtp_send",
+      "owner": "Mail",
+      "implementation": "TinyCat\\Mail\\Smtp::email_smtp_send"
+    },
+    {
+      "name": "moderation_user_post_count",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::moderation_user_post_count"
+    },
+    {
+      "name": "moderation_user_reputation",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::moderation_user_reputation"
+    },
+    {
+      "name": "moderation_action_rules",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::moderation_action_rules"
+    },
+    {
+      "name": "moderation_action_rule",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::moderation_action_rule"
+    },
+    {
+      "name": "moderation_bucket_start",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::moderation_bucket_start"
+    },
+    {
+      "name": "moderation_action_count",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::moderation_action_count"
+    },
+    {
+      "name": "user_can_be_muted",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Users\\Roles::canBeMuted"
+    },
+    {
+      "name": "user_muted_until",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::user_muted_until"
+    },
+    {
+      "name": "user_is_muted",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::user_is_muted"
+    },
+    {
+      "name": "user_mute",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::user_mute"
+    },
+    {
+      "name": "moderation_record_action",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::moderation_record_action"
+    },
+    {
+      "name": "moderation_body_fingerprint",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Restrictions::moderation_body_fingerprint"
+    },
+    {
+      "name": "session_action_retry_after",
+      "owner": "Security",
+      "implementation": "TinyCat\\Security\\RateLimiter::session_action_retry_after"
+    },
+    {
+      "name": "status_session_interval_rule",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_session_interval_rule"
+    },
+    {
+      "name": "status_json_require_session_interval",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_json_require_session_interval"
+    },
+    {
+      "name": "plain_text_limit",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Text::plain_text_limit"
+    },
+    {
+      "name": "strip_html_tags_preserving_text",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Text::strip_html_tags_preserving_text"
+    },
+    {
+      "name": "sanitize_html",
+      "owner": "Security",
+      "implementation": "TinyCat\\Security\\Sanitizer::sanitize_html"
+    },
+    {
+      "name": "auth_modal_id",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_modal_id"
+    },
+    {
+      "name": "auth_modal_mode",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_modal_mode"
+    },
+    {
+      "name": "auth_modal_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_modal_url"
+    },
+    {
+      "name": "auth_next_from_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_next_from_url"
+    },
+    {
+      "name": "sanitize_html_node",
+      "owner": "Security",
+      "implementation": "TinyCat\\Security\\Sanitizer::sanitize_html_node"
+    },
+    {
+      "name": "sanitize_html_url",
+      "owner": "Security",
+      "implementation": "TinyCat\\Security\\Sanitizer::sanitize_html_url"
+    },
+    {
+      "name": "user_profile_update_request",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_profile_update_request"
+    },
+    {
+      "name": "user_email_update_request",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_email_update_request"
+    },
+    {
+      "name": "user_password_update_request",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::user_password_update_request"
+    },
+    {
+      "name": "auth_recovery_replace_token",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Recovery::auth_recovery_replace_token"
+    },
+    {
+      "name": "auth_recovery_consume_token",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Recovery::auth_recovery_consume_token"
+    },
+    {
+      "name": "user_avatar_update_request",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Avatars::user_avatar_update_request"
+    },
+    {
+      "name": "author_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::author_url"
+    },
+    {
+      "name": "author_feed_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::author_feed_url"
+    },
+    {
+      "name": "author_api_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::author_api_url"
+    },
+    {
+      "name": "public_author_find",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Repository::public_author_find"
+    },
+    {
+      "name": "tag_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::tag_url"
+    },
+    {
+      "name": "tag_feed_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::tag_feed_url"
+    },
+    {
+      "name": "author_is_followed",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Following::author_is_followed"
+    },
+    {
+      "name": "author_follow",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Following::author_follow"
+    },
+    {
+      "name": "author_unfollow",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::author_unfollow"
+    },
+    {
+      "name": "author_follow_counts",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Following::author_follow_counts"
+    },
+    {
+      "name": "author_following_profiles",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Following::author_following_profiles"
+    },
+    {
+      "name": "author_following_cursor_params",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Following::author_following_cursor_params"
+    },
+    {
+      "name": "author_following_profile_payload",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Following::author_following_profile_payload"
+    },
+    {
+      "name": "author_activity_stats",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Repository::author_activity_stats"
+    },
+    {
+      "name": "status_anchor",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_anchor"
+    },
+    {
+      "name": "status_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_url"
+    },
+    {
+      "name": "status_accessible_identity",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_accessible_identity"
+    },
+    {
+      "name": "status_permalink_label",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_permalink_label"
+    },
+    {
+      "name": "status_accessible_context",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_accessible_context"
+    },
+    {
+      "name": "status_url_host_key",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_url_host_key"
+    },
+    {
+      "name": "status_internal_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_internal_url"
+    },
+    {
+      "name": "status_internal_url_path",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_internal_url_path"
+    },
+    {
+      "name": "status_external_url_pattern",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_external_url_pattern"
+    },
+    {
+      "name": "status_strip_external_urls",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_strip_external_urls"
+    },
+    {
+      "name": "moderation_blocked_url_rules",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Blocking::moderation_blocked_url_rules"
+    },
+    {
+      "name": "moderation_blocked_url_rule",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Blocking::moderation_blocked_url_rule"
+    },
+    {
+      "name": "moderation_url_host",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Blocking::moderation_url_host"
+    },
+    {
+      "name": "moderation_blocked_url_match",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Blocking::moderation_blocked_url_match"
+    },
+    {
+      "name": "moderation_require_allowed_urls",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Blocking::moderation_require_allowed_urls"
+    },
+    {
+      "name": "moderation_text_contains_blocked_host",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Blocking::moderation_text_contains_blocked_host"
+    },
+    {
+      "name": "moderation_host_blocked_by",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Blocking::moderation_host_blocked_by"
+    },
+    {
+      "name": "author_mention_users_by_ids",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Mentions::author_mention_users_by_ids"
+    },
+    {
+      "name": "status_author_url_mention",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Mentions::status_author_url_mention"
+    },
+    {
+      "name": "normalize_author_urls_for_storage",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Mentions::normalize_author_urls_for_storage"
+    },
+    {
+      "name": "normalize_mentions_for_storage",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Mentions::normalize_mentions_for_storage"
+    },
+    {
+      "name": "mention_id_pattern",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Mentions::mention_id_pattern"
+    },
+    {
+      "name": "mentions_for_editing",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Mentions::mentions_for_editing"
+    },
+    {
+      "name": "render_mentions",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::render_mentions"
+    },
+    {
+      "name": "render_status_text",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::render_status_text"
+    },
+    {
+      "name": "render_status_body",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::render_status_body"
+    },
+    {
+      "name": "render_mentions_segment",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::render_mentions_segment"
+    },
+    {
+      "name": "render_status_emoticons",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::render_status_emoticons"
+    },
+    {
+      "name": "render_status_emoticons_segment",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::render_status_emoticons_segment"
+    },
+    {
+      "name": "public_status_select_sql",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_select_sql"
+    },
+    {
+      "name": "public_status_apply_visibility",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_apply_visibility"
+    },
+    {
+      "name": "public_status_id_query",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_id_query"
+    },
+    {
+      "name": "public_status_author_id_query",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_author_id_query"
+    },
+    {
+      "name": "public_status_query",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_query"
+    },
+    {
+      "name": "public_status_ids_page",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_ids_page"
+    },
+    {
+      "name": "public_status_cursor_page",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_cursor_page"
+    },
+    {
+      "name": "public_status_items_cursor",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_items_cursor"
+    },
+    {
+      "name": "public_status_items_for_user_cursor",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_items_for_user_cursor"
+    },
+    {
+      "name": "public_following_author_ids",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Following::public_following_author_ids"
+    },
+    {
+      "name": "public_status_items_by_author_cursor",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_items_by_author_cursor"
+    },
+    {
+      "name": "public_status_ids_by_author",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_ids_by_author"
+    },
+    {
+      "name": "public_status_items_by_tag",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_items_by_tag"
+    },
+    {
+      "name": "public_status_ids_by_tag",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_ids_by_tag"
+    },
+    {
+      "name": "public_status_item",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_item"
+    },
+    {
+      "name": "public_status_items_by_ids",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_items_by_ids"
+    },
+    {
+      "name": "status_preload_feed",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::status_preload_feed"
+    },
+    {
+      "name": "status_prepare_items_view",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_prepare_items_view"
+    },
+    {
+      "name": "status_prepare_link_view",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_prepare_link_view"
+    },
+    {
+      "name": "public_trending_tags",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::public_trending_tags"
+    },
+    {
+      "name": "public_top_authors",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Repository::public_top_authors"
+    },
+    {
+      "name": "public_sidebar",
+      "owner": "Site",
+      "implementation": "TinyCat\\Site\\Presentation::public_sidebar"
+    },
+    {
+      "name": "public_search_excerpt",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_excerpt"
+    },
+    {
+      "name": "public_search_empty_result",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_empty_result"
+    },
+    {
+      "name": "public_search_normalize_query",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_normalize_query"
+    },
+    {
+      "name": "public_search_query_too_short",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_query_too_short"
+    },
+    {
+      "name": "public_search_guest_limits",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Guard::public_search_guest_limits"
+    },
+    {
+      "name": "public_search_guest_state",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Guard::public_search_guest_state"
+    },
+    {
+      "name": "public_search_guest_unlock",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Guard::public_search_guest_unlock"
+    },
+    {
+      "name": "public_search_guard",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Guard::public_search_guard"
+    },
+    {
+      "name": "public_search_api_guard",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Guard::public_search_api_guard"
+    },
+    {
+      "name": "public_search_captcha_verify",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Guard::public_search_captcha_verify"
+    },
+    {
+      "name": "public_search_fulltext_query",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_fulltext_query"
+    },
+    {
+      "name": "public_search_fulltext_ready",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_fulltext_ready"
+    },
+    {
+      "name": "public_search_text_contains",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_text_contains"
+    },
+    {
+      "name": "public_search_content_result",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_content_result"
+    },
+    {
+      "name": "public_search_recent_content_scan",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_recent_content_scan"
+    },
+    {
+      "name": "public_search_link_content_rows",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_link_content_rows"
+    },
+    {
+      "name": "public_search_content_rows",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_content_rows"
+    },
+    {
+      "name": "public_search_suggestion_tags",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_suggestion_tags"
+    },
+    {
+      "name": "public_search_suggestion_users",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_suggestion_users"
+    },
+    {
+      "name": "public_search_suggestions",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_suggestions"
+    },
+    {
+      "name": "status_editor_suggestions",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_editor_suggestions"
+    },
+    {
+      "name": "public_search_results",
+      "owner": "Search",
+      "implementation": "TinyCat\\Search\\Queries::public_search_results"
+    },
+    {
+      "name": "status_find",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_find"
+    },
+    {
+      "name": "status_is_scheduled",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_is_scheduled"
+    },
+    {
+      "name": "status_can_view",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_can_view"
+    },
+    {
+      "name": "status_edit_locked",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_edit_locked"
+    },
+    {
+      "name": "status_edit_lock",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_edit_lock"
+    },
+    {
+      "name": "status_can_edit",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_can_edit"
+    },
+    {
+      "name": "status_can_delete",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_can_delete"
+    },
+    {
+      "name": "status_user_liked",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Reactions::status_user_liked"
+    },
+    {
+      "name": "status_preload_user_likes",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Reactions::status_preload_user_likes"
+    },
+    {
+      "name": "status_set_user_liked",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Reactions::status_set_user_liked"
+    },
+    {
+      "name": "status_comment_rows_to_tree",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_rows_to_tree"
+    },
+    {
+      "name": "status_comments_query",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comments_query"
+    },
+    {
+      "name": "status_comments",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comments"
+    },
+    {
+      "name": "status_comment_tree_rows",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_tree_rows"
+    },
+    {
+      "name": "status_preload_comment_tree_user_likes",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_preload_comment_tree_user_likes"
+    },
+    {
+      "name": "status_prepare_comments_view",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_prepare_comments_view"
+    },
+    {
+      "name": "status_prepare_comment_view",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_prepare_comment_view"
+    },
+    {
+      "name": "status_prepare_detail_view",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_prepare_detail_view"
+    },
+    {
+      "name": "status_comment_find",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_find"
+    },
+    {
+      "name": "status_comment_count",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_count"
+    },
+    {
+      "name": "status_comment_can_delete",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_can_delete"
+    },
+    {
+      "name": "status_comment_can_edit",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_can_edit"
+    },
+    {
+      "name": "status_comment_history",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_history"
+    },
+    {
+      "name": "status_comment_history_append",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_history_append"
+    },
+    {
+      "name": "status_comment_history_diff_html",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_comment_history_diff_html"
+    },
+    {
+      "name": "status_comment_user_liked",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_user_liked"
+    },
+    {
+      "name": "status_preload_comment_user_likes",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_preload_comment_user_likes"
+    },
+    {
+      "name": "status_set_comment_user_liked",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_set_comment_user_liked"
+    },
+    {
+      "name": "status_comment_like_count",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_like_count"
+    },
+    {
+      "name": "status_tag_normalize",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::status_tag_normalize"
+    },
+    {
+      "name": "status_tag_max_length",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::status_tag_max_length"
+    },
+    {
+      "name": "status_tag_tokens_from_text",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::status_tag_tokens_from_text"
+    },
+    {
+      "name": "status_tags_from_text",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::status_tags_from_text"
+    },
+    {
+      "name": "status_require_valid_tags",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_require_valid_tags"
+    },
+    {
+      "name": "normalize_tags_for_storage",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::normalize_tags_for_storage"
+    },
+    {
+      "name": "status_tag_suggestions",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::status_tag_suggestions"
+    },
+    {
+      "name": "status_editor_view_data",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_editor_view_data"
+    },
+    {
+      "name": "status_term_id",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::status_term_id"
+    },
+    {
+      "name": "status_term_id_exact",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::status_term_id_exact"
+    },
+    {
+      "name": "status_sync_tags",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::status_sync_tags"
+    },
+    {
+      "name": "status_term_ids_for_content",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::status_term_ids_for_content"
+    },
+    {
+      "name": "status_cleanup_unused_term_ids",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Tags::status_cleanup_unused_term_ids"
+    },
+    {
+      "name": "status_links_from_text",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_links_from_text"
+    },
+    {
+      "name": "status_link_is_internal",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_is_internal"
+    },
+    {
+      "name": "status_link_metadata_ttl",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_metadata_ttl"
+    },
+    {
+      "name": "status_link_metadata_cache",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_metadata_cache"
+    },
+    {
+      "name": "status_link_data",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_data"
+    },
+    {
+      "name": "status_link_find_by_hash",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_find_by_hash"
+    },
+    {
+      "name": "status_link_upsert",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_upsert"
+    },
+    {
+      "name": "status_link_metadata_fresh",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_metadata_fresh"
+    },
+    {
+      "name": "status_link_metadata_has_content",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_metadata_has_content"
+    },
+    {
+      "name": "status_link_apply_cached_metadata",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_apply_cached_metadata"
+    },
+    {
+      "name": "status_link_image_cache",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_image_cache"
+    },
+    {
+      "name": "status_link_image_exists",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_image_exists"
+    },
+    {
+      "name": "status_link_prepare_metadata",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_prepare_metadata"
+    },
+    {
+      "name": "status_sync_links",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_sync_links"
+    },
+    {
+      "name": "status_link_ids_for_content",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_ids_for_content"
+    },
+    {
+      "name": "status_cleanup_unused_link_ids",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_cleanup_unused_link_ids"
+    },
+    {
+      "name": "status_links_cache",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_links_cache"
+    },
+    {
+      "name": "status_links_for_content",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_links_for_content"
+    },
+    {
+      "name": "status_link_display_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_link_display_url"
+    },
+    {
+      "name": "status_video_embed_allowed",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_video_embed_allowed"
+    },
+    {
+      "name": "status_video_embed_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_video_embed_url"
+    },
+    {
+      "name": "status_video_thumbnail_sources",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Links::status_video_thumbnail_sources"
+    },
+    {
+      "name": "status_post_modal_id",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_post_modal_id"
+    },
+    {
+      "name": "status_edit_modal_id",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_edit_modal_id"
+    },
+    {
+      "name": "status_comment_edit_modal_id",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_comment_edit_modal_id"
+    },
+    {
+      "name": "status_comment_history_modal_id",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_comment_history_modal_id"
+    },
+    {
+      "name": "status_post_modal_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_post_modal_url"
+    },
+    {
+      "name": "status_action_modal_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_action_modal_url"
+    },
+    {
+      "name": "status_comment_edit_modal_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_comment_edit_modal_url"
+    },
+    {
+      "name": "status_comment_history_modal_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_comment_history_modal_url"
+    },
+    {
+      "name": "status_api_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_api_url"
+    },
+    {
+      "name": "status_report_modal_id",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_report_modal_id"
+    },
+    {
+      "name": "author_profile_edit_modal_id",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::author_profile_edit_modal_id"
+    },
+    {
+      "name": "author_profile_edit_modal_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::author_profile_edit_modal_url"
+    },
+    {
+      "name": "author_avatar_edit_modal_id",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Avatars::author_avatar_edit_modal_id"
+    },
+    {
+      "name": "author_avatar_edit_modal_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Avatars::author_avatar_edit_modal_url"
+    },
+    {
+      "name": "author_following_modal_id",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Following::author_following_modal_id"
+    },
+    {
+      "name": "author_following_modal_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Following::author_following_modal_url"
+    },
+    {
+      "name": "author_following_api_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Following::author_following_api_url"
+    },
+    {
+      "name": "status_json_require_not_muted",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_json_require_not_muted"
+    },
+    {
+      "name": "status_json_require_action",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_json_require_action"
+    },
+    {
+      "name": "status_json_require_unique_body",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_json_require_unique_body"
+    },
+    {
+      "name": "status_like_count",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Reactions::status_like_count"
+    },
+    {
+      "name": "status_json_summary",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_json_summary"
+    },
+    {
+      "name": "status_comment_item_find",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_item_find"
+    },
+    {
+      "name": "status_json_comment_payload",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_json_comment_payload"
+    },
+    {
+      "name": "status_json_create",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_json_create"
+    },
+    {
+      "name": "status_json_react",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_json_react"
+    },
+    {
+      "name": "status_comment_input_body",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_input_body"
+    },
+    {
+      "name": "status_json_comment",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_json_comment"
+    },
+    {
+      "name": "status_json_comment_like",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_json_comment_like"
+    },
+    {
+      "name": "status_json_comment_update",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_json_comment_update"
+    },
+    {
+      "name": "status_json_comment_delete",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_json_comment_delete"
+    },
+    {
+      "name": "status_delete_comment_rows",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_delete_comment_rows"
+    },
+    {
+      "name": "status_payload",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_payload"
+    },
+    {
+      "name": "status_report_reasons",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_report_reasons"
+    },
+    {
+      "name": "status_report_dismissal_lock",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_report_dismissal_lock"
+    },
+    {
+      "name": "status_delete_content",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_delete_content"
+    },
+    {
+      "name": "public_status_page_limit",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_page_limit"
+    },
+    {
+      "name": "status_scheduled_published_at",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_scheduled_published_at"
+    },
+    {
+      "name": "public_status_initial_page_limit",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::public_status_initial_page_limit"
+    },
+    {
+      "name": "status_feed_context_items",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::status_feed_context_items"
+    },
+    {
+      "name": "public_home_feed_data",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::public_home_feed_data"
+    },
+    {
+      "name": "status_json_report",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_json_report"
+    },
+    {
+      "name": "status_json_update",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_json_update"
+    },
+    {
+      "name": "status_json_delete",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_json_delete"
+    },
+    {
+      "name": "public_home_feed_api_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::public_home_feed_api_url"
+    },
+    {
+      "name": "public_home_feed_payload",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::public_home_feed_payload"
+    },
+    {
+      "name": "status_feed_next_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::status_feed_next_url"
+    },
+    {
+      "name": "status_feed_more_view_data",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\ViewData::status_feed_more_view_data"
+    },
+    {
+      "name": "status_feed_cursor_params",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::status_feed_cursor_params"
+    },
+    {
+      "name": "cron_token",
+      "owner": "Scheduler",
+      "implementation": "TinyCat\\Scheduler\\Tokens::cron_token"
+    },
+    {
+      "name": "cron_token_rotate",
+      "owner": "Scheduler",
+      "implementation": "TinyCat\\Scheduler\\Tokens::cron_token_rotate"
+    },
+    {
+      "name": "cron_request_token",
+      "owner": "Scheduler",
+      "implementation": "TinyCat\\Scheduler\\Tokens::cron_request_token"
+    },
+    {
+      "name": "status_feed_payload",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Feed::status_feed_payload"
+    },
+    {
+      "name": "status_comment_mention",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Comments::status_comment_mention"
+    },
+    {
+      "name": "status_login_url",
+      "owner": "Status",
+      "implementation": "TinyCat\\Status\\Posts::status_login_url"
+    },
+    {
+      "name": "app_existing_tables",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Schema::app_existing_tables"
+    },
+    {
+      "name": "cleanup_batch_size",
+      "owner": "Scheduler",
+      "implementation": "TinyCat\\Scheduler\\Cleanup::cleanup_batch_size"
+    },
+    {
+      "name": "cron_cleanup_tasks",
+      "owner": "Scheduler",
+      "implementation": "TinyCat\\Scheduler\\Cleanup::cron_cleanup_tasks"
+    },
+    {
+      "name": "cron_cleanup_run",
+      "owner": "Scheduler",
+      "implementation": "TinyCat\\Scheduler\\Cleanup::cron_cleanup_run"
+    },
+    {
+      "name": "cleanup_task_run",
+      "owner": "Scheduler",
+      "implementation": "TinyCat\\Scheduler\\Cleanup::cleanup_task_run"
+    },
+    {
+      "name": "cleanup_has_rows",
+      "owner": "Scheduler",
+      "implementation": "TinyCat\\Scheduler\\Cleanup::cleanup_has_rows"
+    },
+    {
+      "name": "cleanup_delete",
+      "owner": "Scheduler",
+      "implementation": "TinyCat\\Scheduler\\Cleanup::cleanup_delete"
+    },
+    {
+      "name": "cleanup_delete_limited",
+      "owner": "Scheduler",
+      "implementation": "TinyCat\\Scheduler\\Cleanup::cleanup_delete_limited"
+    },
+    {
+      "name": "app_apply_user_locale",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::app_apply_user_locale"
+    },
+    {
+      "name": "app_sql_identifier",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Schema::app_sql_identifier"
+    },
+    {
+      "name": "app_auth_account_ready",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::app_auth_account_ready"
+    },
+    {
+      "name": "app_db_status",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Schema::app_db_status"
+    },
+    {
+      "name": "app_db_ready",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Schema::app_db_ready"
+    },
+    {
+      "name": "asset",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Assets::asset"
+    },
+    {
+      "name": "icon",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Html::icon"
+    },
+    {
+      "name": "run",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::exec"
+    },
+    {
+      "name": "all",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::all"
+    },
+    {
+      "name": "one",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::one"
+    },
+    {
+      "name": "val",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::value"
+    },
+    {
+      "name": "db_select",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Queries::db_select"
+    },
+    {
+      "name": "insert",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::insert"
+    },
+    {
+      "name": "update",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::update"
+    },
+    {
+      "name": "delete",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::delete"
+    },
+    {
+      "name": "find",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::find"
+    },
+    {
+      "name": "total",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Connection::count"
+    },
+    {
+      "name": "pagination_meta",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Pagination::paginationMeta"
+    },
+    {
+      "name": "pagination_sql",
+      "owner": "Database",
+      "implementation": "TinyCat\\Database\\Queries::pagination_sql"
+    },
+    {
+      "name": "tc_admin_roles",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::tc_admin_roles"
+    },
+    {
+      "name": "tc_admin_users_api_url",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_api_url"
+    },
+    {
+      "name": "tc_admin_users_list_params",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_list_params"
+    },
+    {
+      "name": "tc_admin_users_filters",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_filters"
+    },
+    {
+      "name": "tc_admin_user_filter_date",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_user_filter_date"
+    },
+    {
+      "name": "tc_admin_users_active_filters",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_active_filters"
+    },
+    {
+      "name": "tc_admin_users_filter_sql",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_filter_sql"
+    },
+    {
+      "name": "tc_admin_users_page",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_page"
+    },
+    {
+      "name": "tc_admin_users_stats",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_stats"
+    },
+    {
+      "name": "tc_admin_users_response_payload",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\ViewData::tc_admin_users_response_payload"
+    },
+    {
+      "name": "tc_admin_users_view_data",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\ViewData::tc_admin_users_view_data"
+    },
+    {
+      "name": "tc_admin_users_api_payload",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_api_payload"
+    },
+    {
+      "name": "tc_admin_user_by_id",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_user_by_id"
+    },
+    {
+      "name": "tc_admin_super_admin_id",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Profiles::tc_admin_super_admin_id"
+    },
+    {
+      "name": "tc_admin_user_is_super_admin",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_user_is_super_admin"
+    },
+    {
+      "name": "tc_admin_user_require_deletable",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_user_require_deletable"
+    },
+    {
+      "name": "tc_admin_user_resource",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_user_resource"
+    },
+    {
+      "name": "tc_admin_user_payload",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_user_payload"
+    },
+    {
+      "name": "tc_admin_user_validation_messages",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_user_validation_messages"
+    },
+    {
+      "name": "tc_admin_options",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::tc_admin_options"
+    },
+    {
+      "name": "tc_admin_datetime",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::tc_admin_datetime"
+    },
+    {
+      "name": "tc_admin_datetime_iso",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::tc_admin_datetime_iso"
+    },
+    {
+      "name": "tc_admin_settings_payload",
+      "owner": "Settings",
+      "implementation": "TinyCat\\Settings\\Administration::tc_admin_settings_payload"
+    },
+    {
+      "name": "tc_admin_settings_sections",
+      "owner": "Settings",
+      "implementation": "TinyCat\\Settings\\Administration::tc_admin_settings_sections"
+    },
+    {
+      "name": "tc_admin_settings_view_sections",
+      "owner": "Settings",
+      "implementation": "TinyCat\\Settings\\Administration::tc_admin_settings_view_sections"
+    },
+    {
+      "name": "tc_admin_settings_save",
+      "owner": "Settings",
+      "implementation": "TinyCat\\Settings\\Administration::tc_admin_settings_save"
+    },
+    {
+      "name": "tc_admin_settings_value_from_post",
+      "owner": "Settings",
+      "implementation": "TinyCat\\Settings\\Administration::tc_admin_settings_value_from_post"
+    },
+    {
+      "name": "tc_admin_settings_uploaded_file",
+      "owner": "Settings",
+      "implementation": "TinyCat\\Settings\\Administration::tc_admin_settings_uploaded_file"
+    },
+    {
+      "name": "tc_admin_settings_site_image_value",
+      "owner": "Settings",
+      "implementation": "TinyCat\\Settings\\Administration::tc_admin_settings_site_image_value"
+    },
+    {
+      "name": "tc_admin_moderation_review_report",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Reports::tc_admin_moderation_review_report"
+    },
+    {
+      "name": "tc_admin_moderation_reports_payload",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Reports::tc_admin_moderation_reports_payload"
+    },
+    {
+      "name": "tc_admin_moderation_reports_view_data",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Reports::tc_admin_moderation_reports_view_data"
+    },
+    {
+      "name": "tc_admin_moderation_reports",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Reports::tc_admin_moderation_reports"
+    },
+    {
+      "name": "tc_admin_moderation_report_view_data",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Reports::tc_admin_moderation_report_view_data"
+    },
+    {
+      "name": "tc_admin_moderation_blocked_urls_value",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Blocking::tc_admin_moderation_blocked_urls_value"
+    },
+    {
+      "name": "tc_admin_moderation_blocking_payload",
+      "owner": "Moderation",
+      "implementation": "TinyCat\\Moderation\\Blocking::tc_admin_moderation_blocking_payload"
+    },
+    {
+      "name": "admin_user_statuses",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::admin_user_statuses"
+    },
+    {
+      "name": "admin_search_like",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::admin_search_like"
+    },
+    {
+      "name": "admin_filter_text",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::admin_filter_text"
+    },
+    {
+      "name": "admin_per_page_options",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::admin_per_page_options"
+    },
+    {
+      "name": "admin_per_page",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::admin_per_page"
+    },
+    {
+      "name": "admin_page",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::admin_page"
+    },
+    {
+      "name": "admin_list_query",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::admin_list_query"
+    },
+    {
+      "name": "admin_list_url",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::admin_list_url"
+    },
+    {
+      "name": "admin_per_page_view_data",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::admin_per_page_view_data"
+    },
+    {
+      "name": "admin_pagination_view_data",
+      "owner": "Support/ViewData",
+      "implementation": "TinyCat\\Support\\AdminViews::admin_pagination_view_data"
+    },
+    {
+      "name": "e",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Html::e"
+    },
+    {
+      "name": "t",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Localization::t"
+    },
+    {
+      "name": "et",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Html::et"
+    },
+    {
+      "name": "locale",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Localization::locale"
+    },
+    {
+      "name": "language_code",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Languages::language_code"
+    },
+    {
+      "name": "language_detect",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Languages::language_detect"
+    },
+    {
+      "name": "language_names",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Languages::language_names"
+    },
+    {
+      "name": "language_name",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Languages::language_name"
+    },
+    {
+      "name": "languages",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Languages::languages"
+    },
+    {
+      "name": "language_packages",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Languages::language_packages"
+    },
+    {
+      "name": "language_options",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Languages::language_options"
+    },
+    {
+      "name": "date_format_presets",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::date_format_presets"
+    },
+    {
+      "name": "time_format_presets",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::time_format_presets"
+    },
+    {
+      "name": "datetime_format_presets",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::datetime_format_presets"
+    },
+    {
+      "name": "datetime_format_preset_options",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::datetime_format_preset_options"
+    },
+    {
+      "name": "datetime_format_preset_exists",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::datetime_format_preset_exists"
+    },
+    {
+      "name": "timezone_presets",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::timezone_presets"
+    },
+    {
+      "name": "timezone_preset_label",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::timezone_preset_label"
+    },
+    {
+      "name": "timezone_options",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::timezone_options"
+    },
+    {
+      "name": "timezone",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::timezone"
+    },
+    {
+      "name": "datetime",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::displayDateTime"
+    },
+    {
+      "name": "relative_time",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::relative_time"
+    },
+    {
+      "name": "relative_datetime_value",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::relative_datetime_value"
+    },
+    {
+      "name": "relative_plural_form",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::relative_plural_form"
+    },
+    {
+      "name": "date_value",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::dateValue"
+    },
+    {
+      "name": "date_iso",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::dateIso"
+    },
+    {
+      "name": "date_db",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Dates::dateDb"
+    },
+    {
+      "name": "slug",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\Text::slug"
+    },
+    {
+      "name": "redirect",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Web::redirect"
+    },
+    {
+      "name": "render",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\View::render"
+    },
+    {
+      "name": "part",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\View::part"
+    },
+    {
+      "name": "layout",
+      "owner": "Support",
+      "implementation": "TinyCat\\Support\\View::layout"
+    },
+    {
+      "name": "api_ok",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Response::success"
+    },
+    {
+      "name": "api_payload",
+      "owner": "Http",
+      "removed": true
+    },
+    {
+      "name": "api_created",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Response::created"
+    },
+    {
+      "name": "api_error",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Response::error"
+    },
+    {
+      "name": "api_validation",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Response::validation"
+    },
+    {
+      "name": "route",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Router::route"
+    },
+    {
+      "name": "api_route",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Router::apiRoute"
+    },
+    {
+      "name": "dispatch_routes",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Router::dispatch"
+    },
+    {
+      "name": "route_path",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Request::current()->path"
+    },
+    {
+      "name": "input",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Request::current()->input"
+    },
+    {
+      "name": "wants_json",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Request::current()->wantsJson"
+    },
+    {
+      "name": "wants_partial",
+      "owner": "Http",
+      "removed": true
+    },
+    {
+      "name": "get",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Web::get"
+    },
+    {
+      "name": "post",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Web::post"
+    },
+    {
+      "name": "method",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Request::current()->method"
+    },
+    {
+      "name": "is_post",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Request::current()->isPost"
+    },
+    {
+      "name": "flash",
+      "owner": "Http",
+      "implementation": "TinyCat\\Http\\Session::flash"
+    },
+    {
+      "name": "auth",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Authentication::auth"
+    },
+    {
+      "name": "auth_check",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Authentication::authCheck"
+    },
+    {
+      "name": "auth_attempt",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Login::auth_attempt"
+    },
+    {
+      "name": "auth_login",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Authentication::authLogin"
+    },
+    {
+      "name": "auth_logout",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Authentication::authLogout"
+    },
+    {
+      "name": "require_auth",
+      "owner": "Http",
+      "implementation": "TinyCat\\Users\\Access::requireAuth"
+    },
+    {
+      "name": "require_role",
+      "owner": "Http",
+      "implementation": "TinyCat\\Users\\Access::require_role"
+    },
+    {
+      "name": "require_admin",
+      "owner": "Http",
+      "implementation": "TinyCat\\Users\\Access::require_admin"
+    },
+    {
+      "name": "auth_is",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Authentication::authIs"
+    },
+    {
+      "name": "auth_password",
+      "owner": "Users",
+      "implementation": "TinyCat\\Users\\Authentication::authPassword"
+    },
+    {
+      "name": "csrf_token",
+      "owner": "Http",
+      "implementation": "TinyCat\\Security\\Csrf::token"
+    },
+    {
+      "name": "csrf_field",
+      "owner": "Http",
+      "implementation": "TinyCat\\Security\\Csrf::field"
+    },
+    {
+      "name": "csrf_require",
+      "owner": "Http",
+      "implementation": "TinyCat\\Security\\Csrf::requireToken"
+    },
+    {
+      "name": "captcha_field",
+      "owner": "Security",
+      "implementation": "TinyCat\\Security\\Captcha::field"
+    },
+    {
+      "name": "captcha_check",
+      "owner": "Security",
+      "implementation": "TinyCat\\Security\\Captcha::check"
+    },
+    {
+      "name": "captcha_refresh",
+      "owner": "Security",
+      "removed": true
+    },
+    {
+      "name": "auth_login_captcha_required",
+      "owner": "Users",
+      "implementation": "TinyCat\\Security\\Captcha::loginRequired"
+    },
+    {
+      "name": "auth_login_failure",
+      "owner": "Users",
+      "implementation": "TinyCat\\Security\\Captcha::recordLoginFailure"
+    },
+    {
+      "name": "auth_login_success",
+      "owner": "Users",
+      "implementation": "TinyCat\\Security\\Captcha::clearLoginFailures"
+    }
+  ],
+  "existing_services": {
+    "Avatar.php": "Users/Avatar.php + Avatars.php",
+    "Notifications.php": "Notifications/Inbox.php + Delivery.php",
+    "Bots.php": "Bots/Importer.php + Sources.php + History.php + Tasks.php",
+    "BotAdmin.php": "Bots/Api.php + Resource.php + ViewData.php",
+    "UserRoles.php": "Users/Roles.php",
+    "StatusLinks.php": "Status/LinkParser.php + Links.php",
+    "StatusImage.php": "Status/ImageStorage.php + Images.php",
+    "LinkMetadata.php": "Status/Metadata.php (shared explicitly with Bots)",
+    "Captcha.php": "Security/Captcha.php",
+    "Cache.php": "Support/Cache.php",
+    "Minifier.php": "Support/Assets.php",
+    "SiteIdentity.php": "Site/Identity.php",
+    "Sitemap.php": "Site/Sitemap.php",
+    "PackageManager.php": "Updates/Manager.php + Package.php + MigrationRegistry.php"
+  },
+  "additional_operations": [
+    {
+      "owner": "Users",
+      "current": "Public/recovery.php",
+      "target": "POST /api/users/password-resets; POST /api/users/password-resets/confirm",
+      "notes": "Token stays in request body, never in a logged URL.",
+      "migrated": true
+    },
+    {
+      "owner": "Updates",
+      "current": "Public/admin/updates.php POST actions",
+      "target": "POST /api/updates/checks; POST /api/updates/installations",
+      "notes": "Admin access, CSRF, maintenance and update locks remain mandatory."
+    },
+    {
+      "owner": "Scheduler",
+      "current": "scheduled-tasks.php CLI + token-protected HTTP",
+      "target": "Existing scheduler entry point retained; admin token management moves under /api/scheduler/tokens",
+      "notes": "CLI/cron consumers remain compatible."
+    },
+    {
+      "owner": "Site",
+      "current": "Public/admin/index.php cache reset",
+      "target": "POST /api/site/cache-resets",
+      "notes": "Admin-only operation, not public site state."
+    }
+  ],
+  "unresolved_functions": [],
+  "completed_stages": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "removed_functions": [
+    "api_validated"
+  ]
+}

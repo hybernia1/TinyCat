@@ -6,10 +6,4 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-$notifications = is_array($notifications ?? null) ? $notifications : [];
-
-foreach ($notifications as $notification) {
-    echo part('notifications/item', [
-        'notification' => is_array($notification) ? $notification : [],
-    ]);
-}
+echo \TinyCat\Notifications\Views::items(['notifications' => (array) ($notifications ?? [])]);

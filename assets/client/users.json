@@ -1,0 +1,42 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "users/avatar",
+      "users/following-profile",
+      "users/auth-content"
+    ],
+    "scripts": [
+      "js/modules/users.js"
+    ],
+    "translation_sources": [
+      "assets/js/modules/users.js"
+    ],
+    "translation_prefixes": [
+      "common.",
+      "account.",
+      "auth.",
+      "privacy.",
+      "public."
+    ]
+  },
+  {
+    "routes": [
+      "/admin/users"
+    ],
+    "components": [
+      "users/avatar",
+      "users/list",
+      "users/filter-form",
+      "users/admin-fields"
+    ],
+    "scripts": [
+      "js/modules/users.js"
+    ],
+    "translation_sources": [
+      "assets/js/modules/users.js"
+    ]
+  }
+]

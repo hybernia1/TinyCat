@@ -1,0 +1,730 @@
+{
+  "ui/field": {
+    "tag": "label",
+    "attrs": {
+      "class": "field"
+    },
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "label"
+        },
+        "children": [
+          {
+            "get": "label"
+          }
+        ]
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "get": "attributes"
+        },
+        "children": [],
+        "when": {
+          "not": {
+            "get": "textarea"
+          }
+        }
+      },
+      {
+        "tag": "textarea",
+        "attrs": {
+          "get": "attributes"
+        },
+        "children": [
+          {
+            "get": "value"
+          }
+        ],
+        "when": {
+          "get": "textarea"
+        }
+      }
+    ]
+  },
+  "ui/select": {
+    "tag": "label",
+    "attrs": {
+      "class": "field"
+    },
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "label"
+        },
+        "children": [
+          {
+            "get": "label"
+          }
+        ]
+      },
+      {
+        "tag": "select",
+        "attrs": {
+          "get": "attributes"
+        },
+        "children": [
+          {
+            "each": {
+              "get": "choices"
+            },
+            "as": "choice",
+            "children": [
+              {
+                "tag": "option",
+                "attrs": {
+                  "value": {
+                    "get": "_key"
+                  },
+                  "selected": {
+                    "if": [
+                      {
+                        "eq": [
+                          {
+                            "string": {
+                              "get": "_key"
+                            }
+                          },
+                          {
+                            "string": {
+                              "get": "value"
+                            }
+                          }
+                        ]
+                      },
+                      true,
+                      null
+                    ]
+                  }
+                },
+                "children": [
+                  {
+                    "get": "choice"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/pagination": {
+    "tag": "nav",
+    "attrs": {
+      "class": "pagination",
+      "aria-label": {
+        "t": "common.pagination",
+        "values": {}
+      }
+    },
+    "children": [
+      {
+        "each": {
+          "get": "navigation.pages"
+        },
+        "as": "page",
+        "children": [
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "pagination-current",
+              "aria-current": "page"
+            },
+            "children": [
+              {
+                "get": "page.number"
+              }
+            ],
+            "when": {
+              "get": "page.current"
+            }
+          },
+          {
+            "tag": "a",
+            "attrs": {
+              "class": "btn btn-ghost btn-sm",
+              "href": {
+                "get": "page.url"
+              },
+              "data-ajax": "",
+              "data-ajax-target": {
+                "get": "target"
+              },
+              "data-history": {
+                "get": "page.history_url"
+              }
+            },
+            "children": [
+              {
+                "get": "page.number"
+              }
+            ],
+            "when": {
+              "not": {
+                "get": "page.current"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "when": {
+      "get": "navigation.visible"
+    }
+  },
+  "ui/api-action": {
+    "tag": "form",
+    "attrs": {
+      "class": "inline-flex",
+      "method": "post",
+      "action": {
+        "get": "url"
+      },
+      "data-api-method": {
+        "get": "method"
+      },
+      "data-ajax-form": "",
+      "data-ajax-target": {
+        "get": "target"
+      },
+      "data-confirm": {
+        "get": "confirm"
+      },
+      "data-confirm-variant": {
+        "if": [
+          {
+            "get": "confirm"
+          },
+          "danger",
+          null
+        ]
+      }
+    },
+    "children": [
+      {
+        "csrf": true
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "_method",
+          "value": {
+            "get": "method"
+          }
+        },
+        "children": []
+      },
+      {
+        "each": {
+          "get": "fields"
+        },
+        "as": "value",
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": {
+                "get": "_key"
+              },
+              "value": {
+                "get": "value"
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "tag": "button",
+        "attrs": {
+          "class": {
+            "or": [
+              {
+                "get": "button_class"
+              },
+              "btn btn-sm btn-ghost"
+            ]
+          },
+          "type": "submit",
+          "aria-label": {
+            "get": "label"
+          }
+        },
+        "children": [
+          {
+            "get": "label"
+          }
+        ]
+      }
+    ]
+  },
+  "ui/modal": {
+    "tag": "div",
+    "attrs": {
+      "get": "root_attributes"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "modal-backdrop"
+        },
+        "children": []
+      },
+      {
+        "tag": {
+          "if": [
+            {
+              "get": "form"
+            },
+            "form",
+            "div"
+          ]
+        },
+        "attrs": {
+          "get": "panel_attributes"
+        },
+        "children": [
+          {
+            "csrf": true,
+            "when": {
+              "get": "csrf"
+            }
+          },
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": "_method",
+              "value": {
+                "get": "hidden_method"
+              }
+            },
+            "children": [],
+            "when": {
+              "get": "hidden_method"
+            }
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "modal-header"
+            },
+            "children": [
+              {
+                "tag": "h2",
+                "attrs": {
+                  "class": "text-lg m-0 cluster gap-2",
+                  "id": {
+                    "get": "title_id"
+                  }
+                },
+                "children": [
+                  {
+                    "icon": {
+                      "get": "icon"
+                    },
+                    "when": {
+                      "get": "icon"
+                    }
+                  },
+                  {
+                    "get": "title"
+                  }
+                ]
+              },
+              {
+                "tag": "button",
+                "attrs": {
+                  "class": "btn btn-sm btn-ghost btn-icon",
+                  "type": "button",
+                  "data-modal-close": "",
+                  "aria-label": {
+                    "get": "close_label"
+                  }
+                },
+                "children": [
+                  {
+                    "slot": {
+                      "get": "close_icon"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": {
+                "or": [
+                  {
+                    "get": "body_class"
+                  },
+                  "modal-body"
+                ]
+              }
+            },
+            "children": [
+              {
+                "slot": {
+                  "get": "body"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "modal-footer"
+            },
+            "children": [
+              {
+                "slot": {
+                  "get": "footer"
+                }
+              }
+            ],
+            "when": {
+              "get": "has_footer"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "ui/captcha": {
+    "tag": "div",
+    "attrs": {
+      "class": "field captcha-provider",
+      "data-captcha": "",
+      "data-captcha-provider": {
+        "get": "config.provider"
+      },
+      "data-captcha-sitekey": {
+        "get": "config.site_key"
+      },
+      "data-captcha-context": {
+        "get": "config.context"
+      },
+      "data-captcha-theme": "auto"
+    },
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "label"
+        },
+        "children": [
+          {
+            "t": "security.captcha_label",
+            "values": {}
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "captcha-widget",
+          "data-captcha-widget": ""
+        },
+        "children": []
+      }
+    ],
+    "when": {
+      "get": "config.enabled"
+    }
+  },
+  "ui/search-form": {
+    "tag": "form",
+    "attrs": {
+      "class": "admin-search-form",
+      "method": "get",
+      "action": {
+        "get": "url"
+      },
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": {
+        "get": "target"
+      },
+      "data-history": {
+        "get": "history"
+      }
+    },
+    "children": [
+      {
+        "each": {
+          "get": "filters"
+        },
+        "as": "value",
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": {
+                "get": "_key"
+              },
+              "value": {
+                "get": "value"
+              }
+            },
+            "children": [],
+            "when": {
+              "not": {
+                "eq": [
+                  {
+                    "get": "_key"
+                  },
+                  "q"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "per_page",
+          "value": {
+            "get": "pagination.per_page"
+          }
+        },
+        "children": []
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "input-icon"
+        },
+        "children": [
+          {
+            "icon": "search"
+          },
+          {
+            "tag": "input",
+            "attrs": {
+              "class": "input",
+              "type": "search",
+              "name": "q",
+              "value": {
+                "get": "filters.q"
+              },
+              "aria-label": {
+                "t": "common.search",
+                "values": {}
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "tag": "button",
+        "attrs": {
+          "class": "btn btn-secondary admin-search-submit",
+          "type": "submit"
+        },
+        "children": [
+          {
+            "icon": "search"
+          },
+          {
+            "tag": "span",
+            "attrs": {},
+            "children": [
+              {
+                "t": "common.search",
+                "values": {}
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/per-page": {
+    "tag": "form",
+    "attrs": {
+      "class": "admin-per-page-form",
+      "method": "get",
+      "action": {
+        "get": "url"
+      },
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": {
+        "get": "target"
+      },
+      "data-history": {
+        "get": "history"
+      }
+    },
+    "children": [
+      {
+        "each": {
+          "get": "filters"
+        },
+        "as": "value",
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": {
+                "get": "_key"
+              },
+              "value": {
+                "get": "value"
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "page",
+          "value": "1"
+        },
+        "children": []
+      },
+      {
+        "tag": "label",
+        "attrs": {
+          "class": "field-inline"
+        },
+        "children": [
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "label"
+            },
+            "children": [
+              {
+                "t": "common.per_page",
+                "values": {}
+              }
+            ]
+          },
+          {
+            "tag": "select",
+            "attrs": {
+              "class": "select select-sm",
+              "name": "per_page",
+              "data-submit-on-change": ""
+            },
+            "children": [
+              {
+                "each": {
+                  "get": "choices"
+                },
+                "as": "choice",
+                "children": [
+                  {
+                    "tag": "option",
+                    "attrs": {
+                      "value": {
+                        "get": "_key"
+                      },
+                      "selected": {
+                        "if": [
+                          {
+                            "eq": [
+                              {
+                                "string": {
+                                  "get": "_key"
+                                }
+                              },
+                              {
+                                "string": {
+                                  "get": "pagination.per_page"
+                                }
+                              }
+                            ]
+                          },
+                          true,
+                          null
+                        ]
+                      }
+                    },
+                    "children": [
+                      {
+                        "get": "choice"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/list-toolbar": {
+    "tag": "div",
+    "attrs": {
+      "class": "admin-list-toolbar"
+    },
+    "children": [
+      {
+        "component": "ui/search-form",
+        "data": {
+          "url": {
+            "get": "url"
+          },
+          "target": {
+            "get": "target"
+          },
+          "history": {
+            "get": "history"
+          },
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          }
+        }
+      },
+      {
+        "component": "ui/per-page",
+        "data": {
+          "url": {
+            "get": "url"
+          },
+          "target": {
+            "get": "target"
+          },
+          "history": {
+            "get": "history"
+          },
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          },
+          "choices": {
+            "10": "10",
+            "25": "25",
+            "50": "50",
+            "100": "100"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -103,25 +103,19 @@ try {
 
     $root = dirname(__DIR__, 2);
     define('TINYCAT', true);
-    foreach ([
-        'autoload.php', 'Core.php', 'Captcha.php', 'Cache.php', 'Minifier.php', 'Avatar.php',
-        'StatusImage.php', 'SiteIdentity.php', 'StatusLinks.php', 'LinkMetadata.php',
-        'Notifications.php', 'UserRoles.php', 'functions.php',
-    ] as $file) {
-        require_once $root . '/App/' . $file;
-    }
+    require_once $root . '/App/autoload.php';
 
-    (new ReflectionProperty(Core::class, 'booted'))->setValue(null, true);
-    (new ReflectionProperty(Core::class, 'config'))->setValue(null, [
+    (new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
+    (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, [
         'app' => ['url' => 'http://localhost'],
         'database' => ['driver' => 'mysql'],
         'install' => ['complete' => true, 'locale' => 'en'],
         'cache' => ['driver' => 'filesystem', 'prefix' => 'scale_worker_'],
         'security' => ['captcha' => ['enabled' => false]],
     ]);
-    $settings = new ReflectionProperty(Core::class, 'settings');
+    $settings = new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings');
     $settings->setValue(null, []);
-    Core::setDb($database);
+    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     $settings->setValue(null, []);
 
     $_GET = $_POST = $_COOKIE = $_FILES = [];
@@ -140,48 +134,48 @@ try {
 
     $exercise = match ($scenario) {
         'feed' => static function (): void {
-            public_status_items_cursor(24);
+            \TinyCat\Status\Feed::public_status_items_cursor(24);
         },
         'status' => static function () use ($statusId): void {
-            $item = public_status_item($statusId);
+            $item = \TinyCat\Status\Feed::public_status_item($statusId);
             if ($item === null) {
                 throw new RuntimeException('Representative status was not found.');
             }
-            status_preload_feed([$item]);
-            status_comments($statusId);
+            \TinyCat\Status\Feed::status_preload_feed([$item]);
+            \TinyCat\Status\Comments::status_comments($statusId);
         },
         'tag' => static function (): void {
-            public_status_items_by_tag('benchmark', 24);
+            \TinyCat\Status\Feed::public_status_items_by_tag('benchmark', 24);
         },
         'author' => static function () use ($authorId): void {
-            public_author_find($authorId);
-            public_status_items_by_author_cursor($authorId, 24);
-            author_follow_counts($authorId);
-            author_activity_stats($authorId);
+            \TinyCat\Users\Repository::public_author_find($authorId);
+            \TinyCat\Status\Feed::public_status_items_by_author_cursor($authorId, 24);
+            \TinyCat\Users\Following::author_follow_counts($authorId);
+            \TinyCat\Users\Repository::author_activity_stats($authorId);
         },
         'search' => static function (): void {
-            public_search_results('performance', 12);
+            \TinyCat\Search\Queries::public_search_results('performance', 12);
         },
         'write' => static function () use ($authorId, &$writeSequence): void {
             $writeSequence++;
             $created = date('Y-m-d H:i:s');
-            $contentId = (int) insert('content', [
+            $contentId = (int) \TinyCat\Database\Connection::insert('content', [
                 'body' => 'Scale benchmark write ' . $writeSequence . ' #benchmark #performance',
                 'author_id' => $authorId,
                 'published_at' => $created,
             ]);
-            status_sync_tags($contentId, ['benchmark', 'performance']);
-            insert('content_comments', [
+            \TinyCat\Status\Tags::status_sync_tags($contentId, ['benchmark', 'performance']);
+            \TinyCat\Database\Connection::insert('content_comments', [
                 'content_id' => $contentId,
                 'parent_id' => null,
                 'user_id' => $authorId,
                 'body' => 'Scale benchmark write comment.',
                 'created_at' => $created,
             ]);
-            status_delete_content($contentId);
+            \TinyCat\Status\Posts::status_delete_content($contentId);
         },
         'maintenance' => static function (): void {
-            cleanup_task_run('orphan_terms', 500);
+            \TinyCat\Scheduler\Cleanup::cleanup_task_run('orphan_terms', 500);
         },
     };
 

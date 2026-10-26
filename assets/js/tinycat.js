@@ -115,19 +115,6 @@
     return input ? input.value : "";
   }
 
-  function normalizeBody(body, headers) {
-    if (!body || body instanceof FormData || body instanceof Blob || typeof body === "string") {
-      return body;
-    }
-
-    if (body instanceof URLSearchParams) {
-      return body;
-    }
-
-    headers["Content-Type"] = headers["Content-Type"] || "application/json";
-    return JSON.stringify(body);
-  }
-
   function compactUrl(url) {
     if (url.origin === window.location.origin) {
       return url.pathname + url.search + url.hash;
@@ -197,16 +184,6 @@
     return compactUrl(current);
   }
 
-  async function parseResponse(response) {
-    var type = response.headers.get("content-type") || "";
-
-    if (type.indexOf("application/json") !== -1) {
-      return response.json();
-    }
-
-    return response.text();
-  }
-
   function getModal(target) {
     if (!target) {
       return null;
@@ -224,11 +201,9 @@
   }
 
   function uiText(name, fallback) {
-    var body = document.body;
-    var key = "ui" + name.charAt(0).toUpperCase() + name.slice(1);
-    var value = body && body.dataset ? body.dataset[key] : "";
-
-    return value || fallback;
+    var keys = { close: "common.close", cancel: "common.cancel", confirm: "common.confirm", confirmTitle: "common.confirm_action", requestFailed: "common.request_failed" };
+    var key = keys[name];
+    return key && TinyCat.i18n.has(key) ? TinyCat.i18n.t(key) : fallback;
   }
 
   function isFocusableVisible(element) {
@@ -323,12 +298,12 @@
     return data;
   }
 
-  function resultErrors(data) {
-    if (!data || typeof data !== "object") {
+  function resultErrors(error) {
+    if (!error || typeof error !== "object") {
       return null;
     }
 
-    return data.errors && typeof data.errors === "object" ? data.errors : null;
+    return TinyCat.api.errors(error);
   }
 
   function resultErrorDetails(data) {
@@ -339,137 +314,14 @@
 
   function refreshFormCaptcha(form, data) {
     var details = resultErrorDetails(data);
-    var captchaHtml = details.captcha_html || "";
-    var current = form ? qs("[data-captcha]", form) : null;
-    var template;
-    var replacement;
-
-    if (!captchaHtml) {
-      return;
-    }
-
-    template = htmlTemplate(captchaHtml);
-    replacement = qs("[data-captcha]", template.content);
-
-    if (!replacement) {
-      return;
-    }
-
-    if (!current) {
-      current = qs('button[type="submit"]', form);
-
-      if (!current || !current.parentNode) {
-        return;
-      }
-
-      current.parentNode.insertBefore(replacement, current);
-      hydrateDynamic(form);
-      return;
-    }
-
-    if (!current.parentNode) {
-      return;
-    }
-
-    current.parentNode.replaceChild(replacement, current);
-    hydrateDynamic(form);
+    if (details.captcha) { TinyCat.ui.captcha(form, details.captcha); }
   }
 
-  function unsafeUrl(value) {
-    var url = String(value || "").trim().replace(/[\u0000-\u001F\u007F\s]+/g, "").toLowerCase();
 
-    return url.indexOf("javascript:") === 0
-      || url.indexOf("vbscript:") === 0
-      || url.indexOf("data:text/html") === 0;
-  }
 
-  function sanitizeHtml(root) {
-    if (!root) {
-      return root;
-    }
 
-    qsa("script, iframe, object, embed, base, meta", root).forEach(function (node) {
-      node.remove();
-    });
 
-    qsa("*", root).forEach(function (node) {
-      Array.prototype.slice.call(node.attributes || []).forEach(function (attr) {
-        var name = attr.name.toLowerCase();
-        var value = attr.value || "";
 
-        if (name.indexOf("on") === 0 || name === "srcdoc") {
-          node.removeAttribute(attr.name);
-          return;
-        }
-
-        if (["href", "src", "action", "formaction", "xlink:href"].indexOf(name) !== -1 && unsafeUrl(value)) {
-          node.removeAttribute(attr.name);
-        }
-      });
-    });
-
-    return root;
-  }
-
-  function htmlTemplate(html) {
-    var template = document.createElement("template");
-
-    template.innerHTML = String(html || "");
-    sanitizeHtml(template.content);
-
-    return template;
-  }
-
-  function replaceHtml(target, html) {
-    var template;
-
-    if (!target) {
-      return;
-    }
-
-    template = htmlTemplate(html);
-    target.innerHTML = "";
-    target.appendChild(template.content);
-  }
-
-  function renderTarget(target, data) {
-    if (!target) {
-      return;
-    }
-
-    var html = unwrapResult(data);
-
-    if (html && typeof html === "object") {
-      html = html.html || html.content || html.view || "";
-    }
-
-    if (typeof html === "string") {
-      replaceHtml(target, html);
-    }
-  }
-
-  function renderTargets(data) {
-    var payload = unwrapResult(data);
-    var targets = null;
-
-    if (payload && typeof payload === "object" && payload.targets) {
-      targets = payload.targets;
-    } else if (data && typeof data === "object" && data.targets) {
-      targets = data.targets;
-    }
-
-    if (!targets || typeof targets !== "object") {
-      return;
-    }
-
-    Object.keys(targets).forEach(function (selector) {
-      var target = qs(selector);
-
-      if (target) {
-        replaceHtml(target, targets[selector] || "");
-      }
-    });
-  }
 
   function clearErrors(form) {
     qsa('[aria-invalid="true"]', form).forEach(function (field) {
@@ -558,7 +410,7 @@
         input.insertAdjacentElement("afterend", error);
       }
 
-      if (!firstInvalid && isFocusableVisible(input)) {
+      if (!firstInvalid && input.type !== "hidden" && !input.hidden && !input.closest('[hidden], [aria-hidden="true"]')) {
         firstInvalid = input;
       }
     });
@@ -591,6 +443,7 @@
       }
 
       if (value instanceof File) {
+        if (value.name === "" && value.size === 0) { return; }
         values.push(key + "=" + value.name + ":" + value.size + ":" + value.lastModified);
         return;
       }
@@ -946,6 +799,19 @@
   }
 
   function hydrateDynamic(root) {
+    if (TinyCat.users && TinyCat.users.dialogs) {
+      qsa("[data-users-view]", root || document).forEach(function (view) {
+        if (view.dataset.usersReady === "true") { return; }
+        view.dataset.usersReady = "true";
+        var state = JSON.parse(view.dataset.usersState);
+        TinyCat.users.dialogs(view, state, state.pagination || {});
+      });
+    }
+    if (TinyCat.bots && TinyCat.bots.bindSources) {
+      qsa("[data-bot-sources-view]", root || document).forEach(function (view) {
+        TinyCat.bots.bindSources(view, JSON.parse(view.dataset.botSourcesState));
+      });
+    }
     initUserAvatarImages(root || document);
     qsa("[data-captcha]", root || document).forEach(initCaptchaRoot);
     qsa("[data-client-image-input]", root || document).forEach(initClientImageInput);
@@ -1531,8 +1397,10 @@
       }
     }
 
-    renderTarget(target, payload);
-    renderTargets(data);
+    var handled = [TinyCat.users, TinyCat.notifications, TinyCat.bots, TinyCat.moderation, TinyCat.scheduler].some(function (module) { return module && module.result(source, data, target); });
+    var sourceUrl = new URL(source.dataset.url || source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
+    if (sourceUrl.pathname === "/api/statuses" && target && target.matches(".home-feed-section")) { TinyCat.status.feed(target, data); handled = true; }
+
     hydrateDynamic(target || document);
     resetForm(source);
     markFormClean(source);
@@ -1620,32 +1488,8 @@
     return TinyCat.confirm(confirmOptions(trigger));
   }
 
-  TinyCat.request = async function (url, options) {
-    var settings = options || {};
-    var headers = Object.assign({
-      "Accept": "application/json, text/html;q=0.9, */*;q=0.8",
-      "X-Requested-With": "XMLHttpRequest"
-    }, settings.headers || {});
-    var csrf = getCsrfToken();
-
-    if (csrf && !headers["X-CSRF-Token"]) {
-      headers["X-CSRF-Token"] = csrf;
-    }
-
-    var response = await fetch(url, Object.assign({}, settings, {
-      headers: headers,
-      body: normalizeBody(settings.body, headers)
-    }));
-    var data = await parseResponse(response);
-
-    if (!response.ok) {
-      var error = new Error(response.statusText || uiText("requestFailed", "Request failed"));
-      error.response = response;
-      error.data = data;
-      throw error;
-    }
-
-    return data;
+  TinyCat.request = function (url, options) {
+    return TinyCat.api.request(url, options);
   };
 
   function modalUsesVisualViewport(modal) {
@@ -1881,11 +1725,9 @@
 
     data = await TinyCat.request(url, { method: "GET" });
     payload = unwrapResult(data);
-    html = payload && typeof payload === "object" ? (payload.html || "") : "";
-
-    if (!html) {
-      throw new Error("Modal content is empty.");
-    }
+    var resourceModal = (TinyCat.users && TinyCat.users.modal(new URL(url, window.location.href), data, target))
+      || (TinyCat.status && TinyCat.status.modal(new URL(url, window.location.href), data, target));
+    if (!resourceModal) { throw new Error("Unsupported modal resource."); }
 
     if (modal) {
       modalIndex = modalStack.indexOf(modal);
@@ -1902,8 +1744,7 @@
       document.body.classList.toggle("has-modal", activeModal !== null);
     }
 
-    template = htmlTemplate(html);
-    (host || document.body).appendChild(template.content);
+    (host || document.body).appendChild(resourceModal);
     modal = getModal(target);
 
     if (!modal) {
@@ -2196,19 +2037,11 @@
 
   TinyCat.confirm = function (options) {
     var settings = typeof options === "string" ? { message: options } : (options || {});
-    var modalId;
-    var modal = createElement("div", "modal");
-    var backdrop = createElement("div", "modal-backdrop");
-    var panel = createElement("div", "modal-panel modal-confirm-panel");
-    var header = createElement("div", "modal-header");
-    var title = createElement("h2", "modal-title text-lg m-0", settings.title || uiText("confirmTitle", "Confirm action"));
-    var close = createElement("button", "btn btn-ghost btn-icon", "×");
-    var body = createElement("div", "modal-body");
+    var modal, backdrop, close;
     var message = createElement("p", "modal-confirm-message", settings.message || "");
-    var footer = createElement("div", "modal-footer");
+    var footer = document.createDocumentFragment();
     var cancel = createElement("button", "btn btn-secondary", settings.cancelLabel || uiText("cancel", "Cancel"));
     var confirm = createElement("button", "btn " + (settings.variant === "danger" ? "btn-danger" : "btn-primary"), settings.confirmLabel || uiText("confirm", "Confirm"));
-
     return new Promise(function (resolve) {
       function finish(value) {
         document.removeEventListener("keydown", onKeydown, true);
@@ -2225,39 +2058,20 @@
         }
       }
 
-      modal.setAttribute("aria-hidden", "true");
-      modal.setAttribute("role", "dialog");
-      modal.setAttribute("aria-modal", "true");
       modalCounterId += 1;
-      modalId = "confirm-modal-" + modalCounterId;
-      title.id = modalId + "-title";
+      var modalId = "confirm-modal-" + modalCounterId;
       message.id = modalId + "-description";
-      modal.setAttribute("aria-labelledby", title.id);
+      cancel.type = "button"; confirm.type = "button";
+      footer.appendChild(cancel); footer.appendChild(confirm);
+      modal = TinyCat.dialog.create({ id: modalId, title: settings.title || uiText("confirmTitle", "Confirm action"), closeLabel: uiText("close", "Close"), closeIcon: createSvgIcon("close"), content: message, footer: footer, panelClass: "modal-confirm-panel" });
       modal.setAttribute("aria-describedby", message.id);
-
-      close.type = "button";
-      close.setAttribute("aria-label", uiText("close", "Close"));
-      cancel.type = "button";
-      confirm.type = "button";
-
-      header.appendChild(title);
-      header.appendChild(close);
-      body.appendChild(message);
-      footer.appendChild(cancel);
-      footer.appendChild(confirm);
-      panel.appendChild(header);
-      panel.appendChild(body);
-      panel.appendChild(footer);
-      modal.appendChild(backdrop);
-      modal.appendChild(panel);
-      document.body.appendChild(modal);
-
+      backdrop = qs(".modal-backdrop", modal); close = qs("[data-modal-close]", modal);
       backdrop.addEventListener("click", function (event) {
         event.preventDefault();
         event.stopPropagation();
         finish(false);
       });
-      close.addEventListener("click", function () { finish(false); });
+      close.addEventListener("click", function (event) { event.stopPropagation(); finish(false); });
       cancel.addEventListener("click", function () { finish(false); });
       confirm.addEventListener("click", function () { finish(true); });
       document.addEventListener("keydown", onKeydown, true);
@@ -2347,15 +2161,18 @@
       }
 
       event.preventDefault();
+      if (form.dataset.apiBusy === "true") { return; }
+      form.dataset.apiBusy = "true";
 
       if (form.dataset.confirm && !(await confirmAction(form))) {
+        delete form.dataset.apiBusy;
         return;
       }
 
       clearErrors(form);
 
       var target = form.dataset.ajaxTarget ? qs(form.dataset.ajaxTarget) : null;
-      var method = (form.getAttribute("method") || "POST").toUpperCase();
+      var method = (form.dataset.apiMethod || form.getAttribute("method") || "POST").toUpperCase();
       var action = form.dataset.ajaxAction || form.getAttribute("action") || window.location.href;
       var body = new FormData(form);
       var headers = {};
@@ -2363,14 +2180,8 @@
       var url = action;
       var nextHistory = "";
       var requestOptions;
-
-      if (target) {
-        headers["X-TinyCat-View"] = "partial";
-      }
-
-      if (override) {
-        headers["X-HTTP-Method-Override"] = String(override).toUpperCase();
-      }
+      method = String(form.dataset.apiMethod || override || method).toUpperCase();
+      body.delete("_method");
 
       if (method === "GET") {
         url = urlWithFormData(action, body, []);
@@ -2387,14 +2198,17 @@
         requestOptions.body = body;
       }
 
+      var generation = target ? (Number(target.dataset.apiGeneration || 0) + 1) : 0;
+      if (target) { target.dataset.apiGeneration = String(generation); }
       try {
         setLoading(form, true);
         emit(form, "tinycat:before", { target: target });
         var data = await TinyCat.request(url, requestOptions);
+        if (target && Number(target.dataset.apiGeneration) !== generation) { return; }
         handleResult(form, data, target);
         pushHistory(nextHistory);
       } catch (error) {
-        var errors = resultErrors(error.data);
+        var errors = resultErrors(error);
 
         refreshFormCaptcha(form, error.data);
 
@@ -2405,9 +2219,10 @@
         TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
         emit(form, "tinycat:error", { error: error, target: target });
       } finally {
+        delete form.dataset.apiBusy;
         setLoading(form, false);
 
-        if (invalidField && invalidField.isConnected && invalidField.focus) {
+        if (invalidField && invalidField.isConnected && invalidField.focus && isFocusableVisible(invalidField)) {
           invalidField.focus();
         }
       }
@@ -2441,14 +2256,14 @@
         return;
       }
 
-      if (target) {
-        headers["X-TinyCat-View"] = "partial";
-      }
 
+      var generation = target ? (Number(target.dataset.apiGeneration || 0) + 1) : 0;
+      if (target) { target.dataset.apiGeneration = String(generation); }
       try {
         setLoading(link, true);
         emit(link, "tinycat:before", { target: target });
         var data = await TinyCat.request(url, { method: method, headers: headers });
+        if (target && Number(target.dataset.apiGeneration) !== generation) { return; }
         handleResult(link, data, target);
         pushHistory(nextHistory);
       } catch (error) {
@@ -2668,7 +2483,7 @@
       text = text.slice(1);
     }
 
-    return text.toLowerCase().replace(/[^a-z0-9_]+/g, "").slice(0, 32);
+    return Array.from(text.replace(/[^\p{L}\p{N}\p{M}_.-]+/gu, "")).slice(0, 32).join("");
   }
 
   function statusEditorSource(root) {
@@ -3382,8 +3197,8 @@
 
   function openGlobalSearchCaptcha(root, error) {
     var details = searchCaptchaDetails(error);
-    var captchaHtml = details.captcha_html || "";
-    var verifyUrl = details.verify_url || "/api/search-captcha";
+    var captcha = details.captcha;
+    var verifyUrl = details.verify_url || "/api/security/challenges/search";
     var message = (error && error.data && error.data.message) || root.dataset.searchCaptchaRequired || "Please complete the security check.";
     var modal = qs("#global-search-captcha-modal");
     var panel;
@@ -3393,7 +3208,7 @@
     var submit;
     var title;
 
-    if (!captchaHtml) {
+    if (!captcha || !captcha.enabled) {
       globalSearchShowMessage(root, message);
       return;
     }
@@ -3437,7 +3252,7 @@
       form.action = verifyUrl;
       form.method = "post";
       form.appendChild(body);
-      form.appendChild(htmlTemplate(captchaHtml).content);
+      TinyCat.ui.captcha(form, captcha);
       form.appendChild(footer);
       form.addEventListener("submit", function (event) {
         event.preventDefault();
@@ -3458,7 +3273,7 @@
           .catch(function (submitError) {
             var submitDetails = searchCaptchaDetails(submitError);
 
-            if (submitDetails.captcha_html) {
+            if (submitDetails.captcha) {
               openGlobalSearchCaptcha(root, submitError);
               return;
             }
@@ -3782,19 +3597,7 @@
       TinyCat.request(url, { method: "GET", cache: "no-store" })
         .then(function (data) {
           var payload = unwrapResult(data) || {};
-          var template;
-          var next;
-
-          if (!payload.html) {
-            return;
-          }
-
-          template = htmlTemplate(payload.html);
-          next = template.content.firstElementChild;
-
-          if (!next) {
-            return;
-          }
+          var next = TinyCat.site.sidebar(payload, url);
 
           if (desktopMedia && !desktopMedia.matches) {
             return;
@@ -4096,9 +3899,12 @@
   }
 
   function statusFeedPayload(data) {
-    var payload = unwrapResult(data);
-
-    return payload && typeof payload === "object" ? payload : {};
+    var payload = Object.assign({}, unwrapResult(data) || {});
+    var pagination = TinyCat.ui.pagination(data);
+    payload.next_url = pagination.next_url || "";
+    payload.done = pagination.done;
+    payload.count = Array.isArray(payload.items) ? payload.items.length : 0;
+    return payload;
   }
 
   function statusFeedTarget(control) {
@@ -4347,7 +4153,7 @@
     try {
       data = await TinyCat.request(url, { method: "GET", cache: "no-store" });
       payload = statusFeedPayload(data);
-      template = htmlTemplate(payload.html || "");
+      template = TinyCat.status.fragment(payload.items);
 
       if (!statusFeedRequestActive(target, request)) {
         return;
@@ -4457,8 +4263,8 @@
         return;
       }
 
-      if (payload.html) {
-        template = htmlTemplate(payload.html || "");
+      if (Array.isArray(payload.items)) {
+        template = target.id === "notifications-list" ? { content: TinyCat.notifications.items(payload.items, false) } : TinyCat.status.fragment(payload.items);
         appendStatusFeedItems(target, template);
         pruneStatusFeed(target, url);
         hydrateDynamic(target);
@@ -4516,7 +4322,8 @@
     try {
       data = await TinyCat.request(url, { method: "GET" });
       payload = data && data.data ? data.data : data;
-      template = htmlTemplate(String((payload && payload.items_html) || ""));
+      payload = Object.assign({}, payload, TinyCat.ui.pagination(data));
+      template = { content: TinyCat.users.profiles(payload.items) };
       grid.appendChild(template.content);
 
       if (payload && payload.next_url && payload.done !== true) {
@@ -4533,28 +4340,7 @@
     }
   }
 
-  function replaceFromDocument(selector, doc) {
-    var current = qs(selector);
-    var next = qs(selector, doc);
-    var imported;
 
-    if (!current || !next) {
-      return false;
-    }
-
-    imported = document.importNode(next, true);
-    current.replaceWith(imported);
-    hydrateDynamic(imported);
-
-    return true;
-  }
-
-  function replaceStatusRegion(doc) {
-    return replaceFromDocument(".profile-layout", doc)
-      || replaceFromDocument(".public-layout", doc)
-      || replaceFromDocument(".home-feed-section", doc)
-      || replaceFromDocument(".profile-main", doc);
-  }
 
   function modalScrollElement(modal) {
     var body = qs(".modal-body", modal);
@@ -4623,60 +4409,6 @@
     }
   }
 
-  async function refreshOpenStatusModal(modal, url, scrollState) {
-    var data;
-    var payload;
-    var html;
-    var template;
-    var nextModal;
-    var currentPanel;
-    var nextPanel;
-    var importedPanel;
-    var labelledBy;
-
-    if (!modal || !url) {
-      restoreModalScroll(modal, scrollState);
-      return false;
-    }
-
-    data = await TinyCat.request(url, { method: "GET" });
-    payload = unwrapResult(data);
-    html = payload && typeof payload === "object" ? (payload.html || "") : "";
-
-    if (!html) {
-      return false;
-    }
-
-    template = htmlTemplate(html);
-    nextModal = qs(".modal", template.content);
-    currentPanel = qs(".modal-panel", modal);
-    nextPanel = nextModal ? qs(".modal-panel", nextModal) : null;
-
-    if (!nextModal || !currentPanel || !nextPanel) {
-      return false;
-    }
-
-    modal.className = nextModal.className;
-    modal.setAttribute("role", nextModal.getAttribute("role") || "dialog");
-    modal.setAttribute("aria-modal", nextModal.getAttribute("aria-modal") || "true");
-    labelledBy = nextModal.getAttribute("aria-labelledby") || "";
-    if (labelledBy) {
-      modal.setAttribute("aria-labelledby", labelledBy);
-    } else {
-      modal.removeAttribute("aria-labelledby");
-    }
-    modal.setAttribute("aria-hidden", "false");
-    modal.dataset.open = "true";
-    modal.dataset.remoteLoaded = "true";
-    modal.dataset.modalUrl = url;
-
-    importedPanel = document.importNode(nextPanel, true);
-    currentPanel.replaceWith(importedPanel);
-    hydrateDynamic(modal);
-    restoreModalScroll(modal, scrollState);
-
-    return true;
-  }
 
   function statusCardId(card) {
     var match = card && card.id ? /^status-(\d+)$/.exec(card.id) : null;
@@ -4774,11 +4506,6 @@
     });
   }
 
-  function elementFromHtml(html) {
-    var template = htmlTemplate(String(html || "").trim());
-
-    return template.content.firstElementChild;
-  }
 
   function ensureCommentReplies(parent) {
     var list = qs("[data-comment-replies]", parent);
@@ -4803,32 +4530,6 @@
     return list;
   }
 
-  function appendStatusComment(comment, scope) {
-    var contentId = comment && comment.content_id ? String(comment.content_id) : "";
-    var parentId = comment && comment.parent_id ? String(comment.parent_id) : "";
-    var node = elementFromHtml(comment ? comment.html : "");
-    var root = scope || document;
-    var list;
-    var parent;
-
-    if (!node || !contentId) {
-      return;
-    }
-
-    if (parentId && parentId !== "0") {
-      parent = qs("[data-comment-id]" + dataSelector("data-comment-id", parentId), root);
-      list = parent ? ensureCommentReplies(parent) : null;
-    } else {
-      list = qs("[data-status-comment-list]" + dataSelector("data-status-id", contentId), root);
-    }
-
-    if (!list) {
-      return;
-    }
-
-    list.appendChild(node);
-    hydrateDynamic(node);
-  }
 
   function removeStatusComment(commentId) {
     var id = commentId ? String(commentId) : "";
@@ -4842,19 +4543,6 @@
     });
   }
 
-  function updateStatusComment(comment) {
-    var id = comment && comment.comment_id ? String(comment.comment_id) : "";
-    var html = comment && comment.body_html ? String(comment.body_html) : "";
-
-    if (!id || !html) {
-      return;
-    }
-
-    qsa("[data-comment-id]" + dataSelector("data-comment-id", id) + " .status-comment-body").forEach(function (body) {
-      body.innerHTML = "";
-      body.appendChild(htmlTemplate(html).content);
-    });
-  }
 
   function statusFeedScope(form) {
     return form
@@ -4868,43 +4556,7 @@
     return (scope ? qs("[data-status-feed]", scope) : null) || qs("[data-status-feed]");
   }
 
-  function prependStatusCard(form, html) {
-    var target = statusFeedForForm(form);
-    var node = elementFromHtml(html);
-    var spacer;
 
-    if (!target || !node) {
-      return;
-    }
-
-    qsa("[data-status-empty]", statusFeedScope(form) || document).forEach(function (empty) {
-      empty.remove();
-    });
-
-    spacer = qs("[data-status-feed-spacer]", target);
-
-    if (spacer && spacer.nextSibling) {
-      target.insertBefore(node, spacer.nextSibling);
-    } else {
-      target.insertBefore(node, target.firstChild);
-    }
-
-    hydrateDynamic(node);
-  }
-
-  function replaceStatusCard(form, html) {
-    var current = statusFormCard(form);
-    var node = elementFromHtml(html);
-
-    if (!current || !node) {
-      return false;
-    }
-
-    current.replaceWith(node);
-    hydrateDynamic(node);
-
-    return true;
-  }
 
   function removeStatusCard(statusId, form) {
     var id = statusId ? String(statusId) : "";
@@ -4979,190 +4631,34 @@
   }
 
   function handleStatusJsonResponse(form, data) {
-    var payload = unwrapResult(data);
-    var action = payload && payload.action ? String(payload.action) : statusFormAction(form);
-    var modal = form ? form.closest(".modal") : null;
-    var messageType = (payload && payload.type) || (data && data.type) || (data && data.meta && data.meta.type) || "success";
-
-    if (data && data.message) {
-      TinyCat.toast(data.message, data.type || (data.ok === false ? "danger" : "success"));
-    } else if (payload && payload.message) {
-      TinyCat.toast(payload.message, messageType);
-    }
-
-    if (payload && payload.status) {
-      updateStatusSummary(payload.status);
-    }
-
-    if (payload && payload.comment_like) {
-      updateCommentLike(payload.comment_like);
-    }
-
-    if (payload && payload.comment) {
-      appendStatusComment(payload.comment, form.closest(".modal") || document);
+    var payload = unwrapResult(data), action = payload.action || statusFormAction(form), modal = form.closest(".modal");
+    if (data.message) { TinyCat.toast(data.message, "success"); }
+    if (payload.status) { updateStatusSummary(payload.status); }
+    if (payload.comment_like) { updateCommentLike(payload.comment_like); }
+    if (payload.comment) {
+      var scope = modal || document;
+      var list = payload.comment.parent_id ? qs('[data-comment-replies][data-comment-id="' + Number(payload.comment.parent_id) + '"]', scope) : qs('[data-status-comment-list][data-status-id="' + Number(payload.comment.content_id) + '"]', scope);
+      if (!list && payload.comment.parent_id) { var parent = qs('.status-comment[data-comment-id="' + Number(payload.comment.parent_id) + '"] .status-comment-main', scope); if (parent) { list = TinyCat.dom.element("div", { "class": "status-comment-replies", "data-comment-replies": "", "data-comment-id": payload.comment.parent_id }); parent.appendChild(list); } }
+      if (list) { list.appendChild(TinyCat.status.comment(payload.comment, modal ? "modal" : "", payload.comment.author)); hydrateDynamic(list); }
       resetStatusCommentForm(form);
     }
-
-    if (payload && payload.updated_comment) {
-      updateStatusComment(payload.updated_comment);
+    if (payload.updated_comment) {
+      qsa('.status-comment[data-comment-id="' + Number(payload.updated_comment.id) + '"]').forEach(function (node) {
+        var body = qs(".status-comment-body", node); if (body) { body.classList.add("is-resource-text"); body.replaceChildren(TinyCat.status.segments(payload.updated_comment.segments)); }
+      });
     }
-
-    if (payload && payload.card_html) {
-      if (action === "create") {
-        prependStatusCard(form, payload.card_html);
-        resetStatusCreateForm(form);
-      } else {
-        replaceStatusCard(form, payload.card_html);
-      }
+    if (payload.item) {
+      if (action === "create") { var feed = statusFeedForForm(form) || qs("[data-status-feed]"); if (feed) { feed.prepend(TinyCat.status.card(payload.item)); hydrateDynamic(feed); } resetStatusCreateForm(form); }
+      else { qsa('.status-card[data-status-id="' + Number(payload.item.id) + '"]').forEach(function (card) { var inModal = Boolean(card.closest(".status-post-modal")); if (activeModal) { detachModalFromCard(activeModal, card); } var next = TinyCat.status.card(payload.item, Boolean(card.id), !inModal); card.replaceWith(next); hydrateDynamic(next); }); }
     }
-
-    if (payload && payload.deleted_status_id) {
-      removeStatusCard(payload.deleted_status_id, form);
-    }
-
-    if (payload && payload.deleted_comment_id) {
-      removeStatusComment(payload.deleted_comment_id);
-    }
-
-    if (modal && payload && payload.modal_close) {
-      TinyCat.closeModal(modal);
-    }
-
+    if (payload.deleted_status_id) { removeStatusCard(payload.deleted_status_id, form); }
+    if (payload.deleted_comment_id) { removeStatusComment(payload.deleted_comment_id); }
     markFormClean(form);
-    emit(form, "tinycat:success", { data: data, payload: payload, target: null });
+    if (modal && ["update", "comment_update", "delete", "report"].indexOf(action) !== -1) { TinyCat.closeModal(modal); }
+    emit(form, "tinycat:success", { data: data, payload: payload });
   }
 
-  async function refreshStatusCard(form, currentCard) {
-    var id = statusCardId(currentCard);
-    var action = statusCardAction(form);
-    var url;
-    var data;
-    var payload;
-    var html;
-    var template;
-    var nextCard;
 
-    if (!id) {
-      return null;
-    }
-
-    url = "/api/status-card?id=" + encodeURIComponent(id) + "&action=" + encodeURIComponent(action);
-    data = await TinyCat.request(url, { method: "GET" });
-    payload = unwrapResult(data);
-    html = payload && typeof payload === "object" ? (payload.html || "") : "";
-
-    if (!html) {
-      return null;
-    }
-
-    template = htmlTemplate(html);
-    nextCard = qs(".status-card", template.content);
-
-    if (!nextCard) {
-      return null;
-    }
-
-    currentCard.replaceWith(nextCard);
-    hydrateDynamic(nextCard);
-
-    return nextCard;
-  }
-
-  async function syncStatusResponse(form, doc, action) {
-    var currentCard = statusFormCard(form);
-    var openedModal = form.closest(".modal");
-    var keepModalOpen = shouldKeepStatusModalOpen(action, openedModal);
-    var reopenModalId = openedModal && openedModal.dataset.open === "true" ? openedModal.id : "";
-    var reopenModalUrl = openedModal && openedModal.dataset.modalUrl ? openedModal.dataset.modalUrl : "";
-    var modalScroll = captureModalScroll(openedModal);
-    var nextCard;
-    var imported;
-    var reopenedModal;
-
-    if (keepModalOpen) {
-      detachModalFromCard(openedModal, currentCard);
-    } else if (openedModal) {
-      TinyCat.closeModal(openedModal);
-    }
-
-    if (currentCard && currentCard.id) {
-      nextCard = doc.getElementById(currentCard.id);
-
-      if (nextCard) {
-        imported = document.importNode(nextCard, true);
-        currentCard.replaceWith(imported);
-        hydrateDynamic(imported);
-
-        if (keepModalOpen) {
-          await refreshOpenStatusModal(openedModal, reopenModalUrl, modalScroll);
-        } else if (reopenModalId && action !== "update" && action !== "delete" && action !== "report") {
-          if (reopenModalUrl) {
-            loadRemoteModal(reopenModalId, reopenModalUrl, imported, true)
-              .then(function (modal) {
-                reopenedModal = TinyCat.openModal(modal);
-                restoreModalScroll(reopenedModal, modalScroll);
-              })
-              .catch(function (error) {
-                TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
-              });
-          } else {
-            reopenedModal = TinyCat.openModal(reopenModalId);
-            restoreModalScroll(reopenedModal, modalScroll);
-          }
-        }
-
-        return true;
-      }
-
-      if (action === "delete") {
-        currentCard.remove();
-        return true;
-      }
-
-      imported = await refreshStatusCard(form, currentCard);
-
-      if (imported) {
-        if (keepModalOpen) {
-          await refreshOpenStatusModal(openedModal, reopenModalUrl, modalScroll);
-        } else if (reopenModalId && action !== "update" && action !== "report") {
-          if (reopenModalUrl) {
-            loadRemoteModal(reopenModalId, reopenModalUrl, imported, true)
-              .then(function (modal) {
-                reopenedModal = TinyCat.openModal(modal);
-                restoreModalScroll(reopenedModal, modalScroll);
-              })
-              .catch(function (error) {
-                TinyCat.toast((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
-              });
-          } else {
-            reopenedModal = TinyCat.openModal(reopenModalId);
-            restoreModalScroll(reopenedModal, modalScroll);
-          }
-        }
-
-        return true;
-      }
-
-      if (replaceStatusRegion(doc)) {
-        if (keepModalOpen) {
-          await refreshOpenStatusModal(openedModal, reopenModalUrl, modalScroll);
-        }
-
-        return true;
-      }
-
-      currentCard.remove();
-      return true;
-    }
-
-    if (keepModalOpen) {
-      replaceStatusRegion(doc);
-      await refreshOpenStatusModal(openedModal, reopenModalUrl, modalScroll);
-      return true;
-    }
-
-    return replaceStatusRegion(doc);
-  }
 
   TinyCat.initStatusForms = function () {
     if (TinyCat.__statusFormEventsBound === true) {
@@ -5210,64 +4706,14 @@
       action = statusFormAction(form, body);
       method = (form.getAttribute("method") || "POST").toUpperCase();
       url = form.getAttribute("action") || window.location.href;
-      headers = {
-        "Accept": "application/json, text/html;q=0.9, application/xhtml+xml;q=0.8, */*;q=0.7",
-        "X-Requested-With": "XMLHttpRequest"
-      };
-
-      if (getCsrfToken()) {
-        headers["X-CSRF-Token"] = getCsrfToken();
-      }
-
+      method = TinyCat.status.method(form, action);
       try {
         form.dataset.statusBusy = "true";
         setLoading(form, true);
-
-        response = await fetch(url, {
-          method: method,
-          headers: headers,
-          body: method === "GET" ? null : body
-        });
-
-        responseUrl = response.url || "";
-        contentType = response.headers.get("content-type") || "";
-
-        if (response.redirected && responseUrl) {
-          responsePath = new URL(responseUrl, window.location.href).pathname;
-
-          if (responsePath === "/login" || responsePath === "/install") {
-            window.location.assign(responseUrl);
-            return;
-          }
-        }
-
-        if (contentType.indexOf("application/json") !== -1) {
-          jsonData = await response.json();
-
-          if (!response.ok) {
-            var requestError = new Error(jsonData.message || (jsonData.error && jsonData.error.message) || response.statusText || uiText("requestFailed", "Request failed"));
-            requestError.data = jsonData;
-            throw requestError;
-          }
-
-          handleStatusJsonResponse(form, jsonData);
-          return;
-        }
-
-        html = await response.text();
-
-        if (!response.ok) {
-          throw new Error(response.statusText || uiText("requestFailed", "Request failed"));
-        }
-
-        doc = new DOMParser().parseFromString(html, "text/html");
-        renderFlashMessages(doc);
-
-        if (!await syncStatusResponse(form, doc, action)) {
-          window.location.assign(responseUrl || url);
-        }
+        jsonData = await TinyCat.request(url, { method: method, body: body });
+        handleStatusJsonResponse(form, jsonData);
       } catch (error) {
-        var errors = resultErrors(error.data);
+        var errors = resultErrors(error);
 
         if (errors) {
           invalidField = applyErrors(form, errors);
@@ -5278,7 +4724,7 @@
         delete form.dataset.statusBusy;
         setLoading(form, false);
 
-        if (invalidField && invalidField.isConnected && invalidField.focus) {
+        if (invalidField && invalidField.isConnected && invalidField.focus && isFocusableVisible(invalidField)) {
           invalidField.focus();
         }
       }
@@ -5357,7 +4803,8 @@
   function updateFollowResult(form, data) {
     var payload = unwrapResult(data) || {};
     var authorId = payload.author_id ? String(payload.author_id) : (form ? form.dataset.authorId : "");
-    var next = elementFromHtml(payload.html || "");
+    TinyCat.users.follow(form, payload);
+    var next = null;
 
     if (data && data.message) {
       TinyCat.toast(data.message, data.type || "success");
@@ -5407,6 +4854,7 @@
       method = (form.getAttribute("method") || "POST").toUpperCase();
       url = form.getAttribute("action") || window.location.href;
       body = new FormData(form);
+      method = body.get("action") === "unfollow" ? "DELETE" : "PUT";
 
       try {
         form.dataset.followBusy = "true";
@@ -5431,7 +4879,7 @@
   }
 
   function updateNotificationButton(button, state) {
-    var unread = Math.max(0, parseInt((state && state.unread) || "0", 10) || 0);
+    var unread = Math.max(0, parseInt((state && (state.unread_count !== undefined ? state.unread_count : state.unread)) || "0", 10) || 0);
     var latestId = Math.max(0, parseInt((state && state.latest_id) || "0", 10) || 0);
     var badge = qs("[data-notification-count]", button);
     var menu = button.closest && button.closest("[data-notification-menu]");
@@ -5452,9 +4900,7 @@
       menuBadge.textContent = notificationBadgeText(unread);
     }
 
-    if (list && state && typeof state.html === "string") {
-      replaceHtml(list, state.html);
-    }
+    if (state && TinyCat.notifications) { TinyCat.notifications.update(state); }
   }
 
   function setNotificationMenu(menu, open) {
@@ -5555,7 +5001,7 @@
           });
           state = unwrapResult(state) || {};
           nextLatestId = Math.max(0, parseInt((state && state.latest_id) || "0", 10) || 0);
-          nextUnread = Math.max(0, parseInt((state && state.unread) || "0", 10) || 0);
+          nextUnread = Math.max(0, parseInt((state && (state.unread_count !== undefined ? state.unread_count : state.unread)) || "0", 10) || 0);
           message = (state && state.message) || button.dataset.notificationMessage || "";
 
           if (!first && message && nextUnread > 0 && (nextLatestId > latestId || nextUnread > unread)) {
@@ -5599,6 +5045,7 @@
     TinyCat.initStickySidebars();
     TinyCat.initPublicSidebar();
     TinyCat.initCaptcha();
+    hydrateDynamic(document);
     TinyCat.initDirtyForms();
     TinyCat.initAutoSubmit();
     TinyCat.initDismissibleMenus();
@@ -5609,5 +5056,19 @@
   };
 
   window.TinyCat = TinyCat;
+  TinyCat.hydrate = hydrateDynamic;
+  window.addEventListener("popstate", async function () {
+    var home = window.location.pathname === "/";
+    var target = qs(home ? ".home-feed-section" : "#users-list");
+    if (!target || (!home && window.location.pathname !== "/admin/users")) { return; }
+    var generation = Number(target.dataset.apiGeneration || 0) + 1;
+    target.dataset.apiGeneration = String(generation);
+    try {
+      var data = await TinyCat.request((home ? "/api/statuses" : "/api/users") + window.location.search, { method: "GET" });
+      if (Number(target.dataset.apiGeneration) !== generation) { return; }
+      if (home) { TinyCat.status.feed(target, data); } else { TinyCat.users.list(target, data); }
+      hydrateDynamic(target);
+    } catch (error) { TinyCat.toast(error.message, "danger"); }
+  });
   ready(TinyCat.init);
 }());

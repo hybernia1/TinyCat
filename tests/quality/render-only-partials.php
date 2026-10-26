@@ -67,10 +67,17 @@ foreach ($iterator as $file) {
         continue;
     }
 
+    $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
+    preg_match_all('/^use ([\\\\\w]+)(?: as (\w+))?;/m', $source, $importMatches, PREG_SET_ORDER);
+    $imports = [];
+    foreach ($importMatches as $import) {
+        $alias = $import[2] ?? substr(strrchr($import[1], '\\'), 1);
+        $imports[$alias] = $import[1];
+    }
     $tokens = token_get_all($source);
 
     foreach ($tokens as $index => $token) {
-        if (!is_array($token) || $token[0] !== T_STRING) {
+        if (!is_array($token) || !in_array($token[0], [T_STRING, T_NAME_FULLY_QUALIFIED, T_NAME_QUALIFIED], true)) {
             continue;
         }
 
@@ -80,7 +87,7 @@ foreach ($iterator as $file) {
         }
 
         $name = $token[1];
-        $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
+        $owner = substr(strrchr('\\' . $name, '\\'), 1);
 
         if (($tokens[$next] ?? null) === '(' && isset($forbiddenFunctions[$name])) {
             $failures[] = $relative . ':' . $token[2] . ' calls query-capable helper ' . $name . '().';
@@ -89,14 +96,23 @@ foreach ($iterator as $file) {
 
         $nextToken = $tokens[$next] ?? null;
 
+        if (is_array($nextToken) && $nextToken[0] === T_DOUBLE_COLON) {
+            $class = $imports[$name] ?? ltrim($name, '\\');
+            if (preg_match('~^TinyCat\\\\(?:Support\\\\(?:Html|View|Localization)|Security\\\\Csrf|(?:Users|Status|Bots|Settings|Site|Notifications)\\\\Views)$~', $class) !== 1) {
+                $failures[] = $relative . ':' . $token[2] . ' must compose presentation components instead of calling ' . $class . '::.';
+            }
+        }
+
         if (
-            isset($forbiddenStaticOwners[$name])
+            (isset($forbiddenStaticOwners[$owner])
+                || preg_match('~^\\\\?TinyCat\\\\(?:Database\\\\(?:Connection|Query|Queries|Transactions)|Settings\\\\Store|Status\\\\(?:Feed|ReadCache))$~', $name) === 1)
             && is_array($nextToken)
             && $nextToken[0] === T_DOUBLE_COLON
         ) {
             $failures[] = $relative . ':' . $token[2] . ' calls service owner ' . $name . '::.';
         }
     }
+
 }
 
 if ($failures !== []) {

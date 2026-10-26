@@ -6,39 +6,27 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-require_admin();
+\TinyCat\Users\Access::require_admin();
 
-if (route_path() === '/api/admin/settings') {
-    csrf_require();
-
-    try {
-        tc_admin_settings_save();
-    } catch (Throwable $exception) {
-        api_error($exception->getMessage(), 422, 'settings_save_failed');
-    }
-
-    api_ok(tc_admin_settings_payload(), t('settings.messages.saved'), 200, ['type' => 'success']);
-}
-
-if (is_post()) {
-    csrf_require();
+if (\TinyCat\Http\Request::current()->isPost()) {
+    \TinyCat\Security\Csrf::requireToken();
 
     try {
-        tc_admin_settings_save();
-        $message = t('settings.messages.saved');
+        \TinyCat\Settings\Administration::tc_admin_settings_save();
+        $message = \TinyCat\Support\Localization::t('settings.messages.saved');
 
-        flash('success', $message);
+        \TinyCat\Http\Session::flash('success', $message);
     } catch (Throwable $exception) {
-        flash('error', $exception->getMessage());
+        \TinyCat\Http\Session::flash('error', $exception->getMessage());
     }
 
-    redirect('/admin/settings');
+    \TinyCat\Http\Web::redirect('/admin/settings');
 }
 
-$settingsSections = tc_admin_settings_view_sections();
+$settingsSections = \TinyCat\Settings\Administration::tc_admin_settings_view_sections();
 
-layout('layout', [
-    'title' => t('settings.meta_title'),
+\TinyCat\Support\View::layout('layout', [
+    'title' => \TinyCat\Support\Localization::t('settings.meta_title'),
     'current' => '/admin/settings',
     'styles' => ['css/tinycat.css'],
     'scripts' => ['js/tinycat.js'],
@@ -48,27 +36,27 @@ layout('layout', [
     ?>
     <section class="card" data-tabs>
         <div class="card-header">
-            <h2 class="text-lg m-0 cluster gap-2"><?= icon('settings') ?> <?= et('settings.title') ?></h2>
+            <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('settings') ?> <?= \TinyCat\Support\Html::et('settings.title') ?></h2>
         </div>
 
-        <div class="tabs px-4" role="tablist" aria-label="<?= et('settings.title') ?>">
+        <div class="tabs px-4" role="tablist" aria-label="<?= \TinyCat\Support\Html::et('settings.title') ?>">
             <?php foreach ($sections as $key => $section): ?>
                 <?php $selected = $key === $active; ?>
-                <button class="tab" type="button" id="settings-tab-<?= e($key) ?>" role="tab" aria-controls="settings-panel-<?= e($key) ?>" aria-selected="<?= $selected ? 'true' : 'false' ?>" data-tab="<?= e($key) ?>">
-                    <?= icon((string) ($section['icon'] ?? 'settings')) ?> <?= e((string) $section['label']) ?>
+                <button class="tab" type="button" id="settings-tab-<?= \TinyCat\Support\Html::e($key) ?>" role="tab" aria-controls="settings-panel-<?= \TinyCat\Support\Html::e($key) ?>" aria-selected="<?= $selected ? 'true' : 'false' ?>" data-tab="<?= \TinyCat\Support\Html::e($key) ?>">
+                    <?= \TinyCat\Support\Html::icon((string) ($section['icon'] ?? 'settings')) ?> <?= \TinyCat\Support\Html::e((string) $section['label']) ?>
                 </button>
             <?php endforeach; ?>
         </div>
 
-        <form method="post" action="/api/admin/settings?view=html" enctype="multipart/form-data" data-ajax-form>
-            <?= csrf_field() ?>
+        <form method="post" action="/api/settings" data-api-method="PATCH" enctype="multipart/form-data" data-ajax-form>
+            <?= \TinyCat\Security\Csrf::field() ?>
             <div class="card-body stack">
                 <?php foreach ($sections as $key => $section): ?>
                     <?php $selected = $key === $active; ?>
-                    <div class="tab-panel stack" id="settings-panel-<?= e($key) ?>" role="tabpanel" aria-labelledby="settings-tab-<?= e($key) ?>" data-tab-panel="<?= e($key) ?>"<?= $selected ? '' : ' hidden' ?>>
+                    <div class="tab-panel stack" id="settings-panel-<?= \TinyCat\Support\Html::e($key) ?>" role="tabpanel" aria-labelledby="settings-tab-<?= \TinyCat\Support\Html::e($key) ?>" data-tab-panel="<?= \TinyCat\Support\Html::e($key) ?>"<?= $selected ? '' : ' hidden' ?>>
                         <div class="settings-grid">
                             <?php foreach ((array) $section['fields'] as $field): ?>
-                                <?= part('admin/settings/field', ['field' => $field]) ?>
+                                <?= \TinyCat\Settings\Views::field(['field' => $field]) ?>
                             <?php endforeach; ?>
                         </div>
                     </div>
@@ -76,320 +64,9 @@ layout('layout', [
             </div>
 
             <div class="card-footer cluster justify-end">
-                <button class="btn btn-primary" type="submit"><?= icon('save') ?> <span><?= et('common.save') ?></span></button>
+                <button class="btn btn-primary" type="submit"><?= \TinyCat\Support\Html::icon('save') ?> <span><?= \TinyCat\Support\Html::et('common.save') ?></span></button>
             </div>
         </form>
     </section>
     <?php
 });
-
-function tc_admin_settings_payload(): array
-{
-    return [
-        'saved' => true,
-        'settings' => config(),
-    ];
-}
-
-function tc_admin_settings_sections(): array
-{
-    return [
-        'site' => [
-            'label' => t('settings.sections.site'),
-            'icon' => 'home',
-            'fields' => [
-                ['key' => 'site.name', 'label' => t('settings.fields.site_name'), 'type' => 'text', 'default' => 'TinyCat', 'max' => 120, 'span' => true],
-                ['key' => 'site.home_title', 'label' => t('settings.fields.site_home_title'), 'type' => 'optional_text', 'default' => '', 'max' => 160, 'span' => true, 'help' => t('settings.fields.site_home_title_help')],
-                ['key' => 'site.meta_description', 'label' => t('settings.fields.site_meta_description'), 'type' => 'textarea', 'default' => '', 'max' => 500, 'span' => true, 'placeholder' => t('settings.fields.site_meta_description_placeholder'), 'help' => t('settings.fields.site_meta_description_help')],
-                ['key' => 'site.logo_url', 'path_key' => 'site.logo_path', 'label' => t('settings.fields.site_logo'), 'type' => 'site_image', 'variant' => 'logo', 'default' => '', 'compact' => true],
-                ['key' => 'site.favicon_url', 'path_key' => 'site.favicon_path', 'label' => t('settings.fields.site_favicon'), 'type' => 'site_image', 'variant' => 'favicon', 'default' => '', 'compact' => true],
-                ['key' => 'site.footer_html', 'label' => t('settings.fields.site_footer'), 'type' => 'textarea', 'default' => '', 'span' => true],
-            ],
-        ],
-        'performance' => [
-            'label' => t('settings.sections.performance'),
-            'icon' => 'settings',
-            'fields' => [
-                ['key' => 'performance.minify_css', 'label' => t('settings.fields.minify_css'), 'type' => 'bool', 'default' => false, 'help' => t('settings.fields.minify_css_help')],
-                ['key' => 'performance.minify_js', 'label' => t('settings.fields.minify_js'), 'type' => 'bool', 'default' => false, 'help' => t('settings.fields.minify_js_help')],
-                ['key' => 'performance.minify_html', 'label' => t('settings.fields.minify_html'), 'type' => 'bool', 'default' => false, 'help' => t('settings.fields.minify_html_help')],
-            ],
-        ],
-        'content_images' => [
-            'label' => t('settings.sections.content_images'),
-            'icon' => 'image',
-            'fields' => [
-                ['key' => 'content_images.enabled', 'label' => t('settings.fields.content_images_enabled'), 'type' => 'bool', 'default' => true, 'help' => t('settings.fields.content_images_enabled_help')],
-                ['key' => 'content_images.max_upload_kb', 'label' => t('settings.fields.content_images_max_upload_kb'), 'type' => 'int', 'default' => 100, 'min' => 20, 'max' => 1024, 'help' => t('settings.fields.content_images_max_upload_kb_help')],
-            ],
-        ],
-        'localization' => [
-            'label' => t('settings.sections.localization'),
-            'icon' => 'globe',
-            'fields' => [
-                ['key' => 'i18n.locale', 'label' => t('settings.fields.locale'), 'type' => 'language', 'default' => (string) config('install.locale', 'en')],
-                ['key' => 'datetime.timezone', 'label' => t('settings.fields.timezone'), 'type' => 'timezone', 'default' => 'UTC'],
-                ['key' => 'datetime.date', 'label' => t('settings.fields.date_format'), 'type' => 'date_format', 'default' => 'd.m.Y'],
-                ['key' => 'datetime.time', 'label' => t('settings.fields.time_format'), 'type' => 'time_format', 'default' => 'H:i'],
-                ['key' => 'datetime.datetime', 'label' => t('settings.fields.datetime_format'), 'type' => 'datetime_format', 'default' => 'd.m.Y H:i'],
-                ['key' => 'datetime.relative', 'label' => t('settings.fields.relative_datetime'), 'type' => 'bool', 'default' => false],
-            ],
-        ],
-        'security' => [
-            'label' => t('settings.sections.security'),
-            'icon' => 'shield',
-            'fields' => [
-                ['key' => 'security.captcha.enabled', 'label' => t('settings.fields.captcha_enabled'), 'type' => 'bool', 'default' => false],
-                ['key' => 'security.captcha.provider', 'label' => t('settings.fields.captcha_provider'), 'type' => 'select', 'default' => 'recaptcha', 'options' => ['recaptcha' => 'Google reCAPTCHA v2 Checkbox', 'turnstile' => 'Cloudflare Turnstile', 'hcaptcha' => 'hCaptcha'], 'help' => t('settings.fields.captcha_provider_help')],
-                ['key' => 'security.captcha.site_key', 'label' => t('settings.fields.captcha_site_key'), 'type' => 'optional_text', 'default' => '', 'max' => 512],
-                ['key' => 'security.captcha.secret_key', 'label' => t('settings.fields.captcha_secret_key'), 'type' => 'password', 'default' => '', 'max' => 512, 'help' => t('settings.fields.captcha_secret_key_help')],
-                ['key' => 'security.captcha.login_attempts', 'label' => t('settings.fields.captcha_login_attempts'), 'type' => 'int', 'default' => 3, 'min' => 1, 'max' => 10],
-                ['key' => 'auth.registration.enabled', 'label' => t('settings.fields.registration_enabled'), 'type' => 'bool', 'default' => false],
-                ['key' => 'auth.registration.auto_approve', 'label' => t('settings.fields.registration_auto_approve'), 'type' => 'bool', 'default' => false],
-            ],
-        ],
-        'email' => [
-            'label' => t('settings.sections.email'),
-            'icon' => 'mail',
-            'fields' => [
-                ['key' => 'email.smtp', 'label' => t('settings.fields.smtp'), 'type' => 'email_smtp', 'default' => email_smtp_default_config(), 'span' => true],
-                ['key' => 'email.templates', 'label' => t('settings.fields.email_templates'), 'type' => 'email_templates', 'default' => email_template_default_states(), 'span' => true],
-            ],
-        ],
-        'analytics' => [
-            'label' => t('settings.sections.analytics'),
-            'icon' => 'chart',
-            'fields' => [
-                ['key' => 'analytics.google_measurement_id', 'label' => t('settings.fields.google_measurement_id'), 'type' => 'optional_text', 'default' => '', 'max' => 40, 'help' => t('settings.fields.google_measurement_id_help')],
-            ],
-        ],
-    ];
-}
-
-/** @return array<string, array<string, mixed>> */
-function tc_admin_settings_view_sections(): array
-{
-    $sections = tc_admin_settings_sections();
-
-    foreach ($sections as &$section) {
-        foreach ($section['fields'] as &$field) {
-            $field['value'] = config((string) ($field['key'] ?? ''), $field['default'] ?? '');
-        }
-        unset($field);
-    }
-    unset($section);
-
-    return $sections;
-}
-
-
-function tc_admin_settings_save(): void
-{
-    $posted = input('settings', []);
-    $posted = is_array($posted) ? $posted : [];
-
-    foreach (tc_admin_settings_sections() as $group => $section) {
-        foreach ((array) $section['fields'] as $field) {
-            if (($field['type'] ?? '') === 'password' && trim((string) (($posted[(string) $field['key']] ?? ''))) === '') {
-                continue;
-            }
-            [$value, $type] = tc_admin_settings_value_from_post($field, $posted);
-            setting_set((string) $field['key'], $value, $type, (string) $group);
-        }
-    }
-}
-
-function tc_admin_settings_value_from_post(array $field, array $posted): array
-{
-    $key = (string) $field['key'];
-    $type = (string) ($field['type'] ?? 'text');
-    $raw = $posted[$key] ?? null;
-
-    if ($type === 'bool') {
-        return [$raw !== null, 'bool'];
-    }
-
-    if ($type === 'email_templates') {
-        $states = is_array($raw) ? $raw : [];
-        $value = [];
-
-        foreach (email_template_keys() as $templateKey) {
-            $value[$templateKey] = array_key_exists($templateKey, $states);
-        }
-
-        return [$value, 'json'];
-    }
-
-    if ($type === 'email_smtp') {
-        $smtp = is_array($raw) ? $raw : [];
-        $current = email_smtp_config();
-        $host = trim((string) ($smtp['host'] ?? ''));
-        $username = trim((string) ($smtp['username'] ?? ''));
-        $password = (string) ($smtp['password'] ?? '');
-        $encryption = strtolower(trim((string) ($smtp['encryption'] ?? 'tls')));
-        $fromAddress = trim((string) ($smtp['from_address'] ?? ''));
-        $fromName = trim((string) ($smtp['from_name'] ?? 'TinyCat'));
-
-        if ($fromAddress !== '' && !user_email_valid($fromAddress)) {
-            throw new InvalidArgumentException(t('account.messages.email_invalid'));
-        }
-
-        return [[
-            'host' => plain_text_limit($host, 190),
-            'port' => max(1, min(65535, (int) ($smtp['port'] ?? 587))),
-            'username' => plain_text_limit($username, 190),
-            'password' => $password !== '' ? plain_text_limit($password, 190) : $current['password'],
-            'encryption' => plain_text_limit($encryption, 20),
-            'from_address' => plain_text_limit($fromAddress, 190),
-            'from_name' => plain_text_limit($fromName, 120),
-        ], 'json'];
-    }
-
-    if ($type === 'language') {
-        $code = language_code((string) $raw);
-
-        if ($code === '' || !array_key_exists($code, language_packages())) {
-            throw new InvalidArgumentException(t('settings.messages.invalid_language'));
-        }
-
-        return [$code, 'string'];
-    }
-
-    if ($type === 'select') {
-        $value = (string) $raw;
-        $options = array_map('strval', array_keys((array) ($field['options'] ?? [])));
-
-        if (!in_array($value, $options, true)) {
-            throw new InvalidArgumentException(t('settings.messages.required'));
-        }
-
-        return [$value, 'string'];
-    }
-
-    if ($type === 'timezone') {
-        $timezone = trim((string) $raw);
-
-        if (!in_array($timezone, timezone_identifiers_list(), true)) {
-            throw new InvalidArgumentException(t('settings.messages.invalid_timezone'));
-        }
-
-        return [$timezone, 'string'];
-    }
-
-    if (in_array($type, ['date_format', 'time_format', 'datetime_format'], true)) {
-        $format = trim((string) $raw);
-        $presetType = match ($type) {
-            'date_format' => 'date',
-            'time_format' => 'time',
-            'datetime_format' => 'datetime',
-        };
-
-        if (!datetime_format_preset_exists($presetType, $format)) {
-            throw new InvalidArgumentException(t('settings.messages.invalid_datetime_format'));
-        }
-
-        return [$format, 'string'];
-    }
-
-    if ($type === 'int') {
-        $value = (int) $raw;
-        $min = (int) ($field['min'] ?? PHP_INT_MIN);
-        $max = (int) ($field['max'] ?? PHP_INT_MAX);
-
-        return [max($min, min($max, $value)), 'int'];
-    }
-
-    if ($type === 'mb') {
-        $value = (float) str_replace(',', '.', (string) $raw);
-        $min = (float) ($field['min'] ?? 0);
-        $max = (float) ($field['max'] ?? 1024);
-        $value = max($min, min($max, $value));
-
-        return [(int) round($value * 1024 * 1024), 'int'];
-    }
-
-    if ($type === 'site_image') {
-        return tc_admin_settings_site_image_value($field, (string) $raw);
-    }
-
-    if ($type === 'textarea') {
-        $value = trim((string) $raw);
-        $max = (int) ($field['max'] ?? 5000);
-
-        return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
-    }
-
-    if (in_array($type, ['password', 'email'], true)) {
-        $value = trim((string) $raw);
-        $max = (int) ($field['max'] ?? 190);
-        if ($type === 'email' && $value !== '' && !user_email_valid($value)) {
-            throw new InvalidArgumentException(t('account.messages.email_invalid'));
-        }
-
-        return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
-    }
-
-    if ($type === 'optional_text') {
-        $value = trim((string) $raw);
-        $max = (int) ($field['max'] ?? 190);
-        if ($key === 'analytics.google_measurement_id' && $value !== '' && preg_match('/^G-[A-Z0-9]+$/i', $value) !== 1) {
-            throw new InvalidArgumentException('Google Analytics Measurement ID must look like G-XXXXXXXXXX.');
-        }
-        return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
-    }
-
-    $value = trim((string) $raw);
-    $max = (int) ($field['max'] ?? 190);
-
-    if ($value === '') {
-        throw new InvalidArgumentException(t('settings.messages.required'));
-    }
-
-    return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
-}
-
-function tc_admin_settings_uploaded_file(string $key): ?array
-{
-    $files = $_FILES['settings_files'] ?? null;
-
-    if (!is_array($files) || !isset($files['name'][$key])) {
-        return null;
-    }
-
-    return [
-        'name' => $files['name'][$key] ?? '',
-        'type' => $files['type'][$key] ?? '',
-        'tmp_name' => $files['tmp_name'][$key] ?? '',
-        'error' => $files['error'][$key] ?? UPLOAD_ERR_NO_FILE,
-        'size' => $files['size'][$key] ?? 0,
-    ];
-}
-
-function tc_admin_settings_site_image_value(array $field, string $currentUrl): array
-{
-    $key = (string) $field['key'];
-    $pathKey = (string) ($field['path_key'] ?? '');
-    $variant = (string) ($field['variant'] ?? 'logo');
-    $uploadedFile = tc_admin_settings_uploaded_file($key);
-    $remove = input('settings_remove', []);
-
-    if (is_array($remove) && isset($remove[$key])) {
-        if ($pathKey !== '') {
-            setting_set($pathKey, '', 'string', 'site');
-        }
-
-        return ['', 'string'];
-    }
-
-    if (is_array($uploadedFile) && (int) ($uploadedFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
-        $uploaded = site_image_upload($uploadedFile, (string) ($field['label'] ?? $variant), $variant);
-
-        if ($pathKey !== '') {
-            setting_set($pathKey, (string) ($uploaded['path'] ?? ''), 'string', 'site');
-        }
-
-        return [(string) ($uploaded['url'] ?? ''), 'string'];
-    }
-
-    return [trim($currentUrl), 'string'];
-}

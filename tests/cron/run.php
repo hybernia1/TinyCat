@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../cache-isolation.php';
+
 define('TINYCAT', true);
 require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
 
-$config = (array) config('database', []);
+$config = (array) \TinyCat\Settings\Store::config('database', []);
 
 if (($config['driver'] ?? 'mysql') !== 'mysql') {
     echo "SKIP cron tasks: a local MySQL database is required.\n";
@@ -48,7 +50,7 @@ try {
         (string) ($config['password'] ?? ''),
         $options
     );
-    Core::setDb($database);
+    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
 
     foreach ([
         'CREATE TABLE settings (
@@ -118,13 +120,13 @@ try {
         $database->exec($statement);
     }
 
-    insert('content', ['body' => 'test']);
-    $contentId = (int) db()->lastInsertId();
-    $imageDirectory = base_path('uploads/status-images/2099/01');
+    \TinyCat\Database\Connection::insert('content', ['body' => 'test']);
+    $contentId = (int) \TinyCat\Database\Connection::get()->lastInsertId();
+    $imageDirectory = \TinyCat\Support\Paths::basePath('uploads/status-images/2099/01');
     $orphanImagePath = '2099/01/' . bin2hex(random_bytes(16)) . '.webp';
     $storedImagePath = '2099/01/' . bin2hex(random_bytes(16)) . '.webp';
-    $orphanImageFile = base_path('uploads/status-images/' . $orphanImagePath);
-    $storedImageFile = base_path('uploads/status-images/' . $storedImagePath);
+    $orphanImageFile = \TinyCat\Support\Paths::basePath('uploads/status-images/' . $orphanImagePath);
+    $storedImageFile = \TinyCat\Support\Paths::basePath('uploads/status-images/' . $storedImagePath);
 
     if (!is_dir($imageDirectory) && !mkdir($imageDirectory, 0775, true) && !is_dir($imageDirectory)) {
         throw new RuntimeException('Could not create the temporary status image directory.');
@@ -134,47 +136,47 @@ try {
     file_put_contents($storedImageFile, 'stored');
     touch($orphanImageFile, time() - 7200);
     touch($storedImageFile, time() - 7200);
-    insert('content_images', [
+    \TinyCat\Database\Connection::insert('content_images', [
         'content_id' => $contentId,
         'path' => $storedImagePath,
         'width' => 1,
         'height' => 1,
         'bytes' => 6,
     ]);
-    insert('terms', ['name' => 'used']);
-    $usedTermId = (int) db()->lastInsertId();
-    insert('terms', ['name' => 'orphan']);
-    insert('content_tags', ['content_id' => $contentId, 'term_id' => $usedTermId]);
-    insert('links', ['normalized_url' => 'https://used.test/']);
-    $usedLinkId = (int) db()->lastInsertId();
-    insert('links', ['normalized_url' => 'https://orphan.test/']);
-    insert('content_links', ['content_id' => $contentId, 'link_id' => $usedLinkId]);
+    \TinyCat\Database\Connection::insert('terms', ['name' => 'used']);
+    $usedTermId = (int) \TinyCat\Database\Connection::get()->lastInsertId();
+    \TinyCat\Database\Connection::insert('terms', ['name' => 'orphan']);
+    \TinyCat\Database\Connection::insert('content_tags', ['content_id' => $contentId, 'term_id' => $usedTermId]);
+    \TinyCat\Database\Connection::insert('links', ['normalized_url' => 'https://used.test/']);
+    $usedLinkId = (int) \TinyCat\Database\Connection::get()->lastInsertId();
+    \TinyCat\Database\Connection::insert('links', ['normalized_url' => 'https://orphan.test/']);
+    \TinyCat\Database\Connection::insert('content_links', ['content_id' => $contentId, 'link_id' => $usedLinkId]);
 
-    insert('ip_action_limits', [
+    \TinyCat\Database\Connection::insert('ip_action_limits', [
         'ip_address' => '192.0.2.1',
         'action_name' => 'old',
-        'bucket_start' => date_db('-31 days'),
+        'bucket_start' => \TinyCat\Support\Dates::dateDb('-31 days'),
         'action_count' => 1,
     ]);
-    insert('ip_action_limits', [
+    \TinyCat\Database\Connection::insert('ip_action_limits', [
         'ip_address' => '192.0.2.1',
         'action_name' => 'current',
-        'bucket_start' => date_db('-1 day'),
+        'bucket_start' => \TinyCat\Support\Dates::dateDb('-1 day'),
         'action_count' => 1,
     ]);
-    insert('password_reset_tokens', ['expires_at' => date_db('-1 hour'), 'used_at' => null]);
-    insert('password_reset_tokens', ['expires_at' => date_db('+1 day'), 'used_at' => date_db('-1 hour')]);
-    insert('password_reset_tokens', ['expires_at' => date_db('+1 day'), 'used_at' => null]);
-    insert('notifications', ['read_at' => date_db('-31 days')]);
-    insert('notifications', ['read_at' => date_db('-1 day')]);
-    insert('notifications', ['read_at' => null]);
+    \TinyCat\Database\Connection::insert('password_reset_tokens', ['expires_at' => \TinyCat\Support\Dates::dateDb('-1 hour'), 'used_at' => null]);
+    \TinyCat\Database\Connection::insert('password_reset_tokens', ['expires_at' => \TinyCat\Support\Dates::dateDb('+1 day'), 'used_at' => \TinyCat\Support\Dates::dateDb('-1 hour')]);
+    \TinyCat\Database\Connection::insert('password_reset_tokens', ['expires_at' => \TinyCat\Support\Dates::dateDb('+1 day'), 'used_at' => null]);
+    \TinyCat\Database\Connection::insert('notifications', ['read_at' => \TinyCat\Support\Dates::dateDb('-31 days')]);
+    \TinyCat\Database\Connection::insert('notifications', ['read_at' => \TinyCat\Support\Dates::dateDb('-1 day')]);
+    \TinyCat\Database\Connection::insert('notifications', ['read_at' => null]);
 
     $databaseCleanupTasks = array_values(array_filter(
-        cron_cleanup_tasks(),
+        \TinyCat\Scheduler\Cleanup::cron_cleanup_tasks(),
         static fn (string $task): bool => $task !== 'orphan_status_image_files'
     ));
-    $result = cron_cleanup_run(500, true, $databaseCleanupTasks);
-    $imageCleanup = StatusImage::cleanupOrphans(500, '2099/01');
+    $result = \TinyCat\Scheduler\Cleanup::cron_cleanup_run(500, true, $databaseCleanupTasks);
+    $imageCleanup = \TinyCat\Status\ImageStorage::cleanupOrphans(500, '2099/01');
     $changed = array_map(
         static fn (array $task): int => (int) ($task['changed'] ?? 0),
         (array) ($result['results'] ?? [])
@@ -194,21 +196,21 @@ try {
         throw new RuntimeException('Scheduled status image cleanup changed an unexpected number of files.');
     }
 
-    if ((int) val('SELECT COUNT(*) FROM terms') !== 1
-        || (int) val('SELECT COUNT(*) FROM links') !== 1
-        || (int) val('SELECT COUNT(*) FROM content_tags') !== 1
-        || (int) val('SELECT COUNT(*) FROM content_links') !== 1
-        || (int) val('SELECT COUNT(*) FROM ip_action_limits') !== 1
-        || (int) val('SELECT COUNT(*) FROM password_reset_tokens') !== 1
-        || (int) val('SELECT COUNT(*) FROM notifications') !== 2
+    if ((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM terms') !== 1
+        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM links') !== 1
+        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM content_tags') !== 1
+        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM content_links') !== 1
+        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM ip_action_limits') !== 1
+        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM password_reset_tokens') !== 1
+        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM notifications') !== 2
         || !is_file($storedImageFile)
         || is_file($orphanImageFile)) {
         throw new RuntimeException('Scheduled cleanup did not preserve current rows.');
     }
 
-    $deferred = cron_cleanup_run(500, false, $databaseCleanupTasks);
+    $deferred = \TinyCat\Scheduler\Cleanup::cron_cleanup_run(500, false, $databaseCleanupTasks);
 
-    if (!empty($deferred['due']) || (int) setting('cron.cleanup_last_run', 0) < time() - 5) {
+    if (!empty($deferred['due']) || (int) \TinyCat\Settings\Store::setting('cron.cleanup_last_run', 0) < time() - 5) {
         throw new RuntimeException('The hourly cleanup interval was not recorded.');
     }
 

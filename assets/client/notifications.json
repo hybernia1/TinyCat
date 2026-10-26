@@ -1,0 +1,16 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "notifications/items"
+    ],
+    "scripts": [
+      "js/modules/notifications.js"
+    ],
+    "translation_sources": [
+      "assets/js/modules/notifications.js"
+    ]
+  }
+]

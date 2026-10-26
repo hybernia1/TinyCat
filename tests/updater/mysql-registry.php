@@ -1,12 +1,14 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Update\MigrationRegistry;
+require_once __DIR__ . '/../cache-isolation.php';
+
+use \TinyCat\Updates\MigrationRegistry;
 
 define('TINYCAT', true);
 require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
 
-$config = (array) config('database', []);
+$config = (array) \TinyCat\Settings\Store::config('database', []);
 
 if (($config['driver'] ?? 'mysql') !== 'mysql') {
     echo "SKIP MySQL migration registry: a local MySQL database is required.\n";
@@ -50,7 +52,7 @@ try {
         (string) ($config['password'] ?? ''),
         $options
     );
-    Core::setDb($database);
+    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     $database->exec('CREATE TABLE user_profile_links (id INT UNSIGNED NOT NULL PRIMARY KEY) ENGINE=InnoDB');
     $removeProfileLinks = require dirname(__DIR__, 2) . '/migrations/20260809_001_remove_user_profile_links.php';
 
@@ -200,15 +202,15 @@ try {
         throw new RuntimeException('The user activity timestamp removal migration did not drop both columns.');
     }
     $removeUserActivityTimestamps($database);
-    run(
+    \TinyCat\Database\Connection::exec(
         'CREATE TABLE schema_migrations (
             version VARCHAR(80) NOT NULL,
             applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (version)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
     );
-    insert('schema_migrations', ['version' => '20260731_email_analytics_ip_limits']);
-    insert('schema_migrations', ['version' => '20260801_bot_sources']);
+    \TinyCat\Database\Connection::insert('schema_migrations', ['version' => '20260731_email_analytics_ip_limits']);
+    \TinyCat\Database\Connection::insert('schema_migrations', ['version' => '20260801_bot_sources']);
 
     try {
         MigrationRegistry::ensure();

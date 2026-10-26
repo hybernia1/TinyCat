@@ -6,39 +6,39 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-$authUser = auth();
-$feed = (string) get('feed', 'all') === 'following' ? 'following' : 'all';
-$editor = $authUser !== null ? status_editor_view_data() : [];
+$authUser = \TinyCat\Users\Authentication::auth();
+$feed = (string) \TinyCat\Http\Web::get('feed', 'all') === 'following' ? 'following' : 'all';
+$editor = $authUser !== null ? \TinyCat\Status\ViewData::status_editor_view_data() : [];
 
-layout('layout', [
-    'title' => site_home_title(),
+\TinyCat\Support\View::layout('layout', [
+    'title' => \TinyCat\Site\Presentation::site_home_title(),
     'current' => '/',
     'meta' => [
-        'description' => site_meta_description(),
+        'description' => \TinyCat\Site\Presentation::site_meta_description(),
         'url' => '/',
-        'image' => site_meta_image_url(),
+        'image' => \TinyCat\Site\Presentation::site_meta_image_url(),
         'type' => 'website',
     ],
 ], static function () use ($authUser, $feed, $editor): void {
     ?>
     <section class="public-layout">
         <div class="home-feed-app stack">
-            <?php if ($authUser !== null && user_is_muted($authUser)): ?>
+            <?php if ($authUser !== null && \TinyCat\Moderation\Restrictions::user_is_muted($authUser)): ?>
                 <div class="alert alert-warning">
-                    <?= icon('lock') ?> <span><?= et('moderation.messages.account_muted', ['until' => datetime(user_muted_until($authUser))]) ?></span>
+                    <?= \TinyCat\Support\Html::icon('lock') ?> <span><?= \TinyCat\Support\Html::et('moderation.messages.account_muted', ['until' => \TinyCat\Support\Dates::displayDateTime(\TinyCat\Moderation\Restrictions::user_muted_until($authUser))]) ?></span>
                 </div>
             <?php elseif ($authUser !== null): ?>
-                <?= part('status/composer', [
+                <?= \TinyCat\Status\Views::composer([
                     'action' => $feed === 'following' ? '/?feed=following' : '/',
                     'user' => $authUser,
                     'editor' => $editor,
                 ]) ?>
             <?php endif; ?>
             <div class="home-feed-section stack">
-                <?= part('status/home-feed', public_home_feed_data($feed, $authUser)) ?>
+                <?= \TinyCat\Status\Views::homeFeed(\TinyCat\Status\ViewData::public_home_feed_data($feed, $authUser)) ?>
             </div>
         </div>
-        <?= public_sidebar() ?>
+        <?= \TinyCat\Site\Presentation::public_sidebar() ?>
     </section>
     <?php
 });

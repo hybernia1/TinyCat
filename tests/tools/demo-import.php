@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Tools\DemoImport\CheckpointStore;
-use TinyCat\Tools\DemoImport\DeterministicGenerator;
-use TinyCat\Tools\DemoImport\Options;
-use TinyCat\Tools\Performance\ComparisonOptions;
+use \TinyCat\Tools\DemoImport\CheckpointStore;
+use \TinyCat\Tools\DemoImport\DeterministicGenerator;
+use \TinyCat\Tools\DemoImport\Options;
+use \TinyCat\Tools\Performance\ComparisonOptions;
 
 $root = dirname(__DIR__, 2);
 require_once $root . '/tools/demo-import/Options.php';

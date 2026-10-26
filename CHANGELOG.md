@@ -1,5 +1,28 @@
 # Changelog
 
+## 3.0.0 - 2026-10-26
+
+- Breaking: replace legacy API endpoints and HTML fragments with module-owned JSON APIs under `/api/users`, `/api/statuses`, `/api/notifications` and other domain prefixes. Integrations must use the new contract in `docs/api.md`.
+- Share declarative components between server rendering and AJAX rendering, including administration, status dialogs, profile editing, avatars and sidebar content.
+- Distribute scoped component definitions and translations as external content-hashed assets instead of inline JSON catalogs; unify PHP and JavaScript translation fallback and literal parameter substitution.
+
+- Complete the modular refactor: built-in modules own their API and page routes, while shared HTTP, database, settings, localization and view services replace the original central files.
+- Add a JSON-only AJAX transport with reusable DOM, form and dialog primitives; replace fixed monolith file-count checks with infrastructure dependency boundaries.
+- Move Users, Notifications and Status into built-in modules with their own API and web registrations; extract session authentication, recovery, avatars, roles, image storage and link metadata.
+- Convert their AJAX forms, modals, lists, feed, comments and notification polling to JSON resources and safe DOM rendering; remove their retired endpoints and HTML negotiation.
+- Move Bots, Moderation, Search, Settings, Site, Mail, Security, Scheduler and Updates into their own namespaces; remove all remaining HTML response negotiation and HTML-consuming AJAX branches.
+- Convert bot lists, filters, source controls, moderation, sidebar and CAPTCHA to JSON resources and local DOM rendering; preserve modal forms across list updates and display canonical validation errors at fields.
+- Add partial settings updates with explicit false values, redact sensitive setting resources, and use path IDs for administration mutations.
+- Use canonical resource URLs, explicit private/public account fields, cursor pagination and idempotent follow/like state writes.
+- Relax usernames to 2–32 Unicode letters, numbers, dots, hyphens and underscores; preserve display case while keeping case-insensitive login and uniqueness. Numeric-only names remain reserved for internal mention IDs.
+- Standardize routing, access policies, CSRF, statuses and JSON serialization; remove `App/Core.php`, `App/functions.php`, central domain `App/Api.php` and temporary delegation classes.
+- Separate administration API handlers from page rendering and remove the former standalone bot API controllers.
+- Replace implicit filesystem routing with explicit public page routes; templates and controller implementation files are no longer routable.
+- Standardize JSON errors for unknown endpoints, unsupported methods, authentication, validation and internal failures. Converted modules no longer return HTML fragments.
+- Return 201 when creating bot sources and reject missing or malformed resource IDs instead of selecting ID 1.
+- Remove obsolete extension settings and extension migration metadata while preserving core Bots data.
+- Add real HTTP API contract coverage and extend the idempotent MySQL migration rehearsal.
+
 ## 2.1.0
 
 - Include Bots in core: passwordless accounts, source administration, RSS/Atom import, translations and the `feeds` scheduled task are always available.

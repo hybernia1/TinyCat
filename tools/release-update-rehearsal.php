@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
 
 $root = dirname(__DIR__);
 $options = getopt('', ['artifact::', 'key::']);
-$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-2.1.0')));
+$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-3.0.0')));
 $configPath = $root . '/config.php';
 $temporaryRoot = $root . '/storage/release-update-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . '/install';
@@ -271,6 +271,7 @@ PHP;
             '20260809_005_move_smtp_settings_to_json.php',
             '20260813_001_remove_relation_created_at.php',
             '20261025_001_core_bots.php',
+            '20261025_002_remove_extension_metadata.php',
         ], true),
     ) as $migrationPath) {
         $migration = pathinfo((string) $migrationPath, PATHINFO_FILENAME);
@@ -342,8 +343,13 @@ PHP;
         '20260809_005_move_smtp_settings_to_json',
         '20260813_001_remove_relation_created_at',
         '20261025_001_core_bots',
+        '20261025_002_remove_extension_metadata',
     ], 'Update removes obsolete tables and consolidates redundant email settings.');
     $assert(($update['extension_loaded'] ?? null) === true, 'Compatible extension remains loaded during update.');
+    $assert(
+        (int) $database->query("SELECT COUNT(*) FROM settings WHERE setting_key LIKE 'extensions.%'")->fetchColumn() === 0,
+        'Update removes obsolete extension settings from the database.'
+    );
     $assert(
         (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() === 0,
         'Update removes the obsolete profile links table from the representative database.'
@@ -380,9 +386,9 @@ PHP;
     }
 
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (Core::VERSION !== '2.1.0' || !class_exists('Bots') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
+        . "; if (TinyCat\\Support\\Version::CURRENT !== '3.0.0' || !class_exists('TinyCat\\\\Bots\\\\Importer') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
     [$newBootExit, $newBootOutput] = $run($newBootRunner);
-    $assert($newBootExit === 0, 'Updated 2.1.0 runtime boots with built-in Bots: ' . implode(' ', $newBootOutput));
+    $assert($newBootExit === 0, 'Updated 3.0.0 runtime boots with built-in Bots: ' . implode(' ', $newBootOutput));
 
     $backup = is_array($update) ? (string) ($update['backup'] ?? '') : '';
     $metadata = json_decode((string) @file_get_contents($backup . '/backup.json'), true);
@@ -415,6 +421,35 @@ PHP;
     }
 
     $assert($inventory($installRoot) === $beforeInventory, 'Rollback restores the exact managed 2.0.25 tree.');
+
+    // A rollback of a release with migrations must restore both files and data.
+    if (preg_match('/^tinycat_release_update_[a-f0-9]{12}$/', $databaseName) !== 1
+        || (string) $database->query('SELECT DATABASE()')->fetchColumn() !== $databaseName
+    ) {
+        throw new RuntimeException('Refusing to restore outside the disposable rehearsal database.');
+    }
+    $databaseBackup = file_get_contents($backup . '/database.sql');
+    if (!is_string($databaseBackup) || $databaseBackup === '') {
+        throw new RuntimeException('The rollback database snapshot is unreadable.');
+    }
+    $database->exec('SET FOREIGN_KEY_CHECKS=0');
+    try {
+        $tables = $database->query("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($tables as $table) {
+            if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', (string) $table) !== 1) {
+                throw new RuntimeException('Unsafe table name in the disposable rollback database.');
+            }
+            $database->exec('DROP TABLE `' . $table . '`');
+        }
+        $database->exec($databaseBackup);
+    } finally {
+        $database->exec('SET FOREIGN_KEY_CHECKS=1');
+    }
+    $assert($databaseFingerprint($database) === $beforeDatabase, 'Rollback restores the exact pre-update database content and schema.');
+    $clearOldCache = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
+        . "; (new ReflectionMethod(TinyCat\\Update\\Manager::class, 'clearRuntimeCache'))->invoke(null);";
+    [$clearCacheExit, $clearCacheOutput] = $run($clearOldCache);
+    $assert($clearCacheExit === 0, 'Rollback invalidates settings cached by the updated runtime: ' . implode(' ', $clearCacheOutput));
     [$oldBootExit, $oldBootOutput] = $run($probeRunner);
     $assert($oldBootExit === 0, 'Rolled-back 2.0.25 runtime and extension boot: ' . implode(' ', $oldBootOutput));
 

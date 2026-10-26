@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use TinyCat\Tools\DemoImport\DemoImporter;
-use TinyCat\Tools\DemoImport\Options;
-use TinyCat\Tools\DemoImport\ProgressReporter;
+use \TinyCat\Tools\DemoImport\DemoImporter;
+use \TinyCat\Tools\DemoImport\Options;
+use \TinyCat\Tools\DemoImport\ProgressReporter;
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../cache-isolation.php';
+
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/bootstrap.php';
@@ -15,7 +17,7 @@ $assert = static function (bool $condition, string $message) use (&$checks, &$fa
     }
 };
 
-$modal = render('modals/layout', [
+$modal = \TinyCat\Support\View::render('modals/layout', [
     'id' => 'snapshot-modal',
     'title' => 'Title <unsafe>',
     'body' => '<p id="snapshot-body">Safe body</p>',
@@ -25,7 +27,7 @@ $assert(str_contains($modal, 'Title &lt;unsafe&gt;'), 'Modal title is escaped.')
 $assert(str_contains($modal, 'data-snapshot="a&amp;b"'), 'Prepared modal attributes are escaped.');
 $assert(str_contains($modal, '<p id="snapshot-body">Safe body</p>'), 'Prepared modal body HTML is preserved.');
 
-$composerBody = part('status/composer-body', [
+$composerBody = \TinyCat\Status\Views::composerBody([
     'user' => ['id' => 1, 'username' => 'alice', 'avatar_exists' => 0],
     'editor' => ['item' => ['body' => 'Draft'], 'tags_json' => '[]', 'image' => []],
     'submit_name' => 'save',
@@ -36,26 +38,12 @@ $assert(str_contains($composerBody, 'class="status-compose-row"'), 'Composer bod
 $assert(str_contains($composerBody, 'name="save"'), 'Composer body can render the edit submit action.');
 $assert(!str_contains($composerBody, 'status-schedule-modal'), 'The shared composer does not expose the scheduler modal.');
 
-$time = part('status/time-link', [
-    'published_at' => '2026-08-09 12:00:00',
-    'content_id' => 7,
-    'open_modal' => false,
-    'item' => [
-        'id' => 7,
-        'username' => 'alice',
-        'display_name' => 'Alice',
-        '_view' => [
-            'status_url' => '/status/7',
-            'permalink_label' => 'Alice, 9 August 2026 12:00',
-            'time' => ['iso' => '2026-08-09T12:00:00+00:00', 'label' => '9 August 2026 12:00'],
-        ],
-    ],
-]);
+$time = \TinyCat\Support\Components::render('status/time', ['item' => ['url' => '/status/7', 'published_at' => '2026-08-09T12:00:00+00:00', 'published_label' => '9 August 2026 12:00', 'permalink_label' => 'Alice'], 'open_modal' => false]);
 $assert(str_contains($time, 'href="/status/7"'), 'Status time link uses the canonical permalink.');
 $assert(str_contains($time, '<time datetime="'), 'Status time link includes a machine-readable date.');
 $assert(!str_contains($time, 'data-modal-open'), 'Status time link respects the non-modal rendering option.');
 
-$statusCard = part('status/card', [
+$statusCard = \TinyCat\Status\Views::card([
     'item' => [
         'id' => 7,
         'author_id' => 1,
@@ -63,6 +51,9 @@ $statusCard = part('status/card', [
         'published_at' => '2026-08-09 12:00:00',
         '_view' => [
             'author_url' => '/author/1',
+            'anchor' => 'status-7',
+            'modal_id' => 'status-post-modal-7',
+            'modal_url' => '/api/statuses/7',
             'body_html' => 'Post body',
             'status_url' => '/status/7',
             'permalink_label' => 'Alice, 9 August 2026 12:00',
@@ -74,27 +65,16 @@ $statusCard = part('status/card', [
     'open_comments_modal' => false,
 ]);
 $assert(!str_contains($statusCard, 'id="status-7"'), 'Modal status cards can omit the feed anchor.');
+$assert(str_contains($statusCard, 'data-modal-parent-url="/api/statuses/7"'), 'Status cards consume their prepared modal route.');
 $assert(preg_match('/status-time-button[^>]*data-modal-open/', $statusCard) !== 1, 'Modal status cards keep their time link in the current modal.');
 
-$link = part('status/link-card', ['link' => [
-    'link_type' => 'video',
-    'provider' => 'youtube',
-    'video_id' => 'abc123',
-    'normalized_url' => 'https://www.youtube.com/watch?v=abc123',
-    'title' => 'Demo <video>',
-    'display_url' => 'youtube.com/watch?v=abc123',
-    'resolved_title' => 'Demo <video>',
-    'embed_url_resolved' => 'https://www.youtube.com/embed/abc123',
-    'embed_allowed' => true,
-    'thumbnail_url' => 'https://i.ytimg.com/vi/abc123/hqdefault.jpg',
-    'thumbnail_webp_url' => 'https://i.ytimg.com/vi_webp/abc123/hqdefault.webp',
-]]);
+$link = \TinyCat\Support\Components::render('status/link', ['link' => ['url' => 'https://www.youtube.com/watch?v=abc123', 'title' => 'Demo <video>', 'embed_url' => 'https://www.youtube.com/embed/abc123', 'embed_allowed' => true, 'thumbnail_url' => 'https://i.ytimg.com/vi/abc123/hqdefault.jpg', 'thumbnail_webp_url' => 'https://i.ytimg.com/vi_webp/abc123/hqdefault.webp']]);
 $assert(str_contains($link, 'data-embed-url="https://www.youtube.com/embed/abc123"'), 'Video card emits a normalized embed URL.');
 $assert(str_contains($link, 'Demo &lt;video&gt;'), 'Video card escapes its title.');
 $assert(str_contains($link, 'vi_webp/abc123/hqdefault.webp'), 'Video card emits the expected thumbnail source.');
 
-$pagination = part('admin/pagination', [
-    'view' => admin_pagination_view_data(
+$pagination = \TinyCat\Support\View::part('admin/pagination', [
+    'view' => \TinyCat\Support\AdminViews::admin_pagination_view_data(
         ['page' => 2, 'last_page' => 5, 'total' => 50, 'from' => 11, 'to' => 20],
         '/api/admin/users',
         '#admin-users-list',
@@ -109,11 +89,13 @@ $assert(str_contains($pagination, 'aria-current="page">2</span>'), 'Pagination m
 $assert(str_contains($pagination, 'data-history="/admin/users?page=3"'), 'Pagination preserves the browser history URL.');
 $assert(str_contains($pagination, 'data-ajax-target="#admin-users-list"'), 'Pagination preserves its AJAX target.');
 
-$comment = part('status/comment-item', [
+$comment = \TinyCat\Status\Views::commentItem([
     'comment' => [
         'id' => 13,
         'content_id' => 7,
         'author_name' => 'Alice <unsafe>',
+        'author_id' => 1,
+        'body' => 'Hello #tinycat <unsafe>',
         'created_at' => '2026-08-09 12:01:00',
         'likes_count' => 4,
         'viewer_liked' => false,
@@ -130,11 +112,11 @@ $comment = part('status/comment-item', [
     'show_replies' => false,
     'show_reply_form' => false,
 ]);
-$assert(str_contains($comment, 'Hello <a href="/author/2">@Bob</a>'), 'Comment renders its prepared mention HTML.');
+$assert(str_contains($comment, 'href="/tag/tinycat"') && str_contains($comment, '&lt;unsafe&gt;'), 'Comment renders canonical segments and escapes literal body text.');
 $assert(str_contains($comment, 'Alice &lt;unsafe&gt;'), 'Comment still escapes prepared author text.');
 $assert(str_contains($comment, 'data-comment-like-count') && str_contains($comment, '>4</span>'), 'Comment renders its prepared reaction count.');
 
-$notification = part('notifications/preview', ['notifications' => [[
+$notification = \TinyCat\Support\View::part('notifications/preview', ['notifications' => [[
     'id' => 21,
     'actor_name' => 'Bob <unsafe>',
     'view_unread' => true,

@@ -28,10 +28,10 @@ if (!$validVersion($version) || !$validVersion($minimumVersion) || !$validVersio
     exit(1);
 }
 
-$core = (string) file_get_contents($root . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'Core.php');
+$core = (string) file_get_contents($root . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'Support' . DIRECTORY_SEPARATOR . 'Version.php');
 
-if (preg_match("/public const string VERSION = '([^']+)'/", $core, $match) !== 1 || ($match[1] ?? '') !== $version) {
-    fwrite(STDERR, "Core::VERSION must match the package version.\n");
+if (preg_match("/public const string CURRENT = '([^']+)'/", $core, $match) !== 1 || ($match[1] ?? '') !== $version) {
+    fwrite(STDERR, "Version::CURRENT must match the package version.\n");
     exit(1);
 }
 
@@ -73,6 +73,7 @@ $excludedDocumentation = [
     'docs/release-2.0.26-monolith-plan.md',
 ];
 $excludedDocumentationPatterns = [
+    '~^docs/development/~',
     '~^docs/stage-[0-9]+(?:-[A-Za-z0-9._-]+)?\.(?:json|md)$~',
 ];
 $files = [];
