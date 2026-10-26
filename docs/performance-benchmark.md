@@ -5,6 +5,9 @@ runner for testing two installed releases against the same relational graph.
 Both utilities are CLI-only, live below `tools/`, and are excluded from release
 packages.
 
+For fresh-request profiling of the current application, executed SQL traces and
+an isolated larger dataset, use [performance profiling](performance-profiling.md).
+
 ## Demo dataset
 
 The importer writes directly through PDO so it does not depend on either

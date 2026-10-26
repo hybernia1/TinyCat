@@ -13,14 +13,19 @@ final class HttpLoadRunner
         return $this->run($url, 1, 1);
     }
 
-    /** @return array<string, mixed> */
-    public function run(string $url, int $requests, int $concurrency): array
+    /** @param string|list<string> $url
+     * @return array<string, mixed>
+     */
+    public function run(string|array $url, int $requests, int $concurrency): array
     {
         if (!extension_loaded('curl')) {
             throw new RuntimeException('The PHP curl extension is required.');
         }
 
         $multi = curl_multi_init();
+        $urls = is_array($url) ? array_values($url) : [$url];
+        if ($urls === []) { throw new RuntimeException('At least one URL is required.'); }
+        $activeUrls = [];
         $active = [];
         $completed = 0;
         $durations = [];
@@ -29,6 +34,7 @@ final class HttpLoadRunner
         $statuses = [];
         $errors = [];
         $fatalResponses = 0;
+        $responseErrors = [];
         $runtimeMetrics = [
             'peak_memory_bytes' => [],
             'included_files' => [],
@@ -41,7 +47,9 @@ final class HttpLoadRunner
         try {
             while ($completed < $requests) {
                 while (count($active) < $concurrency && count($active) + $completed < $requests) {
-                    $handle = curl_init($url);
+                    $available = array_values(array_diff($urls, $activeUrls));
+                    $target = $available[0] ?? $urls[(count($active) + $completed) % count($urls)];
+                    $handle = curl_init($target);
                     if ($handle === false) {
                         throw new RuntimeException('Unable to initialize cURL.');
                     }
@@ -78,6 +86,7 @@ final class HttpLoadRunner
                     ]);
                     curl_multi_add_handle($multi, $handle);
                     $active[spl_object_id($handle)] = $handle;
+                    $activeUrls[spl_object_id($handle)] = $target;
                 }
 
                 do {
@@ -105,10 +114,12 @@ final class HttpLoadRunner
                     }
                     if (is_string($body) && preg_match('/(?:Fatal error|Uncaught (?:Error|Exception)|<b>Warning<\/b>)/i', $body) === 1) {
                         $fatalResponses++;
+                        $responseErrors[] = substr($body, 0, 500);
                     }
                     curl_multi_remove_handle($multi, $handle);
                     curl_close($handle);
                     unset($active[spl_object_id($handle)]);
+                    unset($activeUrls[spl_object_id($handle)]);
                     $completed++;
                 }
 
@@ -142,6 +153,7 @@ final class HttpLoadRunner
             'successes' => $successes,
             'failures' => $requests - $successes + array_sum($errors),
             'fatal_responses' => $fatalResponses,
+            'response_errors' => array_slice($responseErrors, 0, 3),
             'status_codes' => $statuses,
             'errors' => $errors,
             'latency_ms' => $this->distribution($durations),

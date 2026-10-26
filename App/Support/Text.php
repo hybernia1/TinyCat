@@ -14,6 +14,12 @@ final class Text
 
         $text = trim($text);
 
+        // Stored tags and generated slugs already have this canonical form.
+        // Avoid rebuilding an ICU transliterator for every repeated read.
+        if ($separator === '-' && preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $text) === 1) {
+            return $text;
+        }
+
         if (function_exists('transliterator_transliterate')) {
             $converted = transliterator_transliterate('Any-Latin; Latin-ASCII', $text);
             $text = $converted === false ? $text : $converted;

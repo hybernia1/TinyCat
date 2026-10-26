@@ -74,6 +74,7 @@ $excludedDocumentation = [
 ];
 $excludedDocumentationPatterns = [
     '~^docs/development/~',
+    '~^docs/performance(?:-[A-Za-z0-9._-]+)?\.md$~',
     '~^docs/stage-[0-9]+(?:-[A-Za-z0-9._-]+)?\.(?:json|md)$~',
 ];
 $files = [];

@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.0.1 - 2026-10-26
+
+- Avoid repeated ICU transliteration for canonical ASCII slugs; preserve Unicode and custom-separator normalization.
+- Coalesce concurrent sidebar ranking refreshes, serve stale values during refresh, and prevent cache-directory races from corrupting JSON responses.
+- Extend performance tooling with isolated PHP call profiles, multiple workers, expired-cache bursts and response hashes.
+
+- Add isolated large-data preparation and fresh-request HTTP profiling with executed SQL counts, timings and query traces.
+- Index recent dashboard comments and active-user search after validating the access plans against an 11.3-million-row dataset; include installer and repeatable update migrations.
+
 ## 4.0.0 - 2026-10-26
 
 - Breaking: normalize API outcomes around top-level `code`, `params` and a readable fallback `message`; replace `error.code` and string-only validation errors with structured field issues. Update external clients using `docs/api.md`.

@@ -340,6 +340,7 @@ function tc_install_create_tables(): void
             UNIQUE KEY users_username_unique (username),
             UNIQUE KEY users_email_unique (email),
             KEY users_role_status_index (role, status),
+            KEY users_status_username_index (status, username, id),
             CONSTRAINT fk_users_muted_by FOREIGN KEY (muted_by) REFERENCES users (id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
@@ -451,6 +452,7 @@ function tc_install_create_tables(): void
             KEY content_comments_content_index (content_id, parent_id, created_at),
             KEY content_comments_user_index (user_id, created_at),
             KEY content_comments_parent_index (parent_id),
+            KEY content_comments_recent_index (created_at, id),
             CONSTRAINT fk_content_comments_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,
             CONSTRAINT fk_content_comments_parent FOREIGN KEY (parent_id) REFERENCES content_comments (id) ON DELETE CASCADE,
             CONSTRAINT fk_content_comments_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE

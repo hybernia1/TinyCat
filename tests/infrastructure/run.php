@@ -25,6 +25,17 @@ $throws = static function (callable $operation, string $class) use ($assert): vo
     }
     throw new RuntimeException('Expected exception: ' . $class);
 };
+foreach ([
+    ['benchmark', '-', 'benchmark'], ['mobile-first', '-', 'mobile-first'],
+    ['123', '-', '123'], ['  cache-hit  ', '-', 'cache-hit'],
+    ['Cache HIT', '-', 'cache-hit'], ['a--b', '-', 'a-b'],
+    ['-a-', '-', 'a'], ['a_b', '-', 'a-b'], ['', '-', ''],
+    ['a-b', '_', 'a_b'], ['a b', '', 'a-b'],
+    ['Příliš žluťoučký kůň', '-', 'prilis-zlutoucky-kun'],
+    ['Žluťoučký', '_', 'zlutoucky'],
+] as [$input, $separator, $expected]) {
+    $assert(\TinyCat\Support\Text::slug($input, $separator) === $expected, 'Slug normalization preserves canonical tags, separators and Unicode transliteration.');
+}
 $request = new Request(
     serverData: ['REQUEST_METHOD' => 'POST', 'REQUEST_URI' => '/api/items/7?view=html', 'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json'],
     queryData: ['value' => 'query', 'nested' => ['q' => 1]],

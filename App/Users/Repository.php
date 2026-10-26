@@ -129,34 +129,34 @@ final class Repository
             return is_array($stale) ? $stale : [];
         }
 
-        $feedIndex = (string) \TinyCat\Settings\Store::config('database.driver', 'mysql') === 'mysql'
-            ? ' FORCE INDEX (content_feed_index)'
-            : '';
-        $rankedRoles = \TinyCat\Users\Roles::rolesWith('appears_in_people_rankings');
-        $rolePlaceholders = implode(', ', array_fill(0, count($rankedRoles), '?'));
-        $authors = \TinyCat\Database\Queries::db_select(
-            'SELECT u.id,
-                    u.username,
-                    u.username AS name,
-                    u.avatar_exists,
-                    u.updated_at,
-                    u.bio,
-                    COUNT(*) AS posts_count,
-                    MAX(c.published_at) AS latest_at
-                FROM content c' . $feedIndex . '
-                INNER JOIN users u ON u.id = c.author_id'
-        )
-            ->where('c.published_at >= ?', \TinyCat\Support\Dates::dateDb('-' . $days . ' days'))
-            ->where('c.published_at <= ?', \TinyCat\Support\Dates::dateDb())
-            ->where('u.status = ?', 'active')
-            ->where('u.role IN (' . $rolePlaceholders . ')', ...$rankedRoles)
-            ->group('u.id, u.username, u.avatar_exists, u.updated_at, u.bio')
-            ->order('posts_count DESC, latest_at DESC, u.username ASC')
-            ->limit($limit)
-            ->all();
+        return \TinyCat\Support\Cache::rememberArray($cacheKey, 3600, static function () use ($limit, $days): array {
+            $feedIndex = (string) \TinyCat\Settings\Store::config('database.driver', 'mysql') === 'mysql'
+                ? ' FORCE INDEX (content_feed_index)'
+                : '';
+            $rankedRoles = \TinyCat\Users\Roles::rolesWith('appears_in_people_rankings');
+            $rolePlaceholders = implode(', ', array_fill(0, count($rankedRoles), '?'));
+            $authors = \TinyCat\Database\Queries::db_select(
+                'SELECT u.id,
+                        u.username,
+                        u.username AS name,
+                        u.avatar_exists,
+                        u.updated_at,
+                        u.bio,
+                        COUNT(*) AS posts_count,
+                        MAX(c.published_at) AS latest_at
+                    FROM content c' . $feedIndex . '
+                    INNER JOIN users u ON u.id = c.author_id'
+            )
+                ->where('c.published_at >= ?', \TinyCat\Support\Dates::dateDb('-' . $days . ' days'))
+                ->where('c.published_at <= ?', \TinyCat\Support\Dates::dateDb())
+                ->where('u.status = ?', 'active')
+                ->where('u.role IN (' . $rolePlaceholders . ')', ...$rankedRoles)
+                ->group('u.id, u.username, u.avatar_exists, u.updated_at, u.bio')
+                ->order('posts_count DESC, latest_at DESC, u.username ASC')
+                ->limit($limit)
+                ->all();
 
-        \TinyCat\Support\Cache::put($cacheKey, $authors);
-
-        return $authors;
+            return $authors;
+        });
     }
 }

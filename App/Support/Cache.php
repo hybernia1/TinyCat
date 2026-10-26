@@ -40,6 +40,56 @@ final class Cache
         return $lookup['found'] && $lookup['written_at'] >= time() - max(1, $ttl) ? $lookup['value'] : null;
     }
 
+    /**
+     * Coalesce computed-array misses between workers on this application node.
+     * A refresh already in progress can serve stale data; a cold miss waits up
+     * to two seconds, then computes independently if the lock is unavailable.
+     *
+     * @param callable(): array<mixed> $compute
+     * @return array<mixed>
+     */
+    public static function rememberArray(string $key, int $ttl, callable $compute): array
+    {
+        $cached = self::get($key, $ttl);
+        if (is_array($cached)) { return $cached; }
+
+        $directory = self::directory('locks');
+        $lock = null;
+        if (is_dir($directory) || @mkdir($directory, 0775, true) || is_dir($directory)) {
+            // Keep lock files: unlinking one while another worker waits would
+            // let later requests lock a different inode for the same key.
+            $opened = @fopen($directory . DIRECTORY_SEPARATOR . hash('sha256', $key) . '.lock', 'c');
+            $lock = $opened === false ? null : $opened;
+        }
+        $acquired = false;
+        try {
+            if (is_resource($lock)) {
+                $acquired = flock($lock, LOCK_EX | LOCK_NB);
+                if (!$acquired) {
+                    $stale = self::read($key);
+                    if (is_array($stale)) { return $stale; }
+                    $deadline = hrtime(true) + 2_000_000_000;
+                    do {
+                        usleep(10000);
+                        $acquired = flock($lock, LOCK_EX | LOCK_NB);
+                    } while (!$acquired && hrtime(true) < $deadline);
+                }
+                if ($acquired) {
+                    $cached = self::get($key, $ttl);
+                    if (is_array($cached)) { return $cached; }
+                }
+            }
+            $value = $compute();
+            self::put($key, $value);
+            return $value;
+        } finally {
+            if (is_resource($lock)) {
+                if ($acquired) { flock($lock, LOCK_UN); }
+                fclose($lock);
+            }
+        }
+    }
+
     public static function read(string $key): mixed
     {
         $lookup = self::lookup($key);
@@ -124,7 +174,7 @@ final class Cache
         $directory = self::directory($namespace);
         $target = self::file($fileName, $namespace);
 
-        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
             return false;
         }
 
@@ -403,7 +453,8 @@ final class Cache
             return self::cacheMiss();
         }
 
-        $json = file_get_contents($file);
+        // A concurrent Windows replacement can remove the file after is_file().
+        $json = @file_get_contents($file);
 
         if (!is_string($json) || $json === '') {
             return self::cacheMiss();
@@ -416,7 +467,7 @@ final class Cache
         }
 
         clearstatcache(true, $file);
-        $writtenAt = filemtime($file);
+        $writtenAt = @filemtime($file);
 
         return [
             'available' => true,

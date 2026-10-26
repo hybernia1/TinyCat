@@ -282,6 +282,8 @@ PHP;
             '20260813_001_remove_relation_created_at.php',
             '20261025_001_core_bots.php',
             '20261025_002_remove_extension_metadata.php',
+            '20261026_001_recent_comments_index.php',
+            '20261026_002_user_search_index.php',
         ], true),
     ) as $migrationPath) {
         $migration = pathinfo((string) $migrationPath, PATHINFO_FILENAME);
@@ -354,6 +356,8 @@ PHP;
         '20260813_001_remove_relation_created_at',
         '20261025_001_core_bots',
         '20261025_002_remove_extension_metadata',
+        '20261026_001_recent_comments_index',
+        '20261026_002_user_search_index',
     ], 'Update removes obsolete tables and consolidates redundant email settings.');
     $assert(($update['extension_loaded'] ?? null) === true, 'Compatible extension remains loaded during update.');
     $assert(

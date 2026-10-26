@@ -184,6 +184,26 @@ try {
     $assert(($status['account_ready'] ?? false) === true, 'Installed database reports an active account.');
     $assert(($status['ready'] ?? false) === true, 'Installed database is application-ready.');
 
+    $recentIndex = static fn (): array => array_column(\TinyCat\Database\Connection::all(
+        "SELECT COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='content_comments' AND INDEX_NAME='content_comments_recent_index' ORDER BY SEQ_IN_INDEX"
+    ), 'COLUMN_NAME');
+    $assert($recentIndex() === ['created_at', 'id'], 'Fresh installs index the latest comments in display order.');
+    \TinyCat\Database\Connection::exec('ALTER TABLE content_comments DROP INDEX content_comments_recent_index');
+    $indexRecentComments = require $root . '/migrations/20261026_001_recent_comments_index.php';
+    $indexRecentComments(\TinyCat\Database\Connection::get());
+    $indexRecentComments(\TinyCat\Database\Connection::get());
+    $assert($recentIndex() === ['created_at', 'id'], 'Recent-comments migration is repeatable on existing installations.');
+
+    $searchIndex = static fn (): array => array_column(\TinyCat\Database\Connection::all(
+        "SELECT COLUMN_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='users' AND INDEX_NAME='users_status_username_index' ORDER BY SEQ_IN_INDEX"
+    ), 'COLUMN_NAME');
+    $assert($searchIndex() === ['status', 'username', 'id'], 'Fresh installs index active-user search and ordering.');
+    \TinyCat\Database\Connection::exec('ALTER TABLE users DROP INDEX users_status_username_index');
+    $indexUserSearch = require $root . '/migrations/20261026_002_user_search_index.php';
+    $indexUserSearch(\TinyCat\Database\Connection::get());
+    $indexUserSearch(\TinyCat\Database\Connection::get());
+    $assert($searchIndex() === ['status', 'username', 'id'], 'User-search migration is repeatable on existing installations.');
+
     $botId = (int) \TinyCat\Database\Connection::insert('users', [
         'username' => 'adopted_feedbot',
         'role' => 'bot',

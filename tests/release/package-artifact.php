@@ -147,7 +147,7 @@ try {
     }
 
     foreach ($names as $name) {
-        if (preg_match('~^docs/(?:development/|baseline-|performance-benchmark|release-2\.0\.26-monolith-plan|stage-[0-9]+)~', $name) === 1) {
+        if (preg_match('~^docs/(?:development/|baseline-|performance(?:[.-]|$)|release-2\.0\.26-monolith-plan|stage-[0-9]+)~', $name) === 1) {
             $failures[] = "Internal release evidence in artifact: {$name}";
         }
     }

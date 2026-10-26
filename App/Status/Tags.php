@@ -43,47 +43,47 @@ final class Tags
             return is_array($stale) ? $stale : [];
         }
 
-        $feedIndex = (string) \TinyCat\Settings\Store::config('database.driver', 'mysql') === 'mysql'
-            ? ' FORCE INDEX (content_sidebar_index)'
-            : '';
-        $rows = \TinyCat\Database\Queries::db_select(
-            'SELECT t.id,
-                    t.name,
-                    COUNT(*) AS posts_count,
-                    MAX(c.published_at) AS latest_at
-                FROM content c' . $feedIndex . '
-                INNER JOIN users u ON u.id = c.author_id
-                INNER JOIN content_tags ct ON ct.content_id = c.id
-                INNER JOIN terms t ON t.id = ct.term_id'
-        )
-            ->where('c.published_at >= ?', $since)
-            ->where('c.published_at <= ?', \TinyCat\Support\Dates::dateDb())
-            ->where('u.status = ?', 'active')
-            ->group('t.id, t.name')
-            ->order('posts_count DESC, latest_at DESC, t.name ASC')
-            ->limit($limit)
-            ->all();
+        return \TinyCat\Support\Cache::rememberArray($cacheKey, 3600, static function () use ($limit, $since): array {
+            $feedIndex = (string) \TinyCat\Settings\Store::config('database.driver', 'mysql') === 'mysql'
+                ? ' FORCE INDEX (content_sidebar_index)'
+                : '';
+            $rows = \TinyCat\Database\Queries::db_select(
+                'SELECT t.id,
+                        t.name,
+                        COUNT(*) AS posts_count,
+                        MAX(c.published_at) AS latest_at
+                    FROM content c' . $feedIndex . '
+                    INNER JOIN users u ON u.id = c.author_id
+                    INNER JOIN content_tags ct ON ct.content_id = c.id
+                    INNER JOIN terms t ON t.id = ct.term_id'
+            )
+                ->where('c.published_at >= ?', $since)
+                ->where('c.published_at <= ?', \TinyCat\Support\Dates::dateDb())
+                ->where('u.status = ?', 'active')
+                ->group('t.id, t.name')
+                ->order('posts_count DESC, latest_at DESC, t.name ASC')
+                ->limit($limit)
+                ->all();
 
-        $tags = [];
+            $tags = [];
 
-        foreach ($rows as $row) {
-            $name = \TinyCat\Status\Tags::status_tag_normalize((string) ($row['name'] ?? ''));
+            foreach ($rows as $row) {
+                $name = \TinyCat\Status\Tags::status_tag_normalize((string) ($row['name'] ?? ''));
 
-            if ($name === '') {
-                continue;
+                if ($name === '') {
+                    continue;
+                }
+
+                $tags[] = [
+                    'id' => (int) ($row['id'] ?? 0),
+                    'name' => $name,
+                    'url' => \TinyCat\Status\Tags::tag_url($name),
+                    'posts_count' => (int) ($row['posts_count'] ?? 0),
+                ];
             }
 
-            $tags[] = [
-                'id' => (int) ($row['id'] ?? 0),
-                'name' => $name,
-                'url' => \TinyCat\Status\Tags::tag_url($name),
-                'posts_count' => (int) ($row['posts_count'] ?? 0),
-            ];
-        }
-
-        \TinyCat\Support\Cache::put($cacheKey, $tags);
-
-        return $tags;
+            return $tags;
+        });
     }
 
     public static function status_tag_normalize(string $tag): string
