@@ -1,0 +1,11 @@
+@media (max-width: 759px) {
+.section > .container {
+    width: 100%;
+  }
+
+.section .card,
+  .admin-content .card {
+    border-inline: 0;
+    border-radius: 0;
+  }
+}

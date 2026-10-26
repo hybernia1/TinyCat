@@ -32,6 +32,9 @@ final class Assets
             default => false,
         };
 
+        $compiled = CompiledAssets::asset($path, $minify);
+        if ($compiled !== null) { return $compiled; }
+
         if ($minify) {
             $optimizedUrl = \TinyCat\Support\Minifier::assetUrl($path, $file, $extension);
 
@@ -40,6 +43,6 @@ final class Assets
             }
         }
 
-        return $url . '?v=' . filemtime($file);
+        return $url . '?v=' . substr((string) hash_file('sha256', $file), 0, 24);
     }
 }

@@ -1,0 +1,5 @@
+/* JSON resource text keeps the line breaks formerly supplied by server markup. */
+.is-resource-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

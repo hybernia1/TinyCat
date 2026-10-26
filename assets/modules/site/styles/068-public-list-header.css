@@ -1,0 +1,20 @@
+@media (max-width: 759px) {
+.public-list-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+.public-list-header.public-list-header-actions {
+    align-items: center;
+    flex-direction: row;
+  }
+
+.public-list-header-actions > .text-2xl {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+.public-list-header-actions > .btn {
+    flex: 0 0 auto;
+  }
+}

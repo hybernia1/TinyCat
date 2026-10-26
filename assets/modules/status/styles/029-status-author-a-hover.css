@@ -1,0 +1,16 @@
+.status-author a:hover {
+  color: var(--primary);
+}
+
+.status-body {
+  color: var(--text);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.mention-link {
+  color: var(--primary-strong);
+  font-weight: 800;
+  text-decoration: none;
+}

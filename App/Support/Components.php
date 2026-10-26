@@ -16,7 +16,7 @@ final class Components
     {
         if (self::$templates !== null) { return self::$templates; }
         $templates = [];
-        foreach (glob(Paths::basePath('assets/ui/*.json')) ?: [] as $file) {
+        foreach ([Paths::basePath('assets/ui/components.json'), ...(glob(Paths::basePath('assets/modules/*/components.json')) ?: [])] as $file) {
             $definitions = json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
             foreach ($definitions as $name => $definition) {
                 if (isset($templates[$name])) { throw new InvalidArgumentException('Duplicate component: ' . $name); }

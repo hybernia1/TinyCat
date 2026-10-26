@@ -15,7 +15,7 @@ final class Api
     {
         $api->get('/users/authentication', self::authentication(...));
         $api->post('/users/sessions', static fn (): Result => self::result(Login::auth_login_request()), 'public', 200);
-        $api->post('/users/registrations', static fn (): Result => self::result(Accounts::registration_request()), 'public');
+        $api->post('/users/registrations', static fn (): Result => self::result(Actions::registration_request()), 'public');
         $api->post('/users/password-resets', static function (Request $request): Result {
             self::recoveryCaptcha();
             Recovery::send((string) $request->input('email', ''));
@@ -33,8 +33,8 @@ final class Api
         });
         $api->get('/users/me', static fn (): array => self::editable(self::actor()));
         $api->patch('/users/me', static fn (): Result => self::profile(self::actor()));
-        $api->patch('/users/me/email', static fn (): Result => self::result(Profiles::user_email_update_request(self::actor())));
-        $api->put('/users/me/password', static fn (): Result => self::result(Profiles::user_password_update_request(self::actor())));
+        $api->patch('/users/me/email', static fn (): Result => self::result(Actions::user_email_update_request(self::actor())));
+        $api->put('/users/me/password', static fn (): Result => self::result(Actions::user_password_update_request(self::actor())));
         $api->get('/users', self::listing(...), 'admin');
         $api->post('/users', static fn (): Result => self::result(self::adminCreate()), 'admin');
         $api->get('/users/{id:[0-9]+}/management', static fn (Request $r, array $p): array => self::editable(self::target((int) $p['id'])), 'user');
@@ -55,7 +55,7 @@ final class Api
             $id = (int) $p['id'];
             $target = Accounts::tc_admin_user_by_id($id);
             if ($target === null) { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }
-            Accounts::tc_admin_user_require_deletable($target);
+            Actions::tc_admin_user_require_deletable($target);
             Accounts::user_delete_account($id);
             return ['deleted_id' => $id];
         }, 'admin');
@@ -91,7 +91,7 @@ final class Api
      */
     private static function target(int $id): array
     {
-        return Profiles::user_profile_require_edit_target(self::actor(), $id);
+        return Actions::user_profile_require_edit_target(self::actor(), $id);
     }
 
     /**
@@ -134,14 +134,14 @@ final class Api
      */
     private static function profile(array $target): Result
     {
-        $data = Profiles::user_profile_update_request($target, self::actor());
+        $data = Actions::user_profile_update_request($target, self::actor());
         $updated = Accounts::tc_admin_user_by_id((int) $target['id']) ?? $target;
         return new Result(['user' => Resource::privateProfile($updated)], (string) $data['message']);
     }
 
     private static function listing(): Result
     {
-        $data = Accounts::tc_admin_users_api_payload();
+        $data = Actions::tc_admin_users_api_payload();
         $pagination = $data['pagination'];
         unset($data['pagination']);
         $data = Resource::listing($data, $pagination);
@@ -154,7 +154,7 @@ final class Api
      */
     private static function adminCreate(): array
     {
-        $id = (int) \TinyCat\Database\Connection::insert('users', Accounts::tc_admin_user_payload());
+        $id = (int) \TinyCat\Database\Connection::insert('users', Actions::tc_admin_user_payload());
         return ['item' => Accounts::tc_admin_user_resource(Accounts::tc_admin_user_by_id($id) ?? []), 'message' => \TinyCat\Support\Localization::t('users.messages.created')];
     }
 
@@ -168,7 +168,7 @@ final class Api
         if (!\TinyCat\Users\Roles::managedByCoreAdmin((string) ($target['role'] ?? ''))) { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }
         try { $avatar = \TinyCat\Users\Avatars::admin_user_avatar_change($target); }
         catch (\InvalidArgumentException $e) { Response::error($e->getMessage(), 422, 'avatar_invalid'); }
-        $payload = Accounts::tc_admin_user_payload($id);
+        $payload = Actions::tc_admin_user_payload($id);
         if ($avatar['changed']) {
             $payload['avatar_exists'] = $avatar['uploaded'] ? 1 : 0;
             $payload['updated_at'] = Avatars::user_avatar_updated_at($target);

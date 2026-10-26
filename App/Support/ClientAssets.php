@@ -8,13 +8,16 @@ use RuntimeException;
 /** Module-owned manifests select public client code, definitions and messages. */
 final class ClientAssets
 {
+    /** @var array<string, list<array<mixed>>> */
+    private static array $features = [];
     /**
      * @return list<array<mixed>>
      */
     private static function features(string $path): array
     {
+        if (isset(self::$features[$path])) { return self::$features[$path]; }
         $features = [];
-        foreach (glob(Paths::basePath('assets/client/*.json')) ?: [] as $file) {
+        foreach (self::manifests() as $file) {
             foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
                 foreach ($feature['routes'] as $route) {
                     $matches = match ($route) {
@@ -27,7 +30,7 @@ final class ClientAssets
                 }
             }
         }
-        return $features;
+        return self::$features[$path] = $features;
     }
 
     /** @return array<string, mixed> */
@@ -47,8 +50,12 @@ final class ClientAssets
         $keys = array_fill_keys(Components::labels(self::definitions($path)), true);
         foreach (self::features($path) as $feature) {
             foreach ($feature['translations'] ?? [] as $key) { $keys[(string) $key] = true; }
-            foreach ($feature['translation_sources'] ?? [] as $source) {
-                $code = (string) file_get_contents(Paths::basePath((string) $source));
+            foreach (AssetGraph::order($feature['entries'] ?? []) as $source) {
+                $code = AssetGraph::read($source);
+                preg_match_all('/\b(?:U|T\.ui|TinyCat\.ui)\.(?:text|button|field|select)\(\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', $code, $literalKeys);
+                foreach ($literalKeys[1] as $key) {
+                    if (!array_key_exists($key, $dictionary)) { throw new RuntimeException('Missing client translation in ' . $source . ': ' . $key); }
+                }
                 preg_match_all('/["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', $code, $matches);
                 foreach ($matches[1] as $key) {
                     if (!array_key_exists($key, $dictionary)) { continue; }
@@ -67,32 +74,87 @@ final class ClientAssets
         return $catalog;
     }
 
-    /**
-     * @param list<string> $extraScripts
+    /** @return list<string> */
+    public static function manifests(): array
+    {
+        return [Paths::basePath('assets/ui/module.json'), ...(glob(Paths::basePath('assets/modules/*/module.json')) ?: [])];
+    }
+
+    /** @return list<string> */
+    public static function scopes(): array
+    {
+        $paths = ['/', '/admin', '/install'];
+        foreach (self::manifests() as $file) {
+            foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
+                foreach ($feature['routes'] as $route) { if (str_starts_with($route, '/')) { $paths[] = $route; } }
+            }
+        }
+        $paths = array_values(array_unique($paths));
+        usort($paths, static fn (string $a, string $b): int => strlen($b) <=> strlen($a) ?: strcmp($a, $b));
+        return $paths;
+    }
+
+    /** @return list<string> */
+    public static function runtime(): array
+    {
+        return AssetGraph::order(['assets/core/components.js']);
+    }
+
+    /** @return list<string> */
+    public static function entries(string $path): array
+    {
+        $entries = [];
+        foreach (self::features($path) as $feature) {
+            foreach ($feature['entries'] ?? [] as $entry) { $entries[] = $entry; }
+        }
+        return array_values(array_unique([...$entries, 'assets/bootstrap.js']));
+    }
+
+    /** @return list<string> */
+    public static function sourceStyles(string $path): array
+    {
+        $styles = [];
+        foreach (self::features($path) as $feature) {
+            foreach ($feature['styles'] ?? [] as $style) { $styles[] = $style; }
+        }
+        return array_values(array_unique($styles));
+    }
+
+    /** @param list<string> $extraScripts
      * @return list<string>
      */
-    public static function scripts(string $path, array $extraScripts = ['js/tinycat.js']): array
+    public static function scripts(string $path, array $extraScripts = []): array
     {
         $locale = Localization::locale();
-        $core = ['api-client', 'dom', 'forms', 'i18n', 'modal', 'ui', 'components'];
-        $urls = array_map(static fn (string $name): string => Assets::asset('js/core/' . $name . '.js'), $core);
-        $encode = static fn (mixed $value): string => json_encode($value, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-        $urls[] = self::bundle('components', 'window.TinyCat.components.register(' . $encode((object) self::definitions($path)) . ');');
-        $urls[] = self::bundle('i18n-' . strtolower($locale), 'window.TinyCat.i18n.register(' . $encode($locale) . ',' . $encode((object) self::catalog($path, $locale)) . ');');
-        $scripts = [];
-        foreach (self::features($path) as $feature) {
-            foreach ($feature['scripts'] ?? [] as $script) { $scripts[] = (string) $script; }
-        }
-        foreach (array_unique([...$scripts, ...$extraScripts]) as $script) { $urls[] = Assets::asset($script); }
+        $minify = (bool) \TinyCat\Settings\Store::setting('performance.minify_js', false);
+        $compiled = CompiledAssets::client($path, $locale, $minify);
+        $urls = $compiled !== null ? $compiled['scripts'] : [
+            self::bundle('runtime', AssetGraph::javascript(self::runtime()), 'js', $minify),
+            self::bundle('components', 'window.TinyCat.components.register(' . self::encode((object) self::definitions($path)) . ');'),
+            self::bundle('i18n-' . strtolower($locale), 'window.TinyCat.i18n.register(' . self::encode($locale) . ',' . self::encode((object) self::catalog($path, $locale)) . ');'),
+            self::bundle('app', AssetGraph::javascript(AssetGraph::order(self::entries($path), self::runtime())), 'js', $minify),
+        ];
+        foreach ($extraScripts as $script) { $urls[] = Assets::asset($script); }
         return $urls;
     }
 
-    private static function bundle(string $kind, string $source): string
+    /** @return list<string> */
+    public static function styles(string $path): array
     {
-        $file = 'client-' . $kind . '.' . substr(hash('sha256', $source), 0, 24) . '.js';
-        $target = Cache::file($file, 'assets');
-        if (!is_file($target) && !Cache::writeFile($file, $source, 'assets')) { throw new RuntimeException('Could not write client asset: ' . $file); }
-        // Keep older hashes: an already-rendered page may still need its original assets.
-        return '/cache/assets/' . $file;
+        $minify = (bool) \TinyCat\Settings\Store::setting('performance.minify_css', false);
+        $compiled = CompiledAssets::client($path, Localization::locale(), false, $minify);
+        return [$compiled !== null ? $compiled['style'] : self::bundle('styles', AssetGraph::stylesheet(self::sourceStyles($path)), 'css', $minify)];
+    }
+
+    public static function encode(mixed $value): string
+    {
+        return json_encode($value, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+    }
+
+    private static function bundle(string $kind, string $source, string $type = 'js', bool $minify = false): string
+    {
+        $url = Minifier::cachedAssetUrl('client-' . $kind, 'client-' . $kind, $source, $type, $minify);
+        if ($url === null) { throw new RuntimeException('Could not write client asset: ' . $kind); }
+        return $url;
     }
 }

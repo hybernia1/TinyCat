@@ -1,0 +1,8 @@
+.notifications-page {
+  width: min(100%, 860px);
+  margin-inline: auto;
+}
+
+.notifications-list {
+  display: grid;
+}

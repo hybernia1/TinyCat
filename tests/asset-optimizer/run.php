@@ -116,7 +116,7 @@ foreach ($cases as $name => [$source, $expected]) {
     $assertSame($name . ' is idempotent', $actual, \TinyCat\Support\Minifier::minifyJavaScript($actual));
 }
 
-$tinyCatSource = file_get_contents(dirname(__DIR__, 2) . '/assets/js/tinycat.js');
+$tinyCatSource = \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries('/')));
 $assertTrue('tinycat.js source is readable', is_string($tinyCatSource));
 
 if (is_string($tinyCatSource)) {
@@ -125,5 +125,10 @@ if (is_string($tinyCatSource)) {
     $assertSame('tinycat.js is idempotent', $tinyCatMinified, \TinyCat\Support\Minifier::minifyJavaScript($tinyCatMinified));
 }
 
+$first = \TinyCat\Support\Minifier::cachedAssetUrl('retention', 'retention', 'var value = 1;', 'js', true);
+$second = \TinyCat\Support\Minifier::cachedAssetUrl('retention', 'retention', 'var value = 2;', 'js', true);
+$assertTrue('changed sources have different immutable URLs', $first !== $second);
+$assertTrue('older asset remains available to open pages', is_file(\TinyCat\Support\Cache::file(basename((string) $first), 'assets')));
+$assertSame('warm source reuses its address', (string) $second, (string) \TinyCat\Support\Minifier::cachedAssetUrl('retention', 'retention', 'var value = 2;', 'js', true));
 echo sprintf("\n%d checks, %d failures.\n", $checks, count($failures));
 exit($failures === [] ? 0 : 1);

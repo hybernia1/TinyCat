@@ -1,0 +1,8 @@
+.home-feed-app {
+  --stack-gap: 10px;
+}
+
+.home-feed-switch {
+  display: flex;
+  width: 100%;
+}

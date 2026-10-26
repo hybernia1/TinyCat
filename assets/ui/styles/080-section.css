@@ -1,0 +1,21 @@
+@media (min-width: 760px) {
+.section {
+    padding-block: 48px;
+  }
+
+.pagination {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+.steps {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+.split {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

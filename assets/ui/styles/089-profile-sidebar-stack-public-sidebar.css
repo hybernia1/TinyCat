@@ -1,0 +1,7 @@
+@media (min-width: 900px) {
+.profile-sidebar-stack,
+  .public-sidebar {
+    position: sticky;
+    top: var(--sidebar-sticky-top, 76px);
+  }
+}

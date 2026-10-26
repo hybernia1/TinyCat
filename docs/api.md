@@ -154,8 +154,8 @@ cannot override the method. Unsupported methods return 405 with `Allow` and
 `error.details.allowed`; unknown paths return 404. Internal failures return JSON
 without exposing exception details in production.
 
-AJAX stays enabled through `assets/js/core/api-client.js` and domain renderers in
-`assets/js/modules`. Server pages remain valid initial renders. Tests exercise
+AJAX stays enabled through `assets/core/http.js` and domain renderers in
+`assets/modules`. Server pages remain valid initial renders. Tests exercise
 the actual front controller with an isolated database, safe DOM rendering,
 authentication, authorization, CSRF, state writes, pagination, history, recovery
 token reuse, CAPTCHA configuration and rejection of presentation fields.

@@ -94,7 +94,7 @@ $assert($value('SELECT password FROM users WHERE id = 1') === 'first-password', 
 
 $tagText = implode(' ', array_map(static fn (int $id): string => '#tag' . $id, range(1, 12)));
 $assert(count(\TinyCat\Status\Tags::status_tags_from_text($tagText)) === 12, 'Tag parsing does not truncate at ten unique tags.');
-$assert(count(\TinyCat\Status\Posts::status_require_valid_tags($tagText)) === 12, 'Tag validation accepts more than ten unique tags.');
+$assert(count(\TinyCat\Status\Actions::status_require_valid_tags($tagText)) === 12, 'Tag validation accepts more than ten unique tags.');
 $assert(\TinyCat\Status\Tags::status_tag_normalize(str_repeat('a', 33)) === '', 'The storage-backed per-tag length bound remains.');
 
 $youtube = \TinyCat\Status\LinkParser::fromRaw('https://youtu.be/abc123');
@@ -155,17 +155,17 @@ $_SERVER['REQUEST_URI'] = '/api/status/react';
 $_SERVER['HTTP_ACCEPT'] = 'application/json';
 $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 $actor = ['id' => 2, 'username' => 'actor', 'role' => 'user', 'created_at' => '2025-01-01 00:00:00'];
-$reaction = \TinyCat\Status\Posts::status_json_react(300, $actor);
+$reaction = \TinyCat\Status\Actions::status_json_react(300, $actor);
 $assert((bool) ($reaction['status']['liked'] ?? false), 'A status reaction is added.');
-$reaction = \TinyCat\Status\Posts::status_json_react(300, $actor);
+$reaction = \TinyCat\Status\Actions::status_json_react(300, $actor);
 $assert(!(bool) ($reaction['status']['liked'] ?? true), 'A status reaction is removed.');
 
-$reaction = \TinyCat\Status\Posts::status_json_react(200, $actor);
+$reaction = \TinyCat\Status\Actions::status_json_react(200, $actor);
 $assert((bool) ($reaction['status']['liked'] ?? false), 'A status-owner notification is created for a new reaction.');
 $database->exec("UPDATE notifications SET read_at = '2026-08-14 12:00:00' WHERE content_id = 200");
-$reaction = \TinyCat\Status\Posts::status_json_react(200, $actor);
+$reaction = \TinyCat\Status\Actions::status_json_react(200, $actor);
 $assert(!(bool) ($reaction['status']['liked'] ?? true), 'A notified reaction can be removed.');
-$reaction = \TinyCat\Status\Posts::status_json_react(200, $actor);
+$reaction = \TinyCat\Status\Actions::status_json_react(200, $actor);
 $assert((bool) ($reaction['status']['liked'] ?? false), 'A removed reaction can be added again.');
 $assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = 200') === 1, 'Repeated reactions reuse one notification.');
 $assert($value('SELECT read_at FROM notifications WHERE content_id = 200') === null, 'A repeated reaction restores the notification as unread.');
@@ -176,34 +176,34 @@ $setComment = static function (string $body) : void {
     \TinyCat\Http\Request::reset();
 };
 $setComment('Root comment #nested');
-$rootComment = \TinyCat\Status\Comments::status_json_comment(300, 0, $actor);
+$rootComment = \TinyCat\Status\Actions::status_json_comment(300, 0, $actor);
 $rootCommentId = (int) ($rootComment['comment_id'] ?? 0);
 $setComment('First reply');
-$firstReply = \TinyCat\Status\Comments::status_json_comment(300, $rootCommentId, $actor);
+$firstReply = \TinyCat\Status\Actions::status_json_comment(300, $rootCommentId, $actor);
 $firstReplyId = (int) ($firstReply['comment_id'] ?? 0);
 $setComment('Nested reply');
-$nestedReply = \TinyCat\Status\Comments::status_json_comment(300, $firstReplyId, $actor);
+$nestedReply = \TinyCat\Status\Actions::status_json_comment(300, $firstReplyId, $actor);
 $nestedReplyId = (int) ($nestedReply['comment_id'] ?? 0);
 $assert($rootCommentId > 0 && $firstReplyId > 0 && $nestedReplyId > 0, 'Comment creation persists a root and replies.');
 $assert((int) $value("SELECT parent_id FROM content_comments WHERE id = {$nestedReplyId}") === $rootCommentId, 'Replies deeper than one level attach to the root comment.');
-$commentReaction = \TinyCat\Status\Comments::status_json_comment_like($rootCommentId, $actor);
+$commentReaction = \TinyCat\Status\Actions::status_json_comment_like($rootCommentId, $actor);
 $assert((bool) ($commentReaction['comment_like']['liked'] ?? false), 'A comment reaction is added.');
-$commentReaction = \TinyCat\Status\Comments::status_json_comment_like($rootCommentId, $actor);
+$commentReaction = \TinyCat\Status\Actions::status_json_comment_like($rootCommentId, $actor);
 $assert(!(bool) ($commentReaction['comment_like']['liked'] ?? true), 'A comment reaction is removed.');
 
 $_POST = ['body' => 'Updated status ' . $tagText];
 \TinyCat\Http\Request::reset();
-$updatedStatus = \TinyCat\Status\Posts::status_json_update(300, $actor);
+$updatedStatus = \TinyCat\Status\Actions::status_json_update(300, $actor);
 $assert((int) ($updatedStatus['status_id'] ?? 0) === 300, 'Status editing keeps the existing aggregate identity.');
 $assert((int) $value('SELECT COUNT(*) FROM content_tags WHERE content_id = 300') === 12, 'Status editing synchronizes more than ten tags atomically.');
 
 $_POST = ['body' => 'Created through the monolith write path #created'];
 \TinyCat\Http\Request::reset();
-$createdStatus = \TinyCat\Status\Posts::status_json_create($actor);
+$createdStatus = \TinyCat\Status\Actions::status_json_create($actor);
 $createdStatusId = (int) ($createdStatus['status_id'] ?? 0);
 $assert($createdStatusId > 300 && (int) $value("SELECT COUNT(*) FROM content WHERE id = {$createdStatusId}") === 1, 'Status creation commits the aggregate.');
 $assert((int) $value("SELECT COUNT(*) FROM content_tags WHERE content_id = {$createdStatusId}") === 1, 'Status creation synchronizes tag relations.');
-$deletedStatus = \TinyCat\Status\Posts::status_json_delete($createdStatusId, $actor);
+$deletedStatus = \TinyCat\Status\Actions::status_json_delete($createdStatusId, $actor);
 $assert((int) ($deletedStatus['deleted_status_id'] ?? 0) === $createdStatusId, 'Status deletion returns the deleted aggregate identity.');
 $assert((int) $value("SELECT COUNT(*) FROM content WHERE id = {$createdStatusId}") === 0, 'Status deletion removes the created aggregate.');
 
@@ -213,7 +213,7 @@ $_POST = [
     'scheduled_at' => '2030-01-02T03:04',
 ];
 \TinyCat\Http\Request::reset();
-$scheduledStatus = \TinyCat\Status\Posts::status_json_create($actor);
+$scheduledStatus = \TinyCat\Status\Actions::status_json_create($actor);
 $scheduledStatusId = (int) ($scheduledStatus['status_id'] ?? 0);
 $scheduledItem = \TinyCat\Status\Posts::status_find($scheduledStatusId);
 $guestScheduledIds = \TinyCat\Status\Feed::public_status_ids_page(\TinyCat\Status\Feed::public_status_id_query(['id' => 1, 'role' => 'user']), 50);
@@ -230,7 +230,7 @@ $assert(in_array($scheduledStatusId, $authorScheduledIds, true), 'Author feed qu
 $assert(in_array($scheduledStatusId, $adminScheduledIds, true), 'Admin feed query includes scheduled statuses.');
 $_POST = ['body' => 'Edited scheduled post @1'];
 \TinyCat\Http\Request::reset();
-\TinyCat\Status\Posts::status_json_update($scheduledStatusId, $actor);
+\TinyCat\Status\Actions::status_json_update($scheduledStatusId, $actor);
 $assert((int) $value('SELECT COUNT(*) FROM notifications') === 0, 'Editing a scheduled status does not send mention notifications before publication.');
 
 \TinyCat\Users\Following::author_follow(2, 1);
@@ -319,7 +319,7 @@ $assert($notNull instanceof PDOException && !\TinyCat\Database\Connection::uniqu
 
 $api = (string) file_get_contents($root . '/App/Status/Api.php');
 $transport = (string) file_get_contents($root . '/App/Http/Api.php');
-$intervalOffset = strpos($api, 'Posts::status_json_require_session_interval($action);');
+$intervalOffset = strpos($api, 'Actions::status_json_require_session_interval($action);');
 $dispatchOffset = strpos($api, '$data = $operation();');
 $assert(
     str_contains($transport, 'Middleware::authorize($access, $method !== \'GET\', $user);') && $intervalOffset !== false && $dispatchOffset > $intervalOffset,
@@ -331,6 +331,13 @@ $assert(
     str_contains($moderation, "\$decision !== 'remove'"),
     'Removal notifications drop the foreign-key target before content deletion.'
 );
+
+try {
+    \TinyCat\Database\Transactions::run(static fn (): array => \TinyCat\Status\Links::prepareLinks([]));
+    $assert(false, 'Metadata preparation must reject an active transaction.');
+} catch (LogicException) {
+    $assert(true, 'Metadata preparation rejects an active transaction.');
+}
 
 if ($failures !== []) {
     foreach ($failures as $failure) {

@@ -26,9 +26,9 @@ kontroly připravenosti a dispatch. Pevný seznam je v `App/modules.php`.
 
 ### Distribuce klientských komponent a překladů
 
-Moduly deklarují potřebné komponenty, skripty a zdroje překladových klíčů v `assets/client/*.json`. `Support/ClientAssets` podle cesty stránky vybere moduly a uzavře závislosti komponent. Veřejná část tak nenačítá administrační formuláře ani skripty botů. Globální funkce, například vyhledávání a profilové modaly, jsou součástí veřejného balíčku.
+Moduly deklarují potřebné komponenty, skripty a zdroje překladových klíčů v `assets/modules/*/module.json`. `Support/ClientAssets` podle cesty stránky vybere moduly a uzavře závislosti komponent. Veřejná část tak nenačítá administrační formuláře ani skripty botů. Globální funkce, například vyhledávání a profilové modaly, jsou součástí veřejného balíčku.
 
-Definice komponent a katalog aktuálního jazyka se distribuují samostatnými externími JS soubory v `/cache/assets/`. Název obsahuje hash obsahu; soubory používají dlouhodobou immutable cache. Starší varianty se při vytvoření nové nemažou, aby zůstaly dostupné rozpracovaným stránkám. Balíčky obsahují pouze statické definice a texty, nikdy uživatelská data ani CSRF. HTML obsahuje odkazy na assety s `defer`, bez inline JSON katalogů. Registrace proběhne před načtením modulů a inicializací aplikace.
+Release builder předem sestaví definice komponent, katalogy jazyků, skripty, CSS a ikony do `assets/build/` a podepsaného manifestu. Runtime pouze vybere příslušné URL. Vývojový checkout bez manifestu používá obsahově adresovaný fallback v `/cache/assets/`. Starší varianty se při vytvoření nové ani při aktualizaci nemažou, aby zůstaly dostupné rozpracovaným stránkám. Balíčky obsahují pouze statické definice a texty, nikdy uživatelská data ani CSRF. HTML obsahuje odkazy na assety s `defer`, bez inline JSON katalogů. Registrace proběhne před načtením modulů a inicializací aplikace.
 
 `Localization` sestavuje katalog s anglickým fallbackem. `TinyCat.i18n` poskytuje klientské `t`, `has`, `locale` a `format`; UI používá tento společný překladač. PHP i JS dosazují `{parametr}` a `:parametr` jedním průchodem, bez opakovaného překládání vložených hodnot. Po uložení jiného jazyka vlastního účtu se stránka znovu načte s odpovídajícím katalogem.
 
@@ -39,7 +39,7 @@ chyby obsahují výhradně data. Neexistuje `wants_partial`, `api_payload`, HTML
 vyjednávání ani klientské parsování síťového HTML.
 
 AJAX aktualizace používají společný JSON klient a DOM komponenty v
-`assets/js/modules`. Formuláře zachovávají rozepsaná data při chybě, blokují dvojí
+`assets/modules`. Formuláře zachovávají rozepsaná data při chybě, blokují dvojí
 odeslání a zobrazují kanonické validační chyby u polí. Filtry účtů i zdrojů botů
 zachovávají browser history a lokální modální formuláře.
 

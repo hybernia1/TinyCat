@@ -1,0 +1,39 @@
+@media (max-width: 759px) {
+.status-link-card.has-image {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+
+.status-link-media {
+    width: 76px;
+    min-height: 76px;
+  }
+
+.status-comment-form,
+  .status-comment-form.is-reply {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+.status-comment.is-child {
+    margin-left: 10px;
+  }
+
+.status-compose-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+.status-composer .status-compose-row .avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+.status-editor-input {
+    min-height: 72px;
+    padding: 9px 10px;
+  }
+
+.status-compose-main .btn {
+    min-height: 36px;
+    padding: 7px 11px;
+  }
+}

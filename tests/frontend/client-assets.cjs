@@ -6,12 +6,17 @@ const { execFileSync } = require("node:child_process");
 const fixture = path.resolve(__dirname, "../presentation/client-assets-fixture.php");
 let checks = 0;
 function check(value, message) { checks++; assert.ok(value, message); }
-function load(route, locale = "en") {
-  const bundle = JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || "php", [fixture, route, locale], { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }));
-  const document = { readyState: "loading", addEventListener() {}, querySelector() { return null; }, getElementById() { throw new Error("Catalogs must not be read from DOM"); } };
+function load(route, locale = "en", compiled = false) {
+  const bundle = JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || "php", [fixture, route, locale, compiled === "min" ? "--compiled-min" : compiled ? "--compiled" : ""], { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }));
+  check(bundle.assets.length === 4 && bundle.styles.length === 1, "Exactly four scripts and one stylesheet: " + route);
+  check(new Set(bundle.assets.map(a => a.url)).size === 4, "No duplicate scripts");
+  const emptyRoot = { dataset: {}, classList: { add() {}, remove() {}, toggle() {} }, querySelectorAll() { return []; }, querySelector() { return null; } };
+  const document = { readyState: "loading", body: emptyRoot, documentElement: emptyRoot, addEventListener() {}, querySelectorAll() { return []; }, querySelector() { return null; }, getElementById() { throw new Error("Catalogs must not be read from DOM"); } };
   const window = { TinyCat: {}, location: new URL("https://tinycat.test" + route), addEventListener() {} };
   const context = vm.createContext({ window, document, URL, URLSearchParams, console, Set, Map });
   for (const asset of bundle.assets) vm.runInContext(asset.source, context, { filename: asset.url });
+  window.TinyCat.init();
+  check(window.TinyCat.modules.navigationUrl({ dataset: {}, getAttribute() { return null; }, closest() { return null; } }) === "", "Non-status navigation does not require the status module: " + route);
   check(window.TinyCat.i18n.locale() === locale, route + " boots the requested locale with external assets in delivery order");
   return { ...bundle, T: window.TinyCat };
 }
@@ -23,12 +28,23 @@ check(users.T.users && !users.T.status && !users.T.bots, "User administration bo
 check(users.definitions.includes("users/admin-fields"), "User administration receives its form definitions");
 const bots = load("/admin/bots/accounts");
 check(bots.T.bots && !bots.T.users && !bots.T.status, "Bots boot independently");
-check(bots.definitions.includes("users/avatar"), "Component dependencies cross module boundaries without loading unrelated scripts");
+check(bots.definitions.includes("ui/avatar"), "Component dependencies cross module boundaries without loading unrelated scripts");
 check(load("/admin/moderation/reports").T.moderation, "Moderation loads its module");
 check(load("/admin/cron").T.scheduler, "Scheduler loads its module");
 check(!load("/admin/settings").T.users, "Settings omit unrelated modules");
 check(!load("/install").T.status, "Installer boots without public modules");
+check(!users.sources.some(s => s.endsWith("/following.js")), "Administration omits public following controller");
+check(!load("/install").sources.some(s => s.includes("/modules/status/") || s.includes("/ui/ajax.js")), "Installer excludes feed and AJAX controllers");
+const minifiedPublic = load("/", "cs", "min");
+const rawPublic = load("/", "cs", true);
+check(minifiedPublic.assets[0].url !== rawPublic.assets[0].url && minifiedPublic.assets[3].url !== rawPublic.assets[3].url && minifiedPublic.styles[0] !== rawPublic.styles[0], "Minification selects distinct runtime, application and CSS variants");
+load("/admin/settings", "en", "min");
 const cs = load("/", "cs");
+for (const route of ["/", "/admin/users", "/admin/bots/accounts", "/admin/moderation/reports", "/admin/cron", "/admin/settings", "/install"]) {
+  const compiled = load(route, "cs", true);
+  check(compiled.assets.every(item => item.url.startsWith("/assets/build/")), "Release assets use the signed precompiled inventory: " + route);
+  check(compiled.T.i18n.has("common.close"), "Compiled catalogs initialize before modules: " + route);
+}
 const asset = (page, name) => page.assets.find(item => item.url.includes("/client-" + name + ".") || item.url.includes("/client-" + name + "-")).url;
 check(asset(publicPage, "components") === asset(cs, "components"), "Component content hashes are independent of language");
 check(asset(publicPage, "i18n") !== asset(cs, "i18n"), "Translation URLs vary with language content");

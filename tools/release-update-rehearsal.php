@@ -8,7 +8,7 @@ if (PHP_SAPI !== 'cli') {
 
 $root = dirname(__DIR__);
 $options = getopt('', ['artifact::', 'key::']);
-$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-3.0.0')));
+$artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-3.1.0')));
 $configPath = $root . '/config.php';
 $temporaryRoot = $root . '/storage/release-update-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . '/install';
@@ -386,9 +386,9 @@ PHP;
     }
 
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (TinyCat\\Support\\Version::CURRENT !== '3.0.0' || !class_exists('TinyCat\\\\Bots\\\\Importer') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
+        . "; if (TinyCat\\Support\\Version::CURRENT !== '3.1.0' || !class_exists('TinyCat\\\\Bots\\\\Importer') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
     [$newBootExit, $newBootOutput] = $run($newBootRunner);
-    $assert($newBootExit === 0, 'Updated 3.0.0 runtime boots with built-in Bots: ' . implode(' ', $newBootOutput));
+    $assert($newBootExit === 0, 'Updated 3.1.0 runtime boots with built-in Bots: ' . implode(' ', $newBootOutput));
 
     $backup = is_array($update) ? (string) ($update['backup'] ?? '') : '';
     $metadata = json_decode((string) @file_get_contents($backup . '/backup.json'), true);

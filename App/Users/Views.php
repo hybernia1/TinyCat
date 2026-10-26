@@ -79,7 +79,7 @@ final class Views
         $fallbackIcon = (string) ($fallback_icon ?? 'user');
         $url = Avatars::user_avatar_url($user);
         $avatarUserId = (int) ($user['author_id'] ?? $user['actor_id'] ?? $user['user_id'] ?? $user['id'] ?? 0);
-        return Components::render('users/avatar-content', [
+        return Components::render('ui/avatar-content', [
             'user' => ['id' => $avatarUserId, 'avatar_url' => $url],
             'alt' => $alt, 'fallback_icon' => $fallbackIcon,
         ]);

@@ -1,0 +1,12 @@
+[
+  {
+    "routes": [
+      "/admin/cron"
+    ],
+    "components": [],
+    "entries": [
+      "assets/modules/scheduler/index.js"
+    ],
+    "styles": []
+  }
+]

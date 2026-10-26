@@ -1,0 +1,5 @@
+@media (max-width: 759px) {
+.following-modal-grid {
+    grid-template-columns: 1fr;
+  }
+}

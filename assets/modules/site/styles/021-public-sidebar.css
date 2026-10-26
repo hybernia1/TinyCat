@@ -1,0 +1,13 @@
+.public-sidebar {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.public-sidebar-card {
+  overflow: hidden;
+}
+
+.public-sidebar-card .card-header {
+  align-items: center;
+}

@@ -1,0 +1,107 @@
+.toast-stack {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 70;
+  display: grid;
+  width: min(calc(100vw - 32px), 420px);
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  padding: 10px;
+  color: var(--text);
+  font-weight: 650;
+  pointer-events: auto;
+}
+
+.toast-icon,
+.toast-close {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: var(--radius-sm);
+}
+
+.toast-icon {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
+.toast-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+.toast-close {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.toast-close:hover,
+.toast-close:focus-visible {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.toast-success {
+  --toast-color: var(--success);
+  --toast-background: var(--success-soft);
+  --toast-border-strength: 34%;
+}
+
+.toast-danger {
+  --toast-color: var(--danger);
+  --toast-background: var(--danger-soft);
+  --toast-border-strength: 38%;
+}
+
+.toast-warning {
+  --toast-color: var(--warning);
+  --toast-background: var(--warning-soft);
+  --toast-border-strength: 34%;
+}
+
+.toast-info {
+  --toast-color: var(--info);
+  --toast-background: var(--info-soft);
+  --toast-border-strength: 34%;
+}
+
+.toast-success,
+.toast-danger,
+.toast-warning,
+.toast-info {
+  border-color: color-mix(in srgb, var(--toast-color) var(--toast-border-strength), var(--border));
+  background: var(--toast-background);
+  color: var(--toast-color);
+}
+
+.toast-success .toast-icon,
+.toast-danger .toast-icon,
+.toast-warning .toast-icon,
+.toast-info .toast-icon {
+  background: var(--surface);
+  color: var(--toast-color);
+}
+
+.toast-success .toast-close,
+.toast-danger .toast-close,
+.toast-warning .toast-close,
+.toast-info .toast-close {
+  color: currentColor;
+}

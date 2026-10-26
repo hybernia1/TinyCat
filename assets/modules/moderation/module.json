@@ -1,0 +1,14 @@
+[
+  {
+    "routes": [
+      "/admin/moderation"
+    ],
+    "components": [
+      "moderation/reports"
+    ],
+    "entries": [
+      "assets/modules/moderation/index.js"
+    ],
+    "styles": []
+  }
+]

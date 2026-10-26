@@ -1,0 +1,17 @@
+@media (max-width: 759px) {
+.home-feed-section > .alert {
+    border-inline: 0;
+    border-radius: 0;
+  }
+
+.toast-stack {
+    right: 10px;
+    bottom: 10px;
+    width: calc(100vw - 20px);
+  }
+
+.toast {
+    grid-template-columns: 32px minmax(0, 1fr) 30px;
+    gap: 8px;
+  }
+}

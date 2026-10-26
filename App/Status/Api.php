@@ -15,21 +15,21 @@ final class Api
     public static function register(Registrar $api): void
     {
         $api->get('/statuses', self::listing(...));
-        $api->post('/statuses', static fn (): Result => self::write(static fn (): array => Posts::status_json_create(Users::actor()), 'create'));
+        $api->post('/statuses', static fn (): Result => self::write(static fn (): array => Actions::status_json_create(Users::actor()), 'create'));
         $api->get('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): array => self::detail((int) $p['id']));
-        $api->patch('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Posts::status_json_update((int) $p['id'], Users::actor()), 'update'));
-        $api->delete('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Posts::status_json_delete((int) $p['id'], Users::actor()), 'delete'));
+        $api->patch('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_update((int) $p['id'], Users::actor()), 'update'));
+        $api->delete('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_delete((int) $p['id'], Users::actor()), 'delete'));
         $api->get('/statuses/{id:[0-9]+}/comments', static fn (Request $r, array $p): array => ['items' => self::detail((int) $p['id'])['comments']]);
         $api->post('/statuses/{id:[0-9]+}/comments', static function (Request $r, array $p): Result {
-            return self::write(static fn (): array => Comments::status_json_comment((int) $p['id'], max(0, (int) $r->input('parent_id', 0)), Users::actor()), 'comment');
+            return self::write(static fn (): array => Actions::status_json_comment((int) $p['id'], max(0, (int) $r->input('parent_id', 0)), Users::actor()), 'comment');
         });
         $api->patch('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}', static function (Request $r, array $p): Result {
             self::commentTarget($p);
-            return self::write(static fn (): array => Comments::status_json_comment_update((int) $p['commentId'], Users::actor()), 'comment_update');
+            return self::write(static fn (): array => Actions::status_json_comment_update((int) $p['commentId'], Users::actor()), 'comment_update');
         });
         $api->delete('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}', static function (Request $r, array $p): Result {
             self::commentTarget($p);
-            return self::write(static fn (): array => Comments::status_json_comment_delete((int) $p['commentId'], Users::actor()), 'comment_delete');
+            return self::write(static fn (): array => Actions::status_json_comment_delete((int) $p['commentId'], Users::actor()), 'comment_delete');
         });
         $api->get('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/revisions', static function (Request $r, array $p): array {
             $comment = self::commentTarget($p);
@@ -37,10 +37,10 @@ final class Api
             return ['items' => Comments::status_comment_history($comment)];
         }, 'user');
         foreach (['put', 'delete'] as $method) {
-            $api->$method('/statuses/{id:[0-9]+}/likes/me', static fn (Request $r, array $p): Result => self::write(static fn (): array => Posts::status_json_react((int) $p['id'], Users::actor(), $r->method() === 'PUT'), 'react'));
+            $api->$method('/statuses/{id:[0-9]+}/likes/me', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_react((int) $p['id'], Users::actor(), $r->method() === 'PUT'), 'react'));
             $api->$method('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/likes/me', static function (Request $r, array $p): Result {
                 self::commentTarget($p);
-                return self::write(static fn (): array => Comments::status_json_comment_like((int) $p['commentId'], Users::actor(), $r->method() === 'PUT'), 'comment_like');
+                return self::write(static fn (): array => Actions::status_json_comment_like((int) $p['commentId'], Users::actor(), $r->method() === 'PUT'), 'comment_like');
             });
         }
 
@@ -96,7 +96,7 @@ final class Api
      */
     private static function write(callable $operation, string $action): Result
     {
-        if (!in_array($action, ['react', 'comment_like'], true)) { Posts::status_json_require_session_interval($action); }
+        if (!in_array($action, ['react', 'comment_like'], true)) { Actions::status_json_require_session_interval($action); }
         $data = $operation();
         $message = isset($data['message']) ? (string) $data['message'] : null;
         unset($data['message']);

@@ -56,11 +56,13 @@ final class Resource
     private static function link(array $link): array
     {
         $thumbnails = Links::status_video_thumbnail_sources($link);
-        $prepared = ViewData::status_prepare_link_view($link);
-        return ['url' => (string) ($link['normalized_url'] ?? ''), 'title' => (string) $prepared['resolved_title'],
-            'display_url' => (string) $prepared['display_url'], 'provider' => (string) ($link['provider'] ?? ''),
+        $displayUrl = Links::status_link_display_url($link);
+        $title = trim((string) ($link['title'] ?? ''));
+        $embedUrl = Links::status_video_embed_url($link);
+        return ['url' => (string) ($link['normalized_url'] ?? ''), 'title' => ($title !== '' ? $title : ($displayUrl !== '' ? $displayUrl : (string) ($link['normalized_url'] ?? ''))),
+            'display_url' => $displayUrl, 'provider' => (string) ($link['provider'] ?? ''),
             'description' => (string) ($link['description'] ?? ''), 'image_url' => (string) ($link['image_url'] ?? ''),
-            'embed_url' => Links::status_video_embed_url($link), 'embed_allowed' => Links::status_video_embed_allowed(Links::status_video_embed_url($link)),
+            'embed_url' => $embedUrl, 'embed_allowed' => Links::status_video_embed_allowed($embedUrl),
             'thumbnail_url' => (string) ($thumbnails['fallback'] ?? ''), 'thumbnail_webp_url' => (string) ($thumbnails['webp'] ?? '')];
     }
 
@@ -103,6 +105,15 @@ final class Resource
      */
     public static function comments(array $comments, ?array $user): array
     {
+        self::preloadComments($comments, $user);
+        return array_map(static fn (array $comment): array => self::comment($comment, $user), array_values($comments));
+    }
+    /**
+     * @param array<int, array<string, mixed>> $comments
+     * @param array<string, mixed>|null $user
+     */
+    public static function preloadComments(array $comments, ?array $user): void
+    {
         $mentionIds = [];
         foreach (Comments::status_comment_tree_rows($comments) as $comment) {
             if (preg_match_all(Mentions::mention_id_pattern(), (string) ($comment['body'] ?? ''), $matches)) {
@@ -111,6 +122,6 @@ final class Resource
         }
         Mentions::author_mention_users_by_ids($mentionIds);
         if ($user !== null) { Comments::status_preload_comment_tree_user_likes($comments, (int) $user['id']); }
-        return array_map(static fn (array $comment): array => self::comment($comment, $user), array_values($comments));
     }
+
 }

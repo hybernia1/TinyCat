@@ -10,6 +10,20 @@ if (!defined('TINYCAT')) {
 
 final class Session
 {
+    /**
+     * Run slow I/O without holding the caller's session lock. Reopening reads
+     * concurrent updates rather than writing an old session snapshot back.
+     * @template T
+     * @param callable(): T $operation
+     * @return T
+     */
+    public static function withoutLock(callable $operation): mixed
+    {
+        $active = session_status() === PHP_SESSION_ACTIVE;
+        if ($active) { session_write_close(); }
+        try { return $operation(); }
+        finally { if ($active) { self::start(); } }
+    }
 
     public static function start(): void
     {

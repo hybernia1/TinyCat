@@ -1,0 +1,5 @@
+@media (max-width: 759px) {
+.section .public-list-header {
+    padding-inline: 12px;
+  }
+}

@@ -1,0 +1,24 @@
+@media (max-width: 759px) {
+.notification-badge {
+    top: -3px;
+    right: -3px;
+    min-width: 17px;
+    height: 17px;
+    border-width: 2px;
+    font-size: 0.5625rem;
+  }
+
+.notification-popover {
+    position: fixed;
+    top: 58px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100vh - 78px);
+    overflow-y: auto;
+  }
+
+.notification-popover::before {
+    display: none;
+  }
+}

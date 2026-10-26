@@ -1,0 +1,83 @@
+.notification-empty {
+  display: flex;
+  min-height: 180px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 750;
+  text-align: center;
+}
+
+.notification-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.notification-item:first-child {
+  border-top: 0;
+}
+
+.notification-item.is-unread {
+  background: var(--unread-surface);
+}
+
+.notification-main {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.notification-main:hover .notification-copy strong,
+.notification-main:focus .notification-copy strong {
+  text-decoration: underline;
+}
+
+.notification-avatar {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--avatar-radius);
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
+.notification-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.notification-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.notification-copy strong,
+.notification-copy span {
+  overflow-wrap: anywhere;
+}
+
+.notification-copy span,
+.notification-copy time {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.notification-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

@@ -1,0 +1,316 @@
+{
+  "site/sidebar": {
+    "tag": "aside",
+    "attrs": {
+      "class": "public-sidebar",
+      "aria-label": {
+        "t": "public.sidebar_title",
+        "values": {}
+      },
+      "data-public-sidebar-url": {
+        "get": "url"
+      }
+    },
+    "children": [
+      {
+        "tag": "article",
+        "attrs": {
+          "class": "card public-sidebar-card"
+        },
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "card-header"
+            },
+            "children": [
+              {
+                "tag": "h2",
+                "attrs": {
+                  "class": "text-base m-0 cluster gap-2"
+                },
+                "children": [
+                  {
+                    "icon": "hash"
+                  },
+                  {
+                    "t": "public.favorite_topics",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "card-body"
+            },
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {
+                  "class": "text-muted m-0"
+                },
+                "children": [
+                  {
+                    "t": "public.favorite_topics_empty",
+                    "values": {}
+                  }
+                ],
+                "when": {
+                  "not": {
+                    "get": "tags"
+                  }
+                }
+              },
+              {
+                "tag": "nav",
+                "attrs": {
+                  "class": "topic-list",
+                  "aria-label": {
+                    "t": "public.favorite_topics",
+                    "values": {}
+                  }
+                },
+                "children": [
+                  {
+                    "each": {
+                      "get": "tags"
+                    },
+                    "as": "tag",
+                    "children": [
+                      {
+                        "tag": "a",
+                        "attrs": {
+                          "class": {
+                            "concat": [
+                              "topic-link",
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      {
+                                        "get": "active_tag"
+                                      },
+                                      {
+                                        "get": "tag.name"
+                                      }
+                                    ]
+                                  },
+                                  " is-active",
+                                  ""
+                                ]
+                              }
+                            ]
+                          },
+                          "href": {
+                            "get": "tag.url"
+                          },
+                          "aria-current": {
+                            "if": [
+                              {
+                                "eq": [
+                                  {
+                                    "get": "active_tag"
+                                  },
+                                  {
+                                    "get": "tag.name"
+                                  }
+                                ]
+                              },
+                              "page",
+                              null
+                            ]
+                          }
+                        },
+                        "children": [
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "topic-name"
+                            },
+                            "children": [
+                              {
+                                "concat": [
+                                  "#",
+                                  {
+                                    "get": "tag.name"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "badge"
+                            },
+                            "children": [
+                              {
+                                "get": "tag.posts_count"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "when": {
+                  "get": "tags"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "article",
+        "attrs": {
+          "class": "card public-sidebar-card"
+        },
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "card-header"
+            },
+            "children": [
+              {
+                "tag": "h2",
+                "attrs": {
+                  "class": "text-base m-0 cluster gap-2"
+                },
+                "children": [
+                  {
+                    "icon": "users"
+                  },
+                  {
+                    "t": "public.active_users",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "card-body"
+            },
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {
+                  "class": "text-muted m-0"
+                },
+                "children": [
+                  {
+                    "t": "public.active_users_empty",
+                    "values": {}
+                  }
+                ],
+                "when": {
+                  "not": {
+                    "get": "authors"
+                  }
+                }
+              },
+              {
+                "tag": "nav",
+                "attrs": {
+                  "class": "sidebar-user-list",
+                  "aria-label": {
+                    "t": "public.active_users",
+                    "values": {}
+                  }
+                },
+                "children": [
+                  {
+                    "each": {
+                      "get": "authors"
+                    },
+                    "as": "author",
+                    "children": [
+                      {
+                        "tag": "a",
+                        "attrs": {
+                          "class": "sidebar-user-link",
+                          "href": {
+                            "get": "author.url"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/avatar",
+                            "data": {
+                              "user": {
+                                "get": "author"
+                              },
+                              "small": true
+                            }
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "sidebar-user-main"
+                            },
+                            "children": [
+                              {
+                                "tag": "strong",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "get": "author.username"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "small",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "t": "public.active_user_posts",
+                                    "values": {
+                                      "count": {
+                                        "get": "author.posts_count"
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "when": {
+                  "get": "authors"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "footer",
+        "attrs": {
+          "class": "public-sidebar-footer"
+        },
+        "children": [
+          {
+            "rich": {
+              "get": "footer"
+            }
+          }
+        ],
+        "when": {
+          "get": "footer"
+        }
+      }
+    ]
+  }
+}

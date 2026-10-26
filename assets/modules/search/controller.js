@@ -1,0 +1,372 @@
+import "../../core/dom.js";
+import "../../core/http.js";
+import "../../core/i18n.js";
+import "../../core/lifecycle.js";
+import "../../core/navigation.js";
+import "../../ui/avatars.js";
+import "../../ui/dialogs.js";
+import "../../ui/fields.js";
+(function () {
+  "use strict";
+  var TinyCat = window.TinyCat;
+  TinyCat.search = {};
+  var appendUserAvatar = TinyCat.ui.appendAvatar;
+  var compactUrl = TinyCat.navigation.compact;
+  var createElement = TinyCat.dom.create;
+  var hydrateDynamic = TinyCat.lifecycle.hydrate;
+  var qs = TinyCat.dom.find;
+  var qsa = TinyCat.dom.all;
+  var uiText = TinyCat.i18n.label;
+  var unwrapResult = TinyCat.api.unwrap;
+  function globalSearchInput(root) {
+    return qs("[data-global-search-input]", root);
+  }
+  function globalSearchResults(root) {
+    return qs("[data-global-search-results]", root);
+  }
+  function globalSearchShowMessage(root, message) {
+    var box = globalSearchResults(root);
+    var item;
+
+    if (!box) {
+      return;
+    }
+
+    box.innerHTML = "";
+    item = createElement("div", "global-search-empty", message);
+    box.appendChild(item);
+    box.hidden = false;
+  }
+  function globalSearchHide(root) {
+    var box = globalSearchResults(root);
+
+    if (box) {
+      box.hidden = true;
+      box.innerHTML = "";
+    }
+  }
+  function globalSearchItem(item) {
+    var link = createElement("a", "global-search-item");
+    var title = createElement("strong", "global-search-title", item.title || "");
+    var metaText = item.type === "tag"
+      ? (item.excerpt || "")
+      : (item.type === "user" ? "@" + (item.title || "") : (item.published_label || item.excerpt || ""));
+    var meta = createElement("span", "global-search-meta", metaText);
+    var excerpt = createElement("span", "global-search-excerpt", item.excerpt || "");
+    var avatar = createElement("span", "global-search-avatar");
+    var text = createElement("span", "global-search-text");
+
+    link.href = item.url || "#";
+    link.dataset.globalSearchLink = "true";
+
+    if (item.type === "tag") {
+      avatar.textContent = "#";
+    } else if (item.type === "search") {
+      avatar.textContent = ">";
+    } else if (item.type === "user") {
+      appendUserAvatar(avatar, item.avatar_url, item.title || "", "", "U");
+    } else {
+      avatar.textContent = "#";
+    }
+
+    text.appendChild(title);
+    if (metaText) {
+      text.appendChild(meta);
+    }
+
+    if (item.excerpt && item.type !== "tag" && item.type !== "search") {
+      text.appendChild(excerpt);
+    }
+
+    link.appendChild(avatar);
+    link.appendChild(text);
+
+    return link;
+  }
+  function renderGlobalSearchSection(root, box, label, items) {
+    var section;
+    var heading;
+
+    if (!items || items.length === 0) {
+      return;
+    }
+
+    section = createElement("section", "global-search-section");
+    heading = createElement("div", "global-search-heading", label);
+    section.appendChild(heading);
+
+    items.forEach(function (item) {
+      section.appendChild(globalSearchItem(item));
+    });
+
+    box.appendChild(section);
+  }
+  function renderGlobalSearchAll(root, box, query) {
+    var link;
+
+    if (!query) {
+      return;
+    }
+
+    link = globalSearchItem({
+      type: "search",
+      title: (root.dataset.searchAll || "Search all") + ": " + query,
+      excerpt: "",
+      url: "/search?q=" + encodeURIComponent(query)
+    });
+    link.classList.add("global-search-all");
+    box.appendChild(link);
+  }
+  function renderGlobalSearch(root, data) {
+    var payload = unwrapResult(data) || {};
+    var box = globalSearchResults(root);
+    var query = payload.query || "";
+    var tags = payload.tags || [];
+    var users = payload.users || [];
+    var content = payload.content || [];
+
+    if (!box) {
+      return;
+    }
+
+    box.innerHTML = "";
+
+    if (tags.length === 0 && users.length === 0 && content.length === 0) {
+      renderGlobalSearchAll(root, box, query);
+      box.hidden = false;
+      return;
+    }
+
+    renderGlobalSearchSection(root, box, root.dataset.searchTags || "Tags", tags);
+    renderGlobalSearchSection(root, box, root.dataset.searchUsers || "Profiles", users);
+    renderGlobalSearchSection(root, box, root.dataset.searchContent || "Posts", content);
+    renderGlobalSearchAll(root, box, query);
+    box.hidden = false;
+  }
+  function searchCaptchaDetails(error) {
+    return error && error.data && error.data.error && error.data.error.details
+      ? error.data.error.details
+      : {};
+  }
+  function openGlobalSearchCaptcha(root, error) {
+    var details = searchCaptchaDetails(error);
+    var captcha = details.captcha;
+    var verifyUrl = details.verify_url || "/api/security/challenges/search";
+    var message = (error && error.data && error.data.message) || root.dataset.searchCaptchaRequired || "Please complete the security check.";
+    var modal = qs("#global-search-captcha-modal");
+    var panel;
+    var form;
+    var body;
+    var footer;
+    var submit;
+    var title;
+
+    if (!captcha || !captcha.enabled) {
+      globalSearchShowMessage(root, message);
+      return;
+    }
+
+    if (modal) {
+      modal.remove();
+    }
+
+    modal = createElement("div", "modal");
+    modal.id = "global-search-captcha-modal";
+    modal.setAttribute("aria-hidden", "true");
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "global-search-captcha-title");
+    modal.innerHTML = ''
+      + '<div class="modal-backdrop" data-modal-close></div>'
+      + '<div class="modal-panel modal-confirm-panel search-captcha-modal-panel">'
+      + '<div class="modal-header">'
+      + '<h2 class="modal-title text-lg m-0" id="global-search-captcha-title"></h2>'
+      + '<button class="btn btn-icon btn-ghost" type="button" data-modal-close></button>'
+      + '</div>'
+      + '<form class="modal-body stack stack-gap-12" data-search-captcha-form></form>'
+      + '</div>';
+
+    panel = qs(".modal-panel", modal);
+    title = qs(".modal-title", modal);
+    form = qs("[data-search-captcha-form]", modal);
+    qs("[data-modal-close]", modal).setAttribute("aria-label", uiText("close", "Close"));
+    qs("[data-modal-close]", modal).textContent = "×";
+
+    if (title) {
+      title.textContent = root.dataset.searchCaptchaTitle || "Security check";
+    }
+
+    if (form) {
+      body = createElement("div", "muted", message);
+      footer = createElement("div", "modal-footer justify-end");
+      submit = createElement("button", "btn btn-primary", root.dataset.searchCaptchaSubmit || "OK");
+      submit.type = "submit";
+      footer.appendChild(submit);
+      form.action = verifyUrl;
+      form.method = "post";
+      form.appendChild(body);
+      TinyCat.ui.captcha(form, captcha);
+      form.appendChild(footer);
+      form.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        TinyCat.api.request(verifyUrl, {
+          method: "POST",
+          body: new FormData(form)
+        })
+          .then(function () {
+            if (modal.parentNode) {
+              TinyCat.dialog.close(modal);
+              modal.remove();
+            }
+
+            root.__tinycatSearchCache = {};
+            runGlobalSearch(root);
+          })
+          .catch(function (submitError) {
+            var submitDetails = searchCaptchaDetails(submitError);
+
+            if (submitDetails.captcha) {
+              openGlobalSearchCaptcha(root, submitError);
+              return;
+            }
+
+            globalSearchShowMessage(root, (submitError && submitError.data && submitError.data.message) || message);
+          });
+      });
+    }
+
+    document.body.appendChild(modal);
+    hydrateDynamic(modal);
+    TinyCat.dialog.open(modal);
+
+    return panel;
+  }
+  function runGlobalSearch(root) {
+    var input = globalSearchInput(root);
+    var query = input ? input.value.trim() : "";
+    var cacheKey = query.toLowerCase();
+    var url;
+    var requestId;
+    var controller;
+
+    if (query === "") {
+      globalSearchHide(root);
+      return;
+    }
+
+    if (query.length < 2) {
+      globalSearchShowMessage(root, root.dataset.searchMin || "Type at least 2 characters.");
+      return;
+    }
+
+    root.__tinycatSearchCache = root.__tinycatSearchCache || {};
+
+    if (root.__tinycatSearchCache[cacheKey]) {
+      renderGlobalSearch(root, root.__tinycatSearchCache[cacheKey]);
+      return;
+    }
+
+    if (root.__tinycatSearchController) {
+      root.__tinycatSearchController.abort();
+    }
+
+    controller = "AbortController" in window ? new AbortController() : null;
+    root.__tinycatSearchController = controller;
+    root.__tinycatSearchRequest = (root.__tinycatSearchRequest || 0) + 1;
+    requestId = root.__tinycatSearchRequest;
+    url = new URL(root.dataset.searchApi || "/api/search", window.location.href);
+    url.searchParams.set("q", query);
+    url = compactUrl(url);
+    root.setAttribute("aria-busy", "true");
+
+    TinyCat.api.request(url, {
+      method: "GET",
+      signal: controller ? controller.signal : undefined
+    })
+      .then(function (data) {
+        if (requestId !== root.__tinycatSearchRequest) {
+          return;
+        }
+
+        root.__tinycatSearchCache[cacheKey] = data;
+        renderGlobalSearch(root, data);
+      })
+      .catch(function (error) {
+        if (error && error.name === "AbortError") {
+          return;
+        }
+
+        if (error && error.data && error.data.error && error.data.error.code === "captcha_required") {
+          openGlobalSearchCaptcha(root, error);
+          return;
+        }
+
+        if (requestId === root.__tinycatSearchRequest) {
+          globalSearchShowMessage(root, (error && error.data && error.data.message) || root.dataset.searchEmpty || "Nothing found.");
+        }
+      })
+      .finally(function () {
+        if (requestId === root.__tinycatSearchRequest) {
+          root.removeAttribute("aria-busy");
+          if (root.__tinycatSearchController === controller) {
+            root.__tinycatSearchController = null;
+          }
+        }
+      });
+  }
+  function initGlobalSearchRoot(root) {
+    var input = globalSearchInput(root);
+
+    if (root.dataset.globalSearchReady === "true" || !input) {
+      return;
+    }
+
+    root.dataset.globalSearchReady = "true";
+
+    input.addEventListener("input", function () {
+      window.clearTimeout(root.__tinycatSearchTimer);
+      root.__tinycatSearchTimer = window.setTimeout(function () {
+        runGlobalSearch(root);
+      }, 220);
+    });
+
+    input.addEventListener("focus", function () {
+      if (input.value.trim() !== "") {
+        runGlobalSearch(root);
+      }
+    });
+
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        globalSearchHide(root);
+        input.blur();
+      }
+    });
+
+    root.addEventListener("submit", function (event) {
+      if (input.value.trim().length < 2) {
+        event.preventDefault();
+        globalSearchShowMessage(root, root.dataset.searchMin || "Type at least 2 characters.");
+      }
+    });
+  }
+  TinyCat.search.hydrate = function (scope) {
+    qsa("[data-global-search]", scope || document).forEach(initGlobalSearchRoot);
+
+    if (TinyCat.__globalSearchEventsBound === true) {
+      return;
+    }
+
+    TinyCat.__globalSearchEventsBound = true;
+
+    document.addEventListener("pointerdown", function (event) {
+      qsa("[data-global-search]").forEach(function (root) {
+        if (!root.contains(event.target)) {
+          globalSearchHide(root);
+        }
+      });
+    });
+  };
+    TinyCat.search.hydrate = TinyCat.search.hydrate;
+}());

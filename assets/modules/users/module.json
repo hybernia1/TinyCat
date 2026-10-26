@@ -1,0 +1,58 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "ui/avatar",
+      "users/following-profile",
+      "users/auth-content"
+    ],
+    "translation_prefixes": [
+      "common.",
+      "account.",
+      "auth.",
+      "privacy.",
+      "public."
+    ],
+    "entries": [
+      "assets/modules/users/public.js"
+    ],
+    "styles": [
+      "assets/modules/users/styles/012-profile-nav-link.css",
+      "assets/modules/users/styles/043-profile-avatar-button.css",
+      "assets/modules/users/styles/046-profile-layout.css",
+      "assets/modules/users/styles/048-profile-stats-strong.css",
+      "assets/modules/users/styles/057-auth-modal-panel.css",
+      "assets/modules/users/styles/072-following-modal-grid.css",
+      "assets/modules/users/styles/084-profile-modal-grid.css",
+      "assets/modules/users/styles/088-profile-layout.css",
+      "assets/modules/users/styles/090-profile-main.css"
+    ]
+  },
+  {
+    "routes": [
+      "/admin/users"
+    ],
+    "components": [
+      "ui/avatar",
+      "users/list",
+      "users/filter-form",
+      "users/admin-fields"
+    ],
+    "entries": [
+      "assets/modules/users/admin.js"
+    ],
+    "styles": [
+      "assets/modules/users/styles/012-profile-nav-link.css",
+      "assets/modules/users/styles/043-profile-avatar-button.css",
+      "assets/modules/users/styles/046-profile-layout.css",
+      "assets/modules/users/styles/048-profile-stats-strong.css",
+      "assets/modules/users/styles/057-auth-modal-panel.css",
+      "assets/modules/users/styles/072-following-modal-grid.css",
+      "assets/modules/users/styles/084-profile-modal-grid.css",
+      "assets/modules/users/styles/088-profile-layout.css",
+      "assets/modules/users/styles/090-profile-main.css"
+    ]
+  }
+]

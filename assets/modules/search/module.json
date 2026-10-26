@@ -1,0 +1,15 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [],
+    "entries": [
+      "assets/modules/search/index.js"
+    ],
+    "styles": [
+      "assets/modules/search/styles/015-global-search-control.css",
+      "assets/modules/search/styles/066-global-search-input.css"
+    ]
+  }
+]

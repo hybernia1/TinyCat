@@ -27,7 +27,7 @@ if (\TinyCat\Http\Request::current()->isPost()) {
         \TinyCat\Http\Web::redirect(\TinyCat\Users\Login::auth_url_with_next('/register', $next));
     }
 
-    $registration = \TinyCat\Users\Accounts::registration_input();
+    $registration = \TinyCat\Users\Actions::registration_input();
     $errors = (array) $registration['errors'];
 
     if ($errors !== []) {

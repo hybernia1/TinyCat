@@ -1,0 +1,8 @@
+.is-loading {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+[data-ajax-target][aria-busy="true"] {
+  opacity: 0.72;
+}

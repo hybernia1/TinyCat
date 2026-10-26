@@ -33,19 +33,26 @@ signed with a replacement key. CI can provide the base64 private key through the
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=3.0.0 --minimum-version=2.0.25
+php tools/build-update.php --version=3.1.0 --minimum-version=2.0.25
 php tools/verify-update.php dist
 ```
+
+The builder compiles JavaScript, CSS, the icon sprite, scoped UI definitions
+and all translation catalogs into `assets/build/`, including a runtime manifest.
+These generated files are added directly to the signed package; the source
+checkout and runtime cache are not modified. Production pages select URLs from
+this inventory instead of minifying or scanning translation sources per request.
+Source checkouts without the inventory retain an on-demand development fallback.
 
 The builder creates:
 
 ```text
-dist/tinycat-3.0.0.zip
+dist/tinycat-3.1.0.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v3.0.0` tag and upload all three files
+Create a GitHub release for the matching `v3.1.0` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 

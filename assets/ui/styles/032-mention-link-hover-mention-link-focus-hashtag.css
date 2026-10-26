@@ -1,0 +1,8 @@
+.mention-link:hover,
+.mention-link:focus,
+.hashtag:hover,
+.hashtag:focus,
+.status-inline-link:hover,
+.status-inline-link:focus {
+  text-decoration: underline;
+}

@@ -47,6 +47,10 @@ $assert(isset(\TinyCat\Http\Validator::validate(['name' => []], ['name' => 'requ
 $throws(static fn () => Router::route('ANY', '/unbounded', static fn (): null => null), InvalidArgumentException::class);
 
 Session::start();
+$assert(Session::withoutLock(static fn (): bool => session_status() !== PHP_SESSION_ACTIVE), 'Slow operations run without a session lock.');
+$assert(session_status() === PHP_SESSION_ACTIVE, 'The session is reopened after slow operations.');
+$throws(static fn () => Session::withoutLock(static function (): never { throw new RuntimeException('I/O failure'); }), RuntimeException::class);
+$assert(session_status() === PHP_SESSION_ACTIVE, 'The session is reopened after a failed operation.');
 $assert(\TinyCat\Security\Csrf::token() === Csrf::token(), 'Legacy and module routes share exactly one CSRF token.');
 $assert(Csrf::verify(\TinyCat\Security\Csrf::token()) && !Csrf::verify('incorrect'), 'CSRF verification belongs to shared security infrastructure.');
 \TinyCat\Http\Session::flash('foundation', 'once');

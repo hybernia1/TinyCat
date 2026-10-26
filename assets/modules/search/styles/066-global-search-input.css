@@ -1,0 +1,10 @@
+@media (max-width: 759px) {
+.global-search-input {
+    min-height: 38px;
+    padding-block: 7px;
+  }
+
+.global-search-results {
+    top: calc(100% + 6px);
+  }
+}

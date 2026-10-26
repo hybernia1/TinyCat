@@ -1,0 +1,9 @@
+@media (max-width: 759px) {
+.status-email-notice-copy {
+    min-width: 0;
+  }
+
+.status-email-notice .btn {
+    margin-left: 30px;
+  }
+}

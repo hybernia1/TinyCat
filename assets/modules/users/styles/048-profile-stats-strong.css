@@ -1,0 +1,57 @@
+.profile-stats strong {
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.profile-editable-text {
+  display: block;
+  width: calc(100% + 16px);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  margin-inline: -8px;
+  padding: 4px 8px;
+  color: var(--muted);
+  cursor: text;
+  font: inherit;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+}
+
+.profile-editable-text:hover,
+.profile-editable-text:focus {
+  border-color: var(--border);
+  background: var(--surface-soft);
+  outline: 0;
+}
+
+.profile-modal-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.profile-edit-tabs {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-edit-tabs .tabs {
+  margin: -2px -2px 0;
+}
+
+.profile-edit-tabs .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-edit-tabs .tab .icon {
+  width: 1em;
+  height: 1em;
+}
+
+.profile-edit-form {
+  margin: 0;
+}

@@ -486,26 +486,38 @@ final class Links
             return;
         }
 
-        \TinyCat\Database\Transactions::run(static function () use ($contentId, $links, $localImageLinkHash, $localImageSource): void {
-            $previousLinkIds = \TinyCat\Status\Links::status_link_ids_for_content($contentId);
-            $metadataCache = \TinyCat\Status\Links::status_link_metadata_cache($links);
-            \TinyCat\Database\Connection::delete('content_links', ['content_id' => $contentId]);
+        self::persistLinks($contentId, self::prepareLinks($links, $localImageLinkHash, $localImageSource));
+    }
 
+    /** @param array<mixed> $links
+     * @return list<array<mixed>>
+     */
+    public static function prepareLinks(array $links, string $localImageLinkHash = '', string $localImageSource = ''): array
+    {
+        if (\TinyCat\Database\Connection::get()->inTransaction()) {
+            throw new \LogicException('Link metadata must be prepared before starting a transaction.');
+        }
+        $metadataCache = self::status_link_metadata_cache($links);
+        return \TinyCat\Http\Session::withoutLock(static function () use ($links, $metadataCache, $localImageLinkHash, $localImageSource): array {
+            $prepared = [];
             foreach ($links as $link) {
                 $link = (array) $link;
                 $hash = (string) ($link['url_hash'] ?? '');
-
-                if (\TinyCat\Support\Text::plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048) === '' || $hash === '') {
-                    continue;
-                }
-
+                if (\TinyCat\Support\Text::plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048) === '' || $hash === '') { continue; }
                 $cacheImage = $localImageLinkHash !== '' && hash_equals($localImageLinkHash, $hash);
-                $link = \TinyCat\Status\Links::status_link_prepare_metadata(
-                    $link,
-                    $metadataCache[$hash] ?? null,
-                    $cacheImage,
-                    $cacheImage ? $localImageSource : ''
-                );
+                $prepared[] = self::status_link_prepare_metadata($link, $metadataCache[$hash] ?? null, $cacheImage, $cacheImage ? $localImageSource : '');
+            }
+            return $prepared;
+        });
+    }
+
+    /** @param list<array<mixed>> $links */
+    public static function persistLinks(int $contentId, array $links): void
+    {
+        \TinyCat\Database\Transactions::run(static function () use ($contentId, $links): void {
+            $previousLinkIds = self::status_link_ids_for_content($contentId);
+            \TinyCat\Database\Connection::delete('content_links', ['content_id' => $contentId]);
+            foreach ($links as $link) {
                 $linkId = \TinyCat\Status\Links::status_link_upsert($link);
 
                 if ($linkId < 1) {

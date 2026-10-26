@@ -1,0 +1,19 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "notifications/items"
+    ],
+    "entries": [
+      "assets/modules/notifications/index.js"
+    ],
+    "styles": [
+      "assets/modules/notifications/styles/010-notification-nav-link.css",
+      "assets/modules/notifications/styles/013-notification-menu.css",
+      "assets/modules/notifications/styles/023-notification-empty.css",
+      "assets/modules/notifications/styles/065-notification-badge.css"
+    ]
+  }
+]

@@ -1,0 +1,11 @@
+@media (max-width: 759px) {
+.home-feed-switch,
+  .home-feed-switch .feed-switch-link {
+    border-radius: 0;
+  }
+
+.home-feed-app > .alert {
+    border-inline: 0;
+    border-radius: 0;
+  }
+}

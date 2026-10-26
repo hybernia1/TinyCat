@@ -1,0 +1,9 @@
+.account-security-page {
+  width: min(100%, 560px);
+  margin-inline: auto;
+}
+
+.account-form-footer {
+  display: flex;
+  justify-content: flex-end;
+}

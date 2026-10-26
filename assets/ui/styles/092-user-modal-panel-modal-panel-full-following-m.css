@@ -1,0 +1,26 @@
+@media (min-width: 900px) {
+.user-modal-panel.modal-panel-full,
+  .following-modal-panel.modal-panel-full {
+    width: 80vw;
+    height: 80vh;
+    max-height: 80vh;
+    border-radius: var(--radius-sm);
+  }
+
+.user-modal-panel .modal-header,
+  .user-modal-panel .modal-body,
+  .user-modal-panel .modal-footer {
+    padding-inline: 16px;
+  }
+
+.user-editor-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+    align-items: start;
+    gap: 20px;
+  }
+
+.user-editor-sidebar {
+    position: sticky;
+    top: 0;
+  }
+}

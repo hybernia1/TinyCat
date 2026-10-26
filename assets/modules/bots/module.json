@@ -1,0 +1,18 @@
+[
+  {
+    "routes": [
+      "/admin/bots"
+    ],
+    "components": [
+      "ui/avatar",
+      "bots/accounts",
+      "bots/sources",
+      "bots/source-fields",
+      "bots/runs"
+    ],
+    "entries": [
+      "assets/modules/bots/index.js"
+    ],
+    "styles": []
+  }
+]

@@ -10,36 +10,27 @@ use InvalidArgumentException;
 
 final class Schema
 {
+    /** @var list<string> */
+    private static array $requiredTables = [];
+    /** @var \Closure(): bool|null */
+    private static ?\Closure $accountReady = null;
+
+    /** @param list<string> $tables
+     * @param callable(): bool $accountReady
+     */
+    public static function configure(array $tables, callable $accountReady): void
+    {
+        if (count($tables) !== count(array_unique($tables))) { throw new LogicException('Required database table names must be unique.'); }
+        self::$requiredTables = $tables;
+        self::$accountReady = \Closure::fromCallable($accountReady);
+    }
+
     /**
      * @return array<mixed>
      */
     public static function app_required_tables(): array
     {
-        $tables = [
-            'users',
-            'content',
-            'content_images',
-            'terms',
-            'content_tags',
-            'links',
-            'content_links',
-            'content_likes',
-            'content_comments',
-            'comment_likes',
-            'user_followers',
-            'notifications',
-            'content_reports',
-            'ip_action_limits',
-            'password_reset_tokens',
-            ...\TinyCat\Bots\Importer::requiredTables(),
-            'settings',
-        ];
-
-        if (count($tables) !== count(array_unique($tables))) {
-            throw new LogicException('Required database table names must be unique.');
-        }
-
-        return $tables;
+        return self::$requiredTables;
     }
 
     /**
@@ -57,7 +48,7 @@ final class Schema
             return [];
         }
 
-        $driver = (string) \TinyCat\Settings\Store::config('database.driver', 'mysql');
+        $driver = (string) \TinyCat\Support\Config::get('database.driver', 'mysql');
         $placeholders = implode(', ', array_fill(0, count($tables), '?'));
 
         if ($driver === 'sqlite') {
@@ -116,7 +107,7 @@ final class Schema
             }
 
             if ($status['missing_tables'] === []) {
-                $status['account_ready'] = \TinyCat\Users\Profiles::app_auth_account_ready();
+                $status['account_ready'] = self::$accountReady !== null && (self::$accountReady)();
             }
 
             $status['ready'] = $status['missing_tables'] === [] && $status['account_ready'];

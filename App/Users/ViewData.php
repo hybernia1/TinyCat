@@ -14,11 +14,11 @@ final class ViewData
      */
     public static function tc_admin_users_view_data(): array
     {
-        $filters = \TinyCat\Users\Accounts::tc_admin_users_filters();
-        $page = \TinyCat\Users\Accounts::tc_admin_users_page($filters);
+        $filters = \TinyCat\Users\Actions::tc_admin_users_filters();
+        $page = \TinyCat\Users\Actions::tc_admin_users_page($filters);
         $users = $page['items'];
         $pagination = $page['pagination'];
-        $params = \TinyCat\Users\Accounts::tc_admin_users_list_params($filters, $pagination);
+        $params = \TinyCat\Users\Actions::tc_admin_users_list_params($filters, $pagination);
         $perPage = (int) ($pagination['per_page'] ?? \TinyCat\Support\AdminViews::admin_per_page());
 
         return [
@@ -27,8 +27,8 @@ final class ViewData
             'pagination' => $pagination,
             'params' => $params,
             'per_page' => $perPage,
-            'search_url' => \TinyCat\Users\Accounts::tc_admin_users_api_url([], false),
-            'clear_url' => \TinyCat\Users\Accounts::tc_admin_users_api_url(['per_page' => $perPage, 'page' => 1], false),
+            'search_url' => \TinyCat\Users\Actions::tc_admin_users_api_url([], false),
+            'clear_url' => \TinyCat\Users\Actions::tc_admin_users_api_url(['per_page' => $perPage, 'page' => 1], false),
             'clear_history_url' => \TinyCat\Support\AdminViews::admin_list_url('/admin/users', ['per_page' => $perPage, 'page' => 1]),
             'per_page_view' => \TinyCat\Support\AdminViews::admin_per_page_view_data(
                 '/api/users',

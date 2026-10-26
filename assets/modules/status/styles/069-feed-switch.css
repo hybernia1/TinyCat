@@ -1,0 +1,9 @@
+@media (max-width: 759px) {
+.feed-switch {
+    width: 100%;
+  }
+
+.feed-switch-link {
+    flex: 1 1 0;
+  }
+}

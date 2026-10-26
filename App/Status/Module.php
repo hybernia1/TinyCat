@@ -2,8 +2,14 @@
 declare(strict_types=1);
 namespace TinyCat\Status;
 
-final class Module implements \TinyCat\Module
+final class Module implements \TinyCat\StorageModule
 {
+    /** @return list<string> */
+    public static function tables(): array
+    {
+        return ['content', 'content_images', 'terms', 'content_tags', 'links', 'content_links', 'content_likes', 'content_comments', 'comment_likes'];
+    }
+
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);

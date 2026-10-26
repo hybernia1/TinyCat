@@ -1,0 +1,5 @@
+@media (max-width: 759px) {
+.home-feed-app {
+    --stack-gap: 8px;
+  }
+}

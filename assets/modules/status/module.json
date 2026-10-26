@@ -1,0 +1,36 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "status/card",
+      "status/thread",
+      "status/composer-body",
+      "status/editor",
+      "status/feed-more"
+    ],
+    "entries": [
+      "assets/modules/status/index.js"
+    ],
+    "styles": [
+      "assets/modules/status/styles/011-status-email-notice.css",
+      "assets/modules/status/styles/017-feed-switch.css",
+      "assets/modules/status/styles/020-home-feed-switch-feed-switch-link.css",
+      "assets/modules/status/styles/025-status-feed.css",
+      "assets/modules/status/styles/027-status-header.css",
+      "assets/modules/status/styles/029-status-author-a-hover.css",
+      "assets/modules/status/styles/031-status-inline-link.css",
+      "assets/modules/status/styles/033-status-links.css",
+      "assets/modules/status/styles/035-status-comment-heading-context-menu.css",
+      "assets/modules/status/styles/037-status-manage-menu-summary.css",
+      "assets/modules/status/styles/039-status-comment-history.css",
+      "assets/modules/status/styles/041-status-header-avatar.css",
+      "assets/modules/status/styles/051-status-time-button.css",
+      "assets/modules/status/styles/063-status-email-notice-copy.css",
+      "assets/modules/status/styles/069-feed-switch.css",
+      "assets/modules/status/styles/071-status-link-card-has-image.css",
+      "assets/modules/status/styles/075-status-feed.css"
+    ]
+  }
+]

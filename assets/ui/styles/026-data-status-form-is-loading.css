@@ -1,0 +1,4 @@
+[data-status-form].is-loading {
+  opacity: 0.72;
+  pointer-events: none;
+}

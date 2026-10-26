@@ -1,0 +1,21 @@
+.status-header {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 9px;
+}
+
+.status-author {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.status-author a {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 800;
+  justify-self: start;
+  line-height: 1.25;
+  text-decoration: none;
+}

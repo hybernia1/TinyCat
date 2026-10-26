@@ -1,0 +1,6 @@
+.global-search {
+  position: relative;
+  flex: 1 1 min(420px, 100%);
+  max-width: 520px;
+  min-width: min(100%, 240px);
+}

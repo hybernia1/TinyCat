@@ -1,0 +1,25 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "site/sidebar"
+    ],
+    "entries": [
+      "assets/modules/site/index.js"
+    ],
+    "styles": [
+      "assets/modules/site/styles/016-public-list-header.css",
+      "assets/modules/site/styles/018-public-layout.css",
+      "assets/modules/site/styles/021-public-sidebar.css",
+      "assets/modules/site/styles/050-public-content-meta.css",
+      "assets/modules/site/styles/052-public-sidebar-footer.css",
+      "assets/modules/site/styles/059-cookie-consent.css",
+      "assets/modules/site/styles/068-public-list-header.css",
+      "assets/modules/site/styles/073-cookie-consent.css",
+      "assets/modules/site/styles/078-section-public-list-header.css",
+      "assets/modules/site/styles/091-public-layout.css"
+    ]
+  }
+]

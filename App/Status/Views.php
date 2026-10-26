@@ -128,7 +128,7 @@ final class Views
         $feedId = (string) ($feed_id ?? ('status-feed-' . $feed));
         $feedMore = is_array($feed_more ?? null) ? $feed_more : [];
         $prepared = [];
-        $prepared['status_login_url'] = Posts::status_login_url('', $currentFeedUrl);
+        $prepared['status_login_url'] = Actions::status_login_url('', $currentFeedUrl);
         $loginUrl = $prepared['status_login_url'];
         $prepared['auth_modal_url'] = Login::auth_modal_url('login', Login::auth_next_from_url($loginUrl));
         $prepared['auth_modal_id'] = Login::auth_modal_id();

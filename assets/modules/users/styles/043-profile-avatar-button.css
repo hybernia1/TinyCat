@@ -1,0 +1,13 @@
+.profile-avatar-button {
+  padding: 0;
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+
+.profile-avatar-button:hover,
+.profile-avatar-button:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 14%, transparent);
+  outline: 0;
+  transform: translateY(-1px);
+}

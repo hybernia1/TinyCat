@@ -50,9 +50,9 @@ for (const [group, values] of Object.entries(dictionary)) { for (const [key, val
 const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--templates"], { encoding: "utf8" }));
 const document = { querySelector: () => null, body: new Node("body"), createElement: tag => new Node(tag), createElementNS: (_, tag) => new Node(tag), createTextNode: text => new Node("text", text), createDocumentFragment: () => new Node("fragment"), getElementById: id => document.body.querySelector('[id="' + id + '"]') };
 const window = { TinyCat: {}, location: new URL("https://tinycat.test/") };
-const context = vm.createContext({ window, document, Node, URL, URLSearchParams, console, Set, Element: Node, RadioNodeList: class {}, CustomEvent: class {} });
-const moduleFiles = ["modules/users.js", "modules/status.js", "modules/notifications.js", "modules/bots.js", "modules/moderation.js", "modules/site.js", "modules/scheduler.js"];
-for (const file of ["core/api-client.js", "core/dom.js", "core/i18n.js", "core/modal.js", "core/ui.js", "core/components.js", ...moduleFiles]) vm.runInContext(fs.readFileSync(path.join(root, "assets/js", file), "utf8"), context, { filename: file });
+const context = vm.createContext({ window, document, Node, AbortController, URL, URLSearchParams, console, Set, Element: Node, RadioNodeList: class {}, CustomEvent: class {} });
+const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
+for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filename: asset.path });
 const T = window.TinyCat;
 T.components.register(definitions);
 T.i18n.register("en", labels);
@@ -185,8 +185,9 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   };
   let sent;
   T.api = { request: async (url, options) => { sent = { url, options }; return { ok: true, data: { action: "react" }, meta: {} }; }, errors: canonicalFieldErrors };
-  vm.runInContext(fs.readFileSync(path.join(root, "assets/js/tinycat.js"), "utf8"), context);
-  T.initStatusForms();
+  const bootAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--bootstrap"], { encoding: "utf8" }));
+  for (const asset of bootAssets) vm.runInContext(asset.source, context);
+  T.status.controllers.actions.initStatusForms();
   const statusForm = new Node("form");
   statusForm.setAttribute("action", "/api/statuses/10/likes/me"); statusForm.setAttribute("method", "POST");
   statusForm.fields = [{ name: "action", value: "react", disabled: false }, { name: "body", value: "Retained draft", disabled: false }];
@@ -198,7 +199,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   check(sent.options.body.get("body") === "Retained draft" && sent.options.body.get("schedule_post") === "1", "Actual status submit captures fields and the submitter before controls become disabled.");
   check(statusForm.fields.every(field => !field.disabled) && !statusForm.dataset.statusBusy, "Actual status submit restores controls after the JSON result.");
   let notify = 0;
-  T.toast = () => { notify++; };
+  T.toasts.show = () => { notify++; };
   T.api.request = async () => { throw new Error("Offline"); };
   await handlers.submit[0]({ target: statusForm, preventDefault() {} });
   check(notify === 1 && statusForm.fields[1].value === "Retained draft" && statusForm.fields.every(field => !field.disabled), "Transport failures retain the actual editor draft and restore its controls.");
@@ -222,7 +223,8 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
     constructor() { super(); this.append("body", "Original"); this.append("image", new File([], "", { lastModified: ++emptyFileClock })); }
   };
   const untouched = new Node("form"); untouched.dataset.confirmUnsaved = "true";
-  T.initDirtyForms({ querySelectorAll: () => [untouched] });
+  T.lifecycle.start();
+  T.forms.hydrate({ querySelectorAll: () => [untouched] });
   handlers.change.forEach(callback => callback({ target: { closest: () => untouched } }));
   check(untouched.dataset.dirty === "false", "An empty upload input with a fresh File timestamp does not mark an unchanged editor dirty.");
   console.log(`PASS domain JSON renderers and request state (${checks} checks)`);

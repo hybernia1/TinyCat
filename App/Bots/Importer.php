@@ -711,7 +711,7 @@ final class Importer
         $itemsSeen = 0;
 
         try {
-            $response = \TinyCat\Status\Metadata::fetchDocument((string) ($source['feed_url'] ?? ''));
+            $response = \TinyCat\Http\Session::withoutLock(static fn (): ?array => \TinyCat\Status\Metadata::fetchDocument((string) ($source['feed_url'] ?? '')));
             if ($response === null) {
                 throw new RuntimeException('RSS feed could not be downloaded.');
             }

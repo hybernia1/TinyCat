@@ -17,7 +17,7 @@ if (!defined('TINYCAT')) {
  */
 final class Minifier
 {
-    private const CACHE_VERSION = '4';
+    private const CACHE_VERSION = '5';
     private const CACHE_NAMESPACE = 'assets';
     private const CACHE_URL = '/cache/assets';
 
@@ -64,19 +64,15 @@ final class Minifier
             return null;
         }
 
-        $content = $minify
-            ? ($type === 'css' ? self::minifyCss($source) : self::minifyJavaScript($source))
-            : $source;
-        $hash = substr(hash('sha256', self::CACHE_VERSION . "\0" . $identity . "\0" . ($minify ? 'min' : 'raw') . "\0" . $content), 0, 20);
+        // Address the source before transforming it: a warm hit never minifies again.
+        $hash = substr(hash('sha256', self::CACHE_VERSION . "\0" . $identity . "\0" . ($minify ? 'min' : 'raw') . "\0" . $type . "\0" . $source), 0, 20);
         $fileName = $prefix . '.' . $hash . ($minify ? '.min' : '') . '.' . $type;
         $target = \TinyCat\Support\Cache::file($fileName, self::CACHE_NAMESPACE);
-
         if (!is_file($target)) {
-            if (!\TinyCat\Support\Cache::writeFile($fileName, $content, self::CACHE_NAMESPACE)) {
-                return null;
-            }
-
-            self::pruneAssetVariants($prefix, $type, $fileName);
+            $content = $minify
+                ? ($type === 'css' ? self::minifyCss($source) : self::minifyJavaScript($source))
+                : $source;
+            if (!\TinyCat\Support\Cache::writeFile($fileName, $content, self::CACHE_NAMESPACE)) { return null; }
         }
 
         return self::CACHE_URL . '/' . rawurlencode($fileName);
@@ -820,13 +816,5 @@ final class Minifier
             && !str_contains('{}:;,>~)', $next);
     }
 
-    private static function pruneAssetVariants(string $prefix, string $type, string $keep): void
-    {
-        $pattern = '/^' . preg_quote($prefix, '/') . '\\.[a-f0-9]{20}(?:\\.min)?\\.' . preg_quote($type, '/') . '$/';
 
-        \TinyCat\Support\Cache::prune(
-            self::CACHE_NAMESPACE,
-            static fn (string $fileName): bool => $fileName !== $keep && preg_match($pattern, $fileName) === 1
-        );
-    }
 }

@@ -19,18 +19,16 @@
           "line": 321
         },
         {
-          "file": "assets/js/tinycat.js",
-          "line": 3386
+          "file": "assets/modules/search/index.js"
         },
         {
-          "file": "assets/js/tinycat.js",
-          "line": 3511
+          "file": "assets/modules/search/index.js"
         }
       ],
       "ui_areas": [
         "Public/search.php",
         "Public/parts/search",
-        "assets/js/tinycat.js"
+        "assets/modules/search"
       ],
       "stage": 5,
       "migrated": true
@@ -59,7 +57,7 @@
       "ui_areas": [
         "Public/search.php",
         "Public/parts/search",
-        "assets/js/tinycat.js"
+        "assets/modules/search"
       ],
       "stage": 5,
       "migrated": true
@@ -77,14 +75,13 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "assets/js/tinycat.js",
-          "line": 3386
+          "file": "assets/modules/security/index.js"
         }
       ],
       "ui_areas": [
         "Public/parts/auth/form.php",
         "Public/search.php",
-        "assets/js/tinycat.js"
+        "assets/modules/security"
       ],
       "stage": 5,
       "migrated": true
@@ -106,7 +103,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -133,7 +130,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -160,7 +157,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -182,7 +179,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -204,7 +201,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -231,7 +228,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -258,7 +255,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -285,7 +282,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -307,7 +304,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -328,7 +325,7 @@
         "Public/parts/status",
         "Public/modals/status-post.php",
         "Public/modals/status-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/status"
       ],
       "stage": 4,
       "migrated": true
@@ -362,14 +359,13 @@
           "line": 18
         },
         {
-          "file": "assets/js/tinycat.js",
-          "line": 5529
+          "file": "assets/modules/notifications/index.js"
         }
       ],
       "ui_areas": [
         "Public/parts/notifications",
         "Public/notifications.php",
-        "assets/js/tinycat.js"
+        "assets/modules/notifications"
       ],
       "stage": 3,
       "migrated": true
@@ -389,7 +385,7 @@
       "ui_areas": [
         "Public/parts/notifications",
         "Public/notifications.php",
-        "assets/js/tinycat.js"
+        "assets/modules/notifications"
       ],
       "stage": 3,
       "migrated": true
@@ -409,7 +405,7 @@
       "ui_areas": [
         "Public/parts/notifications",
         "Public/notifications.php",
-        "assets/js/tinycat.js"
+        "assets/modules/notifications"
       ],
       "stage": 3,
       "migrated": true
@@ -430,7 +426,7 @@
         "Public/parts/status",
         "Public/modals/status-post.php",
         "Public/modals/status-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/status"
       ],
       "stage": 4,
       "migrated": true
@@ -459,7 +455,7 @@
       "ui_areas": [
         "Public/parts/sidebar.php",
         "Public/parts/sidebar-slot.php",
-        "assets/js/tinycat.js"
+        "assets/modules/site"
       ],
       "stage": 5,
       "migrated": true
@@ -480,7 +476,7 @@
         "Public/parts/status",
         "Public/modals/status-post.php",
         "Public/modals/status-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/status"
       ],
       "stage": 4,
       "migrated": true
@@ -498,15 +494,14 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "assets/js/tinycat.js",
-          "line": 5049
+          "file": "assets/modules/status/index.js"
         }
       ],
       "ui_areas": [
         "Public/parts/status",
         "Public/modals/status-post.php",
         "Public/modals/status-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/status"
       ],
       "stage": 4,
       "migrated": true
@@ -527,7 +522,7 @@
         "Public/parts/status",
         "Public/modals/status-post.php",
         "Public/modals/status-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/status"
       ],
       "stage": 4,
       "migrated": true
@@ -547,7 +542,7 @@
       "ui_areas": [
         "Public/admin/moderation",
         "Public/parts/admin/moderation",
-        "assets/js/tinycat.js"
+        "assets/modules/moderation"
       ],
       "stage": 5,
       "migrated": true
@@ -568,7 +563,7 @@
         "Public/parts/status",
         "Public/modals/status-post.php",
         "Public/modals/status-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/status"
       ],
       "stage": 4,
       "migrated": true
@@ -589,7 +584,7 @@
         "Public/parts/status",
         "Public/modals/status-post.php",
         "Public/modals/status-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/status"
       ],
       "stage": 4,
       "migrated": true
@@ -610,7 +605,7 @@
         "Public/parts/status",
         "Public/modals/status-post.php",
         "Public/modals/status-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/status"
       ],
       "stage": 4,
       "migrated": true
@@ -632,7 +627,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -654,7 +649,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -676,7 +671,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -703,7 +698,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -730,7 +725,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -757,7 +752,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -784,7 +779,7 @@
         "Public/parts/admin/users",
         "Public/modals/profile-edit.php",
         "Public/modals/avatar-edit.php",
-        "assets/js/tinycat.js"
+        "assets/modules/users"
       ],
       "stage": 3,
       "migrated": true
@@ -808,7 +803,7 @@
       ],
       "ui_areas": [
         "Public/admin/settings.php",
-        "assets/js/tinycat.js"
+        "assets/modules/settings"
       ],
       "stage": 5,
       "migrated": true
@@ -832,7 +827,7 @@
       ],
       "ui_areas": [
         "Public/admin/cron.php",
-        "assets/js/tinycat.js"
+        "assets/modules/site"
       ],
       "stage": 5,
       "migrated": true
@@ -857,7 +852,7 @@
       "ui_areas": [
         "Public/admin/moderation",
         "Public/parts/admin/moderation",
-        "assets/js/tinycat.js"
+        "assets/modules/moderation"
       ],
       "stage": 5,
       "migrated": true
@@ -882,7 +877,7 @@
       "ui_areas": [
         "Public/admin/moderation",
         "Public/parts/admin/moderation",
-        "assets/js/tinycat.js"
+        "assets/modules/moderation"
       ],
       "stage": 5,
       "migrated": true
@@ -907,7 +902,7 @@
       "ui_areas": [
         "Public/admin/moderation",
         "Public/parts/admin/moderation",
-        "assets/js/tinycat.js"
+        "assets/modules/moderation"
       ],
       "stage": 5,
       "migrated": true
@@ -932,7 +927,7 @@
       "ui_areas": [
         "Public/admin/moderation",
         "Public/parts/admin/moderation",
-        "assets/js/tinycat.js"
+        "assets/modules/moderation"
       ],
       "stage": 5,
       "migrated": true
@@ -977,7 +972,7 @@
       "ui_areas": [
         "Public/admin/bots",
         "Public/parts/bots",
-        "assets/js/tinycat.js"
+        "assets/modules/bots"
       ],
       "stage": 5,
       "migrated": true
@@ -1022,7 +1017,7 @@
       "ui_areas": [
         "Public/admin/bots",
         "Public/parts/bots",
-        "assets/js/tinycat.js"
+        "assets/modules/bots"
       ],
       "stage": 5,
       "migrated": true
@@ -1067,7 +1062,7 @@
       "ui_areas": [
         "Public/admin/bots",
         "Public/parts/bots",
-        "assets/js/tinycat.js"
+        "assets/modules/bots"
       ],
       "stage": 5,
       "migrated": true
@@ -1112,7 +1107,7 @@
       "ui_areas": [
         "Public/admin/bots",
         "Public/parts/bots",
-        "assets/js/tinycat.js"
+        "assets/modules/bots"
       ],
       "stage": 5,
       "migrated": true
@@ -1141,7 +1136,7 @@
       "ui_areas": [
         "Public/admin/bots",
         "Public/parts/bots",
-        "assets/js/tinycat.js"
+        "assets/modules/bots"
       ],
       "stage": 5,
       "migrated": true
@@ -1170,7 +1165,7 @@
       "ui_areas": [
         "Public/admin/bots",
         "Public/parts/bots",
-        "assets/js/tinycat.js"
+        "assets/modules/bots"
       ],
       "stage": 5,
       "migrated": true
@@ -1199,7 +1194,7 @@
       "ui_areas": [
         "Public/admin/bots",
         "Public/parts/bots",
-        "assets/js/tinycat.js"
+        "assets/modules/bots"
       ],
       "stage": 5,
       "migrated": true
@@ -1228,7 +1223,7 @@
       "ui_areas": [
         "Public/admin/bots",
         "Public/parts/bots",
-        "assets/js/tinycat.js"
+        "assets/modules/bots"
       ],
       "stage": 5,
       "migrated": true
@@ -1248,7 +1243,7 @@
       "ui_areas": [
         "Public/admin/bots",
         "Public/parts/bots",
-        "assets/js/tinycat.js"
+        "assets/modules/bots"
       ],
       "stage": 5,
       "migrated": true
@@ -1478,7 +1473,7 @@
     {
       "name": "user_profile_require_edit_target",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Profiles::user_profile_require_edit_target"
+      "implementation": "TinyCat\\Users\\Actions::user_profile_require_edit_target"
     },
     {
       "name": "theme_normalize",
@@ -1598,7 +1593,7 @@
     {
       "name": "registration_input",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Accounts::registration_input"
+      "implementation": "TinyCat\\Users\\Actions::registration_input"
     },
     {
       "name": "registration_create_user",
@@ -1608,7 +1603,7 @@
     {
       "name": "registration_request",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Accounts::registration_request"
+      "implementation": "TinyCat\\Users\\Actions::registration_request"
     },
     {
       "name": "registration_enabled",
@@ -1813,7 +1808,7 @@
     {
       "name": "status_json_require_session_interval",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_json_require_session_interval"
+      "implementation": "TinyCat\\Status\\Actions::status_json_require_session_interval"
     },
     {
       "name": "plain_text_limit",
@@ -1863,17 +1858,17 @@
     {
       "name": "user_profile_update_request",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Profiles::user_profile_update_request"
+      "implementation": "TinyCat\\Users\\Actions::user_profile_update_request"
     },
     {
       "name": "user_email_update_request",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Profiles::user_email_update_request"
+      "implementation": "TinyCat\\Users\\Actions::user_email_update_request"
     },
     {
       "name": "user_password_update_request",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Profiles::user_password_update_request"
+      "implementation": "TinyCat\\Users\\Actions::user_password_update_request"
     },
     {
       "name": "auth_recovery_replace_token",
@@ -2078,32 +2073,32 @@
     {
       "name": "render_mentions",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\ViewData::render_mentions"
+      "implementation": "TinyCat\\Status\\Segments::text"
     },
     {
       "name": "render_status_text",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\ViewData::render_status_text"
+      "implementation": "TinyCat\\Status\\Segments::text"
     },
     {
       "name": "render_status_body",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\ViewData::render_status_body"
+      "implementation": "TinyCat\\Status\\Resource::post"
     },
     {
       "name": "render_mentions_segment",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\ViewData::render_mentions_segment"
+      "implementation": "TinyCat\\Status\\Segments::text"
     },
     {
       "name": "render_status_emoticons",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\ViewData::render_status_emoticons"
+      "implementation": "TinyCat\\Status\\Segments::render_status_emoticons"
     },
     {
       "name": "render_status_emoticons_segment",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\ViewData::render_status_emoticons_segment"
+      "implementation": "TinyCat\\Status\\Segments::render_status_emoticons_segment"
     },
     {
       "name": "public_status_select_sql",
@@ -2198,7 +2193,7 @@
     {
       "name": "status_prepare_link_view",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\ViewData::status_prepare_link_view"
+      "implementation": "TinyCat\\Status\\Resource::post"
     },
     {
       "name": "public_trending_tags",
@@ -2408,7 +2403,7 @@
     {
       "name": "status_prepare_comment_view",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\ViewData::status_prepare_comment_view"
+      "implementation": "TinyCat\\Status\\Resource::comment"
     },
     {
       "name": "status_prepare_detail_view",
@@ -2493,7 +2488,7 @@
     {
       "name": "status_require_valid_tags",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_require_valid_tags"
+      "implementation": "TinyCat\\Status\\Actions::status_require_valid_tags"
     },
     {
       "name": "normalize_tags_for_storage",
@@ -2733,17 +2728,17 @@
     {
       "name": "status_json_require_not_muted",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_json_require_not_muted"
+      "implementation": "TinyCat\\Status\\Actions::status_json_require_not_muted"
     },
     {
       "name": "status_json_require_action",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_json_require_action"
+      "implementation": "TinyCat\\Status\\Actions::status_json_require_action"
     },
     {
       "name": "status_json_require_unique_body",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_json_require_unique_body"
+      "implementation": "TinyCat\\Status\\Actions::status_json_require_unique_body"
     },
     {
       "name": "status_like_count",
@@ -2763,42 +2758,42 @@
     {
       "name": "status_json_comment_payload",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Comments::status_json_comment_payload"
+      "implementation": "TinyCat\\Status\\Actions::status_json_comment_payload"
     },
     {
       "name": "status_json_create",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_json_create"
+      "implementation": "TinyCat\\Status\\Actions::status_json_create"
     },
     {
       "name": "status_json_react",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_json_react"
+      "implementation": "TinyCat\\Status\\Actions::status_json_react"
     },
     {
       "name": "status_comment_input_body",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Comments::status_comment_input_body"
+      "implementation": "TinyCat\\Status\\Actions::status_comment_input_body"
     },
     {
       "name": "status_json_comment",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Comments::status_json_comment"
+      "implementation": "TinyCat\\Status\\Actions::status_json_comment"
     },
     {
       "name": "status_json_comment_like",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Comments::status_json_comment_like"
+      "implementation": "TinyCat\\Status\\Actions::status_json_comment_like"
     },
     {
       "name": "status_json_comment_update",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Comments::status_json_comment_update"
+      "implementation": "TinyCat\\Status\\Actions::status_json_comment_update"
     },
     {
       "name": "status_json_comment_delete",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Comments::status_json_comment_delete"
+      "implementation": "TinyCat\\Status\\Actions::status_json_comment_delete"
     },
     {
       "name": "status_delete_comment_rows",
@@ -2808,7 +2803,7 @@
     {
       "name": "status_payload",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_payload"
+      "implementation": "TinyCat\\Status\\Actions::status_payload"
     },
     {
       "name": "status_report_reasons",
@@ -2833,7 +2828,7 @@
     {
       "name": "status_scheduled_published_at",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_scheduled_published_at"
+      "implementation": "TinyCat\\Status\\Actions::status_scheduled_published_at"
     },
     {
       "name": "public_status_initial_page_limit",
@@ -2853,17 +2848,17 @@
     {
       "name": "status_json_report",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_json_report"
+      "implementation": "TinyCat\\Status\\Actions::status_json_report"
     },
     {
       "name": "status_json_update",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_json_update"
+      "implementation": "TinyCat\\Status\\Actions::status_json_update"
     },
     {
       "name": "status_json_delete",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_json_delete"
+      "implementation": "TinyCat\\Status\\Actions::status_json_delete"
     },
     {
       "name": "public_home_feed_api_url",
@@ -2918,7 +2913,7 @@
     {
       "name": "status_login_url",
       "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_login_url"
+      "implementation": "TinyCat\\Status\\Actions::status_login_url"
     },
     {
       "name": "app_existing_tables",
@@ -3063,17 +3058,17 @@
     {
       "name": "tc_admin_users_api_url",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_api_url"
+      "implementation": "TinyCat\\Users\\Actions::tc_admin_users_api_url"
     },
     {
       "name": "tc_admin_users_list_params",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_list_params"
+      "implementation": "TinyCat\\Users\\Actions::tc_admin_users_list_params"
     },
     {
       "name": "tc_admin_users_filters",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_filters"
+      "implementation": "TinyCat\\Users\\Actions::tc_admin_users_filters"
     },
     {
       "name": "tc_admin_user_filter_date",
@@ -3093,7 +3088,7 @@
     {
       "name": "tc_admin_users_page",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_page"
+      "implementation": "TinyCat\\Users\\Actions::tc_admin_users_page"
     },
     {
       "name": "tc_admin_users_stats",
@@ -3113,7 +3108,7 @@
     {
       "name": "tc_admin_users_api_payload",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_api_payload"
+      "implementation": "TinyCat\\Users\\Actions::tc_admin_users_api_payload"
     },
     {
       "name": "tc_admin_user_by_id",
@@ -3133,7 +3128,7 @@
     {
       "name": "tc_admin_user_require_deletable",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Accounts::tc_admin_user_require_deletable"
+      "implementation": "TinyCat\\Users\\Actions::tc_admin_user_require_deletable"
     },
     {
       "name": "tc_admin_user_resource",
@@ -3143,7 +3138,7 @@
     {
       "name": "tc_admin_user_payload",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Accounts::tc_admin_user_payload"
+      "implementation": "TinyCat\\Users\\Actions::tc_admin_user_payload"
     },
     {
       "name": "tc_admin_user_validation_messages",

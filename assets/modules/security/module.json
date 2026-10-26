@@ -1,0 +1,16 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "entries": [
+      "assets/modules/security/index.js"
+    ],
+    "components": [
+      "ui/captcha"
+    ],
+    "styles": [
+      "assets/modules/security/styles/006-captcha-provider.css"
+    ]
+  }
+]

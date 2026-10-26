@@ -164,13 +164,13 @@ try {
         }
     }
 
-    foreach (['App/Http/Api.php', 'App/Http/Request.php', 'App/Http/Response.php', 'App/Http/Validator.php', 'App/Database/Connection.php', 'App/Support/Config.php', 'App/Module.php', 'App/modules.php', 'assets/js/core/api-client.js', 'assets/js/core/dom.js', 'assets/js/core/forms.js', 'assets/js/core/modal.js'] as $required) {
+    foreach (['App/Http/Api.php', 'App/Http/Request.php', 'App/Http/Response.php', 'App/Http/Validator.php', 'App/Database/Connection.php', 'App/Support/Config.php', 'App/Module.php', 'App/modules.php', 'assets/core/http.js', 'assets/core/dom.js', 'assets/ui/forms.js', 'assets/ui/dialogs.js'] as $required) {
         if (!in_array($required, $names, true)) {
             $failures[] = "Required module infrastructure missing from artifact: {$required}";
         }
     }
 
-    foreach (['App/Users/Module.php', 'App/Users/Api.php', 'App/Users/Avatar.php', 'App/Users/Roles.php', 'App/Notifications/Module.php', 'App/Notifications/Api.php', 'App/Status/Module.php', 'App/Status/Api.php', 'App/Status/ImageStorage.php', 'App/Status/LinkParser.php', 'App/Status/Metadata.php', 'assets/js/core/ui.js', 'assets/js/modules/users.js', 'assets/js/modules/status.js', 'assets/js/modules/notifications.js'] as $required) {
+    foreach (['App/Users/Module.php', 'App/Users/Api.php', 'App/Users/Avatar.php', 'App/Users/Roles.php', 'App/Notifications/Module.php', 'App/Notifications/Api.php', 'App/Status/Module.php', 'App/Status/Api.php', 'App/Status/ImageStorage.php', 'App/Status/LinkParser.php', 'App/Status/Metadata.php', 'assets/ui/fields.js', 'assets/modules/users/views.js', 'assets/modules/status/views.js', 'assets/modules/notifications/views.js'] as $required) {
         if (!in_array($required, $names, true)) { $failures[] = 'Required domain runtime missing: ' . $required; }
     }
     foreach (['App/Core.php', 'App/functions.php', 'App/Api.php', 'App/Bots.php', 'App/BotAdmin.php', 'App/Captcha.php', 'App/Cache.php', 'App/Minifier.php', 'App/SiteIdentity.php', 'App/Sitemap.php', 'App/PackageManager.php', 'App/Notifications.php', 'App/Avatar.php', 'App/UserRoles.php', 'App/StatusImage.php', 'App/StatusLinks.php', 'App/LinkMetadata.php'] as $retired) {

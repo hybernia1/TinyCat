@@ -20,8 +20,8 @@ final class Api
         }, 'user');
         $api->post('/moderation/reports', static function (Request $r): Result {
             $r->validated(['id' => 'required|integer', 'reason' => 'string', 'note' => 'string']);
-            \TinyCat\Status\Posts::status_json_require_session_interval('report');
-            return Result::from(\TinyCat\Status\Posts::status_json_report((int) $r->input('id'), \TinyCat\Users\Access::requireAuth()));
+            \TinyCat\Status\Actions::status_json_require_session_interval('report');
+            return Result::from(\TinyCat\Status\Actions::status_json_report((int) $r->input('id'), \TinyCat\Users\Access::requireAuth()));
         });
         $api->get('/moderation/reports', static fn (): Result => Result::from(Actions::adminReports()), 'admin');
         $api->patch('/moderation/reports/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminReportReview((int) $p['id'])), 'admin');

@@ -1,5 +1,22 @@
 # Changelog
 
+## 3.1.0 - 2026-10-26
+
+- Enforce frontend source reachability and per-scope raw/gzip delivery budgets in preflight.
+
+- Organize frontend sources into core, UI and domain-owned modules with explicit local import dependencies; split status controllers and keep styles beside their owners.
+- Deliver four dependency-ordered JavaScript assets and one scoped stylesheet per page, preserve CSS cascade order, and remove the retired JS/CSS monoliths during updates.
+
+- Remove unused frontend helpers and unify DOM, icon, avatar and form request primitives, including status and follow forms.
+- Give dialogs their own focus/stack/viewport manager and resource resolver; extract dirty-form protection, registered history restoration and an idempotent init/hydrate/dispose lifecycle from the shared shell.
+
+- Compile source/minified assets, scoped UI definitions and translation catalogs into a signed release inventory; use content hashes for asset URLs and preserve older immutable variants during updates.
+- Skip minification on warm source-cache hits and prepare remote link metadata before database transactions, releasing the session lock during network waits.
+- Remove the retired HTML status formatting pipeline and duplicate `_view` preparation; share canonical resources and batch preloads between server and AJAX rendering.
+- Separate Users and Status HTTP actions from domain services and compose database requirements through module declarations.
+- Move status, profile/follow, search, sidebar and notification behavior into scoped client modules; share form request lifecycle and register result/hydration/navigation handlers through the client module registry.
+- Add token-based dependency checks and exercise source and compiled client initialization across public, administration and installer scopes.
+
 ## 3.0.0 - 2026-10-26
 
 - Breaking: replace legacy API endpoints and HTML fragments with module-owned JSON APIs under `/api/users`, `/api/statuses`, `/api/notifications` and other domain prefixes. Integrations must use the new contract in `docs/api.md`.

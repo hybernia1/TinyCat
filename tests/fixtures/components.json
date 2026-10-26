@@ -1,6 +1,6 @@
 [
   {
-    "component": "users/avatar",
+    "component": "ui/avatar",
     "data": {
       "user": {
         "id": 2,
@@ -20,7 +20,7 @@
     }
   },
   {
-    "component": "users/avatar",
+    "component": "ui/avatar",
     "data": {
       "user": {
         "id": 2,

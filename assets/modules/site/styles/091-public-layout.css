@@ -1,0 +1,7 @@
+@media (min-width: 900px) {
+.public-layout {
+    grid-template-columns: minmax(0, 820px) minmax(230px, 300px);
+    gap: 24px;
+    justify-content: center;
+  }
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "routes": [
+      "/admin/settings"
+    ],
+    "entries": [
+      "assets/modules/settings/index.js"
+    ],
+    "components": [],
+    "styles": []
+  }
+]

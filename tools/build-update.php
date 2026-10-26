@@ -103,6 +103,7 @@ foreach ($allowedRoots as $directory) {
         }
 
         $relative = str_replace('\\', '/', substr($entry->getPathname(), strlen($root) + 1));
+        if (str_starts_with($relative, 'assets/build/')) { continue; }
 
         if (preg_match('/^[A-Za-z0-9._\/-]+$/', $relative) !== 1) {
             fwrite(STDERR, "Unsupported package path: {$relative}\n");
@@ -149,6 +150,15 @@ foreach ($files as $relative => $path) {
 
     $hashes[$relative] = $hash;
 }
+
+$compileAssets = require __DIR__ . '/compile-assets.php';
+foreach ($compileAssets() as $relative => $content) {
+    $files[$relative] = '';
+    $normalizedContents[$relative] = $content;
+    $hashes[$relative] = hash('sha256', $content);
+}
+ksort($files, SORT_STRING);
+ksort($hashes, SORT_STRING);
 
 $deletionsFile = $root . DIRECTORY_SEPARATOR . 'tools' . DIRECTORY_SEPARATOR . 'update-deletions.json';
 $deletions = [];

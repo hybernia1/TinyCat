@@ -1,0 +1,10 @@
+@media (max-width: 759px) {
+.cookie-consent {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+.cookie-consent-actions .btn {
+    flex: 1;
+  }
+}

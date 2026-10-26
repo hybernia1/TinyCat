@@ -6,7 +6,7 @@ require_once __DIR__ . '/../cache-isolation.php';
 $root = dirname(__DIR__, 2);
 $options = getopt('', ['baseline-version::']);
 $baselineVersion = (string) ($options['baseline-version'] ?? '2.0.25');
-if (!in_array($baselineVersion, ['2.0.25', '2.1.0'], true)) {
+if (!in_array($baselineVersion, ['2.0.25', '2.1.0', '3.0.0'], true)) {
     throw new InvalidArgumentException('Unsupported rehearsal baseline.');
 }
 $temporaryRoot = $root . '/storage/update-rehearsal-' . bin2hex(random_bytes(6));
@@ -16,7 +16,8 @@ $installRoot = $temporaryRoot . '/install';
 $freshRoot = $temporaryRoot . '/fresh';
 $artifactRoot = $temporaryRoot . '/dist';
 $signingKey = $temporaryRoot . '/signing.key';
-$candidateVersion = '3.0.0';
+require_once $root . '/App/Support/Version.php';
+$candidateVersion = \TinyCat\Support\Version::CURRENT;
 $failures = [];
 $managedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
 $managedRootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
@@ -174,6 +175,7 @@ try {
     }
 
     $copyTree($root . '/tools/build-update.php', $candidateRoot . '/tools/build-update.php');
+    $copyTree($root . '/tools/compile-assets.php', $candidateRoot . '/tools/compile-assets.php');
     $copyTree($root . '/tools/update-deletions.json', $candidateRoot . '/tools/update-deletions.json');
     $core = (string) file_get_contents($candidateRoot . '/App/Support/Version.php');
 
@@ -201,7 +203,7 @@ try {
     exec($archiveCommand . ' 2>&1', $archiveOutput, $archiveExit);
 
     if ($archiveExit !== 0) {
-        throw new RuntimeException('Unable to archive v2.0.25: ' . implode(' ', $archiveOutput));
+        throw new RuntimeException('Unable to archive baseline: ' . implode(' ', $archiveOutput));
     }
 
     $extractZip($baselineArchive, $installRoot);
@@ -279,6 +281,7 @@ PHP;
         ],
         $runner
     );
+    if ($baselineVersion === '3.0.0') { $runner = str_replace('TinyCat\\Update\\Manager', 'TinyCat\\Updates\\Manager', $runner); }
     [$updateExit, $updateOutput] = $run($runner);
     $updateResult = json_decode(implode("\n", $updateOutput), true);
     $assert($updateExit === 0 && is_array($updateResult), 'Updater rehearsal completes: ' . implode(' ', $updateOutput));
@@ -302,6 +305,10 @@ PHP;
     $assert($retiredExit === 0, 'Updated runtime provides Bots without an extension loader: ' . implode(' ', $retiredOutput));
 
     $updatedInventory = $inventory($installRoot);
+    $assetCache = $installRoot . '/storage/cache/assets';
+    if (!is_dir($assetCache)) { mkdir($assetCache, 0775, true); }
+    file_put_contents($assetCache . '/retention.aaaaaaaaaaaaaaaaaaaa.js', 'var retained = true;');
+    file_put_contents($installRoot . '/storage/cache/expired-rehearsal.json', '{}');
     $repeatRunner = <<<'PHP'
 define('TINYCAT', true);
 $root = __INSTALL_ROOT__;
@@ -317,6 +324,7 @@ $invoke('enableMaintenance', __VERSION__);
 $invoke('applyFiles', $stage, $manifest);
 $invoke('deleteLegacyFiles', $manifest);
 TinyCat\Updates\Manager::disableMaintenance();
+$invoke('clearRuntimeCache');
 echo json_encode(['backup' => $backup], JSON_THROW_ON_ERROR);
 PHP;
     $repeatRunner = str_replace(
@@ -335,6 +343,8 @@ PHP;
     $repeatBackup = is_array($repeatResult) ? (string) ($repeatResult['backup'] ?? '') : '';
     $repeatMetadata = json_decode((string) @file_get_contents($repeatBackup . '/backup.json'), true);
     $assert($repeatExit === 0 && is_array($repeatResult), 'Repeated signed update completes: ' . implode(' ', $repeatOutput));
+    $assert(is_file($assetCache . '/retention.aaaaaaaaaaaaaaaaaaaa.js'), 'Runtime cache cleanup preserves immutable assets used by open pages.');
+    $assert(!is_file($installRoot . '/storage/cache/expired-rehearsal.json'), 'Runtime cache cleanup still removes obsolete data caches.');
     $assert($inventory($installRoot) === $updatedInventory, 'Repeated signed update leaves the candidate inventory unchanged.');
     $assert(is_array($repeatMetadata) && ($repeatMetadata['files'] ?? null) === [], 'Repeated signed update does not back up unchanged files.');
 
@@ -350,7 +360,7 @@ PHP;
 
     $backup = is_array($updateResult) ? (string) ($updateResult['backup'] ?? '') : '';
     $metadata = json_decode((string) @file_get_contents($backup . '/backup.json'), true);
-    $assert(is_array($metadata) && ($metadata['from_version'] ?? '') === $baselineVersion, 'Rollback backup records source version 2.0.25.');
+    $assert(is_array($metadata) && ($metadata['from_version'] ?? '') === $baselineVersion, 'Rollback backup records the baseline version.');
 
     foreach ((array) ($metadata['files'] ?? []) as $relative => $hash) {
         $source = $backup . '/files/' . str_replace('/', DIRECTORY_SEPARATOR, (string) $relative);
@@ -380,13 +390,14 @@ PHP;
     }
 
     $restoredInventory = $inventory($installRoot);
-    $assert($restoredInventory === $baselineInventory, 'Rollback restores the exact v2.0.25 managed inventory.');
+    $assert($restoredInventory === $baselineInventory, 'Rollback restores the exact baseline managed inventory.');
     $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash, 'Rollback leaves configuration unchanged.');
     $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Rollback leaves legacy extension files unchanged.');
+    $oldVersionConstant = $baselineVersion === '3.0.0' ? 'TinyCat\\Support\\Version::CURRENT' : 'Core::VERSION';
     $bootOld = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (Core::VERSION !== " . var_export($baselineVersion, true) . ") exit(2);";
+        . "; if (" . $oldVersionConstant . " !== " . var_export($baselineVersion, true) . ") exit(2);";
     [$oldBootExit, $oldBootOutput] = $run($bootOld);
-    $assert($oldBootExit === 0, 'Restored v2.0.25 runtime boots: ' . implode(' ', $oldBootOutput));
+    $assert($oldBootExit === 0, 'Restored baseline runtime boots: ' . implode(' ', $oldBootOutput));
 
     $extractZip($packagePath, $freshRoot);
     file_put_contents($freshRoot . '/config.php', $configSource($publicKey), LOCK_EX);

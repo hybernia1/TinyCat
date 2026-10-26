@@ -783,7 +783,7 @@ function tc_install_render(string $step, array $languages, array $state): void
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="<?= \TinyCat\Support\Html::e(\TinyCat\Security\Csrf::token()) ?>">
         <title><?= \TinyCat\Support\Html::e($pageTitle) ?></title>
-        <link rel="stylesheet" href="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Assets::asset('css/tinycat.css')) ?>">
+        <link rel="stylesheet" href="<?= \TinyCat\Support\Html::e(\TinyCat\Support\ClientAssets::styles('/install')[0]) ?>">
         <?php foreach (\TinyCat\Support\ClientAssets::scripts('/install') as $scriptUrl): ?>
             <script src="<?= \TinyCat\Support\Html::e($scriptUrl) ?>" defer></script>
         <?php endforeach; ?>

@@ -43,7 +43,7 @@ final class Segments
         $segments = [];
         $offset = 0;
         foreach ($matches[0] as $i => [$token, $position]) {
-            if ($position > $offset) { $segments[] = ['type' => 'text', 'text' => ViewData::render_status_emoticons(substr($text, $offset, $position - $offset))]; }
+            if ($position > $offset) { $segments[] = ['type' => 'text', 'text' => self::render_status_emoticons(substr($text, $offset, $position - $offset))]; }
             $value = $matches[2][$i][0];
             $symbol = $matches[1][$i][0];
             $user = ctype_digit($value) ? ($users[(int) $value] ?? null) : null;
@@ -55,7 +55,65 @@ final class Segments
             } else { $segments[] = ['type' => 'text', 'text' => $token]; }
             $offset = $position + strlen($token);
         }
-        if ($offset < strlen($text)) { $segments[] = ['type' => 'text', 'text' => ViewData::render_status_emoticons(substr($text, $offset))]; }
+        if ($offset < strlen($text)) { $segments[] = ['type' => 'text', 'text' => self::render_status_emoticons(substr($text, $offset))]; }
         return $segments;
+    }
+
+    public static function render_status_emoticons(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+
+        // Keep URL text untouched. Statuses render URLs separately, while
+        // comments use this generic mention renderer directly.
+        if (!preg_match_all(\TinyCat\Status\LinkParser::pattern(), $text, $matches, PREG_OFFSET_CAPTURE)) {
+            return self::render_status_emoticons_segment($text);
+        }
+
+        $offset = 0;
+        $result = '';
+
+        foreach ((array) ($matches[0] ?? []) as $match) {
+            $raw = (string) $match[0];
+            $position = (int) $match[1];
+
+            $result .= self::render_status_emoticons_segment(substr($text, $offset, $position - $offset));
+            $result .= $raw;
+            $offset = $position + strlen($raw);
+        }
+
+        return $result . self::render_status_emoticons_segment(substr($text, $offset));
+    }
+
+
+    public static function render_status_emoticons_segment(string $text): string
+    {
+        $pattern = '/(?<![\\p{L}\\p{N}_])(<3|<2|:-?\\)|:-?\\(|:-?D|;-?\\)|;-?\\(|:-?P|;-?P|:-?\\/)(?![\\p{L}\\p{N}_])/iu';
+        $map = [
+            '<2' => '❤️',
+            '<3' => '❤️',
+            ':)' => '🙂',
+            ':-)' => '🙂',
+            ':(' => '🙁',
+            ':-(' => '🙁',
+            ':d' => '😄',
+            ':-d' => '😄',
+            ';)' => '😉',
+            ';-)' => '😉',
+            ';(' => '😢',
+            ';-(' => '😢',
+            ':p' => '😛',
+            ':-p' => '😛',
+            ';p' => '😜',
+            ';-p' => '😜',
+            ':-/' => '😕',
+        ];
+
+        return (string) preg_replace_callback($pattern, static function (array $match) use ($map): string {
+            $token = strtolower((string) $match[1]);
+
+            return $map[$token] ?? (string) $match[0];
+        }, $text);
     }
 }

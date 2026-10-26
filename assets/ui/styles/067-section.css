@@ -1,0 +1,15 @@
+@media (max-width: 759px) {
+.section {
+    padding-block: 14px 22px;
+  }
+
+.card-body,
+  .status-composer .card-body {
+    padding: 12px;
+  }
+
+.card-header,
+  .card-footer {
+    padding: 10px 12px;
+  }
+}

@@ -20,10 +20,10 @@ $title = (string) ($title ?? $appName);
 $current = \TinyCat\Http\Request::current()->path((string) ($current ?? \TinyCat\Http\Request::current()->path()));
 $bodyClass = (string) ($bodyClass ?? '');
 $csrfToken = (string) ($csrfToken ?? \TinyCat\Security\Csrf::token());
-$styles = $styles ?? ['css/tinycat.css'];
-$scriptUrls = \TinyCat\Support\ClientAssets::scripts($current, array_values(array_map(static fn (mixed $script): string => (string) $script, (array) ($scripts ?? ['js/tinycat.js']))));
+$scriptUrls = \TinyCat\Support\ClientAssets::scripts($current, array_values(array_map(static fn (mixed $script): string => (string) $script, (array) ($scripts ?? []))));
 $styleUrls = array_values(array_unique([
-    ...array_map(static fn (mixed $style): string => \TinyCat\Support\Assets::asset((string) $style), (array) $styles),
+    ...\TinyCat\Support\ClientAssets::styles($current),
+    ...array_map(static fn (mixed $style): string => \TinyCat\Support\Assets::asset((string) $style), (array) ($styles ?? [])),
 ]));
 $actions = (string) ($actions ?? '');
 $meta = is_array($meta ?? null) ? $meta : [];

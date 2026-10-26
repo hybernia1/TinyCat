@@ -2,8 +2,14 @@
 declare(strict_types=1);
 namespace TinyCat\Notifications;
 
-final class Module implements \TinyCat\Module
+final class Module implements \TinyCat\StorageModule
 {
+    /** @return list<string> */
+    public static function tables(): array
+    {
+        return ['notifications'];
+    }
+
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);

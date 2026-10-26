@@ -11,6 +11,7 @@ require_once __DIR__ . '/cache-isolation.php';
 $root = dirname(__DIR__);
 $tests = [
     'Module infrastructure boundaries' => 'tests/quality/module-boundaries.php',
+    'Class dependency boundaries' => 'tests/quality/dependencies.php',
     'Shared infrastructure' => 'tests/infrastructure/run.php',
     'JSON AJAX client' => 'tests/frontend/run.php',
     'Monolith API inventory' => 'tests/quality/monolith-inventory.php',
@@ -29,6 +30,8 @@ $tests = [
     'Hot-read query budgets' => 'tests/hot-read-query-budgets.php',
     'Cache' => 'tests/cache/run.php',
     'Asset optimizer' => 'tests/asset-optimizer/run.php',
+    'Asset reachability and delivery budgets' => 'tests/asset-optimizer/budgets.php',
+    'Asset dependency graph' => 'tests/asset-optimizer/graph.php',
     'Built-in Bots' => 'tests/bots/run.php',
     'Updater' => 'tests/updater/run.php',
     'MySQL migration registry' => 'tests/updater/mysql-registry.php',

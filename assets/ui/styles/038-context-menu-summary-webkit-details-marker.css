@@ -1,0 +1,48 @@
+.context-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.context-menu-popover {
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 4px);
+  right: 0;
+  display: none;
+  min-width: 132px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.context-menu[open] .context-menu-popover {
+  display: grid;
+}
+
+.context-menu-popover form {
+  display: block;
+}
+
+.context-menu-action {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.context-menu-action:hover,
+.context-menu-action:focus-visible {
+  background: var(--surface-soft);
+  color: var(--primary-strong);
+}
+
+.context-menu-action.is-danger {
+  color: var(--danger);
+}

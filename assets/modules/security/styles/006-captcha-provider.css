@@ -1,0 +1,7 @@
+.captcha-provider {
+  gap: 8px;
+}
+
+.captcha-widget {
+  min-height: 65px;
+}

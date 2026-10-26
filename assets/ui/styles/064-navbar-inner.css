@@ -1,0 +1,52 @@
+@media (max-width: 759px) {
+.navbar-inner {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand nav"
+      "search search";
+    align-items: center;
+    gap: 8px 10px;
+    padding-block: 8px;
+  }
+
+.navbar-brand {
+    grid-area: brand;
+    min-height: 36px;
+    overflow: hidden;
+    font-size: 0.9375rem;
+  }
+
+.navbar-brand strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+.global-search {
+    grid-area: search;
+    order: 3;
+    width: 100%;
+    flex: none;
+    max-width: none;
+    min-width: 0;
+  }
+
+.nav-links {
+    grid-area: nav;
+    min-width: 0;
+    justify-content: flex-end;
+    gap: 2px;
+  }
+
+.nav-link-icon {
+    width: 36px;
+    min-height: 36px;
+  }
+
+.nav-link-icon .icon {
+    width: 19px;
+    height: 19px;
+  }
+}
