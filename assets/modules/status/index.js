@@ -8,6 +8,7 @@ import "./feed.js";
 import "./forms.js";
 import "./media.js";
 import "./views.js";
+import "./translation.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;
@@ -18,6 +19,7 @@ import "./views.js";
     qsa("[data-status-video]", root).forEach(C.media.initStatusVideoRoot);
     qsa("[data-status-link-image]", root).forEach(C.media.initStatusLinkImageRoot);
     C.editor.initStatusEditors(root); C.feed.initStatusFeedLazy(root);
+    C.translation.hydrate(root);
   };
   TinyCat.status.init = function () {
     document.addEventListener("tinycat:form-reset", function (event) { qsa("[data-status-editor]", event.target).forEach(C.editor.resetStatusEditor); });

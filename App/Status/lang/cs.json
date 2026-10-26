@@ -1,5 +1,13 @@
 {
   "account": {
+    "translation_translate": "Přeložit",
+    "translation_hide": "Skrýt překlad",
+    "translation_preparing": "Připravuji překlad…",
+    "translation_machine": "Strojový překlad",
+    "translation_unavailable": "Překlad tohoto textu není dostupný.",
+    "translation_same": "Příspěvek už je v jazyce rozhraní.",
+    "translation_continue": "Překlad je připravený. Klikněte znovu na Přeložit.",
+    "translation_failed": "Překlad se nezdařil. Zkuste to znovu.",
     "posts_title": "Příspěvky",
     "status_body": "Co je nového?",
     "status_counter": "Zbývá {count}",

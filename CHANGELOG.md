@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.3.0 - 2026-10-26
+
+- Add optional, on-device post translation in supported browsers on HTTPS, targeting the current interface language without uploading or persistently storing translations.
+- Detect source languages and omit translation offers for matching languages, unsupported pairs, uncertain detections and posts containing only numbers, punctuation, links or social references.
+- Show translation controls as badges with a translation icon; preserve the original and display collapsible translated text below it with a quote-style border and smaller type.
+
+## 4.2.0 - 2026-10-26
+
+- Retain the public page header and sidebar during JSON navigation between feeds, tags, profiles and posts while updating metadata and preserving browser history, scroll and focus.
+- Share public page data and declarative rendering, cache sidebar data and retain normal document loading as a fallback.
+- Remove four retired public page templates during overlay updates.
+
 ## 4.1.1 - 2026-10-26
 
 - Normalize public RSS, sitemap, robots and LLM documents under module-owned responders with shared HEAD, ETag and conditional GET handling.

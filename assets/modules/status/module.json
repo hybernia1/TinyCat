@@ -33,6 +33,14 @@
       "assets/modules/status/styles/075-status-feed.css"
     ],
     "translations": [
+      "account.translation_translate",
+      "account.translation_hide",
+      "account.translation_preparing",
+      "account.translation_machine",
+      "account.translation_unavailable",
+      "account.translation_same",
+      "account.translation_continue",
+      "account.translation_failed",
       "account.status_comment_history",
       "account.status_comment_placeholder",
       "account.status_edit",

@@ -14,3 +14,38 @@
   font-weight: 800;
   text-decoration: none;
 }
+
+.status-translation {
+  margin-top: 0.5rem;
+}
+
+.status-translation-link {
+  appearance: none;
+  border: 0;
+  gap: 0.3rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.status-translation-link:hover {
+  color: var(--primary-strong);
+  background: var(--primary-soft);
+}
+
+.status-translation-link:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.status-translation [role="status"] {
+  margin-inline-start: 0.5rem;
+  font-size: 0.85em;
+}
+
+.status-translation-output {
+  margin-top: 0.5rem;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 3px solid var(--border);
+  font-size: 0.9em;
+  white-space: pre-wrap;
+}
