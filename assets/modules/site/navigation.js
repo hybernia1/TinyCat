@@ -7,7 +7,8 @@ import "../../ui/dialogs.js";
   var T = window.TinyCat, pending = null, currentIndex = 0, rollback = false, sidebar = null;
   function supported(url) {
     if (url.origin !== window.location.origin || url.hash || !document.querySelector("[data-public-page]")) { return false; }
-    if (!(url.pathname === "/" || /^\/(?:tag\/[^/]+|author\/[1-9][0-9]*|status\/[1-9][0-9]*)$/.test(url.pathname))) { return false; }
+    var parts = T.urls.split(url.pathname);
+    if (parts.locale !== T.urls.prefix() || !(parts.path === "/" || /^\/(?:tag\/[^/]+|author\/[1-9][0-9]*|status\/[1-9][0-9]*)$/.test(parts.path))) { return false; }
     return Array.from(url.searchParams.keys()).every(function (key) { return key === "feed" || key === "compact"; });
   }
   function saveScroll() {
@@ -50,6 +51,7 @@ import "../../ui/dialogs.js";
     var slot = view.querySelector("[data-public-sidebar-slot]");
     if (slot && sidebar && (!window.matchMedia || window.matchMedia("(min-width: 900px)").matches)) { slot.replaceWith(sidebar); sidebar.dataset.publicSidebarUrl = data.sidebar_url; T.site.activateSidebar(sidebar, data.tag); }
     target.replaceChildren(view); metadata(data); T.lifecycle.hydrate(target);
+    document.querySelectorAll("[data-language-link]").forEach(function (node) { node.href = T.urls.local(data.url, node.dataset.languageLink); });
     document.querySelectorAll(".navbar a[aria-current]").forEach(function (node) { node.removeAttribute("aria-current"); });
     document.querySelectorAll(".navbar a[href]").forEach(function (node) { if (new URL(node.href).pathname === new URL(data.url, window.location.href).pathname) { node.setAttribute("aria-current", "page"); } });
     var main = document.getElementById("main-content"); main.focus({ preventScroll: true });

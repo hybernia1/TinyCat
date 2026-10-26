@@ -9,7 +9,7 @@ final class Web
     public static function redirect(string $url, int $status = 302): never
     {
         http_response_code($status);
-        header('Location: ' . $url);
+        header('Location: ' . \TinyCat\Support\LocalUrls::resolve($url));
         exit;
     }
 

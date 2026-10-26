@@ -17,7 +17,8 @@ import "./i18n.js";
     else if (absolute < 29808000) { unit = "month"; count = Math.max(1, Math.round(absolute / 2592000)); }
     else if (absolute < 47088000) { unit = "year"; count = 1; }
     else { unit = "year"; count = Math.max(1, Math.round(absolute / 31536000)); }
-    return T.i18n.plural("relative." + (seconds > 0 ? "future" : "past") + "." + unit, count);
+    var key = "relative." + (seconds > 0 ? "future" : "past") + "." + unit;
+    return count === 1 ? T.i18n.t(key + ".single") : T.i18n.plural(key, count);
   }
   function format(input, kind) {
     if (!input) { return ""; }

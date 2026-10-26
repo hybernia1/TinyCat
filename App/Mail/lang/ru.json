@@ -1,0 +1,45 @@
+{
+  "signature": "С уважением,\n{site}",
+  "templates": {
+    "welcome": {
+      "subject": "Добро пожаловать в {site}",
+      "body": "Здравствуйте, {username}!\n\nДобро пожаловать в {site}. Ваш аккаунт готов.\n\nВойдите: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Сбросьте пароль {site}",
+      "body": "Здравствуйте, {username}!\n\nМы получили запрос на сброс вашего пароля.\n\nСбросьте пароль: {reset_url}\n\nСрок действия этой ссылки истекает через 60 минут. Если вы этого не запрашивали, вы можете игнорировать это письмо.\n\n{signature}"
+    },
+    "notification_content_like": {
+      "subject": "{actor} понравился ваш пост",
+      "body": "{actor} понравился ваш пост.\n\nПосмотреть сообщение: {content_url}\n\n{signature}"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} прокомментировал ваше сообщение",
+      "body": "{actor} прокомментировал ваше сообщение.\n\nПосмотреть беседу: {content_url}\n\n{signature}"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} понравился ваш комментарий",
+      "body": "{actor} понравился ваш комментарий.\n\nПосмотреть беседу: {content_url}\n\n{signature}"
+    },
+    "notification_follow": {
+      "subject": "{actor} подписался на вас",
+      "body": "{actor} подписался на вас.\n\nПосмотреть их профиль: {actor_url}\n\n{signature}"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} упомянул вас",
+      "body": "{actor} упомянул вас в сообщении.\n\nПосмотреть сообщение: {content_url}\n\n{signature}"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} упомянул вас",
+      "body": "{actor} упомянул вас в комментарии.\n\nПосмотреть беседу: {content_url}\n\n{signature}"
+    },
+    "notification_report_resolved": {
+      "subject": "Ваш отчет решен",
+      "body": "Ваш отчет был обработан командой модераторов.\n\nПросмотрите сообщаемый контент: {content_url}\n\n{signature}"
+    },
+    "notification_report_dismissed": {
+      "subject": "Ваш отчет отклонен.",
+      "body": "Ваш отчет был рассмотрен и отклонен командой модераторов.\n\nПросмотрите сообщаемый контент: {content_url}\n\n{signature}"
+    }
+  }
+}

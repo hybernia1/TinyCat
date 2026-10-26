@@ -37,9 +37,28 @@
     pluralCategory: function (count, language) {
       if (typeof count !== "number" || !Number.isFinite(count)) { throw new TypeError("Plural counts must be finite numbers."); }
       count = Math.abs(count);
-      if (/^(cs|sk)(?:-|_|$)/i.test(language)) {
-        if (!Number.isInteger(count)) { return "many"; }
+      var normalized = language.toLowerCase().replace(/_/g, "-"), base = normalized.split("-")[0];
+      var integer = Number.isInteger(count), lastDigit = count % 10, lastTwo = count % 100;
+      if (base === "cs" || base === "sk") {
+        if (!integer) { return "many"; }
         return count === 1 ? "one" : (count >= 2 && count <= 4 ? "few" : "other");
+      }
+      if (base === "pl") {
+        if (!integer) { return "other"; }
+        if (count === 1) { return "one"; }
+        return lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14) ? "few" : "many";
+      }
+      if (base === "ru" || base === "uk") {
+        if (!integer) { return "other"; }
+        if (lastDigit === 1 && lastTwo !== 11) { return "one"; }
+        return lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14) ? "few" : "many";
+      }
+      if (["es", "fr", "it", "pt"].includes(base)) {
+        if ((base === "fr" || base === "pt") && !normalized.startsWith("pt-pt")) {
+          if (Math.floor(count) < 2) { return "one"; }
+        } else if (count === 1) { return "one"; }
+        if (integer && count !== 0 && count % 1000000 === 0) { return "many"; }
+        return "other";
       }
       return count === 1 ? "one" : "other";
     },

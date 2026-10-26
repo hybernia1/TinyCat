@@ -1,0 +1,54 @@
+{
+  "moderation": {
+    "title": "Modération",
+    "reports_title": "Rapports",
+    "reports_empty": "Il n'y a aucun rapport.",
+    "reported_content": "Contenu signalé",
+    "report_status": "Signaler l'article",
+    "report_action": "Rapport",
+    "report_reason": "Raison",
+    "report_note": "Note",
+    "report_submit": "Envoyer le rapport",
+    "profile_muted_until": "Le compte est masqué jusqu'au {until}.",
+    "url_blocker_title": "URL bloquées",
+    "url_blocker_label": "Sites Web bloqués",
+    "url_blocker_placeholder": "exemple.com, mauvais.exemple, domaine :ru",
+    "url_blocker_help": "Séparez les sites Web par des virgules ou de nouvelles lignes. Les sous-domaines sont également bloqués. Utilisez domain:ru pour bloquer l'intégralité du suffixe .ru.",
+    "remove_content": "Supprimer le contenu",
+    "keep_and_lock": "Conserver et verrouiller",
+    "empty_content": "Contenu vide",
+    "report_reasons": {
+      "spam": "Courrier indésirable",
+      "illegal": "Contenu illégal",
+      "malware": "Logiciel malveillant ou phishing",
+      "abuse": "Abus",
+      "other": "Autre"
+    },
+    "report_statuses": {
+      "open": "Ouvrir",
+      "reviewed": "Révisé",
+      "resolved": "Résolu",
+      "dismissed": "Rejeté"
+    },
+    "messages": {
+      "action_limited": "Ce compte a atteint la limite d'action temporaire.",
+      "action_too_fast": "Veuillez patienter un moment avant la prochaine action.",
+      "account_muted": "Ce compte est temporairement désactivé jusqu'au {until}.",
+      "blocked_url": "Ce lien n'est pas autorisé : {host}.",
+      "duplicate_body": "Ce message ressemble trop à votre message récent.",
+      "report_created": "Le rapport a été déposé.",
+      "report_already_reviewed": "Ce message a déjà été examiné et le rapport n'a pas été rouvert.",
+      "report_own_content": "Vous ne pouvez pas signaler votre propre message.",
+      "reports_unavailable": "Les rapports ne sont pas disponibles.",
+      "report_not_found": "Le rapport n'a pas été trouvé.",
+      "report_reviewed": "Le rapport a été examiné.",
+      "url_blocker_saved": "Les URL bloquées ont été enregistrées."
+    },
+    "report_count": {
+      "one": "{count} signalement",
+      "few": "{count} signalements",
+      "many": "{count} signalements",
+      "other": "{count} signalements"
+    }
+  }
+}

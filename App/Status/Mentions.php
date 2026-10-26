@@ -56,6 +56,7 @@ final class Mentions
     public static function status_author_url_mention(string $url): string
     {
         $path = \TinyCat\Status\Links::status_internal_url_path($url);
+        $path = \TinyCat\Site\LocaleRouting::split($path)['path'];
 
         if ($path === '' || preg_match('~^/author/([0-9]+)/?$~', $path, $match) !== 1) {
             return '';
@@ -68,7 +69,7 @@ final class Mentions
 
     public static function normalize_author_urls_for_storage(string $text): string
     {
-        $pattern = '~(?<![\p{L}\p{N}_])((?:https?://|www\.)[^\s<>"\']+|/author/[0-9]+[^\s<>"\']*)~iu';
+        $pattern = '~(?<![\p{L}\p{N}_])((?:https?://|www\.)[^\s<>"\']+|/(?:[a-z]{2}/)?author/[0-9]+[^\s<>"\']*)~iu';
 
         return (string) preg_replace_callback($pattern, static function (array $match): string {
             $raw = (string) $match[1];

@@ -98,7 +98,7 @@ final class TranslationSources
             $members = get_object_vars($object);
             if ($members === []) { throw new RuntimeException($file . ': empty namespace ' . $prefix); }
             $forms = ['one', 'few', 'many', 'other'];
-            if (count(array_intersect(array_keys($members), $forms)) >= 2 && array_diff(array_keys($members), $forms) === [] && count($members) !== 4) {
+            if (count(array_intersect(array_keys($members), $forms)) >= 2 && array_diff(array_keys($members), [...$forms, 'single']) === [] && array_diff($forms, array_keys($members)) !== []) {
                 throw new RuntimeException($file . ': incomplete plural forms at ' . $prefix);
             }
             foreach ($members as $name => $value) {

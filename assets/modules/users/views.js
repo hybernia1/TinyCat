@@ -32,6 +32,7 @@ import "../../ui/toasts.js";
       addSubmit(form); content.appendChild(form);
     }
     var form = U.form("/api/users/" + user.id, "PATCH");
+    form.dataset.originalLocale = user.locale || "";
     var grid = e("div", { "class": "profile-modal-grid" });
     var languages = {};
     Object.keys(data.options.languages).forEach(function (key) { var value = data.options.languages[key]; languages[key] = typeof value === "object" ? (value.name || value.label || key) : value; });
@@ -164,8 +165,12 @@ import "../../ui/toasts.js";
         }
         var modal = source.closest(".modal");
         if (modal) { T.dialog.close(modal); }
-        if (Number(document.body.dataset.currentUserId) === Number(data.user.id) && data.user.locale && data.user.locale !== T.i18n.locale()) {
-          window.setTimeout(function () { window.location.reload(); }, 0);
+        var localeChanged = source.dataset.originalLocale !== undefined && data.user.locale !== source.dataset.originalLocale;
+        if (Number(document.body.dataset.currentUserId) === Number(data.user.id) && data.user.locale && data.user.locale !== T.i18n.locale() && (!T.urls.prefix() || localeChanged)) {
+          window.setTimeout(function () {
+            if (T.urls.prefix()) { window.location.assign(T.urls.local(window.location.pathname + window.location.search, data.user.locale)); }
+            else { window.location.reload(); }
+          }, 0);
         }
       }
       return true;

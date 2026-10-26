@@ -1,0 +1,54 @@
+{
+  "moderation": {
+    "title": "Модерація",
+    "reports_title": "Скарги",
+    "reports_empty": "Звітів немає.",
+    "reported_content": "Вміст скарги",
+    "report_status": "Поскаржитися на допис",
+    "report_action": "Скарга",
+    "report_reason": "Причина",
+    "report_note": "Примітка",
+    "report_submit": "Надіслати звіт",
+    "profile_muted_until": "Обліковий запис вимкнено до {until}.",
+    "url_blocker_title": "Заблоковані URL-адреси",
+    "url_blocker_label": "Заблоковані веб-сайти",
+    "url_blocker_placeholder": "example.com, bad.example, domain:ru",
+    "url_blocker_help": "Розділяйте веб-сайти комами або новими рядками. Також блокуються субдомени. Використовуйте домен:ru, щоб заблокувати весь суфікс .ru.",
+    "remove_content": "Видалити вміст",
+    "keep_and_lock": "Зберігати та блокувати",
+    "empty_content": "Порожній вміст",
+    "report_reasons": {
+      "spam": "Спам",
+      "illegal": "Незаконний вміст",
+      "malware": "Зловмисне програмне забезпечення або фішинг",
+      "abuse": "Зловживання",
+      "other": "Інше"
+    },
+    "report_statuses": {
+      "open": "Відкрито",
+      "reviewed": "Перевірено",
+      "resolved": "Вирішено",
+      "dismissed": "Відхилено"
+    },
+    "messages": {
+      "action_limited": "Цей обліковий запис досяг обмеження тимчасових дій.",
+      "action_too_fast": "Будь ласка, зачекайте трохи перед наступною дією.",
+      "account_muted": "Цей обліковий запис тимчасово вимкнено до {until}.",
+      "blocked_url": "Це посилання заборонено: {host}.",
+      "duplicate_body": "Ця публікація надто схожа на вашу недавню публікацію.",
+      "report_created": "Звіт подано.",
+      "report_already_reviewed": "Цю публікацію вже переглянуто, і звіт не відкривався повторно.",
+      "report_own_content": "Ви не можете повідомити про власну публікацію.",
+      "reports_unavailable": "Звіти недоступні.",
+      "report_not_found": "Скаргу не знайдено.",
+      "report_reviewed": "Звіт розглянуто.",
+      "url_blocker_saved": "Заблоковані URL-адреси збережено."
+    },
+    "report_count": {
+      "one": "{count} скарга",
+      "few": "{count} скарги",
+      "many": "{count} скарг",
+      "other": "{count} скарги"
+    }
+  }
+}

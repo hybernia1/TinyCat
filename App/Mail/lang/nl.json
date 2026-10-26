@@ -1,0 +1,45 @@
+{
+  "signature": "Met vriendelijke groet,\n{site}",
+  "templates": {
+    "welcome": {
+      "subject": "Welkom bij {site}",
+      "body": "Hallo {username},\n\nWelkom bij {site}. Uw account is klaar.\n\nInloggen: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Reset uw {site} wachtwoord",
+      "body": "Hallo {username},\n\nWij hebben een verzoek ontvangen om uw wachtwoord opnieuw in te stellen.\n\nReset uw wachtwoord: {reset_url}\n\nDeze link verloopt over 60 minuten. Als u dit niet heeft aangevraagd, kunt u deze e-mail negeren.\n\n{signature}"
+    },
+    "notification_content_like": {
+      "subject": "{actor} vond je bericht leuk",
+      "body": "{actor} vond je bericht leuk.\n\nBekijk het bericht: {content_url}\n\n{signature}"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} heeft gereageerd op je bericht",
+      "body": "{actor} heeft gereageerd op je bericht.\n\nBekijk het gesprek: {content_url}\n\n{signature}"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} vond je reactie leuk",
+      "body": "{actor} vond je reactie leuk.\n\nBekijk het gesprek: {content_url}\n\n{signature}"
+    },
+    "notification_follow": {
+      "subject": "{actor} heeft je gevolgd",
+      "body": "{actor} heeft je gevolgd.\n\nBekijk hun profiel: {actor_url}\n\n{signature}"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} heeft je genoemd",
+      "body": "{actor} heeft je genoemd in een bericht.\n\nBekijk het bericht: {content_url}\n\n{signature}"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} heeft je genoemd",
+      "body": "{actor} heeft je genoemd in een reactie.\n\nBekijk het gesprek: {content_url}\n\n{signature}"
+    },
+    "notification_report_resolved": {
+      "subject": "Uw melding is opgelost",
+      "body": "Uw melding is opgelost door het moderatieteam.\n\nBekijk de gerapporteerde inhoud: {content_url}\n\n{signature}"
+    },
+    "notification_report_dismissed": {
+      "subject": "Uw rapport is afgewezen",
+      "body": "Uw melding is beoordeeld en afgewezen door het moderatieteam.\n\nBekijk de gerapporteerde inhoud: {content_url}\n\n{signature}"
+    }
+  }
+}

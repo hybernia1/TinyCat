@@ -307,6 +307,9 @@ final class Pages
 
         $authPasswordMaxLength = Login::auth_password_max_length();
         $field = Captcha::field('recovery');
+        $pageUrls = [];
+        foreach (['/recovery', '/login', '/privacy'] as $pagePath) { $pageUrls[$pagePath] = \TinyCat\Support\LocalUrls::resolve($pagePath); }
+        $pageUrls['/privacy'] = \TinyCat\Site\LocaleRouting::url('/privacy', Localization::locale());
         Layout::render([
             'title' => Localization::t('auth.recovery_title'),
             'current' => '/recovery',
@@ -317,6 +320,6 @@ final class Pages
                 'image' => Presentation::site_meta_image_url(),
                 'robots' => 'noindex,nofollow',
             ],
-        ], View::render('recovery', compact('recoveryToken', 'authPasswordMaxLength', 'field'), __DIR__ . '/templates'));
+        ], View::render('recovery', compact('pageUrls', 'recoveryToken', 'authPasswordMaxLength', 'field'), __DIR__ . '/templates'));
     }
 }

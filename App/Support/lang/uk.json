@@ -1,0 +1,174 @@
+{
+  "common": {
+    "refresh": "Оновити",
+    "save": "Зберегти",
+    "create": "Створити",
+    "delete": "Видалити",
+    "cancel": "Скасування",
+    "continue": "Продовжити",
+    "confirm": "Підтвердити",
+    "confirm_action": "Підтвердити дію",
+    "back": "Назад",
+    "previous": "Назад",
+    "next": "Далі",
+    "finish": "Завершити",
+    "open": "Відкрити",
+    "video": "Відео",
+    "menu": "Меню",
+    "close": "Закрити",
+    "skip_to_content": "Перейти до основного вмісту",
+    "main_navigation": "Головна навігація",
+    "site_logo_alt": "Логотип {site}",
+    "request_failed": "Не вдалося виконати запит.",
+    "edit": "Редагувати",
+    "login": "Увійти",
+    "logout": "Вийти",
+    "register": "Реєстрація",
+    "admin": "Адмін",
+    "dashboard": "Панель керування",
+    "home": "Головна",
+    "language": "Мова",
+    "database": "База даних",
+    "tables": "Таблиці",
+    "account": "Обліковий запис",
+    "done": "Готово",
+    "username": "Ім'я користувача",
+    "email": "Електронна пошта",
+    "password": "Пароль",
+    "new_password": "Новий пароль",
+    "current_password": "Поточний пароль",
+    "password_confirm": "Підтвердьте пароль",
+    "role": "Роль",
+    "status": "Статус",
+    "note": "Примітка",
+    "created": "Створено",
+    "updated": "Оновлено",
+    "route": "Маршрут",
+    "file": "Файл",
+    "image": "Зображення",
+    "table": "Таблиця",
+    "clean_api": "API даних",
+    "ui_api": "UI API",
+    "ui": "Інтерфейс",
+    "actions": "Дії",
+    "search": "Пошук",
+    "filters": "Фільтри",
+    "apply_filters": "Застосувати фільтри",
+    "clear_filters": "Очистити",
+    "pagination": "Пагінація",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "На сторінку",
+    "all": "Усі",
+    "updated_from": "Оновлено з",
+    "updated_to": "Оновлено до",
+    "created_from": "Створено з",
+    "created_to": "Створено для",
+    "unsaved_title": "Незбережені зміни",
+    "unsaved_message": "Форма містить незбережені зміни. Все одно піти?",
+    "leave": "Залиште",
+    "stay": "Залишайтеся",
+    "validation_failed": "Будь ласка, перевірте подані значення.",
+    "not_found": "Не знайдено.",
+    "validation_required": "Поле {field} є обов’язковим.",
+    "validation_invalid": "Поле {field} має недійсне значення."
+  },
+  "relative": {
+    "now": "зараз",
+    "past": {
+      "minute": {
+        "one": "{count} хвилину тому",
+        "few": "{count} хвилини тому",
+        "many": "{count} хвилин тому",
+        "other": "{count} хвилини тому",
+        "single": "хвилину тому"
+      },
+      "hour": {
+        "one": "{count} годину тому",
+        "few": "{count} години тому",
+        "many": "{count} годин тому",
+        "other": "{count} години тому",
+        "single": "годину тому"
+      },
+      "day": {
+        "one": "{count} день тому",
+        "few": "{count} дні тому",
+        "many": "{count} днів тому",
+        "other": "{count} дня тому",
+        "single": "вчора"
+      },
+      "week": {
+        "one": "{count} тиждень тому",
+        "few": "{count} тижні тому",
+        "many": "{count} тижнів тому",
+        "other": "{count} тижня тому",
+        "single": "тиждень тому"
+      },
+      "month": {
+        "one": "{count} місяць тому",
+        "few": "{count} місяці тому",
+        "many": "{count} місяців тому",
+        "other": "{count} місяця тому",
+        "single": "місяць тому"
+      },
+      "year": {
+        "one": "{count} рік тому",
+        "few": "{count} роки тому",
+        "many": "{count} років тому",
+        "other": "{count} року тому",
+        "single": "рік тому"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "через {count} хвилину",
+        "few": "через {count} хвилини",
+        "many": "через {count} хвилин",
+        "other": "через {count} хвилини",
+        "single": "за хвилину"
+      },
+      "hour": {
+        "one": "через {count} годину",
+        "few": "через {count} години",
+        "many": "через {count} годин",
+        "other": "через {count} години",
+        "single": "через годину"
+      },
+      "day": {
+        "one": "через {count} день",
+        "few": "через {count} дні",
+        "many": "через {count} днів",
+        "other": "через {count} дня",
+        "single": "завтра"
+      },
+      "week": {
+        "one": "через {count} тиждень",
+        "few": "через {count} тижні",
+        "many": "через {count} тижнів",
+        "other": "через {count} тижня",
+        "single": "через тиждень"
+      },
+      "month": {
+        "one": "через {count} місяць",
+        "few": "через {count} місяці",
+        "many": "через {count} місяців",
+        "other": "через {count} місяця",
+        "single": "через місяць"
+      },
+      "year": {
+        "one": "через {count} рік",
+        "few": "через {count} роки",
+        "many": "через {count} років",
+        "other": "через {count} року",
+        "single": "через рік"
+      }
+    }
+  },
+  "action": {
+    "save": "Зберегти",
+    "cancel": "Скасування",
+    "delete": "Видалити"
+  },
+  "message": {
+    "welcome": "Ласкаво просимо до {app}."
+  }
+}

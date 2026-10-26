@@ -51,6 +51,7 @@ final class Pages
         $authModalId = Login::auth_modal_id();
         $authModalUrl = Login::auth_modal_url();
         $publicSidebar = Presentation::public_sidebar();
+        $pageUrls = ['/search' => \TinyCat\Support\LocalUrls::resolve('/search'), '/login' => \TinyCat\Support\LocalUrls::resolve('/login')];
         Layout::render([
             'title' => $hasQuery ? Localization::t('public.search_title_query', ['query' => $query]) : Localization::t('public.search_title'),
             'current' => '/search',
@@ -63,7 +64,7 @@ final class Pages
                 'robots' => 'noindex,follow',
             ],
             'search_query' => $query,
-        ], View::render('search', compact('query', 'hasQuery', 'searchBlocked', 'statusItems', 'current', 'authUser', 'field', 'authModalId', 'authModalUrl', 'publicSidebar'), __DIR__ . '/templates'));
+        ], View::render('search', compact('pageUrls', 'query', 'hasQuery', 'searchBlocked', 'statusItems', 'current', 'authUser', 'field', 'authModalId', 'authModalUrl', 'publicSidebar'), __DIR__ . '/templates'));
     }
     /** @param array<mixed> $results
      * @return array<mixed>

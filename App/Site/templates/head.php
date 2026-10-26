@@ -31,13 +31,16 @@ declare(strict_types=1);
 /** @var string $siteFaviconUrl */
 /** @var array<mixed> $siteIdentity */
 /** @var list<string> $styleUrls */
+/** @var list<array{language: string, url: string}> $languageAlternatives */
+/** @var string $interfacePrefix */
+/** @var string $interfaceLocales */
 /** @var string $theme */
 /** @var string $themeAttribute */
 /** @var string $dateFormat */
 /** @var bool $dateRelative */
 ?>
 <!doctype html>
-<html lang="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Localization::locale()) ?>"<?= $themeAttribute ?> data-date-format="<?= \TinyCat\Support\Html::e($dateFormat) ?>" data-date-relative="<?= $dateRelative ? 'true' : 'false' ?>">
+<html lang="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Localization::locale()) ?>"<?= $themeAttribute ?> data-interface-prefix="<?= \TinyCat\Support\Html::e($interfacePrefix) ?>" data-interface-locales="<?= \TinyCat\Support\Html::e($interfaceLocales) ?>" data-date-format="<?= \TinyCat\Support\Html::e($dateFormat) ?>" data-date-relative="<?= $dateRelative ? 'true' : 'false' ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -62,6 +65,9 @@ declare(strict_types=1);
         <meta name="robots" content="<?= \TinyCat\Support\Html::e($metaRobots) ?>">
     <?php endif; ?>
     <link rel="canonical" href="<?= \TinyCat\Support\Html::e($metaUrl) ?>">
+    <?php foreach ($languageAlternatives as $alternative): ?>
+        <link rel="alternate" hreflang="<?= \TinyCat\Support\Html::e($alternative['language']) ?>" href="<?= \TinyCat\Support\Html::e($alternative['url']) ?>">
+    <?php endforeach; ?>
     <link rel="privacy-policy" href="<?= \TinyCat\Support\Html::e($privacyUrl) ?>">
     <?php if ($metaRss !== ''): ?>
         <link rel="alternate" type="application/rss+xml" title="<?= \TinyCat\Support\Html::e($pageTitle) ?>" href="<?= \TinyCat\Support\Html::e($metaRssUrl) ?>">

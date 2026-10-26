@@ -60,8 +60,8 @@ final class Pages
                 'type' => 'website',
                 'jsonld' => [
                     '@context' => 'https://schema.org', '@type' => 'WebPage',
-                    '@id' => Presentation::absolute_url('/privacy') . '#webpage',
-                    'url' => Presentation::absolute_url('/privacy'),
+                    '@id' => Presentation::absolute_url(LocaleRouting::url('/privacy')) . '#webpage',
+                    'url' => Presentation::absolute_url(LocaleRouting::url('/privacy')),
                     'name' => Localization::t('privacy.title'),
                     'description' => Localization::t('privacy.meta', ['site' => $siteName]),
                     'inLanguage' => Localization::locale(),

@@ -1,0 +1,25 @@
+{
+  "public": {
+    "search_title": "Buscar",
+    "search_title_query": "Buscar \"{query}\"",
+    "search_meta": "Busque publicaciones, perfiles y etiquetas.",
+    "search_meta_query": "Resultados de la búsqueda para {query}.",
+    "search_placeholder": "Buscar publicaciones o perfiles",
+    "search_suggest_placeholder": "Buscar",
+    "search_all": "Buscar todo",
+    "search_tags": "Etiquetas",
+    "search_users": "Perfiles",
+    "search_content": "Publicaciones",
+    "search_empty": "No se encontró nada.",
+    "search_min": "Escriba al menos 2 caracteres.",
+    "search_captcha_title": "control de seguridad",
+    "search_captcha_required": "Complete la verificación de seguridad para continuar la búsqueda.",
+    "search_captcha_unlocked": "La búsqueda fue desbloqueada.",
+    "search_tag_posts": {
+      "one": "{count} publicación",
+      "few": "{count} publicaciones",
+      "many": "{count} publicaciones",
+      "other": "{count} publicaciones"
+    }
+  }
+}

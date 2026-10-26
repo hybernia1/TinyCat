@@ -252,7 +252,10 @@ final class Dates
         };
         $direction = $seconds < 0 ? 'past' : 'future';
 
-        return \TinyCat\Support\Localization::plural('relative.' . $direction . '.' . $unit, $count);
+        $key = 'relative.' . $direction . '.' . $unit;
+        return $count === 1
+            ? \TinyCat\Support\Localization::t($key . '.single')
+            : \TinyCat\Support\Localization::plural($key, $count);
     }
 
     public static function relative_datetime_value(mixed $value = null): DateTimeImmutable

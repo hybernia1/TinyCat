@@ -1,0 +1,25 @@
+{
+  "public": {
+    "search_title": "Szukaj",
+    "search_title_query": "Szukaj „{query}”",
+    "search_meta": "Przeszukuj posty, profile i tagi.",
+    "search_meta_query": "Wyniki wyszukiwania dla {query}.",
+    "search_placeholder": "Przeszukuj posty lub profile",
+    "search_suggest_placeholder": "Szukaj",
+    "search_all": "Szukaj wszędzie",
+    "search_tags": "Tagi",
+    "search_users": "Profile",
+    "search_content": "Wpisy",
+    "search_empty": "Nic nie znaleziono.",
+    "search_min": "Wpisz co najmniej 2 znaki.",
+    "search_captcha_title": "Kontrola bezpieczeństwa",
+    "search_captcha_required": "Aby kontynuować wyszukiwanie, przeprowadź kontrolę bezpieczeństwa.",
+    "search_captcha_unlocked": "Wyszukiwanie zostało odblokowane.",
+    "search_tag_posts": {
+      "one": "{count} wpis",
+      "few": "{count} wpisy",
+      "many": "{count} wpisów",
+      "other": "{count} wpisu"
+    }
+  }
+}

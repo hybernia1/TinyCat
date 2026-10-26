@@ -67,7 +67,7 @@ final class Router
                 continue;
             }
 
-            if (!in_array($method, $route['methods'], true)) {
+            if (!in_array($method, $route['methods'], true) && !($method === 'HEAD' && in_array('GET', $route['methods'], true))) {
                 $allowed = array_merge($allowed, $route['methods']);
                 continue;
             }

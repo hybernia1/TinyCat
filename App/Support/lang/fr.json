@@ -1,0 +1,174 @@
+{
+  "common": {
+    "refresh": "Rafraîchir",
+    "save": "Enregistrer",
+    "create": "Créer",
+    "delete": "Supprimer",
+    "cancel": "Annuler",
+    "continue": "Continuer",
+    "confirm": "Confirmer",
+    "confirm_action": "Confirmer l'action",
+    "back": "Retour",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "finish": "Terminer",
+    "open": "Ouvrir",
+    "video": "Vidéo",
+    "menu": "Menu",
+    "close": "Fermer",
+    "skip_to_content": "Passer au contenu principal",
+    "main_navigation": "Navigation principale",
+    "site_logo_alt": "Logo {site}",
+    "request_failed": "La demande n'a pas pu être complétée.",
+    "edit": "Modifier",
+    "login": "Se connecter",
+    "logout": "Se déconnecter",
+    "register": "S’inscrire",
+    "admin": "Administrateur",
+    "dashboard": "Tableau de bord",
+    "home": "Accueil",
+    "language": "Langue",
+    "database": "Base de données",
+    "tables": "Tableaux",
+    "account": "Compte",
+    "done": "Fait",
+    "username": "Nom d'utilisateur",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "new_password": "Nouveau mot de passe",
+    "current_password": "Mot de passe actuel",
+    "password_confirm": "Confirmez le mot de passe",
+    "role": "Rôle",
+    "status": "Statut",
+    "note": "Note",
+    "created": "Créé",
+    "updated": "Mis à jour",
+    "route": "Itinéraire",
+    "file": "Fichier",
+    "image": "Image",
+    "table": "Tableau",
+    "clean_api": "API de données",
+    "ui_api": "API d’interface",
+    "ui": "Interface utilisateur",
+    "actions": "Actions",
+    "search": "Recherche",
+    "filters": "Filtres",
+    "apply_filters": "Appliquer des filtres",
+    "clear_filters": "Effacer",
+    "pagination": "Pagination",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "Par page",
+    "all": "Tous",
+    "updated_from": "Mis à jour à partir du",
+    "updated_to": "Mis à jour jusqu’au",
+    "created_from": "Créé à partir du",
+    "created_to": "Créé jusqu’au",
+    "unsaved_title": "Modifications non enregistrées",
+    "unsaved_message": "Le formulaire contient des modifications non enregistrées. Partir quand même ?",
+    "leave": "Partir",
+    "stay": "Rester",
+    "validation_failed": "Veuillez vérifier les valeurs soumises.",
+    "not_found": "Pas trouvé.",
+    "validation_required": "Le champ {field} est obligatoire.",
+    "validation_invalid": "Le champ {field} a une valeur non valide."
+  },
+  "relative": {
+    "now": "maintenant",
+    "past": {
+      "minute": {
+        "one": "il y a {count} minute",
+        "few": "il y a {count} minutes",
+        "many": "il y a {count} minutes",
+        "other": "il y a {count} minutes",
+        "single": "il y a une minute"
+      },
+      "hour": {
+        "one": "il y a {count} heure",
+        "few": "il y a {count} heures",
+        "many": "il y a {count} heures",
+        "other": "il y a {count} heures",
+        "single": "il y a une heure"
+      },
+      "day": {
+        "one": "il y a {count} jour",
+        "few": "il y a {count} jours",
+        "many": "il y a {count} jours",
+        "other": "il y a {count} jours",
+        "single": "hier"
+      },
+      "week": {
+        "one": "il y a {count} semaine",
+        "few": "il y a {count} semaines",
+        "many": "il y a {count} semaines",
+        "other": "il y a {count} semaines",
+        "single": "il y a une semaine"
+      },
+      "month": {
+        "one": "il y a {count} mois",
+        "few": "il y a {count} mois",
+        "many": "il y a {count} mois",
+        "other": "il y a {count} mois",
+        "single": "il y a un mois"
+      },
+      "year": {
+        "one": "il y a {count} an",
+        "few": "il y a {count} ans",
+        "many": "il y a {count} ans",
+        "other": "il y a {count} ans",
+        "single": "il y a un an"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "dans {count} minute",
+        "few": "dans {count} minutes",
+        "many": "dans {count} minutes",
+        "other": "dans {count} minutes",
+        "single": "dans une minute"
+      },
+      "hour": {
+        "one": "dans {count} heure",
+        "few": "dans {count} heures",
+        "many": "dans {count} heures",
+        "other": "dans {count} heures",
+        "single": "dans une heure"
+      },
+      "day": {
+        "one": "dans {count} jour",
+        "few": "dans {count} jours",
+        "many": "dans {count} jours",
+        "other": "dans {count} jours",
+        "single": "demain"
+      },
+      "week": {
+        "one": "dans {count} semaine",
+        "few": "dans {count} semaines",
+        "many": "dans {count} semaines",
+        "other": "dans {count} semaines",
+        "single": "dans une semaine"
+      },
+      "month": {
+        "one": "dans {count} mois",
+        "few": "dans {count} mois",
+        "many": "dans {count} mois",
+        "other": "dans {count} mois",
+        "single": "dans un mois"
+      },
+      "year": {
+        "one": "dans {count} an",
+        "few": "dans {count} ans",
+        "many": "dans {count} ans",
+        "other": "dans {count} ans",
+        "single": "dans un an"
+      }
+    }
+  },
+  "action": {
+    "save": "Sauvegarder",
+    "cancel": "Annuler",
+    "delete": "Supprimer"
+  },
+  "message": {
+    "welcome": "Bienvenue sur {app}."
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "signature": "Beste Grüße,\n{site}",
+  "templates": {
+    "welcome": {
+      "subject": "Willkommen bei {site}",
+      "body": "Hallo {username},\n\nWillkommen bei {site}. Ihr Konto ist fertig.\n\nAnmelden: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Setzen Sie Ihr {site}-Passwort zurück",
+      "body": "Hallo {username},\n\nWir haben eine Anfrage zum Zurücksetzen Ihres Passworts erhalten.\n\nSetzen Sie Ihr Passwort zurück: {reset_url}\n\nDieser Link läuft in 60 Minuten ab. Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren.\n\n{signature}"
+    },
+    "notification_content_like": {
+      "subject": "{actor} mochte deinen Beitrag",
+      "body": "{actor} mochte deinen Beitrag.\n\nDen Beitrag ansehen: {content_url}\n\n{signature}"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} hat Ihren Beitrag kommentiert",
+      "body": "{actor} hat Ihren Beitrag kommentiert.\n\nSehen Sie sich die Konversation an: {content_url}\n\n{signature}"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} mochte Ihren Kommentar",
+      "body": "{actor} mochte Ihren Kommentar.\n\nSehen Sie sich die Konversation an: {content_url}\n\n{signature}"
+    },
+    "notification_follow": {
+      "subject": "{actor} ist dir gefolgt",
+      "body": "{actor} ist dir gefolgt.\n\nSehen Sie sich ihr Profil an: {actor_url}\n\n{signature}"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} hat Sie erwähnt",
+      "body": "{actor} hat Sie in einem Beitrag erwähnt.\n\nDen Beitrag ansehen: {content_url}\n\n{signature}"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} hat Sie erwähnt",
+      "body": "{actor} hat Sie in einem Kommentar erwähnt.\n\nSehen Sie sich die Konversation an: {content_url}\n\n{signature}"
+    },
+    "notification_report_resolved": {
+      "subject": "Ihre Meldung wurde gelöst",
+      "body": "Ihr Bericht wurde vom Moderationsteam gelöst.\n\nDen gemeldeten Inhalt anzeigen: {content_url}\n\n{signature}"
+    },
+    "notification_report_dismissed": {
+      "subject": "Ihr Bericht wurde abgewiesen",
+      "body": "Ihr Bericht wurde vom Moderationsteam überprüft und abgelehnt.\n\nDen gemeldeten Inhalt anzeigen: {content_url}\n\n{signature}"
+    }
+  }
+}

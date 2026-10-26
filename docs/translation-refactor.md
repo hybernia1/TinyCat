@@ -24,8 +24,50 @@ compiled delivery, shared formatting and the separation of API data from present
   destination (HTML text, attributes, email, etc.), not the catalog.
 - Count messages use complete `one`, `few`, `many`, `other` objects, with explicit
   `Localization::plural()` / `i18n.plural()` calls or component `plural` expressions.
-  Rules cover shipped Czech and English locales, negative counts and fractions.
+  Rules cover all twelve shipped locales, negative counts and fractions.
   A new language with different plural rules needs a matching rule and parity cases.
+  Relative-time families also contain `single` for exactly one unit (such as
+  yesterday); numeric `one` retains `{count}` because this category can include
+  21, 101 or zero depending on the language.
+
+The shipped locales are `cs`, `en`, `de`, `es`, `fr`, `pt`, `ru`, `it`, `nl`,
+`pl`, `tr` and `uk`. The ten added catalogs start from machine translation with
+reviewed core labels and explicit count/time inflections; native-language editorial
+review is still recommended. No external translation service is called at runtime.
+Generic Portuguese uses Brazilian-style wording; regional browser preferences fall
+back to `pt`, while explicit `pt-PT` plural selection follows European Portuguese.
+
+Public HTML routes support explicit locale prefixes (`/pl/`, `/pl/status/123`,
+`/pl/privacy`, `/pl/login`, etc.). The URL takes precedence over account and browser
+preferences without changing the saved profile language. Bare locale roots redirect
+once to a trailing slash, retaining query parameters. Unknown languages and prefixed
+administration, API, asset and RSS routes return 404. These services retain their
+existing global URLs.
+
+`LocaleRouting` owns the public route policy. Shared renderers and redirects use an
+injected `LocalUrls` resolver; templates receive prepared URLs. AJAX sends
+`X-TinyCat-Locale` for a prefixed interface, and the public-page API also accepts an
+explicit prefixed `path`. Cross-language navigation reloads the document/catalog;
+same-language public navigation retains its existing partial rendering. Anonymous
+visitors get a navbar flag menu with native language names and ordinary links,
+retaining relevant feed/search/form parameters. Signed-in users manage preferences
+in their profile. When an anonymous visitor's preferred supported browser language
+differs from the interface, a banner offers the equivalent page in that language;
+it never redirects automatically. Its text is written in the suggested language,
+and dismissal lasts for that interface/preferred-language pair in sessionStorage.
+Unavailable storage does not prevent dismissal. HTML varies on Accept-Language.
+
+All localized HTML advertises its actual `lang` and `Content-Language`. Genuine
+translated policy pages use self-canonicals, reciprocal `hreflang` (including
+`x-default`) and sitemap entries. The unprefixed policy is a stable default-site-
+language fallback. Feed, profile, tag and post UI variants consolidate under their
+original canonical URLs and structured-data identities because their primary user
+content is unchanged. Shared tag caches store language-neutral URLs.
+
+Optional browser-local post translation targets the selected interface language;
+it is offered only when the browser, language detector and language pair support
+it. It does not create an indexable server translation. See Google's guidance:
+https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites
 
 ## Ownership and delivery target
 
@@ -204,8 +246,8 @@ keys from English through base language to the requested regional locale; empty
 localized strings remain intentional. Client locale changes clear prior catalogs,
 and changing the current account's language reloads its document and hashed assets.
 
-PHP/JavaScript parity cases cover seven count families, both shipped languages and
-a Czech regional locale, as well as date presets, DST offsets and relative-time
+PHP/JavaScript parity cases cover seven count families, all twelve shipped languages
+and six regional locales, as well as date presets, DST offsets and relative-time
 thresholds. Runtime checks exercise compiled catalogs without sources or a database,
 including regional plural fallback. Build checks ignore stale runtime translation
 caches. No new production dependency, inline catalog or additional HTTP request is
@@ -220,6 +262,14 @@ Measured delivery after the refactor (largest locale, minified JS, gzip):
 | Bots administration | 24182 | 4 / 1 |
 | Moderation | 20448 | 4 / 1 |
 | Installer | 8958 | 4 / 1 |
+
+After the twelve-language expansion and explicit locale routing, the largest
+per-scope JS deliveries (raw / gzip bytes) are 286893 / 60703 for public pages,
+132784 / 30841 for users, 117141 / 26784 for bots, 101609 / 24263 for cron,
+88403 / 21857 for moderation, 74751 / 19899 for settings, 70574 / 18771 for the
+dashboard and 32597 / 9966 for installation. Each page still loads one locale catalog, four scripts and one
+stylesheet. The reviewed JS budgets retain approximately 15% headroom rounded up
+to KiB; CSS and request-count budgets are unchanged.
 
 Final verification uses `php tools/preflight.php`, including source validation,
 PHP syntax, PHPStan, repository security, behavior/HTTP/frontend tests, signed

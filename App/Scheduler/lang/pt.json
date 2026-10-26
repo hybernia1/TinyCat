@@ -1,0 +1,81 @@
+{
+  "cron": {
+    "title": "Tarefas agendadas",
+    "intro": "Um pequeno executor expõe tarefas agendadas independentes com autenticação compartilhada.",
+    "access_title": "Acesso e token",
+    "access_help": "Endpoint compartilhado e autenticação usada por cada tarefa agendada.",
+    "url": "Ponto final URL",
+    "token": "Token do portador",
+    "task_url": "Web-cron simples URL",
+    "query_help": "Opção de compatibilidade para serviços sem cabeçalhos personalizados. O token pode ser armazenado em logs de acesso ao servidor.",
+    "http_command": "Comando HTTP",
+    "cli_command": "Comando do servidor",
+    "rotate": "Girar token",
+    "rotate_confirm": "Girar o token cron? As chamadas agendadas existentes deixarão de funcionar até serem atualizadas.",
+    "tasks": {
+      "cleanup": "Limpeza automática",
+      "cleanup_help": "Remove tags e links não utilizados, postagens órfãs e imagens de visualização, caches de dados expirados, buckets de limite de taxa antigos, tokens de redefinição expirados e notificações de leitura.",
+      "cleanup_schedule": "Agende de hora em hora. As devidas verificações internas evitam que a limpeza seja executada com muita frequência.",
+      "feeds": "Fontes RSS e Atom",
+      "feeds_help": "Publica itens de fontes ativas cujo intervalo é devido.",
+      "feeds_schedule": "Agende de acordo com a frequência de votação necessária, normalmente a cada dois minutos."
+    },
+    "messages": {
+      "token_rotated": "O token cron foi girado."
+    },
+    "list_title": "Visão geral da tarefa",
+    "configuration": "Conexão e agendamento",
+    "list_help": "O agendamento é controlado pelo seu servidor ou web-cron. Estes são os intervalos recomendados e os limites padrão. Executar agora ignora o intervalo de limpeza; RSS ainda respeita cada intervalo de origem. O histórico inclui execuções registradas após esta atualização.",
+    "task": "Tarefa",
+    "schedule": "Cronograma e limites padrão",
+    "latest": "Última execução",
+    "run_now": "Corra agora",
+    "history": "Histórico de execução",
+    "status": "Status",
+    "started": "Iniciado",
+    "duration": "Duração",
+    "result": "Resultado",
+    "no_runs": "Nenhuma execução registrada corresponde a esses filtros.",
+    "never": "Nenhuma corrida registrada",
+    "run_finished": "A tarefa terminou.",
+    "run_failed": "A tarefa falhou. Veja seu resultado no histórico de execução.",
+    "already_running": "A tarefa já está em execução.",
+    "unknown_task": "Tarefa desconhecida.",
+    "summary_count": "Processado: {count}",
+    "summary_changed": "Alterado: {count}",
+    "options": {
+      "bot_limit": "Limite de origem",
+      "cleanup_batch": "Lote de limpeza",
+      "source_id": "ID da fonte"
+    },
+    "statuses": {
+      "running": "Correndo",
+      "completed": "Concluído",
+      "failed": "Fracassado",
+      "not_due": "Não devido",
+      "has_more": "Mais trabalhos pendentes",
+      "interrupted": "Interrompido"
+    },
+    "modes": {
+      "cli": "CLI do servidor",
+      "http": "Cron da Web",
+      "admin": "Manual"
+    },
+    "menu_title": "Tarefas",
+    "overview_help": "Intervalos recomendados e limites padrão. O agendamento é gerenciado pelo servidor ou web-cron.",
+    "cadence": {
+      "feeds": "Verifique a cada dois minutos",
+      "cleanup": "Uma vez por hora"
+    },
+    "run_details": "Detalhes da execução",
+    "refresh": "Atualizar",
+    "run_not_found": "Esta execução não foi encontrada.",
+    "finished": "Finalizado",
+    "unfinished": "Não concluído",
+    "trigger": "Iniciado por",
+    "actor": "Iniciado por",
+    "run_id": "ID de execução",
+    "parameters": "Executar parâmetros",
+    "error": "Erro"
+  }
+}

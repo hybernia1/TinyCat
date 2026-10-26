@@ -3,6 +3,20 @@ declare(strict_types=1);
 define('TINYCAT', true);
 require dirname(__DIR__, 2) . '/App/autoload.php';
 $mode = $argv[1] ?? '--all';
+if ($mode === '--localized-urls') {
+    \TinyCat\Site\LocaleRouting::prepare('/pl/');
+    $urls = json_decode((string) ($argv[2] ?? '[]'), true, 512, JSON_THROW_ON_ERROR);
+    echo json_encode(array_map(\TinyCat\Site\LocaleRouting::url(...), $urls), JSON_THROW_ON_ERROR);
+    exit;
+}
+if ($mode === '--catalogs') {
+    $catalogs = [];
+    foreach ([...array_keys(\TinyCat\Support\Languages::language_packages()), 'cs-CZ', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'uk-UA'] as $locale) {
+        $catalogs[$locale] = \TinyCat\Support\Localization::catalog($locale);
+    }
+    echo json_encode($catalogs, JSON_THROW_ON_ERROR);
+    exit;
+}
 if ($mode === '--catalog') {
     echo json_encode(\TinyCat\Support\Localization::catalog((string) ($argv[2] ?? 'en')), JSON_THROW_ON_ERROR);
     exit;

@@ -3,6 +3,8 @@
     "name": "TinyCat"
   },
   "public": {
+    "language_available": "This website is also available in English.",
+    "language_switch": "Switch to English",
     "meta_description": "{site} is a social feed for short posts, profiles, comments, and tags.",
     "home_meta": "Browse the latest posts, profiles, and topics on {site}.",
     "feed_title": "Posts",

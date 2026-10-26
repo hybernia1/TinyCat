@@ -189,6 +189,7 @@ final class Components
         foreach ((array) self::value($node['attrs'] ?? [], $data) as $key => $value) {
             if (preg_match('/^[a-z][a-z0-9:_-]*$/iD', (string) $key) !== 1 || preg_match('/^(on|srcdoc$|style$|innerHTML$)/i', (string) $key) === 1) { throw new InvalidArgumentException('Unsupported component attribute.'); }
             if ($value === null || $value === false) { continue; }
+            if (in_array(strtolower((string) $key), ['href', 'action', 'formaction'], true) && is_string($value)) { $value = LocalUrls::resolve($value); }
             if (in_array(strtolower((string) $key), ['href', 'src', 'action', 'formaction'], true)) {
                 $url = (string) preg_replace('/[\x00-\x20\x7f]+/', '', Values::string($value));
                 if (preg_match('/^([a-z][a-z0-9+.-]*):/i', $url, $scheme) === 1

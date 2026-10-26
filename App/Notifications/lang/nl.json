@@ -1,0 +1,35 @@
+{
+  "notifications": {
+    "title": "-meldingen",
+    "meta": "Overzicht van waarschuwingen voor uw berichten.",
+    "empty": "Er zijn nog geen meldingen.",
+    "mark_read": "Markeren als gelezen",
+    "mark_all_read": "Markeer alles als gelezen",
+    "delete": "Verwijderen",
+    "open": "Openen",
+    "more": "Bekijk meer meldingen",
+    "load_more": "Laad meer",
+    "loading": "Bezig met laden...",
+    "someone": "Iemand",
+    "new_count": {
+      "one": "Je hebt {count} nieuwe melding.",
+      "few": "Je hebt {count} nieuwe meldingen.",
+      "many": "Je hebt {count} nieuwe meldingen.",
+      "other": "Je hebt {count} nieuwe meldingen."
+    },
+    "messages": {
+      "follow": "{actor} heeft je gevolgd.",
+      "content_like": "{actor} vond je bericht leuk.",
+      "comment_like": "{actor} vond je reactie leuk.",
+      "content_comment": "{actor} heeft gereageerd op je bericht.",
+      "content_mention": "{actor} heeft je genoemd in een bericht.",
+      "comment_mention": "{actor} heeft je genoemd in een reactie.",
+      "report_resolved": "Uw melding is opgelost.",
+      "report_dismissed": "Uw rapport is afgewezen.",
+      "generic": "{actor} heeft op je bericht gereageerd.",
+      "read_done": "De melding is gemarkeerd als gelezen.",
+      "read_all_done": "Alle meldingen zijn gemarkeerd als gelezen.",
+      "deleted": "De melding is verwijderd."
+    }
+  }
+}

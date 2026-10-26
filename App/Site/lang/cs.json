@@ -3,6 +3,8 @@
     "name": "TinyCat"
   },
   "public": {
+    "language_available": "Tento web je dostupný také v češtině.",
+    "language_switch": "Přejít na češtinu",
     "meta_description": "{site} je sociální feed pro krátké příspěvky, profily, komentáře a štítky.",
     "home_meta": "Procházej nejnovější příspěvky, profily a témata na {site}.",
     "feed_title": "Příspěvky",

@@ -1,0 +1,54 @@
+{
+  "moderation": {
+    "title": "Moderazione",
+    "reports_title": "Segnalazioni",
+    "reports_empty": "Non ci sono segnalazioni.",
+    "reported_content": "Contenuto segnalato",
+    "report_status": "Segnala il post",
+    "report_action": "Segnalazione",
+    "report_reason": "Motivo",
+    "report_note": "Nota",
+    "report_submit": "Invia rapporto",
+    "profile_muted_until": "L'account è disattivato fino al {until}.",
+    "url_blocker_title": "URL bloccati",
+    "url_blocker_label": "Siti Web bloccati",
+    "url_blocker_placeholder": "esempio.com, bad.esempio, dominio:ru",
+    "url_blocker_help": "Separare i siti Web con virgole o nuove righe. Anche i sottodomini sono bloccati. Utilizza dominio:ru per bloccare l'intero suffisso .ru.",
+    "remove_content": "Rimuovere il contenuto",
+    "keep_and_lock": "Conserva e chiudi",
+    "empty_content": "Contenuto vuoto",
+    "report_reasons": {
+      "spam": "Spam",
+      "illegal": "Contenuto illegale",
+      "malware": "Malware o phishing",
+      "abuse": "Abuso",
+      "other": "Altro"
+    },
+    "report_statuses": {
+      "open": "Aperto",
+      "reviewed": "Esaminato",
+      "resolved": "Risolto",
+      "dismissed": "Respinto"
+    },
+    "messages": {
+      "action_limited": "Questo account ha raggiunto il limite di azioni temporanee.",
+      "action_too_fast": "Attendi un attimo prima dell'azione successiva.",
+      "account_muted": "Questo account è temporaneamente disattivato fino al {until}.",
+      "blocked_url": "Questo collegamento non è consentito: {host}.",
+      "duplicate_body": "Questo post è troppo simile al tuo post recente.",
+      "report_created": "Il rapporto è stato inviato.",
+      "report_already_reviewed": "Questo post è già stato rivisto e il rapporto non è stato riaperto.",
+      "report_own_content": "Non puoi segnalare il tuo post.",
+      "reports_unavailable": "I report non sono disponibili.",
+      "report_not_found": "Segnalazione non trovata.",
+      "report_reviewed": "Il rapporto è stato esaminato.",
+      "url_blocker_saved": "Gli URL bloccati sono stati salvati."
+    },
+    "report_count": {
+      "one": "{count} segnalazione",
+      "few": "{count} segnalazioni",
+      "many": "{count} segnalazioni",
+      "other": "{count} segnalazioni"
+    }
+  }
+}

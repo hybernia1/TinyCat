@@ -1,0 +1,81 @@
+{
+  "cron": {
+    "title": "Tâches planifiées",
+    "intro": "Un petit exécuteur expose des tâches planifiées indépendantes avec une authentification partagée.",
+    "access_title": "Accès et jeton",
+    "access_help": "Point de terminaison partagé et authentification utilisés par chaque tâche planifiée.",
+    "url": "Point de terminaison URL",
+    "token": "Jeton du porteur",
+    "task_url": "Web-cron simple URL",
+    "query_help": "Option de compatibilité pour les services sans en-têtes personnalisés. Le jeton peut être stocké dans les journaux d'accès au serveur.",
+    "http_command": "Commande HTTP",
+    "cli_command": "Commande serveur",
+    "rotate": "Faire pivoter le jeton",
+    "rotate_confirm": "Faire pivoter le jeton cron ? Les appels programmés existants cesseront de fonctionner jusqu'à ce qu'ils soient mis à jour.",
+    "tasks": {
+      "cleanup": "Nettoyage automatique",
+      "cleanup_help": "Supprime les balises et les liens inutilisés, les images de publication et d'aperçu orphelines, les caches de données expirés, les anciens compartiments de limite de débit, les jetons de réinitialisation expirés et les notifications de lecture.",
+      "cleanup_schedule": "Planifiez toutes les heures. Les vérifications internes empêchent le nettoyage de s'exécuter trop souvent.",
+      "feeds": "Sources RSS et Atom",
+      "feeds_help": "Publie les éléments à partir de sources actives dont l'intervalle est dû.",
+      "feeds_schedule": "Planifiez en fonction de la fréquence d'interrogation requise, généralement toutes les deux minutes."
+    },
+    "messages": {
+      "token_rotated": "Le jeton cron a été pivoté."
+    },
+    "list_title": "Aperçu des tâches",
+    "configuration": "Connexion et planification",
+    "list_help": "La planification est contrôlée par votre serveur ou web-cron. Il s'agit des intervalles recommandés et des limites par défaut. Exécuter contourne désormais l'intervalle de nettoyage ; RSS respecte toujours chaque intervalle source. L'historique inclut les exécutions enregistrées après cette mise à jour.",
+    "task": "Tâche",
+    "schedule": "Planification et limites par défaut",
+    "latest": "Dernière course",
+    "run_now": "Courez maintenant",
+    "history": "Historique d'exécution",
+    "status": "Statut",
+    "started": "Commencé",
+    "duration": "Durée",
+    "result": "Résultat",
+    "no_runs": "Aucune exécution enregistrée ne correspond à ces filtres.",
+    "never": "Aucune course enregistrée",
+    "run_finished": "La tâche terminée.",
+    "run_failed": "La tâche a échoué. Voir son résultat dans l'historique des exécutions.",
+    "already_running": "La tâche est déjà en cours d'exécution.",
+    "unknown_task": "Tâche inconnue.",
+    "summary_count": "Traité : {count}",
+    "summary_changed": "Modifié : {count}",
+    "options": {
+      "bot_limit": "Limite de source",
+      "cleanup_batch": "Lot de nettoyage",
+      "source_id": "Identifiant de la source"
+    },
+    "statuses": {
+      "running": "En cours d'exécution",
+      "completed": "Complété",
+      "failed": "Échoué",
+      "not_due": "Pas dû",
+      "has_more": "Plus de travail en attente",
+      "interrupted": "Interrompu"
+    },
+    "modes": {
+      "cli": "CLI du serveur",
+      "http": "Cron Web",
+      "admin": "Manuel"
+    },
+    "menu_title": "Tâches",
+    "overview_help": "Intervalles recommandés et limites par défaut. La planification est gérée par le serveur ou web-cron.",
+    "cadence": {
+      "feeds": "Vérifiez toutes les deux minutes",
+      "cleanup": "Une fois par heure"
+    },
+    "run_details": "Détails de l'exécution",
+    "refresh": "Rafraîchir",
+    "run_not_found": "Cette exécution n'a pas été trouvée.",
+    "finished": "Fini",
+    "unfinished": "Pas fini",
+    "trigger": "Démarré via",
+    "actor": "Commencé par",
+    "run_id": "ID d'exécution",
+    "parameters": "Paramètres d'exécution",
+    "error": "Erreur"
+  }
+}

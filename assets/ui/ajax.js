@@ -49,7 +49,7 @@ import "./toasts.js";
         // canonical page. It is no longer an unsaved draft, so let the
         // global beforeunload guard allow that redirect.
         markFormClean(source);
-        window.location.assign(redirect);
+        window.location.assign(TinyCat.urls.local(redirect));
         return;
       }
 

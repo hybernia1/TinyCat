@@ -1,0 +1,174 @@
+{
+  "common": {
+    "refresh": "Aggiorna",
+    "save": "Salva",
+    "create": "Crea",
+    "delete": "Elimina",
+    "cancel": "Annulla",
+    "continue": "Continua",
+    "confirm": "Conferma",
+    "confirm_action": "Conferma azione",
+    "back": "Indietro",
+    "previous": "Precedente",
+    "next": "Avanti",
+    "finish": "Termina",
+    "open": "Apri",
+    "video": "Video",
+    "menu": "Menu",
+    "close": "Chiudi",
+    "skip_to_content": "Passa al contenuto principale",
+    "main_navigation": "Navigazione principale",
+    "site_logo_alt": "Logo di {site}",
+    "request_failed": "Impossibile completare la richiesta.",
+    "edit": "Modifica",
+    "login": "Accedi",
+    "logout": "Esci",
+    "register": "Registrati",
+    "admin": "Ammin",
+    "dashboard": "Pannello di controllo",
+    "home": "Home",
+    "language": "Lingua",
+    "database": "Database",
+    "tables": "Tabelle",
+    "account": "Account",
+    "done": "Fatto",
+    "username": "Nome utente",
+    "email": "E-mail",
+    "password": "Password",
+    "new_password": "Nuova password",
+    "current_password": "Password attuale",
+    "password_confirm": "Conferma la password",
+    "role": "Ruolo",
+    "status": "Stato",
+    "note": "Nota",
+    "created": "Creato",
+    "updated": "Aggiornato",
+    "route": "Percorso",
+    "file": "File",
+    "image": "Immagine",
+    "table": "Tabella",
+    "clean_api": "API dati",
+    "ui_api": "UI API",
+    "ui": "Interfaccia",
+    "actions": "Azioni",
+    "search": "Cerca",
+    "filters": "Filtri",
+    "apply_filters": "Applica filtri",
+    "clear_filters": "Cancella",
+    "pagination": "Impaginazione",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "Per pagina",
+    "all": "Tutti",
+    "updated_from": "Aggiornato da",
+    "updated_to": "Aggiornato a",
+    "created_from": "Creato da",
+    "created_to": "Creato a",
+    "unsaved_title": "Modifiche non salvate",
+    "unsaved_message": "Il modulo contiene modifiche non salvate. Partire comunque?",
+    "leave": "Lascia",
+    "stay": "Soggiorno",
+    "validation_failed": "Controllare i valori inviati.",
+    "not_found": "Non trovato.",
+    "validation_required": "Il campo {field} è obbligatorio.",
+    "validation_invalid": "Il campo {field} ha un valore non valido."
+  },
+  "relative": {
+    "now": "adesso",
+    "past": {
+      "minute": {
+        "one": "{count} minuto fa",
+        "few": "{count} minuti fa",
+        "many": "{count} minuti fa",
+        "other": "{count} minuti fa",
+        "single": "un minuto fa"
+      },
+      "hour": {
+        "one": "{count} ora fa",
+        "few": "{count} ore fa",
+        "many": "{count} ore fa",
+        "other": "{count} ore fa",
+        "single": "un'ora fa"
+      },
+      "day": {
+        "one": "{count} giorno fa",
+        "few": "{count} giorni fa",
+        "many": "{count} giorni fa",
+        "other": "{count} giorni fa",
+        "single": "ieri"
+      },
+      "week": {
+        "one": "{count} settimana fa",
+        "few": "{count} settimane fa",
+        "many": "{count} settimane fa",
+        "other": "{count} settimane fa",
+        "single": "una settimana fa"
+      },
+      "month": {
+        "one": "{count} mese fa",
+        "few": "{count} mesi fa",
+        "many": "{count} mesi fa",
+        "other": "{count} mesi fa",
+        "single": "un mese fa"
+      },
+      "year": {
+        "one": "{count} anno fa",
+        "few": "{count} anni fa",
+        "many": "{count} anni fa",
+        "other": "{count} anni fa",
+        "single": "un anno fa"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "tra {count} minuto",
+        "few": "tra {count} minuti",
+        "many": "tra {count} minuti",
+        "other": "tra {count} minuti",
+        "single": "in un minuto"
+      },
+      "hour": {
+        "one": "tra {count} ora",
+        "few": "tra {count} ore",
+        "many": "tra {count} ore",
+        "other": "tra {count} ore",
+        "single": "tra un'ora"
+      },
+      "day": {
+        "one": "tra {count} giorno",
+        "few": "tra {count} giorni",
+        "many": "tra {count} giorni",
+        "other": "tra {count} giorni",
+        "single": "domani"
+      },
+      "week": {
+        "one": "tra {count} settimana",
+        "few": "tra {count} settimane",
+        "many": "tra {count} settimane",
+        "other": "tra {count} settimane",
+        "single": "tra una settimana"
+      },
+      "month": {
+        "one": "tra {count} mese",
+        "few": "tra {count} mesi",
+        "many": "tra {count} mesi",
+        "other": "tra {count} mesi",
+        "single": "tra un mese"
+      },
+      "year": {
+        "one": "tra {count} anno",
+        "few": "tra {count} anni",
+        "many": "tra {count} anni",
+        "other": "tra {count} anni",
+        "single": "tra un anno"
+      }
+    }
+  },
+  "action": {
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina"
+  },
+  "message": {
+    "welcome": "Benvenuto in {app}."
+  }
+}

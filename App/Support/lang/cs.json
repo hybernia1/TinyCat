@@ -76,78 +76,90 @@
     "now": "teď",
     "past": {
       "minute": {
-        "one": "před minutou",
+        "one": "před {count} minutou",
         "few": "před {count} minutami",
         "many": "před {count} minutami",
-        "other": "před {count} minutami"
+        "other": "před {count} minutami",
+        "single": "před minutou"
       },
       "hour": {
-        "one": "před hodinou",
+        "one": "před {count} hodinou",
         "few": "před {count} hodinami",
         "many": "před {count} hodinami",
-        "other": "před {count} hodinami"
+        "other": "před {count} hodinami",
+        "single": "před hodinou"
       },
       "day": {
-        "one": "včera",
+        "one": "před {count} dnem",
         "few": "před {count} dny",
         "many": "před {count} dny",
-        "other": "před {count} dny"
+        "other": "před {count} dny",
+        "single": "včera"
       },
       "week": {
-        "one": "před týdnem",
+        "one": "před {count} týdnem",
         "few": "před {count} týdny",
         "many": "před {count} týdny",
-        "other": "před {count} týdny"
+        "other": "před {count} týdny",
+        "single": "před týdnem"
       },
       "month": {
-        "one": "před měsícem",
+        "one": "před {count} měsícem",
         "few": "před {count} měsíci",
         "many": "před {count} měsíci",
-        "other": "před {count} měsíci"
+        "other": "před {count} měsíci",
+        "single": "před měsícem"
       },
       "year": {
-        "one": "před rokem",
+        "one": "před {count} rokem",
         "few": "před {count} lety",
         "many": "před {count} lety",
-        "other": "před {count} lety"
+        "other": "před {count} lety",
+        "single": "před rokem"
       }
     },
     "future": {
       "minute": {
-        "one": "za minutu",
+        "one": "za {count} minutu",
         "few": "za {count} minuty",
         "many": "za {count} minut",
-        "other": "za {count} minut"
+        "other": "za {count} minut",
+        "single": "za minutu"
       },
       "hour": {
-        "one": "za hodinu",
+        "one": "za {count} hodinu",
         "few": "za {count} hodiny",
         "many": "za {count} hodin",
-        "other": "za {count} hodin"
+        "other": "za {count} hodin",
+        "single": "za hodinu"
       },
       "day": {
-        "one": "zítra",
+        "one": "za {count} den",
         "few": "za {count} dny",
         "many": "za {count} dní",
-        "other": "za {count} dní"
+        "other": "za {count} dní",
+        "single": "zítra"
       },
       "week": {
-        "one": "za týden",
+        "one": "za {count} týden",
         "few": "za {count} týdny",
         "many": "za {count} týdnů",
-        "other": "za {count} týdnů"
+        "other": "za {count} týdnů",
+        "single": "za týden"
       },
       "month": {
-        "one": "za měsíc",
+        "one": "za {count} měsíc",
         "few": "za {count} měsíce",
         "many": "za {count} měsíců",
-        "other": "za {count} měsíců"
+        "other": "za {count} měsíců",
+        "single": "za měsíc"
       },
       "year": {
-        "one": "za rok",
+        "one": "za {count} rok",
         "few": "za {count} roky",
         "many": "za {count} let",
-        "other": "za {count} let"
+        "other": "za {count} let",
+        "single": "za rok"
       }
     }
   },

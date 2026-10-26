@@ -1,0 +1,25 @@
+{
+  "public": {
+    "search_title": "Поиск",
+    "search_title_query": "Поиск \"{query}\"",
+    "search_meta": "Поиск сообщений, профилей и тегов.",
+    "search_meta_query": "Результаты поиска для {query}.",
+    "search_placeholder": "Поиск сообщений или профилей",
+    "search_suggest_placeholder": "Поиск",
+    "search_all": "Искать везде",
+    "search_tags": "Теги",
+    "search_users": "Профили",
+    "search_content": "Публикации",
+    "search_empty": "Ничего не найдено.",
+    "search_min": "Введите не менее 2 символов.",
+    "search_captcha_title": "Проверка безопасности",
+    "search_captcha_required": "Пожалуйста, завершите проверку безопасности, чтобы продолжить поиск.",
+    "search_captcha_unlocked": "Поиск был разблокирован.",
+    "search_tag_posts": {
+      "one": "{count} публикация",
+      "few": "{count} публикации",
+      "many": "{count} публикаций",
+      "other": "{count} публикации"
+    }
+  }
+}

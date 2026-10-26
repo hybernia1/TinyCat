@@ -1,0 +1,174 @@
+{
+  "common": {
+    "refresh": "Aktualisieren",
+    "save": "Speichern",
+    "create": "Erstellen",
+    "delete": "Löschen",
+    "cancel": "Abbrechen",
+    "continue": "Weiter",
+    "confirm": "Bestätigen",
+    "confirm_action": "Aktion bestätigen",
+    "back": "Zurück",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "finish": "Beenden",
+    "open": "Öffnen",
+    "video": "Video",
+    "menu": "Menü",
+    "close": "Schließen",
+    "skip_to_content": "Zum Hauptinhalt springen",
+    "main_navigation": "Hauptnavigation",
+    "site_logo_alt": "{site}-Logo",
+    "request_failed": "Die Anfrage konnte nicht abgeschlossen werden.",
+    "edit": "Bearbeiten",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "register": "Registrieren",
+    "admin": "Admin",
+    "dashboard": "Übersicht",
+    "home": "Startseite",
+    "language": "Sprache",
+    "database": "Datenbank",
+    "tables": "Tabellen",
+    "account": "Konto",
+    "done": "Erledigt",
+    "username": "Benutzername",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "new_password": "Neues Passwort",
+    "current_password": "Aktuelles Passwort",
+    "password_confirm": "Passwort bestätigen",
+    "role": "Rolle",
+    "status": "Status",
+    "note": "Notiz",
+    "created": "Erstellt",
+    "updated": "Aktualisiert",
+    "route": "Route",
+    "file": "Datei",
+    "image": "Bild",
+    "table": "Tabelle",
+    "clean_api": "Daten-API",
+    "ui_api": "UI-API",
+    "ui": "Benutzeroberfläche",
+    "actions": "Aktionen",
+    "search": "Suchen",
+    "filters": "Filter",
+    "apply_filters": "Filter anwenden",
+    "clear_filters": "Zurücksetzen",
+    "pagination": "Pagination",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "Pro Seite",
+    "all": "Alle",
+    "updated_from": "Aktualisiert ab",
+    "updated_to": "Aktualisiert bis",
+    "created_from": "Erstellt ab",
+    "created_to": "Erstellt bis",
+    "unsaved_title": "Nicht gespeicherte Änderungen",
+    "unsaved_message": "Das Formular enthält nicht gespeicherte Änderungen. Trotzdem gehen?",
+    "leave": "Verlassen",
+    "stay": "Bleiben",
+    "validation_failed": "Bitte überprüfen Sie die übermittelten Werte.",
+    "not_found": "Nicht gefunden.",
+    "validation_required": "Das Feld {field} ist erforderlich.",
+    "validation_invalid": "Das Feld {field} hat einen ungültigen Wert."
+  },
+  "relative": {
+    "now": "Jetzt",
+    "past": {
+      "minute": {
+        "one": "vor {count} Minute",
+        "few": "vor {count} Minuten",
+        "many": "vor {count} Minuten",
+        "other": "vor {count} Minuten",
+        "single": "vor einer Minute"
+      },
+      "hour": {
+        "one": "vor {count} Stunde",
+        "few": "vor {count} Stunden",
+        "many": "vor {count} Stunden",
+        "other": "vor {count} Stunden",
+        "single": "vor einer Stunde"
+      },
+      "day": {
+        "one": "vor {count} Tag",
+        "few": "vor {count} Tagen",
+        "many": "vor {count} Tagen",
+        "other": "vor {count} Tagen",
+        "single": "gestern"
+      },
+      "week": {
+        "one": "vor {count} Woche",
+        "few": "vor {count} Wochen",
+        "many": "vor {count} Wochen",
+        "other": "vor {count} Wochen",
+        "single": "vor einer Woche"
+      },
+      "month": {
+        "one": "vor {count} Monat",
+        "few": "vor {count} Monaten",
+        "many": "vor {count} Monaten",
+        "other": "vor {count} Monaten",
+        "single": "vor einem Monat"
+      },
+      "year": {
+        "one": "vor {count} Jahr",
+        "few": "vor {count} Jahren",
+        "many": "vor {count} Jahren",
+        "other": "vor {count} Jahren",
+        "single": "vor einem Jahr"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "in {count} Minute",
+        "few": "in {count} Minuten",
+        "many": "in {count} Minuten",
+        "other": "in {count} Minuten",
+        "single": "in einer Minute"
+      },
+      "hour": {
+        "one": "in {count} Stunde",
+        "few": "in {count} Stunden",
+        "many": "in {count} Stunden",
+        "other": "in {count} Stunden",
+        "single": "in einer Stunde"
+      },
+      "day": {
+        "one": "in {count} Tag",
+        "few": "in {count} Tagen",
+        "many": "in {count} Tagen",
+        "other": "in {count} Tagen",
+        "single": "morgen"
+      },
+      "week": {
+        "one": "in {count} Woche",
+        "few": "in {count} Wochen",
+        "many": "in {count} Wochen",
+        "other": "in {count} Wochen",
+        "single": "in einer Woche"
+      },
+      "month": {
+        "one": "in {count} Monat",
+        "few": "in {count} Monaten",
+        "many": "in {count} Monaten",
+        "other": "in {count} Monaten",
+        "single": "in einem Monat"
+      },
+      "year": {
+        "one": "in {count} Jahr",
+        "few": "in {count} Jahren",
+        "many": "in {count} Jahren",
+        "other": "in {count} Jahren",
+        "single": "in einem Jahr"
+      }
+    }
+  },
+  "action": {
+    "save": "Speichern",
+    "cancel": "Stornieren",
+    "delete": "Löschen"
+  },
+  "message": {
+    "welcome": "Willkommen bei {app}."
+  }
+}

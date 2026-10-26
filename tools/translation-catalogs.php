@@ -25,7 +25,7 @@ return static function (string $directory): array {
             foreach (array_diff_key($base, $catalog) as $key => $_) { throw new RuntimeException($file . ': missing key ' . $key); }
             foreach (array_diff_key($catalog, $base) as $key => $_) { throw new RuntimeException($file . ': unknown key ' . $key); }
             foreach ($base as $key => $text) {
-                if ($locale === 'cs' && preg_match('/\p{L}\?\p{L}/u', $catalog[$key])) {
+                if (preg_match('/\p{L}\?\p{L}|\?{2,}|\x{FFFD}/u', $catalog[$key])) {
                     throw new RuntimeException($file . ': suspicious encoding marker at ' . $key);
                 }
                 if (\TinyCat\Support\Localization::parameters($text) !== \TinyCat\Support\Localization::parameters($catalog[$key])) {

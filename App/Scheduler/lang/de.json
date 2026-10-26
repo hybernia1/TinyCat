@@ -1,0 +1,81 @@
+{
+  "cron": {
+    "title": "Geplante Aufgaben",
+    "intro": "Ein kleiner Läufer stellt unabhängige geplante Aufgaben mit gemeinsamer Authentifizierung bereit.",
+    "access_title": "Zugriff und Token",
+    "access_help": "Gemeinsamer Endpunkt und Authentifizierung, die von jeder geplanten Aufgabe verwendet werden.",
+    "url": "Endpunkt URL",
+    "token": "Inhabertoken",
+    "task_url": "Einfacher Web-Cron URL",
+    "query_help": "Kompatibilitätsoption für Dienste ohne benutzerdefinierte Header. Das Token kann in Serverzugriffsprotokollen gespeichert werden.",
+    "http_command": "Befehl HTTP",
+    "cli_command": "Serverbefehl",
+    "rotate": "Token drehen",
+    "rotate_confirm": "Den Cron-Token drehen? Vorhandene geplante Anrufe funktionieren nicht mehr, bis sie aktualisiert werden.",
+    "tasks": {
+      "cleanup": "Automatische Bereinigung",
+      "cleanup_help": "Entfernt nicht verwendete Tags und Links, verwaiste Post- und Vorschaubilder, abgelaufene Datencaches, alte Rate-Limit-Buckets, abgelaufene Reset-Tokens und Lesebenachrichtigungen.",
+      "cleanup_schedule": "Planen Sie stündlich. Interne ordnungsgemäße Prüfungen verhindern, dass die Bereinigung zu oft ausgeführt wird.",
+      "feeds": "RSS und Atom-Quellen",
+      "feeds_help": "Veröffentlicht Elemente aus aktiven Quellen, deren Intervall fällig ist.",
+      "feeds_schedule": "Planen Sie entsprechend der erforderlichen Abfragehäufigkeit, normalerweise alle zwei Minuten."
+    },
+    "messages": {
+      "token_rotated": "Der Cron-Token wurde rotiert."
+    },
+    "list_title": "Aufgabenübersicht",
+    "configuration": "Verbindung und Terminplanung",
+    "list_help": "Die Planung wird von Ihrem Server oder Web-Cron gesteuert. Dies sind die empfohlenen Intervalle und Standardgrenzen. „Jetzt ausführen“ umgeht das Bereinigungsintervall; RSS respektiert weiterhin jedes Quellintervall. Der Verlauf umfasst Läufe, die nach diesem Update aufgezeichnet wurden.",
+    "task": "Aufgabe",
+    "schedule": "Zeitplan und Standardgrenzen",
+    "latest": "Letzter Lauf",
+    "run_now": "Lauf jetzt",
+    "history": "Laufverlauf",
+    "status": "Status",
+    "started": "Begonnen",
+    "duration": "Dauer",
+    "result": "Ergebnis",
+    "no_runs": "Keine aufgezeichneten Läufe entsprechen diesen Filtern.",
+    "never": "Kein aufgezeichneter Lauf",
+    "run_finished": "Die Aufgabe ist erledigt.",
+    "run_failed": "Die Aufgabe ist fehlgeschlagen. Sehen Sie sich das Ergebnis im Laufverlauf an.",
+    "already_running": "Die Aufgabe läuft bereits.",
+    "unknown_task": "Unbekannte Aufgabe.",
+    "summary_count": "Verarbeitet: {count}",
+    "summary_changed": "Geändert: {count}",
+    "options": {
+      "bot_limit": "Quellenlimit",
+      "cleanup_batch": "Bereinigungsstapel",
+      "source_id": "Quell-ID"
+    },
+    "statuses": {
+      "running": "Läuft",
+      "completed": "Vollendet",
+      "failed": "Fehlgeschlagen",
+      "not_due": "Nicht fällig",
+      "has_more": "Weitere Arbeiten stehen an",
+      "interrupted": "Unterbrochen"
+    },
+    "modes": {
+      "cli": "Server-CLI",
+      "http": "Web-Cron",
+      "admin": "Handbuch"
+    },
+    "menu_title": "Aufgaben",
+    "overview_help": "Empfohlene Intervalle und Standardgrenzen. Die Planung wird vom Server oder Web-Cron verwaltet.",
+    "cadence": {
+      "feeds": "Überprüfen Sie alle zwei Minuten",
+      "cleanup": "Einmal pro Stunde"
+    },
+    "run_details": "Ausführungsdetails",
+    "refresh": "Aktualisieren",
+    "run_not_found": "Dieser Lauf wurde nicht gefunden.",
+    "finished": "Fertig",
+    "unfinished": "Nicht fertig",
+    "trigger": "Gestartet über",
+    "actor": "Begonnen von",
+    "run_id": "Lauf-ID",
+    "parameters": "Parameter ausführen",
+    "error": "Fehler"
+  }
+}

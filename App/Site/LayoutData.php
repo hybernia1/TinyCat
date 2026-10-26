@@ -50,7 +50,19 @@ final class LayoutData
         $pageTitle = $title === $appName ? $title : $title . ' | ' . $appName;
         $metaTitle = \TinyCat\Site\Presentation::meta_text((string) ($meta['title'] ?? $pageTitle), 120);
         $metaDescription = \TinyCat\Site\Presentation::meta_text((string) ($meta['description'] ?? \TinyCat\Site\Presentation::site_meta_description()), 180);
-        $metaUrl = \TinyCat\Site\Presentation::absolute_url((string) ($meta['url'] ?? ($_SERVER['REQUEST_URI'] ?? $current)));
+        $metaUrl = \TinyCat\Site\Presentation::absolute_url(LocaleRouting::canonical((string) ($meta['url'] ?? ($_SERVER['REQUEST_URI'] ?? $current))));
+        $languageAlternatives = http_response_code() < 400 ? LocaleRouting::alternatives($current) : [];
+        $languageLinks = LocaleRouting::selector($current, \TinyCat\Http\Request::current()->query());
+        $currentLanguageName = (string) (\TinyCat\Support\Languages::language_packages()[\TinyCat\Support\Localization::locale()] ?? \TinyCat\Support\Localization::locale());
+        $languageFlagSprite = \TinyCat\Support\Assets::asset('icons.svg');
+        $languageFlagId = 'flag-' . \TinyCat\Support\Localization::locale();
+        $languageSuggestion = $authUser === null && http_response_code() < 400
+            ? LocaleRouting::suggestion($languageLinks, (string) ($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? '')) : null;
+        $interfacePrefix = LocaleRouting::active() ?? '';
+        $interfaceLocales = implode(',', array_keys(\TinyCat\Support\Languages::language_packages()));
+        $pageUrls = [];
+        foreach (['/', '/search', '/login', '/logout', '/privacy'] as $pagePath) { $pageUrls[$pagePath] = LocaleRouting::url($pagePath); }
+        if ($current !== '/privacy' || LocaleRouting::active() !== null) { $pageUrls['/privacy'] = LocaleRouting::url('/privacy', \TinyCat\Support\Localization::locale()); }
         $metaImageRaw = trim((string) ($meta['image'] ?? \TinyCat\Site\Presentation::site_meta_image_url()));
         $metaImage = $metaImageRaw !== '' ? \TinyCat\Site\Presentation::absolute_url($metaImageRaw) : '';
         $metaImageType = trim((string) ($meta['image_type'] ?? ''));
@@ -61,13 +73,14 @@ final class LayoutData
         $metaRss = trim((string) ($meta['rss'] ?? ''));
         $metaPrev = trim((string) ($meta['prev'] ?? ''));
         $metaNext = trim((string) ($meta['next'] ?? ''));
-        $privacyUrl = Presentation::absolute_url('/privacy');
+        $privacyUrl = Presentation::absolute_url($pageUrls['/privacy']);
         $metaJsonLd = $meta['jsonld'] ?? null;
+        if (is_array($metaJsonLd)) { $metaJsonLd = LocaleRouting::schema($metaJsonLd); }
         $metaJsonLdJson = is_array($metaJsonLd)
             ? json_encode($metaJsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
             : false;
         $metaRobots = trim((string) ($meta['robots'] ?? ($isAdminShell ? 'noindex,nofollow' : '')));
-        $metaLocale = str_replace('-', '_', \TinyCat\Support\Localization::locale());
+        $metaLocale = ['cs' => 'cs_CZ', 'en' => 'en_US', 'de' => 'de_DE', 'es' => 'es_ES', 'fr' => 'fr_FR', 'pt' => 'pt_BR', 'ru' => 'ru_RU', 'it' => 'it_IT', 'nl' => 'nl_NL', 'pl' => 'pl_PL', 'tr' => 'tr_TR', 'uk' => 'uk_UA'][\TinyCat\Support\Localization::locale()] ?? str_replace('-', '_', \TinyCat\Support\Localization::locale());
         $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
         $theme = \TinyCat\Users\Profiles::user_theme($authUser);
         $themeAttribute = $theme !== 'system' ? ' data-theme="' . \TinyCat\Support\Html::e($theme) . '"' : '';
@@ -92,6 +105,6 @@ final class LayoutData
             $notificationState = \TinyCat\Notifications\Inbox::state($notificationUserId);
             $notificationItems = \TinyCat\Notifications\Inbox::items($notificationUserId, \TinyCat\Notifications\Inbox::PREVIEW_LIMIT);
         }
-        return compact('applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'themeAttribute', 'title', 'viewerIsAdmin');
+        return compact('currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageSuggestion', 'pageUrls', 'languageAlternatives', 'languageLinks', 'interfacePrefix', 'interfaceLocales', 'applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'themeAttribute', 'title', 'viewerIsAdmin');
     }
 }

@@ -15,7 +15,11 @@ try {
 
     \TinyCat\Http\Web::securityHeaders();
 
-    $path = \TinyCat\Http\Request::current()->path();
+    $path = \TinyCat\Site\LocaleRouting::prepare(\TinyCat\Http\Request::current()->path());
+    if (\TinyCat\Site\LocaleRouting::active() !== null && $path === '/' && parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) === '/' . \TinyCat\Site\LocaleRouting::active()
+        && in_array(\TinyCat\Http\Request::current()->method(), ['GET', 'HEAD'], true)) {
+        \TinyCat\Http\Web::redirect(\TinyCat\Site\LocaleRouting::url('/') . (!empty($_SERVER['QUERY_STRING']) ? '?' . (string) $_SERVER['QUERY_STRING'] : ''), 301);
+    }
     $installPath = $path === '/install' || str_starts_with($path, '/install/');
     $siteIdentityPath = \TinyCat\Site\Identity::handles($path);
 
@@ -33,6 +37,8 @@ try {
 
     if (!$installPath && !$siteIdentityPath && !\TinyCat\Site\Discovery::handles($path) && !\TinyCat\Site\Errors::isAsset($path)) {
         \TinyCat\Users\Profiles::app_apply_user_locale();
+        \TinyCat\Site\LocaleRouting::apply();
+        header('Vary: Accept-Language, X-TinyCat-Locale', false);
     }
 
     if (!\TinyCat\Http\Router::dispatch($path)) {
@@ -42,5 +48,8 @@ try {
     while (ob_get_level() > $frontBufferLevel) { ob_end_clean(); }
     \TinyCat\Site\Errors::exception($exception);
 } finally {
-    if (ob_get_level() > $frontBufferLevel) { ob_end_flush(); }
+    if (ob_get_level() > $frontBufferLevel) {
+        if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'HEAD') { ob_end_clean(); }
+        else { ob_end_flush(); }
+    }
 }

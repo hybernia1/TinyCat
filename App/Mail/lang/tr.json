@@ -1,0 +1,45 @@
+{
+  "signature": "Saygılarımızla,\n{site}",
+  "templates": {
+    "welcome": {
+      "subject": "{site}'a hoş geldiniz",
+      "body": "Merhaba {username},\n\n{site}'e hoş geldiniz. Hesabınız hazır.\n\nOturum açın: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "{site} şifrenizi sıfırlayın",
+      "body": "Merhaba {username},\n\nŞifrenizin sıfırlanması yönünde bir talep aldık.\n\nŞifrenizi sıfırlayın: {reset_url}\n\nBu bağlantının süresi 60 dakika içinde dolacaktır. Eğer bunu talep etmediyseniz bu e-postayı yok sayabilirsiniz.\n\n{signature}"
+    },
+    "notification_content_like": {
+      "subject": "{actor} gönderinizi beğendi",
+      "body": "{actor} gönderinizi beğendi.\n\nGönderiyi görüntüle: {content_url}\n\n{signature}"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} gönderinize yorum yaptı",
+      "body": "{actor} gönderinize yorum yaptı.\n\nKonuşmayı görüntüle: {content_url}\n\n{signature}"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} yorumunuzu beğendi",
+      "body": "{actor} yorumunuzu beğendi.\n\nKonuşmayı görüntüle: {content_url}\n\n{signature}"
+    },
+    "notification_follow": {
+      "subject": "{actor} seni takip etti",
+      "body": "{actor} seni takip etti.\n\nProfillerini görüntüle: {actor_url}\n\n{signature}"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} sizden bahsetti",
+      "body": "{actor} bir gönderide sizden bahsetti.\n\nGönderiyi görüntüle: {content_url}\n\n{signature}"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} sizden bahsetti",
+      "body": "{actor} bir yorumda sizden bahsetti.\n\nKonuşmayı görüntüle: {content_url}\n\n{signature}"
+    },
+    "notification_report_resolved": {
+      "subject": "Raporunuz çözüldü",
+      "body": "Raporunuz moderasyon ekibi tarafından çözümlendi.\n\nBildirilen içeriği görüntüleyin: {content_url}\n\n{signature}"
+    },
+    "notification_report_dismissed": {
+      "subject": "Raporunuz reddedildi",
+      "body": "Raporunuz moderasyon ekibi tarafından incelendi ve reddedildi.\n\nBildirilen içeriği görüntüleyin: {content_url}\n\n{signature}"
+    }
+  }
+}

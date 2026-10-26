@@ -1,0 +1,25 @@
+{
+  "public": {
+    "search_title": "Arama",
+    "search_title_query": "Arama \"{query}\"",
+    "search_meta": "Gönderileri, profilleri ve etiketleri arayın.",
+    "search_meta_query": "{query} için arama sonuçları.",
+    "search_placeholder": "Gönderileri veya profilleri arayın",
+    "search_suggest_placeholder": "Arama",
+    "search_all": "Tümünü ara",
+    "search_tags": "Etiketler",
+    "search_users": "Profilleri",
+    "search_content": "Gönderiler",
+    "search_empty": "Hiçbir şey bulunamadı.",
+    "search_min": "En az 2 karakter yazın.",
+    "search_captcha_title": "Güvenlik kontrolü",
+    "search_captcha_required": "Aramaya devam etmek için lütfen güvenlik kontrolünü tamamlayın.",
+    "search_captcha_unlocked": "Aramanın kilidi açıldı.",
+    "search_tag_posts": {
+      "one": "{count} gönderi",
+      "few": "{count} gönderi",
+      "many": "{count} gönderi",
+      "other": "{count} gönderi"
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "moderation": {
+    "title": "Moderación",
+    "reports_title": "Informes",
+    "reports_empty": "No hay informes.",
+    "reported_content": "Contenido reportado",
+    "report_status": "Reportar publicación",
+    "report_action": "Informe",
+    "report_reason": "Razón",
+    "report_note": "Nota",
+    "report_submit": "Enviar informe",
+    "profile_muted_until": "La cuenta está silenciada hasta {until}.",
+    "url_blocker_title": "URL bloqueadas",
+    "url_blocker_label": "Sitios web bloqueados",
+    "url_blocker_placeholder": "ejemplo.com, mal.ejemplo, dominio:ru",
+    "url_blocker_help": "Separe los sitios web con comas o líneas nuevas. Los subdominios también están bloqueados. Utilice dominio:ru para bloquear todo el sufijo .ru.",
+    "remove_content": "Eliminar contenido",
+    "keep_and_lock": "Mantener y bloquear",
+    "empty_content": "Contenido vacío",
+    "report_reasons": {
+      "spam": "Correo basura",
+      "illegal": "Contenido ilegal",
+      "malware": "Malware o phishing",
+      "abuse": "Abuso",
+      "other": "Otro"
+    },
+    "report_statuses": {
+      "open": "Abierto",
+      "reviewed": "Revisado",
+      "resolved": "Resuelto",
+      "dismissed": "Despedido"
+    },
+    "messages": {
+      "action_limited": "Esta cuenta ha alcanzado el límite de acción temporal.",
+      "action_too_fast": "Espere un momento antes de la siguiente acción.",
+      "account_muted": "Esta cuenta está temporalmente silenciada hasta el {until}.",
+      "blocked_url": "Este enlace no está permitido: {host}.",
+      "duplicate_body": "Esta publicación es demasiado similar a tu publicación reciente.",
+      "report_created": "El informe fue presentado.",
+      "report_already_reviewed": "Esta publicación ya fue revisada y el informe no se volvió a abrir.",
+      "report_own_content": "No puedes denunciar tu propia publicación.",
+      "reports_unavailable": "Los informes no están disponibles.",
+      "report_not_found": "No se encontró el informe.",
+      "report_reviewed": "El informe fue revisado.",
+      "url_blocker_saved": "Se guardaron las URL bloqueadas."
+    },
+    "report_count": {
+      "one": "{count} denuncia",
+      "few": "{count} denuncias",
+      "many": "{count} denuncias",
+      "other": "{count} denuncias"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "cron": {
+    "title": "Geplande taken",
+    "intro": "Eén kleine runner maakt onafhankelijke geplande taken mogelijk met gedeelde authenticatie.",
+    "access_title": "Toegang en token",
+    "access_help": "Gedeeld eindpunt en authenticatie gebruikt voor elke geplande taak.",
+    "url": "Eindpunt URL",
+    "token": "Token aan toonder",
+    "task_url": "Eenvoudige web-cron URL",
+    "query_help": "Compatibiliteitsoptie voor services zonder aangepaste headers. Het token kan worden opgeslagen in servertoegangslogboeken.",
+    "http_command": "HTTP opdracht",
+    "cli_command": "Serveropdracht",
+    "rotate": "Token roteren",
+    "rotate_confirm": "De cron-token roteren? Bestaande geplande oproepen werken niet meer totdat ze zijn bijgewerkt.",
+    "tasks": {
+      "cleanup": "Automatisch opschonen",
+      "cleanup_help": "Verwijdert ongebruikte tags en links, verweesde berichten en voorbeeldafbeeldingen, verlopen datacaches, oude snelheidslimietbuckets, verlopen resettokens en leesmeldingen.",
+      "cleanup_schedule": "Schema per uur. Interne controles voorkomen dat er te vaak wordt opgeschoond.",
+      "feeds": "RSS en Atom-bronnen",
+      "feeds_help": "Publiceert items uit actieve bronnen waarvan het interval afloopt.",
+      "feeds_schedule": "Plan volgens de vereiste pollingfrequentie, doorgaans elke twee minuten."
+    },
+    "messages": {
+      "token_rotated": "De cron-token is geroteerd."
+    },
+    "list_title": "Taakoverzicht",
+    "configuration": "Verbinding en planning",
+    "list_help": "De planning wordt beheerd door uw server of web-cron. Dit zijn de aanbevolen intervallen en standaardlimieten. Nu uitvoeren omzeilt het opschooninterval; RSS respecteert nog steeds elk broninterval. De geschiedenis omvat runs die na deze update zijn geregistreerd.",
+    "task": "-taak",
+    "schedule": "Schema en standaardlimieten",
+    "latest": "Laatste run",
+    "run_now": "Nu uitvoeren",
+    "history": "Rungeschiedenis",
+    "status": "-status",
+    "started": "gestart",
+    "duration": "Duur",
+    "result": "-resultaat",
+    "no_runs": "Er zijn geen geregistreerde runs die overeenkomen met deze filters.",
+    "never": "Geen geregistreerde run",
+    "run_finished": "De taak is voltooid.",
+    "run_failed": "De taak is mislukt. Bekijk het resultaat in de rungeschiedenis.",
+    "already_running": "De taak wordt al uitgevoerd.",
+    "unknown_task": "Onbekende taak.",
+    "summary_count": "Verwerkt: {count}",
+    "summary_changed": "Gewijzigd: {count}",
+    "options": {
+      "bot_limit": "Bronlimiet",
+      "cleanup_batch": "Opruimbatch",
+      "source_id": "Bron-ID"
+    },
+    "statuses": {
+      "running": "Actief",
+      "completed": "voltooid",
+      "failed": "Mislukt",
+      "not_due": "Niet verschuldigd",
+      "has_more": "Meer werk in behandeling",
+      "interrupted": "Onderbroken"
+    },
+    "modes": {
+      "cli": "Server-CLI",
+      "http": "Webcron",
+      "admin": "-handleiding"
+    },
+    "menu_title": "Taken",
+    "overview_help": "Aanbevolen intervallen en standaardlimieten. De planning wordt beheerd door de server of web-cron.",
+    "cadence": {
+      "feeds": "Controleer elke twee minuten",
+      "cleanup": "Eén keer per uur"
+    },
+    "run_details": "Rundetails",
+    "refresh": "Vernieuwen",
+    "run_not_found": "Deze run is niet gevonden.",
+    "finished": "Klaar",
+    "unfinished": "Niet klaar",
+    "trigger": "Gestart via",
+    "actor": "Gestart door",
+    "run_id": "Run-ID",
+    "parameters": "Runparameters",
+    "error": "-fout"
+  }
+}

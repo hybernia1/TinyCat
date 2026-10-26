@@ -36,7 +36,7 @@ $assert(count(Export::posts(1)) === 1 && Export::posts(100, 2) === [], 'Limits a
 $assert(array_column(Export::posts(50, null, 1), 'id') === [1], 'Tag exports use the requested public tag only.');
 $assert(Sitemap::count('tags') === 1 && array_column(Sitemap::entries('tags', 1000, 0), 'url') === ['/tag/public'], 'Sitemap counts and entries exclude orphan, hidden-only and future-only tags.');
 $assert(Sitemap::count('status') === 2 && count(Sitemap::entries('status', 1000, 0)) === 2, 'Sitemap and export visibility agree.');
-$assert(Sitemap::count('pages') === 2 && Sitemap::entries('pages', 1, 1)[0]['url'] === '/privacy', 'Public static pages share count and pagination rules.');
+$assert(Sitemap::count('pages') === 2 + count(\TinyCat\Support\Languages::language_packages()) && Sitemap::entries('pages', 1, 1)[0]['url'] === '/privacy', 'Public static pages and their translated policies share count and pagination rules.');
 $assert(Sitemap::entries('status', 1000, 0)[0]['last_modified'] === null, 'Publication time is not presented as a modification timestamp.');
 $assert(Xml::escape("A\x01<&B") === 'A&lt;&amp;B', 'XML escapes entities and removes forbidden control characters.');
 $xml = simplexml_load_string('<value>' . Xml::cdata('a]]>b') . '</value>');

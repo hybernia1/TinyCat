@@ -1,0 +1,81 @@
+{
+  "cron": {
+    "title": "Attività pianificate",
+    "intro": "Un piccolo runner espone attività pianificate indipendenti con autenticazione condivisa.",
+    "access_title": "Accesso e token",
+    "access_help": "Endpoint condiviso e autenticazione utilizzati da ogni attività pianificata.",
+    "url": "URL dell'endpoint",
+    "token": "Gettone al portatore",
+    "task_url": "Webcron semplice URL",
+    "query_help": "Opzione di compatibilità per servizi senza intestazioni personalizzate. Il token può essere archiviato nei registri di accesso al server.",
+    "http_command": "Comando HTTP",
+    "cli_command": "Comando del server",
+    "rotate": "Ruota gettone",
+    "rotate_confirm": "Ruotare il token cron? Le chiamate pianificate esistenti smetteranno di funzionare finché non verranno aggiornate.",
+    "tasks": {
+      "cleanup": "Pulizia automatica",
+      "cleanup_help": "Rimuove tag e collegamenti inutilizzati, post orfani e immagini di anteprima, cache di dati scaduti, vecchi bucket con limite di velocità, token di ripristino scaduti e notifiche di lettura.",
+      "cleanup_schedule": "Programmazione oraria. I dovuti controlli interni impediscono che la pulizia venga eseguita troppo spesso.",
+      "feeds": "RSS e sorgenti Atom",
+      "feeds_help": "Pubblica elementi da origini attive il cui intervallo è scaduto.",
+      "feeds_schedule": "Pianificazione in base alla frequenza di polling richiesta, in genere ogni due minuti."
+    },
+    "messages": {
+      "token_rotated": "Il token cron è stato ruotato."
+    },
+    "list_title": "Panoramica delle attività",
+    "configuration": "Connessione e programmazione",
+    "list_help": "La pianificazione è controllata dal tuo server o web-cron. Questi sono gli intervalli consigliati e i limiti predefiniti. Esegui ora ignora l'intervallo di pulizia; RSS rispetta comunque ciascun intervallo di origine. La cronologia include le corse registrate dopo questo aggiornamento.",
+    "task": "Attività",
+    "schedule": "Programmazione e limiti predefiniti",
+    "latest": "Ultima esecuzione",
+    "run_now": "Esegui ora",
+    "history": "Esegui cronologia",
+    "status": "Stato",
+    "started": "Avviato",
+    "duration": "Durata",
+    "result": "Risultato",
+    "no_runs": "Nessuna corsa registrata corrisponde a questi filtri.",
+    "never": "Nessuna corsa registrata",
+    "run_finished": "L'attività è terminata.",
+    "run_failed": "L'attività non è riuscita. Visualizza il risultato nella cronologia delle corse.",
+    "already_running": "L'attività è già in esecuzione.",
+    "unknown_task": "Attività sconosciuta.",
+    "summary_count": "Elaborato: {count}",
+    "summary_changed": "Modificato: {count}",
+    "options": {
+      "bot_limit": "Limite sorgente",
+      "cleanup_batch": "Lotto di pulizia",
+      "source_id": "ID origine"
+    },
+    "statuses": {
+      "running": "In esecuzione",
+      "completed": "Completato",
+      "failed": "non riuscito",
+      "not_due": "Non dovuto",
+      "has_more": "Altri lavori in sospeso",
+      "interrupted": "Interrotto"
+    },
+    "modes": {
+      "cli": "CLI del server",
+      "http": "Cronologia web",
+      "admin": "Manuale"
+    },
+    "menu_title": "Attività",
+    "overview_help": "Intervalli consigliati e limiti predefiniti. La pianificazione è gestita dal server o dal web-cron.",
+    "cadence": {
+      "feeds": "Controllare ogni due minuti",
+      "cleanup": "Una volta ogni ora"
+    },
+    "run_details": "Dettagli esecuzione",
+    "refresh": "Aggiorna",
+    "run_not_found": "Questa esecuzione non è stata trovata.",
+    "finished": "Finito",
+    "unfinished": "Non finito",
+    "trigger": "Avviato tramite",
+    "actor": "Iniziato da",
+    "run_id": "ID esecuzione",
+    "parameters": "Parametri di esecuzione",
+    "error": "Errore"
+  }
+}

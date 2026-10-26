@@ -1,0 +1,25 @@
+{
+  "public": {
+    "search_title": "Suchen",
+    "search_title_query": "Suche „{query}“",
+    "search_meta": "Durchsuchen Sie Beiträge, Profile und Tags.",
+    "search_meta_query": "Suchergebnisse für {query}.",
+    "search_placeholder": "Durchsuchen Sie Beiträge oder Profile",
+    "search_suggest_placeholder": "Suchen",
+    "search_all": "Alle durchsuchen",
+    "search_tags": "Schlagworte",
+    "search_users": "Profile",
+    "search_content": "Beiträge",
+    "search_empty": "Nichts gefunden.",
+    "search_min": "Geben Sie mindestens 2 Zeichen ein.",
+    "search_captcha_title": "Sicherheitskontrolle",
+    "search_captcha_required": "Bitte führen Sie die Sicherheitsüberprüfung durch, um mit der Suche fortzufahren.",
+    "search_captcha_unlocked": "Die Suche wurde entsperrt.",
+    "search_tag_posts": {
+      "one": "{count} Beitrag",
+      "few": "{count} Beiträge",
+      "many": "{count} Beiträge",
+      "other": "{count} Beiträge"
+    }
+  }
+}

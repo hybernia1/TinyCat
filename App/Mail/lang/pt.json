@@ -1,0 +1,45 @@
+{
+  "signature": "Atenciosamente,\n{site}",
+  "templates": {
+    "welcome": {
+      "subject": "Bem-vindo ao {site}",
+      "body": "Olá {username},\n\nBem-vindo ao {site}. Sua conta está pronta.\n\nEntrar: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Redefina sua senha {site}",
+      "body": "Olá {username},\n\nRecebemos uma solicitação para redefinir sua senha.\n\nRedefina sua senha: {reset_url}\n\nEste link expira em 60 minutos. Se você não solicitou isso, pode ignorar este e-mail.\n\n{signature}"
+    },
+    "notification_content_like": {
+      "subject": "{actor} gostou da sua postagem",
+      "body": "{actor} gostou da sua postagem.\n\nVeja a postagem: {content_url}\n\n{signature}"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} comentou sua postagem",
+      "body": "{actor} comentou sua postagem.\n\nVeja a conversa: {content_url}\n\n{signature}"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} gostou do seu comentário",
+      "body": "{actor} gostou do seu comentário.\n\nVeja a conversa: {content_url}\n\n{signature}"
+    },
+    "notification_follow": {
+      "subject": "{actor} seguiu você",
+      "body": "{actor} seguiu você.\n\nVeja o perfil deles: {actor_url}\n\n{signature}"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} mencionou você",
+      "body": "{actor} mencionou você em uma postagem.\n\nVeja a postagem: {content_url}\n\n{signature}"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} mencionou você",
+      "body": "{actor} mencionou você em um comentário.\n\nVeja a conversa: {content_url}\n\n{signature}"
+    },
+    "notification_report_resolved": {
+      "subject": "Seu relatório foi resolvido",
+      "body": "Sua denúncia foi resolvida pela equipe de moderação.\n\nVeja o conteúdo denunciado: {content_url}\n\n{signature}"
+    },
+    "notification_report_dismissed": {
+      "subject": "Seu relatório foi rejeitado",
+      "body": "Sua denúncia foi analisada e rejeitada pela equipe de moderação.\n\nVeja o conteúdo denunciado: {content_url}\n\n{signature}"
+    }
+  }
+}

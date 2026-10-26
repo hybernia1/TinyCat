@@ -1,4 +1,5 @@
 import "./i18n.js";
+import "./urls.js";
 (function () {
   "use strict";
 
@@ -31,6 +32,7 @@ import "./i18n.js";
     var method = String(settings.method || "GET").toUpperCase();
     headers.set("Accept", "application/json");
     headers.set("X-Requested-With", "XMLHttpRequest");
+    if (TinyCat.urls.prefix()) { headers.set("X-TinyCat-Locale", TinyCat.urls.prefix()); }
     if (!headers.has("X-CSRF-Token") && csrfToken()) {
       headers.set("X-CSRF-Token", csrfToken());
     }

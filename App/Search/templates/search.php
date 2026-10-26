@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+/** @var array<string, string> $pageUrls */
 /** @var string $query */
 /** @var bool $hasQuery */
 /** @var array<mixed>|null $searchBlocked */
@@ -21,7 +22,7 @@ declare(strict_types=1);
             <div class="alert alert-info"><?= \TinyCat\Support\Html::et('public.search_min') ?></div>
         <?php elseif ($searchBlocked !== null): ?>
             <?php if (($searchBlocked['code'] ?? '') === 'captcha_required'): ?>
-                <form class="card" action="/search" method="post">
+                <form class="card" action="<?= \TinyCat\Support\Html::e($pageUrls['/search']) ?>" method="post">
                     <?= \TinyCat\Security\Csrf::field() ?>
                     <input type="hidden" name="_search_captcha" value="1">
                     <input type="hidden" name="q" value="<?= \TinyCat\Support\Html::e($query) ?>">
@@ -33,7 +34,7 @@ declare(strict_types=1);
                         <?= $field ?>
                     </div>
                     <div class="card-footer justify-end">
-                        <a class="btn btn-ghost" href="/login" data-modal-open="<?= \TinyCat\Support\Html::e($authModalId) ?>" data-modal-url="<?= \TinyCat\Support\Html::e($authModalUrl) ?>"><?= \TinyCat\Support\Html::icon('login') ?> <span><?= \TinyCat\Support\Html::et('auth.login_title') ?></span></a>
+                        <a class="btn btn-ghost" href="<?= \TinyCat\Support\Html::e($pageUrls['/login']) ?>" data-modal-open="<?= \TinyCat\Support\Html::e($authModalId) ?>" data-modal-url="<?= \TinyCat\Support\Html::e($authModalUrl) ?>"><?= \TinyCat\Support\Html::icon('login') ?> <span><?= \TinyCat\Support\Html::et('auth.login_title') ?></span></a>
                         <button class="btn btn-primary" type="submit"><?= \TinyCat\Support\Html::icon('confirm') ?> <span><?= \TinyCat\Support\Html::et('common.confirm') ?></span></button>
                     </div>
                 </form>

@@ -1,0 +1,35 @@
+{
+  "notifications": {
+    "title": "Notificações",
+    "meta": "Visão geral dos alertas para suas postagens.",
+    "empty": "Ainda não há notificações.",
+    "mark_read": "Marcar como lido",
+    "mark_all_read": "Marcar tudo como lido",
+    "delete": "Excluir",
+    "open": "Abrir",
+    "more": "Ver mais notificações",
+    "load_more": "Carregar mais",
+    "loading": "Carregando...",
+    "someone": "Alguém",
+    "new_count": {
+      "one": "Você tem {count} nova notificação.",
+      "few": "Você tem {count} novas notificações.",
+      "many": "Você tem {count} novas notificações.",
+      "other": "Você tem {count} novas notificações."
+    },
+    "messages": {
+      "follow": "{actor} seguiu você.",
+      "content_like": "{actor} gostou da sua postagem.",
+      "comment_like": "{actor} gostou do seu comentário.",
+      "content_comment": "{actor} comentou sua postagem.",
+      "content_mention": "{actor} mencionou você em uma postagem.",
+      "comment_mention": "{actor} mencionou você em um comentário.",
+      "report_resolved": "Seu relatório foi resolvido.",
+      "report_dismissed": "Seu relatório foi rejeitado.",
+      "generic": "{actor} reagiu à sua postagem.",
+      "read_done": "A notificação foi marcada como lida.",
+      "read_all_done": "Todas as notificações foram marcadas como lidas.",
+      "deleted": "A notificação foi excluída."
+    }
+  }
+}

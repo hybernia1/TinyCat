@@ -1,0 +1,81 @@
+{
+  "cron": {
+    "title": "Tareas programadas",
+    "intro": "Un pequeño corredor expone tareas programadas independientes con autenticación compartida.",
+    "access_title": "Acceso y token",
+    "access_help": "Punto final compartido y autenticación utilizada por cada tarea programada.",
+    "url": "Punto final URL",
+    "token": "ficha al portador",
+    "task_url": "Cron web simple URL",
+    "query_help": "Opción de compatibilidad para servicios sin encabezados personalizados. El token puede almacenarse en los registros de acceso al servidor.",
+    "http_command": "Comando HTTP",
+    "cli_command": "Comando del servidor",
+    "rotate": "Girar ficha",
+    "rotate_confirm": "¿Girar el token cron? Las llamadas programadas existentes dejarán de funcionar hasta que se actualicen.",
+    "tasks": {
+      "cleanup": "limpieza automática",
+      "cleanup_help": "Elimina etiquetas y enlaces no utilizados, publicaciones huérfanas e imágenes de vista previa, cachés de datos caducados, depósitos de límite de velocidad antiguos, tokens de restablecimiento caducados y notificaciones de lectura.",
+      "cleanup_schedule": "Horario cada hora. Las comprobaciones internas debidas evitan que la limpieza se ejecute con demasiada frecuencia.",
+      "feeds": "RSS y fuentes Atom",
+      "feeds_help": "Publica elementos de fuentes activas cuyo intervalo vence.",
+      "feeds_schedule": "Programe de acuerdo con la frecuencia de votación requerida, generalmente cada dos minutos."
+    },
+    "messages": {
+      "token_rotated": "Se rotó el token cron."
+    },
+    "list_title": "Resumen de tareas",
+    "configuration": "Conexión y programación",
+    "list_help": "La programación está controlada por su servidor o web-cron. Estos son los intervalos recomendados y los límites predeterminados. Ejecutar ahora omite el intervalo de limpieza; RSS todavía respeta cada intervalo de fuente. El historial incluye ejecuciones registradas después de esta actualización.",
+    "task": "Tarea",
+    "schedule": "Horario y límites predeterminados",
+    "latest": "Última ejecución",
+    "run_now": "Corre ahora",
+    "history": "Historial de ejecución",
+    "status": "Estado",
+    "started": "Comenzó",
+    "duration": "Duración",
+    "result": "Resultado",
+    "no_runs": "Ninguna carrera registrada coincide con estos filtros.",
+    "never": "No hay carrera registrada",
+    "run_finished": "La tarea terminó.",
+    "run_failed": "La tarea fracasó. Vea su resultado en el historial de ejecución.",
+    "already_running": "La tarea ya se está ejecutando.",
+    "unknown_task": "Tarea desconocida.",
+    "summary_count": "Procesado: {count}",
+    "summary_changed": "Cambiado: {count}",
+    "options": {
+      "bot_limit": "Límite de fuente",
+      "cleanup_batch": "Lote de limpieza",
+      "source_id": "ID de fuente"
+    },
+    "statuses": {
+      "running": "Correr",
+      "completed": "Terminado",
+      "failed": "Fallido",
+      "not_due": "no debido",
+      "has_more": "Más trabajo pendiente",
+      "interrupted": "interrumpido"
+    },
+    "modes": {
+      "cli": "CLI del servidor",
+      "http": "cron web",
+      "admin": "Manual"
+    },
+    "menu_title": "Tareas",
+    "overview_help": "Intervalos recomendados y límites predeterminados. La programación la gestiona el servidor o web-cron.",
+    "cadence": {
+      "feeds": "Comprobar cada dos minutos",
+      "cleanup": "Una vez por hora"
+    },
+    "run_details": "Detalles de ejecución",
+    "refresh": "Refrescar",
+    "run_not_found": "Esta ejecución no fue encontrada.",
+    "finished": "Finalizado",
+    "unfinished": "No terminado",
+    "trigger": "Comenzó vía",
+    "actor": "Iniciado por",
+    "run_id": "ID de ejecución",
+    "parameters": "Ejecutar parámetros",
+    "error": "Error"
+  }
+}

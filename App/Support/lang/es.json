@@ -1,0 +1,174 @@
+{
+  "common": {
+    "refresh": "Actualizar",
+    "save": "Guardar",
+    "create": "Crear",
+    "delete": "Eliminar",
+    "cancel": "Cancelar",
+    "continue": "Continuar",
+    "confirm": "Confirmar",
+    "confirm_action": "Confirmar acción",
+    "back": "Atrás",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "finish": "Finalizar",
+    "open": "Abrir",
+    "video": "Video",
+    "menu": "Menú",
+    "close": "Cerrar",
+    "skip_to_content": "Saltar al contenido principal",
+    "main_navigation": "Navegación principal",
+    "site_logo_alt": "Logotipo {site}",
+    "request_failed": "La solicitud no se pudo completar.",
+    "edit": "Editar",
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "register": "Registrarse",
+    "admin": "Administración",
+    "dashboard": "Panel de control",
+    "home": "Inicio",
+    "language": "Idioma",
+    "database": "Base de datos",
+    "tables": "Tablas",
+    "account": "Cuenta",
+    "done": "Hecho",
+    "username": "Nombre de usuario",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "new_password": "Nueva contraseña",
+    "current_password": "Contraseña actual",
+    "password_confirm": "Confirmar Contraseña",
+    "role": "Rol",
+    "status": "Estado",
+    "note": "Nota",
+    "created": "Creado",
+    "updated": "Actualizado",
+    "route": "Ruta",
+    "file": "Archivo",
+    "image": "Imagen",
+    "table": "Tabla",
+    "clean_api": "API de datos",
+    "ui_api": "API de interfaz",
+    "ui": "interfaz de usuario",
+    "actions": "Acciones",
+    "search": "Buscar",
+    "filters": "Filtros",
+    "apply_filters": "Aplicar filtros",
+    "clear_filters": "Limpiar",
+    "pagination": "Paginación",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "Por página",
+    "all": "Todo",
+    "updated_from": "Actualizado desde",
+    "updated_to": "Actualizado hasta",
+    "created_from": "Creado desde",
+    "created_to": "Creado hasta",
+    "unsaved_title": "Cambios no guardados",
+    "unsaved_message": "El formulario contiene cambios no guardados. ¿Irse de todos modos?",
+    "leave": "Dejar",
+    "stay": "Permanecer",
+    "validation_failed": "Por favor verifique los valores enviados.",
+    "not_found": "No encontrado.",
+    "validation_required": "El campo {field} es obligatorio.",
+    "validation_invalid": "El campo {field} tiene un valor no válido."
+  },
+  "relative": {
+    "now": "ahora",
+    "past": {
+      "minute": {
+        "one": "hace {count} minuto",
+        "few": "hace {count} minutos",
+        "many": "hace {count} minutos",
+        "other": "hace {count} minutos",
+        "single": "hace un minuto"
+      },
+      "hour": {
+        "one": "hace {count} hora",
+        "few": "hace {count} horas",
+        "many": "hace {count} horas",
+        "other": "hace {count} horas",
+        "single": "hace una hora"
+      },
+      "day": {
+        "one": "hace {count} día",
+        "few": "hace {count} días",
+        "many": "hace {count} días",
+        "other": "hace {count} días",
+        "single": "ayer"
+      },
+      "week": {
+        "one": "hace {count} semana",
+        "few": "hace {count} semanas",
+        "many": "hace {count} semanas",
+        "other": "hace {count} semanas",
+        "single": "hace una semana"
+      },
+      "month": {
+        "one": "hace {count} mes",
+        "few": "hace {count} meses",
+        "many": "hace {count} meses",
+        "other": "hace {count} meses",
+        "single": "hace un mes"
+      },
+      "year": {
+        "one": "hace {count} año",
+        "few": "hace {count} años",
+        "many": "hace {count} años",
+        "other": "hace {count} años",
+        "single": "hace un año"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "dentro de {count} minuto",
+        "few": "dentro de {count} minutos",
+        "many": "dentro de {count} minutos",
+        "other": "dentro de {count} minutos",
+        "single": "en un minuto"
+      },
+      "hour": {
+        "one": "dentro de {count} hora",
+        "few": "dentro de {count} horas",
+        "many": "dentro de {count} horas",
+        "other": "dentro de {count} horas",
+        "single": "en una hora"
+      },
+      "day": {
+        "one": "dentro de {count} día",
+        "few": "dentro de {count} días",
+        "many": "dentro de {count} días",
+        "other": "dentro de {count} días",
+        "single": "mañana"
+      },
+      "week": {
+        "one": "dentro de {count} semana",
+        "few": "dentro de {count} semanas",
+        "many": "dentro de {count} semanas",
+        "other": "dentro de {count} semanas",
+        "single": "en una semana"
+      },
+      "month": {
+        "one": "dentro de {count} mes",
+        "few": "dentro de {count} meses",
+        "many": "dentro de {count} meses",
+        "other": "dentro de {count} meses",
+        "single": "en un mes"
+      },
+      "year": {
+        "one": "dentro de {count} año",
+        "few": "dentro de {count} años",
+        "many": "dentro de {count} años",
+        "other": "dentro de {count} años",
+        "single": "en un año"
+      }
+    }
+  },
+  "action": {
+    "save": "Ahorrar",
+    "cancel": "Cancelar",
+    "delete": "Borrar"
+  },
+  "message": {
+    "welcome": "Bienvenido a {app}."
+  }
+}

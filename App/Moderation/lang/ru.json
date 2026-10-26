@@ -1,0 +1,54 @@
+{
+  "moderation": {
+    "title": "Модерация",
+    "reports_title": "Жалобы",
+    "reports_empty": "Отчетов нет.",
+    "reported_content": "Содержимое жалобы",
+    "report_status": "Пожаловаться на публикацию",
+    "report_action": "Жалоба",
+    "report_reason": "Причина",
+    "report_note": "Примечание",
+    "report_submit": "Отправить отчет",
+    "profile_muted_until": "Звук аккаунта отключен до {until}.",
+    "url_blocker_title": "Заблокированные URL-адреса",
+    "url_blocker_label": "Заблокированные веб-сайты",
+    "url_blocker_placeholder": "example.com, bad.example, домен:ru",
+    "url_blocker_help": "Разделяйте веб-сайты запятыми или новыми строками. Субдомены тоже заблокированы. Используйте домен:ru, чтобы заблокировать весь суффикс .ru.",
+    "remove_content": "Удалить контент",
+    "keep_and_lock": "Сохранить и запереть",
+    "empty_content": "Пустое содержимое",
+    "report_reasons": {
+      "spam": "Спам",
+      "illegal": "Незаконный контент",
+      "malware": "Вредоносное ПО или фишинг",
+      "abuse": "Злоупотребление",
+      "other": "Другое"
+    },
+    "report_statuses": {
+      "open": "Открыто",
+      "reviewed": "Проверено",
+      "resolved": "Решено",
+      "dismissed": "Уволен"
+    },
+    "messages": {
+      "action_limited": "Для этой учетной записи достигнут временный лимит действий.",
+      "action_too_fast": "Пожалуйста, подождите немного перед следующим действием.",
+      "account_muted": "Звук этой учетной записи временно отключен до {until}.",
+      "blocked_url": "Эта ссылка не разрешена: {host}.",
+      "duplicate_body": "Это сообщение слишком похоже на ваше недавнее сообщение.",
+      "report_created": "Отчет отправлен.",
+      "report_already_reviewed": "Это сообщение уже было проверено, и отчет не был открыт повторно.",
+      "report_own_content": "Вы не можете пожаловаться на собственное сообщение.",
+      "reports_unavailable": "Отчеты недоступны.",
+      "report_not_found": "Жалоба не найдена.",
+      "report_reviewed": "Отчет рассмотрен.",
+      "url_blocker_saved": "Заблокированные URL-адреса сохранены."
+    },
+    "report_count": {
+      "one": "{count} жалоба",
+      "few": "{count} жалобы",
+      "many": "{count} жалоб",
+      "other": "{count} жалобы"
+    }
+  }
+}

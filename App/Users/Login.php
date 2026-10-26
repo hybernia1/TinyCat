@@ -45,7 +45,7 @@ final class Login
             return '';
         }
 
-        $path = \TinyCat\Users\Login::auth_next_path($next);
+        $path = \TinyCat\Site\LocaleRouting::split(\TinyCat\Users\Login::auth_next_path($next))['path'];
 
         if (
             in_array($path, ['/login', '/register', '/install'], true)
@@ -95,7 +95,7 @@ final class Login
     {
         $next = \TinyCat\Users\Login::auth_safe_next_url($next);
 
-        return $path . ($next !== '' ? '?next=' . rawurlencode($next) : '');
+        return \TinyCat\Support\LocalUrls::resolve($path) . ($next !== '' ? '?next=' . rawurlencode($next) : '');
     }
 
     /**

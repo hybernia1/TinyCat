@@ -1,0 +1,35 @@
+{
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "meta": "Übersicht der Benachrichtigungen für Ihre Beiträge.",
+    "empty": "Es liegen noch keine Benachrichtigungen vor.",
+    "mark_read": "Als gelesen markieren",
+    "mark_all_read": "Alle als gelesen markieren",
+    "delete": "Löschen",
+    "open": "Offen",
+    "more": "Weitere Benachrichtigungen anzeigen",
+    "load_more": "Mehr laden",
+    "loading": "Laden...",
+    "someone": "Jemand",
+    "new_count": {
+      "one": "Du hast {count} neue Benachrichtigung.",
+      "few": "Du hast {count} neue Benachrichtigungen.",
+      "many": "Du hast {count} neue Benachrichtigungen.",
+      "other": "Du hast {count} neue Benachrichtigungen."
+    },
+    "messages": {
+      "follow": "{actor} ist dir gefolgt.",
+      "content_like": "{actor} mochte deinen Beitrag.",
+      "comment_like": "{actor} mochte Ihren Kommentar.",
+      "content_comment": "{actor} hat Ihren Beitrag kommentiert.",
+      "content_mention": "{actor} hat Sie in einem Beitrag erwähnt.",
+      "comment_mention": "{actor} hat Sie in einem Kommentar erwähnt.",
+      "report_resolved": "Ihre Meldung wurde gelöst.",
+      "report_dismissed": "Ihr Bericht wurde abgewiesen.",
+      "generic": "{actor} hat auf Ihren Beitrag reagiert.",
+      "read_done": "Die Benachrichtigung wurde als gelesen markiert.",
+      "read_all_done": "Alle Benachrichtigungen wurden als gelesen markiert.",
+      "deleted": "Die Benachrichtigung wurde gelöscht."
+    }
+  }
+}

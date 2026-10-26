@@ -9,8 +9,8 @@ require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
 if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Support\Components::json(); exit(0); }
 if (($argv[1] ?? '') === '--translation-fixtures') {
     $cases = [];
-    foreach (['cs', 'en', 'cs-CZ'] as $locale) {
-        foreach ([0, 1, 2, 4, 5, -1, -3, 1.5, 101] as $count) {
+    foreach ([...array_keys(\TinyCat\Support\Languages::language_packages()), 'cs-CZ', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'uk-UA'] as $locale) {
+        foreach ([0, 0.5, 1, 1.5, 2, 4, 5, 11, 12, 14, 21, 22, 25, -1, -3, -21, 101, 111, 1000000] as $count) {
             foreach (['bots.sources_count', 'bots.active_sources_count', 'bots.every_minutes', 'public.active_user_posts', 'public.search_tag_posts', 'moderation.report_count', 'notifications.new_count'] as $key) {
                 $cases[] = ['locale' => $locale, 'key' => $key, 'count' => $count, 'category' => \TinyCat\Support\Localization::pluralCategory($count, $locale), 'expected' => \TinyCat\Support\Localization::plural($key, $count, [], $locale)];
             }
@@ -31,9 +31,9 @@ if (($argv[1] ?? '') === '--date-fixtures') {
         }
     }
     $base = new DateTimeImmutable('2026-10-26T12:00:00+01:00');
-    foreach (['cs', 'en'] as $locale) {
+    foreach (array_keys(\TinyCat\Support\Languages::language_packages()) as $locale) {
         \TinyCat\Support\Localization::locale($locale);
-        foreach ([0, 44, 45, 89, 90, 2699, 2700, 5399, 5400, 79199, 79200, 129599, 129600, 604799, 604800, 2419199, 2419200, 3887999, 3888000, 29807999, 29808000, 47087999, 47088000, 63072000] as $offset) {
+        foreach ([0, 44, 45, 89, 90, 1260, 1320, 1500, 2699, 2700, 5399, 5400, 75600, 79199, 79200, 129599, 129600, 604799, 604800, 2419199, 2419200, 3887999, 3888000, 29807999, 29808000, 47087999, 47088000, 63072000, 662256000] as $offset) {
             foreach ([-1, 1] as $sign) {
                 $date = $base->modify(($sign * $offset) . ' seconds');
                 $cases['relative'][] = ['locale' => $locale, 'value' => $date->format(DATE_ATOM), 'base' => $base->getTimestamp() * 1000, 'expected' => \TinyCat\Support\Dates::relative_time($date, $base)];

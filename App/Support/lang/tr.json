@@ -1,0 +1,174 @@
+{
+  "common": {
+    "refresh": "Yenile",
+    "save": "Kaydet",
+    "create": "Oluştur",
+    "delete": "Sil",
+    "cancel": "İptal",
+    "continue": "Devam Et",
+    "confirm": "Onayla",
+    "confirm_action": "Eylemi onayla",
+    "back": "Geri",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "finish": "Kaplama",
+    "open": "Aç",
+    "video": "Videosu",
+    "menu": "Menü",
+    "close": "Kapat",
+    "skip_to_content": "Ana içeriğe atla",
+    "main_navigation": "Ana gezinme",
+    "site_logo_alt": "{site} logosu",
+    "request_failed": "İstek tamamlanamadı.",
+    "edit": "Düzenle",
+    "login": "Giriş",
+    "logout": "Çıkış yap",
+    "register": "Kayıt ol",
+    "admin": "Yönetici",
+    "dashboard": "Kontrol paneli",
+    "home": "Ana sayfa",
+    "language": "Dil",
+    "database": "Veritabanı",
+    "tables": "Tablolar",
+    "account": "Hesabı",
+    "done": "Bitti",
+    "username": "Kullanıcı Adı",
+    "email": "E-posta",
+    "password": "Şifre",
+    "new_password": "Yeni şifre",
+    "current_password": "Mevcut şifre",
+    "password_confirm": "Şifreyi doğrula",
+    "role": "Rolü",
+    "status": "Durumu",
+    "note": "Not",
+    "created": "Oluşturuldu",
+    "updated": "Güncellendi",
+    "route": "Rotası",
+    "file": "Dosyası",
+    "image": "Görüntüsü",
+    "table": "Tablo",
+    "clean_api": "Veri API",
+    "ui_api": "Kullanıcı arayüzü API",
+    "ui": "kullanıcı arayüzü",
+    "actions": "Eylemler",
+    "search": "Arama",
+    "filters": "Filtreler",
+    "apply_filters": "Filtreleri uygula",
+    "clear_filters": "Temizle",
+    "pagination": "Sayfalandırma",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "Sayfa başına",
+    "all": "Hepsi",
+    "updated_from": "Güncelleme tarihi:",
+    "updated_to": "Güncellendi",
+    "created_from": "'nin oluşturulduğu kaynak",
+    "created_to": "Oluşturuldu",
+    "unsaved_title": "Kaydedilmemiş değişiklikler",
+    "unsaved_message": "Form kaydedilmemiş değişiklikler içeriyor. Yine de ayrılmak mı?",
+    "leave": "Ayrıl",
+    "stay": "Kalma",
+    "validation_failed": "Lütfen gönderilen değerleri kontrol edin.",
+    "not_found": "Bulunamadı.",
+    "validation_required": "{field} alanı gereklidir.",
+    "validation_invalid": "{field} alanı geçersiz bir değere sahip."
+  },
+  "relative": {
+    "now": "şimdi",
+    "past": {
+      "minute": {
+        "one": "{count} dakika önce",
+        "few": "{count} dakika önce",
+        "many": "{count} dakika önce",
+        "other": "{count} dakika önce",
+        "single": "bir dakika önce"
+      },
+      "hour": {
+        "one": "{count} saat önce",
+        "few": "{count} saat önce",
+        "many": "{count} saat önce",
+        "other": "{count} saat önce",
+        "single": "bir saat önce"
+      },
+      "day": {
+        "one": "{count} gün önce",
+        "few": "{count} gün önce",
+        "many": "{count} gün önce",
+        "other": "{count} gün önce",
+        "single": "dün"
+      },
+      "week": {
+        "one": "{count} hafta önce",
+        "few": "{count} hafta önce",
+        "many": "{count} hafta önce",
+        "other": "{count} hafta önce",
+        "single": "bir hafta önce"
+      },
+      "month": {
+        "one": "{count} ay önce",
+        "few": "{count} ay önce",
+        "many": "{count} ay önce",
+        "other": "{count} ay önce",
+        "single": "bir ay önce"
+      },
+      "year": {
+        "one": "{count} yıl önce",
+        "few": "{count} yıl önce",
+        "many": "{count} yıl önce",
+        "other": "{count} yıl önce",
+        "single": "bir yıl önce"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "{count} dakika sonra",
+        "few": "{count} dakika sonra",
+        "many": "{count} dakika sonra",
+        "other": "{count} dakika sonra",
+        "single": "bir dakika içinde"
+      },
+      "hour": {
+        "one": "{count} saat sonra",
+        "few": "{count} saat sonra",
+        "many": "{count} saat sonra",
+        "other": "{count} saat sonra",
+        "single": "bir saat içinde"
+      },
+      "day": {
+        "one": "{count} gün sonra",
+        "few": "{count} gün sonra",
+        "many": "{count} gün sonra",
+        "other": "{count} gün sonra",
+        "single": "yarın"
+      },
+      "week": {
+        "one": "{count} hafta sonra",
+        "few": "{count} hafta sonra",
+        "many": "{count} hafta sonra",
+        "other": "{count} hafta sonra",
+        "single": "bir hafta içinde"
+      },
+      "month": {
+        "one": "{count} ay sonra",
+        "few": "{count} ay sonra",
+        "many": "{count} ay sonra",
+        "other": "{count} ay sonra",
+        "single": "bir ay içinde"
+      },
+      "year": {
+        "one": "{count} yıl sonra",
+        "few": "{count} yıl sonra",
+        "many": "{count} yıl sonra",
+        "other": "{count} yıl sonra",
+        "single": "bir yıl içinde"
+      }
+    }
+  },
+  "action": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil"
+  },
+  "message": {
+    "welcome": "{app} uygulamasına hoş geldiniz."
+  }
+}

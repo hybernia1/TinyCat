@@ -11,7 +11,7 @@ final class Tags
     {
         $tag = \TinyCat\Status\Tags::status_tag_normalize($tag);
 
-        return $tag !== '' ? '/tag/' . rawurlencode($tag) : '/';
+        return \TinyCat\Support\LocalUrls::resolve($tag !== '' ? '/tag/' . rawurlencode($tag) : '/');
     }
 
     public static function tag_feed_url(string $tag): string
@@ -29,7 +29,7 @@ final class Tags
         $limit = max(1, min(30, $limit));
         $days = max(1, min(365, $days));
         $since = \TinyCat\Support\Dates::dateDb('-' . $days . ' days');
-        $cacheKey = 'public_trending_tags_' . $limit . '_' . $days;
+        $cacheKey = 'public_trending_tags_v2_' . $limit . '_' . $days;
 
         $cached = \TinyCat\Support\Cache::get($cacheKey, 3600);
 
@@ -77,7 +77,7 @@ final class Tags
                 $tags[] = [
                     'id' => (int) ($row['id'] ?? 0),
                     'name' => $name,
-                    'url' => \TinyCat\Status\Tags::tag_url($name),
+                    'url' => '/tag/' . rawurlencode($name),
                     'posts_count' => (int) ($row['posts_count'] ?? 0),
                 ];
             }

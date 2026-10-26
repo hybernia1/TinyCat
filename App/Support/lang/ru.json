@@ -1,0 +1,174 @@
+{
+  "common": {
+    "refresh": "Обновить",
+    "save": "Сохранить",
+    "create": "Создать",
+    "delete": "Удалить",
+    "cancel": "Отмена",
+    "continue": "Продолжить",
+    "confirm": "Подтвердить",
+    "confirm_action": "Подтвердить действие",
+    "back": "Назад",
+    "previous": "Назад",
+    "next": "Далее",
+    "finish": "Завершить",
+    "open": "Открыть",
+    "video": "Видео",
+    "menu": "Меню",
+    "close": "Закрыть",
+    "skip_to_content": "Перейти к основному содержанию",
+    "main_navigation": "Основная навигация",
+    "site_logo_alt": "Логотип {site}",
+    "request_failed": "Не удалось выполнить запрос.",
+    "edit": "Править",
+    "login": "Вход",
+    "logout": "Выйти",
+    "register": "Регистрация",
+    "admin": "Администратор",
+    "dashboard": "Панель управления",
+    "home": "Главная",
+    "language": "Язык",
+    "database": "База данных",
+    "tables": "Таблицы",
+    "account": "Учётная запись",
+    "done": "Готово",
+    "username": "Имя пользователя",
+    "email": "Электронная почта",
+    "password": "Пароль",
+    "new_password": "Новый пароль",
+    "current_password": "Текущий пароль",
+    "password_confirm": "Подтвердить пароль",
+    "role": "Роль",
+    "status": "Статус",
+    "note": "Примечание",
+    "created": "Создано",
+    "updated": "Обновлено",
+    "route": "Маршрут",
+    "file": "Файл",
+    "image": "Изображение",
+    "table": "Таблица",
+    "clean_api": "API данных",
+    "ui_api": "Пользовательский интерфейс API",
+    "ui": "Интерфейс",
+    "actions": "Действия",
+    "search": "Поиск",
+    "filters": "Фильтры",
+    "apply_filters": "Применить фильтры",
+    "clear_filters": "Сбросить",
+    "pagination": "Нумерация страниц",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "На странице",
+    "all": "Все",
+    "updated_from": "Обновлено с",
+    "updated_to": "Обновлено до",
+    "created_from": "Создано из",
+    "created_to": "Создано для",
+    "unsaved_title": "Несохраненные изменения",
+    "unsaved_message": "Форма содержит несохраненные изменения. Все равно уйти?",
+    "leave": "Оставить",
+    "stay": "Оставайся",
+    "validation_failed": "Пожалуйста, проверьте отправленные значения.",
+    "not_found": "Не найден.",
+    "validation_required": "Поле {field} является обязательным.",
+    "validation_invalid": "Поле {field} имеет недопустимое значение."
+  },
+  "relative": {
+    "now": "сейчас",
+    "past": {
+      "minute": {
+        "one": "{count} минуту назад",
+        "few": "{count} минуты назад",
+        "many": "{count} минут назад",
+        "other": "{count} минуты назад",
+        "single": "минуту назад"
+      },
+      "hour": {
+        "one": "{count} час назад",
+        "few": "{count} часа назад",
+        "many": "{count} часов назад",
+        "other": "{count} часа назад",
+        "single": "час назад"
+      },
+      "day": {
+        "one": "{count} день назад",
+        "few": "{count} дня назад",
+        "many": "{count} дней назад",
+        "other": "{count} дня назад",
+        "single": "вчера"
+      },
+      "week": {
+        "one": "{count} неделю назад",
+        "few": "{count} недели назад",
+        "many": "{count} недель назад",
+        "other": "{count} недели назад",
+        "single": "неделю назад"
+      },
+      "month": {
+        "one": "{count} месяц назад",
+        "few": "{count} месяца назад",
+        "many": "{count} месяцев назад",
+        "other": "{count} месяца назад",
+        "single": "месяц назад"
+      },
+      "year": {
+        "one": "{count} год назад",
+        "few": "{count} года назад",
+        "many": "{count} лет назад",
+        "other": "{count} года назад",
+        "single": "год назад"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "через {count} минуту",
+        "few": "через {count} минуты",
+        "many": "через {count} минут",
+        "other": "через {count} минуты",
+        "single": "через минуту"
+      },
+      "hour": {
+        "one": "через {count} час",
+        "few": "через {count} часа",
+        "many": "через {count} часов",
+        "other": "через {count} часа",
+        "single": "через час"
+      },
+      "day": {
+        "one": "через {count} день",
+        "few": "через {count} дня",
+        "many": "через {count} дней",
+        "other": "через {count} дня",
+        "single": "завтра"
+      },
+      "week": {
+        "one": "через {count} неделю",
+        "few": "через {count} недели",
+        "many": "через {count} недель",
+        "other": "через {count} недели",
+        "single": "через неделю"
+      },
+      "month": {
+        "one": "через {count} месяц",
+        "few": "через {count} месяца",
+        "many": "через {count} месяцев",
+        "other": "через {count} месяца",
+        "single": "через месяц"
+      },
+      "year": {
+        "one": "через {count} год",
+        "few": "через {count} года",
+        "many": "через {count} лет",
+        "other": "через {count} года",
+        "single": "через год"
+      }
+    }
+  },
+  "action": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить"
+  },
+  "message": {
+    "welcome": "Добро пожаловать в {app}."
+  }
+}

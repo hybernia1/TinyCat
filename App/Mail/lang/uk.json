@@ -1,0 +1,45 @@
+{
+  "signature": "З повагою,\n{site}",
+  "templates": {
+    "welcome": {
+      "subject": "Ласкаво просимо до {site}",
+      "body": "Привіт {username},\n\nЛаскаво просимо до {site}. Ваш обліковий запис готовий.\n\nУвійти: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Скиньте свій пароль {site}",
+      "body": "Привіт {username},\n\nМи отримали запит на скидання вашого пароля.\n\nЗмініть пароль: {reset_url}\n\nЦе посилання діє через 60 хвилин. Якщо ви не запитували це, ви можете ігнорувати цей електронний лист.\n\n{signature}"
+    },
+    "notification_content_like": {
+      "subject": "{actor} сподобався ваш допис",
+      "body": "{actor} сподобався ваш допис.\n\nПереглянути публікацію: {content_url}\n\n{signature}"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} прокоментував вашу публікацію",
+      "body": "{actor} прокоментував вашу публікацію.\n\nПереглянути розмову: {content_url}\n\n{signature}"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} сподобався ваш коментар",
+      "body": "{actor} сподобався ваш коментар.\n\nПереглянути розмову: {content_url}\n\n{signature}"
+    },
+    "notification_follow": {
+      "subject": "{actor} підписався на вас",
+      "body": "{actor} підписався на вас.\n\nПереглянути їхній профіль: {actor_url}\n\n{signature}"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} згадав вас",
+      "body": "{actor} згадав вас у публікації.\n\nПереглянути публікацію: {content_url}\n\n{signature}"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} згадав вас",
+      "body": "{actor} згадав вас у коментарі.\n\nПереглянути розмову: {content_url}\n\n{signature}"
+    },
+    "notification_report_resolved": {
+      "subject": "Ваше повідомлення було вирішено",
+      "body": "Ваше повідомлення було розглянуто командою модераторів.\n\nПереглянути повідомлений вміст: {content_url}\n\n{signature}"
+    },
+    "notification_report_dismissed": {
+      "subject": "Ваш звіт відхилено",
+      "body": "Ваше повідомлення було розглянуто та відхилено командою модераторів.\n\nПереглянути повідомлений вміст: {content_url}\n\n{signature}"
+    }
+  }
+}

@@ -6,6 +6,7 @@ final class Module implements \TinyCat\Module
 {
     public static function register(\TinyCat\Http\Api $api): void
     {
+        \TinyCat\Support\LocalUrls::configure(LocaleRouting::url(...));
         Api::register($api);
         foreach (['/sitemap.xml', '/sitemap'] as $path) {
             \TinyCat\Http\Router::route(['GET', 'HEAD'], $path, Discovery::sitemap(...));

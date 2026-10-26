@@ -291,4 +291,16 @@
     <path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="m8 12 3 3 5-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </symbol>
+  <symbol id="flag-cs" viewBox="0 0 24 16"><path fill="#fff" d="M0 0h24v8H0z"/><path fill="#d7141a" d="M0 8h24v8H0z"/><path fill="#11457e" d="m0 0 12 8L0 16z"/></symbol>
+  <symbol id="flag-en" viewBox="0 0 24 16"><path fill="#012169" d="M0 0h24v16H0z"/><path stroke="#fff" stroke-width="4" d="m0 0 24 16M24 0 0 16"/><path stroke="#c8102e" stroke-width="1.5" d="m0 0 24 16M24 0 0 16"/><path stroke="#fff" stroke-width="6" d="M12 0v16M0 8h24"/><path stroke="#c8102e" stroke-width="3" d="M12 0v16M0 8h24"/></symbol>
+  <symbol id="flag-de" viewBox="0 0 24 16"><path fill="#111" d="M0 0h24v6H0z"/><path fill="#d00" d="M0 5.33h24v5.34H0z"/><path fill="#ffce00" d="M0 10.67h24V16H0z"/></symbol>
+  <symbol id="flag-es" viewBox="0 0 24 16"><path fill="#aa151b" d="M0 0h24v16H0z"/><path fill="#f1bf00" d="M0 4h24v8H0z"/></symbol>
+  <symbol id="flag-fr" viewBox="0 0 24 16"><path fill="#0055a4" d="M0 0h8v16H0z"/><path fill="#fff" d="M8 0h8v16H8z"/><path fill="#ef4135" d="M16 0h8v16h-8z"/></symbol>
+  <symbol id="flag-pt" viewBox="0 0 24 16"><path fill="#f00" d="M0 0h24v16H0z"/><path fill="#006600" d="M0 0h10v16H0z"/><circle cx="10" cy="8" r="3.2" fill="#ff0"/><path fill="#fff" stroke="#d00" stroke-width="1" d="M8.4 5.6h3.2v3c0 2-3.2 2-3.2 0z"/></symbol>
+  <symbol id="flag-ru" viewBox="0 0 24 16"><path fill="#fff" d="M0 0h24v6H0z"/><path fill="#0039a6" d="M0 5.33h24v5.34H0z"/><path fill="#d52b1e" d="M0 10.67h24V16H0z"/></symbol>
+  <symbol id="flag-it" viewBox="0 0 24 16"><path fill="#009246" d="M0 0h8v16H0z"/><path fill="#fff" d="M8 0h8v16H8z"/><path fill="#ce2b37" d="M16 0h8v16h-8z"/></symbol>
+  <symbol id="flag-nl" viewBox="0 0 24 16"><path fill="#ae1c28" d="M0 0h24v6H0z"/><path fill="#fff" d="M0 5.33h24v5.34H0z"/><path fill="#21468b" d="M0 10.67h24V16H0z"/></symbol>
+  <symbol id="flag-pl" viewBox="0 0 24 16"><path fill="#fff" d="M0 0h24v8H0z"/><path fill="#dc143c" d="M0 8h24v8H0z"/></symbol>
+  <symbol id="flag-tr" viewBox="0 0 24 16"><path fill="#e30a17" d="M0 0h24v16H0z"/><circle cx="9" cy="8" r="4" fill="#fff"/><circle cx="10.2" cy="8" r="3.2" fill="#e30a17"/><path fill="#fff" d="m15 5.2.8 2 2.1.1-1.6 1.4.5 2.1-1.8-1.2-1.8 1.2.5-2.1-1.6-1.4 2.1-.1z"/></symbol>
+  <symbol id="flag-uk" viewBox="0 0 24 16"><path fill="#0057b7" d="M0 0h24v8H0z"/><path fill="#ffd700" d="M0 8h24v8H0z"/></symbol>
 </svg>

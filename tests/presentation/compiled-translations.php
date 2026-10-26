@@ -34,7 +34,7 @@ try {
     $assert($actual['packages'] === \TinyCat\Support\TranslationSources::packages(), 'Compiled language metadata differs.');
     $assert($actual['unknown_locale'] === \TinyCat\Support\Localization::t('common.close', [], 'en'), 'Unknown locales must fall back without loading source catalogs.');
     $assert($actual['regional_plural'] === \TinyCat\Support\Localization::plural('bots.sources_count', 2, [], 'cs'), 'Regional plural fallback works without source catalogs.');
-    foreach (['cs', 'en'] as $locale) {
+    foreach (array_keys($actual['packages']) as $locale) {
         $assert($actual[$locale]['app'] === \TinyCat\Support\Localization::catalog($locale), 'Compiled/server source parity: ' . $locale);
         $expectedEmails = json_decode((string) file_get_contents($root . '/App/Mail/lang/' . $locale . '.json'), true, 512, JSON_THROW_ON_ERROR);
         $assert($actual[$locale]['emails'] === $expectedEmails, 'Compiled email source parity: ' . $locale);

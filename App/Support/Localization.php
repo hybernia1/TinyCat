@@ -107,9 +107,31 @@ final class Localization
         if (!is_finite((float) $count)) { throw new InvalidArgumentException('Plural counts must be finite.'); }
         $count = abs($count);
         $language = explode('-', strtolower(str_replace('_', '-', $locale)))[0];
+        $integer = floor($count) === (float) $count;
+        $lastDigit = fmod((float) $count, 10);
+        $lastTwo = fmod((float) $count, 100);
         if ($language === 'cs' || $language === 'sk') {
-            if (floor($count) !== (float) $count) { return 'many'; }
+            if (!$integer) { return 'many'; }
             return $count === 1 || $count === 1.0 ? 'one' : ($count >= 2 && $count <= 4 ? 'few' : 'other');
+        }
+        if ($language === 'pl') {
+            if (!$integer) { return 'other'; }
+            if ($count == 1) { return 'one'; }
+            return $lastDigit >= 2 && $lastDigit <= 4 && ($lastTwo < 12 || $lastTwo > 14) ? 'few' : 'many';
+        }
+        if ($language === 'ru' || $language === 'uk') {
+            if (!$integer) { return 'other'; }
+            if ($lastDigit === 1.0 && $lastTwo !== 11.0) { return 'one'; }
+            return $lastDigit >= 2 && $lastDigit <= 4 && ($lastTwo < 12 || $lastTwo > 14) ? 'few' : 'many';
+        }
+        if (in_array($language, ['es', 'fr', 'it', 'pt'], true)) {
+            if (($language === 'fr' || $language === 'pt') && !str_starts_with(strtolower(str_replace('_', '-', $locale)), 'pt-pt')) {
+                if (floor($count) < 2) { return 'one'; }
+            } elseif ($count == 1) {
+                return 'one';
+            }
+            if ($integer && $count !== 0 && $count !== 0.0 && fmod((float) $count, 1000000) === 0.0) { return 'many'; }
+            return 'other';
         }
         return $count === 1 || $count === 1.0 ? 'one' : 'other';
     }

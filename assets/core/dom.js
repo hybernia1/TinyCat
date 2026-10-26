@@ -1,4 +1,5 @@
 
+import "./urls.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat = window.TinyCat || {};
@@ -47,6 +48,7 @@
       var element = document.createElement(tag);
       Object.keys(attributes || {}).forEach(function (name) {
         var value = attributes[name];
+        if (/^(href|action|formaction)$/i.test(name)) { value = TinyCat.urls.local(value); }
         if (!/^[a-z][a-z0-9:_-]*$/i.test(name) || /^on/i.test(name) || /^(srcdoc|style|innerHTML)$/i.test(name)) {
           throw new TypeError("Unsupported UI attribute.");
         }

@@ -10,6 +10,14 @@ Modules own their routes; the entry point only composes and dispatches the app.
 
 ## JSON contract
 
+Public HTML supports explicit language prefixes, for example `/pl/status/123`.
+API routes retain their global `/api/...` addresses. Clients on a prefixed page
+send `X-TinyCat-Locale: pl` to keep server messages and navigation URLs in that
+interface language. The header accepts shipped locale codes and never modifies
+profile preferences. `/api/site/pages?path=/pl/status/123` also accepts a prefixed
+public path; its explicit language takes precedence over the header. Service URLs
+and RSS remain unprefixed, and prefixed API aliases return 404.
+
 ```json
 {"ok":true,"status":200,"code":"ok","params":{},"message":null,"data":{},"meta":{}}
 ```

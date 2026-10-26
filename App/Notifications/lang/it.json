@@ -1,0 +1,35 @@
+{
+  "notifications": {
+    "title": "Notifiche",
+    "meta": "Panoramica degli avvisi per i tuoi post.",
+    "empty": "Non ci sono ancora notifiche.",
+    "mark_read": "Segna come letto",
+    "mark_all_read": "Contrassegna tutto come letto",
+    "delete": "Elimina",
+    "open": "Aperto",
+    "more": "Visualizza altre notifiche",
+    "load_more": "Carica altro",
+    "loading": "Caricamento in corso...",
+    "someone": "Qualcuno",
+    "new_count": {
+      "one": "Hai {count} nuova notifica.",
+      "few": "Hai {count} nuove notifiche.",
+      "many": "Hai {count} nuove notifiche.",
+      "other": "Hai {count} nuove notifiche."
+    },
+    "messages": {
+      "follow": "{actor} ti ha seguito.",
+      "content_like": "A {actor} è piaciuto il tuo post.",
+      "comment_like": "A {actor} è piaciuto il tuo commento.",
+      "content_comment": "{actor} ha commentato il tuo post.",
+      "content_mention": "{actor} ti ha menzionato in un post.",
+      "comment_mention": "{actor} ti ha menzionato in un commento.",
+      "report_resolved": "La tua segnalazione è stata risolta.",
+      "report_dismissed": "La tua segnalazione è stata respinta.",
+      "generic": "{actor} ha reagito al tuo post.",
+      "read_done": "La notifica è stata contrassegnata come letta.",
+      "read_all_done": "Tutte le notifiche sono state contrassegnate come lette.",
+      "deleted": "La notifica è stata eliminata."
+    }
+  }
+}

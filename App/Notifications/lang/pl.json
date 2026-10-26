@@ -1,0 +1,35 @@
+{
+  "notifications": {
+    "title": "Powiadomienia",
+    "meta": "Przegląd alertów dla Twoich postów.",
+    "empty": "Nie ma jeszcze żadnych powiadomień.",
+    "mark_read": "Oznacz jako przeczytane",
+    "mark_all_read": "Oznacz wszystko jako przeczytane",
+    "delete": "Usuń",
+    "open": "Otwarte",
+    "more": "Wyświetl więcej powiadomień",
+    "load_more": "Załaduj więcej",
+    "loading": "Ładowanie...",
+    "someone": "Ktoś",
+    "new_count": {
+      "one": "Masz {count} nowe powiadomienie.",
+      "few": "Masz {count} nowe powiadomienia.",
+      "many": "Masz {count} nowych powiadomień.",
+      "other": "Masz {count} nowego powiadomienia."
+    },
+    "messages": {
+      "follow": "{actor} podążał za tobą.",
+      "content_like": "{actor} polubił Twój post.",
+      "comment_like": "{actor} polubił Twój komentarz.",
+      "content_comment": "{actor} skomentował Twój post.",
+      "content_mention": "{actor} wspomniał o Tobie w poście.",
+      "comment_mention": "{actor} wspomniał o Tobie w komentarzu.",
+      "report_resolved": "Twój raport został rozwiązany.",
+      "report_dismissed": "Twój raport został odrzucony.",
+      "generic": "{actor} zareagował na Twój post.",
+      "read_done": "Powiadomienie zostało oznaczone jako przeczytane.",
+      "read_all_done": "Wszystkie powiadomienia zostały oznaczone jako przeczytane.",
+      "deleted": "Powiadomienie zostało usunięte."
+    }
+  }
+}

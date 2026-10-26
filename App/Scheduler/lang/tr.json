@@ -1,0 +1,81 @@
+{
+  "cron": {
+    "title": "Zamanlanmış görevler",
+    "intro": "Küçük bir koşucu, paylaşılan kimlik doğrulamayla bağımsız zamanlanmış görevleri kullanıma sunar.",
+    "access_title": "Erişim ve belirteç",
+    "access_help": "Zamanlanmış her görev tarafından kullanılan paylaşılan uç nokta ve kimlik doğrulama.",
+    "url": "Uç Nokta URL",
+    "token": "Taşıyıcı jeton",
+    "task_url": "Basit web cron'u URL",
+    "query_help": "Özel üstbilgileri olmayan hizmetler için uyumluluk seçeneği. Belirteç, sunucu erişim günlüklerinde saklanabilir.",
+    "http_command": "HTTP komutu",
+    "cli_command": "Sunucu komutu",
+    "rotate": "Jetonu döndür",
+    "rotate_confirm": "Cron jetonu döndürülsün mü? Mevcut planlanmış aramalar güncellenene kadar çalışmayı durduracaktır.",
+    "tasks": {
+      "cleanup": "Otomatik temizleme",
+      "cleanup_help": "Kullanılmayan etiketleri ve bağlantıları, artık yayın ve önizleme resimlerini, süresi dolmuş veri önbelleklerini, eski hız sınırı paketlerini, süresi dolmuş sıfırlama belirteçlerini ve okuma bildirimlerini kaldırır.",
+      "cleanup_schedule": "Saatlik program. Dahili durum kontrolleri temizleme işleminin çok sık yapılmasını önler.",
+      "feeds": "RSS ve Atom kaynakları",
+      "feeds_help": "Etkin kaynaklardan gelen, aralığının dolması gereken öğeleri yayınlar.",
+      "feeds_schedule": "Gerekli yoklama sıklığına göre planlama yapın; genellikle her iki dakikada bir."
+    },
+    "messages": {
+      "token_rotated": "Cron jetonu döndürüldü."
+    },
+    "list_title": "Göreve genel bakış",
+    "configuration": "Bağlantı ve planlama",
+    "list_help": "Planlama, sunucunuz veya web cronunuz tarafından kontrol edilir. Bunlar önerilen aralıklar ve varsayılan sınırlardır. Şimdi çalıştır, temizleme aralığını atlar; RSS hâlâ her kaynak aralığına saygı gösteriyor. Geçmiş, bu güncellemeden sonra kaydedilen çalıştırmaları içerir.",
+    "task": "Görev",
+    "schedule": "Program ve varsayılan sınırlar",
+    "latest": "En son çalışma",
+    "run_now": "Şimdi çalıştır",
+    "history": "Çalıştırma geçmişi",
+    "status": "Durumu",
+    "started": "Başlatıldı",
+    "duration": "Süre",
+    "result": "Sonuç",
+    "no_runs": "Bu filtrelerle eşleşen kayıtlı çalışma yok.",
+    "never": "Kayıtlı çalışma yok",
+    "run_finished": "Görev tamamlandı.",
+    "run_failed": "Görev başarısız oldu. Çalıştırma geçmişinde sonucunu görün.",
+    "already_running": "Görev zaten çalışıyor.",
+    "unknown_task": "Bilinmeyen görev.",
+    "summary_count": "İşlendi: {count}",
+    "summary_changed": "Değiştirildi: {count}",
+    "options": {
+      "bot_limit": "Kaynak sınırı",
+      "cleanup_batch": "Temizleme toplu işlemi",
+      "source_id": "Kaynak Kimliği"
+    },
+    "statuses": {
+      "running": "Çalışıyor",
+      "completed": "Tamamlandı",
+      "failed": "Başarısız",
+      "not_due": "Vadesi gelmedi",
+      "has_more": "Daha fazla iş beklemede",
+      "interrupted": "Kesintiye uğradı"
+    },
+    "modes": {
+      "cli": "Sunucu CLI'si",
+      "http": "Web cronu",
+      "admin": "Kılavuzu"
+    },
+    "menu_title": "Görevler",
+    "overview_help": "Önerilen aralıklar ve varsayılan sınırlar. Planlama sunucu veya web-cron tarafından yönetilir.",
+    "cadence": {
+      "feeds": "Her iki dakikada bir kontrol edin",
+      "cleanup": "Saatte bir"
+    },
+    "run_details": "Çalıştırma ayrıntıları",
+    "refresh": "Yenile",
+    "run_not_found": "Bu çalıştırma bulunamadı.",
+    "finished": "Bitti",
+    "unfinished": "Bitmedi",
+    "trigger": "Başlangıç tarihi:",
+    "actor": "Başlatan",
+    "run_id": "Çalıştırma Kimliği",
+    "parameters": "Çalıştırma parametreleri",
+    "error": "Hatası"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "notifications": {
+    "title": "Notificaciones",
+    "meta": "Resumen de alertas para sus publicaciones.",
+    "empty": "Aún no hay notificaciones.",
+    "mark_read": "Marcar como leído",
+    "mark_all_read": "Marcar todo como leído",
+    "delete": "Borrar",
+    "open": "Abierto",
+    "more": "Ver más notificaciones",
+    "load_more": "Cargar más",
+    "loading": "Cargando...",
+    "someone": "Alguien",
+    "new_count": {
+      "one": "Tienes {count} notificación nueva.",
+      "few": "Tienes {count} notificaciones nuevas.",
+      "many": "Tienes {count} notificaciones nuevas.",
+      "other": "Tienes {count} notificaciones nuevas."
+    },
+    "messages": {
+      "follow": "{actor} te siguió.",
+      "content_like": "A {actor} le gustó tu publicación.",
+      "comment_like": "A {actor} le gustó tu comentario.",
+      "content_comment": "{actor} comentó tu publicación.",
+      "content_mention": "{actor} te mencionó en una publicación.",
+      "comment_mention": "{actor} te mencionó en un comentario.",
+      "report_resolved": "Su informe fue resuelto.",
+      "report_dismissed": "Su informe fue desestimado.",
+      "generic": "{actor} reaccionó a tu publicación.",
+      "read_done": "La notificación se marcó como leída.",
+      "read_all_done": "Todas las notificaciones se marcaron como leídas.",
+      "deleted": "La notificación fue eliminada."
+    }
+  }
+}

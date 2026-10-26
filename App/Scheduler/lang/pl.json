@@ -1,0 +1,81 @@
+{
+  "cron": {
+    "title": "Zaplanowane zadania",
+    "intro": "Jeden mały moduł uruchamiający udostępnia niezależne zaplanowane zadania ze współdzielonym uwierzytelnianiem.",
+    "access_title": "Dostęp i token",
+    "access_help": "Współdzielony punkt końcowy i uwierzytelnianie używane przez każde zaplanowane zadanie.",
+    "url": "Adres URL punktu końcowego",
+    "token": "Token okaziciela",
+    "task_url": "Prosty web-cron URL",
+    "query_help": "Opcja kompatybilności dla usług bez niestandardowych nagłówków. Token może być przechowywany w logach dostępu do serwera.",
+    "http_command": "Polecenie HTTP",
+    "cli_command": "Polecenie serwera",
+    "rotate": "Obróć token",
+    "rotate_confirm": "Obrócić token cron? Istniejące zaplanowane połączenia przestaną działać do czasu ich aktualizacji.",
+    "tasks": {
+      "cleanup": "Automatyczne czyszczenie",
+      "cleanup_help": "Usuwa nieużywane znaczniki i łącza, osierocone obrazy postów i podglądów, wygasłe pamięci podręczne danych, stare zasobniki z limitami szybkości, wygasłe tokeny resetowania i powiadomienia o przeczytaniu.",
+      "cleanup_schedule": "Harmonogram godzinowy. Wewnętrzne kontrole zapobiegają zbyt częstemu uruchamianiu czyszczenia.",
+      "feeds": "RSS i źródła Atom",
+      "feeds_help": "Publikuje elementy z aktywnych źródeł, dla których przypada termin.",
+      "feeds_schedule": "Harmonogram zgodnie z wymaganą częstotliwością odpytywania, zazwyczaj co dwie minuty."
+    },
+    "messages": {
+      "token_rotated": "Token cron został obrócony."
+    },
+    "list_title": "Przegląd zadań",
+    "configuration": "Połączenie i planowanie",
+    "list_help": "Harmonogramem zarządza Twój serwer lub web-cron. Podano zalecane interwały i domyślne limity. Uruchom teraz pomija interwał czyszczenia; RSS nadal przestrzega interwału każdego źródła. Historia obejmuje uruchomienia zarejestrowane po tej aktualizacji.",
+    "task": "Zadanie",
+    "schedule": "Harmonogram i limity domyślne",
+    "latest": "Najnowsze uruchomienie",
+    "run_now": "Uruchom teraz",
+    "history": "Historia uruchamiania",
+    "status": "Status",
+    "started": "Rozpoczęto",
+    "duration": "Czas trwania",
+    "result": "Wynik",
+    "no_runs": "Żadne zarejestrowane przebiegi nie pasują do tych filtrów.",
+    "never": "Brak zarejestrowanego przebiegu",
+    "run_finished": "Zadanie zostało zakończone.",
+    "run_failed": "Zadanie nie powiodło się. Zobacz jego wynik w historii uruchomień.",
+    "already_running": "Zadanie jest już uruchomione.",
+    "unknown_task": "Nieznane zadanie.",
+    "summary_count": "Przetworzone: {count}",
+    "summary_changed": "Zmieniono: {count}",
+    "options": {
+      "bot_limit": "Limit źródła",
+      "cleanup_batch": "Partia czyszcząca",
+      "source_id": "Identyfikator źródła"
+    },
+    "statuses": {
+      "running": "W trakcie",
+      "completed": "Ukończono",
+      "failed": "nie powiodło się",
+      "not_due": "Nieterminowe",
+      "has_more": "Dalsze prace w toku",
+      "interrupted": "Przerwano"
+    },
+    "modes": {
+      "cli": "Wiersz poleceń serwera",
+      "http": "Cron internetowy",
+      "admin": "Zadania"
+    },
+    "menu_title": "Zadania",
+    "overview_help": "Zalecane odstępy czasu i domyślne limity. Harmonogramem zarządza serwer lub web-cron.",
+    "cadence": {
+      "feeds": "Sprawdzaj co dwie minuty",
+      "cleanup": "Raz na godzinę"
+    },
+    "run_details": "Szczegóły uruchomienia",
+    "refresh": "Odśwież",
+    "run_not_found": "Nie znaleziono tego uruchomienia.",
+    "finished": "Zakończono",
+    "unfinished": "Nieskończone",
+    "trigger": "Uruchomiono przez",
+    "actor": "Rozpoczęty przez",
+    "run_id": "Identyfikator uruchomienia",
+    "parameters": "Parametry pracy",
+    "error": "Błąd"
+  }
+}

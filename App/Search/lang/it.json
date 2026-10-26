@@ -1,0 +1,25 @@
+{
+  "public": {
+    "search_title": "Cerca",
+    "search_title_query": "Cerca \"{query}\"",
+    "search_meta": "Cerca post, profili e tag.",
+    "search_meta_query": "Risultati della ricerca per {query}.",
+    "search_placeholder": "Cerca post o profili",
+    "search_suggest_placeholder": "Cerca",
+    "search_all": "Cerca ovunque",
+    "search_tags": "Tag",
+    "search_users": "Profili",
+    "search_content": "Post",
+    "search_empty": "Non è stato trovato nulla.",
+    "search_min": "Digitare almeno 2 caratteri.",
+    "search_captcha_title": "Controllo di sicurezza",
+    "search_captcha_required": "Completa il controllo di sicurezza per continuare la ricerca.",
+    "search_captcha_unlocked": "La ricerca è stata sbloccata.",
+    "search_tag_posts": {
+      "one": "{count} post",
+      "few": "{count} post",
+      "many": "{count} post",
+      "other": "{count} post"
+    }
+  }
+}

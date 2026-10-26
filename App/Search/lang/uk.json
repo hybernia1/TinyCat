@@ -1,0 +1,25 @@
+{
+  "public": {
+    "search_title": "Пошук",
+    "search_title_query": "Пошук \"{query}\"",
+    "search_meta": "Пошук публікацій, профілів і тегів.",
+    "search_meta_query": "Результати пошуку для {query}.",
+    "search_placeholder": "Пошук публікацій або профілів",
+    "search_suggest_placeholder": "Пошук",
+    "search_all": "Шукати всюди",
+    "search_tags": "Теги",
+    "search_users": "Профілі",
+    "search_content": "Дописи",
+    "search_empty": "Нічого не знайдено.",
+    "search_min": "Введіть принаймні 2 символи.",
+    "search_captcha_title": "Перевірка безпеки",
+    "search_captcha_required": "Пройдіть перевірку безпеки, щоб продовжити пошук.",
+    "search_captcha_unlocked": "Пошук розблоковано.",
+    "search_tag_posts": {
+      "one": "{count} допис",
+      "few": "{count} дописи",
+      "many": "{count} дописів",
+      "other": "{count} допису"
+    }
+  }
+}

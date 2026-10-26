@@ -1,0 +1,174 @@
+{
+  "common": {
+    "refresh": "Vernieuwen",
+    "save": "Opslaan",
+    "create": "Maken",
+    "delete": "Verwijderen",
+    "cancel": "Annuleren",
+    "continue": "Ga verder",
+    "confirm": "Bevestigen",
+    "confirm_action": "Actie bevestigen",
+    "back": "Terug",
+    "previous": "Vorige",
+    "next": "Volgende",
+    "finish": "Afwerking",
+    "open": "Openen",
+    "video": "-video",
+    "menu": "-menu",
+    "close": "Sluiten",
+    "skip_to_content": "Ga naar de hoofdinhoud",
+    "main_navigation": "Hoofdnavigatie",
+    "site_logo_alt": "{site}-logo",
+    "request_failed": "Het verzoek kon niet worden voltooid.",
+    "edit": "Bewerken",
+    "login": "Inloggen",
+    "logout": "Uitloggen",
+    "register": "Registreren",
+    "admin": "Beheerder",
+    "dashboard": "Dashboard",
+    "home": "Startpagina",
+    "language": "Taal",
+    "database": "-database",
+    "tables": "Tabellen",
+    "account": "-rekening",
+    "done": "Klaar",
+    "username": "Gebruikersnaam",
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "new_password": "Nieuw wachtwoord",
+    "current_password": "Huidig wachtwoord",
+    "password_confirm": "Wachtwoord bevestigen",
+    "role": "Rol",
+    "status": "-status",
+    "note": "Opmerking",
+    "created": "Gemaakt",
+    "updated": "bijgewerkt",
+    "route": "-route",
+    "file": "-bestand",
+    "image": "-afbeelding",
+    "table": "-tabel",
+    "clean_api": "Gegevens-API",
+    "ui_api": "gebruikersinterface API",
+    "ui": "-gebruikersinterface",
+    "actions": "Acties",
+    "search": "Zoeken",
+    "filters": "-filters",
+    "apply_filters": "Filters toepassen",
+    "clear_filters": "Wissen",
+    "pagination": "Paginering",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "Per pagina",
+    "all": "Alle",
+    "updated_from": "Bijgewerkt vanaf",
+    "updated_to": "Bijgewerkt naar",
+    "created_from": "Gemaakt van",
+    "created_to": "Gemaakt naar",
+    "unsaved_title": "Niet-opgeslagen wijzigingen",
+    "unsaved_message": "Het formulier bevat niet-opgeslagen wijzigingen. Toch weggaan?",
+    "leave": "Vertrekken",
+    "stay": "Blijf",
+    "validation_failed": "Controleer de ingediende waarden.",
+    "not_found": "Niet gevonden.",
+    "validation_required": "Het veld {field} is verplicht.",
+    "validation_invalid": "Het veld {field} heeft een ongeldige waarde."
+  },
+  "relative": {
+    "now": "nu",
+    "past": {
+      "minute": {
+        "one": "{count} minuut geleden",
+        "few": "{count} minuten geleden",
+        "many": "{count} minuten geleden",
+        "other": "{count} minuten geleden",
+        "single": "een minuut geleden"
+      },
+      "hour": {
+        "one": "{count} uur geleden",
+        "few": "{count} uur geleden",
+        "many": "{count} uur geleden",
+        "other": "{count} uur geleden",
+        "single": "een uur geleden"
+      },
+      "day": {
+        "one": "{count} dag geleden",
+        "few": "{count} dagen geleden",
+        "many": "{count} dagen geleden",
+        "other": "{count} dagen geleden",
+        "single": "gisteren"
+      },
+      "week": {
+        "one": "{count} week geleden",
+        "few": "{count} weken geleden",
+        "many": "{count} weken geleden",
+        "other": "{count} weken geleden",
+        "single": "een week geleden"
+      },
+      "month": {
+        "one": "{count} maand geleden",
+        "few": "{count} maanden geleden",
+        "many": "{count} maanden geleden",
+        "other": "{count} maanden geleden",
+        "single": "een maand geleden"
+      },
+      "year": {
+        "one": "{count} jaar geleden",
+        "few": "{count} jaar geleden",
+        "many": "{count} jaar geleden",
+        "other": "{count} jaar geleden",
+        "single": "een jaar geleden"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "over {count} minuut",
+        "few": "over {count} minuten",
+        "many": "over {count} minuten",
+        "other": "over {count} minuten",
+        "single": "in een minuut"
+      },
+      "hour": {
+        "one": "over {count} uur",
+        "few": "over {count} uur",
+        "many": "over {count} uur",
+        "other": "over {count} uur",
+        "single": "in een uur"
+      },
+      "day": {
+        "one": "over {count} dag",
+        "few": "over {count} dagen",
+        "many": "over {count} dagen",
+        "other": "over {count} dagen",
+        "single": "morgen"
+      },
+      "week": {
+        "one": "over {count} week",
+        "few": "over {count} weken",
+        "many": "over {count} weken",
+        "other": "over {count} weken",
+        "single": "binnen een week"
+      },
+      "month": {
+        "one": "over {count} maand",
+        "few": "over {count} maanden",
+        "many": "over {count} maanden",
+        "other": "over {count} maanden",
+        "single": "binnen een maand"
+      },
+      "year": {
+        "one": "over {count} jaar",
+        "few": "over {count} jaar",
+        "many": "over {count} jaar",
+        "other": "over {count} jaar",
+        "single": "over een jaar"
+      }
+    }
+  },
+  "action": {
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen"
+  },
+  "message": {
+    "welcome": "Welkom bij {app}."
+  }
+}

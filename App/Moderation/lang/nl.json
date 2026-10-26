@@ -1,0 +1,54 @@
+{
+  "moderation": {
+    "title": "Moderatie",
+    "reports_title": "-rapporten",
+    "reports_empty": "Er zijn geen meldingen.",
+    "reported_content": "Gerapporteerde inhoud",
+    "report_status": "Rapportbericht",
+    "report_action": "-rapport",
+    "report_reason": "Reden",
+    "report_note": "Opmerking",
+    "report_submit": "Rapport verzenden",
+    "profile_muted_until": "Het account is gedempt tot {until}.",
+    "url_blocker_title": "Geblokkeerde URL's",
+    "url_blocker_label": "Geblokkeerde websites",
+    "url_blocker_placeholder": "voorbeeld.com, slecht.voorbeeld, domein:ru",
+    "url_blocker_help": "Scheid websites met komma's of nieuwe regels. Subdomeinen worden ook geblokkeerd. Gebruik domain:ru om het hele .ru-achtervoegsel te blokkeren.",
+    "remove_content": "Inhoud verwijderen",
+    "keep_and_lock": "Bewaren en vergrendelen",
+    "empty_content": "Lege inhoud",
+    "report_reasons": {
+      "spam": "Spam",
+      "illegal": "Illegale inhoud",
+      "malware": "Malware of phishing",
+      "abuse": "Misbruik",
+      "other": "Anders"
+    },
+    "report_statuses": {
+      "open": "Openen",
+      "reviewed": "beoordeeld",
+      "resolved": "Opgelost",
+      "dismissed": "afgewezen"
+    },
+    "messages": {
+      "action_limited": "Dit account heeft de tijdelijke actielimiet bereikt.",
+      "action_too_fast": "Even geduld a.u.b. voor de volgende actie.",
+      "account_muted": "Dit account is tijdelijk gedempt tot {until}.",
+      "blocked_url": "Deze link is niet toegestaan: {host}.",
+      "duplicate_body": "Dit bericht lijkt te veel op uw recente bericht.",
+      "report_created": "Het rapport is ingediend.",
+      "report_already_reviewed": "Dit bericht is al beoordeeld en het rapport is niet heropend.",
+      "report_own_content": "Je kunt je eigen bericht niet rapporteren.",
+      "reports_unavailable": "Rapporten zijn niet beschikbaar.",
+      "report_not_found": "Rapport is niet gevonden.",
+      "report_reviewed": "Het rapport is beoordeeld.",
+      "url_blocker_saved": "Geblokkeerde URL's zijn opgeslagen."
+    },
+    "report_count": {
+      "one": "{count} melding",
+      "few": "{count} meldingen",
+      "many": "{count} meldingen",
+      "other": "{count} meldingen"
+    }
+  }
+}

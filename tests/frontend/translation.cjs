@@ -19,13 +19,14 @@ function node(value = "") {
 }
 async function flush() { for (let i = 0; i < 12; i++) { await Promise.resolve(); } }
 async function run() {
-  let translations = 0, destroyed = 0, fail = false;
+  let translations = 0, destroyed = 0, fail = false, interfaceLocale = "cs";
+  const pairs = [];
   const bodies = ["12345", "!!!", "https://example.com", "#testing @user", "Czech post", "English post", "uncertain"].map(node);
   const detector = { detect: async value => [{ detectedLanguage: value === "Czech post" ? "cs" : "en", confidence: value === "uncertain" ? 0.1 : 0.99 }] };
-  const T = { i18n: { t: key => key, locale: () => "cs" }, dom: { all: () => bodies }, icons: { create: name => ({ name }) }, status: { controllers: {} } };
+  const T = { i18n: { t: key => key, locale: () => interfaceLocale }, dom: { all: () => bodies }, icons: { create: name => ({ name }) }, status: { controllers: {} } };
   const window = { TinyCat: T, isSecureContext: false,
     LanguageDetector: { availability: async () => "available", create: async () => detector },
-    Translator: { availability: async () => "available", create: async () => ({
+    Translator: { availability: async pair => { pairs.push(pair); return "available"; }, create: async () => ({
       translate: async () => { translations++; if (fail) { throw new Error("Unavailable"); } return "<b>Translated text</b>"; },
       destroy() { destroyed++; }
     }) }
@@ -62,6 +63,11 @@ async function run() {
   assert.equal(retry.controls.children[0].disabled, false, "Failure allows retry");
   assert.equal(retry.hidden, false);
   assert.equal(retry.controls.children[1].textContent, "account.translation_failed");
-  console.log("PASS local translation eligibility, target language, original preservation, badge, toggle and failure recovery (19 checks)");
+  interfaceLocale = "pl";
+  const polishView = node("Another English post in the Polish interface");
+  bodies.push(polishView); T.status.controllers.translation.hydrate({}); await flush();
+  assert.equal(polishView.controls.children[2].lang, "pl", "A prefixed Polish interface selects Polish output");
+  assert.ok(pairs.some(pair => pair.sourceLanguage === "en" && pair.targetLanguage === "pl"), "Browser translation availability is checked for the URL-selected language");
+  console.log("PASS local translation eligibility, target language, original preservation, badge, toggle and failure recovery (21 checks)");
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

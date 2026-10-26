@@ -1,0 +1,35 @@
+{
+  "notifications": {
+    "title": "Bildirimler",
+    "meta": "Gönderilerinize ilişkin uyarılara genel bakış.",
+    "empty": "Henüz herhangi bir bildirim yok.",
+    "mark_read": "Okundu olarak işaretle",
+    "mark_all_read": "Tümünü okundu olarak işaretle",
+    "delete": "Sil",
+    "open": "Açık",
+    "more": "Daha fazla bildirim görüntüle",
+    "load_more": "Daha fazlasını yükle",
+    "loading": "Yükleniyor...",
+    "someone": "Birisi",
+    "new_count": {
+      "one": "{count} yeni bildiriminiz var.",
+      "few": "{count} yeni bildiriminiz var.",
+      "many": "{count} yeni bildiriminiz var.",
+      "other": "{count} yeni bildiriminiz var."
+    },
+    "messages": {
+      "follow": "{actor} seni takip etti.",
+      "content_like": "{actor} gönderinizi beğendi.",
+      "comment_like": "{actor} yorumunuzu beğendi.",
+      "content_comment": "{actor} gönderinize yorum yaptı.",
+      "content_mention": "{actor} bir gönderide sizden bahsetti.",
+      "comment_mention": "{actor} bir yorumda sizden bahsetti.",
+      "report_resolved": "Raporunuz çözüldü.",
+      "report_dismissed": "Raporunuz reddedildi.",
+      "generic": "{actor} gönderinize tepki verdi.",
+      "read_done": "Bildirim okundu olarak işaretlendi.",
+      "read_all_done": "Tüm bildirimler okundu olarak işaretlendi.",
+      "deleted": "Bildirim silindi."
+    }
+  }
+}

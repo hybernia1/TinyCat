@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.4.0 - 2026-10-27
+
+- Move anonymous language selection into a navbar flag menu; signed-in users retain profile preferences. Offer a dismissible switch in the browser's preferred supported language when it differs from the current interface.
+- Add explicit locale-prefixed public URLs, language-preserving HTML/AJAX navigation and a crawlable language selector; URL language takes precedence over account/browser preferences.
+- Publish reciprocal policy-page hreflang alternatives and sitemap entries, retain canonical original user content, and align structured data and HTTP language metadata.
+- Add initial German, Spanish, French, Portuguese, Russian, Italian, Dutch, Polish, Turkish and Ukrainian interface, administration, installation and email catalogs.
+- Apply locale-specific plural rules consistently in PHP and JavaScript, preserving exact-one relative-time phrases separately from numeric plural forms.
+- Verify every shipped locale in browser detection, compiled catalogs, CLDR plural selection and server/client rendering parity.
+- Preserve the detected language in the F1 policy link and close the navbar menu after selecting a language.
+
 ## 4.3.0 - 2026-10-26
 
 - Add optional, on-device post translation in supported browsers on HTTPS, targeting the current interface language without uploading or persistently storing translations.

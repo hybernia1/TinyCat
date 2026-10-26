@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **4.3.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+Current release: **4.4.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -13,6 +13,8 @@ Usernames support 2–32 letters (including accents), numbers, dots, hyphens and
 - Public and following-only feeds with incremental loading.
 - Posts with hashtags, mentions, likes, threaded comments, comment likes, and notifications.
 - Profiles with avatars, bios, language and appearance preferences, activity statistics, and following lists.
+- Interface, administration, installer and email translations in Czech, English, German, Spanish, French, Portuguese, Russian, Italian, Dutch, Polish, Turkish and Ukrainian; browser language detection initializes new account preferences.
+- Explicit public language URLs such as `/pl/`, `/pl/status/123` and `/pl/privacy`, with a language selector, localized policy discovery and canonical original posts.
 - Search across posts, users, tags, and metadata extracted from linked pages.
 - HTML5 link previews with Open Graph, video embeds, and cached metadata.
 - Optional email recovery and localized email notifications through PHP mail or SMTP.

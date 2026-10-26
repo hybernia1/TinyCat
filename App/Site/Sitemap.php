@@ -58,7 +58,7 @@ final class Sitemap
         $section = strtolower(trim($section));
 
         return match ($section) {
-            'pages' => 2,
+            'pages' => count(self::staticEntries()),
             'authors' => (int) \TinyCat\Database\Connection::value(
                 'SELECT COUNT(*) FROM users WHERE status = ?',
                 ['active']
@@ -101,7 +101,7 @@ final class Sitemap
         $offset = max(0, $offset);
 
         $rows = match ($section) {
-            'pages' => array_slice([['url' => '/', 'last_modified' => null], ['url' => '/privacy', 'last_modified' => null]], $offset, $limit),
+            'pages' => array_slice(self::staticEntries(), $offset, $limit),
             'authors' => \TinyCat\Database\Connection::all(
                 'SELECT u.id
                     FROM users u
@@ -153,6 +153,16 @@ final class Sitemap
             }
         }
 
+        return $entries;
+    }
+
+    /** @return list<array{url: string, last_modified: null}> */
+    private static function staticEntries(): array
+    {
+        $entries = [['url' => '/', 'last_modified' => null], ['url' => '/privacy', 'last_modified' => null]];
+        foreach (array_keys(\TinyCat\Support\Languages::language_packages()) as $locale) {
+            $entries[] = ['url' => LocaleRouting::url('/privacy', $locale), 'last_modified' => null];
+        }
         return $entries;
     }
 

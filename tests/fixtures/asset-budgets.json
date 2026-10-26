@@ -1,5 +1,53 @@
 {
   "/admin/moderation": {
+    "raw_js": 100352,
+    "gzip_js": 25600,
+    "raw_css": 38912,
+    "gzip_css": 8192,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/admin/settings": {
+    "raw_js": 84992,
+    "gzip_js": 22528,
+    "raw_css": 38912,
+    "gzip_css": 8192,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/admin/users": {
+    "raw_js": 151552,
+    "gzip_js": 35840,
+    "raw_css": 44032,
+    "gzip_css": 9216,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/admin/bots": {
+    "raw_js": 134144,
+    "gzip_js": 30720,
+    "raw_css": 38912,
+    "gzip_css": 8192,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/admin/cron": {
+    "raw_js": 115712,
+    "gzip_js": 27648,
+    "raw_css": 38912,
+    "gzip_css": 8192,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/install": {
+    "raw_js": 36864,
+    "gzip_js": 11264,
+    "raw_css": 32768,
+    "gzip_css": 7168,
+    "scripts": 4,
+    "stylesheets": 1
+  },
+  "/admin": {
     "raw_js": 79872,
     "gzip_js": 21504,
     "raw_css": 38912,
@@ -7,57 +55,9 @@
     "scripts": 4,
     "stylesheets": 1
   },
-  "/admin/settings": {
-    "raw_js": 76800,
-    "gzip_js": 20480,
-    "raw_css": 38912,
-    "gzip_css": 8192,
-    "scripts": 4,
-    "stylesheets": 1
-  },
-  "/admin/users": {
-    "raw_js": 116736,
-    "gzip_js": 29696,
-    "raw_css": 44032,
-    "gzip_css": 9216,
-    "scripts": 4,
-    "stylesheets": 1
-  },
-  "/admin/bots": {
-    "raw_js": 103424,
-    "gzip_js": 25600,
-    "raw_css": 38912,
-    "gzip_css": 8192,
-    "scripts": 4,
-    "stylesheets": 1
-  },
-  "/admin/cron": {
-    "raw_js": 94208,
-    "gzip_js": 23552,
-    "raw_css": 38912,
-    "gzip_css": 8192,
-    "scripts": 4,
-    "stylesheets": 1
-  },
-  "/install": {
-    "raw_js": 31744,
-    "gzip_js": 10240,
-    "raw_css": 32768,
-    "gzip_css": 7168,
-    "scripts": 4,
-    "stylesheets": 1
-  },
-  "/admin": {
-    "raw_js": 71680,
-    "gzip_js": 19456,
-    "raw_css": 38912,
-    "gzip_css": 8192,
-    "scripts": 4,
-    "stylesheets": 1
-  },
   "/": {
-    "raw_js": 259072,
-    "gzip_js": 59392,
+    "raw_js": 328704,
+    "gzip_js": 69632,
     "raw_css": 65536,
     "gzip_css": 12288,
     "scripts": 4,

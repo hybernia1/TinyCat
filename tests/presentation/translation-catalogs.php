@@ -49,7 +49,10 @@ try {
     $reject('App/Support/lang/cs.json', '{"common":{"empty":false}}', 'expected string at common.empty');
     $reject('App/Support/lang/cs.json', '{"common":{}}', 'empty namespace common');
     $reject('App/Support/lang/cs.json', '{"common":{"one":"1","other":"many"}}', 'incomplete plural forms at common');
+    $reject('App/Support/lang/cs.json', '{"common":{"one":"1","other":"many","single":"exactly one"}}', 'incomplete plural forms at common');
     $reject('App/Support/lang/cs.json', str_replace('Hello', 'prob?ha', $app), 'suspicious encoding marker at common.greeting');
+    $reject('App/Support/lang/en.json', str_replace('Hello', 'bad??', $app), 'suspicious encoding marker at common.greeting');
+    $reject('App/Support/lang/en.json', str_replace('Hello', '\ufffd', $app), 'suspicious encoding marker at common.greeting');
     $reject('App/Support/lang/cs.json', '{"common.empty":"x"}', 'invalid key common.empty');
     $reject('App/Support/lang/cs.json', '[]', 'catalog must be an object');
     $reject('App/Support/lang/cs.json', '{', 'Syntax error');

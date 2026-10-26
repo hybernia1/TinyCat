@@ -1,0 +1,174 @@
+{
+  "common": {
+    "refresh": "Odśwież",
+    "save": "Zapisz",
+    "create": "Utwórz",
+    "delete": "Usuń",
+    "cancel": "Anuluj",
+    "continue": "Kontynuuj",
+    "confirm": "Potwierdź",
+    "confirm_action": "Potwierdź działanie",
+    "back": "Tył",
+    "previous": "Poprzedni",
+    "next": "Dalej",
+    "finish": "Zakończ",
+    "open": "Otwórz",
+    "video": "Wideo",
+    "menu": "Menu",
+    "close": "Zamknij",
+    "skip_to_content": "Przejdź do głównej treści",
+    "main_navigation": "Nawigacja główna",
+    "site_logo_alt": "Logo {site}",
+    "request_failed": "Żądanie nie mogło zostać zrealizowane.",
+    "edit": "Edytuj",
+    "login": "Zaloguj się",
+    "logout": "Wyloguj się",
+    "register": "Zarejestruj się",
+    "admin": "Administrator",
+    "dashboard": "Panel administracyjny",
+    "home": "Strona główna",
+    "language": "Język",
+    "database": "Baza danych",
+    "tables": "Tabele",
+    "account": "Konto",
+    "done": "Gotowe",
+    "username": "Nazwa użytkownika",
+    "email": "E-mail",
+    "password": "Hasło",
+    "new_password": "Nowe hasło",
+    "current_password": "Bieżące hasło",
+    "password_confirm": "Potwierdź hasło",
+    "role": "Rola",
+    "status": "Status",
+    "note": "Uwaga",
+    "created": "Utworzono",
+    "updated": "Zaktualizowano",
+    "route": "Ścieżka",
+    "file": "Plik",
+    "image": "Obraz",
+    "table": "Tabela",
+    "clean_api": "API danych",
+    "ui_api": "Interfejs użytkownika API",
+    "ui": "Interfejs",
+    "actions": "Działania",
+    "search": "Szukaj",
+    "filters": "Filtry",
+    "apply_filters": "Zastosuj filtry",
+    "clear_filters": "Wyczyść",
+    "pagination": "Paginacja",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "Na stronę",
+    "all": "Wszystkie",
+    "updated_from": "Zaktualizowano z",
+    "updated_to": "Zaktualizowano do",
+    "created_from": "Utworzono z",
+    "created_to": "Utworzono do",
+    "unsaved_title": "Niezapisane zmiany",
+    "unsaved_message": "Formularz zawiera niezapisane zmiany. Mimo to wyjść?",
+    "leave": "Wyjdź",
+    "stay": "Podpora",
+    "validation_failed": "Proszę sprawdzić przesłane wartości.",
+    "not_found": "Nie znaleziono.",
+    "validation_required": "Pole {field} jest wymagane.",
+    "validation_invalid": "Pole {field} ma nieprawidłową wartość."
+  },
+  "relative": {
+    "now": "teraz",
+    "past": {
+      "minute": {
+        "one": "{count} minutę temu",
+        "few": "{count} minuty temu",
+        "many": "{count} minut temu",
+        "other": "{count} minuty temu",
+        "single": "minutę temu"
+      },
+      "hour": {
+        "one": "{count} godzinę temu",
+        "few": "{count} godziny temu",
+        "many": "{count} godzin temu",
+        "other": "{count} godziny temu",
+        "single": "godzinę temu"
+      },
+      "day": {
+        "one": "{count} dzień temu",
+        "few": "{count} dni temu",
+        "many": "{count} dni temu",
+        "other": "{count} dnia temu",
+        "single": "wczoraj"
+      },
+      "week": {
+        "one": "{count} tydzień temu",
+        "few": "{count} tygodnie temu",
+        "many": "{count} tygodni temu",
+        "other": "{count} tygodnia temu",
+        "single": "tydzień temu"
+      },
+      "month": {
+        "one": "{count} miesiąc temu",
+        "few": "{count} miesiące temu",
+        "many": "{count} miesięcy temu",
+        "other": "{count} miesiąca temu",
+        "single": "miesiąc temu"
+      },
+      "year": {
+        "one": "{count} rok temu",
+        "few": "{count} lata temu",
+        "many": "{count} lat temu",
+        "other": "{count} roku temu",
+        "single": "rok temu"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "za {count} minutę",
+        "few": "za {count} minuty",
+        "many": "za {count} minut",
+        "other": "za {count} minuty",
+        "single": "za minutę"
+      },
+      "hour": {
+        "one": "za {count} godzinę",
+        "few": "za {count} godziny",
+        "many": "za {count} godzin",
+        "other": "za {count} godziny",
+        "single": "za godzinę"
+      },
+      "day": {
+        "one": "za {count} dzień",
+        "few": "za {count} dni",
+        "many": "za {count} dni",
+        "other": "za {count} dnia",
+        "single": "jutro"
+      },
+      "week": {
+        "one": "za {count} tydzień",
+        "few": "za {count} tygodnie",
+        "many": "za {count} tygodni",
+        "other": "za {count} tygodnia",
+        "single": "za tydzień"
+      },
+      "month": {
+        "one": "za {count} miesiąc",
+        "few": "za {count} miesiące",
+        "many": "za {count} miesięcy",
+        "other": "za {count} miesiąca",
+        "single": "za miesiąc"
+      },
+      "year": {
+        "one": "za {count} rok",
+        "few": "za {count} lata",
+        "many": "za {count} lat",
+        "other": "za {count} roku",
+        "single": "za rok"
+      }
+    }
+  },
+  "action": {
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "delete": "Usuń"
+  },
+  "message": {
+    "welcome": "Witamy w {app}."
+  }
+}

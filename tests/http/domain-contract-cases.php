@@ -109,6 +109,26 @@ foreach (['/api/auth-modal', '/api/auth/login', '/api/profile/update', '/api/adm
     [$status] = $request('GET', $retired);
     $assert($status === 404, 'Converted domains expose one canonical URL; retired endpoint: ' . $retired);
 }
+foreach (['pl-PL' => 'pl', 'tr-TR' => 'tr'] as $browserLocale => $expectedLocale) {
+    [$status, $payload] = $request('POST', '/api/users/registrations', [
+        'username' => 'locale-' . $expectedLocale,
+        'password' => 'Locale-password-42',
+        'password_confirm' => 'Locale-password-42',
+        'platform_terms' => '1',
+    ], '', $csrf + ['Accept-Language' => $browserLocale . ',en;q=0.8']);
+    $assert($status === 201 && $payload['data']['user']['locale'] === $expectedLocale, 'Registration persists the detected browser locale: ' . $browserLocale);
+    $localeDatabase = new PDO('sqlite:' . $databasePath);
+    $localeQuery = $localeDatabase->prepare('SELECT locale FROM users WHERE id = ?');
+    $localeQuery->execute([$payload['data']['user_id']]);
+    $assert($localeQuery->fetchColumn() === $expectedLocale, 'The new account stores its interface locale.');
+    $localeQuery->closeCursor();
+    $localeDatabase->prepare('DELETE FROM users WHERE id = ?')->execute([$payload['data']['user_id']]);
+    $localeQuery = null;
+    $localeDatabase = null;
+}
+[$status, $payload] = $request('GET', '/api/users/me', null, 'user', ['Accept-Language' => 'pl-PL']);
+$assert($status === 200 && $payload['data']['user']['locale'] === 'en', 'An existing account language takes precedence over browser preferences.');
+
 [$status, $payload] = $request('POST', '/api/users/registrations', [], '', $csrf + ['X-Test-Captcha' => '1']);
 $assert($status === 422 && $payload['code'] === 'captcha_invalid' && $payload['error']['details']['captcha']['site_key'] === 'test_public_key', 'CAPTCHA errors contain only public widget configuration.');
 $assert(!str_contains(json_encode($payload), 'test_private_key'), 'CAPTCHA secrets never enter a response.');

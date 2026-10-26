@@ -1,0 +1,54 @@
+{
+  "moderation": {
+    "title": "Mäßigung",
+    "reports_title": "Berichte",
+    "reports_empty": "Es liegen keine Berichte vor.",
+    "reported_content": "Gemeldeter Inhalt",
+    "report_status": "Beitrag melden",
+    "report_action": "Bericht",
+    "report_reason": "Grund",
+    "report_note": "Notiz",
+    "report_submit": "Bericht senden",
+    "profile_muted_until": "Das Konto ist bis {until} stummgeschaltet.",
+    "url_blocker_title": "Blockierte URLs",
+    "url_blocker_label": "Blockierte Websites",
+    "url_blocker_placeholder": "example.com, bad.example, domain:ru",
+    "url_blocker_help": "Trennen Sie Websites durch Kommas oder neue Zeilen. Auch Subdomains werden blockiert. Verwenden Sie domain:ru, um das gesamte .ru-Suffix zu blockieren.",
+    "remove_content": "Inhalte entfernen",
+    "keep_and_lock": "Behalten und verschließen",
+    "empty_content": "Leerer Inhalt",
+    "report_reasons": {
+      "spam": "Spam",
+      "illegal": "Illegale Inhalte",
+      "malware": "Malware oder Phishing",
+      "abuse": "Missbrauch",
+      "other": "Andere"
+    },
+    "report_statuses": {
+      "open": "Offen",
+      "reviewed": "Bewertet",
+      "resolved": "Gelöst",
+      "dismissed": "Entlassen"
+    },
+    "messages": {
+      "action_limited": "Dieses Konto hat das temporäre Aktionslimit erreicht.",
+      "action_too_fast": "Bitte warten Sie einen Moment mit der nächsten Aktion.",
+      "account_muted": "Dieses Konto ist bis {until} vorübergehend stummgeschaltet.",
+      "blocked_url": "Dieser Link ist nicht zulässig: {host}.",
+      "duplicate_body": "Dieser Beitrag ist Ihrem letzten Beitrag zu ähnlich.",
+      "report_created": "Der Bericht wurde eingereicht.",
+      "report_already_reviewed": "Dieser Beitrag wurde bereits überprüft und der Bericht wurde nicht erneut geöffnet.",
+      "report_own_content": "Sie können Ihren eigenen Beitrag nicht melden.",
+      "reports_unavailable": "Berichte sind nicht verfügbar.",
+      "report_not_found": "Bericht wurde nicht gefunden.",
+      "report_reviewed": "Der Bericht wurde geprüft.",
+      "url_blocker_saved": "Gesperrte URLs wurden gespeichert."
+    },
+    "report_count": {
+      "one": "{count} Meldung",
+      "few": "{count} Meldungen",
+      "many": "{count} Meldungen",
+      "other": "{count} Meldungen"
+    }
+  }
+}

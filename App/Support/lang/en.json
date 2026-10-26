@@ -76,78 +76,90 @@
     "now": "now",
     "past": {
       "minute": {
-        "one": "a minute ago",
+        "one": "{count} minute ago",
         "few": "{count} minutes ago",
         "many": "{count} minutes ago",
-        "other": "{count} minutes ago"
+        "other": "{count} minutes ago",
+        "single": "a minute ago"
       },
       "hour": {
-        "one": "an hour ago",
+        "one": "{count} hour ago",
         "few": "{count} hours ago",
         "many": "{count} hours ago",
-        "other": "{count} hours ago"
+        "other": "{count} hours ago",
+        "single": "an hour ago"
       },
       "day": {
-        "one": "yesterday",
+        "one": "{count} day ago",
         "few": "{count} days ago",
         "many": "{count} days ago",
-        "other": "{count} days ago"
+        "other": "{count} days ago",
+        "single": "yesterday"
       },
       "week": {
-        "one": "a week ago",
+        "one": "{count} week ago",
         "few": "{count} weeks ago",
         "many": "{count} weeks ago",
-        "other": "{count} weeks ago"
+        "other": "{count} weeks ago",
+        "single": "a week ago"
       },
       "month": {
-        "one": "a month ago",
+        "one": "{count} month ago",
         "few": "{count} months ago",
         "many": "{count} months ago",
-        "other": "{count} months ago"
+        "other": "{count} months ago",
+        "single": "a month ago"
       },
       "year": {
-        "one": "a year ago",
+        "one": "{count} year ago",
         "few": "{count} years ago",
         "many": "{count} years ago",
-        "other": "{count} years ago"
+        "other": "{count} years ago",
+        "single": "a year ago"
       }
     },
     "future": {
       "minute": {
-        "one": "in a minute",
+        "one": "in {count} minute",
         "few": "in {count} minutes",
         "many": "in {count} minutes",
-        "other": "in {count} minutes"
+        "other": "in {count} minutes",
+        "single": "in a minute"
       },
       "hour": {
-        "one": "in an hour",
+        "one": "in {count} hour",
         "few": "in {count} hours",
         "many": "in {count} hours",
-        "other": "in {count} hours"
+        "other": "in {count} hours",
+        "single": "in an hour"
       },
       "day": {
-        "one": "tomorrow",
+        "one": "in {count} day",
         "few": "in {count} days",
         "many": "in {count} days",
-        "other": "in {count} days"
+        "other": "in {count} days",
+        "single": "tomorrow"
       },
       "week": {
-        "one": "in a week",
+        "one": "in {count} week",
         "few": "in {count} weeks",
         "many": "in {count} weeks",
-        "other": "in {count} weeks"
+        "other": "in {count} weeks",
+        "single": "in a week"
       },
       "month": {
-        "one": "in a month",
+        "one": "in {count} month",
         "few": "in {count} months",
         "many": "in {count} months",
-        "other": "in {count} months"
+        "other": "in {count} months",
+        "single": "in a month"
       },
       "year": {
-        "one": "in a year",
+        "one": "in {count} year",
         "few": "in {count} years",
         "many": "in {count} years",
-        "other": "in {count} years"
+        "other": "in {count} years",
+        "single": "in a year"
       }
     }
   },

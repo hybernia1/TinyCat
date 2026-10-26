@@ -1,0 +1,45 @@
+{
+  "signature": "Cordiali saluti,\n{site}",
+  "templates": {
+    "welcome": {
+      "subject": "Benvenuto in {site}",
+      "body": "Ciao {username},\n\nBenvenuto in {site}. Il tuo account è pronto.\n\nAccedi: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Reimposta la tua password {site}",
+      "body": "Ciao {username},\n\nAbbiamo ricevuto una richiesta per reimpostare la tua password.\n\nReimposta la tua password: {reset_url}\n\nQuesto collegamento scade tra 60 minuti. Se non lo hai richiesto, puoi ignorare questa email.\n\n{signature}"
+    },
+    "notification_content_like": {
+      "subject": "A {actor} è piaciuto il tuo post",
+      "body": "A {actor} è piaciuto il tuo post.\n\nVisualizza il post: {content_url}\n\n{signature}"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} ha commentato il tuo post",
+      "body": "{actor} ha commentato il tuo post.\n\nVisualizza la conversazione: {content_url}\n\n{signature}"
+    },
+    "notification_comment_like": {
+      "subject": "A {actor} è piaciuto il tuo commento",
+      "body": "A {actor} è piaciuto il tuo commento.\n\nVisualizza la conversazione: {content_url}\n\n{signature}"
+    },
+    "notification_follow": {
+      "subject": "{actor} ti ha seguito",
+      "body": "{actor} ti ha seguito.\n\nVisualizza il loro profilo: {actor_url}\n\n{signature}"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} ti ha menzionato",
+      "body": "{actor} ti ha menzionato in un post.\n\nVisualizza il post: {content_url}\n\n{signature}"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} ti ha menzionato",
+      "body": "{actor} ti ha menzionato in un commento.\n\nVisualizza la conversazione: {content_url}\n\n{signature}"
+    },
+    "notification_report_resolved": {
+      "subject": "La tua segnalazione è stata risolta",
+      "body": "La tua segnalazione è stata risolta dal team di moderazione.\n\nVisualizza il contenuto segnalato: {content_url}\n\n{signature}"
+    },
+    "notification_report_dismissed": {
+      "subject": "La tua segnalazione è stata respinta",
+      "body": "La tua segnalazione è stata esaminata e respinta dal team di moderazione.\n\nVisualizza il contenuto segnalato: {content_url}\n\n{signature}"
+    }
+  }
+}
