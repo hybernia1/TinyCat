@@ -3,7 +3,7 @@ import "./http.js";
 import "./lifecycle.js";
 (function () {
   "use strict";
-  var T = window.TinyCat, routes = new Map(), pending = new WeakMap(), helpUrl = null, beforeLeave = function () { return true; };
+  var T = window.TinyCat, routes = new Map(), pending = new WeakMap(), helpUrl = null, pageRoute = null, beforeLeave = function () { return true; };
   function urlWithFormData(action, formData, omit) {
     var url = new URL(action || window.location.href, window.location.href);
     var ignored = omit || [];
@@ -60,9 +60,12 @@ import "./lifecycle.js";
     push: function (url) { if (url && window.history && window.history.pushState) { window.history.pushState({}, "", url); } },
     guard: function (check) { beforeLeave = check; },
     help: function (url) { helpUrl = url; },
-    go: async function (url) { if (await beforeLeave()) { window.location.assign(url); } },
+    go: async function (url) { if (await beforeLeave()) { if (pageRoute && pageRoute.accepts(new URL(url, window.location.href))) { return pageRoute.visit(new URL(url, window.location.href)); } window.location.assign(url); } },
+    canLeave: function () { return beforeLeave(); },
+    registerPage: function (route) { if (pageRoute) { throw new TypeError("Duplicate page navigation provider."); } pageRoute = route; },
     register: function (path, route) { if (routes.has(path)) { throw new TypeError("Duplicate history route: " + path); } routes.set(path, route); },
-    restore: async function () {
+    restore: async function (event) {
+      if (pageRoute && pageRoute.accepts(new URL(window.location.href))) { return pageRoute.restore(event); }
       var route = routes.get(window.location.pathname), target = route && document.querySelector(route.target);
       if (!target) { return; }
       var previous = pending.get(target);

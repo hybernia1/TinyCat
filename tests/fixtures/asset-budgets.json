@@ -56,8 +56,8 @@
     "stylesheets": 1
   },
   "/": {
-    "raw_js": 233472,
-    "gzip_js": 54272,
+    "raw_js": 258048,
+    "gzip_js": 59392,
     "raw_css": 65536,
     "gzip_css": 12288,
     "scripts": 4,

@@ -315,5 +315,1364 @@
         }
       }
     ]
+  },
+  "site/public-page": {
+    "tag": "section",
+    "attrs": {
+      "class": {
+        "if": [
+          {
+            "eq": [
+              {
+                "get": "kind"
+              },
+              "author"
+            ]
+          },
+          "profile-layout",
+          {
+            "if": [
+              {
+                "get": "compact"
+              },
+              "stack",
+              "public-layout"
+            ]
+          }
+        ]
+      },
+      "data-public-page": {
+        "get": "kind"
+      }
+    },
+    "children": [
+      {
+        "tag": "aside",
+        "attrs": {
+          "class": "profile-sidebar"
+        },
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "profile-sidebar-stack"
+            },
+            "children": [
+              {
+                "tag": "article",
+                "attrs": {
+                  "class": "card profile-card"
+                },
+                "children": [
+                  {
+                    "tag": "div",
+                    "attrs": {
+                      "class": "card-body profile-card-body"
+                    },
+                    "children": [
+                      {
+                        "tag": "button",
+                        "attrs": {
+                          "class": "btn btn-secondary btn-sm btn-icon profile-edit-toggle",
+                          "type": "button",
+                          "data-modal-open": {
+                            "get": "profile_edit_id"
+                          },
+                          "data-modal-url": {
+                            "get": "profile_edit_url"
+                          },
+                          "title": {
+                            "t": "common.edit",
+                            "values": {}
+                          },
+                          "aria-label": {
+                            "t": "common.edit",
+                            "values": {}
+                          }
+                        },
+                        "children": [
+                          {
+                            "icon": "edit"
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "sr-only"
+                            },
+                            "children": [
+                              {
+                                "t": "common.edit",
+                                "values": {}
+                              }
+                            ]
+                          }
+                        ],
+                        "when": {
+                          "get": "can_edit"
+                        }
+                      },
+                      {
+                        "tag": "div",
+                        "attrs": {
+                          "class": "profile-identity"
+                        },
+                        "children": [
+                          {
+                            "tag": "button",
+                            "attrs": {
+                              "class": "avatar avatar-xl profile-avatar-button",
+                              "type": "button",
+                              "data-modal-open": {
+                                "get": "avatar_edit_id"
+                              },
+                              "data-modal-url": {
+                                "get": "avatar_edit_url"
+                              },
+                              "title": {
+                                "t": "account.avatar_edit",
+                                "values": {}
+                              },
+                              "aria-label": {
+                                "t": "account.avatar_edit",
+                                "values": {}
+                              }
+                            },
+                            "children": [
+                              {
+                                "component": "ui/avatar-content",
+                                "data": {
+                                  "user": {
+                                    "get": "author"
+                                  },
+                                  "alt": {
+                                    "get": "author.username"
+                                  }
+                                }
+                              }
+                            ],
+                            "when": {
+                              "get": "can_edit"
+                            }
+                          },
+                          {
+                            "tag": "div",
+                            "attrs": {
+                              "class": "avatar avatar-xl"
+                            },
+                            "children": [
+                              {
+                                "component": "ui/avatar-content",
+                                "data": {
+                                  "user": {
+                                    "get": "author"
+                                  },
+                                  "alt": {
+                                    "get": "author.username"
+                                  }
+                                }
+                              }
+                            ],
+                            "when": {
+                              "not": {
+                                "get": "can_edit"
+                              }
+                            }
+                          },
+                          {
+                            "tag": "div",
+                            "attrs": {
+                              "class": "profile-identity-main"
+                            },
+                            "children": [
+                              {
+                                "tag": "h1",
+                                "attrs": {
+                                  "class": "profile-name m-0"
+                                },
+                                "children": [
+                                  {
+                                    "get": "author.username"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "div",
+                        "attrs": {
+                          "class": "profile-details"
+                        },
+                        "children": [
+                          {
+                            "tag": "button",
+                            "attrs": {
+                              "data-author-bio": "",
+                              "data-author-id": {
+                                "get": "author.id"
+                              },
+                              "class": "profile-editable-text is-resource-text",
+                              "type": "button",
+                              "data-modal-open": {
+                                "get": "profile_edit_id"
+                              },
+                              "data-modal-url": {
+                                "get": "profile_edit_url"
+                              }
+                            },
+                            "children": [
+                              {
+                                "if": [
+                                  {
+                                    "get": "bio"
+                                  },
+                                  {
+                                    "get": "bio"
+                                  },
+                                  {
+                                    "t": "account.bio",
+                                    "values": {}
+                                  }
+                                ]
+                              }
+                            ],
+                            "when": {
+                              "get": "can_edit"
+                            }
+                          },
+                          {
+                            "tag": "p",
+                            "attrs": {
+                              "data-author-bio": "",
+                              "data-author-id": {
+                                "get": "author.id"
+                              },
+                              "class": "text-muted mb-0 is-resource-text"
+                            },
+                            "children": [
+                              {
+                                "get": "bio"
+                              }
+                            ],
+                            "when": {
+                              "and": [
+                                {
+                                  "not": {
+                                    "get": "can_edit"
+                                  }
+                                },
+                                {
+                                  "get": "bio"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "div",
+                        "attrs": {
+                          "class": "profile-stats"
+                        },
+                        "children": [
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "profile-stat"
+                            },
+                            "children": [
+                              {
+                                "tag": "strong",
+                                "attrs": {
+                                  "data-author-stat": "followers",
+                                  "data-author-id": {
+                                    "get": "author.id"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "follow_counts.followers"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "t": "public.followers",
+                                    "values": {}
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "button",
+                            "attrs": {
+                              "type": "button",
+                              "class": "profile-stat profile-stat-button",
+                              "data-modal-open": {
+                                "get": "following_id"
+                              },
+                              "data-modal-url": {
+                                "get": "following_url"
+                              },
+                              "aria-label": {
+                                "t": "public.following_profiles_title",
+                                "values": {
+                                  "author": {
+                                    "get": "author.username"
+                                  }
+                                }
+                              },
+                              "title": {
+                                "t": "public.following_profiles_title",
+                                "values": {
+                                  "author": {
+                                    "get": "author.username"
+                                  }
+                                }
+                              }
+                            },
+                            "children": [
+                              {
+                                "tag": "strong",
+                                "attrs": {
+                                  "data-author-stat": "following",
+                                  "data-author-id": {
+                                    "get": "author.id"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "follow_counts.following"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "t": "public.following",
+                                    "values": {}
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "profile-stat"
+                            },
+                            "children": [
+                              {
+                                "tag": "strong",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "get": "activity.posts"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "t": "public.profile_posts",
+                                    "values": {}
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "profile-stat"
+                            },
+                            "children": [
+                              {
+                                "tag": "strong",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "get": "activity.likes_given"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "t": "public.profile_likes_given",
+                                    "values": {}
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "profile-stat"
+                            },
+                            "children": [
+                              {
+                                "tag": "strong",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "get": "activity.likes_received"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "t": "public.profile_likes_received",
+                                    "values": {}
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "profile-stat"
+                            },
+                            "children": [
+                              {
+                                "tag": "strong",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "get": "activity.comments"
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "t": "public.profile_comments",
+                                    "values": {}
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "profile-member-since"
+                            },
+                            "children": [
+                              {
+                                "icon": "calendar"
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "t": "public.member_since",
+                                    "values": {
+                                      "date": {
+                                        "date": {
+                                          "get": "member_since"
+                                        }
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            ],
+                            "when": {
+                              "get": "member_since"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "div",
+                        "attrs": {
+                          "class": "profile-actions"
+                        },
+                        "children": [
+                          {
+                            "tag": "a",
+                            "attrs": {
+                              "class": "btn btn-ghost btn-sm",
+                              "href": {
+                                "get": "rss_url"
+                              },
+                              "target": "_blank",
+                              "rel": "noopener",
+                              "title": {
+                                "t": "public.rss_feed",
+                                "values": {}
+                              },
+                              "aria-label": {
+                                "t": "public.rss_feed",
+                                "values": {}
+                              }
+                            },
+                            "children": [
+                              {
+                                "icon": "rss"
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  "RSS"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "form",
+                            "attrs": {
+                              "method": "post",
+                              "action": {
+                                "concat": [
+                                  "/api/users/",
+                                  {
+                                    "get": "author.id"
+                                  },
+                                  "/followers/me"
+                                ]
+                              },
+                              "data-follow-form": "",
+                              "data-author-id": {
+                                "get": "author.id"
+                              }
+                            },
+                            "children": [
+                              {
+                                "tag": "input",
+                                "attrs": {
+                                  "type": "hidden",
+                                  "name": "_csrf",
+                                  "value": {
+                                    "get": "csrf"
+                                  }
+                                },
+                                "children": []
+                              },
+                              {
+                                "tag": "input",
+                                "attrs": {
+                                  "type": "hidden",
+                                  "name": "action",
+                                  "value": {
+                                    "if": [
+                                      {
+                                        "get": "following"
+                                      },
+                                      "unfollow",
+                                      "follow"
+                                    ]
+                                  }
+                                },
+                                "children": []
+                              },
+                              {
+                                "tag": "button",
+                                "attrs": {
+                                  "class": {
+                                    "if": [
+                                      {
+                                        "get": "following"
+                                      },
+                                      "btn btn-secondary btn-sm",
+                                      "btn btn-primary btn-sm"
+                                    ]
+                                  },
+                                  "type": "submit"
+                                },
+                                "children": [
+                                  {
+                                    "icon": {
+                                      "if": [
+                                        {
+                                          "get": "following"
+                                        },
+                                        "check",
+                                        "plus"
+                                      ]
+                                    }
+                                  },
+                                  {
+                                    "tag": "span",
+                                    "attrs": {},
+                                    "children": [
+                                      {
+                                        "if": [
+                                          {
+                                            "get": "following"
+                                          },
+                                          {
+                                            "t": "public.unfollow",
+                                            "values": {}
+                                          },
+                                          {
+                                            "t": "public.follow",
+                                            "values": {}
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ],
+                            "when": {
+                              "get": "can_follow"
+                            }
+                          },
+                          {
+                            "tag": "a",
+                            "attrs": {
+                              "class": "btn btn-secondary btn-sm",
+                              "href": {
+                                "get": "login_url"
+                              },
+                              "data-modal-open": "auth-modal",
+                              "data-modal-url": {
+                                "get": "login_modal_url"
+                              }
+                            },
+                            "children": [
+                              {
+                                "icon": "login"
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "t": "public.follow",
+                                    "values": {}
+                                  }
+                                ]
+                              }
+                            ],
+                            "when": {
+                              "not": {
+                                "get": "viewer"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "when": {
+          "eq": [
+            {
+              "get": "kind"
+            },
+            "author"
+          ]
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": {
+            "if": [
+              {
+                "eq": [
+                  {
+                    "get": "kind"
+                  },
+                  "author"
+                ]
+              },
+              "profile-main",
+              {
+                "if": [
+                  {
+                    "eq": [
+                      {
+                        "get": "kind"
+                      },
+                      "home"
+                    ]
+                  },
+                  "home-feed-app",
+                  "home-feed-section"
+                ]
+              }
+            ]
+          },
+          "data-public-page-content": ""
+        },
+        "children": [
+          {
+            "tag": "h1",
+            "attrs": {
+              "class": "sr-only",
+              "id": "public-page-title"
+            },
+            "children": [
+              {
+                "if": [
+                  {
+                    "eq": [
+                      {
+                        "get": "kind"
+                      },
+                      "home"
+                    ]
+                  },
+                  {
+                    "if": [
+                      {
+                        "eq": [
+                          {
+                            "get": "feed"
+                          },
+                          "following"
+                        ]
+                      },
+                      {
+                        "t": "public.feed_title_following",
+                        "values": {}
+                      },
+                      {
+                        "t": "public.feed_title",
+                        "values": {}
+                      }
+                    ]
+                  },
+                  {
+                    "t": "public.status_title",
+                    "values": {}
+                  }
+                ]
+              }
+            ],
+            "when": {
+              "or": [
+                {
+                  "eq": [
+                    {
+                      "get": "kind"
+                    },
+                    "home"
+                  ]
+                },
+                {
+                  "eq": [
+                    {
+                      "get": "kind"
+                    },
+                    "status"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "stack stack-gap-14"
+            },
+            "children": [
+              {
+                "tag": "header",
+                "attrs": {
+                  "class": "public-list-header public-list-header-actions"
+                },
+                "children": [
+                  {
+                    "tag": "h1",
+                    "attrs": {
+                      "class": "text-2xl m-0"
+                    },
+                    "children": [
+                      {
+                        "t": "public.tag_feed_title",
+                        "values": {
+                          "tag": {
+                            "concat": [
+                              "#",
+                              {
+                                "get": "tag"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "a",
+                    "attrs": {
+                      "class": "btn btn-ghost btn-sm",
+                      "href": {
+                        "get": "rss_url"
+                      },
+                      "target": "_blank",
+                      "rel": "noopener",
+                      "title": {
+                        "t": "public.rss_feed",
+                        "values": {}
+                      },
+                      "aria-label": {
+                        "t": "public.rss_feed",
+                        "values": {}
+                      }
+                    },
+                    "children": [
+                      {
+                        "icon": "rss"
+                      },
+                      {
+                        "tag": "span",
+                        "attrs": {},
+                        "children": [
+                          "RSS"
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "when": {
+                  "eq": [
+                    {
+                      "get": "kind"
+                    },
+                    "tag"
+                  ]
+                }
+              },
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": "alert alert-warning"
+                },
+                "children": [
+                  {
+                    "icon": "lock"
+                  },
+                  {
+                    "tag": "span",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "t": "moderation.profile_muted_until",
+                        "values": {
+                          "until": {
+                            "date": {
+                              "get": "muted_until"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "when": {
+                  "get": "muted_until"
+                }
+              },
+              {
+                "tag": "section",
+                "attrs": {
+                  "class": "card status-composer"
+                },
+                "children": [
+                  {
+                    "tag": "div",
+                    "attrs": {
+                      "class": "card-body"
+                    },
+                    "children": [
+                      {
+                        "tag": "div",
+                        "attrs": {
+                          "class": "alert alert-info status-email-notice"
+                        },
+                        "children": [
+                          {
+                            "icon": "info"
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {
+                              "class": "status-email-notice-copy"
+                            },
+                            "children": [
+                              {
+                                "t": "account.email_missing_notice",
+                                "values": {}
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "button",
+                            "attrs": {
+                              "type": "button",
+                              "class": "btn btn-secondary btn-sm",
+                              "data-modal-open": {
+                                "get": "viewer_profile_id"
+                              },
+                              "data-modal-url": {
+                                "get": "viewer_profile_url"
+                              }
+                            },
+                            "children": [
+                              {
+                                "icon": "edit"
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "t": "account.profile_settings",
+                                    "values": {}
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ],
+                        "when": {
+                          "get": "email_missing"
+                        }
+                      },
+                      {
+                        "tag": "form",
+                        "attrs": {
+                          "method": "post",
+                          "action": "/api/statuses",
+                          "enctype": "multipart/form-data",
+                          "data-status-form": "",
+                          "data-status-scope": "feed",
+                          "data-confirm-unsaved": "true",
+                          "data-confirm-unsaved-title": {
+                            "t": "common.unsaved_title",
+                            "values": {}
+                          },
+                          "data-confirm-unsaved-message": {
+                            "t": "common.unsaved_message",
+                            "values": {}
+                          },
+                          "data-confirm-unsaved-ok": {
+                            "t": "common.leave",
+                            "values": {}
+                          },
+                          "data-confirm-unsaved-cancel": {
+                            "t": "common.stay",
+                            "values": {}
+                          }
+                        },
+                        "children": [
+                          {
+                            "tag": "input",
+                            "attrs": {
+                              "type": "hidden",
+                              "name": "_csrf",
+                              "value": {
+                                "get": "csrf"
+                              }
+                            },
+                            "children": []
+                          },
+                          {
+                            "tag": "input",
+                            "attrs": {
+                              "type": "hidden",
+                              "name": "action",
+                              "value": "create"
+                            },
+                            "children": []
+                          },
+                          {
+                            "component": "status/composer-body",
+                            "data": {
+                              "viewer": {
+                                "get": "viewer"
+                              },
+                              "enabled": {
+                                "get": "images_enabled"
+                              },
+                              "value": "",
+                              "submit_name": "publish_now",
+                              "submit_value": "1",
+                              "submit_label": {
+                                "t": "account.status_create",
+                                "values": {}
+                              },
+                              "submit_icon": "send"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "when": {
+                  "get": "composer"
+                }
+              },
+              {
+                "component": "status/card",
+                "data": {
+                  "item": {
+                    "get": "item"
+                  },
+                  "anchor": true,
+                  "open_modal": false,
+                  "action": {
+                    "get": "url"
+                  }
+                },
+                "when": {
+                  "eq": [
+                    {
+                      "get": "kind"
+                    },
+                    "status"
+                  ]
+                }
+              },
+              {
+                "component": "status/thread",
+                "data": {
+                  "item": {
+                    "get": "item"
+                  },
+                  "comments": {
+                    "get": "comments"
+                  },
+                  "viewer": {
+                    "get": "viewer"
+                  },
+                  "context": {
+                    "concat": [
+                      "status-",
+                      {
+                        "get": "item.id"
+                      }
+                    ]
+                  }
+                },
+                "when": {
+                  "eq": [
+                    {
+                      "get": "kind"
+                    },
+                    "status"
+                  ]
+                }
+              },
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": {
+                    "if": [
+                      {
+                        "eq": [
+                          {
+                            "get": "kind"
+                          },
+                          "home"
+                        ]
+                      },
+                      "home-feed-section stack",
+                      "stack stack-gap-12"
+                    ]
+                  }
+                },
+                "children": [
+                  {
+                    "tag": "nav",
+                    "attrs": {
+                      "class": "feed-switch home-feed-switch",
+                      "aria-label": {
+                        "t": "public.feed_title",
+                        "values": {}
+                      }
+                    },
+                    "children": [
+                      {
+                        "tag": "a",
+                        "attrs": {
+                          "href": "/",
+                          "class": "feed-switch-link",
+                          "aria-current": {
+                            "if": [
+                              {
+                                "eq": [
+                                  {
+                                    "get": "feed"
+                                  },
+                                  "all"
+                                ]
+                              },
+                              "page",
+                              null
+                            ]
+                          }
+                        },
+                        "children": [
+                          {
+                            "t": "public.feed_all",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "a",
+                        "attrs": {
+                          "href": "/?feed=following",
+                          "class": "feed-switch-link",
+                          "aria-current": {
+                            "if": [
+                              {
+                                "eq": [
+                                  {
+                                    "get": "feed"
+                                  },
+                                  "following"
+                                ]
+                              },
+                              "page",
+                              null
+                            ]
+                          }
+                        },
+                        "children": [
+                          {
+                            "t": "public.feed_following",
+                            "values": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "when": {
+                      "eq": [
+                        {
+                          "get": "kind"
+                        },
+                        "home"
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "div",
+                    "attrs": {
+                      "class": "alert alert-info cluster",
+                      "data-feed-login-required": ""
+                    },
+                    "children": [
+                      {
+                        "tag": "span",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "public.feed_following_login",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "a",
+                        "attrs": {
+                          "class": "btn btn-secondary btn-sm",
+                          "href": {
+                            "get": "login_url"
+                          },
+                          "data-modal-open": "auth-modal",
+                          "data-modal-url": {
+                            "get": "login_modal_url"
+                          }
+                        },
+                        "children": [
+                          {
+                            "icon": "login"
+                          },
+                          {
+                            "tag": "span",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "t": "common.login",
+                                "values": {}
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "when": {
+                      "get": "login_required"
+                    }
+                  },
+                  {
+                    "tag": "div",
+                    "attrs": {
+                      "class": "alert alert-info",
+                      "data-status-empty": ""
+                    },
+                    "children": [
+                      {
+                        "lookup": {
+                          "get": "kind"
+                        },
+                        "cases": {
+                          "tag": {
+                            "t": "public.tag_feed_empty",
+                            "values": {}
+                          },
+                          "author": {
+                            "t": "public.author_feed_empty",
+                            "values": {}
+                          }
+                        },
+                        "default": {
+                          "if": [
+                            {
+                              "eq": [
+                                {
+                                  "get": "feed"
+                                },
+                                "following"
+                              ]
+                            },
+                            {
+                              "t": "public.feed_empty_following",
+                              "values": {}
+                            },
+                            {
+                              "t": "public.feed_empty",
+                              "values": {}
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "when": {
+                      "and": [
+                        {
+                          "not": {
+                            "get": "items"
+                          }
+                        },
+                        {
+                          "not": {
+                            "get": "login_required"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "div",
+                    "attrs": {
+                      "class": "status-feed",
+                      "id": {
+                        "get": "feed_id"
+                      },
+                      "data-status-feed": ""
+                    },
+                    "children": [
+                      {
+                        "each": {
+                          "get": "items"
+                        },
+                        "as": "post",
+                        "children": [
+                          {
+                            "component": "status/card",
+                            "data": {
+                              "item": {
+                                "get": "post"
+                              },
+                              "anchor": true,
+                              "open_modal": true,
+                              "action": {
+                                "get": "url"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "when": {
+                      "not": {
+                        "get": "login_required"
+                      }
+                    }
+                  },
+                  {
+                    "component": "status/feed-more",
+                    "data": {
+                      "target": {
+                        "concat": [
+                          "#",
+                          {
+                            "get": "feed_id"
+                          }
+                        ]
+                      },
+                      "url": {
+                        "get": "next_url"
+                      }
+                    },
+                    "when": {
+                      "get": "next_url"
+                    }
+                  }
+                ],
+                "when": {
+                  "not": {
+                    "eq": [
+                      {
+                        "get": "kind"
+                      },
+                      "status"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "template",
+        "attrs": {
+          "data-public-sidebar-slot": "",
+          "data-sidebar-url": {
+            "get": "sidebar_url"
+          }
+        },
+        "children": [],
+        "when": {
+          "get": "sidebar"
+        }
+      }
+    ]
   }
 }

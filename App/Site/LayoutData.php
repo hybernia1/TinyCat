@@ -10,6 +10,7 @@ final class LayoutData
     public static function prepare(array $data): array
     {
         extract($data, EXTR_SKIP);
+        $applicationVersion = \TinyCat\Support\Version::CURRENT;
         $appName = \TinyCat\Site\Presentation::site_name();
         $siteLogoUrl = \TinyCat\Site\Presentation::site_logo_url();
         $siteFaviconUrl = \TinyCat\Site\Presentation::site_favicon_url();
@@ -91,6 +92,6 @@ final class LayoutData
             $notificationState = \TinyCat\Notifications\Inbox::state($notificationUserId);
             $notificationItems = \TinyCat\Notifications\Inbox::items($notificationUserId, \TinyCat\Notifications\Inbox::PREVIEW_LIMIT);
         }
-        return compact('privacyUrl', 'dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'themeAttribute', 'title', 'viewerIsAdmin');
+        return compact('applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'themeAttribute', 'title', 'viewerIsAdmin');
     }
 }

@@ -12,7 +12,7 @@ function load(route, locale = "en", compiled = false) {
   check(new Set(bundle.assets.map(a => a.url)).size === 4, "No duplicate scripts");
   const emptyRoot = { dataset: {}, classList: { add() {}, remove() {}, toggle() {} }, querySelectorAll() { return []; }, querySelector() { return null; } };
   const document = { readyState: "loading", body: emptyRoot, documentElement: emptyRoot, addEventListener() {}, querySelectorAll() { return []; }, querySelector() { return null; }, getElementById() { throw new Error("Catalogs must not be read from DOM"); } };
-  const window = { TinyCat: {}, location: new URL("https://tinycat.test" + route), addEventListener() {} };
+  const window = { TinyCat: {}, location: new URL("https://tinycat.test" + route), addEventListener() {}, setInterval() {} };
   const context = vm.createContext({ window, document, URL, URLSearchParams, console, Set, Map });
   for (const asset of bundle.assets) vm.runInContext(asset.source, context, { filename: asset.url });
   window.TinyCat.init();

@@ -4,7 +4,8 @@
       "public"
     ],
     "components": [
-      "site/sidebar"
+      "site/sidebar",
+      "site/public-page"
     ],
     "entries": [
       "assets/modules/site/index.js"

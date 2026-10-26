@@ -47,9 +47,9 @@ class Node {
 }
 const labels = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--catalog"], { encoding: "utf8" }));
 const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--templates"], { encoding: "utf8" }));
-const document = { querySelector: () => null, body: new Node("body"), createElement: tag => new Node(tag), createElementNS: (_, tag) => new Node(tag), createTextNode: text => new Node("text", text), createDocumentFragment: () => new Node("fragment"), getElementById: id => document.body.querySelector('[id="' + id + '"]') };
+const document = { addEventListener() {}, querySelector: () => null, body: new Node("body"), createElement: tag => new Node(tag), createElementNS: (_, tag) => new Node(tag), createTextNode: text => new Node("text", text), createDocumentFragment: () => new Node("fragment"), getElementById: id => document.body.querySelector('[id="' + id + '"]') };
 document.documentElement = { dataset: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--dates"], { encoding: "utf8" })) };
-const window = { TinyCat: {}, location: new URL("https://tinycat.test/") };
+const window = { setInterval() { return 0; }, TinyCat: {}, location: new URL("https://tinycat.test/") };
 const context = vm.createContext({ window, document, Node, AbortController, URL, URLSearchParams, console, Set, Element: Node, RadioNodeList: class {}, CustomEvent: class {} });
 const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
 for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filename: asset.path });

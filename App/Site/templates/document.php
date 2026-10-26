@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 /** @var array<mixed>|null $authUser */
+/** @var string $applicationVersion */
 /** @var string $bodyClasses */
 /** @var string $privacyUrl */
 /** @var string $head */
@@ -8,7 +9,7 @@ declare(strict_types=1);
 /** @var string $iconSpriteUrl */
 ?>
 <?= $head ?>
-<body<?= $bodyClasses !== '' ? ' class="' . \TinyCat\Support\Html::e($bodyClasses) . '"' : '' ?> data-current-user-id="<?= \TinyCat\Support\Html::e((int) ($authUser['id'] ?? 0)) ?>" data-icon-sprite="<?= \TinyCat\Support\Html::e($iconSpriteUrl) ?>">
+<body<?= $bodyClasses !== '' ? ' class="' . \TinyCat\Support\Html::e($bodyClasses) . '"' : '' ?> data-application-version="<?= \TinyCat\Support\Html::e($applicationVersion) ?>" data-current-user-id="<?= \TinyCat\Support\Html::e((int) ($authUser['id'] ?? 0)) ?>" data-icon-sprite="<?= \TinyCat\Support\Html::e($iconSpriteUrl) ?>">
     <a class="skip-link" href="#main-content"><?= \TinyCat\Support\Html::et('common.skip_to_content') ?></a>
     <?= $shell ?>
     <footer class="container section text-sm text-muted">

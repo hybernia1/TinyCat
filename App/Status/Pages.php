@@ -5,13 +5,11 @@ namespace TinyCat\Status;
 use TinyCat\Http\Request;
 use TinyCat\Http\Web;
 use TinyCat\Moderation\Restrictions;
-use TinyCat\Site\Layout;
 use TinyCat\Site\Pages as SitePages;
 use TinyCat\Site\Presentation;
 use TinyCat\Support\Dates;
 use TinyCat\Support\Localization;
 use TinyCat\Support\Text;
-use TinyCat\Support\View;
 use TinyCat\Users\Authentication;
 use TinyCat\Users\Profiles;
 
@@ -20,6 +18,13 @@ final class Pages
 {
     public static function home(): void
     {
+        $data = self::homeData();
+        \TinyCat\Site\PublicPages::render('home', $data);
+    }
+
+    /** @return array<string, mixed> */
+    public static function homeData(): array
+    {
         $authUser = Authentication::auth();
         $feed = (string) Web::get('feed', 'all') === 'following' ? 'following' : 'all';
         $editor = $authUser !== null ? ViewData::status_editor_view_data() : [];
@@ -27,8 +32,7 @@ final class Pages
         $userIsMuted = $authUser !== null && Restrictions::user_is_muted($authUser);
         $userMutedUntil = $authUser !== null ? Restrictions::user_muted_until($authUser) : '';
         $publicHomeFeedData = ViewData::public_home_feed_data($feed, $authUser);
-        $publicSidebar = Presentation::public_sidebar();
-        Layout::render([
+        return ['page' => [
             'title' => Presentation::site_home_title(),
             'current' => '/',
             'meta' => [
@@ -37,31 +41,33 @@ final class Pages
                 'image' => Presentation::site_meta_image_url(),
                 'type' => 'website',
             ],
-        ], View::render('home', compact('authUser', 'feed', 'editor', 'userIsMuted', 'userMutedUntil', 'publicHomeFeedData', 'publicSidebar'), __DIR__ . '/templates'));
+        ], 'context' => compact('authUser', 'feed', 'editor', 'userIsMuted', 'userMutedUntil', 'publicHomeFeedData')];
     }
 
     public static function detail(?int $statusId = null): void
     {
+        $data = self::detailData($statusId);
+        if ($data === null) { self::statusNotFound(); return; }
+        if (Request::current()->method() === 'GET' && Request::current()->path() !== $data['page']['current']) { Web::redirect($data['page']['current'], 301); }
+        \TinyCat\Site\PublicPages::render('status', $data);
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function detailData(?int $statusId = null): ?array
+    {
         $statusId = max(0, $statusId ?? (int) Web::get('id', 0));
         $current = Posts::status_url($statusId);
         $compact = (string) Web::get('compact', '') === '1';
-        $pageAction = $current . ($compact ? '?compact=1' : '');
 
         if ($statusId < 1) {
-            self::statusNotFound();
-            return;
-        }
-
-        if (Request::current()->method() === 'GET' && Request::current()->path() !== $current) {
-            Web::redirect($current, 301);
+            return null;
         }
 
         $authUser = Authentication::auth();
         $item = Feed::public_status_item($statusId);
 
         if ($item === null) {
-            self::statusNotFound();
-            return;
+            return null;
         }
 
         $detail = ViewData::status_prepare_detail_view($item, $authUser);
@@ -73,8 +79,7 @@ final class Pages
         $statusStructuredImage = Images::status_image_jsonld($item) ?? (ViewData::status_meta_link_image($item) ?: null);
         $statusImageUrl = Images::status_image_url($item);
 
-        $publicSidebar = $compact ? '' : Presentation::public_sidebar();
-        Layout::render([
+        return ['page' => [
             'title' => $statusTitle,
             'current' => $current,
             'meta' => [
@@ -119,7 +124,7 @@ final class Pages
                     ],
                 ], static fn (mixed $value): bool => $value !== null),
             ],
-        ], View::render('detail', compact('item', 'comments', 'authUser', 'current', 'compact', 'pageAction', 'publicSidebar'), __DIR__ . '/templates'));
+        ], 'context' => compact('authUser', 'item', 'comments', 'compact')];
     }
     private static function statusNotFound(): void
     {
@@ -131,25 +136,22 @@ final class Pages
 
     public static function tag(?string $tag = null): void
     {
+        $data = self::tagData($tag);
+        if ($data === null) { \TinyCat\Site\Errors::respond(404); return; }
+        if (Request::current()->method() === 'GET' && (Request::current()->path() !== $data['page']['current'] || (int) Web::get('page', 0) > 1)) { Web::redirect($data['page']['current'], 301); }
+        \TinyCat\Site\PublicPages::render('tag', $data);
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function tagData(?string $tag = null): ?array
+    {
         $tag = Tags::status_tag_normalize(($tag ?? (string) Web::get('tag', '')));
 
         if ($tag === '') {
-            http_response_code(404);
-            $notFoundTitle = Localization::t('public.tag_not_found');
-            $notFoundCurrent = '/tag';
-            SitePages::notFound($notFoundTitle, null, $notFoundCurrent);
-            return;
+            return null;
         }
 
         $current = Tags::tag_url($tag);
-
-        if (Request::current()->method() === 'GET' && Request::current()->path() !== $current) {
-            Web::redirect($current, 301);
-        }
-
-        if (Request::current()->method() === 'GET' && (int) Web::get('page', 0) > 1) {
-            Web::redirect($current, 301);
-        }
 
         $statusLimit = Feed::public_status_initial_page_limit();
         $nextStatusLimit = Feed::public_status_page_limit();
@@ -186,8 +188,7 @@ final class Pages
         ];
 
         $tagFeedUrl = Tags::tag_feed_url($tag);
-        $publicSidebar = Presentation::public_sidebar($tag);
-        Layout::render([
+        return ['page' => [
             'title' => Localization::t('public.tag_feed_title', ['tag' => '#' . $tag]),
             'current' => $current,
             'meta' => [
@@ -198,6 +199,6 @@ final class Pages
                 'robots' => count($indexableItems) >= 2 ? '' : 'noindex,follow',
                 'jsonld' => $tagStructuredData,
             ],
-        ], View::render('tag', compact('tag', 'statusItems', 'current', 'authUser', 'feedMore', 'tagFeedUrl', 'publicSidebar'), __DIR__ . '/templates'));
+        ], 'context' => compact('authUser', 'tag', 'statusItems', 'feedMore', 'tagFeedUrl')];
     }
 }

@@ -22,7 +22,6 @@ use TinyCat\Support\Dates;
 use TinyCat\Support\Localization;
 use TinyCat\Support\View;
 
-
 /** HTTP page composition; view components receive already prepared data. */
 final class Pages
 {
@@ -42,14 +41,19 @@ final class Pages
 
     public static function author(?int $requestedId = null): void
     {
+        $data = self::authorData($requestedId);
+        if ($data === null) { \TinyCat\Site\Errors::respond(404); return; }
+        if (Request::current()->method() === 'GET' && (int) Web::get('page', 0) > 1) { Web::redirect($data['page']['current'], 301); }
+        \TinyCat\Site\PublicPages::render('author', $data);
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function authorData(?int $requestedId = null): ?array
+    {
         $author = Repository::public_author_find(($requestedId ?? (int) Web::get('id', 0)));
 
         if ($author === null) {
-            http_response_code(404);
-            $notFoundTitle = Localization::t('public.author_not_found');
-            $notFoundCurrent = '/author';
-            SitePages::notFound($notFoundTitle, null, $notFoundCurrent);
-            return;
+            return null;
         }
 
         $authorId = (int) $author['id'];
@@ -58,10 +62,6 @@ final class Pages
         $avatarUrl = Avatars::user_avatar_url($author);
         $memberSince = (string) ($author['created_at'] ?? '');
         $current = Profiles::author_url($authorId);
-
-        if (Request::current()->method() === 'GET' && (int) Web::get('page', 0) > 1) {
-            Web::redirect($current, 301);
-        }
 
         $statusLimit = Feed::public_status_initial_page_limit();
         $nextStatusLimit = Feed::public_status_page_limit();
@@ -127,10 +127,7 @@ final class Pages
         $authorFollowingModalId = Following::author_following_modal_id($authorId);
         $authorFollowingModalUrl = Following::author_following_modal_url($authorId);
         $authorFeedUrl = Profiles::author_feed_url($authorId);
-        $authModalId = Login::auth_modal_id();
-        $authModalUrl = Login::auth_modal_url();
-        $authorUrl = Profiles::author_url($authorId);
-        Layout::render([
+        return ['page' => [
             'title' => Localization::t('public.author_archive_title', ['author' => $authorName]),
             'current' => $current,
             'meta' => [
@@ -144,7 +141,7 @@ final class Pages
                 'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
                 'jsonld' => $authorStructuredData,
             ],
-        ], View::render('author', compact('author', 'authorId', 'authorName', 'bio', 'memberSince', 'statusItems', 'canPost', 'canEditProfile', 'authUser', 'canSeeMute', 'mutedUntil', 'canFollow', 'isFollowing', 'followCounts', 'activityStats', 'feedMore', 'editor', 'authorProfileEditModalId', 'authorProfileEditModalUrl', 'authorAvatarEditModalId', 'authorAvatarEditModalUrl', 'authorFollowingModalId', 'authorFollowingModalUrl', 'authorFeedUrl', 'authModalId', 'authModalUrl', 'authorUrl'), __DIR__ . '/templates'));
+        ], 'context' => compact('author', 'authUser', 'statusItems', 'feedMore', 'editor', 'bio', 'memberSince', 'followCounts', 'activityStats', 'canEditProfile', 'canFollow', 'isFollowing', 'canPost', 'canSeeMute', 'mutedUntil', 'authorProfileEditModalId', 'authorProfileEditModalUrl', 'authorAvatarEditModalId', 'authorAvatarEditModalUrl', 'authorFollowingModalId', 'authorFollowingModalUrl', 'authorFeedUrl')];
     }
 
     public static function login(): void
@@ -240,7 +237,6 @@ final class Pages
 
             $id = (int) $result['user_id'];
             $status = (string) $result['status'];
-
 
             if ($status === 'active') {
                 Authentication::authLogin($id);

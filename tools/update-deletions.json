@@ -208,5 +208,11 @@
         "Public/robots.php",
         "Public/sitemap.php",
         "Public/llms.php"
+    ],
+    "4.2.0": [
+        "App/Status/templates/home.php",
+        "App/Status/templates/detail.php",
+        "App/Status/templates/tag.php",
+        "App/Users/templates/author.php"
     ]
 }
