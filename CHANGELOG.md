@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.1.1 - 2026-10-26
+
+- Normalize public RSS, sitemap, robots and LLM documents under module-owned responders with shared HEAD, ETag and conditional GET handling.
+- Use lightweight, indexed public export queries; cache sitemap page counts briefly and exclude orphan or non-public tags without caching content visibility.
+- Normalize manifest delivery, policy discovery links and WebPage metadata; fix standalone post alignment and compact layout.
+- Share HTML, JSON and asset error handling, provide safe database-independent fallback pages and fixed SVG placeholders, and prevent long-lived caching of errors.
+- Check email availability while typing in registration and profile forms with debouncing, cancellation, CSRF protection, IP limits and authoritative save-time validation.
+- Remove retired Public document handlers during overlay updates.
+
 ## 4.1.0 - 2026-10-26
 
 - Add standard administration pages for scheduled tasks, searchable run history, detailed run modals and manual execution through the shared authenticated API.
