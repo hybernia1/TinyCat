@@ -913,6 +913,14 @@
             "feed_duplicate": "Tento RSS nebo Atom zdroj už je přidaný.",
             "interval": "Interval musí být mezi 5 a 43200 minutami.",
             "template": "Zadej šablonu příspěvku dlouhou nejvýše 2000 znaků."
+        },
+        "run_statuses": {
+            "posted": "Publikov?no",
+            "current": "Beze zm?n",
+            "running": "Prob?h?",
+            "error": "Chyba",
+            "skipped": "P?esko?eno",
+            "completed": "Dokon?eno"
         }
     }
 }

@@ -19,7 +19,7 @@ final class Module implements \TinyCat\StorageModule
         });
 
         \TinyCat\Http\Router::route(['GET', 'POST'], '/notifications', static function (): void {
-            require \TinyCat\Support\Paths::publicPath('notifications.php');
+            Pages::page();
         });
     }
 }

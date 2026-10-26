@@ -112,7 +112,7 @@ final class Presentation
         $sidebarUrl = '/api/site/sidebar' . ($activeTag !== '' ? '?tag=' . rawurlencode($activeTag) : '');
 
         if (!$compute) {
-            return \TinyCat\Support\View::part('sidebar-slot', ['sidebar_url' => $sidebarUrl]);
+            return \TinyCat\Support\View::part('Site/sidebar-slot', ['sidebar_url' => $sidebarUrl]);
         }
 
         $tags = \TinyCat\Status\Tags::public_trending_tags(8, 7, $compute);

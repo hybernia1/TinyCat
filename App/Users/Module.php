@@ -21,24 +21,22 @@ final class Module implements \TinyCat\StorageModule
         });
 
         \TinyCat\Http\Router::route('GET', '/author/{author_id:[0-9]+}', static function (string $author_id): void {
-            $_GET['id'] = (string) max(0, (int) $author_id);
-
-            require \TinyCat\Support\Paths::publicPath('author.php');
+            Pages::author(max(0, (int) $author_id));
         });
 
         \TinyCat\Http\Router::route('GET', '/avatar/{username:' . \TinyCat\Users\Usernames::username_pattern() . '}', static function (string $username): void {
             \TinyCat\Users\Avatar::respond($username);
         });
 
+        \TinyCat\Http\Router::route('GET', '/admin/users', Pages::administration(...));
         foreach ([
-            [['GET', 'POST'], '/login', 'login.php'],
-            [['GET', 'POST'], '/logout', 'logout.php'],
-            [['GET', 'POST'], '/register', 'register.php'],
-            [['GET', 'POST'], '/recovery', 'recovery.php'],
-            ['GET', '/admin/users', 'admin/users.php'],
-            ['GET', '/author', 'author.php'],
-        ] as [$methods, $path, $file]) {
-            \TinyCat\Http\Router::route($methods, $path, static function () use ($file): void { require \TinyCat\Support\Paths::publicPath($file); });
+            [['GET', 'POST'], '/login', Pages::login(...)],
+            [['GET', 'POST'], '/logout', Pages::logout(...)],
+            [['GET', 'POST'], '/register', Pages::register(...)],
+            [['GET', 'POST'], '/recovery', Pages::recovery(...)],
+            ['GET', '/author', Pages::author(...)],
+        ] as [$methods, $path, $handler]) {
+            \TinyCat\Http\Router::route($methods, $path, $handler);
         }
     }
 }

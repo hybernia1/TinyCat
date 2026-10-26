@@ -32,6 +32,7 @@ final readonly class Options
         public bool $reset,
         public bool $resume,
         public bool $jsonLines,
+        public bool $uiFixtures,
     ) {
     }
 
@@ -121,6 +122,7 @@ final readonly class Options
             self::boolean($raw, 'reset', true),
             self::boolean($raw, 'resume', true),
             self::boolean($raw, 'jsonl', false),
+            self::boolean($raw, 'ui-fixtures', false),
         );
     }
 
@@ -128,7 +130,8 @@ final readonly class Options
     public function fingerprintData(): array
     {
         return [
-            'import_format' => 2,
+            'import_format' => 3,
+            'ui_fixtures' => (int) $this->uiFixtures,
             'profile' => $this->profile,
             'users' => $this->users,
             'min_posts' => $this->minPosts,
@@ -179,6 +182,7 @@ Execution:
   --max-batches=N                    Stop cleanly after N batches (resume test)
   --state=/path/state.json           Checkpoint path
   --report=/path/report.json         Final report path
+  --ui-fixtures=1                   Add offline avatars, images and disabled demo bots
   --jsonl=1                          Machine-readable progress events
 TEXT;
     }

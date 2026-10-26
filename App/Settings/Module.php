@@ -13,10 +13,6 @@ final class Module implements \TinyCat\StorageModule
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
-        foreach ([[['GET', 'POST'], '/admin/settings', 'admin/settings.php']] as [$methods, $pagePath, $file]) {
-            \TinyCat\Http\Router::route($methods, $pagePath, static function () use ($file): void {
-                require \TinyCat\Support\Paths::publicPath($file);
-            });
-        }
+        \TinyCat\Http\Router::route(['GET', 'POST'], '/admin/settings', Pages::administration(...));
     }
 }

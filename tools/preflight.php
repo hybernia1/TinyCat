@@ -11,6 +11,8 @@ if (PHP_VERSION_ID < 80400) {
 }
 
 $root = dirname(__DIR__);
+require_once $root . '/App/Support/Version.php';
+$version = \TinyCat\Support\Version::CURRENT;
 if (!is_file($root . '/vendor/bin/phpstan')) {
     fwrite(STDERR, "Development tools are missing. Run composer install first.\n");
     exit(1);
@@ -36,4 +38,4 @@ foreach ($commands as $label => $command) {
     }
 }
 
-echo "\nPASS TinyCat 3.1.0 monolith preflight\n";
+echo "\nPASS TinyCat {$version} monolith preflight\n";

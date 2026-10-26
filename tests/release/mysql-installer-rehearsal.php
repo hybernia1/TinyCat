@@ -45,6 +45,7 @@ $options = [
 $server = null;
 $database = null;
 $created = false;
+$demoRoot = $workspaceRoot . '/storage/demo-schema-test-' . bin2hex(random_bytes(6));
 $failures = [];
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$failures, &$checks): void {
@@ -229,7 +230,11 @@ try {
         $_SERVER['REQUEST_URI'] = '/admin/bots/' . $botId;
         ob_start();
         try {
-            require $root . '/Public/admin/bots/' . $botPage;
+            match ($botPage) {
+                'accounts-page.php' => \TinyCat\Bots\Pages::accounts(),
+                'sources-page.php' => \TinyCat\Bots\Pages::sources(),
+                default => \TinyCat\Bots\Pages::detail($botId),
+            };
             $botHtml = (string) ob_get_contents();
         } finally {
             ob_end_clean();
@@ -249,9 +254,49 @@ try {
     $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_feed_history WHERE bot_user_id = ?', [$botId]) === 2, 'Metadata cleanup preserves built-in bot import history.');
     $assert((string) \TinyCat\Database\Connection::value("SELECT setting_value FROM settings WHERE setting_key = 'i18n.locale'") === 'cs', 'Metadata cleanup preserves application settings.');
     $assert(is_string($configHash) && hash_file('sha256', $configPath) === $configHash, 'Schema rehearsal does not replace application configuration.');
+
+    // Run the real importer against the current fresh schema, including interrupted resume.
+    foreach (['Options', 'DeterministicGenerator', 'ProgressReporter', 'CheckpointStore', 'BatchWriter', 'Schema', 'UiFixtures', 'DemoImporter'] as $tool) { require_once $workspaceRoot . '/tools/demo-import/' . $tool . '.php'; }
+    mkdir($demoRoot, 0700);
+    file_put_contents($demoRoot . '/config.php', "<?php return ['database' => []];");
+    mkdir($demoRoot . '/storage/cache/assets', 0775, true);
+    file_put_contents($demoRoot . '/storage/cache/assets/demo.aaaaaaaaaaaaaaaaaaaa.js', 'immutable');
+    file_put_contents($demoRoot . '/storage/cache/expired.json', '{}');
+    $demoArguments = ['demo-import.php', '--config=' . $demoRoot . '/config.php', '--profile=small', '--users=12', '--prefix=fixture', '--ui-fixtures=' . (function_exists('imagewebp') ? '1' : '0')];
+    $pausedOptions = \TinyCat\Tools\DemoImport\Options::fromArgv([...$demoArguments, '--reset=1', '--max-batches=2'], $workspaceRoot);
+    $progress = new \TinyCat\Tools\DemoImport\ProgressReporter(false);
+    $paused = (new \TinyCat\Tools\DemoImport\DemoImporter($database, $pausedOptions, $progress, $databaseName))->run();
+    $assert(!$paused['complete'], 'Fresh-schema demo import can pause at a checkpoint.');
+    $resumedOptions = \TinyCat\Tools\DemoImport\Options::fromArgv([...$demoArguments, '--reset=0'], $workspaceRoot);
+    $importer = new \TinyCat\Tools\DemoImport\DemoImporter($database, $resumedOptions, $progress, $databaseName);
+    $demo = $importer->run();
+    $assert($demo['complete'] && $demo['counts']['content'] > 0 && $demo['counts']['content_comments'] > 0, 'Resumed demo import populates the current schema.');
+    $assert(is_file($demoRoot . '/storage/cache/assets/demo.aaaaaaaaaaaaaaaaaaaa.js'), 'Demo import preserves immutable assets for open pages.');
+    $assert(!is_file($demoRoot . '/storage/cache/expired.json'), 'Demo import clears stale data caches.');
+    $assert((int) $database->query("SELECT COUNT(*) FROM settings WHERE setting_key IN ('i18n.locale', 'datetime.timezone')")->fetchColumn() === 2, 'Demo importer uses current localization setting keys.');
+    $repeated = $importer->run();
+    $assert($repeated['counts'] === $demo['counts'], 'Completed demo checkpoint is idempotent.');
+    if (function_exists('imagewebp')) {
+        $assert((int) $database->query('SELECT COUNT(*) FROM bot_sources')->fetchColumn() === 2, 'UI demo includes built-in bot sources.');
+        $assert((int) $database->query('SELECT COUNT(*) FROM bot_sources WHERE enabled <> 0')->fetchColumn() === 0, 'Demo bot sources do not start network imports.');
+        $assert((int) $database->query('SELECT COUNT(*) FROM content_images')->fetchColumn() > 0, 'UI demo includes status images.');
+        $assert(is_file($demoRoot . '/uploads/avatars/1.webp'), 'UI demo stores an actual avatar file.');
+        $before = (int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn();
+        (new \TinyCat\Tools\DemoImport\UiFixtures($database, $demoRoot, 'fixture', $resumedOptions->anchor))->run();
+        $assert((int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn() === $before, 'Visual fixture generation is idempotent.');
+    }
+
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();
 } finally {
+    if (is_dir($demoRoot)) {
+        $resolvedDemo = realpath($demoRoot);
+        $storage = realpath($workspaceRoot . '/storage');
+        if (is_string($resolvedDemo) && is_string($storage) && str_starts_with($resolvedDemo, $storage . DIRECTORY_SEPARATOR)) {
+            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($resolvedDemo, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $file) { $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname()); }
+            rmdir($resolvedDemo);
+        }
+    }
     $database = null;
 
     if ($created && $server instanceof PDO && preg_match('/^tinycat_installer_test_[a-f0-9]{12}$/', $databaseName) === 1) {

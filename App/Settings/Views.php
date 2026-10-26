@@ -47,6 +47,6 @@ final class Views
             },
             'email_template_keys' => $type === 'email_templates' ? Templates::email_template_keys() : [],
         ];
-        return View::part('admin/settings/field', array_replace($data, compact('classes', 'displayValue', 'field', 'name', 'tag', 'type', 'value', 'prepared')));
+        return View::part('Settings/field', array_replace($data, compact('classes', 'displayValue', 'field', 'name', 'tag', 'type', 'value', 'prepared')));
     }
 }

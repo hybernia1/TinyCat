@@ -56,7 +56,7 @@ final class View
         echo $output;
     }
 
-    private static function capture(callable $callback): string
+    public static function capture(callable $callback): string
     {
         ob_start();
 
@@ -123,6 +123,10 @@ final class View
      */
     public static function part(string $template, array $data = []): string
     {
-        return trim(\TinyCat\Support\View::render('parts/' . trim($template, '/'), $data));
+        $parts = explode('/', $template, 2);
+        if (count($parts) !== 2 || preg_match('/^[A-Z][A-Za-z0-9]*$/D', $parts[0]) !== 1) {
+            throw new RuntimeException('Partial must name its module: ' . $template);
+        }
+        return trim(self::render($parts[1], $data, Paths::basePath('App/' . $parts[0] . '/templates/parts')));
     }
 }

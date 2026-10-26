@@ -599,16 +599,21 @@
                                   {
                                     "tag": "button",
                                     "attrs": {
-                                      "class": "btn btn-sm btn-ghost",
+                                      "class": "btn btn-sm btn-ghost btn-icon",
                                       "type": "button",
                                       "data-bot-source-edit": {
                                         "get": "source.id"
+                                      },
+                                      "aria-label": {
+                                        "t": "bots.edit_source"
+                                      },
+                                      "title": {
+                                        "t": "bots.edit_source"
                                       }
                                     },
                                     "children": [
                                       {
-                                        "t": "bots.edit_source",
-                                        "values": {}
+                                        "icon": "edit"
                                       }
                                     ]
                                   },
@@ -650,7 +655,17 @@
                                             "values": {}
                                           }
                                         ]
-                                      }
+                                      },
+                                      "icon": {
+                                        "if": [
+                                          {
+                                            "get": "source.enabled"
+                                          },
+                                          "pause",
+                                          "play"
+                                        ]
+                                      },
+                                      "button_class": "btn btn-sm btn-ghost btn-icon"
                                     }
                                   },
                                   {
@@ -670,7 +685,9 @@
                                       "label": {
                                         "t": "bots.detail_run_now",
                                         "values": {}
-                                      }
+                                      },
+                                      "icon": "refresh",
+                                      "button_class": "btn btn-sm btn-ghost btn-icon"
                                     }
                                   },
                                   {
@@ -693,7 +710,9 @@
                                       "confirm": {
                                         "t": "bots.delete_confirm",
                                         "values": {}
-                                      }
+                                      },
+                                      "icon": "trash",
+                                      "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
                                     }
                                   }
                                 ]
@@ -851,10 +870,16 @@
                                 },
                                 "children": [
                                   {
-                                    "concat": [
-                                      "@",
+                                    "tag": "strong",
+                                    "attrs": {},
+                                    "children": [
                                       {
-                                        "get": "account.username"
+                                        "concat": [
+                                          "@",
+                                          {
+                                            "get": "account.username"
+                                          }
+                                        ]
                                       }
                                     ]
                                   }
@@ -867,7 +892,15 @@
                             "attrs": {},
                             "children": [
                               {
-                                "get": "account.status_label"
+                                "component": "ui/account-status",
+                                "data": {
+                                  "status": {
+                                    "get": "account.status"
+                                  },
+                                  "label": {
+                                    "get": "account.status_label"
+                                  }
+                                }
                               }
                             ]
                           },
@@ -898,7 +931,8 @@
                                 "attrs": {
                                   "datetime": {
                                     "get": "account.updated_at"
-                                  }
+                                  },
+                                  "class": "table-meta"
                                 },
                                 "children": [
                                   {
@@ -913,31 +947,41 @@
                             "attrs": {},
                             "children": [
                               {
-                                "component": "ui/api-action",
-                                "data": {
-                                  "url": {
-                                    "concat": [
-                                      "/api/bots/accounts/",
-                                      {
-                                        "get": "account.id"
-                                      }
-                                    ]
-                                  },
-                                  "method": "DELETE",
-                                  "target": "#bot-accounts-list",
-                                  "confirm": {
-                                    "t": "bots.account_delete_confirm",
-                                    "values": {
-                                      "username": {
-                                        "get": "account.username"
-                                      }
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-actions"
+                                },
+                                "children": [
+                                  {
+                                    "component": "ui/api-action",
+                                    "data": {
+                                      "url": {
+                                        "concat": [
+                                          "/api/bots/accounts/",
+                                          {
+                                            "get": "account.id"
+                                          }
+                                        ]
+                                      },
+                                      "method": "DELETE",
+                                      "target": "#bot-accounts-list",
+                                      "confirm": {
+                                        "t": "bots.account_delete_confirm",
+                                        "values": {
+                                          "username": {
+                                            "get": "account.username"
+                                          }
+                                        }
+                                      },
+                                      "label": {
+                                        "t": "common.delete",
+                                        "values": {}
+                                      },
+                                      "icon": "trash",
+                                      "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
                                     }
-                                  },
-                                  "label": {
-                                    "t": "common.delete",
-                                    "values": {}
                                   }
-                                }
+                                ]
                               }
                             ]
                           }
@@ -1077,7 +1121,14 @@
               },
               "children": [
                 {
-                  "get": "runs.0.status"
+                  "or": [
+                    {
+                      "get": "runs.0.status_label"
+                    },
+                    {
+                      "get": "runs.0.status"
+                    }
+                  ]
                 }
               ]
             }
@@ -1259,7 +1310,14 @@
                           "attrs": {},
                           "children": [
                             {
-                              "get": "run.status"
+                              "or": [
+                                {
+                                  "get": "run.status_label"
+                                },
+                                {
+                                  "get": "run.status"
+                                }
+                              ]
                             }
                           ]
                         },

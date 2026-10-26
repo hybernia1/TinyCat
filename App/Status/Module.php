@@ -19,9 +19,7 @@ final class Module implements \TinyCat\StorageModule
             });
         }
         \TinyCat\Http\Router::route(['GET', 'POST'], '/status/{status_id:[0-9]+}', static function (string $status_id): void {
-            $_GET['id'] = (string) max(0, (int) $status_id);
-
-            require \TinyCat\Support\Paths::publicPath('status.php');
+            Pages::detail(max(0, (int) $status_id));
         });
 
         \TinyCat\Http\Router::route('GET', '/tag/{tag}/feed', static function (string $tag): void {
@@ -32,17 +30,15 @@ final class Module implements \TinyCat\StorageModule
         });
 
         \TinyCat\Http\Router::route(['GET', 'POST'], '/tag/{tag}', static function (string $tag): void {
-            $_GET['tag'] = $tag;
-
-            require \TinyCat\Support\Paths::publicPath('tag.php');
+            Pages::tag($tag);
         });
 
         foreach ([
-            ['GET', '/', 'index.php'],
-            [['GET', 'POST'], '/status', 'status.php'],
-            [['GET', 'POST'], '/tag', 'tag.php'],
-        ] as [$methods, $path, $file]) {
-            \TinyCat\Http\Router::route($methods, $path, static function () use ($file): void { require \TinyCat\Support\Paths::publicPath($file); });
+            ['GET', '/', Pages::home(...)],
+            [['GET', 'POST'], '/status', Pages::detail(...)],
+            [['GET', 'POST'], '/tag', Pages::tag(...)],
+        ] as [$methods, $path, $handler]) {
+            \TinyCat\Http\Router::route($methods, $path, $handler);
         }
     }
 }

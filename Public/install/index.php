@@ -802,7 +802,7 @@ function tc_install_render(string $step, array $languages, array $state): void
                     <h1 class="text-2xl m-0"><?= \TinyCat\Support\Html::et('install.title') ?></h1>
                 </div>
 
-                <?= \TinyCat\Support\View::part('install/steps', ['current' => $step]) ?>
+                <?= \TinyCat\Support\View::part('Site/install/steps', ['current' => $step]) ?>
 
                 <?php if ($error): ?>
                     <div class="alert alert-danger"><?= \TinyCat\Support\Html::e($error) ?></div>

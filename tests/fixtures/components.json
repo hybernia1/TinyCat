@@ -1277,5 +1277,50 @@
       "target": "#feed",
       "url": "/api/statuses?before_id=10"
     }
+  },
+  {
+    "component": "ui/account-status",
+    "data": {
+      "status": "active",
+      "label": "Status <unsafe>"
+    }
+  },
+  {
+    "component": "ui/account-status",
+    "data": {
+      "status": "waiting",
+      "label": "Status <unsafe>"
+    }
+  },
+  {
+    "component": "ui/account-status",
+    "data": {
+      "status": "ban",
+      "label": "Status <unsafe>"
+    }
+  },
+  {
+    "component": "ui/admin-list",
+    "data": {
+      "title": "List <unsafe>",
+      "icon": "users",
+      "target_id": "fixture-list",
+      "filter_modal": "filter-modal"
+    },
+    "slots": {
+      "content": "Prepared list <safe>"
+    }
+  },
+  {
+    "component": "ui/admin-list",
+    "data": {
+      "title": "List <unsafe>",
+      "icon": "users",
+      "target_id": "fixture-list",
+      "filter_modal": ""
+    },
+    "slots": {
+      "content": "Prepared list <safe>"
+    }
   }
 ]

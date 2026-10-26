@@ -2,7 +2,8 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
-$partsRoot = $root . '/Public/parts';
+$templateRoots = glob($root . '/App/*/templates') ?: [];
+if ($templateRoots === []) { throw new RuntimeException('No module templates found.'); }
 $forbiddenFunctions = array_fill_keys([
     'all',
     'auth',
@@ -50,12 +51,19 @@ $forbiddenStaticOwners = array_fill_keys([
     'UserRoles',
 ], true);
 $failures = [];
-$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(
-    $partsRoot,
-    FilesystemIterator::SKIP_DOTS
-));
+$production = '';
+foreach (['App', 'Public'] as $directory) {
+    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/' . $directory, FilesystemIterator::SKIP_DOTS)) as $sourceFile) {
+        if ($sourceFile->getExtension() === 'php') { $production .= file_get_contents($sourceFile->getPathname()) . "\n"; }
+    }
+}
 
-foreach ($iterator as $file) {
+$files = [];
+foreach ($templateRoots as $templateRoot) {
+    foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($templateRoot, FilesystemIterator::SKIP_DOTS)) as $file) { $files[] = $file; }
+}
+
+foreach ($files as $file) {
     if (!$file instanceof SplFileInfo || $file->getExtension() !== 'php') {
         continue;
     }
@@ -68,6 +76,11 @@ foreach ($iterator as $file) {
     }
 
     $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
+    if (preg_match('~^App/([^/]+)/templates/parts/(.+)\.php$~', $relative, $match)) {
+        $name = $match[1] . '/' . $match[2];
+        if (!str_contains($production, "'" . $name . "'") && !str_contains($production, '"' . $name . '"')) { $failures[] = 'Unreferenced module partial: ' . $relative; }
+    }
+
     preg_match_all('/^use ([\\\\\w]+)(?: as (\w+))?;/m', $source, $importMatches, PREG_SET_ORDER);
     $imports = [];
     foreach ($importMatches as $import) {
@@ -98,7 +111,7 @@ foreach ($iterator as $file) {
 
         if (is_array($nextToken) && $nextToken[0] === T_DOUBLE_COLON) {
             $class = $imports[$name] ?? ltrim($name, '\\');
-            if (preg_match('~^TinyCat\\\\(?:Support\\\\(?:Html|View|Localization)|Security\\\\Csrf|(?:Users|Status|Bots|Settings|Site|Notifications)\\\\Views)$~', $class) !== 1) {
+            if (preg_match('~^TinyCat\\\\(?:Support\\\\(?:Html|View|Localization|Dates|Text|Format|Components|Version)|Security\\\\Csrf|(?:Users|Status|Bots|Settings|Site|Notifications)\\\\Views)$~', $class) !== 1) {
                 $failures[] = $relative . ':' . $token[2] . ' must compose presentation components instead of calling ' . $class . '::.';
             }
         }
@@ -123,4 +136,4 @@ if ($failures !== []) {
     exit(1);
 }
 
-echo "PASS render-only partial boundary\n";
+echo "PASS render-only module template boundary (" . count($files) . " templates)\n";

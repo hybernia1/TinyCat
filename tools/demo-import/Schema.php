@@ -10,6 +10,10 @@ use Throwable;
 final readonly class Schema
 {
     private const array REQUIRED_TABLES = [
+        'bot_sources',
+        'bot_source_runs',
+        'bot_feed_history',
+        'content_images',
         'users',
         'content',
         'terms',
@@ -26,6 +30,9 @@ final readonly class Schema
     ];
 
     private const array RESET_TABLES = [
+        'bot_source_runs',
+        'bot_feed_history',
+        'bot_sources',
         'password_reset_tokens',
         'notifications',
         'comment_likes',
@@ -100,8 +107,8 @@ final readonly class Schema
             ['site.name', 'site', 'TinyCat benchmark', 'string'],
             ['auth.registration.enabled', 'security', '1', 'bool'],
             ['auth.registration.auto_approve', 'security', '1', 'bool'],
-            ['site.timezone', 'localization', 'UTC', 'string'],
-            ['site.locale', 'localization', 'en', 'string'],
+            ['datetime.timezone', 'localization', 'UTC', 'string'],
+            ['i18n.locale', 'localization', 'en', 'string'],
         ] as $setting) {
             $statement->execute($setting);
         }

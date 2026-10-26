@@ -51,21 +51,13 @@ final class Module implements \TinyCat\Module
         \TinyCat\Http\Router::route('GET', '/icon-maskable-512.png', static function (): void {
             \TinyCat\Site\Identity::respondIcon('maskable-512');
         });
-        foreach ([['GET', '/privacy', 'privacy.php']] as [$methods, $pagePath, $file]) {
-            \TinyCat\Http\Router::route($methods, $pagePath, static function () use ($file): void {
-                require \TinyCat\Support\Paths::publicPath($file);
-            });
-        }
+        \TinyCat\Http\Router::route('GET', '/privacy', Pages::privacy(...));
         foreach ([[['GET', 'POST'], '/install', 'install/index.php']] as [$methods, $pagePath, $file]) {
             \TinyCat\Http\Router::route($methods, $pagePath, static function () use ($file): void {
                 require \TinyCat\Support\Paths::publicPath($file);
             });
         }
-        foreach ([[['GET', 'POST'], '/admin', 'admin/index.php']] as [$methods, $pagePath, $file]) {
-            \TinyCat\Http\Router::route($methods, $pagePath, static function () use ($file): void {
-                require \TinyCat\Support\Paths::publicPath($file);
-            });
-        }
+        \TinyCat\Http\Router::route(['GET', 'POST'], '/admin', Pages::dashboard(...));
         foreach ([['GET', '/sitemap', 'sitemap.php']] as [$methods, $pagePath, $file]) {
             \TinyCat\Http\Router::route($methods, $pagePath, static function () use ($file): void {
                 require \TinyCat\Support\Paths::publicPath($file);

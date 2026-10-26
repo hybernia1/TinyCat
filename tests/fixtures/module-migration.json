@@ -15,8 +15,7 @@
       "presentation_dependency": false,
       "direct_ui_references": [
         {
-          "file": "Public/layout.php",
-          "line": 321
+          "file": "App/Site/templates/public.php"
         },
         {
           "file": "assets/modules/search/index.js"
@@ -26,8 +25,8 @@
         }
       ],
       "ui_areas": [
-        "Public/search.php",
-        "Public/parts/search",
+        "App/Search/Pages.php",
+        "App/Search/Pages.php",
         "assets/modules/search"
       ],
       "stage": 5,
@@ -46,17 +45,15 @@
       "presentation_dependency": false,
       "direct_ui_references": [
         {
-          "file": "Public/parts/status/comment-field.php",
-          "line": 16
+          "file": "App/Search/Pages.php"
         },
         {
-          "file": "Public/parts/status/field.php",
-          "line": 13
+          "file": "App/Search/Pages.php"
         }
       ],
       "ui_areas": [
-        "Public/search.php",
-        "Public/parts/search",
+        "App/Search/Pages.php",
+        "App/Search/Pages.php",
         "assets/modules/search"
       ],
       "stage": 5,
@@ -79,8 +76,8 @@
         }
       ],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/search.php",
+        "assets/modules/users/components.json",
+        "App/Search/Pages.php",
         "assets/modules/security"
       ],
       "stage": 5,
@@ -99,10 +96,10 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -121,15 +118,14 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/auth/form.php",
-          "line": 14
+          "file": "assets/modules/users/components.json"
         }
       ],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -148,15 +144,14 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/auth/form.php",
-          "line": 14
+          "file": "assets/modules/users/components.json"
         }
       ],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -175,10 +170,10 @@
       "presentation_dependency": false,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -197,10 +192,10 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -219,15 +214,14 @@
       "presentation_dependency": false,
       "direct_ui_references": [
         {
-          "file": "Public/modals/profile-edit.php",
-          "line": 57
+          "file": "assets/modules/users/components.json"
         }
       ],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -246,15 +240,14 @@
       "presentation_dependency": false,
       "direct_ui_references": [
         {
-          "file": "Public/modals/profile-edit.php",
-          "line": 82
+          "file": "assets/modules/users/components.json"
         }
       ],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -273,15 +266,14 @@
       "presentation_dependency": false,
       "direct_ui_references": [
         {
-          "file": "Public/modals/profile-edit.php",
-          "line": 99
+          "file": "assets/modules/users/components.json"
         }
       ],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -300,10 +292,10 @@
       "presentation_dependency": false,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -322,9 +314,9 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/status",
-        "Public/modals/status-post.php",
-        "Public/modals/status-edit.php",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
         "assets/modules/status"
       ],
       "stage": 4,
@@ -343,28 +335,24 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/notifications/item.php",
-          "line": 38
+          "file": "assets/modules/notifications/components.json"
         },
         {
-          "file": "Public/parts/notifications/item.php",
-          "line": 46
+          "file": "assets/modules/notifications/components.json"
         },
         {
-          "file": "Public/parts/notifications/menu.php",
-          "line": 17
+          "file": "App/Notifications/templates/parts/menu.php"
         },
         {
-          "file": "Public/parts/notifications/page.php",
-          "line": 18
+          "file": "App/Notifications/templates/parts/page.php"
         },
         {
           "file": "assets/modules/notifications/index.js"
         }
       ],
       "ui_areas": [
-        "Public/parts/notifications",
-        "Public/notifications.php",
+        "assets/modules/notifications/components.json",
+        "App/Notifications/Pages.php",
         "assets/modules/notifications"
       ],
       "stage": 3,
@@ -383,8 +371,8 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/notifications",
-        "Public/notifications.php",
+        "assets/modules/notifications/components.json",
+        "App/Notifications/Pages.php",
         "assets/modules/notifications"
       ],
       "stage": 3,
@@ -403,8 +391,8 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/notifications",
-        "Public/notifications.php",
+        "assets/modules/notifications/components.json",
+        "App/Notifications/Pages.php",
         "assets/modules/notifications"
       ],
       "stage": 3,
@@ -423,9 +411,9 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/status",
-        "Public/modals/status-post.php",
-        "Public/modals/status-edit.php",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
         "assets/modules/status"
       ],
       "stage": 4,
@@ -444,17 +432,15 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/sidebar-slot.php",
-          "line": 9
+          "file": "App/Site/templates/parts/sidebar-slot.php"
         },
         {
-          "file": "Public/parts/sidebar.php",
-          "line": 12
+          "file": "assets/modules/site/components.json"
         }
       ],
       "ui_areas": [
-        "Public/parts/sidebar.php",
-        "Public/parts/sidebar-slot.php",
+        "assets/modules/site/components.json",
+        "App/Site/templates/parts/sidebar-slot.php",
         "assets/modules/site"
       ],
       "stage": 5,
@@ -473,9 +459,9 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/status",
-        "Public/modals/status-post.php",
-        "Public/modals/status-edit.php",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
         "assets/modules/status"
       ],
       "stage": 4,
@@ -498,9 +484,9 @@
         }
       ],
       "ui_areas": [
-        "Public/parts/status",
-        "Public/modals/status-post.php",
-        "Public/modals/status-edit.php",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
         "assets/modules/status"
       ],
       "stage": 4,
@@ -519,9 +505,9 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/status",
-        "Public/modals/status-post.php",
-        "Public/modals/status-edit.php",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
         "assets/modules/status"
       ],
       "stage": 4,
@@ -540,8 +526,8 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/admin/moderation",
-        "Public/parts/admin/moderation",
+        "App/Moderation/Pages.php",
+        "assets/modules/moderation/components.json",
         "assets/modules/moderation"
       ],
       "stage": 5,
@@ -560,9 +546,9 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/status",
-        "Public/modals/status-post.php",
-        "Public/modals/status-edit.php",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
         "assets/modules/status"
       ],
       "stage": 4,
@@ -581,9 +567,9 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/status",
-        "Public/modals/status-post.php",
-        "Public/modals/status-edit.php",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
         "assets/modules/status"
       ],
       "stage": 4,
@@ -602,9 +588,9 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/status",
-        "Public/modals/status-post.php",
-        "Public/modals/status-edit.php",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
+        "assets/modules/status/components.json",
         "assets/modules/status"
       ],
       "stage": 4,
@@ -623,10 +609,10 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -645,10 +631,10 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -667,10 +653,10 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -689,15 +675,14 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/admin/users/list.php",
-          "line": 19
+          "file": "assets/modules/users/components.json"
         }
       ],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -716,15 +701,14 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/admin/users/list.php",
-          "line": 19
+          "file": "assets/modules/users/components.json"
         }
       ],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -743,15 +727,14 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/admin/users/list.php",
-          "line": 19
+          "file": "assets/modules/users/components.json"
         }
       ],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -770,15 +753,14 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/admin/users/list.php",
-          "line": 19
+          "file": "assets/modules/users/components.json"
         }
       ],
       "ui_areas": [
-        "Public/parts/auth/form.php",
-        "Public/parts/admin/users",
-        "Public/modals/profile-edit.php",
-        "Public/modals/avatar-edit.php",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
+        "assets/modules/users/components.json",
         "assets/modules/users"
       ],
       "stage": 3,
@@ -797,12 +779,11 @@
       "presentation_dependency": false,
       "direct_ui_references": [
         {
-          "file": "Public/admin/settings.php",
-          "line": 51
+          "file": "App/Settings/templates/administration.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/settings.php",
+        "App/Settings/templates/administration.php",
         "assets/modules/settings"
       ],
       "stage": 5,
@@ -821,12 +802,11 @@
       "presentation_dependency": false,
       "direct_ui_references": [
         {
-          "file": "Public/admin/cron.php",
-          "line": 64
+          "file": "App/Scheduler/templates/administration.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/cron.php",
+        "App/Scheduler/templates/administration.php",
         "assets/modules/site"
       ],
       "stage": 5,
@@ -845,13 +825,12 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/admin/moderation/report-action.php",
-          "line": 16
+          "file": "assets/modules/moderation/components.json"
         }
       ],
       "ui_areas": [
-        "Public/admin/moderation",
-        "Public/parts/admin/moderation",
+        "App/Moderation/Pages.php",
+        "assets/modules/moderation/components.json",
         "assets/modules/moderation"
       ],
       "stage": 5,
@@ -870,13 +849,12 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/admin/moderation/report-action.php",
-          "line": 16
+          "file": "assets/modules/moderation/components.json"
         }
       ],
       "ui_areas": [
-        "Public/admin/moderation",
-        "Public/parts/admin/moderation",
+        "App/Moderation/Pages.php",
+        "assets/modules/moderation/components.json",
         "assets/modules/moderation"
       ],
       "stage": 5,
@@ -895,13 +873,12 @@
       "presentation_dependency": false,
       "direct_ui_references": [
         {
-          "file": "Public/admin/moderation/blocking.php",
-          "line": 22
+          "file": "App/Moderation/templates/blocking.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/moderation",
-        "Public/parts/admin/moderation",
+        "App/Moderation/Pages.php",
+        "assets/modules/moderation/components.json",
         "assets/modules/moderation"
       ],
       "stage": 5,
@@ -920,13 +897,12 @@
       "presentation_dependency": false,
       "direct_ui_references": [
         {
-          "file": "Public/admin/moderation/blocking.php",
-          "line": 22
+          "file": "App/Moderation/templates/blocking.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/moderation",
-        "Public/parts/admin/moderation",
+        "App/Moderation/Pages.php",
+        "assets/modules/moderation/components.json",
         "assets/modules/moderation"
       ],
       "stage": 5,
@@ -945,33 +921,27 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/bots/modals/account-filter.php",
-          "line": 27
+          "file": "App/Bots/templates/parts/modals/account-filter.php"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 30
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 36
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 86
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 95
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 69
+          "file": "App/Bots/templates/detail.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/bots",
-        "Public/parts/bots",
+        "App/Bots/Pages.php",
+        "assets/modules/bots/components.json",
         "assets/modules/bots"
       ],
       "stage": 5,
@@ -990,33 +960,27 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/bots/modals/account-filter.php",
-          "line": 27
+          "file": "App/Bots/templates/parts/modals/account-filter.php"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 30
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 36
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 86
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 95
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 69
+          "file": "App/Bots/templates/detail.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/bots",
-        "Public/parts/bots",
+        "App/Bots/Pages.php",
+        "assets/modules/bots/components.json",
         "assets/modules/bots"
       ],
       "stage": 5,
@@ -1035,33 +999,27 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/bots/modals/account-filter.php",
-          "line": 27
+          "file": "App/Bots/templates/parts/modals/account-filter.php"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 30
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 36
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 86
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 95
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 69
+          "file": "App/Bots/templates/detail.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/bots",
-        "Public/parts/bots",
+        "App/Bots/Pages.php",
+        "assets/modules/bots/components.json",
         "assets/modules/bots"
       ],
       "stage": 5,
@@ -1080,33 +1038,27 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/parts/bots/modals/account-filter.php",
-          "line": 27
+          "file": "App/Bots/templates/parts/modals/account-filter.php"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 30
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 36
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 86
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/parts/bots/parts/accounts.php",
-          "line": 95
+          "file": "assets/modules/bots/components.json"
         },
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 69
+          "file": "App/Bots/templates/detail.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/bots",
-        "Public/parts/bots",
+        "App/Bots/Pages.php",
+        "assets/modules/bots/components.json",
         "assets/modules/bots"
       ],
       "stage": 5,
@@ -1125,17 +1077,15 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 125
+          "file": "App/Bots/templates/detail.php"
         },
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 130
+          "file": "App/Bots/templates/detail.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/bots",
-        "Public/parts/bots",
+        "App/Bots/Pages.php",
+        "assets/modules/bots/components.json",
         "assets/modules/bots"
       ],
       "stage": 5,
@@ -1154,17 +1104,15 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 125
+          "file": "App/Bots/templates/detail.php"
         },
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 130
+          "file": "App/Bots/templates/detail.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/bots",
-        "Public/parts/bots",
+        "App/Bots/Pages.php",
+        "assets/modules/bots/components.json",
         "assets/modules/bots"
       ],
       "stage": 5,
@@ -1183,17 +1131,15 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 125
+          "file": "App/Bots/templates/detail.php"
         },
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 130
+          "file": "App/Bots/templates/detail.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/bots",
-        "Public/parts/bots",
+        "App/Bots/Pages.php",
+        "assets/modules/bots/components.json",
         "assets/modules/bots"
       ],
       "stage": 5,
@@ -1212,17 +1158,15 @@
       "presentation_dependency": true,
       "direct_ui_references": [
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 125
+          "file": "App/Bots/templates/detail.php"
         },
         {
-          "file": "Public/admin/bots/detail.php",
-          "line": 130
+          "file": "App/Bots/templates/detail.php"
         }
       ],
       "ui_areas": [
-        "Public/admin/bots",
-        "Public/parts/bots",
+        "App/Bots/Pages.php",
+        "assets/modules/bots/components.json",
         "assets/modules/bots"
       ],
       "stage": 5,
@@ -1241,8 +1185,8 @@
       "presentation_dependency": true,
       "direct_ui_references": [],
       "ui_areas": [
-        "Public/admin/bots",
-        "Public/parts/bots",
+        "App/Bots/Pages.php",
+        "assets/modules/bots/components.json",
         "assets/modules/bots"
       ],
       "stage": 5,

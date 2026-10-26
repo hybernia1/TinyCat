@@ -173,6 +173,18 @@ for (const attributes of [{ onclick: "alert(1)" }, { style: "color:red" }, { src
 assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel_attributes: {}, close_icon: "<img onerror=bad>", body: "<script>bad</script>" })); checks++;
 
 (async () => {
+  const owner = new Node("section"); owner.dataset.botDetailId = "2";
+  const counters = ["sources", "active_sources", "posts", "runs"].map(key => { const node = new Node("strong"); node.dataset.botStat = key; node.textContent = "stale"; return node; });
+  document.querySelector = selector => selector === "[data-bot-detail-id]" ? owner : selector === "[data-bot-sources]" ? sourceRoot : null;
+  document.querySelectorAll = selector => selector === "[data-bot-stat]" ? counters : [];
+  const previousRequest = T.api.request;
+  T.api.request = async () => ({ data: { item: { id: 2, username: "Bot", post_count: 4 }, sources: [{ id: 7, enabled: false }], runs: [{ id: 1 }, { id: 2 }] } });
+  const sourceAction = new Node("form"); sourceAction.setAttribute("action", "/api/bots/sources/7");
+  check(T.bots.result(sourceAction, {}, null), "Bot detail accepts its canonical resource mutation.");
+  await Promise.resolve();
+  check(counters.map(node => node.textContent).join(",") === "1,0,4,2", "AJAX detail refresh updates all source, post and run counters.");
+  check(sourceRoot.querySelector("[data-bot-sources-view]"), "AJAX detail preserves the shared source component.");
+  T.api.request = previousRequest;
   const handlers = {};
   document.readyState = "loading";
   document.addEventListener = (name, callback) => { (handlers[name] ||= []).push(callback); };

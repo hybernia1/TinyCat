@@ -913,6 +913,14 @@
             "feed_duplicate": "This RSS or Atom source has already been added.",
             "interval": "The interval must be between 5 and 43200 minutes.",
             "template": "Enter a post template of at most 2000 characters."
+        },
+        "run_statuses": {
+            "posted": "Published",
+            "current": "Up to date",
+            "running": "Running",
+            "error": "Error",
+            "skipped": "Skipped",
+            "completed": "Completed"
         }
     }
 }

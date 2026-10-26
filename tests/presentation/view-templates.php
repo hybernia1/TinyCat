@@ -26,7 +26,7 @@ $assert = static function (bool $condition, string $message) use (&$checks, &$fa
     }
 };
 
-$modal = \TinyCat\Support\View::render('modals/layout', [
+$modal = \TinyCat\Support\View::part('Support/modal', [
     'id' => 'snapshot-modal',
     'title' => 'Title <unsafe>',
     'body' => '<p id="snapshot-body">Safe body</p>',
@@ -82,21 +82,21 @@ $assert(str_contains($link, 'data-embed-url="https://www.youtube.com/embed/abc12
 $assert(str_contains($link, 'Demo &lt;video&gt;'), 'Video card escapes its title.');
 $assert(str_contains($link, 'vi_webp/abc123/hqdefault.webp'), 'Video card emits the expected thumbnail source.');
 
-$pagination = \TinyCat\Support\View::part('admin/pagination', [
-    'view' => \TinyCat\Support\AdminViews::admin_pagination_view_data(
+$pagination = \TinyCat\Support\Components::render('ui/pagination', [
+    'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data(
         ['page' => 2, 'last_page' => 5, 'total' => 50, 'from' => 11, 'to' => 20],
-        '/api/admin/users',
-        '#admin-users-list',
+        '/api/users',
+        '#users-list',
         [],
         'page',
         2,
         '/admin/users'
     ),
-    'target' => '#admin-users-list',
+    'target' => '#users-list',
 ]);
 $assert(str_contains($pagination, 'aria-current="page">2</span>'), 'Pagination marks the current page.');
 $assert(str_contains($pagination, 'data-history="/admin/users?page=3"'), 'Pagination preserves the browser history URL.');
-$assert(str_contains($pagination, 'data-ajax-target="#admin-users-list"'), 'Pagination preserves its AJAX target.');
+$assert(str_contains($pagination, 'data-ajax-target="#users-list"'), 'Pagination preserves its AJAX target.');
 
 $comment = \TinyCat\Status\Views::commentItem([
     'comment' => [
@@ -125,7 +125,7 @@ $assert(str_contains($comment, 'href="/tag/tinycat"') && str_contains($comment, 
 $assert(str_contains($comment, 'Alice &lt;unsafe&gt;'), 'Comment still escapes prepared author text.');
 $assert(str_contains($comment, 'data-comment-like-count') && str_contains($comment, '>4</span>'), 'Comment renders its prepared reaction count.');
 
-$notification = \TinyCat\Support\View::part('notifications/preview', ['notifications' => [[
+$notification = \TinyCat\Notifications\Views::items(['notifications' => [[
     'id' => 21,
     'actor_name' => 'Bob <unsafe>',
     'view_unread' => true,
@@ -135,7 +135,7 @@ $notification = \TinyCat\Support\View::part('notifications/preview', ['notificat
     'view_content_text' => 'Prepared notification text',
     'view_created_iso' => '2026-08-09T12:02:00+00:00',
     'view_created_label' => '9 August 2026 12:02',
-]]]);
+]]], true);
 $assert(str_contains($notification, 'href="/notifications/open?id=21"'), 'Notification renders its prepared target URL.');
 $assert(str_contains($notification, 'Prepared notification text'), 'Notification renders its prepared content text.');
 $assert(str_contains($notification, 'Bob mentioned you'), 'Notification renders its prepared message.');
@@ -146,6 +146,29 @@ if (class_exists(DOMDocument::class)) {
     $assert($loaded, 'Template snapshots are parseable HTML.');
     $dialog = $document->getElementById('snapshot-modal');
     $assert($dialog instanceof DOMElement && $dialog->getAttribute('role') === 'dialog', 'Modal exposes dialog semantics.');
+}
+
+// Layout composition must preserve a single document and select the correct shell.
+set_error_handler(static function (int $level, string $message): never { throw new ErrorException($message, 0, $level); });
+try {
+    ob_start();
+    \TinyCat\Site\Layout::render(['title' => 'Public <unsafe>', 'current' => '/search', 'meta' => ['description' => 'Description <unsafe>']], '<p id="page-fixture">Prepared content</p>');
+    $publicLayout = (string) ob_get_clean();
+    $assert(substr_count($publicLayout, '<!doctype html>') === 1 && substr_count($publicLayout, '<body') === 1, 'Public shell produces exactly one HTML document.');
+    $assert(str_contains($publicLayout, 'class="navbar"') && !str_contains($publicLayout, 'data-admin-shell'), 'Guest pages use the public shell.');
+    $assert(str_contains($publicLayout, 'Public &lt;unsafe&gt;') && str_contains($publicLayout, 'id="page-fixture"'), 'Head metadata is escaped and prepared content is preserved.');
+    $assert(substr_count($publicLayout, ' defer></script>') === 4, 'Split layout keeps scoped script delivery.');
+    \TinyCat\Users\Authentication::reset(['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status' => 'active', 'theme' => 'dark'], true);
+    ob_start();
+    \TinyCat\Site\Layout::render(['title' => 'Administration', 'current' => '/admin/moderation/reports'], '<p>Admin content</p>');
+    $adminLayout = (string) ob_get_clean();
+    $assert(str_contains($adminLayout, 'data-admin-shell') && !str_contains($adminLayout, 'class="navbar"'), 'Admin pages use only the admin shell.');
+    $assert(str_contains($adminLayout, 'noindex,nofollow') && str_contains($adminLayout, 'data-theme="dark"'), 'Admin robots policy and account theme survive the split.');
+    $assert(str_contains($adminLayout, 'open data-active="true"') && str_contains($adminLayout, 'aria-current="page"'), 'Prepared navigation expands and marks the active group.');
+    $assert(str_contains($adminLayout, 'Admin &lt;unsafe&gt;'), 'Prepared administration identity is escaped.');
+} finally {
+    restore_error_handler();
+    \TinyCat\Users\Authentication::reset(null, true);
 }
 
 if ($failures !== []) {

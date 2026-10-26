@@ -7,8 +7,10 @@ if (PHP_SAPI !== 'cli') {
 }
 
 $root = dirname(__DIR__);
+require_once $root . '/App/Support/Version.php';
+$version = \TinyCat\Support\Version::CURRENT;
 $options = getopt('', ['artifact::']);
-$artifact = trim((string) ($options['artifact'] ?? ($root . '/dist/release-3.1.0')));
+$artifact = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
 
 if (!str_starts_with($artifact, DIRECTORY_SEPARATOR) && preg_match('~^[A-Za-z]:[\\\\/]~', $artifact) !== 1) {
     $artifact = $root . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $artifact);
@@ -65,8 +67,8 @@ try {
     $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
     $packageName = basename((string) ($manifest['package'] ?? ''));
     $packagePath = $artifact . DIRECTORY_SEPARATOR . $packageName;
-    $assert($packageName === 'tinycat-3.1.0.zip' && is_file($packagePath), 'The 3.1.0 package is present.');
-    $assert(($manifest['version'] ?? null) === '3.1.0', 'Manifest targets 3.1.0.');
+    $assert($packageName === 'tinycat-' . $version . '.zip' && is_file($packagePath), 'The versioned package is present.');
+    $assert(($manifest['version'] ?? null) === $version, 'Manifest targets the current version.');
     $assert(($manifest['minimum_version'] ?? null) === '2.0.25', 'Manifest accepts exact 2.0.25 as its minimum.');
     $assert(($manifest['minimum_php'] ?? null) === '8.4.0', 'Manifest retains the PHP 8.4 runtime floor.');
     $assert(in_array('Public/parts/profile/link-fields.php', (array) ($manifest['delete'] ?? []), true), 'Patch release removes the obsolete profile link fields.');
@@ -131,7 +133,7 @@ try {
     }
 
     $core = (string) file_get_contents($installRoot . '/App/Support/Version.php');
-    $assert(str_contains($core, "public const string CURRENT = '3.1.0';"), 'Extracted runtime reports 3.1.0.');
+    $assert(str_contains($core, "public const string CURRENT = '{$version}';"), 'Extracted runtime reports the current version.');
     $run([PHP_BINARY, $root . '/tests/http/public-route-smoke.php', '--root=' . $installRoot]);
     $run([PHP_BINARY, $root . '/tests/release/mysql-installer-rehearsal.php', '--root=' . $installRoot]);
 } catch (Throwable $exception) {
@@ -151,4 +153,4 @@ if ($failures !== []) {
     exit(1);
 }
 
-echo "PASS extracted 3.1.0 artifact preflight ({$checks} checks, signed inventory, routes and fresh MySQL install)\n";
+echo "PASS extracted {$version} artifact preflight ({$checks} checks, signed inventory, routes and fresh MySQL install)\n";

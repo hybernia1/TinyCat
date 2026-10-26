@@ -1,0 +1,68 @@
+<?php
+declare(strict_types=1);
+namespace TinyCat\Scheduler;
+
+use TinyCat\Bots\Importer;
+use TinyCat\Http\Request;
+use TinyCat\Site\Layout;
+use TinyCat\Site\Presentation;
+use TinyCat\Support\Localization;
+use TinyCat\Support\Paths;
+use TinyCat\Support\View;
+use TinyCat\Users\Access;
+
+/** HTTP authorization, actions and prepared page composition. */
+final class Pages
+{
+    public static function administration(): void
+    {
+        Access::require_admin();
+
+        if (Request::current()->method() !== 'GET') {
+            header('Allow: GET');
+            http_response_code(405);
+            echo 'Method not allowed.';
+            return;
+        }
+
+        $cronToken = Tokens::cron_token(true);
+        $cronUrl = Presentation::absolute_url('/scheduled-tasks.php');
+        $runnerPath = Paths::basePath('scheduled-tasks.php');
+        $taskViews = [];
+
+        foreach (Importer::scheduledTasks() as $task => $definition) {
+            $admin = $definition['admin'];
+
+            $arguments = [];
+            foreach ((array) $definition['options'] as $name => $default) {
+                $arguments[] = '--' . str_replace('_', '-', (string) $name) . '=' . (int) $default;
+            }
+
+            $taskViews[$task] = [
+                ...$admin,
+                'cli_arguments' => implode(' ', $arguments),
+            ];
+        }
+
+        $taskViews['cleanup'] = [
+                'icon' => 'database',
+                'title' => 'cron.tasks.cleanup',
+                'help' => 'cron.tasks.cleanup_help',
+                'schedule' => 'cron.tasks.cleanup_schedule',
+                'cli_arguments' => '--cleanup-batch=500',
+        ];
+
+        foreach ($taskViews as $task => &$view) {
+            $taskUrl = $cronUrl . '?task=' . rawurlencode($task);
+            $view['query_url'] = $taskUrl . '&bearer=' . rawurlencode($cronToken);
+            $view['http_command'] = 'curl -fsS -X POST -H "Authorization: Bearer ' . $cronToken . '" "' . $taskUrl . '"';
+            $view['cli_command'] = 'php "' . $runnerPath . '" --task=' . $task . ' ' . (string) $view['cli_arguments'];
+        }
+        unset($view);
+
+        Layout::render([
+            'title' => Localization::t('cron.title'),
+            'current' => '/admin/cron',
+        ], View::render('administration', compact('cronToken', 'cronUrl', 'taskViews'), __DIR__ . '/templates'));
+    }
+}

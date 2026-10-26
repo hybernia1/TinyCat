@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.2.0 - 2026-10-26
+
+- Unify administration action icons and accessible tooltips; add pause/shield-check symbols and remove duplicate SVG symbol IDs.
+
+- Move public page handlers and surviving partials into their modules, remove obsolete wrappers, and enforce render-only template ownership.
+- Share bot detail source rendering with AJAX updates, refresh summary counters and localize account/run status labels.
+- Update demo import for the current schema and settings; add optional offline UI fixtures, fresh-schema resume tests and immutable asset preservation.
+
+- Split document/head/public/admin layouts, prepare shell data and navigation outside templates, and move the remaining administration pages and dashboard data into module-owned classes and private templates. Remove obsolete settings asset references.
+
+- Move Users and Bots list page composition into module-owned Pages classes and share their list-card headers, modal actions and account status badges.
+
 ## 3.1.0 - 2026-10-26
 
 - Enforce frontend source reachability and per-scope raw/gzip delivery budgets in preflight.

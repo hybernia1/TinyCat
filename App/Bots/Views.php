@@ -35,7 +35,7 @@ final class Views
         $prepared['admin_user_statuses'] = AdminViews::admin_user_statuses();
         $prepared['username_hint'] = Usernames::username_hint();
         $prepared['username_pattern'] = Usernames::username_pattern();
-        return View::part('bots/modals/account-create', array_replace($data, compact('prepared')));
+        return View::part('Bots/modals/account-create', array_replace($data, compact('prepared')));
     }
 
     /** @param array<mixed> $data */
@@ -46,7 +46,7 @@ final class Views
         $prepared = [];
         $prepared['accounts_url'] = Administration::accountsApiUrl();
         $prepared['admin_user_statuses'] = AdminViews::admin_user_statuses();
-        return View::part('bots/modals/account-filter', array_replace($data, compact('filters', 'prepared')));
+        return View::part('Bots/modals/account-filter', array_replace($data, compact('filters', 'prepared')));
     }
 
     /** @param array<mixed> $data */
@@ -62,7 +62,7 @@ final class Views
         $prepared = [];
         $prepared['source_url'] = Administration::apiUrl();
         $prepared['defaultSourceTemplate'] = Importer::defaultSourceTemplate();
-        return View::part('bots/modals/source', array_replace($data, compact('bots', 'create', 'id', 'source', 'prepared')));
+        return View::part('Bots/modals/source', array_replace($data, compact('bots', 'create', 'id', 'source', 'prepared')));
     }
 
     /** @param array<mixed> $data */

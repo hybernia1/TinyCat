@@ -5,6 +5,21 @@ namespace TinyCat\Support;
 
 final class AdminViews
 {
+    public static function listCard(string $title, string $icon, string $targetId, string $filterModal, Markup $content): string
+    {
+        return Components::render('ui/admin-list', [
+            'title' => $title, 'icon' => $icon, 'target_id' => $targetId,
+            'filter_modal' => $filterModal, 'content' => $content,
+        ]);
+    }
+
+    public static function modalAction(string $modal, string $label, string $icon): string
+    {
+        return Components::render('ui/modal-trigger', [
+            'class' => 'btn btn-primary btn-sm', 'modal' => $modal, 'label' => $label, 'icon' => $icon,
+        ]);
+    }
+
     /**
      * @param array<mixed> $options
      */

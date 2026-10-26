@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **3.1.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+Current release: **3.2.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -188,7 +188,8 @@ Tests and development tools are excluded from signed production packages.
 - `App/Bots/` owns feed imports and bot administration.
 - `App/Updates/` contains signed application updates and the migration registry.
 - Other `App/` directories contain domain modules and shared infrastructure.
-- `Public/` contains pages, layouts, modals, reusable view parts, and the installer.
+- `App/<Module>/Pages.php` owns page handlers; private page templates and partials live in `App/<Module>/templates/`.
+- `Public/` retains the bootstrap installer and technical RSS, sitemap, robots and LLM discovery endpoints.
 - `assets/` contains source CSS, JavaScript, the SVG icon sprite, shared UI definitions and module-owned client manifests.
 - `lang/<locale>/` contains each language package: `app.json` for the interface and optional `emails.json` for email templates.
 - `storage/` contains private runtime state and generated asset caches.

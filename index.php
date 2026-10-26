@@ -40,5 +40,5 @@ if (!$installPath && !$siteIdentityPath) {
 
 if (!\TinyCat\Http\Router::dispatch($path)) {
     http_response_code(404);
-    require \TinyCat\Support\Paths::publicPath('not-found.php');
+    \TinyCat\Site\Pages::notFound();
 }

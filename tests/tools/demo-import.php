@@ -47,7 +47,7 @@ try {
     $expect($options->prefix === 'benchtest', 'Prefix was not normalized.');
     $expect(!$options->reset && $options->jsonLines, 'Boolean options were not parsed.');
     $expect($options->minComments === 3 && $options->maxComments === 7, 'Small profile defaults changed unexpectedly.');
-    $expect($options->fingerprintData()['import_format'] === 2, 'Import format is missing from the fingerprint.');
+    $expect($options->fingerprintData()['import_format'] === 3, 'Import format is missing from the fingerprint.');
 
     $million = Options::fromArgv([
         'demo-import.php',

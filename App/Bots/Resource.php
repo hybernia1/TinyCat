@@ -17,7 +17,17 @@ final class Resource
     {
         return array_map(static function (array $run): array {
             $at = (string) ($run['started_at'] ?? '');
-            return $run + ['started_iso' => $at !== '' ? Dates::dateIso($at) : '', 'started_label' => $at !== '' ? Dates::displayDateTime($at) : ''];
+            $status = (string) ($run['status'] ?? '');
+            $label = match ($status) {
+                'posted', 'success' => Localization::t('bots.run_statuses.posted'),
+                'current' => Localization::t('bots.run_statuses.current'),
+                'running' => Localization::t('bots.run_statuses.running'),
+                'error' => Localization::t('bots.run_statuses.error'),
+                'skipped' => Localization::t('bots.run_statuses.skipped'),
+                'completed' => Localization::t('bots.run_statuses.completed'),
+                default => $status,
+            };
+            return $run + ['status_label' => $label, 'started_iso' => $at !== '' ? Dates::dateIso($at) : '', 'started_label' => $at !== '' ? Dates::displayDateTime($at) : ''];
         }, $runs);
     }
 

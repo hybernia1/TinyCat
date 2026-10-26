@@ -534,46 +534,15 @@
         "attrs": {},
         "children": [
           {
-            "tag": "span",
-            "attrs": {
-              "class": {
-                "concat": [
-                  "badge",
-                  {
-                    "if": [
-                      {
-                        "eq": [
-                          {
-                            "get": "user.status"
-                          },
-                          "active"
-                        ]
-                      },
-                      " badge-primary",
-                      {
-                        "if": [
-                          {
-                            "eq": [
-                              {
-                                "get": "user.status"
-                              },
-                              "ban"
-                            ]
-                          },
-                          " badge-danger",
-                          ""
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "children": [
-              {
+            "component": "ui/account-status",
+            "data": {
+              "status": {
+                "get": "user.status"
+              },
+              "label": {
                 "get": "user.status_label"
               }
-            ]
+            }
           }
         ]
       },
@@ -645,11 +614,9 @@
                 ]
               },
               {
-                "tag": "form",
-                "attrs": {
-                  "class": "inline-flex",
-                  "method": "post",
-                  "action": {
+                "component": "ui/api-action",
+                "data": {
+                  "url": {
                     "concat": [
                       "/api/users/",
                       {
@@ -657,10 +624,9 @@
                       }
                     ]
                   },
-                  "data-api-method": "DELETE",
-                  "data-ajax-form": "",
-                  "data-ajax-target": "#users-list",
-                  "data-confirm": {
+                  "method": "DELETE",
+                  "target": "#users-list",
+                  "confirm": {
                     "t": "users.delete_confirm",
                     "values": {
                       "username": {
@@ -668,38 +634,12 @@
                       }
                     }
                   },
-                  "data-confirm-variant": "danger"
+                  "label": {
+                    "t": "common.delete"
+                  },
+                  "icon": "trash",
+                  "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
                 },
-                "children": [
-                  {
-                    "csrf": true
-                  },
-                  {
-                    "tag": "input",
-                    "attrs": {
-                      "type": "hidden",
-                      "name": "_method",
-                      "value": "DELETE"
-                    },
-                    "children": []
-                  },
-                  {
-                    "tag": "button",
-                    "attrs": {
-                      "class": "btn btn-sm btn-ghost btn-icon text-danger",
-                      "type": "submit",
-                      "aria-label": {
-                        "t": "common.delete",
-                        "values": {}
-                      }
-                    },
-                    "children": [
-                      {
-                        "icon": "trash"
-                      }
-                    ]
-                  }
-                ],
                 "when": {
                   "get": "user.can_delete"
                 }

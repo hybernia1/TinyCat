@@ -22,6 +22,7 @@ final class DemoImporter
         'comment_likes',
         'reports',
         'settings',
+        'ui_fixtures',
         'complete',
     ];
 
@@ -91,6 +92,7 @@ final class DemoImporter
     public function run(): array
     {
         $this->schema->validate();
+        if ($this->options->uiFixtures && !function_exists('imagewebp')) { throw new RuntimeException('UI fixtures require GD with WebP support.'); }
         $configuration = ['database' => $this->databaseName, ...$this->options->fingerprintData()];
         $fingerprint = hash('sha256', json_encode($configuration, JSON_THROW_ON_ERROR));
         $state = $this->checkpoints->load(
@@ -279,6 +281,7 @@ final class DemoImporter
             'comment_likes' => $this->commentLikesBatch($cursor),
             'reports' => $this->reportsBatch($cursor),
             'settings' => $this->settingsBatch($cursor),
+            'ui_fixtures' => $this->uiFixturesBatch($cursor),
             default => throw new RuntimeException('Unsupported batch phase: ' . $phase),
         };
     }
@@ -383,13 +386,13 @@ final class DemoImporter
             $targets = $this->generator->uniqueIntegers('follow-targets', (string) $follower, $count, 1, $allUsers, $follower);
             foreach ($targets as $target) {
                 $created = $this->generator->dateAfter('follow-date', $follower . ':' . $target, (string) $user['created_at']);
-                $rows[] = [$target, $follower, $created];
+                $rows[] = [$target, $follower];
                 if ($this->generator->chance('follow-notification', $follower . ':' . $target, 35)) {
                     $notifications[] = $this->notificationRow($target, $follower, null, null, 'follow', 'follow:' . $follower, $created);
                 }
             }
         }
-        $inserted = $this->writer->insert('user_followers', ['user_id', 'follower_id', 'created_at'], $rows, true);
+        $inserted = $this->writer->insert('user_followers', ['user_id', 'follower_id'], $rows, true);
         $notificationResult = $this->writer->insert('notifications', $this->notificationColumns(), $notifications, true);
         $last = (int) end($users)['id'];
 
@@ -426,9 +429,9 @@ final class DemoImporter
         $relations = [];
         foreach ($inserted['ids'] as $offset => $linkId) {
             $contentId = $contentIds[$offset];
-            $relations[] = [$contentId, $linkId, $contentCreated[$contentId]];
+            $relations[] = [$contentId, $linkId];
         }
-        $relationResult = $this->writer->insert('content_links', ['content_id', 'link_id', 'created_at'], $relations, true);
+        $relationResult = $this->writer->insert('content_links', ['content_id', 'link_id'], $relations, true);
         $last = (int) end($posts)['id'];
 
         return $this->result($cursor, $last, $total, count($links) + count($relations), [
@@ -674,6 +677,15 @@ final class DemoImporter
         $last = (int) end($posts)['id'];
 
         return $this->result($cursor, $last, $total, count($rows), ['reports' => $inserted['affected']]);
+    }
+
+    /** @return array{previous_cursor: int, cursor: int, total: int, rows: int, done: bool, stats: array<string, int>} */
+    private function uiFixturesBatch(int $cursor): array
+    {
+        $stats = $cursor === 0 && $this->options->uiFixtures
+            ? (new UiFixtures($this->database, dirname($this->options->configPath), $this->options->prefix, $this->options->anchor))->run()
+            : [];
+        return $this->result($cursor, 1, 1, array_sum($stats), $stats);
     }
 
     /** @return array{previous_cursor: int, cursor: int, total: int, rows: int, done: bool, stats: array<string, int>} */
@@ -944,6 +956,8 @@ final class DemoImporter
             if (!$entry instanceof \SplFileInfo) {
                 continue;
             }
+            $relative = str_replace('\\', '/', substr($entry->getPathname(), strlen($cache) + 1));
+            if ($entry->isLink() || $relative === 'assets' || str_starts_with($relative, 'assets/')) { continue; }
             if (in_array($entry->getFilename(), ['.gitkeep', '.htaccess'], true)) {
                 continue;
             }

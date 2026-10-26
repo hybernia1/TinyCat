@@ -254,11 +254,46 @@
           "type": "submit",
           "aria-label": {
             "get": "label"
+          },
+          "title": {
+            "if": [
+              {
+                "get": "icon"
+              },
+              {
+                "get": "label"
+              },
+              null
+            ]
           }
         },
         "children": [
           {
-            "get": "label"
+            "icon": {
+              "get": "icon"
+            },
+            "when": {
+              "get": "icon"
+            }
+          },
+          {
+            "tag": "span",
+            "attrs": {
+              "class": {
+                "if": [
+                  {
+                    "get": "icon"
+                  },
+                  "sr-only",
+                  null
+                ]
+              }
+            },
+            "children": [
+              {
+                "get": "label"
+              }
+            ]
           }
         ]
       }
@@ -822,5 +857,139 @@
         }
       ]
     }
-  ]
+  ],
+  "ui/modal-trigger": {
+    "tag": "button",
+    "attrs": {
+      "class": {
+        "get": "class"
+      },
+      "type": "button",
+      "data-modal-open": {
+        "get": "modal"
+      }
+    },
+    "children": [
+      {
+        "icon": {
+          "get": "icon"
+        }
+      },
+      {
+        "tag": "span",
+        "attrs": {},
+        "children": [
+          {
+            "get": "label"
+          }
+        ]
+      }
+    ]
+  },
+  "ui/admin-list": {
+    "tag": "section",
+    "attrs": {
+      "class": "card"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "card-header split"
+        },
+        "children": [
+          {
+            "tag": "h2",
+            "attrs": {
+              "class": "text-lg m-0 cluster gap-2"
+            },
+            "children": [
+              {
+                "icon": {
+                  "get": "icon"
+                }
+              },
+              {
+                "get": "title"
+              }
+            ]
+          },
+          {
+            "component": "ui/modal-trigger",
+            "data": {
+              "class": "btn btn-secondary btn-sm",
+              "modal": {
+                "get": "filter_modal"
+              },
+              "icon": "filter",
+              "label": {
+                "t": "common.filters"
+              }
+            },
+            "when": {
+              "get": "filter_modal"
+            }
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "card-body",
+          "id": {
+            "get": "target_id"
+          }
+        },
+        "children": [
+          {
+            "slot": {
+              "get": "content"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "ui/account-status": {
+    "tag": "span",
+    "attrs": {
+      "class": {
+        "concat": [
+          "badge",
+          {
+            "if": [
+              {
+                "eq": [
+                  {
+                    "get": "status"
+                  },
+                  "active"
+                ]
+              },
+              " badge-primary",
+              {
+                "if": [
+                  {
+                    "eq": [
+                      {
+                        "get": "status"
+                      },
+                      "ban"
+                    ]
+                  },
+                  " badge-danger",
+                  ""
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "children": [
+      {
+        "get": "label"
+      }
+    ]
+  }
 }

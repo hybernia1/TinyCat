@@ -6,7 +6,7 @@ require_once __DIR__ . '/../cache-isolation.php';
 $root = dirname(__DIR__, 2);
 $options = getopt('', ['baseline-version::']);
 $baselineVersion = (string) ($options['baseline-version'] ?? '2.0.25');
-if (!in_array($baselineVersion, ['2.0.25', '2.1.0', '3.0.0'], true)) {
+if (!in_array($baselineVersion, ['2.0.25', '2.1.0', '3.0.0', '3.1.0'], true)) {
     throw new InvalidArgumentException('Unsupported rehearsal baseline.');
 }
 $temporaryRoot = $root . '/storage/update-rehearsal-' . bin2hex(random_bytes(6));
@@ -281,7 +281,7 @@ PHP;
         ],
         $runner
     );
-    if ($baselineVersion === '3.0.0') { $runner = str_replace('TinyCat\\Update\\Manager', 'TinyCat\\Updates\\Manager', $runner); }
+    if (version_compare($baselineVersion, '3.0.0', '>=')) { $runner = str_replace('TinyCat\\Update\\Manager', 'TinyCat\\Updates\\Manager', $runner); }
     [$updateExit, $updateOutput] = $run($runner);
     $updateResult = json_decode(implode("\n", $updateOutput), true);
     $assert($updateExit === 0 && is_array($updateResult), 'Updater rehearsal completes: ' . implode(' ', $updateOutput));
@@ -393,7 +393,7 @@ PHP;
     $assert($restoredInventory === $baselineInventory, 'Rollback restores the exact baseline managed inventory.');
     $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash, 'Rollback leaves configuration unchanged.');
     $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Rollback leaves legacy extension files unchanged.');
-    $oldVersionConstant = $baselineVersion === '3.0.0' ? 'TinyCat\\Support\\Version::CURRENT' : 'Core::VERSION';
+    $oldVersionConstant = version_compare($baselineVersion, '3.0.0', '>=') ? 'TinyCat\\Support\\Version::CURRENT' : 'Core::VERSION';
     $bootOld = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; if (" . $oldVersionConstant . " !== " . var_export($baselineVersion, true) . ") exit(2);";
     [$oldBootExit, $oldBootOutput] = $run($bootOld);

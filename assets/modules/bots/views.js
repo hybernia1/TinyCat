@@ -45,6 +45,11 @@ import "../../ui/toasts.js";
     if (filter) { filter.querySelectorAll("input, select").forEach(function (control) { var value = control.name === "per_page" ? pagination.per_page : data.filters[control.name]; if (value !== undefined) { control.value = String(value); control.defaultValue = String(value); } }); }
   }
   function detail(data) {
+    var stats = { sources: data.sources.length, active_sources: data.sources.filter(function (source) { return Boolean(source.enabled); }).length, posts: data.item ? data.item.post_count : 0, runs: data.runs.length };
+    document.querySelectorAll("[data-bot-stat]").forEach(function (node) {
+      var value = stats[node.dataset.botStat];
+      if (Number.isFinite(Number(value))) { node.textContent = String(value); }
+    });
     var root = document.querySelector("[data-bot-sources]");
     if (root) { sources(root, { items: data.sources, bots: [data.item] }); }
     document.querySelectorAll("[data-bot-run-history]").forEach(function (node) {

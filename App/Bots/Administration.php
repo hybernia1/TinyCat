@@ -120,13 +120,13 @@ final class Administration
             'sources' => $sources,
             'runs' => $runs,
             'stats' => [
-                ['label' => 'bots.detail_stat_sources', 'value' => count($sources)],
-                ['label' => 'bots.detail_stat_active_sources', 'value' => count(array_filter(
+                ['key' => 'sources', 'label' => 'bots.detail_stat_sources', 'value' => count($sources)],
+                ['key' => 'active_sources', 'label' => 'bots.detail_stat_active_sources', 'value' => count(array_filter(
                     $sources,
                     static fn (array $source): bool => (bool) ($source['enabled'] ?? false)
                 ))],
-                ['label' => 'bots.detail_stat_posts', 'value' => \TinyCat\Moderation\Restrictions::moderation_user_post_count($id)],
-                ['label' => 'bots.detail_stat_runs', 'value' => count($runs)],
+                ['key' => 'posts', 'label' => 'bots.detail_stat_posts', 'value' => \TinyCat\Moderation\Restrictions::moderation_user_post_count($id)],
+                ['key' => 'runs', 'label' => 'bots.detail_stat_runs', 'value' => count($runs)],
             ],
             'last_posts' => \TinyCat\Database\Connection::all(
                 'SELECT id, body, published_at FROM content WHERE author_id = ? ORDER BY published_at DESC, id DESC LIMIT 8',

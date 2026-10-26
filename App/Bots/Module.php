@@ -20,14 +20,9 @@ final class Module implements \TinyCat\StorageModule
                 : '/admin/bots/accounts');
         });
         \TinyCat\Http\Router::route('GET', '/admin/bots/{bot_id:[0-9]+}', static function (string $bot_id): void {
-            $_GET['id'] = (string) max(0, (int) $bot_id);
-            require \TinyCat\Support\Paths::publicPath('admin/bots/detail.php');
+            Pages::detail(max(0, (int) $bot_id));
         });
-        \TinyCat\Http\Router::route('GET', '/admin/bots/accounts', static function (): void {
-            require \TinyCat\Support\Paths::publicPath('admin/bots/accounts-page.php');
-        });
-        \TinyCat\Http\Router::route('GET', '/admin/bots/list', static function (): void {
-            require \TinyCat\Support\Paths::publicPath('admin/bots/sources-page.php');
-        });
+        \TinyCat\Http\Router::route('GET', '/admin/bots/accounts', Pages::accounts(...));
+        \TinyCat\Http\Router::route('GET', '/admin/bots/list', Pages::sources(...));
     }
 }

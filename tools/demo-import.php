@@ -16,6 +16,7 @@ require_once __DIR__ . '/demo-import/ProgressReporter.php';
 require_once __DIR__ . '/demo-import/CheckpointStore.php';
 require_once __DIR__ . '/demo-import/BatchWriter.php';
 require_once __DIR__ . '/demo-import/Schema.php';
+require_once __DIR__ . '/demo-import/UiFixtures.php';
 require_once __DIR__ . '/demo-import/DemoImporter.php';
 
 if (in_array('--help', $argv, true) || in_array('-h', $argv, true)) {

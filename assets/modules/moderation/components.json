@@ -268,7 +268,9 @@
                                       "confirm": {
                                         "t": "account.status_delete_confirm",
                                         "values": {}
-                                      }
+                                      },
+                                      "icon": "trash",
+                                      "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
                                     },
                                     "when": {
                                       "get": "report.open_count"
@@ -293,7 +295,9 @@
                                       "label": {
                                         "t": "moderation.keep_and_lock",
                                         "values": {}
-                                      }
+                                      },
+                                      "icon": "shield-check",
+                                      "button_class": "btn btn-sm btn-ghost btn-icon"
                                     },
                                     "when": {
                                       "get": "report.open_count"

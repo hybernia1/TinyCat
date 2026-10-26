@@ -152,7 +152,7 @@ try {
         }
     }
 
-    foreach (['App/Support/Version.php', 'App/Support/Localization.php', 'App/Updates/Manager.php', 'App/Bots/Importer.php', 'App/Bots/Administration.php', 'Public/admin/bots/accounts-page.php', 'index.php', 'scheduled-tasks.php'] as $required) {
+    foreach (['App/Support/Version.php', 'App/Support/Localization.php', 'App/Updates/Manager.php', 'App/Bots/Importer.php', 'App/Bots/Administration.php', 'App/Bots/Pages.php', 'index.php', 'scheduled-tasks.php'] as $required) {
         if (!in_array($required, $names, true)) {
             $failures[] = "Required modular runtime file missing from artifact: {$required}";
         }

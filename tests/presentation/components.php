@@ -81,6 +81,10 @@ $form = StatusViews::commentForm(['content_id' => 7, 'user' => $member]);
 $assert(str_contains($form, 'action="/api/statuses/7/comments"') && str_contains($form, 'status-comment-input-shell'), 'Comment forms preserve the API action and editor structure.');
 $thread = StatusViews::commentsThread(['item' => $item, 'comments' => [['id' => 1, 'content_id' => 7]], 'user' => null]);
 $assert(str_contains($thread, 'data-modal-url="/api/users/authentication?'), 'Guest comment threads keep the sign-in modal.');
+$detailData = ['botId' => 3, 'bot' => ['id' => 3, 'username' => 'Bot'], 'sources' => [['id' => 7, 'bot_user_id' => 3, 'name' => 'Fixture', 'feed_url' => 'https://example.invalid/rss', 'enabled' => false]], 'runs' => [], 'stats' => [], 'lastPosts' => [], 'lastRun' => null, 'profileUrl' => '/author/3', 'statuses' => [], 'avatarUrl' => ''];
+$detail = \TinyCat\Support\View::render('detail', $detailData, dirname(__DIR__, 2) . '/App/Bots/templates');
+$assert(str_contains($detail, 'id="bots-list"') && str_contains($detail, 'data-bot-sources-view'), 'Bot detail and AJAX updates share the same source component and target.');
+$assert(str_contains($detail, 'data-bot-source-edit="7"'), 'The shared detail source component keeps the edit action.');
 restore_error_handler();
 foreach ([['onclick' => 'alert(1)'], ['style' => 'color:red'], ['srcdoc' => '<script>bad</script>'], ['src' => 'javascript:alert(1)'], ['formaction' => "java\nscript:alert(1)"], ['src' => 'data:text/html,bad']] as $attributes) {
     $rejected = false;

@@ -16,15 +16,7 @@ final class Module implements \TinyCat\StorageModule
         \TinyCat\Http\Router::route('GET', '/admin/moderation', static function (): void {
             \TinyCat\Http\Web::redirect('/admin/moderation/reports');
         });
-        foreach ([['GET', '/admin/moderation/reports', 'admin/moderation/reports.php']] as [$methods, $pagePath, $file]) {
-            \TinyCat\Http\Router::route($methods, $pagePath, static function () use ($file): void {
-                require \TinyCat\Support\Paths::publicPath($file);
-            });
-        }
-        foreach ([['GET', '/admin/moderation/blocking', 'admin/moderation/blocking.php']] as [$methods, $pagePath, $file]) {
-            \TinyCat\Http\Router::route($methods, $pagePath, static function () use ($file): void {
-                require \TinyCat\Support\Paths::publicPath($file);
-            });
-        }
+        \TinyCat\Http\Router::route('GET', '/admin/moderation/reports', Pages::reports(...));
+        \TinyCat\Http\Router::route('GET', '/admin/moderation/blocking', Pages::blocking(...));
     }
 }

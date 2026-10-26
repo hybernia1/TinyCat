@@ -8,7 +8,7 @@ final class Module implements \TinyCat\Module
     {
         Api::register($api);
         \TinyCat\Http\Router::route(['GET', 'POST'], '/search', static function (): void {
-            require \TinyCat\Support\Paths::publicPath('search.php');
+            Pages::search();
         });
     }
 }

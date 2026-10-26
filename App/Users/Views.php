@@ -59,7 +59,7 @@ final class Views
         }
         $prepared = [];
         $prepared['author_api_url'] = Profiles::author_api_url($authorId);
-        return View::part('author/follow-button', array_replace($data, compact('authorId', 'isFollowing', 'prepared')));
+        return View::part('Users/follow-button', array_replace($data, compact('authorId', 'isFollowing', 'prepared')));
     }
 
     /** @param array<mixed> $data */

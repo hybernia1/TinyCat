@@ -104,7 +104,7 @@ final class Views
         $prepared['status_api_url'] = Posts::status_api_url('create');
         $prepared['author_profile_edit_modal_url'] = Profiles::author_profile_edit_modal_url((int) ($user['id'] ?? 0), 'email');
         $prepared['author_profile_edit_modal_id'] = Profiles::author_profile_edit_modal_id((int) ($user['id'] ?? 0));
-        return View::part('status/composer', array_replace($data, compact('editor', 'user', 'prepared')));
+        return View::part('Status/composer', array_replace($data, compact('editor', 'user', 'prepared')));
     }
 
     /** @param array<mixed> $data */
@@ -134,6 +134,6 @@ final class Views
         $prepared['auth_modal_id'] = Login::auth_modal_id();
         $prepared['following_feed_url'] = Posts::public_home_feed_api_url('following', true);
         $prepared['all_feed_url'] = Posts::public_home_feed_api_url('all', true);
-        return View::part('status/home-feed', array_replace($data, compact('currentFeedUrl', 'feed', 'feedId', 'feedMore', 'followingLoginRequired', 'items', 'user', 'prepared')));
+        return View::part('Status/home-feed', array_replace($data, compact('currentFeedUrl', 'feed', 'feedId', 'feedMore', 'followingLoginRequired', 'items', 'user', 'prepared')));
     }
 }
