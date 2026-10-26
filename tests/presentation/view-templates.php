@@ -7,6 +7,14 @@ define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/bootstrap.php';
 
+// Rendering fixtures must not depend on an installed workspace/CI database.
+$database = new PDO('sqlite::memory:');
+$database->exec('CREATE TABLE content_links (content_id INTEGER, link_id INTEGER)');
+$database->exec('CREATE TABLE links (id INTEGER, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)');
+\TinyCat\Database\Connection::set($database);
+(new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
+\TinyCat\Users\Authentication::reset(null, true);
+
 $checks = 0;
 $failures = [];
 $assert = static function (bool $condition, string $message) use (&$checks, &$failures): void {
