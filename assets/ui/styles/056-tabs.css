@@ -24,6 +24,13 @@
   display: none;
 }
 
+/* Action columns stay compact at the right edge in every admin list. */
+.table .table-actions-cell {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .table-actions {
   display: inline-flex;
   flex-wrap: nowrap;

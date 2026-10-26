@@ -16,7 +16,7 @@ import "../../ui/fields.js";
     root.appendChild(U.hidden("action", action)); return root;
   }
   function editor(name, body, placeholder) {
-    return T.components.render("status/editor", { name: name, comment: name === "comment", value: body || "", placeholder: U.text(placeholder) });
+    return T.components.render("status/editor", { name: name, comment: false, value: body || "", placeholder: U.text(placeholder) });
   }
   T.status = {
     segments: function (segments) {
@@ -33,17 +33,33 @@ import "../../ui/fields.js";
       var data = response.data, content = e("div", { "class": "stack" }), item = data.item;
       if (url.pathname === "/api/moderation/report-options") {
         var report = form("/api/moderation/reports", "report", url.searchParams.get("id"));
+        report.classList.add("status-modal-form");
         report.appendChild(U.hidden("id", url.searchParams.get("id")));
-        report.appendChild(U.select("moderation.report_submit", "reason", "spam", Object.fromEntries(data.reasons.map(function (reason) { return [reason, U.text("moderation.report_reasons." + reason)]; }))));
-        report.appendChild(U.field("moderation.report_submit", "note", "", "textarea", { maxlength: "2000" }));
+        report.appendChild(U.select("moderation.report_reason", "reason", "spam", Object.fromEntries(data.reasons.map(function (reason) { return [reason, U.text("moderation.report_reasons." + reason)]; }))));
+        report.appendChild(U.field("moderation.report_note", "note", "", "textarea", { maxlength: "2000" }));
         report.appendChild(U.button("moderation.report_submit", { type: "submit", "class": "btn btn-primary" }));
         return U.dialog(id, "moderation.report_submit", report);
       }
       if (!/^\/api\/statuses\//.test(url.pathname)) { return null; }
       if (/\/revisions$/.test(url.pathname)) {
+        content.className = "status-comment-history";
         data.items.forEach(function (revision) {
           var change = revision.changes && revision.changes.body || {};
-          content.append(e("time", {}, revision.at || revision.created_at || ""), e("pre", {}, String(change.from || "")), e("pre", {}, String(change.to || "")));
+          var entry = e("article", { "class": "status-comment-history-entry" });
+          var at = revision.at || revision.created_at || "";
+          entry.appendChild(e("time", { "class": "status-comment-history-meta", datetime: at }, T.dates && T.dates.format ? T.dates.format(at) : at));
+          var before = String(change.from || ""), after = String(change.to || ""), start = 0, end = 0;
+          while (start < before.length && start < after.length && before[start] === after[start]) { start++; }
+          while (end < before.length - start && end < after.length - start && before[before.length - end - 1] === after[after.length - end - 1]) { end++; }
+          [[before, "del", "removed"], [after, "ins", "added"]].forEach(function (version) {
+            var row = e("div", { "class": "status-comment-history-diff" });
+            row.appendChild(e("span", { "class": "status-comment-diff-marker", "aria-hidden": "true" }, version[1] === "del" ? "-" : "+"));
+            row.appendChild(document.createTextNode(version[0].slice(0, start)));
+            row.appendChild(e(version[1], { "class": "status-comment-diff-" + version[2] }, version[0].slice(start, version[0].length - end)));
+            row.appendChild(document.createTextNode(end ? version[0].slice(-end) : ""));
+            entry.appendChild(row);
+          });
+          content.appendChild(entry);
         });
         return U.dialog(id, "account.status_comment_history", content);
       }
@@ -60,8 +76,12 @@ import "../../ui/fields.js";
         var wanted = Number(url.searchParams.get("comment_id")), selected;
         data.comments.forEach(function (comment) { if (comment.id === wanted) { selected = comment; } comment.replies.forEach(function (reply) { if (reply.id === wanted) { selected = reply; } }); });
         if (!selected || !selected.capabilities.edit) { throw new Error(U.text("auth.forbidden")); }
-        var commentEdit = form(base(item.id) + "/comments/" + selected.id, "comment_update", item.id); commentEdit.dataset.confirmUnsaved = "true";
-        commentEdit.appendChild(editor("comment", selected.editable_body, "account.status_comment_placeholder"));
+        var commentEdit = form(base(item.id) + "/comments/" + selected.id, "comment_update", item.id); commentEdit.dataset.confirmUnsaved = "true"; commentEdit.classList.add("status-modal-form");
+        var commentLabel = e("div", { "class": "label", id: id + "-label" }, U.text("account.status_comment_placeholder"));
+        var commentEditor = editor("comment", selected.editable_body, "account.status_comment_placeholder");
+        commentEditor.querySelector("textarea").setAttribute("aria-labelledby", id + "-label");
+        commentEditor.querySelector("textarea").required = true;
+        commentEdit.append(commentLabel, commentEditor);
         commentEdit.appendChild(U.button("common.save", { type: "submit", "class": "btn btn-primary" })); return U.dialog(id, "common.edit", commentEdit);
       }
       content.className = "status-post-modal-content";

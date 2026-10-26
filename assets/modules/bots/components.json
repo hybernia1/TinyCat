@@ -401,7 +401,10 @@
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "class": "table-actions-cell",
+                          "scope": "col"
+                        },
                         "children": [
                           {
                             "t": "common.actions",
@@ -606,7 +609,9 @@
                           },
                           {
                             "tag": "td",
-                            "attrs": {},
+                            "attrs": {
+                              "class": "table-actions-cell"
+                            },
                             "children": [
                               {
                                 "tag": "div",
@@ -844,7 +849,10 @@
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "class": "table-actions-cell",
+                          "scope": "col"
+                        },
                         "children": [
                           {
                             "t": "common.actions",
@@ -875,29 +883,14 @@
                             "attrs": {},
                             "children": [
                               {
-                                "tag": "a",
-                                "attrs": {
-                                  "href": {
-                                    "concat": [
-                                      "/admin/bots/",
-                                      {
-                                        "get": "account.id"
-                                      }
-                                    ]
-                                  }
-                                },
+                                "tag": "strong",
+                                "attrs": {},
                                 "children": [
                                   {
-                                    "tag": "strong",
-                                    "attrs": {},
-                                    "children": [
+                                    "concat": [
+                                      "@",
                                       {
-                                        "concat": [
-                                          "@",
-                                          {
-                                            "get": "account.username"
-                                          }
-                                        ]
+                                        "get": "account.username"
                                       }
                                     ]
                                   }
@@ -977,7 +970,9 @@
                           },
                           {
                             "tag": "td",
-                            "attrs": {},
+                            "attrs": {
+                              "class": "table-actions-cell"
+                            },
                             "children": [
                               {
                                 "tag": "div",
@@ -985,6 +980,70 @@
                                   "class": "table-actions"
                                 },
                                 "children": [
+                                  {
+                                    "component": "ui/modal-trigger",
+                                    "data": {
+                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "modal": {
+                                        "concat": [
+                                          "bot-account-edit-",
+                                          {
+                                            "get": "account.id"
+                                          }
+                                        ]
+                                      },
+                                      "url": {
+                                        "concat": [
+                                          "/api/bots/accounts/",
+                                          {
+                                            "get": "account.id"
+                                          },
+                                          "/management"
+                                        ]
+                                      },
+                                      "label": {
+                                        "t": "bots.edit_account"
+                                      },
+                                      "icon": "edit",
+                                      "icon_only": true
+                                    }
+                                  },
+                                  {
+                                    "tag": "a",
+                                    "attrs": {
+                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "href": {
+                                        "concat": [
+                                          "/admin/bots/",
+                                          {
+                                            "get": "account.id"
+                                          }
+                                        ]
+                                      },
+                                      "aria-label": {
+                                        "t": "bots.detail_title"
+                                      },
+                                      "title": {
+                                        "t": "bots.detail_title"
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "icon": "eye"
+                                      },
+                                      {
+                                        "tag": "span",
+                                        "attrs": {
+                                          "class": "sr-only"
+                                        },
+                                        "children": [
+                                          {
+                                            "t": "bots.detail_title"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
                                   {
                                     "component": "ui/api-action",
                                     "data": {
@@ -1154,39 +1213,12 @@
               },
               "children": [
                 {
-                  "or": [
-                    {
-                      "lookup": {
-                        "get": "runs.0.status"
-                      },
-                      "cases": {
-                        "success": {
-                          "t": "bots.run_statuses.posted"
-                        },
-                        "posted": {
-                          "t": "bots.run_statuses.posted"
-                        },
-                        "current": {
-                          "t": "bots.run_statuses.current"
-                        },
-                        "running": {
-                          "t": "bots.run_statuses.running"
-                        },
-                        "error": {
-                          "t": "bots.run_statuses.error"
-                        },
-                        "skipped": {
-                          "t": "bots.run_statuses.skipped"
-                        },
-                        "completed": {
-                          "t": "bots.run_statuses.completed"
-                        }
-                      }
-                    },
-                    {
+                  "component": "bots/run-status",
+                  "data": {
+                    "status": {
                       "get": "runs.0.status"
                     }
-                  ]
+                  }
                 }
               ]
             }
@@ -1370,39 +1402,12 @@
                           "attrs": {},
                           "children": [
                             {
-                              "or": [
-                                {
-                                  "lookup": {
-                                    "get": "run.status"
-                                  },
-                                  "cases": {
-                                    "success": {
-                                      "t": "bots.run_statuses.posted"
-                                    },
-                                    "posted": {
-                                      "t": "bots.run_statuses.posted"
-                                    },
-                                    "current": {
-                                      "t": "bots.run_statuses.current"
-                                    },
-                                    "running": {
-                                      "t": "bots.run_statuses.running"
-                                    },
-                                    "error": {
-                                      "t": "bots.run_statuses.error"
-                                    },
-                                    "skipped": {
-                                      "t": "bots.run_statuses.skipped"
-                                    },
-                                    "completed": {
-                                      "t": "bots.run_statuses.completed"
-                                    }
-                                  }
-                                },
-                                {
+                              "component": "bots/run-status",
+                              "data": {
+                                "status": {
                                   "get": "run.status"
                                 }
-                              ]
+                              }
                             }
                           ]
                         },
@@ -1515,5 +1520,180 @@
         ]
       }
     ]
+  },
+  "bots/account-edit-fields": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack"
+    },
+    "children": [
+      {
+        "tag": "strong",
+        "attrs": {},
+        "children": [
+          {
+            "concat": [
+              "@",
+              {
+                "get": "item.username"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "common.status"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "status",
+            "required": true
+          },
+          "value": {
+            "get": "item.status"
+          },
+          "choices": {
+            "active": {
+              "t": "users.statuses.active"
+            },
+            "waiting": {
+              "t": "users.statuses.waiting"
+            },
+            "ban": {
+              "t": "users.statuses.ban"
+            }
+          }
+        }
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {
+            "t": "bots.detail_bio"
+          },
+          "value": {
+            "get": "item.bio"
+          },
+          "textarea": true,
+          "attributes": {
+            "class": "textarea",
+            "name": "bio",
+            "rows": "4",
+            "maxlength": "500"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "field stack stack-gap-8"
+        },
+        "children": [
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "label"
+            },
+            "children": [
+              {
+                "t": "account.avatar"
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "cluster gap-3"
+            },
+            "children": [
+              {
+                "component": "ui/avatar",
+                "data": {
+                  "user": {
+                    "get": "item"
+                  }
+                }
+              },
+              {
+                "tag": "input",
+                "attrs": {
+                  "type": "file",
+                  "name": "avatar",
+                  "class": "input",
+                  "accept": "image/png,image/jpeg,image/webp"
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "label",
+            "attrs": {
+              "class": "check"
+            },
+            "children": [
+              {
+                "tag": "input",
+                "attrs": {
+                  "type": "checkbox",
+                  "name": "remove_avatar",
+                  "value": "1"
+                },
+                "children": []
+              },
+              {
+                "tag": "span",
+                "attrs": {},
+                "children": [
+                  {
+                    "t": "account.remove_avatar"
+                  }
+                ]
+              }
+            ],
+            "when": {
+              "get": "item.avatar_url"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "bots/run-status": {
+    "lookup": {
+      "get": "status"
+    },
+    "cases": {
+      "success": {
+        "t": "bots.run_statuses.posted"
+      },
+      "posted": {
+        "t": "bots.run_statuses.posted"
+      },
+      "current": {
+        "t": "bots.run_statuses.current"
+      },
+      "running": {
+        "t": "bots.run_statuses.running"
+      },
+      "error": {
+        "t": "bots.run_statuses.error"
+      },
+      "skipped": {
+        "t": "bots.run_statuses.skipped"
+      },
+      "completed": {
+        "t": "bots.run_statuses.completed"
+      },
+      "interrupted": {
+        "t": "bots.run_statuses.interrupted"
+      }
+    },
+    "default": {
+      "get": "status"
+    }
   }
 }

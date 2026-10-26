@@ -465,3 +465,22 @@ img.status-editor-suggestion-avatar {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.status-comment-like-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 2px 0;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.status-comment-like-button:hover { color: var(--primary-strong); }
+.status-comment-like-button:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.status-modal-form { display: grid; gap: 16px; min-width: 0; }
+.status-modal-form > .btn { justify-self: end; }
+.status-modal-form > .label { margin-bottom: -8px; }
+.status-modal-form .status-editor-input { min-height: 130px; background: var(--surface-soft); }
+.status-comment-history-diff { white-space: pre-wrap; line-height: 1.6; }
+.status-comment-diff-marker { display: inline-block; width: 1.5em; color: var(--muted); font-weight: 800; }
+.status-comment-diff-removed { text-decoration: line-through; }

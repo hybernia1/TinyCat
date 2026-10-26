@@ -105,6 +105,45 @@ $assert(\TinyCat\Status\Links::status_video_embed_url(['provider' => 'dailymotio
 $assert(\TinyCat\Status\Links::status_video_embed_url(['provider' => 'unknown', 'video_id' => 'abc123']) === '', 'Unknown video providers cannot produce an embed URL.');
 $assert(!array_key_exists('embed_url', \TinyCat\Status\Links::status_link_data((array) $youtube)), 'Link persistence excludes the derived embed URL.');
 
+
+// Count transport attempts without DNS or any real outbound request.
+final class FailedLinkTransport
+{
+    public mixed $context;
+    public static int $attempts = 0;
+    public function stream_open(string $path, string $mode, int $options, ?string &$openedPath): bool
+    {
+        self::$attempts++;
+        return false;
+    }
+}
+$failedLink = \TinyCat\Status\LinkParser::fromRaw('http://93.184.216.34/unavailable');
+$failureKey = 'link-metadata-failure-v1-' . hash('sha256', (string) $failedLink['normalized_url']);
+stream_wrapper_unregister('http');
+stream_wrapper_register('http', FailedLinkTransport::class);
+try {
+    $firstFailure = \TinyCat\Status\Links::status_link_prepare_metadata($failedLink, null);
+    $secondFailure = \TinyCat\Status\Links::status_link_prepare_metadata($failedLink, null);
+    $assert(FailedLinkTransport::$attempts === 1, 'A repeated unavailable preview reuses the short failure cache.');
+    $assert($secondFailure['normalized_url'] === $failedLink['normalized_url'], 'A failed preview retains a usable link.');
+    $staleLink = $failedLink + ['image_url' => ''];
+    $staleLink['title'] = 'Previously fetched title';
+    $staleLink['updated_at'] = '2020-01-01 00:00:00';
+    $stalePreview = \TinyCat\Status\Links::status_link_prepare_metadata($failedLink, $staleLink);
+    $assert($stalePreview['title'] === 'Previously fetched title' && $stalePreview['_metadata_updated_at'] === $staleLink['updated_at'], 'Failure backoff preserves old metadata without renewing its daily TTL.');
+    $failureFile = (new ReflectionMethod(\TinyCat\Support\Cache::class, 'jsonFile'))->invoke(null, $failureKey);
+    touch($failureFile, time() - 301);
+    $retry = \TinyCat\Status\Links::status_link_prepare_metadata($failedLink, $staleLink);
+    $assert(FailedLinkTransport::$attempts === 2 && $retry['_metadata_updated_at'] === $staleLink['updated_at'], 'Once failure backoff expires, retry preserves the old success timestamp on another failure.');
+    $freshLink = $staleLink;
+    $freshLink['updated_at'] = \TinyCat\Support\Dates::dateDb();
+    $freshPreview = \TinyCat\Status\Links::status_link_prepare_metadata($failedLink, $freshLink);
+    $assert(FailedLinkTransport::$attempts === 2 && $freshPreview['title'] === 'Previously fetched title', 'Fresh successful metadata remains available during failure backoff.');
+} finally {
+    stream_wrapper_restore('http');
+    \TinyCat\Support\Cache::forget($failureKey);
+}
+
 $database->exec('INSERT INTO content (id, author_id) VALUES (100, 1), (200, 1), (300, 2)');
 $database->exec("INSERT INTO terms (id, name) VALUES (1, 'old')");
 $database->exec('INSERT INTO content_tags (content_id, term_id) VALUES (100, 1)');
@@ -145,6 +184,43 @@ $assert((int) $value('SELECT link_id FROM content_links WHERE content_id = 100')
 $database->exec('DROP TRIGGER fail_link_attach');
 \TinyCat\Status\Links::status_sync_links(100, $links);
 $assert((int) $value('SELECT COUNT(*) FROM content_links WHERE content_id = 100') === 2, 'Successful link synchronization replaces all relations.');
+
+
+$database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, last_imported_at TEXT)');
+$database->exec('CREATE TABLE bot_feed_history (bot_user_id INTEGER, feed_hash TEXT, item_hash TEXT, created_at TEXT, UNIQUE (bot_user_id, feed_hash, item_hash))');
+$database->exec('INSERT INTO bot_sources (id) VALUES (1)');
+$persistFeed = new ReflectionMethod(\TinyCat\Bots\Importer::class, 'persistFeedPost');
+$feedHash = hash('sha256', 'fixture-feed');
+$itemHash = hash('sha256', 'fixture-item');
+$beforePosts = (int) $value('SELECT COUNT(*) FROM content');
+$database->exec('CREATE TRIGGER fail_bot_link BEFORE INSERT ON content_links BEGIN SELECT RAISE(ABORT, \'forced bot link failure\'); END');
+try {
+    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, 'Bot post #rollback', $links, 0, 1);
+    $assert(false, 'Bot link storage errors must propagate.');
+} catch (PDOException) {
+    $assert(true, 'Bot link storage errors propagate.');
+}
+$assert((int) $value('SELECT COUNT(*) FROM content') === $beforePosts && (int) $value('SELECT COUNT(*) FROM bot_feed_history') === 0, 'A failed bot import rolls back both the post and duplicate claim.');
+$assert($value('SELECT last_imported_at FROM bot_sources WHERE id = 1') === null, 'A failed import does not mark its source imported.');
+$assert((int) $value("SELECT COUNT(*) FROM terms WHERE name = 'rollback'") === 0, 'A failed bot import rolls back new tags.');
+$database->exec('DROP TRIGGER fail_bot_link');
+$database->exec('CREATE TRIGGER fail_bot_history BEFORE INSERT ON bot_feed_history BEGIN SELECT RAISE(ABORT, \'forced history failure\'); END');
+try {
+    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, 'Bot post #rollback', $links, 0, 1);
+    $assert(false, 'History storage failures must propagate.');
+} catch (PDOException) {
+    $assert((int) $value('SELECT COUNT(*) FROM content') === $beforePosts, 'History storage failures cannot leave an untracked post.');
+}
+$database->exec('DROP TRIGGER fail_bot_history');
+$botPost = $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, 'Bot post #rollback', $links, 0, 1);
+$assert($botPost > 0 && (int) $value('SELECT COUNT(*) FROM bot_feed_history') === 1, 'A retry atomically commits the bot post and history.');
+$assert((int) $value('SELECT COUNT(*) FROM content_links WHERE content_id = ' . $botPost) === 2, 'A successful bot import commits all prepared links.');
+try {
+    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, 'Duplicate bot post', $links, 0, 1);
+    $assert(false, 'A duplicate feed claim must abort the second post.');
+} catch (PDOException) {
+    $assert((int) $value('SELECT COUNT(*) FROM content') === $beforePosts + 1, 'A concurrent duplicate claim cannot leave a second post.');
+}
 
 $_GET = [];
 $_POST = [];

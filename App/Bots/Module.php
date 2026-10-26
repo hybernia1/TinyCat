@@ -10,6 +10,21 @@ final class Module implements \TinyCat\StorageModule
         return \TinyCat\Bots\Importer::requiredTables();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public static function adminNavigation(): array
+    {
+        return [
+            'icon' => 'rss',
+            'label' => \TinyCat\Support\Localization::t('bots.title'),
+            'children' => [
+                ['href' => '/admin/bots/accounts', 'icon' => 'users', 'label' => \TinyCat\Support\Localization::t('bots.accounts_title')],
+                ['href' => '/admin/bots/list', 'icon' => 'list-unordered', 'label' => \TinyCat\Support\Localization::t('bots.sources_title')],
+            ],
+        ];
+    }
+
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);

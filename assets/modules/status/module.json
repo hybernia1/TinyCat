@@ -47,6 +47,8 @@
       "moderation.report_reasons.other",
       "moderation.report_reasons.spam",
       "moderation.report_submit",
+      "moderation.report_reason",
+      "moderation.report_note",
       "public.feed_empty",
       "public.feed_empty_following"
     ],

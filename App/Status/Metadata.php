@@ -23,43 +23,60 @@ final class Metadata
     private const IMAGE_LIMIT = 5242880;
     private const REDIRECT_LIMIT = 3;
 
+    /** @var array<string, bool>|null */
+    private static ?array $hostChecks = null;
+
+    private static function withHostChecks(callable $operation): mixed
+    {
+        if (self::$hostChecks !== null) { return $operation(); }
+        self::$hostChecks = [];
+        try {
+            return $operation();
+        } finally {
+            // DNS decisions belong only to this operation, never a later import.
+            self::$hostChecks = null;
+        }
+    }
+
     /**
      * @return array<mixed>
      * @param array<mixed> $link
      */
     public static function enrich(array $link): array
     {
-        $link['_metadata_fetched'] = false;
-        $type = (string) ($link['link_type'] ?? 'link');
-        $url = (string) ($link['normalized_url'] ?? '');
+        return self::withHostChecks(static function () use ($link): array {
+            $link['_metadata_fetched'] = false;
+            $type = (string) ($link['link_type'] ?? 'link');
+            $url = (string) ($link['normalized_url'] ?? '');
 
-        if ($url === '') {
-            return $link;
-        }
-
-        if (!self::shouldFetch($link)) {
-            return $link;
-        }
-
-        $meta = $type === 'video' ? self::fetchVideo($link) : self::fetch($url);
-
-        if ($meta === []) {
-            return $link;
-        }
-
-        $link['_metadata_fetched'] = true;
-
-        foreach (['title', 'description'] as $key) {
-            if (!empty($meta[$key])) {
-                $link[$key] = (string) $meta[$key];
+            if ($url === '') {
+                return $link;
             }
-        }
 
-        if (!empty($meta['image_url'])) {
-            $link['image_url'] = (string) $meta['image_url'];
-        }
+            if (!self::shouldFetch($link)) {
+                return $link;
+            }
 
-        return $link;
+            $meta = $type === 'video' ? self::fetchVideo($link) : self::fetch($url);
+
+            if ($meta === []) {
+                return $link;
+            }
+
+            $link['_metadata_fetched'] = true;
+
+            foreach (['title', 'description'] as $key) {
+                if (!empty($meta[$key])) {
+                    $link[$key] = (string) $meta[$key];
+                }
+            }
+
+            if (!empty($meta['image_url'])) {
+                $link['image_url'] = (string) $meta['image_url'];
+            }
+
+            return $link;
+        });
     }
 
     /**
@@ -141,17 +158,20 @@ final class Metadata
      */
     public static function fetch(string $url): array
     {
-        if (!self::safeUrl($url)) {
-            return [];
-        }
+        return self::withHostChecks(static function () use ($url): array {
+            if (!self::safeUrl($url)) {
+                return [];
+            }
 
-        $response = self::request($url, self::HTML_LIMIT, 'text/html,application/xhtml+xml', 0, true);
+            $response = self::request($url, self::HTML_LIMIT, 'text/html,application/xhtml+xml', 0, true);
 
-        if ($response === null || !self::isHtml((string) ($response['content_type'] ?? ''))) {
-            return [];
-        }
+            if ($response === null || !self::isHtml((string) ($response['content_type'] ?? ''))) {
+                return [];
+            }
 
-        return self::parseHtml((string) ($response['body'] ?? ''), (string) ($response['url'] ?? $url));
+            return self::parseHtml((string) ($response['body'] ?? ''), (string) ($response['url'] ?? $url));
+
+        });
     }
 
     /**
@@ -159,9 +179,12 @@ final class Metadata
      */
     public static function fetchDocument(string $url, int $limit = self::FEED_LIMIT, string $accept = 'application/rss+xml,application/atom+xml,application/xml,text/xml'): ?array
     {
-        $limit = max(1024, min(self::FEED_LIMIT, $limit));
-        return self::requestCurl($url, $limit, $accept, 0, false, self::FEED_TIMEOUT)
-            ?? self::request($url, $limit, $accept, 0, false, self::FEED_TIMEOUT);
+        return self::withHostChecks(static function () use ($url, $limit, $accept): ?array {
+            $limit = max(1024, min(self::FEED_LIMIT, $limit));
+            return self::requestCurl($url, $limit, $accept, 0, false, self::FEED_TIMEOUT)
+                ?? self::request($url, $limit, $accept, 0, false, self::FEED_TIMEOUT);
+
+        });
     }
 
     public static function isSafeRemoteUrl(string $url): bool
@@ -174,20 +197,23 @@ final class Metadata
      */
     public static function fetchImage(string $url): ?array
     {
-        $response = self::request(
-            $url,
-            self::IMAGE_LIMIT,
-            'image/webp,image/jpeg,image/png,image/gif',
-            0,
-            false,
-            self::IMAGE_TIMEOUT
-        );
+        return self::withHostChecks(static function () use ($url): ?array {
+            $response = self::request(
+                $url,
+                self::IMAGE_LIMIT,
+                'image/webp,image/jpeg,image/png,image/gif',
+                0,
+                false,
+                self::IMAGE_TIMEOUT
+            );
 
-        if ($response === null || !str_starts_with(strtolower((string) ($response['content_type'] ?? '')), 'image/')) {
-            return null;
-        }
+            if ($response === null || !str_starts_with(strtolower((string) ($response['content_type'] ?? '')), 'image/')) {
+                return null;
+            }
 
-        return $response;
+            return $response;
+
+        });
     }
 
     /**
@@ -487,6 +513,16 @@ final class Metadata
             return self::publicAddress($host);
         }
 
+        if (self::$hostChecks !== null && array_key_exists($host, self::$hostChecks)) {
+            return self::$hostChecks[$host];
+        }
+        $public = self::resolvePublicHost($host);
+        if (self::$hostChecks !== null) { self::$hostChecks[$host] = $public; }
+        return $public;
+    }
+
+    private static function resolvePublicHost(string $host): bool
+    {
         $ips = [];
 
         $ipv4Addresses = gethostbynamel($host);

@@ -24,9 +24,13 @@ final class Cleanup
             'orphan_terms',
             'orphan_links',
             'orphan_status_image_files',
+            'orphan_link_image_files',
+            'expired_cache_files',
             'old_action_limits',
             'old_password_reset_tokens',
             'old_read_notifications',
+            'old_scheduler_runs',
+            'bot_history',
         ];
     }
 
@@ -93,8 +97,14 @@ final class Cleanup
     {
         $batchSize = \TinyCat\Scheduler\Cleanup::cleanup_batch_size($batchSize);
         $startedAt = hrtime(true);
-        if ($task === 'orphan_status_image_files') {
-            $result = \TinyCat\Status\ImageStorage::cleanupOrphans($batchSize);
+        if (in_array($task, ['orphan_status_image_files', 'orphan_link_image_files', 'expired_cache_files', 'bot_history'], true)) {
+            $result = match ($task) {
+                'orphan_status_image_files' => \TinyCat\Status\ImageStorage::cleanupOrphans($batchSize),
+                'orphan_link_image_files' => \TinyCat\Status\Links::cleanupOrphanImages($batchSize),
+                'bot_history' => \TinyCat\Bots\Cleanup::run($batchSize),
+                default => \TinyCat\Support\Cache::cleanupExpired($batchSize),
+            };
+            if (isset($result['error'])) { throw new \RuntimeException((string) $result['error']); }
             $changed = $result['changed'];
             $hasMore = !empty($result['has_more']);
         } else {
@@ -149,6 +159,7 @@ final class Cleanup
                     LIMIT 1',
                 [\TinyCat\Support\Dates::dateDb()]
             ),
+            'old_scheduler_runs' => \TinyCat\Database\Connection::value('SELECT 1 FROM scheduler_runs WHERE started_at < ? LIMIT 1', [\TinyCat\Support\Dates::dateDb('-30 days')]),
             'old_read_notifications' => \TinyCat\Database\Connection::value(
                 'SELECT 1
                     FROM notifications
@@ -197,6 +208,7 @@ final class Cleanup
                     LIMIT ' . $batchSize,
                 [\TinyCat\Support\Dates::dateDb()]
             ),
+            'old_scheduler_runs' => self::cleanup_delete_limited('DELETE FROM scheduler_runs WHERE started_at < ? LIMIT ' . $batchSize, [\TinyCat\Support\Dates::dateDb('-30 days')]),
             'old_read_notifications' => \TinyCat\Scheduler\Cleanup::cleanup_delete_limited(
                 'DELETE FROM notifications
                     WHERE read_at IS NOT NULL AND read_at < ?

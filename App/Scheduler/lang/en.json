@@ -14,7 +14,7 @@
     "rotate_confirm": "Rotate the cron token? Existing scheduled calls will stop working until they are updated.",
     "tasks": {
       "cleanup": "Automatic cleanup",
-      "cleanup_help": "Removes unused tags and links, old rate-limit buckets, expired reset tokens, and read notifications.",
+      "cleanup_help": "Removes unused tags and links, orphaned post and preview images, expired data caches, old rate-limit buckets, expired reset tokens and read notifications.",
       "cleanup_schedule": "Schedule hourly. Internal due checks prevent cleanup from running too often.",
       "feeds": "RSS and Atom sources",
       "feeds_help": "Publishes items from active sources whose interval is due.",
@@ -22,6 +22,60 @@
     },
     "messages": {
       "token_rotated": "The cron token was rotated."
-    }
+    },
+    "list_title": "Task overview",
+    "configuration": "Connection and scheduling",
+    "list_help": "Scheduling is controlled by your server or web-cron. These are the recommended intervals and default limits. Run now bypasses the cleanup interval; RSS still respects each source interval. History includes runs recorded after this update.",
+    "task": "Task",
+    "schedule": "Schedule and default limits",
+    "latest": "Latest run",
+    "run_now": "Run now",
+    "history": "Run history",
+    "status": "Status",
+    "started": "Started",
+    "duration": "Duration",
+    "result": "Result",
+    "no_runs": "No recorded runs match these filters.",
+    "never": "No recorded run",
+    "run_finished": "The task finished.",
+    "run_failed": "The task failed. See its result in the run history.",
+    "already_running": "The task is already running.",
+    "unknown_task": "Unknown task.",
+    "summary_count": "Processed: {count}",
+    "summary_changed": "Changed: {count}",
+    "options": {
+      "bot_limit": "Source limit",
+      "cleanup_batch": "Cleanup batch",
+      "source_id": "Source ID"
+    },
+    "statuses": {
+      "running": "Running",
+      "completed": "Completed",
+      "failed": "Failed",
+      "not_due": "Not due",
+      "has_more": "More work pending",
+      "interrupted": "Interrupted"
+    },
+    "modes": {
+      "cli": "Server CLI",
+      "http": "Web cron",
+      "admin": "Manual"
+    },
+    "menu_title": "Tasks",
+    "overview_help": "Recommended intervals and default limits. Scheduling is managed by the server or web-cron.",
+    "cadence": {
+      "feeds": "Check every two minutes",
+      "cleanup": "Once an hour"
+    },
+    "run_details": "Run details",
+    "refresh": "Refresh",
+    "run_not_found": "This run was not found.",
+    "finished": "Finished",
+    "unfinished": "Not finished",
+    "trigger": "Started via",
+    "actor": "Started by",
+    "run_id": "Run ID",
+    "parameters": "Run parameters",
+    "error": "Error"
   }
 }

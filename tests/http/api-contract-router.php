@@ -18,6 +18,8 @@ require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
 
 $database = new PDO('sqlite:' . (string) getenv('TINYCAT_API_TEST_DATABASE'));
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$database->sqliteCreateFunction('GET_LOCK', static fn (): int => (int) ($_SERVER['HTTP_X_TEST_SCHEDULER_LOCK'] ?? 1));
+$database->sqliteCreateFunction('RELEASE_LOCK', static fn (): int => 1);
 $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);

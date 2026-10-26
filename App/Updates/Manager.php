@@ -100,7 +100,7 @@ final class Manager extends Package
             'package_url' => $packageUrl,
         ];
 
-        \TinyCat\Support\Cache::put(self::CACHE_KEY, $result);
+        \TinyCat\Support\Cache::put(self::CACHE_KEY, $result, self::CACHE_TTL);
 
         return $result;
     }

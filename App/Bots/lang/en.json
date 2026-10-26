@@ -104,7 +104,9 @@
       "running": "Running",
       "error": "Error",
       "skipped": "Skipped",
-      "completed": "Completed"
-    }
+      "completed": "Completed",
+      "interrupted": "Interrupted"
+    },
+    "edit_account": "Edit bot account"
   }
 }

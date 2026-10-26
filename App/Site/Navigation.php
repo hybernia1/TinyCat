@@ -10,7 +10,7 @@ final class Navigation
         return [
             ['href' => '/admin', 'icon' => 'dashboard', 'label' => \TinyCat\Support\Localization::t('common.dashboard')],
             ['href' => '/admin/users', 'icon' => 'users', 'label' => \TinyCat\Support\Localization::t('users.list_title')],
-            \TinyCat\Bots\Importer::adminNavigation(),
+            \TinyCat\Bots\Module::adminNavigation(),
             [
                 'icon' => 'shield',
                 'label' => \TinyCat\Support\Localization::t('moderation.title'),
@@ -19,7 +19,7 @@ final class Navigation
                     ['href' => '/admin/moderation/blocking', 'icon' => 'lock', 'label' => \TinyCat\Support\Localization::t('moderation.url_blocker_title')],
                 ],
             ],
-            ['href' => '/admin/cron', 'icon' => 'clock', 'label' => \TinyCat\Support\Localization::t('cron.title')],
+            \TinyCat\Scheduler\Module::adminNavigation(),
             ['href' => '/admin/updates', 'icon' => 'download', 'label' => \TinyCat\Support\Localization::t('updates.title')],
             ['href' => '/admin/settings', 'icon' => 'settings', 'label' => \TinyCat\Support\Localization::t('settings.title')],
         ];
@@ -35,7 +35,7 @@ final class Navigation
             $href = (string) ($item['href'] ?? '#');
             if ($admin) { $href = \TinyCat\Http\Request::current()->path($href); }
             $local = str_starts_with($href, '/') && !str_starts_with($href, '//');
-            $active = $local && ($href === $current || ($admin && $href !== '/admin' && str_starts_with($current, $href . '/')));
+            $active = $local && ($href === $current || ($admin && empty($item['exact']) && $href !== '/admin' && str_starts_with($current, $href . '/')));
             $children = self::prepare((array) ($item['children'] ?? []), $current, $admin);
             $groupActive = array_any($children, static fn (array $child): bool => (bool) $child['active']);
             $result[] = [...$item, 'href' => $href, 'active' => $active, 'children' => $children, 'group_active' => $groupActive];

@@ -14,7 +14,7 @@
     "rotate_confirm": "Obnovit cron token? Existující naplánovaná volání přestanou fungovat, dokud je neupravíš.",
     "tasks": {
       "cleanup": "Automatický úklid",
-      "cleanup_help": "Odstraňuje nepoužívané štítky a odkazy, staré rate-limit buckety, expirované reset tokeny a přečtené notifikace.",
+      "cleanup_help": "Odstraňuje nepoužívané štítky a odkazy, osiřelé obrázky příspěvků a náhledů, expirovanou datovou cache, staré rate-limit buckety, expirované reset tokeny a přečtené notifikace.",
       "cleanup_schedule": "Naplánuj jednou za hodinu. Interní kontrola zabrání příliš častému spuštění.",
       "feeds": "RSS a Atom zdroje",
       "feeds_help": "Publikuje položky z aktivních zdrojů, jejichž interval právě vypršel.",
@@ -22,6 +22,60 @@
     },
     "messages": {
       "token_rotated": "Cron token byl obnoven."
-    }
+    },
+    "list_title": "Přehled úloh",
+    "configuration": "Připojení a plánování",
+    "list_help": "Spouštění řídí server nebo web-cron. Zde jsou doporučené intervaly a výchozí limity. Spustit hned přeskočí interval úklidu; RSS zachová intervaly jednotlivých zdrojů. Historie obsahuje běhy zaznamenané od této aktualizace.",
+    "task": "Úloha",
+    "schedule": "Plánování a výchozí limity",
+    "latest": "Poslední běh",
+    "run_now": "Spustit hned",
+    "history": "Historie běhů",
+    "status": "Stav",
+    "started": "Spuštěno",
+    "duration": "Doba běhu",
+    "result": "Výsledek",
+    "no_runs": "Filtrům neodpovídají žádné zaznamenané běhy.",
+    "never": "Zatím bez záznamu",
+    "run_finished": "Úloha byla dokončena.",
+    "run_failed": "Úloha selhala. Podrobnosti jsou v historii běhů.",
+    "already_running": "Úloha již běží.",
+    "unknown_task": "Neznámá úloha.",
+    "summary_count": "Zpracováno: {count}",
+    "summary_changed": "Změněno: {count}",
+    "options": {
+      "bot_limit": "Limit zdrojů",
+      "cleanup_batch": "Dávka úklidu",
+      "source_id": "ID zdroje"
+    },
+    "statuses": {
+      "running": "Běží",
+      "completed": "Dokončeno",
+      "failed": "Selhalo",
+      "not_due": "Zatím není na řadě",
+      "has_more": "Zbývá další práce",
+      "interrupted": "Přerušeno"
+    },
+    "modes": {
+      "cli": "Serverové CLI",
+      "http": "Web-cron",
+      "admin": "Ručně"
+    },
+    "menu_title": "Úlohy",
+    "overview_help": "Doporučené intervaly a výchozí limity. Spouštění řídí server nebo web-cron.",
+    "cadence": {
+      "feeds": "Kontrola každé dvě minuty",
+      "cleanup": "Jednou za hodinu"
+    },
+    "run_details": "Podrobnosti běhu",
+    "refresh": "Obnovit",
+    "run_not_found": "Tento běh nebyl nalezen.",
+    "finished": "Dokončeno",
+    "unfinished": "Nedokončeno",
+    "trigger": "Způsob spuštění",
+    "actor": "Spustil",
+    "run_id": "ID běhu",
+    "parameters": "Parametry běhu",
+    "error": "Chyba"
   }
 }

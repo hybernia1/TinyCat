@@ -8,7 +8,8 @@
       "bots/accounts",
       "bots/sources",
       "bots/source-fields",
-      "bots/runs"
+      "bots/runs",
+      "bots/account-edit-fields"
     ],
     "entries": [
       "assets/modules/bots/index.js"
@@ -16,7 +17,8 @@
     "styles": [],
     "translations": [
       "bots.edit_source",
-      "common.save"
+      "common.save",
+      "bots.edit_account"
     ],
     "messages": {
       "bot_account_created": "bots.messages.account_created",
@@ -39,7 +41,8 @@
       "user_username_taken": "users.messages.username_taken",
       "bot_run_failed": "bots.detail_run_failed",
       "bot_run_completed": "bots.detail_run_finished",
-      "bot_created": "bots.messages.created"
+      "bot_created": "bots.messages.created",
+      "scheduler_already_running": "cron.already_running"
     }
   }
 ]

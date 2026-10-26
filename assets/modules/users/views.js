@@ -115,7 +115,8 @@ import "../../ui/toasts.js";
     },
     follow: function (form, data) {
       form.elements.namedItem("action").value = data.following ? "unfollow" : "follow";
-      var button = form.querySelector("button"); button.textContent = U.text(data.following ? "public.unfollow" : "public.follow");
+      var button = form.querySelector("button");
+      button.replaceChildren(U.icon(data.following ? "check" : "plus"), e("span", {}, U.text(data.following ? "public.unfollow" : "public.follow")));
       button.classList.toggle("btn-primary", !data.following); button.classList.toggle("btn-secondary", data.following);
     },
     list: function (target, response) {

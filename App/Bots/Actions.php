@@ -125,21 +125,21 @@ final class Actions
         return \TinyCat\Bots\Administration::payload() + ['message' => \TinyCat\Support\Localization::t('bots.messages.deleted'), 'code' => 'bot_deleted'];
     }
 
-    /**
-     * @return array<mixed>
-     */
-    public static function adminBotSourceAction(int $sourceId): array
+    public static function adminBotSourceAction(int $sourceId): \TinyCat\Http\Result
     {
         $source = \TinyCat\Bots\Administration::sourceForAction($sourceId, max(0, (int) \TinyCat\Http\Request::current()->input('bot_id', 0)));
 
         $result = \TinyCat\Bots\Administration::runSource($source);
-        $failed = (string) ($result['status'] ?? '') === 'error';
+        if (($result['status'] ?? '') === 'already_running') {
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('cron.already_running'), 409, 'scheduler_already_running');
+        }
+        $failed = empty($result['ok']);
         $message = \TinyCat\Support\Localization::t($failed ? 'bots.detail_run_failed' : 'bots.detail_run_finished');
         $code = $failed ? 'bot_run_failed' : 'bot_run_completed';
 
         $payload = \TinyCat\Bots\Administration::payload($sourceId);
 
-        return $payload + ['message' => $message, 'code' => $code];
+        return new \TinyCat\Http\Result($payload + ['execution' => $result], $message, ['type' => $failed ? 'danger' : 'success'], $code);
     }
 
     /**

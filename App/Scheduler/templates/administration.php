@@ -29,8 +29,8 @@ declare(strict_types=1);
                     <?= \TinyCat\Support\Html::icon('chevron-down', 'icon disclosure-chevron') ?>
                 </summary>
                 <div class="disclosure-body stack">
-                    <label class="field"><span class="label"><?= \TinyCat\Support\Html::et('cron.url') ?></span><input class="input" value="<?= \TinyCat\Support\Html::e($cronUrl) ?>" data-scheduler-url readonly></label>
-                    <label class="field"><span class="label"><?= \TinyCat\Support\Html::et('cron.token') ?></span><input class="input" value="<?= \TinyCat\Support\Html::e($cronToken) ?>" data-scheduler-token readonly></label>
+                    <label class="field"><span class="label cluster gap-2"><?= \TinyCat\Support\Html::icon('globe') ?> <?= \TinyCat\Support\Html::et('cron.url') ?></span><input class="input" value="<?= \TinyCat\Support\Html::e($cronUrl) ?>" data-scheduler-url readonly></label>
+                    <label class="field"><span class="label cluster gap-2"><?= \TinyCat\Support\Html::icon('key') ?> <?= \TinyCat\Support\Html::et('cron.token') ?></span><input class="input" value="<?= \TinyCat\Support\Html::e($cronToken) ?>" data-scheduler-token readonly></label>
                 </div>
             </details>
 
@@ -47,9 +47,9 @@ declare(strict_types=1);
                         <?= \TinyCat\Support\Html::icon('chevron-down', 'icon disclosure-chevron') ?>
                     </summary>
                     <div class="disclosure-body stack">
-                        <label class="field"><span class="label"><?= \TinyCat\Support\Html::et('cron.task_url') ?></span><input class="input" value="<?= \TinyCat\Support\Html::e((string) $view['query_url']) ?>" data-scheduler-url readonly><span class="help"><?= \TinyCat\Support\Html::et('cron.query_help') ?></span></label>
-                        <div class="field"><span class="label"><?= \TinyCat\Support\Html::et('cron.http_command') ?></span><pre class="code-block"><code data-scheduler-command><?= \TinyCat\Support\Html::e((string) $view['http_command']) ?></code></pre></div>
-                        <div class="field"><span class="label"><?= \TinyCat\Support\Html::et('cron.cli_command') ?></span><pre class="code-block"><code data-scheduler-command><?= \TinyCat\Support\Html::e((string) $view['cli_command']) ?></code></pre></div>
+                        <label class="field"><span class="label cluster gap-2"><?= \TinyCat\Support\Html::icon('link') ?> <?= \TinyCat\Support\Html::et('cron.task_url') ?></span><input class="input" value="<?= \TinyCat\Support\Html::e((string) $view['query_url']) ?>" data-scheduler-url readonly><span class="help"><?= \TinyCat\Support\Html::et('cron.query_help') ?></span></label>
+                        <div class="field"><span class="label cluster gap-2"><?= \TinyCat\Support\Html::icon('globe') ?> <?= \TinyCat\Support\Html::et('cron.http_command') ?></span><pre class="code-block"><code data-scheduler-command><?= \TinyCat\Support\Html::e((string) $view['http_command']) ?></code></pre></div>
+                        <div class="field"><span class="label cluster gap-2"><?= \TinyCat\Support\Html::icon('code') ?> <?= \TinyCat\Support\Html::et('cron.cli_command') ?></span><pre class="code-block"><code data-scheduler-command><?= \TinyCat\Support\Html::e((string) $view['cli_command']) ?></code></pre></div>
                         <p class="help m-0"><?= \TinyCat\Support\Html::et((string) $view['schedule']) ?></p>
                     </div>
                 </details>

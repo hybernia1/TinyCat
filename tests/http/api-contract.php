@@ -39,6 +39,11 @@ foreach ([
 ] as $sql) {
     $database->exec($sql);
 }
+define('TINYCAT', true);
+$schedulerMigration = require $root . '/migrations/20261026_003_scheduler_runs.php';
+$schedulerMigration($database);
+$botSchedulerMigration = require $root . '/migrations/20261026_004_bot_scheduler_runs.php';
+$botSchedulerMigration($database);
 $password = password_hash('Example-password-42', PASSWORD_DEFAULT);
 $database->prepare('UPDATE users SET password = ?, locale = ?, email = ? WHERE id = 2')->execute([$password, 'en', 'member@example.test']);
 $database->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (10, 1, 'Hello @2 #test <img onerror=alert(1)>', '2026-01-01 12:00:00'), (11, 2, 'Member post', '2026-01-02 12:00:00')");
@@ -133,12 +138,49 @@ try {
     }
     [$status] = $request('GET', '/api/bots/sources', null, 'user');
     $assert($status === 403, 'A regular user cannot access bot administration.');
-    foreach (['/api/users', '/api/bots/sources', '/api/bots/accounts', '/api/scheduler/tokens'] as $path) {
+    foreach (['/api/users', '/api/bots/sources', '/api/bots/accounts', '/api/scheduler/tokens', '/api/scheduler/tasks/feeds/runs'] as $path) {
         [$status, $payload] = $request('POST', $path, [], 'admin');
         $assert($status === 403 && $payload['code'] === 'csrf_token_mismatch', 'All API mutations must use the shared CSRF guard.');
     }
 
     $csrf = ['X-CSRF-Token' => str_repeat('a', 64)];
+    [$status] = $request('GET', '/api/scheduler/tasks', null, 'user');
+    $assert($status === 403, 'Only administrators may inspect cron history.');
+    [$status] = $request('GET', '/api/scheduler/tasks');
+    $assert($status === 401, 'Anonymous users cannot inspect cron history.');
+    [$status, $payload] = $request('GET', '/api/scheduler/tasks', null, 'admin');
+    $assert($status === 200 && count($payload['data']['items']) === 2 && $payload['data']['runs'] === [], 'Cron list exposes the registered task definitions and an empty initial history.');
+    $assert(isset($payload['meta']['pagination']) && !array_key_exists('pagination', $payload['data']) && !array_key_exists('per_page', $payload['data']['filters']), 'Cron GET pagination follows the shared metadata contract.');
+    $schedulerDatabase = new PDO('sqlite:' . $databasePath);
+    $schedulerDatabase->prepare('INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES (?, ?, ?, ?)')->execute(['bots.cleanup_last_run', (string) time(), 'int', 'bots']);
+    $schedulerDatabase = null;
+    [$status, $payload] = $request('POST', '/api/scheduler/tasks/feeds/runs?per_page=50', [], 'admin', $csrf);
+    $assert($status === 201 && $payload['data']['execution']['ok'] && $payload['data']['runs'][0]['status'] === 'completed', 'An authorized run-now request executes and returns its durable history.');
+    $assert($payload['code'] === 'scheduler_run_finished' && $payload['meta']['pagination']['per_page'] === 50 && !array_key_exists('pagination', $payload['data']), 'Cron POST uses the same pagination metadata and a stable action code.');
+    $assert($payload['data']['runs'][0]['mode'] === 'admin' && !str_contains(json_encode($payload), 'Bearer '), 'Manual runs identify their origin without exposing cron credentials.');
+    $schedulerRunId = $payload['data']['runs'][0]['id'];
+    [$status, $detail] = $request('GET', '/api/scheduler/runs/' . $schedulerRunId, null, 'admin');
+    $assert($status === 200 && $detail['data']['item']['id'] === $schedulerRunId && $detail['data']['item']['actor']['username'] === 'admin', 'Run detail exposes persisted times, parameters and initiator to administrators.');
+    [$status] = $request('GET', '/api/scheduler/runs/' . $schedulerRunId, null, 'user');
+    $assert($status === 403, 'Run details require administrator access.');
+    [$status] = $request('GET', '/api/scheduler/runs/999999', null, 'admin');
+    $assert($status === 404, 'A missing run returns a standard not-found response.');
+    $schedulerDatabase = new PDO('sqlite:' . $databasePath);
+    $schedulerDatabase->exec("DELETE FROM settings WHERE setting_key = 'bots.cleanup_last_run'");
+    $schedulerDatabase = null;
+    [$status, $busy] = $request('POST', '/api/scheduler/tasks/feeds/runs?per_page=50', [], 'admin', $csrf + ['X-Test-Scheduler-Lock' => '0']);
+    $assert($status === 201 && $busy['code'] === 'scheduler_already_running' && $busy['data']['execution']['skipped'] && $busy['meta']['pagination']['per_page'] === 50, 'Concurrent cron requests use the stable busy code and shared pagination contract.');
+    $schedulerDatabase = new PDO('sqlite:' . $databasePath);
+    $schedulerDatabase->exec("CREATE TRIGGER scheduler_fixture_failure BEFORE INSERT ON scheduler_runs BEGIN SELECT RAISE(ABORT, 'fixture history unavailable'); END");
+    $schedulerDatabase = null;
+    [$status, $failed] = $request('POST', '/api/scheduler/tasks/feeds/runs?per_page=50', [], 'admin', $csrf);
+    $assert($failed['code'] === 'scheduler_run_failed' && !$failed['data']['execution']['ok'] && $failed['meta']['type'] === 'danger' && $failed['meta']['pagination']['per_page'] === 50, 'Failed cron executions have a stable failure code while returning the refreshed list.');
+    $schedulerDatabase = new PDO('sqlite:' . $databasePath);
+    $schedulerDatabase->exec('DROP TRIGGER scheduler_fixture_failure');
+    $schedulerDatabase = null;
+    [$status] = $request('POST', '/api/scheduler/tasks/unknown/runs', [], 'admin', $csrf);
+    $assert($status === 404, 'Unknown cron tasks cannot execute arbitrary jobs.');
+
     [$status, $payload] = $request('GET', '/api/foundation/items/7');
     $assert($status === 200 && $payload['data']['id'] === 7 && $payload['data']['value'] === '<b>literal user text</b>' && $payload['message'] === 'Loaded.' && $payload['meta']['source'] === 'module', 'Module APIs receive named parameters and return pure data, messages and metadata.');
     [$status, $payload] = $request('POST', '/api/foundation/items', ['value' => 'new'], 'admin', $csrf);
@@ -171,10 +213,40 @@ try {
     $assert($status === 201 && $payload['data']['item']['username'] === 'Žaneta.Novák', 'Bot account creation must preserve Unicode and case and return 201.');
     $assert(is_string($payload['message']) && !isset($payload['data']['message']), 'Success messages must be exposed consistently.');
 
+    $editableBotId = $payload['data']['item']['id'];
+    [$status, $botManagement] = $request('GET', '/api/bots/accounts/' . $editableBotId . '/management', null, 'admin');
+    $assert($status === 200 && $botManagement['data']['item']['id'] === $editableBotId && !isset($botManagement['data']['runs']), 'Bot management loads the editable account without unrelated detail-page history.');
+    [$status] = $request('GET', '/api/bots/accounts/' . $editableBotId . '/management', null, 'user');
+    $assert($status === 403, 'Bot edit resources remain restricted to administrators.');
+    [$status] = $request('GET', '/api/bots/accounts/2/management', null, 'admin');
+    $assert($status === 404, 'Bot management cannot load a regular user account.');
+    [$status] = $request('PATCH', '/api/bots/accounts/' . $editableBotId, ['status' => 'active', 'bio' => 'Updated in list'], 'admin');
+    $assert($status === 403, 'Bot modal writes retain shared CSRF protection.');
+    [$status, $botSaved] = $request('PATCH', '/api/bots/accounts/' . $editableBotId . '?per_page=50', ['status' => 'active', 'bio' => 'Updated in list'], 'admin', $csrf);
+    $assert($status === 200 && $botSaved['code'] === 'bot_saved' && $botSaved['data']['item']['bio'] === 'Updated in list' && $botSaved['meta']['pagination']['per_page'] === 50, 'Saving the bot modal returns updated list data and preserves the page-size contract.');
+
     $source = ['bot_user_id' => 3, 'name' => 'Contract feed', 'feed_url' => 'https://93.184.216.34/feed', 'interval_minutes' => 60, 'post_template' => '{{title}}', 'enabled' => '1'];
     [$status, $payload] = $request('POST', '/api/bots/sources', $source, 'admin', $csrf);
     $assert($status === 201 && $payload['data']['item']['name'] === 'Contract feed', 'Bot source creation must return the same 201 contract.');
     $sourceId = $payload['data']['id'];
+
+    $sourceDatabase = new PDO('sqlite:' . $databasePath);
+    [$status] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'user', $csrf);
+    $assert($status === 403, 'Manual source imports require administrator privileges.');
+    [$status] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'admin');
+    $assert($status === 403, 'Manual source imports require CSRF protection.');
+    [$status, $busy] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'admin', $csrf + ['X-Test-Scheduler-Lock' => '0']);
+    $assert($status === 409 && $busy['code'] === 'scheduler_already_running', 'Manual source imports share the feeds scheduler lock.');
+    $sourceDatabase->prepare('UPDATE bot_sources SET feed_url = ? WHERE id = ?')->execute(['http://127.0.0.1/blocked-feed', $sourceId]);
+    [$status, $manual] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'admin', $csrf);
+    $assert($status === 201 && $manual['code'] === 'bot_run_failed' && $manual['meta']['type'] === 'danger', 'Failed manual imports refresh the list with a stable failure code and danger notice.');
+    $manualParent = $sourceDatabase->query("SELECT * FROM scheduler_runs WHERE task = 'feeds' ORDER BY id DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+    $assert($manualParent['mode'] === 'admin' && (int) $manualParent['actor_id'] === 1 && json_decode($manualParent['options_json'], true)['source_id'] === $sourceId, 'Manual imports persist their initiator and selected source.');
+    [$status, $manualDetail] = $request('GET', '/api/scheduler/runs/' . $manualParent['id'], null, 'admin');
+    $assert($status === 200 && count($manualDetail['data']['item']['sources']) === 1 && (int) $manualDetail['data']['item']['sources'][0]['scheduler_run_id'] === (int) $manualParent['id'], 'Manual source diagnostics are available through the standard scheduler detail endpoint.');
+    $sourceDatabase->prepare('UPDATE bot_sources SET feed_url = ? WHERE id = ?')->execute([$source['feed_url'], $sourceId]);
+
+    $sourceDatabase = null;
     [$status, $payload] = $request('PATCH', '/api/bots/sources/' . $sourceId, ['enabled' => false], 'admin', $csrf);
     $assert($status === 200 && !$payload['data']['item']['enabled'], 'Named action parameters must dispatch through the same API middleware.');
     [$status, $payload] = $request('POST', '/api/bots/sources', $source, 'admin', $csrf);

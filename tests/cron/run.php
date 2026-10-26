@@ -171,9 +171,43 @@ try {
     \TinyCat\Database\Connection::insert('notifications', ['read_at' => \TinyCat\Support\Dates::dateDb('-1 day')]);
     \TinyCat\Database\Connection::insert('notifications', ['read_at' => null]);
 
+    $schedulerMigration = require dirname(__DIR__, 2) . '/migrations/20261026_003_scheduler_runs.php';
+    $schedulerMigration($database);
+    $schedulerMigration($database);
+    foreach (['-31 days', '-1 day'] as $age) {
+        \TinyCat\Database\Connection::insert('scheduler_runs', ['task' => 'cleanup', 'mode' => 'cli', 'status' => 'completed', 'started_at' => \TinyCat\Support\Dates::dateDb($age), 'options_json' => '{}']);
+    }
+    $historyCleanup = \TinyCat\Scheduler\Cleanup::cleanup_task_run('old_scheduler_runs', 500);
+    if ($historyCleanup['changed'] !== 1 || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM scheduler_runs') !== 1) {
+        throw new RuntimeException('Scheduler history retention must preserve recent runs.');
+    }
+
+
+    $database->exec('CREATE TABLE bot_sources (id BIGINT PRIMARY KEY, bot_user_id BIGINT, feed_hash VARCHAR(64))');
+    $database->exec('CREATE TABLE bot_source_runs (id BIGINT AUTO_INCREMENT PRIMARY KEY, source_id BIGINT, status VARCHAR(24), started_at DATETIME)');
+    $database->exec('CREATE TABLE bot_feed_history (bot_user_id BIGINT, feed_hash VARCHAR(64), created_at DATETIME)');
+    $botMigration = require dirname(__DIR__, 2) . '/migrations/20261026_004_bot_scheduler_runs.php';
+    $botMigration($database); $botMigration($database);
+    $database->exec("INSERT INTO bot_sources VALUES (1, 1, 'active')");
+    for ($index = 0; $index < 55; $index++) {
+        \TinyCat\Database\Connection::insert('bot_source_runs', ['source_id' => 1, 'status' => 'current', 'started_at' => \TinyCat\Support\Dates::dateDb()]);
+    }
+    foreach (['running', 'error', 'interrupted'] as $status) {
+        \TinyCat\Database\Connection::insert('bot_source_runs', ['source_id' => 1, 'status' => $status, 'started_at' => \TinyCat\Support\Dates::dateDb('-15 days')]);
+    }
+    foreach (['active', 'orphan'] as $hash) {
+        \TinyCat\Database\Connection::insert('bot_feed_history', ['bot_user_id' => 1, 'feed_hash' => $hash, 'created_at' => \TinyCat\Support\Dates::dateDb('-15 days')]);
+    }
+    $botCleanup = \TinyCat\Scheduler\Cleanup::cleanup_task_run('bot_history', 500);
+    if ($botCleanup['changed'] !== 8 || (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM bot_source_runs WHERE status = 'current'") !== 50
+        || (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM bot_source_runs WHERE status = 'running'") !== 1
+        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_feed_history') !== 1) {
+        throw new RuntimeException('Common cleanup must bound bot diagnostics and preserve active imports and duplicate protection.');
+    }
+
     $databaseCleanupTasks = array_values(array_filter(
         \TinyCat\Scheduler\Cleanup::cron_cleanup_tasks(),
-        static fn (string $task): bool => $task !== 'orphan_status_image_files'
+        static fn (string $task): bool => !in_array($task, ['orphan_status_image_files', 'orphan_link_image_files', 'expired_cache_files', 'old_scheduler_runs', 'bot_history'], true)
     ));
     $result = \TinyCat\Scheduler\Cleanup::cron_cleanup_run(500, true, $databaseCleanupTasks);
     $imageCleanup = \TinyCat\Status\ImageStorage::cleanupOrphans(500, '2099/01');

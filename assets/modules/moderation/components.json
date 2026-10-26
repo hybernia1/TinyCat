@@ -74,7 +74,10 @@
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "class": "table-actions-cell",
+                          "scope": "col"
+                        },
                         "children": [
                           {
                             "t": "common.actions",
@@ -270,7 +273,9 @@
                           },
                           {
                             "tag": "td",
-                            "attrs": {},
+                            "attrs": {
+                              "class": "table-actions-cell"
+                            },
                             "children": [
                               {
                                 "tag": "div",

@@ -80,7 +80,7 @@ final class Cache
                 }
             }
             $value = $compute();
-            self::put($key, $value);
+            self::put($key, $value, $ttl);
             return $value;
         } finally {
             if (is_resource($lock)) {
@@ -97,14 +97,14 @@ final class Cache
         return $lookup['found'] ? $lookup['value'] : null;
     }
 
-    public static function put(string $key, mixed $value): bool
+    public static function put(string $key, mixed $value, int $ttl = 300, int $staleTtl = 3600): bool
     {
         if (self::driver() !== 'memcached') {
-            return self::filesystemPut($key, $value);
+            return self::filesystemPut($key, $value, $ttl, $staleTtl);
         }
 
-        if (!self::memcachedPut($key, $value)) {
-            return self::filesystemPut($key, $value);
+        if (!self::memcachedPut($key, $value, $ttl, $staleTtl)) {
+            return self::filesystemPut($key, $value, $ttl, $staleTtl);
         }
 
         // Do not retain an older filesystem value after a successful primary
@@ -211,6 +211,34 @@ final class Cache
 
         @unlink($temporary);
         return false;
+    }
+
+    /**
+     * Data caches only: generated assets and lock files have separate lifetimes.
+     * Legacy JSON entries have no stored TTL; retain them for seven days.
+     * @return array{changed: int, has_more: bool}
+     */
+    public static function cleanupExpired(int $limit): array
+    {
+        $directory = self::directory();
+        $changed = 0;
+        if (!is_dir($directory)) { return ['changed' => 0, 'has_more' => false]; }
+        foreach (new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS) as $file) {
+            if (!$file instanceof \SplFileInfo || !$file->isFile() || $file->isLink() || $file->getExtension() !== 'json') { continue; }
+            $path = $file->getPathname();
+            $contents = @file_get_contents($path);
+            $entry = is_string($contents) ? json_decode($contents, true) : null;
+            $retention = is_array($entry) && ($entry['_tinycat_cache'] ?? null) === 2
+                ? max(1, (int) ($entry['ttl'] ?? 300)) + max(0, (int) ($entry['stale_ttl'] ?? 3600))
+                : 604800;
+            clearstatcache(true, $path);
+            $modified = @filemtime($path);
+            if ($modified === false || $modified >= time() - $retention) { continue; }
+            if ($changed >= max(1, $limit)) { return ['changed' => $changed, 'has_more' => true]; }
+            if (!@unlink($path) && is_file($path)) { throw new \RuntimeException('Unable to remove expired cache entry.'); }
+            $changed++;
+        }
+        return ['changed' => $changed, 'has_more' => false];
     }
 
     /**
@@ -466,6 +494,10 @@ final class Cache
             return self::cacheMiss();
         }
 
+        if (is_array($value) && ($value['_tinycat_cache'] ?? null) === 2 && array_key_exists('value', $value)) {
+            $value = $value['value'];
+        }
+
         clearstatcache(true, $file);
         $writtenAt = @filemtime($file);
 
@@ -477,10 +509,10 @@ final class Cache
         ];
     }
 
-    private static function filesystemPut(string $key, mixed $value): bool
+    private static function filesystemPut(string $key, mixed $value, int $ttl, int $staleTtl): bool
     {
         try {
-            $json = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            $json = json_encode(['_tinycat_cache' => 2, 'ttl' => max(1, $ttl), 'stale_ttl' => max(0, $staleTtl), 'value' => $value], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return false;
         }
@@ -539,7 +571,7 @@ final class Cache
         ];
     }
 
-    private static function memcachedPut(string $key, mixed $value): bool
+    private static function memcachedPut(string $key, mixed $value, int $ttl, int $staleTtl): bool
     {
         $client = self::memcachedClient();
 
@@ -562,7 +594,7 @@ final class Cache
         }
 
         try {
-            return $client->set(self::memcachedKey($key), $payload, 0);
+            return $client->set(self::memcachedKey($key), $payload, time() + max(1, $ttl) + max(0, $staleTtl));
         } catch (Throwable) {
             return false;
         }

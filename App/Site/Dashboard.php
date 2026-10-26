@@ -78,7 +78,7 @@ final class Dashboard
             $counts[$table] = self::count($table);
         }
 
-        \TinyCat\Support\Cache::put($cacheKey, $counts);
+        \TinyCat\Support\Cache::put($cacheKey, $counts, 300);
 
         return $counts;
     }

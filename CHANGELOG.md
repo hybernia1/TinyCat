@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.1.0 - 2026-10-26
+
+- Add standard administration pages for scheduled tasks, searchable run history, detailed run modals and manual execution through the shared authenticated API.
+- Unify manual and scheduled bot imports under one execution lock; link per-source diagnostics to scheduler runs and move bot retention into the common cleanup task.
+- Clean expired filesystem cache entries and orphaned link previews in bounded batches while preserving stale-refresh windows, active imports and referenced images.
+- Preserve repeated URL query parameters and balanced punctuation; reduce duplicate DNS checks and cache failed metadata lookups without extending stale successful metadata.
+- Persist bot posts, tags, links and duplicate claims atomically and report failed imports accurately.
+- Fix avatar/video alternative text, follow-button icons, comment editing and report forms, revision diffs and clipped comment menus.
+- Normalize administration pagination, right-aligned action columns, icon actions and bot account editing; validate scoped modal-title translations.
+- Include repeatable scheduler-history and bot-run linkage migrations for updates and fresh installations.
+
 ## 4.0.1 - 2026-10-26
 
 - Avoid repeated ICU transliteration for canonical ASCII slugs; preserve Unicode and custom-separator normalization.

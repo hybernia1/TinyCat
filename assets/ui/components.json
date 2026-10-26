@@ -117,55 +117,129 @@
     "attrs": {
       "class": "pagination",
       "aria-label": {
-        "t": "common.pagination",
-        "values": {}
+        "t": "common.pagination"
       }
     },
     "children": [
       {
-        "each": {
-          "get": "navigation.pages"
+        "tag": "div",
+        "attrs": {
+          "class": "pagination-summary"
         },
-        "as": "page",
         "children": [
           {
-            "tag": "span",
-            "attrs": {
-              "class": "pagination-current",
-              "aria-current": "page"
-            },
-            "children": [
-              {
-                "get": "page.number"
+            "t": "common.pagination_summary",
+            "values": {
+              "from": {
+                "get": "navigation.from"
+              },
+              "to": {
+                "get": "navigation.to"
+              },
+              "total": {
+                "get": "navigation.total"
               }
-            ],
-            "when": {
-              "get": "page.current"
+            }
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "pagination-list"
+        },
+        "children": [
+          {
+            "component": "ui/pagination-step",
+            "data": {
+              "step": {
+                "get": "navigation.previous"
+              },
+              "kind": "prev",
+              "icon": "chevron-left",
+              "label": {
+                "t": "common.previous"
+              },
+              "target": {
+                "get": "target"
+              }
             }
           },
           {
-            "tag": "a",
-            "attrs": {
-              "class": "btn btn-ghost btn-sm",
-              "href": {
-                "get": "page.url"
-              },
-              "data-ajax": "",
-              "data-ajax-target": {
-                "get": "target"
-              },
-              "data-history": {
-                "get": "page.history_url"
-              }
+            "each": {
+              "get": "navigation.pages"
             },
+            "as": "page",
             "children": [
               {
-                "get": "page.number"
+                "tag": "span",
+                "attrs": {
+                  "class": "pagination-ellipsis",
+                  "aria-hidden": "true"
+                },
+                "children": [
+                  "…"
+                ],
+                "when": {
+                  "get": "page.gap_before"
+                }
+              },
+              {
+                "tag": "span",
+                "attrs": {
+                  "class": "pagination-link is-active",
+                  "aria-current": "page"
+                },
+                "children": [
+                  {
+                    "get": "page.number"
+                  }
+                ],
+                "when": {
+                  "get": "page.current"
+                }
+              },
+              {
+                "tag": "a",
+                "attrs": {
+                  "class": "pagination-link",
+                  "href": {
+                    "get": "page.url"
+                  },
+                  "data-ajax": "",
+                  "data-ajax-target": {
+                    "get": "target"
+                  },
+                  "data-history": {
+                    "get": "page.history_url"
+                  }
+                },
+                "children": [
+                  {
+                    "get": "page.number"
+                  }
+                ],
+                "when": {
+                  "not": {
+                    "get": "page.current"
+                  }
+                }
               }
-            ],
-            "when": {
-              "not": {
-                "get": "page.current"
+            ]
+          },
+          {
+            "component": "ui/pagination-step",
+            "data": {
+              "step": {
+                "get": "navigation.next"
+              },
+              "kind": "next",
+              "icon": "chevron-right",
+              "label": {
+                "t": "common.next"
+              },
+              "target": {
+                "get": "target"
               }
             }
           }
@@ -812,7 +886,10 @@
             {
               "get": "alt"
             },
-            ""
+            {
+              "get": "user.username"
+            },
+            "Avatar"
           ]
         },
         "loading": "lazy",
@@ -867,6 +944,15 @@
       "type": "button",
       "data-modal-open": {
         "get": "modal"
+      },
+      "data-modal-url": {
+        "get": "url"
+      },
+      "aria-label": {
+        "get": "label"
+      },
+      "title": {
+        "get": "label"
       }
     },
     "children": [
@@ -882,7 +968,12 @@
           {
             "get": "label"
           }
-        ]
+        ],
+        "when": {
+          "not": {
+            "get": "icon_only"
+          }
+        }
       }
     ]
   },
@@ -989,6 +1080,86 @@
     "children": [
       {
         "get": "label"
+      }
+    ]
+  },
+  "ui/pagination-step": {
+    "tag": {
+      "if": [
+        {
+          "get": "step"
+        },
+        "a",
+        "span"
+      ]
+    },
+    "attrs": {
+      "class": {
+        "concat": [
+          "pagination-link pagination-",
+          {
+            "get": "kind"
+          }
+        ]
+      },
+      "href": {
+        "get": "step.url"
+      },
+      "data-history": {
+        "get": "step.history_url"
+      },
+      "data-ajax": {
+        "if": [
+          {
+            "get": "step"
+          },
+          "",
+          null
+        ]
+      },
+      "data-ajax-target": {
+        "if": [
+          {
+            "get": "step"
+          },
+          {
+            "get": "target"
+          },
+          null
+        ]
+      },
+      "aria-label": {
+        "get": "label"
+      },
+      "title": {
+        "get": "label"
+      },
+      "aria-disabled": {
+        "if": [
+          {
+            "get": "step"
+          },
+          null,
+          "true"
+        ]
+      }
+    },
+    "children": [
+      {
+        "icon": {
+          "get": "icon"
+        }
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "sr-only"
+        },
+        "children": [
+          {
+            "get": "label"
+          }
+        ]
       }
     ]
   }

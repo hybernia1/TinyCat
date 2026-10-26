@@ -17,11 +17,6 @@ if (!defined('TINYCAT')) {
 final class Importer
 {
     private const FEED_HISTORY_KEEP = 500;
-    private const CLEANUP_INTERVAL = 3600;
-    private const CLEANUP_BATCH = 1000;
-    private const ERROR_RUN_RETENTION_DAYS = 14;
-    private const ORPHAN_HISTORY_RETENTION_DAYS = 14;
-    private const SUCCESSFUL_RUNS_PER_SOURCE_KEEP = 50;
 
     private function __construct()
     {
@@ -59,29 +54,13 @@ final class Importer
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    public static function adminNavigation(): array
-    {
-        return [
-            'icon' => 'rss',
-            'label' => \TinyCat\Support\Localization::t('bots.title'),
-            'children' => [
-                ['href' => '/admin/bots/accounts', 'icon' => 'users', 'label' => \TinyCat\Support\Localization::t('bots.accounts_title')],
-                ['href' => '/admin/bots/list', 'icon' => 'list-unordered', 'label' => \TinyCat\Support\Localization::t('bots.sources_title')],
-            ],
-        ];
-    }
-
-    /**
      * @param array<string, mixed> $context
      * @return array<string, mixed>
      */
     private static function runScheduledTask(array $context): array
     {
         $limit = max(1, min(100, (int) ($context['options']['bot_limit'] ?? 20)));
-        $results = self::runDueSources($limit);
-        $cleanup = self::cleanupDatabase();
+        $results = self::runDueSources($limit, (int) ($context['scheduler_run_id'] ?? 0));
         $summary = [];
 
         foreach ($results as $result) {
@@ -89,14 +68,14 @@ final class Importer
             $summary[$status] = (int) ($summary[$status] ?? 0) + 1;
         }
 
+        $failed = ($summary['error'] ?? 0) > 0;
         return [
-            'ok' => true,
-            'status' => 'completed',
+            'ok' => !$failed,
+            'status' => $failed ? 'failed' : 'completed',
             'limit' => $limit,
             'count' => count($results),
             'summary' => $summary,
             'results' => $results,
-            'cleanup' => $cleanup,
         ];
     }
 
@@ -189,19 +168,36 @@ final class Importer
             return;
         }
 
-        try {
-            $data = [
-                'bot_user_id' => $botUserId,
-                'feed_hash' => $feedHash,
-                'item_hash' => $itemHash,
-                'created_at' => $createdAt !== '' ? $createdAt : \TinyCat\Support\Dates::dateDb(),
-            ];
-            \TinyCat\Database\Connection::insert('bot_feed_history', $data);
-        } catch (Throwable) {
-            // The global history key is intentionally immutable and race-safe.
-        }
+        // Let storage failures (including a concurrent duplicate claim) roll
+        // back the post and all its relations together with the history entry.
+        $data = [
+            'bot_user_id' => $botUserId,
+            'feed_hash' => $feedHash,
+            'item_hash' => $itemHash,
+            'created_at' => $createdAt !== '' ? $createdAt : \TinyCat\Support\Dates::dateDb(),
+        ];
+        \TinyCat\Database\Connection::insert('bot_feed_history', $data);
 
         self::pruneFeedHistory($botUserId, $feedHash);
+    }
+
+    /** @param list<array<mixed>> $preparedLinks */
+    private static function persistFeedPost(int $sourceId, int $botUserId, string $feedHash, string $itemHash, string $body, array $preparedLinks, int $runId, int $itemsSeen): int
+    {
+        $publishedAt = \TinyCat\Support\Dates::dateDb();
+        return \TinyCat\Database\Transactions::run(static function () use ($sourceId, $botUserId, $feedHash, $itemHash, $body, $preparedLinks, $runId, $itemsSeen, $publishedAt): int {
+            self::recordFeedHistory($botUserId, $feedHash, $itemHash, $publishedAt);
+            $contentId = (int) \TinyCat\Database\Connection::insert('content', [
+                'body' => $body,
+                'author_id' => $botUserId,
+                'published_at' => $publishedAt,
+            ]);
+            \TinyCat\Status\Tags::status_sync_tags($contentId, \TinyCat\Status\Tags::status_tags_from_text($body));
+            \TinyCat\Status\Links::persistLinks($contentId, $preparedLinks);
+            \TinyCat\Database\Connection::update('bot_sources', ['last_imported_at' => $publishedAt], ['id' => $sourceId]);
+            self::finishSourceRun($runId, 'posted', $itemsSeen);
+            return $contentId;
+        });
     }
 
     private static function pruneFeedHistory(int $botUserId, string $feedHash, int $keep = self::FEED_HISTORY_KEEP): void
@@ -225,94 +221,6 @@ final class Importer
                     )',
             [$botUserId, $feedHash, $botUserId, $feedHash]
         );
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function cleanupDatabase(): array
-    {
-        $now = time();
-        $lastRun = max(0, (int) \TinyCat\Settings\Store::setting('bots.cleanup_last_run', 0));
-        if ($lastRun > $now - self::CLEANUP_INTERVAL) {
-            return ['due' => false, 'changed' => 0, 'has_more' => false];
-        }
-
-        $batch = self::CLEANUP_BATCH;
-        $errorsBefore = date('Y-m-d H:i:s', $now - self::ERROR_RUN_RETENTION_DAYS * 86400);
-        $historyBefore = date('Y-m-d H:i:s', $now - self::ORPHAN_HISTORY_RETENTION_DAYS * 86400);
-        $results = [];
-
-        try {
-            $results['old_errors'] = \TinyCat\Database\Connection::exec(
-                'DELETE FROM bot_source_runs WHERE status = ? AND started_at < ? LIMIT ' . $batch,
-                ['error', $errorsBefore]
-            );
-            $results['orphan_history'] = \TinyCat\Database\Connection::exec(
-                'DELETE FROM bot_feed_history
-                 WHERE created_at < ?
-                    AND NOT EXISTS (
-                        SELECT 1 FROM bot_sources
-                        WHERE bot_sources.bot_user_id = bot_feed_history.bot_user_id
-                            AND bot_sources.feed_hash = bot_feed_history.feed_hash
-                    )
-                 LIMIT ' . $batch,
-                [$historyBefore]
-            );
-            $results['successful_run_cap'] = self::pruneSuccessfulRunsPerSource($batch);
-        } catch (Throwable $exception) {
-            return [
-                'due' => true,
-                'changed' => array_sum($results),
-                'has_more' => false,
-                'error' => $exception->getMessage(),
-            ];
-        }
-
-        $changed = array_sum($results);
-        $hasMore = array_any($results, static fn (int $count): bool => $count >= $batch);
-        if (!$hasMore) {
-            \TinyCat\Settings\Store::setSetting('bots.cleanup_last_run', $now, 'int', 'bots');
-        }
-
-        return [
-            'due' => true,
-            'changed' => $changed,
-            'has_more' => $hasMore,
-            'results' => $results,
-        ];
-    }
-
-    private static function pruneSuccessfulRunsPerSource(int $batch): int
-    {
-        $changed = 0;
-        $keep = self::SUCCESSFUL_RUNS_PER_SOURCE_KEEP;
-
-        foreach (\TinyCat\Database\Connection::all('SELECT id FROM bot_sources ORDER BY id ASC') as $source) {
-            $sourceId = (int) ($source['id'] ?? 0);
-            if ($sourceId < 1 || $changed >= $batch) {
-                break;
-            }
-
-            $remaining = max(1, $batch - $changed);
-            $changed += \TinyCat\Database\Connection::exec(
-                'DELETE FROM bot_source_runs
-                 WHERE source_id = ? AND status <> ?
-                    AND id NOT IN (
-                        SELECT id FROM (
-                            SELECT id
-                            FROM bot_source_runs
-                            WHERE source_id = ? AND status <> ?
-                            ORDER BY started_at DESC, id DESC
-                            LIMIT ' . $keep . '
-                        ) retained_runs
-                    )
-                 LIMIT ' . $remaining,
-                [$sourceId, 'error', $sourceId, 'error']
-            );
-        }
-
-        return $changed;
     }
 
     public static function defaultSourceTemplate(): string
@@ -375,38 +283,23 @@ final class Importer
         ];
     }
 
-    private static function createSourceRun(int $sourceId): int
+    private static function createSourceRun(int $sourceId, int $schedulerRunId): int
     {
-        if ($sourceId < 1) {
-            return 0;
-        }
-
-        try {
-            return (int) \TinyCat\Database\Connection::insert('bot_source_runs', [
-                'source_id' => $sourceId,
-                'status' => 'running',
-                'started_at' => \TinyCat\Support\Dates::dateDb(),
-            ]);
-        } catch (Throwable) {
-            return 0;
-        }
+        // Both scheduled and manual imports own the shared feeds lock here.
+        \TinyCat\Database\Connection::exec("UPDATE bot_source_runs SET status = 'interrupted' WHERE source_id = ? AND status = 'running'", [$sourceId]);
+        return (int) \TinyCat\Database\Connection::insert('bot_source_runs', [
+            'source_id' => $sourceId, 'scheduler_run_id' => $schedulerRunId > 0 ? $schedulerRunId : null,
+            'status' => 'running', 'started_at' => \TinyCat\Support\Dates::dateDb(),
+        ]);
     }
 
     private static function finishSourceRun(int $runId, string $status, int $itemsSeen = 0, string $error = ''): void
     {
-        if ($runId < 1) {
-            return;
-        }
-
-        try {
-            \TinyCat\Database\Connection::update('bot_source_runs', [
-                'status' => $status,
-                'items_seen' => max(0, $itemsSeen),
-                'error' => $error !== '' ? self::feedText($error, 500) : null,
-            ], ['id' => $runId]);
-        } catch (Throwable) {
-            // Run history is diagnostic and must never break the import.
-        }
+        if ($runId < 1) { return; }
+        \TinyCat\Database\Connection::update('bot_source_runs', [
+            'status' => $status, 'items_seen' => max(0, $itemsSeen),
+            'error' => $error !== '' ? self::feedText($error, 500) : null,
+        ], ['id' => $runId]);
     }
 
     public static function deleteSource(int $sourceId): void
@@ -657,7 +550,7 @@ final class Importer
     /**
      * @return list<array<string, mixed>>
      */
-    private static function runDueSources(int $limit = 10): array
+    private static function runDueSources(int $limit = 10, int $schedulerRunId = 0): array
     {
         $limit = max(1, min(100, $limit));
         $sources = \TinyCat\Database\Connection::all(
@@ -673,7 +566,7 @@ final class Importer
         $results = [];
 
         foreach ($sources as $source) {
-            $results[] = self::runSource($source);
+            $results[] = self::runSource($source, false, $schedulerRunId);
         }
 
         return $results;
@@ -683,7 +576,7 @@ final class Importer
      * @param array<string, mixed> $source
      * @return array<string, mixed>
      */
-    public static function runSource(array $source, bool $force = false): array
+    public static function runSource(array $source, bool $force = false, int $schedulerRunId = 0): array
     {
         $sourceId = (int) ($source['id'] ?? 0);
         $botUserId = (int) ($source['bot_user_id'] ?? 0);
@@ -705,7 +598,7 @@ final class Importer
             return ['source_id' => $sourceId, 'status' => 'skipped'];
         }
 
-        $runId = self::createSourceRun($sourceId);
+        $runId = self::createSourceRun($sourceId, $schedulerRunId);
         $itemsSeen = 0;
 
         try {
@@ -736,29 +629,14 @@ final class Importer
                     throw new RuntimeException('Post template produced an empty post.');
                 }
 
-                $publishedAt = \TinyCat\Support\Dates::dateDb();
-                $contentId = (int) \TinyCat\Database\Connection::insert('content', [
-                    'body' => $body,
-                    'author_id' => $botUserId,
-                    'published_at' => $publishedAt,
-                ]);
-                \TinyCat\Status\Tags::status_sync_tags($contentId, \TinyCat\Status\Tags::status_tags_from_text($body));
                 $feedLink = \TinyCat\Status\LinkParser::fromRaw((string) ($item['url'] ?? ''));
-                \TinyCat\Status\Links::status_sync_links(
-                    $contentId,
+                $preparedLinks = \TinyCat\Status\Links::prepareLinks(
                     \TinyCat\Status\Links::status_links_from_text($body),
                     (string) ($feedLink['url_hash'] ?? ''),
                     (string) ($item['image_url'] ?? '')
                 );
-                self::recordFeedHistory(
-                    $botUserId,
-                    $feedHash,
-                    $hash,
-                    $publishedAt
-                );
+                $contentId = self::persistFeedPost($sourceId, $botUserId, $feedHash, $hash, $body, $preparedLinks, $runId, $itemsSeen);
                 $historyItemHashes[$hash] = true;
-                \TinyCat\Database\Connection::update('bot_sources', ['last_imported_at' => $publishedAt], ['id' => $sourceId]);
-                self::finishSourceRun($runId, 'posted', $itemsSeen);
 
                 return ['source_id' => $sourceId, 'status' => 'posted', 'content_id' => $contentId];
             }

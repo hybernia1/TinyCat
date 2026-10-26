@@ -5,30 +5,7 @@ define('TINYCAT', true);
 require_once __DIR__ . '/App/bootstrap.php';
 
 $isCli = PHP_SAPI === 'cli';
-$taskDefinitions = \TinyCat\Bots\Importer::scheduledTasks();
-$taskDefinitions['cleanup'] = [
-    'runner' => static function (array $context): array {
-        $cleanupBatch = \TinyCat\Scheduler\Cleanup::cleanup_batch_size($context['options']['cleanup_batch'] ?? 500);
-        $result = \TinyCat\Scheduler\Cleanup::cron_cleanup_run($cleanupBatch);
-        $hasErrors = array_any(
-            (array) ($result['results'] ?? []),
-            static fn (array $task): bool => isset($task['error'])
-        );
-        $status = $hasErrors
-            ? 'failed'
-            : (empty($result['due'])
-                ? 'not_due'
-                : (!empty($result['has_more']) ? 'has_more' : 'completed'));
-
-        return [
-            'ok' => !$hasErrors,
-            'status' => $status,
-            'batch_size' => $cleanupBatch,
-            ...$result,
-        ];
-    },
-    'options' => ['cleanup_batch' => 500],
-];
+$taskDefinitions = \TinyCat\Scheduler\Tasks::definitions();
 $availableTasks = array_keys($taskDefinitions);
 $cliOptions = [
     'health' => false,
@@ -166,47 +143,16 @@ $taskContext = static function (string $task) use ($isCli, $cliOptions, $taskDef
     ];
 };
 
-$lockSuffix = substr(hash('sha256', \TinyCat\Support\Paths::basePath()), 0, 24);
 $debug = (bool) \TinyCat\Settings\Store::config('app.debug', false);
-$runTask = static function (string $name, callable $runner, array $context) use ($lockSuffix, $debug): array {
-    $lockName = 'tinycat_scheduled_' . $name . '_' . $lockSuffix;
-    $locked = false;
-
-    try {
-        $locked = (int) \TinyCat\Database\Connection::value('SELECT GET_LOCK(?, 0)', [$lockName]) === 1;
-
-        if (!$locked) {
-            return [
-                'ok' => true,
-                'status' => 'already_running',
-                'skipped' => true,
-            ];
-        }
-
-        return $runner($context);
-    } catch (Throwable $exception) {
-        return [
-            'ok' => false,
-            'status' => 'failed',
-            'error' => $debug ? $exception->getMessage() : $name . ' task failed.',
-        ];
-    } finally {
-        if ($locked) {
-            try {
-                \TinyCat\Database\Connection::value('SELECT RELEASE_LOCK(?)', [$lockName]);
-            } catch (Throwable) {
-            }
-        }
-    }
-};
 
 $results = [];
 
 foreach ($selectedTasks as $task) {
-    $results[$task] = $runTask(
+    $results[$task] = \TinyCat\Scheduler\Runner::run(
         $task,
         $taskDefinitions[$task]['runner'],
-        $taskContext($task)
+        $taskContext($task),
+        $debug
     );
 }
 

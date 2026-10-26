@@ -8,6 +8,7 @@ let checks = 0;
 function check(condition, message) { checks++; assert.ok(condition, message); }
 class Node {
   constructor(tag, text = "") {
+    this.style = { setProperty() {}, removeProperty() {} };
     this.tag = tag; this.attributes = {}; this.children = []; this.value = ""; this._text = text;
     this.dataset = new Proxy({}, { get: (_, key) => this.getAttribute("data-" + String(key).replace(/[A-Z]/g, c => "-" + c.toLowerCase())), set: (_, key, value) => { this.setAttribute("data-" + String(key).replace(/[A-Z]/g, c => "-" + c.toLowerCase()), value); return true; }, deleteProperty: (_, key) => { this.removeAttribute("data-" + String(key).replace(/[A-Z]/g, c => "-" + c.toLowerCase())); return true; } });
     this.classList = { add: value => { this.className += " " + value; }, toggle: (value, enabled) => { const names = this.className.split(/\s+/).filter(x => x !== value); if (enabled) names.push(value); this.className = names.join(" "); } };
@@ -78,6 +79,35 @@ check(T.api.errors({ data: { error: { details: { errors: { name: [{ code: "examp
 const countedSidebar = T.site.sidebar({ tags: [], authors: [{ id: 2, username: "Member", url: "/author/2", avatar_url: "", posts_count: 5 }], footer: [] }, "/api/site/sidebar");
 check(countedSidebar.textContent.includes(T.i18n.plural("public.active_user_posts", 5)), "A translation parameter named count is a value binding, not the count operator.");
 const canonicalFieldErrors = T.api.errors;
+const followForm = new Node("form"), followButton = new Node("button"), followAction = new Node("input");
+followForm.appendChild(followButton);
+followForm.elements = { namedItem: () => followAction };
+[true, false, true].forEach(following => {
+  T.users.follow(followForm, { following });
+  check(followButton.querySelectorAll("svg").length === 1 && followButton.querySelector("use").getAttribute("href").endsWith(following ? "#check" : "#plus"), "Follow toggles retain exactly one icon matching the current state.");
+  check(followAction.value === (following ? "unfollow" : "follow") && followButton.querySelector("span").textContent === T.ui.text(following ? "public.unfollow" : "public.follow"), "Follow label and next action stay synchronized.");
+});
+const schedulerModel = { items: [{ name: "cleanup", options: { cleanup_batch: 500 }, latest: null, run_url: "/api/scheduler/tasks/cleanup/runs" }], runs: [{ id: 1, detail_url: "/api/scheduler/runs/1", task: "cleanup", started_at: "2026-10-26T12:00:00Z", status: "failed", mode: "admin", duration_ms: 25, summary: { changed: 0 }, options: { cleanup_batch: 500 }, error: "<img src=x onerror=bad>" }], task_choices: ["feeds", "cleanup"], status_choices: ["failed"], page_choices: { 25: 25 }, filters: { task: "", status: "" }, navigation: { visible: false } };
+const schedulerRoot = new Node("div"), schedulerSource = new Node("form");
+schedulerSource.setAttribute("action", "/api/scheduler/tasks/cleanup/runs");
+check(T.scheduler.result(schedulerSource, { data: schedulerModel, meta: { pagination: { page: 1, per_page: 50 } } }, schedulerRoot), "Scheduler actions refresh the normalized list through the registered client module.");
+check(schedulerRoot.querySelectorAll("button").some(button => button.getAttribute("aria-label") === T.ui.text("cron.run_now") && button.className.includes("btn-icon") && button.querySelector(".sr-only")), "Run-now actions use the standard icon button with an accessible hidden label.");
+check(schedulerRoot.querySelectorAll("select").find(field => field.getAttribute("name") === "per_page").value === "50", "Scheduler controls read pagination from the shared API metadata.");
+check(document.getElementById("scheduler-filter-modal").querySelectorAll("input").find(field => field.getAttribute("name") === "per_page").value === "50", "The filter modal preserves the API's page-size setting.");
+const schedulerPageForm = schedulerRoot.querySelectorAll("form").find(form => form.className.includes("admin-per-page-form"));
+check(schedulerPageForm.querySelectorAll("input").every(field => field.getAttribute("name") !== "per_page"), "The scheduler page-size form sends no duplicate hidden per_page value.");
+const schedulerDetail = T.scheduler.modal(new URL("https://tinycat.test/api/scheduler/runs/1"), { data: { item: Object.assign({}, schedulerModel.runs[0], { sources: [{ source_name: "Fixture RSS source", status: "interrupted", error: "<b>source failure</b>" }] }) } }, "scheduler-run-detail-fixture");
+check(schedulerDetail.textContent.includes("<img src=x onerror=bad>") && schedulerDetail.querySelectorAll("img").length === 0, "Scheduler errors render as literal text in the standard detail modal.");
+check(schedulerDetail.textContent.includes("Fixture RSS source") && schedulerDetail.textContent.includes(T.ui.text("bots.run_statuses.interrupted")) && schedulerDetail.textContent.includes("<b>source failure</b>") && schedulerDetail.querySelectorAll("b").length === 0, "The common run modal renders linked source states and escapes their diagnostic errors.");
+check(!schedulerRoot.textContent.includes("<img src=x onerror=bad>") && schedulerRoot.querySelector('[data-modal-url="/api/scheduler/runs/1"]'), "Run history opens details lazily through the standard resource modal.");
+const schedulerPageLink = new Node("a");
+schedulerPageLink.setAttribute("href", "/api/scheduler/tasks?page=2&status=failed");
+check(T.scheduler.result(schedulerPageLink, { data: schedulerModel, meta: { pagination: { page: 2, per_page: 50 } } }, schedulerRoot), "Scheduler pagination links are recognized through their href.");
+check(schedulerRoot.querySelectorAll("use").some(icon => icon.getAttribute("href").endsWith("#play")), "Run-now actions retain the sprite icon after rerendering.");
+const sharedPagination = T.components.render("ui/pagination", { target: "#users-list", navigation: { visible: true, from: 1, to: 25, total: 50, previous: null, next: { url: "/api/users?page=2", history_url: "/admin/users?page=2" }, pages: [{ number: 1, current: true, gap_before: false }, { number: 2, current: false, gap_before: false, url: "/api/users?page=2", history_url: "/admin/users?page=2" }] } });
+check(sharedPagination.querySelector(".pagination-list") && sharedPagination.querySelector(".is-active").getAttribute("aria-current") === "page", "Shared pagination groups controls and visibly marks the current page.");
+check(sharedPagination.querySelector(".pagination-prev").getAttribute("aria-disabled") === "true" && sharedPagination.querySelector(".pagination-prev").getAttribute("href") === null, "Pagination cannot navigate before the first page.");
+check(sharedPagination.querySelector(".pagination-next").getAttribute("data-ajax-target") === "#users-list", "Pagination next links retain the standard AJAX target.");
 const unsafe = '<img src=x onerror="window.pwned=true">';
 const user = { id: 2, username: unsafe, url: "/author/2", avatar_url: "", email: "test@example.test", bio: unsafe, locale: "en", theme: "system" };
 let node = T.users.profiles([user]);
@@ -96,6 +126,12 @@ check(node.querySelector(".public-content-meta") !== null && node.querySelector(
 check(T.ui.avatar(user).querySelector("use").getAttribute("href").endsWith("#user"), "Missing avatars use the same SVG user icon as server-rendered cards.");
 const modalPost = Object.assign({}, post, { capabilities: { edit: true, delete: true, report: false, interact: true }, image: { url: "/uploads/statuses/fixture.webp", alt: "Fixture" } });
 const detailData = { item: modalPost, viewer: user, comments: [], options: { images_enabled: true } };
+const commentEditDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10?panel=comment-edit&comment_id=20"), { data: { ...detailData, comments: [{ id: 20, editable_body: unsafe, capabilities: { edit: true }, replies: [] }] } }, "comment-edit-fixture");
+check(commentEditDialog.querySelector(".status-modal-form") && commentEditDialog.querySelector("textarea").textContent === unsafe, "Comment editing renders a spaced form with literal editable text.");
+check(commentEditDialog.querySelector("textarea").getAttribute("aria-labelledby") === "comment-edit-fixture-label", "Comment editor has an explicit visible label.");
+const historyDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10/comments/20/revisions"), { data: { items: [{ at: "2026-01-01T12:00:00Z", changes: { body: { from: "Hello old world", to: "Hello new world" } } }] } }, "history-fixture");
+check(historyDialog.querySelector("del").textContent === "old" && historyDialog.querySelector("ins").textContent === "new", "Revision history highlights changed text while retaining context.");
+check(T.ui.avatar({ ...user, avatar_url: "/avatar.webp" }).querySelector("img").getAttribute("alt") === unsafe, "Feed avatar images always have alternative text.");
 const statusDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10"), { data: detailData }, "status-layout-fixture");
 check(statusDialog.querySelector(".modal-backdrop") && statusDialog.querySelector(".status-post-modal-content"), "Status dialogs retain the shared backdrop and original content layout.");
 check(statusDialog.querySelector(".status-comment-input-shell") && statusDialog.querySelector(".status-comment-form").children.some(child => child.className.split(/\s+/).includes("avatar")), "The comment form retains a separate avatar column and a full-width editor shell.");
@@ -109,6 +145,12 @@ check(profileDialog.querySelector('[data-tab-panel="email"]').getAttribute("acti
 const avatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user } }, "avatar-layout-fixture");
 check(avatarDialog.querySelector('[data-avatar-upload-input]') && avatarDialog.querySelector('[data-avatar-upload-preview]'), "The avatar dialog provides the existing upload and preview lifecycle hooks.");
 check(avatarDialog.querySelector('.avatar-upload-preview').className.split(/\s+/).includes('avatar'), "The avatar preview retains the shared avatar layout and fallback alignment.");
+const botAccount = { id: 3, username: "FixtureBot", status: "active", bio: unsafe, avatar_url: "", source_count: 2, post_count: 4, updated_at: "2026-10-26T12:00:00Z" };
+const botAccountTable = T.components.render("bots/accounts", { items: [botAccount], filters: {}, pagination: { per_page: 25 }, navigation: { visible: false } });
+check(!botAccountTable.querySelector("tbody").querySelector("td").querySelector("a") && botAccountTable.querySelector('[data-modal-url="/api/bots/accounts/3/management"]'), "Bot account names are plain text and editing uses the same icon-modal interaction as user rows.");
+const botAccountDialog = T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/3/management"), { data: { item: botAccount } }, "bot-account-edit-fixture");
+check(botAccountDialog.querySelector("form").dataset.apiMethod === "PATCH" && botAccountDialog.querySelector("form").dataset.ajaxTarget === "#bot-accounts-list" && botAccountDialog.querySelector("form").dataset.modalCloseOnSuccess === "true", "Bot edit modals save through the existing PATCH endpoint and refresh the list.");
+check(botAccountDialog.querySelector("textarea").value === unsafe && botAccountDialog.querySelectorAll("input").some(field => field.getAttribute("name") === "avatar"), "Bot edit modals preserve literal biography text and avatar-upload support.");
 const comment = { id: 20, content_id: 10, parent_id: 0, author: user, body: unsafe, segments: [{ type: "text", text: unsafe }], editable_body: unsafe, created_at: "2026-01-01T12:00:00Z", created_label: "Today", likes_count: 0, liked: false, capabilities: { edit: true, delete: true, interact: true }, replies: [] };
 node = T.status.comment(comment, "modal");
 check(node.dataset.contentId === "10" && node.querySelector(".status-comment-body").textContent === unsafe, "Comment DOM retains its parent status and safe text.");
@@ -203,6 +245,29 @@ for (const attributes of [{ onclick: "alert(1)" }, { style: "color:red" }, { src
 assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel_attributes: {}, close_icon: "<img onerror=bad>", body: "<script>bad</script>" })); checks++;
 
 (async () => {
+  const schedulerLocation = window.location, schedulerQuery = document.querySelector, schedulerRequest = T.api.request;
+  let restoredSchedulerUrl = "";
+  const schedulerHydrate = T.lifecycle.hydrate;
+  T.lifecycle.hydrate = () => {};
+  try {
+    window.location = new URL("https://tinycat.test/admin/cron/list?page=2&status=failed");
+    document.querySelector = selector => selector === "#scheduler-list" ? schedulerRoot : schedulerQuery(selector);
+    T.api.request = async url => { restoredSchedulerUrl = url; return { data: Object.assign({}, schedulerModel, { filters: { task: "", status: "failed" }, pagination: { page: 2, per_page: 10 } }), meta: { pagination: { page: 2, per_page: 50 } } }; };
+    await T.navigation.restore();
+    check(restoredSchedulerUrl === "/api/scheduler/tasks?page=2&status=failed", "Browser history restores the scheduler's query, page and filters through AJAX.");
+    check(schedulerRoot.querySelectorAll("select").find(field => field.getAttribute("name") === "per_page").value === "50", "History restoration uses metadata instead of stale embedded pagination.");
+    const schedulerFilters = document.getElementById("scheduler-filter-modal");
+    check(schedulerFilters.querySelectorAll("select").find(field => field.getAttribute("name") === "status").value === "failed", "The filter modal stays synchronized after AJAX navigation.");
+    window.location = new URL("https://tinycat.test/admin/bots/accounts?per_page=50&page=2");
+    const botAccountsPage = new Node("div");
+    document.querySelector = selector => selector === "#bot-accounts-list" ? botAccountsPage : schedulerQuery(selector);
+    let restoredBotUrl = "";
+    T.api.request = async url => { restoredBotUrl = url; return { data: { items: [], filters: {}, navigation: { visible: false } }, meta: { pagination: { page: 2, per_page: 50 } } }; };
+    await T.navigation.restore();
+    check(restoredBotUrl === "/api/bots/accounts?per_page=50&page=2" && botAccountsPage.querySelectorAll("select").find(field => field.getAttribute("name") === "per_page").value === "50", "Bot accounts restore their page and page size through browser history like other admin lists.");
+  } finally {
+    window.location = schedulerLocation; document.querySelector = schedulerQuery; T.api.request = schedulerRequest; T.lifecycle.hydrate = schedulerHydrate;
+  }
   const owner = new Node("section"); owner.dataset.botDetailId = "2";
   const counters = ["sources", "active_sources", "posts", "runs"].map(key => { const node = new Node("strong"); node.dataset.botStat = key; node.textContent = "stale"; return node; });
   document.querySelector = selector => selector === "[data-bot-detail-id]" ? owner : selector === "[data-bot-sources]" ? sourceRoot : null;

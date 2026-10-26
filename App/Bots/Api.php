@@ -13,6 +13,11 @@ final class Api
 
         $api->get('/bots/accounts', static fn (): Result => Result::from(Actions::adminBotAccounts()), 'admin');
         $api->post('/bots/accounts', static fn (): Result => Result::from(Actions::adminBotAccountCreate()), 'admin');
+        $api->get('/bots/accounts/{id:[0-9]+}/management', static function (Request $request, array $params): array {
+            $account = Administration::accountById((int) $params['id']);
+            if ($account === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found'); }
+            return ['item' => Administration::accountResource($account)];
+        }, 'admin');
         $api->get('/bots/accounts/{id:[0-9]+}', static function (Request $r, array $p): array {
             $data = \TinyCat\Bots\Administration::accountDetailData((int) $p['id']);
             if ($data === null) { Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found'); }
@@ -34,6 +39,6 @@ final class Api
             return Result::from(Actions::adminBotSourceUpdate($id));
         }, 'admin');
         $api->delete('/bots/sources/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotSourceDelete((int) $p['id'])), 'admin');
-        $api->post('/bots/sources/{id:[0-9]+}/runs', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotSourceAction((int) $p['id'])), 'admin');
+        $api->post('/bots/sources/{id:[0-9]+}/runs', static fn (Request $r, array $p): Result => Actions::adminBotSourceAction((int) $p['id']), 'admin');
     }
 }

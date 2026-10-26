@@ -622,7 +622,9 @@
       },
       {
         "tag": "td",
-        "attrs": {},
+        "attrs": {
+          "class": "table-actions-cell"
+        },
         "children": [
           {
             "tag": "div",
@@ -631,11 +633,10 @@
             },
             "children": [
               {
-                "tag": "button",
-                "attrs": {
+                "component": "ui/modal-trigger",
+                "data": {
                   "class": "btn btn-sm btn-ghost btn-icon",
-                  "type": "button",
-                  "data-modal-open": {
+                  "modal": {
                     "concat": [
                       "user-edit-",
                       {
@@ -643,7 +644,7 @@
                       }
                     ]
                   },
-                  "data-modal-url": {
+                  "url": {
                     "concat": [
                       "/api/users/",
                       {
@@ -652,20 +653,17 @@
                       "/management?panel=administration"
                     ]
                   },
-                  "aria-label": {
+                  "label": {
                     "t": "users.edit_user",
                     "values": {
                       "username": {
                         "get": "user.username"
                       }
                     }
-                  }
-                },
-                "children": [
-                  {
-                    "icon": "edit"
-                  }
-                ]
+                  },
+                  "icon": "edit",
+                  "icon_only": true
+                }
               },
               {
                 "component": "ui/api-action",
@@ -792,7 +790,10 @@
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "class": "table-actions-cell",
+                          "scope": "col"
+                        },
                         "children": [
                           {
                             "t": "common.actions",

@@ -45,6 +45,9 @@ $items = $invoke('parseFeed', $atom);
 $assert(count($items) === 1 && $items[0]['author'] === 'Writer', 'Atom posts must preserve their author.');
 $assert($items[0]['url'] === 'https://93.184.216.34/atom', 'Atom alternate links must survive.');
 
+$videoDescription = $invoke('feedDescriptionText', '<a href="https://youtu.be/abc123?si=share">Watch</a> https://example.com/remove', 2000);
+$assert(str_contains($videoDescription, 'https://www.youtube.com/watch?v=abc123') && !str_contains($videoDescription, 'example.com'), 'Bot descriptions retain canonical video URLs and remove article links.');
+
 foreach (['en', 'cs'] as $code) {
     $assert(\TinyCat\Support\Localization::t('bots.title', [], $code) !== 'bots.title', 'Bot translations must ship in core: ' . $code);
     $assert(\TinyCat\Support\Localization::t('cron.tasks.feeds', [], $code) !== 'cron.tasks.feeds', 'Feed scheduler translations must ship in core: ' . $code);

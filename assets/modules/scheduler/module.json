@@ -3,14 +3,23 @@
     "routes": [
       "/admin/cron"
     ],
-    "components": [],
+    "components": [
+      "scheduler/list",
+      "scheduler/filter-form",
+      "scheduler/run-detail"
+    ],
     "entries": [
       "assets/modules/scheduler/index.js"
     ],
     "styles": [],
-    "translations": [],
+    "translations": [
+      "common.filters"
+    ],
     "messages": {
-      "scheduler_token_rotated": "cron.messages.token_rotated"
+      "scheduler_token_rotated": "cron.messages.token_rotated",
+      "scheduler_run_failed": "cron.run_failed",
+      "scheduler_already_running": "cron.already_running",
+      "scheduler_run_finished": "cron.run_finished"
     }
   }
 ]

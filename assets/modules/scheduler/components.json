@@ -1,0 +1,1653 @@
+{
+  "scheduler/status": {
+    "tag": "span",
+    "attrs": {
+      "class": {
+        "concat": [
+          "badge",
+          {
+            "if": [
+              {
+                "eq": [
+                  {
+                    "get": "status"
+                  },
+                  "failed"
+                ]
+              },
+              " badge-danger",
+              {
+                "if": [
+                  {
+                    "eq": [
+                      {
+                        "get": "status"
+                      },
+                      "running"
+                    ]
+                  },
+                  " badge-primary",
+                  ""
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "children": [
+      {
+        "lookup": {
+          "get": "status"
+        },
+        "cases": {
+          "running": {
+            "t": "cron.statuses.running"
+          },
+          "completed": {
+            "t": "cron.statuses.completed"
+          },
+          "failed": {
+            "t": "cron.statuses.failed"
+          },
+          "not_due": {
+            "t": "cron.statuses.not_due"
+          },
+          "has_more": {
+            "t": "cron.statuses.has_more"
+          },
+          "interrupted": {
+            "t": "cron.statuses.interrupted"
+          }
+        },
+        "default": ""
+      }
+    ]
+  },
+  "scheduler/list": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14",
+      "data-scheduler-view": "",
+      "data-scheduler-state": {
+        "json": {
+          "get": "state"
+        }
+      }
+    },
+    "children": [
+      {
+        "tag": "p",
+        "attrs": {
+          "class": "help m-0"
+        },
+        "children": [
+          {
+            "t": "cron.overview_help"
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table"
+            },
+            "children": [
+              {
+                "tag": "thead",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "cron.task"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "cron.schedule"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "cron.latest"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "class": "table-actions-cell"
+                        },
+                        "children": [
+                          {
+                            "t": "common.actions"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "attrs": {},
+                "children": [
+                  {
+                    "each": {
+                      "get": "items"
+                    },
+                    "as": "task",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "strong",
+                                "attrs": {
+                                  "class": "cluster gap-2"
+                                },
+                                "children": [
+                                  {
+                                    "icon": {
+                                      "lookup": {
+                                        "get": "task.name"
+                                      },
+                                      "cases": {
+                                        "feeds": "rss",
+                                        "cleanup": "database"
+                                      },
+                                      "default": ""
+                                    }
+                                  },
+                                  {
+                                    "lookup": {
+                                      "get": "task.name"
+                                    },
+                                    "cases": {
+                                      "feeds": {
+                                        "t": "cron.tasks.feeds"
+                                      },
+                                      "cleanup": {
+                                        "t": "cron.tasks.cleanup"
+                                      }
+                                    },
+                                    "default": ""
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "lookup": {
+                                      "get": "task.name"
+                                    },
+                                    "cases": {
+                                      "feeds": {
+                                        "t": "cron.cadence.feeds"
+                                      },
+                                      "cleanup": {
+                                        "t": "cron.cadence.cleanup"
+                                      }
+                                    },
+                                    "default": ""
+                                  }
+                                ]
+                              },
+                              {
+                                "each": {
+                                  "get": "task.options"
+                                },
+                                "as": "option",
+                                "children": [
+                                  {
+                                    "tag": "div",
+                                    "attrs": {
+                                      "class": "help m-0"
+                                    },
+                                    "children": [
+                                      {
+                                        "lookup": {
+                                          "get": "_key"
+                                        },
+                                        "cases": {
+                                          "bot_limit": {
+                                            "t": "cron.options.bot_limit"
+                                          },
+                                          "cleanup_batch": {
+                                            "t": "cron.options.cleanup_batch"
+                                          },
+                                          "source_id": {
+                                            "t": "cron.options.source_id"
+                                          }
+                                        },
+                                        "default": ""
+                                      },
+                                      ": ",
+                                      {
+                                        "get": "option"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "stack stack-gap-4"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "div",
+                                    "attrs": {},
+                                    "children": [
+                                      {
+                                        "component": "scheduler/status",
+                                        "data": {
+                                          "status": {
+                                            "get": "task.latest.status"
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "time",
+                                    "attrs": {
+                                      "datetime": {
+                                        "get": "task.latest.started_at"
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "date": {
+                                          "get": "task.latest.started_at"
+                                        }
+                                      }
+                                    ],
+                                    "when": {
+                                      "get": "task.latest.started_at"
+                                    }
+                                  },
+                                  {
+                                    "tag": "small",
+                                    "attrs": {
+                                      "class": "text-muted"
+                                    },
+                                    "children": [
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              {
+                                                "get": "task.latest.duration_ms"
+                                              },
+                                              null
+                                            ]
+                                          },
+                                          "",
+                                          {
+                                            "concat": [
+                                              {
+                                                "get": "task.latest.duration_ms"
+                                              },
+                                              " ms"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "when": {
+                                  "get": "task.latest"
+                                }
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {
+                                  "class": "cluster gap-2 text-muted"
+                                },
+                                "children": [
+                                  {
+                                    "t": "cron.never"
+                                  }
+                                ],
+                                "when": {
+                                  "not": {
+                                    "get": "task.latest"
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {
+                              "class": "table-actions-cell"
+                            },
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-actions"
+                                },
+                                "children": [
+                                  {
+                                    "component": "ui/api-action",
+                                    "data": {
+                                      "url": {
+                                        "get": "task.run_url"
+                                      },
+                                      "method": "POST",
+                                      "target": "#scheduler-list",
+                                      "label": {
+                                        "t": "cron.run_now"
+                                      },
+                                      "icon": "play",
+                                      "button_class": "btn btn-sm btn-ghost btn-icon"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "split"
+        },
+        "children": [
+          {
+            "tag": "h3",
+            "attrs": {
+              "class": "text-lg m-0"
+            },
+            "children": [
+              {
+                "t": "cron.history"
+              }
+            ]
+          },
+          {
+            "tag": "a",
+            "attrs": {
+              "href": {
+                "get": "refresh_url"
+              },
+              "data-ajax": "",
+              "data-ajax-target": "#scheduler-list",
+              "class": "btn btn-secondary btn-sm"
+            },
+            "children": [
+              {
+                "icon": "refresh"
+              },
+              {
+                "tag": "span",
+                "attrs": {},
+                "children": [
+                  {
+                    "t": "cron.refresh"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "component": "ui/list-toolbar",
+        "data": {
+          "url": "/api/scheduler/tasks",
+          "target": "#scheduler-list",
+          "history": "/admin/cron/list",
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table"
+            },
+            "children": [
+              {
+                "tag": "thead",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "cron.task"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "cron.started"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "cron.status"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "cron.duration"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "cron.result"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "class": "table-actions-cell"
+                        },
+                        "children": [
+                          {
+                            "t": "common.actions"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "attrs": {},
+                "children": [
+                  {
+                    "each": {
+                      "get": "runs"
+                    },
+                    "as": "run",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "span",
+                                "attrs": {
+                                  "class": "cluster gap-2"
+                                },
+                                "children": [
+                                  {
+                                    "icon": {
+                                      "lookup": {
+                                        "get": "run.task"
+                                      },
+                                      "cases": {
+                                        "feeds": "rss",
+                                        "cleanup": "database"
+                                      },
+                                      "default": ""
+                                    }
+                                  },
+                                  {
+                                    "lookup": {
+                                      "get": "run.task"
+                                    },
+                                    "cases": {
+                                      "feeds": {
+                                        "t": "cron.tasks.feeds"
+                                      },
+                                      "cleanup": {
+                                        "t": "cron.tasks.cleanup"
+                                      }
+                                    },
+                                    "default": ""
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "stack stack-gap-4"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "time",
+                                    "attrs": {
+                                      "datetime": {
+                                        "get": "run.started_at"
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "date": {
+                                          "get": "run.started_at"
+                                        }
+                                      }
+                                    ],
+                                    "when": {
+                                      "get": "run.started_at"
+                                    }
+                                  },
+                                  {
+                                    "tag": "small",
+                                    "attrs": {
+                                      "class": "cluster gap-2 text-muted"
+                                    },
+                                    "children": [
+                                      {
+                                        "lookup": {
+                                          "get": "run.mode"
+                                        },
+                                        "cases": {
+                                          "admin": {
+                                            "t": "cron.modes.admin"
+                                          },
+                                          "http": {
+                                            "t": "cron.modes.http"
+                                          },
+                                          "cli": {
+                                            "t": "cron.modes.cli"
+                                          }
+                                        },
+                                        "default": ""
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "component": "scheduler/status",
+                                "data": {
+                                  "status": {
+                                    "get": "run.status"
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      {
+                                        "get": "run.duration_ms"
+                                      },
+                                      null
+                                    ]
+                                  },
+                                  "",
+                                  {
+                                    "concat": [
+                                      {
+                                        "get": "run.duration_ms"
+                                      },
+                                      " ms"
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "each": [
+                                  {
+                                    "get": "run.summary.count"
+                                  },
+                                  {
+                                    "get": "run.summary.changed"
+                                  }
+                                ],
+                                "as": "metric",
+                                "children": [
+                                  {
+                                    "tag": "div",
+                                    "attrs": {},
+                                    "children": [
+                                      {
+                                        "lookup": {
+                                          "string": {
+                                            "get": "_key"
+                                          }
+                                        },
+                                        "cases": {
+                                          "0": {
+                                            "t": "cron.summary_count",
+                                            "values": {
+                                              "count": {
+                                                "get": "metric"
+                                              }
+                                            }
+                                          },
+                                          "1": {
+                                            "t": "cron.summary_changed",
+                                            "values": {
+                                              "count": {
+                                                "get": "metric"
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ],
+                                    "when": {
+                                      "not": {
+                                        "eq": [
+                                          {
+                                            "get": "metric"
+                                          },
+                                          null
+                                        ]
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {
+                              "class": "table-actions-cell"
+                            },
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-actions"
+                                },
+                                "children": [
+                                  {
+                                    "component": "ui/modal-trigger",
+                                    "data": {
+                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "modal": {
+                                        "concat": [
+                                          "scheduler-run-",
+                                          {
+                                            "get": "run.id"
+                                          }
+                                        ]
+                                      },
+                                      "url": {
+                                        "get": "run.detail_url"
+                                      },
+                                      "label": {
+                                        "t": "cron.run_details"
+                                      },
+                                      "icon": "eye",
+                                      "icon_only": true
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "td",
+                        "attrs": {
+                          "colspan": "6",
+                          "class": "text-muted"
+                        },
+                        "children": [
+                          {
+                            "icon": "info"
+                          },
+                          {
+                            "t": "cron.no_runs"
+                          }
+                        ]
+                      }
+                    ],
+                    "when": {
+                      "not": {
+                        "get": "runs"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "component": "ui/pagination",
+        "data": {
+          "navigation": {
+            "get": "navigation"
+          },
+          "target": "#scheduler-list"
+        }
+      }
+    ]
+  },
+  "scheduler/filter-form": {
+    "tag": "form",
+    "attrs": {
+      "class": "stack",
+      "method": "get",
+      "action": "/api/scheduler/tasks",
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": "#scheduler-list",
+      "data-history": "/admin/cron/list",
+      "data-modal-close-on-success": "true"
+    },
+    "children": [
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "q",
+          "value": {
+            "get": "filters.q"
+          }
+        },
+        "children": []
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "per_page",
+          "value": {
+            "get": "pagination.per_page"
+          }
+        },
+        "children": []
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "cron.task"
+          },
+          "choices": {
+            "options": {
+              "get": "task_choices"
+            },
+            "cases": {
+              "feeds": {
+                "t": "cron.tasks.feeds"
+              },
+              "cleanup": {
+                "t": "cron.tasks.cleanup"
+              }
+            },
+            "all": true
+          },
+          "value": {
+            "get": "filters.task"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "task"
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "cron.status"
+          },
+          "choices": {
+            "options": {
+              "get": "status_choices"
+            },
+            "cases": {
+              "running": {
+                "t": "cron.statuses.running"
+              },
+              "completed": {
+                "t": "cron.statuses.completed"
+              },
+              "failed": {
+                "t": "cron.statuses.failed"
+              },
+              "not_due": {
+                "t": "cron.statuses.not_due"
+              },
+              "has_more": {
+                "t": "cron.statuses.has_more"
+              },
+              "interrupted": {
+                "t": "cron.statuses.interrupted"
+              }
+            },
+            "all": true
+          },
+          "value": {
+            "get": "filters.status"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "cluster gap-2"
+        },
+        "children": [
+          {
+            "tag": "a",
+            "attrs": {
+              "href": "/api/scheduler/tasks",
+              "data-ajax": "",
+              "data-ajax-target": "#scheduler-list",
+              "data-history": "/admin/cron/list",
+              "data-modal-close": "",
+              "class": "btn btn-secondary"
+            },
+            "children": [
+              {
+                "icon": "close"
+              },
+              {
+                "tag": "span",
+                "attrs": {},
+                "children": [
+                  {
+                    "t": "common.clear_filters"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "button",
+            "attrs": {
+              "class": "btn btn-primary",
+              "type": "submit"
+            },
+            "children": [
+              {
+                "icon": "filter"
+              },
+              {
+                "tag": "span",
+                "attrs": {},
+                "children": [
+                  {
+                    "t": "common.apply_filters"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "scheduler/run-detail": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack"
+    },
+    "children": [
+      {
+        "tag": "dl",
+        "attrs": {
+          "class": "grid sm:grid-2 gap-4 m-0"
+        },
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "stack stack-gap-4"
+            },
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {
+                  "class": "text-muted"
+                },
+                "children": [
+                  {
+                    "t": "cron.task"
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0"
+                },
+                "children": [
+                  {
+                    "lookup": {
+                      "get": "item.task"
+                    },
+                    "cases": {
+                      "feeds": {
+                        "t": "cron.tasks.feeds"
+                      },
+                      "cleanup": {
+                        "t": "cron.tasks.cleanup"
+                      }
+                    },
+                    "default": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "stack stack-gap-4"
+            },
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {
+                  "class": "text-muted"
+                },
+                "children": [
+                  {
+                    "t": "cron.status"
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0"
+                },
+                "children": [
+                  {
+                    "component": "scheduler/status",
+                    "data": {
+                      "status": {
+                        "get": "item.status"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "stack stack-gap-4"
+            },
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {
+                  "class": "text-muted"
+                },
+                "children": [
+                  {
+                    "t": "cron.started"
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0"
+                },
+                "children": [
+                  {
+                    "if": [
+                      {
+                        "eq": [
+                          {
+                            "get": "item.started_at"
+                          },
+                          null
+                        ]
+                      },
+                      {
+                        "t": "cron.unfinished"
+                      },
+                      {
+                        "date": {
+                          "get": "item.started_at"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "stack stack-gap-4"
+            },
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {
+                  "class": "text-muted"
+                },
+                "children": [
+                  {
+                    "t": "cron.finished"
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0"
+                },
+                "children": [
+                  {
+                    "if": [
+                      {
+                        "eq": [
+                          {
+                            "get": "item.finished_at"
+                          },
+                          null
+                        ]
+                      },
+                      {
+                        "t": "cron.unfinished"
+                      },
+                      {
+                        "date": {
+                          "get": "item.finished_at"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "stack stack-gap-4"
+            },
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {
+                  "class": "text-muted"
+                },
+                "children": [
+                  {
+                    "t": "cron.duration"
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0"
+                },
+                "children": [
+                  {
+                    "if": [
+                      {
+                        "eq": [
+                          {
+                            "get": "item.duration_ms"
+                          },
+                          null
+                        ]
+                      },
+                      {
+                        "t": "cron.unfinished"
+                      },
+                      {
+                        "concat": [
+                          {
+                            "get": "item.duration_ms"
+                          },
+                          " ms"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "stack stack-gap-4"
+            },
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {
+                  "class": "text-muted"
+                },
+                "children": [
+                  {
+                    "t": "cron.trigger"
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0"
+                },
+                "children": [
+                  {
+                    "lookup": {
+                      "get": "item.mode"
+                    },
+                    "cases": {
+                      "admin": {
+                        "t": "cron.modes.admin"
+                      },
+                      "http": {
+                        "t": "cron.modes.http"
+                      },
+                      "cli": {
+                        "t": "cron.modes.cli"
+                      }
+                    },
+                    "default": ""
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "stack stack-gap-4"
+            },
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {
+                  "class": "text-muted"
+                },
+                "children": [
+                  {
+                    "t": "cron.run_id"
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0"
+                },
+                "children": [
+                  {
+                    "get": "item.id"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "stack stack-gap-4"
+            },
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {
+                  "class": "text-muted"
+                },
+                "children": [
+                  {
+                    "t": "cron.actor"
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0"
+                },
+                "children": [
+                  {
+                    "or": [
+                      {
+                        "get": "item.actor.username"
+                      },
+                      {
+                        "get": "item.actor.id"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "when": {
+              "get": "item.actor"
+            }
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {
+          "class": "stack stack-gap-8"
+        },
+        "children": [
+          {
+            "tag": "h3",
+            "attrs": {
+              "class": "text-base m-0"
+            },
+            "children": [
+              {
+                "t": "cron.parameters"
+              }
+            ]
+          },
+          {
+            "tag": "dl",
+            "attrs": {
+              "class": "stack stack-gap-4"
+            },
+            "children": [
+              {
+                "each": {
+                  "get": "item.options"
+                },
+                "as": "value",
+                "children": [
+                  {
+                    "tag": "div",
+                    "attrs": {
+                      "class": "split"
+                    },
+                    "children": [
+                      {
+                        "tag": "dt",
+                        "attrs": {
+                          "class": "text-muted"
+                        },
+                        "children": [
+                          {
+                            "lookup": {
+                              "get": "_key"
+                            },
+                            "cases": {
+                              "bot_limit": {
+                                "t": "cron.options.bot_limit"
+                              },
+                              "cleanup_batch": {
+                                "t": "cron.options.cleanup_batch"
+                              },
+                              "source_id": {
+                                "t": "cron.options.source_id"
+                              }
+                            },
+                            "default": ""
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "dd",
+                        "attrs": {
+                          "class": "m-0"
+                        },
+                        "children": [
+                          {
+                            "get": "value"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {
+          "class": "stack stack-gap-4"
+        },
+        "children": [
+          {
+            "tag": "h3",
+            "attrs": {
+              "class": "text-base m-0"
+            },
+            "children": [
+              {
+                "t": "cron.result"
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {},
+            "children": [
+              {
+                "t": "cron.summary_count",
+                "values": {
+                  "count": {
+                    "get": "item.summary.count"
+                  }
+                }
+              }
+            ],
+            "when": {
+              "not": {
+                "eq": [
+                  {
+                    "get": "item.summary.count"
+                  },
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "tag": "div",
+            "attrs": {},
+            "children": [
+              {
+                "t": "cron.summary_changed",
+                "values": {
+                  "count": {
+                    "get": "item.summary.changed"
+                  }
+                }
+              }
+            ],
+            "when": {
+              "not": {
+                "eq": [
+                  {
+                    "get": "item.summary.changed"
+                  },
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "each": {
+              "get": "item.summary.summary"
+            },
+            "as": "count",
+            "children": [
+              {
+                "tag": "div",
+                "attrs": {},
+                "children": [
+                  {
+                    "lookup": {
+                      "get": "_key"
+                    },
+                    "cases": {
+                      "posted": {
+                        "t": "bots.run_statuses.posted"
+                      },
+                      "current": {
+                        "t": "bots.run_statuses.current"
+                      },
+                      "error": {
+                        "t": "bots.run_statuses.error"
+                      },
+                      "skipped": {
+                        "t": "bots.run_statuses.skipped"
+                      }
+                    },
+                    "default": ""
+                  },
+                  ": ",
+                  {
+                    "get": "count"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {
+          "class": "stack stack-gap-8"
+        },
+        "children": [
+          {
+            "tag": "h3",
+            "attrs": {
+              "class": "text-base m-0"
+            },
+            "children": [
+              {
+                "t": "cron.error"
+              }
+            ]
+          },
+          {
+            "tag": "p",
+            "attrs": {
+              "class": "is-resource-text text-danger m-0"
+            },
+            "children": [
+              {
+                "get": "item.error"
+              }
+            ]
+          }
+        ],
+        "when": {
+          "get": "item.error"
+        }
+      },
+      {
+        "tag": "section",
+        "attrs": {
+          "class": "stack stack-gap-8"
+        },
+        "when": {
+          "get": "item.sources"
+        },
+        "children": [
+          {
+            "tag": "h3",
+            "attrs": {
+              "class": "text-base m-0"
+            },
+            "children": [
+              {
+                "t": "bots.sources_title"
+              }
+            ]
+          },
+          {
+            "each": {
+              "get": "item.sources"
+            },
+            "as": "source",
+            "children": [
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": "stack stack-gap-4"
+                },
+                "children": [
+                  {
+                    "tag": "strong",
+                    "children": [
+                      {
+                        "get": "source.source_name"
+                      }
+                    ]
+                  },
+                  {
+                    "component": "bots/run-status",
+                    "data": {
+                      "status": {
+                        "get": "source.status"
+                      }
+                    }
+                  },
+                  {
+                    "tag": "p",
+                    "attrs": {
+                      "class": "is-resource-text text-danger m-0"
+                    },
+                    "when": {
+                      "get": "source.error"
+                    },
+                    "children": [
+                      {
+                        "get": "source.error"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

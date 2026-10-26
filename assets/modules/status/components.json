@@ -353,7 +353,12 @@
                     "src": {
                       "get": "link.thumbnail_url"
                     },
-                    "alt": "",
+                    "alt": {
+                      "or": [
+                        { "get": "link.title" },
+                        { "get": "link.url" }
+                      ]
+                    },
                     "loading": "lazy",
                     "decoding": "async",
                     "referrerpolicy": "no-referrer"

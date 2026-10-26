@@ -9,6 +9,8 @@ use Throwable;
 
 final class Links
 {
+    private const METADATA_FAILURE_TTL = 300;
+
     public static function status_link_title_is_placeholder(string $title): bool
     {
         return in_array(strtolower(trim($title)), [
@@ -338,7 +340,9 @@ final class Links
             return '';
         }
         if (str_starts_with($imageUrl, '/uploads/links/')) {
-            return \TinyCat\Status\Links::status_link_image_exists($imageUrl) ? $imageUrl : '';
+            if (!self::status_link_image_exists($imageUrl)) { return ''; }
+            @touch(\TinyCat\Support\Paths::basePath(ltrim($imageUrl, '/')));
+            return $imageUrl;
         }
         if (!\TinyCat\Status\Metadata::isSafeRemoteUrl($imageUrl)) {
             return '';
@@ -351,6 +355,7 @@ final class Links
         $localUrl = '/uploads/links/' . $subfolder . '/' . $filename;
 
         if (is_file($target)) {
+            @touch($target);
             return $localUrl;
         }
 
@@ -441,6 +446,56 @@ final class Links
         return $localUrl;
     }
 
+    /** @return array{changed: int, has_more: bool} */
+    public static function cleanupOrphanImages(int $limit, string $relativeDirectory = ''): array
+    {
+        if ($relativeDirectory !== '' && preg_match('~^[0-9]{4}/[0-9]{2}$~D', $relativeDirectory) !== 1) {
+            throw new \InvalidArgumentException('Invalid link image cleanup directory.');
+        }
+        $base = \TinyCat\Support\Paths::basePath('uploads/links');
+        $directory = $base . ($relativeDirectory !== '' ? '/' . $relativeDirectory : '');
+        $resolvedBase = realpath($base);
+        $resolvedDirectory = realpath($directory);
+        if ($resolvedBase === false || $resolvedDirectory === false) { return ['changed' => 0, 'has_more' => false]; }
+        if ($resolvedDirectory !== $resolvedBase && !str_starts_with($resolvedDirectory, $resolvedBase . DIRECTORY_SEPARATOR)) {
+            throw new \RuntimeException('Link image directory escapes upload storage.');
+        }
+        $changed = 0;
+        $cutoff = time() - 3600;
+        $pending = [];
+        $flush = static function (array $paths) use (&$changed, $limit, $cutoff): bool {
+            if ($paths === []) { return false; }
+            $placeholders = implode(', ', array_fill(0, count($paths), '?'));
+            $rows = \TinyCat\Database\Connection::all('SELECT image_url FROM links WHERE image_url IN (' . $placeholders . ')', array_keys($paths));
+            $stored = array_fill_keys(array_column($rows, 'image_url'), true);
+            foreach ($paths as $url => $file) {
+                if (isset($stored[$url])) { continue; }
+                clearstatcache(true, $file);
+                $modified = @filemtime($file);
+                if ($modified === false || $modified > $cutoff || is_link($file)) { continue; }
+                if ($changed >= max(1, $limit)) { return true; }
+                if (!@unlink($file) && is_file($file)) { throw new \RuntimeException('Unable to remove orphan link image.'); }
+                $changed++;
+            }
+            return false;
+        };
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS));
+        foreach ($iterator as $file) {
+            if (!$file->isFile() || $file->isLink() || $file->getMTime() > $cutoff) { continue; }
+            $parent = realpath($file->getPath());
+            if ($parent === false || !str_starts_with($parent, $resolvedBase . DIRECTORY_SEPARATOR)) { continue; }
+            $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($base) + 1));
+            if (preg_match('~^[0-9]{4}/[0-9]{2}/[a-f0-9]{40}\.webp$~D', $relative) !== 1) { continue; }
+            $pending['/uploads/links/' . $relative] = $file->getPathname();
+            if (count($pending) >= 100) {
+                if ($flush($pending)) { return ['changed' => $changed, 'has_more' => true]; }
+                $pending = [];
+            }
+        }
+        $hasMore = $flush($pending);
+        return ['changed' => $changed, 'has_more' => $hasMore];
+    }
+
     public static function status_link_image_exists(string $url): bool
     {
         $relative = str_replace('\\', '/', trim(substr($url, strlen('/uploads/links/')), '/'));
@@ -458,14 +513,24 @@ final class Links
      */
     public static function status_link_prepare_metadata(array $link, ?array $cached, bool $localizeImage = false, string $localImageSource = ''): array
     {
-        if ($cached !== null && \TinyCat\Status\Links::status_link_metadata_fresh($cached)) {
-            $prepared = \TinyCat\Status\Links::status_link_apply_cached_metadata($link, $cached, true);
+        $failureKey = 'link-metadata-failure-v1-' . hash('sha256', (string) ($link['normalized_url'] ?? ''));
+        if ($cached !== null && self::status_link_metadata_fresh($cached)) {
+            $prepared = self::status_link_apply_cached_metadata($link, $cached, true);
+        } elseif (\TinyCat\Support\Cache::get($failureKey, self::METADATA_FAILURE_TTL) === true) {
+            $prepared = $cached !== null ? self::status_link_apply_cached_metadata($link, $cached, true) : $link;
+            // A failed attempt must not make old metadata fresh for another day.
+            $prepared['_metadata_updated_at'] = (string) ($cached['updated_at'] ?? '1970-01-01 00:00:00');
         } else {
             $prepared = \TinyCat\Status\Metadata::enrich($link);
-            $prepared['_metadata_updated_at'] = \TinyCat\Support\Dates::dateDb();
-
-            if (empty($prepared['_metadata_fetched']) && $cached !== null) {
-                $prepared = \TinyCat\Status\Links::status_link_apply_cached_metadata($prepared, $cached, false);
+            if (empty($prepared['_metadata_fetched'])) {
+                \TinyCat\Support\Cache::put($failureKey, true, self::METADATA_FAILURE_TTL, 0);
+                if ($cached !== null) {
+                    $prepared = self::status_link_apply_cached_metadata($prepared, $cached, true);
+                }
+                $prepared['_metadata_updated_at'] = (string) ($cached['updated_at'] ?? '1970-01-01 00:00:00');
+            } else {
+                \TinyCat\Support\Cache::forget($failureKey);
+                $prepared['_metadata_updated_at'] = \TinyCat\Support\Dates::dateDb();
             }
         }
 

@@ -632,6 +632,10 @@ function tc_install_create_tables(): void
     foreach ($statements as $statement) {
         \TinyCat\Database\Connection::exec($statement);
     }
+    $schedulerMigration = require \TinyCat\Support\Paths::basePath('migrations/20261026_003_scheduler_runs.php');
+    $schedulerMigration(\TinyCat\Database\Connection::get());
+    $botSchedulerMigration = require \TinyCat\Support\Paths::basePath('migrations/20261026_004_bot_scheduler_runs.php');
+    $botSchedulerMigration(\TinyCat\Database\Connection::get());
 
 }
 

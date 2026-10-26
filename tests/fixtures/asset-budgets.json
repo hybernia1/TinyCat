@@ -16,7 +16,7 @@
     "stylesheets": 1
   },
   "/admin/users": {
-    "raw_js": 111616,
+    "raw_js": 112640,
     "gzip_js": 28672,
     "raw_css": 44032,
     "gzip_css": 9216,
@@ -24,16 +24,16 @@
     "stylesheets": 1
   },
   "/admin/bots": {
-    "raw_js": 98304,
-    "gzip_js": 24576,
+    "raw_js": 103424,
+    "gzip_js": 25600,
     "raw_css": 38912,
     "gzip_css": 8192,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/cron": {
-    "raw_js": 72704,
-    "gzip_js": 19456,
+    "raw_js": 93184,
+    "gzip_js": 23552,
     "raw_css": 38912,
     "gzip_css": 8192,
     "scripts": 4,

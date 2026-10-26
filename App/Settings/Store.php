@@ -199,7 +199,7 @@ final class Store
      */
     private static function cacheAutoloadSettings(array $settings): void
     {
-        \TinyCat\Support\Cache::put(self::SETTINGS_CACHE_KEY, $settings);
+        \TinyCat\Support\Cache::put(self::SETTINGS_CACHE_KEY, $settings, self::SETTINGS_CACHE_TTL);
     }
 
     private static function forgetCachedAutoloadSettings(): void

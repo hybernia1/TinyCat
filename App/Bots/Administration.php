@@ -443,7 +443,11 @@ final class Administration
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('bots.detail_source_disabled'), 409, 'bot_source_disabled');
         }
 
-        return \TinyCat\Bots\Importer::runSource($source, true);
+        $user = \TinyCat\Users\Authentication::auth();
+        return \TinyCat\Http\Session::withoutLock(static fn (): array => \TinyCat\Scheduler\Runner::run('feeds', static function (array $context) use ($source): array {
+            $result = Importer::runSource($source, true, (int) $context['scheduler_run_id']);
+            return ['ok' => $result['status'] !== 'error', 'status' => $result['status'] === 'error' ? 'failed' : 'completed', 'count' => 1, 'results' => [$result]];
+        }, ['mode' => 'admin', 'actor_id' => (int) ($user['id'] ?? 0), 'options' => ['source_id' => (int) $source['id']]]));
     }
 
     /**

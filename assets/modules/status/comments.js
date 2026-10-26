@@ -57,12 +57,39 @@ import "../../ui/dialogs.js";
       keepModalReplyVisible(TinyCat.__modalReplyField);
     });
   }
+    function positionMenu(menu) {
+      var popover = qs(".context-menu-popover", menu);
+      var summary = qs("summary", menu);
+      if (!popover || !summary) { return; }
+      menu.classList.remove("opens-up");
+      var bottom = window.innerHeight - 8;
+      var parent = menu.parentElement;
+      while (parent) {
+        if (/(auto|scroll|hidden|clip)/.test(window.getComputedStyle(parent).overflowY)) {
+          bottom = Math.min(bottom, parent.getBoundingClientRect().bottom - 8);
+        }
+        parent = parent.parentElement;
+      }
+      if (summary.getBoundingClientRect().bottom + popover.getBoundingClientRect().height + 4 > bottom) {
+        menu.classList.add("opens-up");
+      }
+    }
+
   function initCommentReplies () {
     if (TinyCat.__commentReplyEventsBound === true) {
       return;
     }
 
     TinyCat.__commentReplyEventsBound = true;
+
+    document.addEventListener("toggle", function (event) {
+      var menu = event.target;
+      if (menu && menu.matches && menu.matches(".context-menu[open]") && menu.closest(".status-comment, .status-post-modal")) { positionMenu(menu); }
+    }, true);
+    window.addEventListener("resize", function () {
+      qsa(".status-comment .context-menu[open], .status-post-modal .context-menu[open]").forEach(positionMenu);
+    });
+
 
     document.addEventListener("toggle", function (event) {
       var details = event.target;

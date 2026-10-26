@@ -35,7 +35,8 @@ return static function (array $catalogs): void {
             $selected = \TinyCat\Support\ClientAssets::catalog($scope, $locale, $catalog['app']);
             foreach (\TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($scope)) as $source) {
                 preg_match_all('/\b(?:U|T\.ui|TinyCat\.ui)\.(?:text|button|field|select)\(\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', \TinyCat\Support\AssetGraph::read($source), $matches);
-                foreach ($matches[1] as $key) {
+                preg_match_all('/\b(?:U|T\.ui|TinyCat\.ui)\.dialog\(\s*[^,\r\n]+,\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', \TinyCat\Support\AssetGraph::read($source), $dialogTitles);
+                foreach (array_merge($matches[1], $dialogTitles[1]) as $key) {
                     if (!array_key_exists($key, $selected)) { throw new RuntimeException($source . ': undeclared ' . $locale . ' translation ' . $key . ' in ' . $scope); }
                 }
                 preg_match_all('/\b(?:T|TinyCat)\.i18n\.plural\(\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', \TinyCat\Support\AssetGraph::read($source), $plurals);

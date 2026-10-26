@@ -2,7 +2,6 @@
 declare(strict_types=1);
 namespace TinyCat\Scheduler;
 
-use TinyCat\Bots\Importer;
 use TinyCat\Http\Request;
 use TinyCat\Site\Layout;
 use TinyCat\Site\Presentation;
@@ -14,6 +13,15 @@ use TinyCat\Users\Access;
 /** HTTP authorization, actions and prepared page composition. */
 final class Pages
 {
+    public static function listing(): void
+    {
+        Access::require_admin();
+        $title = Localization::t('cron.list_title');
+        $data = Administration::payload();
+        $content = \TinyCat\Support\AdminViews::listCard($title, 'clock', 'scheduler-list', 'scheduler-filter-modal', new \TinyCat\Support\Markup(\TinyCat\Support\Components::render('scheduler/list', $data + ['state' => $data])));
+        Layout::render(['title' => $title, 'current' => '/admin/cron/list'], $content);
+    }
+
     public static function administration(): void
     {
         Access::require_admin();
@@ -30,7 +38,7 @@ final class Pages
         $runnerPath = Paths::basePath('scheduled-tasks.php');
         $taskViews = [];
 
-        foreach (Importer::scheduledTasks() as $task => $definition) {
+        foreach (Tasks::definitions() as $task => $definition) {
             $admin = $definition['admin'];
 
             $arguments = [];
@@ -43,14 +51,6 @@ final class Pages
                 'cli_arguments' => implode(' ', $arguments),
             ];
         }
-
-        $taskViews['cleanup'] = [
-                'icon' => 'database',
-                'title' => 'cron.tasks.cleanup',
-                'help' => 'cron.tasks.cleanup_help',
-                'schedule' => 'cron.tasks.cleanup_schedule',
-                'cli_arguments' => '--cleanup-batch=500',
-        ];
 
         foreach ($taskViews as $task => &$view) {
             $taskUrl = $cronUrl . '?task=' . rawurlencode($task);

@@ -46,3 +46,5 @@
 .context-menu-action.is-danger {
   color: var(--danger);
 }
+
+.context-menu.opens-up .context-menu-popover { top: auto; bottom: calc(100% + 4px); }

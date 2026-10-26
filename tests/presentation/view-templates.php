@@ -97,6 +97,11 @@ $pagination = \TinyCat\Support\Components::render('ui/pagination', [
 $assert(str_contains($pagination, 'aria-current="page">2</span>'), 'Pagination marks the current page.');
 $assert(str_contains($pagination, 'data-history="/admin/users?page=3"'), 'Pagination preserves the browser history URL.');
 $assert(str_contains($pagination, 'data-ajax-target="#users-list"'), 'Pagination preserves its AJAX target.');
+$assert(str_contains($pagination, 'class="pagination-list"') && str_contains($pagination, 'class="pagination-link is-active"'), 'Pagination groups controls using the shared styles instead of spreading numbers across the page.');
+$assert(str_contains($pagination, 'class="pagination-link pagination-prev"') && str_contains($pagination, 'class="pagination-link pagination-next"'), 'Pagination includes previous and next controls.');
+$gaps = \TinyCat\Support\Components::render('ui/pagination', ['navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data(['page' => 10, 'last_page' => 20], '/api/users', '#users-list'), 'target' => '#users-list']);
+$assert(substr_count($gaps, 'class="pagination-ellipsis"') === 2, 'Non-adjacent page ranges are separated by ellipses.');
+
 
 $comment = \TinyCat\Status\Views::commentItem([
     'comment' => [

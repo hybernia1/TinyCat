@@ -61,6 +61,15 @@ import "../../ui/toasts.js";
     }
   }
   T.bots = {
+    modal: function (url, response, id) {
+      if (!/^\/api\/bots\/accounts\/[0-9]+\/management$/.test(url.pathname)) { return null; }
+      var form = U.form("/api/bots/accounts/" + response.data.item.id + window.location.search, "PATCH");
+      form.enctype = "multipart/form-data";
+      form.dataset.ajaxTarget = "#bot-accounts-list";
+      form.dataset.modalCloseOnSuccess = "true";
+      form.appendChild(T.components.render("bots/account-edit-fields", response.data));
+      return U.dialog(id, "bots.edit_account", submit(form));
+    },
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
       if (!url.pathname.startsWith("/api/bots/")) { return false; }

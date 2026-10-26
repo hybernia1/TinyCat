@@ -16,7 +16,6 @@ final class LinkParser
         '_hsmi',
         '_openstat',
         'ab_channel',
-        'campaign',
         'ck_subscriber_id',
         'dclid',
         'fbclid',
@@ -24,7 +23,6 @@ final class LinkParser
         'fb_action_types',
         'fb_ref',
         'fb_source',
-        'feature',
         'gclid',
         'gbraid',
         'igshid',
@@ -34,14 +32,11 @@ final class LinkParser
         'msclkid',
         'oly_anon_id',
         'oly_enc_id',
-        'ref',
         'ref_src',
         'sc_customer',
         'sc_eh',
         'sc_llid',
         'sc_src',
-        'si',
-        'spm',
         'srsltid',
         'vero_id',
         'wbraid',
@@ -93,11 +88,15 @@ final class LinkParser
 
         $links = [];
         $seen = [];
+        $parsed = [];
 
         foreach ((array) ($matches[0] ?? []) as $match) {
             $raw = (string) $match;
             [$url] = self::splitTail($raw);
-            $link = self::fromRaw($url);
+            if (!array_key_exists($url, $parsed)) {
+                $parsed[$url] = self::fromRaw($url);
+            }
+            $link = $parsed[$url];
 
             if ($link === null || isset($seen[$link['url_hash']])) {
                 continue;
@@ -161,15 +160,17 @@ final class LinkParser
             return null;
         }
 
+        $displayUrl = $host . (($parts['path'] ?? '') !== '/' ? (string) ($parts['path'] ?? '') : '');
+
         return [
             'normalized_url' => $normalizedUrl,
             'url_hash' => self::hash($normalizedUrl),
             'provider' => 'web',
             'link_type' => 'link',
-            'title' => self::title($normalizedUrl),
-            'description' => self::displayUrl($normalizedUrl),
+            'title' => self::title($host, (string) ($parts['path'] ?? '')),
+            'description' => $displayUrl,
             'video_id' => '',
-            'display_url' => self::displayUrl($normalizedUrl),
+            'display_url' => $displayUrl,
         ];
     }
 
@@ -186,15 +187,25 @@ final class LinkParser
      */
     public static function splitTail(string $url): array
     {
-        $tail = '';
-
-        while ($url !== '' && preg_match('/[\\.,;:!\\?\\)\\]\\}]+$/', $url, $match) === 1) {
-            $chunk = (string) $match[0];
-            $tail = $chunk . $tail;
-            $url = substr($url, 0, -strlen($chunk));
+        $length = strlen($url);
+        $end = $length;
+        $pairs = [')' => '(', ']' => '[', '}' => '{'];
+        $excess = [];
+        foreach ($pairs as $close => $open) {
+            $excess[$close] = substr_count($url, $close) - substr_count($url, $open);
+        }
+        while ($end > 0) {
+            $last = $url[$end - 1];
+            if (isset($pairs[$last])) {
+                if ($excess[$last] <= 0) { break; }
+                $excess[$last]--;
+            } elseif (!str_contains('.,;:!?', $last)) {
+                break;
+            }
+            $end--;
         }
 
-        return [$url, $tail];
+        return [substr($url, 0, $end), substr($url, $end)];
     }
 
     public static function isSocialHost(string $host): bool
@@ -357,31 +368,23 @@ final class LinkParser
             return '';
         }
 
-        parse_str($query, $params);
-
-        foreach (array_keys($params) as $key) {
-            $lower = strtolower((string) $key);
-
-            if (str_starts_with($lower, 'utm_') || in_array($lower, self::TRACKING_PARAMS, true)) {
-                unset($params[$key]);
+        // Decode only the name for tracking detection. Rebuilding query data
+        // would alter repeated keys, dotted names, flags and signed values.
+        $kept = [];
+        foreach (explode('&', $query) as $parameter) {
+            $name = strtolower(urldecode(explode('=', $parameter, 2)[0]));
+            if (str_starts_with($name, 'utm_') || in_array($name, self::TRACKING_PARAMS, true)) {
+                continue;
             }
+            $kept[] = $parameter;
         }
 
-        if ($params === []) {
-            return '';
-        }
-
-        ksort($params);
-
-        return http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return implode('&', $kept);
     }
 
-    private static function title(string $url): string
+    private static function title(string $host, string $path): string
     {
-        $parts = parse_url($url);
-        $host = self::host((string) ($parts['host'] ?? ''));
-        $path = trim((string) ($parts['path'] ?? ''), '/');
-
+        $path = trim($path, '/');
         if ($path === '') {
             return $host;
         }

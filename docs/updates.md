@@ -33,7 +33,7 @@ signed with a replacement key. CI can provide the base64 private key through the
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=4.0.1 --minimum-version=2.0.25
+php tools/build-update.php --version=4.1.0 --minimum-version=2.0.25
 php tools/verify-update.php dist
 ```
 
@@ -47,12 +47,12 @@ Source checkouts without the inventory retain an on-demand development fallback.
 The builder creates:
 
 ```text
-dist/tinycat-4.0.1.zip
+dist/tinycat-4.1.0.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v4.0.1` tag and upload all three files
+Create a GitHub release for the matching `v4.1.0` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
