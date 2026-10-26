@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.2.1 - 2026-10-26
+
+- Fix a fatal error on the home page for signed-out visitors by checking authentication before reading the account mute expiry.
+- Cover anonymous home and following feeds in public route smoke tests.
+
 ## 3.2.0 - 2026-10-26
 
 - Unify administration action icons and accessible tooltips; add pause/shield-check symbols and remove duplicate SVG symbol IDs.

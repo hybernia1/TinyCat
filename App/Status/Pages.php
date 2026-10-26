@@ -25,7 +25,7 @@ final class Pages
         $editor = $authUser !== null ? ViewData::status_editor_view_data() : [];
 
         $userIsMuted = $authUser !== null && Restrictions::user_is_muted($authUser);
-        $userMutedUntil = Restrictions::user_muted_until($authUser);
+        $userMutedUntil = $authUser !== null ? Restrictions::user_muted_until($authUser) : '';
         $publicHomeFeedData = ViewData::public_home_feed_data($feed, $authUser);
         $publicSidebar = Presentation::public_sidebar();
         Layout::render([

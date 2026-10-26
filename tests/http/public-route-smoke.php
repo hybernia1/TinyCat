@@ -51,6 +51,8 @@ PHP;
 $entryScript = str_replace('__ENTRY__', $entry, $entryScript);
 
 foreach ([
+    ['GET', '/'],
+    ['GET', '/?feed=following'],
     ['GET', '/privacy'],
     ['GET', '/search?q=runtime'],
     ['GET', '/status/0'],
