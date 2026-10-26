@@ -7,6 +7,42 @@ require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
 (new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Support\Localization::locale('en');
 if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Support\Components::json(); exit(0); }
+if (($argv[1] ?? '') === '--translation-fixtures') {
+    $cases = [];
+    foreach (['cs', 'en', 'cs-CZ'] as $locale) {
+        foreach ([0, 1, 2, 4, 5, -1, -3, 1.5, 101] as $count) {
+            foreach (['bots.sources_count', 'bots.active_sources_count', 'bots.every_minutes', 'public.active_user_posts', 'public.search_tag_posts', 'moderation.report_count', 'notifications.new_count'] as $key) {
+                $cases[] = ['locale' => $locale, 'key' => $key, 'count' => $count, 'category' => \TinyCat\Support\Localization::pluralCategory($count, $locale), 'expected' => \TinyCat\Support\Localization::plural($key, $count, [], $locale)];
+            }
+        }
+    }
+    echo json_encode($cases, JSON_THROW_ON_ERROR);
+    exit;
+}
+if (($argv[1] ?? '') === '--dates') {
+    echo json_encode(['dateFormat' => \TinyCat\Settings\Store::config('datetime.datetime', 'Y-m-d H:i:s'), 'dateRelative' => \TinyCat\Settings\Store::config('datetime.relative', false) ? 'true' : 'false'], JSON_THROW_ON_ERROR);
+    exit;
+}
+if (($argv[1] ?? '') === '--date-fixtures') {
+    $cases = ['absolute' => [], 'relative' => []];
+    foreach (['2026-10-25T02:30:09+02:00', '2026-10-25T02:30:09+01:00'] as $date) {
+        foreach (array_keys(\TinyCat\Support\Dates::datetime_format_presets()) as $format) {
+            $cases['absolute'][] = ['value' => $date, 'format' => $format, 'expected' => \TinyCat\Support\Dates::dateTime($date, $format)];
+        }
+    }
+    $base = new DateTimeImmutable('2026-10-26T12:00:00+01:00');
+    foreach (['cs', 'en'] as $locale) {
+        \TinyCat\Support\Localization::locale($locale);
+        foreach ([0, 44, 45, 89, 90, 2699, 2700, 5399, 5400, 79199, 79200, 129599, 129600, 604799, 604800, 2419199, 2419200, 3887999, 3888000, 29807999, 29808000, 47087999, 47088000, 63072000] as $offset) {
+            foreach ([-1, 1] as $sign) {
+                $date = $base->modify(($sign * $offset) . ' seconds');
+                $cases['relative'][] = ['locale' => $locale, 'value' => $date->format(DATE_ATOM), 'base' => $base->getTimestamp() * 1000, 'expected' => \TinyCat\Support\Dates::relative_time($date, $base)];
+            }
+        }
+    }
+    echo json_encode($cases, JSON_THROW_ON_ERROR);
+    exit;
+}
 
 $fixtures = json_decode((string) file_get_contents(dirname(__DIR__) . '/fixtures/components.json'), true, 512, JSON_THROW_ON_ERROR);
 $output = [];

@@ -3,6 +3,10 @@ declare(strict_types=1);
 define('TINYCAT', true);
 require dirname(__DIR__, 2) . '/App/autoload.php';
 $mode = $argv[1] ?? '--all';
+if ($mode === '--catalog') {
+    echo json_encode(\TinyCat\Support\Localization::catalog((string) ($argv[2] ?? 'en')), JSON_THROW_ON_ERROR);
+    exit;
+}
 if ($mode === '--styles') {
     $styles = [];
     foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) { $styles = [...$styles, ...\TinyCat\Support\ClientAssets::sourceStyles($scope)]; }

@@ -12,10 +12,7 @@
         "role": "user",
         "status": "active",
         "can_delete": true,
-        "role_label": "User",
-        "status_label": "Active",
-        "updated_at": "2026-01-01T12:00:00+00:00",
-        "updated_at_formatted": "Today"
+        "updated_at": "2026-01-01T12:00:00+00:00"
       }
     }
   },
@@ -32,10 +29,7 @@
         "role": "user",
         "status": "active",
         "can_delete": true,
-        "role_label": "User",
-        "status_label": "Active",
-        "updated_at": "2026-01-01T12:00:00+00:00",
-        "updated_at_formatted": "Today"
+        "updated_at": "2026-01-01T12:00:00+00:00"
       },
       "small": true
     }
@@ -53,10 +47,7 @@
         "role": "user",
         "status": "active",
         "can_delete": true,
-        "role_label": "User",
-        "status_label": "Active",
-        "updated_at": "2026-01-01T12:00:00+00:00",
-        "updated_at_formatted": "Today"
+        "updated_at": "2026-01-01T12:00:00+00:00"
       }
     }
   },
@@ -76,10 +67,7 @@
           "role": "user",
           "status": "active",
           "can_delete": true,
-          "role_label": "User",
-          "status_label": "Active",
-          "updated_at": "2026-01-01T12:00:00+00:00",
-          "updated_at_formatted": "Today"
+          "updated_at": "2026-01-01T12:00:00+00:00"
         },
         "segments": [
           {
@@ -98,8 +86,6 @@
           }
         ],
         "published_at": "2026-01-01T12:00:00+00:00",
-        "published_label": "Today",
-        "permalink_label": "Post by Alice",
         "image": {
           "url": "",
           "alt": ""
@@ -138,10 +124,7 @@
           "role": "user",
           "status": "active",
           "can_delete": true,
-          "role_label": "User",
-          "status_label": "Active",
-          "updated_at": "2026-01-01T12:00:00+00:00",
-          "updated_at_formatted": "Today"
+          "updated_at": "2026-01-01T12:00:00+00:00"
         },
         "segments": [
           {
@@ -160,8 +143,6 @@
           }
         ],
         "published_at": "2026-01-01T12:00:00+00:00",
-        "published_label": "Today",
-        "permalink_label": "Post by Alice",
         "image": {
           "url": "/uploads/statuses/10.webp",
           "alt": "Image"
@@ -201,10 +182,7 @@
           "role": "user",
           "status": "active",
           "can_delete": true,
-          "role_label": "User",
-          "status_label": "Active",
-          "updated_at": "2026-01-01T12:00:00+00:00",
-          "updated_at_formatted": "Today"
+          "updated_at": "2026-01-01T12:00:00+00:00"
         },
         "segments": [
           {
@@ -223,8 +201,6 @@
           }
         ],
         "published_at": "2026-01-01T12:00:00+00:00",
-        "published_label": "Today",
-        "permalink_label": "Post by Alice",
         "image": {
           "url": "",
           "alt": ""
@@ -285,10 +261,7 @@
           "role": "user",
           "status": "active",
           "can_delete": true,
-          "role_label": "User",
-          "status_label": "Active",
-          "updated_at": "2026-01-01T12:00:00+00:00",
-          "updated_at_formatted": "Today"
+          "updated_at": "2026-01-01T12:00:00+00:00"
         },
         "segments": [
           {
@@ -307,7 +280,6 @@
           }
         ],
         "created_at": "2026-01-01T12:00:00+00:00",
-        "created_label": "Today",
         "likes_count": 1,
         "liked": false,
         "capabilities": {
@@ -327,10 +299,7 @@
         "role": "user",
         "status": "active",
         "can_delete": true,
-        "role_label": "User",
-        "status_label": "Active",
-        "updated_at": "2026-01-01T12:00:00+00:00",
-        "updated_at_formatted": "Today"
+        "updated_at": "2026-01-01T12:00:00+00:00"
       },
       "context": "modal",
       "show_replies": true,
@@ -354,10 +323,7 @@
           "role": "user",
           "status": "active",
           "can_delete": true,
-          "role_label": "User",
-          "status_label": "Active",
-          "updated_at": "2026-01-01T12:00:00+00:00",
-          "updated_at_formatted": "Today"
+          "updated_at": "2026-01-01T12:00:00+00:00"
         },
         "segments": [
           {
@@ -376,7 +342,6 @@
           }
         ],
         "created_at": "2026-01-01T12:00:00+00:00",
-        "created_label": "Today",
         "likes_count": 1,
         "liked": false,
         "capabilities": {
@@ -406,10 +371,7 @@
           "role": "user",
           "status": "active",
           "can_delete": true,
-          "role_label": "User",
-          "status_label": "Active",
-          "updated_at": "2026-01-01T12:00:00+00:00",
-          "updated_at_formatted": "Today"
+          "updated_at": "2026-01-01T12:00:00+00:00"
         },
         "segments": [
           {
@@ -428,8 +390,6 @@
           }
         ],
         "published_at": "2026-01-01T12:00:00+00:00",
-        "published_label": "Today",
-        "permalink_label": "Post by Alice",
         "image": {
           "url": "",
           "alt": ""
@@ -462,10 +422,7 @@
             "role": "user",
             "status": "active",
             "can_delete": true,
-            "role_label": "User",
-            "status_label": "Active",
-            "updated_at": "2026-01-01T12:00:00+00:00",
-            "updated_at_formatted": "Today"
+            "updated_at": "2026-01-01T12:00:00+00:00"
           },
           "segments": [
             {
@@ -484,7 +441,6 @@
             }
           ],
           "created_at": "2026-01-01T12:00:00+00:00",
-          "created_label": "Today",
           "likes_count": 1,
           "liked": false,
           "capabilities": {
@@ -505,10 +461,7 @@
         "role": "user",
         "status": "active",
         "can_delete": true,
-        "role_label": "User",
-        "status_label": "Active",
-        "updated_at": "2026-01-01T12:00:00+00:00",
-        "updated_at_formatted": "Today"
+        "updated_at": "2026-01-01T12:00:00+00:00"
       },
       "context": "status-10"
     }
@@ -529,10 +482,7 @@
           "role": "user",
           "status": "active",
           "can_delete": true,
-          "role_label": "User",
-          "status_label": "Active",
-          "updated_at": "2026-01-01T12:00:00+00:00",
-          "updated_at_formatted": "Today"
+          "updated_at": "2026-01-01T12:00:00+00:00"
         },
         "segments": [
           {
@@ -551,8 +501,6 @@
           }
         ],
         "published_at": "2026-01-01T12:00:00+00:00",
-        "published_label": "Today",
-        "permalink_label": "Post by Alice",
         "image": {
           "url": "",
           "alt": ""
@@ -585,10 +533,7 @@
             "role": "user",
             "status": "active",
             "can_delete": true,
-            "role_label": "User",
-            "status_label": "Active",
-            "updated_at": "2026-01-01T12:00:00+00:00",
-            "updated_at_formatted": "Today"
+            "updated_at": "2026-01-01T12:00:00+00:00"
           },
           "segments": [
             {
@@ -607,7 +552,6 @@
             }
           ],
           "created_at": "2026-01-01T12:00:00+00:00",
-          "created_label": "Today",
           "likes_count": 1,
           "liked": false,
           "capabilities": {
@@ -635,10 +579,7 @@
         "role": "user",
         "status": "active",
         "can_delete": true,
-        "role_label": "User",
-        "status_label": "Active",
-        "updated_at": "2026-01-01T12:00:00+00:00",
-        "updated_at_formatted": "Today"
+        "updated_at": "2026-01-01T12:00:00+00:00"
       },
       "value": "Draft <unsafe>",
       "image": {
@@ -646,7 +587,6 @@
         "alt": ""
       },
       "enabled": true,
-      "submit_label": "Save",
       "submit_icon": "save"
     }
   },
@@ -663,10 +603,7 @@
         "role": "user",
         "status": "active",
         "can_delete": true,
-        "role_label": "User",
-        "status_label": "Active",
-        "updated_at": "2026-01-01T12:00:00+00:00",
-        "updated_at_formatted": "Today"
+        "updated_at": "2026-01-01T12:00:00+00:00"
       },
       "value": "Draft",
       "image": {
@@ -676,7 +613,6 @@
       "enabled": false,
       "submit_name": "save",
       "submit_value": "1",
-      "submit_label": "Save",
       "submit_icon": "save"
     }
   },
@@ -696,18 +632,13 @@
             "role": "user",
             "status": "active",
             "can_delete": true,
-            "role_label": "User",
-            "status_label": "Active",
-            "updated_at": "2026-01-01T12:00:00+00:00",
-            "updated_at_formatted": "Today"
+            "updated_at": "2026-01-01T12:00:00+00:00"
           },
-          "icon": "bell",
-          "message": "Mention <unsafe>",
           "excerpt": "Excerpt",
           "url": "/status/10",
           "created_at": "2026-01-01T12:00:00+00:00",
-          "created_label": "Today",
-          "unread": true
+          "unread": true,
+          "type": "follow"
         },
         {
           "id": 2,
@@ -721,18 +652,13 @@
             "role": "user",
             "status": "active",
             "can_delete": true,
-            "role_label": "User",
-            "status_label": "Active",
-            "updated_at": "2026-01-01T12:00:00+00:00",
-            "updated_at_formatted": "Today"
+            "updated_at": "2026-01-01T12:00:00+00:00"
           },
-          "icon": "bell",
-          "message": "Mention <unsafe>",
           "excerpt": "Excerpt",
           "url": "/status/10",
           "created_at": "2026-01-01T12:00:00+00:00",
-          "created_label": "Today",
-          "unread": false
+          "unread": false,
+          "type": "follow"
         }
       ],
       "preview": false
@@ -754,18 +680,13 @@
             "role": "user",
             "status": "active",
             "can_delete": true,
-            "role_label": "User",
-            "status_label": "Active",
-            "updated_at": "2026-01-01T12:00:00+00:00",
-            "updated_at_formatted": "Today"
+            "updated_at": "2026-01-01T12:00:00+00:00"
           },
-          "icon": "bell",
-          "message": "Mention <unsafe>",
           "excerpt": "Excerpt",
           "url": "/status/10",
           "created_at": "2026-01-01T12:00:00+00:00",
-          "created_label": "Today",
-          "unread": true
+          "unread": true,
+          "type": "follow"
         }
       ],
       "preview": true
@@ -801,10 +722,7 @@
           "role": "user",
           "status": "active",
           "can_delete": true,
-          "role_label": "User",
-          "status_label": "Active",
           "updated_at": "2026-01-01T12:00:00+00:00",
-          "updated_at_formatted": "Today",
           "posts_count": 3
         }
       ],
@@ -835,14 +753,10 @@
         "role": "admin",
         "status": "active",
         "can_delete": true,
-        "role_label": "User",
-        "status_label": "Active",
-        "updated_at": "2026-01-01T12:00:00+00:00",
-        "updated_at_formatted": "Today"
+        "updated_at": "2026-01-01T12:00:00+00:00"
       },
       "options": {
         "username_pattern": "[A-Za-z0-9._-]+",
-        "username_hint": "Letters and digits",
         "password_max_length": 1024,
         "roles": {
           "admin": "Admin",
@@ -863,7 +777,6 @@
       "user": {},
       "options": {
         "username_pattern": "[A-Za-z0-9._-]+",
-        "username_hint": "Letters and digits",
         "password_max_length": 1024,
         "roles": {
           "admin": "Admin",
@@ -892,10 +805,7 @@
           "role": "user",
           "status": "active",
           "can_delete": true,
-          "role_label": "User",
-          "status_label": "Active",
-          "updated_at": "2026-01-01T12:00:00+00:00",
-          "updated_at_formatted": "Today"
+          "updated_at": "2026-01-01T12:00:00+00:00"
         }
       ],
       "filters": {
@@ -910,16 +820,6 @@
         "user": "User"
       },
       "statuses": {
-        "active": "Active",
-        "ban": "Banned"
-      },
-      "role_options": {
-        "": "All",
-        "admin": "Admin",
-        "user": "User"
-      },
-      "status_options": {
-        "": "All",
         "active": "Active",
         "ban": "Banned"
       },
@@ -955,10 +855,7 @@
             "role": "user",
             "status": "active",
             "can_delete": true,
-            "role_label": "User",
-            "status_label": "Active",
-            "updated_at": "2026-01-01T12:00:00+00:00",
-            "updated_at_formatted": "Today"
+            "updated_at": "2026-01-01T12:00:00+00:00"
           }
         ],
         "filters": {
@@ -973,16 +870,6 @@
           "user": "User"
         },
         "statuses": {
-          "active": "Active",
-          "ban": "Banned"
-        },
-        "role_options": {
-          "": "All",
-          "admin": "Admin",
-          "user": "User"
-        },
-        "status_options": {
-          "": "All",
           "active": "Active",
           "ban": "Banned"
         },
@@ -1021,7 +908,6 @@
       "registration_enabled": true,
       "options": {
         "username_pattern": "[A-Za-z0-9._-]+",
-        "username_hint": "Letters and digits",
         "password_max_length": 1024,
         "roles": {
           "admin": "Admin",
@@ -1050,7 +936,6 @@
       "registration_enabled": true,
       "options": {
         "username_pattern": "[A-Za-z0-9._-]+",
-        "username_hint": "Letters and digits",
         "password_max_length": 1024,
         "roles": {
           "admin": "Admin",
@@ -1084,9 +969,7 @@
         "enabled": true,
         "last_error": "",
         "last_imported_at": "",
-        "last_imported_label": "",
-        "next_run_at": "",
-        "next_run_label": ""
+        "next_run_at": ""
       },
       "bots": [
         {
@@ -1111,9 +994,7 @@
           "enabled": true,
           "last_error": "",
           "last_imported_at": "",
-          "last_imported_label": "",
-          "next_run_at": "",
-          "next_run_label": ""
+          "next_run_at": ""
         }
       ],
       "bots": [
@@ -1139,19 +1020,11 @@
           "role": "user",
           "status": "active",
           "can_delete": true,
-          "role_label": "User",
-          "status_label": "Active",
           "updated_at": "2026-01-01T12:00:00+00:00",
-          "updated_at_formatted": "Today",
           "source_count": 2,
-          "post_count": 3,
-          "updated_label": "Today"
+          "post_count": 3
         }
       ],
-      "status_options": {
-        "": "All",
-        "active": "Active"
-      },
       "filters": {
         "q": "",
         "status": ""
@@ -1178,7 +1051,6 @@
       },
       "title_id": "parity-modal-title",
       "title": "Title <unsafe>",
-      "close_label": "Close",
       "has_footer": true
     },
     "slots": {
@@ -1205,7 +1077,6 @@
       },
       "title_id": "parity-modal-title",
       "title": "Title <unsafe>",
-      "close_label": "Close",
       "has_footer": true,
       "form": true,
       "csrf": true,
@@ -1228,13 +1099,9 @@
           "open_count": 1,
           "excerpt": "Post",
           "note": "Report note <unsafe>",
-          "reason_label": "Spam",
-          "report_count_label": "2 reports",
           "status": "open",
-          "status_label": "Open",
-          "reported_at_label": "Today",
           "permalink_url": "/status/10",
-          "permalink_label": "Open post"
+          "report_count": 1
         }
       ]
     }
@@ -1248,7 +1115,6 @@
           "source_name": "Feed",
           "status": "error",
           "started_iso": "2026-01-01T12:00:00Z",
-          "started_label": "Today",
           "items_seen": 3,
           "error": "Failure <unsafe>"
         }
@@ -1264,7 +1130,6 @@
           "source_name": "Feed",
           "status": "error",
           "started_iso": "2026-01-01T12:00:00Z",
-          "started_label": "Today",
           "items_seen": 3,
           "error": "Failure <unsafe>"
         }

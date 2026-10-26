@@ -149,6 +149,20 @@ a:hover {
   padding-block: 24px;
 }
 
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.stack[hidden] {
+  display: none;
+}
+
+.stack > .btn {
+  align-self: flex-start;
+}
+
 .stack > * {
   margin-block: 0;
 }

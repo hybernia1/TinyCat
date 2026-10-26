@@ -32,9 +32,11 @@ declare(strict_types=1);
 /** @var list<string> $styleUrls */
 /** @var string $theme */
 /** @var string $themeAttribute */
+/** @var string $dateFormat */
+/** @var bool $dateRelative */
 ?>
 <!doctype html>
-<html lang="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Localization::locale()) ?>"<?= $themeAttribute ?>>
+<html lang="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Localization::locale()) ?>"<?= $themeAttribute ?> data-date-format="<?= \TinyCat\Support\Html::e($dateFormat) ?>" data-date-relative="<?= $dateRelative ? 'true' : 'false' ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">

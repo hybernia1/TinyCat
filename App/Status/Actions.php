@@ -45,7 +45,9 @@ final class Actions
             if (strlen($normalized) > \TinyCat\Status\Tags::status_tag_max_length()) {
                 \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_tag_too_long', [
                     'max' => (string) \TinyCat\Status\Tags::status_tag_max_length(),
-                ]), 422, 'status_tag_too_long');
+                ]), 422, 'status_tag_too_long', [], [
+                    'max' => (string) \TinyCat\Status\Tags::status_tag_max_length(),
+                ]);
             }
 
             if ($normalized !== '') {
@@ -64,7 +66,7 @@ final class Actions
         $mutedUntil = \TinyCat\Moderation\Restrictions::user_muted_until($user);
 
         if ($mutedUntil !== '') {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.account_muted', ['until' => \TinyCat\Support\Dates::displayDateTime($mutedUntil)]), 403, 'muted');
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.account_muted', ['until' => \TinyCat\Support\Dates::displayDateTime($mutedUntil)]), 403, 'muted', [], ['until' => \TinyCat\Support\Dates::displayDateTime($mutedUntil)]);
         }
     }
 
@@ -154,7 +156,7 @@ final class Actions
         } catch (LengthException) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_compression'), 422, 'status_image_compression');
         } catch (Throwable) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_invalid', ['size' => \TinyCat\Status\Images::status_image_max_upload_kb()]), 422, 'status_image_invalid');
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_invalid', ['size' => \TinyCat\Status\Images::status_image_max_upload_kb()]), 422, 'status_image_invalid', [], ['size' => \TinyCat\Status\Images::status_image_max_upload_kb()]);
         }
 
         try {
@@ -195,7 +197,7 @@ final class Actions
             'action' => 'create',
             'status' => \TinyCat\Status\Posts::status_json_summary($contentId, $user),
             'status_id' => $contentId,
-            'message' => \TinyCat\Support\Localization::t($scheduled ? 'account.messages.status_scheduled' : 'account.messages.status_created'),
+            'message' => \TinyCat\Support\Localization::t($scheduled ? 'account.messages.status_scheduled' : 'account.messages.status_created'), 'code' => $scheduled ? 'status_scheduled' : 'status_created',
         ];
 
         $resource = \TinyCat\Status\Feed::public_status_item($contentId);
@@ -331,7 +333,7 @@ final class Actions
                 'action' => 'report',
                 'status_id' => $contentId,
 
-                'message' => \TinyCat\Support\Localization::t('moderation.messages.report_already_reviewed'),
+                'message' => \TinyCat\Support\Localization::t('moderation.messages.report_already_reviewed'), 'code' => 'report_already_reviewed',
                 'type' => 'info',
             ];
         }
@@ -362,7 +364,7 @@ final class Actions
                 'action' => 'report',
                 'status_id' => $contentId,
 
-                'message' => \TinyCat\Support\Localization::t('moderation.messages.report_already_reviewed'),
+                'message' => \TinyCat\Support\Localization::t('moderation.messages.report_already_reviewed'), 'code' => 'report_already_reviewed',
                 'type' => 'info',
             ];
         }
@@ -392,7 +394,7 @@ final class Actions
             'action' => 'report',
             'status_id' => $contentId,
 
-            'message' => \TinyCat\Support\Localization::t('moderation.messages.report_created'),
+            'message' => \TinyCat\Support\Localization::t('moderation.messages.report_created'), 'code' => 'report_created',
         ];
     }
 
@@ -448,7 +450,7 @@ final class Actions
         } catch (LengthException) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_compression'), 422, 'status_image_compression');
         } catch (Throwable) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_invalid', ['size' => \TinyCat\Status\Images::status_image_max_upload_kb()]), 422, 'status_image_invalid');
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_image_invalid', ['size' => \TinyCat\Status\Images::status_image_max_upload_kb()]), 422, 'status_image_invalid', [], ['size' => \TinyCat\Status\Images::status_image_max_upload_kb()]);
         }
 
         try {
@@ -500,7 +502,7 @@ final class Actions
             'status_id' => $contentId,
             'status' => \TinyCat\Status\Posts::status_json_summary($contentId, $user),
 
-            'message' => \TinyCat\Support\Localization::t('account.messages.status_saved'),
+            'message' => \TinyCat\Support\Localization::t('account.messages.status_saved'), 'code' => 'status_saved',
         ];
 
         $resource = \TinyCat\Status\Feed::public_status_item($contentId);
@@ -528,7 +530,7 @@ final class Actions
             'status_id' => $contentId,
             'deleted_status_id' => $contentId,
 
-            'message' => \TinyCat\Support\Localization::t('account.messages.status_deleted'),
+            'message' => \TinyCat\Support\Localization::t('account.messages.status_deleted'), 'code' => 'status_deleted',
         ];
     }
 
@@ -627,7 +629,7 @@ final class Actions
             'action' => 'comment',
             'status' => \TinyCat\Status\Posts::status_json_summary($contentId, $user),
             'comment_id' => $commentId,
-            'message' => \TinyCat\Support\Localization::t('account.messages.comment_created'),
+            'message' => \TinyCat\Support\Localization::t('account.messages.comment_created'), 'code' => 'comment_created',
         ];
 
         $data['comment'] = \TinyCat\Status\Actions::status_json_comment_payload($commentId, $user, $redirect, $context);
@@ -766,7 +768,7 @@ final class Actions
             'status' => \TinyCat\Status\Posts::status_json_summary($contentId, $user),
             'updated_comment' => Resource::comment(\TinyCat\Status\Comments::status_comment_item_find($commentId) ?? [], $user),
 
-            'message' => \TinyCat\Support\Localization::t('account.messages.comment_saved'),
+            'message' => \TinyCat\Support\Localization::t('account.messages.comment_saved'), 'code' => 'comment_saved',
         ];
     }
 
@@ -794,7 +796,7 @@ final class Actions
             'action' => 'comment_delete',
             'status' => \TinyCat\Status\Posts::status_json_summary($contentId, $user),
             'deleted_comment_id' => $commentId,
-            'message' => \TinyCat\Support\Localization::t('account.messages.comment_deleted'),
+            'message' => \TinyCat\Support\Localization::t('account.messages.comment_deleted'), 'code' => 'comment_deleted',
         ];
     }
 }

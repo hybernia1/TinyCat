@@ -11,7 +11,7 @@ Modules own their routes; the entry point only composes and dispatches the app.
 ## JSON contract
 
 ```json
-{"ok":true,"status":200,"message":null,"data":{},"meta":{}}
+{"ok":true,"status":200,"code":"ok","params":{},"message":null,"data":{},"meta":{}}
 ```
 
 All API endpoints return resource data only. `view=html`, `format=html`, HTML Accept
@@ -20,8 +20,19 @@ contain HTML fragments, modal markup, DOM selectors or CAPTCHA markup. A user's
 literal text may contain `<` and `>`; clients must render it with DOM text APIs.
 Messages appear once, in the envelope. Lists use `data.items` and `meta.pagination`.
 
-Errors use `error.code` and `error.details`. Validation fields live only at
-`error.details.errors`; modules do not emit the former top-level alias.
+Every outcome uses top-level `code` and `params`; `message` is a readable fallback.
+Domain codes are stable API identifiers, independent of translation identifiers.
+Errors add `error.details`. Validation fields live only at
+`error.details.errors`, with lists of `{code, params, message}` issues. Issue params
+include the field name. The former `error.code` path and string-only field issues
+are replaced by this contract; bundled clients are updated together with the API.
+
+Resources return domain states, allowed option values, counts, ISO timestamps and
+content, rather than translated labels or translation keys. Shared module
+components supply localized labels, icons, accessible names and date formatting
+for both initial HTML and AJAX. API serialization rejects presentation fields.
+Module-owned code-to-translation maps travel in external hashed assets. Clients
+use their current catalog and preserve server fallbacks for unknown codes.
 CAPTCHA failures include `error.details.captcha` with `enabled`, `provider`,
 `site_key`, `context` and `refresh`. No secret key is exposed.
 
@@ -63,7 +74,7 @@ by body IDs. User list filters retain `q`, `role`, `status`, `updated_from`,
 | PATCH | `/api/notifications/{id}` | Mark own item read |
 | DELETE | `/api/notifications/{id}` | Delete own item |
 
-All routes require a session. Items contain identity, type, localized message,
+All routes require a session. Items contain identity, type, actor data,
 excerpt, URL, read state and timestamps. Cursor pages contain up to 40 items;
 `meta.pagination` contains `next_url` and `done`. Equal timestamps are ordered by ID.
 

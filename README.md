@@ -191,7 +191,8 @@ Tests and development tools are excluded from signed production packages.
 - `App/<Module>/Pages.php` owns page handlers; private page templates and partials live in `App/<Module>/templates/`.
 - `Public/` retains the bootstrap installer and technical RSS, sitemap, robots and LLM discovery endpoints.
 - `assets/` contains source CSS, JavaScript, the SVG icon sprite, shared UI definitions and module-owned client manifests.
-- `lang/<locale>/` contains each language package: `app.json` for the interface and optional `emails.json` for email templates.
+- `App/<Module>/lang/<locale>.json` contains module-owned translations; `App/Mail/lang/` owns server-only email templates. `lang/<locale>.json` declares language names.
+- Module manifests explicitly declare JavaScript translation dependencies; component definitions declare theirs through static `t` references. Release builds emit hashed page catalogs and OPcache-compatible PHP catalogs in `App/Support/compiled/`.
 - `storage/` contains private runtime state and generated asset caches.
 - `uploads/` contains user and site media.
 - `tools/` contains versioned development and release utilities; it is excluded from production packages and blocked from web access.

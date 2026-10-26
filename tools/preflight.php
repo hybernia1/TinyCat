@@ -23,6 +23,7 @@ $commands = [
     'Composer metadata' => 'composer validate --strict --no-interaction',
     'Dependency advisories' => 'composer audit --locked --no-interaction',
     'Deterministic code style' => $php . ' ' . escapeshellarg($root . '/tools/style-check.php'),
+    'Translation catalogs and client declarations' => $php . ' ' . escapeshellarg($root . '/tools/check-translations.php'),
     'PHP 8.4 lint' => $php . ' ' . escapeshellarg($root . '/tools/php-lint.php'),
     'PHPStan level 8' => $php . ' ' . escapeshellarg($root . '/vendor/bin/phpstan') . ' analyse --configuration=' . escapeshellarg($root . '/phpstan.neon') . ' --no-progress',
     'Repository security' => $php . ' ' . escapeshellarg($root . '/tools/security-check.php'),

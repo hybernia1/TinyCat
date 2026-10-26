@@ -7,6 +7,10 @@
     "entries": [
       "assets/modules/scheduler/index.js"
     ],
-    "styles": []
+    "styles": [],
+    "translations": [],
+    "messages": {
+      "scheduler_token_rotated": "cron.messages.token_rotated"
+    }
   }
 ]

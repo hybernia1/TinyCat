@@ -18,7 +18,146 @@
         "attrs": {},
         "children": [
           {
-            "get": "item.message"
+            "lookup": {
+              "get": "item.type"
+            },
+            "cases": {
+              "follow": {
+                "t": "notifications.messages.follow",
+                "values": {
+                  "actor": {
+                    "or": [
+                      {
+                        "get": "item.actor.username"
+                      },
+                      {
+                        "t": "notifications.someone"
+                      }
+                    ]
+                  }
+                }
+              },
+              "content_like": {
+                "t": "notifications.messages.content_like",
+                "values": {
+                  "actor": {
+                    "or": [
+                      {
+                        "get": "item.actor.username"
+                      },
+                      {
+                        "t": "notifications.someone"
+                      }
+                    ]
+                  }
+                }
+              },
+              "comment_like": {
+                "t": "notifications.messages.comment_like",
+                "values": {
+                  "actor": {
+                    "or": [
+                      {
+                        "get": "item.actor.username"
+                      },
+                      {
+                        "t": "notifications.someone"
+                      }
+                    ]
+                  }
+                }
+              },
+              "content_comment": {
+                "t": "notifications.messages.content_comment",
+                "values": {
+                  "actor": {
+                    "or": [
+                      {
+                        "get": "item.actor.username"
+                      },
+                      {
+                        "t": "notifications.someone"
+                      }
+                    ]
+                  }
+                }
+              },
+              "content_mention": {
+                "t": "notifications.messages.content_mention",
+                "values": {
+                  "actor": {
+                    "or": [
+                      {
+                        "get": "item.actor.username"
+                      },
+                      {
+                        "t": "notifications.someone"
+                      }
+                    ]
+                  }
+                }
+              },
+              "comment_mention": {
+                "t": "notifications.messages.comment_mention",
+                "values": {
+                  "actor": {
+                    "or": [
+                      {
+                        "get": "item.actor.username"
+                      },
+                      {
+                        "t": "notifications.someone"
+                      }
+                    ]
+                  }
+                }
+              },
+              "report_resolved": {
+                "t": "notifications.messages.report_resolved",
+                "values": {
+                  "actor": {
+                    "or": [
+                      {
+                        "get": "item.actor.username"
+                      },
+                      {
+                        "t": "notifications.someone"
+                      }
+                    ]
+                  }
+                }
+              },
+              "report_dismissed": {
+                "t": "notifications.messages.report_dismissed",
+                "values": {
+                  "actor": {
+                    "or": [
+                      {
+                        "get": "item.actor.username"
+                      },
+                      {
+                        "t": "notifications.someone"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "default": {
+              "t": "notifications.messages.generic",
+              "values": {
+                "actor": {
+                  "or": [
+                    {
+                      "get": "item.actor.username"
+                    },
+                    {
+                      "t": "notifications.someone"
+                    }
+                  ]
+                }
+              }
+            }
           }
         ]
       },
@@ -43,7 +182,9 @@
         },
         "children": [
           {
-            "get": "item.created_label"
+            "date": {
+              "get": "item.created_at"
+            }
           }
         ],
         "when": {
@@ -197,7 +338,20 @@
                     "get": "item.actor.username"
                   },
                   "fallback_icon": {
-                    "get": "item.icon"
+                    "lookup": {
+                      "get": "item.type"
+                    },
+                    "cases": {
+                      "follow": "user-plus",
+                      "content_like": "thumb-up",
+                      "comment_like": "thumb-up",
+                      "content_comment": "message-circle",
+                      "content_mention": "user",
+                      "comment_mention": "user",
+                      "report_resolved": "check",
+                      "report_dismissed": "flag"
+                    },
+                    "default": "bell"
                   }
                 }
               }
@@ -285,7 +439,20 @@
                 "get": "item.actor.username"
               },
               "fallback_icon": {
-                "get": "item.icon"
+                "lookup": {
+                  "get": "item.type"
+                },
+                "cases": {
+                  "follow": "user-plus",
+                  "content_like": "thumb-up",
+                  "comment_like": "thumb-up",
+                  "content_comment": "message-circle",
+                  "content_mention": "user",
+                  "comment_mention": "user",
+                  "report_resolved": "check",
+                  "report_dismissed": "flag"
+                },
+                "default": "bell"
               }
             }
           }

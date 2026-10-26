@@ -13,8 +13,20 @@ import "./icons.js";
     if (own(expr, "get")) { return expr.get.split(".").reduce(function (result, key) { return result != null && Object.prototype.hasOwnProperty.call(result, key) ? result[key] : null; }, data); }
     if (own(expr, "string")) { var scalar = value(expr.string, data); return scalar == null ? "" : String(scalar); }
     if (own(expr, "json")) { return JSON.stringify(value(expr.json, data)); }
+    if (own(expr, "plural")) { return T.i18n.plural(expr.plural, value(expr.count, data), bindings(expr.values || {}, data)); }
     if (own(expr, "count")) { var entries = Object.values(value(expr.count, data) || {}); return expr.where ? entries.filter(function (entry) { return truth(entry[expr.where]); }).length : entries.length; }
     if (own(expr, "t")) { return T.i18n.t(expr.t, bindings(expr.values || {}, data)); }
+    if (own(expr, "use")) {
+      if (!own(templates, expr.use)) { throw new TypeError("Unknown presentation value: " + expr.use); }
+      return value(templates[expr.use], bindings(expr.data || {}, data));
+    }
+    if (own(expr, "lookup")) { var key = String(value(expr.lookup, data) || ""); return value(own(expr.cases, key) ? expr.cases[key] : (own(expr, "default") ? expr.default : key), data); }
+    if (own(expr, "options")) {
+      var items = value(expr.options, data) || [], codes = Array.isArray(items) ? items : Object.keys(items), options = Object.create(null);
+      if (expr.all) { options[""] = T.i18n.t("common.all"); }
+      codes.forEach(function (code) { options[code] = value(own(expr.cases, code) ? expr.cases[code] : code, data); }); return options;
+    }
+    if (own(expr, "date")) { return T.dates.format(value(expr.date, data), expr.format); }
     if (own(expr, "concat")) { return expr.concat.map(function (part) { var result = value(part, data); return result == null ? "" : String(result); }).join(""); }
     if (own(expr, "if")) { return value(expr.if[truth(value(expr.if[0], data)) ? 1 : 2], data); }
     if (own(expr, "eq")) { return value(expr.eq[0], data) === value(expr.eq[1], data); }

@@ -111,17 +111,7 @@ final class Languages
             return (string) $names[$code];
         }
 
-        $path = \TinyCat\Support\Paths::basePath('lang/' . $code . '/app.json');
-
-        if (is_file($path)) {
-            $data = json_decode((string) file_get_contents($path), true);
-
-            if (is_array($data) && !empty($data['install']['language_label'])) {
-                return (string) $data['install']['language_label'];
-            }
-        }
-
-        return (string) ($default ?? strtoupper($code));
+        return self::language_packages()[$code] ?? (string) ($default ?? strtoupper($code));
     }
 
     /**
@@ -166,33 +156,7 @@ final class Languages
      */
     public static function language_packages(): array
     {
-        $directory = \TinyCat\Support\Paths::basePath('lang');
-        $defaults = \TinyCat\Support\Languages::language_names();
-        $items = [];
-
-        foreach (glob($directory . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [] as $languageDirectory) {
-            $directoryName = basename($languageDirectory);
-            $code = \TinyCat\Support\Languages::language_code($directoryName);
-
-            if ($code === '' || $directoryName !== $code) {
-                continue;
-            }
-
-            $file = $languageDirectory . DIRECTORY_SEPARATOR . 'app.json';
-
-            if (!is_file($file)) {
-                continue;
-            }
-
-            $data = json_decode((string) file_get_contents($file), true);
-            $items[$code] = is_array($data) && !empty($data['install']['language_label'])
-                ? (string) $data['install']['language_label']
-                : ($defaults[$code] ?? strtoupper($code));
-        }
-
-        ksort($items);
-
-        return $items;
+        return CompiledTranslations::packages() ?? TranslationSources::packages();
     }
 
     /**

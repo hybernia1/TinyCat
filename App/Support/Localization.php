@@ -3,21 +3,23 @@ declare(strict_types=1);
 
 namespace TinyCat\Support;
 
-use RuntimeException;
 use InvalidArgumentException;
-use JsonException;
 use \TinyCat\Support\Config;
 
 final class Localization
 {
+    private const string PLACEHOLDER_PATTERN = '/(?<!\{)\{([A-Za-z_][A-Za-z0-9_]*)\}(?!\})/';
     private static ?string $locale = null;
-    /** @var array<mixed> */
+    /** @var array<string, array<string, string>> */
     private static array $translations = [];
+    /** @var array<string, array<string, string>> */
+    private static array $catalogs = [];
 
     public static function reset(): void
     {
         self::$locale = null;
         self::$translations = [];
+        self::$catalogs = [];
     }
 
     public static function locale(?string $locale = null): string
@@ -49,15 +51,8 @@ final class Localization
     {
         $locale ??= self::locale();
         self::assertLocale($locale);
-
-        $value = self::translation($key, $locale);
-        if ($value === null && $locale !== 'en') { $value = self::translation($key, 'en'); }
-
-        if ($value === null) {
-            $value = $key;
-        }
-
-        return self::replacePlaceholders(\TinyCat\Support\Values::string($value), $replace);
+        $value = self::catalog($locale)[$key] ?? $key;
+        return self::format($value, $replace);
     }
 
     /** @return array<string, string> */
@@ -65,106 +60,77 @@ final class Localization
     {
         $locale ??= self::locale();
         self::assertLocale($locale);
-        $flatten = static function (array $items, string $prefix = '') use (&$flatten): array {
-            $result = [];
-            foreach ($items as $key => $value) {
-                $name = $prefix === '' ? (string) $key : $prefix . '.' . $key;
-                if (is_array($value)) { $result += $flatten($value, $name); }
-                elseif (is_string($value)) { $result[$name] = $value; }
-            }
-            return $result;
-        };
-        $catalog = array_replace($flatten(self::translations('en')), $flatten(self::translations($locale)));
+        if (isset(self::$catalogs[$locale])) { return self::$catalogs[$locale]; }
+        $compiled = CompiledTranslations::application($locale);
+        if ($compiled !== null) { return self::$catalogs[$locale] = $compiled; }
+        $catalog = [];
+        foreach (self::fallbacks($locale) as $candidate) { $catalog = array_replace($catalog, self::translations($candidate)); }
         ksort($catalog);
-        return $catalog;
+        return self::$catalogs[$locale] = $catalog;
     }
 
-    /**
-     * @return array<mixed>
-     */
-    private static function translations(?string $locale = null): array
+    /** @return array<string, string> */
+    private static function translations(string $locale): array
     {
-        $locale ??= self::locale();
-        self::assertLocale($locale);
-
-        if (array_key_exists($locale, self::$translations)) {
-            return self::$translations[$locale];
-        }
-
-        $path = self::translationPath($locale);
-
-        if (!is_file($path)) {
-            self::$translations[$locale] = [];
-            return self::$translations[$locale];
-        }
-
-        $json = file_get_contents($path);
-
-        if ($json === false) {
-            throw new RuntimeException('Could not read translation file: ' . $path);
-        }
-
-        try {
-            $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $exception) {
-            throw new RuntimeException('Translation file contains invalid JSON: ' . $path, 0, $exception);
-        }
-
-        if (!is_array($data)) {
-            throw new RuntimeException('Translation file must contain a JSON object: ' . $path);
-        }
-
-        self::$translations[$locale] = $data;
-
-        return self::$translations[$locale];
-    }
-
-    private static function translation(string $key, string $locale): mixed
-    {
-        $data = self::translations($locale);
-
-        if (array_key_exists($key, $data)) {
-            return $data[$key];
-        }
-
-        $value = $data;
-
-        foreach (explode('.', $key) as $segment) {
-            if (!is_array($value) || !array_key_exists($segment, $value)) {
-                return null;
-            }
-
-            $value = $value[$segment];
-        }
-
-        return $value;
-    }
-
-    private static function translationPath(string $locale): string
-    {
-        self::assertLocale($locale);
-
-        return \TinyCat\Support\Paths::basePath('lang/' . $locale . '/app.json');
+        return self::$translations[$locale] ??= CompiledTranslations::application($locale)
+            ?? (CompiledTranslations::packages() !== null ? [] : TranslationSources::catalog($locale));
     }
 
     /**
      * @param array<mixed> $replace
      */
-    private static function replacePlaceholders(string $text, array $replace): string
+    public static function format(string $text, array $replace = []): string
     {
         if ($replace === []) {
             return $text;
         }
 
-        $tokens = [];
+        return preg_replace_callback(self::PLACEHOLDER_PATTERN, static fn (array $match): string => array_key_exists($match[1], $replace) ? Values::string($replace[$match[1]]) : $match[0], $text) ?? $text;
+    }
 
-        foreach ($replace as $key => $value) {
-            $value = \TinyCat\Support\Values::string($value);
-            $tokens['{' . $key . '}'] = $value;
-            $tokens[':' . $key] = $value;
+    /** @return list<string> Low to high priority, shared by application and mail catalogs. */
+    public static function fallbacks(string $locale): array
+    {
+        self::assertLocale($locale);
+        $locale = strtolower(str_replace('_', '-', $locale));
+        $locales = [];
+        while ($locale !== '') {
+            $locales[] = $locale;
+            $separator = strrpos($locale, '-');
+            $locale = $separator === false ? '' : substr($locale, 0, $separator);
         }
+        return array_values(array_unique(['en', ...array_reverse($locales)]));
+    }
 
-        return strtr($text, $tokens);
+    public static function pluralCategory(int|float $count, string $locale): string
+    {
+        if (!is_finite((float) $count)) { throw new InvalidArgumentException('Plural counts must be finite.'); }
+        $count = abs($count);
+        $language = explode('-', strtolower(str_replace('_', '-', $locale)))[0];
+        if ($language === 'cs' || $language === 'sk') {
+            if (floor($count) !== (float) $count) { return 'many'; }
+            return $count === 1 || $count === 1.0 ? 'one' : ($count >= 2 && $count <= 4 ? 'few' : 'other');
+        }
+        return $count === 1 || $count === 1.0 ? 'one' : 'other';
+    }
+
+    /** @param array<mixed> $replace */
+    public static function plural(string $key, int|float $count, array $replace = [], ?string $locale = null): string
+    {
+        $locale ??= self::locale();
+        $catalog = self::catalog($locale);
+        $category = self::pluralCategory($count, $locale);
+        $replace['count'] = $count;
+        return self::format($catalog[$key . '.' . $category] ?? $catalog[$key . '.other'] ?? $key, $replace);
+    }
+
+    /** @return list<string> */
+    public static function parameters(string $text): array
+    {
+        preg_match_all(self::PLACEHOLDER_PATTERN, $text, $matches);
+        $parameters = array_values(array_unique($matches[1]));
+        sort($parameters);
+        return $parameters;
     }
 
     private static function assertLocale(string $locale): void

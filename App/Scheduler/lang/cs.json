@@ -1,0 +1,27 @@
+{
+  "cron": {
+    "title": "Plánované úlohy",
+    "intro": "Jeden malý runner zpřístupňuje samostatné plánované úlohy se společným zabezpečením.",
+    "access_title": "Přístup a token",
+    "access_help": "Společný endpoint a ověření používané všemi plánovanými úlohami.",
+    "url": "URL endpointu",
+    "token": "Bearer token",
+    "task_url": "URL pro jednoduchý web-cron",
+    "query_help": "Kompatibilní varianta pro služby bez vlastních hlaviček. Token se může uložit do access logu serveru.",
+    "http_command": "HTTP příkaz",
+    "cli_command": "Serverový příkaz",
+    "rotate": "Obnovit token",
+    "rotate_confirm": "Obnovit cron token? Existující naplánovaná volání přestanou fungovat, dokud je neupravíš.",
+    "tasks": {
+      "cleanup": "Automatický úklid",
+      "cleanup_help": "Odstraňuje nepoužívané štítky a odkazy, staré rate-limit buckety, expirované reset tokeny a přečtené notifikace.",
+      "cleanup_schedule": "Naplánuj jednou za hodinu. Interní kontrola zabrání příliš častému spuštění.",
+      "feeds": "RSS a Atom zdroje",
+      "feeds_help": "Publikuje položky z aktivních zdrojů, jejichž interval právě vypršel.",
+      "feeds_schedule": "Naplánuj podle požadované frekvence kontroly, obvykle každé dvě minuty."
+    },
+    "messages": {
+      "token_rotated": "Cron token byl obnoven."
+    }
+  }
+}

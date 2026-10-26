@@ -8,12 +8,7 @@
     return typeof value === "object" ? JSON.stringify(value) : String(value);
   }
   function format(text, values) {
-    var tokens = Object.create(null);
-    Object.keys(values || {}).forEach(function (key) { tokens["{" + key + "}"] = scalar(values[key]); tokens[":" + key] = scalar(values[key]); });
-    var keys = Object.keys(tokens).sort(function (a, b) { return b.length - a.length; });
-    if (!keys.length) { return text; }
-    var pattern = keys.map(function (key) { return key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|");
-    return text.replace(new RegExp(pattern, "g"), function (token) { return tokens[token]; });
+    return text.replace(/(?<!\{)\{([A-Za-z_][A-Za-z0-9_]*)\}(?!\})/g, function (token, name) { return Object.prototype.hasOwnProperty.call(values || {}, name) ? scalar(values[name]) : token; });
   }
   function uiText(name, fallback) {
     var keys = { close: "common.close", cancel: "common.cancel", confirm: "common.confirm", confirmTitle: "common.confirm_action", requestFailed: "common.request_failed" };
@@ -34,6 +29,20 @@
     locale: function () { return locale; },
     has: function (key) { return Object.prototype.hasOwnProperty.call(catalog, key); },
     t: function (key, values) { return format(T.i18n.has(key) ? catalog[key] : key, values); },
+    plural: function (key, count, values) {
+      var category = T.i18n.pluralCategory(count, locale || "en");
+      var selected = T.i18n.has(key + "." + category) ? catalog[key + "." + category] : (T.i18n.has(key + ".other") ? catalog[key + ".other"] : key);
+      return format(selected, Object.assign({}, values || {}, { count: count }));
+    },
+    pluralCategory: function (count, language) {
+      if (typeof count !== "number" || !Number.isFinite(count)) { throw new TypeError("Plural counts must be finite numbers."); }
+      count = Math.abs(count);
+      if (/^(cs|sk)(?:-|_|$)/i.test(language)) {
+        if (!Number.isInteger(count)) { return "many"; }
+        return count === 1 ? "one" : (count >= 2 && count <= 4 ? "few" : "other");
+      }
+      return count === 1 ? "one" : "other";
+    },
     format: format
   };
 }());

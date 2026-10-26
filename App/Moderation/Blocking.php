@@ -115,7 +115,7 @@ final class Blocking
         $blockedHost = \TinyCat\Moderation\Blocking::moderation_blocked_url_match($text);
 
         if ($blockedHost !== '') {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.blocked_url', ['host' => $blockedHost]), 422, 'blocked_url', ['host' => $blockedHost]);
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.blocked_url', ['host' => $blockedHost]), 422, 'blocked_url', ['host' => $blockedHost], ['host' => $blockedHost]);
         }
     }
 

@@ -29,12 +29,7 @@ $botName = '@' . (string) ($bot['username'] ?? '');
     <div class="card-body">
         <div class="grid sm:grid-2 md:grid-4">
             <?php foreach ($stats as $stat): ?>
-                <div class="card">
-                    <div class="card-body stack gap-1">
-                        <span class="table-meta"><?= \TinyCat\Support\Html::et((string) $stat['label']) ?></span>
-                        <strong class="text-2xl" data-bot-stat="<?= \TinyCat\Support\Html::e((string) $stat['key']) ?>"><?= \TinyCat\Support\Html::e((string) $stat['value']) ?></strong>
-                    </div>
-                </div>
+                <?= \TinyCat\Support\Components::render('bots/stat', ['stat' => $stat]) ?>
             <?php endforeach; ?>
         </div>
     </div>

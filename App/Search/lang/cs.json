@@ -1,0 +1,25 @@
+{
+  "public": {
+    "search_title": "Vyhledávání",
+    "search_title_query": "Vyhledávání \"{query}\"",
+    "search_meta": "Vyhledávání příspěvků, profilů a štítků.",
+    "search_meta_query": "Výsledky vyhledávání pro {query}.",
+    "search_placeholder": "Hledat příspěvky nebo profily",
+    "search_suggest_placeholder": "Hledat",
+    "search_all": "Hledat vše",
+    "search_tags": "Štítky",
+    "search_users": "Profily",
+    "search_content": "Příspěvky",
+    "search_empty": "Nic nenalezeno.",
+    "search_min": "Zadej alespoň 2 znaky.",
+    "search_captcha_title": "Bezpečnostní ověření",
+    "search_captcha_required": "Dokonči bezpečnostní ověření pro pokračování ve vyhledávání.",
+    "search_captcha_unlocked": "Vyhledávání bylo odemčeno.",
+    "search_tag_posts": {
+      "one": "{count} příspěvek",
+      "few": "{count} příspěvky",
+      "many": "{count} příspěvku",
+      "other": "{count} příspěvků"
+    }
+  }
+}

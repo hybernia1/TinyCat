@@ -11,6 +11,11 @@
     ],
     "styles": [
       "assets/modules/security/styles/006-captcha-provider.css"
-    ]
+    ],
+    "translations": [],
+    "messages": {
+      "captcha_invalid": "auth.invalid_captcha",
+      "search_search_captcha_unlocked": "public.search_captcha_unlocked"
+    }
   }
 ]

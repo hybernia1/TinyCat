@@ -1,0 +1,54 @@
+{
+  "moderation": {
+    "title": "Moderace",
+    "reports_title": "Nahlášení",
+    "reports_empty": "Nejsou tu žádná nahlášení.",
+    "reported_content": "Nahlášený obsah",
+    "report_status": "Nahlásit příspěvek",
+    "report_action": "Nahlásit",
+    "report_reason": "Důvod",
+    "report_note": "Poznámka",
+    "report_submit": "Odeslat nahlášení",
+    "profile_muted_until": "Účet je umlčen do {until}.",
+    "url_blocker_title": "Blokované URL",
+    "url_blocker_label": "Blokované weby",
+    "url_blocker_placeholder": "example.com, bad.example, domain:ru",
+    "url_blocker_help": "Odděl weby čárkou nebo novým řádkem. Blokuje se i jejich subdoména. Zápis domain:ru zablokuje celou koncovku .ru.",
+    "remove_content": "Odstranit obsah",
+    "keep_and_lock": "Ponechat a zamknout",
+    "empty_content": "Prázdný obsah",
+    "report_reasons": {
+      "spam": "Spam",
+      "illegal": "Nelegální obsah",
+      "malware": "Malware nebo phishing",
+      "abuse": "Obtěžování",
+      "other": "Jiné"
+    },
+    "report_statuses": {
+      "open": "Otevřené",
+      "reviewed": "Zkontrolované",
+      "resolved": "Vyřešené",
+      "dismissed": "Zamítnuté"
+    },
+    "messages": {
+      "action_limited": "Tento účet dosáhl dočasného limitu akcí.",
+      "action_too_fast": "Před další akcí chvíli počkej.",
+      "account_muted": "Účet je dočasně umlčen do {until}.",
+      "blocked_url": "Tento odkaz není povolen: {host}.",
+      "duplicate_body": "Tento příspěvek je příliš podobný tvému nedávnému příspěvku.",
+      "report_created": "Nahlášení bylo odesláno.",
+      "report_already_reviewed": "Příspěvek už byl zkontrolován a nahlášení se znovu neotevřelo.",
+      "report_own_content": "Vlastní příspěvek nelze nahlásit.",
+      "reports_unavailable": "Nahlášení nejsou dostupná.",
+      "report_not_found": "Nahlášení nebylo nalezeno.",
+      "report_reviewed": "Nahlášení bylo zkontrolováno.",
+      "url_blocker_saved": "Blokované URL byly uloženy."
+    },
+    "report_count": {
+      "one": "{count} nahlášení",
+      "few": "{count} nahlášení",
+      "many": "{count} nahlášení",
+      "other": "{count} nahlášení"
+    }
+  }
+}

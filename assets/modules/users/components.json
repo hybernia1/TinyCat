@@ -153,7 +153,7 @@
                                 "get": "create"
                               },
                               {
-                                "get": "options.username_hint"
+                                "t": "account.username_hint"
                               },
                               {
                                 "t": "users.username_locked",
@@ -443,7 +443,20 @@
                         ]
                       },
                       "choices": {
-                        "get": "options.roles"
+                        "options": {
+                          "get": "options.roles"
+                        },
+                        "cases": {
+                          "admin": {
+                            "t": "users.roles.admin"
+                          },
+                          "user": {
+                            "t": "users.roles.user"
+                          },
+                          "bot": {
+                            "t": "users.roles.bot"
+                          }
+                        }
                       }
                     }
                   },
@@ -484,7 +497,20 @@
                         ]
                       },
                       "choices": {
-                        "get": "options.statuses"
+                        "options": {
+                          "get": "options.statuses"
+                        },
+                        "cases": {
+                          "active": {
+                            "t": "users.statuses.active"
+                          },
+                          "waiting": {
+                            "t": "users.statuses.waiting"
+                          },
+                          "ban": {
+                            "t": "users.statuses.ban"
+                          }
+                        }
                       }
                     }
                   }
@@ -525,7 +551,20 @@
         "attrs": {},
         "children": [
           {
-            "get": "user.role_label"
+            "lookup": {
+              "get": "user.role"
+            },
+            "cases": {
+              "admin": {
+                "t": "users.roles.admin"
+              },
+              "user": {
+                "t": "users.roles.user"
+              },
+              "bot": {
+                "t": "users.roles.bot"
+              }
+            }
           }
         ]
       },
@@ -540,7 +579,20 @@
                 "get": "user.status"
               },
               "label": {
-                "get": "user.status_label"
+                "lookup": {
+                  "get": "user.status"
+                },
+                "cases": {
+                  "active": {
+                    "t": "users.statuses.active"
+                  },
+                  "waiting": {
+                    "t": "users.statuses.waiting"
+                  },
+                  "ban": {
+                    "t": "users.statuses.ban"
+                  }
+                }
               }
             }
           }
@@ -560,7 +612,9 @@
             },
             "children": [
               {
-                "get": "user.updated_at_formatted"
+                "date": {
+                  "get": "user.updated_at"
+                }
               }
             ]
           }
@@ -922,7 +976,7 @@
         },
         "children": [
           {
-            "get": "options.username_hint"
+            "t": "account.username_hint"
           }
         ],
         "when": {
@@ -1442,7 +1496,21 @@
             "get": "filters.role"
           },
           "choices": {
-            "get": "role_options"
+            "options": {
+              "get": "roles"
+            },
+            "cases": {
+              "admin": {
+                "t": "users.roles.admin"
+              },
+              "user": {
+                "t": "users.roles.user"
+              },
+              "bot": {
+                "t": "users.roles.bot"
+              }
+            },
+            "all": true
           }
         }
       },
@@ -1462,7 +1530,21 @@
             "get": "filters.status"
           },
           "choices": {
-            "get": "status_options"
+            "options": {
+              "get": "statuses"
+            },
+            "cases": {
+              "active": {
+                "t": "users.statuses.active"
+              },
+              "waiting": {
+                "t": "users.statuses.waiting"
+              },
+              "ban": {
+                "t": "users.statuses.ban"
+              }
+            },
+            "all": true
           }
         }
       },

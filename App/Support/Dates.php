@@ -251,9 +251,8 @@ final class Dates
             default => ['year', max(1, (int) round($absolute / (365 * 86400)))],
         };
         $direction = $seconds < 0 ? 'past' : 'future';
-        $form = \TinyCat\Support\Dates::relative_plural_form($count);
 
-        return \TinyCat\Support\Localization::t('relative.' . $direction . '.' . $unit . '.' . $form, ['count' => (string) $count]);
+        return \TinyCat\Support\Localization::plural('relative.' . $direction . '.' . $unit, $count);
     }
 
     public static function relative_datetime_value(mixed $value = null): DateTimeImmutable
@@ -279,14 +278,4 @@ final class Dates
         return new DateTimeImmutable($value, \TinyCat\Support\Dates::timezone());
     }
 
-    public static function relative_plural_form(int $count): string
-    {
-        $language = strtolower(strtok(\TinyCat\Support\Localization::locale(), '-_') ?: 'en');
-
-        if (in_array($language, ['cs', 'sk'], true)) {
-            return $count === 1 ? 'one' : ($count >= 2 && $count <= 4 ? 'few' : 'many');
-        }
-
-        return $count === 1 ? 'one' : 'many';
-    }
 }

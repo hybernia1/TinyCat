@@ -115,7 +115,7 @@ final class Administration
     {
         $posted = \TinyCat\Http\Request::current()->input('settings', []);
         if (!is_array($posted)) {
-            \TinyCat\Http\Response::validation(['settings' => [\TinyCat\Support\Localization::t('common.request_failed')]]);
+            \TinyCat\Http\Response::validation(['settings' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]);
         }
 
         foreach (\TinyCat\Settings\Administration::tc_admin_settings_sections() as $group => $section) {
@@ -127,7 +127,7 @@ final class Administration
                 $nested = in_array($field['type'], ['email_smtp', 'email_templates'], true);
                 if (($nested && (!is_array($raw) || array_filter($raw, static fn (mixed $value): bool => !is_scalar($value) && $value !== null) !== []))
                     || (!$nested && !is_scalar($raw) && $raw !== null)) {
-                    \TinyCat\Http\Response::validation(['settings' => [\TinyCat\Support\Localization::t('common.request_failed')]]);
+                    \TinyCat\Http\Response::validation(['settings' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]);
                 }
                 if (($field['type'] ?? '') === 'password' && trim((string) (($posted[(string) $field['key']] ?? ''))) === '') {
                     continue;

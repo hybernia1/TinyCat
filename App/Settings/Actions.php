@@ -17,6 +17,6 @@ final class Actions
             \TinyCat\Http\Response::error($exception->getMessage(), 422, 'settings_save_failed');
         }
 
-        return \TinyCat\Settings\Administration::tc_admin_settings_payload() + ['message' => \TinyCat\Support\Localization::t('settings.messages.saved')];
+        return \TinyCat\Settings\Administration::tc_admin_settings_payload() + ['message' => \TinyCat\Support\Localization::t('settings.messages.saved'), 'code' => 'settings_saved'];
     }
 }

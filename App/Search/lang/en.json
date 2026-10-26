@@ -1,0 +1,25 @@
+{
+  "public": {
+    "search_title": "Search",
+    "search_title_query": "Search \"{query}\"",
+    "search_meta": "Search posts, profiles, and tags.",
+    "search_meta_query": "Search results for {query}.",
+    "search_placeholder": "Search posts or profiles",
+    "search_suggest_placeholder": "Search",
+    "search_all": "Search all",
+    "search_tags": "Tags",
+    "search_users": "Profiles",
+    "search_content": "Posts",
+    "search_empty": "Nothing found.",
+    "search_min": "Type at least 2 characters.",
+    "search_captcha_title": "Security check",
+    "search_captcha_required": "Please complete the security check to continue searching.",
+    "search_captcha_unlocked": "Search was unlocked.",
+    "search_tag_posts": {
+      "one": "{count} post",
+      "few": "{count} posts",
+      "many": "{count} posts",
+      "other": "{count} posts"
+    }
+  }
+}

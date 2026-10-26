@@ -17,7 +17,7 @@ $latestId = max(0, (int) ($state['latest_id'] ?? 0));
 $badgeText = (string) ($state['badge_text'] ?? $unread);
 ?>
 <div class="notification-menu" data-notification-menu>
-    <a class="nav-link nav-link-icon notification-nav-link" href="/notifications"<?= $current === '/notifications' ? ' aria-current="page"' : '' ?> aria-label="<?= Html::et('notifications.title') ?>" title="<?= Html::et('notifications.title') ?>" aria-haspopup="true" aria-expanded="false" aria-controls="notification-popover" data-notification-button data-notification-api="/api/notifications" data-notification-interval="5000" data-notification-unread="<?= Html::e($unread) ?>" data-notification-latest-id="<?= Html::e($latestId) ?>" data-notification-message="<?= Html::et('notifications.new') ?>">
+    <a class="nav-link nav-link-icon notification-nav-link" href="/notifications"<?= $current === '/notifications' ? ' aria-current="page"' : '' ?> aria-label="<?= Html::et('notifications.title') ?>" title="<?= Html::et('notifications.title') ?>" aria-haspopup="true" aria-expanded="false" aria-controls="notification-popover" data-notification-button data-notification-api="/api/notifications" data-notification-interval="5000" data-notification-unread="<?= Html::e($unread) ?>" data-notification-latest-id="<?= Html::e($latestId) ?>">
         <?= Html::icon('bell') ?>
         <span class="notification-badge" data-notification-count<?= $unread < 1 ? ' hidden' : '' ?>><?= Html::e($badgeText) ?></span>
     </a>

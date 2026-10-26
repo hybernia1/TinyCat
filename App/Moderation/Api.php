@@ -16,7 +16,7 @@ final class Api
             if ($item === null || !\TinyCat\Status\Posts::status_can_view($item, \TinyCat\Users\Authentication::auth())) {
                 \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
             }
-            return ['reasons' => \TinyCat\Status\Posts::status_report_reasons()];
+            return ['reasons' => array_keys(\TinyCat\Status\Posts::status_report_reasons())];
         }, 'user');
         $api->post('/moderation/reports', static function (Request $r): Result {
             $r->validated(['id' => 'required|integer', 'reason' => 'string', 'note' => 'string']);

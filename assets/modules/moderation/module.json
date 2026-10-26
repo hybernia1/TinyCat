@@ -9,6 +9,14 @@
     "entries": [
       "assets/modules/moderation/index.js"
     ],
-    "styles": []
+    "styles": [],
+    "translations": [],
+    "messages": {
+      "blocked_url": "moderation.messages.blocked_url",
+      "common_request_failed": "common.request_failed",
+      "report_reviewed": "moderation.messages.report_reviewed",
+      "status_not_found": "account.messages.status_not_found",
+      "url_blocker_saved": "moderation.messages.url_blocker_saved"
+    }
   }
 ]

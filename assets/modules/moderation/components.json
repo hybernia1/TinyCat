@@ -109,7 +109,14 @@
                                 "attrs": {},
                                 "children": [
                                   {
-                                    "get": "report.excerpt"
+                                    "or": [
+                                      {
+                                        "get": "report.excerpt"
+                                      },
+                                      {
+                                        "t": "moderation.empty_content"
+                                      }
+                                    ]
                                   }
                                 ]
                               },
@@ -140,7 +147,10 @@
                                 },
                                 "children": [
                                   {
-                                    "get": "report.report_count_label"
+                                    "plural": "moderation.report_count",
+                                    "count": {
+                                      "get": "report.report_count"
+                                    }
                                   }
                                 ]
                               },
@@ -165,7 +175,29 @@
                             "attrs": {},
                             "children": [
                               {
-                                "get": "report.reason_label"
+                                "lookup": {
+                                  "get": "report.reason"
+                                },
+                                "cases": {
+                                  "spam": {
+                                    "t": "moderation.report_reasons.spam"
+                                  },
+                                  "illegal": {
+                                    "t": "moderation.report_reasons.illegal"
+                                  },
+                                  "malware": {
+                                    "t": "moderation.report_reasons.malware"
+                                  },
+                                  "abuse": {
+                                    "t": "moderation.report_reasons.abuse"
+                                  },
+                                  "other": {
+                                    "t": "moderation.report_reasons.other"
+                                  }
+                                },
+                                "default": {
+                                  "t": "moderation.report_reasons.other"
+                                }
                               }
                             ]
                           },
@@ -198,7 +230,26 @@
                                 },
                                 "children": [
                                   {
-                                    "get": "report.status_label"
+                                    "lookup": {
+                                      "get": "report.status"
+                                    },
+                                    "cases": {
+                                      "open": {
+                                        "t": "moderation.report_statuses.open"
+                                      },
+                                      "resolved": {
+                                        "t": "moderation.report_statuses.resolved"
+                                      },
+                                      "dismissed": {
+                                        "t": "moderation.report_statuses.dismissed"
+                                      },
+                                      "reviewed": {
+                                        "t": "moderation.report_statuses.reviewed"
+                                      }
+                                    },
+                                    "default": {
+                                      "t": "moderation.report_statuses.reviewed"
+                                    }
                                   }
                                 ]
                               },
@@ -209,7 +260,9 @@
                                 },
                                 "children": [
                                   {
-                                    "get": "report.reported_at_label"
+                                    "date": {
+                                      "get": "report.reported_at"
+                                    }
                                   }
                                 ]
                               }
@@ -233,7 +286,12 @@
                                         "get": "report.permalink_url"
                                       },
                                       "aria-label": {
-                                        "get": "report.permalink_label"
+                                        "use": "status/permalink",
+                                        "data": {
+                                          "item": {
+                                            "get": "report"
+                                          }
+                                        }
                                       }
                                     },
                                     "children": [

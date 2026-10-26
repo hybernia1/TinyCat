@@ -1,6 +1,6 @@
 {
   "/admin/moderation": {
-    "raw_js": 76800,
+    "raw_js": 79872,
     "gzip_js": 20480,
     "raw_css": 38912,
     "gzip_css": 8192,
@@ -24,7 +24,7 @@
     "stylesheets": 1
   },
   "/admin/bots": {
-    "raw_js": 96256,
+    "raw_js": 98304,
     "gzip_js": 24576,
     "raw_css": 38912,
     "gzip_css": 8192,

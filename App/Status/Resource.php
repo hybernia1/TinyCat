@@ -20,16 +20,13 @@ final class Resource
             'body' => (string) ($item['body'] ?? ''),
             'editable_body' => Mentions::mentions_for_editing((string) ($item['body'] ?? '')),
             'segments' => Segments::text((string) ($item['body'] ?? ''), array_column($links, 'url_hash')),
-            'published_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '', 'published_label' => $at !== '' ? \TinyCat\Support\Dates::displayDateTime($at) : '',
-            'published_local' => $at !== '' ? date('Y-m-d\TH:i', strtotime($at) ?: 0) : '',
+            'published_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'scheduled' => Posts::status_is_scheduled($item),
             'edit_locked' => Posts::status_edit_locked($item) && !\TinyCat\Users\Profiles::user_is_admin($user),
-            'permalink_label' => ViewData::status_permalink_label($item),
-            'like_label' => \TinyCat\Support\Localization::t('account.status_like_for', ['context' => ViewData::status_accessible_context($item)]),
-            'unlike_label' => \TinyCat\Support\Localization::t('account.status_unlike_for', ['context' => ViewData::status_accessible_context($item)]),
+            'context' => self::context($item),
             'login_url' => \TinyCat\Users\Login::auth_url_with_next('/login', Posts::status_url($id)),
             'login_modal_url' => \TinyCat\Users\Login::auth_modal_url('login', Posts::status_url($id)),
-            'image' => ['url' => Images::status_image_url($item), 'alt' => Images::status_image_alt_text($item)],
+            'image' => ['url' => Images::status_image_url($item), 'description' => \TinyCat\Site\Presentation::meta_text(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Site\Presentation::site_name()],
             'links' => array_map(self::link(...), $links),
             'likes_count' => (int) ($item['likes_count'] ?? 0),
             'comments_count' => (int) ($item['comments_count'] ?? 0),
@@ -37,6 +34,16 @@ final class Resource
             'capabilities' => ['edit' => Posts::status_can_edit($item, $user), 'delete' => Posts::status_can_delete($item, $user),
                 'report' => $user !== null && (int) $user['id'] !== (int) ($item['author_id'] ?? 0), 'interact' => $user !== null],
         ];
+    }
+
+    /** @param array<mixed> $item
+     * @return array<string, string|int>
+     */
+    public static function context(array $item): array
+    {
+        return ['author' => trim((string) ($item['author_name'] ?? $item['author_username'] ?? $item['username'] ?? '')),
+            'excerpt' => \TinyCat\Site\Presentation::meta_text(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 80),
+            'id' => max(0, (int) ($item['id'] ?? $item['content_id'] ?? 0))];
     }
 
     /**
@@ -79,7 +86,7 @@ final class Resource
             'author' => self::author($comment), 'body' => (string) ($comment['body'] ?? ''),
             'editable_body' => Mentions::mentions_for_editing((string) ($comment['body'] ?? '')),
             'segments' => Segments::text((string) ($comment['body'] ?? '')),
-            'created_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '', 'created_label' => $at !== '' ? \TinyCat\Support\Dates::displayDateTime($at) : '',
+            'created_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'likes_count' => (int) ($comment['likes_count'] ?? 0),
             'liked' => $user !== null && Comments::status_comment_user_liked($id, (int) $user['id']),
             'capabilities' => ['edit' => Comments::status_comment_can_edit($comment, $user), 'delete' => Comments::status_comment_can_delete($comment, $user), 'interact' => $user !== null],

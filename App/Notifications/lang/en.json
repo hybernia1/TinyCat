@@ -1,0 +1,35 @@
+{
+  "notifications": {
+    "title": "Notifications",
+    "meta": "Overview of alerts for your posts.",
+    "empty": "There are no notifications yet.",
+    "mark_read": "Mark as read",
+    "mark_all_read": "Mark all as read",
+    "delete": "Delete",
+    "open": "Open",
+    "more": "View more notifications",
+    "load_more": "Load more",
+    "loading": "Loading...",
+    "someone": "Someone",
+    "new_count": {
+      "one": "You have {count} new notification.",
+      "few": "You have {count} new notifications.",
+      "many": "You have {count} new notifications.",
+      "other": "You have {count} new notifications."
+    },
+    "messages": {
+      "follow": "{actor} followed you.",
+      "content_like": "{actor} liked your post.",
+      "comment_like": "{actor} liked your comment.",
+      "content_comment": "{actor} commented on your post.",
+      "content_mention": "{actor} mentioned you in a post.",
+      "comment_mention": "{actor} mentioned you in a comment.",
+      "report_resolved": "Your report was resolved.",
+      "report_dismissed": "Your report was dismissed.",
+      "generic": "{actor} reacted to your post.",
+      "read_done": "The notification was marked as read.",
+      "read_all_done": "All notifications were marked as read.",
+      "deleted": "The notification was deleted."
+    }
+  }
+}

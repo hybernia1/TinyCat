@@ -13,7 +13,7 @@ final class Reports
     public static function tc_admin_moderation_review_report(int $reportId, string $decision): array
     {
         if (!in_array($decision, ['remove', 'dismiss'], true)) {
-            \TinyCat\Http\Response::validation(['decision' => [\TinyCat\Support\Localization::t('common.request_failed')]]);
+            \TinyCat\Http\Response::validation(['decision' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]);
         }
 
         $deletedImagePath = '';
@@ -98,7 +98,7 @@ final class Reports
     public static function tc_admin_moderation_reports_view_data(): array
     {
         return [
-            'reports' => array_map('TinyCat\\Moderation\\Reports::tc_admin_moderation_report_view_data', \TinyCat\Moderation\Reports::tc_admin_moderation_reports()),
+            'reports' => self::tc_admin_moderation_reports(),
         ];
     }
 
@@ -136,40 +136,4 @@ final class Reports
         );
     }
 
-    /**
-     * @param array<mixed> $report
-     * @return array<mixed>
-     */
-    public static function tc_admin_moderation_report_view_data(array $report): array
-    {
-        $openCount = max(0, (int) ($report['open_count'] ?? 0));
-        $reportCount = max(1, (int) ($report['report_count'] ?? 1));
-        $status = $openCount > 0 ? 'open' : (string) ($report['status'] ?? 'reviewed');
-        $contentExists = (int) ($report['existing_content_id'] ?? 0) > 0;
-        $body = trim((string) preg_replace('/\s+/', ' ', (string) ($report['body'] ?? '')));
-        $reasons = \TinyCat\Status\Posts::status_report_reasons();
-
-        return array_merge($report, [
-            'excerpt' => $body === '' ? \TinyCat\Support\Localization::t('moderation.empty_content') : \TinyCat\Support\Text::plain_text_limit($body, 120),
-            'reason_label' => (string) ($reasons[(string) ($report['reason'] ?? 'other')] ?? $reasons['other']),
-            'report_count_label' => $reportCount === 1
-                ? \TinyCat\Support\Localization::t('moderation.report_count_one')
-                : \TinyCat\Support\Localization::t('moderation.report_count_many', ['count' => $reportCount]),
-            'display_status' => $status,
-            'status_label' => match ($status) {
-                'open' => \TinyCat\Support\Localization::t('moderation.report_statuses.open'),
-                'resolved' => \TinyCat\Support\Localization::t('moderation.report_statuses.resolved'),
-                'dismissed' => \TinyCat\Support\Localization::t('moderation.report_statuses.dismissed'),
-                default => \TinyCat\Support\Localization::t('moderation.report_statuses.reviewed'),
-            },
-            'status_badge_class' => match ($status) {
-                'open' => 'badge badge-danger',
-                'resolved' => 'badge badge-primary',
-                default => 'badge',
-            },
-            'reported_at_label' => \TinyCat\Support\Dates::displayDateTime((string) ($report['latest_reported_at'] ?? $report['created_at'] ?? '')),
-            'permalink_url' => $contentExists ? \TinyCat\Status\Posts::status_url((int) ($report['content_id'] ?? 0)) : '',
-            'permalink_label' => $contentExists ? \TinyCat\Status\ViewData::status_permalink_label($report) : '',
-        ]);
-    }
 }

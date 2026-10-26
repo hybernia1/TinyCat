@@ -26,7 +26,7 @@ final class Api
             $id = (int) $p['id'];
             if ($r->input('feed_url') === null && $r->input('enabled') !== null) {
                 $enabled = $r->input('enabled');
-                if (!in_array($enabled, [true,false,0,1,'0','1'], true)) { Response::validation(['enabled' => [\TinyCat\Support\Localization::t('common.request_failed')]]); }
+                if (!in_array($enabled, [true,false,0,1,'0','1'], true)) { Response::validation(['enabled' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]); }
                 $source = \TinyCat\Bots\Administration::sourceForAction($id, max(0, (int) $r->input('bot_id', 0)));
                 if ((bool) $source['enabled'] !== in_array($enabled, [true,1,'1'], true)) { \TinyCat\Bots\Administration::toggleSource($source); }
                 return Result::from(\TinyCat\Bots\Administration::payload($id));

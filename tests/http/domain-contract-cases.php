@@ -110,7 +110,7 @@ foreach (['/api/auth-modal', '/api/auth/login', '/api/profile/update', '/api/adm
     $assert($status === 404, 'Converted domains expose one canonical URL; retired endpoint: ' . $retired);
 }
 [$status, $payload] = $request('POST', '/api/users/registrations', [], '', $csrf + ['X-Test-Captcha' => '1']);
-$assert($status === 422 && $payload['error']['code'] === 'captcha_invalid' && $payload['error']['details']['captcha']['site_key'] === 'test_public_key', 'CAPTCHA errors contain only public widget configuration.');
+$assert($status === 422 && $payload['code'] === 'captcha_invalid' && $payload['error']['details']['captcha']['site_key'] === 'test_public_key', 'CAPTCHA errors contain only public widget configuration.');
 $assert(!str_contains(json_encode($payload), 'test_private_key'), 'CAPTCHA secrets never enter a response.');
 $pure($payload);
 [$status, $payload] = $request('POST', '/api/users/password-resets', ['email' => 'unknown@example.test'], '', $csrf);

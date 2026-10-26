@@ -44,11 +44,10 @@ class Node {
   dispatchEvent() { return true; }
   addEventListener() {}
 }
-const dictionary = JSON.parse(fs.readFileSync(path.join(root, "lang/en/app.json"), "utf8"));
-const labels = {};
-for (const [group, values] of Object.entries(dictionary)) { for (const [key, value] of Object.entries(values)) if (typeof value === "string") labels[group + "." + key] = value; }
+const labels = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--catalog"], { encoding: "utf8" }));
 const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--templates"], { encoding: "utf8" }));
 const document = { querySelector: () => null, body: new Node("body"), createElement: tag => new Node(tag), createElementNS: (_, tag) => new Node(tag), createTextNode: text => new Node("text", text), createDocumentFragment: () => new Node("fragment"), getElementById: id => document.body.querySelector('[id="' + id + '"]') };
+document.documentElement = { dataset: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--dates"], { encoding: "utf8" })) };
 const window = { TinyCat: {}, location: new URL("https://tinycat.test/") };
 const context = vm.createContext({ window, document, Node, AbortController, URL, URLSearchParams, console, Set, Element: Node, RadioNodeList: class {}, CustomEvent: class {} });
 const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
@@ -56,8 +55,28 @@ for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filen
 const T = window.TinyCat;
 T.components.register(definitions);
 T.i18n.register("en", labels);
+const dateCases = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--date-fixtures"], { encoding: "utf8" }));
+const originalDates = { ...document.documentElement.dataset };
+document.documentElement.dataset.dateRelative = "false";
+dateCases.absolute.forEach(item => { document.documentElement.dataset.dateFormat = item.format; check(T.dates.format(item.value) === item.expected, "PHP/JS date preset and DST offset parity: " + item.format); });
+const csLabels = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--catalog", "cs"], { encoding: "utf8" }));
+dateCases.relative.forEach(item => { if (T.i18n.locale() !== item.locale) T.i18n.register(item.locale, item.locale === "cs" ? csLabels : labels); check(T.dates.relative(new Date(item.value), item.base) === item.expected, "PHP/JS relative-time threshold and plural parity: " + item.locale + " " + item.value); });
+T.i18n.register("en", labels);
+document.documentElement.dataset = originalDates;
+const pluralCases = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--translation-fixtures"], { encoding: "utf8" }));
+pluralCases.forEach(item => {
+  if (T.i18n.locale() !== item.locale) T.i18n.register(item.locale, item.locale.startsWith("cs") ? csLabels : labels);
+  check(T.i18n.pluralCategory(item.count, item.locale) === item.category && T.i18n.plural(item.key, item.count) === item.expected, "PHP/JS plural and regional fallback parity: " + item.locale + " " + item.key + " " + item.count);
+});
+T.i18n.register("en", labels);
+check(T.i18n.format("{{name}} :name {name}", { name: "Zofie" }) === "{{name}} :name Zofie", "Only canonical placeholders are interpolated, with literal legacy examples preserved.");
+assert.throws(() => T.i18n.pluralCategory(Infinity, "cs")); checks++;
+T.api.registerMessages({ example_saved: "common.save", example_invalid: "common.request_failed" });
+check(T.api.message({ code: "example_saved", params: {}, message: "Server fallback" }) === T.i18n.t("common.save"), "Known message codes use the client catalog.");
+check(T.api.message({ code: "unknown_event", params: {}, message: "Readable fallback" }) === "Readable fallback", "Unknown codes preserve the readable API fallback.");
+check(T.api.errors({ data: { error: { details: { errors: { name: [{ code: "example_invalid", params: {}, message: "Fallback" }] } } } } }).name[0] === T.i18n.t("common.request_failed"), "Field issue codes use the same client message mapping.");
 const countedSidebar = T.site.sidebar({ tags: [], authors: [{ id: 2, username: "Member", url: "/author/2", avatar_url: "", posts_count: 5 }], footer: [] }, "/api/site/sidebar");
-check(countedSidebar.textContent.includes(T.ui.text("public.active_user_posts", { count: 5 })), "A translation parameter named count is a value binding, not the count operator.");
+check(countedSidebar.textContent.includes(T.i18n.plural("public.active_user_posts", 5)), "A translation parameter named count is a value binding, not the count operator.");
 const canonicalFieldErrors = T.api.errors;
 const unsafe = '<img src=x onerror="window.pwned=true">';
 const user = { id: 2, username: unsafe, url: "/author/2", avatar_url: "", email: "test@example.test", bio: unsafe, locale: "en", theme: "system" };
@@ -99,8 +118,8 @@ check(T.status.method(form, "react") === "PUT", "An unliked resource requests PU
 form.querySelector("button").setAttribute("aria-pressed", "true");
 check(T.status.method(form, "react") === "DELETE", "A liked resource requests DELETE rather than a toggle.");
 check(T.status.method(form, "comment_update") === "PATCH" && T.status.method(form, "comment_delete") === "DELETE", "Comment edits and deletions use resource methods.");
-node = T.notifications.items([{ id: 1, message: unsafe, excerpt: unsafe, url: "/status/10", unread: true, created_at: "2026-01-01", created_label: "Today" }], false);
-check(node.querySelector("strong").textContent === unsafe && node.querySelectorAll("img").length === 0, "Notifications render messages and excerpts as literal text.");
+node = T.notifications.items([{ id: 1, type: "follow", actor: { username: unsafe }, excerpt: unsafe, url: "/status/10", unread: true, created_at: "2026-01-01T12:00:00+00:00" }], false);
+check(node.querySelector("strong").textContent === T.i18n.t("notifications.messages.follow", { actor: unsafe }) && node.querySelectorAll("img").length === 0, "Notifications translate event data and render actors and excerpts as literal text.");
 check(node.querySelector('[data-api-method="PATCH"]').getAttribute("action") === "/api/notifications/1", "Notification actions address the individual resource.");
 const response = { data: { user, options: { languages: { en: "English" }, password_max_length: 1024 }, capabilities: { password: false } }, meta: {} };
 node = T.users.modal(new URL("https://tinycat.test/api/users/2/management"), response, "profile-test");
@@ -120,6 +139,17 @@ document.querySelectorAll = selector => selector.includes("data-author-bio") ? [
 const avatarForm = new Node("form"); avatarForm.setAttribute("action", "/api/users/2/avatar"); avatarForm.setAttribute("method", "post"); avatarForm.closest = () => null;
 T.users.result(avatarForm, { data: { user: { id: 2, username: "Member", avatar_url: "" } } }, null);
 check(existingBio.textContent === "Retained profile bio", "Partial avatar resources never erase profile fields they do not contain.");
+let localeReloads = 0;
+document.body.dataset.currentUserId = "2";
+window.setTimeout = callback => callback();
+window.location.reload = () => { localeReloads++; };
+T.users.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
+check(localeReloads === 1, "Changing the current user's locale reloads the document and its hashed catalog.");
+T.users.result(avatarForm, { data: { user: { id: 3, locale: "cs" } } }, null);
+T.users.result(avatarForm, { data: { user: { id: 2, locale: "en" } } }, null);
+check(localeReloads === 1, "Other accounts and unchanged locales do not reload the current catalog.");
+delete document.body.dataset.currentUserId;
+delete window.location.reload;
 const templateKeys = new Set();
 function collectLabels(value) { if (!value || typeof value !== "object") return; if (typeof value.t === "string") templateKeys.add(value.t); Object.values(value).forEach(collectLabels); }
 collectLabels(definitions);
@@ -133,7 +163,7 @@ check(sourceActions.some(form => form.getAttribute("action") === "/api/bots/sour
 node = T.bots.sourceForm({ id: 7, bot_user_id: 2, name: unsafe, post_template: unsafe, enabled: true }, [user]);
 check(node.dataset.apiMethod === "PATCH" && node.querySelector('[name="post_template"]').value === unsafe, "Source editing uses a local form and preserves the template as text.");
 const reportRoot = new Node("div");
-T.moderation.reports(reportRoot, [{ id: 12, content_id: 9, author_name: unsafe, excerpt: unsafe, open_count: 1, status_label: "Open" }]);
+T.moderation.reports(reportRoot, [{ id: 12, content_id: 9, author_name: unsafe, excerpt: unsafe, open_count: 1, report_count: 1, status: "open" }]);
 check(reportRoot.querySelectorAll("form").every(form => form.getAttribute("action") === "/api/moderation/reports/12" && form.dataset.apiMethod === "PATCH"), "Moderation controls address the report by path ID.");
 check(reportRoot.querySelectorAll("img").length === 0 && reportRoot.textContent.includes(unsafe), "Report excerpts never become markup.");
 const footer = new Node("div");

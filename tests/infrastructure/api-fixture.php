@@ -15,6 +15,7 @@ $api->get('/foundation/items/{id:[0-9]+}', static fn (Request $request, array $p
 $api->post('/foundation/items', static fn (Request $request): Result => new Result(['id' => 9, 'value' => $request->input('value')], 'Created.'), access: 'admin');
 $api->get('/foundation/private', static fn (): array => ['private' => true], access: 'admin');
 $api->get('/foundation/bad-resource', static fn (): array => ['items' => [['body_html' => '<b>fragment</b>']]]);
+$api->get('/foundation/bad-ui', static fn (): array => ['items' => [['status_label' => 'Open']]]);
 $api->get('/foundation/bad-error', static function (): never { Response::error('Invalid.', 422, 'bad', ['captcha_html' => '<form>fragment</form>']); });
 $api->post('/foundation/validation', static function (): never { Response::validation(['name' => ['Required.']]); }, access: 'public');
 

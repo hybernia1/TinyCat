@@ -69,24 +69,16 @@ final class Templates
             return $cache[$requestedLocale];
         }
 
-        $baseLocale = explode('-', $requestedLocale, 2)[0];
-        $locales = array_values(array_unique([$requestedLocale, $baseLocale, 'en']));
-
-        foreach ($locales as $locale) {
-            $path = \TinyCat\Support\Paths::basePath('lang/' . $locale . '/emails.json');
-
-            if (!is_file($path)) {
-                continue;
+        $catalog = [];
+        foreach (\TinyCat\Support\Localization::fallbacks($requestedLocale) as $locale) {
+            $data = \TinyCat\Support\CompiledTranslations::emails($locale);
+            if ($data === null && \TinyCat\Support\CompiledTranslations::packages() === null) {
+                $path = \TinyCat\Support\Paths::basePath('App/Mail/lang/' . $locale . '.json');
+                if (is_file($path)) { $data = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR); }
             }
-
-            $data = json_decode((string) file_get_contents($path), true);
-
-            if (is_array($data)) {
-                return $cache[$requestedLocale] = $data;
-            }
+            if (is_array($data)) { $catalog = array_replace_recursive($catalog, $data); }
         }
-
-        return $cache[$requestedLocale] = ['signature' => '', 'templates' => []];
+        return $cache[$requestedLocale] = $catalog;
     }
 
     /**
@@ -106,13 +98,11 @@ final class Templates
             if ($template === []) return false;
             $vars += ['site' => \TinyCat\Site\Presentation::site_name(), 'username' => (string) $user['username'], 'email' => $address];
             $vars += ['site_url' => \TinyCat\Site\Presentation::absolute_url('/'), 'signature' => (string) ($catalog['signature'] ?? '')];
-            $vars['signature'] = str_replace('{{site}}', \TinyCat\Site\Presentation::site_name(), (string) $vars['signature']);
+            $vars['signature'] = \TinyCat\Support\Localization::format((string) $vars['signature'], ['site' => \TinyCat\Site\Presentation::site_name()]);
             $subject = (string) ($template['subject'] ?? '');
             $body = (string) ($template['body'] ?? '');
-            foreach ($vars as $key => $value) {
-                $subject = str_replace('{{' . $key . '}}', (string) $value, $subject);
-                $body = str_replace('{{' . $key . '}}', (string) $value, $body);
-            }
+            $subject = \TinyCat\Support\Localization::format($subject, $vars);
+            $body = \TinyCat\Support\Localization::format($body, $vars);
             return \TinyCat\Mail\Smtp::email_smtp_send($address, $subject, $body);
         } catch (Throwable) {
             return false;

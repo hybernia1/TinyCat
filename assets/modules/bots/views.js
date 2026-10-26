@@ -1,3 +1,4 @@
+import "../../core/dates.js";
 import "../../core/components.js";
 import "../../core/http.js";
 import "../../ui/avatars.js";

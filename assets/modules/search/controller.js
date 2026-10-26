@@ -1,3 +1,4 @@
+import "../../core/dates.js";
 import "../../core/dom.js";
 import "../../core/http.js";
 import "../../core/i18n.js";
@@ -49,8 +50,8 @@ import "../../ui/fields.js";
     var link = createElement("a", "global-search-item");
     var title = createElement("strong", "global-search-title", item.title || "");
     var metaText = item.type === "tag"
-      ? (item.excerpt || "")
-      : (item.type === "user" ? "@" + (item.title || "") : (item.published_label || item.excerpt || ""));
+      ? TinyCat.i18n.plural("public.search_tag_posts", Number(item.posts_count || 0))
+      : (item.type === "user" ? "@" + (item.title || "") : (TinyCat.dates.format(item.published_at) || item.excerpt || ""));
     var meta = createElement("span", "global-search-meta", metaText);
     var excerpt = createElement("span", "global-search-excerpt", item.excerpt || "");
     var avatar = createElement("span", "global-search-avatar");
@@ -297,7 +298,7 @@ import "../../ui/fields.js";
           return;
         }
 
-        if (error && error.data && error.data.error && error.data.error.code === "captcha_required") {
+        if (error && error.data && error.data.error && error.data.code === "captcha_required") {
           openGlobalSearchCaptcha(root, error);
           return;
         }

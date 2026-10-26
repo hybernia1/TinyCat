@@ -126,19 +126,13 @@ $assert(str_contains($comment, 'Alice &lt;unsafe&gt;'), 'Comment still escapes p
 $assert(str_contains($comment, 'data-comment-like-count') && str_contains($comment, '>4</span>'), 'Comment renders its prepared reaction count.');
 
 $notification = \TinyCat\Notifications\Views::items(['notifications' => [[
-    'id' => 21,
-    'actor_name' => 'Bob <unsafe>',
-    'view_unread' => true,
-    'view_url' => '/notifications/open?id=21',
-    'view_icon' => 'user',
-    'view_message' => 'Bob mentioned you',
-    'view_content_text' => 'Prepared notification text',
-    'view_created_iso' => '2026-08-09T12:02:00+00:00',
-    'view_created_label' => '9 August 2026 12:02',
+    'id' => 21, 'type' => 'content_mention', 'actor_name' => 'Bob <unsafe>',
+    'content_id' => 7, 'content_body' => 'Notification content text',
+    'created_at' => '2026-08-09T12:02:00+00:00', 'read_at' => null,
 ]]], true);
-$assert(str_contains($notification, 'href="/notifications/open?id=21"'), 'Notification renders its prepared target URL.');
-$assert(str_contains($notification, 'Prepared notification text'), 'Notification renders its prepared content text.');
-$assert(str_contains($notification, 'Bob mentioned you'), 'Notification renders its prepared message.');
+$assert(str_contains($notification, 'href="/notifications/open?id=21"'), 'Unread notification preserves the read-and-open target.');
+$assert(str_contains($notification, 'Notification content text'), 'Notification renders its content excerpt.');
+$assert(str_contains($notification, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::t('notifications.messages.content_mention', ['actor' => 'Bob <unsafe>']))), 'Notification translates raw event data with escaped actor text.');
 
 if (class_exists(DOMDocument::class)) {
     $document = new DOMDocument();

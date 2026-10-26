@@ -98,8 +98,6 @@ final class Api
     {
         if (!in_array($action, ['react', 'comment_like'], true)) { Actions::status_json_require_session_interval($action); }
         $data = $operation();
-        $message = isset($data['message']) ? (string) $data['message'] : null;
-        unset($data['message']);
-        return new Result($data, $message);
+        return Result::from($data);
     }
 }

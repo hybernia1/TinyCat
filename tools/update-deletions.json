@@ -1,4 +1,10 @@
 {
+    "4.0.0": [
+        "lang/cs/app.json",
+        "lang/cs/emails.json",
+        "lang/en/app.json",
+        "lang/en/emails.json"
+    ],
     "3.2.0": [
         "Public/admin/bots/accounts-page.php",
         "Public/admin/bots/detail.php",

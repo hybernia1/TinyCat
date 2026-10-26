@@ -120,13 +120,13 @@ final class Administration
             'sources' => $sources,
             'runs' => $runs,
             'stats' => [
-                ['key' => 'sources', 'label' => 'bots.detail_stat_sources', 'value' => count($sources)],
-                ['key' => 'active_sources', 'label' => 'bots.detail_stat_active_sources', 'value' => count(array_filter(
+                ['key' => 'sources', 'value' => count($sources)],
+                ['key' => 'active_sources', 'value' => count(array_filter(
                     $sources,
                     static fn (array $source): bool => (bool) ($source['enabled'] ?? false)
                 ))],
-                ['key' => 'posts', 'label' => 'bots.detail_stat_posts', 'value' => \TinyCat\Moderation\Restrictions::moderation_user_post_count($id)],
-                ['key' => 'runs', 'label' => 'bots.detail_stat_runs', 'value' => count($runs)],
+                ['key' => 'posts', 'value' => \TinyCat\Moderation\Restrictions::moderation_user_post_count($id)],
+                ['key' => 'runs', 'value' => count($runs)],
             ],
             'last_posts' => \TinyCat\Database\Connection::all(
                 'SELECT id, body, published_at FROM content WHERE author_id = ? ORDER BY published_at DESC, id DESC LIMIT 8',
@@ -165,13 +165,13 @@ final class Administration
         $errors = [];
 
         if (!\TinyCat\Users\Usernames::username_valid($username)) {
-            $errors['username'][] = \TinyCat\Support\Localization::t('users.messages.username_invalid');
+            $errors['username'][] = \TinyCat\Http\Response::issue('user_username_invalid', \TinyCat\Support\Localization::t('users.messages.username_invalid'));
         } elseif (\TinyCat\Users\Usernames::user_username_taken($username)) {
-            $errors['username'][] = \TinyCat\Support\Localization::t('users.messages.username_taken');
+            $errors['username'][] = \TinyCat\Http\Response::issue('user_username_taken', \TinyCat\Support\Localization::t('users.messages.username_taken'));
         }
 
         if (!array_key_exists($status, $statuses)) {
-            $errors['status'][] = \TinyCat\Support\Localization::t('users.validation.status_invalid');
+            $errors['status'][] = \TinyCat\Http\Response::issue('user_status_invalid', \TinyCat\Support\Localization::t('users.validation.status_invalid'));
         }
 
         if ($errors !== []) {
@@ -273,8 +273,8 @@ final class Administration
             'avatar_url' => \TinyCat\Users\Avatars::user_avatar_url($account),
             'source_count' => (int) ($account['source_count'] ?? 0),
             'post_count' => (int) ($account['post_count'] ?? 0),
-            'created_at' => (string) ($account['created_at'] ?? ''),
-            'updated_at' => (string) ($account['updated_at'] ?? ''),
+            'created_at' => !empty($account['created_at']) ? \TinyCat\Support\Dates::dateIso($account['created_at']) : '',
+            'updated_at' => !empty($account['updated_at']) ? \TinyCat\Support\Dates::dateIso($account['updated_at']) : '',
         ];
     }
 
@@ -366,23 +366,23 @@ final class Administration
         $errors = [];
 
         if ($bot === null) {
-            $errors['bot_user_id'][] = \TinyCat\Support\Localization::t('bots.validation.bot');
+            $errors['bot_user_id'][] = \TinyCat\Http\Response::issue('bot_bot', \TinyCat\Support\Localization::t('bots.validation.bot'));
         }
         if ($name === '' || strlen($name) > 120) {
-            $errors['name'][] = \TinyCat\Support\Localization::t('bots.validation.name');
+            $errors['name'][] = \TinyCat\Http\Response::issue('bot_name', \TinyCat\Support\Localization::t('bots.validation.name'));
         }
 
         $feedHash = \TinyCat\Bots\Importer::feedSourceHash($feedUrl);
         if (!\TinyCat\Status\Metadata::isSafeRemoteUrl($feedUrl) || strlen($feedUrl) > 2048 || $feedHash === '') {
-            $errors['feed_url'][] = \TinyCat\Support\Localization::t('bots.validation.feed_url');
+            $errors['feed_url'][] = \TinyCat\Http\Response::issue('bot_feed_url', \TinyCat\Support\Localization::t('bots.validation.feed_url'));
         } elseif (\TinyCat\Bots\Importer::sourceDuplicateExists($feedUrl, max(0, (int) $sourceId))) {
-            $errors['feed_url'][] = \TinyCat\Support\Localization::t('bots.validation.feed_duplicate');
+            $errors['feed_url'][] = \TinyCat\Http\Response::issue('bot_feed_duplicate', \TinyCat\Support\Localization::t('bots.validation.feed_duplicate'));
         }
         if ($interval < 5 || $interval > 43200) {
-            $errors['interval_minutes'][] = \TinyCat\Support\Localization::t('bots.validation.interval');
+            $errors['interval_minutes'][] = \TinyCat\Http\Response::issue('bot_interval', \TinyCat\Support\Localization::t('bots.validation.interval'));
         }
         if ($template === '' || strlen($template) > 2000) {
-            $errors['post_template'][] = \TinyCat\Support\Localization::t('bots.validation.template');
+            $errors['post_template'][] = \TinyCat\Http\Response::issue('bot_template', \TinyCat\Support\Localization::t('bots.validation.template'));
         }
         if ($errors !== []) {
             \TinyCat\Http\Response::validation($errors);

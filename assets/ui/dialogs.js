@@ -298,7 +298,7 @@ import "./forms.js";
     TinyCat.dialog.close(modal);
     return true;
   };
-  async function loadRemoteModal(target, url, host, force) {
+  async function loadRemoteModal(target, url, host, force, trigger) {
     var modal = getModal(target);
     var modalIndex;
     var data;
@@ -316,6 +316,7 @@ import "./forms.js";
     try { data = await TinyCat.api.request(url, { method: "GET", signal: controller.signal }); }
     finally { if (pending.get(target) === controller) { pending.delete(target); } }
     if (controller.signal.aborted) { throw new DOMException("Dialog request cancelled.", "AbortError"); }
+    if (trigger && trigger.isConnected === false) { throw new DOMException("Dialog trigger removed.", "AbortError"); }
     var resourceModal = TinyCat.modules.modal(new URL(url, window.location.href), data, target);
     if (!resourceModal) { throw new Error("Unsupported modal resource."); }
 
@@ -363,8 +364,7 @@ import "./forms.js";
     setLoading(trigger, true);
 
     try {
-      modal = await loadRemoteModal(target, url, host, force);
-      if (trigger.isConnected === false) { TinyCat.dialog.close(modal); return null; }
+      modal = await loadRemoteModal(target, url, host, force, trigger);
       return TinyCat.dialog.open(modal);
     } finally {
       delete trigger.dataset.modalBusy;

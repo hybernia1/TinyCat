@@ -36,12 +36,14 @@ final class Response
 
     /**
      * @param array<mixed> $meta
+     * @param array<mixed> $params
      */
-    public static function success(mixed $data = null, ?string $message = null, int $status = 200, array $meta = []): never
+    public static function success(mixed $data = null, ?string $message = null, int $status = 200, array $meta = [], ?string $code = null, array $params = []): never
     {
         self::assertData($data);
         self::assertData($meta);
-        self::json(self::envelope(true, $status, $message, $data, $meta), $status);
+        self::assertData($params);
+        self::json(self::envelope(true, $status, $message, $data, $meta, null, $code ?? ($message !== null ? 'request_completed' : 'ok'), $params), $status);
     }
 
     /**
@@ -54,14 +56,16 @@ final class Response
 
     /**
      * @param array<mixed> $details
+     * @param array<mixed> $params
      */
-    public static function error(string $message = 'Request failed.', int $status = 400, string $code = 'error', array $details = []): never
+    public static function error(string $message = 'Request failed.', int $status = 400, string $code = 'error', array $details = [], array $params = []): never
     {
+        if (isset($details['errors']) && is_array($details['errors'])) { $details['errors'] = self::issues($details['errors']); }
         self::assertData($details);
+        self::assertData($params);
         $payload = self::envelope(false, $status, $message, null, [], [
-            'code' => $code,
             'details' => $details,
-        ]);
+        ], $code, $params);
 
         self::json($payload, $status);
     }
@@ -72,6 +76,31 @@ final class Response
     public static function validation(array $errors, string $message = 'Validation failed.'): never
     {
         self::error($message, 422, 'validation_error', ['errors' => $errors]);
+    }
+
+    /** @param array<mixed> $params
+     * @return array<string, mixed>
+     */
+    public static function issue(string $code, string $message, array $params = []): array
+    {
+        return ['code' => $code, 'params' => $params, 'message' => $message];
+    }
+
+    /** @param array<mixed> $errors
+     * @return array<mixed>
+     */
+    private static function issues(array $errors): array
+    {
+        foreach ($errors as $field => &$issues) {
+            $issues = array_map(static function (mixed $issue) use ($field): array {
+                if (is_array($issue) && isset($issue['code'], $issue['message'])) {
+                    return ['code' => (string) $issue['code'], 'params' => (array) ($issue['params'] ?? []) + ['field' => (string) $field], 'message' => (string) $issue['message']];
+                }
+                return ['code' => 'invalid_value', 'params' => ['field' => (string) $field], 'message' => (string) $issue];
+            }, (array) $issues);
+        }
+        unset($issues);
+        return $errors;
     }
 
     public static function exception(Throwable $exception, bool $debug = false): never
@@ -100,6 +129,7 @@ final class Response
     /**
      * @param array<mixed> $meta
      * @param array<mixed>|null $error
+     * @param array<mixed> $params
      * @return array<mixed>
      */
     private static function envelope(
@@ -108,11 +138,16 @@ final class Response
         ?string $message,
         mixed $data,
         array $meta,
-        ?array $error = null
+        ?array $error = null,
+        string $code = 'ok',
+        array $params = []
     ): array {
+        if (!preg_match('/^[a-z][a-z0-9_]*$/D', $code)) { throw new \LogicException('API outcome codes must be stable identifiers.'); }
         $payload = [
             'ok' => $ok,
             'status' => $status,
+            'code' => $code,
+            'params' => $params === [] ? (object) [] : $params,
             'message' => $message,
             'data' => $data,
             'meta' => $meta === [] ? (object) [] : $meta,
@@ -140,6 +175,9 @@ final class Response
         foreach ($data as $key => $value) {
             if (is_string($key) && preg_match('/(?:^|_)html(?:$|_)/i', $key) === 1) {
                 throw new \LogicException('HTML presentation fields are not allowed in module API resources.');
+            }
+            if (is_string($key) && preg_match('/(?:^|_)(?:label|formatted)$|^(?:ui|components|translations|role_options|status_options|username_hint)$/i', $key) === 1) {
+                throw new \LogicException('UI presentation fields are not allowed in module API resources: ' . $key);
             }
             self::assertData($value);
         }

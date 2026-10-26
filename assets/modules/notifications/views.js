@@ -1,3 +1,4 @@
+import "../../core/dates.js";
 import "../../core/components.js";
 import "../../core/dom.js";
 import "../../core/http.js";
@@ -168,7 +169,7 @@ import "../../ui/toasts.js";
           state = state.data || {};
           nextLatestId = Math.max(0, parseInt((state && state.latest_id) || "0", 10) || 0);
           nextUnread = Math.max(0, parseInt((state && (state.unread_count !== undefined ? state.unread_count : state.unread)) || "0", 10) || 0);
-          message = (state && state.message) || button.dataset.notificationMessage || "";
+          message = T.i18n.plural("notifications.new_count", nextUnread);
 
           if (!first && message && nextUnread > 0 && (nextLatestId > latestId || nextUnread > unread)) {
             T.toasts.show(message, "info", 4200);

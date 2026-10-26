@@ -20,7 +20,7 @@ final class Validator
      * @param array<mixed> $messages
      * @return array<mixed>
      */
-    public static function validate(array $data, array $rules, array $messages = []): array
+    public static function validate(array $data, array $rules, array $messages = [], bool $structured = false): array
     {
         $errors = [];
 
@@ -33,7 +33,7 @@ final class Validator
             $nullable = self::hasAnyRule($fieldRules, ['nullable']);
 
             if ($required && self::blank($value, $exists)) {
-                $errors[$field][] = self::validationMessage($messages, $field, 'required');
+                $errors[$field][] = self::validationMessage($messages, $field, 'required', $structured);
                 continue;
             }
 
@@ -49,7 +49,7 @@ final class Validator
                 }
 
                 if (!self::passesRule($value, $name, $params, $fieldRules)) {
-                    $errors[$field][] = self::validationMessage($messages, $field, $name);
+                    $errors[$field][] = self::validationMessage($messages, $field, $name, $structured);
                 }
             }
         }
@@ -66,7 +66,7 @@ final class Validator
     public static function validated(array $rules, ?array $data = null, array $messages = []): array
     {
         $data ??= Request::current()->input();
-        $errors = self::validate($data, $rules, $messages);
+        $errors = self::validate($data, $rules, $messages, true);
 
         if ($errors !== []) {
             Response::validation($errors);
@@ -175,13 +175,15 @@ final class Validator
 
     /**
      * @param array<mixed> $messages
+     * @return array<string, mixed>|string
      */
-    private static function validationMessage(array $messages, string $field, string $rule): string
+    private static function validationMessage(array $messages, string $field, string $rule, bool $structured): array|string
     {
-        if (isset($messages[$field]) && is_array($messages[$field]) && isset($messages[$field][$rule])) {
-            return (string) $messages[$field][$rule];
-        }
-
-        return (string) ($messages[$field . '.' . $rule] ?? $messages[$rule] ?? 'validation.' . $field . '.' . $rule);
+        $custom = is_array($messages[$field] ?? null) ? ($messages[$field][$rule] ?? null) : null;
+        $custom ??= $messages[$field . '.' . $rule] ?? $messages[$rule] ?? null;
+        if (!$structured) { return (string) ($custom ?? 'validation.' . $field . '.' . $rule); }
+        $params = ['field' => $field, 'rule' => $rule];
+        $message = $custom !== null ? (string) $custom : \TinyCat\Support\Localization::t($rule === 'required' ? 'common.validation_required' : 'common.validation_invalid', $params);
+        return Response::issue($custom !== null ? 'invalid_value' : 'validation_' . $rule, $message, $params);
     }
 }

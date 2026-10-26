@@ -147,8 +147,7 @@ final class Queries
             'excerpt' => \TinyCat\Search\Queries::public_search_excerpt($excerptText, $query, 120),
             'url' => \TinyCat\Status\Posts::status_url($id),
             'author_url' => \TinyCat\Users\Profiles::author_url($authorId),
-            'published_at' => $publishedAt,
-            'published_label' => \TinyCat\Support\Dates::displayDateTime($publishedAt),
+            'published_at' => $publishedAt !== '' ? \TinyCat\Support\Dates::dateIso($publishedAt) : '',
             'avatar_url' => \TinyCat\Users\Avatars::user_avatar_url($item),
         ];
     }
@@ -498,7 +497,6 @@ final class Queries
                 'id' => (int) ($tag['id'] ?? 0),
                 'type' => 'tag',
                 'title' => '#' . $name,
-                'excerpt' => \TinyCat\Support\Localization::t('public.search_tag_posts', ['count' => (int) ($tag['posts_count'] ?? 0)]),
                 'url' => \TinyCat\Status\Tags::tag_url($name),
                 'posts_count' => (int) ($tag['posts_count'] ?? 0),
             ];

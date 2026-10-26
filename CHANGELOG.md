@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.0.0 - 2026-10-26
+
+- Breaking: normalize API outcomes around top-level `code`, `params` and a readable fallback `message`; replace `error.code` and string-only validation errors with structured field issues. Update external clients using `docs/api.md`.
+- Return domain values, counts, timestamps and content from APIs; move translated labels, option text, notification icons and accessible names into shared module-owned presentation components.
+- Move translations beside their modules, declare client message dependencies explicitly and compile OPcache-compatible PHP catalogs together with scoped, content-hashed client assets. Keep email templates server-only.
+- Share single-pass `{name}` interpolation, per-key English/base/regional fallback and Czech/English plural rules across PHP, JavaScript and email templates.
+- Fix profile and login form layout, login/register modal switching and damaged Czech validation and bot-run messages.
+- Validate catalog ownership, parameters, plural forms, client declarations and encoding; extend PHP/JavaScript parity, locale/cache, API and release checks.
+
 ## 3.2.1 - 2026-10-26
 
 - Fix a fatal error on the home page for signed-out visitors by checking authentication before reading the account mute expiry.

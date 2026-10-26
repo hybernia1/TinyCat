@@ -1,0 +1,54 @@
+{
+  "moderation": {
+    "title": "Moderation",
+    "reports_title": "Reports",
+    "reports_empty": "There are no reports.",
+    "reported_content": "Reported content",
+    "report_status": "Report post",
+    "report_action": "Report",
+    "report_reason": "Reason",
+    "report_note": "Note",
+    "report_submit": "Send report",
+    "profile_muted_until": "The account is muted until {until}.",
+    "url_blocker_title": "Blocked URLs",
+    "url_blocker_label": "Blocked websites",
+    "url_blocker_placeholder": "example.com, bad.example, domain:ru",
+    "url_blocker_help": "Separate websites with commas or new lines. Subdomains are blocked too. Use domain:ru to block the whole .ru suffix.",
+    "remove_content": "Remove content",
+    "keep_and_lock": "Keep and lock",
+    "empty_content": "Empty content",
+    "report_reasons": {
+      "spam": "Spam",
+      "illegal": "Illegal content",
+      "malware": "Malware or phishing",
+      "abuse": "Abuse",
+      "other": "Other"
+    },
+    "report_statuses": {
+      "open": "Open",
+      "reviewed": "Reviewed",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed"
+    },
+    "messages": {
+      "action_limited": "This account has reached the temporary action limit.",
+      "action_too_fast": "Please wait a moment before the next action.",
+      "account_muted": "This account is temporarily muted until {until}.",
+      "blocked_url": "This link is not allowed: {host}.",
+      "duplicate_body": "This post is too similar to your recent post.",
+      "report_created": "The report was submitted.",
+      "report_already_reviewed": "This post has already been reviewed and the report was not reopened.",
+      "report_own_content": "You cannot report your own post.",
+      "reports_unavailable": "Reports are not available.",
+      "report_not_found": "Report was not found.",
+      "report_reviewed": "The report was reviewed.",
+      "url_blocker_saved": "Blocked URLs were saved."
+    },
+    "report_count": {
+      "one": "{count} report",
+      "few": "{count} reports",
+      "many": "{count} reports",
+      "other": "{count} reports"
+    }
+  }
+}

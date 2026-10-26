@@ -19,6 +19,8 @@ final class LayoutData
         $current = \TinyCat\Http\Request::current()->path((string) ($current ?? \TinyCat\Http\Request::current()->path()));
         $bodyClass = (string) ($bodyClass ?? '');
         $csrfToken = (string) ($csrfToken ?? \TinyCat\Security\Csrf::token());
+        $dateFormat = (string) \TinyCat\Settings\Store::config('datetime.datetime', 'Y-m-d H:i:s');
+        $dateRelative = (bool) \TinyCat\Settings\Store::config('datetime.relative', false);
         $scriptUrls = \TinyCat\Support\ClientAssets::scripts($current, array_values(array_map(static fn (mixed $script): string => (string) $script, (array) ($scripts ?? []))));
         $styleUrls = array_values(array_unique([
             ...\TinyCat\Support\ClientAssets::styles($current),
@@ -86,8 +88,8 @@ final class LayoutData
         if (!$isAdminShell && $authUser !== null) {
             $notificationUserId = (int) $authUser['id'];
             $notificationState = \TinyCat\Notifications\Inbox::state($notificationUserId);
-            $notificationItems = \TinyCat\Notifications\Inbox::viewItems(\TinyCat\Notifications\Inbox::items($notificationUserId, \TinyCat\Notifications\Inbox::PREVIEW_LIMIT), 90);
+            $notificationItems = \TinyCat\Notifications\Inbox::items($notificationUserId, \TinyCat\Notifications\Inbox::PREVIEW_LIMIT);
         }
-        return compact('isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'themeAttribute', 'title', 'viewerIsAdmin');
+        return compact('dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'themeAttribute', 'title', 'viewerIsAdmin');
     }
 }

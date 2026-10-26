@@ -95,6 +95,12 @@ $request = static function (string $method, string $path, array|string|null $dat
     $GLOBALS['api_contract_server_error'] = $httpStatus >= 500 ? substr((string) file_get_contents($temporary . '/server.log'), -1500) : '';
     $assert(($payload['status'] ?? null) === $httpStatus, "{$method} {$path} envelope status must equal HTTP status.");
     $assert(isset($payload['ok']) && array_key_exists('data', $payload) && array_key_exists('message', $payload) && array_key_exists('meta', $payload), 'Every response must use the shared envelope.');
+    $assert(is_string($payload['code'] ?? null) && preg_match('/^[a-z][a-z0-9_]*$/D', $payload['code']) === 1 && is_array($payload['params'] ?? null), 'Every outcome exposes a stable domain code and parameter object.');
+    foreach ($payload['error']['details']['errors'] ?? [] as $field => $issues) {
+        foreach ($issues as $issue) {
+            $assert(is_string($issue['code'] ?? null) && is_array($issue['params'] ?? null) && is_string($issue['message'] ?? null) && $issue['params']['field'] === $field, 'Field errors use code, params and readable fallback.');
+        }
+    }
     $assert(count(array_filter($headers, static fn (string $header): bool => str_starts_with(strtolower($header), 'content-type: application/json'))) === 1, 'API responses must declare JSON.');
     return [$httpStatus, $payload, $headers];
 };
@@ -114,22 +120,22 @@ try {
 
     foreach (['/api', '/api/missing', '/api/admin/missing', '/api/status/unsupported', '/api/bots/sources/accounts-api'] as $path) {
         [$status, $payload] = $request('POST', $path);
-        $assert($status === 404 && $payload['error']['code'] === 'not_found', 'Unknown API endpoints must return the same 404.');
+        $assert($status === 404 && $payload['code'] === 'not_found', 'Unknown API endpoints must return the same 404.');
     }
     foreach (['/api/users', '/api/bots/accounts', '/api/bots/sources'] as $path) {
         [$status, $payload, $headers] = $request('PUT', $path);
-        $assert($status === 405 && $payload['error']['code'] === 'method_not_allowed', 'Unsupported methods must be rejected before handlers.');
+        $assert($status === 405 && $payload['code'] === 'method_not_allowed', 'Unsupported methods must be rejected before handlers.');
         $assert(count(array_filter($headers, static fn (string $header): bool => str_starts_with($header, 'Allow: GET, POST'))) === 1, '405 responses must include explicit allowed methods.');
     }
     foreach (['/api/users', '/api/bots/sources', '/api/notifications', '/api/statuses'] as $path) {
         [$status, $payload] = $request($path === '/api/statuses' ? 'POST' : 'GET', $path);
-        $assert($status === 401 && $payload['error']['code'] === 'unauthenticated', 'Protected API routes must share the authentication error.');
+        $assert($status === 401 && $payload['code'] === 'unauthenticated', 'Protected API routes must share the authentication error.');
     }
     [$status] = $request('GET', '/api/bots/sources', null, 'user');
     $assert($status === 403, 'A regular user cannot access bot administration.');
     foreach (['/api/users', '/api/bots/sources', '/api/bots/accounts', '/api/scheduler/tokens'] as $path) {
         [$status, $payload] = $request('POST', $path, [], 'admin');
-        $assert($status === 403 && $payload['error']['code'] === 'csrf_token_mismatch', 'All API mutations must use the shared CSRF guard.');
+        $assert($status === 403 && $payload['code'] === 'csrf_token_mismatch', 'All API mutations must use the shared CSRF guard.');
     }
 
     $csrf = ['X-CSRF-Token' => str_repeat('a', 64)];
@@ -137,7 +143,7 @@ try {
     $assert($status === 200 && $payload['data']['id'] === 7 && $payload['data']['value'] === '<b>literal user text</b>' && $payload['message'] === 'Loaded.' && $payload['meta']['source'] === 'module', 'Module APIs receive named parameters and return pure data, messages and metadata.');
     [$status, $payload] = $request('POST', '/api/foundation/items', ['value' => 'new'], 'admin', $csrf);
     $assert($status === 201 && $payload['data']['value'] === 'new', 'Module API writes share authentication, CSRF and request parsing.');
-    foreach (['/api/foundation/bad-resource', '/api/foundation/bad-error'] as $path) {
+    foreach (['/api/foundation/bad-resource', '/api/foundation/bad-error', '/api/foundation/bad-ui'] as $path) {
         [$status, $payload] = $request('GET', $path);
         $assert($status === 500 && !str_contains(json_encode($payload), 'fragment'), 'Module APIs reject HTML resources and HTML error details.');
     }
@@ -158,7 +164,7 @@ try {
     [$status, $payload] = $request('POST', '/api/users/1/followers/me', [], 'user', $csrf);
     $assert($status === 405, 'Follow state must use PUT or DELETE, never an action toggle.');
     [$status, $payload] = $request('POST', '/api/bots/sources', '{invalid', 'admin', $csrf);
-    $assert($status === 400 && $payload['error']['code'] === 'bad_request', 'Malformed JSON must use the same error envelope.');
+    $assert($status === 400 && $payload['code'] === 'bad_request', 'Malformed JSON must use the same error envelope.');
     [$status, $payload] = $request('GET', '/api/foundation/database-error', null, 'admin');
     $assert($status === 500 && $payload['message'] === 'Server error.' && !str_contains(json_encode($payload), 'SQL'), 'Unexpected database failures must remain JSON without leaking internals.');
     [$status, $payload] = $request('POST', '/api/bots/accounts', ['username' => 'Žaneta.Novák', 'status' => 'active'], 'admin', $csrf);

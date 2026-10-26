@@ -1,0 +1,35 @@
+{
+  "notifications": {
+    "title": "Notifikace",
+    "meta": "Přehled upozornění k tvým příspěvkům.",
+    "empty": "Zatím tu nejsou žádné notifikace.",
+    "mark_read": "Označit jako přečtené",
+    "mark_all_read": "Přečíst vše",
+    "delete": "Smazat",
+    "open": "Otevřít",
+    "more": "Zobrazit další notifikace",
+    "load_more": "Načíst další",
+    "loading": "Načítání...",
+    "someone": "Někdo",
+    "new_count": {
+      "one": "Máš {count} novou notifikaci.",
+      "few": "Máš {count} nové notifikace.",
+      "many": "Máš {count} nové notifikace.",
+      "other": "Máš {count} nových notifikací."
+    },
+    "messages": {
+      "follow": "{actor} tě začal(a) sledovat.",
+      "content_like": "{actor} lajknul/a tvůj příspěvek.",
+      "comment_like": "{actor} lajknul/a tvůj komentář.",
+      "content_comment": "{actor} okomentoval/a tvůj příspěvek.",
+      "content_mention": "{actor} tě označil/a v příspěvku.",
+      "comment_mention": "{actor} tě označil/a v komentáři.",
+      "report_resolved": "Tvoje nahlášení bylo vyřešeno.",
+      "report_dismissed": "Tvoje nahlášení bylo zamítnuto.",
+      "generic": "{actor} reagoval/a na tvůj příspěvek.",
+      "read_done": "Notifikace byla označena jako přečtená.",
+      "read_all_done": "Všechny notifikace byly označeny jako přečtené.",
+      "deleted": "Notifikace byla smazána."
+    }
+  }
+}

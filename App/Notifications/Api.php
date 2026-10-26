@@ -16,7 +16,7 @@ final class Api
         $api->get('/notifications', self::listing(...), 'user');
         $api->patch('/notifications', static function (Request $request): array {
             if ($request->input('read') !== true && (string) $request->input('read', '') !== '1') {
-                Response::validation(['read' => [\TinyCat\Support\Localization::t('common.request_failed')]]);
+                Response::validation(['read' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]);
             }
             $id = (int) Users::actor()['id'];
             Inbox::applyAction($id, 'read_all');

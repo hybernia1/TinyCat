@@ -4,7 +4,21 @@ declare(strict_types=1);
 return static function (): array {
     if (!defined('TINYCAT')) { define('TINYCAT', true); }
     require_once dirname(__DIR__) . '/App/autoload.php';
+    $validateTranslations = require __DIR__ . '/translation-catalogs.php';
+    $catalogs = $validateTranslations(dirname(__DIR__));
+    $validateClients = require __DIR__ . '/client-translations.php';
+    $validateClients($catalogs);
     $files = [];
+    $server = ['packages' => \TinyCat\Support\TranslationSources::packages(), 'catalogs' => []];
+    foreach ($catalogs as $locale => $catalog) {
+        // Preserve template order as well as content; all sources were validated above.
+        $emails = json_decode((string) file_get_contents(\TinyCat\Support\Paths::basePath('App/Mail/lang/' . $locale . '.json')), true, 512, JSON_THROW_ON_ERROR);
+        $source = "<?php\ndeclare(strict_types=1);\n\nreturn " . var_export(['app' => $catalog['app'], 'emails' => $emails], true) . ";\n";
+        $name = $locale . '.' . substr(hash('sha256', $source), 0, 24) . '.php';
+        $files['App/Support/compiled/' . $name] = $source;
+        $server['catalogs'][$locale] = $name;
+    }
+    $files['App/Support/compiled/translations.php'] = "<?php\ndeclare(strict_types=1);\n\nreturn " . var_export($server, true) . ";\n";
     $manifest = ['assets' => [], 'clients' => []];
     $emit = static function (string $prefix, string $source, string $type = 'js') use (&$files): string {
         $relative = 'assets/build/' . $prefix . '.' . substr(hash('sha256', $source), 0, 24) . '.' . $type;
@@ -21,13 +35,12 @@ return static function (): array {
         $client = [
             'runtime' => $runtime,
             'app' => $variants('app', \TinyCat\Support\AssetGraph::javascript(\TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($path), \TinyCat\Support\ClientAssets::runtime()))),
-            'components' => $emit('components', 'window.TinyCat.components.register(' . \TinyCat\Support\ClientAssets::encode((object) \TinyCat\Support\ClientAssets::definitions($path)) . ');'),
+            'components' => $emit('components', \TinyCat\Support\ClientAssets::componentScript($path)),
             'catalogs' => [],
             'styles' => $variants('styles', \TinyCat\Support\AssetGraph::stylesheet(\TinyCat\Support\ClientAssets::sourceStyles($path)), 'css'),
         ];
-        foreach (glob(dirname(__DIR__) . '/lang/*/app.json') ?: [] as $file) {
-            $locale = basename(dirname($file));
-            $client['catalogs'][$locale] = $emit('i18n-' . $locale, 'window.TinyCat.i18n.register(' . \TinyCat\Support\ClientAssets::encode($locale) . ',' . \TinyCat\Support\ClientAssets::encode((object) \TinyCat\Support\ClientAssets::catalog($path, $locale)) . ');');
+        foreach ($catalogs as $locale => $catalog) {
+            $client['catalogs'][$locale] = $emit('i18n-' . $locale, 'window.TinyCat.i18n.register(' . \TinyCat\Support\ClientAssets::encode($locale) . ',' . \TinyCat\Support\ClientAssets::encode((object) \TinyCat\Support\ClientAssets::catalog($path, $locale, $catalog['app'])) . ');');
         }
         $manifest['clients'][$path] = $client;
     }

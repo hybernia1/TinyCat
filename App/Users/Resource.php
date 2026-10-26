@@ -30,11 +30,6 @@ final class Resource
         $roles = (array) ($data['roles'] ?? []);
         $statuses = (array) ($data['statuses'] ?? []);
         $items = (array) ($data['items'] ?? []);
-        foreach ($items as &$item) {
-            $item['role_label'] = (string) ($roles[$item['role']] ?? $item['role']);
-            $item['status_label'] = (string) ($statuses[$item['status']] ?? $item['status']);
-        }
-        unset($item);
         $filters = (array) ($data['filters'] ?? []);
         $params = $filters + ['per_page' => (int) ($pagination['per_page'] ?? 25)];
         $navigation = \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, '/api/users', '#users-list', $params, 'page', 2, '/admin/users');
@@ -42,8 +37,8 @@ final class Resource
         return array_replace($data, [
             'items' => $items, 'pagination' => $pagination,
             'options' => Resource::options(),
-            'role_options' => ['' => \TinyCat\Support\Localization::t('common.all')] + $roles,
-            'status_options' => ['' => \TinyCat\Support\Localization::t('common.all')] + $statuses,
+            'roles' => array_keys($roles),
+            'statuses' => array_keys($statuses),
             'navigation' => $navigation,
         ]);
     }
@@ -88,7 +83,6 @@ final class Resource
             'languages' => \TinyCat\Support\Languages::language_packages(),
             'themes' => ['system', 'light', 'dark'],
             'username_pattern' => Usernames::username_pattern(),
-            'username_hint' => Usernames::username_hint(),
             'password_max_length' => Login::auth_password_max_length(),
         ];
     }

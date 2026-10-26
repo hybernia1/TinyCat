@@ -267,7 +267,12 @@
                 },
                 "children": [
                   {
-                    "t": "bots.sources_count",
+                    "plural": "bots.sources_count",
+                    "count": {
+                      "count": {
+                        "get": "items"
+                      }
+                    },
                     "values": {
                       "count": {
                         "count": {
@@ -285,7 +290,13 @@
                 },
                 "children": [
                   {
-                    "t": "bots.active_sources_count",
+                    "plural": "bots.active_sources_count",
+                    "count": {
+                      "count": {
+                        "get": "items"
+                      },
+                      "where": "enabled"
+                    },
                     "values": {
                       "count": {
                         "count": {
@@ -544,7 +555,10 @@
                             "attrs": {},
                             "children": [
                               {
-                                "t": "bots.every_minutes",
+                                "plural": "bots.every_minutes",
+                                "count": {
+                                  "get": "source.interval_minutes"
+                                },
                                 "values": {
                                   "count": {
                                     "get": "source.interval_minutes"
@@ -558,7 +572,9 @@
                                 },
                                 "children": [
                                   {
-                                    "get": "source.next_run_label"
+                                    "date": {
+                                      "get": "source.next_run_at"
+                                    }
                                   }
                                 ],
                                 "when": {
@@ -576,7 +592,9 @@
                               {
                                 "or": [
                                   {
-                                    "get": "source.last_imported_label"
+                                    "date": {
+                                      "get": "source.last_imported_at"
+                                    }
                                   },
                                   {
                                     "t": "bots.never_imported",
@@ -898,7 +916,20 @@
                                     "get": "account.status"
                                   },
                                   "label": {
-                                    "get": "account.status_label"
+                                    "lookup": {
+                                      "get": "account.status"
+                                    },
+                                    "cases": {
+                                      "active": {
+                                        "t": "users.statuses.active"
+                                      },
+                                      "waiting": {
+                                        "t": "users.statuses.waiting"
+                                      },
+                                      "ban": {
+                                        "t": "users.statuses.ban"
+                                      }
+                                    }
                                   }
                                 }
                               }
@@ -936,7 +967,9 @@
                                 },
                                 "children": [
                                   {
-                                    "get": "account.updated_label"
+                                    "date": {
+                                      "get": "account.updated_at"
+                                    }
                                   }
                                 ]
                               }
@@ -1123,7 +1156,32 @@
                 {
                   "or": [
                     {
-                      "get": "runs.0.status_label"
+                      "lookup": {
+                        "get": "runs.0.status"
+                      },
+                      "cases": {
+                        "success": {
+                          "t": "bots.run_statuses.posted"
+                        },
+                        "posted": {
+                          "t": "bots.run_statuses.posted"
+                        },
+                        "current": {
+                          "t": "bots.run_statuses.current"
+                        },
+                        "running": {
+                          "t": "bots.run_statuses.running"
+                        },
+                        "error": {
+                          "t": "bots.run_statuses.error"
+                        },
+                        "skipped": {
+                          "t": "bots.run_statuses.skipped"
+                        },
+                        "completed": {
+                          "t": "bots.run_statuses.completed"
+                        }
+                      }
                     },
                     {
                       "get": "runs.0.status"
@@ -1154,12 +1212,14 @@
               "tag": "time",
               "attrs": {
                 "datetime": {
-                  "get": "runs.0.started_iso"
+                  "get": "runs.0.started_at"
                 }
               },
               "children": [
                 {
-                  "get": "runs.0.started_label"
+                  "date": {
+                    "get": "runs.0.started_at"
+                  }
                 }
               ]
             }
@@ -1312,7 +1372,32 @@
                             {
                               "or": [
                                 {
-                                  "get": "run.status_label"
+                                  "lookup": {
+                                    "get": "run.status"
+                                  },
+                                  "cases": {
+                                    "success": {
+                                      "t": "bots.run_statuses.posted"
+                                    },
+                                    "posted": {
+                                      "t": "bots.run_statuses.posted"
+                                    },
+                                    "current": {
+                                      "t": "bots.run_statuses.current"
+                                    },
+                                    "running": {
+                                      "t": "bots.run_statuses.running"
+                                    },
+                                    "error": {
+                                      "t": "bots.run_statuses.error"
+                                    },
+                                    "skipped": {
+                                      "t": "bots.run_statuses.skipped"
+                                    },
+                                    "completed": {
+                                      "t": "bots.run_statuses.completed"
+                                    }
+                                  }
                                 },
                                 {
                                   "get": "run.status"
@@ -1329,12 +1414,14 @@
                               "tag": "time",
                               "attrs": {
                                 "datetime": {
-                                  "get": "run.started_iso"
+                                  "get": "run.started_at"
                                 }
                               },
                               "children": [
                                 {
-                                  "get": "run.started_label"
+                                  "date": {
+                                    "get": "run.started_at"
+                                  }
                                 }
                               ]
                             }
@@ -1371,5 +1458,62 @@
         ]
       }
     }
-  ]
+  ],
+  "bots/stat": {
+    "tag": "div",
+    "attrs": {
+      "class": "card"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "card-body stack gap-1"
+        },
+        "children": [
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "table-meta"
+            },
+            "children": [
+              {
+                "lookup": {
+                  "get": "stat.key"
+                },
+                "cases": {
+                  "sources": {
+                    "t": "bots.detail_stat_sources"
+                  },
+                  "active_sources": {
+                    "t": "bots.detail_stat_active_sources"
+                  },
+                  "posts": {
+                    "t": "bots.detail_stat_posts"
+                  },
+                  "runs": {
+                    "t": "bots.detail_stat_runs"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "tag": "strong",
+            "attrs": {
+              "class": "text-2xl",
+              "data-bot-stat": {
+                "get": "stat.key"
+              }
+            },
+            "children": [
+              {
+                "get": "stat.value"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

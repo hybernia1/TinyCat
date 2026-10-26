@@ -1,3 +1,4 @@
+import "../../core/dates.js";
 import "../../core/components.js";
 import "../../core/dom.js";
 import "../../ui/fields.js";
@@ -33,7 +34,7 @@ import "../../ui/fields.js";
       if (url.pathname === "/api/moderation/report-options") {
         var report = form("/api/moderation/reports", "report", url.searchParams.get("id"));
         report.appendChild(U.hidden("id", url.searchParams.get("id")));
-        report.appendChild(U.select("moderation.report_submit", "reason", "spam", data.reasons));
+        report.appendChild(U.select("moderation.report_submit", "reason", "spam", Object.fromEntries(data.reasons.map(function (reason) { return [reason, U.text("moderation.report_reasons." + reason)]; }))));
         report.appendChild(U.field("moderation.report_submit", "note", "", "textarea", { maxlength: "2000" }));
         report.appendChild(U.button("moderation.report_submit", { type: "submit", "class": "btn btn-primary" }));
         return U.dialog(id, "moderation.report_submit", report);

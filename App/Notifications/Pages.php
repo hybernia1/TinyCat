@@ -35,7 +35,7 @@ final class Pages
 
         $batch = Inbox::page($userId);
         $unread = Inbox::unreadCount($userId);
-        $viewItems = Inbox::viewItems((array) $batch['items']);
+        $viewItems = (array) $batch['items'];
 
         Layout::render([
             'title' => Localization::t('notifications.title'),

@@ -271,7 +271,10 @@
                                 "attrs": {},
                                 "children": [
                                   {
-                                    "t": "public.active_user_posts",
+                                    "plural": "public.active_user_posts",
+                                    "count": {
+                                      "get": "author.posts_count"
+                                    },
                                     "values": {
                                       "count": {
                                         "get": "author.posts_count"

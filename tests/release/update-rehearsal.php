@@ -6,7 +6,7 @@ require_once __DIR__ . '/../cache-isolation.php';
 $root = dirname(__DIR__, 2);
 $options = getopt('', ['baseline-version::']);
 $baselineVersion = (string) ($options['baseline-version'] ?? '2.0.25');
-if (!in_array($baselineVersion, ['2.0.25', '2.1.0', '3.0.0', '3.1.0'], true)) {
+if (!in_array($baselineVersion, ['2.0.25', '2.1.0', '3.0.0', '3.1.0', '3.2.1'], true)) {
     throw new InvalidArgumentException('Unsupported rehearsal baseline.');
 }
 $temporaryRoot = $root . '/storage/update-rehearsal-' . bin2hex(random_bytes(6));
@@ -176,6 +176,8 @@ try {
 
     $copyTree($root . '/tools/build-update.php', $candidateRoot . '/tools/build-update.php');
     $copyTree($root . '/tools/compile-assets.php', $candidateRoot . '/tools/compile-assets.php');
+    $copyTree($root . '/tools/translation-catalogs.php', $candidateRoot . '/tools/translation-catalogs.php');
+    $copyTree($root . '/tools/client-translations.php', $candidateRoot . '/tools/client-translations.php');
     $copyTree($root . '/tools/update-deletions.json', $candidateRoot . '/tools/update-deletions.json');
     $core = (string) file_get_contents($candidateRoot . '/App/Support/Version.php');
 

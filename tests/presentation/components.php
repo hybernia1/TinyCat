@@ -49,7 +49,7 @@ $assert(str_contains($locked, 'name="role" value="admin"') && str_contains($lock
 $assert(str_contains($locked, 'Admin &lt;unsafe&gt;') && !str_contains($locked, 'Admin <unsafe>'), 'Administrative account names remain escaped.');
 $editable = UsersViews::adminFormFields(['user' => $member, 'roles' => $roles, 'statuses' => $statuses]);
 $assert(!str_contains($editable, 'name="role_locked"'), 'An ordinary account retains editable role controls.');
-$filter = \TinyCat\Support\Components::render('users/filter-form', ['role_options' => $roles, 'status_options' => $statuses, 'filters' => ['role' => 'user', 'status' => 'ban'], 'pagination' => ['per_page' => 25]]);
+$filter = \TinyCat\Support\Components::render('users/filter-form', ['roles' => array_keys($roles), 'statuses' => array_keys($statuses), 'filters' => ['role' => 'user', 'status' => 'ban'], 'pagination' => ['per_page' => 25]]);
 $assert(str_contains($filter, 'value="user" selected') && str_contains($filter, 'value="ban" selected'), 'Shared administrative filters preserve both selected options.');
 $list = UsersViews::adminList(['users' => [$admin, $member], 'roles' => $roles, 'statuses' => $statuses]);
 $assert(!preg_match('/<form[^>]*action="\/api\/users\/1(?:\?|"|&)[^>]*data-confirm=/', $list), 'The protected administrator has no deletion action.');
@@ -61,7 +61,7 @@ foreach (['bool' => true, 'email_templates' => ['welcome' => true], 'email_smtp'
     if ($type === 'password') { $assert(!str_contains($field, 'value="secret"'), 'Stored passwords never enter the rendered form.'); }
 }
 $sidebar = SiteViews::sidebar(['authors' => [$admin + ['name' => $admin['username'], 'posts_count' => 5], $member + ['name' => $member['username'], 'posts_count' => 6]], 'tags' => [['name' => 'tinycat']]]);
-$assert(str_contains($sidebar, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::t('public.active_user_posts', ['count' => 5]))), 'Translation parameter maps preserve a parameter named count.');
+$assert(str_contains($sidebar, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::plural('public.active_user_posts', 5))), 'Translation parameter maps preserve a parameter named count.');
 $assert(str_contains($sidebar, 'href="/author/1"') && str_contains($sidebar, 'href="/author/2"'), 'Sidebar authors retain distinct destinations.');
 $assert(str_contains($sidebar, 'href="/tag/tinycat"'), 'Sidebar topics use their prepared destination.');
 $following = UsersViews::followingProfile(['profile' => $member]);

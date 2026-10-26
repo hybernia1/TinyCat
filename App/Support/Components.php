@@ -41,6 +41,9 @@ final class Components
         $visit = static function (mixed $node) use (&$visit, &$labels): void {
             if (!is_array($node)) { return; }
             if (isset($node['t']) && is_string($node['t'])) { $labels[$node['t']] = true; }
+            if (isset($node['plural']) && is_string($node['plural'])) {
+                foreach (['one', 'few', 'many', 'other'] as $form) { $labels[$node['plural'] . '.' . $form] = true; }
+            }
             foreach ($node as $child) { $visit($child); }
         };
         $visit($templates ?? self::templates());
@@ -62,6 +65,7 @@ final class Components
             $visit = static function (mixed $node) use (&$visit, &$include): void {
                 if (!is_array($node)) { return; }
                 if (isset($node['component']) && is_string($node['component'])) { $include($node['component']); }
+                if (isset($node['use']) && is_string($node['use'])) { $include($node['use']); }
                 foreach ($node as $child) { $visit($child); }
             };
             $visit($all[$name]);
@@ -93,11 +97,38 @@ final class Components
         }
         if (array_key_exists('string', $value)) { return Values::string(self::value($value['string'], $data)); }
         if (array_key_exists('json', $value)) { return json_encode(self::value($value['json'], $data), JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); }
+        if (array_key_exists('plural', $value)) {
+            $count = self::value($value['count'], $data);
+            if (!is_int($count) && !is_float($count)) { throw new InvalidArgumentException('Plural count must be numeric data.'); }
+            return Localization::plural((string) $value['plural'], $count, self::bindings((array) ($value['values'] ?? []), $data));
+        }
         if (array_key_exists('count', $value)) {
             $items = (array) self::value($value['count'], $data);
             return isset($value['where']) ? count(array_filter($items, static fn (mixed $item): bool => self::truth(is_array($item) ? ($item[$value['where']] ?? null) : null))) : count($items);
         }
         if (array_key_exists('t', $value)) { return Localization::t((string) $value['t'], self::bindings((array) ($value['values'] ?? []), $data)); }
+        if (array_key_exists('use', $value)) {
+            $name = (string) $value['use'];
+            $templates = self::templates();
+            if (!isset($templates[$name])) { throw new InvalidArgumentException('Unknown presentation value: ' . $name); }
+            return self::value($templates[$name], self::bindings((array) ($value['data'] ?? []), $data));
+        }
+        if (array_key_exists('lookup', $value)) {
+            $key = Values::string(self::value($value['lookup'], $data));
+            return self::value($value['cases'][$key] ?? $value['default'] ?? $key, $data);
+        }
+        if (array_key_exists('options', $value)) {
+            $items = (array) self::value($value['options'], $data);
+            $codes = array_is_list($items) ? $items : array_keys($items);
+            $options = !empty($value['all']) ? ['' => Localization::t('common.all')] : [];
+            foreach ($codes as $code) { $options[$code] = self::value($value['cases'][$code] ?? $code, $data); }
+            return $options;
+        }
+        if (array_key_exists('date', $value)) {
+            $date = Values::string(self::value($value['date'], $data));
+            if ($date === '') { return ''; }
+            return ($value['format'] ?? '') === 'input' ? Dates::dateTime($date, 'Y-m-d\TH:i') : Dates::displayDateTime($date);
+        }
         if (array_key_exists('concat', $value)) { return implode('', array_map(static fn (mixed $part): string => Values::string(self::value($part, $data)), $value['concat'])); }
         if (array_key_exists('if', $value)) { return self::value($value['if'][self::truth(self::value($value['if'][0], $data)) ? 1 : 2] ?? null, $data); }
         if (array_key_exists('eq', $value)) { return self::value($value['eq'][0], $data) === self::value($value['eq'][1], $data); }

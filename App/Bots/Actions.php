@@ -21,7 +21,7 @@ final class Actions
     public static function adminBotAccountCreate(): array
     {
         $id = (int) \TinyCat\Database\Connection::insert('users', \TinyCat\Bots\Administration::accountCreatePayload());
-        return \TinyCat\Bots\Administration::accountsPayload($id) + ['message' => \TinyCat\Support\Localization::t('bots.messages.account_created')];
+        return \TinyCat\Bots\Administration::accountsPayload($id) + ['message' => \TinyCat\Support\Localization::t('bots.messages.account_created'), 'code' => 'bot_account_created'];
     }
 
     /**
@@ -38,7 +38,7 @@ final class Actions
 
         $status = (string) \TinyCat\Http\Request::current()->input('status', '');
         if (!array_key_exists($status, \TinyCat\Support\AdminViews::admin_user_statuses())) {
-            \TinyCat\Http\Response::validation(['status' => [\TinyCat\Support\Localization::t('users.validation.status_invalid')]]);
+            \TinyCat\Http\Response::validation(['status' => [\TinyCat\Http\Response::issue('user_status_invalid', \TinyCat\Support\Localization::t('users.validation.status_invalid'))]]);
         }
 
         try {
@@ -69,7 +69,7 @@ final class Actions
 
         $response = \TinyCat\Bots\Administration::accountsPayload($id);
 
-        return $response + ['message' => \TinyCat\Support\Localization::t('bots.messages.saved')];
+        return $response + ['message' => \TinyCat\Support\Localization::t('bots.messages.saved'), 'code' => 'bot_saved'];
     }
 
     /**
@@ -84,7 +84,7 @@ final class Actions
         }
 
         \TinyCat\Users\Accounts::user_delete_account($id);
-        return \TinyCat\Bots\Administration::accountsPayload() + ['message' => \TinyCat\Support\Localization::t('bots.messages.account_deleted')];
+        return \TinyCat\Bots\Administration::accountsPayload() + ['message' => \TinyCat\Support\Localization::t('bots.messages.account_deleted'), 'code' => 'bot_account_deleted'];
     }
 
     /**
@@ -122,7 +122,7 @@ final class Actions
         }
 
         \TinyCat\Bots\Importer::deleteSource($id);
-        return \TinyCat\Bots\Administration::payload() + ['message' => \TinyCat\Support\Localization::t('bots.messages.deleted')];
+        return \TinyCat\Bots\Administration::payload() + ['message' => \TinyCat\Support\Localization::t('bots.messages.deleted'), 'code' => 'bot_deleted'];
     }
 
     /**
@@ -135,10 +135,11 @@ final class Actions
         $result = \TinyCat\Bots\Administration::runSource($source);
         $failed = (string) ($result['status'] ?? '') === 'error';
         $message = \TinyCat\Support\Localization::t($failed ? 'bots.detail_run_failed' : 'bots.detail_run_finished');
+        $code = $failed ? 'bot_run_failed' : 'bot_run_completed';
 
         $payload = \TinyCat\Bots\Administration::payload($sourceId);
 
-        return $payload + ['message' => $message];
+        return $payload + ['message' => $message, 'code' => $code];
     }
 
     /**
@@ -156,22 +157,24 @@ final class Actions
             if ($id === null) {
                 $id = (int) \TinyCat\Database\Connection::insert('bot_sources', $payload + ['created_at' => \TinyCat\Support\Dates::dateDb()]);
                 $message = \TinyCat\Support\Localization::t('bots.messages.created');
+                $code = 'bot_created';
             } else {
                 \TinyCat\Database\Connection::update('bot_sources', $payload, ['id' => $id]);
                 $message = \TinyCat\Support\Localization::t('bots.messages.saved');
+                $code = 'bot_saved';
             }
         } catch (Throwable $exception) {
             if (
                 \TinyCat\Bots\Importer::isDuplicateSourceException($exception)
                 && \TinyCat\Bots\Importer::sourceDuplicateExists((string) ($payload['feed_url'] ?? ''), (int) $id)
             ) {
-                \TinyCat\Http\Response::validation(['feed_url' => [\TinyCat\Support\Localization::t('bots.validation.feed_duplicate')]]);
+                \TinyCat\Http\Response::validation(['feed_url' => [\TinyCat\Http\Response::issue('bot_feed_duplicate', \TinyCat\Support\Localization::t('bots.validation.feed_duplicate'))]]);
             }
 
             throw $exception;
         }
 
-        return \TinyCat\Bots\Administration::payload($id) + ['message' => $message];
+        return \TinyCat\Bots\Administration::payload($id) + ['message' => $message, 'code' => $code];
     }
 
 }

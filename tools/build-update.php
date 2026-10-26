@@ -103,7 +103,7 @@ foreach ($allowedRoots as $directory) {
         }
 
         $relative = str_replace('\\', '/', substr($entry->getPathname(), strlen($root) + 1));
-        if (str_starts_with($relative, 'assets/build/')) { continue; }
+        if (str_starts_with($relative, 'assets/build/') || str_starts_with($relative, 'App/Support/compiled/')) { continue; }
 
         if (preg_match('/^[A-Za-z0-9._\/-]+$/', $relative) !== 1) {
             fwrite(STDERR, "Unsupported package path: {$relative}\n");

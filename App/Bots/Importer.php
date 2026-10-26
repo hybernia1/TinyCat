@@ -368,11 +368,9 @@ final class Importer
             'interval_minutes' => (int) ($source['interval_minutes'] ?? 60),
             'post_template' => (string) ($source['post_template'] ?? ''),
             'enabled' => (bool) ($source['enabled'] ?? false),
-            'last_checked_at' => (string) ($source['last_checked_at'] ?? ''),
-            'last_imported_at' => (string) ($source['last_imported_at'] ?? ''),
-            'last_imported_label' => !empty($source['last_imported_at']) ? \TinyCat\Support\Dates::displayDateTime((string) $source['last_imported_at']) : '',
-            'next_run_at' => (string) ($source['next_run_at'] ?? ''),
-            'next_run_label' => !empty($source['next_run_at']) ? \TinyCat\Support\Dates::displayDateTime((string) $source['next_run_at']) : '',
+            'last_checked_at' => !empty($source['last_checked_at']) ? \TinyCat\Support\Dates::dateIso($source['last_checked_at']) : '',
+            'last_imported_at' => !empty($source['last_imported_at']) ? \TinyCat\Support\Dates::dateIso($source['last_imported_at']) : '',
+            'next_run_at' => !empty($source['next_run_at']) ? \TinyCat\Support\Dates::dateIso($source['next_run_at']) : '',
             'last_error' => (string) ($source['last_error'] ?? ''),
         ];
     }

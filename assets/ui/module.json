@@ -57,6 +57,14 @@
       "assets/ui/styles/092-user-modal-panel-modal-panel-full-following-m.css",
       "assets/ui/styles/093-before-after.css",
       "assets/ui/styles/094-is-resource-text.css"
+    ],
+    "translations": [
+      "common.all",
+      "common.cancel",
+      "common.close",
+      "common.confirm",
+      "common.confirm_action",
+      "common.request_failed"
     ]
   },
   {
@@ -68,6 +76,103 @@
       "assets/ui/ajax.js",
       "assets/ui/actions.js"
     ],
-    "components": []
+    "components": [],
+    "translations": [
+      "common.leave",
+      "common.stay",
+      "common.unsaved_message",
+      "common.unsaved_title"
+    ],
+    "messages": {
+      "forbidden": "auth.forbidden",
+      "unauthenticated": "auth.login_required",
+      "unauthorized": "auth.login_required",
+      "bad_request": "common.request_failed",
+      "not_found": "common.not_found",
+      "validation_error": "common.validation_failed",
+      "server_error": "common.request_failed",
+      "error": "common.request_failed",
+      "validation_required": "common.validation_required",
+      "validation_accepted": "common.validation_invalid",
+      "validation_array": "common.validation_invalid",
+      "validation_bool": "common.validation_invalid",
+      "validation_boolean": "common.validation_invalid",
+      "validation_date": "common.validation_invalid",
+      "validation_email": "common.validation_invalid",
+      "validation_float": "common.validation_invalid",
+      "validation_number": "common.validation_invalid",
+      "validation_numeric": "common.validation_invalid",
+      "validation_in": "common.validation_invalid",
+      "validation_int": "common.validation_invalid",
+      "validation_integer": "common.validation_invalid",
+      "validation_max": "common.validation_invalid",
+      "validation_min": "common.validation_invalid",
+      "validation_between": "common.validation_invalid",
+      "validation_string": "common.validation_invalid",
+      "validation_url": "common.validation_invalid"
+    }
+  },
+  {
+    "routes": [
+      "public",
+      "/admin/users",
+      "/admin/bots",
+      "/admin/moderation"
+    ],
+    "entries": [
+      "assets/core/dates.js"
+    ],
+    "components": [],
+    "translations": [
+      "relative.future.day.few",
+      "relative.future.day.many",
+      "relative.future.day.one",
+      "relative.future.day.other",
+      "relative.future.hour.few",
+      "relative.future.hour.many",
+      "relative.future.hour.one",
+      "relative.future.hour.other",
+      "relative.future.minute.few",
+      "relative.future.minute.many",
+      "relative.future.minute.one",
+      "relative.future.minute.other",
+      "relative.future.month.few",
+      "relative.future.month.many",
+      "relative.future.month.one",
+      "relative.future.month.other",
+      "relative.future.week.few",
+      "relative.future.week.many",
+      "relative.future.week.one",
+      "relative.future.week.other",
+      "relative.future.year.few",
+      "relative.future.year.many",
+      "relative.future.year.one",
+      "relative.future.year.other",
+      "relative.now",
+      "relative.past.day.few",
+      "relative.past.day.many",
+      "relative.past.day.one",
+      "relative.past.day.other",
+      "relative.past.hour.few",
+      "relative.past.hour.many",
+      "relative.past.hour.one",
+      "relative.past.hour.other",
+      "relative.past.minute.few",
+      "relative.past.minute.many",
+      "relative.past.minute.one",
+      "relative.past.minute.other",
+      "relative.past.month.few",
+      "relative.past.month.many",
+      "relative.past.month.one",
+      "relative.past.month.other",
+      "relative.past.week.few",
+      "relative.past.week.many",
+      "relative.past.week.one",
+      "relative.past.week.other",
+      "relative.past.year.few",
+      "relative.past.year.many",
+      "relative.past.year.one",
+      "relative.past.year.other"
+    ]
   }
 ]

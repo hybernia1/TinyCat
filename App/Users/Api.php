@@ -19,13 +19,13 @@ final class Api
         $api->post('/users/password-resets', static function (Request $request): Result {
             self::recoveryCaptcha();
             Recovery::send((string) $request->input('email', ''));
-            return new Result(['accepted' => true], \TinyCat\Support\Localization::t('auth.recovery_sent'));
+            return new Result(['accepted' => true], \TinyCat\Support\Localization::t('auth.recovery_sent'), [], 'auth_recovery_sent', []);
         }, 'public');
         $api->post('/users/password-resets/confirm', static function (Request $request): Result {
             self::recoveryCaptcha();
             $errors = Recovery::confirm(trim((string) $request->input('token', '')), (string) $request->input('password', ''), (string) $request->input('password_confirm', ''));
             if ($errors !== []) { Response::validation($errors); }
-            return new Result(['password_changed' => true, 'redirect' => '/login'], \TinyCat\Support\Localization::t('auth.recovery_done'));
+            return new Result(['password_changed' => true, 'redirect' => '/login'], \TinyCat\Support\Localization::t('auth.recovery_done'), [], 'auth_recovery_done', []);
         }, 'public', 200);
         $api->delete('/users/sessions/current', static function (): array {
             Authentication::authLogout();
@@ -104,7 +104,7 @@ final class Api
         $data = ['user' => Resource::privateProfile($user), 'options' => Resource::options(),
             'capabilities' => ['edit' => true, 'password' => (int) $actor['id'] === (int) $user['id']]];
         if (Profiles::user_is_admin($actor)) {
-            $data['administration'] = ['roles' => \TinyCat\Users\Profiles::tc_admin_roles(), 'statuses' => \TinyCat\Support\AdminViews::admin_user_statuses()];
+            $data['administration'] = ['roles' => array_keys(\TinyCat\Users\Profiles::tc_admin_roles()), 'statuses' => array_keys(\TinyCat\Support\AdminViews::admin_user_statuses())];
             $data['user']['protected'] = Accounts::tc_admin_user_is_super_admin($user);
         }
         return $data;
@@ -124,9 +124,7 @@ final class Api
      */
     private static function result(array $data): Result
     {
-        $message = isset($data['message']) ? (string) $data['message'] : null;
-        unset($data['message']);
-        return new Result($data, $message);
+        return Result::from($data);
     }
 
     /**
@@ -136,7 +134,7 @@ final class Api
     {
         $data = Actions::user_profile_update_request($target, self::actor());
         $updated = Accounts::tc_admin_user_by_id((int) $target['id']) ?? $target;
-        return new Result(['user' => Resource::privateProfile($updated)], (string) $data['message']);
+        return Result::from(['user' => Resource::privateProfile($updated), 'message' => (string) $data['message'], 'code' => (string) ($data['code'] ?? 'profile_saved')]);
     }
 
     private static function listing(): Result
@@ -155,7 +153,7 @@ final class Api
     private static function adminCreate(): array
     {
         $id = (int) \TinyCat\Database\Connection::insert('users', Actions::tc_admin_user_payload());
-        return ['item' => Accounts::tc_admin_user_resource(Accounts::tc_admin_user_by_id($id) ?? []), 'message' => \TinyCat\Support\Localization::t('users.messages.created')];
+        return ['item' => Accounts::tc_admin_user_resource(Accounts::tc_admin_user_by_id($id) ?? []), 'message' => \TinyCat\Support\Localization::t('users.messages.created'), 'code' => 'user_created'];
     }
 
     /**
@@ -175,7 +173,7 @@ final class Api
         }
         \TinyCat\Database\Connection::update('users', $payload, ['id' => $id]);
         if ($avatar['changed'] && !$avatar['uploaded']) { \TinyCat\Users\Avatar::delete($id); }
-        return ['item' => Accounts::tc_admin_user_resource(Accounts::tc_admin_user_by_id($id) ?? []), 'message' => \TinyCat\Support\Localization::t('users.messages.saved')];
+        return ['item' => Accounts::tc_admin_user_resource(Accounts::tc_admin_user_by_id($id) ?? []), 'message' => \TinyCat\Support\Localization::t('users.messages.saved'), 'code' => 'user_saved'];
     }
 
     /**

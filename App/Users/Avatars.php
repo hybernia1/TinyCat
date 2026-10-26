@@ -74,7 +74,7 @@ final class Avatars
             return [
                 'user' => \TinyCat\Users\Profiles::user_public_payload($updated),
                 'avatar_url' => '',
-                'message' => \TinyCat\Support\Localization::t('account.messages.avatar_removed'),
+                'message' => \TinyCat\Support\Localization::t('account.messages.avatar_removed'), 'code' => 'avatar_removed',
 
             ];
         }
@@ -104,7 +104,7 @@ final class Avatars
         return [
             'user' => \TinyCat\Users\Profiles::user_public_payload($updated),
             'avatar_url' => \TinyCat\Users\Avatars::user_avatar_url($updated),
-            'message' => \TinyCat\Support\Localization::t('account.messages.avatar_saved'),
+            'message' => \TinyCat\Support\Localization::t('account.messages.avatar_saved'), 'code' => 'avatar_saved',
 
         ];
     }

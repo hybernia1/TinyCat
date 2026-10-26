@@ -13,6 +13,33 @@
     "entries": [
       "assets/modules/bots/index.js"
     ],
-    "styles": []
+    "styles": [],
+    "translations": [
+      "bots.edit_source",
+      "common.save"
+    ],
+    "messages": {
+      "bot_account_created": "bots.messages.account_created",
+      "bot_account_deleted": "bots.messages.account_deleted",
+      "bot_account_not_found": "bots.messages.account_not_found",
+      "bot_bot": "bots.validation.bot",
+      "bot_deleted": "bots.messages.deleted",
+      "bot_feed_duplicate": "bots.validation.feed_duplicate",
+      "bot_feed_url": "bots.validation.feed_url",
+      "bot_inactive": "bots.detail_bot_inactive",
+      "bot_interval": "bots.validation.interval",
+      "bot_name": "bots.validation.name",
+      "bot_saved": "bots.messages.saved",
+      "bot_source_disabled": "bots.detail_source_disabled",
+      "bot_source_not_found": "bots.messages.not_found",
+      "bot_template": "bots.validation.template",
+      "common_request_failed": "common.request_failed",
+      "user_status_invalid": "users.validation.status_invalid",
+      "user_username_invalid": "users.messages.username_invalid",
+      "user_username_taken": "users.messages.username_taken",
+      "bot_run_failed": "bots.detail_run_failed",
+      "bot_run_completed": "bots.detail_run_finished",
+      "bot_created": "bots.messages.created"
+    }
   }
 ]

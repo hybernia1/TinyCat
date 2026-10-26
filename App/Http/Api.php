@@ -67,7 +67,7 @@ final class Api
                     $named[$name] = $value;
                 }
                 $result = self::result($handler(Request::current(), $named));
-                Response::success($result->data, $result->message, $status, $result->meta);
+                Response::success($result->data, $result->message, $status, $result->meta, $result->code, $result->params);
             } catch (Throwable $exception) {
                 error_log('Module API failed: ' . $exception->getMessage());
                 Response::exception($exception, $this->debug);
@@ -83,7 +83,7 @@ final class Api
         if (!is_array($value)) {
             throw new LogicException('API handlers must return a resource or Result.');
         }
-        return new Result($value);
+        return Result::from($value);
     }
 
 }

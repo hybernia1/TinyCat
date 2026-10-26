@@ -167,11 +167,11 @@ final class Actions
 
         if ($id === null) {
             if (!\TinyCat\Users\Usernames::username_valid($username)) {
-                \TinyCat\Http\Response::validation(['username' => [\TinyCat\Support\Localization::t('users.messages.username_invalid')]]);
+                \TinyCat\Http\Response::validation(['username' => [\TinyCat\Http\Response::issue('user_username_invalid', \TinyCat\Support\Localization::t('users.messages.username_invalid'))]]);
             }
 
             if (\TinyCat\Users\Usernames::user_username_taken($username)) {
-                \TinyCat\Http\Response::validation(['username' => [\TinyCat\Support\Localization::t('users.messages.username_taken')]]);
+                \TinyCat\Http\Response::validation(['username' => [\TinyCat\Http\Response::issue('user_username_taken', \TinyCat\Support\Localization::t('users.messages.username_taken'))]]);
             }
         }
 
@@ -183,21 +183,21 @@ final class Actions
             : \TinyCat\Users\Profiles::user_email_normalize((string) ($existing['email'] ?? ''));
 
         if ($email !== '' && !\TinyCat\Users\Profiles::user_email_valid($email)) {
-            \TinyCat\Http\Response::validation(['email' => [\TinyCat\Support\Localization::t('account.messages.email_invalid')]]);
+            \TinyCat\Http\Response::validation(['email' => [\TinyCat\Http\Response::issue('email_invalid', \TinyCat\Support\Localization::t('account.messages.email_invalid'))]]);
         }
 
         if ($email !== '' && \TinyCat\Users\Profiles::user_email_taken($email, $id)) {
-            \TinyCat\Http\Response::validation(['email' => [\TinyCat\Support\Localization::t('account.messages.email_taken')]]);
+            \TinyCat\Http\Response::validation(['email' => [\TinyCat\Http\Response::issue('email_taken', \TinyCat\Support\Localization::t('account.messages.email_taken'))]]);
         }
 
         if ($id === null && (string) ($data['password'] ?? '') === '') {
-            \TinyCat\Http\Response::validation(['password' => [\TinyCat\Support\Localization::t('users.validation.password_required')]]);
+            \TinyCat\Http\Response::validation(['password' => [\TinyCat\Http\Response::issue('user_password_required', \TinyCat\Support\Localization::t('users.validation.password_required'))]]);
         }
 
         if ($existing !== null && \TinyCat\Users\Accounts::tc_admin_user_is_super_admin($existing) && ($role !== 'admin' || $status !== 'active')) {
             \TinyCat\Http\Response::validation([
-                'role' => [\TinyCat\Support\Localization::t('users.messages.super_admin_protected')],
-                'status' => [\TinyCat\Support\Localization::t('users.messages.super_admin_protected')],
+                'role' => [\TinyCat\Http\Response::issue('user_super_admin_protected', \TinyCat\Support\Localization::t('users.messages.super_admin_protected'))],
+                'status' => [\TinyCat\Http\Response::issue('user_super_admin_protected', \TinyCat\Support\Localization::t('users.messages.super_admin_protected'))],
             ]);
         }
 
@@ -259,16 +259,16 @@ final class Actions
         }
 
         if ($locale === '' || !array_key_exists($locale, \TinyCat\Support\Languages::language_packages())) {
-            $errors['locale'][] = \TinyCat\Support\Localization::t('settings.messages.invalid_language');
+            $errors['locale'][] = \TinyCat\Http\Response::issue('settings_invalid_language', \TinyCat\Support\Localization::t('settings.messages.invalid_language'));
         }
         if ($emailProvided && $email !== '' && !\TinyCat\Users\Profiles::user_email_valid($email)) {
-            $errors['email'][] = \TinyCat\Support\Localization::t('account.messages.email_invalid');
+            $errors['email'][] = \TinyCat\Http\Response::issue('email_invalid', \TinyCat\Support\Localization::t('account.messages.email_invalid'));
         } elseif ($email !== '' && \TinyCat\Users\Profiles::user_email_taken($email, $id)) {
-            $errors['email'][] = \TinyCat\Support\Localization::t('account.messages.email_taken');
+            $errors['email'][] = \TinyCat\Http\Response::issue('email_taken', \TinyCat\Support\Localization::t('account.messages.email_taken'));
         }
 
         if ($errors !== []) {
-            \TinyCat\Http\Response::validation($errors, implode(' ', array_merge(...array_values($errors))));
+            \TinyCat\Http\Response::validation($errors);
         }
 
         $data = [
@@ -293,7 +293,7 @@ final class Actions
 
         return [
             'user' => \TinyCat\Users\Profiles::user_public_payload(array_replace($user, $data)),
-            'message' => \TinyCat\Support\Localization::t('account.messages.profile_saved'),
+            'message' => \TinyCat\Support\Localization::t('account.messages.profile_saved'), 'code' => 'profile_saved',
         ];
     }
 
@@ -312,13 +312,13 @@ final class Actions
         }
 
         if ($email !== '' && !\TinyCat\Users\Profiles::user_email_valid($email)) {
-            $errors['email'][] = \TinyCat\Support\Localization::t('account.messages.email_invalid');
+            $errors['email'][] = \TinyCat\Http\Response::issue('email_invalid', \TinyCat\Support\Localization::t('account.messages.email_invalid'));
         } elseif ($email !== '' && \TinyCat\Users\Profiles::user_email_taken($email, $id)) {
-            $errors['email'][] = \TinyCat\Support\Localization::t('account.messages.email_taken');
+            $errors['email'][] = \TinyCat\Http\Response::issue('email_taken', \TinyCat\Support\Localization::t('account.messages.email_taken'));
         }
 
         if ($errors !== []) {
-            \TinyCat\Http\Response::validation($errors, implode(' ', array_merge(...array_values($errors))));
+            \TinyCat\Http\Response::validation($errors);
         }
 
         $data = ['email' => $email !== '' ? $email : null];
@@ -333,7 +333,7 @@ final class Actions
 
         return [
             'user' => \TinyCat\Users\Profiles::user_public_payload(array_replace($user, $data)),
-            'message' => \TinyCat\Support\Localization::t('account.messages.profile_saved'),
+            'message' => \TinyCat\Support\Localization::t('account.messages.profile_saved'), 'code' => 'profile_saved',
         ];
     }
 
@@ -355,7 +355,7 @@ final class Actions
         }
 
         if (\TinyCat\Users\Login::auth_password_too_long($currentPassword) || $hash === '' || !password_verify($currentPassword, $hash)) {
-            $errors['current_password'][] = \TinyCat\Support\Localization::t('account.messages.current_password_invalid');
+            $errors['current_password'][] = \TinyCat\Http\Response::issue('current_password_invalid', \TinyCat\Support\Localization::t('account.messages.current_password_invalid'));
         }
 
         foreach (\TinyCat\Users\Login::auth_password_validation_field_errors($password, $passwordConfirm) as $field => $messages) {
@@ -363,7 +363,7 @@ final class Actions
         }
 
         if ($errors !== []) {
-            \TinyCat\Http\Response::validation($errors, implode(' ', array_merge(...array_values($errors))));
+            \TinyCat\Http\Response::validation($errors);
         }
 
         \TinyCat\Database\Connection::update('users', [
@@ -371,7 +371,7 @@ final class Actions
         ], ['id' => $id]);
 
         return [
-            'message' => \TinyCat\Support\Localization::t('account.messages.password_saved'),
+            'message' => \TinyCat\Support\Localization::t('account.messages.password_saved'), 'code' => 'password_saved',
         ];
     }
     /**

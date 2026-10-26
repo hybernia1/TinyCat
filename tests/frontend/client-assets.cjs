@@ -50,7 +50,7 @@ check(asset(publicPage, "components") === asset(cs, "components"), "Component co
 check(asset(publicPage, "i18n") !== asset(cs, "i18n"), "Translation URLs vary with language content");
 check(asset(publicPage, "components") === asset(load("/"), "components"), "Asset hashes are deterministic");
 const i18n = publicPage.T.i18n;
-check(i18n.format("{a} {b} :count :counter", { a: "{b}", b: "$&\\", count: 2, counter: 3 }) === "{b} $&\\ 2 3", "Interpolation is single-pass, longest-token first, with literal replacement values");
+check(i18n.format("{a} {b} {count} {counter}", { a: "{b}", b: "$&\\", count: 2, counter: 3 }) === "{b} $&\\ 2 3", "Interpolation is single-pass, longest-token first, with literal replacement values");
 check(i18n.format("{yes}/{no}/{nil}", { yes: true, no: false, nil: null }) === "1//", "Scalar interpolation agrees with PHP");
 check(i18n.t("missing.translation") === "missing.translation", "Unknown translations retain their key");
 i18n.register("test", { "test.label": "Test" });

@@ -9,36 +9,18 @@ final class Inbox
 
     private const PAGE_LIMIT = 40;
     public const TYPES = [
-        'follow' => ['icon' => 'user-plus', 'email' => 'notification_follow'],
-        'content_like' => ['icon' => 'thumb-up', 'email' => 'notification_content_like'],
-        'comment_like' => ['icon' => 'thumb-up', 'email' => 'notification_comment_like'],
-        'content_comment' => ['icon' => 'message-circle', 'email' => 'notification_content_comment'],
-        'content_mention' => ['icon' => 'user', 'email' => 'notification_content_mention'],
-        'comment_mention' => ['icon' => 'user', 'email' => 'notification_comment_mention'],
-        'report_resolved' => ['icon' => 'check', 'email' => 'notification_report_resolved'],
-        'report_dismissed' => ['icon' => 'flag', 'email' => 'notification_report_dismissed'],
+        'follow' => ['email' => 'notification_follow'],
+        'content_like' => ['email' => 'notification_content_like'],
+        'comment_like' => ['email' => 'notification_comment_like'],
+        'content_comment' => ['email' => 'notification_content_comment'],
+        'content_mention' => ['email' => 'notification_content_mention'],
+        'comment_mention' => ['email' => 'notification_comment_mention'],
+        'report_resolved' => ['email' => 'notification_report_resolved'],
+        'report_dismissed' => ['email' => 'notification_report_dismissed'],
     ];
 
     private function __construct()
     {
-    }
-
-    public static function iconName(string $type): string
-    {
-        return self::TYPES[$type]['icon'] ?? 'bell';
-    }
-
-    /**
-     * @param array<mixed> $notification
-     */
-    public static function message(array $notification): string
-    {
-        $type = (string) ($notification['type'] ?? '');
-        $actor = trim((string) ($notification['actor_name'] ?? ''));
-        $actor = $actor !== '' ? $actor : \TinyCat\Support\Localization::t('notifications.someone');
-        $message = array_key_exists($type, self::TYPES) ? $type : 'generic';
-
-        return \TinyCat\Support\Localization::t('notifications.messages.' . $message, ['actor' => $actor]);
     }
 
     /**
@@ -266,11 +248,7 @@ final class Inbox
     public static function state(int $userId): array
     {
         $unread = self::unreadCount($userId);
-        $message = match (true) {
-            $unread === 1 => \TinyCat\Support\Localization::t('notifications.new'),
-            $unread > 1 => \TinyCat\Support\Localization::t('notifications.new_count', ['count' => $unread]),
-            default => '',
-        };
+        $message = $unread > 0 ? \TinyCat\Support\Localization::plural('notifications.new_count', $unread) : '';
 
         return [
             'unread' => $unread,
@@ -283,45 +261,6 @@ final class Inbox
     public static function badgeText(int $count): string
     {
         return $count > 99 ? '99+' : (string) max(0, $count);
-    }
-
-    /**
-     * @param array<string, mixed> $notification
-     * @return array<string, mixed>
-     */
-    /**
-     * @param array<mixed> $notification
-     * @return array<mixed>
-     */
-    public static function viewItem(array $notification, int $excerptLimit = 120): array
-    {
-        $createdAt = (string) ($notification['created_at'] ?? '');
-
-        return $notification + [
-            'view_unread' => trim((string) ($notification['read_at'] ?? '')) === '',
-            'view_url' => self::url($notification),
-            'view_icon' => self::iconName((string) ($notification['type'] ?? '')),
-            'view_message' => self::message($notification),
-            'view_content_text' => \TinyCat\Site\Presentation::meta_text((string) ($notification['content_body'] ?? ''), $excerptLimit),
-            'view_created_iso' => $createdAt !== '' ? \TinyCat\Support\Dates::dateIso($createdAt) : '',
-            'view_created_label' => $createdAt !== '' ? \TinyCat\Support\Dates::displayDateTime($createdAt) : '',
-        ];
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $notifications
-     * @return array<int, array<string, mixed>>
-     */
-    /**
-     * @param array<mixed> $notifications
-     * @return array<mixed>
-     */
-    public static function viewItems(array $notifications, int $excerptLimit = 120): array
-    {
-        return array_map(
-            static fn (array $notification): array => self::viewItem($notification, $excerptLimit),
-            $notifications
-        );
     }
 
     private static function markRead(int $id, int $userId): void

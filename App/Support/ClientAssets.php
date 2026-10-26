@@ -43,27 +43,17 @@ final class ClientAssets
         return Components::select(array_values(array_unique($roots)));
     }
 
-    /** @return array<string, string> */
-    public static function catalog(string $path, string $locale): array
+    /**
+     * @param array<string, string>|null $dictionary Validated source data during a build.
+     * @return array<string, string>
+     */
+    public static function catalog(string $path, string $locale, ?array $dictionary = null): array
     {
-        $dictionary = Localization::catalog($locale);
+        $dictionary ??= Localization::catalog($locale);
         $keys = array_fill_keys(Components::labels(self::definitions($path)), true);
         foreach (self::features($path) as $feature) {
             foreach ($feature['translations'] ?? [] as $key) { $keys[(string) $key] = true; }
-            foreach (AssetGraph::order($feature['entries'] ?? []) as $source) {
-                $code = AssetGraph::read($source);
-                preg_match_all('/\b(?:U|T\.ui|TinyCat\.ui)\.(?:text|button|field|select)\(\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', $code, $literalKeys);
-                foreach ($literalKeys[1] as $key) {
-                    if (!array_key_exists($key, $dictionary)) { throw new RuntimeException('Missing client translation in ' . $source . ': ' . $key); }
-                }
-                preg_match_all('/["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', $code, $matches);
-                foreach ($matches[1] as $key) {
-                    if (!array_key_exists($key, $dictionary)) { continue; }
-                    $prefixes = $feature['translation_prefixes'] ?? [];
-                    if ($prefixes !== [] && !array_any($prefixes, static fn (string $prefix): bool => str_starts_with($key, $prefix))) { continue; }
-                    $keys[$key] = true;
-                }
-            }
+            foreach ($feature['messages'] ?? [] as $key) { $keys[(string) $key] = true; }
         }
         $catalog = [];
         foreach ($keys as $key => $_) {
@@ -72,6 +62,26 @@ final class ClientAssets
         }
         ksort($catalog);
         return $catalog;
+    }
+
+    /** @return array<string, string> Stable API code => module-owned translation identifier. */
+    public static function messages(string $path): array
+    {
+        $messages = [];
+        foreach (self::features($path) as $feature) {
+            foreach ($feature['messages'] ?? [] as $code => $key) {
+                if (isset($messages[$code]) && $messages[$code] !== $key) { throw new RuntimeException('Conflicting API message code: ' . $code); }
+                $messages[$code] = $key;
+            }
+        }
+        ksort($messages);
+        return $messages;
+    }
+
+    public static function componentScript(string $path): string
+    {
+        return 'window.TinyCat.components.register(' . self::encode((object) self::definitions($path)) . ');'
+            . 'window.TinyCat.api.registerMessages(' . self::encode((object) self::messages($path)) . ');';
     }
 
     /** @return list<string> */
@@ -130,7 +140,7 @@ final class ClientAssets
         $compiled = CompiledAssets::client($path, $locale, $minify);
         $urls = $compiled !== null ? $compiled['scripts'] : [
             self::bundle('runtime', AssetGraph::javascript(self::runtime()), 'js', $minify),
-            self::bundle('components', 'window.TinyCat.components.register(' . self::encode((object) self::definitions($path)) . ');'),
+            self::bundle('components', self::componentScript($path)),
             self::bundle('i18n-' . strtolower($locale), 'window.TinyCat.i18n.register(' . self::encode($locale) . ',' . self::encode((object) self::catalog($path, $locale)) . ');'),
             self::bundle('app', AssetGraph::javascript(AssetGraph::order(self::entries($path), self::runtime())), 'js', $minify),
         ];

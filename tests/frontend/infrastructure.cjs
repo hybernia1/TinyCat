@@ -37,7 +37,7 @@ const definitions = JSON.parse(require("node:child_process").execFileSync(proces
 const document = { addEventListener() {}, querySelectorAll() { return []; }, getElementById: () => null, createTextNode: text => { const node = new Element("text"); node.textContent = text; return node; }, createDocumentFragment: () => new Element("fragment"), querySelector: () => ({ content: "csrf-token" }), createElement: tag => new Element(tag), body: new Element("body") };
 const window = { location: new URL("https://tinycat.test/admin"), TinyCat: {}, addEventListener() {}, setTimeout() {}, requestAnimationFrame(callback) { callback(); }, scrollTo() {} };
 let calls = [];
-const envelope = (status = 200, data = {}, ok = true) => ({ ok, status, message: ok ? null : "Invalid.", data, meta: {} });
+const envelope = (status = 200, data = {}, ok = true) => ({ ok, status, code: ok ? "ok" : "validation_error", params: {}, message: ok ? null : "Invalid.", data, meta: {} });
 const response = (data, status = data.status) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json; charset=utf-8" } });
 const context = vm.createContext({ window, document, URL, Headers, FormData: TestFormData, Blob, URLSearchParams, AbortController, CustomEvent, Node: Element, Element, console, fetch: async (url, options) => { calls.push({ url, options }); return response(envelope()); } });
 const coreAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--core"], { encoding: "utf8", maxBuffer: 8e6 }));
@@ -66,7 +66,7 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
   await assert.rejects(api.request("/api/example"), /envelope/); checks++;
   context.fetch = async () => new Response("{invalid", { headers: { "Content-Type": "application/json" } });
   await assert.rejects(api.request("/api/example"), /invalid JSON/); checks++;
-  const invalid = { ...envelope(422, null, false), error: { code: "validation_error", details: { errors: { name: ["Required."] } } } };
+  const invalid = { ...envelope(422, null, false), error: { details: { errors: { name: [{ code: "invalid_value", params: { field: "name" }, message: "Required." }] } } } };
   context.fetch = async () => response(invalid);
   try { await api.request("/api/example"); assert.fail("Expected validation failure."); } catch (error) {
     check(api.errors(error).name[0] === "Required." && error.response.status === 422, "Errors preserve the canonical field errors and HTTP response.");
