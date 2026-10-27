@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace TinyCat\Bots;
 
-use SimpleXMLElement;
-
 use Throwable;
 use RuntimeException;
 use PDOException;
@@ -312,7 +310,7 @@ final class Importer
         if ($runId < 1) { return; }
         \TinyCat\Database\Connection::update('bot_source_runs', [
             'status' => $status, 'items_seen' => max(0, $itemsSeen),
-            'error' => $error !== '' ? self::feedText($error, 500) : null,
+            'error' => $error !== '' ? \TinyCat\Bots\FeedParser::text($error, 500) : null,
         ], ['id' => $runId]);
     }
 
@@ -326,202 +324,6 @@ final class Importer
             \TinyCat\Database\Connection::delete('bot_source_runs', ['source_id' => $sourceId]);
             \TinyCat\Database\Connection::delete('bot_sources', ['id' => $sourceId]);
         });
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    private static function parseFeed(string $xml): array
-    {
-        if ($xml === '' || !function_exists('simplexml_load_string')) {
-            return [];
-        }
-
-        $previous = libxml_use_internal_errors(true);
-        $feed = simplexml_load_string($xml, SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
-        libxml_clear_errors();
-        libxml_use_internal_errors($previous);
-
-        if (!$feed instanceof SimpleXMLElement) {
-            return [];
-        }
-
-        $nodes = isset($feed->channel->item) ? $feed->channel->item : $feed->entry;
-        $items = [];
-
-        foreach ($nodes as $node) {
-            $namespaces = $node->getNamespaces(true);
-            $link = trim((string) $node->link);
-
-            if ($node->getName() === 'entry') {
-                foreach ($node->link as $linkNode) {
-                    $attributes = $linkNode->attributes();
-                    $rel = strtolower((string) ($attributes['rel'] ?? 'alternate'));
-
-                    if ($rel === '' || $rel === 'alternate') {
-                        $link = trim((string) ($attributes['href'] ?? $linkNode));
-                        break;
-                    }
-                }
-            }
-
-            $creator = '';
-            if (isset($namespaces['dc'])) {
-                $creator = trim((string) $node->children($namespaces['dc'])->creator);
-            }
-            if ($creator === '') {
-                $creator = trim((string) ($node->author->name ?? $node->author));
-            }
-
-            $categories = [];
-            foreach ($node->category as $category) {
-                $value = trim((string) ($category['term'] ?? $category));
-                if ($value !== '') {
-                    $categories[] = $value;
-                }
-            }
-
-            $title = self::feedText((string) $node->title, 500);
-            $descriptionSource = (string) ($node->description ?: $node->summary ?: $node->content);
-            $description = self::feedDescriptionText($descriptionSource, 1200);
-            $guid = trim((string) ($node->guid ?: $node->id ?: $link));
-            $published = trim((string) ($node->pubDate ?: $node->published ?: $node->updated));
-
-            if ($guid === '' || ($title === '' && $link === '')) {
-                continue;
-            }
-
-            $timestamp = $published !== '' ? strtotime($published) : false;
-            $items[] = [
-                'guid' => $guid,
-                'title' => $title,
-                'description' => $description,
-                'url' => \TinyCat\Status\Metadata::isSafeRemoteUrl($link) ? $link : '',
-                'image_url' => self::feedImageUrl($node, $namespaces, $descriptionSource),
-                'author' => self::feedText($creator, 200),
-                'categories' => array_values(array_unique($categories)),
-                'published_at' => $timestamp !== false ? date('Y-m-d H:i:s', $timestamp) : null,
-                '_timestamp' => $timestamp !== false ? $timestamp : 0,
-            ];
-
-            if (count($items) >= 100) {
-                break;
-            }
-        }
-
-        usort($items, static fn (array $a, array $b): int => ((int) $a['_timestamp']) <=> ((int) $b['_timestamp']));
-        return $items;
-    }
-
-    private static function feedText(string $value, int $limit): string
-    {
-        $value = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
-        return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
-    }
-
-    private static function feedDescriptionText(string $value, int $limit): string
-    {
-        $value = preg_replace_callback(
-            '~<a\b([^>]*)>(.*?)</a\s*>~is',
-            static function (array $match): string {
-                $label = (string) $match[2];
-                $videoUrl = self::feedHtmlVideoUrl((string) $match[1], 'href');
-                if ($videoUrl === '') {
-                    return $label;
-                }
-
-                $labelText = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($label, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-                foreach (\TinyCat\Status\LinkParser::extract($labelText) as $labelLink) {
-                    if ((string) ($labelLink['normalized_url'] ?? '') === $videoUrl) {
-                        return $label;
-                    }
-                }
-
-                return $label . ' ' . $videoUrl;
-            },
-            $value
-        ) ?? $value;
-        $value = preg_replace_callback(
-            '~<(?:iframe|embed)\b([^>]*)>(?:\s*</iframe\s*>)?~is',
-            static fn (array $match): string => self::feedHtmlVideoUrl((string) $match[1], 'src'),
-            $value
-        ) ?? $value;
-        $value = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        $value = preg_replace_callback(
-            \TinyCat\Status\LinkParser::pattern(),
-            static function (array $match): string {
-                [$url, $tail] = \TinyCat\Status\LinkParser::splitTail((string) ($match[0] ?? ''));
-                $videoUrl = self::supportedVideoUrl($url);
-                return ($videoUrl !== '' ? $videoUrl : '') . $tail;
-            },
-            $value
-        ) ?? '';
-        $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
-        $value = preg_replace('/\s+([.,;:!?])/u', '$1', $value) ?? $value;
-        $value = preg_replace('/(?:^|\s)The post\b.*?\bappeared first on\s*[.!?]*\s*$/iu', '', $value) ?? $value;
-        $value = trim($value);
-
-        return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
-    }
-
-    private static function feedHtmlVideoUrl(string $attributes, string $name): string
-    {
-        $name = preg_quote($name, '~');
-        if (preg_match('~\b' . $name . '\s*=\s*(["\'])(.*?)\1~is', $attributes, $match) === 1) {
-            return self::supportedVideoUrl(html_entity_decode((string) $match[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        }
-        if (preg_match('~\b' . $name . '\s*=\s*([^\s>]+)~i', $attributes, $match) === 1) {
-            return self::supportedVideoUrl(html_entity_decode(trim((string) $match[1], "\"'"), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        }
-
-        return '';
-    }
-
-    private static function supportedVideoUrl(string $url): string
-    {
-        $link = \TinyCat\Status\LinkParser::fromRaw(trim($url));
-        return ($link['link_type'] ?? '') === 'video' ? (string) ($link['normalized_url'] ?? '') : '';
-    }
-
-    /**
-     * @param array<string, mixed> $namespaces
-     */
-    private static function feedImageUrl(SimpleXMLElement $node, array $namespaces, string $description = ''): string
-    {
-        $candidates = [];
-
-        if (isset($namespaces['media'])) {
-            $media = $node->children((string) $namespaces['media']);
-            foreach (['content', 'thumbnail'] as $element) {
-                foreach ($media->{$element} as $image) {
-                    $candidates[] = (string) ($image->attributes()['url'] ?? '');
-                }
-            }
-        }
-
-        foreach ($node->enclosure as $enclosure) {
-            $attributes = $enclosure->attributes();
-            $type = strtolower((string) ($attributes['type'] ?? ''));
-            if ($type === '' || str_starts_with($type, 'image/')) {
-                $candidates[] = (string) ($attributes['url'] ?? '');
-            }
-        }
-
-        if (preg_match('~<img\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1~is', $description, $match) === 1) {
-            $candidates[] = (string) $match[2];
-        } elseif (preg_match('~<img\b[^>]*\bsrc\s*=\s*([^\s>]+)~is', $description, $match) === 1) {
-            $candidates[] = trim((string) $match[1], "\"'");
-        }
-
-        foreach ($candidates as $candidate) {
-            $url = html_entity_decode(trim((string) $candidate), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            if (strlen($url) <= 2048 && \TinyCat\Status\Metadata::isSafeRemoteUrl($url)) {
-                return $url;
-            }
-        }
-
-        return '';
     }
 
     /**
@@ -613,12 +415,14 @@ final class Importer
         $itemsSeen = 0;
 
         try {
-            $response = \TinyCat\Http\Session::withoutLock(static fn (): ?array => \TinyCat\Status\Metadata::fetchDocument((string) ($source['feed_url'] ?? '')));
+            $response = \TinyCat\Http\Session::withoutLock(static fn (): ?array => \TinyCat\Http\Client::get((string) ($source['feed_url'] ?? ''), 2097152, [
+                'accept' => 'application/rss+xml,application/atom+xml,application/xml,text/xml', 'timeout' => 10,
+            ]));
             if ($response === null) {
                 throw new RuntimeException('RSS feed could not be downloaded.');
             }
 
-            $items = self::parseFeed((string) ($response['body'] ?? ''));
+            $items = \TinyCat\Bots\FeedParser::parse($response['body'], $response['url']);
             $itemsSeen = count($items);
             if ($items === []) {
                 throw new RuntimeException('RSS feed contains no usable items.');
@@ -669,8 +473,11 @@ final class Importer
                 $feedLink = \TinyCat\Status\LinkParser::fromRaw((string) ($item['url'] ?? ''));
                 $preparedLinks = \TinyCat\Status\Links::prepareLinks(
                     $draft->links,
-                    (string) ($feedLink['url_hash'] ?? ''),
-                    (string) ($item['image_url'] ?? '')
+                    [
+                        'url_hash' => (string) ($feedLink['url_hash'] ?? ''),
+                        'title' => (string) ($item['title'] ?? ''), 'description' => (string) ($item['description'] ?? ''),
+                        'image_urls' => array_values(array_filter((array) ($item['image_urls'] ?? [$item['image_url'] ?? '']), is_string(...))),
+                    ]
                 );
                 $contentId = self::persistFeedPost($sourceId, $botUserId, $feedHash, $hash, $draft, $preparedLinks, $runId, $itemsSeen);
                 return ['source_id' => $sourceId, 'status' => 'posted', 'content_id' => $contentId, 'skipped_items' => $skippedItems];
@@ -686,7 +493,7 @@ final class Importer
     /** @return array<string, mixed> */
     private static function sourceFailure(int $sourceId, int $runId, int $itemsSeen, Throwable $exception): array
     {
-        $error = self::feedText($exception->getMessage(), 500);
+        $error = \TinyCat\Bots\FeedParser::text($exception->getMessage(), 500);
         \TinyCat\Database\Connection::update('bot_sources', ['last_error' => $error], ['id' => $sourceId]);
         self::finishSourceRun($runId, 'error', $itemsSeen, $error);
         return ['source_id' => $sourceId, 'status' => 'error', 'error' => $error];

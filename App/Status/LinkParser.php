@@ -42,39 +42,6 @@ final class LinkParser
         'wbraid',
         'yclid',
     ];
-    private const SOCIAL_HOSTS = [
-        'bsky.app',
-        'discord.com',
-        'discord.gg',
-        'facebook.com',
-        'fb.com',
-        'fb.watch',
-        'instagram.com',
-        'linkedin.com',
-        'm.facebook.com',
-        'm.instagram.com',
-        'm.tiktok.com',
-        'm.twitter.com',
-        'm.x.com',
-        'pinterest.com',
-        'reddit.com',
-        'snapchat.com',
-        't.co',
-        'threads.net',
-        'tiktok.com',
-        'twitter.com',
-        'www.facebook.com',
-        'www.instagram.com',
-        'www.linkedin.com',
-        'www.pinterest.com',
-        'www.reddit.com',
-        'www.threads.net',
-        'www.tiktok.com',
-        'www.twitter.com',
-        'www.x.com',
-        'x.com',
-    ];
-
     /**
      * @return array<mixed>
      */
@@ -126,18 +93,18 @@ final class LinkParser
 
         $parts = parse_url($url);
 
-        if (!is_array($parts)) {
+        if (!is_array($parts) || isset($parts['user']) || isset($parts['pass'])) {
             return null;
         }
 
         $scheme = strtolower((string) ($parts['scheme'] ?? ''));
         $host = self::host((string) ($parts['host'] ?? ''));
 
-        if (!in_array($scheme, ['http', 'https'], true) || $host === '' || self::isSocialHost($host)) {
+        if (!in_array($scheme, ['http', 'https'], true) || $host === '' || mb_strlen($url) > 2048) {
             return null;
         }
 
-        $video = self::video($parts, $host);
+        $video = \TinyCat\Status\Providers::classify(self::normalizeUrl($parts, $host));
 
         if ($video !== null) {
             $normalizedUrl = $video['normalized_url'];
@@ -146,7 +113,7 @@ final class LinkParser
                 'normalized_url' => $normalizedUrl,
                 'url_hash' => self::hash($normalizedUrl),
                 'provider' => $video['provider'],
-                'link_type' => 'video',
+                'link_type' => $video['link_type'] ?? 'video',
                 'title' => $video['title'],
                 'description' => $video['description'],
                 'video_id' => $video['video_id'],
@@ -165,8 +132,8 @@ final class LinkParser
         return [
             'normalized_url' => $normalizedUrl,
             'url_hash' => self::hash($normalizedUrl),
-            'provider' => 'web',
-            'link_type' => 'link',
+            'provider' => '',
+            'link_type' => 'web',
             'title' => self::title($host, (string) ($parts['path'] ?? '')),
             'description' => $displayUrl,
             'video_id' => '',
@@ -179,12 +146,10 @@ final class LinkParser
     /**
      * @return array<mixed>
      */
-        return '~(?<![@\p{L}\p{N}_])(?:https?://[^\s<>"\']+|(?:www\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(?:[/?#][^\s<>"\']*)?)~iu';
+        return '~(?<![@\p{L}\p{N}_])(?:https?://(?:[^\s<>"\']|(?<=\d)\'(?=\d))+|(?:www\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(?:[/?#](?:[^\s<>"\']|(?<=\d)\'(?=\d))*)?)~iu';
     }
 
-    /**
-     * @return array<mixed>
-     */
+    /** @return array<mixed> */
     public static function splitTail(string $url): array
     {
         $length = strlen($url);
@@ -208,140 +173,6 @@ final class LinkParser
         return [substr($url, 0, $end), substr($url, $end)];
     }
 
-    public static function isSocialHost(string $host): bool
-    {
-        $host = self::host($host);
-
-        if ($host === '') {
-            return false;
-        }
-
-        return array_any(
-    /**
-     * @param array<mixed> $parts
-     * @return array<mixed>|null
-     */
-            self::SOCIAL_HOSTS,
-            static fn (string $socialHost): bool => $host === $socialHost || str_ends_with($host, '.' . $socialHost)
-        );
-    }
-
-    /**
-     * @param array<mixed> $parts
-     * @return array<mixed>|null
-     */
-    private static function video(array $parts, string $host): ?array
-    {
-        $youtubeId = self::youtubeId($parts, $host);
-
-        if ($youtubeId !== '') {
-            return [
-                'provider' => 'youtube',
-                'title' => 'YouTube video',
-                'description' => 'youtube.com',
-                'video_id' => $youtubeId,
-                'normalized_url' => 'https://www.youtube.com/watch?v=' . rawurlencode($youtubeId),
-            ];
-        }
-
-        $vimeoId = self::vimeoId($parts, $host);
-
-        if ($vimeoId !== '') {
-            return [
-                'provider' => 'vimeo',
-                'title' => 'Vimeo video',
-                'description' => 'vimeo.com',
-                'video_id' => $vimeoId,
-                'normalized_url' => 'https://vimeo.com/' . rawurlencode($vimeoId),
-            ];
-        }
-
-        $dailymotionId = self::dailymotionId($parts, $host);
-
-        if ($dailymotionId !== '') {
-            return [
-                'provider' => 'dailymotion',
-                'title' => 'Dailymotion video',
-                'description' => 'dailymotion.com',
-                'video_id' => $dailymotionId,
-                'normalized_url' => 'https://www.dailymotion.com/video/' . rawurlencode($dailymotionId),
-            ];
-        }
-
-        return null;
-    }
-
-    /**
-     * @param array<mixed> $parts
-     */
-    private static function youtubeId(array $parts, string $host): string
-    {
-        $path = trim((string) ($parts['path'] ?? ''), '/');
-
-        if ($host === 'youtu.be') {
-            return self::videoIdToken(explode('/', $path)[0]);
-        }
-
-        if (!self::hostMatches($host, ['youtube.com', 'youtube-nocookie.com'])) {
-            return '';
-        }
-
-        parse_str((string) ($parts['query'] ?? ''), $query);
-
-        if (isset($query['v']) && is_string($query['v'])) {
-            return self::videoIdToken((string) $query['v']);
-        }
-
-        if (preg_match('~^(?:shorts|embed|live)/([^/?#]+)~i', $path, $match) === 1) {
-            return self::videoIdToken((string) $match[1]);
-        }
-
-        return '';
-    }
-
-    /**
-     * @param array<mixed> $parts
-     */
-    private static function vimeoId(array $parts, string $host): string
-    {
-        $path = trim((string) ($parts['path'] ?? ''), '/');
-
-        if ($host === 'player.vimeo.com' && preg_match('~^video/([0-9]+)~', $path, $match) === 1) {
-            return (string) $match[1];
-        }
-
-        if (self::hostMatches($host, ['vimeo.com']) && preg_match('~(?:^|/)([0-9]{5,})$~', $path, $match) === 1) {
-            return (string) $match[1];
-        }
-
-        return '';
-    }
-
-    /**
-     * @param array<mixed> $parts
-     */
-    private static function dailymotionId(array $parts, string $host): string
-    {
-        $path = trim((string) ($parts['path'] ?? ''), '/');
-
-        if ($host === 'dai.ly') {
-            return self::videoIdToken(explode('/', $path)[0]);
-        }
-
-        if (self::hostMatches($host, ['dailymotion.com']) && preg_match('~^video/([^/?#]+)~i', $path, $match) === 1) {
-            return self::videoIdToken((string) $match[1]);
-        }
-
-        return '';
-    }
-
-    private static function videoIdToken(string $value): string
-    {
-        $value = trim($value);
-
-        return preg_match('/^[A-Za-z0-9_-]{5,40}$/', $value) === 1 ? $value : '';
-    }
-
     /**
      * @param array<mixed> $parts
      */
@@ -359,13 +190,18 @@ final class LinkParser
             $path = '/';
         }
 
-        return $scheme . '://' . $host . $port . ($path !== '/' ? $path : '') . ($query !== '' ? '?' . $query : '');
+        return $scheme . '://' . $host . $port . ($path !== '/' ? $path : '') . ($query !== '' ? '?' . $query : '')
+            . (isset($parts['fragment']) && $parts['fragment'] !== '' ? '#' . $parts['fragment'] : '');
     }
 
     private static function cleanQuery(string $query): string
     {
         if ($query === '') {
             return '';
+        }
+        foreach (explode('&', $query) as $parameter) {
+            $name = strtolower(urldecode(explode('=', $parameter, 2)[0]));
+            if (in_array($name, ['signature', 'sig', 'hmac', 'x-amz-signature', 'x-goog-signature'], true)) { return $query; }
         }
 
         // Decode only the name for tracking detection. Rebuilding query data
@@ -406,7 +242,8 @@ final class LinkParser
 
     private static function withScheme(string $url): string
     {
-        $url = trim((string) preg_replace('/[\x00-\x1F\x7F]+/', '', $url));
+        $url = trim($url);
+        if (preg_match('/[\x00-\x20\x7F<>"\\\\]/', $url) === 1) { return ''; }
 
         if ($url === '' || str_starts_with($url, '//')) {
             return '';
@@ -423,22 +260,7 @@ final class LinkParser
     {
         $host = strtolower(trim($host, ". \t\n\r\0\x0B[]"));
 
-        if (str_starts_with($host, 'www.')) {
-            $host = substr($host, 4);
-        }
-
         return preg_match('/^[a-z0-9.-]+$/', $host) === 1 ? $host : '';
-    }
-
-    /**
-     * @param array<mixed> $domains
-     */
-    private static function hostMatches(string $host, array $domains): bool
-    {
-        return array_any(
-            $domains,
-            static fn (string $domain): bool => $host === $domain || str_ends_with($host, '.' . $domain)
-        );
     }
 
     private static function hash(string $url): string

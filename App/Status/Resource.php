@@ -12,21 +12,44 @@ final class Resource
     public static function post(array $item, ?array $user): array
     {
         $id = (int) ($item['id'] ?? 0);
+        $body = (string) ($item['body'] ?? '');
         $links = array_values(array_filter(Links::status_links_for_content($id), static fn (array $link): bool => !Links::status_link_is_internal($link)));
+        foreach ($links as &$storedLink) {
+            $canonical = LinkParser::fromRaw((string) ($storedLink['normalized_url'] ?? ''));
+            if ($canonical !== null) { $storedLink = array_replace($storedLink, ['normalized_url' => $canonical['normalized_url'], 'url_hash' => $canonical['url_hash']]); }
+        }
+        unset($storedLink);
+        $cards = array_slice($links, 0, 1);
+        $byHash = array_column($links, null, 'url_hash');
+        foreach (LinkParser::extract($body) as $link) {
+            if (isset($byHash[$link['url_hash']])) {
+                $cards = [$byHash[$link['url_hash']]];
+                break;
+            }
+            // Older map relations stopped at the apostrophe in coordinates.
+            if (Providers::googleMap($link['normalized_url']) !== null) {
+                foreach ($links as $stored) {
+                    if (str_contains($link['normalized_url'], "'") && ($stored['normalized_url'] ?? '') === explode("'", $link['normalized_url'], 2)[0]) {
+                        $cards = [array_replace($stored, $link)];
+                        break 2;
+                    }
+                }
+            }
+        }
         $at = (string) ($item['published_at'] ?? '');
         return [
             'id' => $id, 'url' => Posts::status_url($id),
             'author' => self::author($item),
-            'body' => (string) ($item['body'] ?? ''),
+            'body' => $body,
             'editable_body' => Mentions::mentions_for_editing((string) ($item['body'] ?? '')),
-            'segments' => Segments::text((string) ($item['body'] ?? ''), array_column($links, 'url_hash')),
+            'segments' => Segments::text($body, array_column($cards, 'url_hash')),
             'published_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'edit_locked' => Posts::status_edit_locked($item) && !\TinyCat\Users\Profiles::user_is_admin($user),
             'context' => self::context($item),
             'login_url' => \TinyCat\Users\Login::auth_url_with_next('/login', Posts::status_url($id)),
             'login_modal_url' => \TinyCat\Users\Login::auth_modal_url('login', Posts::status_url($id)),
             'image' => ['url' => Images::status_image_url($item), 'description' => \TinyCat\Site\Presentation::meta_text(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Site\Presentation::site_name()],
-            'links' => array_map(self::link(...), $links),
+            'links' => array_map(self::link(...), $cards),
             'likes_count' => (int) ($item['likes_count'] ?? 0),
             'comments_count' => (int) ($item['comments_count'] ?? 0),
             'liked' => $user !== null && Reactions::status_user_liked($id, (int) $user['id']),
@@ -61,15 +84,23 @@ final class Resource
      */
     private static function link(array $link): array
     {
+        $map = Providers::googleMap((string) ($link['normalized_url'] ?? ''));
+        if ($map !== null) { $link = array_replace($link, $map); }
+        $rule = Providers::classify((string) ($link['normalized_url'] ?? ''));
+        foreach (['provider', 'link_type', 'video_id'] as $key) { if (isset($rule[$key])) { $link[$key] = $rule[$key]; } }
         $thumbnails = Links::status_video_thumbnail_sources($link);
-        $displayUrl = Links::status_link_display_url($link);
+        $displayUrl = $map['display_url'] ?? Links::status_link_display_url($link);
         $title = trim((string) ($link['title'] ?? ''));
-        $embedUrl = Links::status_video_embed_url($link);
+        $embedUrl = Providers::embedUrl($link);
+        $image = (string) ($link['image_url'] ?? '');
+        $image = Links::status_link_image_exists($image) ? $image : '';
         return ['url' => (string) ($link['normalized_url'] ?? ''), 'title' => ($title !== '' ? $title : ($displayUrl !== '' ? $displayUrl : (string) ($link['normalized_url'] ?? ''))),
-            'display_url' => $displayUrl, 'provider' => (string) ($link['provider'] ?? ''),
-            'description' => (string) ($link['description'] ?? ''), 'image_url' => (string) ($link['image_url'] ?? ''),
-            'embed_url' => $embedUrl, 'embed_allowed' => Links::status_video_embed_allowed($embedUrl),
-            'thumbnail_url' => (string) ($thumbnails['fallback'] ?? ''), 'thumbnail_webp_url' => (string) ($thumbnails['webp'] ?? '')];
+            'display_url' => $displayUrl,
+            'provider' => !empty($link['provider']) && $link['provider'] !== 'web' ? $link['provider'] : null,
+            'link_type' => in_array($link['link_type'] ?? '', ['video', 'audio'], true) ? $link['link_type'] : 'web',
+            'description' => (string) ($link['description'] ?? ''), 'image_url' => $image,
+            'embed_url' => $embedUrl, 'embed_allowed' => Providers::embedAllowed($embedUrl), 'embed_origin' => $embedUrl !== '' ? 'https://' . parse_url($embedUrl, PHP_URL_HOST) : '',
+            'thumbnail_url' => (string) ($thumbnails['fallback'] ?? ''), 'thumbnail_webp_url' => (string) ($thumbnails['webp'] ?? '')] + Providers::presentation($link);
     }
 
     /**

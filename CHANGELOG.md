@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.8.0 - 2026-10-27
+
+- Centralize bounded HTTP fetching for feeds, link metadata, images and update downloads, validating public destinations at every redirect.
+- Parse RSS and Atom through a shared feed parser, including Novinky/Seznam images, Media RSS, enclosures, namespaced authors and relative URLs; use feed metadata before scraping articles.
+- Consolidate provider rules for WordPress REST discovery, Facebook posts/reels, X photos, video players and SoundCloud audio. Keep previews local and load permitted players only after a click.
+- Display one link card per post; keep remaining URLs as ordinary text links. Social cards have a linked network/account header and a separate, non-clickable caption inside the shared border.
+- Normalize provider URL variants and tracking parameters before metadata lookup and storage; calculate link hashes from canonical URLs and merge existing duplicates transactionally without losing post relations.
+- Improve Google Maps cards with place names and exact place coordinates; accept public map previews only when a numeric marker matches the place, retaining text cards when Google requires consent or supplies no suitable image.
+- Cover bot imports, normalized links, local feed previews, API rendering and duplicate-link migrations with regression checks.
+
 ## 4.7.0 - 2026-10-27 — Optimization release #1
 
 - Centralize post creation for users and bot imports, sharing validation, normalization and transactional storage; report rejected feed items without blocking valid items.

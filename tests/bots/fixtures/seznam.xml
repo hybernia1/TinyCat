@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:publisher="https://www.seznam.cz" xmlns:article="http://purl.org/rss/1.0/modules/content/" version="2.0">
+  <channel><title>Publisher feed</title>
+    <item>
+      <title>Článek se snímkem</title><link>https://93.184.216.34/article</link><guid>article-1</guid>
+      <description>Krátký popis.</description>
+      <publisher:authors><value>Jana Nová</value><value>Petr Malý</value></publisher:authors>
+      <publisher:image><publisher:url>https://93.184.216.34/photo.jpeg?fl=cro,0,0,1920,1080|res,1200,,3|jpg,80&amp;size=large</publisher:url></publisher:image>
+      <publisher:sections><value>Krimi</value><value>Stalo se</value></publisher:sections>
+      <article:encoded><![CDATA[<p>Full text <img src="/backup.jpg"></p>]]></article:encoded>
+    </item>
+  </channel>
+</rss>

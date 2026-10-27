@@ -13,11 +13,7 @@ final class Links
 
     public static function status_link_title_is_placeholder(string $title): bool
     {
-        return in_array(strtolower(trim($title)), [
-            'youtube video',
-            'vimeo video',
-            'dailymotion video',
-        ], true);
+        return Providers::titleIsPlaceholder($title);
     }
 
     public static function status_url_host_key(string $url): string
@@ -191,18 +187,18 @@ final class Links
      */
     public static function status_link_data(array $link): array
     {
-        $normalizedUrl = \TinyCat\Support\Text::plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048);
-        $hash = \TinyCat\Support\Text::plain_text_limit((string) ($link['url_hash'] ?? ''), 64);
+        $canonical = LinkParser::fromRaw((string) ($link['normalized_url'] ?? ''));
+        if ($canonical === null) { return []; }
+        $normalizedUrl = $canonical['normalized_url'];
+        $hash = $canonical['url_hash'];
+        $link = array_replace($link, ['normalized_url' => $normalizedUrl, 'url_hash' => $hash]);
 
-        if ($normalizedUrl === '' || $hash === '') {
-            return [];
-        }
-
+        $taxonomy = Providers::taxonomy($link);
         return [
             'normalized_url' => $normalizedUrl,
             'url_hash' => $hash,
-            'provider' => \TinyCat\Support\Text::plain_text_limit((string) ($link['provider'] ?? 'web'), 40),
-            'link_type' => \TinyCat\Support\Text::plain_text_limit((string) ($link['link_type'] ?? 'link'), 20),
+            'provider' => \TinyCat\Support\Text::plain_text_limit($taxonomy['provider'], 40),
+            'link_type' => $taxonomy['link_type'],
             'title' => \TinyCat\Support\Text::plain_text_limit((string) ($link['title'] ?? ''), 255),
             'description' => \TinyCat\Support\Text::plain_text_limit((string) ($link['description'] ?? ''), 500),
             'image_url' => \TinyCat\Support\Text::plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
@@ -269,7 +265,7 @@ final class Links
      */
     public static function status_link_metadata_fresh(?array $link): bool
     {
-        if ($link === null) {
+        if ($link === null || Providers::needsMetadataRefresh($link)) {
             return false;
         }
 
@@ -287,20 +283,14 @@ final class Links
      */
     public static function status_link_metadata_has_content(array $link): bool
     {
-        $type = (string) ($link['link_type'] ?? 'link');
-        $provider = (string) ($link['provider'] ?? 'web');
+        $type = (string) ($link['link_type'] ?? 'web');
         $title = trim((string) ($link['title'] ?? ''));
         $description = trim((string) ($link['description'] ?? ''));
 
-        if ($type === 'video') {
-            $fallbackTitle = match ($provider) {
-                'youtube' => 'YouTube video',
-                'vimeo' => 'Vimeo video',
-                'dailymotion' => 'Dailymotion video',
-                default => '',
-            };
+        if (Providers::googleMap((string) ($link['normalized_url'] ?? '')) !== null) { return $title !== ''; }
 
-            return $title !== '' && ($fallbackTitle === '' || strcasecmp($title, $fallbackTitle) !== 0);
+        if ($type === 'video') {
+            return $title !== '' && !Providers::titleIsPlaceholder($title);
         }
 
         $fallback = \TinyCat\Status\LinkParser::fromRaw((string) ($link['normalized_url'] ?? ''));
@@ -333,7 +323,7 @@ final class Links
         return $link;
     }
 
-    public static function status_link_image_cache(string $imageUrl): string
+    public static function status_link_image_cache(string $imageUrl, string $variant = 'card'): string
     {
         $imageUrl = trim($imageUrl);
         if ($imageUrl === '' || !extension_loaded('gd') || !function_exists('imagewebp')) {
@@ -348,8 +338,9 @@ final class Links
             return '';
         }
 
+        if (!in_array($variant, ['card', 'social', 'video', 'reel'], true)) { throw new \InvalidArgumentException('Unknown link image variant.'); }
         $subfolder = date('Y/m');
-        $filename = substr(hash('sha256', $imageUrl), 0, 40) . '.webp';
+        $filename = substr(hash('sha256', $variant === 'card' ? $imageUrl : $imageUrl . "\0" . $variant), 0, 40) . '.webp';
         $directory = \TinyCat\Support\Paths::basePath('uploads/links/' . $subfolder);
         $target = $directory . DIRECTORY_SEPARATOR . $filename;
         $localUrl = '/uploads/links/' . $subfolder . '/' . $filename;
@@ -401,6 +392,16 @@ final class Links
             $sourceY = (int) floor(($height - $cropHeight) / 2);
         }
 
+        if ($variant !== 'card') {
+            [$maxWidth, $maxHeight] = match ($variant) { 'social' => [800, 600], 'reel' => [540, 960], default => [960, 540] };
+            $scale = min(1, $maxWidth / $width, $maxHeight / $height);
+            $targetWidth = max(1, (int) round($width * $scale));
+            $targetHeight = max(1, (int) round($height * $scale));
+            $sourceX = $sourceY = 0;
+            $cropWidth = $width;
+            $cropHeight = $height;
+        }
+
         $canvas = \TinyCat\Security\Images::image_resample($source, $targetWidth, $targetHeight, $sourceX, $sourceY, $cropWidth, $cropHeight);
         imagedestroy($source);
 
@@ -410,7 +411,7 @@ final class Links
         }
 
         try {
-            \TinyCat\Security\Images::image_write_webp($canvas, $target, [62], keepExisting: true);
+            \TinyCat\Security\Images::image_write_webp($canvas, $target, [$variant === 'card' ? 62 : 78], keepExisting: true);
             return $localUrl;
         } catch (RuntimeException) {
             return '';
@@ -471,6 +472,7 @@ final class Links
 
     public static function status_link_image_exists(string $url): bool
     {
+        if (!str_starts_with($url, '/uploads/links/')) { return false; }
         $relative = str_replace('\\', '/', trim(substr($url, strlen('/uploads/links/')), '/'));
         if (!preg_match('~^[0-9]{4}/[0-9]{2}/[a-f0-9]{40}\.webp$~', $relative) || str_contains($relative, '..')) {
             return false;
@@ -483,11 +485,15 @@ final class Links
      * @param array<mixed> $link
      * @param array<mixed> $cached
      * @return array<mixed>
+     * @param array{url_hash: string, title: string, description: string, image_urls: list<string>}|null $source
      */
-    public static function status_link_prepare_metadata(array $link, ?array $cached, bool $localizeImage = false, string $localImageSource = ''): array
+    public static function status_link_prepare_metadata(array $link, ?array $cached, bool $localizeImage = false, ?array $source = null): array
     {
         $failureKey = 'link-metadata-failure-v1-' . hash('sha256', (string) ($link['normalized_url'] ?? ''));
-        if ($cached !== null && self::status_link_metadata_fresh($cached)) {
+        $fromSource = $source !== null && $source['title'] !== '' && $source['image_urls'] !== [];
+        if ($fromSource) {
+            $prepared = array_replace($link, ['title' => $source['title'], 'description' => $source['description'], '_metadata_updated_at' => \TinyCat\Support\Dates::dateDb()]);
+        } elseif ($cached !== null && self::status_link_metadata_fresh($cached)) {
             $prepared = self::status_link_apply_cached_metadata($link, $cached, true);
         } elseif (\TinyCat\Support\Cache::get($failureKey, self::METADATA_FAILURE_TTL) === true) {
             $prepared = $cached !== null ? self::status_link_apply_cached_metadata($link, $cached, true) : $link;
@@ -508,8 +514,20 @@ final class Links
         }
 
         if ($localizeImage) {
-            $imageUrl = $localImageSource ?: (string) ($prepared['image_url'] ?? '');
-            $prepared['image_url'] = \TinyCat\Status\Links::status_link_image_cache($imageUrl);
+            $kind = Providers::presentation($prepared)['card_kind'];
+            $variant = in_array($kind, ['social', 'video', 'reel'], true) ? $kind : 'card';
+            $sources = array_values(array_unique(array_merge($source['image_urls'] ?? [], Providers::imageCandidates($prepared))));
+            $prepared['image_url'] = '';
+            foreach ($sources as $image) {
+                if ($image === '') { continue; }
+                $prepared['image_url'] = self::status_link_image_cache($image, $variant);
+                if ($prepared['image_url'] !== '') { break; }
+            }
+            if ($prepared['image_url'] === '' && $fromSource) {
+                // Only fetch the article when all images supplied by its feed failed.
+                $fallback = self::status_link_prepare_metadata($link, $cached);
+                $prepared['image_url'] = self::status_link_image_cache((string) ($fallback['image_url'] ?? ''), $variant);
+            }
         }
 
         return $prepared;
@@ -517,33 +535,43 @@ final class Links
 
     /**
      * @param array<mixed> $links
+     * @param array{url_hash: string, title: string, description: string, image_urls: list<string>}|null $source
      */
-    public static function status_sync_links(int $contentId, array $links, string $localImageLinkHash = '', string $localImageSource = ''): void
+    public static function status_sync_links(int $contentId, array $links, ?array $source = null): void
     {
         if ($contentId < 1) {
             return;
         }
 
-        self::persistLinks($contentId, self::prepareLinks($links, $localImageLinkHash, $localImageSource));
+        self::persistLinks($contentId, self::prepareLinks($links, $source));
     }
 
     /** @param array<mixed> $links
+     * @param array{url_hash: string, title: string, description: string, image_urls: list<string>}|null $source
      * @return list<array<mixed>>
      */
-    public static function prepareLinks(array $links, string $localImageLinkHash = '', string $localImageSource = ''): array
+    public static function prepareLinks(array $links, ?array $source = null): array
     {
         if (\TinyCat\Database\Connection::get()->inTransaction()) {
             throw new \LogicException('Link metadata must be prepared before starting a transaction.');
         }
+        $unique = [];
+        foreach ($links as $link) {
+            $link = (array) $link;
+            $canonical = LinkParser::fromRaw((string) ($link['normalized_url'] ?? ''));
+            if ($canonical === null) { continue; }
+            $unique[$canonical['url_hash']] ??= array_replace($link, ['normalized_url' => $canonical['normalized_url'], 'url_hash' => $canonical['url_hash']]);
+        }
+        $links = array_values($unique);
         $metadataCache = self::status_link_metadata_cache($links);
-        return \TinyCat\Http\Session::withoutLock(static function () use ($links, $metadataCache, $localImageLinkHash, $localImageSource): array {
+        return \TinyCat\Http\Session::withoutLock(static function () use ($links, $metadataCache, $source): array {
             $prepared = [];
             foreach ($links as $link) {
                 $link = (array) $link;
                 $hash = (string) ($link['url_hash'] ?? '');
                 if (\TinyCat\Support\Text::plain_text_limit((string) ($link['normalized_url'] ?? ''), 2048) === '' || $hash === '') { continue; }
-                $cacheImage = $localImageLinkHash !== '' && hash_equals($localImageLinkHash, $hash);
-                $prepared[] = self::status_link_prepare_metadata($link, $metadataCache[$hash] ?? null, $cacheImage, $cacheImage ? $localImageSource : '');
+                $cacheImage = $source !== null && $source['url_hash'] !== '' && hash_equals($source['url_hash'], $hash);
+                $prepared[] = self::status_link_prepare_metadata($link, $metadataCache[$hash] ?? null, true, $cacheImage ? $source : null);
             }
             return $prepared;
         });
@@ -713,17 +741,7 @@ final class Links
 
     public static function status_video_embed_allowed(string $url): bool
     {
-        $host = strtolower((string) (parse_url($url, PHP_URL_HOST) ?: ''));
-
-        return in_array($host, [
-            'www.youtube-nocookie.com',
-            'youtube-nocookie.com',
-            'www.youtube.com',
-            'youtube.com',
-            'player.vimeo.com',
-            'www.dailymotion.com',
-            'dailymotion.com',
-        ], true);
+        return Providers::embedAllowed($url);
     }
 
     /**
@@ -731,21 +749,7 @@ final class Links
      */
     public static function status_video_embed_url(array $link): string
     {
-        $provider = (string) ($link['provider'] ?? '');
-        $videoId = trim((string) ($link['video_id'] ?? ''));
-
-        if ($videoId === '') {
-            return '';
-        }
-
-        $encodedId = rawurlencode($videoId);
-
-        return match ($provider) {
-            'youtube' => 'https://www.youtube.com/embed/' . $encodedId,
-            'vimeo' => 'https://player.vimeo.com/video/' . $encodedId,
-            'dailymotion' => 'https://www.dailymotion.com/embed/video/' . $encodedId,
-            default => '',
-        };
+        return Providers::embedUrl($link);
     }
 
     /**
@@ -754,22 +758,7 @@ final class Links
      */
     public static function status_video_thumbnail_sources(array $link): array
     {
-        $provider = (string) ($link['provider'] ?? '');
-        $videoId = trim((string) ($link['video_id'] ?? ''));
-        $imageUrl = trim((string) ($link['image_url'] ?? ''));
-
-        if ($provider === 'youtube' && $videoId !== '') {
-            $encodedId = rawurlencode($videoId);
-
-            return [
-                'webp' => 'https://i.ytimg.com/vi_webp/' . $encodedId . '/hqdefault.webp',
-                'fallback' => 'https://i.ytimg.com/vi/' . $encodedId . '/hqdefault.jpg',
-            ];
-        }
-
-        return [
-            'webp' => '',
-            'fallback' => $imageUrl,
-        ];
+        $image = (string) ($link['image_url'] ?? '');
+        return ['webp' => '', 'fallback' => self::status_link_image_exists($image) ? $image : ''];
     }
 }

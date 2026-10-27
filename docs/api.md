@@ -159,6 +159,79 @@ Source writes accept `bot_user_id`, `name`, `feed_url`, `interval_minutes`,
 state; repeating it never toggles the source back. Path IDs always take precedence.
 Lists contain `data.items`; paginated account lists use `meta.pagination`.
 
+Feed imports normalize RSS and Atom, including Media RSS, `content:encoded`,
+Atom image enclosures and Seznam image, author and section extensions. Relative
+URLs respect the downloaded feed URL and `xml:base`. Feed-provided metadata and
+images take precedence; article metadata is fetched when the feed lacks usable
+preview data or its image candidates fail. Only successfully decoded images are
+stored as local WebP previews.
+
+Link provider rules live in `App/Status/Providers.php`: URL recognition,
+normalization, oEmbed endpoints, video thumbnails and permitted player origins.
+Known providers use structured metadata APIs when useful; service cards otherwise
+need no remote page fetch. Unknown sites may advertise an oEmbed endpoint in
+HTML; it is cached per origin for seven days. WordPress uses its discovered
+single-post REST endpoint or a slug lookup with an exact canonical-link check,
+requesting only title, excerpt and embedded featured media. Subdirectory and
+query-based REST roots are supported. Incomplete API results are supplemented
+from HTML; a successful oEmbed response alone never proves article metadata is
+complete. Failed discovered APIs fall back to bounded HTML metadata.
+Preview images are stored locally before saving. Responses omit legacy remote
+preview images until those links are refreshed; displaying a post never fetches
+provider metadata. YouTube, Vimeo and Dailymotion players still load only after
+an explicit click. Provider-supplied embed HTML and scripts are never rendered.
+Facebook public-post previews are extracted server-side from its official post
+plugin, selecting message text and the main photo; plugin links normalize to the
+original post. Login or unavailable-content pages do not become successful previews.
+
+Link resources expose `link_type` (`web`, `video`, `audio`) separately from
+`provider` (for example `wordpress`, `facebook`, `youtube` or `spotify`). An unknown
+provider is stored as an empty string and returned as JSON `null`. WordPress is
+identified from its declared APIs. The update migration normalizes the old
+`link` type to `web` and the generic `web` provider to an empty value, preserving
+link IDs and content relations.
+Link resources also prepare a `card_kind` (`web`, `social`, `audio`, `video` or
+`reel`) and provider label/icon for shared server/client rendering. Social and
+video previews use larger local WebP variants. Facebook `/reel/{id}`, `watch?v=`,
+`video.php?v=` and page `/videos/{id}` URLs identify video content; validated
+video-plugin links normalize to the same source. Reels retain their portrait
+layout. Players load only on click, and the original link remains available if
+the provider cannot play the video. Signed/share URLs without a public video ID
+remain links rather than guessing a player target.
+SoundCloud tracks and playlists remain `audio` content and use its official
+widget only after a click. Provider rules supply its `auto_play` option and
+track/playlist height; previews and artwork remain local until playback starts.
+X post metadata first uses the JSON supplied to its official embed widget,
+including an attached photo or video poster, with oEmbed as a fallback. Only
+media belonging to the requested post is used; avatars and quoted-post photos
+are excluded. Text-only results and transient failures have separate retry
+windows. Media is stored as a local WebP preview before rendering.
+Each post exposes at most one preview in `links`, selecting the first stored
+external URL in body order. Only that URL is hidden from body segments; other
+URLs remain ordinary clickable links. Additional link records and relations
+remain stored and may become the preview when the post's URL order changes.
+
+Link identity is a SHA-256 hash of the canonical URL, recalculated at persistence.
+Credentials, control characters and URLs longer than 2048 characters are rejected
+instead of silently rewriting or truncating them. Generic URLs preserve scheme,
+`www`, path case, trailing slashes, fragments and query order/repeated parameters.
+Known tracking parameters are removed; recognized signed queries remain intact.
+Provider rules additionally canonicalize supported video/Facebook URLs, X posts
+by post ID, and Google Maps sharing parameters (`entry`, `g_ep`, `g_st`,
+`entryfrom`, `skid`). Redirects and untrusted HTML canonical tags do not decide
+database identity. Short links require a future explicit resolution policy.
+Google Maps cards use place names and exact place coordinates from the URL,
+never the viewport center as a substitute for a place position. Public static-map
+OG previews are cached locally only when a numeric `markers` location matches
+the place position within 0.0001 degrees. Repeated marker parameters and multiple
+locations are supported; center and zoom do not establish place identity.
+The signed image URL is kept intact. Generic descriptions, marker-free viewport
+images and thumbnails from other origins are ignored. Cards with no
+verified image remain text links, with no map SDK or external iframe on render.
+`php tools/audit-links.php` previews existing-record changes without writes.
+The update migration normalizes stored identities and merges duplicate relations
+transactionally, preserving post associations and complementary cached metadata.
+
 Settings PATCH takes `{ "settings": { "site.name": "Example" } }`. Omitted
 settings remain unchanged. Boolean false disables a setting. Password fields
 retain their value when empty. Read resources contain `key`, `type`, `value` and

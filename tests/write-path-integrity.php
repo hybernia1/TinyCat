@@ -1,6 +1,14 @@
 <?php
 declare(strict_types=1);
 
+namespace TinyCat\Http {
+    function function_exists(string $name): bool
+    {
+        return $name !== 'curl_init' && \function_exists($name);
+    }
+}
+namespace {
+
 require_once __DIR__ . '/cache-isolation.php';
 
 if (PHP_SAPI !== 'cli') {
@@ -166,13 +174,13 @@ $now = \TinyCat\Support\Dates::dateDb();
 $linkColumns = 'normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at';
 $insertLink = $database->prepare('INSERT INTO links (' . $linkColumns . ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 $insertLink->execute(['https://old.example', 'old', 'web', 'link', 'Old', '', '', '', $now, $now]);
-$insertLink->execute(['https://alpha.example', 'alpha', 'web', 'link', 'Alpha title', '', '', '', $now, $now]);
-$insertLink->execute(['https://beta.example', 'beta', 'web', 'link', 'Beta title', '', '', '', $now, $now]);
+$insertLink->execute(['https://alpha.example', hash('sha256', 'https://alpha.example'), 'web', 'link', 'Alpha title', '', '', '', $now, $now]);
+$insertLink->execute(['https://beta.example', hash('sha256', 'https://beta.example'), 'web', 'link', 'Beta title', '', '', '', $now, $now]);
 $database->exec("INSERT INTO content_links (content_id, link_id, created_at) VALUES (100, 1, '$now')");
 $database->exec('CREATE TRIGGER fail_link_attach BEFORE INSERT ON content_links WHEN NEW.link_id = 3 BEGIN SELECT RAISE(ABORT, \'forced link failure\'); END');
 $links = [
-    ['normalized_url' => 'https://alpha.example', 'url_hash' => 'alpha'],
-    ['normalized_url' => 'https://beta.example', 'url_hash' => 'beta'],
+    ['normalized_url' => 'https://alpha.example', 'url_hash' => hash('sha256', 'https://alpha.example')],
+    ['normalized_url' => 'https://beta.example', 'url_hash' => hash('sha256', 'https://beta.example')],
 ];
 $linkFailed = false;
 try {
@@ -310,6 +318,38 @@ $assert((int) $value("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '"
 $database->exec('DROP TRIGGER fail_import_post');
 $retried = $importItems->invoke(null, $source, $technical, 1);
 $assert($retried['status'] === 'posted', 'A technical failure can be retried successfully.');
+
+// RSS metadata, URL normalization and single-card rendering must share the same path.
+$feedPreviewDirectory = $root . '/uploads/links/' . date('Y/m');
+if (!is_dir($feedPreviewDirectory)) { mkdir($feedPreviewDirectory, 0775, true); }
+$feedPreviewUrl = '/uploads/links/' . date('Y/m') . '/' . bin2hex(random_bytes(20)) . '.webp';
+$feedPreviewPath = $root . $feedPreviewUrl;
+$preview = imagecreatetruecolor(184, 172);
+imagewebp($preview, $feedPreviewPath);
+imagedestroy($preview);
+try {
+    $videoLink = \TinyCat\Status\LinkParser::fromRaw('https://youtu.be/feed123?si=share');
+    \TinyCat\Status\Links::status_link_upsert(array_replace($videoLink, ['title' => 'Cached feed video', 'image_url' => $feedPreviewUrl, '_metadata_updated_at' => $now]));
+    $feedWithLinks = array_replace($source, ['post_template' => "{{title}}\n{{url}}\nhttps://youtu.be/feed123?si=share"]);
+    $feedItem = ['guid' => 'normalized-image-card', 'title' => 'RSS article title', 'description' => 'RSS article summary',
+        'url' => 'https://93.184.216.34/rss-article?utm_source=feed', 'image_urls' => [$feedPreviewUrl]];
+    $feedResult = $importItems->invoke(null, $feedWithLinks, [$feedItem], 1);
+    $assert($feedResult['status'] === 'posted', 'Bots publish posts with feed metadata and multiple provider links.');
+    $feedPostId = (int) ($feedResult['content_id'] ?? 0);
+    $feedRow = \TinyCat\Database\Connection::one('SELECT * FROM content WHERE id = ?', [$feedPostId]);
+    $feedResource = \TinyCat\Status\Resource::post($feedRow, null);
+    $assert(count($feedResource['links']) === 1 && $feedResource['links'][0]['title'] === 'RSS article title'
+        && $feedResource['links'][0]['description'] === 'RSS article summary' && $feedResource['links'][0]['image_url'] === $feedPreviewUrl,
+        'The first bot link retains RSS title, summary and local image without article scraping.');
+    $assert($feedResource['links'][0]['url'] === 'https://93.184.216.34/rss-article'
+        && in_array('https://www.youtube.com/watch?v=feed123', array_column($feedResource['segments'], 'url'), true)
+        && (int) $value('SELECT COUNT(*) FROM content_links WHERE content_id = ' . $feedPostId) === 2,
+        'Bots use canonical link identity, store both relations and render the second URL as a plain link.');
+    $feedAgain = $importItems->invoke(null, $feedWithLinks, [$feedItem], 1);
+    $assert($feedAgain['status'] === 'current', 'Canonical link changes do not bypass GUID-based bot history.');
+} finally {
+    if (is_file($feedPreviewPath)) { unlink($feedPreviewPath); }
+}
 
 $_GET = [];
 $_POST = [];
@@ -514,6 +554,45 @@ try {
     if ($database->inTransaction()) { $database->rollBack(); }
 }
 
+$database->exec("INSERT INTO links (id, normalized_url, url_hash, provider, link_type) VALUES (9001, 'https://unknown.example', 'taxonomy-unknown', 'web', 'link'), (9002, 'https://youtube.com/watch?v=abc123', 'taxonomy-video', 'youtube', 'video')");
+$normalizeLinks = require $root . '/migrations/20261027_001_link_taxonomy.php';
+$normalizeLinks($database);
+$normalizeLinks($database);
+$assert($value('SELECT provider FROM links WHERE id = 9001') === '' && $value('SELECT link_type FROM links WHERE id = 9001') === 'web', 'Classification migration normalizes legacy unknown links and is repeatable.');
+$assert($value('SELECT provider FROM links WHERE id = 9002') === 'youtube' && $value('SELECT link_type FROM links WHERE id = 9002') === 'video', 'Classification migration preserves recognized providers, content types and row IDs.');
+$wpLinkId = \TinyCat\Status\Links::status_link_upsert(['normalized_url' => 'https://wp.example/article', 'url_hash' => hash('sha256', 'wp-taxonomy'), 'provider' => 'wordpress', 'link_type' => 'web', 'title' => 'Article']);
+$assert($value('SELECT provider FROM links WHERE id = ' . $wpLinkId) === 'wordpress' && $value('SELECT link_type FROM links WHERE id = ' . $wpLinkId) === 'web', 'Recognized WordPress links persist their platform separately from content type.');
+
+$migrationDb = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$migrationDb->exec('CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, title TEXT, description TEXT, image_url TEXT, video_id TEXT)');
+$migrationDb->exec('CREATE TABLE content_links (content_id INTEGER, link_id INTEGER, created_at TEXT, PRIMARY KEY (content_id, link_id))');
+$migrationInsert = $migrationDb->prepare('INSERT INTO links VALUES (?, ?, ?, ?, ?, ?, ?)');
+$migrationInsert->execute([1, 'https://twitter.com/account/status/123?s=20', 'old-x', 'Account', '', '', '']);
+$migrationInsert->execute([2, 'https://x.com/account/status/123/photo/1', 'old-photo', '', 'Caption', '/uploads/preview.webp', '']);
+$migrationDb->exec("INSERT INTO content_links VALUES (10, 1, '2026-10-27'), (10, 2, '2026-10-27'), (20, 2, '2026-10-27')");
+$normalizeStored = require $root . '/migrations/20261027_002_link_normalization.php';
+$dryReport = $normalizeStored($migrationDb, false);
+$assert($dryReport['changed'] === 2 && $dryReport['merged'] === 1 && (int) $migrationDb->query('SELECT COUNT(*) FROM links')->fetchColumn() === 2, 'Normalization audit reports duplicates without changing records.');
+$migrationDb->exec("CREATE TRIGGER fail_normalization BEFORE UPDATE ON links BEGIN SELECT RAISE(ABORT, 'forced migration failure'); END");
+try { $normalizeStored($migrationDb); } catch (PDOException) { }
+$assert((int) $migrationDb->query('SELECT COUNT(*) FROM links')->fetchColumn() === 2 && (int) $migrationDb->query('SELECT COUNT(*) FROM content_links')->fetchColumn() === 3, 'Normalization failure restores deleted links and transferred relations.');
+$migrationDb->exec('DROP TRIGGER fail_normalization');
+$normalizeStored($migrationDb);
+$migrated = $migrationDb->query('SELECT * FROM links')->fetch(PDO::FETCH_ASSOC);
+$assert($migrated['normalized_url'] === 'https://x.com/i/web/status/123' && $migrated['url_hash'] === hash('sha256', $migrated['normalized_url']), 'Migration stores one canonical identity.');
+$assert($migrated['title'] === 'Account' && $migrated['description'] === 'Caption' && $migrated['image_url'] === '/uploads/preview.webp', 'Duplicate merge preserves complementary cached metadata.');
+$assert((int) $migrationDb->query('SELECT COUNT(*) FROM content_links WHERE link_id = 1')->fetchColumn() === 2 && (int) $migrationDb->query('SELECT COUNT(*) FROM links')->fetchColumn() === 1, 'Duplicate merge preserves both posts and collapses overlapping relations.');
+$again = $normalizeStored($migrationDb);
+$assert($again['changed'] === 0 && $again['merged'] === 0, 'Normalization migration is repeatable.');
+$preparedDuplicates = \TinyCat\Status\Links::prepareLinks([
+    ['normalized_url' => 'https://alpha.example?utm_source=one', 'url_hash' => 'stale-one'],
+    ['normalized_url' => 'https://alpha.example?utm_source=two', 'url_hash' => 'stale-two'],
+]);
+$assert(count($preparedDuplicates) === 1 && $preparedDuplicates[0]['url_hash'] === hash('sha256', 'https://alpha.example'), 'Preparation normalizes and deduplicates identities before metadata lookup.');
+$firstVariantId = \TinyCat\Status\Links::status_link_upsert(['normalized_url' => 'https://twitter.com/account/status/987?s=20', 'url_hash' => 'stale-first']);
+$secondVariantId = \TinyCat\Status\Links::status_link_upsert(['normalized_url' => 'https://x.com/other/status/987/photo/1', 'url_hash' => 'stale-second']);
+$assert($firstVariantId > 0 && $firstVariantId === $secondVariantId, 'Writing equivalent provider variants reuses one database record despite different supplied hashes.');
+
 if ($failures !== []) {
     foreach ($failures as $failure) {
         echo "FAIL {$failure}\n";
@@ -523,3 +602,5 @@ if ($failures !== []) {
 }
 
 echo 'PASS write-path policy and transactional integrity (' . $checks . " checks)\n";
+
+}

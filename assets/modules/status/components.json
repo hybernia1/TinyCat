@@ -314,107 +314,179 @@
         "data-status-video": "",
         "data-embed-url": {
           "get": "link.embed_url"
+        },
+        "data-embed-origin": {
+          "get": "link.embed_origin"
+        },
+        "data-embed-width-param": {
+          "get": "link.embed_width_param"
+        },
+        "data-embed-autoplay-param": {
+          "get": "link.embed_autoplay_param"
+        },
+        "data-embed-autoplay-value": {
+          "get": "link.embed_autoplay_value"
+        },
+        "data-embed-height": {
+          "get": "link.embed_height"
+        },
+        "data-card-kind": {
+          "get": "link.card_kind"
+        },
+        "data-provider": {
+          "get": "link.provider"
         }
       },
       "children": [
         {
-          "tag": "button",
+          "tag": "div",
           "attrs": {
-            "class": "status-video-placeholder",
-            "type": "button",
-            "data-status-video-load": "",
-            "aria-label": {
-              "get": "link.title"
-            }
+            "data-status-video-mount": ""
           },
           "children": [
             {
-              "tag": "picture",
+              "tag": "button",
               "attrs": {
-                "class": "status-video-thumb"
+                "class": "status-video-placeholder",
+                "type": "button",
+                "data-status-video-load": "",
+                "aria-label": {
+                  "get": "link.title"
+                }
               },
               "children": [
                 {
-                  "tag": "source",
+                  "tag": "span",
                   "attrs": {
-                    "srcset": {
-                      "get": "link.thumbnail_webp_url"
-                    },
-                    "type": "image/webp"
+                    "class": "status-video-provider"
                   },
-                  "children": [],
+                  "children": [
+                    {
+                      "get": "link.provider_name"
+                    }
+                  ],
                   "when": {
-                    "get": "link.thumbnail_webp_url"
+                    "get": "link.provider_name"
                   }
                 },
                 {
-                  "tag": "img",
+                  "tag": "picture",
                   "attrs": {
-                    "src": {
-                      "get": "link.thumbnail_url"
-                    },
-                    "alt": {
-                      "or": [
-                        {
-                          "get": "link.title"
-                        },
-                        {
-                          "get": "link.url"
-                        }
-                      ]
-                    },
-                    "loading": "lazy",
-                    "decoding": "async",
-                    "referrerpolicy": "no-referrer"
+                    "class": "status-video-thumb"
                   },
-                  "children": []
-                }
-              ],
-              "when": {
-                "get": "link.thumbnail_url"
-              }
-            },
-            {
-              "tag": "span",
-              "attrs": {
-                "class": "status-video-play"
-              },
-              "children": [
-                {
-                  "icon": "play"
-                }
-              ]
-            },
-            {
-              "tag": "span",
-              "attrs": {
-                "class": "status-video-copy"
-              },
-              "children": [
-                {
-                  "tag": "strong",
-                  "attrs": {},
                   "children": [
                     {
-                      "get": "link.title"
+                      "tag": "source",
+                      "attrs": {
+                        "srcset": {
+                          "get": "link.thumbnail_webp_url"
+                        },
+                        "type": "image/webp"
+                      },
+                      "children": [],
+                      "when": {
+                        "get": "link.thumbnail_webp_url"
+                      }
+                    },
+                    {
+                      "tag": "img",
+                      "attrs": {
+                        "src": {
+                          "get": "link.thumbnail_url"
+                        },
+                        "alt": {
+                          "or": [
+                            {
+                              "get": "link.title"
+                            },
+                            {
+                              "get": "link.url"
+                            }
+                          ]
+                        },
+                        "loading": "lazy",
+                        "decoding": "async",
+                        "referrerpolicy": "no-referrer"
+                      },
+                      "children": []
+                    }
+                  ],
+                  "when": {
+                    "get": "link.thumbnail_url"
+                  }
+                },
+                {
+                  "tag": "span",
+                  "attrs": {
+                    "class": "status-video-play"
+                  },
+                  "children": [
+                    {
+                      "icon": "play"
                     }
                   ]
                 },
                 {
-                  "tag": "small",
-                  "attrs": {},
+                  "tag": "span",
+                  "attrs": {
+                    "class": "status-video-copy"
+                  },
                   "children": [
                     {
-                      "or": [
+                      "tag": "strong",
+                      "attrs": {},
+                      "children": [
                         {
-                          "get": "link.description"
-                        },
+                          "get": "link.title"
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "small",
+                      "attrs": {},
+                      "children": [
                         {
-                          "get": "link.provider"
+                          "or": [
+                            {
+                              "get": "link.description"
+                            },
+                            {
+                              "get": "link.provider"
+                            }
+                          ]
                         }
                       ]
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "a",
+          "attrs": {
+            "class": "status-video-source",
+            "href": {
+              "get": "link.url"
+            },
+            "target": "_blank",
+            "rel": "nofollow noopener noreferrer ugc"
+          },
+          "children": [
+            {
+              "icon": "external-link"
+            },
+            {
+              "or": [
+                {
+                  "get": "link.provider_name"
+                },
+                {
+                  "get": "link.display_url"
+                },
+                {
+                  "get": "link.url"
                 }
               ]
             }
@@ -446,9 +518,58 @@
           "get": "link.url"
         },
         "target": "_blank",
-        "rel": "nofollow noopener noreferrer ugc"
+        "rel": "nofollow noopener noreferrer ugc",
+        "data-card-kind": {
+          "get": "link.card_kind"
+        },
+        "data-provider": {
+          "get": "link.provider"
+        }
       },
       "children": [
+        {
+          "tag": "span",
+          "attrs": {
+            "class": "status-link-provider"
+          },
+          "children": [
+            {
+              "icon": {
+                "or": [
+                  {
+                    "get": "link.card_icon"
+                  },
+                  "external-link"
+                ]
+              }
+            },
+            {
+              "get": "link.provider_name"
+            },
+            {
+              "tag": "span",
+              "attrs": {
+                "class": "status-link-account"
+              },
+              "children": [
+                {
+                  "get": "link.title"
+                }
+              ],
+              "when": {
+                "eq": [
+                  {
+                    "get": "link.card_kind"
+                  },
+                  "social"
+                ]
+              }
+            }
+          ],
+          "when": {
+            "get": "link.provider_name"
+          }
+        },
         {
           "tag": "span",
           "attrs": {
@@ -493,7 +614,14 @@
           },
           "children": [
             {
-              "icon": "external-link"
+              "icon": {
+                "or": [
+                  {
+                    "get": "link.card_icon"
+                  },
+                  "external-link"
+                ]
+              }
             }
           ],
           "when": {
@@ -522,7 +650,17 @@
                     }
                   ]
                 }
-              ]
+              ],
+              "when": {
+                "not": {
+                  "eq": [
+                    {
+                      "get": "link.card_kind"
+                    },
+                    "social"
+                  ]
+                }
+              }
             },
             {
               "tag": "span",
@@ -556,9 +694,214 @@
         }
       ],
       "when": {
-        "not": {
-          "get": "link.embed_allowed"
+        "and": [
+          {
+            "not": {
+              "get": "link.embed_allowed"
+            }
+          },
+          {
+            "not": {
+              "eq": [
+                {
+                  "get": "link.card_kind"
+                },
+                "social"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "tag": "div",
+      "attrs": {
+        "class": "status-social-link"
+      },
+      "children": [
+        {
+          "tag": "a",
+          "attrs": {
+            "class": "status-link-provider",
+            "href": {
+              "get": "link.url"
+            },
+            "target": "_blank",
+            "rel": "nofollow noopener noreferrer ugc",
+            "data-card-kind": {
+              "get": "link.card_kind"
+            },
+            "data-provider": {
+              "get": "link.provider"
+            }
+          },
+          "children": [
+            {
+              "icon": {
+                "or": [
+                  {
+                    "get": "link.card_icon"
+                  },
+                  "external-link"
+                ]
+              }
+            },
+            {
+              "get": "link.provider_name"
+            },
+            {
+              "tag": "span",
+              "attrs": {
+                "class": "status-link-account"
+              },
+              "children": [
+                {
+                  "get": "link.title"
+                }
+              ],
+              "when": {
+                "eq": [
+                  {
+                    "get": "link.card_kind"
+                  },
+                  "social"
+                ]
+              }
+            }
+          ],
+          "when": {
+            "get": "link.provider_name"
+          }
+        },
+        {
+          "tag": "span",
+          "attrs": {
+            "class": "status-link-copy"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attrs": {},
+              "children": [
+                {
+                  "get": "link.description"
+                }
+              ],
+              "when": {
+                "get": "link.description"
+              }
+            }
+          ]
+        },
+        {
+          "tag": "a",
+          "attrs": {
+            "class": {
+              "concat": [
+                "status-link-card",
+                {
+                  "if": [
+                    {
+                      "get": "link.image_url"
+                    },
+                    " has-image",
+                    ""
+                  ]
+                }
+              ]
+            },
+            "href": {
+              "get": "link.url"
+            },
+            "target": "_blank",
+            "rel": "nofollow noopener noreferrer ugc",
+            "data-card-kind": {
+              "get": "link.card_kind"
+            },
+            "data-provider": {
+              "get": "link.provider"
+            }
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attrs": {
+                "class": "status-link-media",
+                "data-status-link-media": ""
+              },
+              "children": [
+                {
+                  "tag": "img",
+                  "attrs": {
+                    "class": "status-link-image",
+                    "src": {
+                      "get": "link.image_url"
+                    },
+                    "alt": "",
+                    "loading": "lazy",
+                    "data-status-link-image": ""
+                  },
+                  "children": []
+                },
+                {
+                  "tag": "span",
+                  "attrs": {
+                    "class": "status-link-icon status-link-fallback-icon",
+                    "data-status-link-fallback": ""
+                  },
+                  "children": [
+                    {
+                      "icon": "image"
+                    }
+                  ]
+                }
+              ],
+              "when": {
+                "get": "link.image_url"
+              }
+            },
+            {
+              "tag": "span",
+              "attrs": {
+                "class": "status-link-icon"
+              },
+              "children": [
+                {
+                  "icon": {
+                    "or": [
+                      {
+                        "get": "link.card_icon"
+                      },
+                      "external-link"
+                    ]
+                  }
+                }
+              ],
+              "when": {
+                "not": {
+                  "get": "link.image_url"
+                }
+              }
+            }
+          ]
         }
+      ],
+      "when": {
+        "and": [
+          {
+            "not": {
+              "get": "link.embed_allowed"
+            }
+          },
+          {
+            "eq": [
+              {
+                "get": "link.card_kind"
+              },
+              "social"
+            ]
+          }
+        ]
       }
     }
   ],

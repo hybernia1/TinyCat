@@ -125,68 +125,12 @@ use ZipArchive;
         ): void {
             self::githubUrl($url, 'The ' . $label . ' source host is not allowed.');
             self::ensureDirectory(dirname($target));
-            $handle = fopen($target, 'wb');
-
-            if (!is_resource($handle)) {
-                throw new RuntimeException('Unable to create the ' . $label . ' download file.');
-            }
-
-            $curl = curl_init($url);
-
-            if ($curl === false) {
-                fclose($handle);
-                throw new RuntimeException('Unable to initialize the ' . $label . ' download.');
-            }
-
-            $written = 0;
-            curl_setopt_array($curl, [
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_MAXREDIRS => 5,
-                CURLOPT_CONNECTTIMEOUT => 10,
-                CURLOPT_TIMEOUT => 180,
-                CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
-                CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
-                CURLOPT_SSL_VERIFYPEER => true,
-                CURLOPT_SSL_VERIFYHOST => 2,
-                CURLOPT_USERAGENT => 'TinyCat/' . \TinyCat\Support\Version::CURRENT . ' ' . $userAgent,
-                CURLOPT_HTTPHEADER => ['Accept: ' . $accept, 'X-GitHub-Api-Version: 2022-11-28'],
-                CURLOPT_WRITEFUNCTION => static function ($resource, string $chunk) use ($handle, $maxBytes, &$written): int {
-                    $length = strlen($chunk);
-                    $written += $length;
-
-                    if ($written > $maxBytes) {
-                        return 0;
-                    }
-
-                    $result = fwrite($handle, $chunk);
-                    return $result === false ? 0 : $result;
-                },
+            \TinyCat\Http\Client::download($url, $target, $maxBytes, [
+                'accept' => $accept, 'timeout' => 180, 'redirects' => 5,
+                'user_agent' => 'TinyCat/' . \TinyCat\Support\Version::CURRENT . ' ' . $userAgent,
+                'headers' => ['X-GitHub-Api-Version: 2022-11-28'],
+                'policy' => static fn (string $next): bool => self::githubUrl($next, 'The ' . $label . ' source host is not allowed.') !== '',
             ]);
-
-            $ok = curl_exec($curl);
-            $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
-            $effectiveUrl = (string) curl_getinfo($curl, CURLINFO_EFFECTIVE_URL);
-            $error = curl_error($curl);
-            curl_close($curl);
-            fclose($handle);
-
-            try {
-                self::githubUrl($effectiveUrl, 'The ' . $label . ' source host is not allowed.');
-            } catch (Throwable $exception) {
-                @unlink($target);
-                throw $exception;
-            }
-
-            if ($ok !== true || $status < 200 || $status >= 300 || $written > $maxBytes) {
-                @unlink($target);
-                throw new RuntimeException(
-                    $written > $maxBytes
-                        ? 'The ' . $label . ' download exceeded the allowed size.'
-                        : 'The ' . $label . ' download failed with HTTP ' . $status . ($error !== '' ? ': ' . $error : '.')
-                );
-            }
-
-            @chmod($target, 0600);
         }
 
         /**

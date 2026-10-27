@@ -33,19 +33,38 @@ $assert(\TinyCat\Bots\Importer::feedSourceHash('https://EXAMPLE.com:443/feed/') 
 $assert(\TinyCat\Bots\Importer::feedSourceHash('file:///private/feed.xml') === '', 'Feed sources require HTTP or HTTPS.');
 $tags = $invoke('feedCategoryTags', array_map(static fn (int $n): string => 'Category ' . $n, range(1, 12)));
 $assert(substr_count($tags, '#category-') === 12, 'All feed category tags must survive.');
-$assert($invoke('parseFeed', '<invalid') === [], 'Invalid XML must not produce posts.');
+$assert(\TinyCat\Bots\FeedParser::parse( '<invalid') === [], 'Invalid XML must not produce posts.');
 
 // Public literal IPs avoid DNS and external network requests in these parser tests.
 $rss = '<rss version="2.0"><channel><item><guid>second</guid><title>Second</title><link>https://93.184.216.34/second</link><pubDate>Tue, 02 Jun 2026 10:00:00 GMT</pubDate></item><item><guid>first</guid><title>First</title><link>https://93.184.216.34/first</link><pubDate>Mon, 01 Jun 2026 10:00:00 GMT</pubDate><category>World News</category></item></channel></rss>';
-$items = $invoke('parseFeed', $rss);
+$items = \TinyCat\Bots\FeedParser::parse( $rss);
 $assert(array_column($items, 'guid') === ['first', 'second'], 'RSS posts must be ordered oldest first.');
 $assert($items[0]['categories'] === ['World News'], 'RSS categories must survive parsing.');
 $atom = '<feed xmlns="http://www.w3.org/2005/Atom"><entry><id>atom-first</id><title>Atom title</title><link rel="alternate" href="https://93.184.216.34/atom"/><updated>2026-06-01T10:00:00Z</updated><author><name>Writer</name></author></entry></feed>';
-$items = $invoke('parseFeed', $atom);
+$items = \TinyCat\Bots\FeedParser::parse( $atom);
 $assert(count($items) === 1 && $items[0]['author'] === 'Writer', 'Atom posts must preserve their author.');
 $assert($items[0]['url'] === 'https://93.184.216.34/atom', 'Atom alternate links must survive.');
 
-$videoDescription = $invoke('feedDescriptionText', '<a href="https://youtu.be/abc123?si=share">Watch</a> https://example.com/remove', 2000);
+$seznam = \TinyCat\Bots\FeedParser::parse((string) file_get_contents(__DIR__ . '/fixtures/seznam.xml'), 'https://93.184.216.34/feed');
+$assert(count($seznam) === 1 && str_contains($seznam[0]['image_url'], 'photo.jpeg?fl=cro,0,0,1920,1080|res,1200,,3|jpg,80&size=large'), 'Publisher image URLs preserve crop parameters and decode XML entities.');
+$assert($seznam[0]['author'] === 'Jana Nová, Petr Malý', 'Publisher authors use the namespace URI, independent of its prefix.');
+$assert($seznam[0]['categories'] === ['Krimi', 'Stalo se'], 'Publisher sections become categories.');
+$assert($seznam[0]['description'] === 'Krátký popis.' && $seznam[0]['image_urls'][1] === 'https://93.184.216.34/backup.jpg', 'Encoded content supplies fallback images without replacing the summary.');
+$prefixed = \TinyCat\Bots\FeedParser::parse((string) file_get_contents(__DIR__ . '/fixtures/atom.xml'));
+$assert($prefixed[0]['url'] === 'https://93.184.216.34/news/article?x=1&y=2', 'Prefixed Atom links respect nested xml:base and parent segments.');
+$assert($prefixed[0]['author'] === 'Writer' && $prefixed[0]['categories'] === ['World'], 'Prefixed Atom author and category attributes survive.');
+$assert($prefixed[0]['description'] === 'Full body', 'Atom XHTML content becomes plain text.');
+$assert($prefixed[0]['image_urls'] === [
+    'https://93.184.216.34/news/media/lead.jpg', 'https://93.184.216.34/news/media/small.jpg',
+    'https://93.184.216.34/news/enclosed.jpg', 'https://93.184.216.34/news/body.jpg',
+], 'Grouped media, Atom enclosures and XHTML images are ordered without video files.');
+$unsafe = '<rss><channel><item><guid>x</guid><title>x</title><enclosure type="image/jpeg" url="http://127.0.0.1/secret"/><description><![CDATA[<img src="data:image/png,x"><img src="https://93.184.216.34/safe.jpg">]]></description></item></channel></rss>';
+$assert(\TinyCat\Bots\FeedParser::parse($unsafe)[0]['image_urls'] === ['https://93.184.216.34/safe.jpg'], 'Unsafe image candidates do not hide later safe images.');
+$assert(\TinyCat\Bots\FeedParser::parse('<!DOCTYPE rss [<!ENTITY x SYSTEM "file:///etc/passwd">]><rss/>') === [], 'Feed parsing rejects document type declarations.');
+$assert(\TinyCat\Bots\FeedParser::parse('<other/>') === [], 'Unrecognized XML documents have no feed items.');
+$assert(count(\TinyCat\Bots\FeedParser::parse('<rss><channel>' . str_repeat('<item><guid>x</guid><title>x</title></item>', 105) . '</channel></rss>')) === 100, 'Feed work is bounded to one hundred entries.');
+
+$videoDescription = \TinyCat\Bots\FeedParser::descriptionText( '<a href="https://youtu.be/abc123?si=share">Watch</a> https://example.com/remove', 2000);
 $assert(str_contains($videoDescription, 'https://www.youtube.com/watch?v=abc123') && !str_contains($videoDescription, 'example.com'), 'Bot descriptions retain canonical video URLs and remove article links.');
 
 foreach (['en', 'cs'] as $code) {

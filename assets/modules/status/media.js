@@ -73,17 +73,8 @@ import "../../ui/toasts.js";
       }
     }
   }
-  function allowedStatusVideoUrl(value) {
+  function allowedStatusVideoUrl(value, expectedOrigin) {
     var url;
-    var allowedHosts = [
-      "www.youtube-nocookie.com",
-      "youtube-nocookie.com",
-      "www.youtube.com",
-      "youtube.com",
-      "player.vimeo.com",
-      "www.dailymotion.com",
-      "dailymotion.com"
-    ];
 
     try {
       url = new URL(String(value || ""), window.location.href);
@@ -91,7 +82,7 @@ import "../../ui/toasts.js";
       return "";
     }
 
-    if (url.protocol !== "https:" || allowedHosts.indexOf(url.hostname.toLowerCase()) === -1) {
+    if (url.protocol !== "https:" || url.username || url.password || !expectedOrigin || url.origin !== expectedOrigin) {
       return "";
     }
 
@@ -106,7 +97,7 @@ import "../../ui/toasts.js";
     }
 
     button = qs("[data-status-video-load]", root);
-    embedUrl = allowedStatusVideoUrl(root.dataset.embedUrl || "");
+    embedUrl = allowedStatusVideoUrl(root.dataset.embedUrl || "", root.dataset.embedOrigin || "");
 
     if (!button || !embedUrl) {
       return;
@@ -116,24 +107,29 @@ import "../../ui/toasts.js";
     button.addEventListener("click", function () {
       var iframe = document.createElement("iframe");
       var url = new URL(embedUrl);
-      var host = url.hostname.toLowerCase();
 
-      url.searchParams.set("autoplay", "1");
-      url.searchParams.set("playsinline", "1");
-
-      if (host === "youtube.com" || host === "www.youtube.com" || host === "youtube-nocookie.com" || host === "www.youtube-nocookie.com") {
-        url.searchParams.set("origin", window.location.origin);
-        url.searchParams.set("rel", "0");
+      var autoplayParam = root.dataset.embedAutoplayParam || "autoplay";
+      if (/^[a-z_]+$/.test(autoplayParam)) {
+        url.searchParams.set(autoplayParam, root.dataset.embedAutoplayValue || "1");
+      }
+      if (root.dataset.cardKind !== "audio") {
+        url.searchParams.set("playsinline", "1");
+      }
+      if (root.dataset.embedWidthParam && /^[a-z_]+$/.test(root.dataset.embedWidthParam)) {
+        url.searchParams.set(root.dataset.embedWidthParam, String(Math.max(220, Math.min(1280, Math.round(root.getBoundingClientRect().width)))));
       }
 
       iframe.className = "status-video-frame";
+      iframe.title = button.getAttribute("aria-label") || "";
+      if (root.dataset.cardKind === "audio") {
+        iframe.height = String(Math.max(80, Math.min(600, Number(root.dataset.embedHeight) || 166)));
+      }
       iframe.src = url.href;
       iframe.loading = "lazy";
       iframe.referrerPolicy = "strict-origin-when-cross-origin";
-      iframe.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share";
-      iframe.allowFullscreen = true;
-      root.innerHTML = "";
-      root.appendChild(iframe);
+      iframe.allow = root.dataset.cardKind === "audio" ? "autoplay" : "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share";
+      iframe.allowFullscreen = root.dataset.cardKind !== "audio";
+      (qs("[data-status-video-mount]", root) || root).replaceChildren(iframe);
     });
   }
   function initStatusImageRoot(root) {

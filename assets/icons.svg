@@ -1,4 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="music" viewBox="0 0 24 24">
+    <path d="M9 18V5l12-2v13M9 9l12-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse cx="6" cy="18" rx="3" ry="3" fill="none" stroke="currentColor" stroke-width="2"/>
+    <ellipse cx="18" cy="16" rx="3" ry="3" fill="none" stroke="currentColor" stroke-width="2"/>
+  </symbol>
   <symbol id="translate" viewBox="0 0 24 24">
     <path d="M3 5h12M9 3v2M5 5c1 5 4 8 8 10M13 5c-1 5-4 8-9 11M14 21l4-10 4 10M15.5 17h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </symbol>

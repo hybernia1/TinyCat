@@ -1,0 +1,12 @@
+{
+  "__typename": "Tweet",
+  "id_str": "123456789",
+  "text": "Text <b>bez HTML</b> https://t.co/photo",
+  "user": {"name": "Test Author", "profile_image_url_https": "https://pbs.twimg.com/profile_images/avatar.jpg"},
+  "entities": {"media": [{"url": "https://t.co/photo"}]},
+  "mediaDetails": [
+    {"type": "photo", "media_url_https": "https://pbs.twimg.com/profile_images/not-a-post-photo.jpg"},
+    {"type": "photo", "media_url_https": "https://pbs.twimg.com/media/test-photo.jpg"}
+  ],
+  "quoted_tweet": {"photos": [{"url": "https://pbs.twimg.com/media/quoted-photo.jpg"}]}
+}

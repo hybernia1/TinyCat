@@ -137,7 +137,22 @@ if (extension_loaded('gd') && function_exists('imagewebp')) {
     }
 }
 
-$linkSource = (string) file_get_contents(dirname(__DIR__) . '/App/Status/Metadata.php');
+$previewPath = \TinyCat\Support\Paths::basePath('uploads/links/' . date('Y/m') . '/' . bin2hex(random_bytes(20)) . '.webp');
+if (!is_dir(dirname($previewPath))) { mkdir(dirname($previewPath), 0775, true); }
+file_put_contents($previewPath, 'fixture');
+$previewUrl = '/uploads/links/' . date('Y/m') . '/' . basename($previewPath);
+try {
+    $link = ['normalized_url' => 'http://127.0.0.1/article', 'url_hash' => hash('sha256', 'fixture'), 'link_type' => 'link'];
+    $source = ['url_hash' => $link['url_hash'], 'title' => 'Feed title', 'description' => 'Feed summary', 'image_urls' => ['http://127.0.0.1/broken', $previewUrl]];
+    $prepared = \TinyCat\Status\Links::status_link_prepare_metadata($link, null, true, $source);
+    $assert($prepared['image_url'] === $previewUrl && $prepared['title'] === 'Feed title', 'Feed metadata avoids article requests and tries later image candidates.');
+    $source['image_urls'] = ['http://127.0.0.1/broken'];
+    $cached = array_replace($link, ['title' => 'Cached title', 'image_url' => $previewUrl, 'updated_at' => date('Y-m-d H:i:s')]);
+    $prepared = \TinyCat\Status\Links::status_link_prepare_metadata($link, $cached, true, $source);
+    $assert($prepared['image_url'] === $previewUrl, 'Failed feed images fall back to article metadata.');
+} finally { unlink($previewPath); }
+
+$linkSource = (string) file_get_contents(dirname(__DIR__) . '/App/Http/Client.php');
 $assert(str_contains($linkSource, 'CURLOPT_FOLLOWLOCATION => false'), 'cURL redirects are not handled manually.');
 $assert(str_contains($linkSource, "'follow_location' => 0"), 'Stream redirects are not handled manually.');
 

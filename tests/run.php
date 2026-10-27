@@ -59,7 +59,11 @@ $passed = 0;
 foreach ($tests as $label => $relative) {
     echo "\n=== {$label} ===\n";
     $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative));
-    passthru($command, $exitCode);
+    // Each group owns its fixture cache; its HTTP workers still inherit it.
+    $parentCache = getenv('TINYCAT_CACHE_DIRECTORY');
+    putenv('TINYCAT_CACHE_DIRECTORY');
+    try { passthru($command, $exitCode); }
+    finally { putenv($parentCache === false ? 'TINYCAT_CACHE_DIRECTORY' : 'TINYCAT_CACHE_DIRECTORY=' . $parentCache); }
 
     if ($exitCode !== 0) {
         fwrite(STDERR, "\nFAIL test suite stopped at: {$label}\n");

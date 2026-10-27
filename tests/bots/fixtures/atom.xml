@@ -1,0 +1,14 @@
+<a:feed xmlns:a="http://www.w3.org/2005/Atom" xmlns:other="http://search.yahoo.com/mrss/" xml:base="https://93.184.216.34/news/">
+  <a:entry xml:base="stories/">
+    <a:id>prefixed-atom</a:id><a:title>Atom article</a:title><a:author><a:name>Writer</a:name></a:author>
+    <a:link rel="self" href="item.atom"/><a:link rel="alternate" href="../article?x=1&amp;y=2"/>
+    <a:link rel="enclosure" type="image/jpeg" href="../enclosed.jpg"/>
+    <a:category term="World"/>
+    <a:content type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml"><p>Full body</p><img src="../body.jpg"/></div></a:content>
+    <other:group xml:base="../media/">
+      <other:content type="video/mp4" medium="video" url="movie.mp4"/>
+      <other:content type="image/jpeg" medium="image" url="lead.jpg"/>
+      <other:thumbnail url="small.jpg"/>
+    </other:group>
+  </a:entry>
+</a:feed>
