@@ -35,6 +35,7 @@ final class Administration
                 'status' => (string) ($user['status'] ?? ''),
             ], self::bots()),
             'filter_bot_user_id' => $filterBotId,
+            'sorting' => \TinyCat\Support\AdminSorting::headings('sources', ['bot' => $filterBotId > 0 ? $filterBotId : '']),
         ];
 
         if ($id !== null) {
@@ -289,7 +290,7 @@ final class Administration
         return [
             'q' => $query,
             'status' => array_key_exists($status, \TinyCat\Support\AdminViews::admin_user_statuses()) ? $status : '',
-        ];
+        ] + \TinyCat\Support\AdminSorting::state('accounts');
     }
 
     /**
@@ -337,7 +338,7 @@ final class Administration
                 (SELECT COUNT(*) FROM bot_sources bs WHERE bs.bot_user_id = u.id) AS source_count,
                 (SELECT COUNT(*) FROM content c WHERE c.author_id = u.id) AS post_count
             FROM users u' . $where . '
-            ORDER BY u.id DESC' . \TinyCat\Database\Queries::pagination_sql($pagination),
+            ORDER BY ' . \TinyCat\Support\AdminSorting::order('accounts', $filters) . \TinyCat\Database\Queries::pagination_sql($pagination),
             $params
         );
 
@@ -479,7 +480,7 @@ final class Administration
         return [
             'bots' => $bots,
             'filter_bot_id' => $filterBotId,
-            'sources' => \TinyCat\Bots\Importer::sources($filterBotId > 0 ? $filterBotId : null),
+            'sources' => \TinyCat\Bots\Importer::sources($filterBotId > 0 ? $filterBotId : null, \TinyCat\Support\AdminSorting::order('sources')),
         ];
     }
 

@@ -5,6 +5,32 @@ import "../../core/lifecycle.js";
   var TinyCat = window.TinyCat = window.TinyCat || {};
   TinyCat.siteLayout = {};
   var qsa = TinyCat.dom.all;
+  var desktopMedia = window.matchMedia ? window.matchMedia("(min-width: 900px)") : null;
+  var viewportBound = false;
+  function onSidebarScroll() {
+    var nextScrollY = window.scrollY || 0;
+    var direction = nextScrollY < TinyCat.__stickySidebarLastScrollY ? "up" : "down";
+    if (nextScrollY === TinyCat.__stickySidebarLastScrollY) { return; }
+    TinyCat.__stickySidebarLastScrollY = nextScrollY;
+    if (direction !== TinyCat.__stickySidebarDirection || TinyCat.__stickySidebarRefreshQueued === true) {
+      scheduleStickySidebarRefresh(direction);
+    }
+  }
+  function onSidebarResize() { scheduleStickySidebarRefresh(); }
+  function updateSidebarViewport() {
+    if (desktopMedia && desktopMedia.matches) {
+      TinyCat.siteLayout.hydrate(document);
+      return;
+    }
+    window.removeEventListener("scroll", onSidebarScroll);
+    window.removeEventListener("resize", onSidebarResize);
+    TinyCat.__stickySidebarEventsBound = false;
+    if (TinyCat.__stickySidebarObserver) { TinyCat.__stickySidebarObserver.disconnect(); }
+    stickySidebarNodes(document).forEach(function (sidebar) {
+      delete sidebar.dataset.stickySidebarReady;
+      sidebar.style.removeProperty("--sidebar-sticky-top");
+    });
+  }
   function stickySidebarNodes(scope) {
     var root = scope || document;
     var selector = ".public-sidebar, .profile-sidebar-stack";
@@ -17,9 +43,9 @@ import "../../core/lifecycle.js";
     return nodes;
   }
   function refreshStickySidebars(direction) {
-    var desktop = window.matchMedia && window.matchMedia("(min-width: 900px)").matches;
     var topOffset = 76;
     var bottomOffset = 16;
+    if (!desktopMedia || !desktopMedia.matches) { return; }
 
     if (direction === "up" || direction === "down") {
       TinyCat.__stickySidebarDirection = direction;
@@ -29,11 +55,6 @@ import "../../core/lifecycle.js";
       var sidebarHeight;
       var stickyOffset;
 
-      if (!desktop) {
-        sidebar.style.removeProperty("--sidebar-sticky-top");
-        return;
-      }
-
       sidebarHeight = Math.ceil(sidebar.getBoundingClientRect().height);
       stickyOffset = TinyCat.__stickySidebarDirection === "up"
         ? topOffset
@@ -42,6 +63,7 @@ import "../../core/lifecycle.js";
     });
   }
   function scheduleStickySidebarRefresh(direction) {
+    if (!desktopMedia || !desktopMedia.matches) { return; }
     if (direction === "up" || direction === "down") {
       TinyCat.__stickySidebarPendingDirection = direction;
     }
@@ -60,6 +82,12 @@ import "../../core/lifecycle.js";
     });
   }
   TinyCat.siteLayout.hydrate = function (scope) {
+    if (!viewportBound && desktopMedia) {
+      viewportBound = true;
+      if (desktopMedia.addEventListener) { desktopMedia.addEventListener("change", updateSidebarViewport); }
+      else if (desktopMedia.addListener) { desktopMedia.addListener(updateSidebarViewport); }
+    }
+    if (!desktopMedia || !desktopMedia.matches) { return; }
     var nodes = stickySidebarNodes(scope);
 
     if (nodes.length === 0) {
@@ -88,32 +116,8 @@ import "../../core/lifecycle.js";
       TinyCat.__stickySidebarEventsBound = true;
       TinyCat.__stickySidebarDirection = "down";
       TinyCat.__stickySidebarLastScrollY = window.scrollY || 0;
-      window.addEventListener("resize", function () {
-        scheduleStickySidebarRefresh();
-      }, { passive: true });
-      window.addEventListener("scroll", function () {
-        var nextScrollY = window.scrollY || 0;
-        var direction;
-
-        if (nextScrollY === TinyCat.__stickySidebarLastScrollY) {
-          return;
-        }
-
-        direction = nextScrollY < TinyCat.__stickySidebarLastScrollY ? "up" : "down";
-        TinyCat.__stickySidebarLastScrollY = nextScrollY;
-
-        if (direction === TinyCat.__stickySidebarDirection && TinyCat.__stickySidebarRefreshQueued !== true) {
-          return;
-        }
-
-        scheduleStickySidebarRefresh(direction);
-      }, { passive: true });
-
-      if (window.matchMedia) {
-        window.matchMedia("(min-width: 900px)").addEventListener("change", function () {
-          scheduleStickySidebarRefresh();
-        });
-      }
+      window.addEventListener("resize", onSidebarResize, { passive: true });
+      window.addEventListener("scroll", onSidebarScroll, { passive: true });
     }
 
     refreshStickySidebars();

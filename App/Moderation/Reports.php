@@ -89,7 +89,7 @@ final class Reports
      */
     public static function tc_admin_moderation_reports_payload(): array
     {
-        return ['items' => array_map(Resource::report(...), self::tc_admin_moderation_reports())];
+        return ['items' => array_map(Resource::report(...), self::tc_admin_moderation_reports()), 'sorting' => \TinyCat\Support\AdminSorting::headings('reports')];
     }
 
     /**
@@ -130,7 +130,7 @@ final class Reports
             LEFT JOIN content c ON c.id = cr.content_id
             LEFT JOIN users au ON au.id = c.author_id
             LEFT JOIN users ru ON ru.id = cr.reporter_id
-            ORDER BY CASE WHEN rc.open_count > 0 THEN 0 ELSE 1 END, rc.latest_reported_at DESC
+            ORDER BY ' . \TinyCat\Support\AdminSorting::order('reports') . '
             LIMIT 100',
             ['open', 'open']
         );

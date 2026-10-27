@@ -8,7 +8,7 @@ import "./views.js";
   var hydrateDynamic = TinyCat.lifecycle.hydrate;
   var qsa = TinyCat.dom.all;
   var unwrapResult = TinyCat.api.unwrap;
-  var cached = null, updated = 0, loading = null;
+  var cached = null, updated = 0, loading = null, refreshTimer = null;
   function loadSidebar() {
     if (cached && Date.now() - updated < 300000) { return Promise.resolve(cached); }
     if (!loading) {
@@ -27,6 +27,14 @@ import "./views.js";
   };
   TinyCat.site.refresh = function (scope) {
     var desktopMedia = window.matchMedia ? window.matchMedia("(min-width: 900px)") : null;
+    var desktop = desktopMedia && desktopMedia.matches;
+
+    if (desktop && refreshTimer === null) {
+      refreshTimer = window.setInterval(function () { if (!document.hidden) { TinyCat.site.refresh(); } }, 60000);
+    } else if (!desktop && refreshTimer !== null) {
+      window.clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
 
     function publicSidebarSlot(url) {
       var slot = document.createElement("template");
@@ -56,6 +64,7 @@ import "./views.js";
             TinyCat.site.refresh();
           } else {
             unloadPublicSidebars();
+            TinyCat.site.refresh();
           }
         });
       } else if (typeof desktopMedia.addListener === "function") {
@@ -64,12 +73,13 @@ import "./views.js";
             TinyCat.site.refresh();
           } else {
             unloadPublicSidebars();
+            TinyCat.site.refresh();
           }
         });
       }
     }
 
-    if (desktopMedia && !desktopMedia.matches) {
+    if (!desktop) {
       return;
     }
 
@@ -87,14 +97,12 @@ import "./views.js";
 
       loadSidebar()
         .then(function (data) {
-          var payload = unwrapResult(data) || {};
-          var next = TinyCat.site.sidebar(payload, url);
-
-          if (desktopMedia && !desktopMedia.matches) {
+          if (!desktopMedia.matches || !sidebar.isConnected) {
             return;
           }
 
-          if (!sidebar.isConnected) { return; }
+          var payload = unwrapResult(data) || {};
+          var next = TinyCat.site.sidebar(payload, url);
           if (sidebar.hasAttribute("data-public-sidebar-url")) {
             sidebar.replaceChildren(...Array.from(next.childNodes)); hydrateDynamic(sidebar);
           } else { sidebar.replaceWith(next); hydrateDynamic(next); }
@@ -109,7 +117,6 @@ import "./views.js";
   };
     TinyCat.site.hydrate = TinyCat.site.refresh;
     TinyCat.lifecycle.register("sidebar-freshness", { init: function () {
-      window.setInterval(function () { if (!document.hidden) { TinyCat.site.refresh(); } }, 60000);
       document.addEventListener("tinycat:success", function (event) {
         var source = event.target, action = source && (source.getAttribute("action") || source.getAttribute("href") || "");
         if (/^\/api\/(?:statuses|users\/[0-9]+\/followers)/.test(action)) { updated = 0; TinyCat.site.refresh(); }

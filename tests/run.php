@@ -13,6 +13,7 @@ $tests = [
     'Module infrastructure boundaries' => 'tests/quality/module-boundaries.php',
     'Class dependency boundaries' => 'tests/quality/dependencies.php',
     'Shared infrastructure' => 'tests/infrastructure/run.php',
+    'Admin list sorting' => 'tests/presentation/admin-sorting.php',
     'JSON AJAX client' => 'tests/frontend/run.php',
     'Monolith API inventory' => 'tests/quality/monolith-inventory.php',
     'Metadata DNS scope' => 'tests/metadata-dns.php',

@@ -77,17 +77,6 @@
     },
     "children": [
       {
-        "tag": "p",
-        "attrs": {
-          "class": "help m-0"
-        },
-        "children": [
-          {
-            "t": "cron.overview_help"
-          }
-        ]
-      },
-      {
         "tag": "div",
         "attrs": {
           "class": "table-wrap"
@@ -489,44 +478,88 @@
                       {
                         "tag": "th",
                         "attrs": {
-                          "scope": "col"
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.task.aria"
+                          }
                         },
                         "children": [
                           {
-                            "t": "cron.task"
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "cron.task"
+                              },
+                              "order": {
+                                "get": "sorting.task"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
                         "attrs": {
-                          "scope": "col"
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.started_at.aria"
+                          }
                         },
                         "children": [
                           {
-                            "t": "cron.started"
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "cron.started"
+                              },
+                              "order": {
+                                "get": "sorting.started_at"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
                         "attrs": {
-                          "scope": "col"
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.status.aria"
+                          }
                         },
                         "children": [
                           {
-                            "t": "cron.status"
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "cron.status"
+                              },
+                              "order": {
+                                "get": "sorting.status"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
                         "attrs": {
-                          "scope": "col"
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.duration_ms.aria"
+                          }
                         },
                         "children": [
                           {
-                            "t": "cron.duration"
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "cron.duration"
+                              },
+                              "order": {
+                                "get": "sorting.duration_ms"
+                              }
+                            }
                           }
                         ]
                       },

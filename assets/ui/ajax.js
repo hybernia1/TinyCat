@@ -31,6 +31,15 @@ import "./toasts.js";
   var unwrapResult = TinyCat.api.unwrap;
   var resultErrors = TinyCat.api.errors;
   var confirmAction = TinyCat.actions.confirm;
+  function preserveListSorting(url, target) {
+    if (!url || !target || !["users-list", "bot-accounts-list", "bots-list", "scheduler-list", "moderation-reports"].includes(target.id)) { return url; }
+    var next = new URL(url, window.location.href);
+    var current = new URL(window.location.href);
+    ["sort", "direction"].forEach(function (key) {
+      if (!next.searchParams.has(key) && current.searchParams.has(key)) { next.searchParams.set(key, current.searchParams.get(key)); }
+    });
+    return TinyCat.navigation.compact(next);
+  }
   function refreshFormCaptcha(form, data) {
     var details = resultErrorDetails(data);
     if (details.captcha) { TinyCat.ui.captcha(form, details.captcha); }
@@ -113,6 +122,8 @@ import "./toasts.js";
         nextHistory = historyUrl(form, action, body);
         body = null;
       }
+      url = preserveListSorting(url, target);
+      nextHistory = preserveListSorting(nextHistory, target);
 
       requestOptions = {
         method: method,
@@ -175,6 +186,8 @@ import "./toasts.js";
       method = (link.dataset.method || "GET").toUpperCase();
       headers = {};
       nextHistory = historyUrl(link, url);
+      url = preserveListSorting(url, target);
+      nextHistory = preserveListSorting(nextHistory, target);
 
       if (target && !await TinyCat.forms.confirmDiscard(TinyCat.forms.dirty(target))) {
         return;

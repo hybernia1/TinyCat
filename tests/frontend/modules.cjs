@@ -56,6 +56,15 @@ for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filen
 const T = window.TinyCat;
 T.components.register(definitions);
 T.i18n.register("en", labels);
+const sortHeading = T.components.render("ui/sort-heading", {
+  label: "Name <safe>", order: { url: "/api/users?sort=username&direction=desc&page=1", history: "/admin/users?sort=username&direction=desc&page=1", target: "#users-list", ascending: true, descending: false }
+});
+const sortLink = sortHeading.querySelector("a");
+check(sortLink.getAttribute("href") === "/api/users?sort=username&direction=desc&page=1" && sortLink.getAttribute("data-history") === "/admin/users?sort=username&direction=desc&page=1", "Sort headings share server-prepared AJAX and history URLs.");
+check(sortLink.textContent === "Name <safe>" && sortLink.querySelectorAll("[data-active]").length === 1, "Sort headings render literal labels and highlight only the active direction.");
+check(sortLink.querySelectorAll("use").map(node => node.getAttribute("href")).join(",") === "#arrow-up,#arrow-down", "Sort arrows use the shared SVG icon sprite.");
+const plainHeading = T.components.render("ui/sort-heading", { label: "Name" });
+check(plainHeading.textContent === "Name" && plainHeading.querySelector("a") === null, "Embedded detail tables without sort state retain plain headings.");
 const dateCases = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--date-fixtures"], { encoding: "utf8" }));
 const originalDates = { ...document.documentElement.dataset };
 document.documentElement.dataset.dateRelative = "false";

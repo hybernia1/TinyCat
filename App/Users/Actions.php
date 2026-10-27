@@ -130,7 +130,7 @@ final class Actions
             'status' => $status,
             'updated_from' => \TinyCat\Users\Accounts::tc_admin_user_filter_date((string) \TinyCat\Http\Web::get('updated_from', '')),
             'updated_to' => \TinyCat\Users\Accounts::tc_admin_user_filter_date((string) \TinyCat\Http\Web::get('updated_to', '')),
-        ];
+        ] + \TinyCat\Support\AdminSorting::state('users');
     }
 
     /** @param array<mixed>|int $user */
@@ -413,7 +413,7 @@ final class Actions
             \TinyCat\Support\AdminViews::admin_page(),
             \TinyCat\Support\AdminViews::admin_per_page()
         );
-        $items = \TinyCat\Database\Connection::all('SELECT * FROM users' . $where . ' ORDER BY id DESC' . \TinyCat\Database\Queries::pagination_sql($pagination), $params);
+        $items = \TinyCat\Database\Connection::all('SELECT * FROM users' . $where . ' ORDER BY ' . \TinyCat\Support\AdminSorting::order('users', $filters) . \TinyCat\Database\Queries::pagination_sql($pagination), $params);
 
         return [
             'items' => $items,

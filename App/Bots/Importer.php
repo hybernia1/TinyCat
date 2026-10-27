@@ -248,7 +248,7 @@ final class Importer
     /**
      * @return array<array<string, mixed>>
      */
-    public static function sources(?int $botUserId = null): array
+    public static function sources(?int $botUserId = null, ?string $order = null): array
     {
         $sql = 'SELECT bs.*, u.username FROM bot_sources bs INNER JOIN users u ON u.id = bs.bot_user_id WHERE u.role = ?';
         $params = ['bot'];
@@ -258,7 +258,7 @@ final class Importer
             $params[] = $botUserId;
         }
 
-        return \TinyCat\Database\Connection::all($sql . ' ORDER BY u.username ASC, bs.name ASC, bs.id ASC', $params);
+        return \TinyCat\Database\Connection::all($sql . ' ORDER BY ' . ($order ?? 'u.username ASC, bs.name ASC, bs.id ASC'), $params);
     }
 
     /**

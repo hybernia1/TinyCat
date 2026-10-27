@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.5.0 - 2026-10-27
+
+- Add shared SVG sorting controls to administration lists for users, bot accounts, feed sources, scheduler run history and reported content; sort on the server before pagination with allowlisted columns and deterministic ties.
+- Preserve sorting through AJAX filters, pagination and item actions, and restore source and report lists through browser history. Retain the open-first default for reports.
+- Defer public scroll-position history writes until scrolling settles while saving immediately before navigation and when leaving the page.
+- Keep desktop sidebar requests, refresh timers, resize observation and sticky scroll handlers inactive below 900 pixels; restore them when returning to desktop and discard late mobile renders.
+- Remove the scheduler overview help paragraph and cover sorting, stale AJAX replies, history restoration and responsive sidebar behavior with regression checks.
+
 ## 4.4.0 - 2026-10-27
 
 - Move anonymous language selection into a navbar flag menu; signed-in users retain profile preferences. Offer a dismissible switch in the browser's preferred supported language when it differs from the current interface.

@@ -1162,5 +1162,79 @@
         ]
       }
     ]
-  }
+  },
+  "ui/sort-heading": [
+    {
+      "tag": "a",
+      "attrs": {
+        "class": "table-sort",
+        "href": {
+          "get": "order.url"
+        },
+        "data-ajax": true,
+        "data-ajax-target": {
+          "get": "order.target"
+        },
+        "data-history": {
+          "get": "order.history"
+        }
+      },
+      "children": [
+        {
+          "tag": "span",
+          "children": [
+            {
+              "get": "label"
+            }
+          ]
+        },
+        {
+          "tag": "span",
+          "attrs": {
+            "class": "table-sort-arrows",
+            "aria-hidden": "true"
+          },
+          "children": [
+            {
+              "tag": "span",
+              "attrs": {
+                "data-active": {
+                  "get": "order.ascending"
+                }
+              },
+              "children": [
+                {
+                  "icon": "arrow-up"
+                }
+              ]
+            },
+            {
+              "tag": "span",
+              "attrs": {
+                "data-active": {
+                  "get": "order.descending"
+                }
+              },
+              "children": [
+                {
+                  "icon": "arrow-down"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "when": {
+        "get": "order"
+      }
+    },
+    {
+      "get": "label",
+      "when": {
+        "not": {
+          "get": "order"
+        }
+      }
+    }
+  ]
 }

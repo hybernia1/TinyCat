@@ -351,51 +351,116 @@
                     "children": [
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.name.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "bots.source_name",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.source_name",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.name"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.bot.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "bots.bot",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.bot",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.bot"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.status.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "common.status",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "common.status",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.status"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.interval.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "bots.schedule",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.schedule",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.interval"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.last_import.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "bots.last_import",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.last_import",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.last_import"
+                              }
+                            }
                           }
                         ]
                       },
@@ -799,51 +864,116 @@
                     "children": [
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.username.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "bots.account",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.account",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.username"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.status.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "common.status",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "common.status",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.status"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.source_count.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "bots.detail_stat_sources",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.detail_stat_sources",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.source_count"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.post_count.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "bots.detail_stat_posts",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.detail_stat_posts",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.post_count"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.updated_at.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "common.updated",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "common.updated",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.updated_at"
+                              }
+                            }
                           }
                         ]
                       },

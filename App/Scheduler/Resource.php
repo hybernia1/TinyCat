@@ -28,6 +28,7 @@ final class Resource
         $navigation = AdminViews::admin_pagination_view_data($pagination, '/api/scheduler/tasks', '#scheduler-list', $params, 'page', 2, '/admin/cron/list');
         unset($navigation['target']);
         return [
+            'sorting' => \TinyCat\Support\AdminSorting::headings('runs', $params),
             'items' => $items, 'runs' => array_map(self::run(...), $records['runs']),
             'filters' => $filters, 'pagination' => $pagination,
             'refresh_url' => AdminViews::admin_list_url('/api/scheduler/tasks', $params + ['page' => $page]),

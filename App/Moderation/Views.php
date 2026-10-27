@@ -10,6 +10,6 @@ final class Views
     /** @param array<mixed> $data */
     public static function reports(array $data): string
     {
-        return Components::render('moderation/reports', ['items' => array_map(Resource::report(...), (array) ($data['reports'] ?? []))]);
+        return Components::render('moderation/reports', ['items' => array_map(Resource::report(...), (array) ($data['reports'] ?? [])), 'sorting' => \TinyCat\Support\AdminSorting::headings('reports')]);
     }
 }

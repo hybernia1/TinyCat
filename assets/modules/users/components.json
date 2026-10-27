@@ -759,41 +759,93 @@
                     "children": [
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.username.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "users.table_user",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "users.table_user",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.username"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.role.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "common.role",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "common.role",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.role"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.status.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "common.status",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "common.status",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.status"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.updated_at.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "common.updated",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "common.updated",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.updated_at"
+                              }
+                            }
                           }
                         ]
                       },

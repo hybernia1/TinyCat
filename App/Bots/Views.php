@@ -76,6 +76,7 @@ final class Views
     public static function sources(array $data = []): string
     {
         $model = ['items' => array_map(Importer::sourceResource(...), (array) ($data['sources'] ?? [])), 'bots' => (array) ($data['bots'] ?? []), 'filter_bot_user_id' => (int) ($data['filter_bot_id'] ?? 0)];
+        $model['sorting'] = \TinyCat\Support\AdminSorting::headings('sources', ['bot' => $model['filter_bot_user_id'] ?: '']);
         return Components::render('bots/sources', $model + ['state' => $model]);
     }
 }

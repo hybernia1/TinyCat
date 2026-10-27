@@ -44,31 +44,70 @@
                     "children": [
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.content.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "moderation.reported_content",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "moderation.reported_content",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.content"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.reason.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "moderation.report_reason",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "moderation.report_reason",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.reason"
+                              }
+                            }
                           }
                         ]
                       },
                       {
                         "tag": "th",
-                        "attrs": {},
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.status.aria"
+                          }
+                        },
                         "children": [
                           {
-                            "t": "common.status",
-                            "values": {}
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "common.status",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.status"
+                              }
+                            }
                           }
                         ]
                       },

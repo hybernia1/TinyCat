@@ -73,6 +73,18 @@ by body IDs. User list filters retain `q`, `role`, `status`, `updated_from`,
 `updated_to`, `page` and `per_page`; pagination includes `total`, `page`, `per_page`,
 `last_page`, `has_prev` and `has_next`. Following uses `cursor_at` and `cursor_id`.
 
+Administration lists accept `sort` and `direction=asc|desc`, alongside their
+existing filters. Sorting happens before pagination, with an ID tie-breaker.
+Unknown columns retain the list's default order. Supported sort keys are:
+
+| List endpoint | Sort keys |
+| --- | --- |
+| `/api/users` | `username`, `role`, `status`, `updated_at` |
+| `/api/bots/accounts` | `username`, `status`, `source_count`, `post_count`, `updated_at` |
+| `/api/bots/sources` | `name`, `bot`, `status`, `interval`, `last_import` |
+| `/api/scheduler/tasks` | `task`, `started_at`, `status`, `duration_ms` (run history) |
+| `/api/moderation/reports` | `content`, `reason`, `status` |
+
 ## Notifications
 
 | Method | Path | Operation |

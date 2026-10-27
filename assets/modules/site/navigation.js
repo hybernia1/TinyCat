@@ -4,7 +4,7 @@ import "../../core/components.js";
 import "../../core/lifecycle.js";
 import "../../ui/dialogs.js";
 (function () {
-  var T = window.TinyCat, pending = null, currentIndex = 0, rollback = false, sidebar = null;
+  var T = window.TinyCat, pending = null, currentIndex = 0, rollback = false, sidebar = null, scrollSaveTimer = null;
   function supported(url) {
     if (url.origin !== window.location.origin || url.hash || !document.querySelector("[data-public-page]")) { return false; }
     var parts = T.urls.split(url.pathname);
@@ -12,9 +12,16 @@ import "../../ui/dialogs.js";
     return Array.from(url.searchParams.keys()).every(function (key) { return key === "feed" || key === "compact"; });
   }
   function saveScroll() {
+    window.clearTimeout(scrollSaveTimer);
+    scrollSaveTimer = null;
     if (!pending && supported(new URL(window.location.href))) {
       window.history.replaceState(Object.assign({}, window.history.state, { publicIndex: currentIndex, scroll: [window.scrollX, window.scrollY] }), "");
     }
+  }
+  function queueScrollSave() {
+    window.clearTimeout(scrollSaveTimer);
+    // Keep history writes out of the continuous scrolling path.
+    scrollSaveTimer = window.setTimeout(saveScroll, 150);
   }
   function meta(selector, attribute, value) {
     var node = document.head.querySelector(selector);
@@ -57,6 +64,8 @@ import "../../ui/dialogs.js";
     var main = document.getElementById("main-content"); main.focus({ preventScroll: true });
   }
   async function visit(url, restored) {
+    window.clearTimeout(scrollSaveTimer);
+    scrollSaveTimer = null;
     if (pending) { pending.abort(); }
     if (!restored) { saveScroll(); }
     var target = document.querySelector("#main-content > .container"), controller = new AbortController(); pending = controller;
@@ -89,7 +98,11 @@ import "../../ui/dialogs.js";
   T.lifecycle.register("public-pages", { init: function () {
     if (!document.querySelector("[data-public-page]")) { return; }
     window.history.scrollRestoration = "manual"; saveScroll();
-    window.addEventListener("scroll", saveScroll, { passive: true });
+    window.addEventListener("scroll", queueScrollSave, { passive: true });
+    window.addEventListener("pagehide", saveScroll);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") { saveScroll(); }
+    });
     document.addEventListener("click", function (event) {
       var link = event.target.closest && event.target.closest("a[href]");
       if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || !link || link.target || link.hasAttribute("download") || link.hasAttribute("data-ajax") || link.hasAttribute("data-modal-open")) { return; }

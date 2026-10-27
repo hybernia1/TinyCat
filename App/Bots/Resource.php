@@ -38,6 +38,7 @@ final class Resource
         $navigation = AdminViews::admin_pagination_view_data($pagination, '/api/bots/accounts', '#bot-accounts-list', $filters + ['per_page' => (int) ($pagination['per_page'] ?? 10)], 'page', 2, '/admin/bots/accounts');
         unset($navigation['target']);
         return array_replace($data, ['items' => $items, 'statuses' => array_keys($statuses),
+            'sorting' => \TinyCat\Support\AdminSorting::headings('accounts', $filters + ['per_page' => (int) ($pagination['per_page'] ?? 25)]),
             'navigation' => $navigation]);
     }
 }

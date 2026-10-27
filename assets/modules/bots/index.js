@@ -5,6 +5,10 @@ import "../../core/navigation.js";
   "use strict";
   var TinyCat = window.TinyCat;
   TinyCat.modules.register("bots", TinyCat.bots);
+  TinyCat.navigation.register("/admin/bots/list", {
+    target: "#bots-list", url: function () { return "/api/bots/sources" + window.location.search; },
+    apply: function (target, response) { TinyCat.bots.sources(target, response.data); }
+  });
   TinyCat.navigation.register("/admin/bots/accounts", {
     target: "#bot-accounts-list",
     url: function () { return "/api/bots/accounts" + window.location.search; },

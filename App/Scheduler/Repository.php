@@ -29,7 +29,7 @@ final class Repository
         $last = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($last, $page));
         return [
-            'runs' => Connection::all('SELECT * FROM scheduler_runs' . $sql . ' ORDER BY id DESC LIMIT ' . $perPage . ' OFFSET ' . (($page - 1) * $perPage), $params),
+            'runs' => Connection::all('SELECT * FROM scheduler_runs' . $sql . ' ORDER BY ' . \TinyCat\Support\AdminSorting::order('runs', $filters) . ' LIMIT ' . $perPage . ' OFFSET ' . (($page - 1) * $perPage), $params),
             'pagination' => ['page' => $page, 'last_page' => $last, 'total' => $total, 'per_page' => $perPage, 'from' => $total > 0 ? ($page - 1) * $perPage + 1 : 0, 'to' => min($total, $page * $perPage)],
         ];
     }

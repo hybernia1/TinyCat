@@ -35,6 +35,7 @@ final class Resource
         $navigation = \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, '/api/users', '#users-list', $params, 'page', 2, '/admin/users');
         unset($navigation['target']);
         return array_replace($data, [
+            'sorting' => \TinyCat\Support\AdminSorting::headings('users', $params),
             'items' => $items, 'pagination' => $pagination,
             'options' => Resource::options(),
             'roles' => array_keys($roles),
