@@ -32,6 +32,10 @@ import "../../ui/toasts.js";
     payload.count = Array.isArray(payload.items) ? payload.items.length : 0;
     return payload;
   }
+  function statusFeedFragment(target, items) {
+    if (target.dataset.feedComponent) { return { content: TinyCat.components.render(target.dataset.feedComponent, { items: items }) }; }
+    return target.id === "notifications-list" ? { content: TinyCat.notifications.items(items, false) } : TinyCat.status.fragment(items);
+  }
   function statusFeedTarget(control) {
     var selector = control ? control.dataset.statusFeedTarget : "";
 
@@ -50,7 +54,7 @@ import "../../ui/toasts.js";
   }
   function statusFeedCards(target) {
     return Array.prototype.slice.call(target ? target.children : []).filter(function (node) {
-      return node.classList && node.classList.contains("status-card");
+      return node.classList && (node.classList.contains("status-card") || node.hasAttribute("data-feed-item"));
     });
   }
   function statusFeedGap(target) {
@@ -93,6 +97,8 @@ import "../../ui/toasts.js";
     next.searchParams.delete("offset");
     next.searchParams.delete("cursor_at");
     next.searchParams.delete("cursor_id");
+    next.searchParams.delete("cursor_rank");
+    next.searchParams.delete("cursor_name");
 
     return compactUrl(next);
   }
@@ -131,16 +137,16 @@ import "../../ui/toasts.js";
   function appendStatusFeedItems(target, template) {
     var seen = {};
 
-    qsa(".status-card[data-status-id]", target).forEach(function (card) {
-      var id = String(card.dataset.statusId || "");
+    qsa(".status-card[data-status-id], [data-feed-item][data-feed-id]", target).forEach(function (card) {
+      var id = String(card.dataset.statusId || card.dataset.feedId || "");
 
       if (id) {
         seen[id] = true;
       }
     });
 
-    qsa(".status-card[data-status-id]", template.content).forEach(function (card) {
-      var id = String(card.dataset.statusId || "");
+    qsa(".status-card[data-status-id], [data-feed-item][data-feed-id]", template.content).forEach(function (card) {
+      var id = String(card.dataset.statusId || card.dataset.feedId || "");
 
       if (id && seen[id]) {
         card.remove();
@@ -262,7 +268,7 @@ import "../../ui/toasts.js";
     try {
       data = await TinyCat.api.request(url, { method: "GET", cache: "no-store" });
       payload = statusFeedPayload(data);
-      template = TinyCat.status.fragment(payload.items);
+      template = statusFeedFragment(target, payload.items);
 
       if (!statusFeedRequestActive(target, request)) {
         return;
@@ -370,7 +376,7 @@ import "../../ui/toasts.js";
       }
 
       if (Array.isArray(payload.items)) {
-        template = target.id === "notifications-list" ? { content: TinyCat.notifications.items(payload.items, false) } : TinyCat.status.fragment(payload.items);
+        template = statusFeedFragment(target, payload.items);
         appendStatusFeedItems(target, template);
         pruneStatusFeed(target, url);
         hydrateDynamic(target);

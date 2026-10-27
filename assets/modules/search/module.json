@@ -3,7 +3,10 @@
     "routes": [
       "public"
     ],
-    "components": [],
+    "components": [
+      "search/items",
+      "search/page"
+    ],
     "entries": [
       "assets/modules/search/index.js"
     ],
@@ -12,10 +15,23 @@
       "assets/modules/search/styles/066-global-search-input.css"
     ],
     "translations": [
-      "public.search_tag_posts.one",
+      "auth.login_title",
+      "common.confirm",
+      "moderation.messages.action_limited",
+      "notifications.load_more",
+      "public.search_captcha_required",
+      "public.search_captcha_title",
+      "public.search_content",
+      "public.search_empty",
+      "public.search_length",
       "public.search_tag_posts.few",
       "public.search_tag_posts.many",
-      "public.search_tag_posts.other"
+      "public.search_tag_posts.one",
+      "public.search_tag_posts.other",
+      "public.search_tags",
+      "public.search_title",
+      "public.search_title_query",
+      "public.search_users"
     ],
     "messages": {
       "action_limited": "moderation.messages.action_limited",

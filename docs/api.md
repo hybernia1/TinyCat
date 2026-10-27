@@ -190,3 +190,45 @@ AJAX stays enabled through `assets/core/http.js` and domain renderers in
 the actual front controller with an isolated database, safe DOM rendering,
 authentication, authorization, CSRF, state writes, pagination, history, recovery
 token reuse, CAPTCHA configuration and rejection of presentation fields.
+
+## Search
+
+- `GET /api/search?q=...` is the public autocomplete: at least two characters,
+  up to five tag and five active username prefixes. It does not search posts.
+- `GET /api/search/results?q=...&type=content` returns the same collection
+  as `/search`. Types are `content` (default), `users`, and `tags`. Batches use
+  the configured feed limit; `meta.pagination` contains `next_url` and `done`.
+  `data` contains `query`, `type`, `items`, `minimum_length`, and `valid_query`.
+- `GET /api/search/suggestions?q=...&type=all&limit=8` remains the signed-in
+  editor completion endpoint (`type=all|tag|user`, limit 1-12).
+
+Queries normalize whitespace and accept at most 80 characters. Full post search
+requires three characters; profiles and tags require two. Too-short queries
+return an empty collection with `valid_query=false`; malformed or overlong API
+parameters return 422. `%`, `_`, and `!` are literal characters, not SQL wildcards.
+
+Post search covers the entire published history of active authors, matching all
+query words in the post body or in one attached link's stored URL, title and
+description. MySQL/MariaDB uses existing FULLTEXT indexes with word prefixes;
+short words and punctuation use literal substring conditions. Quotes and angle
+brackets separate words; a query containing only those symbols searches them
+literally (subject to the same minimum query length). SQLite uses
+literal substring conditions for tests. Results are deduplicated and sorted by
+publication time, then ID, newest first. No unrelated posts from matching authors
+or tags are added. Comments, bios and remote page bodies are not searched.
+
+Profile and tag results rank exact matches, prefixes, then contained matches;
+ties sort by name and ID. Profile bios are excerpts only. Autocomplete has a
+separate session budget of 120 requests per minute and never consumes the full
+search allowance. Full searches retain the account limits and guest CAPTCHA.
+Continuation uses the standard feed loader and `next_url`. Posts share the feed
+`cursor_at`/`cursor_id` keyset; profiles and tags use `cursor_rank`, `cursor_name`,
+and `cursor_id` in rank/name/ID order. There are no numbered pages or SQL offsets.
+Post items use the standard status resource consumed by the feed renderer.
+Initial HTML uses the shared initial feed limit; continuation uses the configured
+regular feed limit. New posts do not shift the continuation boundary.
+
+Search also participates in `/api/site/pages?path=/search&q=...&type=...`.
+Initial HTML and JSON navigation render the same public page component, preserve
+the existing sidebar and navbar, and support category links, search form submits,
+locale-prefixed URLs and browser history without a document reload.

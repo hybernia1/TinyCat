@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.6.0 - 2026-10-27
+
+- Separate search into Posts, Profiles and Tags, with full-history post/link matching, predictable ranking and the shared cursor feed loader.
+- Preserve the existing navbar and sidebar while searching, switching categories and navigating browser history; handle quotes and angle brackets as plain search text.
+- Count tag posts using the shared feed visibility rules and give autocomplete its own request budget.
+- Restore sidebar interaction after background refreshes triggered by likes, comments, post changes and follows.
+- Synchronize notification previews, inbox rows and counters after reads/deletes, discard stale polling replies, and keep mark-all controls reusable.
+- Include relative-time translations on scheduler pages and validate date translation dependencies in every client scope.
+- Add a distinct fresh-install package without migration files or internal documentation; create the current scheduler schema directly in the installer.
+
 ## 4.5.0 - 2026-10-27
 
 - Add shared SVG sorting controls to administration lists for users, bot accounts, feed sources, scheduler run history and reported content; sort on the server before pagination with allowlisted columns and deterministic ties.

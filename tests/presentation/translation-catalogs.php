@@ -115,10 +115,11 @@ try {
     $validateClients = require dirname(__DIR__, 2) . '/tools/client-translations.php';
     $featuresProperty = new ReflectionProperty(\TinyCat\Support\ClientAssets::class, 'features');
     $saved = $featuresProperty->getValue();
+    $dateKeys = array_values(array_filter(array_keys($real['en']['app']), static fn (string $key): bool => str_starts_with($key, 'relative.')));
     try {
         foreach (['missing.catalog_entry', null] as $dependency) {
             $features = $saved;
-            $features['/'] = [['entries' => ['assets/modules/users/views.js'], 'translations' => $dependency === null ? [] : [$dependency]]];
+            $features['/'] = [['entries' => ['assets/modules/users/views.js'], 'translations' => $dependency === null ? $dateKeys : [...$dateKeys, $dependency]]];
             $featuresProperty->setValue(null, $features);
             try {
                 $validateClients($real);
@@ -128,6 +129,16 @@ try {
                 if (!str_contains($error->getMessage(), $expected)) { throw $error; }
                 $checks++;
             }
+        }
+        $features = $saved;
+        $features['/'] = [['entries' => ['assets/core/dates.js'], 'translations' => []]];
+        $featuresProperty->setValue(null, $features);
+        try {
+            $validateClients($real);
+            throw new LogicException('Missing relative date dependencies accepted');
+        } catch (RuntimeException $error) {
+            if (!str_contains($error->getMessage(), 'Missing date translation')) { throw $error; }
+            $checks++;
         }
     } finally {
         $featuresProperty->setValue(null, $saved);

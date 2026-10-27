@@ -20,6 +20,7 @@
       "few": "{count} berichten",
       "many": "{count} berichten",
       "other": "{count} berichten"
-    }
+    },
+    "search_length": "Voer {min}-{max} tekens in."
   }
 }

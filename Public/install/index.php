@@ -617,11 +617,13 @@ function tc_install_create_tables(): void
         "CREATE TABLE IF NOT EXISTS bot_source_runs (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             source_id BIGINT UNSIGNED NOT NULL,
+            scheduler_run_id BIGINT NULL,
             status VARCHAR(20) NOT NULL,
             started_at DATETIME NOT NULL,
             items_seen INT UNSIGNED NOT NULL DEFAULT 0,
             error VARCHAR(500) NULL,
             PRIMARY KEY (id),
+            KEY bot_source_runs_scheduler_index (scheduler_run_id, id),
             KEY bot_source_runs_source_index (source_id, started_at),
             KEY bot_source_runs_status_index (status, started_at),
             KEY bot_source_runs_started_index (started_at, id),
@@ -632,10 +634,18 @@ function tc_install_create_tables(): void
     foreach ($statements as $statement) {
         \TinyCat\Database\Connection::exec($statement);
     }
-    $schedulerMigration = require \TinyCat\Support\Paths::basePath('migrations/20261026_003_scheduler_runs.php');
-    $schedulerMigration(\TinyCat\Database\Connection::get());
-    $botSchedulerMigration = require \TinyCat\Support\Paths::basePath('migrations/20261026_004_bot_scheduler_runs.php');
-    $botSchedulerMigration(\TinyCat\Database\Connection::get());
+    \TinyCat\Database\Connection::exec(
+        "CREATE TABLE IF NOT EXISTS scheduler_runs (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            task VARCHAR(40) NOT NULL, mode VARCHAR(16) NOT NULL,
+            actor_id BIGINT NULL, status VARCHAR(24) NOT NULL,
+            started_at DATETIME NOT NULL, finished_at DATETIME NULL,
+            duration_ms BIGINT NULL, options_json TEXT NOT NULL,
+            summary_json TEXT NULL, error TEXT NULL,
+            KEY scheduler_runs_task_id (task, id),
+            KEY scheduler_runs_started (started_at, id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
 
 }
 

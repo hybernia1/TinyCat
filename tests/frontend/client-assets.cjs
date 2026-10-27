@@ -38,6 +38,12 @@ check(!load("/install").sources.some(s => s.includes("/modules/status/") || s.in
 const schedulerPage = load("/admin/cron/list");
 check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.definitions.includes("scheduler/filter-form"), "The scheduler page independently loads date formatting and shared filter components.");
 check(load("/admin/cron/list", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");
+for (const mode of [false, true, "min"]) {
+  const cron = load("/admin/cron/list", "cs", mode);
+  const now = Date.UTC(2026, 9, 27, 12, 0, 0);
+  check(cron.T.dates.relative(new Date(now - 2 * 60000), now) === "p\u0159ed 2 minutami", "Filtered cron dates receive Czech minute translations in source and release assets");
+  check(cron.T.dates.relative(new Date(now - 3 * 3600000), now) === "p\u0159ed 3 hodinami", "Filtered cron dates receive Czech hour translations in source and release assets");
+}
 const minifiedPublic = load("/", "cs", "min");
 const rawPublic = load("/", "cs", true);
 check(minifiedPublic.assets[0].url !== rawPublic.assets[0].url && minifiedPublic.assets[3].url !== rawPublic.assets[3].url && minifiedPublic.styles[0] !== rawPublic.styles[0], "Minification selects distinct runtime, application and CSS variants");

@@ -8,8 +8,8 @@ import "../../ui/dialogs.js";
   function supported(url) {
     if (url.origin !== window.location.origin || url.hash || !document.querySelector("[data-public-page]")) { return false; }
     var parts = T.urls.split(url.pathname);
-    if (parts.locale !== T.urls.prefix() || !(parts.path === "/" || /^\/(?:tag\/[^/]+|author\/[1-9][0-9]*|status\/[1-9][0-9]*)$/.test(parts.path))) { return false; }
-    return Array.from(url.searchParams.keys()).every(function (key) { return key === "feed" || key === "compact"; });
+    if (parts.locale !== T.urls.prefix() || !(parts.path === "/" || parts.path === "/search" || /^\/(?:tag\/[^/]+|author\/[1-9][0-9]*|status\/[1-9][0-9]*)$/.test(parts.path))) { return false; }
+    return Array.from(url.searchParams.keys()).every(function (key) { return parts.path === "/search" ? key === "q" || key === "type" : key === "feed" || key === "compact"; });
   }
   function saveScroll() {
     window.clearTimeout(scrollSaveTimer);
@@ -58,6 +58,9 @@ import "../../ui/dialogs.js";
     var slot = view.querySelector("[data-public-sidebar-slot]");
     if (slot && sidebar && (!window.matchMedia || window.matchMedia("(min-width: 900px)").matches)) { slot.replaceWith(sidebar); sidebar.dataset.publicSidebarUrl = data.sidebar_url; T.site.activateSidebar(sidebar, data.tag); }
     target.replaceChildren(view); metadata(data); T.lifecycle.hydrate(target);
+    var searchInput = document.querySelector("[data-global-search-input]");
+    if (searchInput) { searchInput.value = data.kind === "search" ? data.search.query : ""; }
+    document.querySelectorAll("[data-global-search-results]").forEach(function (node) { node.hidden = true; });
     document.querySelectorAll("[data-language-link]").forEach(function (node) { node.href = T.urls.local(data.url, node.dataset.languageLink); });
     document.querySelectorAll(".navbar a[aria-current]").forEach(function (node) { node.removeAttribute("aria-current"); });
     document.querySelectorAll(".navbar a[href]").forEach(function (node) { if (new URL(node.href).pathname === new URL(data.url, window.location.href).pathname) { node.setAttribute("aria-current", "page"); } });
@@ -102,6 +105,16 @@ import "../../ui/dialogs.js";
     window.addEventListener("pagehide", saveScroll);
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") { saveScroll(); }
+    });
+    document.addEventListener("submit", function (event) {
+      var form = event.target.closest && event.target.closest("form[data-global-search]");
+      if (!form || event.defaultPrevented) { return; }
+      var input = form.querySelector("[data-global-search-input]");
+      if (!input || input.value.trim().length < 2) { return; }
+      var url = new URL(form.action, window.location.href);
+      url.searchParams.set("q", input.value.trim());
+      if (!supported(url)) { return; }
+      event.preventDefault(); T.navigation.go(url.href);
     });
     document.addEventListener("click", function (event) {
       var link = event.target.closest && event.target.closest("a[href]");

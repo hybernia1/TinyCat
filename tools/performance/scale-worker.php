@@ -154,7 +154,7 @@ try {
             \TinyCat\Users\Repository::author_activity_stats($authorId);
         },
         'search' => static function (): void {
-            \TinyCat\Search\Queries::public_search_results('performance', 12);
+            \TinyCat\Search\Queries::collection('performance');
         },
         'write' => static function () use ($authorId, &$writeSequence): void {
             $writeSequence++;

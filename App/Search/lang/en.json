@@ -20,6 +20,7 @@
       "few": "{count} posts",
       "many": "{count} posts",
       "other": "{count} posts"
-    }
+    },
+    "search_length": "Use {min}-{max} characters."
   }
 }

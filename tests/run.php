@@ -46,7 +46,10 @@ $tests = [
     'Scheduled file cleanup' => 'tests/cron/files.php',
     'Scheduled tasks' => 'tests/cron/run.php',
     'Demo importer tooling' => 'tests/tools/demo-import.php',
+    'Search semantics' => 'tests/search.php',
+    'MySQL search semantics' => 'tests/search-mysql.php',
     'Signed package artifact' => 'tests/release/package-artifact.php',
+    'Fresh installation package artifact' => 'tests/release/fresh-package-artifact.php',
     'Update and rollback rehearsal' => 'tests/release/update-rehearsal.php',
     'MySQL installer rehearsal' => 'tests/release/mysql-installer-rehearsal.php',
 ];

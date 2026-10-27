@@ -108,9 +108,10 @@ import "./views.js";
           } else { sidebar.replaceWith(next); hydrateDynamic(next); }
         })
         .catch(function () {
-          sidebar.classList.remove("is-loading");
+          // Keep the current sidebar when a background refresh fails.
         })
         .finally(function () {
+          sidebar.classList.remove("is-loading");
           delete sidebar.dataset.sidebarLoading;
         });
     });

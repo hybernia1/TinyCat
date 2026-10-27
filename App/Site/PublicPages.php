@@ -19,6 +19,7 @@ final class PublicPages
         if (LocaleRouting::split($path)['locale'] !== null) { $path = LocaleRouting::prepare($path); LocaleRouting::apply(); }
         $kind = ''; $data = null;
         if ($path === '/') { $kind = 'home'; $data = \TinyCat\Status\Pages::homeData(); }
+        elseif ($path === '/search') { $kind = 'search'; $data = \TinyCat\Search\Pages::data(); }
         elseif (preg_match('~^/status/([1-9][0-9]*)$~D', $path, $match)) { $kind = 'status'; $data = \TinyCat\Status\Pages::detailData((int) $match[1]); }
         elseif (preg_match('~^/author/([1-9][0-9]*)$~D', $path, $match)) { $kind = 'author'; $data = \TinyCat\Users\Pages::authorData((int) $match[1]); }
         elseif (preg_match('~^/tag/([^/]+)$~D', $path, $match)) { $kind = 'tag'; $data = \TinyCat\Status\Pages::tagData($match[1]); }
@@ -45,7 +46,7 @@ final class PublicPages
         $items = $context['statusItems'] ?? $home['items'] ?? [];
         $more = $context['feedMore'] ?? $home['feed_more'] ?? [];
         $author = $context['author'] ?? null;
-        $feedId = $home['feed_id'] ?? ($kind === 'author' ? 'status-feed-author-' . (int) ($author['id'] ?? 0) : 'status-feed-tag-' . \TinyCat\Support\Text::slug((string) ($context['tag'] ?? '')));
+        $feedId = $context['feedId'] ?? $home['feed_id'] ?? ($kind === 'author' ? 'status-feed-author-' . (int) ($author['id'] ?? 0) : 'status-feed-tag-' . \TinyCat\Support\Text::slug((string) ($context['tag'] ?? '')));
         $editor = $context['editor'] ?? [];
         $url = $kind === 'home' ? (string) ($home['current_feed_url'] ?? '/') : (string) $meta['url'] . (!empty($context['compact']) ? '?compact=1' : '');
         $item = $context['item'] ?? null;
@@ -69,7 +70,7 @@ final class PublicPages
             'comments' => Posts::comments($context['comments'] ?? [], $viewer),
             'next_url' => (int) ($more['loaded'] ?? 0) >= (int) ($more['limit'] ?? 1) ? (string) ($more['next_url'] ?? '') : '',
             'sidebar_url' => '/api/site/sidebar' . (!empty($context['tag']) ? '?tag=' . rawurlencode($context['tag']) : ''),
-            'sidebar' => in_array($kind, ['home', 'tag', 'status'], true) && empty($context['compact']),
+            'sidebar' => in_array($kind, ['home', 'tag', 'status', 'search'], true) && empty($context['compact']),
             'author' => $author !== null ? Users::profile($author) : null,
             'bio' => (string) ($context['bio'] ?? ''), 'member_since' => !empty($context['memberSince']) ? \TinyCat\Support\Dates::dateIso($context['memberSince']) : '',
             'follow_counts' => $context['followCounts'] ?? [], 'activity' => $context['activityStats'] ?? [],
@@ -86,6 +87,6 @@ final class PublicPages
             'rss_url' => (string) ($context['authorFeedUrl'] ?? $context['tagFeedUrl'] ?? ''),
             'login_url' => \TinyCat\Users\Login::auth_url_with_next('/login', $url),
             'login_modal_url' => \TinyCat\Users\Login::auth_modal_url('login', $url),
-        ];
+        ] + ($kind === 'search' ? ['search' => $context['search']] : []);
     }
 }

@@ -126,6 +126,12 @@ final class Feed
      */
     public static function public_status_cursor_page(\TinyCat\Database\Query $query, int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
     {
+        return self::public_status_items_by_ids(self::public_status_ids_page(self::public_status_apply_cursor($query, $cursorAt, $cursorId), $limit));
+    }
+
+    /** Shared time/ID keyset for chronological feeds. */
+    public static function public_status_apply_cursor(\TinyCat\Database\Query $query, string $cursorAt = '', int $cursorId = 0): \TinyCat\Database\Query
+    {
         $cursorAt = trim($cursorAt);
         $cursorId = max(0, $cursorId);
 
@@ -141,7 +147,7 @@ final class Feed
             );
         }
 
-        return \TinyCat\Status\Feed::public_status_items_by_ids(\TinyCat\Status\Feed::public_status_ids_page($query, $limit));
+        return $query;
     }
 
     /**
@@ -296,11 +302,8 @@ final class Feed
 
     /**
      * @param array<mixed> $ids
-     * @return array<mixed>
+     * @return list<array<string, mixed>>
      */
-    /** @return array<mixed> */
-    /** @param array<mixed> $ids
-     * @return array<mixed> */
     public static function public_status_items_by_ids(array $ids, bool $preload = true): array
     {
         $ids = \TinyCat\Support\Text::positive_int_ids($ids);

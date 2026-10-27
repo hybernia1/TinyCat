@@ -20,6 +20,7 @@
       "few": "{count} post",
       "many": "{count} post",
       "other": "{count} post"
-    }
+    },
+    "search_length": "Inserisci da {min} a {max} caratteri."
   }
 }

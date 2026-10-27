@@ -20,6 +20,7 @@
       "few": "{count} příspěvky",
       "many": "{count} příspěvku",
       "other": "{count} příspěvků"
-    }
+    },
+    "search_length": "Zadejte {min}-{max} znaků."
   }
 }

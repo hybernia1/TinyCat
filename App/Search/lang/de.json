@@ -20,6 +20,7 @@
       "few": "{count} Beiträge",
       "many": "{count} Beiträge",
       "other": "{count} Beiträge"
-    }
+    },
+    "search_length": "{min}-{max} Zeichen eingeben."
   }
 }

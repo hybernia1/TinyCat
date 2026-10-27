@@ -12,19 +12,20 @@ if (!function_exists('sodium_crypto_sign_detached')) {
 }
 
 $root = dirname(__DIR__);
-$options = getopt('', ['version:', 'minimum-version::', 'minimum-php::', 'output::', 'key::', 'allow-dirty', 'without-migrations']);
+$options = getopt('', ['version:', 'minimum-version::', 'minimum-php::', 'output::', 'key::', 'allow-dirty', 'without-migrations', 'fresh-install']);
 $version = trim((string) ($options['version'] ?? ''));
 $minimumVersion = trim((string) ($options['minimum-version'] ?? '1.0.14'));
 $minimumPhp = trim((string) ($options['minimum-php'] ?? '8.4.0'));
 $output = trim((string) ($options['output'] ?? ($root . DIRECTORY_SEPARATOR . 'dist')));
 $keyPath = trim((string) ($options['key'] ?? ($root . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'update-signing.key')));
 $allowDirty = array_key_exists('allow-dirty', $options);
-$withoutMigrations = array_key_exists('without-migrations', $options);
+$freshInstall = array_key_exists('fresh-install', $options);
+$withoutMigrations = $freshInstall || array_key_exists('without-migrations', $options);
 
 $validVersion = static fn (string $value): bool => preg_match('/^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$/', $value) === 1;
 
 if (!$validVersion($version) || !$validVersion($minimumVersion) || !$validVersion($minimumPhp)) {
-    fwrite(STDERR, "Usage: php tools/build-update.php --version=X.Y.Z [--minimum-version=X.Y.Z] [--output=dist] [--without-migrations]\n");
+    fwrite(STDERR, "Usage: php tools/build-update.php --version=X.Y.Z [--minimum-version=X.Y.Z] [--output=dist] [--without-migrations] [--fresh-install]\n");
     exit(1);
 }
 
@@ -67,16 +68,10 @@ if (!is_string($secretKey) || strlen($secretKey) !== SODIUM_CRYPTO_SIGN_SECRETKE
 
 $allowedRoots = ['App', 'Public', 'assets', 'docs', 'lang', 'migrations'];
 $rootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
-$excludedDocumentation = [
-    'docs/baseline-2.0.25.md',
-    'docs/performance-benchmark.md',
-    'docs/release-2.0.26-monolith-plan.md',
-];
-$excludedDocumentationPatterns = [
-    '~^docs/development/~',
-    '~^docs/performance(?:-[A-Za-z0-9._-]+)?\.md$~',
-    '~^docs/stage-[0-9]+(?:-[A-Za-z0-9._-]+)?\.(?:json|md)$~',
-];
+$includedDocumentation = ['docs/api.md', 'docs/updates.md'];
+if ($freshInstall) {
+    $allowedRoots = array_values(array_diff($allowedRoots, ['migrations']));
+}
 $files = [];
 
 foreach ($rootFiles as $file) {
@@ -111,12 +106,7 @@ foreach ($allowedRoots as $directory) {
             exit(1);
         }
 
-        if (in_array($relative, $excludedDocumentation, true)
-            || array_any(
-                $excludedDocumentationPatterns,
-                static fn (string $pattern): bool => preg_match($pattern, $relative) === 1
-            )
-        ) {
+        if (str_starts_with($relative, 'docs/') && !in_array($relative, $includedDocumentation, true)) {
             continue;
         }
 
@@ -164,7 +154,7 @@ ksort($hashes, SORT_STRING);
 $deletionsFile = $root . DIRECTORY_SEPARATOR . 'tools' . DIRECTORY_SEPARATOR . 'update-deletions.json';
 $deletions = [];
 
-if (is_file($deletionsFile)) {
+if (!$freshInstall && is_file($deletionsFile)) {
     try {
         $allDeletions = json_decode((string) file_get_contents($deletionsFile), true, 512, JSON_THROW_ON_ERROR);
     } catch (JsonException $exception) {
@@ -195,7 +185,7 @@ if (!is_dir($output) && !mkdir($output, 0775, true) && !is_dir($output)) {
     exit(1);
 }
 
-$packageName = 'tinycat-' . $version . '.zip';
+$packageName = 'tinycat-' . $version . ($freshInstall ? '-install' : '') . '.zip';
 $packagePath = $output . DIRECTORY_SEPARATOR . $packageName;
 $sourceDateEpoch = trim((string) getenv('SOURCE_DATE_EPOCH'));
 
@@ -339,8 +329,9 @@ $manifest = [
 ];
 $manifestJson = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n";
 $signature = sodium_crypto_sign_detached($manifestJson, $secretKey);
-$manifestPath = $output . DIRECTORY_SEPARATOR . 'tinycat-update.json';
-$signaturePath = $output . DIRECTORY_SEPARATOR . 'tinycat-update.sig';
+$manifestName = $freshInstall ? 'tinycat-install' : 'tinycat-update';
+$manifestPath = $output . DIRECTORY_SEPARATOR . $manifestName . '.json';
+$signaturePath = $output . DIRECTORY_SEPARATOR . $manifestName . '.sig';
 file_put_contents($manifestPath, $manifestJson, LOCK_EX);
 file_put_contents($signaturePath, base64_encode($signature) . "\n", LOCK_EX);
 sodium_memzero($secretKey);

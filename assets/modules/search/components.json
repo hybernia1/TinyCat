@@ -1,0 +1,528 @@
+{
+  "search/items": {
+    "each": {
+      "get": "items"
+    },
+    "as": "item",
+    "children": [
+      {
+        "tag": "article",
+        "attrs": {
+          "class": "card",
+          "data-feed-item": "",
+          "data-feed-id": {
+            "get": "item.id"
+          }
+        },
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "card-body"
+            },
+            "children": [
+              {
+                "tag": "a",
+                "attrs": {
+                  "href": {
+                    "get": "item.url"
+                  }
+                },
+                "children": [
+                  {
+                    "get": "item.title"
+                  }
+                ]
+              },
+              {
+                "tag": "p",
+                "attrs": {
+                  "class": "muted m-0"
+                },
+                "when": {
+                  "get": "item.excerpt"
+                },
+                "children": [
+                  {
+                    "get": "item.excerpt"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "search/page": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-16"
+    },
+    "children": [
+      {
+        "tag": "header",
+        "attrs": {
+          "class": "public-list-header"
+        },
+        "children": [
+          {
+            "tag": "h1",
+            "attrs": {
+              "class": "text-2xl m-0"
+            },
+            "children": [
+              {
+                "if": [
+                  {
+                    "get": "search.valid"
+                  },
+                  {
+                    "t": "public.search_title_query",
+                    "values": {
+                      "query": {
+                        "get": "search.query"
+                      }
+                    }
+                  },
+                  {
+                    "t": "public.search_title",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "nav",
+        "attrs": {
+          "class": "cluster gap-2",
+          "aria-label": {
+            "t": "public.search_title",
+            "values": {}
+          }
+        },
+        "children": [
+          {
+            "each": {
+              "get": "search.tabs"
+            },
+            "as": "tab",
+            "children": [
+              {
+                "tag": "a",
+                "attrs": {
+                  "class": {
+                    "if": [
+                      {
+                        "get": "tab.active"
+                      },
+                      "btn btn-primary",
+                      "btn btn-ghost"
+                    ]
+                  },
+                  "href": {
+                    "get": "tab.url"
+                  },
+                  "aria-current": {
+                    "if": [
+                      {
+                        "get": "tab.active"
+                      },
+                      "page",
+                      false
+                    ]
+                  }
+                },
+                "children": [
+                  {
+                    "lookup": {
+                      "get": "tab.type"
+                    },
+                    "cases": {
+                      "content": {
+                        "t": "public.search_content",
+                        "values": {}
+                      },
+                      "users": {
+                        "t": "public.search_users",
+                        "values": {}
+                      },
+                      "tags": {
+                        "t": "public.search_tags",
+                        "values": {}
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "alert alert-info"
+        },
+        "children": [
+          {
+            "t": "public.search_length",
+            "values": {
+              "min": {
+                "get": "search.minimum_length"
+              },
+              "max": 80
+            }
+          }
+        ],
+        "when": {
+          "not": {
+            "get": "search.valid"
+          }
+        }
+      },
+      {
+        "tag": "form",
+        "attrs": {
+          "class": "card",
+          "action": {
+            "get": "url"
+          },
+          "method": "post"
+        },
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": "_csrf",
+              "value": {
+                "get": "csrf"
+              }
+            },
+            "children": []
+          },
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": "_search_captcha",
+              "value": "1"
+            },
+            "children": []
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "card-header"
+            },
+            "children": [
+              {
+                "tag": "strong",
+                "attrs": {},
+                "children": [
+                  {
+                    "t": "public.search_captcha_title",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "card-body stack stack-gap-12"
+            },
+            "children": [
+              {
+                "tag": "p",
+                "attrs": {
+                  "class": "muted m-0"
+                },
+                "children": [
+                  {
+                    "t": "public.search_captcha_required",
+                    "values": {}
+                  }
+                ]
+              },
+              {
+                "component": "ui/captcha",
+                "data": {
+                  "config": {
+                    "get": "search.captcha"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "card-footer justify-end"
+            },
+            "children": [
+              {
+                "tag": "a",
+                "attrs": {
+                  "class": "btn btn-ghost",
+                  "href": {
+                    "get": "login_url"
+                  },
+                  "data-modal-open": "auth-modal",
+                  "data-modal-url": {
+                    "get": "login_modal_url"
+                  }
+                },
+                "children": [
+                  {
+                    "t": "auth.login_title",
+                    "values": {}
+                  }
+                ]
+              },
+              {
+                "tag": "button",
+                "attrs": {
+                  "class": "btn btn-primary",
+                  "type": "submit"
+                },
+                "children": [
+                  {
+                    "t": "common.confirm",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "when": {
+          "and": [
+            {
+              "get": "search.blocked"
+            },
+            {
+              "eq": [
+                {
+                  "get": "search.block_code"
+                },
+                "captcha_required"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "alert alert-info"
+        },
+        "children": [
+          {
+            "t": "moderation.messages.action_limited",
+            "values": {}
+          }
+        ],
+        "when": {
+          "and": [
+            {
+              "get": "search.blocked"
+            },
+            {
+              "not": {
+                "eq": [
+                  {
+                    "get": "search.block_code"
+                  },
+                  "captcha_required"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "alert alert-info"
+        },
+        "children": [
+          {
+            "t": "public.search_empty",
+            "values": {}
+          }
+        ],
+        "when": {
+          "and": [
+            {
+              "and": [
+                {
+                  "get": "search.valid"
+                },
+                {
+                  "not": {
+                    "get": "search.blocked"
+                  }
+                }
+              ]
+            },
+            {
+              "get": "search.empty"
+            }
+          ]
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "id": "search-results",
+          "class": "status-feed"
+        },
+        "children": [
+          {
+            "each": {
+              "get": "items"
+            },
+            "as": "post",
+            "children": [
+              {
+                "component": "status/card",
+                "data": {
+                  "item": {
+                    "get": "post"
+                  },
+                  "anchor": true,
+                  "open_modal": true,
+                  "action": {
+                    "get": "url"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "when": {
+          "and": [
+            {
+              "and": [
+                {
+                  "get": "search.valid"
+                },
+                {
+                  "not": {
+                    "get": "search.blocked"
+                  }
+                }
+              ]
+            },
+            {
+              "not": {
+                "get": "search.empty"
+              }
+            },
+            {
+              "eq": [
+                {
+                  "get": "search.type"
+                },
+                "content"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "id": "search-results",
+          "class": "stack stack-gap-12",
+          "data-feed-component": "search/items"
+        },
+        "children": [
+          {
+            "component": "search/items",
+            "data": {
+              "items": {
+                "get": "search.entities"
+              }
+            }
+          }
+        ],
+        "when": {
+          "and": [
+            {
+              "and": [
+                {
+                  "get": "search.valid"
+                },
+                {
+                  "not": {
+                    "get": "search.blocked"
+                  }
+                }
+              ]
+            },
+            {
+              "not": {
+                "get": "search.empty"
+              }
+            },
+            {
+              "not": {
+                "eq": [
+                  {
+                    "get": "search.type"
+                  },
+                  "content"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "component": "status/feed-more",
+        "data": {
+          "target": "#search-results",
+          "url": {
+            "get": "next_url"
+          },
+          "label": {
+            "if": [
+              {
+                "eq": [
+                  {
+                    "get": "search.type"
+                  },
+                  "content"
+                ]
+              },
+              null,
+              {
+                "t": "notifications.load_more",
+                "values": {}
+              }
+            ]
+          }
+        },
+        "when": {
+          "and": [
+            {
+              "get": "search.valid"
+            },
+            {
+              "not": {
+                "get": "search.blocked"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

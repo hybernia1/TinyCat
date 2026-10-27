@@ -7,13 +7,25 @@ import "../../ui/toasts.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui, e = T.dom.element;
+  var mutationRevision = 0;
+  function markItemRead(item) {
+    item.classList.remove("is-unread");
+    var read = item.querySelector('[data-api-method="PATCH"], [name="_method"][value="PATCH"]');
+    if (read) { (read.closest("form") || read).remove(); }
+  }
   T.notifications = {
     items: function (items, preview) {
       return T.components.render("notifications/items", { items: items, preview: Boolean(preview) });
     },
     update: function (state) {
-      var count = Number(state.unread_count !== undefined ? state.unread_count : (state.unread || 0));
-      document.querySelectorAll("[data-notification-count], [data-notification-menu-count]").forEach(function (node) { node.textContent = count > 99 ? "99+" : String(count); node.hidden = count < 1; });
+      var count = Math.max(0, parseInt(state.unread_count !== undefined ? state.unread_count : (state.unread || 0), 10) || 0);
+      document.querySelectorAll("[data-notification-button]").forEach(function (button) {
+        button.dataset.notificationUnread = String(count);
+        if (state.latest_id !== undefined) { button.dataset.notificationLatestId = String(Math.max(0, parseInt(state.latest_id, 10) || 0)); }
+        button.classList.toggle("has-unread", count > 0);
+      });
+      document.querySelectorAll("[data-notification-count], [data-notification-menu-count]").forEach(function (node) { node.textContent = notificationBadgeText(count); node.hidden = count < 1; });
+      document.querySelectorAll('form[action="/api/notifications"]').forEach(function (form) { form.hidden = count < 1; });
       if (state.items) { document.querySelectorAll("[data-notification-list]").forEach(function (node) { node.replaceChildren(T.notifications.items(state.items.slice(0, 6), true)); }); }
     },
     page: function (response, append) {
@@ -30,11 +42,15 @@ import "../../ui/toasts.js";
     result: function (source, response) {
       var url = source.dataset.ajaxAction || source.getAttribute("action") || "";
       if (!/^\/api\/notifications(?:\/|$)/.test(url)) { return false; }
-      var data = response.data, item = document.querySelector('[data-notification-id="' + Number(data.id) + '"]');
-      if (item) {
-        if (data.deleted) { item.remove(); } else { item.classList.remove("is-unread"); var read = item.querySelector('[data-api-method="PATCH"], [name="_method"][value="PATCH"]'); if (read) { (read.closest("form") || read).remove(); } }
-      } else if (!data.id) { document.querySelectorAll(".notification-item.is-unread").forEach(function (node) { node.classList.remove("is-unread"); }); }
-      if (!data.unread_count) { document.querySelectorAll('form[action="/api/notifications"], .notification-item form[data-api-method="PATCH"]').forEach(function (form) { form.remove(); }); }
+      mutationRevision++;
+      var data = response.data;
+      if (data.id) {
+        document.querySelectorAll('[data-notification-id="' + Number(data.id) + '"]').forEach(function (item) {
+          if (data.deleted) { item.remove(); } else { markItemRead(item); }
+        });
+      } else {
+        document.querySelectorAll("[data-notification-id].is-unread").forEach(markItemRead);
+      }
       T.notifications.update(data); return true;
     }
   };
@@ -43,31 +59,6 @@ import "../../ui/toasts.js";
   function notificationBadgeText(count) {
     count = Math.max(0, parseInt(count || "0", 10) || 0);
     return count > 99 ? "99+" : String(count);
-  }
-
-  function updateNotificationButton(button, state) {
-    var unread = Math.max(0, parseInt((state && (state.unread_count !== undefined ? state.unread_count : state.unread)) || "0", 10) || 0);
-    var latestId = Math.max(0, parseInt((state && state.latest_id) || "0", 10) || 0);
-    var badge = qs("[data-notification-count]", button);
-    var menu = button.closest && button.closest("[data-notification-menu]");
-    var menuBadge = menu ? qs("[data-notification-menu-count]", menu) : null;
-    var list = menu ? qs("[data-notification-list]", menu) : null;
-
-    button.dataset.notificationUnread = String(unread);
-    button.dataset.notificationLatestId = String(latestId);
-    button.classList.toggle("has-unread", unread > 0);
-
-    if (badge) {
-      badge.hidden = unread < 1;
-      badge.textContent = notificationBadgeText(unread);
-    }
-
-    if (menuBadge) {
-      menuBadge.hidden = unread < 1;
-      menuBadge.textContent = notificationBadgeText(unread);
-    }
-
-    if (state && T.notifications) { T.notifications.update(state); }
   }
 
   function setNotificationMenu(menu, open) {
@@ -144,7 +135,7 @@ import "../../ui/toasts.js";
       latestId = Math.max(0, parseInt(button.dataset.notificationLatestId || "0", 10) || 0);
       unread = Math.max(0, parseInt(button.dataset.notificationUnread || "0", 10) || 0);
       button.dataset.notificationReady = "true";
-      updateNotificationButton(button, {
+      T.notifications.update({
         unread: unread,
         latest_id: latestId
       });
@@ -160,12 +151,16 @@ import "../../ui/toasts.js";
         }
 
         polling = true;
+        var requestRevision = mutationRevision;
+        latestId = Math.max(0, parseInt(button.dataset.notificationLatestId || "0", 10) || 0);
+        unread = Math.max(0, parseInt(button.dataset.notificationUnread || "0", 10) || 0);
 
         try {
           state = await T.api.request(api, {
             method: "GET",
             cache: "no-store"
           });
+          if (requestRevision !== mutationRevision || button.isConnected === false) { return; }
           state = state.data || {};
           nextLatestId = Math.max(0, parseInt((state && state.latest_id) || "0", 10) || 0);
           nextUnread = Math.max(0, parseInt((state && (state.unread_count !== undefined ? state.unread_count : state.unread)) || "0", 10) || 0);
@@ -175,7 +170,7 @@ import "../../ui/toasts.js";
             T.toasts.show(message, "info", 4200);
           }
 
-          updateNotificationButton(button, state || {});
+          T.notifications.update(state || {});
           latestId = nextLatestId;
           unread = nextUnread;
           first = false;

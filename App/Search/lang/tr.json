@@ -20,6 +20,7 @@
       "few": "{count} gönderi",
       "many": "{count} gönderi",
       "other": "{count} gönderi"
-    }
+    },
+    "search_length": "{min}-{max} karakter girin."
   }
 }

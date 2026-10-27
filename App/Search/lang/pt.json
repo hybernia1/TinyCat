@@ -20,6 +20,7 @@
       "few": "{count} publicações",
       "many": "{count} publicações",
       "other": "{count} publicações"
-    }
+    },
+    "search_length": "Introduza entre {min} e {max} caracteres."
   }
 }

@@ -20,6 +20,7 @@
       "few": "{count} wpisy",
       "many": "{count} wpisów",
       "other": "{count} wpisu"
-    }
+    },
+    "search_length": "Wpisz od {min} do {max} znaków."
   }
 }

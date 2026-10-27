@@ -17,8 +17,9 @@ if (!str_starts_with($directory, DIRECTORY_SEPARATOR) && preg_match('~^[A-Za-z]:
     $directory = $root . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $directory);
 }
 
-$manifestPath = $directory . DIRECTORY_SEPARATOR . 'tinycat-update.json';
-$signaturePath = $directory . DIRECTORY_SEPARATOR . 'tinycat-update.sig';
+$manifestName = in_array('--fresh-install', $argv, true) ? 'tinycat-install' : 'tinycat-update';
+$manifestPath = $directory . DIRECTORY_SEPARATOR . $manifestName . '.json';
+$signaturePath = $directory . DIRECTORY_SEPARATOR . $manifestName . '.sig';
 
 if (!is_file($manifestPath)) {
     fwrite(STDERR, "Update manifest not found.\n");

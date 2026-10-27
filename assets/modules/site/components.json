@@ -1656,7 +1656,51 @@
                   }
                 }
               }
-            ]
+            ],
+            "when": {
+              "not": {
+                "eq": [
+                  {
+                    "get": "kind"
+                  },
+                  "search"
+                ]
+              }
+            }
+          },
+          {
+            "component": "search/page",
+            "data": {
+              "search": {
+                "get": "search"
+              },
+              "items": {
+                "get": "items"
+              },
+              "url": {
+                "get": "url"
+              },
+              "next_url": {
+                "get": "next_url"
+              },
+              "csrf": {
+                "get": "csrf"
+              },
+              "login_url": {
+                "get": "login_url"
+              },
+              "login_modal_url": {
+                "get": "login_modal_url"
+              }
+            },
+            "when": {
+              "eq": [
+                {
+                  "get": "kind"
+                },
+                "search"
+              ]
+            }
           }
         ]
       },

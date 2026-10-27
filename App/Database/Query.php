@@ -19,7 +19,8 @@ final class Query
     private ?int $limitValue = null;
     private int $offsetValue = 0;
 
-    public function __construct(string $sql)
+    /** @param array<string|int, mixed> $params */
+    public function __construct(string $sql, array $params = [])
     {
         $sql = rtrim(trim($sql), ';');
 
@@ -28,6 +29,7 @@ final class Query
         }
 
         $this->baseSql = $sql;
+        $this->params = $params;
     }
 
     public function join(string $sql): self

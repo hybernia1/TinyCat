@@ -20,6 +20,7 @@
       "few": "{count} дописи",
       "many": "{count} дописів",
       "other": "{count} допису"
-    }
+    },
+    "search_length": "Введіть від {min} до {max} символів."
   }
 }

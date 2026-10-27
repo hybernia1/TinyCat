@@ -31,9 +31,21 @@ return static function (array $catalogs): void {
     }
     foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) {
         \TinyCat\Support\ClientAssets::messages($scope);
+        $sources = \TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($scope));
         foreach ($catalogs as $locale => $catalog) {
             $selected = \TinyCat\Support\ClientAssets::catalog($scope, $locale, $catalog['app']);
-            foreach (\TinyCat\Support\AssetGraph::order(\TinyCat\Support\ClientAssets::entries($scope)) as $source) {
+            if (in_array('assets/core/dates.js', $sources, true)) {
+                $dateKeys = ['relative.now'];
+                foreach (['past', 'future'] as $direction) {
+                    foreach (['minute', 'hour', 'day', 'week', 'month', 'year'] as $unit) {
+                        foreach (['single', 'one', 'few', 'many', 'other'] as $form) { $dateKeys[] = "relative.{$direction}.{$unit}.{$form}"; }
+                    }
+                }
+                foreach ($dateKeys as $key) {
+                    if (!array_key_exists($key, $selected)) { throw new RuntimeException("Missing date translation {$locale} {$key} in {$scope}"); }
+                }
+            }
+            foreach ($sources as $source) {
                 preg_match_all('/\b(?:U|T\.ui|TinyCat\.ui)\.(?:text|button|field|select)\(\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', \TinyCat\Support\AssetGraph::read($source), $matches);
                 preg_match_all('/\b(?:U|T\.ui|TinyCat\.ui)\.dialog\(\s*[^,\r\n]+,\s*["\']([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)["\']/i', \TinyCat\Support\AssetGraph::read($source), $dialogTitles);
                 foreach (array_merge($matches[1], $dialogTitles[1]) as $key) {

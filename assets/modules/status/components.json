@@ -355,8 +355,12 @@
                     },
                     "alt": {
                       "or": [
-                        { "get": "link.title" },
-                        { "get": "link.url" }
+                        {
+                          "get": "link.title"
+                        },
+                        {
+                          "get": "link.url"
+                        }
                       ]
                     },
                     "loading": "lazy",
@@ -2553,8 +2557,18 @@
             "attrs": {},
             "children": [
               {
-                "t": "public.load_more_posts",
-                "values": {}
+                "if": [
+                  {
+                    "get": "label"
+                  },
+                  {
+                    "get": "label"
+                  },
+                  {
+                    "t": "public.load_more_posts",
+                    "values": {}
+                  }
+                ]
               }
             ]
           }

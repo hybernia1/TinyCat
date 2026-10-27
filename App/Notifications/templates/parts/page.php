@@ -18,13 +18,11 @@ $nextUrl = (string) ($next_url ?? '');
     <article class="card">
         <div class="card-header split">
             <h1 class="text-lg m-0 cluster gap-2"><?= Html::icon('bell') ?> <?= Html::et('notifications.title') ?></h1>
-            <?php if ($unread > 0): ?>
-                <form method="post" action="/api/notifications" data-api-method="PATCH" data-ajax-form data-ajax-target="#notifications-view">
-                    <?= Csrf::field() ?>
-                    <input type="hidden" name="read" value="1">
-                    <button class="btn btn-secondary btn-sm" type="submit"><?= Html::icon('check') ?> <span><?= Html::et('notifications.mark_all_read') ?></span></button>
-                </form>
-            <?php endif; ?>
+            <form method="post" action="/api/notifications" data-api-method="PATCH" data-ajax-form data-ajax-target="#notifications-view"<?= $unread < 1 ? ' hidden' : '' ?>>
+                <?= Csrf::field() ?>
+                <input type="hidden" name="read" value="1">
+                <button class="btn btn-secondary btn-sm" type="submit"><?= Html::icon('check') ?> <span><?= Html::et('notifications.mark_all_read') ?></span></button>
+            </form>
         </div>
         <div class="notifications-list" id="notifications-list">
             <?php if ($notifications === []): ?>

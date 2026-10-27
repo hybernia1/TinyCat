@@ -50,4 +50,58 @@ foreach (['/api/bots/accounts?q=feedbot', '/api/users?q=admin'] as $filtered) {
 }
 [$status, $payload] = $request('GET', '/api/bots/accounts?q=%25', null, 'admin');
 $assert($status === 200 && $payload['data']['items'] === [], 'Literal wildcard characters cannot broaden an account search.');
+// Search results and autocomplete have independent contracts.
+$seed->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (9100, 2, 'quartz bright nebula', '2026-01-01 12:00:00'), (9101, 2, 'unrelated post', '2026-01-02 12:00:00')");
+[$status, $payload] = $request('GET', '/api/search/results?q=nebula%20quartz');
+$assert($status === 200 && array_column($payload['data']['items'], 'id') === [9100], 'Full search matches all words in any order.');
+$assert($payload['meta']['pagination']['done'] && $payload['meta']['pagination']['next_url'] === '', 'Search uses the standard feed cursor envelope.');
+$pure($payload);
+[$status, $payload] = $request('GET', '/api/search?q=quartz');
+$assert($status === 200 && $payload['data']['content'] === [], 'Autocomplete returns no post results.');
+foreach (['/api/search?q=' . str_repeat('a', 81), '/api/search/results?q=quartz&type=invalid', '/api/search/results?q=quartz&cursor_id=-1', '/api/search/results?q[]=invalid'] as $path) {
+    [$status] = $request('GET', $path);
+    $assert($status === 422, 'Search rejects invalid query and pagination parameters.');
+}
+[$status, $html] = $exportRequest('/search?q=nebula%20quartz');
+$assert($status === 200 && str_contains($html, 'quartz bright nebula') && !str_contains($html, 'unrelated post'), 'Search documents render matching posts without unrelated author posts.');
+[$status, $html] = $exportRequest('/search?q=member&type=users');
+$assert($status === 200 && str_contains($html, '/author/2') && !str_contains($html, 'unrelated post'), 'Profile results render profiles, not their posts.');
+$assert(str_contains($html, 'aria-current="page"') && str_contains($html, 'type=tags'), 'Search documents expose an active category and category navigation.');
+[$status] = $exportRequest('/search?q[]=invalid');
+$assert($status === 422, 'Malformed document queries fail without PHP warnings.');
+[$status, $payload] = $request('GET', '/api/search/results?q=quartz%22');
+$assert($status === 200 && $payload['data']['query'] === 'quartz"' && array_column($payload['data']['items'], 'id') === [9100], 'Quoted queries retain their text and find the unquoted word.');
+[$status, $html] = $exportRequest('/search?q=%22%3Cquartz%3E%22');
+$document = new DOMDocument(); libxml_use_internal_errors(true); $document->loadHTML($html); libxml_clear_errors();
+$input = (new DOMXPath($document))->query('//input[@id="global-search-input"]')->item(0);
+$assert($status === 200 && $input->getAttribute('value') === '"<quartz>"' && str_contains($html, 'quartz bright nebula'), 'HTML search preserves and safely escapes quotes and angle brackets while matching words.');
+$insertCursor = $seed->prepare('INSERT INTO content (id, author_id, body, published_at) VALUES (?, 2, ?, ?)');
+for ($i = 0; $i < 25; $i++) { $insertCursor->execute([9200 + $i, 'cursorfixture ' . $i, '2020-01-01 12:00:00']); }
+[$status, $firstBatch] = $request('GET', '/api/search/results?q=cursorfixture');
+$assert($status === 200 && count($firstBatch['data']['items']) === 20 && !$firstBatch['meta']['pagination']['done'], 'Search exposes the standard feed continuation URL.');
+$insertCursor->execute([9230, 'cursorfixture newer insertion', '2025-01-01 12:00:00']);
+[$status, $nextBatch] = $request('GET', $firstBatch['meta']['pagination']['next_url']);
+$allIds = array_column([...$firstBatch['data']['items'], ...$nextBatch['data']['items']], 'id');
+$assert($status === 200 && count($nextBatch['data']['items']) === 5 && $nextBatch['meta']['pagination']['done'] && count(array_unique($allIds)) === 25 && !in_array(9230, $allIds, true), 'HTTP search cursors survive new posts and ties without duplicate or missing results.');
+[$status, $html] = $exportRequest('/search?q=cursorfixture');
+$assert($status === 200 && str_contains($html, 'data-status-feed-more') && str_contains($html, 'cursor_at') && !str_contains($html, 'rel="next"'), 'Search documents use the existing feed loader instead of numbered pagination.');
+foreach (['content', 'users', 'tags'] as $type) {
+    [$status, $resource] = $request('GET', '/api/site/pages?path=/search&q=quartz&type=' . $type);
+    $assert($status === 200 && $resource['data']['kind'] === 'search' && $resource['data']['sidebar'] && $resource['data']['search']['type'] === $type, 'Search categories use the shared public-page resource and sidebar slot.');
+    $pure($resource);
+}
+[$status, $resource] = $request('GET', '/api/site/pages?path=/cs/search&q=quartz');
+$assert($status === 200 && $resource['data']['locale'] === 'cs' && str_contains($resource['data']['url'], '/cs/search?'), 'Search navigation preserves locale and query parameters.');
+[$status, $html] = $exportRequest('/search?q=quartz');
+$assert($status === 200 && str_contains($html, 'data-public-page="search"') && str_contains($html, 'data-public-sidebar-slot'), 'Search initial HTML uses the same public page component and sidebar placeholder.');
+[$status, $state] = $request('PATCH', '/api/notifications', ['read' => true], 'user', $csrf);
+$assert($status === 200 && $state['data']['unread_count'] === 0, 'Mark-all clears the unread state.');
+[$status, $html] = $exportRequest('/notifications', 'GET', ['X-Test-Role' => 'user']);
+$doc = new DOMDocument(); libxml_use_internal_errors(true); $doc->loadHTML($html); libxml_clear_errors();
+$assert($status === 200 && (new DOMXPath($doc))->query('//form[@action="/api/notifications" and @hidden]')->length === 1, 'An empty inbox retains a hidden reusable mark-all control.');
+$seed->exec("INSERT INTO notifications (user_id, actor_id, type, notification_key, created_at, updated_at) VALUES (2, 1, 'follow', 'reactivate-read-all', '2026-03-01 00:00:00', '2026-03-01 00:00:00')");
+[$status, $html] = $exportRequest('/notifications', 'GET', ['X-Test-Role' => 'user']);
+$doc->loadHTML($html);
+$assert((new DOMXPath($doc))->query('//form[@action="/api/notifications" and not(@hidden)]')->length === 1, 'New notifications make mark-all available again.');
+$insertCursor = null;
 $seed = null;

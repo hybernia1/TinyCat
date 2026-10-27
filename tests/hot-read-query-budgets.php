@@ -258,20 +258,12 @@ function exerciseAuthor(): void
 
 function exerciseSearch(): void
 {
-    $results = \TinyCat\Search\Queries::public_search_results('performance', 12);
+    $results = \TinyCat\Search\Queries::collection('performance');
     $ids = [];
 
-    foreach ((array) ($results['content'] ?? []) as $item) {
+    foreach ((array) ($results['items'] ?? []) as $item) {
         $id = (int) ($item['id'] ?? 0);
         if ($id > 0) $ids[$id] = true;
-    }
-
-    foreach (array_slice((array) ($results['users'] ?? []), 0, 3) as $user) {
-        foreach (\TinyCat\Status\Feed::public_status_ids_by_author((int) ($user['id'] ?? 0), 4) as $id) $ids[$id] = true;
-    }
-
-    foreach (array_slice((array) ($results['tags'] ?? []), 0, 3) as $tag) {
-        foreach (\TinyCat\Status\Feed::public_status_ids_by_tag(trim((string) ($tag['title'] ?? ''), '# '), 4) as $id) $ids[$id] = true;
     }
 
     exerciseStatusImages(\TinyCat\Status\Feed::public_status_items_by_ids(array_slice(array_keys($ids), 0, 48)));

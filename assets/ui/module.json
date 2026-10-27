@@ -118,7 +118,8 @@
       "public",
       "/admin/users",
       "/admin/bots",
-      "/admin/moderation"
+      "/admin/moderation",
+      "/admin/cron"
     ],
     "entries": [
       "assets/core/dates.js"

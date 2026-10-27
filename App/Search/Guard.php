@@ -5,6 +5,20 @@ namespace TinyCat\Search;
 
 final class Guard
 {
+    /** Autocomplete has its own session budget; it never consumes full searches. */
+    public static function suggestions(): void
+    {
+        \TinyCat\Http\Session::start();
+        $now = time();
+        $state = $_SESSION['_tinycat_suggestion_guard'] ?? ['started_at' => $now, 'count' => 0];
+        if ((int) $state['started_at'] <= $now - 60) { $state = ['started_at' => $now, 'count' => 0]; }
+        $state['count']++;
+        $_SESSION['_tinycat_suggestion_guard'] = $state;
+        if ($state['count'] > 120) {
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.action_limited'), 429, 'action_limited', ['retry_after' => max(1, $state['started_at'] + 60 - $now)]);
+        }
+    }
+
     /**
      * @return array<mixed>
      */

@@ -61,7 +61,8 @@ try {
         . ' ' . escapeshellarg($root . '/tools/build-update.php')
         . ' --version=' . escapeshellarg($version)
         . ' --minimum-version=' . escapeshellarg($version)
-        . ' --allow-dirty --without-migrations'
+        . ' --allow-dirty'
+        . (in_array('--fresh-install', $argv, true) ? ' --fresh-install' : ' --without-migrations')
         . ' --output=' . escapeshellarg($output)
         . ' --key=' . escapeshellarg($keyPath);
     exec($command . ' 2>&1', $buildOutput, $exitCode);
@@ -81,10 +82,13 @@ try {
         throw new RuntimeException('Repeated package build failed: ' . implode(' ', $repeatedBuildOutput));
     }
 
-    $package = $output . '/tinycat-' . $version . '.zip';
-    $manifestPath = $output . '/tinycat-update.json';
-    $signaturePath = $output . '/tinycat-update.sig';
-    $repeatedPackage = $repeatedOutput . '/tinycat-' . $version . '.zip';
+    $freshInstall = in_array('--fresh-install', $argv, true);
+    $packageName = 'tinycat-' . $version . ($freshInstall ? '-install' : '') . '.zip';
+    $manifestName = $freshInstall ? 'tinycat-install' : 'tinycat-update';
+    $package = $output . '/' . $packageName;
+    $manifestPath = $output . '/' . $manifestName . '.json';
+    $signaturePath = $output . '/' . $manifestName . '.sig';
+    $repeatedPackage = $repeatedOutput . '/' . $packageName;
     $manifestJson = (string) file_get_contents($manifestPath);
     $signature = base64_decode(trim((string) file_get_contents($signaturePath)), true);
 
@@ -106,6 +110,10 @@ try {
         $failures[] = 'Stage 1 artifact fixture unexpectedly declares migrations.';
     }
 
+    if (in_array('--fresh-install', $argv, true) && ($manifest['delete'] ?? null) !== []) {
+        $failures[] = 'Fresh installation artifact unexpectedly declares update deletions.';
+    }
+
     $archive = new PharData($package);
     $iterator = new RecursiveIteratorIterator($archive);
 
@@ -125,6 +133,10 @@ try {
             $failures[] = "Development or private path in artifact: {$relative}";
         }
 
+        if (in_array('--fresh-install', $argv, true) && str_starts_with($relative, 'migrations/')) {
+            $failures[] = "Migration in fresh installation artifact: {$relative}";
+        }
+
         $expectedHash = $manifest['files'][$relative] ?? null;
 
         if (!is_string($expectedHash) || hash('sha256', (string) $entry->getContent()) !== $expectedHash) {
@@ -133,6 +145,11 @@ try {
     }
 
     sort($names, SORT_STRING);
+    if (!in_array('--fresh-install', $argv, true)
+        && !in_array('migrations/20261026_003_scheduler_runs.php', $names, true)
+    ) {
+        $failures[] = 'Updater bridge must retain authenticated migration files.';
+    }
     $manifestNames = array_keys((array) ($manifest['files'] ?? []));
     sort($manifestNames, SORT_STRING);
 
@@ -147,7 +164,7 @@ try {
     }
 
     foreach ($names as $name) {
-        if (preg_match('~^docs/(?:development/|baseline-|performance(?:[.-]|$)|release-2\.0\.26-monolith-plan|stage-[0-9]+)~', $name) === 1) {
+        if (preg_match('~^docs/(?:translation-refactor|development/|baseline-|performance(?:[.-]|$)|release-2\.0\.26-monolith-plan|stage-[0-9]+)~', $name) === 1) {
             $failures[] = "Internal release evidence in artifact: {$name}";
         }
     }

@@ -214,5 +214,8 @@
         "App/Status/templates/detail.php",
         "App/Status/templates/tag.php",
         "App/Users/templates/author.php"
+    ],
+    "4.6.0": [
+        "App/Search/templates/search.php"
     ]
 }
