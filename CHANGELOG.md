@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.9.0 - 2026-10-28
+
+- Centralize filesystem storage primitives for validated storage paths, concurrent directory creation and complete temporary-file writes with explicit permissions and cleanup on failure.
+- Share file publishing between cache and update state while preserving existing paths, data formats and cache-specific Windows replacement behavior.
+- Use shared directory creation for avatars, site images, status images, link previews and update packages.
+- Add storage contract tests and developer documentation; retain existing cleanup and retention policies.
+
 ## 4.8.1 - 2026-10-27
 
 - Prevent legacy links stored without `www` from appearing both inline and as a card; retain the original post URL and cached RSS metadata in feeds and post detail.

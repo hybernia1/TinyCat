@@ -96,7 +96,7 @@ final class Avatar
 
         $directory = \TinyCat\Support\Paths::basePath(self::BASE_DIRECTORY);
 
-        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
+        if (!\TinyCat\Support\Storage::ensureDirectory($directory)) {
             imagedestroy($canvas);
             throw new RuntimeException('Could not create avatar directory.');
         }

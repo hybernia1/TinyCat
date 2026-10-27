@@ -86,7 +86,7 @@ final class ImageStorage
         $yearMonth = date('Y/m');
         $directory = \TinyCat\Support\Paths::basePath(self::BASE_DIRECTORY . '/' . str_replace('/', DIRECTORY_SEPARATOR, $yearMonth));
 
-        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
+        if (!\TinyCat\Support\Storage::ensureDirectory($directory)) {
             imagedestroy($canvas);
             throw new RuntimeException('Could not create image directory.');
         }

@@ -836,7 +836,7 @@ final class Manager extends Package
 
     private static function clearRuntimeCache(): void
     {
-        $cache = \TinyCat\Support\Paths::basePath('storage/cache');
+        $cache = \TinyCat\Support\Storage::path('cache');
 
         if (!is_dir($cache)) {
             return;
@@ -890,12 +890,12 @@ final class Manager extends Package
 
     private static function maintenanceFile(): string
     {
-        return \TinyCat\Support\Paths::basePath('storage/maintenance.json');
+        return \TinyCat\Support\Storage::path('maintenance.json');
     }
 
     private static function updateRoot(): string
     {
-        return \TinyCat\Support\Paths::basePath('storage/updates');
+        return \TinyCat\Support\Storage::path('updates');
     }
 
     private static function managedPath(string $path): string
@@ -958,17 +958,8 @@ final class Manager extends Package
     private static function writeJsonFile(string $path, array $data): void
     {
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-        $temporary = $path . '.tmp-' . bin2hex(random_bytes(4));
-
-        if (file_put_contents($temporary, $json . "\n", LOCK_EX) === false) {
+        if (!\TinyCat\Support\Storage::write($path, $json . "\n")) {
             throw new RuntimeException('Unable to write update state.');
-        }
-
-        @chmod($temporary, 0600);
-
-        if (!@rename($temporary, $path)) {
-            @unlink($temporary);
-            throw new RuntimeException('Unable to activate update state.');
         }
     }
 

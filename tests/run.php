@@ -12,6 +12,7 @@ $root = dirname(__DIR__);
 $tests = [
     'Module infrastructure boundaries' => 'tests/quality/module-boundaries.php',
     'Class dependency boundaries' => 'tests/quality/dependencies.php',
+    'Filesystem storage' => 'tests/infrastructure/storage.php',
     'Shared infrastructure' => 'tests/infrastructure/run.php',
     'Admin list sorting' => 'tests/presentation/admin-sorting.php',
     'JSON AJAX client' => 'tests/frontend/run.php',

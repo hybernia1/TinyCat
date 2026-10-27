@@ -192,7 +192,7 @@ final class Images
         $subfolder = date('Y/m');
         $directory = $baseDirectory . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $subfolder);
 
-        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
+        if (!\TinyCat\Support\Storage::ensureDirectory($directory)) {
             imagedestroy($source);
             imagedestroy($canvas);
             throw new RuntimeException('Could not create image directory.');

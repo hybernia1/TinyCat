@@ -55,7 +55,7 @@ final class Cache
 
         $directory = self::directory('locks');
         $lock = null;
-        if (is_dir($directory) || @mkdir($directory, 0775, true) || is_dir($directory)) {
+        if (Storage::ensureDirectory($directory)) {
             // Keep lock files: unlinking one while another worker waits would
             // let later requests lock a different inode for the same key.
             $opened = @fopen($directory . DIRECTORY_SEPARATOR . hash('sha256', $key) . '.lock', 'c');
@@ -152,7 +152,7 @@ final class Cache
         $configured = \TinyCat\Support\Config::get('cache.directory', getenv('TINYCAT_CACHE_DIRECTORY') ?: null);
         $directory = is_string($configured) && $configured !== ''
             ? $configured
-            : dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'cache';
+            : Storage::path('cache');
 
         if ($namespace === '') {
             return $directory;
@@ -171,46 +171,7 @@ final class Cache
 
     public static function writeFile(string $fileName, string $content, string $namespace = ''): bool
     {
-        $directory = self::directory($namespace);
-        $target = self::file($fileName, $namespace);
-
-        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
-            return false;
-        }
-
-        $temporary = tempnam($directory, '.tinycat-cache-');
-
-        if ($temporary === false) {
-            return false;
-        }
-
-        $written = file_put_contents($temporary, $content, LOCK_EX);
-
-        if ($written === false) {
-            @unlink($temporary);
-            return false;
-        }
-
-        @chmod($temporary, 0664);
-
-        if (@rename($temporary, $target)) {
-            return true;
-        }
-
-        // Content-addressed files may have been created by another request.
-        if (is_file($target) && @file_get_contents($target) === $content) {
-            @unlink($temporary);
-            return true;
-        }
-
-        // Windows cannot replace an existing file with rename(). A cache miss
-        // during this very short replacement window is safe and recomputable.
-        if (is_file($target) && @unlink($target) && @rename($temporary, $target)) {
-            return true;
-        }
-
-        @unlink($temporary);
-        return false;
+        return Storage::write(self::file($fileName, $namespace), $content, 0664, true);
     }
 
     /**

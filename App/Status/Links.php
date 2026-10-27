@@ -405,7 +405,7 @@ final class Links
         $canvas = \TinyCat\Security\Images::image_resample($source, $targetWidth, $targetHeight, $sourceX, $sourceY, $cropWidth, $cropHeight);
         imagedestroy($source);
 
-        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
+        if (!\TinyCat\Support\Storage::ensureDirectory($directory)) {
             imagedestroy($canvas);
             return '';
         }

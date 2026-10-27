@@ -110,7 +110,7 @@ use ZipArchive;
 
         protected static function ensureDirectory(string $directory): void
         {
-            if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+            if (!\TinyCat\Support\Storage::ensureDirectory($directory)) {
                 throw new RuntimeException('Unable to create package working directory.');
             }
         }
