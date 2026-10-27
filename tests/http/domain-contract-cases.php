@@ -2,6 +2,14 @@
 declare(strict_types=1);
 
 // Runs against the same isolated HTTP server and disposable database as api-contract.php.
+[$status, $legacyPost] = $request('GET', '/api/statuses/12');
+$legacyItem = $legacyPost['data']['item'];
+$assert($status === 200 && count($legacyItem['links']) === 1 && $legacyItem['links'][0]['url'] === 'https://www.legacy.example/article/'
+    && $legacyItem['links'][0]['title'] === 'Original RSS headline' && $legacyItem['links'][0]['description'] === 'Original RSS summary', 'Legacy non-www link records retain RSS metadata and point to the original www URL.');
+$assert(array_column(array_filter($legacyItem['segments'], static fn (array $segment): bool => $segment['type'] === 'link'), 'url') === ['https://other.example/plain'], 'The legacy www URL is hidden behind its card while the other URL remains a plain link.');
+[$status, $legacyFeed] = $request('GET', '/api/statuses?limit=50');
+$legacyFeedItem = array_values(array_filter($legacyFeed['data']['items'], static fn (array $post): bool => $post['id'] === 12))[0];
+$assert($status === 200 && $legacyFeedItem['links'] === $legacyItem['links'] && $legacyFeedItem['segments'] === $legacyItem['segments'], 'Legacy www compatibility is identical in the AJAX feed and post detail.');
 $pure = static function (mixed $value) use (&$pure, $assert): void {
     if (!is_array($value)) { return; }
     foreach ($value as $key => $child) {

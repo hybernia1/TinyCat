@@ -26,6 +26,15 @@ final class Resource
                 $cards = [$byHash[$link['url_hash']]];
                 break;
             }
+            // Older records dropped www even though the original post kept it.
+            $legacyUrl = (string) preg_replace('~^(https?://)www\.~i', '$1', $link['normalized_url']);
+            if ($legacyUrl !== $link['normalized_url']) {
+                $legacy = LinkParser::fromRaw($legacyUrl);
+                if ($legacy !== null && isset($byHash[$legacy['url_hash']])) {
+                    $cards = [array_replace($byHash[$legacy['url_hash']], ['normalized_url' => $link['normalized_url'], 'url_hash' => $link['url_hash']])];
+                    break;
+                }
+            }
             // Older map relations stopped at the apostrophe in coordinates.
             if (Providers::googleMap($link['normalized_url']) !== null) {
                 foreach ($links as $stored) {

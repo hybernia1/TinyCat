@@ -53,6 +53,11 @@ $database->prepare('INSERT INTO links (normalized_url, url_hash, provider, link_
     ->execute([$linkFixtureUrl, hash('sha256', $linkFixtureUrl), 'facebook', 'web', 'Example page', 'Cached preview', '', '', gmdate('Y-m-d H:i:s'), gmdate('Y-m-d H:i:s')]);
 $database->exec('INSERT INTO content_links (content_id, link_id) VALUES (10, 1)');
 $database->prepare('INSERT INTO links (normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    ->execute(['https://legacy.example/article/', hash('sha256', 'https://legacy.example/article/'), '', 'web', 'Original RSS headline', 'Original RSS summary', '', '', gmdate('Y-m-d H:i:s'), gmdate('Y-m-d H:i:s')]);
+$legacyLinkId = (int) $database->lastInsertId();
+$database->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (12, 1, 'Legacy feed https://www.legacy.example/article/ https://other.example/plain', '2026-01-01 11:00:00')");
+$database->prepare('INSERT INTO content_links (content_id, link_id) VALUES (12, ?)')->execute([$legacyLinkId]);
+$database->prepare('INSERT INTO links (normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
     ->execute(['https://google.com/search?q=TinyCat', hash('sha256', 'https://google.com/search?q=TinyCat'), 'google', 'web', 'Search results', 'Cached search preview', '', '', gmdate('Y-m-d H:i:s'), gmdate('Y-m-d H:i:s')]);
 $database->exec("INSERT INTO notifications (id, user_id, actor_id, content_id, type, notification_key, created_at, updated_at) VALUES (1, 2, 1, 10, 'content_like', 'fixture-own', '2026-01-01 12:02:00', '2026-01-01 12:02:00'), (2, 1, 2, 11, 'content_like', 'fixture-foreign', '2026-01-01 12:03:00', '2026-01-01 12:03:00')");
 $database->exec("INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES ('auth.registration.enabled', '1', 'bool', 'auth'), ('auth.registration.auto_approve', '1', 'bool', 'auth'), ('i18n.locale', 'en', 'string', 'i18n')");

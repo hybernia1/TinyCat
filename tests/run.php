@@ -46,6 +46,7 @@ $tests = [
     'Scheduled file cleanup' => 'tests/cron/files.php',
     'Scheduled tasks' => 'tests/cron/run.php',
     'Demo importer tooling' => 'tests/tools/demo-import.php',
+    'One-off link optimizer' => 'tests/tools/link-optimizer.php',
     'Search semantics' => 'tests/search.php',
     'MySQL search semantics' => 'tests/search-mysql.php',
     'Signed package artifact' => 'tests/release/package-artifact.php',

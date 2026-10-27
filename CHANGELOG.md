@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.8.1 - 2026-10-27
+
+- Prevent legacy links stored without `www` from appearing both inline and as a card; retain the original post URL and cached RSS metadata in feeds and post detail.
+- Add a separate, optional one-off link optimization package with a read-only preview, required verified backup before writes, transactional recovery/merging, orphan-record cleanup and conservative handling of ambiguous URLs.
+- Keep the maintenance script outside normal application packages; preserve post bodies, local image files and bot GUID history during optimization.
+- Verify legacy-link rendering through the real API and optimizer rollback, repeatability and metadata preservation on isolated SQLite and MySQL databases.
+
 ## 4.8.0 - 2026-10-27
 
 - Centralize bounded HTTP fetching for feeds, link metadata, images and update downloads, validating public destinations at every redirect.
