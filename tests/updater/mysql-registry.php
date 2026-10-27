@@ -98,6 +98,21 @@ try {
             UNIQUE KEY settings_key_unique (setting_key)
         ) ENGINE=InnoDB'
     );
+    \TinyCat\Settings\Store::setSetting('fixture.atomic', 'first');
+    $atomicId = \TinyCat\Database\Connection::find('settings', ['setting_key' => 'fixture.atomic'])['id'];
+    \TinyCat\Settings\Store::setSetting('fixture.atomic', 'updated');
+    $atomic = \TinyCat\Database\Connection::find('settings', ['setting_key' => 'fixture.atomic']);
+    if ($atomic['id'] !== $atomicId || $atomic['setting_value'] !== 'updated'
+        || \TinyCat\Database\Connection::count('settings', ['setting_key' => 'fixture.atomic']) !== 1
+        || \TinyCat\Settings\Store::setting('fixture.atomic') !== 'updated') {
+        throw new RuntimeException('Atomic settings writes must preserve row identity and invalidate cached values.');
+    }
+    try {
+        \TinyCat\Database\Connection::upsert('settings', ['setting_key' => 'fixture.atomic'], ['setting_group' => null]);
+        throw new RuntimeException('Atomic upsert swallowed a non-unique constraint failure.');
+    } catch (PDOException $exception) {
+        if (\TinyCat\Database\Connection::uniqueViolation($exception)) { throw $exception; }
+    }
     $database->exec(
         'CREATE TABLE email_templates (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

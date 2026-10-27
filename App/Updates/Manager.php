@@ -650,7 +650,7 @@ final class Manager extends Package
 
     private static function backupDatabase(string $backupDirectory): void
     {
-        $driver = (string) \TinyCat\Database\Connection::get()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $driver = \TinyCat\Database\Connection::driver();
 
         if ($driver === 'sqlite') {
             $database = (array) \TinyCat\Settings\Store::config('database', []);

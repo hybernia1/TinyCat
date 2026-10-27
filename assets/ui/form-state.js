@@ -161,10 +161,10 @@ import "./forms.js";
     }
 
     return confirmDiscard({
-      title: form.dataset.confirmUnsavedTitle || "Unsaved changes",
-      message: form.dataset.confirmUnsavedMessage || "Discard unsaved changes?",
-      confirmLabel: form.dataset.confirmUnsavedOk || "Leave",
-      cancelLabel: form.dataset.confirmUnsavedCancel || "Stay",
+      title: form.dataset.confirmUnsavedTitle || TinyCat.i18n.t("common.unsaved_title"),
+      message: form.dataset.confirmUnsavedMessage || TinyCat.i18n.t("common.unsaved_message"),
+      confirmLabel: form.dataset.confirmUnsavedOk || TinyCat.i18n.t("common.leave"),
+      cancelLabel: form.dataset.confirmUnsavedCancel || TinyCat.i18n.t("common.stay"),
       variant: "danger"
     });
   }

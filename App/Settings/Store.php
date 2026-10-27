@@ -110,20 +110,14 @@ final class Store
         $type = self::normalizeSettingType($type);
         $group = self::settingGroup($group);
         $stored = self::serializeSettingValue($value, $type);
-        $existing = \TinyCat\Database\Connection::find('settings', ['setting_key' => $key], ['id']);
         $data = [
-            'setting_key' => $key,
             'setting_group' => $group,
             'setting_value' => $stored,
             'setting_type' => $type,
             'autoload' => 1,
         ];
 
-        if ($existing === null) {
-            \TinyCat\Database\Connection::insert('settings', $data);
-        } else {
-            \TinyCat\Database\Connection::update('settings', $data, ['id' => $existing['id']]);
-        }
+        \TinyCat\Database\Connection::upsert('settings', ['setting_key' => $key], $data);
 
         self::$settings = null;
         unset(self::$sensitiveSettings[$key]);

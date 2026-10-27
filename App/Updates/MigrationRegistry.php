@@ -18,7 +18,7 @@ final class MigrationRegistry
 
     public static function ensure(): void
     {
-        $driver = (string) \TinyCat\Database\Connection::get()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        $driver = \TinyCat\Database\Connection::driver();
         $suffix = $driver === 'mysql'
             ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
             : '';
@@ -108,7 +108,7 @@ final class MigrationRegistry
             self::assertMigration((string) $migration, (string) $checksum);
         }
 
-        $driver = (string) \TinyCat\Database\Connection::get()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        $driver = \TinyCat\Database\Connection::driver();
 
         if (!in_array($driver, ['mysql', 'sqlite'], true)) {
             throw new RuntimeException('The migration registry requires MySQL, MariaDB or SQLite.');

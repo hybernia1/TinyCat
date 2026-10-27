@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace TinyCat\Security;
 
-use PDO;
-
 final class RateLimiter
 {
     public static function rate_limit_ip(): string
@@ -26,7 +24,7 @@ final class RateLimiter
     public static function rate_limit_ip_action_record(string $action, int $window = 3600): void
     {
         $bucket = \TinyCat\Moderation\Restrictions::moderation_bucket_start($window);
-        $conflict = \TinyCat\Database\Connection::get()->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
+        $conflict = \TinyCat\Database\Connection::driver() === 'sqlite'
             ? 'ON CONFLICT (ip_address, action_name, bucket_start) DO UPDATE SET action_count = action_count + 1, updated_at = excluded.updated_at'
             : 'ON DUPLICATE KEY UPDATE action_count = action_count + 1, updated_at = VALUES(updated_at)';
         \TinyCat\Database\Connection::exec(

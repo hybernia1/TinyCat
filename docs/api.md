@@ -117,8 +117,8 @@ Feed queries accept `context=home|author|tag`, `feed=all|following`, `author_id`
 `next_url` and `done`. Posts return author data, literal and editable body, typed
 text/mention/tag/link segments, image/link/video metadata, counts and capabilities.
 Details include a comment tree. Comment history contains plain `from`/`to` text.
-Nested IDs and reply parents must belong to the status in the path. Scheduled
-posts remain visible only to their author and administrators until publication.
+Nested IDs and reply parents must belong to the status in the path. New posts
+are published immediately using the server's current publication time.
 
 Writes retain ownership, moderation, rate limits and transaction checks. Creation
 returns 201; reads, updates and deletions return 200. Like/follow PUT and DELETE
@@ -127,6 +127,14 @@ request a state, so repeating an accepted request cannot toggle it back.
 ## Bots and administration
 
 All routes below require an administrator session.
+
+Scheduled executions share `ok`, `status`, `count`, `changed`, `has_more`,
+`skipped`, `error`, `summary` and `results`. `count` counts processed work items
+(feed sources or cleanup subtasks); `changed` counts created posts or removed
+records/files. History stores the prepared summary and error without deriving
+them from nested results. Stored options are normalized before execution.
+Manual imports of one source use the same feeds task and lock, with
+`bot_limit=1` and the selected `source_id` recorded in history.
 
 | Method | Path | Operation |
 | --- | --- | --- |

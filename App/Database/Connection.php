@@ -82,9 +82,20 @@ final class Connection
         self::$pdo = $pdo;
     }
 
+    public static function driver(): string
+    {
+        return (string) self::get()->getAttribute(PDO::ATTR_DRIVER_NAME);
+    }
+
+    /** Escape literal text; the caller chooses prefix/substring matching. */
+    public static function escapeLike(string $text): string
+    {
+        return strtr($text, ['!' => '!!', '%' => '!%', '_' => '!_']);
+    }
+
     public static function lockingSelect(string $sql): string
     {
-        return self::get()->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? $sql : $sql . ' FOR UPDATE';
+        return self::driver() === 'sqlite' ? $sql : $sql . ' FOR UPDATE';
     }
 
     /**
@@ -168,6 +179,32 @@ final class Connection
         }
 
         return $id;
+    }
+
+    /** Atomic insert/update for rows identified by a primary or unique key.
+     * @param array<string, mixed> $key
+     * @param array<string, mixed> $data */
+    public static function upsert(string $table, array $key, array $data): void
+    {
+        self::requireData($key);
+        self::requireData($data);
+        if (in_array(null, $key, true)) { throw new InvalidArgumentException('Upsert keys cannot be null.'); }
+        if (array_intersect_key($key, $data) !== []) { throw new InvalidArgumentException('Upsert data cannot replace its key.'); }
+        $values = $key + $data;
+        $columns = self::columns(array_keys($values));
+        $updates = [];
+        $driver = self::driver();
+        if (!in_array($driver, ['mysql', 'sqlite'], true)) { throw new RuntimeException('Unsupported upsert driver.'); }
+        foreach (array_keys($data) as $column) {
+            $name = self::column($column);
+            $updates[] = $name . ' = ' . ($driver === 'sqlite' ? 'excluded.' . $name : 'VALUES(' . $name . ')');
+        }
+        $conflict = $driver === 'sqlite'
+            ? 'ON CONFLICT (' . implode(', ', self::columns(array_keys($key))) . ') DO UPDATE SET '
+            : 'ON DUPLICATE KEY UPDATE ';
+        // Native MySQL semantics apply: a conflict on any unique index selects the row.
+        self::exec('INSERT INTO ' . self::identifier($table) . ' (' . implode(', ', $columns) . ') VALUES ('
+            . implode(', ', array_fill(0, count($values), '?')) . ') ' . $conflict . implode(', ', $updates), array_values($values));
     }
 
     /**

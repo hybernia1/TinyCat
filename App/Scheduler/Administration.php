@@ -38,6 +38,12 @@ final class Administration
     public static function runDetail(int $id): ?array
     {
         $record = Repository::find($id);
-        return $record !== null ? Resource::detail($record) + ['sources' => \TinyCat\Bots\Resource::runs(Repository::sources($id))] : null;
+        if ($record === null) { return null; }
+        $item = Resource::detail($record) + ['sources' => \TinyCat\Bots\Resource::runs(Repository::sources($id))];
+        $sourceNames = array_column($item['sources'], 'source_name', 'source_id');
+        foreach ($item['summary']['skipped_items'] ?? [] as $index => $skipped) {
+            $item['summary']['skipped_items'][$index]['source_name'] = $sourceNames[$skipped['source_id']] ?? (string) $skipped['source_id'];
+        }
+        return $item;
     }
 }

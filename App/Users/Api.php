@@ -170,15 +170,9 @@ final class Api
     {
         $id = (int) $target['id'];
         if (!\TinyCat\Users\Roles::managedByCoreAdmin((string) ($target['role'] ?? ''))) { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }
-        try { $avatar = \TinyCat\Users\Avatars::admin_user_avatar_change($target); }
-        catch (\InvalidArgumentException $e) { Response::error($e->getMessage(), 422, 'avatar_invalid'); }
         $payload = Actions::tc_admin_user_payload($id);
-        if ($avatar['changed']) {
-            $payload['avatar_exists'] = $avatar['uploaded'] ? 1 : 0;
-            $payload['updated_at'] = Avatars::user_avatar_updated_at($target);
-        }
-        \TinyCat\Database\Connection::update('users', $payload, ['id' => $id]);
-        if ($avatar['changed'] && !$avatar['uploaded']) { \TinyCat\Users\Avatar::delete($id); }
+        try { \TinyCat\Users\Avatars::admin_user_avatar_save($target, $payload); }
+        catch (\InvalidArgumentException $e) { Response::error($e->getMessage(), 422, 'avatar_invalid'); }
         return ['item' => Accounts::tc_admin_user_resource(Accounts::tc_admin_user_by_id($id) ?? []), 'message' => \TinyCat\Support\Localization::t('users.messages.saved'), 'code' => 'user_saved'];
     }
 

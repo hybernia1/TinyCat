@@ -35,6 +35,7 @@ $config->setValue(null, [
     'i18n' => ['locale' => 'en'],
     'datetime' => ['timezone' => 'UTC'],
     'cache' => ['driver' => 'filesystem'],
+    'moderation' => ['blocked_urls' => 'blocked.example'],
 ]);
 \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
 
@@ -186,7 +187,37 @@ $database->exec('DROP TRIGGER fail_link_attach');
 $assert((int) $value('SELECT COUNT(*) FROM content_links WHERE content_id = 100') === 2, 'Successful link synchronization replaces all relations.');
 
 
-$database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, last_imported_at TEXT)');
+$draft = \TinyCat\Status\PostCreation::fromText("  <b>Hello</b> @actor #Mixed_CASE\r\nhttps://alpha.example  ");
+$assert($draft->body === "Hello @2 #mixed-case\nhttps://alpha.example", 'The shared draft cleans markup, line endings, mentions and tags.');
+$assert($draft->tags === ['mixed-case'] && count($draft->links) === 1, 'Draft relations are extracted from the normalized stored text.');
+$boundedDraft = \TinyCat\Status\PostCreation::fromText(str_repeat('x', 2000) . ' #outside');
+$assert(mb_strlen($boundedDraft->body) === 2000 && $boundedDraft->tags === [], 'Tags outside the shared text limit cannot leave invisible relations.');
+$image = ['path' => 'fixture.webp', 'width' => 10, 'height' => 20, 'bytes' => 100];
+$beforeCreation = (int) $value('SELECT COUNT(*) FROM content');
+$database->exec('CREATE TRIGGER fail_post_links BEFORE INSERT ON content_links BEGIN SELECT RAISE(ABORT, \'forced post failure\'); END');
+try {
+    \TinyCat\Status\PostCreation::create(1, $draft, $links, $image);
+    $assert(false, 'The shared writer must propagate relation failures.');
+} catch (PDOException) {
+    $assert((int) $value('SELECT COUNT(*) FROM content') === $beforeCreation, 'A relation failure rolls back the newly created post.');
+    $assert((int) $value('SELECT COUNT(*) FROM content_images') === 0, 'A relation failure rolls back the image record.');
+    $assert((int) $value("SELECT COUNT(*) FROM terms WHERE name = 'mixed-case'") === 0, 'A relation failure rolls back new tags.');
+}
+$database->exec('DROP TRIGGER fail_post_links');
+$imagePost = \TinyCat\Status\PostCreation::create(1, \TinyCat\Status\PostCreation::fromText(''), [], $image);
+$assert((string) $value('SELECT published_at FROM content WHERE id = ' . $imagePost) <= \TinyCat\Support\Dates::dateDb(), 'The shared writer publishes image-only posts immediately.');
+$assert((int) $value('SELECT COUNT(*) FROM content_images WHERE content_id = ' . $imagePost) === 1, 'An image-only post commits its image record.');
+\TinyCat\Status\Posts::status_delete_content($imagePost, true, true, false);
+foreach ([0, 1] as $authorId) {
+    try {
+        \TinyCat\Status\PostCreation::create($authorId, \TinyCat\Status\PostCreation::fromText($authorId === 0 ? 'Text' : ' '), []);
+        $assert(false, 'The shared writer rejects missing authors and empty posts.');
+    } catch (InvalidArgumentException) {
+        $assert((int) $value('SELECT COUNT(*) FROM content') === $beforeCreation, 'Invalid drafts cannot create a partial post.');
+    }
+}
+
+$database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, last_imported_at TEXT, last_error TEXT)');
 $database->exec('CREATE TABLE bot_feed_history (bot_user_id INTEGER, feed_hash TEXT, item_hash TEXT, created_at TEXT, UNIQUE (bot_user_id, feed_hash, item_hash))');
 $database->exec('INSERT INTO bot_sources (id) VALUES (1)');
 $persistFeed = new ReflectionMethod(\TinyCat\Bots\Importer::class, 'persistFeedPost');
@@ -195,7 +226,7 @@ $itemHash = hash('sha256', 'fixture-item');
 $beforePosts = (int) $value('SELECT COUNT(*) FROM content');
 $database->exec('CREATE TRIGGER fail_bot_link BEFORE INSERT ON content_links BEGIN SELECT RAISE(ABORT, \'forced bot link failure\'); END');
 try {
-    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, 'Bot post #rollback', $links, 0, 1);
+    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links, 0, 1);
     $assert(false, 'Bot link storage errors must propagate.');
 } catch (PDOException) {
     $assert(true, 'Bot link storage errors propagate.');
@@ -206,21 +237,79 @@ $assert((int) $value("SELECT COUNT(*) FROM terms WHERE name = 'rollback'") === 0
 $database->exec('DROP TRIGGER fail_bot_link');
 $database->exec('CREATE TRIGGER fail_bot_history BEFORE INSERT ON bot_feed_history BEGIN SELECT RAISE(ABORT, \'forced history failure\'); END');
 try {
-    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, 'Bot post #rollback', $links, 0, 1);
+    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links, 0, 1);
     $assert(false, 'History storage failures must propagate.');
 } catch (PDOException) {
     $assert((int) $value('SELECT COUNT(*) FROM content') === $beforePosts, 'History storage failures cannot leave an untracked post.');
 }
 $database->exec('DROP TRIGGER fail_bot_history');
-$botPost = $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, 'Bot post #rollback', $links, 0, 1);
+$botPost = $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links, 0, 1);
 $assert($botPost > 0 && (int) $value('SELECT COUNT(*) FROM bot_feed_history') === 1, 'A retry atomically commits the bot post and history.');
 $assert((int) $value('SELECT COUNT(*) FROM content_links WHERE content_id = ' . $botPost) === 2, 'A successful bot import commits all prepared links.');
 try {
-    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, 'Duplicate bot post', $links, 0, 1);
+    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Duplicate bot post'), $links, 0, 1);
     $assert(false, 'A duplicate feed claim must abort the second post.');
 } catch (PDOException) {
     $assert((int) $value('SELECT COUNT(*) FROM content') === $beforePosts + 1, 'A concurrent duplicate claim cannot leave a second post.');
 }
+
+// Feed validation must reject content without swallowing technical failures.
+$database->exec('INSERT INTO bot_sources (id) VALUES (2)');
+$database->exec('CREATE TABLE bot_source_runs (id INTEGER PRIMARY KEY, source_id INTEGER, status TEXT, started_at TEXT, items_seen INTEGER, error TEXT)');
+$database->exec("INSERT INTO bot_source_runs (id, source_id, status) VALUES (1, 2, 'running')");
+$database->exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, status TEXT, finished_at TEXT, duration_ms INTEGER, summary_json TEXT, error TEXT)');
+$database->exec("INSERT INTO scheduler_runs (id, status) VALUES (1, 'running')");
+$importItems = new ReflectionMethod(\TinyCat\Bots\Importer::class, 'importItems');
+$source = ['id' => 2, 'bot_user_id' => 1, 'feed_url' => 'https://feed.example/rss', 'post_template' => '{{title}}'];
+$items = [
+    ['guid' => 'blocked', 'title' => 'https://blocked.example/article'],
+    ['guid' => 'long-tag', 'title' => '#' . str_repeat('a', 33)],
+    ['guid' => 'empty', 'title' => '<b></b>'],
+    ['guid' => 'allowed', 'title' => 'Allowed item #feed'],
+];
+$result = $importItems->invoke(null, $source, $items, 1);
+$assert($result['status'] === 'posted', 'Invalid feed items do not prevent a later valid item from being posted.');
+$assert(array_column($result['skipped_items'], 'code') === ['blocked_url', 'status_tag_too_long', 'status_required'], 'Feed skips preserve structured content rejection codes.');
+$assert($result['skipped_items'][0]['params'] === ['host' => 'blocked.example'] && $result['skipped_items'][1]['params'] === ['max' => '32'], 'Feed rejections preserve the same parameters as HTTP validation.');
+$sourceHash = \TinyCat\Bots\Importer::feedSourceHash($source['feed_url']);
+$history = \TinyCat\Database\Connection::all('SELECT item_hash FROM bot_feed_history WHERE feed_hash = ?', [$sourceHash]);
+$assert(array_column($history, 'item_hash') === [hash('sha256', 'allowed')], 'Rejected feed items never acquire successful duplicate claims.');
+$scheduledResult = (new ReflectionMethod(\TinyCat\Bots\Importer::class, 'scheduledResult'))->invoke(null, [$result]);
+\TinyCat\Scheduler\History::finish(1, $scheduledResult, 1);
+$assert($scheduledResult['count'] === 1 && $scheduledResult['changed'] === 1, 'Feed task counters distinguish checked sources from newly published posts.');
+$summary = json_decode((string) $value('SELECT summary_json FROM scheduler_runs WHERE id = 1'), true);
+$assert(count($summary['skipped_items']) === 3 && $summary['skipped_items'][0]['source_id'] === 2, 'Scheduler history durably records each skipped item and its source.');
+$assert($summary['skipped_items'][0]['item_hash'] === hash('sha256', 'blocked'), 'Skipped diagnostics identify the exact feed item without storing its content.');
+$again = $importItems->invoke(null, $source, $items, 1);
+$assert($again['status'] === 'current' && count($again['skipped_items']) === 3, 'All-invalid remaining items finish successfully and remain eligible for re-evaluation.');
+try {
+    \TinyCat\Status\PostCreation::create(1, \TinyCat\Status\PostCreation::fromText($items[0]['title']), []);
+    $assert(false, 'Rejected content cannot bypass validation through the shared writer.');
+} catch (InvalidArgumentException) {
+    $assert(true, 'The shared writer refuses content rejected during preparation.');
+}
+$relaxed = $config->getValue();
+$relaxed['moderation']['blocked_urls'] = '';
+$config->setValue(null, $relaxed);
+// Fresh fixture metadata prevents a remote preview fetch when the URL is admitted.
+$admittedLink = \TinyCat\Status\LinkParser::fromRaw($items[0]['title']);
+$insertLink->execute([$admittedLink['normalized_url'], $admittedLink['url_hash'], 'web', 'link', 'Cached article', '', '', '', $now, $now]);
+$afterPolicyChange = $importItems->invoke(null, $source, [$items[0]], 1);
+$assert($afterPolicyChange['status'] === 'posted' && $afterPolicyChange['skipped_items'] === [], 'Removing a URL block admits the original previously rejected item.');
+// A changed template can repair previously rejected content without losing its GUID.
+$repaired = $source;
+$repaired['post_template'] = 'Repaired item';
+$retry = $importItems->invoke(null, $repaired, [$items[1]], 1);
+$assert($retry['status'] === 'posted' && $retry['skipped_items'] === [], 'A repaired template can publish a previously rejected feed item.');
+$technical = [['guid' => 'technical', 'title' => 'Technical retry #retry'], ['guid' => 'after-error', 'title' => 'Must wait']];
+$database->exec('CREATE TRIGGER fail_import_post BEFORE INSERT ON content BEGIN SELECT RAISE(ABORT, \'forced import failure\'); END');
+$failed = $importItems->invoke(null, $source, $technical, 1);
+$assert($failed['status'] === 'error' && $failed['skipped_items'] === [], 'Database failures remain technical errors, not content skips.');
+$assert((int) $value("SELECT COUNT(*) FROM content WHERE body = 'Must wait'") === 0, 'A technical error stops the run before subsequent items.');
+$assert((int) $value("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '" . hash('sha256', 'technical') . "'") === 0, 'A technical failure leaves its feed item available for retry.');
+$database->exec('DROP TRIGGER fail_import_post');
+$retried = $importItems->invoke(null, $source, $technical, 1);
+$assert($retried['status'] === 'posted', 'A technical failure can be retried successfully.');
 
 $_GET = [];
 $_POST = [];
@@ -273,41 +362,41 @@ $updatedStatus = \TinyCat\Status\Actions::status_json_update(300, $actor);
 $assert((int) ($updatedStatus['status_id'] ?? 0) === 300, 'Status editing keeps the existing aggregate identity.');
 $assert((int) $value('SELECT COUNT(*) FROM content_tags WHERE content_id = 300') === 12, 'Status editing synchronizes more than ten tags atomically.');
 
-$_POST = ['body' => 'Created through the monolith write path #created'];
+$_POST = ['body' => 'Bot post @actor #ROLLBACK'];
 \TinyCat\Http\Request::reset();
 $createdStatus = \TinyCat\Status\Actions::status_json_create($actor);
 $createdStatusId = (int) ($createdStatus['status_id'] ?? 0);
 $assert($createdStatusId > 300 && (int) $value("SELECT COUNT(*) FROM content WHERE id = {$createdStatusId}") === 1, 'Status creation commits the aggregate.');
 $assert((int) $value("SELECT COUNT(*) FROM content_tags WHERE content_id = {$createdStatusId}") === 1, 'Status creation synchronizes tag relations.');
+$assert($value('SELECT body FROM content WHERE id = ' . $createdStatusId) === $value('SELECT body FROM content WHERE id = ' . $botPost), 'User and bot creation store identical normalized text for identical input.');
+$assert($value('SELECT body FROM content WHERE id = ' . $botPost) === 'Bot post @2 #rollback', 'Bot creation uses canonical stored mentions and tags.');
 $deletedStatus = \TinyCat\Status\Actions::status_json_delete($createdStatusId, $actor);
 $assert((int) ($deletedStatus['deleted_status_id'] ?? 0) === $createdStatusId, 'Status deletion returns the deleted aggregate identity.');
 $assert((int) $value("SELECT COUNT(*) FROM content WHERE id = {$createdStatusId}") === 0, 'Status deletion removes the created aggregate.');
 
-$_POST = [
-    'body' => 'Scheduled through the monolith write path #scheduled',
-    'schedule_post' => '1',
-    'scheduled_at' => '2030-01-02T03:04',
-];
+$_POST = ['body' => 'Immediate publication @owner', 'schedule_post' => '1', 'scheduled_at' => '2099-01-01T12:00'];
 \TinyCat\Http\Request::reset();
-$scheduledStatus = \TinyCat\Status\Actions::status_json_create($actor);
-$scheduledStatusId = (int) ($scheduledStatus['status_id'] ?? 0);
-$scheduledItem = \TinyCat\Status\Posts::status_find($scheduledStatusId);
-$guestScheduledIds = \TinyCat\Status\Feed::public_status_ids_page(\TinyCat\Status\Feed::public_status_id_query(['id' => 1, 'role' => 'user']), 50);
-$authorScheduledIds = \TinyCat\Status\Feed::public_status_ids_page(\TinyCat\Status\Feed::public_status_id_query($actor), 50);
-$adminScheduledIds = \TinyCat\Status\Feed::public_status_ids_page(\TinyCat\Status\Feed::public_status_id_query(['id' => 9, 'role' => 'admin']), 50);
-$assert((string) $value("SELECT published_at FROM content WHERE id = {$scheduledStatusId}") === '2030-01-02 03:04:00', 'Scheduled status stores the requested future publication time.');
-$assert((string) ($scheduledStatus['message'] ?? '') === \TinyCat\Support\Localization::t('account.messages.status_scheduled'), 'Scheduled creation confirms scheduling rather than immediate publication.');
-$assert(\TinyCat\Status\Posts::status_is_scheduled($scheduledItem), 'Future publication time marks a status as scheduled.');
-$assert(!\TinyCat\Status\Posts::status_can_view($scheduledItem, ['id' => 1, 'role' => 'user']), 'Scheduled status is hidden from another member.');
-$assert(\TinyCat\Status\Posts::status_can_view($scheduledItem, $actor), 'Scheduled status remains visible to its author.');
-$assert(\TinyCat\Status\Posts::status_can_view($scheduledItem, ['id' => 9, 'role' => 'admin']), 'Scheduled status remains visible to administrators.');
-$assert(!in_array($scheduledStatusId, $guestScheduledIds, true), 'Public feed query excludes scheduled statuses.');
-$assert(in_array($scheduledStatusId, $authorScheduledIds, true), 'Author feed query includes the author scheduled statuses.');
-$assert(in_array($scheduledStatusId, $adminScheduledIds, true), 'Admin feed query includes scheduled statuses.');
-$_POST = ['body' => 'Edited scheduled post @1'];
+$createdAt = \TinyCat\Support\Dates::dateDb();
+$immediate = \TinyCat\Status\Actions::status_json_create($actor);
+$immediateId = (int) $immediate['status_id'];
+$storedAt = (string) $value('SELECT published_at FROM content WHERE id = ' . $immediateId);
+$assert($storedAt >= $createdAt && $storedAt <= \TinyCat\Support\Dates::dateDb(), 'Obsolete scheduling inputs cannot set a future publication date.');
+$assert($immediate['code'] === 'status_created' && !array_key_exists('scheduled', $immediate['item']), 'Creation returns a published post without scheduling metadata.');
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = ' . $immediateId . ' AND user_id = 1') === 1, 'Immediate user publication delivers mention notifications.');
+$database->exec("INSERT INTO users (id, username, role, bio, password, status) VALUES (3, 'feedbot', 'bot', '', '', 'active')");
+$botSource = $source;
+$botSource['bot_user_id'] = 3;
+$botPublication = $importItems->invoke(null, $botSource, [['guid' => 'bot-mention', 'title' => 'Bot mention @owner']], 1);
+$botPublicationId = (int) $botPublication['content_id'];
+$assert((string) $value('SELECT published_at FROM content WHERE id = ' . $botPublicationId) <= \TinyCat\Support\Dates::dateDb(), 'Bot imports publish immediately through the shared writer.');
+\TinyCat\Notifications\Delivery::notifyMentions('@1', ['id' => 3, 'role' => 'bot'], $botPublicationId);
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = ' . $botPublicationId) === 0, 'Bot imports and direct bot mention delivery do not send notifications.');
+$assert(\TinyCat\Status\PostCreation::sendsMentionNotifications('admin') && !\TinyCat\Status\PostCreation::sendsMentionNotifications('bot'), 'Mention sender policy distinguishes human accounts from bots.');
+$_POST = ['body' => 'Admin edited bot post @actor'];
 \TinyCat\Http\Request::reset();
-\TinyCat\Status\Actions::status_json_update($scheduledStatusId, $actor);
-$assert((int) $value('SELECT COUNT(*) FROM notifications') === 0, 'Editing a scheduled status does not send mention notifications before publication.');
+\TinyCat\Status\Actions::status_json_update($botPublicationId, ['id' => 1, 'username' => 'owner', 'role' => 'admin']);
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = ' . $botPublicationId) === 0, 'An administrator editing a bot post cannot bypass its mention policy.');
+$database->exec('DELETE FROM notifications');
 
 \TinyCat\Users\Following::author_follow(2, 1);
 $assert(\TinyCat\Users\Following::author_is_followed(2, 1), 'Following creates the social relation.');
@@ -413,6 +502,16 @@ try {
     $assert(false, 'Metadata preparation must reject an active transaction.');
 } catch (LogicException) {
     $assert(true, 'Metadata preparation rejects an active transaction.');
+}
+
+$database->beginTransaction();
+try {
+    \TinyCat\Users\Avatar::replace(1, null, false, static fn (array $user): array => $user);
+    $assert(false, 'Avatar replacement must reject an outer transaction.');
+} catch (LogicException) {
+    $assert($database->inTransaction(), 'Rejecting nested avatar replacement must not roll back the caller transaction.');
+} finally {
+    if ($database->inTransaction()) { $database->rollBack(); }
 }
 
 if ($failures !== []) {

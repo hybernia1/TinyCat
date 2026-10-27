@@ -1390,9 +1390,9 @@
       "implementation": "TinyCat\\Users\\Avatars::user_avatar_updated_at"
     },
     {
-      "name": "admin_user_avatar_change",
+      "name": "admin_user_avatar_save",
       "owner": "Support/ViewData",
-      "implementation": "TinyCat\\Users\\Avatars::admin_user_avatar_change"
+      "implementation": "TinyCat\\Users\\Avatars::admin_user_avatar_save"
     },
     {
       "name": "user_display_name",
@@ -2270,11 +2270,6 @@
       "implementation": "TinyCat\\Status\\Posts::status_find"
     },
     {
-      "name": "status_is_scheduled",
-      "owner": "Status",
-      "implementation": "TinyCat\\Status\\Posts::status_is_scheduled"
-    },
-    {
       "name": "status_can_view",
       "owner": "Status",
       "implementation": "TinyCat\\Status\\Posts::status_can_view"
@@ -2770,11 +2765,6 @@
       "implementation": "TinyCat\\Status\\Feed::public_status_page_limit"
     },
     {
-      "name": "status_scheduled_published_at",
-      "owner": "Status",
-      "implementation": "TinyCat\\Status\\Actions::status_scheduled_published_at"
-    },
-    {
       "name": "public_status_initial_page_limit",
       "owner": "Status",
       "implementation": "TinyCat\\Status\\Feed::public_status_initial_page_limit"
@@ -3025,9 +3015,9 @@
       "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_active_filters"
     },
     {
-      "name": "tc_admin_users_filter_sql",
+      "name": "tc_admin_users_query",
       "owner": "Users",
-      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_filter_sql"
+      "implementation": "TinyCat\\Users\\Accounts::tc_admin_users_query"
     },
     {
       "name": "tc_admin_users_page",
@@ -3178,11 +3168,6 @@
       "name": "admin_user_statuses",
       "owner": "Support/ViewData",
       "implementation": "TinyCat\\Support\\AdminViews::admin_user_statuses"
-    },
-    {
-      "name": "admin_search_like",
-      "owner": "Support/ViewData",
-      "implementation": "TinyCat\\Support\\AdminViews::admin_search_like"
     },
     {
       "name": "admin_filter_text",

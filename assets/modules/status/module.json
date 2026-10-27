@@ -84,10 +84,7 @@
       "status_not_found": "account.messages.status_not_found",
       "status_required": "account.messages.status_required",
       "status_saved": "account.messages.status_saved",
-      "status_schedule_future": "account.messages.status_schedule_future",
-      "status_schedule_invalid": "account.messages.status_schedule_invalid",
       "status_tag_too_long": "account.messages.status_tag_too_long",
-      "status_scheduled": "account.messages.status_scheduled",
       "status_created": "account.messages.status_created"
     }
   }

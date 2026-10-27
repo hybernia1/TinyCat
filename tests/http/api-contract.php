@@ -242,6 +242,9 @@ try {
     $assert($status === 201 && $manual['code'] === 'bot_run_failed' && $manual['meta']['type'] === 'danger', 'Failed manual imports refresh the list with a stable failure code and danger notice.');
     $manualParent = $sourceDatabase->query("SELECT * FROM scheduler_runs WHERE task = 'feeds' ORDER BY id DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
     $assert($manualParent['mode'] === 'admin' && (int) $manualParent['actor_id'] === 1 && json_decode($manualParent['options_json'], true)['source_id'] === $sourceId, 'Manual imports persist their initiator and selected source.');
+    $assert(json_decode($manualParent['options_json'], true)['bot_limit'] === 1, 'Manual imports persist the effective one-source limit.');
+    $assert(array_keys($manual['data']['execution']) === array_keys($failed['data']['execution']) && $manual['data']['execution']['count'] === 1 && $manual['data']['execution']['changed'] === 0, 'Manual imports and scheduler failures expose the same normalized execution shape.');
+    $assert(json_decode($manualParent['summary_json'], true) === $manual['data']['execution']['summary'], 'The API execution and stored run expose the same prepared summary.');
     [$status, $manualDetail] = $request('GET', '/api/scheduler/runs/' . $manualParent['id'], null, 'admin');
     $assert($status === 200 && count($manualDetail['data']['item']['sources']) === 1 && (int) $manualDetail['data']['item']['sources'][0]['scheduler_run_id'] === (int) $manualParent['id'], 'Manual source diagnostics are available through the standard scheduler detail endpoint.');
     $sourceDatabase->prepare('UPDATE bot_sources SET feed_url = ? WHERE id = ?')->execute([$source['feed_url'], $sourceId]);

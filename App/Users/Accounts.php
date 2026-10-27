@@ -128,49 +128,22 @@ final class Accounts
         }, ARRAY_FILTER_USE_BOTH);
     }
 
-    /**
-     * @param array<mixed> $filters
-     * @return array<mixed>
-     */
-    public static function tc_admin_users_filter_sql(array $filters): array
+    /** @param array<mixed> $filters */
+    public static function tc_admin_users_query(array $filters): \TinyCat\Database\Query
     {
-        $managedRoles = array_keys(\TinyCat\Users\Profiles::tc_admin_roles());
-        $clauses = ['role IN (' . implode(', ', array_fill(0, count($managedRoles), '?')) . ')'];
-        $params = $managedRoles;
-
+        $query = new \TinyCat\Database\Query('SELECT * FROM users');
+        $query->whereIn('role', array_keys(\TinyCat\Users\Profiles::tc_admin_roles()));
         if ($filters['q'] !== '') {
-            $like = \TinyCat\Support\AdminViews::admin_search_like($filters['q']);
-            $clauses[] = '(username LIKE ? ESCAPE \'!\' OR email LIKE ? ESCAPE \'!\')';
-            $params[] = $like;
-            $params[] = $like;
+            $like = '%' . \TinyCat\Database\Connection::escapeLike($filters['q']) . '%';
+            $query->where("username LIKE ? ESCAPE '!' OR email LIKE ? ESCAPE '!'", $like, $like);
         }
-
-        if ($filters['role'] !== '') {
-            $clauses[] = 'role = ?';
-            $params[] = $filters['role'];
+        foreach (['role', 'status'] as $key) {
+            if ($filters[$key] !== '') { $query->where($key . ' = ?', $filters[$key]); }
         }
-
-        if ($filters['status'] !== '') {
-            $clauses[] = 'status = ?';
-            $params[] = $filters['status'];
-        }
-
-        if ($filters['updated_from'] !== '') {
-            $clauses[] = 'updated_at >= ?';
-            $params[] = $filters['updated_from'] . ' 00:00:00';
-        }
-
-        if ($filters['updated_to'] !== '') {
-            $clauses[] = 'updated_at <= ?';
-            $params[] = $filters['updated_to'] . ' 23:59:59';
-        }
-
-        return [
-            ' WHERE ' . implode(' AND ', $clauses),
-            $params,
-        ];
+        if ($filters['updated_from'] !== '') { $query->where('updated_at >= ?', $filters['updated_from'] . ' 00:00:00'); }
+        if ($filters['updated_to'] !== '') { $query->where('updated_at <= ?', $filters['updated_to'] . ' 23:59:59'); }
+        return $query;
     }
-
 
     /**
      * @return array<mixed>

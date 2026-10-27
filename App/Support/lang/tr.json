@@ -45,6 +45,7 @@
     "updated": "Güncellendi",
     "route": "Rotası",
     "file": "Dosyası",
+    "image_prepare_failed": "Seçilen görsel yükleme için hazırlanamadı.",
     "image": "Görüntüsü",
     "table": "Tablo",
     "clean_api": "Veri API",

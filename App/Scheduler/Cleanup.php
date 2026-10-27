@@ -97,6 +97,7 @@ final class Cleanup
     {
         $batchSize = \TinyCat\Scheduler\Cleanup::cleanup_batch_size($batchSize);
         $startedAt = hrtime(true);
+        $error = '';
         if (in_array($task, ['orphan_status_image_files', 'orphan_link_image_files', 'expired_cache_files', 'bot_history'], true)) {
             $result = match ($task) {
                 'orphan_status_image_files' => \TinyCat\Status\ImageStorage::cleanupOrphans($batchSize),
@@ -104,7 +105,7 @@ final class Cleanup
                 'bot_history' => \TinyCat\Bots\Cleanup::run($batchSize),
                 default => \TinyCat\Support\Cache::cleanupExpired($batchSize),
             };
-            if (isset($result['error'])) { throw new \RuntimeException((string) $result['error']); }
+            $error = (string) ($result['error'] ?? '');
             $changed = $result['changed'];
             $hasMore = !empty($result['has_more']);
         } else {
@@ -118,8 +119,8 @@ final class Cleanup
             'has_more' => $hasMore,
             'batch_size' => $batchSize,
             'duration_ms' => max(0, (int) round((hrtime(true) - $startedAt) / 1_000_000)),
-            'done' => !$hasMore,
-        ];
+            'done' => !$hasMore && $error === '',
+        ] + ($error !== '' ? ['error' => $error] : []);
     }
 
     public static function cleanup_has_rows(string $task): bool
@@ -224,9 +225,6 @@ final class Cleanup
      */
     public static function cleanup_delete_limited(string $sql, array $params = []): int
     {
-        $stmt = \TinyCat\Database\Connection::get()->prepare($sql);
-        $stmt->execute($params);
-
-        return $stmt->rowCount();
+        return \TinyCat\Database\Connection::exec($sql, $params);
     }
 }

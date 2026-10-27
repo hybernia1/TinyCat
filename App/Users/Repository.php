@@ -60,7 +60,7 @@ final class Repository
             // Drive received-like counts from this author's rows. Starting from
             // the global likes tables can make MySQL scan every like before it
             // filters by the post or comment owner.
-            $receivedLikesJoin = (string) \TinyCat\Settings\Store::config('database.driver', 'mysql') === 'mysql'
+            $receivedLikesJoin = \TinyCat\Database\Connection::driver() === 'mysql'
                 ? 'STRAIGHT_JOIN'
                 : 'INNER JOIN';
             $stats = \TinyCat\Database\Connection::one(
@@ -130,7 +130,7 @@ final class Repository
         }
 
         return \TinyCat\Support\Cache::rememberArray($cacheKey, 3600, static function () use ($limit, $days): array {
-            $feedIndex = (string) \TinyCat\Settings\Store::config('database.driver', 'mysql') === 'mysql'
+            $feedIndex = \TinyCat\Database\Connection::driver() === 'mysql'
                 ? ' FORCE INDEX (content_feed_index)'
                 : '';
             $rankedRoles = \TinyCat\Users\Roles::rolesWith('appears_in_people_rankings');

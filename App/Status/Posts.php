@@ -119,15 +119,6 @@ final class Posts
     }
 
     /**
-     * @param array<string, mixed>|null $item
-     */
-    public static function status_is_scheduled(?array $item): bool
-    {
-        return $item !== null
-            && trim((string) ($item['published_at'] ?? '')) > \TinyCat\Support\Dates::dateDb();
-    }
-
-    /**
      * @param array<mixed> $item
      */
     public static function status_edit_locked(?array $item): bool
@@ -333,17 +324,9 @@ final class Posts
         return Feed::status_feed_payload('home', \TinyCat\Status\Feed::public_status_initial_page_limit(), ['feed' => $feed], $user);
     }
 
-    /** @param array<string, mixed>|null $item
-     * @param array<string, mixed>|null $user */
-    public static function status_can_view(?array $item, ?array $user = null): bool
+    /** @param array<string, mixed>|null $item */
+    public static function status_can_view(?array $item): bool
     {
-        if ($item === null || !\TinyCat\Status\Posts::status_is_scheduled($item)) {
-            return $item !== null;
-        }
-
-        $user ??= \TinyCat\Users\Authentication::auth();
-
-        return \TinyCat\Users\Profiles::user_is_admin($user)
-            || (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0);
+        return $item !== null && (string) ($item['published_at'] ?? '') <= \TinyCat\Support\Dates::dateDb();
     }
 }

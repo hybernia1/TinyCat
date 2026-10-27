@@ -407,13 +407,13 @@ final class Actions
     public static function tc_admin_users_page(?array $filters = null): array
     {
         $filters ??= \TinyCat\Users\Actions::tc_admin_users_filters();
-        [$where, $params] = \TinyCat\Users\Accounts::tc_admin_users_filter_sql($filters);
+        $query = \TinyCat\Users\Accounts::tc_admin_users_query($filters);
         $pagination = \TinyCat\Support\Pagination::paginationMeta(
-            (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM users' . $where, $params),
+            $query->count(),
             \TinyCat\Support\AdminViews::admin_page(),
             \TinyCat\Support\AdminViews::admin_per_page()
         );
-        $items = \TinyCat\Database\Connection::all('SELECT * FROM users' . $where . ' ORDER BY ' . \TinyCat\Support\AdminSorting::order('users', $filters) . \TinyCat\Database\Queries::pagination_sql($pagination), $params);
+        $items = $query->order(\TinyCat\Support\AdminSorting::order('users', $filters))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
 
         return [
             'items' => $items,

@@ -54,7 +54,8 @@ final class Delivery
         try {
             \TinyCat\Database\Connection::insert('notifications', $data);
             $created = true;
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            if (!\TinyCat\Database\Connection::uniqueViolation($exception)) { throw $exception; }
             \TinyCat\Database\Connection::update('notifications', [
                 'actor_id' => $actorId,
                 'content_id' => $contentId > 0 ? $contentId : null,
@@ -111,7 +112,7 @@ final class Delivery
 
         $actorId = (int) ($actor['id'] ?? 0);
 
-        if ($actorId < 1) {
+        if ($actorId < 1 || !\TinyCat\Status\PostCreation::sendsMentionNotifications((string) ($actor['role'] ?? ''))) {
             return;
         }
 

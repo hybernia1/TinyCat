@@ -45,6 +45,7 @@
     "updated": "Updated",
     "route": "Route",
     "file": "File",
+    "image_prepare_failed": "The selected image could not be prepared for upload.",
     "image": "Image",
     "table": "Table",
     "clean_api": "Clean API",

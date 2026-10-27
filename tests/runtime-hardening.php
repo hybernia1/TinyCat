@@ -90,17 +90,50 @@ if (extension_loaded('gd')) {
         });
 
         try {
-            foreach ([\TinyCat\Users\Avatar::class, \TinyCat\Status\ImageStorage::class] as $owner) {
-                $decode = new ReflectionMethod($owner, 'createSource');
-                $decoded = $decode->invoke(null, $fixture, 'image/png');
-                $assert($decoded === false, $owner . ' accepted malformed PNG data.');
-            }
+            $decoded = \TinyCat\Security\Images::image_open($fixture, 'image/png');
+            $assert($decoded === false, 'The shared decoder accepted malformed PNG data.');
         } finally {
             restore_error_handler();
             @unlink($fixture);
         }
 
         $assert($warnings === [], 'Malformed raster decoding emitted a PHP warning.');
+    }
+}
+
+if (extension_loaded('gd') && function_exists('imagewebp')) {
+    $rasterDirectory = sys_get_temp_dir() . '/tinycat-raster-' . bin2hex(random_bytes(6));
+    mkdir($rasterDirectory, 0700);
+    $source = imagecreatetruecolor(1200, 600);
+    imagealphablending($source, false); imagesavealpha($source, true);
+    imagefill($source, 0, 0, imagecolorallocatealpha($source, 0, 0, 0, 127));
+    imagefilledrectangle($source, 500, 200, 700, 400, imagecolorallocatealpha($source, 255, 0, 0, 0));
+    try {
+        $avatar = (new ReflectionMethod(\TinyCat\Users\Avatar::class, 'resizeSquare'))->invoke(null, $source);
+        $post = (new ReflectionMethod(\TinyCat\Status\ImageStorage::class, 'resize'))->invoke(null, $source);
+        $assert(imagesx($avatar) === 200 && imagesy($avatar) === 200, 'Avatar resampling preserves its square profile.');
+        $assert(imagesx($post) === 800 && imagesy($post) === 400, 'Post resampling preserves its size bound and aspect ratio.');
+        $assert(imagecolorsforindex($avatar, imagecolorat($avatar, 0, 0))['alpha'] === 127, 'Shared resampling preserves transparent corners.');
+        $target = $rasterDirectory . '/image.webp';
+        \TinyCat\Security\Images::image_write_webp($avatar, $target);
+        $encoded = imagecreatefromwebp($target);
+        $assert(imagesx($encoded) === 200 && imagecolorsforindex($encoded, imagecolorat($encoded, 0, 0))['alpha'] === 127, 'The shared WebP writer preserves dimensions and transparency.');
+        imagedestroy($encoded);
+        $hash = hash_file('sha256', $target);
+        try {
+            \TinyCat\Security\Images::image_write_webp($post, $target, [82, 40], 1);
+            $assert(false, 'An impossible output byte limit must reject the image.');
+        } catch (LengthException) {
+            $assert(hash_file('sha256', $target) === $hash, 'Compression failure leaves an existing image untouched.');
+        }
+        \TinyCat\Security\Images::image_write_webp($post, $target, keepExisting: true);
+        $assert(hash_file('sha256', $target) === $hash, 'Preview caching preserves an image already published by another writer.');
+        $assert((glob($rasterDirectory . '/.image-*') ?: []) === [], 'The shared writer cleans up encoding and publication temporary files.');
+        imagedestroy($avatar); imagedestroy($post);
+    } finally {
+        imagedestroy($source);
+        foreach (new FilesystemIterator($rasterDirectory, FilesystemIterator::SKIP_DOTS) as $file) { unlink($file->getPathname()); }
+        rmdir($rasterDirectory);
     }
 }
 

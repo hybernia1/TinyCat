@@ -48,7 +48,7 @@ final class Schema
             return [];
         }
 
-        $driver = (string) \TinyCat\Support\Config::get('database.driver', 'mysql');
+        $driver = \TinyCat\Database\Connection::driver();
         $placeholders = implode(', ', array_fill(0, count($tables), '?'));
 
         if ($driver === 'sqlite') {

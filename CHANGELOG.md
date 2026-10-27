@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.7.0 - 2026-10-27 — Optimization release #1
+
+- Centralize post creation for users and bot imports, sharing validation, normalization and transactional storage; report rejected feed items without blocking valid items.
+- Remove unused post scheduling: new posts publish immediately, and post resources no longer expose scheduled metadata.
+- Normalize scheduled-task options, results and history across automatic and manual execution, preserving partial cleanup counts and import diagnostics.
+- Share image decoding, resizing and WebP writing; stage avatar changes and restore files when related database writes fail.
+- Simplify database access with shared driver detection, literal LIKE escaping, filtered query counts and atomic settings upserts.
+- Translate confirmation dialogs, unsaved-change prompts, avatar actions, image errors and search fallbacks consistently across all supported languages.
+
 ## 4.6.0 - 2026-10-27
 
 - Separate search into Posts, Profiles and Tags, with full-history post/link matching, predictable ranking and the shared cursor feed loader.

@@ -13,8 +13,8 @@ final class Export
     public static function posts(int $limit = 100, ?int $authorId = null, ?int $termId = null): array
     {
         $limit = max(1, min(100, $limit));
-        $query = $authorId !== null ? Feed::public_status_author_id_query(null, false)->where('c.author_id = ?', $authorId)
-            : Feed::public_status_id_query(null, false);
+        $query = $authorId !== null ? Feed::public_status_author_id_query()->where('c.author_id = ?', $authorId)
+            : Feed::public_status_id_query();
         if ($termId !== null) { $query->join('INNER JOIN content_tags ct ON ct.content_id = c.id')->where('ct.term_id = ?', $termId); }
         $ids = Feed::public_status_ids_page($query, $limit);
         if ($ids === []) { return []; }

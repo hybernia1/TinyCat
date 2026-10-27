@@ -38,6 +38,9 @@ foreach (['Users', 'Notifications', 'Status', 'Bots', 'Settings', 'Moderation', 
 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/App', FilesystemIterator::SKIP_DOTS)) as $file) {
     if ($file->getExtension() !== 'php') { continue; }
     $source = (string) file_get_contents($file->getPathname());
+    if (str_replace('\\', '/', $file->getPathname()) !== str_replace('\\', '/', $root . '/App/Status/PostCreation.php')) {
+        $assert(!preg_match('/\b(?:insert\s*\(\s*[\'"]content[\'"]|INSERT\s+INTO\s+[`"]?content\b)/i', $source), 'New posts must use Status/PostCreation: ' . $file->getPathname());
+    }
     $assert(!preg_match('/(?:Core::|use Core;|\bwants_partial\s*\(|\bapi_payload\s*\(|X_TINYCAT_VIEW|legacyPresentation|legacyAliases)/', $source), 'Removed adapter or HTML negotiation remains: ' . $file->getPathname());
     $assert(!preg_match('/^function &?\w+\(/m', $source), 'Application globals must have a module owner: ' . $file->getPathname());
 }

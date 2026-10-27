@@ -6,10 +6,10 @@ import "./dialogs.js";
   TinyCat.actions = {};
   function confirmOptions(trigger) {
     return {
-      title: trigger.dataset.confirmTitle || "Confirm action",
+      title: trigger.dataset.confirmTitle || TinyCat.i18n.t("common.confirm_action"),
       message: trigger.dataset.confirm || "",
-      confirmLabel: trigger.dataset.confirmOk || "Confirm",
-      cancelLabel: trigger.dataset.confirmCancel || "Cancel",
+      confirmLabel: trigger.dataset.confirmOk || TinyCat.i18n.t("common.confirm"),
+      cancelLabel: trigger.dataset.confirmCancel || TinyCat.i18n.t("common.cancel"),
       variant: trigger.dataset.confirmVariant || (trigger.classList.contains("btn-danger") ? "danger" : "")
     };
   }

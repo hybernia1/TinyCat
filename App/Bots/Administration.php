@@ -315,32 +315,21 @@ final class Administration
     private static function accountsPage(?array $filters = null): array
     {
         $filters ??= self::accountFilters();
-        $clauses = ['u.role = ?'];
-        $params = ['bot'];
-
+        $query = new \TinyCat\Database\Query('SELECT u.*,
+            (SELECT COUNT(*) FROM bot_sources bs WHERE bs.bot_user_id = u.id) AS source_count,
+            (SELECT COUNT(*) FROM content c WHERE c.author_id = u.id) AS post_count FROM users u');
+        $query->where('u.role = ?', 'bot');
         if ($filters['q'] !== '') {
-            $clauses[] = 'u.username LIKE ? ESCAPE \'!\'';
-            $params[] = \TinyCat\Support\AdminViews::admin_search_like($filters['q']);
+            $query->where("u.username LIKE ? ESCAPE '!'", '%' . \TinyCat\Database\Connection::escapeLike($filters['q']) . '%');
         }
-        if ($filters['status'] !== '') {
-            $clauses[] = 'u.status = ?';
-            $params[] = $filters['status'];
-        }
-
-        $where = ' WHERE ' . implode(' AND ', $clauses);
+        if ($filters['status'] !== '') { $query->where('u.status = ?', $filters['status']); }
         $pagination = \TinyCat\Support\Pagination::paginationMeta(
-            (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM users u' . $where, $params),
+            $query->count('SELECT u.id FROM users u'),
             \TinyCat\Support\AdminViews::admin_page(),
             \TinyCat\Support\AdminViews::admin_per_page()
         );
-        $items = \TinyCat\Database\Connection::all(
-            'SELECT u.*,
-                (SELECT COUNT(*) FROM bot_sources bs WHERE bs.bot_user_id = u.id) AS source_count,
-                (SELECT COUNT(*) FROM content c WHERE c.author_id = u.id) AS post_count
-            FROM users u' . $where . '
-            ORDER BY ' . \TinyCat\Support\AdminSorting::order('accounts', $filters) . \TinyCat\Database\Queries::pagination_sql($pagination),
-            $params
-        );
+        $items = $query->order(\TinyCat\Support\AdminSorting::order('accounts', $filters))
+            ->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
 
         return [
             'items' => $items,
@@ -445,10 +434,11 @@ final class Administration
         }
 
         $user = \TinyCat\Users\Authentication::auth();
-        return \TinyCat\Http\Session::withoutLock(static fn (): array => \TinyCat\Scheduler\Runner::run('feeds', static function (array $context) use ($source): array {
-            $result = Importer::runSource($source, true, (int) $context['scheduler_run_id']);
-            return ['ok' => $result['status'] !== 'error', 'status' => $result['status'] === 'error' ? 'failed' : 'completed', 'count' => 1, 'results' => [$result]];
-        }, ['mode' => 'admin', 'actor_id' => (int) ($user['id'] ?? 0), 'options' => ['source_id' => (int) $source['id']]]));
+        $definition = \TinyCat\Scheduler\Tasks::definitions()['feeds'];
+        return \TinyCat\Http\Session::withoutLock(static fn (): array => \TinyCat\Scheduler\Runner::run(
+            'feeds', $definition['runner'],
+            ['mode' => 'admin', 'actor_id' => (int) ($user['id'] ?? 0), 'options' => ['source_id' => (int) $source['id']]]
+        ));
     }
 
     /**

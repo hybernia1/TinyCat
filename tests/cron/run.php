@@ -205,6 +205,15 @@ try {
         throw new RuntimeException('Common cleanup must bound bot diagnostics and preserve active imports and duplicate protection.');
     }
 
+    \TinyCat\Database\Connection::insert('bot_source_runs', ['source_id' => 1, 'status' => 'error', 'started_at' => \TinyCat\Support\Dates::dateDb('-15 days')]);
+    \TinyCat\Database\Connection::insert('bot_feed_history', ['bot_user_id' => 1, 'feed_hash' => 'forced-orphan', 'created_at' => \TinyCat\Support\Dates::dateDb('-15 days')]);
+    $database->exec("CREATE TRIGGER fail_bot_history_cleanup BEFORE DELETE ON bot_feed_history FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced cleanup failure'");
+    $partialCleanup = \TinyCat\Scheduler\Cleanup::cleanup_task_run('bot_history', 500);
+    $database->exec('DROP TRIGGER fail_bot_history_cleanup');
+    if (($partialCleanup['changed'] ?? 0) !== 1 || empty($partialCleanup['error']) || $partialCleanup['done']) {
+        throw new RuntimeException('Partial cleanup failures must retain completed changes and report unfinished work.');
+    }
+
     $databaseCleanupTasks = array_values(array_filter(
         \TinyCat\Scheduler\Cleanup::cron_cleanup_tasks(),
         static fn (string $task): bool => !in_array($task, ['orphan_status_image_files', 'orphan_link_image_files', 'expired_cache_files', 'old_scheduler_runs', 'bot_history'], true)

@@ -45,6 +45,7 @@
     "updated": "bijgewerkt",
     "route": "-route",
     "file": "-bestand",
+    "image_prepare_failed": "De geselecteerde afbeelding kon niet worden voorbereid voor uploaden.",
     "image": "-afbeelding",
     "table": "-tabel",
     "clean_api": "Gegevens-API",

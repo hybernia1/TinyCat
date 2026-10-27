@@ -450,7 +450,7 @@ import "../../ui/fields.js";
     editor.setAttribute("contenteditable", "plaintext-only");
     editor.setAttribute("role", "textbox");
     editor.setAttribute("aria-multiline", "true");
-    editor.setAttribute("aria-label", source.getAttribute("placeholder") || "Status");
+    editor.setAttribute("aria-label", source.getAttribute("placeholder") || TinyCat.i18n.t("account.status_body"));
     if (source.hasAttribute("aria-labelledby")) { editor.setAttribute("aria-labelledby", source.getAttribute("aria-labelledby")); }
     editor.spellcheck = true;
 

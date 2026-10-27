@@ -9,6 +9,63 @@ use GdImage;
 
 final class Images
 {
+    /** Decode only after checking source metadata and resource limits. */
+    public static function image_open(string $path, string $mime): GdImage|false
+    {
+        $source = match ($mime) {
+            'image/jpeg' => @imagecreatefromjpeg($path),
+            'image/png' => @imagecreatefrompng($path),
+            'image/gif' => @imagecreatefromgif($path),
+            'image/webp' => @imagecreatefromwebp($path),
+            default => false,
+        };
+        return $source instanceof GdImage && $mime === 'image/jpeg' ? self::image_apply_orientation($source, $path) : $source;
+    }
+
+    public static function image_resample(GdImage $source, int $width, int $height, int $sourceX = 0, int $sourceY = 0, ?int $cropWidth = null, ?int $cropHeight = null): GdImage
+    {
+        if ($width < 1 || $height < 1) { throw new \InvalidArgumentException('Image dimensions must be positive.'); }
+        $canvas = imagecreatetruecolor($width, $height);
+        imagealphablending($canvas, false);
+        imagesavealpha($canvas, true);
+        $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+        if ($transparent === false || !imagefill($canvas, 0, 0, $transparent)
+            || !imagecopyresampled($canvas, $source, 0, 0, $sourceX, $sourceY, $width, $height, $cropWidth ?? imagesx($source), $cropHeight ?? imagesy($source))) {
+            imagedestroy($canvas);
+            throw new RuntimeException('Could not resize image.');
+        }
+        return $canvas;
+    }
+
+    /** @param list<int> $qualities */
+    public static function image_write_webp(GdImage $image, string $target, array $qualities = [86], int $maxBytes = 0, bool $keepExisting = false): void
+    {
+        if (!is_dir(dirname($target))) { throw new RuntimeException('Image directory does not exist.'); }
+        $temporary = @tempnam(dirname($target), '.image-');
+        if ($temporary === false) { throw new RuntimeException('Could not create temporary image.'); }
+        try {
+            $written = false;
+            $fits = false;
+            foreach ($qualities as $quality) {
+                if (!@imagewebp($image, $temporary, $quality)) { continue; }
+                clearstatcache(true, $temporary);
+                $bytes = filesize($temporary);
+                $written = is_int($bytes) && $bytes > 0;
+                $fits = $written && ($maxBytes < 1 || $bytes <= $maxBytes);
+                if ($fits) { break; }
+            }
+            if (!$written) { throw new RuntimeException('Could not write WebP image.'); }
+            if (!$fits) { throw new \LengthException('The image could not be compressed to the configured limit.'); }
+            if ($keepExisting && is_file($target)) { return; }
+            if (!@rename($temporary, $target)) {
+                if ($keepExisting && is_file($target)) { return; }
+                throw new RuntimeException('Could not publish WebP image.');
+            }
+        } finally {
+            if (is_file($temporary)) { @unlink($temporary); }
+        }
+    }
+
     /**
      * @param array<mixed> $allowedMimes
      * @param array<mixed> $info
@@ -99,20 +156,10 @@ final class Images
         }
 
         $mime = strtolower((string) $info['mime']);
-        $source = match ($mime) {
-            'image/jpeg' => @imagecreatefromjpeg($tmpName),
-            'image/png' => @imagecreatefrompng($tmpName),
-            'image/gif' => @imagecreatefromgif($tmpName),
-            'image/webp' => @imagecreatefromwebp($tmpName),
-            default => false,
-        };
+        $source = self::image_open($tmpName, $mime);
 
         if (!$source instanceof GdImage) {
             throw new RuntimeException('Only JPEG, PNG, GIF, and WebP images can be uploaded.');
-        }
-
-        if ($mime === 'image/jpeg') {
-            $source = \TinyCat\Security\Images::image_apply_orientation($source, $tmpName);
         }
 
         $sourceWidth = imagesx($source);
@@ -138,33 +185,14 @@ final class Images
             $cropHeight = $sourceHeight;
         }
 
-        $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
-        imagealphablending($canvas, false);
-        imagesavealpha($canvas, true);
-
-        $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
-        if ($transparent === false) { throw new RuntimeException('Could not allocate image color.'); }
-        imagefilledrectangle($canvas, 0, 0, $targetWidth, $targetHeight, $transparent);
-
-        imagecopyresampled(
-            $canvas,
-            $source,
-            0,
-            0,
-            $sourceX,
-            $sourceY,
-            $targetWidth,
-            $targetHeight,
-            $cropWidth,
-            $cropHeight
-        );
+        $canvas = self::image_resample($source, $targetWidth, $targetHeight, $sourceX, $sourceY, $cropWidth, $cropHeight);
 
         $baseDirectory = \TinyCat\Support\Paths::basePath('uploads/site');
         $baseUrl = '/uploads/site';
         $subfolder = date('Y/m');
         $directory = $baseDirectory . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $subfolder);
 
-        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
             imagedestroy($source);
             imagedestroy($canvas);
             throw new RuntimeException('Could not create image directory.');
@@ -182,29 +210,18 @@ final class Images
             $counter++;
         }
 
-        if (!imagewebp($canvas, $target, 86)) {
+        try {
+            self::image_write_webp($canvas, $target);
+            if ($variant === 'favicon') {
+                \TinyCat\Site\Identity::writeVariants($source, $directory, pathinfo($filename, PATHINFO_FILENAME));
+            }
+        } catch (Throwable $exception) {
+            if (is_file($target)) { @unlink($target); }
+            throw $exception;
+        } finally {
             imagedestroy($source);
             imagedestroy($canvas);
-            throw new RuntimeException('Could not write WebP image.');
         }
-
-        if ($variant === 'favicon') {
-            try {
-                \TinyCat\Site\Identity::writeVariants($source, $directory, pathinfo($filename, PATHINFO_FILENAME));
-            } catch (Throwable $exception) {
-                imagedestroy($source);
-                imagedestroy($canvas);
-
-                if (is_file($target)) {
-                    @unlink($target);
-                }
-
-                throw $exception;
-            }
-        }
-
-        imagedestroy($source);
-        imagedestroy($canvas);
 
         return [
             'path' => trim($subfolder . '/' . $filename, '/'),

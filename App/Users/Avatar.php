@@ -41,9 +41,9 @@ final class Avatar
     /**
      * @param array<mixed> $file
      */
-    public static function upload(array $file, int $userId): void
+    public static function prepare(array $file): string
     {
-        if ($userId < 1 || !extension_loaded('gd') || !function_exists('imagewebp')) {
+        if (!extension_loaded('gd') || !function_exists('imagewebp')) {
             throw new RuntimeException('WebP image conversion is not available.');
         }
 
@@ -85,44 +85,89 @@ final class Avatar
 
         $mime = strtolower((string) $info['mime']);
 
-        $source = self::createSource($tmpName, $mime);
+        $source = \TinyCat\Security\Images::image_open($tmpName, $mime);
 
         if (!$source instanceof GdImage) {
             throw new RuntimeException('Uploaded avatar could not be read.');
         }
 
-        if ($mime === 'image/jpeg') {
-            $source = \TinyCat\Security\Images::image_apply_orientation($source, $tmpName);
-        }
-
-        $canvas = self::resizeSquare($source);
-        imagedestroy($source);
+        try { $canvas = self::resizeSquare($source); }
+        finally { imagedestroy($source); }
 
         $directory = \TinyCat\Support\Paths::basePath(self::BASE_DIRECTORY);
 
-        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
             imagedestroy($canvas);
             throw new RuntimeException('Could not create avatar directory.');
         }
 
-        $temporary = tempnam($directory, 'avatar-');
-
-        if ($temporary === false || !imagewebp($canvas, $temporary, self::QUALITY)) {
+        $temporary = @tempnam($directory, '.avatar-');
+        if ($temporary === false) { imagedestroy($canvas); throw new RuntimeException('Could not stage avatar.'); }
+        // The shared writer publishes to a fresh path on Windows as well as Unix.
+        if (!@unlink($temporary)) { imagedestroy($canvas); throw new RuntimeException('Could not stage avatar.'); }
+        try {
+            \TinyCat\Security\Images::image_write_webp($canvas, $temporary, [self::QUALITY]);
+            return $temporary;
+        } finally {
             imagedestroy($canvas);
-            if (is_string($temporary)) {
-                @unlink($temporary);
-            }
-            throw new RuntimeException('Could not write avatar image.');
         }
+    }
 
-        imagedestroy($canvas);
+    /**
+     * Keep the old file until both replacement and database persistence succeed.
+     * The user row lock serializes all avatar changes, including removal.
+     * @param callable(array<string, mixed>): array<string, mixed> $persist
+     * @return array<string, mixed>
+     */
+    public static function replace(int $userId, ?string $prepared, bool $remove, callable $persist): array
+    {
+        $database = \TinyCat\Database\Connection::get();
         $target = self::path($userId);
-
-        if (!@rename($temporary, $target)) {
-            if (!is_file($target) || !@unlink($target) || !@rename($temporary, $target)) {
-                @unlink($temporary);
-                throw new RuntimeException('Could not replace avatar image.');
+        $backup = null;
+        $fileChanged = false;
+        $ownsTransaction = false;
+        $preserveBackup = false;
+        try {
+            if ($userId < 1 || $database->inTransaction()) { throw new \LogicException('Avatar replacement requires its own transaction and a valid user.'); }
+            $database->beginTransaction();
+            $ownsTransaction = true;
+            $user = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM users WHERE id = ?'), [$userId]);
+            if ($user === null) { throw new RuntimeException('Avatar owner no longer exists.'); }
+            if (($prepared !== null || $remove) && is_file($target)) {
+                $backup = @tempnam(dirname($target), '.avatar-backup-');
+                if ($backup === false || !@copy($target, $backup)) { throw new RuntimeException('Could not back up avatar.'); }
             }
+            if ($prepared !== null) {
+                if (!@rename($prepared, $target)) {
+                    if (!is_file($target) || !@unlink($target)) { throw new RuntimeException('Could not replace avatar.'); }
+                    $fileChanged = true;
+                    if (!@rename($prepared, $target)) { throw new RuntimeException('Could not replace avatar.'); }
+                }
+                $fileChanged = true;
+            } elseif ($remove && is_file($target)) {
+                if (!@unlink($target)) { throw new RuntimeException('Could not remove avatar.'); }
+                $fileChanged = true;
+            }
+            $updated = $persist($user);
+            $database->commit();
+            return $updated;
+        } catch (Throwable $exception) {
+            // Restore while still holding the row lock, before allowing another save.
+            if ($fileChanged) {
+                if (is_string($backup)) {
+                    if (is_file($target)) { @unlink($target); }
+                    if (!@rename($backup, $target)) {
+                        $preserveBackup = true;
+                        throw new RuntimeException('Could not restore avatar backup: ' . $backup, 0, $exception);
+                    }
+                    $backup = null;
+                } elseif (is_file($target)) { @unlink($target); }
+            }
+            throw $exception;
+        } finally {
+            if ($ownsTransaction && $database->inTransaction()) { $database->rollBack(); }
+            if (!$preserveBackup && is_string($backup) && is_file($backup)) { @unlink($backup); }
+            if ($prepared !== null && is_file($prepared)) { @unlink($prepared); }
         }
     }
 
@@ -165,16 +210,6 @@ final class Avatar
         exit;
     }
 
-    private static function createSource(string $path, string $mime): GdImage|false
-    {
-        return match ($mime) {
-            'image/jpeg' => @imagecreatefromjpeg($path),
-            'image/png' => @imagecreatefrompng($path),
-            'image/webp' => @imagecreatefromwebp($path),
-            default => false,
-        };
-    }
-
     private static function resizeSquare(GdImage $source): GdImage
     {
         $sourceWidth = imagesx($source);
@@ -182,16 +217,7 @@ final class Avatar
         $crop = min($sourceWidth, $sourceHeight);
         $sourceX = (int) floor(($sourceWidth - $crop) / 2);
         $sourceY = (int) floor(($sourceHeight - $crop) / 2);
-        $canvas = imagecreatetruecolor(self::SIZE, self::SIZE);
-
-        imagealphablending($canvas, false);
-        imagesavealpha($canvas, true);
-        $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
-        if ($transparent === false) { throw new RuntimeException('Unable to allocate image background.'); }
-        imagefill($canvas, 0, 0, $transparent);
-        imagecopyresampled($canvas, $source, 0, 0, $sourceX, $sourceY, self::SIZE, self::SIZE, $crop, $crop);
-
-        return $canvas;
+        return \TinyCat\Security\Images::image_resample($source, self::SIZE, self::SIZE, $sourceX, $sourceY, $crop, $crop);
     }
 
     private static function path(int $userId): string

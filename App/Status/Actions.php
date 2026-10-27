@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace TinyCat\Status;
 
-use DateTimeImmutable;
 use LengthException;
 use Throwable;
 
@@ -37,25 +36,21 @@ final class Actions
      */
     public static function status_require_valid_tags(string $text): array
     {
-        $tags = [];
+        $rejection = PostCreation::tagRejection($text);
+        if ($rejection !== null) { self::status_content_rejected($rejection); }
+        return Tags::status_tags_from_text($text);
+    }
 
-        foreach (\TinyCat\Status\Tags::status_tag_tokens_from_text($text) as $item) {
-            $normalized = \TinyCat\Support\Text::slug((string) $item);
-
-            if (strlen($normalized) > \TinyCat\Status\Tags::status_tag_max_length()) {
-                \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_tag_too_long', [
-                    'max' => (string) \TinyCat\Status\Tags::status_tag_max_length(),
-                ]), 422, 'status_tag_too_long', [], [
-                    'max' => (string) \TinyCat\Status\Tags::status_tag_max_length(),
-                ]);
-            }
-
-            if ($normalized !== '') {
-                $tags[$normalized] = $normalized;
-            }
-        }
-
-        return array_values($tags);
+    /** @param array{code: string, message_key: string, params: array<string, int|string>} $rejection */
+    private static function status_content_rejected(array $rejection): never
+    {
+        \TinyCat\Http\Response::error(
+            \TinyCat\Support\Localization::t($rejection['message_key'], $rejection['params']),
+            422,
+            $rejection['code'],
+            $rejection['code'] === 'blocked_url' ? $rejection['params'] : [],
+            $rejection['params']
+        );
     }
 
     /**
@@ -124,9 +119,9 @@ final class Actions
      */
     public static function status_json_create(array $user, string $redirect = '/'): array
     {
-        $payload = \TinyCat\Status\Actions::status_payload();
+        $draft = self::status_draft();
         $userId = (int) ($user['id'] ?? 0);
-        $body = (string) ($payload['body'] ?? '');
+        $body = $draft->body;
         $imageFile = \TinyCat\Status\Images::status_image_uploaded_file();
         $hasImage = $imageFile !== null;
 
@@ -144,13 +139,9 @@ final class Actions
         \TinyCat\Status\Actions::status_json_require_action($user, 'post');
         \TinyCat\Status\Actions::status_json_require_unique_body($user, $body);
 
-        $now = \TinyCat\Support\Dates::dateDb();
-        $publishedAt = \TinyCat\Status\Actions::status_scheduled_published_at($now);
-        $scheduled = $publishedAt > $now;
-        $contentId = 0;
         $image = null;
 
-        $preparedLinks = \TinyCat\Status\Links::prepareLinks((array) ($payload['links'] ?? []));
+        $preparedLinks = \TinyCat\Status\Links::prepareLinks($draft->links);
         try {
             $image = $hasImage ? \TinyCat\Status\ImageStorage::upload((array) $imageFile) : null;
         } catch (LengthException) {
@@ -160,26 +151,7 @@ final class Actions
         }
 
         try {
-            \TinyCat\Database\Transactions::run(static function () use (&$contentId, $body, $userId, $publishedAt, $payload, $image, $preparedLinks): void {
-                $contentId = (int) \TinyCat\Database\Connection::insert('content', [
-                    'body' => $body,
-                    'author_id' => $userId,
-                    'published_at' => $publishedAt,
-                ]);
-
-                if ($image !== null) {
-                    \TinyCat\Database\Connection::insert('content_images', [
-                        'content_id' => $contentId,
-                        'path' => (string) $image['path'],
-                        'width' => (int) $image['width'],
-                        'height' => (int) $image['height'],
-                        'bytes' => (int) $image['bytes'],
-                    ]);
-                }
-
-                \TinyCat\Status\Tags::status_sync_tags($contentId, (array) ($payload['tags'] ?? []));
-                \TinyCat\Status\Links::persistLinks($contentId, $preparedLinks);
-            });
+            $contentId = PostCreation::create($userId, $draft, $preparedLinks, $image);
         } catch (Throwable $exception) {
             if ($image !== null) {
                 \TinyCat\Status\ImageStorage::delete((string) ($image['path'] ?? ''));
@@ -189,15 +161,13 @@ final class Actions
         }
 
         \TinyCat\Moderation\Restrictions::moderation_record_action($user, 'post');
-        if (!$scheduled) {
-            \TinyCat\Notifications\Delivery::notifyMentions($body, $user, $contentId);
-        }
+        \TinyCat\Notifications\Delivery::notifyMentions($body, $user, $contentId);
 
         $data = [
             'action' => 'create',
             'status' => \TinyCat\Status\Posts::status_json_summary($contentId, $user),
             'status_id' => $contentId,
-            'message' => \TinyCat\Support\Localization::t($scheduled ? 'account.messages.status_scheduled' : 'account.messages.status_created'), 'code' => $scheduled ? 'status_scheduled' : 'status_created',
+            'message' => \TinyCat\Support\Localization::t('account.messages.status_created'), 'code' => 'status_created',
         ];
 
         $resource = \TinyCat\Status\Feed::public_status_item($contentId);
@@ -216,7 +186,7 @@ final class Actions
 
         $status = \TinyCat\Status\Posts::status_find($contentId);
 
-        if ($contentId < 1 || $userId < 1 || !\TinyCat\Status\Posts::status_can_view($status, $user)) {
+        if ($contentId < 1 || $userId < 1 || !\TinyCat\Status\Posts::status_can_view($status)) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
         }
 
@@ -253,49 +223,14 @@ final class Actions
      */
     public static function status_payload(): array
     {
-        $body = \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('body', ''), 2000);
-        \TinyCat\Moderation\Blocking::moderation_require_allowed_urls($body);
-
-        $body = \TinyCat\Status\Mentions::normalize_mentions_for_storage($body);
-        $tags = \TinyCat\Status\Actions::status_require_valid_tags($body);
-        $body = \TinyCat\Status\Tags::normalize_tags_for_storage($body);
-        $body = \TinyCat\Support\Text::plain_text_limit($body, 2000);
-
-        return [
-            'body' => $body,
-            'tags' => $tags,
-            'links' => \TinyCat\Status\Links::status_links_from_text($body),
-        ];
+        return self::status_draft()->payload();
     }
 
-    public static function status_scheduled_published_at(string $now): string
+    private static function status_draft(): PostCreation
     {
-        if ((string) \TinyCat\Http\Request::current()->input('schedule_post', '') !== '1') {
-            return $now;
-        }
-
-        $scheduledAt = trim((string) \TinyCat\Http\Request::current()->input('scheduled_at', ''));
-        $scheduled = DateTimeImmutable::createFromFormat('!Y-m-d\\TH:i', $scheduledAt, \TinyCat\Support\Dates::timezone());
-        $errors = DateTimeImmutable::getLastErrors();
-
-        if ($scheduled === false
-            || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))
-            || $scheduled->format('Y-m-d\\TH:i') !== $scheduledAt
-        ) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_schedule_invalid'), 422, 'status_schedule_invalid', [
-                'errors' => ['scheduled_at' => [\TinyCat\Support\Localization::t('account.messages.status_schedule_invalid')]],
-            ]);
-        }
-
-        $publishedAt = \TinyCat\Support\Dates::dateDb($scheduled);
-
-        if ($publishedAt <= $now) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_schedule_future'), 422, 'status_schedule_future', [
-                'errors' => ['scheduled_at' => [\TinyCat\Support\Localization::t('account.messages.status_schedule_future')]],
-            ]);
-        }
-
-        return $publishedAt;
+        $draft = PostCreation::fromText((string) \TinyCat\Http\Request::current()->input('body', ''));
+        if ($draft->rejection !== null) { self::status_content_rejected($draft->rejection); }
+        return $draft;
     }
 
     /**
@@ -307,7 +242,7 @@ final class Actions
         $userId = (int) ($user['id'] ?? 0);
         $item = \TinyCat\Status\Posts::status_find($contentId);
 
-        if ($contentId < 1 || $userId < 1 || !\TinyCat\Status\Posts::status_can_view($item, $user)) {
+        if ($contentId < 1 || $userId < 1 || !\TinyCat\Status\Posts::status_can_view($item)) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
         }
 
@@ -493,7 +428,7 @@ final class Actions
         if ($oldPath !== '') {
             \TinyCat\Status\ImageStorage::delete($oldPath);
         }
-        if (!\TinyCat\Status\Posts::status_is_scheduled($item)) {
+        if (PostCreation::sendsMentionNotifications((string) ($author['role'] ?? ''))) {
             \TinyCat\Notifications\Delivery::notifyMentions($body, $user, $contentId, 0, $oldMentionIds);
         }
 
@@ -589,7 +524,7 @@ final class Actions
         $status = \TinyCat\Status\Posts::status_find($contentId);
         $body = \TinyCat\Status\Actions::status_comment_input_body();
 
-        if ($contentId < 1 || $userId < 1 || !\TinyCat\Status\Posts::status_can_view($status, $user)) {
+        if ($contentId < 1 || $userId < 1 || !\TinyCat\Status\Posts::status_can_view($status)) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
         }
 
@@ -648,7 +583,7 @@ final class Actions
         $contentId = (int) ($comment['content_id'] ?? 0);
         $status = \TinyCat\Status\Posts::status_find($contentId);
 
-        if ($comment === null || $userId < 1 || !\TinyCat\Status\Posts::status_can_view($status, $user)) {
+        if ($comment === null || $userId < 1 || !\TinyCat\Status\Posts::status_can_view($status)) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.comment_not_found'), 404, 'comment_not_found');
         }
 

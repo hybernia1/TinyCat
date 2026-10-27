@@ -65,6 +65,7 @@
       "common.close",
       "common.confirm",
       "common.confirm_action",
+      "common.image_prepare_failed",
       "common.request_failed"
     ]
   },

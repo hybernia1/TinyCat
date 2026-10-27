@@ -45,6 +45,7 @@
     "updated": "Zaktualizowano",
     "route": "Ścieżka",
     "file": "Plik",
+    "image_prepare_failed": "Nie udało się przygotować wybranego obrazu do przesłania.",
     "image": "Obraz",
     "table": "Tabela",
     "clean_api": "API danych",

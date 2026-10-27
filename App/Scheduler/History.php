@@ -24,18 +24,11 @@ final class History
     /** @param array<string, mixed> $result */
     public static function finish(int $id, array $result, int $duration): void
     {
-        $error = (string) ($result['error'] ?? $result['cleanup']['error'] ?? '');
-        foreach ((array) ($result['results'] ?? []) as $item) {
-            if (is_array($item) && isset($item['error'])) { $error = (string) $item['error']; break; }
-        }
-        $summary = array_intersect_key($result, array_flip(['count', 'summary', 'has_more', 'batch_size', 'limit']));
-        if (isset($result['results']) && is_array($result['results'])) {
-            $summary['changed'] = array_sum(array_map(static fn (mixed $row): int => is_array($row) ? (int) ($row['changed'] ?? 0) : 0, $result['results']));
-        }
+        $error = (string) $result['error'];
         Connection::update('scheduler_runs', [
-            'status' => (string) ($result['status'] ?? (empty($result['ok']) ? 'failed' : 'completed')),
+            'status' => (string) $result['status'],
             'finished_at' => Dates::dateDb(), 'duration_ms' => max(0, $duration),
-            'summary_json' => json_encode($summary, JSON_THROW_ON_ERROR),
+            'summary_json' => json_encode($result['summary'], JSON_THROW_ON_ERROR),
             'error' => $error !== '' ? \TinyCat\Support\Text::plain_text_limit($error, 1000) : null,
         ], ['id' => $id]);
     }

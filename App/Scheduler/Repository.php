@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace TinyCat\Scheduler;
 
 use TinyCat\Database\Connection;
+use TinyCat\Database\Query;
 
 final class Repository
 {
@@ -12,24 +13,22 @@ final class Repository
      */
     public static function listing(array $filters, int $page, int $perPage, array $taskAliases = []): array
     {
-        $where = []; $params = [];
-        $query = (string) ($filters['q'] ?? '');
-        if ($query !== '') {
-            $pattern = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $query) . '%';
-            $params = [$pattern, $pattern, $pattern, ...$taskAliases];
+        $selection = new Query('SELECT * FROM scheduler_runs');
+        $text = (string) ($filters['q'] ?? '');
+        if ($text !== '') {
+            $pattern = '%' . Connection::escapeLike($text) . '%';
             $extra = $taskAliases !== [] ? ' OR task IN (' . implode(', ', array_fill(0, count($taskAliases), '?')) . ')' : '';
-            $where[] = "(task LIKE ? ESCAPE '!' OR error LIKE ? ESCAPE '!' OR mode LIKE ? ESCAPE '!'" . $extra . ')';
+            $selection->where("task LIKE ? ESCAPE '!' OR error LIKE ? ESCAPE '!' OR mode LIKE ? ESCAPE '!'" . $extra, $pattern, $pattern, $pattern, $taskAliases);
         }
         foreach (['task', 'status'] as $key) {
-            if (($filters[$key] ?? '') !== '') { $where[] = $key . ' = ?'; $params[] = $filters[$key]; }
+            if (($filters[$key] ?? '') !== '') { $selection->where($key . ' = ?', $filters[$key]); }
         }
-        $sql = $where !== [] ? ' WHERE ' . implode(' AND ', $where) : '';
-        $total = (int) Connection::value('SELECT COUNT(*) FROM scheduler_runs' . $sql, $params);
+        $total = $selection->count();
         $perPage = max(1, min(200, $perPage));
         $last = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($last, $page));
         return [
-            'runs' => Connection::all('SELECT * FROM scheduler_runs' . $sql . ' ORDER BY ' . \TinyCat\Support\AdminSorting::order('runs', $filters) . ' LIMIT ' . $perPage . ' OFFSET ' . (($page - 1) * $perPage), $params),
+            'runs' => $selection->order(\TinyCat\Support\AdminSorting::order('runs', $filters))->limit($perPage, ($page - 1) * $perPage)->all(),
             'pagination' => ['page' => $page, 'last_page' => $last, 'total' => $total, 'per_page' => $perPage, 'from' => $total > 0 ? ($page - 1) * $perPage + 1 : 0, 'to' => min($total, $page * $perPage)],
         ];
     }

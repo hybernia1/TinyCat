@@ -50,7 +50,7 @@ $database->exec("INSERT INTO bot_sources (id, bot_user_id, enabled, feed_url, in
 (new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, ['bots.cleanup_last_run' => time()]);
 $feedTask = \TinyCat\Bots\Importer::scheduledTasks()['feeds']['runner'];
 $result = $feedTask(['options' => ['bot_limit' => 1]]);
-$assert(!$result['ok'] && $result['status'] === 'failed' && $result['summary']['error'] === 1, 'A failed feed import makes the cron result fail instead of claiming success.');
+$assert(!$result['ok'] && $result['status'] === 'failed' && $result['summary']['summary']['error'] === 1, 'A failed feed import makes the cron result fail instead of claiming success.');
 $result = $feedTask(['options' => ['bot_limit' => 1]]);
 $assert($result['ok'] && $result['count'] === 0, 'A feed whose retry is scheduled in the future is not imported again.');
 
@@ -61,7 +61,7 @@ $releases = 0;
 $ran = 0;
 $database->sqliteCreateFunction('GET_LOCK', static function () use (&$lockResult): ?int { return $lockResult; });
 $database->sqliteCreateFunction('RELEASE_LOCK', static function () use (&$releases): int { $releases++; return 1; });
-$runner = static function (array $context) use (&$ran): array { $ran++; return ['ok' => true, 'context' => $context]; };
+$runner = static function (array $context) use (&$ran): array { $ran++; return \TinyCat\Scheduler\Tasks::result('completed'); };
 $result = \TinyCat\Scheduler\Runner::run('cleanup', $runner, ['mode' => 'fixture']);
 $assert($result['ok'] && $ran === 1 && $releases === 1, 'Successful cron tasks run under a lock and release it.');
 $lockResult = 0;
@@ -98,7 +98,7 @@ $_GET = [];
 
 for ($index = 0; $index < 26; $index++) {
     $id = \TinyCat\Scheduler\History::start('feeds', ['mode' => 'http', 'options' => ['bot_limit' => 3]]);
-    \TinyCat\Scheduler\History::finish($id, ['ok' => true, 'status' => 'completed', 'count' => 0], 1);
+    \TinyCat\Scheduler\History::finish($id, \TinyCat\Scheduler\Tasks::result('completed'), 1);
 }
 $_GET = ['per_page' => 10, 'page' => 2];
 \TinyCat\Http\Request::reset();
@@ -143,7 +143,7 @@ try {
     rmdir(dirname($directory));
 }
 $id = \TinyCat\Scheduler\History::start('feeds', ['mode' => 'cli']);
-\TinyCat\Scheduler\History::finish($id, ['ok' => false, 'status' => 'failed', 'cleanup' => ['error' => 'Feed history cleanup failed.']], 1);
+\TinyCat\Scheduler\History::finish($id, \TinyCat\Scheduler\Tasks::result('failed', error: 'Feed history cleanup failed.'), 1);
 $assert($database->query('SELECT error FROM scheduler_runs WHERE id = ' . $id)->fetchColumn() === 'Feed history cleanup failed.', 'Feed cleanup errors remain available in the scheduled run detail.');
 
 
@@ -153,10 +153,7 @@ $database->exec('ALTER TABLE bot_sources ADD COLUMN name TEXT');
 $database->exec("UPDATE bot_sources SET name = 'Fixture feed', next_run_at = NULL WHERE id = 1");
 $database->exec("INSERT INTO bot_source_runs (source_id, status, started_at) VALUES (1, 'running', '2026-01-01 00:00:00')");
 $source = $database->query('SELECT * FROM bot_sources WHERE id = 1')->fetch(PDO::FETCH_ASSOC);
-$result = \TinyCat\Scheduler\Runner::run('feeds', static function (array $context) use ($source): array {
-    $result = \TinyCat\Bots\Importer::runSource($source, true, $context['scheduler_run_id']);
-    return ['ok' => false, 'status' => 'failed', 'results' => [$result]];
-}, ['mode' => 'admin', 'options' => ['source_id' => 1]]);
+$result = \TinyCat\Scheduler\Runner::run('feeds', $feedTask, ['mode' => 'admin', 'options' => ['source_id' => 1]]);
 $parentId = (int) $database->query('SELECT MAX(id) FROM scheduler_runs')->fetchColumn();
 $run = $database->query('SELECT * FROM bot_source_runs ORDER BY id DESC LIMIT 1')->fetch(PDO::FETCH_ASSOC);
 $assert(!$result['ok'] && (int) $run['scheduler_run_id'] === $parentId && $run['status'] === 'error', 'A failed manual import is linked to the common scheduler run.');
@@ -167,12 +164,47 @@ $html = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => $
 $assert(str_contains($html, 'Fixture feed') && str_contains($html, 'RSS feed could not be downloaded.'), 'The common run modal renders source diagnostics.');
 $lockResult = 0;
 $before = (int) $database->query('SELECT COUNT(*) FROM bot_source_runs')->fetchColumn();
-\TinyCat\Scheduler\Runner::run('feeds', static fn (array $context): array => \TinyCat\Bots\Importer::runSource($source, true, $context['scheduler_run_id']), []);
+\TinyCat\Scheduler\Runner::run('feeds', $feedTask, ['mode' => 'admin', 'options' => ['source_id' => 1]]);
 $assert((int) $database->query('SELECT COUNT(*) FROM bot_source_runs')->fetchColumn() === $before, 'A busy feeds lock prevents a second forced source import.');
 $lockResult = 1;
 $database->exec("CREATE TRIGGER reject_source_log BEFORE INSERT ON bot_source_runs BEGIN SELECT RAISE(ABORT, 'diagnostic write failed'); END");
-$result = \TinyCat\Scheduler\Runner::run('feeds', static fn (array $context): array => \TinyCat\Bots\Importer::runSource($source, true, $context['scheduler_run_id']), []);
+$result = \TinyCat\Scheduler\Runner::run('feeds', $feedTask, ['mode' => 'admin', 'options' => ['source_id' => 1]]);
 $assert(!$result['ok'], 'Diagnostic storage failures propagate to the common scheduler result.');
 $database->exec('DROP TRIGGER reject_source_log');
+
+$captured = null;
+$canonical = \TinyCat\Scheduler\Runner::run('feeds', static function (array $context) use (&$captured): array {
+    $captured = $context;
+    return \TinyCat\Scheduler\Tasks::result('failed', 2, 1, details: ['diagnostic' => 'fixture'], error: 'Canonical failure', results: [['changed' => 99, 'error' => 'Nested detail']]);
+}, ['mode' => 'http', 'options' => ['bot_limit' => '999']]);
+$record = $database->query('SELECT * FROM scheduler_runs ORDER BY id DESC LIMIT 1')->fetch(PDO::FETCH_ASSOC);
+$assert($captured['options'] === ['bot_limit' => 100] && json_decode($record['options_json'], true) === $captured['options'], 'The runner normalizes options before both execution and history.');
+$assert(json_decode($record['summary_json'], true) === $canonical['summary'] && $record['error'] === 'Canonical failure', 'History stores the prepared summary and canonical error without interpreting nested results.');
+$assert($canonical['changed'] === 1 && $canonical['summary']['changed'] === 1, 'Nested task details cannot replace the canonical change count.');
+$assert($captured['scheduler_run_id'] === (int) $record['id'], 'The normalized context links task diagnostics to their parent run.');
+$cli = \TinyCat\Scheduler\Tasks::context('feeds', ['mode' => 'cli', 'options' => ['bot_limit' => 999]]);
+$assert($cli['options'] === $captured['options'], 'CLI and HTTP use identical effective limits.');
+$targeted = \TinyCat\Scheduler\Tasks::context('feeds', ['mode' => 'admin', 'options' => ['source_id' => '1', 'bot_limit' => 99]]);
+$assert($targeted['options'] === ['bot_limit' => 1, 'source_id' => 1], 'Manual source imports record an effective one-source limit.');
+$cleanup = \TinyCat\Scheduler\Tasks::context('cleanup', ['options' => ['cleanup_batch' => 7]]);
+$assert($cleanup['options'] === ['cleanup_batch' => 1000], 'Cleanup records the supported batch actually used for an unsupported request.');
+$before = (int) $database->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn();
+$invalid = \TinyCat\Scheduler\Runner::run('feeds', $runner, ['options' => ['source_id' => 1]], true);
+$assert(!$invalid['ok'] && (int) $database->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn() === $before, 'A source selector outside administrator mode is rejected before execution or history.');
+$invalid = \TinyCat\Scheduler\Runner::run('cleanup', $runner, ['options' => ['cleanup_batch' => []]], true);
+$assert(!$invalid['ok'], 'Malformed option values cannot be silently converted into a batch size.');
+$invalid = \TinyCat\Scheduler\Runner::run('cleanup', static fn (): array => ['ok' => true], [], true);
+$assert(!$invalid['ok'] && $database->query('SELECT status FROM scheduler_runs ORDER BY id DESC LIMIT 1')->fetchColumn() === 'failed', 'A malformed callback result is recorded as a failed execution.');
+$notDue = \TinyCat\Scheduler\Runner::run('cleanup', static fn (): array => \TinyCat\Scheduler\Tasks::result('not_due'), []);
+$lockResult = 0;
+$busy = \TinyCat\Scheduler\Runner::run('cleanup', $runner, []);
+$lockResult = 1;
+$assert(array_keys($canonical) === array_keys($notDue) && array_keys($busy) === array_keys($notDue), 'Failure, not-due and busy results use the same execution envelope.');
+$assert($notDue['count'] === 0 && $notDue['changed'] === 0 && $busy['skipped'], 'Non-executed work reports zero processed and changed items.');
+(new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, ['cron.cleanup_last_run' => time()]);
+$deferred = \TinyCat\Scheduler\Runner::run('cleanup', \TinyCat\Scheduler\Tasks::definitions()['cleanup']['runner'], ['mode' => 'http', 'options' => ['cleanup_batch' => 7]]);
+$deferredRecord = $database->query('SELECT * FROM scheduler_runs ORDER BY id DESC LIMIT 1')->fetch(PDO::FETCH_ASSOC);
+$assert($deferred['status'] === 'not_due' && $deferred['count'] === 0 && $deferred['changed'] === 0 && $deferred['summary']['tasks'] === [], 'The real cleanup adapter normalizes a not-due run without executing maintenance.');
+$assert(json_decode($deferredRecord['options_json'], true) === ['cleanup_batch' => 1000], 'The real cleanup run records its effective supported batch.');
 
 echo "PASS scheduled cache and preview file cleanup ({$checks} checks)\n";

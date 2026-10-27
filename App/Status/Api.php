@@ -70,7 +70,7 @@ final class Api
     {
         $user = Authentication::auth();
         $item = Feed::public_status_item($id);
-        if ($item === null || !Posts::status_can_view($item, $user)) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
+        if ($item === null || !Posts::status_can_view($item)) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
         $items = Resource::posts([$item], $user);
         $comments = Comments::status_comments($id);
         return ['item' => $items[0], 'comments' => Resource::comments($comments, $user),
@@ -85,7 +85,7 @@ final class Api
     private static function commentTarget(array $params): array
     {
         $comment = Comments::status_comment_find((int) $params['commentId']);
-        if ($comment === null || (int) $comment['content_id'] !== (int) $params['id'] || !Posts::status_can_view(Posts::status_find((int) $params['id']), Authentication::auth())) {
+        if ($comment === null || (int) $comment['content_id'] !== (int) $params['id'] || !Posts::status_can_view(Posts::status_find((int) $params['id']))) {
             Response::error(\TinyCat\Support\Localization::t('account.messages.comment_not_found'), 404, 'comment_not_found');
         }
         return $comment;

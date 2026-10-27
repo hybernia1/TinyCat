@@ -1619,6 +1619,100 @@
           "class": "stack stack-gap-8"
         },
         "when": {
+          "get": "item.summary.skipped_items"
+        },
+        "children": [
+          {
+            "tag": "h3",
+            "attrs": {
+              "class": "text-base m-0"
+            },
+            "children": [
+              {
+                "t": "bots.run_statuses.skipped"
+              }
+            ]
+          },
+          {
+            "each": {
+              "get": "item.summary.skipped_items"
+            },
+            "as": "skipped",
+            "children": [
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": "stack stack-gap-4"
+                },
+                "children": [
+                  {
+                    "tag": "strong",
+                    "children": [
+                      {
+                        "get": "skipped.source_name"
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "p",
+                    "attrs": {
+                      "class": "m-0"
+                    },
+                    "children": [
+                      {
+                        "lookup": {
+                          "get": "skipped.code"
+                        },
+                        "cases": {
+                          "blocked_url": {
+                            "t": "moderation.messages.blocked_url",
+                            "values": {
+                              "host": {
+                                "get": "skipped.params.host"
+                              }
+                            }
+                          },
+                          "status_tag_too_long": {
+                            "t": "account.messages.status_tag_too_long",
+                            "values": {
+                              "max": {
+                                "get": "skipped.params.max"
+                              }
+                            }
+                          },
+                          "status_required": {
+                            "t": "account.messages.status_required"
+                          }
+                        },
+                        "default": {
+                          "get": "skipped.code"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "code",
+                    "attrs": {
+                      "class": "is-resource-text muted"
+                    },
+                    "children": [
+                      {
+                        "get": "skipped.item_hash"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "section",
+        "attrs": {
+          "class": "stack stack-gap-8"
+        },
+        "when": {
           "get": "item.sources"
         },
         "children": [

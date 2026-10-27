@@ -35,73 +35,37 @@ final class Feed
                 LEFT JOIN content_images ci ON ci.content_id = c.id";
     }
 
-    /**
-     * @param array<string, mixed>|null $viewer
-     */
-    public static function public_status_apply_visibility(\TinyCat\Database\Query $query, ?array $viewer = null, bool $allowScheduled = true): \TinyCat\Database\Query
+    public static function public_status_apply_visibility(\TinyCat\Database\Query $query): \TinyCat\Database\Query
     {
-        $now = \TinyCat\Support\Dates::dateDb();
-
-        if (!$allowScheduled) {
-            return $query->where('c.published_at <= ?', $now);
-        }
-
-        $viewer ??= \TinyCat\Users\Authentication::auth();
-
-        if (\TinyCat\Users\Profiles::user_is_admin($viewer)) {
-            return $query;
-        }
-
-        $viewerId = (int) ($viewer['id'] ?? 0);
-
-        return $viewerId > 0
-            ? $query->where('(c.published_at <= ? OR c.author_id = ?)', $now, $viewerId)
-            : $query->where('c.published_at <= ?', $now);
+        return $query->where('c.published_at <= ?', \TinyCat\Support\Dates::dateDb());
     }
 
-    /**
-     * @param array<string, mixed>|null $viewer
-     */
-    public static function public_status_id_query(?array $viewer = null, bool $allowScheduled = true): \TinyCat\Database\Query
+    public static function public_status_id_query(): \TinyCat\Database\Query
     {
-        $feedIndex = (string) \TinyCat\Settings\Store::config('database.driver', 'mysql') === 'mysql'
+        $feedIndex = \TinyCat\Database\Connection::driver() === 'mysql'
             ? ' FORCE INDEX (content_feed_index)'
             : '';
 
-        return \TinyCat\Status\Feed::public_status_apply_visibility(\TinyCat\Database\Queries::db_select(
-            'SELECT c.id
-                FROM content c' . $feedIndex . '
-                INNER JOIN users u ON u.id = c.author_id'
-        )
-            ->where('u.status = ?', 'active'), $viewer, $allowScheduled);
+        return self::public_status_apply_visibility(\TinyCat\Database\Queries::db_select(
+            'SELECT c.id FROM content c' . $feedIndex . ' INNER JOIN users u ON u.id = c.author_id'
+        )->where('u.status = ?', 'active'));
     }
 
-    /**
-     * @param array<string, mixed>|null $viewer
-     */
-    public static function public_status_author_id_query(?array $viewer = null, bool $allowScheduled = true): \TinyCat\Database\Query
+    public static function public_status_author_id_query(): \TinyCat\Database\Query
     {
-        $authorIndex = (string) \TinyCat\Settings\Store::config('database.driver', 'mysql') === 'mysql'
+        $authorIndex = \TinyCat\Database\Connection::driver() === 'mysql'
             ? ' FORCE INDEX (content_author_index)'
             : '';
 
-        return \TinyCat\Status\Feed::public_status_apply_visibility(\TinyCat\Database\Queries::db_select(
-            'SELECT c.id
-                FROM content c' . $authorIndex . '
-                INNER JOIN users u ON u.id = c.author_id'
-        )
-            ->where('u.status = ?', 'active'), $viewer, $allowScheduled);
+        return self::public_status_apply_visibility(\TinyCat\Database\Queries::db_select(
+            'SELECT c.id FROM content c' . $authorIndex . ' INNER JOIN users u ON u.id = c.author_id'
+        )->where('u.status = ?', 'active'));
     }
 
-    /**
-     * @param array<string, mixed>|null $viewer
-     */
-    public static function public_status_query(?array $viewer = null, bool $allowScheduled = true): \TinyCat\Database\Query
+    public static function public_status_query(): \TinyCat\Database\Query
     {
-        return \TinyCat\Status\Feed::public_status_apply_visibility(
-            \TinyCat\Database\Queries::db_select(\TinyCat\Status\Feed::public_status_select_sql())->where('u.status = ?', 'active'),
-            $viewer,
-            $allowScheduled
+        return self::public_status_apply_visibility(
+            \TinyCat\Database\Queries::db_select(self::public_status_select_sql())->where('u.status = ?', 'active')
         );
     }
 
@@ -154,9 +118,9 @@ final class Feed
      * @return array<mixed>
      */
     /** @return array<mixed> */
-    public static function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0, bool $allowScheduled = true): array
+    public static function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
     {
-        return \TinyCat\Status\Feed::public_status_cursor_page(\TinyCat\Status\Feed::public_status_id_query(null, $allowScheduled), $limit, $cursorAt, $cursorId);
+        return \TinyCat\Status\Feed::public_status_cursor_page(\TinyCat\Status\Feed::public_status_id_query(), $limit, $cursorAt, $cursorId);
     }
 
     /**
@@ -204,14 +168,14 @@ final class Feed
      * @return array<mixed>
      */
     /** @return array<mixed> */
-    public static function public_status_items_by_author_cursor(int $authorId, int $limit = 24, string $cursorAt = '', int $cursorId = 0, bool $allowScheduled = true): array
+    public static function public_status_items_by_author_cursor(int $authorId, int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
     {
         if ($authorId < 1) {
             return [];
         }
 
         return \TinyCat\Status\Feed::public_status_cursor_page(
-            \TinyCat\Status\Feed::public_status_author_id_query(null, $allowScheduled)->where('c.author_id = ?', $authorId),
+            \TinyCat\Status\Feed::public_status_author_id_query()->where('c.author_id = ?', $authorId),
             $limit,
             $cursorAt,
             $cursorId
@@ -241,8 +205,7 @@ final class Feed
         string $tag,
         int $limit = 24,
         string $cursorAt = '',
-        int $cursorId = 0,
-        bool $allowScheduled = true
+        int $cursorId = 0
     ): array
     {
         $tag = \TinyCat\Status\Tags::status_tag_normalize($tag);
@@ -257,7 +220,7 @@ final class Feed
             return [];
         }
 
-        $query = \TinyCat\Status\Feed::public_status_id_query(null, $allowScheduled)
+        $query = \TinyCat\Status\Feed::public_status_id_query()
             ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
             ->where('ct.term_id = ?', $termId);
 
@@ -284,17 +247,14 @@ final class Feed
         );
     }
 
-    /** @param array<string, mixed>|null $viewer  * @return array<mixed>|null
-     */
-    /** @param array<string, mixed>|null $viewer
-     * @return array<string, mixed>|null */
-    public static function public_status_item(int $id, ?array $viewer = null, bool $allowScheduled = true): ?array
+    /** @return array<string, mixed>|null */
+    public static function public_status_item(int $id): ?array
     {
         if ($id < 1) {
             return null;
         }
 
-        return \TinyCat\Status\Feed::public_status_query($viewer, $allowScheduled)
+        return \TinyCat\Status\Feed::public_status_query()
             ->where('c.id = ?', $id)
             ->limit(1)
             ->one();

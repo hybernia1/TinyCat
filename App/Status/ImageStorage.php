@@ -10,7 +10,6 @@ use FilesystemIterator;
 use SplFileInfo;
 use InvalidArgumentException;
 use RuntimeException;
-use LengthException;
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -75,49 +74,29 @@ final class ImageStorage
         }
 
         $mime = strtolower((string) $info['mime']);
-        $source = self::createSource($tmpName, $mime);
+        $source = \TinyCat\Security\Images::image_open($tmpName, $mime);
 
         if (!$source instanceof GdImage) {
             throw new RuntimeException('Uploaded image could not be read.');
         }
 
-        if ($mime === 'image/jpeg') {
-            $source = \TinyCat\Security\Images::image_apply_orientation($source, $tmpName);
-        }
-
-        $canvas = self::resize($source);
-        imagedestroy($source);
+        try { $canvas = self::resize($source); }
+        finally { imagedestroy($source); }
 
         $yearMonth = date('Y/m');
         $directory = \TinyCat\Support\Paths::basePath(self::BASE_DIRECTORY . '/' . str_replace('/', DIRECTORY_SEPARATOR, $yearMonth));
 
-        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
             imagedestroy($canvas);
             throw new RuntimeException('Could not create image directory.');
         }
 
         $filename = bin2hex(random_bytes(16)) . '.webp';
         $target = $directory . DIRECTORY_SEPARATOR . $filename;
-        $written = false;
-
-        foreach ([82, 76, 70, 64, 58, 52, 46, 40] as $quality) {
-            if (!imagewebp($canvas, $target, $quality)) {
-                continue;
-            }
-
-            $written = true;
-            if ((int) filesize($target) <= $maxSize) {
-                break;
-            }
-        }
-
-        imagedestroy($canvas);
-
-        if (!$written || !is_file($target) || (int) filesize($target) > $maxSize) {
-            if (is_file($target)) {
-                @unlink($target);
-            }
-            throw new LengthException('The image could not be compressed to the configured limit.');
+        try {
+            \TinyCat\Security\Images::image_write_webp($canvas, $target, [82, 76, 70, 64, 58, 52, 46, 40], $maxSize);
+        } finally {
+            imagedestroy($canvas);
         }
 
         $relativePath = $yearMonth . '/' . $filename;
@@ -236,16 +215,6 @@ final class ImageStorage
         return ['changed' => $changed, 'has_more' => $changed >= $limit];
     }
 
-    private static function createSource(string $path, string $mime): GdImage|false
-    {
-        return match ($mime) {
-            'image/jpeg' => @imagecreatefromjpeg($path),
-            'image/png' => @imagecreatefrompng($path),
-            'image/webp' => @imagecreatefromwebp($path),
-            default => false,
-        };
-    }
-
     private static function resize(GdImage $source): GdImage
     {
         $sourceWidth = imagesx($source);
@@ -253,16 +222,7 @@ final class ImageStorage
         $scale = min(1, self::MAX_DIMENSION / max($sourceWidth, $sourceHeight));
         $width = max(1, (int) round($sourceWidth * $scale));
         $height = max(1, (int) round($sourceHeight * $scale));
-        $canvas = imagecreatetruecolor($width, $height);
-
-        imagealphablending($canvas, false);
-        imagesavealpha($canvas, true);
-        $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
-        if ($transparent === false) { throw new RuntimeException('Unable to allocate image background.'); }
-        imagefill($canvas, 0, 0, $transparent);
-        imagecopyresampled($canvas, $source, 0, 0, 0, 0, $width, $height, $sourceWidth, $sourceHeight);
-
-        return $canvas;
+        return \TinyCat\Security\Images::image_resample($source, $width, $height);
     }
 
     private static function absolutePath(string $path): string

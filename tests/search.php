@@ -67,7 +67,7 @@ try {
     $assert(!in_array(30000, $ids, true), 'New posts before the cursor cannot shift or duplicate the continuation.');
     $assert($ids[0] === 20003 && $ids[1] === 10025 && end($ids) === 20000, 'Body and link matches share newest-first ordering, including the oldest history.');
     $assert(count(array_unique($ids)) === count($ids), 'Matching body and multiple links produce one post.');
-    $assert(!in_array(20001, $ids, true) && !in_array(20002, $ids, true), 'Inactive authors and scheduled posts stay hidden.');
+    $assert(!in_array(20001, $ids, true) && !in_array(20002, $ids, true), 'Inactive authors and future-dated records stay hidden.');
     foreach (['quartz"', '"quartz"', '<quartz>', '"<quartz>"'] as $decorated) {
         $assert(array_column(Queries::collection($decorated)['items'], 'id') === array_column(Queries::collection('quartz')['items'], 'id'), 'Quotes and angle brackets do not block word matches.');
     }
@@ -92,12 +92,12 @@ try {
     $assert(Queries::public_search_suggestions('nebula')['content'] === [], 'Autocomplete never queries posts.');
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Guests count only published posts from active authors.');
     \TinyCat\Users\Authentication::reset(['id' => 1, 'role' => 'admin'], true);
-    $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 2, 'Admins also count scheduled posts, matching the tag page.');
-    $assert(Queries::collection('nebula', 'tags')['items'][0]['posts_count'] === 2, 'Tag results share autocomplete counts.');
+    $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Admins use the same published tag counts as public readers.');
+    $assert(Queries::collection('nebula', 'tags')['items'][0]['posts_count'] === 1, 'Tag results share autocomplete counts.');
     \TinyCat\Users\Authentication::reset(['id' => 1, 'role' => 'user'], true);
-    $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 2, 'Authors count their own scheduled posts.');
+    $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Authors use the same published tag counts as public readers.');
     \TinyCat\Users\Authentication::reset(['id' => 2, 'role' => 'user'], true);
-    $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, "Other users cannot count someone else's scheduled posts.");
+    $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, "All viewers use the same published tag counts.");
     \TinyCat\Users\Authentication::reset(null, true);
     \TinyCat\Http\Session::start();
     $_SESSION['_tinycat_search_guard'] = ['count' => 7];

@@ -118,6 +118,19 @@ final class Query
         return Connection::value($this->sql(), $this->params);
     }
 
+    /** Count rows/groups without builder pagination or ordering and without mutation.
+     * An equivalent base SELECT (same bindings) can omit expensive display projections. */
+    public function count(?string $baseSql = null): int
+    {
+        $query = clone $this;
+        if ($baseSql !== null) {
+            $baseSql = rtrim(trim($baseSql), ';');
+            if ($baseSql === '') { throw new InvalidArgumentException('Count SQL cannot be empty.'); }
+            $query->baseSql = $baseSql;
+        }
+        return (int) Connection::value('SELECT COUNT(*) FROM (' . $query->buildSql(false) . ') counted_rows', $query->params);
+    }
+
     private function sql(): string
     {
         return $this->buildSql(true);

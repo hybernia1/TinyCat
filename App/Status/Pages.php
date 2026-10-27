@@ -73,7 +73,6 @@ final class Pages
         $detail = ViewData::status_prepare_detail_view($item, $authUser);
         $item = $detail['item'];
         $comments = $detail['comments'];
-        $scheduled = Posts::status_is_scheduled($item);
 
         $statusTitle = ViewData::status_meta_title($item);
         $statusStructuredImage = Images::status_image_jsonld($item) ?? (ViewData::status_meta_link_image($item) ?: null);
@@ -92,7 +91,6 @@ final class Pages
                 'image_height' => (int) ($item['image_height'] ?? 0),
                 'image_alt' => $statusImageUrl !== '' ? Images::status_image_alt_text($item) : '',
                 'type' => 'article',
-                'robots' => $scheduled ? 'noindex,nofollow' : '',
                 'published_time' => (string) ($item['published_at'] ?? ''),
                 'author' => (string) ($item['author_name'] ?? ''),
                 'jsonld' => array_filter([

@@ -115,6 +115,9 @@ check(document.getElementById("scheduler-filter-modal").querySelectorAll("input"
 const schedulerPageForm = schedulerRoot.querySelectorAll("form").find(form => form.className.includes("admin-per-page-form"));
 check(schedulerPageForm.querySelectorAll("input").every(field => field.getAttribute("name") !== "per_page"), "The scheduler page-size form sends no duplicate hidden per_page value.");
 const schedulerDetail = T.scheduler.modal(new URL("https://tinycat.test/api/scheduler/runs/1"), { data: { item: Object.assign({}, schedulerModel.runs[0], { sources: [{ source_name: "Fixture RSS source", status: "interrupted", error: "<b>source failure</b>" }] }) } }, "scheduler-run-detail-fixture");
+const skippedDetail = T.scheduler.modal(new URL("https://tinycat.test/api/scheduler/runs/1"), { data: { item: Object.assign({}, schedulerModel.runs[0], { summary: { skipped_items: [{ source_id: 7, source_name: "Skipped source", item_hash: "fixture-item-hash", code: "blocked_url", params: { host: "<b>blocked.example</b>" } }] } }) } }, "scheduler-skipped-fixture");
+check(skippedDetail.textContent.includes("Skipped source") && skippedDetail.textContent.includes("fixture-item-hash"), "Skipped feed diagnostics identify the source and item in the scheduler detail.");
+check(skippedDetail.textContent.includes(T.i18n.t("moderation.messages.blocked_url", { host: "<b>blocked.example</b>" })) && skippedDetail.querySelectorAll("b").length === 0, "Content rejection reasons are localized with parameters and rendered as text.");
 check(schedulerDetail.textContent.includes("<img src=x onerror=bad>") && schedulerDetail.querySelectorAll("img").length === 0, "Scheduler errors render as literal text in the standard detail modal.");
 check(schedulerDetail.textContent.includes("Fixture RSS source") && schedulerDetail.textContent.includes(T.ui.text("bots.run_statuses.interrupted")) && schedulerDetail.textContent.includes("<b>source failure</b>") && schedulerDetail.querySelectorAll("b").length === 0, "The common run modal renders linked source states and escapes their diagnostic errors.");
 check(!schedulerRoot.textContent.includes("<img src=x onerror=bad>") && schedulerRoot.querySelector('[data-modal-url="/api/scheduler/runs/1"]'), "Run history opens details lazily through the standard resource modal.");
@@ -333,8 +336,8 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   statusForm.closest = selector => selector === "form[data-status-form]" ? statusForm : null;
   statusForm.elements = { namedItem: name => statusForm.fields.find(field => field.name === name) || null };
   statusForm.fields.forEach(field => { field.dataset = {}; });
-  await handlers.submit[0]({ target: statusForm, preventDefault() {}, submitter: { name: "schedule_post", value: "1" } });
-  check(sent.options.body.get("body") === "Retained draft" && sent.options.body.get("schedule_post") === "1", "Actual status submit captures fields and the submitter before controls become disabled.");
+  await handlers.submit[0]({ target: statusForm, preventDefault() {}, submitter: { name: "submit_action", value: "publish" } });
+  check(sent.options.body.get("body") === "Retained draft" && sent.options.body.get("submit_action") === "publish", "Actual status submit captures fields and the submitter before controls become disabled.");
   check(statusForm.fields.every(field => !field.disabled) && !statusForm.dataset.statusBusy, "Actual status submit restores controls after the JSON result.");
   let notify = 0;
   T.toasts.show = () => { notify++; };

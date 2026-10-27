@@ -59,24 +59,44 @@ final class Importer
      */
     private static function runScheduledTask(array $context): array
     {
-        $limit = max(1, min(100, (int) ($context['options']['bot_limit'] ?? 20)));
-        $results = self::runDueSources($limit, (int) ($context['scheduler_run_id'] ?? 0));
-        $summary = [];
+        $limit = (int) ($context['options']['bot_limit'] ?? 20);
+        $runId = (int) ($context['scheduler_run_id'] ?? 0);
+        $sourceId = (int) ($context['options']['source_id'] ?? 0);
+        if ($sourceId > 0) {
+            $source = \TinyCat\Database\Connection::one(
+                'SELECT bs.*, u.username, u.status AS user_status FROM bot_sources bs
+                 INNER JOIN users u ON u.id = bs.bot_user_id
+                 WHERE bs.id = ? AND bs.enabled = 1 AND u.role = ? AND u.status = ?',
+                [$sourceId, 'bot', 'active']
+            );
+            $results = [$source !== null ? self::runSource($source, true, $runId) : ['source_id' => $sourceId, 'status' => 'skipped']];
+        } else {
+            $results = self::runDueSources($limit, $runId);
+        }
+        return self::scheduledResult($results);
+    }
 
+    /** @param list<array<string, mixed>> $results
+     * @return array<string, mixed> */
+    private static function scheduledResult(array $results): array
+    {
+        $summary = [];
+        $skipped = [];
+        $error = '';
         foreach ($results as $result) {
             $status = (string) ($result['status'] ?? 'unknown');
             $summary[$status] = (int) ($summary[$status] ?? 0) + 1;
+            if ($error === '' && !empty($result['error'])) { $error = (string) $result['error']; }
+            foreach ((array) ($result['skipped_items'] ?? []) as $item) {
+                $skipped[] = ['source_id' => (int) $result['source_id']] + $item;
+            }
         }
-
-        $failed = ($summary['error'] ?? 0) > 0;
-        return [
-            'ok' => !$failed,
-            'status' => $failed ? 'failed' : 'completed',
-            'limit' => $limit,
-            'count' => count($results),
-            'summary' => $summary,
-            'results' => $results,
-        ];
+        return \TinyCat\Scheduler\Tasks::result(
+            ($summary['error'] ?? 0) > 0 ? 'failed' : 'completed',
+            count($results), (int) ($summary['posted'] ?? 0),
+            details: ['summary' => $summary, 'skipped_items' => $skipped],
+            error: $error, results: $results
+        );
     }
 
     private static function normalizeFeedUrl(string $url): string
@@ -182,18 +202,12 @@ final class Importer
     }
 
     /** @param list<array<mixed>> $preparedLinks */
-    private static function persistFeedPost(int $sourceId, int $botUserId, string $feedHash, string $itemHash, string $body, array $preparedLinks, int $runId, int $itemsSeen): int
+    private static function persistFeedPost(int $sourceId, int $botUserId, string $feedHash, string $itemHash, \TinyCat\Status\PostCreation $draft, array $preparedLinks, int $runId, int $itemsSeen): int
     {
         $publishedAt = \TinyCat\Support\Dates::dateDb();
-        return \TinyCat\Database\Transactions::run(static function () use ($sourceId, $botUserId, $feedHash, $itemHash, $body, $preparedLinks, $runId, $itemsSeen, $publishedAt): int {
+        return \TinyCat\Database\Transactions::run(static function () use ($sourceId, $botUserId, $feedHash, $itemHash, $draft, $preparedLinks, $runId, $itemsSeen, $publishedAt): int {
             self::recordFeedHistory($botUserId, $feedHash, $itemHash, $publishedAt);
-            $contentId = (int) \TinyCat\Database\Connection::insert('content', [
-                'body' => $body,
-                'author_id' => $botUserId,
-                'published_at' => $publishedAt,
-            ]);
-            \TinyCat\Status\Tags::status_sync_tags($contentId, \TinyCat\Status\Tags::status_tags_from_text($body));
-            \TinyCat\Status\Links::persistLinks($contentId, $preparedLinks);
+            $contentId = \TinyCat\Status\PostCreation::create($botUserId, $draft, $preparedLinks);
             \TinyCat\Database\Connection::update('bot_sources', ['last_imported_at' => $publishedAt], ['id' => $sourceId]);
             self::finishSourceRun($runId, 'posted', $itemsSeen);
             return $contentId;
@@ -526,8 +540,7 @@ final class Importer
             '{{categories}}' => implode(', ', $categories),
             '#{categories}' => self::feedCategoryTags($categories),
         ];
-        $body = trim(preg_replace("/\n{3,}/", "\n\n", strtr((string) ($source['post_template'] ?? self::defaultSourceTemplate()), $values)) ?? '');
-        return function_exists('mb_substr') ? mb_substr($body, 0, 2000, 'UTF-8') : substr($body, 0, 2000);
+        return trim(preg_replace("/\n{3,}/", "\n\n", strtr((string) ($source['post_template'] ?? self::defaultSourceTemplate()), $values)) ?? '');
     }
 
     /**
@@ -579,8 +592,6 @@ final class Importer
     public static function runSource(array $source, bool $force = false, int $schedulerRunId = 0): array
     {
         $sourceId = (int) ($source['id'] ?? 0);
-        $botUserId = (int) ($source['bot_user_id'] ?? 0);
-        $feedUrl = (string) ($source['feed_url'] ?? '');
         $interval = max(5, min(43200, (int) ($source['interval_minutes'] ?? 60)));
         $now = \TinyCat\Support\Dates::dateDb();
         $next = date('Y-m-d H:i:s', time() + $interval * 60);
@@ -613,41 +624,71 @@ final class Importer
                 throw new RuntimeException('RSS feed contains no usable items.');
             }
 
-            $feedHash = self::feedSourceHash($feedUrl);
+            return self::importItems($source, $items, $runId);
+        } catch (Throwable $exception) {
+            return self::sourceFailure($sourceId, $runId, $itemsSeen, $exception);
+        }
+    }
+
+    /**
+     * Rejections are diagnostic only: never claim them in successful feed history.
+     * Re-evaluate on later runs so policy or template changes can admit the item.
+     *
+     * @param array<string, mixed> $source
+     * @param list<array<string, mixed>> $items
+     * @return array<string, mixed>
+     */
+    private static function importItems(array $source, array $items, int $runId): array
+    {
+        $sourceId = (int) ($source['id'] ?? 0);
+        $botUserId = (int) ($source['bot_user_id'] ?? 0);
+        $feedHash = self::feedSourceHash((string) ($source['feed_url'] ?? ''));
+        $itemsSeen = count($items);
+        $skippedItems = [];
+
+        try {
             $itemHashes = array_map(static fn (array $item): string => hash('sha256', (string) ($item['guid'] ?? '')), $items);
             $historyItemHashes = self::feedHistoryHashes($botUserId, $feedHash, $itemHashes);
 
             foreach ($items as $item) {
-                $itemGuid = (string) ($item['guid'] ?? '');
-                $hash = hash('sha256', $itemGuid);
-                if (isset($historyItemHashes[$hash])) {
-                    continue;
-                }
+                $hash = hash('sha256', (string) ($item['guid'] ?? ''));
+                if (isset($historyItemHashes[$hash])) { continue; }
 
-                $body = self::renderPost($source, $item);
-                if ($body === '') {
-                    throw new RuntimeException('Post template produced an empty post.');
+                $draft = \TinyCat\Status\PostCreation::fromText(self::renderPost($source, $item));
+                $rejection = $draft->rejection;
+                if ($rejection === null && $draft->body === '') {
+                    $rejection = ['code' => 'status_required', 'params' => []];
+                }
+                if ($rejection !== null) {
+                    $skippedItems[] = ['item_hash' => $hash, 'code' => $rejection['code'], 'params' => $rejection['params']];
+                    // Suppress repeated GUIDs within this run, without persisting a claim.
+                    $historyItemHashes[$hash] = true;
+                    continue;
                 }
 
                 $feedLink = \TinyCat\Status\LinkParser::fromRaw((string) ($item['url'] ?? ''));
                 $preparedLinks = \TinyCat\Status\Links::prepareLinks(
-                    \TinyCat\Status\Links::status_links_from_text($body),
+                    $draft->links,
                     (string) ($feedLink['url_hash'] ?? ''),
                     (string) ($item['image_url'] ?? '')
                 );
-                $contentId = self::persistFeedPost($sourceId, $botUserId, $feedHash, $hash, $body, $preparedLinks, $runId, $itemsSeen);
-                $historyItemHashes[$hash] = true;
-
-                return ['source_id' => $sourceId, 'status' => 'posted', 'content_id' => $contentId];
+                $contentId = self::persistFeedPost($sourceId, $botUserId, $feedHash, $hash, $draft, $preparedLinks, $runId, $itemsSeen);
+                return ['source_id' => $sourceId, 'status' => 'posted', 'content_id' => $contentId, 'skipped_items' => $skippedItems];
             }
 
             self::finishSourceRun($runId, 'current', $itemsSeen);
-            return ['source_id' => $sourceId, 'status' => 'current'];
+            return ['source_id' => $sourceId, 'status' => 'current', 'skipped_items' => $skippedItems];
         } catch (Throwable $exception) {
-            $error = self::feedText($exception->getMessage(), 500);
-            \TinyCat\Database\Connection::update('bot_sources', ['last_error' => $error], ['id' => $sourceId]);
-            self::finishSourceRun($runId, 'error', $itemsSeen, $error);
-            return ['source_id' => $sourceId, 'status' => 'error', 'error' => $error];
+            return self::sourceFailure($sourceId, $runId, $itemsSeen, $exception) + ['skipped_items' => $skippedItems];
         }
+    }
+
+    /** @return array<string, mixed> */
+    private static function sourceFailure(int $sourceId, int $runId, int $itemsSeen, Throwable $exception): array
+    {
+        $error = self::feedText($exception->getMessage(), 500);
+        \TinyCat\Database\Connection::update('bot_sources', ['last_error' => $error], ['id' => $sourceId]);
+        self::finishSourceRun($runId, 'error', $itemsSeen, $error);
+        return ['source_id' => $sourceId, 'status' => 'error', 'error' => $error];
     }
 }

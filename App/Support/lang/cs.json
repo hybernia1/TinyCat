@@ -45,6 +45,7 @@
     "updated": "Upraveno",
     "route": "Route",
     "file": "Soubor",
+    "image_prepare_failed": "Vybraný obrázek se nepodařilo připravit k nahrání.",
     "image": "Obrázek",
     "table": "Tabulka",
     "clean_api": "Clean API",

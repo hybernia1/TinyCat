@@ -41,30 +41,18 @@ final class Actions
             \TinyCat\Http\Response::validation(['status' => [\TinyCat\Http\Response::issue('user_status_invalid', \TinyCat\Support\Localization::t('users.validation.status_invalid'))]]);
         }
 
-        try {
-            $avatar = \TinyCat\Users\Avatars::admin_user_avatar_change($account);
-        } catch (InvalidArgumentException $exception) {
-            \TinyCat\Http\Response::error($exception->getMessage(), 422, 'avatar_invalid');
-        }
-
         $payload = [
             'status' => $status,
             'bio' => \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('bio', ''), 500),
         ];
-        if ($avatar['changed']) {
-            $payload['avatar_exists'] = $avatar['uploaded'] ? 1 : 0;
-            $payload['updated_at'] = \TinyCat\Users\Avatars::user_avatar_updated_at($account);
-        }
-
-        \TinyCat\Database\Transactions::run(static function () use ($payload, $id, $status): void {
-            \TinyCat\Database\Connection::update('users', $payload, ['id' => $id]);
-            if ($status !== 'active') {
-                \TinyCat\Database\Connection::update('bot_sources', ['enabled' => 0], ['bot_user_id' => $id]);
-            }
-        });
-
-        if ($avatar['changed'] && !$avatar['uploaded']) {
-            \TinyCat\Users\Avatar::delete($id);
+        try {
+            \TinyCat\Users\Avatars::admin_user_avatar_save($account, $payload, static function () use ($id, $status): void {
+                if ($status !== 'active') {
+                    \TinyCat\Database\Connection::update('bot_sources', ['enabled' => 0], ['bot_user_id' => $id]);
+                }
+            });
+        } catch (InvalidArgumentException $exception) {
+            \TinyCat\Http\Response::error($exception->getMessage(), 422, 'avatar_invalid');
         }
 
         $response = \TinyCat\Bots\Administration::accountsPayload($id);

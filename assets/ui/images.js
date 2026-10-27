@@ -146,7 +146,7 @@ import "./toasts.js";
           return;
         }
         input.value = "";
-        TinyCat.toasts.show("The selected image could not be prepared for upload.", "danger");
+        TinyCat.toasts.show(TinyCat.i18n.t("common.image_prepare_failed"), "danger");
       }
     });
   }

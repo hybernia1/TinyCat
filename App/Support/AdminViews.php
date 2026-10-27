@@ -56,11 +56,6 @@ final class AdminViews
         ];
     }
 
-    public static function admin_search_like(string $value): string
-    {
-        return '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value) . '%';
-    }
-
     public static function admin_filter_text(string $value, int $limit = 120): string
     {
         $value = trim((string) preg_replace('/\s+/', ' ', $value));

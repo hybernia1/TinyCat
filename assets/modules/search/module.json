@@ -21,6 +21,8 @@
       "notifications.load_more",
       "public.search_captcha_required",
       "public.search_captcha_title",
+      "public.search_all",
+      "public.search_min",
       "public.search_content",
       "public.search_empty",
       "public.search_length",

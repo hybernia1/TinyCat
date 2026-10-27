@@ -143,11 +143,13 @@ $seed->prepare('INSERT INTO password_reset_tokens (user_id, token_hash, expires_
 $assert($status === 200 && $payload['data']['password_changed'], 'Recovery consumes the token and updates the password atomically.');
 [$status] = $request('POST', '/api/users/password-resets/confirm', ['token' => 'fixture-recovery-token', 'password' => 'Other-password-46', 'password_confirm' => 'Other-password-46'], '', $csrf);
 $assert($status === 422, 'A consumed recovery token cannot be reused through the API.');
-$seed->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (1000, 2, 'Scheduled private post', '2030-01-01 12:00:00')");
+$seed->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (1000, 2, 'Future timestamp fixture', '2030-01-01 12:00:00')");
 [$status] = $request('GET', '/api/statuses/1000');
-$assert($status === 404, 'Scheduled statuses remain hidden from anonymous API readers.');
+$assert($status === 404, 'Future-dated data remains hidden from public API readers.');
 [$status, $payload] = $request('GET', '/api/statuses/1000', null, 'user');
-$assert($status === 200 && $payload['data']['item']['scheduled'], 'The author can read the scheduled resource.');
+$assert($status === 404, 'Authors have no special access to future-dated records.');
+[$status] = $request('GET', '/api/statuses/1000', null, 'admin');
+$assert($status === 404, 'Administrators have no scheduling-specific visibility override.');
 $insert = $seed->prepare('INSERT INTO notifications (user_id, actor_id, type, notification_key, created_at, updated_at) VALUES (2, 1, ?, ?, ?, ?)');
 foreach (range(1, 45) as $number) { $insert->execute(['follow', 'page-fixture-' . $number, '2026-02-01 00:00:00', '2026-02-01 00:00:00']); }
 [$status, $payload] = $request('GET', '/api/notifications', null, 'user');

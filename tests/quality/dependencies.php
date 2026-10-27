@@ -25,7 +25,7 @@ foreach ($graph as $owner => $targets) {
         if (str_starts_with($owner, 'Database\\') && !preg_match('/^(?:Database|Support)\\\\/', $target)) {
             $failures[] = "Database infrastructure imports domain code: {$owner} -> {$target}";
         }
-        if (in_array($owner, ['Status\\Posts', 'Status\\Comments', 'Users\\Accounts', 'Users\\Profiles'], true)
+        if (in_array($owner, ['Status\\Posts', 'Status\\PostCreation', 'Status\\Comments', 'Users\\Accounts', 'Users\\Profiles'], true)
             && (str_starts_with($target, 'Http\\') || str_ends_with($target, '\\Actions'))) {
             $failures[] = "Domain service imports HTTP orchestration: {$owner} -> {$target}";
         }

@@ -44,7 +44,7 @@ final class Tags
         }
 
         return \TinyCat\Support\Cache::rememberArray($cacheKey, 3600, static function () use ($limit, $since): array {
-            $feedIndex = (string) \TinyCat\Settings\Store::config('database.driver', 'mysql') === 'mysql'
+            $feedIndex = \TinyCat\Database\Connection::driver() === 'mysql'
                 ? ' FORCE INDEX (content_sidebar_index)'
                 : '';
             $rows = \TinyCat\Database\Queries::db_select(

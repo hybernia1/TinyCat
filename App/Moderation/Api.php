@@ -13,7 +13,7 @@ final class Api
         $api->get('/moderation/report-options', static function (Request $r): array {
             $r->validated(['id' => 'required|integer']);
             $item = \TinyCat\Status\Feed::public_status_item((int) $r->input('id'));
-            if ($item === null || !\TinyCat\Status\Posts::status_can_view($item, \TinyCat\Users\Authentication::auth())) {
+            if ($item === null || !\TinyCat\Status\Posts::status_can_view($item)) {
                 \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
             }
             return ['reasons' => array_keys(\TinyCat\Status\Posts::status_report_reasons())];

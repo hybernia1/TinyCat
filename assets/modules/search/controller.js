@@ -111,7 +111,7 @@ import "../../ui/fields.js";
 
     link = globalSearchItem({
       type: "search",
-      title: (root.dataset.searchAll || "Search all") + ": " + query,
+      title: (root.dataset.searchAll || TinyCat.i18n.t("public.search_all")) + ": " + query,
       excerpt: "",
       url: "/search?q=" + encodeURIComponent(query)
     });
@@ -138,9 +138,9 @@ import "../../ui/fields.js";
       return;
     }
 
-    renderGlobalSearchSection(root, box, root.dataset.searchTags || "Tags", tags);
-    renderGlobalSearchSection(root, box, root.dataset.searchUsers || "Profiles", users);
-    renderGlobalSearchSection(root, box, root.dataset.searchContent || "Posts", content);
+    renderGlobalSearchSection(root, box, root.dataset.searchTags || TinyCat.i18n.t("public.search_tags"), tags);
+    renderGlobalSearchSection(root, box, root.dataset.searchUsers || TinyCat.i18n.t("public.search_users"), users);
+    renderGlobalSearchSection(root, box, root.dataset.searchContent || TinyCat.i18n.t("public.search_content"), content);
     renderGlobalSearchAll(root, box, query);
     box.hidden = false;
   }
@@ -153,7 +153,7 @@ import "../../ui/fields.js";
     var details = searchCaptchaDetails(error);
     var captcha = details.captcha;
     var verifyUrl = details.verify_url || "/api/security/challenges/search";
-    var message = (error && error.data && error.data.message) || root.dataset.searchCaptchaRequired || "Please complete the security check.";
+    var message = (error && error.data && error.data.message) || root.dataset.searchCaptchaRequired || TinyCat.i18n.t("public.search_captcha_required");
     var modal = qs("#global-search-captcha-modal");
     var panel;
     var form;
@@ -194,13 +194,13 @@ import "../../ui/fields.js";
     qs("[data-modal-close]", modal).textContent = "×";
 
     if (title) {
-      title.textContent = root.dataset.searchCaptchaTitle || "Security check";
+      title.textContent = root.dataset.searchCaptchaTitle || TinyCat.i18n.t("public.search_captcha_title");
     }
 
     if (form) {
       body = createElement("div", "muted", message);
       footer = createElement("div", "modal-footer justify-end");
-      submit = createElement("button", "btn btn-primary", root.dataset.searchCaptchaSubmit || "OK");
+      submit = createElement("button", "btn btn-primary", root.dataset.searchCaptchaSubmit || TinyCat.i18n.t("common.confirm"));
       submit.type = "submit";
       footer.appendChild(submit);
       form.action = verifyUrl;
@@ -257,7 +257,7 @@ import "../../ui/fields.js";
     }
 
     if (query.length < 2) {
-      globalSearchShowMessage(root, root.dataset.searchMin || "Type at least 2 characters.");
+      globalSearchShowMessage(root, root.dataset.searchMin || TinyCat.i18n.t("public.search_min"));
       return;
     }
 
@@ -304,7 +304,7 @@ import "../../ui/fields.js";
         }
 
         if (requestId === root.__tinycatSearchRequest) {
-          globalSearchShowMessage(root, (error && error.data && error.data.message) || root.dataset.searchEmpty || "Nothing found.");
+          globalSearchShowMessage(root, (error && error.data && error.data.message) || root.dataset.searchEmpty || TinyCat.i18n.t("public.search_empty"));
         }
       })
       .finally(function () {
@@ -348,7 +348,7 @@ import "../../ui/fields.js";
     root.addEventListener("submit", function (event) {
       if (input.value.trim().length < 2) {
         event.preventDefault();
-        globalSearchShowMessage(root, root.dataset.searchMin || "Type at least 2 characters.");
+        globalSearchShowMessage(root, root.dataset.searchMin || TinyCat.i18n.t("public.search_min"));
       }
     });
   }

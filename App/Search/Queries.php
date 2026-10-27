@@ -24,11 +24,6 @@ final class Queries
         return self::length($query) < 2 || self::length($query) > self::MAX_QUERY_LENGTH;
     }
 
-    public static function like(string $text): string
-    {
-        return strtr($text, ['!' => '!!', '%' => '!%', '_' => '!_']);
-    }
-
     /** @return array<string, mixed> */
     public static function public_search_empty_result(string $query): array
     {
@@ -98,7 +93,7 @@ final class Queries
 
         $tags = [];
 
-        $rows = Connection::all("SELECT id, name FROM terms WHERE name LIKE ? ESCAPE '!' ORDER BY name ASC LIMIT " . max(1, min(12, $limit)), [self::like($tagQuery) . '%']);
+        $rows = Connection::all("SELECT id, name FROM terms WHERE name LIKE ? ESCAPE '!' ORDER BY name ASC LIMIT " . max(1, min(12, $limit)), [Connection::escapeLike($tagQuery) . '%']);
         foreach (self::tagCounts($rows) as $tag) {
             $name = \TinyCat\Status\Tags::status_tag_normalize((string) ($tag['name'] ?? ''));
 
@@ -137,7 +132,7 @@ final class Queries
                 FROM users u'
         )
             ->where('u.status = ?', 'active')
-            ->where("u.username LIKE ? ESCAPE '!'", self::like($usernameQuery) . '%')
+            ->where("u.username LIKE ? ESCAPE '!'", Connection::escapeLike($usernameQuery) . '%')
             ->order('u.username ASC, u.id ASC')
             ->limit($limit)
             ->all() as $user) {
@@ -195,7 +190,7 @@ final class Queries
         if ($words === []) { $words = [$query]; }
         $fulltext = [];
         $literal = [];
-        $mysql = Connection::get()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql';
+        $mysql = Connection::driver() === 'mysql';
         foreach ($words as $word) {
             if ($mysql && preg_match('/^[\p{L}\p{N}]{3,}$/u', $word) === 1) {
                 $fulltext[] = '+' . $word . '*';
@@ -211,7 +206,7 @@ final class Queries
         }
         foreach ($literal as $word) {
             $conditions[] = $text . " LIKE ? ESCAPE '!'";
-            $params[] = '%' . self::like($word) . '%';
+            $params[] = '%' . Connection::escapeLike($word) . '%';
         }
         return [implode(' AND ', $conditions), $params];
     }
@@ -225,7 +220,7 @@ final class Queries
         }
         $limit = max(1, min(51, $limit));
         [$body, $bodyParams] = self::textPredicate($query, 'c.body', 'c.body');
-        $linkText = Connection::get()->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql'
+        $linkText = Connection::driver() === 'mysql'
             ? "CONCAT_WS(' ', l.normalized_url, l.title, l.description)"
             : "COALESCE(l.normalized_url, '') || ' ' || COALESCE(l.title, '') || ' ' || COALESCE(l.description, '')";
         [$link, $linkParams] = self::textPredicate($query, 'l.normalized_url, l.title, l.description', '(' . $linkText . ')');
@@ -290,7 +285,7 @@ final class Queries
         $sql = 'SELECT * FROM (SELECT ' . ($tag ? 'id, name' : 'id, username, bio, avatar_exists, updated_at')
             . ', CASE WHEN ' . $column . ' = ? THEN 0 WHEN ' . $column . " LIKE ? ESCAPE '!' THEN 1 ELSE 2 END AS search_rank"
             . ' FROM ' . $table . ' WHERE ' . $where . $column . " LIKE ? ESCAPE '!') matches";
-        $params = [$needle, self::like($needle) . '%', '%' . self::like($needle) . '%'];
+        $params = [$needle, Connection::escapeLike($needle) . '%', '%' . Connection::escapeLike($needle) . '%'];
         $selection = new \TinyCat\Database\Query($sql, $params);
         if ((int) ($cursor['cursor_id'] ?? 0) > 0 && isset($cursor['cursor_rank'], $cursor['cursor_name'])) {
             $rank = (int) $cursor['cursor_rank'];

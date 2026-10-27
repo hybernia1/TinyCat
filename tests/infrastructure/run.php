@@ -95,5 +95,44 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     try { Connection::insert('records', ['name' => 'first']); } catch (PDOException $exception) {
         $assert(Connection::uniqueViolation($exception) && \TinyCat\Database\Connection::uniqueViolation($exception), 'Unique constraint handling is shared.');
     }
+    $configuration = \TinyCat\Support\Config::get();
+    $mismatched = $configuration;
+    $mismatched['database']['driver'] = 'mysql';
+    (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $mismatched);
+    try {
+        $assert(Connection::driver() === 'sqlite', 'Driver selection follows the injected connection rather than configuration.');
+        $assert(\TinyCat\Database\Schema::app_existing_tables(['records', 'missing']) === ['records'], 'Schema inspection uses the actual connection driver.');
+    } finally {
+        (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $configuration);
+    }
+    Connection::exec('CREATE TABLE query_items (id INTEGER PRIMARY KEY, category TEXT)');
+    Connection::exec("INSERT INTO query_items VALUES (1, 'a'), (2, 'a'), (3, 'a'), (4, 'b'), (5, 'b'), (6, 'c')");
+    $filtered = (new Query('SELECT id FROM query_items'))->whereIn('category', ['a', 'b'])->order('id DESC')->limit(2, 1);
+    $assert($filtered->count() === 5 && array_column($filtered->all(), 'id') === [4, 3], 'Counting ignores pagination without mutating the paginated data query.');
+    $grouped = (new Query('SELECT category, COUNT(*) AS total FROM query_items'))->group('category')->order('total DESC')->limit(1);
+    $assert($grouped->count() === 3 && count($grouped->all()) === 1, 'Grouped query counts count groups rather than source rows.');
+    $assert((new Query('SELECT DISTINCT category FROM query_items'))->count() === 3, 'Distinct projections retain their counting semantics.');
+    $assert((new Query('SELECT id FROM query_items'))->whereIn('id', [])->count() === 0, 'An empty IN filter safely counts zero rows.');
+    $displayCalls = 0;
+    $database->sqliteCreateFunction('display_value', static function (int $id) use (&$displayCalls): int { $displayCalls++; return $id; });
+    $display = (new Query('SELECT display_value(id) AS label FROM query_items'))->where('id > ?', 2)->limit(1);
+    $assert($display->count('SELECT id FROM query_items') === 4 && $displayCalls === 0, 'A lightweight count preserves filters without evaluating display projections.');
+    $assert(count($display->all()) === 1 && $displayCalls === 1, 'The original display projection remains available after counting.');
+    $literal = '100%_!';
+    Connection::exec('CREATE TABLE literal_search (label TEXT)');
+    Connection::insert('literal_search', ['label' => $literal]);
+    Connection::insert('literal_search', ['label' => '100X_!']);
+    $assert((new Query('SELECT label FROM literal_search'))->where("label LIKE ? ESCAPE '!'", Connection::escapeLike($literal))->count() === 1, 'LIKE escaping treats percent, underscore and the escape character literally.');
+    Connection::exec('CREATE TABLE atomic_values (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, value TEXT, extra INTEGER CHECK (extra >= 0))');
+    Connection::upsert('atomic_values', ['name' => 'one'], ['value' => 'initial', 'extra' => 7]);
+    $firstId = Connection::find('atomic_values', ['name' => 'one'])['id'];
+    Connection::upsert('atomic_values', ['name' => 'one'], ['value' => null]);
+    $saved = Connection::find('atomic_values', ['name' => 'one']);
+    $assert(Connection::count('atomic_values') === 1 && $saved['id'] === $firstId && $saved['value'] === null && $saved['extra'] === 7, 'Atomic upsert preserves row identity and omitted columns while allowing null data.');
+    $throws(static fn () => Connection::upsert('atomic_values', [], ['value' => 'x']), InvalidArgumentException::class);
+    $throws(static fn () => Connection::upsert('atomic_values', ['name' => null], ['value' => 'x']), InvalidArgumentException::class);
+    $throws(static fn () => Connection::upsert('atomic_values', ['name' => 'one'], ['name' => 'two']), InvalidArgumentException::class);
+    $throws(static fn () => Connection::upsert('atomic_values', ['name' => 'one'], ['extra' => -1]), PDOException::class);
+    $assert(Connection::find('atomic_values', ['name' => 'one'])['extra'] === 7, 'Non-unique constraint failures propagate without corrupting the existing upsert row.');
 }
 echo "PASS shared HTTP, session and database infrastructure ({$checks} checks)\n";

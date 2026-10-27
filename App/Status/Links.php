@@ -401,49 +401,22 @@ final class Links
             $sourceY = (int) floor(($height - $cropHeight) / 2);
         }
 
-        $canvas = imagecreatetruecolor($targetWidth, $targetHeight);
-        imagealphablending($canvas, false);
-        imagesavealpha($canvas, true);
-        $background = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
-        if ($background === false) { throw new RuntimeException('Unable to allocate image background.'); }
-        imagefill($canvas, 0, 0, $background);
-        imagecopyresampled(
-            $canvas,
-            $source,
-            0,
-            0,
-            $sourceX,
-            $sourceY,
-            $targetWidth,
-            $targetHeight,
-            $cropWidth,
-            $cropHeight
-        );
+        $canvas = \TinyCat\Security\Images::image_resample($source, $targetWidth, $targetHeight, $sourceX, $sourceY, $cropWidth, $cropHeight);
         imagedestroy($source);
 
-        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+        if (!is_dir($directory) && !@mkdir($directory, 0775, true) && !is_dir($directory)) {
             imagedestroy($canvas);
             return '';
         }
 
-        $temporary = $target . '.tmp-' . bin2hex(random_bytes(6));
-        $written = imagewebp($canvas, $temporary, 62);
-        imagedestroy($canvas);
-
-        if (!$written) {
-            @unlink($temporary);
-            return '';
-        }
-        if (is_file($target)) {
-            @unlink($temporary);
+        try {
+            \TinyCat\Security\Images::image_write_webp($canvas, $target, [62], keepExisting: true);
             return $localUrl;
-        }
-        if (!@rename($temporary, $target)) {
-            @unlink($temporary);
+        } catch (RuntimeException) {
             return '';
+        } finally {
+            imagedestroy($canvas);
         }
-
-        return $localUrl;
     }
 
     /** @return array{changed: int, has_more: bool} */

@@ -45,6 +45,7 @@
     "updated": "Mis à jour",
     "route": "Itinéraire",
     "file": "Fichier",
+    "image_prepare_failed": "Impossible de préparer l’image sélectionnée pour l’envoi.",
     "image": "Image",
     "table": "Tableau",
     "clean_api": "API de données",

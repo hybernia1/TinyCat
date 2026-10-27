@@ -105,7 +105,7 @@ import "../../ui/toasts.js";
           return;
         }
         input.value = "";
-        TinyCat.toasts.show("The selected image could not be prepared for upload.", "danger");
+        TinyCat.toasts.show(TinyCat.i18n.t("common.image_prepare_failed"), "danger");
         showOriginal();
       }
     });
@@ -113,10 +113,10 @@ import "../../ui/toasts.js";
     if (remove && form) {
       remove.addEventListener("click", async function () {
         var confirmed = await TinyCat.dialog.confirm({
-          title: root.dataset.avatarRemoveTitle || "Remove avatar",
-          message: root.dataset.avatarRemoveMessage || "Remove the current avatar?",
-          confirmLabel: root.dataset.avatarRemoveOk || "Remove",
-          cancelLabel: root.dataset.avatarRemoveCancel || "Cancel",
+          title: root.dataset.avatarRemoveTitle || TinyCat.i18n.t("account.remove_avatar_title"),
+          message: root.dataset.avatarRemoveMessage || TinyCat.i18n.t("account.remove_avatar_confirm"),
+          confirmLabel: root.dataset.avatarRemoveOk || TinyCat.i18n.t("common.remove"),
+          cancelLabel: root.dataset.avatarRemoveCancel || TinyCat.i18n.t("common.cancel"),
           variant: "danger"
         });
 

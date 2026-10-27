@@ -21,7 +21,6 @@ final class Resource
             'editable_body' => Mentions::mentions_for_editing((string) ($item['body'] ?? '')),
             'segments' => Segments::text((string) ($item['body'] ?? ''), array_column($links, 'url_hash')),
             'published_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
-            'scheduled' => Posts::status_is_scheduled($item),
             'edit_locked' => Posts::status_edit_locked($item) && !\TinyCat\Users\Profiles::user_is_admin($user),
             'context' => self::context($item),
             'login_url' => \TinyCat\Users\Login::auth_url_with_next('/login', Posts::status_url($id)),
