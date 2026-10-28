@@ -150,10 +150,11 @@ final class Pages
         }
 
         $current = Tags::tag_url($tag);
+        $archiveType = Feed::archive_type((string) Web::get('media', ''));
 
         $statusLimit = Feed::public_status_initial_page_limit();
         $nextStatusLimit = Feed::public_status_page_limit();
-        $statusItems = Feed::public_status_items_by_tag($tag, $statusLimit);
+        $statusItems = Feed::public_status_items_by_tag($tag, $statusLimit, '', 0, $archiveType);
         $indexableItems = $statusLimit >= 2 ? $statusItems : Feed::public_status_items_by_tag($tag, 2);
         $authUser = Authentication::auth();
         $statusItems = ViewData::status_prepare_items_view($statusItems, $authUser);
@@ -162,7 +163,7 @@ final class Pages
             'tag',
             $statusItems,
             $statusLimit,
-            ['tag' => $tag],
+            ['tag' => $tag, 'media' => $archiveType],
             $nextStatusLimit
         );
         $pageUrl = $current;
@@ -197,6 +198,6 @@ final class Pages
                 'robots' => count($indexableItems) >= 2 ? '' : 'noindex,follow',
                 'jsonld' => $tagStructuredData,
             ],
-        ], 'context' => compact('authUser', 'tag', 'statusItems', 'feedMore', 'tagFeedUrl')];
+        ], 'context' => compact('authUser', 'tag', 'statusItems', 'feedMore', 'tagFeedUrl', 'archiveType')];
     }
 }

@@ -5,6 +5,24 @@ namespace TinyCat\Status;
 
 final class Feed
 {
+    public static function archive_type(string $type): string
+    {
+        return in_array($type, ['images', 'video', 'audio', 'links', 'text'], true) ? $type : '';
+    }
+
+    private static function archive_query(\TinyCat\Database\Query $query, string $type): \TinyCat\Database\Query
+    {
+        $image = 'EXISTS (SELECT 1 FROM content_images fi WHERE fi.content_id = c.id)';
+        $link = 'EXISTS (SELECT 1 FROM content_links fl WHERE fl.content_id = c.id)';
+        return match (self::archive_type($type)) {
+            'images' => $query->where($image),
+            'video', 'audio' => $query->where('EXISTS (SELECT 1 FROM content_links fl INNER JOIN links l ON l.id = fl.link_id WHERE fl.content_id = c.id AND l.link_type = ?)', $type),
+            'links' => $query->where($link),
+            'text' => $query->where('NOT ' . $image . ' AND NOT ' . $link),
+            default => $query,
+        };
+    }
+
     public static function public_status_select_sql(): string
     {
         return "SELECT c.id,
@@ -60,6 +78,14 @@ final class Feed
         return self::public_status_apply_visibility(\TinyCat\Database\Queries::db_select(
             'SELECT c.id FROM content c' . $authorIndex . ' INNER JOIN users u ON u.id = c.author_id'
         )->where('u.status = ?', 'active'));
+    }
+
+    public static function public_status_tag_id_query(int $termId): \TinyCat\Database\Query
+    {
+        // Let selective tags start with (term_id, content_id), without forcing a global feed scan.
+        return self::public_status_apply_visibility(\TinyCat\Database\Queries::db_select(
+            'SELECT c.id FROM content_tags ct INNER JOIN content c ON c.id = ct.content_id INNER JOIN users u ON u.id = c.author_id'
+        )->where('ct.term_id = ?', $termId)->where('u.status = ?', 'active'));
     }
 
     public static function public_status_query(): \TinyCat\Database\Query
@@ -168,14 +194,14 @@ final class Feed
      * @return array<mixed>
      */
     /** @return array<mixed> */
-    public static function public_status_items_by_author_cursor(int $authorId, int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
+    public static function public_status_items_by_author_cursor(int $authorId, int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = ''): array
     {
         if ($authorId < 1) {
             return [];
         }
 
         return \TinyCat\Status\Feed::public_status_cursor_page(
-            \TinyCat\Status\Feed::public_status_author_id_query()->where('c.author_id = ?', $authorId),
+            self::archive_query(\TinyCat\Status\Feed::public_status_author_id_query()->where('c.author_id = ?', $authorId), $type),
             $limit,
             $cursorAt,
             $cursorId
@@ -205,7 +231,8 @@ final class Feed
         string $tag,
         int $limit = 24,
         string $cursorAt = '',
-        int $cursorId = 0
+        int $cursorId = 0,
+        string $type = ''
     ): array
     {
         $tag = \TinyCat\Status\Tags::status_tag_normalize($tag);
@@ -220,11 +247,9 @@ final class Feed
             return [];
         }
 
-        $query = \TinyCat\Status\Feed::public_status_id_query()
-            ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
-            ->where('ct.term_id = ?', $termId);
+        $query = self::public_status_tag_id_query($termId);
 
-        return \TinyCat\Status\Feed::public_status_cursor_page($query, $limit, $cursorAt, $cursorId);
+        return \TinyCat\Status\Feed::public_status_cursor_page(self::archive_query($query, $type), $limit, $cursorAt, $cursorId);
     }
 
     /**
@@ -240,9 +265,7 @@ final class Feed
         }
 
         return \TinyCat\Status\Feed::public_status_ids_page(
-            \TinyCat\Status\Feed::public_status_id_query()
-                ->join('INNER JOIN content_tags ct ON ct.content_id = c.id')
-                ->where('ct.term_id = ?', $termId),
+            self::public_status_tag_id_query($termId),
             $limit
         );
     }
@@ -357,12 +380,13 @@ final class Feed
         $user ??= \TinyCat\Users\Authentication::auth();
         $cursorAt = trim((string) ($params['cursor_at'] ?? ''));
         $cursorId = max(0, (int) ($params['cursor_id'] ?? 0));
+        $type = self::archive_type((string) ($params['media'] ?? ''));
 
         if ($context === 'author') {
             $authorId = max(0, (int) ($params['author_id'] ?? 0));
 
             return [
-                'items' => \TinyCat\Status\Feed::public_status_items_by_author_cursor($authorId, $limit, $cursorAt, $cursorId),
+                'items' => \TinyCat\Status\Feed::public_status_items_by_author_cursor($authorId, $limit, $cursorAt, $cursorId, $type),
                 'action' => \TinyCat\Users\Profiles::author_url($authorId),
             ];
         }
@@ -371,7 +395,7 @@ final class Feed
             $tag = \TinyCat\Status\Tags::status_tag_normalize((string) ($params['tag'] ?? ''));
 
             return [
-                'items' => \TinyCat\Status\Feed::public_status_items_by_tag($tag, $limit, $cursorAt, $cursorId),
+                'items' => \TinyCat\Status\Feed::public_status_items_by_tag($tag, $limit, $cursorAt, $cursorId, $type),
                 'action' => \TinyCat\Status\Tags::tag_url($tag),
             ];
         }

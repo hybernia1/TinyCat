@@ -61,7 +61,14 @@
     "not_found_title": "Seite nicht gefunden",
     "not_found_intro": "Diese Adresse führt nicht zu einer Seite. Überprüfen Sie den URL oder fahren Sie von der Homepage fort.",
     "not_found_home": "Gehen Sie zur Startseite",
-    "not_found_search": "Inhalte durchsuchen"
+    "not_found_search": "Inhalte durchsuchen",
+    "filter_content": "Filtern",
+    "filter_all": "Alle Beiträge",
+    "filter_images": "Bilder",
+    "filter_video": "Videos",
+    "filter_audio": "Audio",
+    "filter_links": "Links",
+    "filter_text": "Nur Text"
   },
   "privacy": {
     "title": "Datenschutz und Regeln",

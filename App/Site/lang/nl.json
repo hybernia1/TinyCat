@@ -61,7 +61,14 @@
     "not_found_title": "Pagina niet gevonden",
     "not_found_intro": "Dit adres leidt niet naar een pagina. Controleer de URL of ga verder vanaf de startpagina.",
     "not_found_home": "Ga naar de startpagina",
-    "not_found_search": "Inhoud zoeken"
+    "not_found_search": "Inhoud zoeken",
+    "filter_content": "Filteren",
+    "filter_all": "Alle berichten",
+    "filter_images": "Afbeeldingen",
+    "filter_video": "Video’s",
+    "filter_audio": "Audio",
+    "filter_links": "Links",
+    "filter_text": "Alleen tekst"
   },
   "privacy": {
     "title": "Privacy en regels",

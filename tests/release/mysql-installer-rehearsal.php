@@ -100,6 +100,32 @@ try {
     \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     tc_install_create_tables();
     $assert(tc_install_missing_tables() === [], 'Fresh installer creates every required table.');
+    $tagIndexColumns = static function () use ($database): array {
+        $columns = [];
+        foreach ($database->query('SHOW INDEX FROM content_tags')->fetchAll(PDO::FETCH_ASSOC) as $index) {
+            if ($index['Key_name'] === 'content_tags_term_index') {
+                $columns[(int) $index['Seq_in_index']] = (string) $index['Column_name'];
+            }
+        }
+        ksort($columns);
+        return array_values($columns);
+    };
+    $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Fresh installation creates the covering tag archive index.');
+    $tagIndexMigration = require $workspaceRoot . '/migrations/20261028_001_tag_archive_index.php';
+    $tagIndexMigration($database);
+    $tagIndexMigration($database);
+    $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Tag index migration is idempotent on the fresh schema.');
+    // Keep the term foreign key supported while simulating a legacy missing index.
+    $database->exec('ALTER TABLE content_tags ADD INDEX tag_test_fk (term_id), DROP INDEX content_tags_term_index');
+    $tagIndexMigration($database);
+    $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Migration restores a missing tag archive index.');
+    $database->exec('ALTER TABLE content_tags DROP INDEX content_tags_term_index, ADD INDEX content_tags_term_index (content_id, term_id)');
+    $tagIndexMigration($database);
+    $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Migration repairs incorrect tag index column order.');
+    $database->exec('ALTER TABLE content_tags DROP INDEX content_tags_term_index');
+    tc_install_create_tables();
+    $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Restarted installation also restores a missing tag archive index.');
+    $database->exec('ALTER TABLE content_tags DROP INDEX tag_test_fk');
     $assert(
         (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() === 0,
         'Fresh installer does not create the obsolete profile links table.'
@@ -305,6 +331,19 @@ try {
         (new \TinyCat\Tools\DemoImport\UiFixtures($database, $demoRoot, 'fixture', $resumedOptions->anchor))->run();
         $assert((int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn() === $before, 'Visual fixture generation is idempotent.');
     }
+
+    $database->exec("INSERT INTO terms (name) VALUES ('archive_index_probe')");
+    $probeTermId = (int) $database->lastInsertId();
+    $database->prepare('INSERT INTO content_tags (content_id, term_id) SELECT id, ? FROM content ORDER BY id LIMIT 3')->execute([$probeTermId]);
+    $probeQuery = \TinyCat\Status\Feed::public_status_tag_id_query($probeTermId)->order('c.published_at DESC, c.id DESC')->limit(20);
+    \TinyCat\Status\Feed::public_status_apply_cursor($probeQuery, '2099-01-01 00:00:00', PHP_INT_MAX);
+    $probeSql = (new ReflectionMethod(\TinyCat\Database\Query::class, 'sql'))->invoke($probeQuery);
+    $probeParams = (new ReflectionProperty(\TinyCat\Database\Query::class, 'params'))->getValue($probeQuery);
+    $probeExplain = $database->prepare('EXPLAIN ' . $probeSql);
+    $probeExplain->execute($probeParams);
+    $probePlan = array_column($probeExplain->fetchAll(PDO::FETCH_ASSOC), null, 'table');
+    $assert(($probePlan['ct']['key'] ?? '') === 'content_tags_term_index', 'Rare tag selection uses the covering term index.');
+    $assert(($probePlan['c']['key'] ?? '') === 'PRIMARY' && ($probePlan['c']['type'] ?? '') === 'eq_ref', 'Rare tag cursor looks up matching content by primary key instead of scanning the global feed.');
 
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();

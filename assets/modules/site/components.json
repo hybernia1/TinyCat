@@ -810,37 +810,6 @@
                         },
                         "children": [
                           {
-                            "tag": "a",
-                            "attrs": {
-                              "class": "btn btn-ghost btn-sm",
-                              "href": {
-                                "get": "rss_url"
-                              },
-                              "target": "_blank",
-                              "rel": "noopener",
-                              "title": {
-                                "t": "public.rss_feed",
-                                "values": {}
-                              },
-                              "aria-label": {
-                                "t": "public.rss_feed",
-                                "values": {}
-                              }
-                            },
-                            "children": [
-                              {
-                                "icon": "rss"
-                              },
-                              {
-                                "tag": "span",
-                                "attrs": {},
-                                "children": [
-                                  "RSS"
-                                ]
-                              }
-                            ]
-                          },
-                          {
                             "tag": "form",
                             "attrs": {
                               "method": "post",
@@ -974,7 +943,19 @@
                               }
                             }
                           }
-                        ]
+                        ],
+                        "when": {
+                          "or": [
+                            {
+                              "get": "can_follow"
+                            },
+                            {
+                              "not": {
+                                "get": "viewer"
+                              }
+                            }
+                          ]
+                        }
                       }
                     ]
                   }
@@ -1124,35 +1105,18 @@
                     ]
                   },
                   {
-                    "tag": "a",
-                    "attrs": {
-                      "class": "btn btn-ghost btn-sm",
-                      "href": {
+                    "component": "site/archive-actions",
+                    "data": {
+                      "rss_url": {
                         "get": "rss_url"
                       },
-                      "target": "_blank",
-                      "rel": "noopener",
-                      "title": {
-                        "t": "public.rss_feed",
-                        "values": {}
+                      "archive_options": {
+                        "get": "archive_options"
                       },
-                      "aria-label": {
-                        "t": "public.rss_feed",
-                        "values": {}
+                      "archive_type": {
+                        "get": "archive_type"
                       }
-                    },
-                    "children": [
-                      {
-                        "icon": "rss"
-                      },
-                      {
-                        "tag": "span",
-                        "attrs": {},
-                        "children": [
-                          "RSS"
-                        ]
-                      }
-                    ]
+                    }
                   }
                 ],
                 "when": {
@@ -1333,6 +1297,47 @@
                 ],
                 "when": {
                   "get": "composer"
+                }
+              },
+              {
+                "tag": "header",
+                "attrs": {
+                  "class": "public-list-header public-list-header-actions"
+                },
+                "children": [
+                  {
+                    "tag": "h2",
+                    "attrs": {
+                      "class": "text-2xl m-0"
+                    },
+                    "children": [
+                      {
+                        "t": "public.feed_title"
+                      }
+                    ]
+                  },
+                  {
+                    "component": "site/archive-actions",
+                    "data": {
+                      "rss_url": {
+                        "get": "rss_url"
+                      },
+                      "archive_options": {
+                        "get": "archive_options"
+                      },
+                      "archive_type": {
+                        "get": "archive_type"
+                      }
+                    }
+                  }
+                ],
+                "when": {
+                  "eq": [
+                    {
+                      "get": "kind"
+                    },
+                    "author"
+                  ]
                 }
               },
               {
@@ -1718,5 +1723,214 @@
         }
       }
     ]
+  },
+  "site/archive-filter": {
+    "tag": "details",
+    "attrs": {
+      "class": "archive-filter",
+      "data-dismissible-menu": ""
+    },
+    "children": [
+      {
+        "tag": "summary",
+        "attrs": {
+          "class": {
+            "if": [
+              {
+                "get": "archive_type"
+              },
+              "btn btn-secondary btn-sm",
+              "btn btn-ghost btn-sm"
+            ]
+          },
+          "title": {
+            "concat": [
+              {
+                "t": "public.filter_content"
+              },
+              ": ",
+              {
+                "use": "site/archive-filter-name",
+                "data": {
+                  "type": {
+                    "or": [
+                      {
+                        "get": "archive_type"
+                      },
+                      "all"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "aria-label": {
+            "concat": [
+              {
+                "t": "public.filter_content"
+              },
+              ": ",
+              {
+                "use": "site/archive-filter-name",
+                "data": {
+                  "type": {
+                    "or": [
+                      {
+                        "get": "archive_type"
+                      },
+                      "all"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "children": [
+          {
+            "icon": "filter"
+          },
+          {
+            "tag": "span",
+            "children": [
+              {
+                "use": "site/archive-filter-name",
+                "data": {
+                  "type": {
+                    "get": "archive_type"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "nav",
+        "attrs": {
+          "class": "archive-filter-menu",
+          "aria-label": {
+            "t": "public.filter_content"
+          }
+        },
+        "children": [
+          {
+            "each": {
+              "get": "archive_options"
+            },
+            "as": "option",
+            "children": [
+              {
+                "tag": "a",
+                "attrs": {
+                  "href": {
+                    "get": "option.url"
+                  },
+                  "class": "archive-filter-option",
+                  "aria-current": {
+                    "if": [
+                      {
+                        "get": "option.active"
+                      },
+                      "page",
+                      false
+                    ]
+                  },
+                  "data-dismissible-menu-action": ""
+                },
+                "children": [
+                  {
+                    "use": "site/archive-filter-name",
+                    "data": {
+                      "type": {
+                        "get": "option.type"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "site/archive-actions": {
+    "tag": "div",
+    "attrs": {
+      "class": "archive-actions"
+    },
+    "children": [
+      {
+        "tag": "a",
+        "attrs": {
+          "class": "btn btn-ghost btn-sm",
+          "href": {
+            "get": "rss_url"
+          },
+          "target": "_blank",
+          "rel": "noopener",
+          "title": {
+            "t": "public.rss_feed",
+            "values": {}
+          },
+          "aria-label": {
+            "t": "public.rss_feed",
+            "values": {}
+          }
+        },
+        "children": [
+          {
+            "icon": "rss"
+          },
+          {
+            "tag": "span",
+            "attrs": {},
+            "children": [
+              "RSS"
+            ]
+          }
+        ]
+      },
+      {
+        "component": "site/archive-filter",
+        "data": {
+          "archive_options": {
+            "get": "archive_options"
+          },
+          "archive_type": {
+            "get": "archive_type"
+          }
+        }
+      }
+    ]
+  },
+  "site/archive-filter-name": {
+    "lookup": {
+      "get": "type"
+    },
+    "cases": {
+      "all": {
+        "t": "public.filter_all"
+      },
+      "images": {
+        "t": "public.filter_images"
+      },
+      "video": {
+        "t": "public.filter_video"
+      },
+      "audio": {
+        "t": "public.filter_audio"
+      },
+      "links": {
+        "t": "public.filter_links"
+      },
+      "text": {
+        "t": "public.filter_text"
+      }
+    },
+    "default": {
+      "t": "public.filter_content"
+    }
   }
 }

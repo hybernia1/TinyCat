@@ -50,6 +50,15 @@ final class PublicPages
         $editor = $context['editor'] ?? [];
         $url = $kind === 'home' ? (string) ($home['current_feed_url'] ?? '/') : (string) $meta['url'] . (!empty($context['compact']) ? '?compact=1' : '');
         $item = $context['item'] ?? null;
+        $archiveType = (string) ($context['archiveType'] ?? '');
+        $archiveOptions = [];
+        if (in_array($kind, ['tag', 'author'], true)) {
+            if ($archiveType !== '') { $url .= '?media=' . rawurlencode($archiveType); }
+            foreach (['' => 'all', 'images' => 'images', 'video' => 'video', 'audio' => 'audio', 'links' => 'links', 'text' => 'text'] as $type => $label) {
+                $archiveOptions[] = ['url' => LocaleRouting::url((string) $page['current'] . ($type !== '' ? '?media=' . $type : '')),
+                    'type' => $label, 'active' => $type === $archiveType];
+            }
+        }
         return [
             'version' => \TinyCat\Support\Version::CURRENT, 'kind' => $kind, 'url' => LocaleRouting::url($url), 'locale' => Localization::locale(), 'viewer' => $viewer !== null ? Users::profile($viewer) : null,
             'document' => [
@@ -84,6 +93,8 @@ final class PublicPages
             'profile_edit_url' => (string) ($context['authorProfileEditModalUrl'] ?? ''), 'profile_edit_id' => (string) ($context['authorProfileEditModalId'] ?? ''),
             'avatar_edit_url' => (string) ($context['authorAvatarEditModalUrl'] ?? ''), 'avatar_edit_id' => (string) ($context['authorAvatarEditModalId'] ?? ''),
             'following_url' => (string) ($context['authorFollowingModalUrl'] ?? ''), 'following_id' => (string) ($context['authorFollowingModalId'] ?? ''),
+            'archive_options' => $archiveOptions,
+            'archive_type' => $archiveType,
             'rss_url' => (string) ($context['authorFeedUrl'] ?? $context['tagFeedUrl'] ?? ''),
             'login_url' => \TinyCat\Users\Login::auth_url_with_next('/login', $url),
             'login_modal_url' => \TinyCat\Users\Login::auth_modal_url('login', $url),

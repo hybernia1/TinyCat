@@ -61,7 +61,14 @@
     "not_found_title": "Página não encontrada",
     "not_found_intro": "Este endereço não leva a uma página. Verifique o URL ou continue na página inicial.",
     "not_found_home": "Ir para a página inicial",
-    "not_found_search": "Pesquisar conteúdo"
+    "not_found_search": "Pesquisar conteúdo",
+    "filter_content": "Filtrar",
+    "filter_all": "Todas as publicações",
+    "filter_images": "Imagens",
+    "filter_video": "Vídeos",
+    "filter_audio": "Áudio",
+    "filter_links": "Links",
+    "filter_text": "Apenas texto"
   },
   "privacy": {
     "title": "Privacidade e regras",

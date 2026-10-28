@@ -61,7 +61,14 @@
     "not_found_title": "Sayfa bulunamadı",
     "not_found_intro": "Bu adres bir sayfaya yönlendirmez. URL'yi kontrol edin veya ana sayfadan devam edin.",
     "not_found_home": "Ana sayfaya git",
-    "not_found_search": "İçerik ara"
+    "not_found_search": "İçerik ara",
+    "filter_content": "Filtrele",
+    "filter_all": "Tüm gönderiler",
+    "filter_images": "Görseller",
+    "filter_video": "Videolar",
+    "filter_audio": "Ses",
+    "filter_links": "Bağlantılar",
+    "filter_text": "Yalnızca metin"
   },
   "privacy": {
     "title": "Gizlilik ve Kurallar",

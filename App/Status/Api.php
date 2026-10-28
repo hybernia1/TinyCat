@@ -51,7 +51,7 @@ final class Api
         $context = (string) $request->input('context', 'home');
         $limit = max(1, min(50, (int) $request->input('limit', \TinyCat\Status\Feed::public_status_page_limit())));
         $params = [];
-        foreach (['feed', 'author_id', 'tag', 'cursor_at', 'cursor_id'] as $key) { $params[$key] = $request->input($key, ''); }
+        foreach (['feed', 'author_id', 'tag', 'cursor_at', 'cursor_id', 'media'] as $key) { $params[$key] = $request->input($key, ''); }
         $user = Authentication::auth();
         $feed = Feed::status_feed_context_items($context, $limit, $params, $user);
         $items = $feed['items'];

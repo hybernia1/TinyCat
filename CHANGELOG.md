@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.10.0 - 2026-10-28
+
+- Filter author and tag archives by images, video, audio, links or text, preserving the selected type in URLs and cursor pagination.
+- Share the RSS and filter toolbar above archive feeds; keep profile follow actions in the author card.
+- Reuse one filter label definition across server and browser rendering, menu items and accessible tooltips.
+- Let tag archives and RSS use the covering tag index rather than forcing a global chronological scan; ensure the index through restart-safe installation and migration checks.
+- Verify media filtering, stable cursors, SQL query budgets, index repair and selective MySQL query plans.
+
 ## 4.9.0 - 2026-10-28
 
 - Centralize filesystem storage primitives for validated storage paths, concurrent directory creation and complete temporary-file writes with explicit permissions and cleanup on failure.

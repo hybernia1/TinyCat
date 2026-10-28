@@ -397,6 +397,8 @@ function tc_install_create_tables(): void
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     );
 
+    \TinyCat\Status\Schema::ensureTagIndex(\TinyCat\Database\Connection::get());
+
     \TinyCat\Database\Connection::exec(
         "CREATE TABLE IF NOT EXISTS links (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

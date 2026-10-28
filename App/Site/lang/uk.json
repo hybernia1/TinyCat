@@ -61,7 +61,14 @@
     "not_found_title": "Сторінка не знайдена",
     "not_found_intro": "Ця адреса не веде на сторінку. Перевірте URL або продовжте з домашньої сторінки.",
     "not_found_home": "Перейти на домашню сторінку",
-    "not_found_search": "Пошук вмісту"
+    "not_found_search": "Пошук вмісту",
+    "filter_content": "Фільтр",
+    "filter_all": "Усі дописи",
+    "filter_images": "Зображення",
+    "filter_video": "Відео",
+    "filter_audio": "Аудіо",
+    "filter_links": "Посилання",
+    "filter_text": "Лише текст"
   },
   "privacy": {
     "title": "Конфіденційність і правила",

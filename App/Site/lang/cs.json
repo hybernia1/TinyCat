@@ -61,7 +61,14 @@
     "not_found_title": "Stránka nenalezena",
     "not_found_intro": "Tato adresa nevede na žádnou stránku. Zkontroluj URL nebo pokračuj z úvodní stránky.",
     "not_found_home": "Na úvodní stránku",
-    "not_found_search": "Vyhledat obsah"
+    "not_found_search": "Vyhledat obsah",
+    "filter_content": "Filtrovat",
+    "filter_all": "Všechny příspěvky",
+    "filter_images": "Obrázky",
+    "filter_video": "Videa",
+    "filter_audio": "Audio",
+    "filter_links": "Odkazy",
+    "filter_text": "Pouze text"
   },
   "privacy": {
     "title": "Soukromí a pravidla",

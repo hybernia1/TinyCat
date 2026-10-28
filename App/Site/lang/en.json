@@ -61,7 +61,14 @@
     "not_found_title": "Page not found",
     "not_found_intro": "This address does not lead to a page. Check the URL or continue from the homepage.",
     "not_found_home": "Go to homepage",
-    "not_found_search": "Search content"
+    "not_found_search": "Search content",
+    "filter_content": "Filter",
+    "filter_all": "All posts",
+    "filter_images": "Images",
+    "filter_video": "Videos",
+    "filter_audio": "Audio",
+    "filter_links": "Links",
+    "filter_text": "Text only"
   },
   "privacy": {
     "title": "Privacy and Rules",

@@ -61,7 +61,14 @@
     "not_found_title": "Страница не найдена",
     "not_found_intro": "Этот адрес не ведет на страницу. Проверьте URL или продолжите с домашней страницы.",
     "not_found_home": "Перейти на домашнюю страницу",
-    "not_found_search": "Поиск по содержимому"
+    "not_found_search": "Поиск по содержимому",
+    "filter_content": "Фильтр",
+    "filter_all": "Все публикации",
+    "filter_images": "Изображения",
+    "filter_video": "Видео",
+    "filter_audio": "Аудио",
+    "filter_links": "Ссылки",
+    "filter_text": "Только текст"
   },
   "privacy": {
     "title": "Конфиденциальность и правила",

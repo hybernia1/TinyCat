@@ -61,7 +61,14 @@
     "not_found_title": "Nie znaleziono strony",
     "not_found_intro": "Ten adres nie prowadzi do strony. Sprawdź URL lub kontynuuj ze strony głównej.",
     "not_found_home": "Przejdź do strony głównej",
-    "not_found_search": "Przeszukaj zawartość"
+    "not_found_search": "Przeszukaj zawartość",
+    "filter_content": "Filtruj",
+    "filter_all": "Wszystkie wpisy",
+    "filter_images": "Obrazy",
+    "filter_video": "Filmy",
+    "filter_audio": "Audio",
+    "filter_links": "Linki",
+    "filter_text": "Tylko tekst"
   },
   "privacy": {
     "title": "Prywatność i zasady",
