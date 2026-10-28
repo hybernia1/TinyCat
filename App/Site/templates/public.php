@@ -47,9 +47,6 @@ declare(strict_types=1);
                             <?= \TinyCat\Support\Html::icon((string) ($item['icon'] ?? 'link')) ?>
                         </a>
                     <?php endforeach; ?>
-                    <a class="nav-link nav-link-icon privacy-mobile-link" href="<?= \TinyCat\Support\Html::e($pageUrls['/privacy']) ?>" rel="privacy-policy" aria-label="<?= \TinyCat\Support\Html::et('privacy.title') ?>" title="<?= \TinyCat\Support\Html::et('privacy.title') ?>">
-                        <?= \TinyCat\Support\Html::icon('shield') ?>
-                    </a>
                     <?php if ($authUser !== null): ?>
                         <?php if ($viewerIsAdmin): ?>
                             <a class="nav-link nav-link-icon" href="/admin" aria-label="<?= \TinyCat\Support\Html::et('common.admin') ?>" title="<?= \TinyCat\Support\Html::et('common.admin') ?>">

@@ -301,7 +301,7 @@
       {
         "tag": "footer",
         "attrs": {
-          "class": "public-sidebar-footer stack stack-gap-8"
+          "class": "public-sidebar-footer stack stack-gap-8 desktop-only"
         },
         "children": [
           {

@@ -14,7 +14,7 @@ declare(strict_types=1);
     <a class="skip-link" href="#main-content"><?= \TinyCat\Support\Html::et('common.skip_to_content') ?></a>
     <?= $shell ?>
     <?php if (!$hasPublicSidebar): ?>
-    <footer class="container section text-sm text-muted">
+    <footer class="container section text-sm text-muted desktop-only">
         <a class="cluster gap-2 text-muted" href="<?= \TinyCat\Support\Html::e($privacyUrl) ?>" rel="privacy-policy"><?= \TinyCat\Support\Html::icon('shield') ?> <span><?= \TinyCat\Support\Html::et('privacy.title') ?></span></a>
     </footer>
     <?php endif; ?>

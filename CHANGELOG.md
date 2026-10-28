@@ -2,7 +2,7 @@
 
 ## 5.2.0 - 2026-10-28
 
-- Move the privacy link into the sticky public-sidebar footer, keep a mobile navigation fallback, and use contrast-safe theme tokens. Retain the document footer on pages without a public sidebar.
+- Move the privacy link into the sticky public-sidebar footer, keep the link desktop-only for now, and use contrast-safe theme tokens. Retain the document footer on pages without a public sidebar.
 
 - Route external post, comment, preview-card and embedded-post navigation through content-bound link APIs. Add configurable UTM source, medium and campaign settings while preserving original query data and existing UTM values. Keep default API responses normalized JSON, with explicit uncached browser navigation redirects.
 
