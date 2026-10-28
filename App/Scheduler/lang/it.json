@@ -14,7 +14,7 @@
     "rotate_confirm": "Ruotare il token cron? Le chiamate pianificate esistenti smetteranno di funzionare finché non verranno aggiornate.",
     "tasks": {
       "cleanup": "Pulizia automatica",
-      "cleanup_help": "Rimuove tag e collegamenti inutilizzati, post orfani e immagini di anteprima, cache di dati scaduti, vecchi bucket con limite di velocità, token di ripristino scaduti e notifiche di lettura.",
+      "cleanup_help": "Rimuove tag e collegamenti inutilizzati, post orfani e immagini di anteprima, cache di dati scaduti, vecchi bucket con limite di velocità, token di ripristino scaduti e notifiche di lettura. Rimuove anche avatar orfani, file temporanei abbandonati e vecchi backup di aggiornamenti completati.",
       "cleanup_schedule": "Programmazione oraria. I dovuti controlli interni impediscono che la pulizia venga eseguita troppo spesso.",
       "feeds": "RSS e sorgenti Atom",
       "feeds_help": "Pubblica elementi da origini attive il cui intervallo è scaduto.",

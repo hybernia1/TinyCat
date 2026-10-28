@@ -14,7 +14,7 @@
     "rotate_confirm": "Faire pivoter le jeton cron ? Les appels programmés existants cesseront de fonctionner jusqu'à ce qu'ils soient mis à jour.",
     "tasks": {
       "cleanup": "Nettoyage automatique",
-      "cleanup_help": "Supprime les balises et les liens inutilisés, les images de publication et d'aperçu orphelines, les caches de données expirés, les anciens compartiments de limite de débit, les jetons de réinitialisation expirés et les notifications de lecture.",
+      "cleanup_help": "Supprime les balises et les liens inutilisés, les images de publication et d'aperçu orphelines, les caches de données expirés, les anciens compartiments de limite de débit, les jetons de réinitialisation expirés et les notifications de lecture. Supprime aussi les avatars orphelins, les fichiers temporaires abandonnés et les anciennes sauvegardes de mises à jour terminées.",
       "cleanup_schedule": "Planifiez toutes les heures. Les vérifications internes empêchent le nettoyage de s'exécuter trop souvent.",
       "feeds": "Sources RSS et Atom",
       "feeds_help": "Publie les éléments à partir de sources actives dont l'intervalle est dû.",

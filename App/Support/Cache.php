@@ -184,24 +184,22 @@ final class Cache
     public static function cleanupExpired(int $limit): array
     {
         $directory = self::directory();
-        $changed = 0;
-        if (!is_dir($directory)) { return ['changed' => 0, 'has_more' => false]; }
-        foreach (new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS) as $file) {
-            if (!$file instanceof \SplFileInfo || !$file->isFile() || $file->isLink() || $file->getExtension() !== 'json') { continue; }
-            $path = $file->getPathname();
-            $contents = @file_get_contents($path);
-            $entry = is_string($contents) ? json_decode($contents, true) : null;
-            $retention = is_array($entry) && ($entry['_tinycat_cache'] ?? null) === 2
-                ? max(1, (int) ($entry['ttl'] ?? 300)) + max(0, (int) ($entry['stale_ttl'] ?? 3600))
-                : 604800;
-            clearstatcache(true, $path);
-            $modified = @filemtime($path);
-            if ($modified === false || $modified >= time() - $retention) { continue; }
-            if ($changed >= max(1, $limit)) { return ['changed' => $changed, 'has_more' => true]; }
-            if (!@unlink($path) && is_file($path)) { throw new \RuntimeException('Unable to remove expired cache entry.'); }
-            $changed++;
-        }
-        return ['changed' => $changed, 'has_more' => false];
+        return FileSweep::run($directory, $limit, static function (array $files): array {
+            $changed = 0;
+            foreach ($files as $file) {
+                if ($file->getExtension() !== 'json') { continue; }
+                $path = $file->getPathname();
+                $contents = @file_get_contents($path);
+                $entry = is_string($contents) ? json_decode($contents, true) : null;
+                $retention = is_array($entry) && ($entry['_tinycat_cache'] ?? null) === 2
+                    ? max(1, (int) ($entry['ttl'] ?? 300)) + max(0, (int) ($entry['stale_ttl'] ?? 3600))
+                    : 604800;
+                clearstatcache(true, $path);
+                $modified = @filemtime($path);
+                if ($modified !== false && $modified < time() - $retention && FileSweep::remove($path)) { $changed++; }
+            }
+            return ['changed' => $changed, 'has_more' => false];
+        }, 'expired-cache', false);
     }
 
     /**

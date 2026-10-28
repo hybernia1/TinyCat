@@ -14,7 +14,7 @@
     "rotate_confirm": "Den Cron-Token drehen? Vorhandene geplante Anrufe funktionieren nicht mehr, bis sie aktualisiert werden.",
     "tasks": {
       "cleanup": "Automatische Bereinigung",
-      "cleanup_help": "Entfernt nicht verwendete Tags und Links, verwaiste Post- und Vorschaubilder, abgelaufene Datencaches, alte Rate-Limit-Buckets, abgelaufene Reset-Tokens und Lesebenachrichtigungen.",
+      "cleanup_help": "Entfernt nicht verwendete Tags und Links, verwaiste Post- und Vorschaubilder, abgelaufene Datencaches, alte Rate-Limit-Buckets, abgelaufene Reset-Tokens und Lesebenachrichtigungen. Entfernt auch verwaiste Avatare, zurückgelassene temporäre Dateien und alte Sicherungen abgeschlossener Updates.",
       "cleanup_schedule": "Planen Sie stündlich. Interne ordnungsgemäße Prüfungen verhindern, dass die Bereinigung zu oft ausgeführt wird.",
       "feeds": "RSS und Atom-Quellen",
       "feeds_help": "Veröffentlicht Elemente aus aktiven Quellen, deren Intervall fällig ist.",

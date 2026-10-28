@@ -14,7 +14,7 @@
     "rotate_confirm": "Obnovit cron token? Existující naplánovaná volání přestanou fungovat, dokud je neupravíš.",
     "tasks": {
       "cleanup": "Automatický úklid",
-      "cleanup_help": "Odstraňuje nepoužívané štítky a odkazy, osiřelé obrázky příspěvků a náhledů, expirovanou datovou cache, staré rate-limit buckety, expirované reset tokeny a přečtené notifikace.",
+      "cleanup_help": "Odstraňuje nepoužívané štítky a odkazy, osiřelé obrázky příspěvků a náhledů, expirovanou datovou cache, staré rate-limit buckety, expirované reset tokeny a přečtené notifikace. Uklízí také osiřelé avatary, opuštěné dočasné soubory a staré dokončené zálohy aktualizací.",
       "cleanup_schedule": "Naplánuj jednou za hodinu. Interní kontrola zabrání příliš častému spuštění.",
       "feeds": "RSS a Atom zdroje",
       "feeds_help": "Publikuje položky z aktivních zdrojů, jejichž interval právě vypršel.",

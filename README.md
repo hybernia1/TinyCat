@@ -123,7 +123,7 @@ The 3.0.0 update removes the remaining extension settings and extension migratio
 
 ## Scheduled tasks
 
-The scheduler provides the built-in `feeds` and `cleanup` tasks.
+The scheduler provides the built-in `feeds`, `cleanup` and `site-health` tasks.
 
 The recommended scheduler is the command-line runner:
 
@@ -141,6 +141,18 @@ Keep independent tasks in separate scheduler entries. For example, poll feeds ev
 ```
 
 Routine database cleanup runs at most once per hour and every task has its own database lock. Bots source intervals decide which feeds are due; feed runs publish at most one new item per due source and retain a bounded GUID history to prevent duplicates. `--task=all` remains available for simple installations that prefer one scheduler entry.
+
+Cleanup also removes avatars belonging to deleted users after 24 hours, known abandoned upload/cache temporary files after 48 hours, and obsolete update work files under the updater lock. Avatar recovery backups and unrelated files are preserved. Rate-limit buckets are retained for at least 24 hours and twice the longest policy window. Image and cache scans checkpoint their position and bound inspected entries as well as deletions; `has_more` can therefore mean that inspection is still in progress, even when nothing was removed. Directory enumeration can revisit entries after concurrent filesystem changes; subsequent complete passes reconcile them.
+
+Update backup retention keeps at least the three newest confirmed complete backups and all backups less than 30 days old. Maintenance mode and an active updater prevent update-file cleanup. Incomplete, failed and legacy backups without a completion marker are preserved. See [update retention](docs/updates.md) for configuration.
+
+The administrator page **Site health** (`/admin/site-health`) shows the latest diagnostic, freshness, recommendations and the last 20 inspections. Schedule `site-health` once a day, for example `php scheduled-tasks.php --task=site-health` or the HTTPS Basic URL `/api/scheduler/triggers/site-health`. The existing POST/Bearer scheduler API accepts `task=site-health` too. Repeated scheduled calls on the same application-local calendar day are skipped. Manual checks use `POST /api/site-health/checks` with administrator authentication and CSRF, and can run again immediately. Every completed check sends an in-app notification to each active administrator; no email is sent. The new task has no options or database migration.
+
+Checks cover database connectivity, a cache round trip and configured cache availability, storage/upload write-and-read probes, free disk space, required PHP extensions, recent cleanup/feed executions and update maintenance state. A completed inspection can report OK, warning or critical independently of cron execution success. Results older than 36 hours and failed latest inspections are shown as unknown. This is internal diagnostics: a total application/database outage cannot reliably record or send its own notification and requires external uptime monitoring.
+
+An anonymous HTTP GET also measures the configured `app.url` homepage: TTFB, elapsed request time, DNS/TCP/TLS setup, HTTP status, received bytes and transfer completeness. Responses and headers are discarded. No session, cookies or authorization are forwarded; redirects and proxy use are disabled and TLS certificates remain verified. This server-side sample is not a visitor percentile or a browser page-load measurement. Self-requests need another available web worker; prefer running the health task from CLI on a single-worker installation.
+
+Configure `health.http` in `config.php`: `enabled` (default `true`), `ttfb_warning_ms` (`800`), `ttfb_critical_ms` (`1800`), `total_warning_ms` (`2000`), `total_critical_ms` (`4000`) and `timeout_ms` (`5000`, clamped to 1000–30000). A threshold is exceeded strictly above its value. Threshold ordering is normalized. HTTP 4xx/5xx, transport failures, timeouts and incomplete oversized responses are critical; unfollowed redirects are warnings. Missing configuration is explicitly unmeasured. Timings and the limits used are stored together in run history, so changing limits never rewrites older results.
 
 When command-line scheduling is unavailable, use the protected HTTP endpoint shown in **Admin → Scheduled tasks**:
 

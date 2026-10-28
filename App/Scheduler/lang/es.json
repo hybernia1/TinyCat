@@ -14,7 +14,7 @@
     "rotate_confirm": "¿Girar el token cron? Las llamadas programadas existentes dejarán de funcionar hasta que se actualicen.",
     "tasks": {
       "cleanup": "limpieza automática",
-      "cleanup_help": "Elimina etiquetas y enlaces no utilizados, publicaciones huérfanas e imágenes de vista previa, cachés de datos caducados, depósitos de límite de velocidad antiguos, tokens de restablecimiento caducados y notificaciones de lectura.",
+      "cleanup_help": "Elimina etiquetas y enlaces no utilizados, publicaciones huérfanas e imágenes de vista previa, cachés de datos caducados, depósitos de límite de velocidad antiguos, tokens de restablecimiento caducados y notificaciones de lectura. También elimina avatares huérfanos, archivos temporales abandonados y copias antiguas de actualizaciones completadas.",
       "cleanup_schedule": "Horario cada hora. Las comprobaciones internas debidas evitan que la limpieza se ejecute con demasiada frecuencia.",
       "feeds": "RSS y fuentes Atom",
       "feeds_help": "Publica elementos de fuentes activas cuyo intervalo vence.",

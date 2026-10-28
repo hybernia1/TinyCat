@@ -1,5 +1,24 @@
 # Changelog
 
+## 5.1.0 - 2026-10-28
+
+- Share dashboard statistic cards, semantic status badges and notices across Site health, scheduler overview and updates. Use standard icon-triggered modals for health run details and a named release-notes action; remove page-specific health styling.
+
+- Record per-task scheduler findings, distinguishing failed, interrupted, missing and stale runs from healthy HTTP response times. Explain inspection duration separately from website timing.
+- Align page wrappers, topbar actions and history tables across scheduler settings, Site health and updates.
+
+- Simplify Site health administration with a status overview, compact response metrics, prioritized findings, expandable diagnostics and limits, and a responsive numeric history table.
+
+- Measure anonymous homepage HTTP response timing in Site health, retain TTFB, total and connection timings with their applied thresholds, and display historical values without changing past evaluations. Bound transfers, verify TLS, reject credential-bearing targets, and distinguish transport/status failures from slow successful responses.
+
+- Add an administrator-only Site health page and a daily `site-health` scheduler task, sharing API execution, locks and history. Record sanitized local diagnostic outcomes, flag stale/failed inspections and notify every active administrator of each completed result through in-app system notifications.
+
+- Add orphan avatar and abandoned temporary-file cleanup with age guards; preserve avatar recovery copies and unrelated files.
+- Checkpoint image and cache directory walks and bound inspected entries as well as deletions. Resume failed batches without advancing their cursor.
+- Derive rate-limit bucket retention from the central policy, with a minimum of 24 hours and twice the longest window.
+- Mark successfully applied update backups as complete. Retire confirmed backups after 30 days while preserving the three newest complete copies, incomplete and legacy recovery snapshots, and configurable longer retention.
+- Share the updater lock for cleanup, protect maintenance mode and recent work directories, and resume backup retirement across bounded batches. No database migration or cron URL change is required.
+
 ## 5.0.1 - 2026-10-28
 
 - Support URL-only hosting schedulers such as Webglobe through HTTPS GET `/api/scheduler/triggers/{task}` with HTTP Basic authentication (username `scheduler`, cron token as password). Use the same task execution, locks and history as the Bearer API.

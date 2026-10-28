@@ -160,7 +160,7 @@ try {
     [$status] = $request('GET', '/api/scheduler/tasks');
     $assert($status === 401, 'Anonymous users cannot inspect cron history.');
     [$status, $payload] = $request('GET', '/api/scheduler/tasks', null, 'admin');
-    $assert($status === 200 && count($payload['data']['items']) === 2 && $payload['data']['runs'] === [], 'Cron list exposes the registered task definitions and an empty initial history.');
+    $assert($status === 200 && count($payload['data']['items']) === 3 && $payload['data']['runs'] === [], 'Cron list exposes the registered task definitions and an empty initial history.');
     $assert(isset($payload['meta']['pagination']) && !array_key_exists('pagination', $payload['data']) && !array_key_exists('per_page', $payload['data']['filters']), 'Cron GET pagination follows the shared metadata contract.');
     $schedulerDatabase = new PDO('sqlite:' . $databasePath);
     $schedulerDatabase->prepare('INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES (?, ?, ?, ?)')->execute(['bots.cleanup_last_run', (string) time(), 'int', 'bots']);

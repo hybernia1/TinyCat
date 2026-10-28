@@ -546,3 +546,5 @@ a:hover {
   padding: 12px;
   background: var(--surface-soft);
 }
+
+.min-w-0 { min-width: 0; }

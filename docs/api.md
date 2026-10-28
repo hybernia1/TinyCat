@@ -41,6 +41,15 @@ components supply localized labels, icons, accessible names and date formatting
 for both initial HTML and AJAX. API serialization rejects presentation fields.
 Module-owned code-to-translation maps travel in external hashed assets. Clients
 use their current catalog and preserve server fallbacks for unknown codes.
+
+Administration reuses the dashboard's `ui/stat-card`, the shared
+`ui/status-badge` and `ui/notice` components, and existing card, badge, alert and
+grid styles. Semantic colors come from the theme variables. Keep task-specific
+data in module components rather than creating parallel page-specific styles.
+Resource details use `ui/modal-trigger` icon buttons and the standard modal
+transport; Site health reuses the scheduler run-detail API and modal. PHP and
+browser renderers consume the same component definitions.
+
 CAPTCHA failures include `error.details.captcha` with `enabled`, `provider`,
 `site_key`, `context` and `refresh`. No secret key is exposed.
 
@@ -60,6 +69,36 @@ created or rotated explicitly through the administrator-only token API.
 | GET / HEAD | `/api/scheduler/triggers/{task}` | HTTPS HTTP Basic: username `scheduler`, cron token as password; GET executes one task with default options, HEAD never executes |
 | GET | `/api/scheduler/health` | Scheduler Bearer token, no execution |
 | POST | `/api/scheduler/executions` | Scheduler Bearer token |
+| GET | `/api/site-health` | Administrator, latest diagnostic and recent history; no execution |
+| POST | `/api/site-health/checks` | Administrator and CSRF, manual inspection through scheduler execution |
+
+`site-health` is a daily scheduler task, distinct from the scheduler connectivity
+probe `/api/scheduler/health`. It accepts no task options. Each completed check
+records sanitized per-check outcomes (`id`, `status`, `duration_ms`) under the
+scheduler result's `summary.health` and sends an in-app system notification to
+each active administrator. Ordinary users, bots and inactive administrators are
+excluded. Scheduled calls on the same application-local calendar day return
+`not_due`; a manual check may run again. Unknown, stale and failed execution
+states are distinct from healthy results. Findings use `ok`, `warning` and
+`critical`; finding a problem still represents a completed inspection.
+
+Checks also carry `metrics` and `limits` objects (empty for legacy checks).
+The `http` check records `ttfb_ms` (null when unavailable), `total_ms`, `dns_ms`,
+`connect_ms`, `tls_ms`, `http_status`, `bytes`, `complete` and a sanitized `error`
+identifier. Timings are milliseconds. `connect_ms` and `tls_ms` are individual
+setup phases; TTFB is cumulative from the start of the request. Each historical
+inspection keeps its original limits; `/api/site-health` includes its HTTP
+measurement under each history item's `http` field. Older runs may have no HTTP
+measurement. No response body, headers, credentials or raw transport errors are
+stored. `health.http` configuration controls thresholds and timeout; the target
+is exclusively the canonical `app.url`, never a URL supplied by an API caller.
+
+Scheduler findings in health reports retain per-task reason codes (`ok`, `missing`,
+`stale`, `failed`, `interrupted`) under `metrics`, with maximum successful-run age
+in seconds under `limits`. Historical reports retain their original findings;
+reports created before this diagnostic detail was available are not reconstructed
+from current scheduler state.
+
 
 Installation steps are `language`, `db`, `tables` and `admin`. Each accepted step
 returns `data.step` and `data.redirect`. Validation stays in the JSON envelope;

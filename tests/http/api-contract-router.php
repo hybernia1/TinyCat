@@ -27,6 +27,7 @@ $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, [
     'app' => ['debug' => false, 'url' => 'http://localhost'],
+    'health' => ['http' => ['enabled' => false]],
     'i18n' => ['locale' => 'en'],
     'database' => ['driver' => 'sqlite'],
     'install' => ['complete' => true],

@@ -31,10 +31,17 @@ final class Pages
         $releaseCompatible = !is_array($release) || !array_key_exists('compatible', $release) || !empty($release['compatible']);
         $canInstall = !in_array(false, $extensions, true) && $releaseCompatible;
         $history = Manager::migrationHistory();
+        $available = is_array($release) && !empty($release['available']);
+        $actions = View::render('actions', compact('release', 'available', 'canInstall'), __DIR__ . '/templates');
+        $releaseNotesModal = is_array($release) && trim((string) ($release['notes'] ?? '')) !== ''
+            ? View::render('parts/modal', ['id' => 'updates-release-notes', 'title' => Localization::t('updates.changelog'),
+                'body' => '<pre class="code-block"><code>' . \TinyCat\Support\Html::e((string) $release['notes']) . '</code></pre>'], \TinyCat\Support\Paths::basePath('App/Support/templates'))
+            : '';
 
         Layout::render([
             'title' => Localization::t('updates.title'),
             'current' => '/admin/updates',
-        ], View::render('administration', compact('release', 'result', 'error', 'maintenance', 'extensions', 'releaseCompatible', 'canInstall', 'history'), __DIR__ . '/templates'));
+            'actions' => $actions,
+        ], \TinyCat\Support\AdminViews::listCard(Localization::t('updates.release_title'), 'download', 'updates-overview', '', new \TinyCat\Support\Markup(View::render('administration', compact('release', 'result', 'error', 'maintenance', 'extensions', 'releaseCompatible', 'canInstall', 'history', 'releaseNotesModal'), __DIR__ . '/templates'))));
     }
 }

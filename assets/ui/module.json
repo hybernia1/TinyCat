@@ -120,7 +120,8 @@
       "/admin/users",
       "/admin/bots",
       "/admin/moderation",
-      "/admin/cron"
+      "/admin/cron",
+      "/admin/site-health"
     ],
     "entries": [
       "assets/core/dates.js"

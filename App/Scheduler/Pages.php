@@ -62,6 +62,7 @@ final class Pages
         Layout::render([
             'title' => Localization::t('cron.title'),
             'current' => '/admin/cron',
-        ], View::render('administration', compact('cronToken', 'cronUrl', 'taskViews'), __DIR__ . '/templates'));
+            'actions' => View::render('actions', [], __DIR__ . '/templates'),
+        ], \TinyCat\Support\AdminViews::listCard(Localization::t('cron.title'), 'clock', 'scheduler-settings', '', new \TinyCat\Support\Markup(View::render('administration', compact('cronToken', 'cronUrl', 'taskViews'), __DIR__ . '/templates'))));
     }
 }

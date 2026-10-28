@@ -25,6 +25,10 @@ final class Tasks
             },
             'options' => ['cleanup_batch' => 500],
             'admin' => ['icon' => 'database', 'title' => 'cron.tasks.cleanup', 'help' => 'cron.tasks.cleanup_help', 'schedule' => 'cron.tasks.cleanup_schedule'],
+        ], 'site-health' => [
+            'runner' => \TinyCat\Health\Service::run(...),
+            'options' => [],
+            'admin' => ['icon' => 'shield', 'title' => 'health.title', 'help' => 'health.intro', 'schedule' => 'health.schedule'],
         ]];
     }
 
@@ -54,7 +58,7 @@ final class Tasks
                 if ($sourceId === false) { throw new \InvalidArgumentException('Invalid feed source ID.'); }
                 $options = ['bot_limit' => 1, 'source_id' => $sourceId];
             }
-        } else {
+        } elseif ($name === 'cleanup') {
             $options['cleanup_batch'] = Cleanup::cleanup_batch_size($options['cleanup_batch']);
         }
         return ['mode' => $mode, 'actor_id' => max(0, (int) ($context['actor_id'] ?? 0)), 'options' => $options];

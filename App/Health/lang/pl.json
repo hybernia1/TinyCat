@@ -1,0 +1,77 @@
+{
+  "health": {
+    "title": "Stan witryny",
+    "intro": "Daily operational checks with a recorded result and a notification to every active administrator.",
+    "run": "Run inspection",
+    "schedule": "Schedule once a day. Every completed inspection notifies active administrators.",
+    "schedule_short": "Once a day",
+    "last_failed": "The latest inspection did not finish. Inspect the scheduler run history.",
+    "stale": "No recent completed inspection is available. Check the cron configuration.",
+    "checked_at": "Checked at",
+    "check": "Check",
+    "result": "Result",
+    "recommendation": "Recommendation",
+    "passed": "The check passed.",
+    "empty": "No inspection has run yet.",
+    "history": "Recent inspections",
+    "execution": "Execution",
+    "notification_ok": "Site health inspection completed: everything is OK.",
+    "notification_attention": "Site health inspection completed: something needs attention.",
+    "status": {
+      "ok": "OK",
+      "warning": "Needs attention",
+      "critical": "Problem detected",
+      "skipped": "Not checked",
+      "unknown": "Unknown"
+    },
+    "checks": {
+      "database": "Database",
+      "cache": "Cache",
+      "storage": "Application storage",
+      "uploads": "Uploads",
+      "disk": "Free disk space",
+      "runtime": "PHP extensions",
+      "scheduler": "Scheduled tasks",
+      "updates": "Update recovery state",
+      "http": "HTTP responsiveness"
+    },
+    "advice": {
+      "database": "Check the database connection and server availability.",
+      "cache": "Check cache writes and the configured cache service; a fallback may be in use.",
+      "storage": "Check storage permissions and available space.",
+      "uploads": "Check upload directory permissions and available space.",
+      "disk": "Check free space: at least 256 MiB and 5% of the volume are recommended.",
+      "runtime": "Check cURL, GD, Sodium and ZIP or Phar support.",
+      "scheduler": "Check recent cleanup and feed runs, their errors and cron configuration.",
+      "updates": "Inspect the update recovery page and maintenance state before reopening the site.",
+      "http": "Check homepage availability and speed. A redirect requires correcting the configured site URL; a timeout or connection error is a failed measurement."
+    },
+    "measured": "Measured",
+    "http": {
+      "total": "Request duration",
+      "limits": "TTFB: warning above {warning} ms, critical above {critical} ms.",
+      "errors": {
+        "configuration": "A valid site URL is missing from configuration.",
+        "unsupported": "Measurement requires cURL.",
+        "timeout": "The request timed out.",
+        "transport": "Connection or TLS verification failed.",
+        "response_limit": "The response exceeded the size limit; the transfer is incomplete.",
+        "disabled": "HTTP measurement is disabled."
+      },
+      "total_limits": "Total: warning above {warning} ms, critical above {critical} ms."
+    },
+    "overview_count": "{passed} of {total} checks passed",
+    "all_checks": "All checks",
+    "measurement_details": "Measurement details and limits",
+    "details": "Details",
+    "check_duration": "Inspection duration",
+    "scheduler": {
+      "ok": "Healthy.",
+      "missing": "No successful run recorded.",
+      "stale": "The last successful run is too old.",
+      "failed": "The latest run failed.",
+      "interrupted": "The latest run was interrupted.",
+      "unknown": "This older report has no details. Run a new inspection."
+    }
+  }
+}

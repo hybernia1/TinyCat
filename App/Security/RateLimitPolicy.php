@@ -78,6 +78,14 @@ final class RateLimitPolicy
     }
 
     public const int SUGGESTION_WINDOW = 60;
+    /** Keep at least a day, and two complete windows when policy grows. */
+    public static function retentionSeconds(): int
+    {
+        $windows = [self::SUGGESTION_WINDOW, self::LOGIN_CAPTCHA_WINDOW, self::guestSearch()['window'], 3600];
+        foreach (self::moderationRules() as $rules) { foreach ($rules as $rule) { $windows[] = $rule[0]; } }
+        foreach (['login', 'registration', 'recovery', 'recovery_confirm', 'email-check', 'upload', 'follow'] as $action) { $windows[] = self::requestRule($action)['window']; }
+        return max(86400, 2 * max($windows));
+    }
     public const int SUGGESTION_MAX = 120;
     public const int LOGIN_CAPTCHA_WINDOW = 900;
 }
