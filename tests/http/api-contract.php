@@ -282,6 +282,9 @@ try {
     require __DIR__ . '/domain-contract-cases.php';
     require __DIR__ . '/module-contract-cases.php';
     require __DIR__ . '/avatar-contract-cases.php';
+    require __DIR__ . '/rate-limit-cases.php';
+    require __DIR__ . '/request-limit-cases.php';
+    require __DIR__ . '/system-api-cases.php';
     echo "PASS API HTTP contract ({$checks} checks)\n";
 } finally {
     if (is_resource($server)) {

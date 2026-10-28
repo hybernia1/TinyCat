@@ -324,6 +324,7 @@ final class Administration
         }
 
         if (is_array($uploadedFile) && (int) ($uploadedFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            \TinyCat\Security\RequestLimits::requireAllowed('upload', (int) (\TinyCat\Users\Authentication::auth()['id'] ?? 0));
             $uploaded = \TinyCat\Security\Images::site_image_upload($uploadedFile, (string) ($field['label'] ?? $variant), $variant);
 
             if ($pathKey !== '') {

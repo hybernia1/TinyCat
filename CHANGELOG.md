@@ -1,5 +1,22 @@
 # Changelog
 
+## 5.0.0 - 2026-10-28
+
+- Centralize rate-limit policy and count signed-in content quotas per account, independent of shared IP addresses. Exempt authenticated administrator and bot accounts from quotas and cooldowns.
+- Separate creation, editing and deletion cooldowns, record them after successful operations, and include consistent wait details and `Retry-After` headers in 429 responses.
+- Bound authentication, registration, password recovery, image uploads and follow changes; reserve request budgets atomically on SQLite and MySQL.
+- Route browser writes through normalized module APIs, including authentication, logout, settings, updates, cache resets, notifications and search CAPTCHA. Retired page POST handlers return 405.
+- Move installation into its own API-backed module, hide the installer page and API with 404 after completion, redirect the new administrator to administration, and remove `Public/install/index.php` through update metadata. No new database migration is required.
+- Share scheduler validation, execution, locks and history between HTTP, CLI and manual bot imports. Keep the installer within its existing asset delivery budget by using the shared API form transport without administration controllers.
+- Verify all 50 test groups, including complete isolated MySQL installation, authenticated scheduler transport, signed update/fresh-install artifacts and update/rollback recovery.
+
+### Integration changes
+
+- Replace HTTP calls to `/scheduled-tasks.php` with `POST /api/scheduler/executions`, using `Authorization: Bearer TOKEN`. Pass `task` and an optional `options` object in JSON. The old endpoint returns 410; query-string tokens and alternate token headers are no longer accepted.
+- Use authenticated `GET /api/scheduler/health` for health checks. Generate or rotate credentials explicitly through the administrator API; visiting scheduler settings no longer creates a token.
+- CLI commands remain unchanged, but machine-readable output now uses the common API envelope: successful task results are in `data.tasks`, and failures are in `error.details` with exit codes 1 (execution failure) or 2 (invalid arguments).
+- Update callers of legacy page POST URLs to the canonical endpoints in `docs/api.md`. HTML pages and public feeds, media and discovery documents retain their native read-only formats.
+
 ## 4.11.0 - 2026-10-28
 
 - Embed public posts through oEmbed 1.0 JSON/XML discovery and a standalone responsive iframe with HTTP validators and visibility checks.

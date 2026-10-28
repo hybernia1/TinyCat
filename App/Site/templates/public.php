@@ -65,8 +65,9 @@ declare(strict_types=1);
                                 <span class="sr-only"><?= \TinyCat\Support\Html::et('account.email_missing_title') ?></span>
                             <?php endif; ?>
                         </a>
-                        <form action="<?= \TinyCat\Support\Html::e($pageUrls['/logout']) ?>" method="post" class="inline-flex" data-confirm="<?= \TinyCat\Support\Html::et('auth.logout_confirm') ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('auth.logout_title') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('common.logout') ?>" data-confirm-cancel="<?= \TinyCat\Support\Html::et('common.cancel') ?>" data-confirm-variant="danger">
+                        <form action="/api/users/sessions/current" data-ajax-form data-api-method="DELETE" method="post" class="inline-flex" data-confirm="<?= \TinyCat\Support\Html::et('auth.logout_confirm') ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('auth.logout_title') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('common.logout') ?>" data-confirm-cancel="<?= \TinyCat\Support\Html::et('common.cancel') ?>" data-confirm-variant="danger">
                             <?= \TinyCat\Security\Csrf::field() ?>
+                            <input type="hidden" name="_method" value="DELETE">
                             <button class="nav-link nav-link-icon" type="submit" aria-label="<?= \TinyCat\Support\Html::et('common.logout') ?>" title="<?= \TinyCat\Support\Html::et('common.logout') ?>">
                                 <?= \TinyCat\Support\Html::icon('logout') ?>
                             </button>

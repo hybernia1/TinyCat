@@ -75,15 +75,9 @@ try {
 
     define('TINYCAT', true);
     require_once $root . '/App/bootstrap.php';
-    ob_start();
-    try {
-        require $root . '/Public/install/index.php';
-    } finally {
-        ob_end_clean();
-    }
     foreach ([$baseline, $candidate] as $database) {
         \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
-        tc_install_create_tables();
+        \TinyCat\Installation\Installer::create_tables();
     }
 
     $writeConfig = static function (string $appRoot, string $name) use ($baseConfig, $databaseConfig, $host, $port, $charset): void {

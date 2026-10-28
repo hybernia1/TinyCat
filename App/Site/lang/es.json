@@ -89,7 +89,7 @@
     "data_email": "Un correo electrónico proporcionado también se puede utilizar para iniciar sesión, recuperar la contraseña y recibir notificaciones por correo electrónico opcionales. Los usuarios pueden controlar las notificaciones en su perfil, mientras que los administradores controlan qué tipos de notificaciones están disponibles.",
     "data_content": "La aplicación almacena contenido que los usuarios crean ellos mismos: publicaciones, comentarios, imágenes cargadas, me gusta, seguimientos, informes y campos de perfil opcionales.",
     "data_technical": "Las contraseñas se almacenan sólo como hashes. Los enlaces de restablecimiento de contraseña son tokens de un solo uso y de corta duración.",
-    "data_server_logs": "{site} almacena direcciones IP para limitar la velocidad de acciones seleccionadas de inicio de sesión, como publicaciones, comentarios, me gusta, informes y búsquedas. El operador del servidor también puede tener registros técnicos del servidor fuera de la aplicación.",
+    "data_server_logs": "{site} almacena contadores por cuenta o dirección IP para limitar las solicitudes excesivas. El operador del servidor también puede tener registros técnicos fuera de la aplicación.",
     "recovery_title": "Recuperación de contraseña",
     "recovery_email": "La recuperación de contraseña utiliza la página /recovery y un enlace enviado al correo electrónico de la cuenta.",
     "recovery_no_contact": "Una dirección de correo electrónico es opcional al registrarse, pero es necesaria para la recuperación de contraseña mediante correo electrónico.",

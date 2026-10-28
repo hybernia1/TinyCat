@@ -17,7 +17,7 @@ if (!defined('TINYCAT')) {
  */
 final class Captcha
 {
-    private const int FAILURE_WINDOW = 900;
+    private const int FAILURE_WINDOW = RateLimitPolicy::LOGIN_CAPTCHA_WINDOW;
 
     /** @var array<string, array{response_field: string, verify_url: string}> */
     private const array PROVIDERS = [
@@ -81,6 +81,7 @@ final class Captcha
 
     public static function loginRequired(): bool
     {
+        if (RateLimitPolicy::isExempt(\TinyCat\Users\Authentication::auth())) { return false; }
         if (!self::isActive()) {
             return false;
         }
@@ -102,6 +103,7 @@ final class Captcha
 
     public static function recordLoginFailure(): void
     {
+        if (RateLimitPolicy::isExempt(\TinyCat\Users\Authentication::auth())) { return; }
         \TinyCat\Http\Session::start();
         $state = $_SESSION['_tinycat_login_guard'] ?? [];
         $now = time();

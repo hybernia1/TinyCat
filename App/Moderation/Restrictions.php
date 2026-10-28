@@ -51,29 +51,7 @@ final class Restrictions
      */
     public static function moderation_action_rules(): array
     {
-        return [
-            'new' => [
-                'post' => [3600, 5],
-                'comment' => [3600, 20],
-                'like' => [3600, 60],
-                'report' => [3600, 10],
-                'search' => [3600, 300],
-            ],
-            'normal' => [
-                'post' => [3600, 20],
-                'comment' => [3600, 80],
-                'like' => [3600, 180],
-                'report' => [3600, 30],
-                'search' => [3600, 900],
-            ],
-            'trusted' => [
-                'post' => [3600, 60],
-                'comment' => [3600, 240],
-                'like' => [3600, 600],
-                'report' => [3600, 80],
-                'search' => [3600, 3000],
-            ],
-        ];
+        return \TinyCat\Security\RateLimitPolicy::moderationRules();
     }
 
     /**
@@ -101,10 +79,11 @@ final class Restrictions
      */
     public static function moderation_action_count(array $user, string $action): int
     {
+        if (\TinyCat\Security\RateLimitPolicy::isExempt($user)) { return 0; }
         [$window] = \TinyCat\Moderation\Restrictions::moderation_action_rule($user, $action);
 
         try {
-            return \TinyCat\Security\RateLimiter::rate_limit_ip_action_count($action, (int) $window);
+            return \TinyCat\Security\RateLimiter::subject_action_count('user:' . (int) ($user['id'] ?? 0), $action, (int) $window);
         } catch (Throwable) {
             return 0;
         }
@@ -176,6 +155,7 @@ final class Restrictions
      */
     public static function moderation_record_action(array $user, string $action): void
     {
+        if (\TinyCat\Security\RateLimitPolicy::isExempt($user)) { return; }
         $userId = (int) ($user['id'] ?? 0);
 
         if ($userId < 1) {
@@ -183,10 +163,9 @@ final class Restrictions
         }
 
         [$window] = \TinyCat\Moderation\Restrictions::moderation_action_rule($user, $action);
-        $bucket = \TinyCat\Moderation\Restrictions::moderation_bucket_start((int) $window);
 
         try {
-            \TinyCat\Security\RateLimiter::rate_limit_ip_action_record($action, (int) $window);
+            \TinyCat\Security\RateLimiter::subject_action_record('user:' . $userId, $action, (int) $window);
         } catch (Throwable) {
             // Moderation limits must never break the primary action.
         }

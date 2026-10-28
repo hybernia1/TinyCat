@@ -185,6 +185,7 @@ final class Login
      */
     public static function auth_login_request(): array
     {
+        \TinyCat\Security\RequestLimits::requireAllowed('login');
         if (\TinyCat\Security\Captcha::loginRequired() && !\TinyCat\Security\Captcha::check('login')) {
 
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('auth.invalid_captcha'), 422, 'captcha_invalid', [

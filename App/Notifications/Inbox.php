@@ -42,12 +42,7 @@ final class Inbox
      */
     public static function url(array $notification): string
     {
-        $id = (int) ($notification['id'] ?? 0);
-        $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
-
-        return $id > 0 && $isUnread
-            ? '/notifications/open?id=' . $id
-            : self::targetUrl($notification);
+        return self::targetUrl($notification);
     }
 
     /** @param array<string, mixed> $actor */

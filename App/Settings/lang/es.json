@@ -110,7 +110,7 @@
     "purpose_user_followers": "El perfil sigue entre usuarios.",
     "purpose_notifications": "Alertas de me gusta, comentarios, menciones y seguimientos.",
     "purpose_content_reports": "Informes de usuario para moderación.",
-    "purpose_ip_action_limits": "Grupos de límite de velocidad basados ​​en IP para acciones seleccionadas.",
+    "purpose_ip_action_limits": "Contadores de límites por cuenta o dirección IP para determinadas acciones.",
     "purpose_password_reset_tokens": "Tokens de restablecimiento de contraseña de corta duración enviados por correo electrónico.",
     "purpose_settings": "Configuración de la aplicación respaldada por bases de datos.",
     "admin_title": "Primera cuenta de administrador",

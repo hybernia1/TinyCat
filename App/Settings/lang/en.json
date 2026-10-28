@@ -110,7 +110,7 @@
     "purpose_user_followers": "Profile follows between users.",
     "purpose_notifications": "Alerts for likes, comments, mentions, and follows.",
     "purpose_content_reports": "User reports for moderation.",
-    "purpose_ip_action_limits": "IP-based rate-limit buckets for selected actions.",
+    "purpose_ip_action_limits": "Account- or IP-based rate-limit buckets for selected actions.",
     "purpose_password_reset_tokens": "Short-lived password-reset tokens sent by email.",
     "purpose_settings": "Database-backed application settings.",
     "admin_title": "First admin account",

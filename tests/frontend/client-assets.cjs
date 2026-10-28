@@ -34,7 +34,7 @@ check(load("/admin/cron").T.scheduler, "Scheduler loads its module");
 check(!load("/admin/settings").T.users, "Settings omit unrelated modules");
 check(!load("/install").T.status, "Installer boots without public modules");
 check(!users.sources.some(s => s.endsWith("/following.js")), "Administration omits public following controller");
-check(!load("/install").sources.some(s => s.includes("/modules/status/") || s.includes("/ui/ajax.js")), "Installer excludes feed and AJAX controllers");
+check(!load("/install").sources.some(s => s.includes("/modules/status/") || s.includes("/ui/ajax.js")) && load("/install").sources.some(s => s.includes("/ui/forms.js") && !s.includes("form-state")), "Installer uses shared API form transport without feed and administration controllers");
 const schedulerPage = load("/admin/cron/list");
 check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.definitions.includes("scheduler/filter-form"), "The scheduler page independently loads date formatting and shared filter components.");
 check(load("/admin/cron/list", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");

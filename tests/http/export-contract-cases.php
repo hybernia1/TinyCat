@@ -88,9 +88,9 @@ $assert($status === 503 && $maintenance['code'] === 'maintenance' && $maintenanc
 $assert($status === 200 && simplexml_load_string($body) !== false, 'The static image placeholder is independently available with status 200.');
 
 [$status, $body] = $exportRequest('/admin', 'POST', ['X-Test-Role' => 'admin']);
-$assert($status === 403 && str_contains($body, '403') && str_contains($body, '<html'), 'HTML CSRF failures use the shared 403 page instead of a JSON or login response.');
+$assert($status === 405 && str_contains($body, '405') && str_contains($body, '<html'), 'Retired dashboard writes return a shared HTML 405 page.');
 [$status, $body] = $exportRequest('/admin', 'POST', ['X-Test-Role' => 'admin'] + $csrf);
-$assert($status === 400 && str_contains($body, '400'), 'Invalid dashboard actions use the shared 400 page.');
+$assert($status === 405 && str_contains($body, '405'), 'A valid CSRF token cannot revive legacy dashboard writes.');
 
 [$status, $body, $headers] = $exportRequest('/privacy');
 $policyDocument = new DOMDocument();

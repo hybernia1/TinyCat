@@ -11,6 +11,10 @@ final class Middleware
     /** @param array<string, mixed>|null $user */
     public static function authorize(string $access, bool $write, ?array $user = null): void
     {
+        if ($access === 'scheduler') {
+            \TinyCat\Scheduler\Tokens::requireBearer();
+            return;
+        }
         if (!in_array($access, ['public', 'user', 'admin'], true)) {
             throw new InvalidArgumentException('Unknown API access policy.');
         }

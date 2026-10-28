@@ -89,7 +89,7 @@
     "data_email": "Un e-mail fourni peut également être utilisé pour se connecter, récupérer le mot de passe et recevoir des notifications facultatives par e-mail. Les utilisateurs peuvent contrôler les notifications dans leur profil, tandis que les administrateurs contrôlent les types de notifications disponibles.",
     "data_content": "L'application stocke le contenu que les utilisateurs créent eux-mêmes : publications, commentaires, images téléchargées, likes, suivis, rapports et champs de profil facultatifs.",
     "data_technical": "Les mots de passe sont stockés uniquement sous forme de hachages. Les liens de réinitialisation de mot de passe sont des jetons de courte durée à usage unique.",
-    "data_server_logs": "{site} stocke les adresses IP pour limiter le débit des actions de connexion sélectionnées telles que les publications, les commentaires, les likes, les rapports et les recherches. L'opérateur du serveur peut également disposer de journaux techniques du serveur en dehors de l'application.",
+    "data_server_logs": "{site} stocke des compteurs par compte ou adresse IP pour limiter les requêtes excessives. L’opérateur du serveur peut également disposer de journaux techniques en dehors de l’application.",
     "recovery_title": "Récupération de mot de passe",
     "recovery_email": "La récupération du mot de passe utilise la page /recovery et un lien envoyé à l'adresse e-mail du compte.",
     "recovery_no_contact": "Une adresse e-mail est facultative lors de l'inscription, mais requise pour la récupération du mot de passe par e-mail.",

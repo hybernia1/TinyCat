@@ -319,7 +319,10 @@
           "class": "notification-main",
           "href": {
             "get": "item.url"
-          }
+          },
+          "data-ajax": { "if": [{ "get": "item.unread" }, "", null] },
+          "data-method": "PATCH",
+          "data-url": { "concat": ["/api/notifications/", { "get": "item.id" }, "?open=1"] }
         },
         "children": [
           {
@@ -420,7 +423,10 @@
       },
       "href": {
         "get": "item.url"
-      }
+      },
+      "data-ajax": { "if": [{ "get": "item.unread" }, "", null] },
+      "data-method": "PATCH",
+      "data-url": { "concat": ["/api/notifications/", { "get": "item.id" }, "?open=1"] }
     },
     "children": [
       {

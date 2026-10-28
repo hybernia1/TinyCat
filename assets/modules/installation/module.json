@@ -1,0 +1,10 @@
+[
+  {
+    "routes": ["/install"],
+    "entries": ["assets/modules/installation/index.js"],
+    "components": [],
+    "styles": [],
+    "translations": ["common.request_failed"],
+    "messages": {}
+  }
+]

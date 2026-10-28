@@ -89,7 +89,7 @@
     "data_email": "Sağlanan e-posta aynı zamanda oturum açmak, parolayı kurtarmak ve isteğe bağlı e-posta bildirimleri almak için de kullanılabilir. Kullanıcılar profillerindeki bildirimleri kontrol edebilirken, yöneticiler hangi bildirim türlerinin kullanılabileceğini kontrol edebilir.",
     "data_content": "Uygulama mağazalarının içeriği, kullanıcıların kendilerinin oluşturduğu içeriklerdir: gönderiler, yorumlar, yüklenen resimler, beğeniler, takipler, raporlar ve isteğe bağlı profil alanları.",
     "data_technical": "Parolalar yalnızca karma olarak saklanır. Parola sıfırlama bağlantıları kısa ömürlü, tek kullanımlık belirteçlerdir.",
-    "data_server_logs": "{site} gönderiler, yorumlar, beğeniler, raporlar ve aramalar gibi seçilen oturum açma işlemlerini hız sınırlamak için IP adreslerini saklar. Sunucu operatörü uygulama dışında da teknik sunucu günlüklerine sahip olabilir.",
+    "data_server_logs": "{site}, aşırı istekleri sınırlamak için hesap veya IP adresine göre sayaçlar saklar. Sunucu işletmecisinin uygulama dışında teknik günlükleri de olabilir.",
     "recovery_title": "Şifre Kurtarma",
     "recovery_email": "Şifre kurtarma, /recovery sayfasını ve hesap e-postasına gönderilen bağlantıyı kullanır.",
     "recovery_no_contact": "Kayıt sırasında e-posta adresi isteğe bağlıdır ancak e-posta tabanlı şifre kurtarma için gereklidir.",

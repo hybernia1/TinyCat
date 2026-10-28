@@ -103,6 +103,10 @@ final class Api
     {
         if (!in_array($action, ['react', 'comment_like'], true)) { Actions::status_json_require_session_interval($action); }
         $data = $operation();
+        if (!in_array($action, ['react', 'comment_like'], true)) {
+            [$key, $intervalMs] = Posts::status_session_interval_rule($action);
+            \TinyCat\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs);
+        }
         return Result::from($data);
     }
 }

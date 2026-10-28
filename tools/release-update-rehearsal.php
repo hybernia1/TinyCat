@@ -244,11 +244,9 @@ PHP, LOCK_EX);
     $installRunner = <<<'PHP'
 define('TINYCAT', true);
 require __ROOT__ . '/App/bootstrap.php';
-ob_start();
-try { require __ROOT__ . '/Public/install/index.php'; } finally { ob_end_clean(); }
-tc_install_create_tables();
-tc_install_create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
-tc_install_default_settings(['locale' => 'en']);
+\TinyCat\Installation\Installer::create_tables();
+\TinyCat\Installation\Installer::create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
+\TinyCat\Installation\Installer::default_settings(['locale' => 'en']);
 Core::setSetting('extensions.states', ['release_probe' => true], 'json', 'extensions');
 Core::setSetting('extensions.installed_versions', ['release_probe' => '1.0.0'], 'json', 'extensions');
 PHP;

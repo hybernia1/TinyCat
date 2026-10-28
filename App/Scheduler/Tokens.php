@@ -5,6 +5,17 @@ namespace TinyCat\Scheduler;
 
 final class Tokens
 {
+    public static function requireBearer(): void
+    {
+        $expected = self::cron_token();
+        if ($expected === '') { \TinyCat\Http\Response::error('Scheduler token is not configured.', 503, 'scheduler_not_configured'); }
+        $token = self::cron_request_token();
+        if ($token === '' || !hash_equals($expected, $token)) {
+            header('WWW-Authenticate: Bearer realm="TinyCat scheduler"');
+            \TinyCat\Http\Response::error('Unauthenticated.', 401, 'unauthenticated');
+        }
+    }
+
     public static function cron_token(bool $create = false): string
     {
         $token = trim((string) \TinyCat\Settings\Store::setting('cron.token', \TinyCat\Settings\Store::config('cron.token', '')));
@@ -26,18 +37,6 @@ final class Tokens
 
     public static function cron_request_token(): string
     {
-        $bearer = \TinyCat\Http\Request::current()->bearerToken();
-
-        if ($bearer !== null) {
-            return $bearer;
-        }
-
-        $header = trim((string) ($_SERVER['HTTP_X_TINYCAT_CRON'] ?? ''));
-
-        if ($header !== '') {
-            return $header;
-        }
-
-        return trim((string) \TinyCat\Http\Web::get('bearer', ''));
+        return \TinyCat\Http\Request::current()->bearerToken() ?? '';
     }
 }

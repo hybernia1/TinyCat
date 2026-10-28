@@ -17,20 +17,20 @@ final class Module implements \TinyCat\StorageModule
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed', static fn (string $id) => Embed::page((int) $id));
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed-code', static fn (string $id) => Embed::page((int) $id, true));
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/rss', static fn () => \TinyCat\Http\Document::notFound('Feed not found.'));
-        \TinyCat\Http\Router::route(['GET', 'POST'], '/status/{status_id:[0-9]+}', static function (string $status_id): void {
+        \TinyCat\Http\Router::route('GET', '/status/{status_id:[0-9]+}', static function (string $status_id): void {
             Pages::detail(max(0, (int) $status_id));
         });
 
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/tag/{tag}/feed', static fn (string $tag) => Syndication::respond('tag', $tag));
 
-        \TinyCat\Http\Router::route(['GET', 'POST'], '/tag/{tag}', static function (string $tag): void {
+        \TinyCat\Http\Router::route('GET', '/tag/{tag}', static function (string $tag): void {
             Pages::tag($tag);
         });
 
         foreach ([
             ['GET', '/', Pages::home(...)],
-            [['GET', 'POST'], '/status', Pages::detail(...)],
-            [['GET', 'POST'], '/tag', Pages::tag(...)],
+            ['GET', '/status', Pages::detail(...)],
+            ['GET', '/tag', Pages::tag(...)],
         ] as [$methods, $path, $handler]) {
             \TinyCat\Http\Router::route($methods, $path, $handler);
         }
