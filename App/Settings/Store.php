@@ -134,7 +134,8 @@ final class Store
             return $default;
         }
 
-        return self::setting($key, $default);
+        $value = self::setting($key, $default);
+        return $key === 'app.url' && $value === '' ? $default : $value;
     }
 
     private static function isSensitiveSetting(string $key): bool
@@ -204,6 +205,11 @@ final class Store
     private static function settingCanOverrideConfig(string $key): bool
     {
         static $keys = [
+            'app.url' => true,
+            'content_links.utm.enabled' => true,
+            'content_links.utm.source' => true,
+            'content_links.utm.medium' => true,
+            'content_links.utm.campaign' => true,
             'site.name' => true,
             'site.home_title' => true,
             'site.meta_description' => true,

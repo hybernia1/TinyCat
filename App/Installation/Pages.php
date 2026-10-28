@@ -26,6 +26,7 @@ final class Pages
         self::render(self::step($state), $languages, $state);
     }
 
+    /** @param array<mixed> $state */
     public static function step(array $state): string
     {
         $status = \TinyCat\Database\Schema::app_db_status();
@@ -39,7 +40,7 @@ final class Pages
         if (isset($state['locale']) && $status['connected']) {
             $defaultStep = 'tables';
 
-            if ($status['connected'] && $status['missing_tables'] === [] && !$status['account_ready']) {
+            if ($status['missing_tables'] === [] && !$status['account_ready']) {
                 $defaultStep = 'admin';
             }
         }
@@ -63,7 +64,7 @@ final class Pages
             \TinyCat\Http\Web::redirect('/install?step=tables');
         }
 
-        if ($step === 'done' && !$status['ready']) {
+        if ($step === 'done') {
             \TinyCat\Http\Session::flash('error', \TinyCat\Support\Localization::t('install.messages.db_not_ready'));
             \TinyCat\Http\Web::redirect('/install?step=' . $defaultStep);
         }
@@ -71,6 +72,8 @@ final class Pages
         return $step;
     }
 
+    /** @param array<string, array{code: string, label: string}> $languages
+     * @param array<mixed> $state */
     public static function render(string $step, array $languages, array $state): void
     {
         $appName = 'TinyCat';
@@ -130,6 +133,8 @@ final class Pages
         <?php
     }
 
+    /** @param array<string, array{code: string, label: string}> $languages
+     * @param array<mixed> $state */
     public static function language_view(array $languages, array $state): void
     {
         $selected = (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale());
@@ -164,6 +169,7 @@ final class Pages
         <?php
     }
 
+    /** @param array<mixed> $state */
     public static function database_view(array $state): void
     {
         $database = is_array($state['database'] ?? null) ? $state['database'] : (array) \TinyCat\Settings\Store::config('database', []);
@@ -212,6 +218,7 @@ final class Pages
         <?php
     }
 
+    /** @param array<mixed> $state */
     public static function tables_view(array $state): void
     {
         $tableStatuses = [];

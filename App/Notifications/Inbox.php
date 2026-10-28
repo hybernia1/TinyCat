@@ -17,6 +17,8 @@ final class Inbox
         'comment_mention' => ['email' => 'notification_comment_mention'],
         'report_resolved' => ['email' => 'notification_report_resolved'],
         'report_dismissed' => ['email' => 'notification_report_dismissed'],
+        'site_health_ok' => ['email' => ''],
+        'site_health_attention' => ['email' => ''],
     ];
 
     private function __construct()
@@ -31,6 +33,8 @@ final class Inbox
         $contentId = (int) ($notification['content_id'] ?? 0);
         $actorId = (int) ($notification['actor_id'] ?? 0);
         $type = (string) ($notification['type'] ?? '');
+
+        if (in_array($type, ['site_health_ok', 'site_health_attention'], true)) { return '/admin/site-health'; }
 
         return $contentId > 0
             ? \TinyCat\Status\Posts::status_url($contentId)

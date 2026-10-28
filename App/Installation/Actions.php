@@ -10,6 +10,7 @@ use Throwable;
 
 final class Actions
 {
+    /** @return array<string, mixed> */
     public static function status(): array
     {
         self::requireOpen();
@@ -48,6 +49,7 @@ final class Actions
         \TinyCat\Http\Response::error($message, 422, 'installation_step_failed', ['step' => $step]);
     }
 
+    /** @param array<string, array{code: string, label: string}> $languages */
     private static function store_language(array $languages): \TinyCat\Http\Result
     {
         $selected = (string) \TinyCat\Http\Request::current()->input('locale', '');
@@ -167,6 +169,7 @@ final class Actions
         }
     }
 
+    /** @return array{driver: string, host: string, name: string, user: string, password: string, charset: string, port?: int} */
     private static function database_from_post(): array
     {
         $database = [

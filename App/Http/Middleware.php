@@ -15,6 +15,10 @@ final class Middleware
             \TinyCat\Scheduler\Tokens::requireBearer();
             return;
         }
+        if ($access === 'scheduler_trigger') {
+            \TinyCat\Scheduler\Tokens::requireBasic();
+            return;
+        }
         if (!in_array($access, ['public', 'user', 'admin'], true)) {
             throw new InvalidArgumentException('Unknown API access policy.');
         }

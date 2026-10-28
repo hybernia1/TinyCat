@@ -356,7 +356,16 @@
               "class": {
                 "if": [
                   {
-                    "get": "icon"
+                    "and": [
+                      {
+                        "get": "icon"
+                      },
+                      {
+                        "not": {
+                          "get": "show_label"
+                        }
+                      }
+                    ]
                   },
                   "sr-only",
                   null
@@ -1236,5 +1245,186 @@
         }
       }
     }
-  ]
+  ],
+  "ui/status-badge": {
+    "tag": "span",
+    "attrs": {
+      "class": {
+        "concat": [
+          "badge ",
+          {
+            "lookup": {
+              "get": "tone"
+            },
+            "cases": {
+              "ok": "badge-success",
+              "success": "badge-success",
+              "warning": "badge-warning",
+              "critical": "badge-danger",
+              "danger": "badge-danger",
+              "primary": "badge-primary",
+              "running": "badge-primary"
+            },
+            "default": ""
+          }
+        ]
+      }
+    },
+    "children": [
+      {
+        "get": "label"
+      }
+    ]
+  },
+  "ui/stat-card": {
+    "tag": "article",
+    "attrs": {
+      "class": "card min-w-0"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "card-body stack"
+        },
+        "children": [
+          {
+            "tag": {
+              "or": [
+                {
+                  "get": "heading"
+                },
+                "h3"
+              ]
+            },
+            "attrs": {
+              "class": "text-lg m-0 cluster gap-2"
+            },
+            "children": [
+              {
+                "icon": {
+                  "get": "icon"
+                },
+                "when": {
+                  "get": "icon"
+                }
+              },
+              {
+                "get": "label"
+              }
+            ]
+          },
+          {
+            "tag": "p",
+            "attrs": {
+              "class": "text-2xl m-0"
+            },
+            "children": [
+              {
+                "tag": "strong",
+                "children": [
+                  {
+                    "get": "value"
+                  }
+                ]
+              },
+              " ",
+              {
+                "tag": "small",
+                "attrs": {
+                  "class": "table-meta"
+                },
+                "children": [
+                  {
+                    "get": "unit"
+                  }
+                ],
+                "when": {
+                  "get": "unit"
+                }
+              }
+            ],
+            "when": {
+              "not": {
+                "eq": [
+                  {
+                    "get": "value"
+                  },
+                  null
+                ]
+              }
+            }
+          },
+          {
+            "tag": "p",
+            "attrs": {
+              "class": "table-meta m-0"
+            },
+            "children": [
+              {
+                "get": "note"
+              }
+            ],
+            "when": {
+              "get": "note"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "ui/notice": {
+    "tag": "div",
+    "attrs": {
+      "class": {
+        "concat": [
+          "alert stack stack-gap-8 ",
+          {
+            "lookup": {
+              "get": "tone"
+            },
+            "cases": {
+              "warning": "alert-warning",
+              "critical": "alert-danger",
+              "ok": "alert-success",
+              "info": "alert-info"
+            },
+            "default": ""
+          }
+        ]
+      }
+    },
+    "children": [
+      {
+        "tag": "strong",
+        "children": [
+          {
+            "get": "title"
+          }
+        ]
+      },
+      {
+        "tag": "span",
+        "children": [
+          {
+            "get": "description"
+          }
+        ],
+        "when": {
+          "get": "description"
+        }
+      },
+      {
+        "tag": "small",
+        "children": [
+          {
+            "get": "detail"
+          }
+        ],
+        "when": {
+          "get": "detail"
+        }
+      }
+    ]
+  }
 }

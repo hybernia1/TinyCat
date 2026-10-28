@@ -180,6 +180,8 @@ final class Manager extends Package
             self::deleteLegacyFiles($manifest);
             self::clearRuntimeCache();
             \TinyCat\Support\Cache::resetOpcache();
+            // Only a fully applied update grants permission for eventual backup retention.
+            self::writeJsonFile($backupDirectory . DIRECTORY_SEPARATOR . 'completed.json', ['version' => $version, 'completed_at' => date(DATE_ATOM)]);
             self::disableMaintenance();
             \TinyCat\Support\Cache::forget(self::CACHE_KEY);
 

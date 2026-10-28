@@ -185,3 +185,28 @@ maintenance button on the update page.
 Apache installations are protected by the bundled `.htaccess`. Other web
 servers must deny public access to all of `storage/`, including database backups
 and signing material.
+
+### Scheduled backup retention
+
+After all update steps succeed, the updater writes `completed.json` beside
+`backup.json`. The shared cleanup task may retire these confirmed backups after
+30 days, keeping the newest three complete snapshots regardless of their age.
+Backups without the completion marker, incomplete payloads and snapshots from
+failed updates remain protected. Older TinyCat releases did not create this
+marker: their existing backups require manual review and are not automatically
+deleted or retroactively labelled successful.
+
+The optional `updates.backups` configuration supports `cleanup` (default `true`),
+`keep` (default and minimum `3`) and `retention_days` (default and minimum `30`).
+Set `cleanup` to `false` to retain all backups. These options do not disable
+cleanup of abandoned updater downloads and work directories after 48 hours.
+The cleanup takes the same `update.lock` as the updater and skips all update
+files while maintenance mode is active. Retirement is resumable and removes
+recovery metadata only after the payload has been removed.
+
+Backup retention, downloads, staging and verification now have independent scan
+cursors and reserved shares of each cleanup batch. A growing work directory
+cannot consume the backup scan's share. Snapshot payloads are validated when
+reached; retention still verifies the newest complete snapshots before protecting
+them. A catalogue exceeding 5000 entries raises a visible cleanup error instead
+of silently returning a successful zero-deletion result.

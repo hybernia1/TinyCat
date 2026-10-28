@@ -155,13 +155,13 @@ try {
     \TinyCat\Database\Connection::insert('ip_action_limits', [
         'ip_address' => '192.0.2.1',
         'action_name' => 'old',
-        'bucket_start' => \TinyCat\Support\Dates::dateDb('-31 days'),
+        'bucket_start' => \TinyCat\Support\Dates::dateDb('-2 days'),
         'action_count' => 1,
     ]);
     \TinyCat\Database\Connection::insert('ip_action_limits', [
         'ip_address' => '192.0.2.1',
         'action_name' => 'current',
-        'bucket_start' => \TinyCat\Support\Dates::dateDb('-1 day'),
+        'bucket_start' => \TinyCat\Support\Dates::dateDb('-1 hour'),
         'action_count' => 1,
     ]);
     \TinyCat\Database\Connection::insert('password_reset_tokens', ['expires_at' => \TinyCat\Support\Dates::dateDb('-1 hour'), 'used_at' => null]);
@@ -216,7 +216,7 @@ try {
 
     $databaseCleanupTasks = array_values(array_filter(
         \TinyCat\Scheduler\Cleanup::cron_cleanup_tasks(),
-        static fn (string $task): bool => !in_array($task, ['orphan_status_image_files', 'orphan_link_image_files', 'expired_cache_files', 'old_scheduler_runs', 'bot_history'], true)
+        static fn (string $task): bool => in_array($task, ['orphan_terms', 'orphan_links', 'old_action_limits', 'old_password_reset_tokens', 'old_read_notifications'], true)
     ));
     $result = \TinyCat\Scheduler\Cleanup::cron_cleanup_run(500, true, $databaseCleanupTasks);
     $imageCleanup = \TinyCat\Status\ImageStorage::cleanupOrphans(500, '2099/01');

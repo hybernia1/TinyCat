@@ -146,3 +146,6 @@
   align-content: start;
   gap: 14px;
 }
+
+.badge-success { background: var(--success-soft); color: var(--success); }
+.badge-warning { background: var(--warning-soft); color: var(--warning); }

@@ -12,6 +12,7 @@ return [
     \TinyCat\Search\Module::class,
     \TinyCat\Security\Module::class,
     \TinyCat\Scheduler\Module::class,
+    \TinyCat\Health\Module::class,
     \TinyCat\Updates\Module::class,
     \TinyCat\Site\Module::class,
 ];

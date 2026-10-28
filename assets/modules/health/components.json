@@ -1,0 +1,481 @@
+{
+  "health/report": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack"
+    },
+    "children": [
+      {
+        "tag": "h3",
+        "attrs": {
+          "class": "text-lg m-0"
+        },
+        "children": [
+          {
+            "t": "health.all_checks"
+          }
+        ]
+      },
+      {
+        "each": {
+          "get": "report.checks"
+        },
+        "as": "check",
+        "children": [
+          {
+            "tag": "section",
+            "attrs": {
+              "class": "card"
+            },
+            "children": [
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": "card-header split"
+                },
+                "children": [
+                  {
+                    "tag": "strong",
+                    "children": [
+                      {
+                        "lookup": {
+                          "get": "check.id"
+                        },
+                        "cases": {
+                          "http": {
+                            "t": "health.checks.http"
+                          },
+                          "database": {
+                            "t": "health.checks.database"
+                          },
+                          "cache": {
+                            "t": "health.checks.cache"
+                          },
+                          "storage": {
+                            "t": "health.checks.storage"
+                          },
+                          "uploads": {
+                            "t": "health.checks.uploads"
+                          },
+                          "disk": {
+                            "t": "health.checks.disk"
+                          },
+                          "runtime": {
+                            "t": "health.checks.runtime"
+                          },
+                          "scheduler": {
+                            "t": "health.checks.scheduler"
+                          },
+                          "updates": {
+                            "t": "health.checks.updates"
+                          }
+                        },
+                        "default": {
+                          "get": "check.id"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "component": "ui/status-badge",
+                    "data": {
+                      "tone": {
+                        "get": "check.status"
+                      },
+                      "label": {
+                        "lookup": {
+                          "get": "check.status"
+                        },
+                        "cases": {
+                          "ok": {
+                            "t": "health.status.ok"
+                          },
+                          "warning": {
+                            "t": "health.status.warning"
+                          },
+                          "critical": {
+                            "t": "health.status.critical"
+                          },
+                          "skipped": {
+                            "t": "health.status.skipped"
+                          },
+                          "unknown": {
+                            "t": "health.status.unknown"
+                          }
+                        },
+                        "default": {
+                          "get": "check.status"
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": "card-body stack stack-gap-8"
+                },
+                "children": [
+                  {
+                    "component": "health/scheduler-findings",
+                    "when": {
+                      "eq": [
+                        {
+                          "get": "check.id"
+                        },
+                        "scheduler"
+                      ]
+                    },
+                    "data": {
+                      "metrics": {
+                        "get": "check.metrics"
+                      }
+                    }
+                  },
+                  {
+                    "tag": "span",
+                    "attrs": {
+                      "class": "table-meta"
+                    },
+                    "children": [
+                      {
+                        "t": "health.check_duration"
+                      },
+                      ": ",
+                      {
+                        "get": "check.duration_ms"
+                      },
+                      " ms"
+                    ]
+                  },
+                  {
+                    "tag": "dl",
+                    "attrs": {
+                      "class": "stack stack-gap-4 m-0"
+                    },
+                    "children": [
+                      {
+                        "each": {
+                          "get": "check.metrics"
+                        },
+                        "as": "value",
+                        "children": [
+                          {
+                            "tag": "div",
+                            "attrs": {
+                              "class": "split"
+                            },
+                            "when": {
+                              "lookup": {
+                                "get": "_key"
+                              },
+                              "cases": {
+                                "ttfb_ms": true,
+                                "total_ms": true,
+                                "dns_ms": true,
+                                "connect_ms": true,
+                                "tls_ms": true,
+                                "http_status": true,
+                                "bytes": true
+                              },
+                              "default": false
+                            },
+                            "children": [
+                              {
+                                "tag": "dt",
+                                "attrs": {
+                                  "class": "text-muted"
+                                },
+                                "children": [
+                                  {
+                                    "lookup": {
+                                      "get": "_key"
+                                    },
+                                    "cases": {
+                                      "ttfb_ms": "TTFB (ms)",
+                                      "total_ms": {
+                                        "concat": [
+                                          {
+                                            "t": "health.http.total"
+                                          },
+                                          " (ms)"
+                                        ]
+                                      },
+                                      "dns_ms": "DNS (ms)",
+                                      "connect_ms": "TCP (ms)",
+                                      "tls_ms": "TLS (ms)",
+                                      "http_status": "HTTP",
+                                      "bytes": "Bytes"
+                                    },
+                                    "default": {
+                                      "get": "_key"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "dd",
+                                "attrs": {
+                                  "class": "m-0"
+                                },
+                                "children": [
+                                  {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          {
+                                            "get": "value"
+                                          },
+                                          null
+                                        ]
+                                      },
+                                      "-",
+                                      {
+                                        "get": "value"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "each": {
+                          "get": "check.limits"
+                        },
+                        "as": "value",
+                        "children": [
+                          {
+                            "tag": "div",
+                            "attrs": {
+                              "class": "split"
+                            },
+                            "children": [
+                              {
+                                "tag": "dt",
+                                "attrs": {
+                                  "class": "text-muted"
+                                },
+                                "children": [
+                                  {
+                                    "lookup": {
+                                      "get": "_key"
+                                    },
+                                    "cases": {
+                                      "ttfb_warning_ms": {
+                                        "concat": [
+                                          "TTFB / ",
+                                          {
+                                            "t": "health.status.warning"
+                                          },
+                                          " (ms)"
+                                        ]
+                                      },
+                                      "ttfb_critical_ms": {
+                                        "concat": [
+                                          "TTFB / ",
+                                          {
+                                            "t": "health.status.critical"
+                                          },
+                                          " (ms)"
+                                        ]
+                                      },
+                                      "total_warning_ms": {
+                                        "concat": [
+                                          {
+                                            "t": "health.http.total"
+                                          },
+                                          " / ",
+                                          {
+                                            "t": "health.status.warning"
+                                          },
+                                          " (ms)"
+                                        ]
+                                      },
+                                      "total_critical_ms": {
+                                        "concat": [
+                                          {
+                                            "t": "health.http.total"
+                                          },
+                                          " / ",
+                                          {
+                                            "t": "health.status.critical"
+                                          },
+                                          " (ms)"
+                                        ]
+                                      }
+                                    },
+                                    "default": {
+                                      "get": "_key"
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "dd",
+                                "attrs": {
+                                  "class": "m-0"
+                                },
+                                "children": [
+                                  {
+                                    "get": "value"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "when": {
+                      "eq": [
+                        {
+                          "get": "check.id"
+                        },
+                        "http"
+                      ]
+                    }
+                  },
+                  {
+                    "tag": "p",
+                    "attrs": {
+                      "class": "m-0 table-meta"
+                    },
+                    "children": [
+                      {
+                        "lookup": {
+                          "get": "check.metrics.error"
+                        },
+                        "cases": {
+                          "configuration": {
+                            "t": "health.http.errors.configuration"
+                          },
+                          "unsupported": {
+                            "t": "health.http.errors.unsupported"
+                          },
+                          "timeout": {
+                            "t": "health.http.errors.timeout"
+                          },
+                          "transport": {
+                            "t": "health.http.errors.transport"
+                          },
+                          "response_limit": {
+                            "t": "health.http.errors.response_limit"
+                          },
+                          "disabled": {
+                            "t": "health.http.errors.disabled"
+                          }
+                        },
+                        "default": ""
+                      }
+                    ],
+                    "when": {
+                      "get": "check.metrics.error"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "health/scheduler-findings": {
+    "tag": "ul",
+    "attrs": {
+      "class": "result-list"
+    },
+    "children": [
+      {
+        "tag": "li",
+        "attrs": {
+          "class": "result-item"
+        },
+        "when": {
+          "not": {
+            "get": "metrics"
+          }
+        },
+        "children": [
+          {
+            "t": "health.scheduler.unknown"
+          }
+        ]
+      },
+      {
+        "each": {
+          "get": "metrics"
+        },
+        "as": "reason",
+        "children": [
+          {
+            "tag": "li",
+            "attrs": {
+              "class": "result-item"
+            },
+            "when": {
+              "lookup": {
+                "get": "_key"
+              },
+              "cases": {
+                "cleanup": true,
+                "feeds": true
+              },
+              "default": false
+            },
+            "children": [
+              {
+                "tag": "strong",
+                "children": [
+                  {
+                    "lookup": {
+                      "get": "_key"
+                    },
+                    "cases": {
+                      "cleanup": {
+                        "t": "cron.tasks.cleanup"
+                      },
+                      "feeds": {
+                        "t": "cron.tasks.feeds"
+                      }
+                    }
+                  }
+                ]
+              },
+              " \u2014 ",
+              {
+                "lookup": {
+                  "get": "reason"
+                },
+                "cases": {
+                  "ok": {
+                    "t": "health.scheduler.ok"
+                  },
+                  "missing": {
+                    "t": "health.scheduler.missing"
+                  },
+                  "stale": {
+                    "t": "health.scheduler.stale"
+                  },
+                  "failed": {
+                    "t": "health.scheduler.failed"
+                  },
+                  "interrupted": {
+                    "t": "health.scheduler.interrupted"
+                  }
+                },
+                "default": {
+                  "t": "health.scheduler.unknown"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
