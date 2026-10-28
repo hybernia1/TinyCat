@@ -6,7 +6,7 @@ if (!defined('TINYCAT')) {
     exit('Forbidden');
 }
 
-if (PHP_VERSION_ID < 80400) {
+if (version_compare(PHP_VERSION, '8.4.0', '<')) {
     http_response_code(500);
     exit('TinyCat requires PHP 8.4 or newer.');
 }
