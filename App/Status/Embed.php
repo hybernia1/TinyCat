@@ -83,6 +83,7 @@ final class Embed
         $media = [];
         foreach (array_slice(array_values($links), 0, 3) as $link) {
             $card = Resource::link($link, (int) $item['id']);
+            $card['outbound_url'] = Presentation::absolute_url($card['outbound_url']);
             $card['url'] = \TinyCat\Security\Sanitizer::sanitize_html_url($card['url']);
             if ($card['url'] === '') { continue; }
             if ($card['thumbnail_url'] === '' && $card['provider'] === 'youtube' && $card['embed_allowed']) {
