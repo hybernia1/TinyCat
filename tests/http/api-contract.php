@@ -276,6 +276,7 @@ try {
     $assert($status === 200, 'Source deletion must use the shared response contract.');
     require __DIR__ . '/email-check-cases.php';
     require __DIR__ . '/export-contract-cases.php';
+    require __DIR__ . '/embed-contract-cases.php';
     require __DIR__ . '/locale-contract-cases.php';
     require __DIR__ . '/public-page-cases.php';
     require __DIR__ . '/domain-contract-cases.php';

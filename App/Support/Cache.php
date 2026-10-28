@@ -104,6 +104,8 @@ final class Cache
         }
 
         if (!self::memcachedPut($key, $value, $ttl, $staleTtl)) {
+            // A rejected replacement must not leave an older primary value visible.
+            self::memcachedForget($key);
             return self::filesystemPut($key, $value, $ttl, $staleTtl);
         }
 
@@ -131,7 +133,7 @@ final class Cache
         $memcached = self::memcachedForget($key);
         $filesystem = self::filesystemForget($key);
 
-        return $memcached || $filesystem;
+        return $memcached && $filesystem;
     }
 
     public static function file(string $fileName, string $namespace = ''): string
@@ -428,7 +430,7 @@ final class Cache
 
         $lookup = self::memcachedLookup($key);
 
-        return $lookup['available'] ? $lookup : self::filesystemLookup($key);
+        return $lookup['found'] ? $lookup : self::filesystemLookup($key);
     }
 
     /**
@@ -455,18 +457,23 @@ final class Cache
             return self::cacheMiss();
         }
 
-        if (is_array($value) && ($value['_tinycat_cache'] ?? null) === 2 && array_key_exists('value', $value)) {
-            $value = $value['value'];
-        }
-
         clearstatcache(true, $file);
         $writtenAt = @filemtime($file);
+        $retention = 604800;
+        if (is_array($value) && ($value['_tinycat_cache'] ?? null) === 2 && array_key_exists('value', $value)) {
+            $retention = max(1, (int) ($value['ttl'] ?? 300)) + max(0, (int) ($value['stale_ttl'] ?? 3600));
+            $value = $value['value'];
+        }
+        // Enforce stale expiry during reads, independently of scheduled cleanup.
+        if (!is_int($writtenAt) || $writtenAt <= time() - $retention) {
+            return self::cacheMiss();
+        }
 
         return [
             'available' => true,
             'found' => true,
             'value' => $value,
-            'written_at' => is_int($writtenAt) ? $writtenAt : 0,
+            'written_at' => $writtenAt,
         ];
     }
 
@@ -645,7 +652,7 @@ final class Cache
     {
         $config = self::memcachedConfig();
 
-        return self::memcachedPrefix((string) ($config['prefix'] ?? 'tinycat:')) . hash('sha256', $key);
+        return self::memcachedPrefix((string) ($config['prefix'] ?? 'tinycat:')) . hash('sha256', Version::CURRENT . ':' . (getenv('TINYCAT_CACHE_DIRECTORY') ?: '') . ':' . $key);
     }
 
     private static function memcachedMaxItemBytes(): int

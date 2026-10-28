@@ -27,7 +27,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
 }
 $config['app']['url'] = 'http://' . $_SERVER['HTTP_HOST'];
 $config['cache']['directory'] = $outputPath . '.cache';
-$config['cache']['driver'] = 'filesystem';
+$config['cache']['driver'] = getenv('TINYCAT_PROFILE_CACHE_DRIVER') ?: 'filesystem';
+// A unique run prefix isolates Memcached without flushing other applications.
+$config['cache']['memcached']['prefix'] = 'tinycat:profile:' . substr(hash('sha256', $outputPath), 0, 24) . ':';
+$config['cache']['memcached']['persistent_id'] = '';
+if ($config['cache']['driver'] === 'memcached') {
+    $client = new Memcached();
+    $client->addServer('127.0.0.1', 11211);
+    if (!in_array(true, array_map(static fn ($v): bool => is_string($v) && $v !== '', $client->getVersion()), true)) {
+        throw new RuntimeException('Memcached benchmark requires a reachable local server.');
+    }
+    $config['cache']['memcached']['servers'] = [['host' => '127.0.0.1', 'port' => 11211]];
+}
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $config);
 $db = $config['database'];
@@ -53,6 +64,7 @@ register_shutdown_function(static function () use ($started, $database, $outputP
         'sql_count' => count($queries), 'sql_ms' => round(array_sum(array_column($queries, 'ms')), 3),
         'peak_memory_bytes' => memory_get_peak_usage(true), 'queries' => $queries,
         'included_files' => count(get_included_files()),
+        'cache_driver' => \TinyCat\Support\Config::get('cache.driver'),
         'opcache_enabled' => function_exists('opcache_get_status') && opcache_get_status(false) !== false,
         'calls' => \TinyCat\Tools\Performance\CallProfile::report(),
         'valid_json' => $validJson,

@@ -67,6 +67,7 @@ final class PublicPages
                 'url' => Presentation::absolute_url(LocaleRouting::canonical((string) $meta['url'])), 'type' => (string) ($meta['type'] ?? 'website'),
                 'image' => !empty($meta['image']) ? Presentation::absolute_url((string) $meta['image']) : '',
                 'image_type' => (string) ($meta['image_type'] ?? ''), 'image_width' => (int) ($meta['image_width'] ?? 0), 'image_height' => (int) ($meta['image_height'] ?? 0), 'image_alt' => (string) ($meta['image_alt'] ?? $page['title']),
+                'oembed' => (string) ($meta['oembed'] ?? ''), 'oembed_xml' => (string) ($meta['oembed_xml'] ?? ''),
                 'rss' => !empty($meta['rss']) ? Presentation::absolute_url((string) $meta['rss']) : '',
                 'robots' => (string) ($meta['robots'] ?? ''), 'jsonld' => isset($meta['jsonld']) && is_array($meta['jsonld']) ? LocaleRouting::schema($meta['jsonld']) : null,
                 'published_time' => !empty($meta['published_time']) ? \TinyCat\Support\Dates::dateIso((string) $meta['published_time']) : '', 'author' => (string) ($meta['author'] ?? ''),

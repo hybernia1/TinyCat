@@ -13,6 +13,9 @@ final class Module implements \TinyCat\StorageModule
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/oembed', Embed::oembed(...));
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed', static fn (string $id) => Embed::page((int) $id));
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/status/{id:[0-9]+}/embed-code', static fn (string $id) => Embed::page((int) $id, true));
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/rss', static fn () => \TinyCat\Http\Document::notFound('Feed not found.'));
         \TinyCat\Http\Router::route(['GET', 'POST'], '/status/{status_id:[0-9]+}', static function (string $status_id): void {
             Pages::detail(max(0, (int) $status_id));

@@ -44,6 +44,10 @@ return static function (): array {
         }
         $manifest['clients'][$path] = $client;
     }
+    foreach (\TinyCat\Support\ClientAssets::standalone() as $path) {
+        $type = pathinfo($path, PATHINFO_EXTENSION);
+        $manifest['assets'][substr($path, strlen('assets/'))] = $variants('standalone-' . pathinfo($path, PATHINFO_FILENAME), \TinyCat\Support\AssetGraph::read($path), $type);
+    }
     $files['assets/build/manifest.json'] = \TinyCat\Support\ClientAssets::encode($manifest);
     ksort($files);
     return $files;

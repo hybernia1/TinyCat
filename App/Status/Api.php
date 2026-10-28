@@ -15,6 +15,11 @@ final class Api
     public static function register(Registrar $api): void
     {
         $api->get('/statuses', self::listing(...));
+        $api->get('/statuses/{id:[0-9]+}/embed', static function (Request $request, array $params): array {
+            $data = Embed::sharing((int) $params['id']);
+            if ($data === null) { Response::error(\TinyCat\Support\Localization::t('public.status_not_found'), 404, 'status_not_found'); }
+            return $data;
+        });
         $api->post('/statuses', static fn (): Result => self::write(static fn (): array => Actions::status_json_create(Users::actor()), 'create'));
         $api->get('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): array => self::detail((int) $p['id']));
         $api->patch('/statuses/{id:[0-9]+}', static fn (Request $r, array $p): Result => self::write(static fn (): array => Actions::status_json_update((int) $p['id'], Users::actor()), 'update'));

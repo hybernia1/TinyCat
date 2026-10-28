@@ -1719,6 +1719,50 @@
             ]
           }
         ]
+      },
+      {
+        "tag": "a",
+        "attrs": {
+          "class": "btn btn-ghost btn-sm status-reaction",
+          "href": {
+            "concat": [
+              "/status/",
+              {
+                "get": "item.id"
+              },
+              "/embed-code"
+            ]
+          },
+          "aria-label": {
+            "t": "account.status_embed"
+          },
+          "data-modal-open": {
+            "concat": [
+              "status-embed-modal-",
+              {
+                "get": "item.id"
+              }
+            ]
+          },
+          "data-modal-url": {
+            "concat": [
+              "/api/statuses/",
+              {
+                "get": "item.id"
+              },
+              "/embed"
+            ]
+          },
+          "data-modal-refresh": "true",
+          "title": {
+            "t": "account.status_embed"
+          }
+        },
+        "children": [
+          {
+            "icon": "code"
+          }
+        ]
       }
     ]
   },

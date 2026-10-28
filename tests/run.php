@@ -38,6 +38,7 @@ $tests = [
     'Hot-read query budgets' => 'tests/hot-read-query-budgets.php',
     'SQL execution profiler' => 'tests/tools/performance-profiler.php',
     'Cache' => 'tests/cache/run.php',
+    'Memcached integration' => 'tests/cache/memcached.php',
     'Concurrent cache refresh' => 'tests/cache/concurrency.php',
     'Asset optimizer' => 'tests/asset-optimizer/run.php',
     'Asset reachability and delivery budgets' => 'tests/asset-optimizer/budgets.php',

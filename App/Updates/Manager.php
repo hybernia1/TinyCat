@@ -836,7 +836,7 @@ final class Manager extends Package
 
     private static function clearRuntimeCache(): void
     {
-        $cache = \TinyCat\Support\Storage::path('cache');
+        $cache = \TinyCat\Support\Cache::directory();
 
         if (!is_dir($cache)) {
             return;

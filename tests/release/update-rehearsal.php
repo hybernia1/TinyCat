@@ -307,10 +307,11 @@ PHP;
     $assert($retiredExit === 0, 'Updated runtime provides Bots without an extension loader: ' . implode(' ', $retiredOutput));
 
     $updatedInventory = $inventory($installRoot);
-    $assetCache = $installRoot . '/storage/cache/assets';
+    $runtimeCache = getenv('TINYCAT_CACHE_DIRECTORY') ?: $installRoot . '/storage/cache';
+    $assetCache = $runtimeCache . '/assets';
     if (!is_dir($assetCache)) { mkdir($assetCache, 0775, true); }
     file_put_contents($assetCache . '/retention.aaaaaaaaaaaaaaaaaaaa.js', 'var retained = true;');
-    file_put_contents($installRoot . '/storage/cache/expired-rehearsal.json', '{}');
+    file_put_contents($runtimeCache . '/expired-rehearsal.json', '{}');
     $repeatRunner = <<<'PHP'
 define('TINYCAT', true);
 $root = __INSTALL_ROOT__;
@@ -346,7 +347,7 @@ PHP;
     $repeatMetadata = json_decode((string) @file_get_contents($repeatBackup . '/backup.json'), true);
     $assert($repeatExit === 0 && is_array($repeatResult), 'Repeated signed update completes: ' . implode(' ', $repeatOutput));
     $assert(is_file($assetCache . '/retention.aaaaaaaaaaaaaaaaaaaa.js'), 'Runtime cache cleanup preserves immutable assets used by open pages.');
-    $assert(!is_file($installRoot . '/storage/cache/expired-rehearsal.json'), 'Runtime cache cleanup still removes obsolete data caches.');
+    $assert(!is_file($runtimeCache . '/expired-rehearsal.json'), 'Runtime cache cleanup still removes obsolete data caches.');
     $assert($inventory($installRoot) === $updatedInventory, 'Repeated signed update leaves the candidate inventory unchanged.');
     $assert(is_array($repeatMetadata) && ($repeatMetadata['files'] ?? null) === [], 'Repeated signed update does not back up unchanged files.');
 

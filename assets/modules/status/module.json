@@ -30,7 +30,8 @@
       "assets/modules/status/styles/063-status-email-notice-copy.css",
       "assets/modules/status/styles/069-feed-switch.css",
       "assets/modules/status/styles/071-status-link-card-has-image.css",
-      "assets/modules/status/styles/075-status-feed.css"
+      "assets/modules/status/styles/075-status-feed.css",
+      "assets/modules/status/styles/095-embed-modal.css"
     ],
     "translations": [
       "account.translation_translate",
@@ -58,7 +59,9 @@
       "moderation.report_reason",
       "moderation.report_note",
       "public.feed_empty",
-      "public.feed_empty_following"
+      "public.feed_empty_following",
+      "account.status_embed_help",
+      "account.status_embed_code"
     ],
     "messages": {
       "action_limited": "moderation.messages.action_limited",
@@ -86,6 +89,11 @@
       "status_saved": "account.messages.status_saved",
       "status_tag_too_long": "account.messages.status_tag_too_long",
       "status_created": "account.messages.status_created"
-    }
+    },
+    "standalone": [
+      "assets/embed.css",
+      "assets/embed-frame.js",
+      "assets/embed.js"
+    ]
   }
 ]

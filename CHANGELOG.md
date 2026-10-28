@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.11.0 - 2026-10-28
+
+- Embed public posts through oEmbed 1.0 JSON/XML discovery and a standalone responsive iframe with HTTP validators and visibility checks.
+- Add an icon action opening the standard TinyCat modal with a live preview and selectable embed code; retain a non-JavaScript fallback page.
+- Show the author avatar, attached images and stored link previews, with click-to-load approved audio/video players, including Spotify and SoundCloud, and standard thumbnail metadata.
+- Keep embed documents independent of visitor sessions and account controls; preserve frame protections on ordinary pages and validate resize message sources and origins.
+- Version Memcached entries per release, read disk fallback entries after rejected primary writes, and enforce stale expiry independently of scheduled cleanup.
+- Respect the configured cache directory during updates and isolate Memcached test entries from the running installation.
+- Add real Memcached failure/recovery and concurrent-refresh checks, oEmbed and modal contracts, and repeatable filesystem/Memcached performance measurements. Warm feed SQL budgets remain unchanged.
+
 ## 4.10.0 - 2026-10-28
 
 - Filter author and tag archives by images, video, audio, links or text, preserving the selected type in URLs and cursor pagination.

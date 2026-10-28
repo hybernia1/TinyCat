@@ -38,6 +38,21 @@ $test('Cache facade preserves fresh and stale values', static function () use ($
     }
 });
 
+$test('stale expiry is enforced without cleanup', static function () use ($expect): void {
+    $key = 'bounded-stale';
+    \TinyCat\Support\Cache::put($key, ['old'], 1, 2);
+    $file = \TinyCat\Support\Cache::file($key . '.json');
+    // Exercise the filesystem backend independently of the local configuration.
+    $put = new ReflectionMethod(\TinyCat\Support\Cache::class, 'filesystemPut');
+    $lookup = new ReflectionMethod(\TinyCat\Support\Cache::class, 'filesystemLookup');
+    $put->invoke(null, $key, ['old'], 1, 2);
+    touch($file, time() - 2);
+    $expect($lookup->invoke(null, $key)['found'], 'Allowed stale data remains readable.');
+    touch($file, time() - 4);
+    $expect(!$lookup->invoke(null, $key)['found'], 'Expired stale data must not be returned.');
+    \TinyCat\Support\Cache::forget($key);
+});
+
 $test('generated cache files remain disk-backed', static function () use ($expect): void {
     $namespace = 'cache-test-' . bin2hex(random_bytes(8));
     $fileName = 'asset.txt';

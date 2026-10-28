@@ -41,7 +41,7 @@ final class Providers
         'https://www.youtube.com', 'https://youtube.com', 'https://player.vimeo.com',
         'https://www.dailymotion.com', 'https://dailymotion.com',
         'https://www.facebook.com',
-        'https://w.soundcloud.com',
+        'https://w.soundcloud.com', 'https://open.spotify.com',
     ];
 
     /** @return array<mixed>|null */
@@ -486,6 +486,14 @@ final class Providers
     /** @param array<mixed> $link */
     public static function embedUrl(array $link): string
     {
+        $url = (string) ($link['normalized_url'] ?? '');
+        $parts = parse_url($url);
+        if (is_array($parts) && !isset($parts['user']) && !isset($parts['pass']) && !isset($parts['port'])
+            && in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+            && self::host((string) ($parts['host'] ?? '')) === 'open.spotify.com'
+            && preg_match('~^/(?:intl-[a-z]{2}/)?((?:track|album|artist|playlist|show|episode)/[A-Za-z0-9]{22})/?$~D', (string) parse_url($url, PHP_URL_PATH), $match) === 1) {
+            return 'https://open.spotify.com/embed/' . $match[1];
+        }
         $soundcloud = self::soundcloudUrl((string) ($link['normalized_url'] ?? ''));
         if ($soundcloud !== '') {
             return 'https://w.soundcloud.com/player/?' . http_build_query(['url' => $soundcloud, 'auto_play' => 'false', 'visual' => 'false', 'show_artwork' => 'true'], '', '&', PHP_QUERY_RFC3986);
@@ -518,6 +526,8 @@ final class Providers
     public static function embedAllowed(string $url): bool
     {
         $parts = parse_url($url);
+        if (($parts['host'] ?? '') === 'open.spotify.com'
+            && preg_match('~^/embed/(?:track|album|artist|playlist|show|episode)/[A-Za-z0-9]{22}$~D', $parts['path'] ?? '') !== 1) { return false; }
         if (($parts['host'] ?? '') === 'w.soundcloud.com') {
             parse_str((string) ($parts['query'] ?? ''), $query);
             if (($parts['path'] ?? '') !== '/player/' || !is_string($query['url'] ?? null) || self::soundcloudUrl($query['url']) === '') { return false; }
@@ -542,7 +552,7 @@ final class Providers
             'embed_width_param' => $provider === 'facebook' && $type === 'video' ? 'width' : '',
             'embed_autoplay_param' => $provider === 'soundcloud' ? 'auto_play' : 'autoplay',
             'embed_autoplay_value' => $provider === 'soundcloud' ? 'true' : '1',
-            'embed_height' => $provider === 'soundcloud' && $type === 'audio' ? (str_contains($path, '/sets/') || str_starts_with($path, '/playlists/') ? 450 : 166) : 0,
+            'embed_height' => $provider === 'spotify' && $type === 'audio' ? 352 : ($provider === 'soundcloud' && $type === 'audio' ? (str_contains($path, '/sets/') || str_starts_with($path, '/playlists/') ? 450 : 166) : 0),
             'provider_name' => self::googleMap((string) ($link['normalized_url'] ?? '')) !== null ? 'Google Maps' : ($labels[$provider] ?? '')];
     }
 

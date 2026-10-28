@@ -91,7 +91,7 @@ final class Resource
      * @param array<mixed> $link
      * @return array<string, mixed>
      */
-    private static function link(array $link): array
+    public static function link(array $link): array
     {
         $map = Providers::googleMap((string) ($link['normalized_url'] ?? ''));
         if ($map !== null) { $link = array_replace($link, $map); }

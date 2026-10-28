@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **4.10.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+Current release: **4.11.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -73,10 +73,20 @@ assets remain on disk. Add this to the private `config.php` file:
 ],
 ```
 
+Memcached keys include the application version, so releases do not reuse older
+computed entries. Old entries expire normally without flushing the shared server.
 Use a unique prefix for each installation. If the extension or server is not
 available, TinyCat safely falls back to its filesystem cache.
 Memcached must be bound to loopback or a private network and must never be
 exposed directly to the public internet.
+
+## Embed posts
+
+Choose **Embed post** on a public post to open the standard modal with a live
+preview and a copyable iframe snippet. TinyCat also provides oEmbed JSON/XML discovery so compatible editors can
+embed the original post URL. The card includes the author avatar, text, attached images, link previews and
+click-to-load audio/video players, with no visitor session or account controls. See [the embedding API](docs/api.md#embedding-public-posts-oembed-10)
+for endpoint details and WordPress configuration.
 
 ## Installation
 

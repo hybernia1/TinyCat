@@ -68,6 +68,9 @@ declare(strict_types=1);
     <?php foreach ($languageAlternatives as $alternative): ?>
         <link rel="alternate" hreflang="<?= \TinyCat\Support\Html::e($alternative['language']) ?>" href="<?= \TinyCat\Support\Html::e($alternative['url']) ?>">
     <?php endforeach; ?>
+    <?php foreach (['oembed' => 'application/json+oembed', 'oembed_xml' => 'text/xml+oembed'] as $key => $type): ?>
+        <?php if (!empty($meta[$key])): ?><link rel="alternate" type="<?= \TinyCat\Support\Html::e($type) ?>" href="<?= \TinyCat\Support\Html::e($meta[$key]) ?>" title="<?= \TinyCat\Support\Html::e($pageTitle) ?>"><?php endif; ?>
+    <?php endforeach; ?>
     <link rel="privacy-policy" href="<?= \TinyCat\Support\Html::e($privacyUrl) ?>">
     <?php if ($metaRss !== ''): ?>
         <link rel="alternate" type="application/rss+xml" title="<?= \TinyCat\Support\Html::e($pageTitle) ?>" href="<?= \TinyCat\Support\Html::e($metaRssUrl) ?>">

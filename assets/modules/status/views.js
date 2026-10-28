@@ -41,6 +41,31 @@ import "../../ui/fields.js";
         return U.dialog(id, "moderation.report_submit", report);
       }
       if (!/^\/api\/statuses\//.test(url.pathname)) { return null; }
+      if (/\/embed$/.test(url.pathname)) {
+        content.appendChild(e("p", { "class": "muted" }, U.text("account.status_embed_help")));
+        var previewUrl = new URL(data.frame_url, window.location.href);
+        if (previewUrl.origin !== window.location.origin || !/\/status\/[1-9][0-9]*\/embed$/.test(previewUrl.pathname)) throw new TypeError("Invalid embed preview URL.");
+        var preview = document.createElement("iframe");
+        preview.src = previewUrl.href; preview.className = "status-embed-preview";
+        preview.title = U.text("account.status_embed"); preview.loading = "lazy"; preview.referrerPolicy = "no-referrer"; preview.height = "340";
+        var previewObserver;
+        preview.addEventListener("load", function () {
+          if (previewObserver) previewObserver.disconnect();
+          var card = preview.contentDocument && preview.contentDocument.querySelector(".embed-card");
+          if (!card) return;
+          function resize() { preview.height = String(Math.min(600, Math.ceil(card.getBoundingClientRect().height))); }
+          if (window.ResizeObserver) { previewObserver = new window.ResizeObserver(resize); previewObserver.observe(card); }
+          resize();
+        });
+        content.appendChild(preview);
+        var field = U.field("account.status_embed_code", "embed_code", data.snippet, "textarea", { readonly: "", rows: "6", spellcheck: "false" });
+        var code = field.querySelector("textarea");
+        code.addEventListener("click", function () { code.select(); });
+        content.appendChild(field);
+        var embedDialog = U.dialog(id, "account.status_embed", content);
+        embedDialog.addEventListener("tinycat:modal-close", function () { if (previewObserver) previewObserver.disconnect(); });
+        return embedDialog;
+      }
       if (/\/revisions$/.test(url.pathname)) {
         content.className = "status-comment-history";
         data.items.forEach(function (revision) {

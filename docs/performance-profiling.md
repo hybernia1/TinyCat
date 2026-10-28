@@ -37,6 +37,11 @@ or failure. Its router accepts only GET requests and only `tinycat_perf_*` datab
 `--user` selects a seeded account on this benchmark server; it does not sign into
 the development website. Authentication resolution still runs in each request.
 An isolated filesystem cache is used per output, independently of the site's cache.
+Pass `--cache=memcached` to measure the local Memcached server at 127.0.0.1:11211
+with a unique prefix per output. A missing server fails the run. The default is
+`--cache=filesystem`; reports and request traces record the selected backend.
+`--expire` supports filesystem entries and ages them just past their fresh TTL,
+within their stale retention window.
 
 Each scenario records its first request per worker, two warmup waves and the measured requests.
 Every HTTP request starts with fresh PHP request state. Reports include HTTP p50,
@@ -67,7 +72,7 @@ same visibility, permissions, content and pagination behavior.
 
 ```sh
 php tools/profile-performance.php --config=storage/performance/run/config.php --root=storage/performance/candidate-app --output=storage/performance/run/cold-cache.json --workers=4 --requests=40 --paths=/api/site/sidebar
-php tools/profile-performance.php --config=storage/performance/run/config.php --root=storage/performance/candidate-app --output=storage/performance/run/expired-cache.json --workers=4 --requests=40 --paths=/api/site/sidebar --expire=public_trending_tags_8_7,public_top_authors_ranked_5_7
+php tools/profile-performance.php --config=storage/performance/run/config.php --root=storage/performance/candidate-app --output=storage/performance/run/expired-cache.json --workers=4 --requests=40 --paths=/api/site/sidebar --expire=public_trending_tags_v2_8_7,public_top_authors_ranked_5_7
 ```
 
 The first command sends a simultaneous cold burst, then warm traffic. `--expire`

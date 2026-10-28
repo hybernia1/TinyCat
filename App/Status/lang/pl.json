@@ -78,6 +78,10 @@
       "comment_not_found": "Nie znaleziono komentarza.",
       "comment_forbidden": "Nie możesz usunąć tego komentarza.",
       "comment_edit_forbidden": "Nie masz uprawnień do edycji tego komentarza."
-    }
+    },
+    "status_embed": "Osadź wpis",
+    "status_embed_help": "Skopiuj ten kod HTML do bloku HTML swojej witryny. WordPress może też rozpoznać osadzanie na podstawie adresu wpisu.",
+    "status_embed_code": "Kod osadzania",
+    "status_embed_open": "Otwórz oryginalny wpis"
   }
 }

@@ -11,7 +11,7 @@ final class Document
         header_remove('Expires');
         header_remove('Pragma');
         header('Content-Type: ' . $type . '; charset=UTF-8');
-        header('Cache-Control: public, max-age=' . max(0, $maxAge) . ($immutable ? ', immutable' : ''));
+        header('Cache-Control: public, max-age=' . max(0, $maxAge) . ($immutable ? ', immutable' : '') . ($maxAge <= 0 ? ', must-revalidate' : ''));
         header('X-Content-Type-Options: nosniff');
         $etag = '"' . hash('sha256', $body) . '"';
         header('ETag: ' . $etag);

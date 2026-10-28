@@ -78,6 +78,10 @@
       "comment_not_found": "El comentario no fue encontrado.",
       "comment_forbidden": "No tienes permiso para eliminar este comentario.",
       "comment_edit_forbidden": "No tienes permiso para editar este comentario."
-    }
+    },
+    "status_embed": "Insertar publicación",
+    "status_embed_help": "Copia este código HTML en un bloque HTML de tu sitio. WordPress también puede descubrir la inserción desde la URL de la publicación.",
+    "status_embed_code": "Código de inserción",
+    "status_embed_open": "Abrir publicación original"
   }
 }

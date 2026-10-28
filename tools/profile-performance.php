@@ -4,7 +4,7 @@ declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require __DIR__ . '/performance/HttpLoadRunner.php';
 require __DIR__ . '/performance/ProfileServerPool.php';
-$options = getopt('', ['config:', 'output:', 'requests:', 'user:', 'paths:', 'root:', 'workers:', 'expire:']);
+$options = getopt('', ['config:', 'output:', 'requests:', 'user:', 'paths:', 'root:', 'workers:', 'expire:', 'cache:']);
 $root = realpath((string) ($options['root'] ?? dirname(__DIR__)));
 $configPath = realpath((string) ($options['config'] ?? ''));
 $output = (string) ($options['output'] ?? '');
@@ -18,6 +18,10 @@ if (!is_dir(dirname($output))) { mkdir(dirname($output), 0775, true); }
 $output = realpath(dirname($output)) . DIRECTORY_SEPARATOR . basename($output);
 $log = $output . '.requests.jsonl';
 if (file_exists($output) || file_exists($log)) { throw new RuntimeException('Choose a new output path; existing measurements are preserved.'); }
+$cacheDriver = (string) ($options['cache'] ?? 'filesystem');
+if (!in_array($cacheDriver, ['filesystem', 'memcached'], true)) { throw new RuntimeException('Expected filesystem or memcached cache.'); }
+if ($cacheDriver === 'memcached' && isset($options['expire'])) { throw new RuntimeException('File aging is only supported for filesystem cache.'); }
+putenv('TINYCAT_PROFILE_CACHE_DRIVER=' . $cacheDriver);
 $pool = new \TinyCat\Tools\Performance\ProfileServerPool($root, $configPath, $log, $workers, (int) ($options['user'] ?? 0));
 try {
     $paths = explode(',', (string) ($options['paths'] ?? '/,/api/statuses,/api/statuses/1,/author/2,/search?q=performance,/api/site/sidebar'));
@@ -32,7 +36,7 @@ try {
             foreach (explode(',', (string) $options['expire']) as $key) {
                 if (preg_match('/^[A-Za-z0-9_.-]+$/D', $key) !== 1) { throw new RuntimeException('Expected safe cache entry names.'); }
                 $entry = $log . '.cache/' . $key . '.json';
-                if (!is_file($entry) || !touch($entry, 1)) { throw new RuntimeException('Unable to expire the requested cache entry.'); }
+                if (!is_file($entry) || !touch($entry, time() - max(1, (int) (json_decode((string) file_get_contents($entry), true)['ttl'] ?? 300)) - 1)) { throw new RuntimeException('Unable to expire the requested cache entry.'); }
             }
         }
         $pathStart = is_file($log) ? count(file($log, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)) : 0;
@@ -75,7 +79,7 @@ try {
         }
     }
     file_put_contents($output, json_encode([
-        'generated_at' => gmdate('c'), 'php' => PHP_VERSION, 'requests_per_path' => $requests,
+        'generated_at' => gmdate('c'), 'cache_driver' => $cacheDriver, 'php' => PHP_VERSION, 'requests_per_path' => $requests,
         'application_root' => $root, 'workers' => $workers,
         'expired_entries' => $options['expire'] ?? null,
         'actor_id' => (int) ($options['user'] ?? 0), 'scenarios' => $scenarios,

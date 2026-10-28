@@ -78,6 +78,10 @@
       "comment_not_found": "Der Kommentar wurde nicht gefunden.",
       "comment_forbidden": "Es ist Ihnen nicht gestattet, diesen Kommentar zu löschen.",
       "comment_edit_forbidden": "Sie sind nicht berechtigt, diesen Kommentar zu bearbeiten."
-    }
+    },
+    "status_embed": "Beitrag einbetten",
+    "status_embed_help": "Diesen HTML-Code in einen HTML-Block Ihrer Website kopieren. WordPress kann die Einbettung auch über die Beitrags-URL erkennen.",
+    "status_embed_code": "Einbettungscode",
+    "status_embed_open": "Originalbeitrag öffnen"
   }
 }

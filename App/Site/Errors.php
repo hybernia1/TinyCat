@@ -52,7 +52,7 @@ final class Errors
             }
             return;
         }
-        if (Discovery::handles($path)) { header('Content-Type: text/plain; charset=UTF-8'); if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'HEAD') { echo $title; } return; }
+        if (Discovery::handles($path) || \TinyCat\Status\Embed::handles($path)) { header('Content-Type: text/plain; charset=UTF-8'); if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'HEAD') { echo $title; } return; }
         header('Content-Type: text/html; charset=UTF-8');
         if (strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) === 'HEAD') { return; }
         if ($status !== 503) {

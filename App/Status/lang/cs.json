@@ -78,6 +78,10 @@
       "comment_not_found": "Komentář nebyl nalezen.",
       "comment_forbidden": "Na smazání tohoto komentáře nemáš oprávnění.",
       "comment_edit_forbidden": "Na úpravu tohoto komentáře nemáš oprávnění."
-    }
+    },
+    "status_embed": "Vložit na web",
+    "status_embed_help": "Zkopírujte tento HTML kód do HTML bloku svého webu. WordPress může vložení rozpoznat také z odkazu na příspěvek.",
+    "status_embed_code": "Kód pro vložení",
+    "status_embed_open": "Otevřít původní příspěvek"
   }
 }

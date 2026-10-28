@@ -78,6 +78,10 @@
       "comment_not_found": "Le commentaire n'a pas été trouvé.",
       "comment_forbidden": "Vous n'êtes pas autorisé à supprimer ce commentaire.",
       "comment_edit_forbidden": "Vous n'êtes pas autorisé à modifier ce commentaire."
-    }
+    },
+    "status_embed": "Intégrer la publication",
+    "status_embed_help": "Copiez ce code HTML dans un bloc HTML de votre site. WordPress peut aussi découvrir le contenu à intégrer depuis son URL.",
+    "status_embed_code": "Code d’intégration",
+    "status_embed_open": "Ouvrir la publication originale"
   }
 }

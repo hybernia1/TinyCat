@@ -78,6 +78,10 @@
       "comment_not_found": "The comment was not found.",
       "comment_forbidden": "You are not allowed to delete this comment.",
       "comment_edit_forbidden": "You are not allowed to edit this comment."
-    }
+    },
+    "status_embed": "Embed post",
+    "status_embed_help": "Copy this HTML into your website HTML block. WordPress can also discover the embed from the post URL.",
+    "status_embed_code": "Embed code",
+    "status_embed_open": "Open original post"
   }
 }

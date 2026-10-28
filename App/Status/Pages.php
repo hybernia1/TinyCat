@@ -83,6 +83,8 @@ final class Pages
             'current' => $current,
             'meta' => [
                 'title' => $statusTitle,
+                'oembed' => Embed::discoveryUrl($statusId),
+                'oembed_xml' => Embed::discoveryUrl($statusId, 'xml'),
                 'description' => ViewData::status_meta_description($item),
                 'url' => $current,
                 'image' => ViewData::status_meta_image($item),

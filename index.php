@@ -35,7 +35,7 @@ try {
         \TinyCat\Http\Web::redirect('/install');
     }
 
-    if (!$installPath && !$siteIdentityPath && !\TinyCat\Site\Discovery::handles($path) && !\TinyCat\Site\Errors::isAsset($path)) {
+    if (!$installPath && !$siteIdentityPath && !\TinyCat\Site\Discovery::handles($path) && !\TinyCat\Status\Embed::handles($path) && !\TinyCat\Site\Errors::isAsset($path)) {
         \TinyCat\Users\Profiles::app_apply_user_locale();
         \TinyCat\Site\LocaleRouting::apply();
         header('Vary: Accept-Language, X-TinyCat-Locale', false);

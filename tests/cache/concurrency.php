@@ -8,9 +8,13 @@ require dirname(__DIR__, 2) . '/App/autoload.php';
 use TinyCat\Support\Cache;
 use TinyCat\Support\Config;
 
-$configure = static function (string $directory): void {
+if (($argv[1] ?? '') === 'memcached') { putenv('TINYCAT_TEST_CACHE_BACKEND=memcached'); }
+$backend = getenv('TINYCAT_TEST_CACHE_BACKEND') ?: 'filesystem';
+$configure = static function (string $directory) use ($backend): void {
+    foreach (['driver', 'memcachedConfig', 'memcachedClient'] as $property) { (new ReflectionProperty(Cache::class, $property))->setValue(null, null); }
+    (new ReflectionProperty(Cache::class, 'memcachedInitialized'))->setValue(null, false);
     (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
-    (new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $directory, 'driver' => 'filesystem']]);
+    (new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $directory, 'driver' => $backend, 'memcached' => ['prefix' => 'tinycat:concurrency:' . hash('sha256', $directory) . ':']]]);
 };
 
 if (($argv[1] ?? '') === 'worker') {
@@ -46,7 +50,16 @@ foreach (['cold', 'stale'] as $scenario) {
     $configure($base . '/' . $scenario . '-cache');
     if ($scenario === 'stale') {
         Cache::put('shared', ['value' => 'old']);
-        touch(Cache::file('shared.json'), time() - 10);
+        if ($backend === 'memcached') {
+            if (!Cache::diagnostics()['memcached']['available']) { throw new RuntimeException('Memcached concurrency requires a reachable server.'); }
+            $client = (new ReflectionMethod(Cache::class, 'memcachedClient'))->invoke(null);
+            $key = (new ReflectionMethod(Cache::class, 'memcachedKey'))->invoke(null, 'shared');
+            $payload = json_decode($client->get($key), true, flags: JSON_THROW_ON_ERROR);
+            $payload['written_at'] = time() - 10;
+            $client->set($key, json_encode($payload, JSON_THROW_ON_ERROR), 3600);
+        } else {
+            touch(Cache::file('shared.json'), time() - 10);
+        }
     }
     $processes = [];
     for ($id = 0; $id < 4; $id++) {
@@ -88,4 +101,4 @@ $expect(Cache::rememberArray('empty', 300, static function (): array { throw new
 $configure($base . '/unavailable-cache');
 mkdir(Cache::directory(), 0700, true); file_put_contents(Cache::directory() . '/locks', 'not a directory');
 $expect(Cache::rememberArray('fallback', 300, static fn (): array => ['available']) === ['available'], 'Unavailable locking preserves computed results.');
-echo 'PASS concurrent cache miss, stale refresh and failure recovery (' . $checks . " checks)\n";
+echo 'PASS ' . $backend . ' concurrent cache miss, stale refresh and failure recovery (' . $checks . " checks)\n";

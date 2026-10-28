@@ -76,6 +76,11 @@ check(playerRoot.querySelector("iframe").src.startsWith("https://www.youtube.com
 check(playerRoot.querySelector("a") === playerSource, "Loading a player preserves the original source link.");
 T.components.register(definitions);
 T.i18n.register("en", labels);
+const embedModal = T.status.modal(new URL("https://tinycat.test/api/statuses/42/embed"), { data: { frame_url: "https://tinycat.test/status/42/embed", snippet: '<iframe title="example"></iframe>' } }, "status-embed-modal-42");
+check(embedModal.getAttribute("role") === "dialog" && embedModal.querySelector("iframe").src === "https://tinycat.test/status/42/embed", "Embedding opens the standard dialog with a same-origin preview.");
+check(embedModal.querySelector("textarea").getAttribute("readonly") !== null && embedModal.querySelector("textarea").value === '<iframe title="example"></iframe>', "The embed modal exposes code as selectable text, never interpreted markup.");
+assert.throws(() => T.status.modal(new URL("https://tinycat.test/api/statuses/42/embed"), { data: { frame_url: "https://evil.test/status/42/embed", snippet: "" } }, "foreign-embed"), /Invalid embed preview/);
+
 const socialCard = T.components.render("status/link", { link: { url: "https://facebook.com/ExamplePage/posts/123", title: "Author", description: "Post text", provider: "facebook", provider_name: "Facebook", card_kind: "social", card_icon: "message-circle" } });
 check(socialCard.querySelector('[data-card-kind="social"]').textContent.includes("Facebook"), "Social cards have a provider header and keep post text local.");
 const audioCard = T.components.render("status/link", { link: { url: "https://open.spotify.com/track/example", title: "Track", provider: "spotify", provider_name: "Spotify", card_kind: "audio", card_icon: "music" } });

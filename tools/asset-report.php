@@ -11,7 +11,7 @@ use TinyCat\Support\ClientAssets;
 $compile = require __DIR__ . '/compile-assets.php';
 $files = $compile();
 $manifest = json_decode($files['assets/build/manifest.json'], true, 512, JSON_THROW_ON_ERROR);
-$reachable = [];
+$reachable = array_fill_keys(ClientAssets::standalone(), true);
 $report = ['scopes' => [], 'unreachable' => []];
 foreach ($manifest['clients'] as $scope => $client) {
     foreach (AssetGraph::order(ClientAssets::entries($scope)) as $source) { $reachable[$source] = true; }

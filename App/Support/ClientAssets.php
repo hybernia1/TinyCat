@@ -156,6 +156,22 @@ final class ClientAssets
         return [$compiled !== null ? $compiled['style'] : self::bundle('styles', AssetGraph::stylesheet(self::sourceStyles($path)), 'css', $minify)];
     }
 
+    /** @return list<string> */
+    public static function standalone(): array
+    {
+        $sources = [];
+        foreach (self::manifests() as $file) {
+            foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
+                foreach ($feature['standalone'] ?? [] as $source) {
+                    AssetGraph::read($source);
+                    if (!in_array(pathinfo($source, PATHINFO_EXTENSION), ['js', 'css'], true)) { throw new RuntimeException('Invalid standalone asset: ' . $source); }
+                    $sources[] = $source;
+                }
+            }
+        }
+        return array_values(array_unique($sources));
+    }
+
     public static function encode(mixed $value): string
     {
         return json_encode($value, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);

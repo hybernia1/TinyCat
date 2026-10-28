@@ -313,3 +313,60 @@ Search also participates in `/api/site/pages?path=/search&q=...&type=...`.
 Initial HTML and JSON navigation render the same public page component, preserve
 the existing sidebar and navbar, and support category links, search form submits,
 locale-prefixed URLs and browser history without a document reload.
+
+
+## Embedding public posts (oEmbed 1.0)
+
+TinyCat is an [oEmbed 1.0](https://oembed.com/) provider. Canonical post pages expose
+JSON and XML discovery links in the document head, including after client navigation.
+
+- `GET /oembed?url={absolute-post-url}` returns the standard top-level `rich` response.
+- `format=json` (default) and `format=xml` are supported. Unsupported formats return 501.
+- `maxwidth` and `maxheight` accept positive integers. Defaults are 550 × 600 pixels;
+  smaller requested maxima are respected. Invalid parameters return 400.
+- `GET /status/{id}/embed` is a standalone read-only HTML card suitable for an iframe.
+- `GET /status/{id}/embed-code` shows the card and a selectable copy/paste HTML snippet.
+  The **Embed post** action on each post opens the standard application modal with a live preview and selectable code. The page remains a fallback when JavaScript is unavailable.
+- `GET /api/statuses/{id}/embed` supplies the modal with a public `frame_url` and `snippet` in the normal JSON envelope.
+
+Only URLs on the configured installation origin are accepted, including supported
+localized post URLs. The provider never fetches the supplied URL. Unknown URLs,
+missing posts, future publications and inactive authors return 404, including for
+signed-in administrators. These public representations have no visitor session,
+analytics, comment forms or edit controls. The card shows the author avatar (or a circular initial), post text, mentions,
+hashtags, an attached image and up to three stored link previews. Approved video
+and audio providers use click-to-load players, including YouTube, Vimeo,
+Dailymotion, Facebook video, SoundCloud and Spotify. Unknown sources retain a
+plain source link; remote HTML is never inserted. Preview rendering reuses the
+normal post provider rules and cached metadata without outbound server fetching.
+Provider players may make third-party requests after a visitor clicks them.
+Consumers such as WordPress may restrict nested players through their sandbox.
+Image and video previews also supply standard oEmbed `thumbnail_url` metadata
+(and dimensions when known).
+
+The iframe is responsive up to its declared width and scrolls for longer content.
+The optional, small `assets/embed.js` helper in the copy/paste snippet adjusts its
+height, checking both message origin and source window. Without that helper the
+iframe remains usable at its declared height. The child frame also implements the
+WordPress `secret`/`height`/`ready`/`link` message protocol for sandboxed discovery.
+
+In WordPress, paste the original post URL into an Embed block, or put the supplied
+HTML into a Custom HTML block if your editor permits iframe markup. WordPress
+policies may restrict unregistered providers or iframe/script markup; a site owner
+can explicitly register their installation with `wp_oembed_add_provider()`:
+
+```php
+wp_oembed_add_provider('https://example.com/status/*', 'https://example.com/oembed');
+```
+
+See [WordPress oEmbed documentation](https://developer.wordpress.org/advanced-administration/wordpress/oembed/)
+for provider policies. A public HTTPS installation is required for normal use from
+other sites; a private development hostname is only suitable for local testing.
+
+The iframe alone permits cross-origin framing. Ordinary pages and the copy-code
+page retain their existing frame protections. Embeds are noindex and point to the
+original canonical post. Responses use ETags and `max-age=0, must-revalidate`: visibility and edits
+are checked before responding or returning 304. No persistent result cache can
+keep a removed or moderated post available through this endpoint. Consumers may
+cache oEmbed metadata independently; the contained iframe still revalidates its
+post. HEAD requests expose the same metadata without a body.

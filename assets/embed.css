@@ -1,0 +1,50 @@
+:root { color-scheme: light dark; font: 16px/1.55 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #20242b; background: transparent; }
+* { box-sizing: border-box; }
+body { margin: 0; overflow-wrap: anywhere; }
+a { color: #315dc7; text-decoration: none; }
+a:hover { text-decoration: underline; }
+a:focus-visible, textarea:focus-visible { outline: 3px solid #7599ef; outline-offset: 3px; }
+.embed-card { padding: 22px; border: 1px solid #dce0e7; border-radius: 14px; background: #fff; }
+.embed-author { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.embed-author > a:first-child { color: inherit; font-weight: 700; }
+.embed-provider { font-size: 12px; color: #687180; }
+.embed-body { white-space: pre-wrap; }
+.embed-image { display: block; margin-top: 18px; }
+.embed-image img { display: block; width: 100%; height: auto; max-height: 480px; object-fit: contain; border-radius: 8px; }
+footer { margin-top: 20px; font-size: 12px; }
+footer a { color: #687180; }
+.share-page { background: #f5f6f8; padding: 32px 16px; }
+.share-page main { max-width: 550px; margin: 0 auto; }
+.share-heading { margin-bottom: 24px; }
+h1 { font-size: 24px; margin: 0 0 8px; }
+p { color: #687180; margin: 0; }
+.share-code { margin-top: 24px; }
+label { display: block; font-weight: 600; margin-bottom: 8px; }
+textarea { display: block; resize: vertical; width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #c9d0dc; border-radius: 8px; font: 12px/1.5 ui-monospace, monospace; color: inherit; background: #fff; }
+@media (prefers-color-scheme: dark) {
+  :root { color: #e6e9ef; }
+  .embed-card, textarea { background: #181c23; border-color: #363d49; }
+  .share-page { background: #101319; }
+  a { color: #95b4ff; }
+  .embed-provider, footer a, p { color: #a6afbd; }
+}
+
+.embed-author-link { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.embed-avatar { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.embed-avatar-initial { display: grid; place-items: center; background: #e6ebf6; color: #315dc7; font-weight: 700; }
+.embed-link { margin-top: 18px; border: 1px solid #dce0e7; border-radius: 10px; overflow: hidden; }
+.embed-link-copy { display: grid; gap: 4px; padding: 14px; }
+.embed-link-copy span, .embed-link-copy small { color: #687180; font-size: 13px; }
+.embed-link-image, .embed-play img { display: block; width: 100%; max-height: 320px; object-fit: cover; }
+.embed-play { position: relative; display: grid; gap: 14px; justify-items: center; width: 100%; min-height: 150px; padding: 22px; border: 0; font: inherit; color: inherit; background: #edf1f8; cursor: pointer; }
+.embed-play img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .4; }
+.embed-play-icon, .embed-play strong { position: relative; padding: 6px 12px; border-radius: 8px; background: #fff; color: #20242b; }
+.embed-play-icon { font-size: 26px; }
+.embed-player iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
+.embed-player[data-player-kind="audio"] iframe { aspect-ratio: auto; }
+@media (prefers-color-scheme: dark) {
+  .embed-link { border-color: #363d49; }
+  .embed-play { background: #232c3c; }
+  .embed-avatar-initial { background: #2b3549; color: #95b4ff; }
+  .embed-link-copy span, .embed-link-copy small { color: #a6afbd; }
+}

@@ -44,7 +44,11 @@ import "../../ui/dialogs.js";
       if (!node) { node = document.createElement("meta"); node.setAttribute("property", name); document.head.appendChild(node); }
       node.content = properties[name];
     });
-    document.head.querySelectorAll('link[rel="alternate"][type="application/rss+xml"], link[rel="prev"], link[rel="next"], script[type="application/ld+json"]').forEach(function (node) { node.remove(); });
+    document.head.querySelectorAll('link[rel="alternate"][type="application/rss+xml"], link[rel="alternate"][type="application/json+oembed"], link[rel="alternate"][type="text/xml+oembed"], link[rel="prev"], link[rel="next"], script[type="application/ld+json"]').forEach(function (node) { node.remove(); });
+    [["oembed", "application/json+oembed"], ["oembed_xml", "text/xml+oembed"]].forEach(function (entry) {
+      if (!doc[entry[0]]) return;
+      var link = document.createElement("link"); link.rel = "alternate"; link.type = entry[1]; link.href = doc[entry[0]]; document.head.appendChild(link);
+    });
     if (doc.rss) { var link = document.createElement("link"); link.rel = "alternate"; link.type = "application/rss+xml"; link.href = doc.rss; link.title = doc.title; document.head.appendChild(link); }
     if (doc.jsonld) { var schema = document.createElement("script"); schema.type = "application/ld+json"; schema.textContent = JSON.stringify(doc.jsonld); document.head.appendChild(schema); }
   }

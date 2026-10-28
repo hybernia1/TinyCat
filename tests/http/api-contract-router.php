@@ -46,7 +46,7 @@ if (($_SERVER['HTTP_X_TEST_CAPTCHA'] ?? '') === '1') {
     (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $configuration);
 }
 
-if (!\TinyCat\Site\Discovery::handles($assetPath)) {
+if (!\TinyCat\Site\Discovery::handles($assetPath) && !\TinyCat\Status\Embed::handles($assetPath)) {
     session_start();
     $_SESSION['_csrf'] = str_repeat('a', 64);
 }
@@ -74,4 +74,7 @@ if (getenv('TINYCAT_API_FOUNDATION_TEST') === '1') {
 \TinyCat\Http\Router::route(['GET', 'HEAD'], '/fixture-maintenance', static function (): void {
     header('Retry-After: 300'); \TinyCat\Site\Errors::respond(503);
 });
+if (($_SERVER['HTTP_X_TEST_EMBED_FAILURE'] ?? '') === '1' && \TinyCat\Status\Embed::handles($assetPath)) {
+    \TinyCat\Database\Connection::set(new PDO('sqlite::memory:'));
+}
 require dirname(__DIR__, 2) . '/index.php';

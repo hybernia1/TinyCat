@@ -78,6 +78,10 @@
       "comment_not_found": "Yorum bulunamadı.",
       "comment_forbidden": "Bu yorumu silmenize izin verilmiyor.",
       "comment_edit_forbidden": "Bu yorumu düzenlemenize izin verilmiyor."
-    }
+    },
+    "status_embed": "Gönderiyi yerleştir",
+    "status_embed_help": "Bu HTML kodunu sitenizin HTML bloğuna kopyalayın. WordPress, gönderi bağlantısından da yerleştirmeyi keşfedebilir.",
+    "status_embed_code": "Yerleştirme kodu",
+    "status_embed_open": "Orijinal gönderiyi aç"
   }
 }
