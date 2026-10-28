@@ -12,6 +12,10 @@ final class Pages
 {
     public static function page(): void
     {
+        if (Installer::isComplete()) {
+            \TinyCat\Site\Errors::respond(404);
+            return;
+        }
         \TinyCat\Security\Csrf::token();
         $languages = Installer::languages();
         $state = &Installer::state();
@@ -19,7 +23,7 @@ final class Pages
         if (empty($state['database']) && is_array(\TinyCat\Settings\Store::config('database', []))) {
             $state['database'] = \TinyCat\Settings\Store::config('database', []);
         }
-        self::render((bool) \TinyCat\Support\Config::get('install.complete', false) ? 'done' : self::step($state), $languages, $state);
+        self::render(self::step($state), $languages, $state);
     }
 
     public static function step(array $state): string

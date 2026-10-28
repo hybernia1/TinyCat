@@ -12,18 +12,16 @@ final class Actions
 {
     public static function status(): array
     {
+        self::requireOpen();
         $state = &Installer::state();
-        $locked = self::locked();
-        return ['locked' => $locked, 'languages' => array_keys(Installer::languages()), 'locale' => Installer::locale(Installer::languages(), $state)];
+        return ['locked' => false, 'languages' => array_keys(Installer::languages()), 'locale' => Installer::locale(Installer::languages(), $state)];
     }
 
     public static function run(string $step): \TinyCat\Http\Result
     {
+        self::requireOpen();
         $state = &Installer::state();
         \TinyCat\Support\Localization::locale(Installer::locale(Installer::languages(), $state));
-        if (self::locked()) {
-            \TinyCat\Http\Response::error('Installation is already complete.', 409, 'installation_locked');
-        }
         $rules = match ($step) {
             'language' => ['locale' => 'required|string'],
             'db' => ['host' => 'required|string', 'name' => 'required|string', 'user' => 'required|string', 'password' => 'string', 'charset' => 'string', 'port' => 'nullable|integer|min:1|max:65535'],
@@ -40,9 +38,9 @@ final class Actions
         };
     }
 
-    private static function locked(): bool
+    private static function requireOpen(): void
     {
-        return (bool) \TinyCat\Support\Config::get('install.complete', false) || \TinyCat\Database\Schema::app_db_ready();
+        if (Installer::isComplete()) { \TinyCat\Http\Response::error('Not found.', 404, 'not_found'); }
     }
 
     private static function failure(string $message, string $step): never
@@ -163,7 +161,7 @@ final class Actions
             unset($_SESSION['tc_install']);
             \TinyCat\Users\Authentication::authLogin($adminId);
 
-            return new \TinyCat\Http\Result(['redirect' => '/install?step=done', 'step' => 'done'], \TinyCat\Support\Localization::t('install.messages.admin_created'), [], 'installation_step_completed');
+            return new \TinyCat\Http\Result(['redirect' => '/admin', 'step' => 'done'], \TinyCat\Support\Localization::t('install.messages.admin_created'), [], 'installation_step_completed');
         } catch (Throwable $exception) {
             self::failure($exception->getMessage(), 'admin');
         }

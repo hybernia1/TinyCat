@@ -52,8 +52,8 @@ try {
     }
     $cookie = '';
     $csrf = '';
-    $request = static function (string $method, string $path, ?array $body = null, bool $token = true) use ($address, &$cookie, &$csrf): array {
-        $headers = ['Content-Type: application/json', 'Accept: application/json'];
+    $request = static function (string $method, string $path, ?array $body = null, bool $token = true, bool $json = true) use ($address, &$cookie, &$csrf): array {
+        $headers = ['Content-Type: application/json', 'Accept: ' . ($json ? 'application/json' : 'text/html')];
         if ($cookie !== '') { $headers[] = 'Cookie: ' . $cookie; }
         if ($token && $csrf !== '') { $headers[] = 'X-CSRF-Token: ' . $csrf; }
         $context = stream_context_create(['http' => ['method' => $method, 'header' => implode("\r\n", $headers), 'content' => $body === null ? '' : json_encode($body, JSON_THROW_ON_ERROR), 'ignore_errors' => true, 'follow_location' => 0, 'timeout' => 30]]);
@@ -87,21 +87,28 @@ try {
     [$status, $result] = $request('POST', '/api/installation/steps/admin', ['username' => 'install_api_admin', 'password' => $password, 'password_confirm' => 'different']);
     $assert($status === 422, 'Invalid administrator data fails without completing installation.');
     [$status, $result] = $request('POST', '/api/installation/steps/admin', ['username' => 'install_api_admin', 'password' => $password, 'password_confirm' => $password]);
-    $assert($status === 200 && $result['data']['step'] === 'done', 'The final API step creates the administrator and configuration.');
+    $assert($status === 200 && $result['data']['step'] === 'done' && $result['data']['redirect'] === '/admin', 'The final API step creates the administrator and configuration.');
     $installed = require $root . '/config.php';
     $assert($installed['install']['complete'] === true && $installed['install']['locale'] === 'cs' && $installed['database']['name'] === $name, 'Only the isolated configuration is written.');
     $pdo = new PDO('mysql:host=' . $db['host'] . ';port=' . ($db['port'] ?? 3306) . ';dbname=' . $name, $db['user'], $db['password'], $options);
     $row = $pdo->query("SELECT role, password FROM users WHERE username = 'install_api_admin'")->fetch();
     $assert($row['role'] === 'admin' && password_verify($password, $row['password']), 'The isolated administrator has the correct role and a verified password hash.');
     [$status, $result] = $request('POST', '/api/installation/steps/language', ['locale' => 'cs']);
-    $assert($status === 409 && $result['code'] === 'installation_locked', 'Completed installations reject further setup writes.');
+    $assert($status === 404 && $result['code'] === 'not_found', 'Completed installations reject further setup writes.');
+    foreach (['/install', '/install?step=done', '/install?step=db', '/api/installation', '/api/installation/steps/unknown'] as $path) {
+        [$status, , $body] = $request('GET', $path, null, true, false);
+        $assert($status === 404 && !str_contains($body, 'data-installation-form'), 'Completed installations hide ' . $path);
+    }
+    [$status, , $body] = $request('HEAD', '/install', null, true, false);
+    $assert($status === 404 && $body === '', 'Installed setup HEAD requests reveal no document.');
     $installed['install']['complete'] = false;
     file_put_contents($root . '/config.php', "<?php\nreturn " . var_export($installed, true) . ";\n");
-    $request('GET', '/install');
+    [$status] = $request('GET', '/install');
+    $assert($status === 404, 'The wizard also stays hidden when the initialized database is detected without the config flag.');
     [$status, $result] = $request('POST', '/api/installation/steps/language', ['locale' => 'en']);
-    $assert($status === 409 && $result['code'] === 'installation_locked', 'An existing initialized database stays locked even if the config flag is missing and the wizard was visited.');
+    $assert($status === 404 && $result['code'] === 'not_found', 'An existing initialized database stays locked even if the config flag is missing and the wizard was visited.');
     [$status] = $request('POST', '/install', []);
-    $assert($status === 405, 'The installer page has no second write transport.');
+    $assert($status === 404, 'Installed setup is hidden for page POST requests as well.');
     $assert(hash_file('sha256', $workspace . '/config.php') === $configHash, 'The real workspace configuration remains byte-for-byte unchanged.');
     echo "PASS complete installation API ({$checks} checks, isolated copy and database)\n";
 } finally {

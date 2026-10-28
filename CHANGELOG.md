@@ -6,7 +6,7 @@
 - Separate creation, editing and deletion cooldowns, record them after successful operations, and include consistent wait details and `Retry-After` headers in 429 responses.
 - Bound authentication, registration, password recovery, image uploads and follow changes; reserve request budgets atomically on SQLite and MySQL.
 - Route browser writes through normalized module APIs, including authentication, logout, settings, updates, cache resets, notifications and search CAPTCHA. Retired page POST handlers return 405.
-- Move installation into its own API-backed module, lock initialized sites against further setup writes, and remove `Public/install/index.php` through update metadata. No new database migration is required.
+- Move installation into its own API-backed module, hide the installer page and API with 404 after completion, redirect the new administrator to administration, and remove `Public/install/index.php` through update metadata. No new database migration is required.
 - Share scheduler validation, execution, locks and history between HTTP, CLI and manual bot imports. Keep the installer within its existing asset delivery budget by using the shared API form transport without administration controllers.
 - Verify all 50 test groups, including complete isolated MySQL installation, authenticated scheduler transport, signed update/fresh-install artifacts and update/rollback recovery.
 

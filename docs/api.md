@@ -64,8 +64,10 @@ Installation steps are `language`, `db`, `tables` and `admin`. Each accepted ste
 returns `data.step` and `data.redirect`. Validation stays in the JSON envelope;
 passwords and database credentials never appear in resource data. Setup routes
 work before the database exists and are exempt from the normal database-readiness
-gate. A completed installation rejects further setup writes with 409
-`installation_locked`. `/install` only renders the API-backed wizard.
+gate. After installation, `/install` and the entire `/api/installation` namespace return
+404 for every method, including requests with an administrator session or valid
+CSRF token. The successful final step redirects directly to `/admin`. `/install`
+only renders the API-backed wizard before setup is complete.
 
 Scheduled execution accepts `task=feeds|cleanup|all` and an `options` object, for
 example `{"task":"feeds","options":{"bot_limit":20}}`. Every selected task and

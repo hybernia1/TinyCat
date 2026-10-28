@@ -21,6 +21,10 @@ try {
         \TinyCat\Http\Web::redirect(\TinyCat\Site\LocaleRouting::url('/') . (!empty($_SERVER['QUERY_STRING']) ? '?' . (string) $_SERVER['QUERY_STRING'] : ''), 301);
     }
     $installPath = $path === '/install' || str_starts_with($path, '/install/') || $path === '/api/installation' || str_starts_with($path, '/api/installation/');
+    if ($installPath && \TinyCat\Installation\Installer::isComplete()) {
+        \TinyCat\Site\Errors::respond(404);
+        return;
+    }
     $siteIdentityPath = \TinyCat\Site\Identity::handles($path);
 
     if (!$siteIdentityPath) {

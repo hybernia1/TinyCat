@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 $systemDb = new PDO('sqlite:' . $databasePath, options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 [$status, $installation] = $request('GET', '/api/installation');
-$assert($status === 200 && $installation['data']['locked'] && !isset($installation['data']['database']), 'Installation status is a safe API resource on an installed site.');
+$assert($status === 404 && $installation['code'] === 'not_found' && $installation['data'] === null, 'Installed sites do not expose setup status.');
 [$status] = $request('POST', '/api/installation/steps/language', ['locale' => 'en']);
-$assert($status === 403, 'Setup uses the shared CSRF check before step execution.');
+$assert($status === 404, 'Installed setup endpoints are hidden even without a CSRF token.');
 [$status, $locked] = $request('POST', '/api/installation/steps/language', ['locale' => 'en'], '', $csrf);
-$assert($status === 409 && $locked['code'] === 'installation_locked', 'Installed sites reject further setup writes.');
+$assert($status === 404 && $locked['code'] === 'not_found', 'Installed sites hide setup writes even with a valid CSRF token.');
 $systemDb->exec("DELETE FROM settings WHERE setting_key = 'cron.token'");
 [$status, $unconfigured] = $request('GET', '/api/scheduler/health');
 $assert($status === 503 && $unconfigured['code'] === 'scheduler_not_configured', 'Scheduler authorization requires an explicitly configured token.');

@@ -10,6 +10,11 @@ use Throwable;
 
 final class Installer
 {
+    public static function isComplete(): bool
+    {
+        return (bool) \TinyCat\Support\Config::get('install.complete', false) || \TinyCat\Database\Schema::app_db_ready();
+    }
+
     public static function &state(): array
     {
         \TinyCat\Http\Session::start();
