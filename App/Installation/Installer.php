@@ -15,6 +15,7 @@ final class Installer
         return (bool) \TinyCat\Support\Config::get('install.complete', false) || \TinyCat\Database\Schema::app_db_ready();
     }
 
+    /** @return array<mixed> */
     public static function &state(): array
     {
         \TinyCat\Http\Session::start();
@@ -25,6 +26,7 @@ final class Installer
         return $_SESSION['tc_install'];
     }
 
+    /** @return array<string, array{code: string, label: string}> */
     public static function languages(): array
     {
         $languages = [];
@@ -41,6 +43,8 @@ final class Installer
         return $languages;
     }
 
+    /** @param array<string, array{code: string, label: string}> $languages
+     * @param array<mixed> $state */
     public static function locale(array $languages, array $state): string
     {
         $configured = (string) ($state['locale'] ?? \TinyCat\Settings\Store::config('i18n.locale', \TinyCat\Settings\Store::config('install.locale', 'en')));
@@ -52,6 +56,7 @@ final class Installer
         return array_key_first($languages) ?: 'en';
     }
 
+    /** @param array<string, mixed> $database */
     public static function pdo(array $database, bool $createDatabase = false): PDO
     {
         $host = (string) ($database['host'] ?? 'localhost');
@@ -424,6 +429,7 @@ final class Installer
 
     }
 
+    /** @param array<mixed> $state */
     public static function default_settings(array $state): void
     {
         $locale = (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale());
@@ -487,6 +493,7 @@ final class Installer
         return (int) \TinyCat\Database\Connection::insert('users', $data);
     }
 
+    /** @param array<mixed> $state */
     public static function write_config(array $state): void
     {
         $locale = (string) ($state['locale'] ?? \TinyCat\Support\Localization::locale());
@@ -527,6 +534,7 @@ final class Installer
         }
     }
 
+    /** @param array<mixed> $config */
     public static function config_content(array $config): string
     {
         return "<?php\n"
@@ -534,6 +542,7 @@ final class Installer
             . "return " . var_export($config, true) . ";\n";
     }
 
+    /** @return array<string, string> */
     public static function schema_tables(): array
     {
         $tables = \TinyCat\Database\Schema::app_required_tables();
@@ -552,6 +561,7 @@ final class Installer
         ) > 0;
     }
 
+    /** @return list<string> */
     public static function missing_tables(): array
     {
         return array_values(array_filter(

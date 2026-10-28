@@ -152,7 +152,7 @@ final class Languages
     }
 
     /**
-     * @return array<mixed>
+     * @return array<string, string>
      */
     public static function language_packages(): array
     {
