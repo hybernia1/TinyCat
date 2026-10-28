@@ -45,6 +45,8 @@ final class Profiles
             'locale' => (string) ($user['locale'] ?? ''),
             'theme' => \TinyCat\Users\Profiles::user_theme($user),
             'avatar_url' => \TinyCat\Users\Avatars::user_avatar_url($user),
+            'avatar_custom' => (int) ($user['avatar_exists'] ?? 0) === 1,
+            'avatar_appearance' => \TinyCat\Users\GeneratedAvatar::appearance($user['avatar_appearance'] ?? null),
         ];
     }
 

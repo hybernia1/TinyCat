@@ -24,6 +24,7 @@ declare(strict_types=1);
 /** @var string $languageFlagId */
 /** @var list<array{language: string, name: string, url: string, active: bool}> $languageLinks */
 /** @var array{language: string, url: string, message: string, action: string, close: string}|null $languageSuggestion */
+/** @var string $userMenu */
 ?>
         <header class="navbar">
             <div class="container navbar-inner">
@@ -58,20 +59,7 @@ declare(strict_types=1);
                             'state' => $notificationState,
                             'notifications' => $notificationItems,
                         ]) ?>
-                        <a class="nav-link nav-link-icon profile-nav-link" href="<?= \TinyCat\Support\Html::e($profileUrl) ?>"<?= $current === $profileUrl ? ' aria-current="page"' : '' ?> aria-label="<?= \TinyCat\Support\Html::e($profileNeedsEmail ? \TinyCat\Support\Localization::t('account.email_missing_title') : \TinyCat\Support\Localization::t('account.public_profile')) ?>" title="<?= \TinyCat\Support\Html::e($profileNeedsEmail ? \TinyCat\Support\Localization::t('account.email_missing_title') : \TinyCat\Support\Localization::t('account.public_profile')) ?>">
-                            <?= \TinyCat\Support\Html::icon('user') ?>
-                            <?php if ($profileNeedsEmail): ?>
-                                <span class="notification-badge profile-email-warning" aria-hidden="true">!</span>
-                                <span class="sr-only"><?= \TinyCat\Support\Html::et('account.email_missing_title') ?></span>
-                            <?php endif; ?>
-                        </a>
-                        <form action="/api/users/sessions/current" data-ajax-form data-api-method="DELETE" method="post" class="inline-flex" data-confirm="<?= \TinyCat\Support\Html::et('auth.logout_confirm') ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('auth.logout_title') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('common.logout') ?>" data-confirm-cancel="<?= \TinyCat\Support\Html::et('common.cancel') ?>" data-confirm-variant="danger">
-                            <?= \TinyCat\Security\Csrf::field() ?>
-                            <input type="hidden" name="_method" value="DELETE">
-                            <button class="nav-link nav-link-icon" type="submit" aria-label="<?= \TinyCat\Support\Html::et('common.logout') ?>" title="<?= \TinyCat\Support\Html::et('common.logout') ?>">
-                                <?= \TinyCat\Support\Html::icon('logout') ?>
-                            </button>
-                        </form>
+                        <?= $userMenu ?>
                     <?php else: ?>
                         <details class="context-menu language-menu" data-language-menu>
                             <summary class="nav-link nav-link-icon" aria-label="<?= \TinyCat\Support\Html::et('common.language') ?>: <?= \TinyCat\Support\Html::e($currentLanguageName) ?>" title="<?= \TinyCat\Support\Html::e($currentLanguageName) ?>">

@@ -1,0 +1,72 @@
+{
+  "gender": {
+    "default": "neutral",
+    "values": [
+      "neutral",
+      "male",
+      "female"
+    ]
+  },
+  "fur": {
+    "default": "auto",
+    "values": [
+      "auto",
+      "ginger",
+      "grey",
+      "cream",
+      "brown",
+      "charcoal",
+      "lilac",
+      "sage",
+      "peach"
+    ]
+  },
+  "expression": {
+    "default": "auto",
+    "values": [
+      "auto",
+      "smile",
+      "serious",
+      "calm"
+    ]
+  },
+  "accessory": {
+    "default": "auto",
+    "values": [
+      "auto",
+      "none",
+      "sunglasses",
+      "glasses",
+      "headphones",
+      "cap"
+    ]
+  },
+  "outfit": {
+    "default": "auto",
+    "values": [
+      "auto",
+      "ginger",
+      "grey",
+      "cream",
+      "brown",
+      "charcoal",
+      "lilac",
+      "sage",
+      "peach"
+    ]
+  },
+  "background": {
+    "default": "auto",
+    "values": [
+      "auto",
+      "ginger",
+      "grey",
+      "cream",
+      "brown",
+      "charcoal",
+      "lilac",
+      "sage",
+      "peach"
+    ]
+  }
+}

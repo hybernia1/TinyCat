@@ -1,3 +1,4 @@
+import "./user-menu.js";
 import "../../core/modules.js";
 import "../../core/navigation.js";
 import "./avatar.js";

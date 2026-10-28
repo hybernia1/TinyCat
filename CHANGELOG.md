@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.3.0 - 2026-10-29
+
+- Replace standalone profile and logout controls with a shared avatar menu containing profile, account settings, theme switching and logout in public and administration headers.
+- Add deterministic generated cat avatars and an expandable creator for gender, fur, expression, accessories, outfit and background colours. Save validated appearance JSON while preserving custom uploads and the stored fallback appearance.
+- Simplify the avatar editor with a live preview and grouped actions; fix missing author avatars in comments and nested replies.
+- Add an idempotent avatar appearance migration and the matching fresh-install schema.
+
 ## 5.2.1 - 2026-10-28
 
 - Give backup retention and updater work directories independent bounded scan cursors and reserved batch shares. Validate candidate payloads lazily while preserving the newest complete recovery snapshots. Report oversized catalogues explicitly.

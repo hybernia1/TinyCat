@@ -145,16 +145,32 @@ and do not implement a second set of operations.
 | GET | `/api/users/{id}/management` | Owner or administrator |
 | PATCH | `/api/users/{id}` | Owner profile; `scope=administration` requires administrator |
 | DELETE | `/api/users/{id}` | Administrator, protected administrator rules apply |
-| GET, PUT, DELETE | `/api/users/{id}/avatar` | Owner or administrator |
+| GET, PUT, PATCH, DELETE | `/api/users/{id}/avatar` | Owner or administrator |
 | PUT, DELETE | `/api/users/{id}/followers/me` | Signed-in user, desired follow state |
 | GET | `/api/users/{id}/following` | Signed-in user, cursor list |
 
-Public profiles contain only `id`, `username`, `bio`, `url` and `avatar_url`.
+Public profiles contain only `id`, `username`, `bio`, `url`, `avatar_url`,
+`avatar_custom` and `avatar_appearance`.
 Private representations add email, preferences, role and account status. Password
 hashes and recovery tokens are never resource fields. Path IDs cannot be overridden
 by body IDs. User list filters retain `q`, `role`, `status`, `updated_from`,
 `updated_to`, `page` and `per_page`; pagination includes `total`, `page`, `per_page`,
 `last_page`, `has_prev` and `has_next`. Following uses `cursor_at` and `cursor_id`.
+
+Users without a custom image receive a deterministic generated cat portrait.
+`PATCH /api/users/{id}/avatar` accepts `{"appearance":{"version":1,"gender":"female"}}`;
+allowed genders are `neutral`, `male` and `female`. The creator also accepts `fur`,
+`expression`, `accessory`, `outfit` and `background`; `auto` preserves each original generated layer.
+The avatar management GET response includes `appearance_options`, with field
+defaults and valid values from `App/Users/avatar-options.json`. Omitted
+parameters preserve their saved values. Form submissions may send
+`appearance` as a JSON string. The server validates the schema and saves the
+normalized JSON in `users.avatar_appearance`. Appearance updates require owner or
+administrator authorization and CSRF, and are rejected while a custom image is
+active. Uploading an image preserves the stored appearance; deleting that image
+restores the configured generated portrait. Generated image URLs include the
+appearance variant and support immutable caching without a database lookup in
+the renderer.
 
 Administration lists accept `sort` and `direction=asc|desc`, alongside their
 existing filters. Sorting happens before pagination, with an ID tie-breaker.
@@ -461,7 +477,7 @@ Only URLs on the configured installation origin are accepted, including supporte
 localized post URLs. The provider never fetches the supplied URL. Unknown URLs,
 missing posts, future publications and inactive authors return 404, including for
 signed-in administrators. These public representations have no visitor session,
-analytics, comment forms or edit controls. The card shows the author avatar (or a circular initial), post text, mentions,
+analytics, comment forms or edit controls. The card shows the author avatar (including the generated cat portrait), post text, mentions,
 hashtags, an attached image and up to three stored link previews. Approved video
 and audio providers use click-to-load players, including YouTube, Vimeo,
 Dailymotion, Facebook video, SoundCloud and Spotify. Unknown sources retain a

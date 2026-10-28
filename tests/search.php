@@ -32,7 +32,7 @@ try {
         $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
     }
     Connection::set($pdo);
-    $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username VARCHAR(80), bio TEXT, status VARCHAR(16), avatar_exists INTEGER DEFAULT 0, updated_at DATETIME)');
+    $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username VARCHAR(80), bio TEXT, status VARCHAR(16), avatar_exists INTEGER DEFAULT 0, avatar_appearance TEXT, updated_at DATETIME)');
     $pdo->exec('CREATE TABLE terms (id INTEGER PRIMARY KEY, name VARCHAR(80))');
     $pdo->exec('CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at DATETIME' . ($mysql ? ', FULLTEXT KEY content_body_fulltext (body)' : '') . ')');
     $pdo->exec('CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT, title TEXT, description TEXT' . ($mysql ? ', FULLTEXT KEY links_search_fulltext (normalized_url, title, description)' : '') . ')');

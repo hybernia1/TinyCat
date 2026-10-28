@@ -128,7 +128,7 @@ final class Inbox
             'SELECT n.*,
                     u.username AS actor_name,
                     u.username AS actor_username,
-                    u.avatar_exists AS actor_avatar_exists,
+                    u.avatar_exists AS actor_avatar_exists, u.avatar_appearance AS actor_avatar_appearance,
                     u.updated_at AS actor_updated_at,
                     c.body AS content_body
                 FROM notifications n

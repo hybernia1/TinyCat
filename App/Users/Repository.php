@@ -25,6 +25,7 @@ final class Repository
                     locale,
                     theme,
                     avatar_exists,
+                    avatar_appearance,
                     updated_at,
                     bio,
                     muted_until,
@@ -139,7 +140,7 @@ final class Repository
                 'SELECT u.id,
                         u.username,
                         u.username AS name,
-                        u.avatar_exists,
+                        u.avatar_exists, u.avatar_appearance,
                         u.updated_at,
                         u.bio,
                         COUNT(*) AS posts_count,
@@ -151,7 +152,7 @@ final class Repository
                 ->where('c.published_at <= ?', \TinyCat\Support\Dates::dateDb())
                 ->where('u.status = ?', 'active')
                 ->where('u.role IN (' . $rolePlaceholders . ')', ...$rankedRoles)
-                ->group('u.id, u.username, u.avatar_exists, u.updated_at, u.bio')
+                ->group('u.id, u.username, u.avatar_exists, u.avatar_appearance, u.updated_at, u.bio')
                 ->order('posts_count DESC, latest_at DESC, u.username ASC')
                 ->limit($limit)
                 ->all();

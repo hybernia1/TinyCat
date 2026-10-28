@@ -11,7 +11,7 @@ $db = new PDO('sqlite::memory:', null, null, [PDO::ATTR_DEFAULT_FETCH_MODE => PD
 \TinyCat\Database\Connection::set($db);
 \TinyCat\Users\Authentication::reset(null, true);
 foreach ([
-    'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, status TEXT, avatar_exists INTEGER, updated_at TEXT)',
+    'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, status TEXT, avatar_exists INTEGER, avatar_appearance TEXT, updated_at TEXT)',
     'CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT, edit_locked_at TEXT)',
     'CREATE TABLE content_images (content_id INTEGER, path TEXT, width INTEGER, height INTEGER, bytes INTEGER)',
     'CREATE TABLE content_links (content_id INTEGER, link_id INTEGER)',
@@ -20,7 +20,7 @@ foreach ([
     'CREATE TABLE content_comments (content_id INTEGER)',
     'CREATE TABLE terms (id INTEGER PRIMARY KEY, name TEXT)',
     'CREATE TABLE content_tags (content_id INTEGER, term_id INTEGER)',
-    "INSERT INTO users VALUES (1, 'author', 'active', 0, ''), (2, 'other', 'active', 0, ''), (3, 'hidden', 'inactive', 0, '')",
+    "INSERT INTO users (id, username, status, avatar_exists, updated_at) VALUES (1, 'author', 'active', 0, ''), (2, 'other', 'active', 0, ''), (3, 'hidden', 'inactive', 0, '')",
     "INSERT INTO terms VALUES (1, 'tinycat')",
     "INSERT INTO links (id, link_type) VALUES (1, 'video'), (2, 'video'), (3, 'audio'), (4, 'web')",
 ] as $sql) { $db->exec($sql); }

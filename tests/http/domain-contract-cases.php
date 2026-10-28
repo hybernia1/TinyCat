@@ -39,6 +39,9 @@ $assert($status === 403, 'A member cannot read another account management resour
 $assert($status === 403, 'A body ID cannot override the path target or its authorization.');
 [$status, $payload] = $request('PATCH', '/api/users/me', ['bio' => 'Literal <script>profile</script>', 'locale' => 'en', 'theme' => 'dark', 'email' => 'member@example.test'], 'user', $csrf);
 $assert($status === 200 && $payload['data']['user']['theme'] === 'dark' && !isset($payload['data']['message']), 'Profile changes return the updated private resource with the message only in the envelope.');
+$profileBeforeTheme = $payload['data']['user'];
+[$status, $payload] = $request('PATCH', '/api/users/me', ['theme' => 'light'], 'user', $csrf);
+$assert($status === 200 && $payload['data']['user']['theme'] === 'light' && $payload['data']['user']['bio'] === $profileBeforeTheme['bio'] && $payload['data']['user']['locale'] === $profileBeforeTheme['locale'] && $payload['data']['user']['email'] === $profileBeforeTheme['email'], 'Header theme changes preserve the other profile fields.');
 $pure($payload);
 [$status, $payload] = $request('PUT', '/api/users/me/password', ['current_password' => 'incorrect', 'password' => 'New-password-44', 'password_confirm' => 'New-password-44'], 'user', $csrf);
 $assert($status === 422 && isset($payload['error']['details']['errors']['current_password']), 'Password changes still verify the current password.');
@@ -88,6 +91,13 @@ $assert($status === 404, 'Nested comment IDs must belong to the status in the pa
 [$status, $payload] = $request('POST', '/api/statuses/10/comments', ['comment' => 'JSON reply <b>literal</b>', 'parent_id' => 10], 'user', $csrf);
 $assert($status === 201 && $payload['data']['comment']['parent_id'] === 10 && !isset($payload['data']['comment']['html']), 'AJAX replies return a complete comment resource instead of rendered markup.');
 $commentId = $payload['data']['comment']['id'];
+$assert(str_starts_with($payload['data']['comment']['author']['avatar_url'], '/avatar/generated/v1/2.svg'), 'New replies carry the avatar of their author rather than an empty fallback.');
+[$commentsStatus, $commentTree] = $request('GET', '/api/statuses/10/comments');
+$replyWithAvatar = null;
+foreach ($commentTree['data']['items'] as $parentComment) {
+    foreach ($parentComment['replies'] as $reply) { if ($reply['id'] === $commentId) { $replyWithAvatar = $reply; } }
+}
+$assert($commentsStatus === 200 && $replyWithAvatar !== null && str_starts_with($replyWithAvatar['author']['avatar_url'], '/avatar/generated/v1/2.svg'), 'Reloading nested replies preserves the correct author avatar.');
 $pure($payload);
 [$status, $payload] = $request('PATCH', '/api/statuses/10/comments/' . $commentId, ['comment' => 'Edited JSON reply @1'], 'user', $csrf);
 $assert($status === 200 && $payload['data']['updated_comment']['editable_body'] === 'Edited JSON reply @admin', 'Comment edits preserve stable mention IDs and return an editable resource.');

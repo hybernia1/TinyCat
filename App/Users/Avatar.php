@@ -27,11 +27,10 @@ final class Avatar
         'image/webp',
     ];
 
-    public static function url(int $userId, bool $exists, ?string $updatedAt = null): string
+    public static function url(int $userId, bool $exists, ?string $updatedAt = null, ?string $appearance = null): string
     {
-        if ($userId < 1 || !$exists) {
-            return '';
-        }
+        if ($userId < 1) { return ''; }
+        if (!$exists) { return GeneratedAvatar::url($userId, $appearance); }
 
         $version = trim((string) $updatedAt);
 
@@ -199,7 +198,7 @@ final class Avatar
             $user = null;
         }
 
-        $url = self::url((int) ($user['id'] ?? 0), (int) ($user['avatar_exists'] ?? 0) === 1, $user['updated_at'] ?? null);
+        $url = self::url((int) ($user['id'] ?? 0), (int) ($user['avatar_exists'] ?? 0) === 1, $user['updated_at'] ?? null, $user['avatar_appearance'] ?? null);
 
         if ($url === '') {
             \TinyCat\Site\Errors::respond(404);

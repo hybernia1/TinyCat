@@ -13,6 +13,9 @@ final class Module implements \TinyCat\StorageModule
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
+        \TinyCat\Http\Router::route(['GET', 'HEAD'], '/avatar/generated/v1/{user_id:[1-9][0-9]*[.]svg}', static function (string $user_id): void {
+            GeneratedAvatar::respond((int) $user_id);
+        });
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/author/{author_id:[0-9]+}/feed', static fn (string $author_id) => \TinyCat\Status\Syndication::respond('author', '', (int) $author_id));
 
         \TinyCat\Http\Router::route('GET', '/author/{author_id:[0-9]+}', static function (string $author_id): void {

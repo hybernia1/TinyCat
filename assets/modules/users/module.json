@@ -1,7 +1,8 @@
 [
   {
     "routes": [
-      "public"
+      "public",
+      "admin"
     ],
     "components": [
       "ui/avatar",
@@ -9,7 +10,7 @@
       "users/auth-content"
     ],
     "entries": [
-      "assets/modules/users/public.js"
+      "assets/modules/users/index.js"
     ],
     "styles": [
       "assets/modules/users/styles/012-profile-nav-link.css",
@@ -59,7 +60,34 @@
       "account.email_available",
       "account.email_checking",
       "account.email_check_failed",
-      "account.messages.email_taken"
+      "account.messages.email_taken",
+      "account.avatar_gender",
+      "account.avatar_gender_neutral",
+      "account.avatar_gender_male",
+      "account.avatar_gender_female",
+      "account.avatar_creator",
+      "account.avatar_fur",
+      "account.avatar_expression",
+      "account.avatar_accessory",
+      "account.avatar_auto",
+      "account.avatar_ginger",
+      "account.avatar_grey",
+      "account.avatar_cream",
+      "account.avatar_brown",
+      "account.avatar_charcoal",
+      "account.avatar_lilac",
+      "account.avatar_sage",
+      "account.avatar_peach",
+      "account.avatar_smile",
+      "account.avatar_serious",
+      "account.avatar_calm",
+      "account.avatar_none",
+      "account.avatar_sunglasses",
+      "account.avatar_glasses",
+      "account.avatar_headphones",
+      "account.avatar_cap",
+      "account.avatar_outfit",
+      "account.avatar_background"
     ],
     "messages": {
       "auth_recovery_done": "auth.recovery_done",
@@ -94,7 +122,6 @@
       "/admin/users"
     ],
     "components": [
-      "ui/avatar",
       "users/list",
       "users/filter-form",
       "users/admin-fields"
@@ -102,82 +129,19 @@
     "entries": [
       "assets/modules/users/admin.js"
     ],
-    "styles": [
-      "assets/modules/users/styles/012-profile-nav-link.css",
-      "assets/modules/users/styles/043-profile-avatar-button.css",
-      "assets/modules/users/styles/046-profile-layout.css",
-      "assets/modules/users/styles/048-profile-stats-strong.css",
-      "assets/modules/users/styles/057-auth-modal-panel.css",
-      "assets/modules/users/styles/072-following-modal-grid.css",
-      "assets/modules/users/styles/084-profile-modal-grid.css",
-      "assets/modules/users/styles/088-profile-layout.css",
-      "assets/modules/users/styles/090-profile-main.css"
+    "styles": [],
+    "translations": [],
+    "messages": {}
+  },
+  {
+    "routes": [
+      "public"
     ],
-    "translations": [
-      "account.avatar_edit",
-      "account.avatar_preview",
-      "account.avatar_upload_empty",
-      "account.avatar_upload_label",
-      "account.bio",
-      "account.email_notifications",
-      "account.email_optional",
-      "account.profile_settings",
-      "account.remove_avatar_title",
-      "account.remove_avatar_confirm",
-      "account.remove_avatar",
-      "account.save_avatar",
-      "account.security_settings",
-      "account.theme",
-      "account.theme_dark",
-      "account.theme_light",
-      "account.theme_system",
-      "common.create",
-      "common.current_password",
-      "common.email",
-      "common.filters",
-      "common.language",
-      "common.login",
-      "common.password",
-      "common.password_confirm",
-      "common.register",
-      "common.save",
-      "notifications.load_more",
-      "public.follow",
-      "public.following",
-      "public.unfollow",
-      "users.edit_user",
-      "users.new_user",
-      "account.email_available",
-      "account.email_checking",
-      "account.email_check_failed",
-      "account.messages.email_taken"
+    "entries": [
+      "assets/modules/users/public.js"
     ],
-    "messages": {
-      "auth_recovery_done": "auth.recovery_done",
-      "auth_recovery_sent": "auth.recovery_sent",
-      "avatar_invalid": "account.messages.avatar_invalid",
-      "avatar_removed": "account.messages.avatar_removed",
-      "avatar_required": "account.messages.avatar_required",
-      "avatar_saved": "account.messages.avatar_saved",
-      "captcha_invalid": "auth.invalid_captcha",
-      "current_password_invalid": "account.messages.current_password_invalid",
-      "email_invalid": "account.messages.email_invalid",
-      "email_taken": "account.messages.email_taken",
-      "invalid_login": "auth.invalid_login",
-      "password_saved": "account.messages.password_saved",
-      "profile_saved": "account.messages.profile_saved",
-      "registration_disabled": "auth.registration_disabled",
-      "registration_failed": "auth.registration_failed",
-      "settings_invalid_language": "settings.messages.invalid_language",
-      "super_admin_protected": "users.messages.super_admin_protected",
-      "user_created": "users.messages.created",
-      "user_not_found": "public.author_not_found",
-      "user_password_required": "users.validation.password_required",
-      "user_saved": "users.messages.saved",
-      "user_super_admin_protected": "users.messages.super_admin_protected",
-      "user_username_invalid": "users.messages.username_invalid",
-      "user_username_taken": "users.messages.username_taken",
-      "email_check_limited": "account.messages.email_check_limited"
-    }
+    "components": [],
+    "styles": [],
+    "translations": []
   }
 ]

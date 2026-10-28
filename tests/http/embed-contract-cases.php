@@ -45,7 +45,7 @@ $embedDb->exec("INSERT INTO content_images (content_id, path, width, height, byt
 [$imageStatus, $imageHtml] = $exportRequest('/status/910001/embed');
 $imageDom = new DOMDocument(); @$imageDom->loadHTML($imageHtml); $imageXPath = new DOMXPath($imageDom);
 $assert($imageStatus === 200 && $imageXPath->query('//article//img[@width="640" and @height="480"]')->length === 1
-    && $imageXPath->evaluate('string(//article//img/@src)') === 'http://localhost/uploads/status-images/2026/10/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp', 'Attached images retain absolute media URLs and intrinsic dimensions.');
+    && $imageXPath->evaluate('string(//article//img[@width="640"]/@src)') === 'http://localhost/uploads/status-images/2026/10/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp', 'Attached images retain absolute media URLs and intrinsic dimensions.');
 [$thumbnailStatus, $thumbnailBody] = $exportRequest($embedUrl);
 $thumbnail = json_decode($thumbnailBody, true, flags: JSON_THROW_ON_ERROR);
 $assert($thumbnailStatus === 200 && $thumbnail['thumbnail_width'] === 640 && $thumbnail['thumbnail_height'] === 480 && str_contains($thumbnail['thumbnail_url'], '/uploads/status-images/'), 'oEmbed exposes the attached image through standard thumbnail metadata.');
@@ -56,7 +56,7 @@ $assert($otherStatus === 200 && $otherHtml === $html, 'Embed output is independe
 $assert($errorStatus === 500 && !isset($errorHeaders['set-cookie']) && !str_contains($errorBody, '<html') && !str_contains($errorBody, 'SELECT'), 'Embed failures stay session-free and do not fall back to the interactive application shell.');
 [$status, $sharing] = $request('GET', '/api/statuses/910001/embed');
 $assert($status === 200 && $sharing['data']['frame_url'] === 'http://localhost/status/910001/embed' && str_contains($sharing['data']['snippet'], '<iframe'), 'The standard modal receives its preview URL and copyable snippet through a public JSON resource.');
-$assert(str_contains($html, 'embed-avatar-initial'), 'Authors without an avatar retain a circular initial.');
+$assert(str_contains($html, '/avatar/generated/v1/910001.svg'), 'Authors without an upload use their generated avatar in embeds.');
 $embedDb->exec("UPDATE users SET avatar_exists=1, updated_at='2020-01-01 12:00:00' WHERE id=910001");
 [$status, $avatarHtml] = $exportRequest('/status/910001/embed');
 $avatarDom = new DOMDocument(); @$avatarDom->loadHTML($avatarHtml); $avatarXPath = new DOMXPath($avatarDom);

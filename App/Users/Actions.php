@@ -249,11 +249,11 @@ final class Actions
     public static function user_profile_update_request(array $user, array $actor): array
     {
         $id = (int) ($user['id'] ?? 0);
-        $bio = \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('bio', ''), 500);
+        $bio = \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('bio', $user['bio'] ?? ''), 500);
         $emailProvided = \TinyCat\Http\Request::current()->input('email', null) !== null;
         $email = $emailProvided ? \TinyCat\Users\Profiles::user_email_normalize((string) \TinyCat\Http\Request::current()->input('email', '')) : \TinyCat\Users\Profiles::user_email_normalize((string) ($user['email'] ?? ''));
-        $locale = \TinyCat\Support\Languages::language_code((string) \TinyCat\Http\Request::current()->input('locale', ''));
-        $theme = \TinyCat\Users\Profiles::theme_normalize((string) \TinyCat\Http\Request::current()->input('theme', 'system'));
+        $locale = \TinyCat\Support\Languages::language_code((string) \TinyCat\Http\Request::current()->input('locale', $user['locale'] ?? ''));
+        $theme = \TinyCat\Users\Profiles::theme_normalize((string) \TinyCat\Http\Request::current()->input('theme', $user['theme'] ?? 'system'));
         $errors = [];
 
         if ($id < 1) {

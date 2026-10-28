@@ -67,7 +67,8 @@ final class Api
             Accounts::user_delete_account($id);
             return ['deleted_id' => $id];
         }, 'admin');
-        $api->get('/users/{id:[0-9]+}/avatar', static fn (Request $r, array $p): array => ['user' => Resource::profile(self::target((int) $p['id']))], 'user');
+        $api->get('/users/{id:[0-9]+}/avatar', static fn (Request $r, array $p): array => ['user' => Resource::profile(self::target((int) $p['id'])), 'appearance_options' => GeneratedAvatar::options()], 'user');
+        $api->patch('/users/{id:[0-9]+}/avatar', static fn (Request $r, array $p): Result => self::result(Avatars::updateAppearance(self::target((int) $p['id']))));
         foreach (['put', 'delete'] as $method) {
             $api->$method('/users/{id:[0-9]+}/avatar', static function (Request $r, array $p): Result {
                 return self::result(Avatars::user_avatar_update_request(self::target((int) $p['id'])));

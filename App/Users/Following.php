@@ -97,7 +97,7 @@ final class Following
             'SELECT u.id,
                     u.username,
                     u.username AS name,
-                    u.avatar_exists,
+                    u.avatar_exists, u.avatar_appearance,
                     u.updated_at,
                     uf.created_at AS followed_at
                 FROM user_followers uf

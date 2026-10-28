@@ -52,11 +52,12 @@ final class Comments
                     cc.content_id,
                     cc.parent_id,
                     cc.user_id,
+                    u.id AS author_id,
                     cc.body,
                     cc.created_at,
                     u.username AS author_name,
                     u.username AS author_username,
-                    u.avatar_exists AS author_avatar_exists,
+                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance,
                     u.updated_at AS author_updated_at,
                     c.author_id AS content_author_id,
                     (

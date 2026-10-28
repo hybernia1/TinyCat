@@ -128,7 +128,7 @@ final class Queries
         $users = [];
 
         foreach (\TinyCat\Database\Queries::db_select(
-            'SELECT u.id, u.username, u.username AS name, u.avatar_exists, u.updated_at, u.bio
+            'SELECT u.id, u.username, u.username AS name, u.avatar_exists, u.avatar_appearance, u.updated_at, u.bio
                 FROM users u'
         )
             ->where('u.status = ?', 'active')
@@ -229,7 +229,7 @@ final class Queries
         $selection = new \TinyCat\Database\Query(
             'SELECT c.id, c.body, c.author_id, c.published_at, matches.link_excerpt,
                     u.username AS author_name, u.username AS author_username,
-                    u.avatar_exists AS author_avatar_exists, u.updated_at AS author_updated_at
+                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.updated_at AS author_updated_at
              FROM (SELECT id, MAX(link_excerpt) AS link_excerpt FROM (
                  SELECT c.id, NULL AS link_excerpt FROM content c INNER JOIN users u ON u.id = c.author_id
                  WHERE u.status = ? AND c.published_at <= ? AND ' . $body . '
@@ -282,7 +282,7 @@ final class Queries
         $column = $tag ? 'name' : 'username';
         $table = $tag ? 'terms' : 'users';
         $where = $tag ? '' : "status = 'active' AND ";
-        $sql = 'SELECT * FROM (SELECT ' . ($tag ? 'id, name' : 'id, username, bio, avatar_exists, updated_at')
+        $sql = 'SELECT * FROM (SELECT ' . ($tag ? 'id, name' : 'id, username, bio, avatar_exists, avatar_appearance, updated_at')
             . ', CASE WHEN ' . $column . ' = ? THEN 0 WHEN ' . $column . " LIKE ? ESCAPE '!' THEN 1 ELSE 2 END AS search_rank"
             . ' FROM ' . $table . ' WHERE ' . $where . $column . " LIKE ? ESCAPE '!') matches";
         $params = [$needle, Connection::escapeLike($needle) . '%', '%' . Connection::escapeLike($needle) . '%'];

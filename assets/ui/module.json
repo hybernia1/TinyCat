@@ -117,11 +117,7 @@
   {
     "routes": [
       "public",
-      "/admin/users",
-      "/admin/bots",
-      "/admin/moderation",
-      "/admin/cron",
-      "/admin/site-health"
+      "admin"
     ],
     "entries": [
       "assets/core/dates.js"

@@ -36,7 +36,7 @@ final class Feed
                     ci.bytes AS image_bytes,
                     u.username AS author_username,
                     u.username AS author_name,
-                    u.avatar_exists AS author_avatar_exists,
+                    u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance,
                     u.updated_at AS author_updated_at,
                     (
                         SELECT COUNT(*)

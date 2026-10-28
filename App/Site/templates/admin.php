@@ -7,6 +7,10 @@ declare(strict_types=1);
 /** @var array<mixed> $nav */
 /** @var string $siteLogoUrl */
 /** @var string $title */
+/** @var array<mixed> $authUser */
+/** @var string $profileUrl */
+/** @var bool $profileNeedsEmail */
+/** @var string $userMenu */
 ?>
         <div class="admin-shell" data-admin-shell>
             <aside class="admin-sidebar" id="admin-sidebar" data-admin-sidebar>
@@ -56,19 +60,12 @@ declare(strict_types=1);
 
                 <div class="admin-sidebar-footer">
                     <div class="admin-user">
-                        <?= \TinyCat\Support\Html::icon('user') ?>
+                        <span class="avatar avatar-sm"><?= \TinyCat\Users\Views::avatar(['user' => $authUser]) ?></span>
                         <span>
                             <strong><?= \TinyCat\Support\Html::e($adminIdentity) ?></strong>
                             <small>TinyCat v<?= \TinyCat\Support\Html::e(\TinyCat\Support\Version::CURRENT) ?></small>
                         </span>
                     </div>
-                    <form action="/api/users/sessions/current" data-ajax-form data-api-method="DELETE" method="post" data-confirm="<?= \TinyCat\Support\Html::et('auth.logout_confirm') ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('auth.logout_title') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('common.logout') ?>" data-confirm-cancel="<?= \TinyCat\Support\Html::et('common.cancel') ?>" data-confirm-variant="danger">
-                        <?= \TinyCat\Security\Csrf::field() ?>
-                        <input type="hidden" name="_method" value="DELETE">
-                        <button class="btn btn-secondary w-full" type="submit">
-                            <?= \TinyCat\Support\Html::icon('logout') ?> <span><?= \TinyCat\Support\Html::et('common.logout') ?></span>
-                        </button>
-                    </form>
                 </div>
             </aside>
 
@@ -87,6 +84,7 @@ declare(strict_types=1);
                             <?= $actions ?>
                         </div>
                     <?php endif; ?>
+                    <?= $userMenu ?>
                 </header>
 
                 <main class="admin-content" id="main-content" tabindex="-1">

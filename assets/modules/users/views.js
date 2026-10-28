@@ -58,17 +58,62 @@ import "../../ui/toasts.js";
     return content;
   }
   function avatar(data) {
-    var user = data.user, content = e("div", { "class": "stack" });
+    var user = data.user, content = e("div", { "class": "avatar-editor" });
     var form = U.form("/api/users/" + user.id + "/avatar", "PUT");
+    form.id = "avatar-upload-form-" + user.id;
+    form.dataset.modalCloseOnSuccess = "true";
     form.enctype = "multipart/form-data";
     var upload = e("div", { "class": "avatar-upload", "data-avatar-upload": "" }), preview = e("div", { "class": "avatar avatar-xl avatar-upload-preview", "aria-label": U.text("account.avatar_preview") });
     preview.appendChild(e("img", { src: user.avatar_url || null, alt: user.username, "data-avatar-upload-preview": "", hidden: !user.avatar_url }));
-    var empty = e("span", { "class": "avatar-upload-empty", "data-avatar-upload-empty": "", hidden: Boolean(user.avatar_url) }); empty.appendChild(U.icon("user")); preview.appendChild(empty); upload.appendChild(preview);
-    upload.appendChild(e("small", { "class": "avatar-upload-empty-note", "data-avatar-upload-empty-note": "", hidden: Boolean(user.avatar_url) }, U.text("account.avatar_upload_empty")));
+    var empty = e("span", { "class": "avatar-upload-empty", "data-avatar-upload-empty": "", hidden: Boolean(user.avatar_url) }); empty.appendChild(U.icon("user")); preview.appendChild(empty);
+    var previewGroup = e("div", { "class": "avatar-editor-preview" });
+    previewGroup.appendChild(preview); upload.appendChild(previewGroup);
+    if (user.avatar_custom === false) {
+      var creatorToggle = U.button("account.avatar_creator", { "class": "btn btn-icon avatar-creator-toggle", "aria-label": U.text("account.avatar_creator"), title: U.text("account.avatar_creator"), "aria-expanded": "false", "aria-controls": "avatar-appearance-form-" + user.id, "data-avatar-creator-toggle": "" });
+      creatorToggle.replaceChildren(U.icon("chevron-right")); previewGroup.appendChild(creatorToggle);
+    }
+    var controls = e("div", { "class": "avatar-editor-controls" });
+    controls.appendChild(e("small", { "class": "avatar-upload-empty-note", "data-avatar-upload-empty-note": "", hidden: Boolean(user.avatar_url) }, U.text("account.avatar_upload_empty")));
     var drop = e("label", { "class": "avatar-upload-drop" });
     drop.append(e("input", { "class": "sr-only", type: "file", name: "avatar", required: true, accept: "image/jpeg,image/png,image/webp", "aria-label": U.text("account.avatar_upload_label"), "data-avatar-upload-input": "", "data-client-image-max-dimension": "400", "data-client-image-max-bytes": "26214400" }), U.icon("upload"), e("span", {}, U.text("account.avatar_upload_label")));
-    upload.appendChild(drop); form.appendChild(upload); addSubmit(form, "account.save_avatar"); content.appendChild(form);
-    if (user.avatar_url) { var remove = U.form("/api/users/" + user.id + "/avatar", "DELETE"); addSubmit(remove, "account.remove_avatar"); content.appendChild(remove); }
+    controls.append(drop, e("small", { "class": "text-muted" }, "JPG, PNG, WebP"));
+    upload.appendChild(controls); form.appendChild(upload); content.appendChild(form);
+    var appearanceForm = null;
+    if (user.avatar_custom === false) {
+      appearanceForm = U.form("/api/users/" + user.id + "/avatar", "PATCH");
+      appearanceForm.id = "avatar-appearance-form-" + user.id;
+      appearanceForm.classList.add("avatar-editor-appearance");
+      appearanceForm.dataset.avatarAppearanceForm = "";
+      appearanceForm.dataset.modalCloseOnSuccess = "true";
+      appearanceForm.hidden = true;
+      var settings = { version: 1 };
+      Object.keys(data.appearance_options || {}).forEach(function (key) {
+        var option = data.appearance_options[key], choices = {};
+        option.values.forEach(function (value) { var choiceLabel = "account.avatar_" + (key === "gender" ? "gender_" : "") + value; choices[value] = U.text(choiceLabel); });
+        settings[key] = user.avatar_appearance && user.avatar_appearance[key] || option.default;
+        var fieldLabel = "account.avatar_" + key;
+        var field = U.select(fieldLabel, "avatar_" + key, settings[key], choices);
+        var select = field.querySelector("select");
+        select.dataset.avatarParameter = key; select.dataset.avatarDefault = option.default;
+        if (key === "gender") { select.dataset.avatarGender = ""; }
+        select.removeAttribute("name"); appearanceForm.appendChild(field);
+      });
+      appearanceForm.dataset.originalAppearance = JSON.stringify(settings);
+      appearanceForm.appendChild(U.hidden("appearance", JSON.stringify(settings)));
+      content.appendChild(appearanceForm);
+    }
+    var footer = e("div", { "class": "avatar-editor-actions" });
+    if (user.avatar_url && user.avatar_custom !== false) {
+      var remove = U.form("/api/users/" + user.id + "/avatar", "DELETE");
+      remove.dataset.modalCloseOnSuccess = "true";
+      remove.dataset.confirm = U.text("account.remove_avatar_confirm");
+      remove.dataset.confirmTitle = U.text("account.remove_avatar_title");
+      remove.dataset.confirmVariant = "danger";
+      var removeButton = U.button("account.remove_avatar", { type: "submit", "class": "btn avatar-editor-remove" });
+      removeButton.replaceChildren(U.icon("trash"), e("span", {}, U.text("account.remove_avatar"))); remove.appendChild(removeButton); footer.appendChild(remove);
+    }
+    footer.appendChild(U.button("account.save_avatar", { type: "submit", "class": "btn btn-primary", form: appearanceForm ? appearanceForm.id : form.id, "data-avatar-save": "", disabled: true }));
+    content.appendChild(footer);
     return content;
   }
   function authentication(data) {

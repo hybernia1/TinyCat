@@ -156,6 +156,27 @@ $linkSource = (string) file_get_contents(dirname(__DIR__) . '/App/Http/Client.ph
 $assert(str_contains($linkSource, 'CURLOPT_FOLLOWLOCATION => false'), 'cURL redirects are not handled manually.');
 $assert(str_contains($linkSource, "'follow_location' => 0"), 'Stream redirects are not handled manually.');
 
+$generated = \TinyCat\Users\GeneratedAvatar::svg(42);
+$assert($generated === \TinyCat\Users\GeneratedAvatar::svg(42), 'Generated avatars are deterministic.');
+$assert(\TinyCat\Users\Avatar::url(42, false) === '/avatar/generated/v1/42.svg', 'Users without uploads receive a versioned generated avatar.');
+$assert(\TinyCat\Users\Avatar::url(0, false) === '', 'Anonymous placeholders never become user avatars.');
+$assert(\TinyCat\Users\GeneratedAvatar::appearance('{"gender":"female","future":"ignored"}') === ['version' => 1, 'gender' => 'female', 'fur' => 'auto', 'expression' => 'auto', 'accessory' => 'auto', 'outfit' => 'auto', 'background' => 'auto'], 'Appearance has a normalized versioned shape.');
+$assert(\TinyCat\Users\GeneratedAvatar::appearance('broken') === ['version' => 1, 'gender' => 'neutral', 'fur' => 'auto', 'expression' => 'auto', 'accessory' => 'auto', 'outfit' => 'auto', 'background' => 'auto'], 'Malformed stored appearance uses neutral defaults.');
+$assert(\TinyCat\Users\GeneratedAvatar::svg(42, 'female') !== $generated && \TinyCat\Users\GeneratedAvatar::svg(42, 'male') !== $generated, 'All three gender variants have a distinct illustration.');
+$assert(\TinyCat\Users\Avatars::user_avatar_url(['author_id' => 42, 'author_avatar_exists' => 0, 'author_avatar_appearance' => '{"gender":"female"}']) === '/avatar/generated/v1/42.svg?gender=female', 'Joined author appearance reaches the generated avatar URL.');
+$customAppearance = ['gender' => 'female', 'fur' => 'lilac', 'expression' => 'smile', 'accessory' => 'glasses'];
+$customSvg = \TinyCat\Users\GeneratedAvatar::svg(42, 'neutral', $customAppearance);
+$assert(str_contains($customSvg, 'fill="#c7a3cf"') && $customSvg !== $generated, 'Creator parameters select the requested SVG layers and fur colour.');
+$assert(\TinyCat\Users\GeneratedAvatar::url(42, json_encode($customAppearance)) === '/avatar/generated/v1/42.svg?gender=female&fur=lilac&expression=smile&accessory=glasses', 'Creator parameters have a canonical cacheable image URL.');
+$colourSvg = \TinyCat\Users\GeneratedAvatar::svg(42, 'neutral', ['outfit' => 'sage', 'background' => 'peach']);
+$assert(str_contains($colourSvg, 'fill="#558675"') && str_contains($colourSvg, 'fill="#f3d7ce"'), 'Outfit and background apply their independent palettes.');
+$assert(\TinyCat\Users\GeneratedAvatar::svg(42, 'neutral', ['outfit' => 'auto', 'background' => 'auto']) === $generated, 'Default colours preserve existing generated avatars.');
+$avatars = [];
+for ($id = 1; $id <= 1000; $id++) { $avatars[] = \TinyCat\Users\GeneratedAvatar::svg($id); }
+$assert(count(array_unique($avatars)) === 1000, 'A sample of 1000 users has visually distinct avatar geometry or colours.');
+$svgDocument = new DOMDocument();
+$assert($svgDocument->loadXML($generated) && $svgDocument->documentElement?->localName === 'svg', 'Generated avatars are valid self-contained SVG images.');
+
 if ($failures !== []) {
     foreach ($failures as $failure) {
         echo "FAIL {$failure}\n";

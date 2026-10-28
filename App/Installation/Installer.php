@@ -108,6 +108,7 @@ final class Installer
                 locale VARCHAR(12) NULL,
                 theme VARCHAR(12) NOT NULL DEFAULT 'system',
                 avatar_exists TINYINT(1) NOT NULL DEFAULT 0,
+                avatar_appearance TEXT NULL,
                 bio VARCHAR(500) NULL,
                 muted_until DATETIME NULL,
                 muted_by INT UNSIGNED NULL,

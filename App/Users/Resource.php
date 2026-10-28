@@ -56,6 +56,8 @@ final class Resource
             'bio' => (string) ($user['bio'] ?? ''),
             'url' => Profiles::author_url((int) ($user['id'] ?? 0)),
             'avatar_url' => Avatars::user_avatar_url($user),
+            'avatar_custom' => (int) ($user['avatar_exists'] ?? 0) === 1,
+            'avatar_appearance' => \TinyCat\Users\GeneratedAvatar::appearance($user['avatar_appearance'] ?? null),
         ];
     }
 
