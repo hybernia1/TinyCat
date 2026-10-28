@@ -73,6 +73,8 @@ $prepared = is_array($prepared ?? null) ? $prepared : [];
         <input class="input" type="password" name="<?= Html::e($name) ?>" value="<?= Html::e((string) $displayValue) ?>" maxlength="<?= Html::e((int) ($field['max'] ?? 190)) ?>" autocomplete="new-password">
     <?php elseif ($type === 'email'): ?>
         <input class="input" type="email" name="<?= Html::e($name) ?>" value="<?= Html::e((string) $value) ?>" maxlength="<?= Html::e((int) ($field['max'] ?? 190)) ?>">
+    <?php elseif ($type === 'site_url'): ?>
+        <input class="input" type="url" name="<?= Html::e($name) ?>" value="<?= Html::e((string) $value) ?>" maxlength="2048" placeholder="https://example.com" autocomplete="url">
     <?php elseif ($type === 'optional_text'): ?>
         <input class="input" name="<?= Html::e($name) ?>" value="<?= Html::e((string) $value) ?>" maxlength="<?= Html::e((int) ($field['max'] ?? 190)) ?>">
     <?php elseif ($type === 'textarea'): ?>

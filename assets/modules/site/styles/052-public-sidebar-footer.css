@@ -12,7 +12,13 @@
   margin-block-end: 0;
 }
 
-.public-sidebar-footer-inner a {
+.public-sidebar-footer a {
   color: var(--primary-strong);
   font-weight: 650;
+}
+
+@media (min-width: 900px) {
+  body:has(.public-sidebar) .privacy-mobile-link {
+    display: none;
+  }
 }

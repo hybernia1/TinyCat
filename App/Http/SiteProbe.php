@@ -12,7 +12,7 @@ final class SiteProbe
     public static function measure(): array
     {
         $result = ['http_status' => 0, 'ttfb_ms' => null, 'total_ms' => 0.0, 'dns_ms' => 0.0, 'connect_ms' => 0.0, 'tls_ms' => 0.0, 'bytes' => 0, 'complete' => false, 'error' => 'configuration'];
-        $url = rtrim((string) Config::get('app.url', ''), '/') . '/';
+        $url = rtrim((string) \TinyCat\Settings\Store::config('app.url', ''), '/') . '/';
         $parts = parse_url($url);
         if (!is_array($parts) || !in_array($parts['scheme'] ?? '', ['http', 'https'], true) || empty($parts['host'])
             || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment']) || preg_match('/[\x00-\x20\x7f\\\\]/', $url)) { return $result; }

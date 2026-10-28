@@ -62,6 +62,21 @@ try {
     $db = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
     $db->exec('CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)');
     \TinyCat\Database\Connection::set($db);
+    $urlField = ['key' => 'app.url', 'type' => 'site_url'];
+    foreach (['http://user:secret@example.com', 'https://example.com/?token=secret', 'https://example.com/#fragment', 'file:///etc/passwd', 'https://example.com/\\evil', "https://example.com/\npath"] as $invalidUrl) {
+        $rejected = false;
+        try { \TinyCat\Settings\Administration::tc_admin_settings_value_from_post($urlField, ['app.url' => $invalidUrl]); }
+        catch (InvalidArgumentException) { $rejected = true; }
+        $assert($rejected, 'Admin website URLs reject credential-bearing or ambiguous targets.');
+    }
+    [$adminUrl] = \TinyCat\Settings\Administration::tc_admin_settings_value_from_post($urlField, ['app.url' => 'http://' . $address . '/']);
+    \TinyCat\Settings\Store::setSetting('app.url', $adminUrl, 'string', 'site');
+    $configure(['app' => ['url' => 'http://127.0.0.1:1']]);
+    $assert(HttpCheck::run()['metrics']['http_status'] === 200, 'A persisted administrator URL overrides file configuration in the actual HTTP probe.');
+    $assert(\TinyCat\Settings\Store::config('app.url') === 'http://' . $address, 'The same administrator address is used by canonical link configuration.');
+    \TinyCat\Settings\Store::setSetting('app.url', '', 'string', 'site');
+    $configure(['app' => ['url' => 'http://' . $address]]);
+    $assert(HttpCheck::run()['metrics']['http_status'] === 200, 'Clearing the administrator override falls back to the file configuration.');
     $migration = require dirname(__DIR__) . '/migrations/20261026_003_scheduler_runs.php';
     $migration($db);
     $runId = \TinyCat\Scheduler\History::start('site-health', ['mode' => 'cli']);

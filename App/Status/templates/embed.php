@@ -56,9 +56,9 @@ use TinyCat\Support\Localization;
                         </button>
                     </div>
                 <?php elseif ($link['image_url'] !== ''): ?>
-                    <a href="<?= Html::e($link['url']) ?>" target="_blank" rel="noopener noreferrer ugc"><img class="embed-link-image" src="<?= Html::e($link['image_url']) ?>" alt="" loading="lazy"></a>
+                    <a href="<?= Html::e(\TinyCat\Site\Presentation::absolute_url($link['outbound_url'])) ?>" target="_blank" rel="noopener noreferrer ugc"><img class="embed-link-image" src="<?= Html::e($link['image_url']) ?>" alt="" loading="lazy"></a>
                 <?php endif; ?>
-                <a class="embed-link-copy" href="<?= Html::e($link['url']) ?>" target="_blank" rel="noopener noreferrer ugc"><strong><?= Html::e($link['title']) ?></strong><?php if ($link['description'] !== ''): ?><span><?= Html::e($link['description']) ?></span><?php endif; ?><small><?= Html::e($link['provider_name'] ?: $link['display_url']) ?></small></a>
+                <a class="embed-link-copy" href="<?= Html::e(\TinyCat\Site\Presentation::absolute_url($link['outbound_url'])) ?>" target="_blank" rel="noopener noreferrer ugc"><strong><?= Html::e($link['title']) ?></strong><?php if ($link['description'] !== ''): ?><span><?= Html::e($link['description']) ?></span><?php endif; ?><small><?= Html::e($link['provider_name'] ?: $link['display_url']) ?></small></a>
             </section>
         <?php endforeach; ?>
         <footer><a href="<?= Html::e($url) ?>" target="_blank" rel="noopener noreferrer"><time datetime="<?= Html::e($publishedAt) ?>"><?= Html::e($publishedLabel) ?></time></a></footer>

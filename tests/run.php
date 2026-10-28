@@ -19,6 +19,7 @@ $tests = [
     'Monolith API inventory' => 'tests/quality/monolith-inventory.php',
     'Metadata DNS scope' => 'tests/metadata-dns.php',
     'Link parser' => 'tests/link-parser.php',
+    'Content link resolution and UTM policy' => 'tests/content-links.php',
     'Rate limiter isolation' => 'tests/rate-limiter.php',
     'MySQL rate limiter' => 'tests/rate-limiter-mysql.php',
     'Write-path integrity' => 'tests/write-path-integrity.php',

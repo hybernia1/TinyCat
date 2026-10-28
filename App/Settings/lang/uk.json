@@ -57,14 +57,22 @@
       "email_from_name": "Ім'я відправника",
       "email_templates": "Типи доставки електронної пошти",
       "google_measurement_id": "Ідентифікатор вимірювання Google Analytics",
-      "google_measurement_id_help": "Додатково, наприклад G-XXXXXXXXXX."
+      "google_measurement_id_help": "Додатково, наприклад G-XXXXXXXXXX.",
+      "site_url": "Website URL",
+      "site_url_help": "Canonical website address for absolute links and health measurements, e.g. https://example.com. No credentials, query or fragment. Leave empty to use the server configuration.",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     },
     "messages": {
       "saved": "Налаштування збережено.",
       "required": "Заповніть усі необхідні налаштування.",
       "invalid_language": "Вибрана мова недоступна.",
       "invalid_timezone": "Вибраний часовий пояс недійсний.",
-      "invalid_datetime_format": "Вибраний формат дати або часу недоступний."
+      "invalid_datetime_format": "Вибраний формат дати або часу недоступний.",
+      "invalid_site_url": "Enter a valid HTTP or HTTPS website URL without credentials, query or fragment."
     },
     "footer_placeholder": "Текст нижнього колонтитула або HTML...",
     "image_empty": "Зображення не вибрано",

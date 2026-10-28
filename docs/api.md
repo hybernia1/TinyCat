@@ -498,3 +498,26 @@ are checked before responding or returning 304. No persistent result cache can
 keep a removed or moderated post available through this endpoint. Consumers may
 cache oEmbed metadata independently; the contained iframe still revalidates its
 post. HEAD requests expose the same metadata without a body.
+
+## Content-link navigation
+
+`GET /api/statuses/{id}/links/{hash}` and
+`GET /api/statuses/{id}/comments/{commentId}/links/{hash}` resolve only links in
+currently visible content. The hash uses the existing normalized link identity.
+The standard JSON envelope contains `data.url` (the configured UTM destination)
+and `data.original_url` (the original published URL). Arbitrary URL parameters
+cannot supply or replace the destination. Removed, unpublished or unavailable
+content returns the normal JSON 404 response.
+
+Browser anchors use the same endpoint with `navigate=1`. Only this explicit mode
+with an HTML Accept header returns HTTP 302; JSON requests always retain the
+normal envelope, including when that flag is present. Navigation responses use
+`private, no-store`, `noindex, nofollow` and `no-referrer`. There are no click logs
+or new per-visitor identifiers. Canonical source URLs remain in resource `url`
+fields, while `outbound_url` supplies the browser anchor destination.
+
+Admin settings under Analytics control `content_links.utm.enabled` (default
+true), `source` (default the configured website hostname), `medium` (default
+`referral`) and optional `campaign`. Missing source configuration leaves URLs
+untagged. Existing UTM values, repeated query keys, encoding and fragments are
+preserved; metadata normalization and public feed/export source URLs are unchanged.

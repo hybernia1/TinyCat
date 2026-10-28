@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.2.0 - 2026-10-28
+
+- Move the privacy link into the sticky public-sidebar footer, keep a mobile navigation fallback, and use contrast-safe theme tokens. Retain the document footer on pages without a public sidebar.
+
+- Route external post, comment, preview-card and embedded-post navigation through content-bound link APIs. Add configurable UTM source, medium and campaign settings while preserving original query data and existing UTM values. Keep default API responses normalized JSON, with explicit uncached browser navigation redirects.
+
+- Configure the canonical website URL in administration through the normalized settings API. Share the stored address between absolute links and health measurements, validate HTTP(S) targets and retain file-configuration fallback.
+
 ## 5.1.0 - 2026-10-28
 
 - Share dashboard statistic cards, semantic status badges and notices across Site health, scheduler overview and updates. Use standard icon-triggered modals for health run details and a named release-notes action; remove page-specific health styling.

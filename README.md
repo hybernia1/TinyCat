@@ -152,6 +152,8 @@ Checks cover database connectivity, a cache round trip and configured cache avai
 
 An anonymous HTTP GET also measures the configured `app.url` homepage: TTFB, elapsed request time, DNS/TCP/TLS setup, HTTP status, received bytes and transfer completeness. Responses and headers are discarded. No session, cookies or authorization are forwarded; redirects and proxy use are disabled and TLS certificates remain verified. This server-side sample is not a visitor percentile or a browser page-load measurement. Self-requests need another available web worker; prefer running the health task from CLI on a single-worker installation.
 
+Set the canonical website address in **Admin ? Settings ? Site ? Website URL**. This stored `app.url` overrides the server configuration for both absolute links and health probes. An empty override falls back to `config.php`. Only HTTP(S) URLs without credentials, query strings or fragments are accepted.
+
 Configure `health.http` in `config.php`: `enabled` (default `true`), `ttfb_warning_ms` (`800`), `ttfb_critical_ms` (`1800`), `total_warning_ms` (`2000`), `total_critical_ms` (`4000`) and `timeout_ms` (`5000`, clamped to 1000–30000). A threshold is exceeded strictly above its value. Threshold ordering is normalized. HTTP 4xx/5xx, transport failures, timeouts and incomplete oversized responses are critical; unfollowed redirects are warnings. Missing configuration is explicitly unmeasured. Timings and the limits used are stored together in run history, so changing limits never rewrites older results.
 
 When command-line scheduling is unavailable, use the protected HTTP endpoint shown in **Admin → Scheduled tasks**:
@@ -227,3 +229,5 @@ Tests and development tools are excluded from signed production packages.
 Copyright (C) 2026 TinyCat contributors.
 
 TinyCat is licensed solely under the [GNU Affero General Public License v3.0 or later](LICENSE) (`AGPL-3.0-or-later`), with no permissive or proprietary alternative license. This strong copyleft license requires modified versions offered as a network service to provide their Corresponding Source to the service's users under the same license.
+
+External content links use content-bound API navigation. Configure UTM source, medium and optional campaign under **Admin ? Settings ? Analytics**. Source defaults to the configured website hostname and medium to `referral`; existing UTM values are preserved. This adds attribution without recording clicks or user identifiers.

@@ -1,0 +1,30 @@
+<?php
+declare(strict_types=1);
+
+$outboundDb = new PDO('sqlite:' . $databasePath, options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$outboundDb->exec("INSERT INTO users (id, username, role, status) VALUES (980001, 'outboundfixture', 'user', 'active')");
+$outboundRaw = 'https://target.example/story?x=1&x=2&utm_source=original#section';
+$outboundDb->prepare('INSERT INTO content (id, author_id, body, published_at) VALUES (980001, 980001, ?, ?)')->execute([$outboundRaw, '2000-01-01']);
+$outboundDb->prepare('INSERT INTO content_comments (id, content_id, user_id, body, created_at) VALUES (980001, 980001, 980001, ?, ?)')->execute([$outboundRaw, '2000-01-01']);
+$outboundHash = hash('sha256', 'https://target.example/story?x=1&x=2#section');
+$outboundPath = '/api/statuses/980001/links/' . $outboundHash;
+[$status, $payload] = $request('GET', $outboundPath);
+$assert($status === 200 && $payload['data']['original_url'] === $outboundRaw && $payload['data']['url'] === 'https://target.example/story?x=1&x=2&utm_source=original&utm_medium=referral#section', 'The default content-link endpoint uses the common JSON envelope even for HTML Accept.');
+[$status, $payload] = $request('GET', $outboundPath . '?navigate=1', null, '', ['Accept' => 'application/json']);
+$assert($status === 200 && isset($payload['data']['url']), 'JSON clients keep their envelope even with the navigation flag.');
+$nativeContext = stream_context_create(['http' => ['header' => "Accept: text/html\r\n", 'ignore_errors' => true, 'follow_location' => 0, 'timeout' => 10]]);
+file_get_contents('http://' . $address . $outboundPath . '?navigate=1&url=https://unrelated.example', false, $nativeContext);
+$nativeHeaders = http_get_last_response_headers() ?? [];
+$assert(str_contains($nativeHeaders[0], '302') && in_array('Location: https://target.example/story?x=1&x=2&utm_source=original&utm_medium=referral#section', $nativeHeaders, true), 'Native navigation redirects only to the content-bound target; query targets cannot override it.');
+$assert(in_array('Cache-Control: private, no-store', $nativeHeaders, true), 'Redirects are not cached across content edits and policy changes.');
+[$status] = $request('GET', '/api/statuses/980001/comments/980001/links/' . $outboundHash);
+$assert($status === 200, 'Comment links use the same normalized resolution API.');
+[$status] = $request('GET', '/api/statuses/980002/comments/980001/links/' . $outboundHash);
+$assert($status === 404, 'Comment links cannot cross content boundaries.');
+[$status] = $request('GET', '/api/statuses/980001/links/' . str_repeat('0', 64));
+$assert($status === 404, 'Unrelated hashes do not create an open redirect.');
+$outboundDb->exec("UPDATE content SET published_at = '2999-01-01' WHERE id = 980001");
+[$status] = $request('GET', $outboundPath);
+$assert($status === 404, 'A previously visible link is revoked when its post becomes unpublished.');
+$outboundDb->exec('DELETE FROM content_comments WHERE id = 980001; DELETE FROM content WHERE id = 980001; DELETE FROM users WHERE id = 980001');
+$outboundDb = null;

@@ -37,6 +37,7 @@ final class Views
             'tags' => $tags,
             'active_tag' => $activeTag,
             'url' => $sidebarUrl,
+            'privacy_url' => LocaleRouting::url('/privacy'),
             'footer' => \TinyCat\Support\RichText::nodes($siteFooterHtml),
         ]);
     }
