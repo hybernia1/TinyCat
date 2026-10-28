@@ -82,7 +82,8 @@ final class Embed
         $links = array_filter(Links::status_links_for_content((int) $item['id']), static fn (array $link): bool => !Links::status_link_is_internal($link));
         $media = [];
         foreach (array_slice(array_values($links), 0, 3) as $link) {
-            $card = Resource::link($link);
+            $card = Resource::link($link, (int) $item['id']);
+            $card['outbound_url'] = Presentation::absolute_url($card['outbound_url']);
             $card['url'] = \TinyCat\Security\Sanitizer::sanitize_html_url($card['url']);
             if ($card['url'] === '') { continue; }
             if ($card['thumbnail_url'] === '' && $card['provider'] === 'youtube' && $card['embed_allowed']) {
@@ -170,9 +171,9 @@ final class Embed
             $parsed = LinkParser::fromRaw((string) $link['url']);
             if ($parsed !== null) { $hiddenHashes[] = (string) $parsed['url_hash']; }
         }
-        $segments = Segments::text((string) $item['body'], $hiddenHashes);
+        $segments = Segments::text((string) $item['body'], $hiddenHashes, (int) $item['id']);
         foreach ($segments as &$segment) {
-            if (isset($segment['url'])) { $segment['url'] = Presentation::absolute_url($segment['url']); }
+            if (isset($segment['url'])) { $segment['url'] = Presentation::absolute_url($segment['outbound_url'] ?? $segment['url']); }
         }
         unset($segment);
         $image = Images::status_image_url($item);

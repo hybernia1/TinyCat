@@ -7,8 +7,9 @@ declare(strict_types=1);
     </div>
     <div class="card-body stack">
         <p class="text-muted mb-0"><?= \TinyCat\Support\Html::et('auth.logout_intro') ?></p>
-        <form method="post" action="/logout" data-confirm="<?= \TinyCat\Support\Html::et('auth.logout_confirm') ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('auth.logout_title') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('common.logout') ?>" data-confirm-cancel="<?= \TinyCat\Support\Html::et('common.cancel') ?>" data-confirm-variant="danger">
+        <form method="post" action="/api/users/sessions/current" data-ajax-form data-api-method="DELETE" data-confirm="<?= \TinyCat\Support\Html::et('auth.logout_confirm') ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('auth.logout_title') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('common.logout') ?>" data-confirm-cancel="<?= \TinyCat\Support\Html::et('common.cancel') ?>" data-confirm-variant="danger">
             <?= \TinyCat\Security\Csrf::field() ?>
+            <input type="hidden" name="_method" value="DELETE">
             <button class="btn btn-danger" type="submit"><?= \TinyCat\Support\Html::icon('logout') ?> <span><?= \TinyCat\Support\Html::et('common.logout') ?></span></button>
         </form>
     </div>

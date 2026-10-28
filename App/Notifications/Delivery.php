@@ -9,6 +9,27 @@ final class Delivery
     /** @var array<int, string> */
     private static array $recipientRoles = [];
 
+    /** System notifications have no invented actor and never send mail implicitly. */
+    public static function siteHealth(bool $healthy, int $runId): int
+    {
+        if ($runId < 1) { throw new \InvalidArgumentException('A health notification requires a run ID.'); }
+        $count = 0;
+        $now = \TinyCat\Support\Dates::dateDb();
+        foreach (\TinyCat\Database\Connection::all("SELECT id FROM users WHERE role = 'admin' AND status = 'active'") as $user) {
+            try {
+                \TinyCat\Database\Connection::insert('notifications', [
+                    'user_id' => (int) $user['id'], 'actor_id' => null, 'content_id' => null, 'comment_id' => null,
+                    'type' => $healthy ? 'site_health_ok' : 'site_health_attention', 'notification_key' => 'site_health:' . $runId,
+                    'read_at' => null, 'created_at' => $now, 'updated_at' => $now,
+                ]);
+                $count++;
+            } catch (Throwable $exception) {
+                if (!\TinyCat\Database\Connection::uniqueViolation($exception)) { throw $exception; }
+            }
+        }
+        return $count;
+    }
+
     public static function create(
         int $userId,
         string $type,

@@ -89,7 +89,7 @@
     "data_email": "L'e-mail fornita può essere utilizzata anche per accedere, recuperare la password e ricevere notifiche e-mail opzionali. Gli utenti possono controllare le notifiche nel proprio profilo, mentre gli amministratori controllano quali tipi di notifiche sono disponibili.",
     "data_content": "I contenuti dell'app store creati dagli utenti stessi: post, commenti, immagini caricate, Mi piace, follower, report e campi del profilo opzionali.",
     "data_technical": "Le password vengono archiviate solo come hash. I collegamenti per la reimpostazione della password sono token monouso e di breve durata.",
-    "data_server_logs": "{site} memorizza gli indirizzi IP per limitare la velocità delle azioni selezionate durante l'accesso come post, commenti, Mi piace, rapporti e ricerche. L'operatore del server può anche disporre di log tecnici del server al di fuori dell'app.",
+    "data_server_logs": "{site} memorizza contatori per account o indirizzo IP per limitare le richieste eccessive. Il gestore del server può anche disporre di log tecnici al di fuori dell’app.",
     "recovery_title": "Recupero password",
     "recovery_email": "Il recupero della password utilizza la pagina /recovery e un collegamento inviato all'e-mail dell'account.",
     "recovery_no_contact": "Un indirizzo e-mail è facoltativo al momento della registrazione, ma è necessario per il recupero della password tramite e-mail.",

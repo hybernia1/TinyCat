@@ -165,7 +165,10 @@ function createFixture(PDO $database): void
     for ($id = 1; $id <= 24; $id++) {
         $day = str_pad((string) $id, 2, '0', STR_PAD_LEFT);
         $createdAt = '2026-01-' . $day . ' 12:00:00';
-        $content->execute([$id, "Performance benchmark status {$id} #benchmark", $createdAt]);
+        $content->execute([$id, "Performance benchmark status {$id} #benchmark https://target.example/article/{$id}?utm_source=original https://other.example/{$id} https://third.example/{$id}", $createdAt]);
+        $url = 'https://target.example/article/' . $id;
+        $database->prepare('INSERT INTO links (id, normalized_url, url_hash, provider, link_type, title) VALUES (?, ?, ?, ?, ?, ?)')->execute([$id, $url, hash('sha256', $url), 'web', 'web', 'Stored article ' . $id]);
+        $database->prepare('INSERT INTO content_links (content_id, link_id) VALUES (?, ?)')->execute([$id, $id]);
         $tag->execute([$id, 1]);
         $tag->execute([$id, 2]);
     }

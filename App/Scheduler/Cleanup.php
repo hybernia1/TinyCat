@@ -25,6 +25,9 @@ final class Cleanup
             'orphan_links',
             'orphan_status_image_files',
             'orphan_link_image_files',
+            'orphan_avatar_files',
+            'temporary_files',
+            'update_files',
             'expired_cache_files',
             'old_action_limits',
             'old_password_reset_tokens',
@@ -41,6 +44,7 @@ final class Cleanup
     public static function cron_cleanup_run(int $batchSize = 500, bool $force = false, ?array $tasks = null): array
     {
         $batchSize = \TinyCat\Scheduler\Cleanup::cleanup_batch_size($batchSize);
+        $fullRun = $tasks === null;
         $tasks = $tasks === null
             ? \TinyCat\Scheduler\Cleanup::cron_cleanup_tasks()
             : array_values(array_intersect(\TinyCat\Scheduler\Cleanup::cron_cleanup_tasks(), $tasks));
@@ -59,8 +63,15 @@ final class Cleanup
         }
 
         $results = [];
+        if ($fullRun) {
+            $nextTask = (string) \TinyCat\Settings\Store::setting('cron.cleanup_next_task', 'update_files');
+            $offset = array_search($nextTask, $tasks, true);
+            if (is_int($offset)) { $tasks = [...array_slice($tasks, $offset), ...array_slice($tasks, 0, $offset)]; }
+        }
 
-        foreach ($tasks as $task) {
+        foreach ($tasks as $index => $task) {
+            // Advance before work so even a killed PHP worker gives the following task its turn.
+            if ($fullRun) { \TinyCat\Settings\Store::setSetting('cron.cleanup_next_task', $tasks[($index + 1) % count($tasks)], 'string', 'cron'); }
             try {
                 $results[$task] = \TinyCat\Scheduler\Cleanup::cleanup_task_run($task, $batchSize);
             } catch (Throwable $exception) {
@@ -98,10 +109,13 @@ final class Cleanup
         $batchSize = \TinyCat\Scheduler\Cleanup::cleanup_batch_size($batchSize);
         $startedAt = hrtime(true);
         $error = '';
-        if (in_array($task, ['orphan_status_image_files', 'orphan_link_image_files', 'expired_cache_files', 'bot_history'], true)) {
+        if (in_array($task, ['orphan_status_image_files', 'orphan_link_image_files', 'orphan_avatar_files', 'temporary_files', 'update_files', 'expired_cache_files', 'bot_history'], true)) {
             $result = match ($task) {
                 'orphan_status_image_files' => \TinyCat\Status\ImageStorage::cleanupOrphans($batchSize),
                 'orphan_link_image_files' => \TinyCat\Status\Links::cleanupOrphanImages($batchSize),
+                'orphan_avatar_files' => \TinyCat\Users\Avatar::cleanupOrphans($batchSize),
+                'temporary_files' => FileCleanup::temporary($batchSize),
+                'update_files' => \TinyCat\Updates\Cleanup::run($batchSize),
                 'bot_history' => \TinyCat\Bots\Cleanup::run($batchSize),
                 default => \TinyCat\Support\Cache::cleanupExpired($batchSize),
             };
@@ -151,7 +165,7 @@ final class Cleanup
                     FROM ip_action_limits
                     WHERE bucket_start < ?
                     LIMIT 1',
-                [\TinyCat\Support\Dates::dateDb('-30 days')]
+                [\TinyCat\Support\Dates::dateDb(time() - \TinyCat\Security\RateLimitPolicy::retentionSeconds())]
             ),
             'old_password_reset_tokens' => \TinyCat\Database\Connection::value(
                 'SELECT 1
@@ -201,7 +215,7 @@ final class Cleanup
                 'DELETE FROM ip_action_limits
                     WHERE bucket_start < ?
                     LIMIT ' . $batchSize,
-                [\TinyCat\Support\Dates::dateDb('-30 days')]
+                [\TinyCat\Support\Dates::dateDb(time() - \TinyCat\Security\RateLimitPolicy::retentionSeconds())]
             ),
             'old_password_reset_tokens' => \TinyCat\Scheduler\Cleanup::cleanup_delete_limited(
                 'DELETE FROM password_reset_tokens

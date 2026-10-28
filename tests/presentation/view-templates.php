@@ -135,7 +135,7 @@ $notification = \TinyCat\Notifications\Views::items(['notifications' => [[
     'content_id' => 7, 'content_body' => 'Notification content text',
     'created_at' => '2026-08-09T12:02:00+00:00', 'read_at' => null,
 ]]], true);
-$assert(str_contains($notification, 'href="/notifications/open?id=21"'), 'Unread notification preserves the read-and-open target.');
+$assert(str_contains($notification, 'href="/status/7"') && str_contains($notification, 'data-url="/api/notifications/21?open=1"') && str_contains($notification, 'data-method="PATCH"'), 'Unread notifications mark read through the API and retain a read-only destination.');
 $assert(str_contains($notification, 'Notification content text'), 'Notification renders its content excerpt.');
 $assert(str_contains($notification, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::t('notifications.messages.content_mention', ['actor' => 'Bob <unsafe>']))), 'Notification translates raw event data with escaped actor text.');
 

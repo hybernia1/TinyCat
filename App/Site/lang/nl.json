@@ -89,7 +89,7 @@
     "data_email": "Een verstrekt e-mailadres kan ook worden gebruikt om in te loggen, het wachtwoord te herstellen en optionele e-mailmeldingen te ontvangen. Gebruikers kunnen meldingen in hun profiel beheren, terwijl beheerders bepalen welke meldingstypen beschikbaar zijn.",
     "data_content": "De app slaat inhoud op die gebruikers zelf maken: berichten, opmerkingen, geüploade afbeeldingen, vind-ik-leuks, volgers, rapporten en optionele profielvelden.",
     "data_technical": "Wachtwoorden worden alleen als hashes opgeslagen. Links voor het opnieuw instellen van wachtwoorden zijn kortstondige tokens voor eenmalig gebruik.",
-    "data_server_logs": "{site} slaat IP-adressen op om de snelheid van geselecteerde ingelogde acties, zoals berichten, opmerkingen, vind-ik-leuks, rapporten en zoekopdrachten, te beperken. De serveroperator kan ook over technische serverlogboeken buiten de app beschikken.",
+    "data_server_logs": "{site} slaat tellers per account of IP-adres op om overmatige verzoeken te beperken. De serverbeheerder kan ook technische logboeken buiten de app hebben.",
     "recovery_title": "Wachtwoordherstel",
     "recovery_email": "Wachtwoordherstel maakt gebruik van de /recovery-pagina en een link die naar het account-e-mailadres wordt verzonden.",
     "recovery_no_contact": "Een e-mailadres is optioneel bij registratie, maar vereist voor wachtwoordherstel via e-mail.",

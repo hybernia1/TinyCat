@@ -434,11 +434,9 @@ final class Administration
         }
 
         $user = \TinyCat\Users\Authentication::auth();
-        $definition = \TinyCat\Scheduler\Tasks::definitions()['feeds'];
-        return \TinyCat\Http\Session::withoutLock(static fn (): array => \TinyCat\Scheduler\Runner::run(
-            'feeds', $definition['runner'],
-            ['mode' => 'admin', 'actor_id' => (int) ($user['id'] ?? 0), 'options' => ['source_id' => (int) $source['id']]]
-        ));
+        return \TinyCat\Http\Session::withoutLock(static fn (): array => \TinyCat\Scheduler\Execution::run(
+            'feeds', ['source_id' => (int) $source['id']], 'admin', (int) ($user['id'] ?? 0)
+        )['tasks']['feeds']);
     }
 
     /**

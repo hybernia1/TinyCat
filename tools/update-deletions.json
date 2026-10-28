@@ -217,5 +217,8 @@
     ],
     "4.6.0": [
         "App/Search/templates/search.php"
+    ],
+    "5.0.0": [
+        "Public/install/index.php"
     ]
 }

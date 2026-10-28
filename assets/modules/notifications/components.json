@@ -141,6 +141,12 @@
                     ]
                   }
                 }
+              },
+              "site_health_ok": {
+                "t": "health.notification_ok"
+              },
+              "site_health_attention": {
+                "t": "health.notification_attention"
               }
             },
             "default": {
@@ -319,6 +325,25 @@
           "class": "notification-main",
           "href": {
             "get": "item.url"
+          },
+          "data-ajax": {
+            "if": [
+              {
+                "get": "item.unread"
+              },
+              "",
+              null
+            ]
+          },
+          "data-method": "PATCH",
+          "data-url": {
+            "concat": [
+              "/api/notifications/",
+              {
+                "get": "item.id"
+              },
+              "?open=1"
+            ]
           }
         },
         "children": [
@@ -349,7 +374,9 @@
                       "content_mention": "user",
                       "comment_mention": "user",
                       "report_resolved": "check",
-                      "report_dismissed": "flag"
+                      "report_dismissed": "flag",
+                      "site_health_ok": "check",
+                      "site_health_attention": "shield"
                     },
                     "default": "bell"
                   }
@@ -420,6 +447,25 @@
       },
       "href": {
         "get": "item.url"
+      },
+      "data-ajax": {
+        "if": [
+          {
+            "get": "item.unread"
+          },
+          "",
+          null
+        ]
+      },
+      "data-method": "PATCH",
+      "data-url": {
+        "concat": [
+          "/api/notifications/",
+          {
+            "get": "item.id"
+          },
+          "?open=1"
+        ]
       }
     },
     "children": [
@@ -450,7 +496,9 @@
                   "content_mention": "user",
                   "comment_mention": "user",
                   "report_resolved": "check",
-                  "report_dismissed": "flag"
+                  "report_dismissed": "flag",
+                  "site_health_ok": "check",
+                  "site_health_attention": "shield"
                 },
                 "default": "bell"
               }

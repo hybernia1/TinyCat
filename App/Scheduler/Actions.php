@@ -26,7 +26,7 @@ final class Actions
         $definition = Tasks::definitions()[$task] ?? null;
         if ($definition === null) { Response::error(Localization::t('cron.unknown_task'), 404, 'scheduler_unknown_task'); }
         $user = \TinyCat\Users\Authentication::auth();
-        $execution = \TinyCat\Http\Session::withoutLock(static fn (): array => Runner::run($task, $definition['runner'], ['mode' => 'admin', 'actor_id' => (int) ($user['id'] ?? 0), 'options' => $definition['options']]));
+        $execution = \TinyCat\Http\Session::withoutLock(static fn (): array => Execution::run($task, $definition['options'], 'admin', (int) ($user['id'] ?? 0))['tasks'][$task]);
         $code = empty($execution['ok']) ? 'scheduler_run_failed' : (($execution['status'] ?? '') === 'already_running' ? 'scheduler_already_running' : 'scheduler_run_finished');
         $key = match ($code) {
             'scheduler_run_failed' => 'cron.run_failed',

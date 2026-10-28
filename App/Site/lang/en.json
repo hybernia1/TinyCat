@@ -89,7 +89,7 @@
     "data_email": "A provided email can also be used to sign in, recover the password, and receive optional email notifications. Users can control notifications in their profile, while administrators control which notification types are available.",
     "data_content": "The app stores content users create themselves: posts, comments, uploaded images, likes, follows, reports, and optional profile fields.",
     "data_technical": "Passwords are stored only as hashes. Password reset links are short-lived, single-use tokens.",
-    "data_server_logs": "{site} stores IP addresses for rate limiting selected signed-in actions such as posts, comments, likes, reports, and searches. The server operator may also have technical server logs outside the app.",
+    "data_server_logs": "{site} stores action counters keyed by account or IP address to limit excessive requests. The server operator may also have technical server logs outside the app.",
     "recovery_title": "Password Recovery",
     "recovery_email": "Password recovery uses the /recovery page and a link sent to the account email.",
     "recovery_no_contact": "An email address is optional at registration, but required for email-based password recovery.",

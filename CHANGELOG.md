@@ -1,5 +1,59 @@
 # Changelog
 
+## 5.2.1 - 2026-10-28
+
+- Give backup retention and updater work directories independent bounded scan cursors and reserved batch shares. Validate candidate payloads lazily while preserving the newest complete recovery snapshots. Report oversized catalogues explicitly.
+- Persist the next cleanup task before starting work so repeated worker interruptions cannot always restart ahead of backup retention.
+
+## 5.2.0 - 2026-10-28
+
+- Move the privacy link into the sticky public-sidebar footer, keep the link desktop-only for now, and use contrast-safe theme tokens. Retain the document footer on pages without a public sidebar.
+
+- Route external post, comment, preview-card and embedded-post navigation through content-bound link APIs. Add configurable UTM source, medium and campaign settings while preserving original query data and existing UTM values. Keep default API responses normalized JSON, with explicit uncached browser navigation redirects.
+
+- Configure the canonical website URL in administration through the normalized settings API. Share the stored address between absolute links and health measurements, validate HTTP(S) targets and retain file-configuration fallback.
+
+## 5.1.0 - 2026-10-28
+
+- Share dashboard statistic cards, semantic status badges and notices across Site health, scheduler overview and updates. Use standard icon-triggered modals for health run details and a named release-notes action; remove page-specific health styling.
+
+- Record per-task scheduler findings, distinguishing failed, interrupted, missing and stale runs from healthy HTTP response times. Explain inspection duration separately from website timing.
+- Align page wrappers, topbar actions and history tables across scheduler settings, Site health and updates.
+
+- Simplify Site health administration with a status overview, compact response metrics, prioritized findings, expandable diagnostics and limits, and a responsive numeric history table.
+
+- Measure anonymous homepage HTTP response timing in Site health, retain TTFB, total and connection timings with their applied thresholds, and display historical values without changing past evaluations. Bound transfers, verify TLS, reject credential-bearing targets, and distinguish transport/status failures from slow successful responses.
+
+- Add an administrator-only Site health page and a daily `site-health` scheduler task, sharing API execution, locks and history. Record sanitized local diagnostic outcomes, flag stale/failed inspections and notify every active administrator of each completed result through in-app system notifications.
+
+- Add orphan avatar and abandoned temporary-file cleanup with age guards; preserve avatar recovery copies and unrelated files.
+- Checkpoint image and cache directory walks and bound inspected entries as well as deletions. Resume failed batches without advancing their cursor.
+- Derive rate-limit bucket retention from the central policy, with a minimum of 24 hours and twice the longest window.
+- Mark successfully applied update backups as complete. Retire confirmed backups after 30 days while preserving the three newest complete copies, incomplete and legacy recovery snapshots, and configurable longer retention.
+- Share the updater lock for cleanup, protect maintenance mode and recent work directories, and resume backup retirement across bounded batches. No database migration or cron URL change is required.
+
+## 5.0.1 - 2026-10-28
+
+- Support URL-only hosting schedulers such as Webglobe through HTTPS GET `/api/scheduler/triggers/{task}` with HTTP Basic authentication (username `scheduler`, cron token as password). Use the same task execution, locks and history as the Bearer API.
+- Authenticate hosting HEAD probes without executing tasks, prevent caching and cross-site browser triggers, and keep credentials out of URLs. Existing POST/Bearer endpoints remain unchanged.
+
+## 5.0.0 - 2026-10-28
+
+- Centralize rate-limit policy and count signed-in content quotas per account, independent of shared IP addresses. Exempt authenticated administrator and bot accounts from quotas and cooldowns.
+- Separate creation, editing and deletion cooldowns, record them after successful operations, and include consistent wait details and `Retry-After` headers in 429 responses.
+- Bound authentication, registration, password recovery, image uploads and follow changes; reserve request budgets atomically on SQLite and MySQL.
+- Route browser writes through normalized module APIs, including authentication, logout, settings, updates, cache resets, notifications and search CAPTCHA. Retired page POST handlers return 405.
+- Move installation into its own API-backed module, hide the installer page and API with 404 after completion, redirect the new administrator to administration, and remove `Public/install/index.php` through update metadata. No new database migration is required.
+- Share scheduler validation, execution, locks and history between HTTP, CLI and manual bot imports. Keep the installer within its existing asset delivery budget by using the shared API form transport without administration controllers.
+- Verify all 50 test groups, including complete isolated MySQL installation, authenticated scheduler transport, signed update/fresh-install artifacts and update/rollback recovery.
+
+### Integration changes
+
+- Replace HTTP calls to `/scheduled-tasks.php` with `POST /api/scheduler/executions`, using `Authorization: Bearer TOKEN`. Pass `task` and an optional `options` object in JSON. The old endpoint returns 410; query-string tokens and alternate token headers are no longer accepted.
+- Use authenticated `GET /api/scheduler/health` for health checks. Generate or rotate credentials explicitly through the administrator API; visiting scheduler settings no longer creates a token.
+- CLI commands remain unchanged, but machine-readable output now uses the common API envelope: successful task results are in `data.tasks`, and failures are in `error.details` with exit codes 1 (execution failure) or 2 (invalid arguments).
+- Update callers of legacy page POST URLs to the canonical endpoints in `docs/api.md`. HTML pages and public feeds, media and discovery documents retain their native read-only formats.
+
 ## 4.11.0 - 2026-10-28
 
 - Embed public posts through oEmbed 1.0 JSON/XML discovery and a standalone responsive iframe with HTTP validators and visibility checks.

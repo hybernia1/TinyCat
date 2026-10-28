@@ -301,18 +301,46 @@
       {
         "tag": "footer",
         "attrs": {
-          "class": "public-sidebar-footer"
+          "class": "public-sidebar-footer stack stack-gap-8 desktop-only"
         },
         "children": [
           {
             "rich": {
               "get": "footer"
+            },
+            "when": {
+              "get": "footer"
             }
+          },
+          {
+            "tag": "a",
+            "attrs": {
+              "class": "cluster gap-2",
+              "href": {
+                "or": [
+                  {
+                    "get": "privacy_url"
+                  },
+                  "/privacy"
+                ]
+              },
+              "rel": "privacy-policy"
+            },
+            "children": [
+              {
+                "icon": "shield"
+              },
+              {
+                "tag": "span",
+                "children": [
+                  {
+                    "t": "privacy.title"
+                  }
+                ]
+              }
+            ]
           }
-        ],
-        "when": {
-          "get": "footer"
-        }
+        ]
       }
     ]
   },

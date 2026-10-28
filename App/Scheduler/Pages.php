@@ -32,8 +32,8 @@ final class Pages
             return;
         }
 
-        $cronToken = Tokens::cron_token(true);
-        $cronUrl = Presentation::absolute_url('/scheduled-tasks.php');
+        $cronToken = Tokens::cron_token();
+        $cronUrl = Presentation::absolute_url('/api/scheduler/executions');
         $runnerPath = Paths::basePath('scheduled-tasks.php');
         $taskViews = [];
 
@@ -53,7 +53,7 @@ final class Pages
 
         foreach ($taskViews as $task => &$view) {
             $taskUrl = $cronUrl . '?task=' . rawurlencode($task);
-            $view['query_url'] = $taskUrl . '&bearer=' . rawurlencode($cronToken);
+            $view['query_url'] = Presentation::absolute_url('/api/scheduler/triggers/' . rawurlencode($task));
             $view['http_command'] = 'curl -fsS -X POST -H "Authorization: Bearer ' . $cronToken . '" "' . $taskUrl . '"';
             $view['cli_command'] = 'php "' . $runnerPath . '" --task=' . $task . ' ' . (string) $view['cli_arguments'];
         }
@@ -62,6 +62,7 @@ final class Pages
         Layout::render([
             'title' => Localization::t('cron.title'),
             'current' => '/admin/cron',
-        ], View::render('administration', compact('cronToken', 'cronUrl', 'taskViews'), __DIR__ . '/templates'));
+            'actions' => View::render('actions', [], __DIR__ . '/templates'),
+        ], \TinyCat\Support\AdminViews::listCard(Localization::t('cron.title'), 'clock', 'scheduler-settings', '', new \TinyCat\Support\Markup(View::render('administration', compact('cronToken', 'cronUrl', 'taskViews'), __DIR__ . '/templates'))));
     }
 }

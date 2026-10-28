@@ -26,6 +26,7 @@ final class Administration
                 'icon' => 'home',
                 'fields' => [
                     ['key' => 'site.name', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_name'), 'type' => 'text', 'default' => 'TinyCat', 'max' => 120, 'span' => true],
+                    ['key' => 'app.url', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_url'), 'type' => 'site_url', 'default' => '', 'max' => 2048, 'span' => true, 'help' => \TinyCat\Support\Localization::t('settings.fields.site_url_help')],
                     ['key' => 'site.home_title', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_home_title'), 'type' => 'optional_text', 'default' => '', 'max' => 160, 'span' => true, 'help' => \TinyCat\Support\Localization::t('settings.fields.site_home_title_help')],
                     ['key' => 'site.meta_description', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_meta_description'), 'type' => 'textarea', 'default' => '', 'max' => 500, 'span' => true, 'placeholder' => \TinyCat\Support\Localization::t('settings.fields.site_meta_description_placeholder'), 'help' => \TinyCat\Support\Localization::t('settings.fields.site_meta_description_help')],
                     ['key' => 'site.logo_url', 'path_key' => 'site.logo_path', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_logo'), 'type' => 'site_image', 'variant' => 'logo', 'default' => '', 'compact' => true],
@@ -87,6 +88,10 @@ final class Administration
                 'label' => \TinyCat\Support\Localization::t('settings.sections.analytics'),
                 'icon' => 'chart',
                 'fields' => [
+                    ['key' => 'content_links.utm.enabled', 'label' => \TinyCat\Support\Localization::t('settings.fields.utm_enabled'), 'type' => 'bool', 'default' => true, 'max' => 120],
+                    ['key' => 'content_links.utm.source', 'label' => \TinyCat\Support\Localization::t('settings.fields.utm_source'), 'type' => 'optional_text', 'default' => '', 'max' => 120, 'help' => \TinyCat\Support\Localization::t('settings.fields.utm_source_help')],
+                    ['key' => 'content_links.utm.medium', 'label' => \TinyCat\Support\Localization::t('settings.fields.utm_medium'), 'type' => 'text', 'default' => 'referral', 'max' => 120],
+                    ['key' => 'content_links.utm.campaign', 'label' => \TinyCat\Support\Localization::t('settings.fields.utm_campaign'), 'type' => 'optional_text', 'default' => '', 'max' => 120],
                     ['key' => 'analytics.google_measurement_id', 'label' => \TinyCat\Support\Localization::t('settings.fields.google_measurement_id'), 'type' => 'optional_text', 'default' => '', 'max' => 40, 'help' => \TinyCat\Support\Localization::t('settings.fields.google_measurement_id_help')],
                 ],
             ],
@@ -264,6 +269,19 @@ final class Administration
             return [function_exists('mb_substr') ? mb_substr($value, 0, $max) : substr($value, 0, $max), 'string'];
         }
 
+        if ($type === 'site_url') {
+            $value = trim((string) $raw);
+            if ($value === '') { return ['', 'string']; }
+            $parts = parse_url($value);
+            if (strlen($value) > 2048 || !is_array($parts) || !in_array($parts['scheme'] ?? '', ['http', 'https'], true)
+                || empty($parts['host']) || filter_var($value, FILTER_VALIDATE_URL) === false
+                || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])
+                || preg_match('/[\x00-\x20\x7f\\\\]/', $value)) {
+                throw new InvalidArgumentException(\TinyCat\Support\Localization::t('settings.messages.invalid_site_url'));
+            }
+            return [rtrim($value, '/'), 'string'];
+        }
+
         if ($type === 'optional_text') {
             $value = trim((string) $raw);
             $max = (int) ($field['max'] ?? 190);
@@ -324,6 +342,7 @@ final class Administration
         }
 
         if (is_array($uploadedFile) && (int) ($uploadedFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            \TinyCat\Security\RequestLimits::requireAllowed('upload', (int) (\TinyCat\Users\Authentication::auth()['id'] ?? 0));
             $uploaded = \TinyCat\Security\Images::site_image_upload($uploadedFile, (string) ($field['label'] ?? $variant), $variant);
 
             if ($pathKey !== '') {

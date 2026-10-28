@@ -12,7 +12,7 @@ final class Actions
     public static function status_json_require_session_interval(string $action): void
     {
         [$key, $intervalMs] = \TinyCat\Status\Posts::status_session_interval_rule($action);
-        $retryAfter = \TinyCat\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs);
+        $retryAfter = \TinyCat\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs, false);
 
         if ($retryAfter > 0) {
             if (!headers_sent()) {
@@ -24,6 +24,7 @@ final class Actions
                 429,
                 'action_too_fast',
                 [
+                    'retry_after' => max(1, (int) ceil($retryAfter / 1000)),
                     'retry_after_ms' => $retryAfter,
                     'interval_ms' => $intervalMs,
                 ]
@@ -70,14 +71,16 @@ final class Actions
      */
     public static function status_json_require_action(array $user, string $action): void
     {
-        if (\TinyCat\Users\Profiles::user_is_admin($user)) {
+        if (\TinyCat\Security\RateLimitPolicy::isExempt($user)) {
             return;
         }
 
-        [, $limit] = \TinyCat\Moderation\Restrictions::moderation_action_rule($user, $action);
+        [$window, $limit] = \TinyCat\Moderation\Restrictions::moderation_action_rule($user, $action);
 
         if (\TinyCat\Moderation\Restrictions::moderation_action_count($user, $action) >= (int) $limit) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.action_limited'), 429, 'action_limited');
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.action_limited'), 429, 'action_limited', [
+                'retry_after' => \TinyCat\Security\RateLimiter::window_retry_after((int) $window),
+            ]);
         }
     }
 
@@ -141,6 +144,7 @@ final class Actions
 
         $image = null;
 
+        if ($hasImage) { \TinyCat\Security\RequestLimits::requireAllowed('upload', $userId); }
         $preparedLinks = \TinyCat\Status\Links::prepareLinks($draft->links);
         try {
             $image = $hasImage ? \TinyCat\Status\ImageStorage::upload((array) $imageFile) : null;
@@ -211,6 +215,10 @@ final class Actions
         }
 
         \TinyCat\Status\Reactions::status_set_user_liked($contentId, $userId, !$liked);
+        if ($desired !== null) {
+            [$key, $intervalMs] = \TinyCat\Status\Posts::status_session_interval_rule('react');
+            \TinyCat\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs);
+        }
 
         return [
             'action' => 'react',
@@ -379,6 +387,7 @@ final class Actions
         $newImage = null;
         $oldPath = '';
 
+        if ($hasNewImage) { \TinyCat\Security\RequestLimits::requireAllowed('upload', (int) $user['id']); }
         $preparedLinks = \TinyCat\Status\Links::prepareLinks((array) ($payload['links'] ?? []));
         try {
             $newImage = $hasNewImage ? \TinyCat\Status\ImageStorage::upload((array) $imageFile) : null;
@@ -608,6 +617,10 @@ final class Actions
         }
 
         \TinyCat\Status\Comments::status_set_comment_user_liked($commentId, $userId, !$liked);
+        if ($desired !== null) {
+            [$key, $intervalMs] = \TinyCat\Status\Posts::status_session_interval_rule('comment_like');
+            \TinyCat\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs);
+        }
 
         return [
             'action' => 'comment_like',

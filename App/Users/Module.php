@@ -25,10 +25,10 @@ final class Module implements \TinyCat\StorageModule
 
         \TinyCat\Http\Router::route('GET', '/admin/users', Pages::administration(...));
         foreach ([
-            [['GET', 'POST'], '/login', Pages::login(...)],
-            [['GET', 'POST'], '/logout', Pages::logout(...)],
-            [['GET', 'POST'], '/register', Pages::register(...)],
-            [['GET', 'POST'], '/recovery', Pages::recovery(...)],
+            ['GET', '/login', Pages::login(...)],
+            ['GET', '/logout', Pages::logout(...)],
+            ['GET', '/register', Pages::register(...)],
+            ['GET', '/recovery', Pages::recovery(...)],
             ['GET', '/author', Pages::author(...)],
         ] as [$methods, $path, $handler]) {
             \TinyCat\Http\Router::route($methods, $path, $handler);

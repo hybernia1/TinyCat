@@ -41,8 +41,91 @@ components supply localized labels, icons, accessible names and date formatting
 for both initial HTML and AJAX. API serialization rejects presentation fields.
 Module-owned code-to-translation maps travel in external hashed assets. Clients
 use their current catalog and preserve server fallbacks for unknown codes.
+
+Administration reuses the dashboard's `ui/stat-card`, the shared
+`ui/status-badge` and `ui/notice` components, and existing card, badge, alert and
+grid styles. Semantic colors come from the theme variables. Keep task-specific
+data in module components rather than creating parallel page-specific styles.
+Resource details use `ui/modal-trigger` icon buttons and the standard modal
+transport; Site health reuses the scheduler run-detail API and modal. PHP and
+browser renderers consume the same component definitions.
+
 CAPTCHA failures include `error.details.captcha` with `enabled`, `provider`,
 `site_key`, `context` and `refresh`. No secret key is exposed.
+
+## Installation and scheduled execution
+
+All HTTP operations enter the front controller and module-owned routes. The shared
+API transport parses requests, applies the selected access policy and serializes
+the same envelope. Browser writes require CSRF. Scheduler automation instead uses
+the `scheduler` access policy with an `Authorization: Bearer TOKEN` header; cookies,
+query tokens and alternate token headers cannot replace it. The scheduler token is
+created or rotated explicitly through the administrator-only token API.
+
+| Method | Path | Access |
+| --- | --- | --- |
+| GET | `/api/installation` | Public safe setup status, no credentials |
+| POST | `/api/installation/steps/{step}` | Public, CSRF, installation must be open |
+| GET / HEAD | `/api/scheduler/triggers/{task}` | HTTPS HTTP Basic: username `scheduler`, cron token as password; GET executes one task with default options, HEAD never executes |
+| GET | `/api/scheduler/health` | Scheduler Bearer token, no execution |
+| POST | `/api/scheduler/executions` | Scheduler Bearer token |
+| GET | `/api/site-health` | Administrator, latest diagnostic and recent history; no execution |
+| POST | `/api/site-health/checks` | Administrator and CSRF, manual inspection through scheduler execution |
+
+`site-health` is a daily scheduler task, distinct from the scheduler connectivity
+probe `/api/scheduler/health`. It accepts no task options. Each completed check
+records sanitized per-check outcomes (`id`, `status`, `duration_ms`) under the
+scheduler result's `summary.health` and sends an in-app system notification to
+each active administrator. Ordinary users, bots and inactive administrators are
+excluded. Scheduled calls on the same application-local calendar day return
+`not_due`; a manual check may run again. Unknown, stale and failed execution
+states are distinct from healthy results. Findings use `ok`, `warning` and
+`critical`; finding a problem still represents a completed inspection.
+
+Checks also carry `metrics` and `limits` objects (empty for legacy checks).
+The `http` check records `ttfb_ms` (null when unavailable), `total_ms`, `dns_ms`,
+`connect_ms`, `tls_ms`, `http_status`, `bytes`, `complete` and a sanitized `error`
+identifier. Timings are milliseconds. `connect_ms` and `tls_ms` are individual
+setup phases; TTFB is cumulative from the start of the request. Each historical
+inspection keeps its original limits; `/api/site-health` includes its HTTP
+measurement under each history item's `http` field. Older runs may have no HTTP
+measurement. No response body, headers, credentials or raw transport errors are
+stored. `health.http` configuration controls thresholds and timeout; the target
+is exclusively the canonical `app.url`, never a URL supplied by an API caller.
+
+Scheduler findings in health reports retain per-task reason codes (`ok`, `missing`,
+`stale`, `failed`, `interrupted`) under `metrics`, with maximum successful-run age
+in seconds under `limits`. Historical reports retain their original findings;
+reports created before this diagnostic detail was available are not reconstructed
+from current scheduler state.
+
+
+Installation steps are `language`, `db`, `tables` and `admin`. Each accepted step
+returns `data.step` and `data.redirect`. Validation stays in the JSON envelope;
+passwords and database credentials never appear in resource data. Setup routes
+work before the database exists and are exempt from the normal database-readiness
+gate. After installation, `/install` and the entire `/api/installation` namespace return
+404 for every method, including requests with an administrator session or valid
+CSRF token. The successful final step redirects directly to `/admin`. `/install`
+only renders the API-backed wizard before setup is complete.
+
+Scheduled execution accepts `task=feeds|cleanup|all` and an `options` object, for
+example `{"task":"feeds","options":{"bot_limit":20}}`. Every selected task and
+option is validated before any task starts. Existing locks, bounded options and
+history recording are shared with manual administration and CLI. Health returns
+`data.available_tasks`; execution returns `data.tasks`. Invalid input returns
+400/422; failed execution returns 500 with `error.details.execution`.
+
+`php scheduled-tasks.php` is a CLI adapter for the same execution service. It uses
+the same JSON envelope, with exit codes 0 (success), 1 (execution failure) and
+2 (invalid arguments). Its former HTTP endpoint only delegates to the front
+controller and returns 410 `endpoint_retired`, pointing to the canonical API.
+
+Public pages, images, RSS/XML, robots, sitemap and embeds remain registered
+read-only representations through the shared router. Their established URLs,
+content types, cache validators and HEAD semantics remain intact; these formats
+are not embedded in JSON. CLI and development tools call module services directly
+and do not implement a second set of operations.
 
 ## Users
 
@@ -123,6 +206,51 @@ are published immediately using the server's current publication time.
 Writes retain ownership, moderation, rate limits and transaction checks. Creation
 returns 201; reads, updates and deletions return 200. Like/follow PUT and DELETE
 request a state, so repeating an accepted request cannot toggle it back.
+
+Signed-in post, comment, like, report and search quotas are per account, independent
+of IP address. Public email checks and failed-login CAPTCHA counters remain IP-based.
+Quotas use fixed time buckets; existing hourly thresholds are unchanged. Short
+cooldowns are session-based and recorded after successful mutations. Publishing,
+editing and deleting have separate cooldowns, as do comment mutations; post and
+comment likes share the rating cooldown. Repeating an already satisfied like state
+does not consume a cooldown. A 429 response includes `Retry-After` and
+`error.details.retry_after` in seconds (short cooldowns also include milliseconds).
+The legacy `ip_action_limits.ip_address` column holds IP addresses or `user:<id>`
+keys, so no schema migration is required. Previous IP action buckets expire through
+normal cleanup and are not applied to the new account quotas. These controls cover
+selected actions; they are not a global request limiter.
+
+All rate-limit policy values live in `App/Security/RateLimitPolicy.php`. Authenticated
+`admin` and `bot` roles are exempt from quotas, request budgets, autocomplete limits
+and short cooldowns, and do not consume these counters. Anonymous requests have no
+trusted role; submitting an administrator's username does not grant an exemption.
+CAPTCHA remains an additional check for public authentication requests.
+
+| Request budget | Scope | Attempts | Window |
+|---|---|---:|---|
+| Login | IP | 60 | 15 minutes |
+| Registration | IP | 20 | 1 hour |
+| Request password reset | IP | 20 | 15 minutes |
+| Confirm password reset | IP | 30 | 15 minutes |
+| Email availability | IP | 60 | 1 minute |
+| Image upload (avatar, post, site settings) | Account of actor | 60 | 1 hour |
+| Follow/unfollow changes | Account of actor | 120 | 1 hour |
+
+Request budgets count attempts, including failed validation or CAPTCHA, and are
+reserved atomically in the database. Rejected attempts do not increase counters
+or extend the window. Upload budgets are shared across upload entry points and
+checked before image decoding. Avatar deletion consumes no upload budget; already
+satisfied follow/unfollow requests consume no follow budget. Content quotas still
+count accepted content actions separately.
+
+Authentication pages (`/login`, `/register`, `/recovery`, `/logout`) are GET views
+only. Their forms submit to the normalized API, including logout via
+`DELETE /api/users/sessions/current`. Legacy POSTs to page URLs return 405.
+The same rule applies to settings,
+updates, cache resets, notifications, search CAPTCHA and status/tag views. Notification
+read-and-open uses `PATCH /api/notifications/{id}?open=1`, returning a safe target
+in `data.redirect`; legacy `/notifications/open` links only redirect and do not
+change read state.
 
 ## Bots and administration
 
@@ -370,3 +498,26 @@ are checked before responding or returning 304. No persistent result cache can
 keep a removed or moderated post available through this endpoint. Consumers may
 cache oEmbed metadata independently; the contained iframe still revalidates its
 post. HEAD requests expose the same metadata without a body.
+
+## Content-link navigation
+
+`GET /api/statuses/{id}/links/{hash}` and
+`GET /api/statuses/{id}/comments/{commentId}/links/{hash}` resolve only links in
+currently visible content. The hash uses the existing normalized link identity.
+The standard JSON envelope contains `data.url` (the configured UTM destination)
+and `data.original_url` (the original published URL). Arbitrary URL parameters
+cannot supply or replace the destination. Removed, unpublished or unavailable
+content returns the normal JSON 404 response.
+
+Browser anchors use the same endpoint with `navigate=1`. Only this explicit mode
+with an HTML Accept header returns HTTP 302; JSON requests always retain the
+normal envelope, including when that flag is present. Navigation responses use
+`private, no-store`, `noindex, nofollow` and `no-referrer`. There are no click logs
+or new per-visitor identifiers. Canonical source URLs remain in resource `url`
+fields, while `outbound_url` supplies the browser anchor destination.
+
+Admin settings under Analytics control `content_links.utm.enabled` (default
+true), `source` (default the configured website hostname), `medium` (default
+`referral`) and optional `campaign`. Missing source configuration leaves URLs
+untagged. Existing UTM values, repeated query keys, encoding and fragments are
+preserved; metadata normalization and public feed/export source URLs are unchanged.

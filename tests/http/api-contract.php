@@ -160,7 +160,7 @@ try {
     [$status] = $request('GET', '/api/scheduler/tasks');
     $assert($status === 401, 'Anonymous users cannot inspect cron history.');
     [$status, $payload] = $request('GET', '/api/scheduler/tasks', null, 'admin');
-    $assert($status === 200 && count($payload['data']['items']) === 2 && $payload['data']['runs'] === [], 'Cron list exposes the registered task definitions and an empty initial history.');
+    $assert($status === 200 && count($payload['data']['items']) === 3 && $payload['data']['runs'] === [], 'Cron list exposes the registered task definitions and an empty initial history.');
     $assert(isset($payload['meta']['pagination']) && !array_key_exists('pagination', $payload['data']) && !array_key_exists('per_page', $payload['data']['filters']), 'Cron GET pagination follows the shared metadata contract.');
     $schedulerDatabase = new PDO('sqlite:' . $databasePath);
     $schedulerDatabase->prepare('INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES (?, ?, ?, ?)')->execute(['bots.cleanup_last_run', (string) time(), 'int', 'bots']);
@@ -282,6 +282,10 @@ try {
     require __DIR__ . '/domain-contract-cases.php';
     require __DIR__ . '/module-contract-cases.php';
     require __DIR__ . '/avatar-contract-cases.php';
+    require __DIR__ . '/rate-limit-cases.php';
+    require __DIR__ . '/request-limit-cases.php';
+    require __DIR__ . '/system-api-cases.php';
+    require __DIR__ . '/content-link-cases.php';
     echo "PASS API HTTP contract ({$checks} checks)\n";
 } finally {
     if (is_resource($server)) {

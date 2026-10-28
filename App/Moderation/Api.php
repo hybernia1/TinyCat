@@ -21,7 +21,10 @@ final class Api
         $api->post('/moderation/reports', static function (Request $r): Result {
             $r->validated(['id' => 'required|integer', 'reason' => 'string', 'note' => 'string']);
             \TinyCat\Status\Actions::status_json_require_session_interval('report');
-            return Result::from(\TinyCat\Status\Actions::status_json_report((int) $r->input('id'), \TinyCat\Users\Access::requireAuth()));
+            $data = \TinyCat\Status\Actions::status_json_report((int) $r->input('id'), \TinyCat\Users\Access::requireAuth());
+            [$key, $intervalMs] = \TinyCat\Status\Posts::status_session_interval_rule('report');
+            \TinyCat\Security\RateLimiter::session_action_retry_after('status_' . $key, $intervalMs);
+            return Result::from($data);
         });
         $api->get('/moderation/reports', static fn (): Result => Result::from(Actions::adminReports()), 'admin');
         $api->patch('/moderation/reports/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminReportReview((int) $p['id'])), 'admin');

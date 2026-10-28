@@ -15,6 +15,7 @@ final class Layout
         $body = is_callable($content) ? View::capture($content) : Values::string($content ?? ($data['content'] ?? ''));
         $prepared = LayoutData::prepare($data);
         $prepared['content'] = $body;
+        $prepared['hasPublicSidebar'] = str_contains($body, 'data-public-sidebar-slot') || str_contains($body, 'data-public-sidebar-url');
         $directory = __DIR__ . '/templates';
         $head = View::render('head', $prepared, $directory);
         $shell = View::render($prepared['isAdminShell'] ? 'admin' : 'public', $prepared, $directory);

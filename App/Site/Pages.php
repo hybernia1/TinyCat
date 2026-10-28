@@ -3,10 +3,7 @@ declare(strict_types=1);
 namespace TinyCat\Site;
 
 use TinyCat\Http\Request;
-use TinyCat\Http\Session;
-use TinyCat\Http\Web;
 use TinyCat\Moderation\Restrictions;
-use TinyCat\Security\Csrf;
 use TinyCat\Support\Cache;
 use TinyCat\Support\Localization;
 use TinyCat\Support\View;
@@ -19,21 +16,8 @@ final class Pages
     {
         Access::require_admin();
 
-        if (Request::current()->isPost()) {
-            Csrf::requireToken();
-
-            if ((string) Web::post('action') !== 'reset-opcache') {
-                Errors::respond(400);
-                return;
-            }
-
-            $reset = Cache::resetOpcache();
-            Session::flash($reset ? 'success' : 'error', Localization::t($reset ? 'admin.cache.opcache_reset_success' : 'admin.cache.opcache_reset_failed'));
-            Web::redirect('/admin');
-        }
-
         if (Request::current()->method() !== 'GET') {
-            header('Allow: GET, POST');
+            header('Allow: GET');
             Errors::respond(405);
             return;
         }

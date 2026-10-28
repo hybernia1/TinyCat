@@ -1,4 +1,12 @@
 {
+  "/admin/site-health": {
+    "raw_js": 102400,
+    "gzip_js": 25600,
+    "raw_css": 40960,
+    "gzip_css": 8192,
+    "scripts": 4,
+    "stylesheets": 1
+  },
   "/admin/moderation": {
     "raw_js": 100352,
     "gzip_js": 25600,
@@ -32,7 +40,7 @@
     "stylesheets": 1
   },
   "/admin/cron": {
-    "raw_js": 115712,
+    "raw_js": 116736,
     "gzip_js": 27648,
     "raw_css": 38912,
     "gzip_css": 8192,

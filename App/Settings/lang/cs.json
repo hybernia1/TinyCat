@@ -57,14 +57,22 @@
       "email_from_name": "Jméno odesílatele",
       "email_templates": "Typy doručovaných emailů",
       "google_measurement_id": "Google Analytics Measurement ID",
-      "google_measurement_id_help": "Volitelné, například G-XXXXXXXXXX."
+      "google_measurement_id_help": "Volitelné, například G-XXXXXXXXXX.",
+      "site_url": "Adresa webu",
+      "site_url_help": "Hlavní adresa webu pro absolutní odkazy a měření zdraví, např. https://example.com. Bez přihlašovacích údajů, parametrů a fragmentu. Prázdná hodnota použije adresu ze serverové konfigurace.",
+      "utm_enabled": "UTM u odchozích odkazů",
+      "utm_source": "UTM zdroj",
+      "utm_medium": "UTM médium",
+      "utm_campaign": "UTM kampaň (volitelná)",
+      "utm_source_help": "Prázdná hodnota použije doménu z adresy webu. Existující UTM parametry odkazu se zachovají."
     },
     "messages": {
       "saved": "Nastavení bylo uloženo.",
       "required": "Vyplň všechna povinná nastavení.",
       "invalid_language": "Vybraný jazyk není dostupný.",
       "invalid_timezone": "Vybrané časové pásmo není platné.",
-      "invalid_datetime_format": "Vybraný formát data nebo času není dostupný."
+      "invalid_datetime_format": "Vybraný formát data nebo času není dostupný.",
+      "invalid_site_url": "Zadejte platnou HTTP nebo HTTPS adresu webu bez přihlašovacích údajů, parametrů a fragmentu."
     },
     "footer_placeholder": "Text nebo HTML patičky...",
     "image_empty": "Není vybraný obrázek",
@@ -110,7 +118,7 @@
     "purpose_user_followers": "Sledování profilů uživateli.",
     "purpose_notifications": "Upozornění na lajky, komentáře, označení a sledování.",
     "purpose_content_reports": "Uživatelská nahlášení pro moderaci.",
-    "purpose_ip_action_limits": "IP bucket limity pro vybrané akce.",
+    "purpose_ip_action_limits": "Počítadla limitů podle účtu nebo IP adresy pro vybrané akce.",
     "purpose_password_reset_tokens": "Krátkodobé tokeny obnovy hesla posílané emailem.",
     "purpose_settings": "Databázová nastavení aplikace.",
     "admin_title": "První admin účet",

@@ -13,17 +13,11 @@ declare(strict_types=1);
 <section class="grid sm:grid-2 md:grid-4">
     <?php foreach ($stats as $item): ?>
         <?php $count = $counts[(string) $item['table']] ?? null; ?>
-        <article class="card">
-            <div class="card-body stack">
-                <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon((string) $item['icon'], 'icon text-primary') ?> <?= \TinyCat\Support\Html::e($item['label']) ?></h2>
-                <?php if ($count === null): ?>
-                    <p class="text-muted mb-0"><?= \TinyCat\Support\Html::et('admin.table_missing') ?></p>
-                <?php else: ?>
-                    <p class="text-2xl m-0"><strong><?= \TinyCat\Support\Html::e(\TinyCat\Support\Format::number($count)) ?></strong></p>
-                    <p class="table-meta m-0"><code><?= \TinyCat\Support\Html::e((string) $item['table']) ?></code></p>
-                <?php endif; ?>
-            </div>
-        </article>
+        <?= \TinyCat\Support\Components::render('ui/stat-card', [
+            'heading' => 'h2', 'icon' => (string) $item['icon'], 'label' => $item['label'],
+            'value' => $count === null ? null : \TinyCat\Support\Format::number($count),
+            'note' => $count === null ? \TinyCat\Support\Localization::t('admin.table_missing') : (string) $item['table'],
+        ]) ?>
     <?php endforeach; ?>
 </section>
 <section class="card mt-6">
@@ -71,7 +65,7 @@ declare(strict_types=1);
                         <div class="split">
                             <strong><?= \TinyCat\Support\Html::et('admin.cache.opcache_details') ?></strong>
                             <?php if ($opcache['resettable']): ?>
-                                <form method="post" action="/admin" data-confirm="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset_confirm') ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset') ?>" data-confirm-cancel="<?= \TinyCat\Support\Html::et('common.cancel') ?>">
+                                <form method="post" action="/api/site/cache-resets" data-ajax-form data-confirm="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset_confirm') ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset') ?>" data-confirm-cancel="<?= \TinyCat\Support\Html::et('common.cancel') ?>">
                                     <?= \TinyCat\Security\Csrf::field() ?>
                                     <input type="hidden" name="action" value="reset-opcache">
                                     <button class="btn btn-secondary btn-sm" type="submit"><?= \TinyCat\Support\Html::icon('refresh') ?> <span><?= \TinyCat\Support\Html::et('admin.cache.opcache_reset') ?></span></button>

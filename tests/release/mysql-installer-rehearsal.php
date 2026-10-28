@@ -11,7 +11,7 @@ $configPath = $workspaceRoot . '/config.php';
 
 if (!is_string($root)
     || !is_file($root . '/App/bootstrap.php')
-    || !is_file($root . '/Public/install/index.php')
+    || !is_file($root . '/App/Installation/Installer.php')
 ) {
     fwrite(STDERR, "MySQL installer rehearsal root is invalid.\n");
     exit(1);
@@ -89,17 +89,10 @@ try {
     );
     define('TINYCAT', true);
     require_once $root . '/App/bootstrap.php';
-    ob_start();
-
-    try {
-        require $root . '/Public/install/index.php';
-    } finally {
-        ob_end_clean();
-    }
 
     \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
-    tc_install_create_tables();
-    $assert(tc_install_missing_tables() === [], 'Fresh installer creates every required table.');
+    \TinyCat\Installation\Installer::create_tables();
+    $assert(\TinyCat\Installation\Installer::missing_tables() === [], 'Fresh installer creates every required table.');
     $tagIndexColumns = static function () use ($database): array {
         $columns = [];
         foreach ($database->query('SHOW INDEX FROM content_tags')->fetchAll(PDO::FETCH_ASSOC) as $index) {
@@ -123,7 +116,7 @@ try {
     $tagIndexMigration($database);
     $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Migration repairs incorrect tag index column order.');
     $database->exec('ALTER TABLE content_tags DROP INDEX content_tags_term_index');
-    tc_install_create_tables();
+    \TinyCat\Installation\Installer::create_tables();
     $assert($tagIndexColumns() === ['term_id', 'content_id'], 'Restarted installation also restores a missing tag archive index.');
     $database->exec('ALTER TABLE content_tags DROP INDEX tag_test_fk');
     $assert(
@@ -166,24 +159,24 @@ try {
         (string) ($databaseConfig['password'] ?? ''),
         $options
     ));
-    tc_install_create_tables();
+    \TinyCat\Installation\Installer::create_tables();
     $secondTableCount = (int) \TinyCat\Database\Connection::get()->query('SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()')->fetchColumn();
     $assert($secondTableCount === $firstTableCount, 'Repeating table creation is restart-safe.');
-    $assert(tc_install_missing_tables() === [], 'Restarted installer still recognizes the complete schema.');
+    $assert(\TinyCat\Installation\Installer::missing_tables() === [], 'Restarted installer still recognizes the complete schema.');
 
     $password = 'Installer-Rehearsal-2026';
-    $firstAdmin = tc_install_create_admin_account('installer_stage1', $password, 'en');
-    $secondAdmin = tc_install_create_admin_account('installer_stage1', $password, 'cs');
+    $firstAdmin = \TinyCat\Installation\Installer::create_admin_account('installer_stage1', $password, 'en');
+    $secondAdmin = \TinyCat\Installation\Installer::create_admin_account('installer_stage1', $password, 'cs');
     $assert($firstAdmin > 0 && $secondAdmin === $firstAdmin, 'Admin creation updates the same account after restart.');
     $assert(
         (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM users WHERE username = 'installer_stage1' AND role = 'admin' AND locale = 'cs'") === 1,
         'Restarted admin step persists one current administrator.'
     );
 
-    tc_install_default_settings(['locale' => 'en']);
+    \TinyCat\Installation\Installer::default_settings(['locale' => 'en']);
     $settingsCount = (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM settings');
     $emailTemplateStates = \TinyCat\Settings\Store::setting('email.templates', []);
-    tc_install_default_settings(['locale' => 'cs']);
+    \TinyCat\Installation\Installer::default_settings(['locale' => 'cs']);
     $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM settings') === $settingsCount, 'Default settings are idempotent.');
     $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(DISTINCT setting_key) FROM settings') === $settingsCount, 'Default settings remain unique.');
     $assert(\TinyCat\Settings\Store::setting('email.templates', []) === $emailTemplateStates, 'Email delivery switches are idempotent settings.');

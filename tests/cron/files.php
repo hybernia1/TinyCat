@@ -27,10 +27,14 @@ Cache::writeFile('legacy-old.json', '{"legacy":true}');
 touch(Cache::file('legacy-old.json'), time() - 604801);
 Cache::writeFile('app.js', 'generated', 'assets');
 Cache::writeFile('active.lock', 'lock', 'locks');
-$result = Cache::cleanupExpired(1);
-$assert($result['changed'] === 1 && $result['has_more'], 'Expired cache cleanup respects its batch size and reports pending work.');
-$result = Cache::cleanupExpired(1);
-$assert($result['changed'] === 1 && !$result['has_more'], 'The next cache cleanup batch completes the pending entries.');
+$removed = 0;
+for ($attempt = 0; $attempt < 20; $attempt++) {
+    $result = Cache::cleanupExpired(1);
+    $assert($result['changed'] <= 1, 'Cache scanning and deletion remain bounded even when entries are fresh.');
+    $removed += $result['changed'];
+    if (!$result['has_more']) { break; }
+}
+$assert($removed === 2 && !$result['has_more'], 'Resumable cache cleanup completes and removes only expired entries.');
 $assert(!is_file(Cache::file('expired.json')) && !is_file(Cache::file('legacy-old.json')), 'Expired entries and old legacy cache files are removed.');
 $assert(Cache::read('fresh') === ['new' => true] && Cache::read('stale') === ['previous' => true], 'Fresh data and the stale refresh window survive cleanup.');
 $assert(Cache::read('legacy') === ['legacy' => true], 'Legacy raw JSON remains readable during rollout.');
@@ -82,7 +86,7 @@ $assert($database->query('SELECT status FROM scheduler_runs WHERE id = ' . $stal
 $_GET = [];
 \TinyCat\Http\Request::reset();
 $model = \TinyCat\Scheduler\Administration::payload();
-$assert(count($model['items']) === 2 && $model['pagination']['total'] === 4, 'The normalized list includes registered tasks and durable run history.');
+$assert(count($model['items']) === 3 && $model['pagination']['total'] === 4, 'The normalized list includes registered tasks and durable run history.');
 $html = \TinyCat\Support\Components::render('scheduler/list', $model);
 $assert(str_contains($html, 'data-ajax-target="#scheduler-list"') && str_contains($html, '/api/scheduler/tasks/cleanup/runs'), 'The shared server component exposes run actions and the standard AJAX target.');
 $_GET = ['task' => 'cleanup', 'status' => 'failed'];
@@ -125,9 +129,11 @@ try {
     file_put_contents($files['other'], 'preserve');
     touch($files['other'], time() - 7200);
     $result = Links::cleanupOrphanImages(1, $month);
-    $assert($result['changed'] === 1 && $result['has_more'], 'Link image cleanup is bounded and reports another orphan.');
+    $assert($result['changed'] <= 1 && $result['has_more'], 'A bounded directory visit may encounter a preserved file first, independent of filesystem order.');
     $result = Links::cleanupOrphanImages(1, $month);
-    $assert($result['changed'] === 1 && !$result['has_more'], 'Link image cleanup finishes in the next batch.');
+    $assert($result['changed'] <= 1, 'Link image cleanup bounds inspection and deletion independently of references.');
+    for ($attempt = 0; $attempt < 10 && $result['has_more']; $attempt++) { $result = Links::cleanupOrphanImages(1, $month); }
+    $assert(!$result['has_more'], 'Link image cleanup resumes through preserved files and completes its bounded scan.');
     $assert(is_file($files['stored']) && is_file($files['fresh']) && is_file($files['other']), 'Referenced previews, new files and unrelated files survive cleanup.');
     $assert(!is_file($files['orphan-a']) && !is_file($files['orphan-b']), 'Old unreferenced previews are removed.');
     $assert(Links::cleanupOrphanImages(500, $month)['changed'] === 0, 'Repeated cleanup is idempotent.');

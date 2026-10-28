@@ -1,0 +1,52 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/cache-isolation.php';
+define('TINYCAT', true);
+require dirname(__DIR__) . '/App/bootstrap.php';
+
+use TinyCat\Settings\Store;
+use TinyCat\Status\ContentLinks;
+use TinyCat\Status\LinkParser;
+
+(new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
+(new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, []);
+
+$checks = 0;
+$assert = static function (bool $ok, string $message) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($message); } };
+(new ReflectionProperty(Store::class, 'settings'))->setValue(null, ['app.url' => 'https://source.example', 'content_links.utm.campaign' => 'News & events']);
+$url = 'https://target.example/path?x=1&x=2&signed=a%2Bb#section';
+$tagged = ContentLinks::tagged($url);
+$assert($tagged === 'https://target.example/path?x=1&x=2&signed=a%2Bb&utm_source=source.example&utm_medium=referral&utm_campaign=News%20%26%20events#section', 'Append encoded campaign fields without rebuilding destination query bytes or fragments.');
+$assert(ContentLinks::tagged($tagged) === $tagged, 'UTM tagging is idempotent.');
+$assert(str_contains(ContentLinks::tagged('https://target.example?utm_source=original&utm_medium=email'), 'utm_source=original&utm_medium=email&utm_campaign='), 'Existing UTM values are preserved.');
+$assert(!str_contains(ContentLinks::tagged('https://target.example?utm%5Fsource=original'), 'utm_source='), 'Encoded existing parameter names are detected.');
+$assert(str_contains(ContentLinks::tagged('https://target.example?'), '?utm_source='), 'An empty query does not produce a second question mark.');
+(new ReflectionProperty(Store::class, 'settings'))->setValue(null, ['content_links.utm.enabled' => false]);
+$assert(ContentLinks::tagged($url) === $url, 'UTM tagging can be disabled.');
+(new ReflectionProperty(Store::class, 'settings'))->setValue(null, ['app.url' => '', 'content_links.utm.source' => '']);
+$assert(ContentLinks::tagged($url) === $url, 'No source domain is invented from request headers.');
+$assert(ContentLinks::url(2, '/status/3') === '/status/3', 'Internal and unsupported destinations do not become external navigation endpoints.');
+$db = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$db->exec('CREATE TABLE users (id INTEGER, status TEXT); CREATE TABLE content (id INTEGER, author_id INTEGER, body TEXT, published_at TEXT); CREATE TABLE content_comments (id INTEGER, content_id INTEGER, user_id INTEGER, body TEXT); CREATE TABLE content_links (content_id INTEGER, link_id INTEGER); CREATE TABLE links (id INTEGER, normalized_url TEXT, url_hash TEXT)');
+$db->exec("INSERT INTO users VALUES (1, 'active'), (2, 'inactive')");
+$raw = 'https://target.example/path?utm_source=original&x=1#fragment';
+$insert = $db->prepare('INSERT INTO content VALUES (?, ?, ?, ?)');
+$insert->execute([1, 1, $raw, '2000-01-01']); $insert->execute([2, 1, $raw, '2999-01-01']); $insert->execute([3, 2, $raw, '2000-01-01']);
+$db->prepare('INSERT INTO content_comments VALUES (10, 1, 1, ?)')->execute([$raw]);
+\TinyCat\Database\Connection::set($db);
+$hash = LinkParser::fromRaw($raw)['url_hash'];
+$assert(ContentLinks::resolve(1, $hash)['original_url'] === $raw, 'Resolution preserves original UTM stripped by metadata normalization.');
+$assert(ContentLinks::resolve(2, $hash) === null && ContentLinks::resolve(3, $hash) === null, 'Future content and inactive authors are not exposed.');
+$assert(ContentLinks::resolve(1, str_repeat('0', 64)) === null, 'An unrelated destination hash cannot be resolved.');
+$assert(ContentLinks::resolve(1, $hash, 10) !== null && ContentLinks::resolve(2, $hash, 10) === null, 'Comment links are bound to their own visible parent.');
+$legacyUrl = 'https://legacy.example/article';
+$legacyHash = hash('sha256', 'legacy-stored-identity');
+$db->prepare('INSERT INTO links (id, normalized_url, url_hash) VALUES (1, ?, ?)')->execute([$legacyUrl, $legacyHash]);
+$db->exec('INSERT INTO content_links VALUES (1, 1)');
+$assert(ContentLinks::resolve(1, $legacyHash)['original_url'] === $legacyUrl, 'Reusing stored preview identities remains compatible with legacy normalized hashes.');
+$assert(ContentLinks::resolve(3, $legacyHash) === null, 'Stored preview identities remain bound to visible content.');
+$db->exec("UPDATE content SET body = '' WHERE id = 1");
+$assert(ContentLinks::resolve(1, $hash) === null, 'Editing a body invalidates removed links.');
+$db->exec('DELETE FROM content_comments');
+$assert(ContentLinks::resolve(1, $hash, 10) === null, 'Deleting a comment invalidates its outbound links.');
+echo "PASS content-link resolution and UTM policy ({$checks} checks)\n";

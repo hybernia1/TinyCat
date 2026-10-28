@@ -8,7 +8,6 @@ use TinyCat\Http\Session;
 use TinyCat\Http\Web;
 use TinyCat\Moderation\Restrictions;
 use TinyCat\Security\Captcha;
-use TinyCat\Security\Csrf;
 use TinyCat\Site\Layout;
 use TinyCat\Site\Pages as SitePages;
 use TinyCat\Site\Presentation;
@@ -149,29 +148,6 @@ final class Pages
     {
         $next = Login::auth_request_next_url();
 
-        if (Request::current()->isPost()) {
-            Csrf::requireToken();
-
-            $credentials = Login::auth_login_credentials();
-
-            if (Captcha::loginRequired() && !Captcha::check('login')) {
-
-                Login::auth_form_state_remember('login');
-                Session::flash('error', Localization::t('auth.invalid_captcha'));
-                Web::redirect(Login::auth_url_with_next('/login', $next));
-            }
-
-            if (Login::auth_attempt($credentials)) {
-                Captcha::clearLoginFailures();
-                Web::redirect(Login::auth_redirect_after_login(Authentication::auth(), $next));
-            }
-
-            Captcha::recordLoginFailure();
-            Login::auth_form_state_remember('login');
-            Session::flash('error', Localization::t('auth.invalid_login'));
-            Web::redirect(Login::auth_url_with_next('/login', $next));
-        }
-
         if (Authentication::authCheck()) {
             Web::redirect(Login::auth_redirect_after_login(Authentication::auth(), $next));
         }
@@ -201,54 +177,6 @@ final class Pages
             Web::redirect(Login::auth_redirect_after_login(Authentication::auth(), $next));
         }
 
-        if (Request::current()->isPost()) {
-            Csrf::requireToken();
-
-            if (!Accounts::registration_enabled()) {
-                Session::flash('error', Localization::t('auth.registration_disabled'));
-                Web::redirect(Login::auth_url_with_next('/register', $next));
-            }
-
-            if (!Captcha::check('register')) {
-
-                Login::auth_form_state_remember('register');
-                Session::flash('error', Localization::t('auth.invalid_captcha'));
-                Web::redirect(Login::auth_url_with_next('/register', $next));
-            }
-
-            $registration = Actions::registration_input();
-            $errors = (array) $registration['errors'];
-
-            if ($errors !== []) {
-
-                Login::auth_form_state_remember('register');
-                Session::flash('error', implode(' ', $errors));
-                Web::redirect(Login::auth_url_with_next('/register', $next));
-            }
-
-            try {
-                $result = Accounts::registration_create_user($registration);
-            } catch (\Throwable $exception) {
-
-                Login::auth_form_state_remember('register');
-                error_log('Registration failed: ' . $exception->getMessage());
-                Session::flash('error', Localization::t('auth.registration_failed'));
-                Web::redirect(Login::auth_url_with_next('/register', $next));
-            }
-
-            $id = (int) $result['user_id'];
-            $status = (string) $result['status'];
-
-            if ($status === 'active') {
-                Authentication::authLogin($id);
-                Session::flash('success', Localization::t('auth.registration_done'));
-                Web::redirect(Login::auth_redirect_after_login(Authentication::auth(), $next));
-            }
-
-            Session::flash('success', Localization::t('auth.registration_waiting'));
-            Web::redirect(Login::auth_url_with_next('/login', $next));
-        }
-
         $old = Login::auth_form_state_previous('register');
 
         Layout::render([
@@ -265,13 +193,6 @@ final class Pages
 
     public static function logout(): void
     {
-        if (Request::current()->isPost()) {
-            Csrf::requireToken();
-            Authentication::authLogout();
-            Session::flash('success', Localization::t('auth.logged_out'));
-            Web::redirect('/login');
-        }
-
         Access::requireAuth();
 
         Layout::render([
@@ -287,23 +208,6 @@ final class Pages
 
     public static function recovery(): void
     {
-        if (Request::current()->isPost()) {
-            Csrf::requireToken();
-            if (!Captcha::check('recovery')) {
-                Session::flash('error', Localization::t('auth.invalid_captcha'));
-                Web::redirect('/recovery');
-            }
-            if ((string) Web::post('action', '') === 'reset') {
-                $errors = Recovery::confirm(trim((string) Web::post('token', '')), (string) Web::post('password', ''), (string) Web::post('password_confirm', ''));
-                if ($errors !== []) { Session::flash('error', implode(' ', array_merge(...array_values($errors)))); Web::redirect('/recovery'); }
-                Session::flash('success', Localization::t('auth.recovery_done'));
-                Web::redirect('/login');
-            }
-            Recovery::send((string) Web::post('email', ''));
-            Session::flash('success', Localization::t('auth.recovery_sent'));
-            Web::redirect('/recovery');
-        }
-
         $recoveryToken = trim((string) Web::get('token', ''));
 
         $authPasswordMaxLength = Login::auth_password_max_length();

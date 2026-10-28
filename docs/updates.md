@@ -28,12 +28,27 @@ release. Losing it means existing installations cannot authenticate packages
 signed with a replacement key. CI can provide the base64 private key through the
 `TINYCAT_UPDATE_SIGNING_KEY` environment variable.
 
+## Upgrading to 5.0.0
+
+External scheduler integrations must switch before relying on the new release:
+HTTP `/scheduled-tasks.php` returns 410. Use `POST /api/scheduler/executions` with
+`Authorization: Bearer TOKEN` and a JSON body such as
+`{"task":"feeds","options":{"bot_limit":20}}`. Health checks use authenticated
+`GET /api/scheduler/health`. Query tokens and alternate token headers are not
+accepted. Existing configured scheduler tokens remain valid.
+
+CLI commands remain supported; update JSON consumers to read successful task
+results from `data.tasks` and failures from `error.details`. Browser writes use
+the canonical module APIs described in `docs/api.md`; legacy page POSTs return 405.
+Public document URLs and formats remain unchanged. This release needs no new
+schema migration, and the update manifest removes the old standalone installer.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=4.11.0 --minimum-version=2.0.25
+php tools/build-update.php --version=5.0.0 --minimum-version=2.0.25
 php tools/verify-update.php dist
 ```
 
@@ -47,12 +62,12 @@ Source checkouts without the inventory retain an on-demand development fallback.
 The builder creates:
 
 ```text
-dist/tinycat-4.11.0.zip
+dist/tinycat-5.0.0.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v4.11.0` tag and upload all three files
+Create a GitHub release for the matching `v5.0.0` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -77,10 +92,10 @@ are retained.
 For a fresh installation, build into a separate output directory:
 
 ```bash
-php tools/build-update.php --version=4.11.0 --fresh-install --output=dist/fresh
+php tools/build-update.php --version=5.0.0 --fresh-install --output=dist/fresh
 ```
 
-The fresh-install outputs are `tinycat-4.11.0-install.zip`, `tinycat-install.json`
+The fresh-install outputs are `tinycat-5.0.0-install.zip`, `tinycat-install.json`
 and `tinycat-install.sig`; they cannot overwrite or be mistaken for updater assets.
 Verify them with `php tools/verify-update.php dist/fresh --fresh-install`.
 This package excludes `migrations/` and update deletions. The installer creates
@@ -130,7 +145,7 @@ restart and should inspect existing columns, indexes, and constraints before
 changing them. Do not assume that wrapping `ALTER TABLE` in a transaction makes
 it reversible.
 
-Fresh installations must also be updated in `Public/install/index.php`. The
+Fresh installations must also be updated in `App/Installation/Installer.php`. The
 installer creates the latest schema directly and does not replay historical
 migrations.
 
@@ -170,3 +185,28 @@ maintenance button on the update page.
 Apache installations are protected by the bundled `.htaccess`. Other web
 servers must deny public access to all of `storage/`, including database backups
 and signing material.
+
+### Scheduled backup retention
+
+After all update steps succeed, the updater writes `completed.json` beside
+`backup.json`. The shared cleanup task may retire these confirmed backups after
+30 days, keeping the newest three complete snapshots regardless of their age.
+Backups without the completion marker, incomplete payloads and snapshots from
+failed updates remain protected. Older TinyCat releases did not create this
+marker: their existing backups require manual review and are not automatically
+deleted or retroactively labelled successful.
+
+The optional `updates.backups` configuration supports `cleanup` (default `true`),
+`keep` (default and minimum `3`) and `retention_days` (default and minimum `30`).
+Set `cleanup` to `false` to retain all backups. These options do not disable
+cleanup of abandoned updater downloads and work directories after 48 hours.
+The cleanup takes the same `update.lock` as the updater and skips all update
+files while maintenance mode is active. Retirement is resumable and removes
+recovery metadata only after the payload has been removed.
+
+Backup retention, downloads, staging and verification now have independent scan
+cursors and reserved shares of each cleanup batch. A growing work directory
+cannot consume the backup scan's share. Snapshot payloads are validated when
+reached; retention still verifies the newest complete snapshots before protecting
+them. A catalogue exceeding 5000 entries raises a visible cleanup error instead
+of silently returning a successful zero-deletion result.

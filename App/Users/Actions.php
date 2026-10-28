@@ -65,6 +65,8 @@ final class Actions
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('auth.registration_disabled'), 403, 'registration_disabled');
         }
 
+        \TinyCat\Security\RequestLimits::requireAllowed('registration');
+
         if (!\TinyCat\Security\Captcha::check('register')) {
 
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('auth.invalid_captcha'), 422, 'captcha_invalid', [

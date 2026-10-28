@@ -51,14 +51,14 @@ final class Resource
             'author' => self::author($item),
             'body' => $body,
             'editable_body' => Mentions::mentions_for_editing((string) ($item['body'] ?? '')),
-            'segments' => Segments::text($body, array_column($cards, 'url_hash')),
+            'segments' => Segments::text($body, array_column($cards, 'url_hash'), $id),
             'published_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'edit_locked' => Posts::status_edit_locked($item) && !\TinyCat\Users\Profiles::user_is_admin($user),
             'context' => self::context($item),
             'login_url' => \TinyCat\Users\Login::auth_url_with_next('/login', Posts::status_url($id)),
             'login_modal_url' => \TinyCat\Users\Login::auth_modal_url('login', Posts::status_url($id)),
             'image' => ['url' => Images::status_image_url($item), 'description' => \TinyCat\Site\Presentation::meta_text(Links::status_strip_external_urls((string) ($item['body'] ?? '')), 120), 'author' => trim((string) ($item['author_name'] ?? '')) ?: \TinyCat\Site\Presentation::site_name()],
-            'links' => array_map(self::link(...), $cards),
+            'links' => array_map(static fn (array $link): array => self::link($link, $id), $cards),
             'likes_count' => (int) ($item['likes_count'] ?? 0),
             'comments_count' => (int) ($item['comments_count'] ?? 0),
             'liked' => $user !== null && Reactions::status_user_liked($id, (int) $user['id']),
@@ -91,7 +91,7 @@ final class Resource
      * @param array<mixed> $link
      * @return array<string, mixed>
      */
-    public static function link(array $link): array
+    public static function link(array $link, int $contentId = 0): array
     {
         $map = Providers::googleMap((string) ($link['normalized_url'] ?? ''));
         if ($map !== null) { $link = array_replace($link, $map); }
@@ -103,7 +103,7 @@ final class Resource
         $embedUrl = Providers::embedUrl($link);
         $image = (string) ($link['image_url'] ?? '');
         $image = Links::status_link_image_exists($image) ? $image : '';
-        return ['url' => (string) ($link['normalized_url'] ?? ''), 'title' => ($title !== '' ? $title : ($displayUrl !== '' ? $displayUrl : (string) ($link['normalized_url'] ?? ''))),
+        return ['outbound_url' => ContentLinks::url($contentId, (string) ($link['normalized_url'] ?? ''), 0, isset($link['url_hash']) ? (string) $link['url_hash'] : null), 'url' => (string) ($link['normalized_url'] ?? ''), 'title' => ($title !== '' ? $title : ($displayUrl !== '' ? $displayUrl : (string) ($link['normalized_url'] ?? ''))),
             'display_url' => $displayUrl,
             'provider' => !empty($link['provider']) && $link['provider'] !== 'web' ? $link['provider'] : null,
             'link_type' => in_array($link['link_type'] ?? '', ['video', 'audio'], true) ? $link['link_type'] : 'web',
@@ -124,7 +124,7 @@ final class Resource
         return ['id' => $id, 'content_id' => (int) ($comment['content_id'] ?? 0), 'parent_id' => (int) ($comment['parent_id'] ?? 0),
             'author' => self::author($comment), 'body' => (string) ($comment['body'] ?? ''),
             'editable_body' => Mentions::mentions_for_editing((string) ($comment['body'] ?? '')),
-            'segments' => Segments::text((string) ($comment['body'] ?? '')),
+            'segments' => Segments::text((string) ($comment['body'] ?? ''), [], (int) ($comment['content_id'] ?? 0), $id),
             'created_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'likes_count' => (int) ($comment['likes_count'] ?? 0),
             'liked' => $user !== null && Comments::status_comment_user_liked($id, (int) $user['id']),

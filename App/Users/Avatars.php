@@ -109,6 +109,7 @@ final class Avatars
     {
         $prepared = null;
         if ($file !== null) {
+            \TinyCat\Security\RequestLimits::requireAllowed('upload', (int) (Authentication::auth()['id'] ?? $user['id']));
             try { $prepared = Avatar::prepare($file); }
             catch (Throwable $exception) {
                 throw new InvalidArgumentException(\TinyCat\Support\Localization::t('account.messages.avatar_invalid'), 0, $exception);

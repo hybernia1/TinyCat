@@ -57,14 +57,22 @@
       "email_from_name": "Naam afzender",
       "email_templates": "Soorten e-mailbezorging",
       "google_measurement_id": "Google Analytics-metings-ID",
-      "google_measurement_id_help": "Optioneel, bijvoorbeeld G-XXXXXXXXXX."
+      "google_measurement_id_help": "Optioneel, bijvoorbeeld G-XXXXXXXXXX.",
+      "site_url": "Website URL",
+      "site_url_help": "Canonical website address for absolute links and health measurements, e.g. https://example.com. No credentials, query or fragment. Leave empty to use the server configuration.",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     },
     "messages": {
       "saved": "Instellingen zijn opgeslagen.",
       "required": "Vul alle benodigde instellingen in.",
       "invalid_language": "Geselecteerde taal is niet beschikbaar.",
       "invalid_timezone": "Geselecteerde tijdzone is niet geldig.",
-      "invalid_datetime_format": "Het geselecteerde datum- of tijdformaat is niet beschikbaar."
+      "invalid_datetime_format": "Het geselecteerde datum- of tijdformaat is niet beschikbaar.",
+      "invalid_site_url": "Enter a valid HTTP or HTTPS website URL without credentials, query or fragment."
     },
     "footer_placeholder": "Voettekst of HTML...",
     "image_empty": "Geen afbeelding geselecteerd",
@@ -110,7 +118,7 @@
     "purpose_user_followers": "Profiel volgt tussen gebruikers.",
     "purpose_notifications": "Waarschuwingen voor vind-ik-leuks, opmerkingen, vermeldingen en volgers.",
     "purpose_content_reports": "Gebruikersrapporten voor moderatie.",
-    "purpose_ip_action_limits": "Op IP gebaseerde snelheidslimietbuckets voor geselecteerde acties.",
+    "purpose_ip_action_limits": "Limiettellers per account of IP-adres voor geselecteerde acties.",
     "purpose_password_reset_tokens": "Kortstondige tokens voor het opnieuw instellen van wachtwoorden, verzonden per e-mail.",
     "purpose_settings": "Database-backed applicatie-instellingen.",
     "admin_title": "Eerste beheerdersaccount",

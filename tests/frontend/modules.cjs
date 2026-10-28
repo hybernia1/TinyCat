@@ -169,6 +169,21 @@ check(skippedDetail.textContent.includes(T.i18n.t("moderation.messages.blocked_u
 check(schedulerDetail.textContent.includes("<img src=x onerror=bad>") && schedulerDetail.querySelectorAll("img").length === 0, "Scheduler errors render as literal text in the standard detail modal.");
 check(schedulerDetail.textContent.includes("Fixture RSS source") && schedulerDetail.textContent.includes(T.ui.text("bots.run_statuses.interrupted")) && schedulerDetail.textContent.includes("<b>source failure</b>") && schedulerDetail.querySelectorAll("b").length === 0, "The common run modal renders linked source states and escapes their diagnostic errors.");
 check(!schedulerRoot.textContent.includes("<img src=x onerror=bad>") && schedulerRoot.querySelector('[data-modal-url="/api/scheduler/runs/1"]'), "Run history opens details lazily through the standard resource modal.");
+{
+  const query = document.querySelector, queryAll = document.querySelectorAll;
+  const field = new Node("input"), command = new Node("code"), rotate = new Node("form");
+  field.value = "";
+  command.textContent = 'curl -X POST -H "Authorization: Bearer " "https://tinycat.test/api/scheduler/executions?task=feeds"';
+  rotate.setAttribute("action", "/api/scheduler/tokens");
+  document.querySelector = selector => selector === "[data-scheduler-token]" ? field : query(selector);
+  document.querySelectorAll = selector => selector === "[data-scheduler-command]" ? [command] : queryAll(selector);
+  try {
+    T.scheduler.result(rotate, { data: { token: "first-token" } });
+    check(field.value === "first-token" && command.textContent.includes('Authorization: Bearer first-token"'), "Creating the first scheduler token updates the ready-to-copy HTTP command.");
+    T.scheduler.result(rotate, { data: { token: "rotated-token" } });
+    check(command.textContent.includes('Authorization: Bearer rotated-token"') && !command.textContent.includes("first-token"), "Rotating a scheduler token replaces the command credential.");
+  } finally { document.querySelector = query; document.querySelectorAll = queryAll; }
+}
 const schedulerPageLink = new Node("a");
 schedulerPageLink.setAttribute("href", "/api/scheduler/tasks?page=2&status=failed");
 check(T.scheduler.result(schedulerPageLink, { data: schedulerModel, meta: { pagination: { page: 2, per_page: 50 } } }, schedulerRoot), "Scheduler pagination links are recognized through their href.");

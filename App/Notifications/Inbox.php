@@ -17,6 +17,8 @@ final class Inbox
         'comment_mention' => ['email' => 'notification_comment_mention'],
         'report_resolved' => ['email' => 'notification_report_resolved'],
         'report_dismissed' => ['email' => 'notification_report_dismissed'],
+        'site_health_ok' => ['email' => ''],
+        'site_health_attention' => ['email' => ''],
     ];
 
     private function __construct()
@@ -32,6 +34,8 @@ final class Inbox
         $actorId = (int) ($notification['actor_id'] ?? 0);
         $type = (string) ($notification['type'] ?? '');
 
+        if (in_array($type, ['site_health_ok', 'site_health_attention'], true)) { return '/admin/site-health'; }
+
         return $contentId > 0
             ? \TinyCat\Status\Posts::status_url($contentId)
             : ($type === 'follow' && $actorId > 0 ? \TinyCat\Users\Profiles::author_url($actorId) : '/notifications');
@@ -42,12 +46,7 @@ final class Inbox
      */
     public static function url(array $notification): string
     {
-        $id = (int) ($notification['id'] ?? 0);
-        $isUnread = trim((string) ($notification['read_at'] ?? '')) === '';
-
-        return $id > 0 && $isUnread
-            ? '/notifications/open?id=' . $id
-            : self::targetUrl($notification);
+        return self::targetUrl($notification);
     }
 
     /** @param array<string, mixed> $actor */

@@ -57,14 +57,22 @@
       "email_from_name": "Absendername",
       "email_templates": "E-Mail-Zustellungsarten",
       "google_measurement_id": "Google Analytics-Messungs-ID",
-      "google_measurement_id_help": "Optional, zum Beispiel G-XXXXXXXXXX."
+      "google_measurement_id_help": "Optional, zum Beispiel G-XXXXXXXXXX.",
+      "site_url": "Website URL",
+      "site_url_help": "Canonical website address for absolute links and health measurements, e.g. https://example.com. No credentials, query or fragment. Leave empty to use the server configuration.",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     },
     "messages": {
       "saved": "Einstellungen wurden gespeichert.",
       "required": "Geben Sie alle erforderlichen Einstellungen ein.",
       "invalid_language": "Die ausgewählte Sprache ist nicht verfügbar.",
       "invalid_timezone": "Die ausgewählte Zeitzone ist ungültig.",
-      "invalid_datetime_format": "Das ausgewählte Datums- oder Uhrzeitformat ist nicht verfügbar."
+      "invalid_datetime_format": "Das ausgewählte Datums- oder Uhrzeitformat ist nicht verfügbar.",
+      "invalid_site_url": "Enter a valid HTTP or HTTPS website URL without credentials, query or fragment."
     },
     "footer_placeholder": "Fußzeilentext oder HTML...",
     "image_empty": "Kein Bild ausgewählt",
@@ -110,7 +118,7 @@
     "purpose_user_followers": "Profil folgt zwischen Benutzern.",
     "purpose_notifications": "Benachrichtigungen für Likes, Kommentare, Erwähnungen und Follower.",
     "purpose_content_reports": "Benutzerberichte zur Moderation.",
-    "purpose_ip_action_limits": "IP-basierte Rate-Limit-Buckets für ausgewählte Aktionen.",
+    "purpose_ip_action_limits": "Konto- oder IP-basierte Rate-Limit-Buckets für ausgewählte Aktionen.",
     "purpose_password_reset_tokens": "Kurzlebige Token zum Zurücksetzen des Passworts, die per E-Mail gesendet werden.",
     "purpose_settings": "Datenbankgestützte Anwendungseinstellungen.",
     "admin_title": "Erstes Administratorkonto",
