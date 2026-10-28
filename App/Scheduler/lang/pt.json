@@ -7,7 +7,7 @@
     "url": "Ponto final URL",
     "token": "Token do portador",
     "task_url": "Web-cron simples URL",
-    "query_help": "Opção de compatibilidade para serviços sem cabeçalhos personalizados. O token pode ser armazenado em logs de acesso ao servidor.",
+    "query_help": "Para agendadores da hospedagem: autenticação HTTP Basic, usuário scheduler e token cron como senha. Exige HTTPS. GET executa a tarefa; HEAD apenas verifica a disponibilidade.",
     "http_command": "Comando HTTP",
     "cli_command": "Comando do servidor",
     "rotate": "Girar token",

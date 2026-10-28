@@ -7,7 +7,7 @@
     "url": "URL endpointu",
     "token": "Bearer token",
     "task_url": "URL pro jednoduchý web-cron",
-    "query_help": "Kompatibilní varianta pro služby bez vlastních hlaviček. Token se může uložit do access logu serveru.",
+    "query_help": "Pro hostingové plánovače: HTTP Basic ověření, jméno scheduler, heslo je cron token. Vyžaduje HTTPS. GET spustí úlohu; HEAD pouze ověří dostupnost.",
     "http_command": "HTTP příkaz",
     "cli_command": "Serverový příkaz",
     "rotate": "Obnovit token",

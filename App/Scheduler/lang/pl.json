@@ -7,7 +7,7 @@
     "url": "Adres URL punktu końcowego",
     "token": "Token okaziciela",
     "task_url": "Prosty web-cron URL",
-    "query_help": "Opcja kompatybilności dla usług bez niestandardowych nagłówków. Token może być przechowywany w logach dostępu do serwera.",
+    "query_help": "Dla harmonogramów hostingu: uwierzytelnianie HTTP Basic, użytkownik scheduler, token cron jako hasło. Wymagany HTTPS. GET uruchamia zadanie; HEAD sprawdza tylko dostępność.",
     "http_command": "Polecenie HTTP",
     "cli_command": "Polecenie serwera",
     "rotate": "Obróć token",

@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.0.1 - 2026-10-28
+
+- Support URL-only hosting schedulers such as Webglobe through HTTPS GET `/api/scheduler/triggers/{task}` with HTTP Basic authentication (username `scheduler`, cron token as password). Use the same task execution, locks and history as the Bearer API.
+- Authenticate hosting HEAD probes without executing tasks, prevent caching and cross-site browser triggers, and keep credentials out of URLs. Existing POST/Bearer endpoints remain unchanged.
+
 ## 5.0.0 - 2026-10-28
 
 - Centralize rate-limit policy and count signed-in content quotas per account, independent of shared IP addresses. Exempt authenticated administrator and bot accounts from quotas and cooldowns.

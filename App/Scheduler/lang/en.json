@@ -7,7 +7,7 @@
     "url": "Endpoint URL",
     "token": "Bearer token",
     "task_url": "Simple web-cron URL",
-    "query_help": "Compatibility option for services without custom headers. The token may be stored in server access logs.",
+    "query_help": "For URL-only hosting schedulers: HTTP Basic authentication, username scheduler, password equal to the cron token. HTTPS is required. GET runs the task; HEAD only checks availability.",
     "http_command": "HTTP command",
     "cli_command": "Server command",
     "rotate": "Rotate token",

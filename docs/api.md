@@ -57,6 +57,7 @@ created or rotated explicitly through the administrator-only token API.
 | --- | --- | --- |
 | GET | `/api/installation` | Public safe setup status, no credentials |
 | POST | `/api/installation/steps/{step}` | Public, CSRF, installation must be open |
+| GET / HEAD | `/api/scheduler/triggers/{task}` | HTTPS HTTP Basic: username `scheduler`, cron token as password; GET executes one task with default options, HEAD never executes |
 | GET | `/api/scheduler/health` | Scheduler Bearer token, no execution |
 | POST | `/api/scheduler/executions` | Scheduler Bearer token |
 

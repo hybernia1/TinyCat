@@ -7,7 +7,7 @@
     "url": "Uç Nokta URL",
     "token": "Taşıyıcı jeton",
     "task_url": "Basit web cron'u URL",
-    "query_help": "Özel üstbilgileri olmayan hizmetler için uyumluluk seçeneği. Belirteç, sunucu erişim günlüklerinde saklanabilir.",
+    "query_help": "Barındırma zamanlayıcıları için: HTTP Basic kimlik doğrulaması, kullanıcı adı scheduler, parola cron belirtecidir. HTTPS gereklidir. GET görevi çalıştırır; HEAD yalnızca erişilebilirliği denetler.",
     "http_command": "HTTP komutu",
     "cli_command": "Sunucu komutu",
     "rotate": "Jetonu döndür",

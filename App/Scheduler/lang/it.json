@@ -7,7 +7,7 @@
     "url": "URL dell'endpoint",
     "token": "Gettone al portatore",
     "task_url": "Webcron semplice URL",
-    "query_help": "Opzione di compatibilità per servizi senza intestazioni personalizzate. Il token può essere archiviato nei registri di accesso al server.",
+    "query_help": "Per i pianificatori dell’hosting: autenticazione HTTP Basic, utente scheduler e token cron come password. Richiede HTTPS. GET esegue l’attività; HEAD verifica solo la disponibilità.",
     "http_command": "Comando HTTP",
     "cli_command": "Comando del server",
     "rotate": "Ruota gettone",

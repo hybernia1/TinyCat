@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **5.0.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+Current release: **5.0.1**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -148,6 +148,8 @@ When command-line scheduling is unavailable, use the protected HTTP endpoint sho
 curl -X POST -H "Authorization: Bearer TOKEN" "https://example.test/api/scheduler/executions?task=feeds"
 curl -X POST -H "Authorization: Bearer TOKEN" "https://example.test/api/scheduler/executions?task=cleanup"
 ```
+
+For URL-only hosting schedulers such as Webglobe, use `https://example.test/api/scheduler/triggers/feeds` or `/api/scheduler/triggers/cleanup` with HTTP Basic authentication: username `scheduler`, password equal to the cron token. HTTPS is required. GET runs the selected task with default options; HEAD only verifies availability. The token never belongs in the URL.
 
 An authenticated `GET /api/scheduler/health` checks connectivity without running a task. HTTP calls require the `Authorization: Bearer TOKEN` header. Query-string tokens are not accepted. The old HTTP `/scheduled-tasks.php` endpoint returns 410; the file remains the CLI entry point. CLI output uses the same JSON envelope as the API.
 

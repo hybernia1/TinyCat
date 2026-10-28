@@ -7,7 +7,7 @@
     "url": "Point de terminaison URL",
     "token": "Jeton du porteur",
     "task_url": "Web-cron simple URL",
-    "query_help": "Option de compatibilité pour les services sans en-têtes personnalisés. Le jeton peut être stocké dans les journaux d'accès au serveur.",
+    "query_help": "Pour les planificateurs de l’hébergeur : authentification HTTP Basic, utilisateur scheduler et jeton cron comme mot de passe. HTTPS est requis. GET exécute la tâche ; HEAD vérifie seulement la disponibilité.",
     "http_command": "Commande HTTP",
     "cli_command": "Commande serveur",
     "rotate": "Faire pivoter le jeton",

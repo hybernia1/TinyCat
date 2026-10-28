@@ -7,7 +7,7 @@
     "url": "Endpunkt URL",
     "token": "Inhabertoken",
     "task_url": "Einfacher Web-Cron URL",
-    "query_help": "Kompatibilitätsoption für Dienste ohne benutzerdefinierte Header. Das Token kann in Serverzugriffsprotokollen gespeichert werden.",
+    "query_help": "Für Hosting-Zeitplaner: HTTP-Basic-Authentifizierung, Benutzername scheduler, Cron-Token als Passwort. HTTPS ist erforderlich. GET führt die Aufgabe aus; HEAD prüft nur die Erreichbarkeit.",
     "http_command": "Befehl HTTP",
     "cli_command": "Serverbefehl",
     "rotate": "Token drehen",

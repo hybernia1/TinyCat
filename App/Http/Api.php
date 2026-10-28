@@ -51,13 +51,13 @@ final class Api
     /** @param callable(Request, array<string, string>): (array<string, mixed>|Result) $handler */
     private function register(string $method, string $path, callable $handler, string $access, int $status): void
     {
-        if (!in_array($access, ['public', 'user', 'admin', 'scheduler'], true) || !in_array($status, [200, 201], true)) {
+        if (!in_array($access, ['public', 'user', 'admin', 'scheduler', 'scheduler_trigger'], true) || !in_array($status, [200, 201], true)) {
             throw new LogicException('Invalid API route contract.');
         }
 
         Router::apiRoute($method, $path, function (string ...$params) use ($method, $handler, $access, $status): never {
             try {
-                $user = in_array($access, ['public', 'scheduler'], true) ? null : ($this->currentUser)();
+                $user = in_array($access, ['public', 'scheduler', 'scheduler_trigger'], true) ? null : ($this->currentUser)();
                 Middleware::authorize($access, $method !== 'GET', $user);
                 $named = [];
                 foreach ($params as $name => $value) {

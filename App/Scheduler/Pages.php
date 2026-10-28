@@ -53,7 +53,7 @@ final class Pages
 
         foreach ($taskViews as $task => &$view) {
             $taskUrl = $cronUrl . '?task=' . rawurlencode($task);
-            $view['query_url'] = $taskUrl;
+            $view['query_url'] = Presentation::absolute_url('/api/scheduler/triggers/' . rawurlencode($task));
             $view['http_command'] = 'curl -fsS -X POST -H "Authorization: Bearer ' . $cronToken . '" "' . $taskUrl . '"';
             $view['cli_command'] = 'php "' . $runnerPath . '" --task=' . $task . ' ' . (string) $view['cli_arguments'];
         }

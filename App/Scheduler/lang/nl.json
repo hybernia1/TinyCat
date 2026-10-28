@@ -7,7 +7,7 @@
     "url": "Eindpunt URL",
     "token": "Token aan toonder",
     "task_url": "Eenvoudige web-cron URL",
-    "query_help": "Compatibiliteitsoptie voor services zonder aangepaste headers. Het token kan worden opgeslagen in servertoegangslogboeken.",
+    "query_help": "Voor hostingplanners: HTTP Basic-authenticatie, gebruikersnaam scheduler en het cron-token als wachtwoord. HTTPS is vereist. GET voert de taak uit; HEAD controleert alleen de beschikbaarheid.",
     "http_command": "HTTP opdracht",
     "cli_command": "Serveropdracht",
     "rotate": "Token roteren",

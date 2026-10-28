@@ -39,4 +39,30 @@ $assert($status === 200 && $execution['code'] === 'scheduler_run_finished' && $e
 $assert($status === 410 && $retired['code'] === 'endpoint_retired' && $retired['error']['details']['endpoint'] === '/api/scheduler/executions', 'The legacy HTTP script retires through the shared front controller without running work.');
 [$status] = $request('GET', '/api/scheduler/executions', null, '', $bearer);
 $assert($status === 405, 'Scheduler runs cannot mutate state over GET.');
+$basic = ['Authorization' => 'Basic ' . base64_encode('scheduler:' . $token), 'X-Forwarded-Proto' => 'https'];
+[$status] = $request('GET', '/api/scheduler/triggers/cleanup', null, '', ['Authorization' => $basic['Authorization']]);
+$assert($status === 426, 'Web-cron credentials require HTTPS.');
+foreach ([[], ['Authorization' => 'Basic invalid'], ['Authorization' => 'Basic ' . base64_encode('scheduler:wrong')], $bearer] as $headers) {
+    [$status] = $request('GET', '/api/scheduler/triggers/cleanup?bearer=' . $token, null, '', $headers + ['X-Forwarded-Proto' => 'https']);
+    $assert($status === 401, 'Web-cron requires valid Basic credentials, independently of query tokens and Bearer credentials.');
+}
+$before = (int) $systemDb->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn();
+[$status, $body, $headers] = $exportRequest('/api/scheduler/triggers/cleanup', 'HEAD', $basic);
+$assert($status === 200 && $body === '' && str_contains($headers['cache-control'], 'no-store'), 'Hosting HEAD probes authenticate without a response body or cacheable result.');
+$assert((int) $systemDb->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn() === $before, 'Hosting HEAD probes never execute tasks.');
+foreach (['all', 'unknown'] as $task) {
+    [$status] = $request('GET', '/api/scheduler/triggers/' . $task, null, '', $basic);
+    $assert($status === 404, 'Web-cron URLs select exactly one registered task.');
+}
+[$status, $execution] = $request('GET', '/api/scheduler/triggers/cleanup?task=feeds&options[cleanup_batch]=1', null, '', $basic + ['X-Test-Scheduler-Lock' => '0']);
+$assert($status === 200 && $execution['data']['selected_task'] === 'cleanup' && $execution['data']['tasks']['cleanup']['status'] === 'already_running', 'Web-cron uses shared execution locks and selects the task from its fixed URL.');
+[$status] = $request('GET', '/api/scheduler/triggers/cleanup', null, '', $basic + ['Sec-Fetch-Site' => 'cross-site']);
+$assert($status === 403, 'Cross-site browser requests cannot trigger a web-cron.');
+[$status] = $request('POST', '/api/scheduler/triggers/cleanup', [], '', $basic);
+$assert($status === 405, 'Web-cron accepts only the documented GET and HEAD methods.');
+[$status] = $request('GET', '/api/scheduler/health', null, '', $basic);
+$assert($status === 401, 'Basic compatibility does not weaken Bearer-only scheduler endpoints.');
+[$status] = $request('POST', '/api/scheduler/tokens', [], 'admin', $csrf);
+[$status] = $request('GET', '/api/scheduler/triggers/cleanup', null, '', $basic);
+$assert($status === 401, 'Token rotation revokes existing web-cron credentials.');
 $systemDb = null;

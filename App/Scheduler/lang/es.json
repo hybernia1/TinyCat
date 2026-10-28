@@ -7,7 +7,7 @@
     "url": "Punto final URL",
     "token": "ficha al portador",
     "task_url": "Cron web simple URL",
-    "query_help": "Opción de compatibilidad para servicios sin encabezados personalizados. El token puede almacenarse en los registros de acceso al servidor.",
+    "query_help": "Para programadores del alojamiento: autenticación HTTP Basic, usuario scheduler y el token cron como contraseña. Requiere HTTPS. GET ejecuta la tarea; HEAD solo comprueba la disponibilidad.",
     "http_command": "Comando HTTP",
     "cli_command": "Comando del servidor",
     "rotate": "Girar ficha",
