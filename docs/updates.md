@@ -203,3 +203,10 @@ cleanup of abandoned updater downloads and work directories after 48 hours.
 The cleanup takes the same `update.lock` as the updater and skips all update
 files while maintenance mode is active. Retirement is resumable and removes
 recovery metadata only after the payload has been removed.
+
+Backup retention, downloads, staging and verification now have independent scan
+cursors and reserved shares of each cleanup batch. A growing work directory
+cannot consume the backup scan's share. Snapshot payloads are validated when
+reached; retention still verifies the newest complete snapshots before protecting
+them. A catalogue exceeding 5000 entries raises a visible cleanup error instead
+of silently returning a successful zero-deletion result.

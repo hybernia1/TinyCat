@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.2.1 - 2026-10-28
+
+- Give backup retention and updater work directories independent bounded scan cursors and reserved batch shares. Validate candidate payloads lazily while preserving the newest complete recovery snapshots. Report oversized catalogues explicitly.
+- Persist the next cleanup task before starting work so repeated worker interruptions cannot always restart ahead of backup retention.
+
 ## 5.2.0 - 2026-10-28
 
 - Move the privacy link into the sticky public-sidebar footer, keep the link desktop-only for now, and use contrast-safe theme tokens. Retain the document footer on pages without a public sidebar.

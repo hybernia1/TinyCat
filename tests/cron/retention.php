@@ -143,4 +143,44 @@ $backup('disabled-retention', 150);
 (new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $root . '/storage/cache'], 'updates' => ['backups' => ['cleanup' => false]]]);
 for ($attempt = 0; $attempt < 5; $attempt++) { Cleanup::run(100); }
 $assert(is_file($root . '/storage/updates/backups/disabled-retention/files/App/example.php'), 'Backup retention can be disabled without changing scheduler transport.');
+// A persisted old cursor deep in staging must not hold backup retention behind it.
+(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['cache' => ['directory' => $root . '/storage/cache']]);
+$backup('starvation-old', 200);
+for ($i = 0; $i < 500; $i++) { $file('storage/updates/staging/backlog/file-' . $i, 3 * 86400); }
+touch($root . '/storage/updates/staging/backlog', time() - 3 * 86400);
+$oldCursor = \TinyCat\Support\Cache::file(hash('sha256', realpath($root . '/storage/updates') . ':update-retention') . '.json', 'cleanup-cursors');
+\TinyCat\Support\Storage::write($oldCursor, json_encode([['path' => '', 'offset' => 0], ['path' => 'staging', 'offset' => 0], ['path' => 'staging/backlog', 'offset' => 0]], JSON_THROW_ON_ERROR));
+for ($attempt = 0; $attempt < 12; $attempt++) {
+    for ($i = 0; $i < 5; $i++) { $file('storage/updates/staging/backlog/growth-' . $attempt . '-' . $i, 3 * 86400); }
+    touch($root . '/storage/updates/staging/backlog', time() - 3 * 86400);
+    $result = Cleanup::run(20);
+    $assert($result['changed'] <= 20, 'Independent areas share a bounded total deletion budget.');
+}
+$assert(!is_dir($root . '/storage/updates/backups/starvation-old'), 'Eligible backups finish retirement while staging remains continuously backlogged, including after upgrading an old shared cursor.');
+$assert(count(glob($root . '/storage/updates/staging/backlog/*') ?: []) > 300, 'The backup regression scenario never empties its staging backlog.');
+foreach ([3, 4, 5] as $i) { $assert(is_file($root . '/storage/updates/backups/backup-' . $i . '/files/App/example.php'), 'Fair processing still preserves the three newest complete backups.'); }
+$file('storage/updates/downloads/.tinycat-download-single', 3 * 86400);
+for ($attempt = 0; $attempt < 16; $attempt++) { $assert(Cleanup::run(1)['changed'] <= 1, 'Tiny direct-call budgets rotate areas without exceeding one deletion.'); }
+$assert(!is_file($root . '/storage/updates/downloads/.tinycat-download-single'), 'Even a single-entry budget eventually gives downloads a turn.');
+
+// The scheduler records the successor before a task starts, not after it completes.
+$database->exec('CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)');
+\TinyCat\Settings\Store::reset();
+\TinyCat\Settings\Store::setSetting('cron.cleanup_next_task', 'orphan_avatar_files', 'string', 'cron');
+$insert->execute([date('Y-m-d H:i:s', time() - 90000)]);
+$seenCursor = null;
+$database->sqliteCreateFunction('capture_cleanup_cursor', static function () use (&$seenCursor): int {
+    $seenCursor = \TinyCat\Settings\Store::setting('cron.cleanup_next_task');
+    return 1;
+});
+$database->exec('ALTER TABLE users RENAME TO users_base');
+$database->exec('CREATE VIEW users AS SELECT capture_cleanup_cursor() AS id FROM users_base');
+$full = \TinyCat\Scheduler\Cleanup::cron_cleanup_run(500, true);
+$assert(array_key_first($full['results']) === 'orphan_avatar_files', 'A full cleanup resumes from its persisted successor instead of restarting the first task.');
+$assert($seenCursor === 'temporary_files', 'The following task is persisted before database cleanup begins, so an interrupted worker cannot starve later tasks.');
+$assert(isset($full['results']['update_files']), 'Other task failures and pending staging cannot prevent the backup task from getting a turn.');
+$cursorBeforePartial = \TinyCat\Settings\Store::setting('cron.cleanup_next_task');
+\TinyCat\Scheduler\Cleanup::cron_cleanup_run(500, true, ['old_action_limits']);
+$assert(\TinyCat\Settings\Store::setting('cron.cleanup_next_task') === $cursorBeforePartial, 'A targeted cleanup does not disturb the full scheduler cursor.');
+
 echo "PASS isolated cleanup retention ({$checks} checks)\n";

@@ -44,6 +44,7 @@ final class Cleanup
     public static function cron_cleanup_run(int $batchSize = 500, bool $force = false, ?array $tasks = null): array
     {
         $batchSize = \TinyCat\Scheduler\Cleanup::cleanup_batch_size($batchSize);
+        $fullRun = $tasks === null;
         $tasks = $tasks === null
             ? \TinyCat\Scheduler\Cleanup::cron_cleanup_tasks()
             : array_values(array_intersect(\TinyCat\Scheduler\Cleanup::cron_cleanup_tasks(), $tasks));
@@ -62,8 +63,15 @@ final class Cleanup
         }
 
         $results = [];
+        if ($fullRun) {
+            $nextTask = (string) \TinyCat\Settings\Store::setting('cron.cleanup_next_task', 'update_files');
+            $offset = array_search($nextTask, $tasks, true);
+            if (is_int($offset)) { $tasks = [...array_slice($tasks, $offset), ...array_slice($tasks, 0, $offset)]; }
+        }
 
-        foreach ($tasks as $task) {
+        foreach ($tasks as $index => $task) {
+            // Advance before work so even a killed PHP worker gives the following task its turn.
+            if ($fullRun) { \TinyCat\Settings\Store::setSetting('cron.cleanup_next_task', $tasks[($index + 1) % count($tasks)], 'string', 'cron'); }
             try {
                 $results[$task] = \TinyCat\Scheduler\Cleanup::cleanup_task_run($task, $batchSize);
             } catch (Throwable $exception) {
