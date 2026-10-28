@@ -188,9 +188,8 @@
         "tag": "form",
         "attrs": {
           "class": "card",
-          "action": {
-            "get": "url"
-          },
+          "action": "/api/security/challenges/search",
+          "data-ajax-form": "",
           "method": "post"
         },
         "children": [
@@ -209,8 +208,8 @@
             "tag": "input",
             "attrs": {
               "type": "hidden",
-              "name": "_search_captcha",
-              "value": "1"
+              "name": "next",
+              "value": { "get": "url" }
             },
             "children": []
           },

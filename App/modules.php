@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 return [
+    \TinyCat\Installation\Module::class,
     \TinyCat\Users\Module::class,
     \TinyCat\Notifications\Module::class,
     \TinyCat\Status\Module::class,

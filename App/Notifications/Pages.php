@@ -3,9 +3,6 @@ declare(strict_types=1);
 namespace TinyCat\Notifications;
 
 use TinyCat\Http\Request;
-use TinyCat\Http\Session;
-use TinyCat\Http\Web;
-use TinyCat\Security\Csrf;
 use TinyCat\Site\Layout;
 use TinyCat\Support\Localization;
 use TinyCat\Support\View;
@@ -18,20 +15,6 @@ final class Pages
     {
         $user = Access::requireAuth('/login');
         $userId = (int) ($user['id'] ?? 0);
-
-        if (Request::current()->isPost()) {
-            Csrf::requireToken();
-
-            $action = (string) Web::post('action', '');
-            $id = max(0, (int) Web::post('id', 0));
-            $message = Inbox::applyAction($userId, $action, $id);
-
-            if ($message !== '') {
-                Session::flash('success', $message);
-            }
-
-            Web::redirect('/notifications');
-        }
 
         $batch = Inbox::page($userId);
         $unread = Inbox::unreadCount($userId);

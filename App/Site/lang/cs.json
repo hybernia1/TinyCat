@@ -89,7 +89,7 @@
     "data_email": "Uvedený email lze použít také k přihlášení, obnově hesla a k příjmu volitelných emailových notifikací. Notifikace si uživatel může vypnout ve svém profilu a administrátor určuje, které typy jsou dostupné.",
     "data_content": "Aplikace ukládá obsah, který uživatel sám vytvoří: příspěvky, komentáře, nahrané obrázky, lajky, sledování profilů, nahlášení a volitelné profilové údaje.",
     "data_technical": "Hesla se ukládají pouze jako hashe. Odkazy pro obnovu hesla jsou krátkodobé a jednorázové.",
-    "data_server_logs": "{site} ukládá IP adresu pro omezení vybraných akcí přihlášených uživatelů, například příspěvků, komentářů, lajků, nahlášení a hledání. Provozovatel serveru může mít také technické serverové logy mimo aplikaci.",
+    "data_server_logs": "{site} ukládá počítadla akcí podle účtu a IP adresy pro omezení nadměrných požadavků. Provozovatel serveru může mít také technické serverové logy mimo aplikaci.",
     "recovery_title": "Obnova hesla",
     "recovery_email": "Obnova hesla používá stránku /recovery a odkaz zaslaný na email účtu.",
     "recovery_no_contact": "Email je při registraci dobrovolný, ale bez něj nejde použít obnovu hesla emailem.",

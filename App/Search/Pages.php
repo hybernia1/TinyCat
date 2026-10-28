@@ -3,10 +3,8 @@ declare(strict_types=1);
 namespace TinyCat\Search;
 
 use TinyCat\Http\Request;
-use TinyCat\Http\Session;
 use TinyCat\Http\Web;
 use TinyCat\Security\Captcha;
-use TinyCat\Security\Csrf;
 use TinyCat\Site\Presentation;
 use TinyCat\Status\Feed;
 use TinyCat\Status\ViewData;
@@ -31,16 +29,6 @@ final class Pages
         $minimumLength = $type === 'content' ? 3 : 2;
         $hasQuery = Queries::length($query) >= $minimumLength && Queries::length($query) <= Queries::MAX_QUERY_LENGTH;
         $current = '/search?' . http_build_query(['q' => $query, 'type' => $type]);
-
-        if (Request::current()->isPost() && (string) Web::post('_search_captcha', '') === '1') {
-            Csrf::requireToken();
-            if (Guard::public_search_captcha_verify()) {
-                Web::redirect($current);
-            }
-
-            Session::flash('error', Localization::t('auth.invalid_captcha'));
-            Web::redirect($current);
-        }
 
         $searchBlocked = $hasQuery ? Guard::public_search_guard($query) : null;
         $results = $hasQuery && $searchBlocked === null ? Queries::collection($query, $type, [], Feed::public_status_initial_page_limit()) : ['items' => [], 'next_url' => '', 'done' => true];

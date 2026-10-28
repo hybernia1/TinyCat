@@ -12,7 +12,7 @@ final class Resource
         $next = Login::auth_safe_next_url($next);
         $other = $mode === 'register' ? 'login' : 'register';
         return ['mode' => $mode, 'register' => $mode === 'register', 'next' => $next,
-            'form_url' => Login::auth_url_with_next('/' . $mode, $next),
+            'form_url' => $mode === 'register' ? '/api/users/registrations' : '/api/users/sessions',
             'switch_url' => Login::auth_url_with_next('/' . $other, $next),
             'switch_modal_url' => Login::auth_modal_url($other, $next),
             'registration_enabled' => Accounts::registration_enabled(),

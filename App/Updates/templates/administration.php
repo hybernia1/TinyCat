@@ -17,9 +17,9 @@ $available = is_array($release) && !empty($release['available']);
             'from' => (string) ($maintenance['from_version'] ?? \TinyCat\Support\Version::CURRENT),
             'to' => (string) ($maintenance['to_version'] ?? '?'),
         ]) ?></span>
-        <form method="post" action="/admin/updates" data-confirm="<?= \TinyCat\Support\Html::et('updates.maintenance_disable_confirm') ?>" data-confirm-variant="danger">
+        <form method="post" action="/api/updates/maintenance" data-api-method="DELETE" data-ajax-form data-confirm="<?= \TinyCat\Support\Html::et('updates.maintenance_disable_confirm') ?>" data-confirm-variant="danger">
             <?= \TinyCat\Security\Csrf::field() ?>
-            <input type="hidden" name="action" value="disable-maintenance">
+            <input type="hidden" name="_method" value="DELETE">
             <button class="btn btn-danger btn-sm" type="submit"><?= \TinyCat\Support\Html::icon('unlock') ?> <span><?= \TinyCat\Support\Html::et('updates.maintenance_disable') ?></span></button>
         </form>
     </section>
@@ -70,13 +70,13 @@ $available = is_array($release) && !empty($release['available']);
             <?php endif; ?>
         </div>
         <div class="card-footer cluster justify-end">
-            <form method="post" action="/admin/updates">
+            <form method="post" action="/api/updates/checks" data-ajax-form>
                 <?= \TinyCat\Security\Csrf::field() ?>
                 <input type="hidden" name="action" value="check">
                 <button class="btn btn-secondary" type="submit"><?= \TinyCat\Support\Html::icon('refresh') ?> <span><?= \TinyCat\Support\Html::et('updates.check') ?></span></button>
             </form>
             <?php if ($available): ?>
-                <form method="post" action="/admin/updates" data-confirm="<?= \TinyCat\Support\Html::et('updates.install_confirm', ['version' => (string) ($release['version'] ?? '')]) ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('updates.install_title') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('updates.install') ?>">
+                <form method="post" action="/api/updates/installations" data-ajax-form data-confirm="<?= \TinyCat\Support\Html::et('updates.install_confirm', ['version' => (string) ($release['version'] ?? '')]) ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('updates.install_title') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('updates.install') ?>">
                     <?= \TinyCat\Security\Csrf::field() ?>
                     <input type="hidden" name="action" value="install">
                     <button class="btn btn-primary" type="submit"<?= $canInstall ? '' : ' disabled' ?>><?= \TinyCat\Support\Html::icon('download') ?> <span><?= \TinyCat\Support\Html::et('updates.install') ?></span></button>

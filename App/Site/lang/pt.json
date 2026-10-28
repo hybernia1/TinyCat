@@ -89,7 +89,7 @@
     "data_email": "Um e-mail fornecido também pode ser usado para fazer login, recuperar a senha e receber notificações opcionais por e-mail. Os usuários podem controlar as notificações em seus perfis, enquanto os administradores controlam quais tipos de notificação estão disponíveis.",
     "data_content": "O aplicativo armazena conteúdo que os próprios usuários criam: postagens, comentários, imagens enviadas, curtidas, seguidores, relatórios e campos de perfil opcionais.",
     "data_technical": "As senhas são armazenadas apenas como hashes. Os links de redefinição de senha são tokens de uso único e de curta duração.",
-    "data_server_logs": "{site} armazena endereços IP para limitar a taxa de ações de login selecionadas, como postagens, comentários, curtidas, relatórios e pesquisas. O operador do servidor também pode ter registros técnicos do servidor fora do aplicativo.",
+    "data_server_logs": "{site} armazena contadores por conta ou endereço IP para limitar pedidos excessivos. O operador do servidor também pode ter registos técnicos fora da aplicação.",
     "recovery_title": "Recuperação de senha",
     "recovery_email": "A recuperação de senha usa a página /recovery e um link enviado para o e-mail da conta.",
     "recovery_no_contact": "Um endereço de e-mail é opcional no registro, mas obrigatório para recuperação de senha por e-mail.",

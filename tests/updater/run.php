@@ -60,6 +60,15 @@ $test('managed update paths accept runtime files', static function () use ($invo
     $expect($invoke('managedPath', 'scheduled-tasks.php') === 'scheduled-tasks.php');
 });
 
+$test('maintenance recovery uses canonical API routes', static function () use ($invoke, $expect): void {
+    foreach (['/api/updates/checks', '/api/updates/installations', '/api/updates/maintenance', '/api/users/sessions', '/api/users/sessions/current', '/api/installation/steps/db'] as $path) {
+        $expect($invoke('maintenancePathAllowed', $path), 'Required recovery route blocked: ' . $path);
+    }
+    foreach (['/api/auth/login', '/api/auth/logout', '/api/admin/updates', '/api/statuses', '/api/scheduler/executions'] as $path) {
+        $expect(!$invoke('maintenancePathAllowed', $path), 'Noncanonical or normal writes allowed during maintenance: ' . $path);
+    }
+});
+
 $test('managed update paths reject protected and traversal targets', static function () use ($invoke, $expectFailure): void {
     foreach (['Extensions/Bots/extension.json', 'config.php', 'storage/cache.php', 'uploads/avatar.php', '../index.php', 'App//Core.php', '/App/Support/Version.php'] as $path) {
         $expectFailure(static fn (): mixed => $invoke('managedPath', $path));

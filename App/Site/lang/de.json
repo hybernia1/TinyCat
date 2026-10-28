@@ -89,7 +89,7 @@
     "data_email": "Eine bereitgestellte E-Mail-Adresse kann auch zum Anmelden, Wiederherstellen des Passworts und zum Empfangen optionaler E-Mail-Benachrichtigungen verwendet werden. Benutzer können Benachrichtigungen in ihrem Profil steuern, während Administratoren steuern, welche Benachrichtigungstypen verfügbar sind.",
     "data_content": "Die App speichert selbst erstellte Inhalte: Beiträge, Kommentare, hochgeladene Bilder, Likes, Follower, Berichte und optionale Profilfelder.",
     "data_technical": "Passwörter werden nur als Hashes gespeichert. Links zum Zurücksetzen von Passwörtern sind kurzlebige Token zur einmaligen Verwendung.",
-    "data_server_logs": "{site} speichert IP-Adressen zur Ratenbegrenzung ausgewählter angemeldeter Aktionen wie Beiträge, Kommentare, „Gefällt mir“-Angaben, Berichte und Suchen. Der Serverbetreiber verfügt möglicherweise auch über technische Serverprotokolle außerhalb der App.",
+    "data_server_logs": "{site} speichert Aktionszähler nach Konto oder IP-Adresse, um übermäßige Anfragen zu begrenzen. Der Serverbetreiber verfügt möglicherweise auch über technische Serverprotokolle außerhalb der App.",
     "recovery_title": "Passwortwiederherstellung",
     "recovery_email": "Zur Passwortwiederherstellung werden die Seite /recovery und ein Link verwendet, der an die E-Mail-Adresse des Kontos gesendet wird.",
     "recovery_no_contact": "Die Angabe einer E-Mail-Adresse ist bei der Registrierung optional, für die E-Mail-basierte Passwortwiederherstellung jedoch erforderlich.",

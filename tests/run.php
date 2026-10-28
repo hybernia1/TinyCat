@@ -19,6 +19,8 @@ $tests = [
     'Monolith API inventory' => 'tests/quality/monolith-inventory.php',
     'Metadata DNS scope' => 'tests/metadata-dns.php',
     'Link parser' => 'tests/link-parser.php',
+    'Rate limiter isolation' => 'tests/rate-limiter.php',
+    'MySQL rate limiter' => 'tests/rate-limiter-mysql.php',
     'Write-path integrity' => 'tests/write-path-integrity.php',
     'Runtime URL and raster hardening' => 'tests/runtime-hardening.php',
     'Browser language detection' => 'tests/language-detection.php',
@@ -48,6 +50,7 @@ $tests = [
     'MySQL migration registry' => 'tests/updater/mysql-registry.php',
     'Scheduled file cleanup' => 'tests/cron/files.php',
     'Scheduled tasks' => 'tests/cron/run.php',
+    'Scheduler CLI transport' => 'tests/cron/cli.php',
     'Demo importer tooling' => 'tests/tools/demo-import.php',
     'One-off link optimizer' => 'tests/tools/link-optimizer.php',
     'Search semantics' => 'tests/search.php',
@@ -55,6 +58,7 @@ $tests = [
     'Signed package artifact' => 'tests/release/package-artifact.php',
     'Fresh installation package artifact' => 'tests/release/fresh-package-artifact.php',
     'Update and rollback rehearsal' => 'tests/release/update-rehearsal.php',
+    'Installation API rehearsal' => 'tests/release/installation-api.php',
     'MySQL installer rehearsal' => 'tests/release/mysql-installer-rehearsal.php',
 ];
 

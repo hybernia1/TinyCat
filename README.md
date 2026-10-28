@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **4.11.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+Current release: **5.0.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -145,11 +145,11 @@ Routine database cleanup runs at most once per hour and every task has its own d
 When command-line scheduling is unavailable, use the protected HTTP endpoint shown in **Admin → Scheduled tasks**:
 
 ```bash
-curl -X POST -H "Authorization: Bearer TOKEN" "https://example.test/scheduled-tasks.php?task=feeds"
-curl -X POST -H "Authorization: Bearer TOKEN" "https://example.test/scheduled-tasks.php?task=cleanup"
+curl -X POST -H "Authorization: Bearer TOKEN" "https://example.test/api/scheduler/executions?task=feeds"
+curl -X POST -H "Authorization: Bearer TOKEN" "https://example.test/api/scheduler/executions?task=cleanup"
 ```
 
-An authenticated `POST /scheduled-tasks.php?health=1` checks connectivity without running a task. Services that cannot send custom headers may add `bearer=TOKEN` to either task URL, but query-string tokens can appear in server access logs and should be treated as a last resort.
+An authenticated `GET /api/scheduler/health` checks connectivity without running a task. HTTP calls require the `Authorization: Bearer TOKEN` header. Query-string tokens are not accepted. The old HTTP `/scheduled-tasks.php` endpoint returns 410; the file remains the CLI entry point. CLI output uses the same JSON envelope as the API.
 
 ## Privacy and security defaults
 
@@ -195,13 +195,12 @@ Tests and development tools are excluded from signed production packages.
 ## Project layout
 
 - `index.php` is the HTTP front controller; built-in modules register their own routes.
-- `scheduled-tasks.php` runs bot imports and routine data cleanup from CLI or an authenticated HTTP request.
+- `scheduled-tasks.php` is the CLI adapter for the same execution service used by the authenticated scheduler API.
 - `App/bootstrap.php` initializes the runtime and the small `TinyCat\` PSR-4 autoloader.
 - `App/Bots/` owns feed imports and bot administration.
 - `App/Updates/` contains signed application updates and the migration registry.
 - Other `App/` directories contain domain modules and shared infrastructure.
 - `App/<Module>/Pages.php` owns page handlers; private page templates and partials live in `App/<Module>/templates/`.
-- `Public/` retains the bootstrap installer and technical RSS, sitemap, robots and LLM discovery endpoints.
 - `assets/` contains source CSS, JavaScript, the SVG icon sprite, shared UI definitions and module-owned client manifests.
 - `App/<Module>/lang/<locale>.json` contains module-owned translations; `App/Mail/lang/` owns server-only email templates. `lang/<locale>.json` declares language names.
 - Module manifests explicitly declare JavaScript translation dependencies; component definitions declare theirs through static `t` references. Release builds emit hashed page catalogs and OPcache-compatible PHP catalogs in `App/Support/compiled/`.

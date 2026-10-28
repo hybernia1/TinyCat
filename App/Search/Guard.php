@@ -8,14 +8,15 @@ final class Guard
     /** Autocomplete has its own session budget; it never consumes full searches. */
     public static function suggestions(): void
     {
+        if (\TinyCat\Security\RateLimitPolicy::isExempt(\TinyCat\Users\Authentication::auth())) { return; }
         \TinyCat\Http\Session::start();
         $now = time();
         $state = $_SESSION['_tinycat_suggestion_guard'] ?? ['started_at' => $now, 'count' => 0];
-        if ((int) $state['started_at'] <= $now - 60) { $state = ['started_at' => $now, 'count' => 0]; }
+        if ((int) $state['started_at'] <= $now - \TinyCat\Security\RateLimitPolicy::SUGGESTION_WINDOW) { $state = ['started_at' => $now, 'count' => 0]; }
         $state['count']++;
         $_SESSION['_tinycat_suggestion_guard'] = $state;
-        if ($state['count'] > 120) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.action_limited'), 429, 'action_limited', ['retry_after' => max(1, $state['started_at'] + 60 - $now)]);
+        if ($state['count'] > \TinyCat\Security\RateLimitPolicy::SUGGESTION_MAX) {
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.action_limited'), 429, 'action_limited', ['retry_after' => max(1, $state['started_at'] + \TinyCat\Security\RateLimitPolicy::SUGGESTION_WINDOW - $now)]);
         }
     }
 
@@ -24,11 +25,7 @@ final class Guard
      */
     public static function public_search_guest_limits(): array
     {
-        return [
-            'max' => 10,
-            'window' => 300,
-            'unlock' => 600,
-        ];
+        return \TinyCat\Security\RateLimitPolicy::guestSearch();
     }
 
     /**
@@ -95,17 +92,18 @@ final class Guard
         $user = \TinyCat\Users\Authentication::auth();
 
         if ($user !== null) {
-            if (\TinyCat\Users\Profiles::user_is_admin($user)) {
+            if (\TinyCat\Security\RateLimitPolicy::isExempt($user)) {
                 return null;
             }
 
-            [, $limit] = \TinyCat\Moderation\Restrictions::moderation_action_rule($user, 'search');
+            [$window, $limit] = \TinyCat\Moderation\Restrictions::moderation_action_rule($user, 'search');
 
             if (\TinyCat\Moderation\Restrictions::moderation_action_count($user, 'search') >= (int) $limit) {
                 return [
                     'code' => 'action_limited',
                     'message' => \TinyCat\Support\Localization::t('moderation.messages.action_limited'),
                     'login_url' => '',
+                    'retry_after' => \TinyCat\Security\RateLimiter::window_retry_after((int) $window),
                 ];
             }
 

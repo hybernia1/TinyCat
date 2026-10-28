@@ -71,7 +71,7 @@ declare(strict_types=1);
                         <div class="split">
                             <strong><?= \TinyCat\Support\Html::et('admin.cache.opcache_details') ?></strong>
                             <?php if ($opcache['resettable']): ?>
-                                <form method="post" action="/admin" data-confirm="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset_confirm') ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset') ?>" data-confirm-cancel="<?= \TinyCat\Support\Html::et('common.cancel') ?>">
+                                <form method="post" action="/api/site/cache-resets" data-ajax-form data-confirm="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset_confirm') ?>" data-confirm-title="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset') ?>" data-confirm-ok="<?= \TinyCat\Support\Html::et('admin.cache.opcache_reset') ?>" data-confirm-cancel="<?= \TinyCat\Support\Html::et('common.cancel') ?>">
                                     <?= \TinyCat\Security\Csrf::field() ?>
                                     <input type="hidden" name="action" value="reset-opcache">
                                     <button class="btn btn-secondary btn-sm" type="submit"><?= \TinyCat\Support\Html::icon('refresh') ?> <span><?= \TinyCat\Support\Html::et('admin.cache.opcache_reset') ?></span></button>

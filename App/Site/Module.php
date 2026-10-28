@@ -8,6 +8,9 @@ final class Module implements \TinyCat\Module
     {
         \TinyCat\Support\LocalUrls::configure(LocaleRouting::url(...));
         Api::register($api);
+        \TinyCat\Http\Router::route(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], '/scheduled-tasks.php', static function (): never {
+            \TinyCat\Http\Response::error('Use the scheduler API.', 410, 'endpoint_retired', ['endpoint' => '/api/scheduler/executions', 'health_endpoint' => '/api/scheduler/health']);
+        });
         foreach (['/sitemap.xml', '/sitemap'] as $path) {
             \TinyCat\Http\Router::route(['GET', 'HEAD'], $path, Discovery::sitemap(...));
         }
@@ -42,11 +45,6 @@ final class Module implements \TinyCat\Module
             \TinyCat\Site\Identity::respondIcon('maskable-512');
         });
         \TinyCat\Http\Router::route('GET', '/privacy', Pages::privacy(...));
-        foreach ([[['GET', 'POST'], '/install', 'install/index.php']] as [$methods, $pagePath, $file]) {
-            \TinyCat\Http\Router::route($methods, $pagePath, static function () use ($file): void {
-                require \TinyCat\Support\Paths::publicPath($file);
-            });
-        }
-        \TinyCat\Http\Router::route(['GET', 'POST'], '/admin', Pages::dashboard(...));
+        \TinyCat\Http\Router::route('GET', '/admin', Pages::dashboard(...));
     }
 }

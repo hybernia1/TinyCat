@@ -13,6 +13,16 @@ if (!defined('TINYCAT')) {
 
 final class Response
 {
+    /** CLI uses the same resource envelope and explicit process exit codes. */
+    public static function cli(mixed $data, string $code = 'ok', int $status = 200, int $exitCode = 0): never
+    {
+        if (PHP_SAPI !== 'cli') { throw new \LogicException('CLI response requires the command line.'); }
+        self::assertData($data);
+        $ok = $status < 400;
+        echo json_encode(self::envelope($ok, $status, null, $ok ? $data : null, [], $ok ? null : ['details' => $data], $code), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
+        exit($exitCode);
+    }
+
     /**
      * @param array<mixed> $headers
      */
@@ -62,6 +72,9 @@ final class Response
     public static function error(string $message = 'Request failed.', int $status = 400, string $code = 'error', array $details = [], array $params = []): never
     {
         header('Cache-Control: no-store, max-age=0');
+        if ($status === 429 && isset($details['retry_after'])) {
+            header('Retry-After: ' . max(1, (int) $details['retry_after']));
+        }
         if (isset($details['errors']) && is_array($details['errors'])) { $details['errors'] = self::issues($details['errors']); }
         self::assertData($details);
         self::assertData($params);

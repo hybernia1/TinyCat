@@ -110,7 +110,7 @@
     "purpose_user_followers": "Profili kullanıcılar arasında takip eder.",
     "purpose_notifications": "Beğeniler, yorumlar, bahsedilmeler ve takipler için uyarılar.",
     "purpose_content_reports": "Denetleme için kullanıcı raporları.",
-    "purpose_ip_action_limits": "Seçilen eylemler için IP tabanlı hız sınırı grupları.",
+    "purpose_ip_action_limits": "Seçilen işlemler için hesap veya IP adresine göre sınır sayaçları.",
     "purpose_password_reset_tokens": "E-postayla gönderilen kısa ömürlü şifre sıfırlama belirteçleri.",
     "purpose_settings": "Veritabanı destekli uygulama ayarları.",
     "admin_title": "İlk yönetici hesabı",

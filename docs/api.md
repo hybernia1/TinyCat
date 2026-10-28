@@ -44,6 +44,47 @@ use their current catalog and preserve server fallbacks for unknown codes.
 CAPTCHA failures include `error.details.captcha` with `enabled`, `provider`,
 `site_key`, `context` and `refresh`. No secret key is exposed.
 
+## Installation and scheduled execution
+
+All HTTP operations enter the front controller and module-owned routes. The shared
+API transport parses requests, applies the selected access policy and serializes
+the same envelope. Browser writes require CSRF. Scheduler automation instead uses
+the `scheduler` access policy with an `Authorization: Bearer TOKEN` header; cookies,
+query tokens and alternate token headers cannot replace it. The scheduler token is
+created or rotated explicitly through the administrator-only token API.
+
+| Method | Path | Access |
+| --- | --- | --- |
+| GET | `/api/installation` | Public safe setup status, no credentials |
+| POST | `/api/installation/steps/{step}` | Public, CSRF, installation must be open |
+| GET | `/api/scheduler/health` | Scheduler Bearer token, no execution |
+| POST | `/api/scheduler/executions` | Scheduler Bearer token |
+
+Installation steps are `language`, `db`, `tables` and `admin`. Each accepted step
+returns `data.step` and `data.redirect`. Validation stays in the JSON envelope;
+passwords and database credentials never appear in resource data. Setup routes
+work before the database exists and are exempt from the normal database-readiness
+gate. A completed installation rejects further setup writes with 409
+`installation_locked`. `/install` only renders the API-backed wizard.
+
+Scheduled execution accepts `task=feeds|cleanup|all` and an `options` object, for
+example `{"task":"feeds","options":{"bot_limit":20}}`. Every selected task and
+option is validated before any task starts. Existing locks, bounded options and
+history recording are shared with manual administration and CLI. Health returns
+`data.available_tasks`; execution returns `data.tasks`. Invalid input returns
+400/422; failed execution returns 500 with `error.details.execution`.
+
+`php scheduled-tasks.php` is a CLI adapter for the same execution service. It uses
+the same JSON envelope, with exit codes 0 (success), 1 (execution failure) and
+2 (invalid arguments). Its former HTTP endpoint only delegates to the front
+controller and returns 410 `endpoint_retired`, pointing to the canonical API.
+
+Public pages, images, RSS/XML, robots, sitemap and embeds remain registered
+read-only representations through the shared router. Their established URLs,
+content types, cache validators and HEAD semantics remain intact; these formats
+are not embedded in JSON. CLI and development tools call module services directly
+and do not implement a second set of operations.
+
 ## Users
 
 | Method | Path | Access |
@@ -123,6 +164,51 @@ are published immediately using the server's current publication time.
 Writes retain ownership, moderation, rate limits and transaction checks. Creation
 returns 201; reads, updates and deletions return 200. Like/follow PUT and DELETE
 request a state, so repeating an accepted request cannot toggle it back.
+
+Signed-in post, comment, like, report and search quotas are per account, independent
+of IP address. Public email checks and failed-login CAPTCHA counters remain IP-based.
+Quotas use fixed time buckets; existing hourly thresholds are unchanged. Short
+cooldowns are session-based and recorded after successful mutations. Publishing,
+editing and deleting have separate cooldowns, as do comment mutations; post and
+comment likes share the rating cooldown. Repeating an already satisfied like state
+does not consume a cooldown. A 429 response includes `Retry-After` and
+`error.details.retry_after` in seconds (short cooldowns also include milliseconds).
+The legacy `ip_action_limits.ip_address` column holds IP addresses or `user:<id>`
+keys, so no schema migration is required. Previous IP action buckets expire through
+normal cleanup and are not applied to the new account quotas. These controls cover
+selected actions; they are not a global request limiter.
+
+All rate-limit policy values live in `App/Security/RateLimitPolicy.php`. Authenticated
+`admin` and `bot` roles are exempt from quotas, request budgets, autocomplete limits
+and short cooldowns, and do not consume these counters. Anonymous requests have no
+trusted role; submitting an administrator's username does not grant an exemption.
+CAPTCHA remains an additional check for public authentication requests.
+
+| Request budget | Scope | Attempts | Window |
+|---|---|---:|---|
+| Login | IP | 60 | 15 minutes |
+| Registration | IP | 20 | 1 hour |
+| Request password reset | IP | 20 | 15 minutes |
+| Confirm password reset | IP | 30 | 15 minutes |
+| Email availability | IP | 60 | 1 minute |
+| Image upload (avatar, post, site settings) | Account of actor | 60 | 1 hour |
+| Follow/unfollow changes | Account of actor | 120 | 1 hour |
+
+Request budgets count attempts, including failed validation or CAPTCHA, and are
+reserved atomically in the database. Rejected attempts do not increase counters
+or extend the window. Upload budgets are shared across upload entry points and
+checked before image decoding. Avatar deletion consumes no upload budget; already
+satisfied follow/unfollow requests consume no follow budget. Content quotas still
+count accepted content actions separately.
+
+Authentication pages (`/login`, `/register`, `/recovery`, `/logout`) are GET views
+only. Their forms submit to the normalized API, including logout via
+`DELETE /api/users/sessions/current`. Legacy POSTs to page URLs return 405.
+The same rule applies to settings,
+updates, cache resets, notifications, search CAPTCHA and status/tag views. Notification
+read-and-open uses `PATCH /api/notifications/{id}?open=1`, returning a safe target
+in `data.redirect`; legacy `/notifications/open` links only redirect and do not
+change read state.
 
 ## Bots and administration
 

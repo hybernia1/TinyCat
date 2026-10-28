@@ -23,11 +23,13 @@ final class Api
         $api->post('/users/{id:[0-9]+}/email-checks', static fn (Request $r, array $p): array => EmailAvailability::check((int) self::target((int) $p['id'])['id']), 'user', 200);
         $api->post('/users/registrations', static fn (): Result => self::result(Actions::registration_request()), 'public');
         $api->post('/users/password-resets', static function (Request $request): Result {
+            \TinyCat\Security\RequestLimits::requireAllowed('recovery');
             self::recoveryCaptcha();
             Recovery::send((string) $request->input('email', ''));
             return new Result(['accepted' => true], \TinyCat\Support\Localization::t('auth.recovery_sent'), [], 'auth_recovery_sent', []);
         }, 'public');
         $api->post('/users/password-resets/confirm', static function (Request $request): Result {
+            \TinyCat\Security\RequestLimits::requireAllowed('recovery_confirm');
             self::recoveryCaptcha();
             $errors = Recovery::confirm(trim((string) $request->input('token', '')), (string) $request->input('password', ''), (string) $request->input('password_confirm', ''));
             if ($errors !== []) { Response::validation($errors); }
@@ -184,6 +186,8 @@ final class Api
         $actor = self::actor();
         if ($id === (int) $actor['id']) { Response::error(\TinyCat\Support\Localization::t('auth.forbidden'), 403, 'forbidden'); }
         if (Repository::public_author_find($id) === null) { Response::error(\TinyCat\Support\Localization::t('public.author_not_found'), 404, 'user_not_found'); }
+        $current = Following::author_is_followed((int) $actor['id'], $id);
+        if ($current !== $following) { \TinyCat\Security\RequestLimits::requireAllowed('follow', (int) $actor['id']); }
         if ($following) { Following::author_follow((int) $actor['id'], $id); }
         else { Profiles::author_unfollow((int) $actor['id'], $id); }
         return ['author_id' => $id, 'following' => $following, 'followers_count' => (int) Following::author_follow_counts($id)['followers']];

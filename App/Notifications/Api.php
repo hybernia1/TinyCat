@@ -26,11 +26,14 @@ final class Api
             $api->$method('/notifications/{id:[0-9]+}', static function (Request $request, array $params): array {
                 $userId = (int) Users::actor()['id'];
                 $id = (int) $params['id'];
-                if (\TinyCat\Database\Connection::find('notifications', ['id' => $id, 'user_id' => $userId]) === null) {
+                $item = \TinyCat\Database\Connection::find('notifications', ['id' => $id, 'user_id' => $userId]);
+                if ($item === null) {
                     Response::error(\TinyCat\Support\Localization::t('common.not_found'), 404, 'notification_not_found');
                 }
                 Inbox::applyAction($userId, $request->method() === 'DELETE' ? 'delete' : 'read', $id);
-                return Resource::state($userId) + ['id' => $id, 'deleted' => $request->method() === 'DELETE'];
+                $data = Resource::state($userId) + ['id' => $id, 'deleted' => $request->method() === 'DELETE'];
+                if ($request->method() === 'PATCH' && (string) $request->input('open', '') === '1') { $data['redirect'] = Inbox::targetUrl($item); }
+                return $data;
             });
         }
     }

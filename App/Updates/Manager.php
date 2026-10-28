@@ -879,11 +879,13 @@ final class Manager extends Package
     private static function maintenancePathAllowed(string $path): bool
     {
         return $path === '/admin/updates'
-            || str_starts_with($path, '/api/admin/updates')
+            || str_starts_with($path, '/api/updates/')
             || $path === '/login'
             || $path === '/logout'
-            || $path === '/api/auth/login'
-            || $path === '/api/auth/logout'
+            || $path === '/api/users/sessions'
+            || $path === '/api/users/sessions/current'
+            || $path === '/api/installation'
+            || str_starts_with($path, '/api/installation/')
             || $path === '/install'
             || str_starts_with($path, '/install/');
     }

@@ -20,7 +20,7 @@ try {
         && in_array(\TinyCat\Http\Request::current()->method(), ['GET', 'HEAD'], true)) {
         \TinyCat\Http\Web::redirect(\TinyCat\Site\LocaleRouting::url('/') . (!empty($_SERVER['QUERY_STRING']) ? '?' . (string) $_SERVER['QUERY_STRING'] : ''), 301);
     }
-    $installPath = $path === '/install' || str_starts_with($path, '/install/');
+    $installPath = $path === '/install' || str_starts_with($path, '/install/') || $path === '/api/installation' || str_starts_with($path, '/api/installation/');
     $siteIdentityPath = \TinyCat\Site\Identity::handles($path);
 
     if (!$siteIdentityPath) {

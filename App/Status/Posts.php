@@ -11,15 +11,7 @@ final class Posts
      */
     public static function status_session_interval_rule(string $action): array
     {
-        $action = str_replace('-', '_', strtolower(trim($action)));
-
-        return match ($action) {
-            'react', 'like', 'comment_like' => ['rating', 500],
-            'comment', 'comment_update', 'comment_delete' => ['comment', 1000],
-            'create', 'update', 'delete' => ['post', 5000],
-            'report' => ['report', 60_000],
-            default => ['status_mutation', 500],
-        };
+        return \TinyCat\Security\RateLimitPolicy::cooldown($action);
     }
 
     public static function status_anchor(int $id): string

@@ -12,7 +12,7 @@ declare(strict_types=1);
         </div>
         <div class="card-body stack">
             <p class="text-muted mb-0"><?= \TinyCat\Support\Html::et($recoveryToken !== '' ? 'auth.recovery_reset_intro' : 'auth.recovery_intro') ?></p>
-            <form data-ajax-form data-ajax-action="<?= $recoveryToken !== '' ? '/api/users/password-resets/confirm' : '/api/users/password-resets' ?>" class="stack" method="post" action="<?= \TinyCat\Support\Html::e($pageUrls['/recovery']) ?><?= $recoveryToken !== '' ? '?token=' . \TinyCat\Support\Html::e(rawurlencode($recoveryToken)) : '' ?>">
+            <form data-ajax-form class="stack" method="post" action="<?= $recoveryToken !== '' ? '/api/users/password-resets/confirm' : '/api/users/password-resets' ?>">
                 <?= \TinyCat\Security\Csrf::field() ?>
                 <?php if ($recoveryToken !== ''): ?>
                     <input type="hidden" name="action" value="reset">

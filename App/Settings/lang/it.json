@@ -110,7 +110,7 @@
     "purpose_user_followers": "Il profilo segue tra gli utenti.",
     "purpose_notifications": "Avvisi per Mi piace, commenti, menzioni e follower.",
     "purpose_content_reports": "Segnalazioni utente per moderazione.",
-    "purpose_ip_action_limits": "Bucket con limite di velocità basato su IP per le azioni selezionate.",
+    "purpose_ip_action_limits": "Contatori dei limiti per account o indirizzo IP per azioni selezionate.",
     "purpose_password_reset_tokens": "Token di reimpostazione della password di breve durata inviati tramite e-mail.",
     "purpose_settings": "Impostazioni dell'applicazione supportata da database.",
     "admin_title": "Primo account amministratore",

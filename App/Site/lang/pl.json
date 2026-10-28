@@ -89,7 +89,7 @@
     "data_email": "Podanego adresu e-mail można także użyć do zalogowania się, odzyskania hasła i otrzymywania opcjonalnych powiadomień e-mail. Użytkownicy mogą kontrolować powiadomienia w swoim profilu, a administratorzy kontrolują dostępne typy powiadomień.",
     "data_content": "Aplikacja przechowuje treści tworzone przez użytkowników: posty, komentarze, przesłane obrazy, polubienia, obserwacje, raporty i opcjonalne pola profilu.",
     "data_technical": "Hasła są przechowywane wyłącznie w postaci skrótów. Linki do resetowania hasła to krótkotrwałe, jednorazowe tokeny.",
-    "data_server_logs": "{site} przechowuje adresy IP w celu ograniczenia szybkości wybranych działań związanych z logowaniem, takich jak posty, komentarze, polubienia, raporty i wyszukiwania. Operator serwera może posiadać logi techniczne serwera także poza aplikacją.",
+    "data_server_logs": "{site} przechowuje liczniki według konta lub adresu IP, aby ograniczać nadmierne żądania. Operator serwera może też posiadać logi techniczne poza aplikacją.",
     "recovery_title": "Odzyskiwanie hasła",
     "recovery_email": "Odzyskiwanie hasła wykorzystuje stronę /recovery i link wysłany na adres e-mail konta.",
     "recovery_no_contact": "Adres e-mail jest opcjonalny podczas rejestracji, ale wymagany do odzyskiwania hasła za pośrednictwem poczty e-mail.",

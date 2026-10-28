@@ -12,7 +12,10 @@ final class Api
 
         $api->post('/security/challenges/search', static function (): Result {
             if (!\TinyCat\Search\Guard::public_search_captcha_verify()) { Response::error(\TinyCat\Support\Localization::t('auth.invalid_captcha'), 422, 'captcha_invalid', ['captcha' => \TinyCat\Security\Captcha::configuration('search')]); }
-            return new Result(['unlocked' => true], \TinyCat\Support\Localization::t('public.search_captcha_unlocked'), [], 'search_search_captcha_unlocked', []);
+            $next = \TinyCat\Users\Login::auth_safe_next_url((string) \TinyCat\Http\Request::current()->input('next', ''));
+            $data = ['unlocked' => true];
+            if ($next !== '') { $data['redirect'] = $next; }
+            return new Result($data, \TinyCat\Support\Localization::t('public.search_captcha_unlocked'), [], 'search_search_captcha_unlocked', []);
         }, 'public', 200);
     }
 }

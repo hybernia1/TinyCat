@@ -110,7 +110,7 @@
     "purpose_user_followers": "Profiel volgt tussen gebruikers.",
     "purpose_notifications": "Waarschuwingen voor vind-ik-leuks, opmerkingen, vermeldingen en volgers.",
     "purpose_content_reports": "Gebruikersrapporten voor moderatie.",
-    "purpose_ip_action_limits": "Op IP gebaseerde snelheidslimietbuckets voor geselecteerde acties.",
+    "purpose_ip_action_limits": "Limiettellers per account of IP-adres voor geselecteerde acties.",
     "purpose_password_reset_tokens": "Kortstondige tokens voor het opnieuw instellen van wachtwoorden, verzonden per e-mail.",
     "purpose_settings": "Database-backed applicatie-instellingen.",
     "admin_title": "Eerste beheerdersaccount",
