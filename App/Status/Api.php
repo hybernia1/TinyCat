@@ -15,6 +15,8 @@ final class Api
     public static function register(Registrar $api): void
     {
         $api->get('/statuses', self::listing(...));
+        $api->get('/statuses/{id:[0-9]+}/links/{hash:[a-f0-9]{64}}', static fn (Request $r, array $p): array => self::contentLink($r, $p));
+        $api->get('/statuses/{id:[0-9]+}/comments/{commentId:[0-9]+}/links/{hash:[a-f0-9]{64}}', static fn (Request $r, array $p): array => self::contentLink($r, $p));
         $api->get('/statuses/{id:[0-9]+}/embed', static function (Request $request, array $params): array {
             $data = Embed::sharing((int) $params['id']);
             if ($data === null) { Response::error(\TinyCat\Support\Localization::t('public.status_not_found'), 404, 'status_not_found'); }
@@ -49,6 +51,24 @@ final class Api
             });
         }
 
+    }
+
+    /** JSON clients receive the standard envelope; native link navigation receives a temporary redirect.
+     * @param array<string, string> $params
+     * @return array{url: string, original_url: string} */
+    private static function contentLink(Request $request, array $params): array
+    {
+        header('Cache-Control: private, no-store');
+        header('Vary: Accept');
+        header('X-Robots-Tag: noindex, nofollow');
+        $link = ContentLinks::resolve((int) $params['id'], $params['hash'], (int) ($params['commentId'] ?? 0));
+        if ($link === null) { Response::error('Content link not found.', 404, 'content_link_not_found'); }
+        if ($request->input('navigate') === '1' && !$request->wantsJson() && str_contains(strtolower((string) $request->header('Accept')), 'text/html')) {
+            header('Referrer-Policy: no-referrer');
+            header('Location: ' . $link['url'], true, 302);
+            exit;
+        }
+        return $link;
     }
 
     private static function listing(Request $request): Result

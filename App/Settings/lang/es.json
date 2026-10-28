@@ -57,14 +57,22 @@
       "email_from_name": "Nombre del remitente",
       "email_templates": "Tipos de entrega de correo electrónico",
       "google_measurement_id": "ID de medición de Google Analytics",
-      "google_measurement_id_help": "Opcional, por ejemplo G-XXXXXXXXXX."
+      "google_measurement_id_help": "Opcional, por ejemplo G-XXXXXXXXXX.",
+      "site_url": "Website URL",
+      "site_url_help": "Canonical website address for absolute links and health measurements, e.g. https://example.com. No credentials, query or fragment. Leave empty to use the server configuration.",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     },
     "messages": {
       "saved": "Se guardaron los ajustes.",
       "required": "Complete todas las configuraciones requeridas.",
       "invalid_language": "El idioma seleccionado no está disponible.",
       "invalid_timezone": "La zona horaria seleccionada no es válida.",
-      "invalid_datetime_format": "El formato de fecha u hora seleccionado no está disponible."
+      "invalid_datetime_format": "El formato de fecha u hora seleccionado no está disponible.",
+      "invalid_site_url": "Enter a valid HTTP or HTTPS website URL without credentials, query or fragment."
     },
     "footer_placeholder": "Texto de pie de página o HTML...",
     "image_empty": "Ninguna imagen seleccionada",

@@ -1,0 +1,77 @@
+{
+  "health": {
+    "title": "Zdraví webu",
+    "intro": "Denní provozní kontrola s uloženým výsledkem a oznámením všem aktivním administrátorům.",
+    "run": "Spustit kontrolu",
+    "schedule": "Naplánujte jednou denně. Každá dokončená kontrola oznámí výsledek aktivním administrátorům.",
+    "schedule_short": "Jednou denně",
+    "last_failed": "Poslední kontrola se nedokončila. Prohlédněte historii plánovaných úloh.",
+    "stale": "Není k dispozici čerstvá dokončená kontrola. Prověřte nastavení cronu.",
+    "checked_at": "Čas kontroly",
+    "check": "Kontrola",
+    "result": "Výsledek",
+    "recommendation": "Doporučení",
+    "passed": "Kontrola proběhla v pořádku.",
+    "empty": "Zatím neproběhla žádná kontrola.",
+    "history": "Poslední kontroly",
+    "execution": "Spuštění",
+    "notification_ok": "Kontrola zdraví webu dokončena: vše je v pořádku.",
+    "notification_attention": "Kontrola zdraví webu dokončena: něco vyžaduje pozornost.",
+    "status": {
+      "ok": "V pořádku",
+      "warning": "Vyžaduje pozornost",
+      "critical": "Zjištěn problém",
+      "skipped": "Nezkontrolováno",
+      "unknown": "Neznámý stav"
+    },
+    "checks": {
+      "database": "Databáze",
+      "cache": "Cache",
+      "storage": "Úložiště aplikace",
+      "uploads": "Nahrávané soubory",
+      "disk": "Volné místo",
+      "runtime": "PHP rozšíření",
+      "scheduler": "Plánované úlohy",
+      "updates": "Stav obnovy po aktualizaci",
+      "http": "HTTP odezva webu"
+    },
+    "advice": {
+      "database": "Prověřte připojení k databázi a dostupnost databázového serveru.",
+      "cache": "Prověřte zápis do cache a nastavenou službu cache; může se používat záložní úložiště.",
+      "storage": "Prověřte práva pro zápis do úložiště a volné místo.",
+      "uploads": "Prověřte práva pro zápis nahrávaných souborů a volné místo.",
+      "disk": "Prověřte volné místo: doporučeno je alespoň 256 MiB a 5 % kapacity disku.",
+      "runtime": "Prověřte podporu cURL, GD, Sodium a ZIP nebo Phar.",
+      "scheduler": "Prověřte poslední běhy úklidu a importu zdrojů, jejich chyby a nastavení cronu.",
+      "updates": "Před otevřením webu prověřte obnovu aktualizace a režim údržby.",
+      "http": "Prověřte HTTP dostupnost a rychlost úvodní stránky. Přesměrování vyžaduje opravu nastavené adresy webu; timeout nebo chyba spojení znamená neúspěšné měření."
+    },
+    "measured": "Naměřeno",
+    "http": {
+      "total": "Doba požadavku",
+      "limits": "TTFB: varování nad {warning} ms, problém nad {critical} ms.",
+      "errors": {
+        "configuration": "Chybí platná adresa webu v konfiguraci.",
+        "unsupported": "Měření vyžaduje rozšíření cURL.",
+        "timeout": "Vypršel časový limit požadavku.",
+        "transport": "Chyba spojení nebo ověření TLS.",
+        "response_limit": "Odpověď překročila limit velikosti; přenos není úplný.",
+        "disabled": "HTTP měření je vypnuté."
+      },
+      "total_limits": "Celkem: varování nad {warning} ms, problém nad {critical} ms."
+    },
+    "overview_count": "{passed} z {total} kontrol v pořádku",
+    "all_checks": "Všechny kontroly",
+    "measurement_details": "Podrobnosti měření a limity",
+    "details": "Podrobnosti",
+    "check_duration": "Doba provedení kontroly",
+    "scheduler": {
+      "ok": "V pořádku.",
+      "missing": "Chybí úspěšný běh.",
+      "stale": "Úspěšný běh je příliš starý.",
+      "failed": "Poslední běh selhal.",
+      "interrupted": "Poslední běh byl přerušen.",
+      "unknown": "Podrobnosti nejsou v tomto starším výsledku uložené. Spusťte novou kontrolu."
+    }
+  }
+}

@@ -220,6 +220,30 @@ final class Avatar
         return \TinyCat\Security\Images::image_resample($source, self::SIZE, self::SIZE, $sourceX, $sourceY, $crop, $crop);
     }
 
+    /** @return array{changed: int, has_more: bool} */
+    public static function cleanupOrphans(int $limit): array
+    {
+        return \TinyCat\Support\FileSweep::run(\TinyCat\Support\Paths::basePath(self::BASE_DIRECTORY), $limit, static function (array $files): array {
+            $candidates = [];
+            foreach ($files as $file) {
+                if (preg_match('/^([1-9][0-9]*)\.webp$/D', $file->getFilename(), $match) === 1 && $file->getMTime() < time() - 86400) {
+                    $candidates[(int) $match[1]] = $file->getPathname();
+                }
+            }
+            $owners = [];
+            foreach (array_chunk(array_keys($candidates), 100) as $ids) {
+                foreach (\TinyCat\Database\Connection::all('SELECT id FROM users WHERE id IN (' . implode(', ', array_fill(0, count($ids), '?')) . ')', $ids) as $row) { $owners[(int) $row['id']] = true; }
+            }
+            $changed = 0;
+            foreach ($candidates as $id => $path) {
+                clearstatcache(true, $path);
+                $modified = @filemtime($path);
+                if (!isset($owners[$id]) && $modified !== false && $modified < time() - 86400 && \TinyCat\Support\FileSweep::remove($path)) { $changed++; }
+            }
+            return ['changed' => $changed, 'has_more' => false];
+        });
+    }
+
     private static function path(int $userId): string
     {
         return \TinyCat\Support\Paths::basePath(self::BASE_DIRECTORY . '/' . $userId . '.webp');

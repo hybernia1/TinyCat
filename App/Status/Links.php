@@ -434,40 +434,27 @@ final class Links
         if ($resolvedDirectory !== $resolvedBase && !str_starts_with($resolvedDirectory, $resolvedBase . DIRECTORY_SEPARATOR)) {
             throw new \RuntimeException('Link image directory escapes upload storage.');
         }
-        $changed = 0;
-        $cutoff = time() - 3600;
-        $pending = [];
-        $flush = static function (array $paths) use (&$changed, $limit, $cutoff): bool {
-            if ($paths === []) { return false; }
-            $placeholders = implode(', ', array_fill(0, count($paths), '?'));
-            $rows = \TinyCat\Database\Connection::all('SELECT image_url FROM links WHERE image_url IN (' . $placeholders . ')', array_keys($paths));
-            $stored = array_fill_keys(array_column($rows, 'image_url'), true);
-            foreach ($paths as $url => $file) {
-                if (isset($stored[$url])) { continue; }
-                clearstatcache(true, $file);
-                $modified = @filemtime($file);
-                if ($modified === false || $modified > $cutoff || is_link($file)) { continue; }
-                if ($changed >= max(1, $limit)) { return true; }
-                if (!@unlink($file) && is_file($file)) { throw new \RuntimeException('Unable to remove orphan link image.'); }
-                $changed++;
+        return \TinyCat\Support\FileSweep::run($directory, $limit, static function (array $files) use ($base): array {
+            $paths = [];
+            foreach ($files as $file) {
+                $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($base) + 1));
+                if ($file->getMTime() <= time() - 3600 && preg_match('~^[0-9]{4}/[0-9]{2}/[a-f0-9]{40}\.webp$~D', $relative) === 1) {
+                    $paths['/uploads/links/' . $relative] = $file->getPathname();
+                }
             }
-            return false;
-        };
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS));
-        foreach ($iterator as $file) {
-            if (!$file->isFile() || $file->isLink() || $file->getMTime() > $cutoff) { continue; }
-            $parent = realpath($file->getPath());
-            if ($parent === false || !str_starts_with($parent, $resolvedBase . DIRECTORY_SEPARATOR)) { continue; }
-            $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($base) + 1));
-            if (preg_match('~^[0-9]{4}/[0-9]{2}/[a-f0-9]{40}\.webp$~D', $relative) !== 1) { continue; }
-            $pending['/uploads/links/' . $relative] = $file->getPathname();
-            if (count($pending) >= 100) {
-                if ($flush($pending)) { return ['changed' => $changed, 'has_more' => true]; }
-                $pending = [];
+            $stored = [];
+            foreach (array_chunk(array_keys($paths), 100) as $chunk) {
+                $rows = \TinyCat\Database\Connection::all('SELECT image_url FROM links WHERE image_url IN (' . implode(', ', array_fill(0, count($chunk), '?')) . ')', $chunk);
+                foreach ($rows as $row) { $stored[(string) $row['image_url']] = true; }
             }
-        }
-        $hasMore = $flush($pending);
-        return ['changed' => $changed, 'has_more' => $hasMore];
+            $changed = 0;
+            foreach ($paths as $url => $path) {
+                clearstatcache(true, $path);
+                $modified = @filemtime($path);
+                if (!isset($stored[$url]) && $modified !== false && $modified <= time() - 3600 && \TinyCat\Support\FileSweep::remove($path)) { $changed++; }
+            }
+            return ['changed' => $changed, 'has_more' => false];
+        });
     }
 
     public static function status_link_image_exists(string $url): bool

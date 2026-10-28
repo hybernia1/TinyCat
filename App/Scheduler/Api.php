@@ -9,6 +9,16 @@ final class Api
 {
     public static function register(\TinyCat\Http\Api $api): void
     {
+        $api->get('/scheduler/triggers/{task:[a-z-]+}', static function (Request $request, array $params): Result {
+            $task = $params['task'];
+            if (!isset(Tasks::definitions()[$task])) { \TinyCat\Http\Response::error('Unknown scheduled task.', 404, 'scheduler_unknown_task'); }
+            if ($request->method() === 'HEAD') {
+                return new Result(['task' => $task, 'available' => true], null, [], 'scheduler_healthy');
+            }
+            $result = \TinyCat\Http\Session::withoutLock(static fn (): array => Execution::run($task));
+            if (!$result['ok']) { \TinyCat\Http\Response::error('Scheduled execution failed.', 500, 'scheduler_run_failed', ['execution' => $result]); }
+            return new Result($result, null, [], 'scheduler_run_finished');
+        }, 'scheduler_trigger');
         $api->get('/scheduler/health', static function (Request $request): Result {
             $request->validated(['task' => 'string']);
             return new Result(Execution::health((string) $request->input('task', 'all')), null, [], 'scheduler_healthy');

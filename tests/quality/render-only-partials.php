@@ -52,7 +52,7 @@ $forbiddenStaticOwners = array_fill_keys([
 ], true);
 $failures = [];
 $production = '';
-foreach (['App', 'Public'] as $directory) {
+foreach (['App'] as $directory) {
     foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/' . $directory, FilesystemIterator::SKIP_DOTS)) as $sourceFile) {
         if ($sourceFile->getExtension() === 'php') { $production .= file_get_contents($sourceFile->getPathname()) . "\n"; }
     }

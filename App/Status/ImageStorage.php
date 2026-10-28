@@ -4,10 +4,6 @@ declare(strict_types=1);
 namespace TinyCat\Status;
 
 use GdImage;
-use RecursiveIteratorIterator;
-use RecursiveDirectoryIterator;
-use FilesystemIterator;
-use SplFileInfo;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -146,73 +142,26 @@ final class ImageStorage
             return ['changed' => 0, 'has_more' => false];
         }
 
-        $cutoff = time() - self::ORPHAN_MINIMUM_AGE;
-        $changed = 0;
-        $pending = [];
-        $scanBatch = min(1000, max(100, $limit));
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::LEAVES_ONLY
-        );
-
-        $flush = static function (array $paths) use (&$changed, $limit): bool {
-            if ($paths === []) {
-                return false;
+        return \TinyCat\Support\FileSweep::run($directory, $limit, static function (array $files) use ($pathPrefix, $directory): array {
+            $paths = [];
+            foreach ($files as $file) {
+                if ($file->getMTime() > time() - self::ORPHAN_MINIMUM_AGE) { continue; }
+                $relative = self::normalizePath($pathPrefix . str_replace('\\', '/', substr($file->getPathname(), strlen($directory) + 1)));
+                if ($relative !== '') { $paths[$relative] = $file->getPathname(); }
             }
-
-            $placeholders = implode(', ', array_fill(0, count($paths), '?'));
-            $records = \TinyCat\Database\Connection::all('SELECT path FROM content_images WHERE path IN (' . $placeholders . ')', array_keys($paths));
             $stored = [];
-
-            foreach ($records as $record) {
-                $stored[(string) ($record['path'] ?? '')] = true;
+            foreach (array_chunk(array_keys($paths), 100) as $chunk) {
+                $rows = \TinyCat\Database\Connection::all('SELECT path FROM content_images WHERE path IN (' . implode(', ', array_fill(0, count($chunk), '?')) . ')', $chunk);
+                foreach ($rows as $row) { $stored[(string) $row['path']] = true; }
             }
-
-            foreach ($paths as $path => $file) {
-                if (isset($stored[$path])) {
-                    continue;
-                }
-
-                if ($changed >= $limit) {
-                    return true;
-                }
-
-                if (self::deletePath($path)) {
-                    $changed++;
-                }
+            $changed = 0;
+            foreach ($paths as $relative => $path) {
+                clearstatcache(true, $path);
+                $modified = @filemtime($path);
+                if (!isset($stored[$relative]) && $modified !== false && $modified <= time() - self::ORPHAN_MINIMUM_AGE && !is_link($path) && self::deletePath($relative)) { $changed++; }
             }
-
-            return false;
-        };
-
-        foreach ($iterator as $file) {
-            if (!$file instanceof SplFileInfo || !$file->isFile() || $file->getMTime() > $cutoff) {
-                continue;
-            }
-
-            $relativePath = $pathPrefix . str_replace('\\', '/', substr($file->getPathname(), strlen($directory) + 1));
-            $relativePath = self::normalizePath($relativePath);
-
-            if ($relativePath === '') {
-                continue;
-            }
-
-            $pending[$relativePath] = $file->getPathname();
-
-            if (count($pending) >= $scanBatch) {
-                if ($flush($pending)) {
-                    return ['changed' => $changed, 'has_more' => true];
-                }
-
-                $pending = [];
-            }
-        }
-
-        if ($flush($pending)) {
-            return ['changed' => $changed, 'has_more' => true];
-        }
-
-        return ['changed' => $changed, 'has_more' => $changed >= $limit];
+            return ['changed' => $changed, 'has_more' => false];
+        });
     }
 
     private static function resize(GdImage $source): GdImage

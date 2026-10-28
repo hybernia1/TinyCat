@@ -18,7 +18,7 @@ $assert = static function (bool $value, string $message) use (&$checks): void {
 };
 [$exit, $payload] = $run(['--health']);
 $assert($exit === 0 && $payload['ok'] && $payload['status'] === 200 && $payload['code'] === 'scheduler_healthy', 'CLI health uses the successful API envelope.');
-$assert($payload['data']['available_tasks'] === ['feeds', 'cleanup'] && $payload['data']['mode'] === 'cli', 'CLI health shares the task registry.');
+$assert($payload['data']['available_tasks'] === ['feeds', 'cleanup', 'site-health'] && $payload['data']['mode'] === 'cli', 'CLI health shares the task registry.');
 foreach ([['--task=unknown', '--health'], ['--task=feeds', '--cleanup-batch=500', '--health'], ['--unknown']] as $args) {
     [$exit, $payload] = $run($args);
     $assert($exit === 2 && !$payload['ok'] && $payload['status'] === 400 && isset($payload['error']['details']), 'CLI invalid arguments use the error envelope and exit code 2.');

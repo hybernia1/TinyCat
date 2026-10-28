@@ -8,7 +8,7 @@ final class Segments
      * @param list<string> $hiddenHashes
      * @return list<array<string, string>>
      */
-    public static function text(string $text, array $hiddenHashes = []): array
+    public static function text(string $text, array $hiddenHashes = [], int $contentId = 0, int $commentId = 0): array
     {
         $segments = [];
         $offset = 0;
@@ -20,7 +20,7 @@ final class Segments
             $internal = Links::status_internal_url($url);
             if ($internal || $link === null || !in_array((string) ($link['url_hash'] ?? ''), $hiddenHashes, true)) {
                 $href = $internal ? Links::status_internal_url_path($url) : (string) ($link['normalized_url'] ?? '');
-                $segments[] = ['type' => $href !== '' ? 'link' : 'text', 'text' => $url, 'url' => $href];
+                $segments[] = ['type' => $href !== '' ? 'link' : 'text', 'text' => $url, 'url' => $href, 'outbound_url' => !$internal && $link !== null && $contentId > 0 ? ContentLinks::navigation($contentId, (string) $link['url_hash'], $commentId) : $href];
             }
             if ($tail !== '') { $segments[] = ['type' => 'text', 'text' => $tail]; }
             $offset = $position + strlen($raw);

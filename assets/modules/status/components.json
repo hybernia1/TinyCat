@@ -26,7 +26,14 @@
         "tag": "a",
         "attrs": {
           "href": {
-            "get": "segment.url"
+            "or": [
+              {
+                "get": "segment.outbound_url"
+              },
+              {
+                "get": "segment.url"
+              }
+            ]
           },
           "class": {
             "if": [
@@ -468,7 +475,14 @@
           "attrs": {
             "class": "status-video-source",
             "href": {
-              "get": "link.url"
+              "or": [
+                {
+                  "get": "link.outbound_url"
+                },
+                {
+                  "get": "link.url"
+                }
+              ]
             },
             "target": "_blank",
             "rel": "nofollow noopener noreferrer ugc"
@@ -515,7 +529,14 @@
           ]
         },
         "href": {
-          "get": "link.url"
+          "or": [
+            {
+              "get": "link.outbound_url"
+            },
+            {
+              "get": "link.url"
+            }
+          ]
         },
         "target": "_blank",
         "rel": "nofollow noopener noreferrer ugc",
@@ -724,7 +745,14 @@
           "attrs": {
             "class": "status-link-provider",
             "href": {
-              "get": "link.url"
+              "or": [
+                {
+                  "get": "link.outbound_url"
+                },
+                {
+                  "get": "link.url"
+                }
+              ]
             },
             "target": "_blank",
             "rel": "nofollow noopener noreferrer ugc",
@@ -811,7 +839,14 @@
               ]
             },
             "href": {
-              "get": "link.url"
+              "or": [
+                {
+                  "get": "link.outbound_url"
+                },
+                {
+                  "get": "link.url"
+                }
+              ]
             },
             "target": "_blank",
             "rel": "nofollow noopener noreferrer ugc",

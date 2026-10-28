@@ -57,14 +57,22 @@
       "email_from_name": "Gönderenin adı",
       "email_templates": "E-posta dağıtım türleri",
       "google_measurement_id": "Google Analytics Ölçüm Kimliği",
-      "google_measurement_id_help": "İsteğe bağlı, örneğin G-XXXXXXXXXX."
+      "google_measurement_id_help": "İsteğe bağlı, örneğin G-XXXXXXXXXX.",
+      "site_url": "Website URL",
+      "site_url_help": "Canonical website address for absolute links and health measurements, e.g. https://example.com. No credentials, query or fragment. Leave empty to use the server configuration.",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     },
     "messages": {
       "saved": "Ayarlar kaydedildi.",
       "required": "Gerekli tüm ayarları doldurun.",
       "invalid_language": "Seçilen dil mevcut değil.",
       "invalid_timezone": "Seçilen saat dilimi geçerli değil.",
-      "invalid_datetime_format": "Seçilen tarih veya saat biçimi mevcut değil."
+      "invalid_datetime_format": "Seçilen tarih veya saat biçimi mevcut değil.",
+      "invalid_site_url": "Enter a valid HTTP or HTTPS website URL without credentials, query or fragment."
     },
     "footer_placeholder": "Altbilgi metni veya HTML...",
     "image_empty": "Resim seçilmedi",

@@ -20,6 +20,7 @@ final class Navigation
                 ],
             ],
             \TinyCat\Scheduler\Module::adminNavigation(),
+            \TinyCat\Health\Module::adminNavigation(),
             ['href' => '/admin/updates', 'icon' => 'download', 'label' => \TinyCat\Support\Localization::t('updates.title')],
             ['href' => '/admin/settings', 'icon' => 'settings', 'label' => \TinyCat\Support\Localization::t('settings.title')],
         ];
