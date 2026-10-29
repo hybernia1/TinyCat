@@ -96,46 +96,69 @@
                 "t": "cron.history"
               }
             ]
-          },
-          {
-            "tag": "a",
-            "attrs": {
-              "href": {
-                "get": "refresh_url"
-              },
-              "data-ajax": "",
-              "data-ajax-target": "#scheduler-list",
-              "class": "btn btn-secondary btn-sm"
-            },
-            "children": [
-              {
-                "icon": "refresh"
-              },
-              {
-                "tag": "span",
-                "children": [
-                  {
-                    "t": "cron.refresh"
-                  }
-                ]
-              }
-            ]
           }
         ]
       },
       {
-        "component": "ui/list-toolbar",
-        "data": {
-          "url": "/api/scheduler/tasks",
-          "target": "#scheduler-list",
-          "history": "/admin/cron/list",
-          "filters": {
-            "get": "filters"
+        "tag": "div",
+        "attrs": {
+          "class": "admin-list-toolbar"
+        },
+        "children": [
+          {
+            "component": "ui/search-form",
+            "data": {
+              "url": "/api/scheduler/tasks",
+              "target": "#scheduler-list",
+              "history": "/admin/cron/list",
+              "filters": {
+                "get": "filters"
+              },
+              "pagination": {
+                "get": "pagination"
+              }
+            }
           },
-          "pagination": {
-            "get": "pagination"
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "admin-filter-actions"
+            },
+            "children": [
+              {
+                "component": "ui/modal-trigger",
+                "data": {
+                  "class": "btn btn-secondary btn-sm",
+                  "modal": "scheduler-filter-modal",
+                  "label": {
+                    "t": "common.filters"
+                  },
+                  "icon": "filter"
+                }
+              },
+              {
+                "component": "ui/per-page",
+                "data": {
+                  "url": "/api/scheduler/tasks",
+                  "target": "#scheduler-list",
+                  "history": "/admin/cron/list",
+                  "filters": {
+                    "get": "filters"
+                  },
+                  "pagination": {
+                    "get": "pagination"
+                  },
+                  "choices": {
+                    "10": "10",
+                    "25": "25",
+                    "50": "50",
+                    "100": "100"
+                  }
+                }
+              }
+            ]
           }
-        }
+        ]
       },
       {
         "tag": "div",

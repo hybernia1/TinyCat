@@ -120,6 +120,11 @@
       "completed": "Complété",
       "interrupted": "Interrompu"
     },
-    "edit_account": "Modifier le compte du robot"
+    "edit_account": "Modifier le compte du robot",
+    "queue_title": "File de publication",
+    "queue_empty": "Aucune publication en attente ne correspond aux filtres.",
+    "publish_now": "Publier maintenant",
+    "publish_now_confirm": "Publier ce message maintenant ?",
+    "queue_published": "Le message a été publié."
   }
 }

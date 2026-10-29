@@ -48,6 +48,7 @@ $tests = [
     'Asset reachability and delivery budgets' => 'tests/asset-optimizer/budgets.php',
     'Asset dependency graph' => 'tests/asset-optimizer/graph.php',
     'Built-in Bots' => 'tests/bots/run.php',
+    'Bot publication queue' => 'tests/bots/queue.php',
     'Bot publication migration' => 'tests/bots/publication-migration.php',
     'Updater' => 'tests/updater/run.php',
     'MySQL migration registry' => 'tests/updater/mysql-registry.php',

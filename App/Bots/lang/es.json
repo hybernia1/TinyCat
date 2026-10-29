@@ -120,6 +120,11 @@
       "completed": "Terminado",
       "interrupted": "interrumpido"
     },
-    "edit_account": "Editar cuenta de bot"
+    "edit_account": "Editar cuenta de bot",
+    "queue_title": "Cola de publicaciones",
+    "queue_empty": "No hay publicaciones en cola que coincidan con los filtros.",
+    "publish_now": "Publicar ahora",
+    "publish_now_confirm": "¿Publicar esta entrada ahora?",
+    "queue_published": "La entrada se ha publicado."
   }
 }

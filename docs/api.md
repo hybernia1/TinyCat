@@ -181,6 +181,7 @@ Unknown columns retain the list's default order. Supported sort keys are:
 | `/api/users` | `username`, `role`, `status`, `updated_at` |
 | `/api/bots/accounts` | `username`, `status`, `source_count`, `post_count`, `updated_at` |
 | `/api/bots/sources` | `name`, `bot`, `status`, `interval`, `last_import` |
+| `/api/bots/queue` | `bot`, `body`, `published_at` |
 | `/api/scheduler/tasks` | `task`, `started_at`, `status`, `duration_ms` (run history) |
 | `/api/moderation/reports` | `content`, `reason`, `status` |
 
@@ -289,6 +290,8 @@ Manual imports of one source use the same feeds task and lock, with
 | GET, POST | `/api/bots/sources` | List / create feed sources |
 | PATCH, DELETE | `/api/bots/sources/{id}` | Edit / delete |
 | POST | `/api/bots/sources/{id}/runs` | Run a feed import |
+| GET | `/api/bots/queue` | Paginated future bot posts; filter by `q` (text), `bot` (account ID), and `status` (account status) |
+| POST | `/api/bots/queue/{id}/publication` | Publish immediately and return the refreshed queue; administrator and CSRF token required |
 | GET | `/api/moderation/reports` | List moderation reports |
 | PATCH | `/api/moderation/reports/{id}` | Review with `decision=remove|dismiss` |
 | GET, PUT | `/api/moderation/blocked-urls` | Read / replace blocked URL rules |
@@ -298,6 +301,13 @@ Manual imports of one source use the same feeds task and lock, with
 | POST | `/api/updates/installations` | Install the verified update |
 | DELETE | `/api/updates/maintenance` | Disable maintenance after recovery |
 | POST | `/api/site/cache-resets` | Reset OPcache |
+
+The publication queue is available at `/admin/bots/queue`. It includes future
+posts belonging to bot accounts, ordered by planned publication time by default.
+Publishing requires an active bot and changes only the selected post's publication
+time. Repeated requests preserve its first publication time. Other queued posts
+keep their schedules. List filters, sorting, and pagination can be included in the
+publication URL and are applied to the returned list.
 
 Bot accounts accept `q`, `status`, `page` and `per_page`; sources accept `bot`.
 The bot post list accepts `q`, `page`, `per_page`, `sort` (`body` or `published_at`)

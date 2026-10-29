@@ -120,6 +120,11 @@
       "completed": "voltooid",
       "interrupted": "Onderbroken"
     },
-    "edit_account": "Botaccount bewerken"
+    "edit_account": "Botaccount bewerken",
+    "queue_title": "Publicatiewachtrij",
+    "queue_empty": "Geen berichten in de wachtrij voldoen aan de filters.",
+    "publish_now": "Nu publiceren",
+    "publish_now_confirm": "Dit bericht nu publiceren?",
+    "queue_published": "Het bericht is gepubliceerd."
   }
 }

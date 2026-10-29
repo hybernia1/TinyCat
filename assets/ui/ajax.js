@@ -32,7 +32,7 @@ import "./toasts.js";
   var resultErrors = TinyCat.api.errors;
   var confirmAction = TinyCat.actions.confirm;
   function preserveListSorting(url, target) {
-    if (!url || !target || !["users-list", "bot-accounts-list", "bots-list", "scheduler-list", "moderation-reports"].includes(target.id)) { return url; }
+    if (!url || !target || !["users-list", "bot-accounts-list", "bots-list", "bot-queue-list", "scheduler-list", "moderation-reports"].includes(target.id)) { return url; }
     var next = new URL(url, window.location.href);
     var current = new URL(window.location.href);
     ["sort", "direction"].forEach(function (key) {

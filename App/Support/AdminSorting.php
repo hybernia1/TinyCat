@@ -7,6 +7,7 @@ namespace TinyCat\Support;
 final class AdminSorting
 {
     private const LISTS = [
+        'bot_queue' => ['/api/bots/queue', '/admin/bots/queue', '#bot-queue-list', ['bot' => 'u.username', 'body' => 'c.body', 'published_at' => 'c.published_at'], 'c.published_at ASC, c.id ASC', 'c.id'],
         'users' => ['/api/users', '/admin/users', '#users-list', ['username' => 'username', 'role' => 'role', 'status' => 'status', 'updated_at' => 'updated_at'], 'id DESC', 'id'],
         'accounts' => ['/api/bots/accounts', '/admin/bots/accounts', '#bot-accounts-list', ['username' => 'u.username', 'status' => 'u.status', 'source_count' => 'source_count', 'post_count' => 'post_count', 'updated_at' => 'u.updated_at'], 'u.id DESC', 'u.id'],
         'sources' => ['/api/bots/sources', '/admin/bots/list', '#bots-list', ['name' => 'bs.name', 'bot' => 'u.username', 'status' => 'bs.enabled', 'interval' => 'bs.interval_minutes', 'last_import' => 'bs.last_imported_at'], 'u.username ASC, bs.name ASC, bs.id ASC', 'bs.id'],

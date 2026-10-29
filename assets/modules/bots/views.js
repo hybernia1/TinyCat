@@ -85,6 +85,10 @@ import "../../ui/toasts.js";
     }
   }
   T.bots = {
+    queue: function (target, response) {
+      var data = Object.assign({}, response.data, { pagination: U.pagination(response) });
+      target.replaceChildren(T.components.render("bots/queue", Object.assign({}, data, { state: data })));
+    },
     modal: function (url, response, id) {
       if (/^\/api\/bots\/accounts\/[0-9]+\/posts\/[0-9]+\/management$/.test(url.pathname)) {
         var editUrl = new URL("/api/statuses/" + response.data.item.id + "?panel=edit", window.location.href);
@@ -103,6 +107,7 @@ import "../../ui/toasts.js";
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
       if (!url.pathname.startsWith("/api/bots/")) { return false; }
+      if (target && target.id === "bot-queue-list") { T.bots.queue(target, response); return true; }
       if (target && target.id === "bot-accounts-list") { accounts(target, response); }
       if (target && target.id === "bots-list") { sources(target, response.data); }
       if (target && target.id === "bot-posts-list") { posts(target, response); return true; }
@@ -114,6 +119,18 @@ import "../../ui/toasts.js";
     }, sources: sources, posts: posts, bindSources: bindSources, accounts: accounts, sourceForm: sourceForm
   };
   T.bots.hydrate = function (root) {
+    Array.from((root || document).querySelectorAll("[data-bot-queue-view]")).forEach(function (view) {
+      if (view.dataset.botQueueReady === "true") { return; }
+      view.dataset.botQueueReady = "true";
+      var previous = document.getElementById("bot-queue-filter-modal");
+      if (previous) { T.dialog.close(previous); previous.remove(); }
+      var form = T.components.render("bots/queue-filter-form", JSON.parse(view.dataset.botQueueState));
+      form.querySelectorAll("input, select").forEach(function (field) {
+        field.defaultValue = field.value;
+        if (field.options) { Array.from(field.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
+      });
+      U.dialog("bot-queue-filter-modal", "common.filters", form, true);
+    });
     var list = document.querySelector("#bot-posts-list");
     if (list && !list.dataset.botPostsReady) {
       list.dataset.botPostsReady = "true";

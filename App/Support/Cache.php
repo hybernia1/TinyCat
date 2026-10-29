@@ -599,7 +599,7 @@ final class Cache
             return false;
         }
 
-        if ($versions === []) {
+        if (!is_array($versions) || $versions === []) {
             return false;
         }
 

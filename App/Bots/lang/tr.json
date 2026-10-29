@@ -120,6 +120,11 @@
       "completed": "Tamamlandı",
       "interrupted": "Kesintiye uğradı"
     },
-    "edit_account": "Bot hesabını düzenle"
+    "edit_account": "Bot hesabını düzenle",
+    "queue_title": "Yayın kuyruğu",
+    "queue_empty": "Kuyrukta filtrelerle eşleşen gönderi yok.",
+    "publish_now": "Şimdi yayımla",
+    "publish_now_confirm": "Bu gönderi şimdi yayımlansın mı?",
+    "queue_published": "Gönderi yayımlandı."
   }
 }

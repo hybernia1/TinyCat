@@ -486,5 +486,17 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.forms.hydrate({ querySelectorAll: () => [untouched] });
   handlers.change.forEach(callback => callback({ target: { closest: () => untouched } }));
   check(untouched.dataset.dirty === "false", "An empty upload input with a fresh File timestamp does not mark an unchanged editor dirty.");
+  const queueRoot = new Node("div"); queueRoot.id = "bot-queue-list";
+  T.api.csrfToken = () => "queue-test-csrf";
+  const queueModel = { items: [{ id: 41, bot_id: 7, username: "QueueBot", status: "active", bot_url: "/admin/bots/7", excerpt: "Waiting post", published_at: "2099-01-01T12:00:00+00:00", can_publish: true, publish_url: "/api/bots/queue/41/publication?bot=7" }],
+    filters: { bot: "7", q: "Waiting", status: "active" }, bots: { "": "All", "7": "QueueBot" }, statuses: ["active", "waiting", "ban"], sorting: {}, navigation: { visible: false } };
+  T.bots.queue(queueRoot, { data: queueModel, meta: { pagination: { page: 1, per_page: 10 } } });
+  T.bots.hydrate(queueRoot);
+  const queuePublish = queueRoot.querySelectorAll("form").find(form => (form.getAttribute("action") || "").includes("/publication"));
+  check(queuePublish && queuePublish.dataset.ajaxTarget === "#bot-queue-list" && queuePublish.querySelectorAll("input").some(field => field.getAttribute("name") === "_csrf"), "Queued posts publish through the shared CSRF-protected AJAX form.");
+  const queueFilter = document.getElementById("bot-queue-filter-modal");
+  check(queueFilter && queueFilter.querySelectorAll("select").find(field => field.getAttribute("name") === "bot").value === "7", "Queue filter hydration preserves the selected bot.");
+  T.bots.result(queuePublish, { data: Object.assign({}, queueModel, { items: [] }), meta: { pagination: { page: 1, per_page: 10, total: 0 } } }, queueRoot);
+  check(queueRoot.textContent.includes(T.i18n.t("bots.queue_empty")) && !queueRoot.textContent.includes("Waiting post"), "Publication replaces the queue and removes the published row.");
   console.log(`PASS domain JSON renderers and request state (${checks} checks)`);
 })().catch(error => { console.error(error); process.exitCode = 1; });
