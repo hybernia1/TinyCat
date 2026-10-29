@@ -335,6 +335,20 @@ Supported formats are RSS (including RSS 1.0/RDF), Atom and JSON Feed 1.0/1.1,
 detected from the document rather than its extension or response MIME type.
 JSON Feed IDs, authors, tags, dates, HTML/text content and image attachments
 normalize into the same item contract as XML feeds.
+
+When `{{image}}` is enabled, a WordPress generator declaration in RSS/Atom may
+trigger optional artwork enrichment for items without feed images. The site
+URL must share the downloaded feed's origin. TinyCat verifies the site's REST
+API namespace before querying up to two bounded post batches (IDs from GUIDs
+or permalink slugs). API responses must match both the expected post ID, when
+available, and the article URL through the existing WordPress provider. Feed
+images retain priority; item GUIDs, URLs, text and publication scheduling do not
+change. Verified post endpoints populate the shared link-provider cache.
+Successful API discovery is cached for seven days, failed discovery for fifteen
+minutes, per-article image results for five minutes and batch failures for one
+minute. Unavailable or unsupported APIs leave ordinary feed processing intact.
+Already imported GUIDs and templates without image attachments do not trigger
+this enrichment. Previews use the same enrichment for their three sample items.
 Normalized items provide a stable `guid`, `title`, `description`, `url`, `author`,
 `categories`, `image_urls` (ordered candidates), `image_url` (first candidate)
 and `published_at`. The parser bounds parsing to 100 items and eight image

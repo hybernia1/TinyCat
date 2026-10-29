@@ -84,6 +84,16 @@ attachments automatically. Source identity and enabled state are checked again
 under a row lock before each post is saved, so edits during a download cannot
 attribute an item to a different feed or bot account.
 
+## Upgrading to 5.7.1: WordPress feed artwork
+
+No database migration or source reconfiguration is required. Sources using
+`{{image}}` can now fill missing feed images through an automatically verified
+WordPress REST API. The site's generator declaration is only a hint; its API
+namespace and returned article identities are checked before artwork is used.
+API requests are bounded, batched and cached. Feed-provided images retain
+priority, and failed API discovery leaves ordinary feed processing intact.
+Existing source IDs, URLs, publication queues and GUID history are unchanged.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

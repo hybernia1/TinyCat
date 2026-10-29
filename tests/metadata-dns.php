@@ -287,5 +287,6 @@ namespace {
     $GLOBALS['dnsAnswers']['consent.google.com'] = ['93.184.216.34'];
     $metadata = \TinyCat\Status\Metadata::fetch($mapUrl);
     $assert($metadata['title'] === 'Charles Bridge' && $metadata['description'] === '50.0864771, 14.4114366' && empty($metadata['image_url']), 'Consent redirects retain useful URL metadata without scraping a consent page.');
+    require __DIR__ . '/bots/wp-feed-cases.php';
     echo "PASS scoped DNS, provider metadata and redirect guards ({$checks} checks)\n";
 }

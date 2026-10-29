@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.7.1 - 2026-10-29
+
+- Fill missing WordPress feed artwork through a verified REST API when `{{image}}` is enabled. Batch requests, cache discovery and image results, and retain feed-provided images as the first choice.
+- Match API artwork to the expected article URL and post ID through the existing WordPress provider, sharing its per-post endpoint cache. Keep URL, redirect, upload and image validation rules intact.
+- Use the same enrichment for source previews and imports. Skip unnecessary requests for known GUIDs and text-only templates, and retain ordinary feed behavior when the API is unavailable. No database migration is required.
+
 ## 5.7.0 - 2026-10-29
 
 - Extend unified sources with automatic JSON Feed 1.0/1.1 and RSS 1.0/RDF support alongside RSS and Atom. Discover advertised feeds from website URLs without introducing stored source types.
