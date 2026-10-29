@@ -125,6 +125,14 @@
     "queue_empty": "Nessun post in coda corrisponde ai filtri.",
     "publish_now": "Pubblica ora",
     "publish_now_confirm": "Pubblicare questo post ora?",
-    "queue_published": "Il post è stato pubblicato."
+    "queue_published": "Il post è stato pubblicato.",
+    "all_sources": "Tutte le fonti RSS",
+    "source_label": "Fonte RSS",
+    "unknown_source": "Fonte sconosciuta",
+    "unknown_source_help": "La fonte RSS originale di questo post non è registrata.",
+    "published_queued": "Pubblicati / in coda",
+    "source_counts_help": "I conteggi includono solo i post con una fonte RSS registrata. I post precedenti senza questa relazione sono esclusi.",
+    "queued_posts": "In coda",
+    "publication_status": "Pubblicazione"
   }
 }

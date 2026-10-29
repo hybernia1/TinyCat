@@ -57,6 +57,19 @@ to hide future posts. Changing publication spacing affects subsequent imports;
 editing a scheduled post preserves its publication time. Scheduler URLs and
 credentials do not change.
 
+## Upgrading to 5.6.0: feed-specific publication queues
+
+Migration `20261029_003_feed_publication_queue` adds `bot_source_posts` to retain
+the source of each newly imported post. Publication slots append only to that
+source's timeline, independently of other sources using the same bot account.
+The source relation and post are saved in the same transaction as the GUID claim.
+Deleting a post or source removes its relation; deleting a source preserves posts.
+
+Legacy posts have no reliable source relation. Their publication times and GUID
+history are preserved, and they do not delay new feed-specific queues. The first
+new item for each source can therefore publish immediately, even if legacy posts
+are still scheduled. No legacy posts are rescheduled or imported again.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

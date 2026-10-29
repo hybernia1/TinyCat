@@ -125,6 +125,14 @@
     "queue_empty": "У черзі немає дописів, що відповідають фільтрам.",
     "publish_now": "Опублікувати зараз",
     "publish_now_confirm": "Опублікувати цей допис зараз?",
-    "queue_published": "Допис опубліковано."
+    "queue_published": "Допис опубліковано.",
+    "all_sources": "Усі RSS-джерела",
+    "source_label": "RSS-джерело",
+    "unknown_source": "Невідоме джерело",
+    "unknown_source_help": "Початкове RSS-джерело цього допису не збережено.",
+    "published_queued": "Опубліковано / у черзі",
+    "source_counts_help": "Враховуються лише дописи зі збереженим RSS-джерелом. Старі дописи без цього зв’язку не включено.",
+    "queued_posts": "У черзі",
+    "publication_status": "Публікація"
   }
 }

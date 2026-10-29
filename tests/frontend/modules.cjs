@@ -489,14 +489,20 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   const queueRoot = new Node("div"); queueRoot.id = "bot-queue-list";
   T.api.csrfToken = () => "queue-test-csrf";
   const queueModel = { items: [{ id: 41, bot_id: 7, username: "QueueBot", status: "active", bot_url: "/admin/bots/7", excerpt: "Waiting post", published_at: "2099-01-01T12:00:00+00:00", can_publish: true, publish_url: "/api/bots/queue/41/publication?bot=7" }],
-    filters: { bot: "7", q: "Waiting", status: "active" }, bots: { "": "All", "7": "QueueBot" }, statuses: ["active", "waiting", "ban"], sorting: {}, navigation: { visible: false } };
+    filters: { bot: "7", q: "Waiting", status: "active", source: "12" }, bots: { "": "All", "7": "QueueBot" }, sources: { "": "All feeds", "12": "RSS fixture" }, statuses: ["active", "waiting", "ban"], sorting: {}, navigation: { visible: false } };
+  queueModel.items[0].source = { id: 12, name: "RSS fixture", url: "/admin/bots/7?source=12" };
   T.bots.queue(queueRoot, { data: queueModel, meta: { pagination: { page: 1, per_page: 10 } } });
   T.bots.hydrate(queueRoot);
   const queuePublish = queueRoot.querySelectorAll("form").find(form => (form.getAttribute("action") || "").includes("/publication"));
   check(queuePublish && queuePublish.dataset.ajaxTarget === "#bot-queue-list" && queuePublish.querySelectorAll("input").some(field => field.getAttribute("name") === "_csrf"), "Queued posts publish through the shared CSRF-protected AJAX form.");
   const queueFilter = document.getElementById("bot-queue-filter-modal");
   check(queueFilter && queueFilter.querySelectorAll("select").find(field => field.getAttribute("name") === "bot").value === "7", "Queue filter hydration preserves the selected bot.");
+  check(queueFilter.querySelectorAll("select").find(field => field.getAttribute("name") === "source").value === "12" && queueRoot.textContent.includes("RSS fixture"), "The queue shows its RSS source and preserves source selection.");
   T.bots.result(queuePublish, { data: Object.assign({}, queueModel, { items: [] }), meta: { pagination: { page: 1, per_page: 10, total: 0 } } }, queueRoot);
   check(queueRoot.textContent.includes(T.i18n.t("bots.queue_empty")) && !queueRoot.textContent.includes("Waiting post"), "Publication replaces the queue and removes the published row.");
+  const unknownSource = T.components.render("bots/post-source", { source: null });
+  check(unknownSource.textContent.includes(T.i18n.t("bots.unknown_source")), "Legacy posts show an explicit unknown source.");
+  const sourceCounts = T.components.render("bots/sources", { items: [{ id: 12, bot_user_id: 7, name: "RSS fixture", bot_username: "QueueBot", interval_minutes: 60, enabled: true, published_count: 120, queued_count: 70, published_url: "/admin/bots/7?source=12&publication=published", queue_url: "/admin/bots/queue?source=12" }], bots: [], sorting: {}, state: {} });
+  check(sourceCounts.textContent.includes("120 / 70") && sourceCounts.querySelectorAll("a").some(link => link.getAttribute("href") === "/admin/bots/queue?source=12"), "Source counts link directly to the corresponding feed queue.");
   console.log(`PASS domain JSON renderers and request state (${checks} checks)`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

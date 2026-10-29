@@ -125,6 +125,14 @@
     "queue_empty": "Aucune publication en attente ne correspond aux filtres.",
     "publish_now": "Publier maintenant",
     "publish_now_confirm": "Publier ce message maintenant ?",
-    "queue_published": "Le message a été publié."
+    "queue_published": "Le message a été publié.",
+    "all_sources": "Toutes les sources RSS",
+    "source_label": "Source RSS",
+    "unknown_source": "Source inconnue",
+    "unknown_source_help": "La source RSS d’origine de ce message n’est pas enregistrée.",
+    "published_queued": "Publiés / en attente",
+    "source_counts_help": "Les nombres incluent uniquement les messages avec une source RSS enregistrée. Les anciens messages sans ce lien sont exclus.",
+    "queued_posts": "En attente",
+    "publication_status": "Publication"
   }
 }

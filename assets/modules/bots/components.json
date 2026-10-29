@@ -709,6 +709,31 @@
                         "tag": "th",
                         "attrs": {
                           "scope": "col",
+                          "title": {
+                            "t": "bots.source_counts_help"
+                          }
+                        },
+                        "children": [
+                          {
+                            "t": "bots.detail_posts"
+                          },
+                          {
+                            "tag": "div",
+                            "attrs": {
+                              "class": "table-meta"
+                            },
+                            "children": [
+                              {
+                                "t": "bots.published_queued"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
                           "aria-sort": {
                             "get": "sorting.last_import.aria"
                           }
@@ -918,6 +943,43 @@
                           {
                             "tag": "td",
                             "attrs": {
+                              "title": {
+                                "t": "bots.source_counts_help"
+                              }
+                            },
+                            "children": [
+                              {
+                                "tag": "a",
+                                "attrs": {
+                                  "href": {
+                                    "get": "source.published_url"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "source.published_count"
+                                  }
+                                ]
+                              },
+                              " / ",
+                              {
+                                "tag": "a",
+                                "attrs": {
+                                  "href": {
+                                    "get": "source.queue_url"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "source.queued_count"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {
                               "class": "table-meta"
                             },
                             "children": [
@@ -1083,6 +1145,17 @@
         "when": {
           "get": "items"
         }
+      },
+      {
+        "tag": "p",
+        "attrs": {
+          "class": "help m-0"
+        },
+        "children": [
+          {
+            "t": "bots.source_counts_help"
+          }
+        ]
       }
     ]
   },
@@ -1971,6 +2044,23 @@
         }
       },
       {
+        "component": "bots/post-filters",
+        "data": {
+          "filters": {
+            "get": "filters"
+          },
+          "sources": {
+            "get": "sources"
+          },
+          "api_url": {
+            "get": "api_url"
+          },
+          "history_url": {
+            "get": "history_url"
+          }
+        }
+      },
+      {
         "tag": "p",
         "attrs": {
           "class": "text-muted m-0"
@@ -2025,6 +2115,28 @@
                               },
                               "order": {
                                 "get": "sorting.body"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.source.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.source_label"
+                              },
+                              "order": {
+                                "get": "sorting.source"
                               }
                             }
                           }
@@ -2126,6 +2238,20 @@
                                 "when": {
                                   "not": {
                                     "get": "post.published"
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "component": "bots/post-source",
+                                "data": {
+                                  "source": {
+                                    "get": "post.source"
                                   }
                                 }
                               }
@@ -2378,6 +2504,28 @@
                         "attrs": {
                           "scope": "col",
                           "aria-sort": {
+                            "get": "sorting.source.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.source_label"
+                              },
+                              "order": {
+                                "get": "sorting.source"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
                             "get": "sorting.body.aria"
                           }
                         },
@@ -2495,6 +2643,20 @@
                             "attrs": {},
                             "children": [
                               {
+                                "component": "bots/post-source",
+                                "data": {
+                                  "source": {
+                                    "get": "post.source"
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
                                 "get": "post.excerpt"
                               }
                             ]
@@ -2591,7 +2753,7 @@
                       {
                         "tag": "td",
                         "attrs": {
-                          "colspan": "4",
+                          "colspan": "5",
                           "class": "text-muted"
                         },
                         "children": [
@@ -2679,6 +2841,24 @@
         "component": "ui/select",
         "data": {
           "label": {
+            "t": "bots.source_label"
+          },
+          "choices": {
+            "get": "sources"
+          },
+          "value": {
+            "get": "filters.source"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "source"
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
             "t": "cron.status"
           },
           "choices": {
@@ -2756,6 +2936,167 @@
                 ]
               }
             ]
+          }
+        ]
+      }
+    ]
+  },
+  "bots/post-source": [
+    {
+      "tag": "a",
+      "attrs": {
+        "href": {
+          "get": "source.url"
+        }
+      },
+      "children": [
+        {
+          "get": "source.name"
+        }
+      ],
+      "when": {
+        "get": "source"
+      }
+    },
+    {
+      "tag": "span",
+      "attrs": {
+        "class": "text-muted",
+        "title": {
+          "t": "bots.unknown_source_help"
+        }
+      },
+      "children": [
+        {
+          "t": "bots.unknown_source"
+        }
+      ],
+      "when": {
+        "not": {
+          "get": "source"
+        }
+      }
+    }
+  ],
+  "bots/post-filters": {
+    "tag": "form",
+    "attrs": {
+      "class": "cluster gap-2",
+      "method": "get",
+      "action": {
+        "get": "api_url"
+      },
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": "#bot-posts-list",
+      "data-history": {
+        "get": "history_url"
+      }
+    },
+    "children": [
+      {
+        "each": {
+          "get": "filters"
+        },
+        "as": "value",
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": {
+                "get": "_key"
+              },
+              "value": {
+                "get": "value"
+              }
+            },
+            "children": [],
+            "when": {
+              "and": [
+                {
+                  "not": {
+                    "eq": [
+                      {
+                        "get": "_key"
+                      },
+                      "source"
+                    ]
+                  }
+                },
+                {
+                  "not": {
+                    "eq": [
+                      {
+                        "get": "_key"
+                      },
+                      "publication"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "bots.source_label"
+          },
+          "choices": {
+            "get": "sources"
+          },
+          "value": {
+            "get": "filters.source"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "source",
+            "data-submit-on-change": ""
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "bots.publication_status"
+          },
+          "choices": {
+            "": {
+              "t": "common.all"
+            },
+            "published": {
+              "t": "bots.post_published"
+            },
+            "queued": {
+              "t": "bots.queued_posts"
+            }
+          },
+          "value": {
+            "get": "filters.publication"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "publication",
+            "data-submit-on-change": ""
+          }
+        }
+      },
+      {
+        "tag": "button",
+        "attrs": {
+          "type": "submit",
+          "class": "btn btn-secondary btn-sm"
+        },
+        "children": [
+          {
+            "icon": "filter"
+          },
+          {
+            "t": "common.apply_filters"
           }
         ]
       }

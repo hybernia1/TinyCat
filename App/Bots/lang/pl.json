@@ -125,6 +125,14 @@
     "queue_empty": "Żaden wpis w kolejce nie pasuje do filtrów.",
     "publish_now": "Opublikuj teraz",
     "publish_now_confirm": "Opublikować ten wpis teraz?",
-    "queue_published": "Wpis został opublikowany."
+    "queue_published": "Wpis został opublikowany.",
+    "all_sources": "Wszystkie źródła RSS",
+    "source_label": "Źródło RSS",
+    "unknown_source": "Nieznane źródło",
+    "unknown_source_help": "Dla tego wpisu nie zapisano oryginalnego źródła RSS.",
+    "published_queued": "Opublikowane / kolejka",
+    "source_counts_help": "Liczby obejmują tylko wpisy z zapisanym źródłem RSS. Starsze wpisy bez tego powiązania są pomijane.",
+    "queued_posts": "W kolejce",
+    "publication_status": "Publikacja"
   }
 }

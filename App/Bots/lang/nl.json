@@ -125,6 +125,14 @@
     "queue_empty": "Geen berichten in de wachtrij voldoen aan de filters.",
     "publish_now": "Nu publiceren",
     "publish_now_confirm": "Dit bericht nu publiceren?",
-    "queue_published": "Het bericht is gepubliceerd."
+    "queue_published": "Het bericht is gepubliceerd.",
+    "all_sources": "Alle RSS-bronnen",
+    "source_label": "RSS-bron",
+    "unknown_source": "Onbekende bron",
+    "unknown_source_help": "De oorspronkelijke RSS-bron van dit bericht is niet vastgelegd.",
+    "published_queued": "Gepubliceerd / wachtrij",
+    "source_counts_help": "De aantallen omvatten alleen berichten met een vastgelegde RSS-bron. Oudere berichten zonder koppeling zijn uitgesloten.",
+    "queued_posts": "In wachtrij",
+    "publication_status": "Publicatie"
   }
 }

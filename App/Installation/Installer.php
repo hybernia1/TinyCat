@@ -387,6 +387,14 @@ final class Installer
                 KEY bot_sources_user_index (bot_user_id, id),
                 CONSTRAINT fk_bot_sources_user FOREIGN KEY (bot_user_id) REFERENCES users (id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS bot_source_posts (
+                content_id BIGINT UNSIGNED NOT NULL,
+                source_id BIGINT UNSIGNED NOT NULL,
+                PRIMARY KEY (content_id),
+                KEY bot_source_posts_source_index (source_id, content_id),
+                CONSTRAINT fk_bot_source_posts_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,
+                CONSTRAINT fk_bot_source_posts_source FOREIGN KEY (source_id) REFERENCES bot_sources (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
             "CREATE TABLE IF NOT EXISTS bot_feed_history (
                 bot_user_id INT UNSIGNED NOT NULL,
                 feed_hash CHAR(64) NOT NULL,

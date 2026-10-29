@@ -125,6 +125,14 @@
     "queue_empty": "Keine geplanten Beiträge entsprechen den Filtern.",
     "publish_now": "Jetzt veröffentlichen",
     "publish_now_confirm": "Diesen Beitrag jetzt veröffentlichen?",
-    "queue_published": "Der Beitrag wurde veröffentlicht."
+    "queue_published": "Der Beitrag wurde veröffentlicht.",
+    "all_sources": "Alle RSS-Quellen",
+    "source_label": "RSS-Quelle",
+    "unknown_source": "Unbekannte Quelle",
+    "unknown_source_help": "Für diesen Beitrag ist keine ursprüngliche RSS-Quelle erfasst.",
+    "published_queued": "Veröffentlicht / geplant",
+    "source_counts_help": "Gezählt werden nur Beiträge mit erfasster RSS-Quelle. Ältere Beiträge ohne Zuordnung sind ausgeschlossen.",
+    "queued_posts": "Geplant",
+    "publication_status": "Veröffentlichung"
   }
 }

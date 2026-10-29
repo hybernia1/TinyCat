@@ -8,6 +8,15 @@ use TinyCat\Support\Dates;
 
 final class Resource
 {
+    /** @param array<string, mixed> $row
+     * @return array{id: int, name: string, url: string}|null
+     */
+    public static function postSource(array $row, int $botId): ?array
+    {
+        $id = (int) ($row['source_id'] ?? 0);
+        return $id > 0 ? ['id' => $id, 'name' => (string) $row['source_name'], 'url' => '/admin/bots/' . $botId . '?source=' . $id] : null;
+    }
+
     /**
      * @param array<mixed> $runs
      * @return array<mixed>

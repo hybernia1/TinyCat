@@ -48,6 +48,8 @@ $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $database->exec('CREATE TABLE links (image_url TEXT)');
 $database->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, role TEXT, status TEXT)');
 $database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, bot_user_id INTEGER, enabled INTEGER, next_run_at TEXT, created_at TEXT, last_checked_at TEXT, last_error TEXT, feed_url TEXT, interval_minutes INTEGER)');
+$database->exec('CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY, source_id INTEGER NOT NULL)');
+$database->exec('CREATE TABLE content (id INTEGER PRIMARY KEY, published_at TEXT)');
 $database->exec('CREATE TABLE bot_source_runs (id INTEGER PRIMARY KEY, source_id INTEGER, scheduler_run_id INTEGER, status TEXT, started_at TEXT, items_seen INTEGER, error TEXT)');
 $database->exec("INSERT INTO users VALUES (1, 'fixture-bot', 'bot', 'active')");
 $database->exec("INSERT INTO bot_sources (id, bot_user_id, enabled, feed_url, interval_minutes) VALUES (1, 1, 1, 'http://127.0.0.1/blocked-feed', 60)");

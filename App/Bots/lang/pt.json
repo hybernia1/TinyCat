@@ -125,6 +125,14 @@
     "queue_empty": "Nenhuma publicação na fila corresponde aos filtros.",
     "publish_now": "Publicar agora",
     "publish_now_confirm": "Publicar esta publicação agora?",
-    "queue_published": "A publicação foi publicada."
+    "queue_published": "A publicação foi publicada.",
+    "all_sources": "Todas as fontes RSS",
+    "source_label": "Fonte RSS",
+    "unknown_source": "Fonte desconhecida",
+    "unknown_source_help": "A fonte RSS original desta publicação não está registada.",
+    "published_queued": "Publicados / na fila",
+    "source_counts_help": "As contagens incluem apenas publicações com uma fonte RSS registada. Publicações antigas sem esta relação são excluídas.",
+    "queued_posts": "Na fila",
+    "publication_status": "Publicação"
   }
 }

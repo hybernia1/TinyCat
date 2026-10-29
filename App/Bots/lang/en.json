@@ -125,6 +125,14 @@
     "queue_empty": "No queued posts match the filters.",
     "publish_now": "Publish now",
     "publish_now_confirm": "Publish this post now?",
-    "queue_published": "The post has been published."
+    "queue_published": "The post has been published.",
+    "all_sources": "All RSS sources",
+    "source_label": "RSS source",
+    "unknown_source": "Unknown source",
+    "unknown_source_help": "No original RSS source is recorded for this post.",
+    "published_queued": "Published / queued",
+    "source_counts_help": "Counts include only posts with a recorded RSS source. Older posts without a source relation are excluded.",
+    "queued_posts": "Queued",
+    "publication_status": "Publication"
   }
 }

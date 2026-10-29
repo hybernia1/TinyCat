@@ -11,6 +11,8 @@ $db = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_
 Connection::set($db);
 $db->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, role TEXT, status TEXT)');
 $db->exec('CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT)');
+$db->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, bot_user_id INTEGER, name TEXT)');
+$db->exec('CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY, source_id INTEGER NOT NULL)');
 $db->exec("INSERT INTO users VALUES (1,'Zulu','bot','active'), (2,'Alpha','bot','ban'), (3,'Human','user','active')");
 $insert = $db->prepare('INSERT INTO content VALUES (?, ?, ?, ?)');
 for ($id = 1; $id <= 25; $id++) { $insert->execute([$id, 1, 'Queued ' . $id, '2099-01-' . str_pad((string) $id, 2, '0', STR_PAD_LEFT) . ' 12:00:00']); }
