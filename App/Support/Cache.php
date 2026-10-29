@@ -594,12 +594,12 @@ final class Cache
         }
 
         try {
-            $versions = $client->getVersion();
+            $versions = $client->getVersion() ?: [];
         } catch (Throwable) {
             return false;
         }
 
-        if (!is_array($versions) || $versions === []) {
+        if ($versions === []) {
             return false;
         }
 
