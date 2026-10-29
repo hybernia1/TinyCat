@@ -18,7 +18,7 @@ final class Pages
         Access::require_admin();
         $title = Localization::t('cron.list_title');
         $data = Administration::payload();
-        $content = \TinyCat\Support\AdminViews::listCard($title, 'clock', 'scheduler-list', 'scheduler-filter-modal', new \TinyCat\Support\Markup(\TinyCat\Support\Components::render('scheduler/list', $data + ['state' => $data])));
+        $content = \TinyCat\Support\AdminViews::listCard($title, 'clock', 'scheduler-list', '', new \TinyCat\Support\Markup(\TinyCat\Support\Components::render('scheduler/list', $data + ['state' => $data])));
         Layout::render(['title' => $title, 'current' => '/admin/cron/list'], $content);
     }
 

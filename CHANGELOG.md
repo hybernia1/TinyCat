@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.5.0 - 2026-10-29
+
+- Add a bot publication queue with text search, bot and account-status filters, sortable columns, pagination and a confirmed Publish now action. Preserve other publication times and guard administrator access, CSRF, inactive accounts and repeated requests.
+- Move scheduler filters beside history controls, remove the manual refresh button and refresh visible idle views through the existing API every five seconds. Preserve list state and reject stale responses.
+- Handle unavailable Memcached version responses without PHP warnings.
+- Reuse module-owned JSON APIs, shared presentation components, navigation, forms and all 12 interface languages. No new database migration is required.
+
 ## 5.4.0 - 2026-10-29
 
 - Import all new usable RSS/Atom items in a batch and schedule publication on the bot's existing timeline. Separate polling from publication spacing, defaulting new and migrated sources to 30 minutes without changing polling intervals.

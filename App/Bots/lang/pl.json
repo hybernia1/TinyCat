@@ -120,6 +120,11 @@
       "completed": "Ukończono",
       "interrupted": "Przerwano"
     },
-    "edit_account": "Edytuj konto bota"
+    "edit_account": "Edytuj konto bota",
+    "queue_title": "Kolejka publikacji",
+    "queue_empty": "Żaden wpis w kolejce nie pasuje do filtrów.",
+    "publish_now": "Opublikuj teraz",
+    "publish_now_confirm": "Opublikować ten wpis teraz?",
+    "queue_published": "Wpis został opublikowany."
   }
 }

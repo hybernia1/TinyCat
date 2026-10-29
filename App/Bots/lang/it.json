@@ -120,6 +120,11 @@
       "completed": "Completato",
       "interrupted": "Interrotto"
     },
-    "edit_account": "Modifica l'account del bot"
+    "edit_account": "Modifica l'account del bot",
+    "queue_title": "Coda di pubblicazione",
+    "queue_empty": "Nessun post in coda corrisponde ai filtri.",
+    "publish_now": "Pubblica ora",
+    "publish_now_confirm": "Pubblicare questo post ora?",
+    "queue_published": "Il post è stato pubblicato."
   }
 }

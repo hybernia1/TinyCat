@@ -5,7 +5,41 @@ import "../../ui/fields.js";
 (function () {
   "use strict";
   var T = window.TinyCat;
+  var timer = null, pending = null;
+  function editing(target) {
+    return document.hidden || document.querySelector('.modal[data-open="true"]') ||
+      (target.contains(document.activeElement) && document.activeElement.matches("input, select, textarea, [contenteditable]")) ||
+      target.querySelector('[aria-busy="true"]');
+  }
+  async function poll() {
+    var target = document.querySelector("#scheduler-list");
+    if (!target || pending || editing(target)) { return; }
+    var view = target.firstElementChild, generation = target.dataset.apiGeneration;
+    var url = "/api/scheduler/tasks" + window.location.search;
+    var controller = new AbortController(); pending = controller;
+    try {
+      var response = await T.api.request(url, { method: "GET", cache: "no-store", signal: controller.signal });
+      if (!target.isConnected || target.firstElementChild !== view || target.dataset.apiGeneration !== generation ||
+          url !== "/api/scheduler/tasks" + window.location.search || editing(target)) { return; }
+      var data = Object.assign({}, response.data, { pagination: T.ui.pagination(response) });
+      if (JSON.stringify(data) === JSON.stringify(JSON.parse(view.dataset.schedulerState))) { return; }
+      T.scheduler.list(target, response);
+      T.lifecycle.hydrate(target);
+    } catch (_error) {
+      // Keep the current history visible; the next poll retries transient failures.
+    } finally { if (pending === controller) { pending = null; } }
+  }
   T.scheduler = {
+    init: function () {
+      document.addEventListener("visibilitychange", function () { if (!document.hidden) { poll(); } });
+    },
+    dispose: function (root) {
+      var target = document.querySelector("#scheduler-list");
+      if (target && (root === target || root.contains(target))) {
+        window.clearInterval(timer); timer = null;
+        if (pending) { pending.abort(); pending = null; }
+      }
+    },
     modal: function (url, response, id) {
       if (!/^\/api\/scheduler\/runs\/[0-9]+$/.test(url.pathname)) { return null; }
       return T.ui.dialog(id, "cron.run_details", T.components.render("scheduler/run-detail", response.data));
@@ -29,6 +63,7 @@ import "../../ui/fields.js";
     },
     hydrate: function (root) {
       Array.from((root || document).querySelectorAll("[data-scheduler-view]")).forEach(function (view) {
+        if (timer === null) { timer = window.setInterval(poll, 5000); }
         if (view.dataset.schedulerReady === "true") { return; }
         view.dataset.schedulerReady = "true";
         T.scheduler.filters(JSON.parse(view.dataset.schedulerState));

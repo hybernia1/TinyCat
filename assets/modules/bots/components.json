@@ -2304,5 +2304,461 @@
         }
       }
     ]
+  },
+  "bots/queue": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14",
+      "data-bot-queue-view": "",
+      "data-bot-queue-state": {
+        "json": {
+          "get": "state"
+        }
+      }
+    },
+    "children": [
+      {
+        "component": "ui/list-toolbar",
+        "data": {
+          "url": "/api/bots/queue",
+          "target": "#bot-queue-list",
+          "history": "/admin/bots/queue",
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table"
+            },
+            "children": [
+              {
+                "tag": "thead",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.bot.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.bot"
+                              },
+                              "order": {
+                                "get": "sorting.bot"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.body.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.detail_posts"
+                              },
+                              "order": {
+                                "get": "sorting.body"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.published_at.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.post_scheduled"
+                              },
+                              "order": {
+                                "get": "sorting.published_at"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "class": "table-actions-cell"
+                        },
+                        "children": [
+                          {
+                            "t": "common.actions"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "attrs": {},
+                "children": [
+                  {
+                    "each": {
+                      "get": "items"
+                    },
+                    "as": "post",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "a",
+                                "attrs": {
+                                  "href": {
+                                    "get": "post.bot_url"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "post.username"
+                                  }
+                                ]
+                              },
+                              {
+                                "component": "ui/account-status",
+                                "data": {
+                                  "status": {
+                                    "get": "post.status"
+                                  },
+                                  "label": {
+                                    "lookup": {
+                                      "get": "post.status"
+                                    },
+                                    "cases": {
+                                      "active": {
+                                        "t": "users.statuses.active"
+                                      },
+                                      "waiting": {
+                                        "t": "users.statuses.waiting"
+                                      },
+                                      "ban": {
+                                        "t": "users.statuses.ban"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "get": "post.excerpt"
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "time",
+                                "attrs": {
+                                  "datetime": {
+                                    "get": "post.published_at"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "date": {
+                                      "get": "post.published_at"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {
+                              "class": "table-actions-cell"
+                            },
+                            "children": [
+                              {
+                                "tag": "form",
+                                "attrs": {
+                                  "method": "post",
+                                  "action": {
+                                    "get": "post.publish_url"
+                                  },
+                                  "data-ajax-form": "",
+                                  "data-ajax-target": "#bot-queue-list",
+                                  "data-confirm": {
+                                    "t": "bots.publish_now_confirm"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "csrf": true
+                                  },
+                                  {
+                                    "tag": "button",
+                                    "attrs": {
+                                      "type": "submit",
+                                      "class": "btn btn-secondary btn-sm",
+                                      "disabled": {
+                                        "not": {
+                                          "get": "post.can_publish"
+                                        }
+                                      },
+                                      "title": {
+                                        "if": [
+                                          {
+                                            "get": "post.can_publish"
+                                          },
+                                          {
+                                            "t": "bots.publish_now"
+                                          },
+                                          {
+                                            "t": "bots.detail_bot_inactive"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "icon": "play"
+                                      },
+                                      {
+                                        "t": "bots.publish_now"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "td",
+                        "attrs": {
+                          "colspan": "4",
+                          "class": "text-muted"
+                        },
+                        "children": [
+                          {
+                            "t": "bots.queue_empty"
+                          }
+                        ]
+                      }
+                    ],
+                    "when": {
+                      "not": {
+                        "get": "items"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "component": "ui/pagination",
+        "data": {
+          "navigation": {
+            "get": "navigation"
+          },
+          "target": "#bot-queue-list"
+        }
+      }
+    ]
+  },
+  "bots/queue-filter-form": {
+    "tag": "form",
+    "attrs": {
+      "class": "stack",
+      "method": "get",
+      "action": "/api/bots/queue",
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": "#bot-queue-list",
+      "data-history": "/admin/bots/queue",
+      "data-modal-close-on-success": "true"
+    },
+    "children": [
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "q",
+          "value": {
+            "get": "filters.q"
+          }
+        }
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "per_page",
+          "value": {
+            "get": "pagination.per_page"
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "bots.bot"
+          },
+          "choices": {
+            "get": "bots"
+          },
+          "value": {
+            "get": "filters.bot"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "bot"
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "cron.status"
+          },
+          "choices": {
+            "options": {
+              "get": "statuses"
+            },
+            "cases": {
+              "active": {
+                "t": "users.statuses.active"
+              },
+              "waiting": {
+                "t": "users.statuses.waiting"
+              },
+              "ban": {
+                "t": "users.statuses.ban"
+              }
+            },
+            "all": true
+          },
+          "value": {
+            "get": "filters.status"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "cluster gap-2"
+        },
+        "children": [
+          {
+            "tag": "a",
+            "attrs": {
+              "href": "/api/bots/queue",
+              "data-ajax": "",
+              "data-ajax-target": "#bot-queue-list",
+              "data-history": "/admin/bots/queue",
+              "data-modal-close": "",
+              "class": "btn btn-secondary"
+            },
+            "children": [
+              {
+                "icon": "close"
+              },
+              {
+                "tag": "span",
+                "children": [
+                  {
+                    "t": "common.clear_filters"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "button",
+            "attrs": {
+              "class": "btn btn-primary",
+              "type": "submit"
+            },
+            "children": [
+              {
+                "icon": "filter"
+              },
+              {
+                "tag": "span",
+                "children": [
+                  {
+                    "t": "common.apply_filters"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

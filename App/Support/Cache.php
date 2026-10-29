@@ -594,7 +594,7 @@ final class Cache
         }
 
         try {
-            $versions = $client->getVersion();
+            $versions = $client->getVersion() ?: [];
         } catch (Throwable) {
             return false;
         }

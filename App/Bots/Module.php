@@ -21,6 +21,7 @@ final class Module implements \TinyCat\StorageModule
             'children' => [
                 ['href' => '/admin/bots/accounts', 'icon' => 'users', 'label' => \TinyCat\Support\Localization::t('bots.accounts_title')],
                 ['href' => '/admin/bots/list', 'icon' => 'list-unordered', 'label' => \TinyCat\Support\Localization::t('bots.sources_title')],
+                ['href' => '/admin/bots/queue', 'icon' => 'clock', 'label' => \TinyCat\Support\Localization::t('bots.queue_title')],
             ],
         ];
     }
@@ -28,6 +29,7 @@ final class Module implements \TinyCat\StorageModule
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
+        \TinyCat\Http\Router::route('GET', '/admin/bots/queue', Pages::queue(...));
         \TinyCat\Http\Router::route('GET', '/admin/bots', static function (): void {
             $botId = max(0, (int) \TinyCat\Http\Web::get('bot', 0));
             \TinyCat\Http\Web::redirect($botId > 0

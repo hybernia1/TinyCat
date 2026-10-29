@@ -16,6 +16,15 @@ use TinyCat\Users\Avatars;
 /** Module-owned HTTP pages; domain services do not render the page shell. */
 final class Pages
 {
+    public static function queue(): void
+    {
+        Access::require_admin();
+        $data = Queue::payload();
+        $title = Localization::t('bots.queue_title');
+        $content = AdminViews::listCard($title, 'clock', 'bot-queue-list', 'bot-queue-filter-modal', new Markup(\TinyCat\Support\Components::render('bots/queue', $data + ['state' => $data])));
+        Layout::render(['title' => $title, 'current' => '/admin/bots/queue'], $content);
+    }
+
     public static function accounts(): void
     {
         Access::require_admin();

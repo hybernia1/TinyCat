@@ -120,6 +120,11 @@
       "completed": "Vollendet",
       "interrupted": "Unterbrochen"
     },
-    "edit_account": "Bot-Konto bearbeiten"
+    "edit_account": "Bot-Konto bearbeiten",
+    "queue_title": "Veröffentlichungswarteschlange",
+    "queue_empty": "Keine geplanten Beiträge entsprechen den Filtern.",
+    "publish_now": "Jetzt veröffentlichen",
+    "publish_now_confirm": "Diesen Beitrag jetzt veröffentlichen?",
+    "queue_published": "Der Beitrag wurde veröffentlicht."
   }
 }

@@ -294,6 +294,7 @@ try {
     require __DIR__ . '/request-limit-cases.php';
     require __DIR__ . '/system-api-cases.php';
     require __DIR__ . '/content-link-cases.php';
+    require __DIR__ . '/bot-queue-cases.php';
     echo "PASS API HTTP contract ({$checks} checks)\n";
 } finally {
     if (is_resource($server)) {

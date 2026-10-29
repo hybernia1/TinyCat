@@ -5,6 +5,10 @@ import "../../core/navigation.js";
   "use strict";
   var TinyCat = window.TinyCat;
   TinyCat.modules.register("bots", TinyCat.bots);
+  TinyCat.navigation.register("/admin/bots/queue", {
+    target: "#bot-queue-list", url: function () { return "/api/bots/queue" + window.location.search; },
+    apply: function (target, response) { TinyCat.bots.queue(target, response); }
+  });
   var owner = document.querySelector("[data-bot-detail-id]");
   if (owner) {
     TinyCat.navigation.register("/admin/bots/" + owner.dataset.botDetailId, {

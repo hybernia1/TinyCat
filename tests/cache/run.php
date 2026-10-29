@@ -26,6 +26,34 @@ $expect = static function (bool $condition, string $message = 'Expectation faile
     }
 };
 
+$test('unavailable Memcached version response is handled without warnings', static function () use ($expect): void {
+    if (!class_exists('Memcached')) { return; }
+    $client = new class extends Memcached {
+        public array|false $versions = false;
+        public function getVersion(): array|false { return $this->versions; }
+    };
+    $clientProperty = new ReflectionProperty(\TinyCat\Support\Cache::class, 'memcachedClient');
+    $initializedProperty = new ReflectionProperty(\TinyCat\Support\Cache::class, 'memcachedInitialized');
+    $previousClient = $clientProperty->getValue();
+    $previousInitialized = $initializedProperty->getValue();
+    $clientProperty->setValue(null, $client);
+    $initializedProperty->setValue(null, true);
+    $available = new ReflectionMethod(\TinyCat\Support\Cache::class, 'memcachedAvailable');
+    set_error_handler(static function (int $severity, string $message): never { throw new ErrorException($message, 0, $severity); });
+    try {
+        foreach ([false, [], ['127.0.0.1:11211' => '']] as $versions) {
+            $client->versions = $versions;
+            $expect($available->invoke(null) === false, 'Missing versions mean the cache is unavailable.');
+        }
+        $client->versions = ['127.0.0.1:11211' => '1.6.0'];
+        $expect($available->invoke(null) === true, 'A server version confirms availability.');
+    } finally {
+        restore_error_handler();
+        $clientProperty->setValue(null, $previousClient);
+        $initializedProperty->setValue(null, $previousInitialized);
+    }
+});
+
 $test('Cache facade preserves fresh and stale values', static function () use ($expect): void {
     $key = 'cache_test_' . bin2hex(random_bytes(12));
 

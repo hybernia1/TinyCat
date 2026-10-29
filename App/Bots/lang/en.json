@@ -120,6 +120,11 @@
       "completed": "Completed",
       "interrupted": "Interrupted"
     },
-    "edit_account": "Edit bot account"
+    "edit_account": "Edit bot account",
+    "queue_title": "Publication queue",
+    "queue_empty": "No queued posts match the filters.",
+    "publish_now": "Publish now",
+    "publish_now_confirm": "Publish this post now?",
+    "queue_published": "The post has been published."
   }
 }

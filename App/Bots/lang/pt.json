@@ -120,6 +120,11 @@
       "completed": "Concluído",
       "interrupted": "Interrompido"
     },
-    "edit_account": "Editar conta do bot"
+    "edit_account": "Editar conta do bot",
+    "queue_title": "Fila de publicação",
+    "queue_empty": "Nenhuma publicação na fila corresponde aos filtros.",
+    "publish_now": "Publicar agora",
+    "publish_now_confirm": "Publicar esta publicação agora?",
+    "queue_published": "A publicação foi publicada."
   }
 }

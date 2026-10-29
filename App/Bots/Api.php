@@ -10,6 +10,8 @@ final class Api
 {
     public static function register(\TinyCat\Http\Api $api): void
     {
+        $api->get('/bots/queue', static fn (): Result => Queue::listing(), 'admin');
+        $api->post('/bots/queue/{id:[0-9]+}/publication', static fn (Request $r, array $p): Result => Queue::publish((int) $p['id']), 'admin');
 
         $api->get('/bots/accounts', static fn (): Result => Result::from(Actions::adminBotAccounts()), 'admin');
         $api->post('/bots/accounts', static fn (): Result => Result::from(Actions::adminBotAccountCreate()), 'admin');

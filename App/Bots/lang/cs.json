@@ -120,6 +120,11 @@
       "completed": "Dokončeno",
       "interrupted": "Přerušeno"
     },
-    "edit_account": "Upravit bot účet"
+    "edit_account": "Upravit bot účet",
+    "queue_title": "Fronta příspěvků",
+    "queue_empty": "Ve frontě nejsou žádné příspěvky odpovídající filtrům.",
+    "publish_now": "Publikovat hned",
+    "publish_now_confirm": "Publikovat tento příspěvek ihned?",
+    "queue_published": "Příspěvek byl publikován."
   }
 }
