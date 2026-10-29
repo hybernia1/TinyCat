@@ -16,7 +16,7 @@
       "cleanup": "Automatyczne czyszczenie",
       "cleanup_help": "Usuwa nieużywane znaczniki i łącza, osierocone obrazy postów i podglądów, wygasłe pamięci podręczne danych, stare zasobniki z limitami szybkości, wygasłe tokeny resetowania i powiadomienia o przeczytaniu. Usuwa też osierocone awatary, porzucone pliki tymczasowe i stare kopie ukończonych aktualizacji.",
       "cleanup_schedule": "Harmonogram godzinowy. Wewnętrzne kontrole zapobiegają zbyt częstemu uruchamianiu czyszczenia.",
-      "feeds": "RSS i źródła Atom",
+      "feeds": "Źródła",
       "feeds_help": "Publikuje elementy z aktywnych źródeł, dla których przypada termin.",
       "feeds_schedule": "Harmonogram zgodnie z wymaganą częstotliwością odpytywania, zazwyczaj co dwie minuty."
     },

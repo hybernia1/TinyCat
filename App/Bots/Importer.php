@@ -203,11 +203,19 @@ final class Importer
         self::pruneFeedHistory($botUserId, $feedHash);
     }
 
-    /** @param list<array<mixed>> $preparedLinks */
-    private static function persistFeedPost(int $sourceId, int $botUserId, string $feedHash, string $itemHash, \TinyCat\Status\PostCreation $draft, array $preparedLinks, int $publicationInterval = self::DEFAULT_PUBLICATION_INTERVAL): int
+    /** @param list<array<mixed>> $preparedLinks
+     * @param array<mixed>|null $image */
+    private static function persistFeedPost(int $sourceId, int $botUserId, string $feedHash, string $itemHash, \TinyCat\Status\PostCreation $draft, array $preparedLinks, int $publicationInterval = self::DEFAULT_PUBLICATION_INTERVAL, ?array $image = null): int
     {
         $publishedAt = \TinyCat\Support\Dates::dateDb();
-        return \TinyCat\Database\Transactions::run(static function () use ($sourceId, $botUserId, $feedHash, $itemHash, $draft, $preparedLinks, $publishedAt, $publicationInterval): int {
+        return \TinyCat\Database\Transactions::run(static function () use ($sourceId, $botUserId, $feedHash, $itemHash, $draft, $preparedLinks, $publishedAt, $publicationInterval, $image): int {
+            // Downloads happen outside the transaction. Recheck identity under the
+            // same row lock that serializes edits/deletion before saving a mapping.
+            $current = \TinyCat\Database\Connection::one('SELECT bot_user_id, feed_hash, enabled FROM bot_sources WHERE id = ?'
+                . (\TinyCat\Database\Connection::driver() === 'mysql' ? ' FOR UPDATE' : ''), [$sourceId]);
+            if ($current === null || (int) $current['bot_user_id'] !== $botUserId || !hash_equals((string) $current['feed_hash'], $feedHash) || !(bool) $current['enabled']) {
+                throw new RuntimeException('Source changed or was disabled during import. Retry using its current settings.');
+            }
             self::recordFeedHistory($botUserId, $feedHash, $itemHash, $publishedAt);
             // Feed executions share the scheduler lock; each source owns its timeline.
             $lastPublication = (string) \TinyCat\Database\Connection::value(
@@ -218,7 +226,7 @@ final class Importer
                 ? \TinyCat\Support\Dates::dateDb((new \DateTimeImmutable($lastPublication, \TinyCat\Support\Dates::timezone()))->modify('+' . $publicationInterval . ' minutes'))
                 : $publishedAt;
             $publicationTime = max($publishedAt, $nextPublication);
-            $contentId = \TinyCat\Status\PostCreation::create($botUserId, $draft, $preparedLinks, publishedAt: $publicationTime);
+            $contentId = \TinyCat\Status\PostCreation::create($botUserId, $draft, $preparedLinks, $image, publishedAt: $publicationTime);
             \TinyCat\Database\Connection::insert('bot_source_posts', ['source_id' => $sourceId, 'content_id' => $contentId]);
             \TinyCat\Database\Connection::update('bot_sources', ['last_imported_at' => $publishedAt], ['id' => $sourceId]);
             return $contentId;
@@ -366,10 +374,11 @@ final class Importer
      * @param array<string, mixed> $source
      * @param array<string, mixed> $item
      */
-    private static function renderPost(array $source, array $item): string
+    public static function renderPost(array $source, array $item): string
     {
         $categories = array_values(array_map(static fn (mixed $category): string => (string) $category, (array) ($item['categories'] ?? [])));
         $values = [
+            '{{image}}' => '',
             '{{title}}' => (string) ($item['title'] ?? ''),
             '{{description}}' => (string) ($item['description'] ?? ''),
             '{{url}}' => (string) ($item['url'] ?? ''),
@@ -458,17 +467,10 @@ final class Importer
         $itemsSeen = 0;
 
         try {
-            $response = \TinyCat\Http\Session::withoutLock(static fn (): ?array => \TinyCat\Http\Client::get((string) ($source['feed_url'] ?? ''), 2097152, [
-                'accept' => 'application/rss+xml,application/atom+xml,application/xml,text/xml', 'timeout' => 10,
-            ]));
-            if ($response === null) {
-                throw new RuntimeException('RSS feed could not be downloaded.');
-            }
-
-            $items = \TinyCat\Bots\FeedParser::parse($response['body'], $response['url']);
+            $items = \TinyCat\Http\Session::withoutLock(static fn (): array => FeedParser::fetch((string) ($source['feed_url'] ?? '')));
             $itemsSeen = count($items);
             if ($items === []) {
-                throw new RuntimeException('RSS feed contains no usable items.');
+                throw new RuntimeException('Source contains no usable items.');
             }
 
             return self::importItems($source, $items, $runId);
@@ -505,7 +507,7 @@ final class Importer
 
                 $draft = \TinyCat\Status\PostCreation::fromText(self::renderPost($source, $item));
                 $rejection = $draft->rejection;
-                if ($rejection === null && $draft->body === '') {
+                if ($rejection === null && $draft->body === '' && !str_contains((string) ($source['post_template'] ?? ''), '{{image}}')) {
                     $rejection = ['code' => 'status_required', 'params' => []];
                 }
                 if ($rejection !== null) {
@@ -515,16 +517,27 @@ final class Importer
                     continue;
                 }
 
-                $feedLink = \TinyCat\Status\LinkParser::fromRaw((string) ($item['url'] ?? ''));
-                $preparedLinks = \TinyCat\Status\Links::prepareLinks(
-                    $draft->links,
-                    [
-                        'url_hash' => (string) ($feedLink['url_hash'] ?? ''),
-                        'title' => (string) ($item['title'] ?? ''), 'description' => (string) ($item['description'] ?? ''),
-                        'image_urls' => array_values(array_filter((array) ($item['image_urls'] ?? [$item['image_url'] ?? '']), is_string(...))),
-                    ]
-                );
-                $contentId = self::persistFeedPost($sourceId, $botUserId, $feedHash, $hash, $draft, $preparedLinks, $interval);
+                $image = \TinyCat\Http\Session::withoutLock(static fn (): ?array => self::prepareImage($source, $item));
+                if ($draft->body === '' && $image === null) {
+                    $skippedItems[] = ['item_hash' => $hash, 'code' => 'status_required', 'params' => []];
+                    $historyItemHashes[$hash] = true;
+                    continue;
+                }
+                try {
+                    $feedLink = \TinyCat\Status\LinkParser::fromRaw((string) ($item['url'] ?? ''));
+                    $preparedLinks = \TinyCat\Status\Links::prepareLinks(
+                        $draft->links,
+                        [
+                            'url_hash' => (string) ($feedLink['url_hash'] ?? ''),
+                            'title' => (string) ($item['title'] ?? ''), 'description' => (string) ($item['description'] ?? ''),
+                            'image_urls' => array_values(array_filter((array) ($item['image_urls'] ?? [$item['image_url'] ?? '']), is_string(...))),
+                        ]
+                    );
+                    $contentId = self::persistFeedPost($sourceId, $botUserId, $feedHash, $hash, $draft, $preparedLinks, $interval, $image);
+                } catch (Throwable $exception) {
+                    if ($image !== null) { \TinyCat\Status\ImageStorage::delete((string) $image['path']); }
+                    throw $exception;
+                }
                 $contentIds[] = $contentId;
                 $historyItemHashes[$hash] = true;
             }
@@ -535,6 +548,22 @@ final class Importer
         } catch (Throwable $exception) {
             return self::sourceFailure($sourceId, $runId, $itemsSeen, $exception) + ['imported_count' => count($contentIds), 'content_ids' => $contentIds, 'skipped_items' => $skippedItems];
         }
+    }
+
+    /** @param array<string, mixed> $source
+     * @param array<string, mixed> $item
+     * @return array<mixed>|null */
+    private static function prepareImage(array $source, array $item): ?array
+    {
+        if (!str_contains((string) ($source['post_template'] ?? ''), '{{image}}') || !\TinyCat\Status\Images::status_images_enabled()) { return null; }
+        $urls = array_slice(array_values(array_unique(array_filter((array) ($item['image_urls'] ?? [$item['image_url'] ?? '']), static fn (mixed $url): bool => is_string($url) && $url !== ''))), 0, 8);
+        $failure = null;
+        foreach ($urls as $url) {
+            try { return \TinyCat\Status\ImageStorage::fromRemote($url); }
+            catch (RuntimeException|\LengthException $exception) { $failure = $exception; }
+        }
+        if ($failure !== null) { throw $failure; }
+        return null;
     }
 
     /** @return array<string, mixed> */

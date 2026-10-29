@@ -16,7 +16,7 @@
       "cleanup": "Limpeza automática",
       "cleanup_help": "Remove tags e links não utilizados, postagens órfãs e imagens de visualização, caches de dados expirados, buckets de limite de taxa antigos, tokens de redefinição expirados e notificações de leitura. Também remove avatares órfãos, arquivos temporários abandonados e backups antigos de atualizações concluídas.",
       "cleanup_schedule": "Agende de hora em hora. As devidas verificações internas evitam que a limpeza seja executada com muita frequência.",
-      "feeds": "Fontes RSS e Atom",
+      "feeds": "fontes",
       "feeds_help": "Publica itens de fontes ativas cujo intervalo é devido.",
       "feeds_schedule": "Agende de acordo com a frequência de votação necessária, normalmente a cada dois minutos."
     },

@@ -2,6 +2,22 @@
 declare(strict_types=1);
 
 namespace TinyCat\Http {
+    function fopen(string $url, string $mode, bool $includePath = false, mixed $context = null): mixed
+    {
+        if (!isset($GLOBALS['sourceImageFixtures'][$url])) { return \fopen($url, $mode, $includePath, $context); }
+        $GLOBALS['sourceImageRequests'][] = $url;
+        $stream = \fopen('php://temp', 'w+');
+        fwrite($stream, $GLOBALS['sourceImageFixtures'][$url]);
+        rewind($stream);
+        $GLOBALS['sourceImageStreams'][(int) $stream] = true;
+        return $stream;
+    }
+    function stream_get_meta_data(mixed $stream): array
+    {
+        $meta = \stream_get_meta_data($stream);
+        return isset($GLOBALS['sourceImageStreams'][(int) $stream])
+            ? array_replace($meta, ['wrapper_data' => $GLOBALS['sourceImageHeaders'] ?? ['HTTP/1.1 200 OK', 'Content-Type: image/png']]) : $meta;
+    }
     function function_exists(string $name): bool
     {
         return $name !== 'curl_init' && \function_exists($name);
@@ -225,13 +241,14 @@ foreach ([0, 1] as $authorId) {
     }
 }
 
-$database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, last_imported_at TEXT, last_error TEXT)');
+$database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, last_imported_at TEXT, last_error TEXT, bot_user_id INTEGER DEFAULT 1, feed_hash TEXT, enabled INTEGER DEFAULT 1)');
 $database->exec('PRAGMA foreign_keys = ON');
 $database->exec('CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY REFERENCES content(id) ON DELETE CASCADE, source_id INTEGER NOT NULL)');
 $database->exec('CREATE TABLE bot_feed_history (bot_user_id INTEGER, feed_hash TEXT, item_hash TEXT, created_at TEXT, UNIQUE (bot_user_id, feed_hash, item_hash))');
 $database->exec('INSERT INTO bot_sources (id) VALUES (1)');
 $persistFeed = new ReflectionMethod(\TinyCat\Bots\Importer::class, 'persistFeedPost');
 $feedHash = hash('sha256', 'fixture-feed');
+$database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 1')->execute([$feedHash]);
 $itemHash = hash('sha256', 'fixture-item');
 $beforePosts = (int) $value('SELECT COUNT(*) FROM content');
 $database->exec('CREATE TRIGGER fail_bot_link BEFORE INSERT ON content_links BEGIN SELECT RAISE(ABORT, \'forced bot link failure\'); END');
@@ -271,6 +288,7 @@ $database->exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, status TEX
 $database->exec("INSERT INTO scheduler_runs (id, status) VALUES (1, 'running')");
 $importItems = new ReflectionMethod(\TinyCat\Bots\Importer::class, 'importItems');
 $source = ['id' => 2, 'bot_user_id' => 1, 'feed_url' => 'https://feed.example/rss', 'post_template' => '{{title}}'];
+$database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 2')->execute([\TinyCat\Bots\Importer::feedSourceHash($source['feed_url'])]);
 $items = [
     ['guid' => 'blocked', 'title' => 'https://blocked.example/article'],
     ['guid' => 'long-tag', 'title' => '#' . str_repeat('a', 33)],
@@ -324,6 +342,8 @@ $assert($retried['status'] === 'posted', 'A technical failure can be retried suc
 // Missing legacy settings, batch imports, duplicate GUIDs and queue continuation.
 $database->exec('INSERT INTO bot_sources (id) VALUES (3), (4)');
 $queueSource = array_replace($source, ['id' => 3, 'bot_user_id' => 900, 'feed_url' => 'https://queue.example/rss']);
+$database->prepare('UPDATE bot_sources SET bot_user_id = 900, feed_hash = ? WHERE id = 3')->execute([\TinyCat\Bots\Importer::feedSourceHash($queueSource['feed_url'])]);
+$database->prepare('UPDATE bot_sources SET bot_user_id = 900, feed_hash = ? WHERE id = 4')->execute([\TinyCat\Bots\Importer::feedSourceHash('https://queue.example/other')]);
 foreach ([[], ['publication_interval_minutes' => null], ['publication_interval_minutes' => 0]] as $legacy) {
     $assert(\TinyCat\Bots\Importer::publicationInterval($legacy) === 30, 'Unset legacy publication intervals default to 30 minutes.');
 }
@@ -358,6 +378,7 @@ $assert($resumed['imported_count'] === 2 && (int) $value('SELECT COUNT(*) FROM c
 $database->exec('DELETE FROM content WHERE author_id = 900');
 
 // RSS metadata, URL normalization and single-card rendering must share the same path.
+require __DIR__ . '/bots/image-cases.php';
 $feedPreviewDirectory = $root . '/uploads/links/' . date('Y/m');
 if (!is_dir($feedPreviewDirectory)) { mkdir($feedPreviewDirectory, 0775, true); }
 $feedPreviewUrl = '/uploads/links/' . date('Y/m') . '/' . bin2hex(random_bytes(20)) . '.webp';
@@ -466,6 +487,7 @@ $botSource = $source;
 $botSource['bot_user_id'] = 3;
 $database->exec('INSERT INTO bot_sources (id) VALUES (5)');
 $botSource['id'] = 5;
+$database->prepare('UPDATE bot_sources SET bot_user_id = 3, feed_hash = ? WHERE id = 5')->execute([\TinyCat\Bots\Importer::feedSourceHash($botSource['feed_url'])]);
 $botPublication = $importItems->invoke(null, $botSource, [['guid' => 'bot-mention', 'title' => 'Bot mention @owner']], 1);
 $botPublicationId = (int) $botPublication['content_id'];
 $assert((string) $value('SELECT published_at FROM content WHERE id = ' . $botPublicationId) <= \TinyCat\Support\Dates::dateDb(), 'Bot imports publish immediately through the shared writer.');

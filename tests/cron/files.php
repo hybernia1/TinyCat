@@ -169,7 +169,7 @@ $assert($database->query("SELECT status FROM bot_source_runs WHERE started_at = 
 $detail = \TinyCat\Scheduler\Administration::runDetail($parentId);
 $assert(count($detail['sources']) === 1 && $detail['sources'][0]['source_name'] === 'Fixture feed', 'Scheduler details expose only the sources belonging to that execution.');
 $html = \TinyCat\Support\Components::render('scheduler/run-detail', ['item' => $detail]);
-$assert(str_contains($html, 'Fixture feed') && str_contains($html, 'RSS feed could not be downloaded.'), 'The common run modal renders source diagnostics.');
+$assert(str_contains($html, 'Fixture feed') && str_contains($html, 'Feed could not be downloaded.'), 'The common run modal renders source diagnostics for all supported feed formats.');
 $lockResult = 0;
 $before = (int) $database->query('SELECT COUNT(*) FROM bot_source_runs')->fetchColumn();
 \TinyCat\Scheduler\Runner::run('feeds', $feedTask, ['mode' => 'admin', 'options' => ['source_id' => 1]]);

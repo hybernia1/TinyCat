@@ -38,6 +38,7 @@ final class Api
         $api->patch('/bots/accounts/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotAccountUpdate((int) $p['id'])), 'admin');
         $api->delete('/bots/accounts/{id:[0-9]+}', static fn (Request $r, array $p): Result => Result::from(Actions::adminBotAccountDelete((int) $p['id'])), 'admin');
         $api->get('/bots/sources', static fn (): Result => Result::from(Actions::adminBotSources()), 'admin');
+        $api->post('/bots/sources/previews', static fn (): array => SourcePreview::payload(), 'admin');
         $api->post('/bots/sources', static fn (): Result => Result::from(Actions::adminBotSourceCreate()), 'admin');
         $api->patch('/bots/sources/{id:[0-9]+}', static function (Request $r, array $p): Result {
             $id = (int) $p['id'];

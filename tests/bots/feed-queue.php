@@ -18,7 +18,7 @@ try {
     $database->exec('USE `' . $name . '`');
     TinyCat\Database\Connection::set($database);
     $database->exec('CREATE TABLE users (id INT UNSIGNED PRIMARY KEY, username VARCHAR(40), role VARCHAR(20), status VARCHAR(20))');
-    $database->exec('CREATE TABLE bot_sources (id BIGINT UNSIGNED PRIMARY KEY, bot_user_id INT UNSIGNED, name VARCHAR(80), last_imported_at DATETIME)');
+    $database->exec('CREATE TABLE bot_sources (id BIGINT UNSIGNED PRIMARY KEY, bot_user_id INT UNSIGNED, name VARCHAR(80), last_imported_at DATETIME, feed_hash CHAR(64), enabled TINYINT NOT NULL DEFAULT 1)');
     $database->exec('CREATE TABLE content (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME)');
     $database->exec('CREATE TABLE bot_feed_history (bot_user_id INT, feed_hash CHAR(64), item_hash CHAR(64), created_at DATETIME, PRIMARY KEY(bot_user_id, feed_hash, item_hash))');
     $database->exec('CREATE TABLE content_tags (content_id BIGINT, term_id BIGINT)');
@@ -30,6 +30,8 @@ try {
     $database->exec("INSERT INTO content (author_id,body,published_at) VALUES (1,'Legacy queue','2099-01-01 12:00:00')");
     $migrate = require $root . '/migrations/20261029_003_feed_publication_queue.php';
     $migrate($database); $migrate($database);
+    $setHash = $database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = ?');
+    foreach ([1, 2, 3] as $sourceId) { $setHash->execute([hash('sha256', 'feed-' . $sourceId), $sourceId]); }
     $checks = 0;
     $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
     $persist = new ReflectionMethod(TinyCat\Bots\Importer::class, 'persistFeedPost');
@@ -68,7 +70,7 @@ try {
     $before = (int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn();
     try { $append(1, 'first', 30); throw new RuntimeException('Duplicate accepted.'); } catch (PDOException) {}
     $assert((int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn() === $before, 'Duplicate item claims cannot create another post.');
-    try { $append(999, 'rollback', 30); throw new RuntimeException('Missing source accepted.'); } catch (PDOException) {}
+    try { $append(999, 'rollback', 30); throw new LogicException('Missing source accepted.'); } catch (RuntimeException) {}
     $assert((int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn() === $before, 'Attribution failure rolls back the post.');
     $assert((int) $database->query("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '" . hash('sha256', 'rollback') . "'")->fetchColumn() === 0, 'Attribution failure also rolls back the GUID claim.');
     $_GET = [];
@@ -83,5 +85,27 @@ try {
     $database->exec('DELETE FROM bot_sources WHERE id = 1');
     $assert((int) $database->query('SELECT COUNT(*) FROM bot_source_posts WHERE source_id = 1')->fetchColumn() === 0, 'Deleting a feed removes its mappings without deleting posts.');
     $assert($at($secondA) !== '', 'Existing posts survive source deletion.');
+    $database->prepare('INSERT INTO bot_sources (id, bot_user_id, name, feed_hash) VALUES (4, 1, ?, ?)')->execute(['Re-added feed A', hash('sha256', 'feed-1')]);
+    $beforeReAdd = (int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn();
+    try {
+        $persist->invoke(null, 4, 1, hash('sha256', 'feed-1'), hash('sha256', 'first'), $draft, [], 30);
+        throw new LogicException('Re-added source duplicated an imported item.');
+    } catch (PDOException) {}
+    $assert((int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn() === $beforeReAdd
+        && (int) $database->query('SELECT COUNT(*) FROM bot_source_posts WHERE source_id = 4')->fetchColumn() === 0,
+        'Re-adding the same feed under a new source ID preserves GUID protection and does not steal old post mappings.');
+    $beforeDrift = (int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn();
+    foreach (['bot_user_id' => 99, 'feed_hash' => hash('sha256', 'changed-feed'), 'enabled' => 0] as $field => $changed) {
+        $database->prepare('UPDATE bot_sources SET ' . $field . ' = ? WHERE id = 2')->execute([$changed]);
+        try { $append(2, 'drift-retry', 60); throw new LogicException('Stale source accepted.'); }
+        catch (RuntimeException $exception) { $assert(str_contains($exception->getMessage(), 'Source changed'), 'In-flight source changes are explicitly rejected.'); }
+        $assert((int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn() === $beforeDrift
+            && (int) $database->query("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '" . hash('sha256', 'drift-retry') . "'")->fetchColumn() === 0
+            && $at($secondB) === $savedB, 'Source edits cannot save a post under a different feed/account or consume history or move the existing queue.');
+        $original = match ($field) { 'bot_user_id' => 1, 'feed_hash' => hash('sha256', 'feed-2'), default => 1 };
+        $database->prepare('UPDATE bot_sources SET ' . $field . ' = ? WHERE id = 2')->execute([$original]);
+    }
+    $retryAfterDrift = $append(2, 'drift-retry', 60);
+    $assert((int) $database->query('SELECT source_id FROM bot_source_posts WHERE content_id = ' . $retryAfterDrift)->fetchColumn() === 2, 'A stale import remains retryable with its original correct source mapping.');
     echo "PASS per-feed publication queues ($checks checks; migration, independent batches, retries, early publication and cleanup)\n";
 } finally { $database->exec('DROP DATABASE `' . $name . '`'); }

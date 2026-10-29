@@ -410,17 +410,18 @@ final class Administration
      */
     public static function sourcePayload(?int $sourceId = null): array
     {
-        \TinyCat\Http\Request::current()->validated(['bot_user_id' => 'required|integer', 'name' => 'required|string', 'feed_url' => 'required|string', 'interval_minutes' => 'integer', 'publication_interval_minutes' => 'integer', 'post_template' => 'required|string', 'enabled' => 'boolean']);
-        $botUserId = max(0, (int) \TinyCat\Http\Request::current()->input('bot_user_id', 0));
+        $request = \TinyCat\Http\Request::current();
+        $request->validated(['bot_user_id' => 'required|integer', 'name' => 'required|string', 'feed_url' => 'required|string', 'interval_minutes' => 'integer', 'publication_interval_minutes' => 'integer', 'post_template' => 'required|string', 'enabled' => 'boolean']);
+        $botUserId = max(0, (int) $request->input('bot_user_id', 0));
         $bot = $botUserId > 0
             ? \TinyCat\Database\Connection::one('SELECT id, status FROM users WHERE id = ? AND role = ? LIMIT 1', [$botUserId, 'bot'])
             : null;
-        $name = trim((string) \TinyCat\Http\Request::current()->input('name', ''));
-        $feedUrl = trim((string) \TinyCat\Http\Request::current()->input('feed_url', ''));
-        $interval = (int) \TinyCat\Http\Request::current()->input('interval_minutes', 60);
+        $name = trim((string) $request->input('name', ''));
+        $feedUrl = trim((string) $request->input('feed_url', ''));
+        $interval = (int) $request->input('interval_minutes', 60);
         $existing = $sourceId !== null ? Importer::findSource($sourceId) : [];
-        $publicationInterval = (int) \TinyCat\Http\Request::current()->input('publication_interval_minutes', Importer::publicationInterval($existing ?? []));
-        $template = trim((string) \TinyCat\Http\Request::current()->input('post_template', ''));
+        $publicationInterval = (int) $request->input('publication_interval_minutes', Importer::publicationInterval($existing ?? []));
+        $template = trim((string) $request->input('post_template', ''));
         $errors = [];
 
         if ($bot === null) {
@@ -449,7 +450,7 @@ final class Administration
             \TinyCat\Http\Response::validation($errors);
         }
 
-        $enabled = in_array(\TinyCat\Http\Request::current()->input('enabled', null), [true, 1, '1', 'true', 'on'], true)
+        $enabled = in_array($request->input('enabled', null), [true, 1, '1', 'true', 'on'], true)
             && (string) ($bot['status'] ?? '') === 'active';
 
         return [

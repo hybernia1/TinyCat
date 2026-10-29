@@ -16,7 +16,7 @@
       "cleanup": "Automatisch opschonen",
       "cleanup_help": "Verwijdert ongebruikte tags en links, verweesde berichten en voorbeeldafbeeldingen, verlopen datacaches, oude snelheidslimietbuckets, verlopen resettokens en leesmeldingen. Verwijdert ook verweesde avatars, achtergebleven tijdelijke bestanden en oude back-ups van voltooide updates.",
       "cleanup_schedule": "Schema per uur. Interne controles voorkomen dat er te vaak wordt opgeschoond.",
-      "feeds": "RSS en Atom-bronnen",
+      "feeds": "bronnen",
       "feeds_help": "Publiceert items uit actieve bronnen waarvan het interval afloopt.",
       "feeds_schedule": "Plan volgens de vereiste pollingfrequentie, doorgaans elke twee minuten."
     },

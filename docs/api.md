@@ -288,6 +288,7 @@ Manual imports of one source use the same feeds task and lock, with
 | GET | `/api/bots/accounts/{id}/posts` | Search, sort and paginate the bot's posts, including scheduled posts |
 | GET | `/api/bots/accounts/{id}/posts/{postId}/management` | Administrator payload for the shared post edit modal |
 | GET, POST | `/api/bots/sources` | List / create feed sources |
+| POST | `/api/bots/sources/previews` | Inspect a feed or website and preview its template; administrator and CSRF token required |
 | PATCH, DELETE | `/api/bots/sources/{id}` | Edit / delete |
 | POST | `/api/bots/sources/{id}/runs` | Run a feed import |
 | GET | `/api/bots/queue` | Paginated future bot posts; filter by `q` (text), `bot` (account ID), `status` (account status), and `source` (RSS source ID or `unknown`) |
@@ -326,7 +327,45 @@ known, otherwise `source: null`. Unknown-source filters retain access to legacy
 posts and posts whose source has been deleted; they do not infer attribution.
 Source writes accept `bot_user_id`, `name`, `feed_url`, `interval_minutes`,
 `publication_interval_minutes`, `post_template` and `enabled`.
-`interval_minutes` controls RSS polling; `publication_interval_minutes` controls
+Sources use one resource without a stored or manually selected type. FeedParser
+handles downloading and parsing; normalized items enter the shared import path
+for history, templates, attachments and publication queues. Existing API paths
+and `feed_url`/`feed_hash` names remain compatible.
+Supported formats are RSS (including RSS 1.0/RDF), Atom and JSON Feed 1.0/1.1,
+detected from the document rather than its extension or response MIME type.
+JSON Feed IDs, authors, tags, dates, HTML/text content and image attachments
+normalize into the same item contract as XML feeds.
+Normalized items provide a stable `guid`, `title`, `description`, `url`, `author`,
+`categories`, `image_urls` (ordered candidates), `image_url` (first candidate)
+and `published_at`. The parser bounds parsing to 100 items and eight image
+candidates per item. Additional feed formats must preserve stable item identity and apply
+equivalent bounds and URL checks before entering the shared import path.
+
+`POST /api/bots/sources/previews` accepts `feed_url`, `name` and `post_template`.
+Clients may supply `document` instead of downloading a URL (maximum 2 MiB).
+The result contains `format`, `title`, the final `feed_url`, `item_count`, up to
+three newest normalized `items` and advertised feed `sources` for website
+discovery. Preview items expose plain `body`, `title`, `url`, local thumbnail
+`image_url`, `has_image` and an optional rejection code. Thumbnails use the
+existing safe local cache; attachment validation still happens during import.
+Preview never creates sources, posts, GUID claims or scheduling changes.
+Unsupported or unavailable input returns a standard 422 `feed_url` error.
+Website discovery lists up to eight RSS/Atom/JSON Feed alternate links for
+explicit selection; it does not crawl them automatically. All downloaded
+documents are limited to 2 MiB and use the shared URL/redirect checks.
+The admin source form gates source saves behind this preview,
+invalidates confirmation when fields change, and cancels pending requests on
+close. Run now starts the import directly without a preview; previews are
+available in source forms. Scheduled imports continue without interaction. No source type or
+database migration is needed.
+Redirect destinations shown in a preview do not silently replace the saved
+source URL or its history identity. Selecting an advertised feed is explicit.
+Before persisting each post, import locks and rechecks the source's current
+account, feed hash and enabled state. If they changed while downloading, the
+post, attribution and GUID claim are rejected together and prepared attachment
+files are removed. Retrying uses the current source settings.
+
+`interval_minutes` controls source polling; `publication_interval_minutes` controls
 spacing between posts (5–43200 minutes, default 30 for new and migrated sources).
 Omitting publication spacing on an update preserves its current value. Each run
 saves all new usable parsed items, appending to that RSS source's publication
@@ -344,6 +383,21 @@ URLs respect the downloaded feed URL and `xml:base`. Feed-provided metadata and
 images take precedence; article metadata is fetched when the feed lacks usable
 preview data or its image candidates fail. Only successfully decoded images are
 stored as local WebP previews.
+
+The optional template marker `{{image}}` attaches the first usable source image
+as a regular post attachment; it inserts no text or remote URL. The default
+template does not include it. RSS image enclosures, Media RSS and embedded images
+use the existing parser candidates. Attachments share upload validation (JPEG,
+PNG and WebP, source byte/dimension limits), resizing, WebP conversion and the
+configured output byte limit. Fetches use the shared HTTP client with URL,
+redirect and blocked-domain checks. Disabled image uploads prevent downloads.
+Image-only posts are supported. If no image is supplied, text posts still import;
+an otherwise empty post is skipped without claiming its GUID. Failed downloads
+or invalid images are retried with later candidates; if all candidates fail, the
+source run reports an error and the item remains retryable. Post, image relation,
+source relation and GUID history persist atomically; failed writes remove the
+prepared attachment file. Deleting a source retains its posts and publication
+times but removes source attribution, as before.
 
 Link provider rules live in `App/Status/Providers.php`: URL recognition,
 normalization, oEmbed endpoints, video thumbnails and permitted player origins.

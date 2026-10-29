@@ -40,7 +40,7 @@
     "stylesheets": 1
   },
   "/admin/bots": {
-    "raw_js": 184320,
+    "raw_js": 193536,
     "gzip_js": 45056,
     "raw_css": 41984,
     "gzip_css": 9216,

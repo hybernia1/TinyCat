@@ -16,7 +16,7 @@
       "cleanup": "Otomatik temizleme",
       "cleanup_help": "Kullanılmayan etiketleri ve bağlantıları, artık yayın ve önizleme resimlerini, süresi dolmuş veri önbelleklerini, eski hız sınırı paketlerini, süresi dolmuş sıfırlama belirteçlerini ve okuma bildirimlerini kaldırır. Sahipsiz avatarları, terk edilmiş geçici dosyaları ve tamamlanan güncellemelerin eski yedeklerini de kaldırır.",
       "cleanup_schedule": "Saatlik program. Dahili durum kontrolleri temizleme işleminin çok sık yapılmasını önler.",
-      "feeds": "RSS ve Atom kaynakları",
+      "feeds": "kaynakları",
       "feeds_help": "Etkin kaynaklardan gelen, aralığının dolması gereken öğeleri yayınlar.",
       "feeds_schedule": "Gerekli yoklama sıklığına göre planlama yapın; genellikle her iki dakikada bir."
     },

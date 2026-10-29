@@ -7,6 +7,7 @@ import "../../ui/fields.js";
 import "../../ui/form-state.js";
 import "../../ui/forms.js";
 import "../../ui/toasts.js";
+import "./source-preview.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;
@@ -55,6 +56,7 @@ import "../../ui/toasts.js";
         var source = data.items.find(function (item) { return Number(item.id) === Number(button.dataset.botSourceEdit); });
         if (!source) { return; }
         var dialog = U.dialog("bot-source-resource-" + source.id, "bots.edit_source", sourceForm(source, data.bots));
+        T.lifecycle.hydrate(dialog);
         T.dialog.open(dialog);
       });
     });
