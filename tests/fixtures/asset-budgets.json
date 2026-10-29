@@ -1,4 +1,12 @@
 {
+  "/admin/bots/detail": {
+    "raw_js": 327680,
+    "gzip_js": 65536,
+    "raw_css": 67584,
+    "gzip_css": 13312,
+    "scripts": 4,
+    "stylesheets": 1
+  },
   "/admin/site-health": {
     "raw_js": 153600,
     "gzip_js": 35840,
@@ -32,7 +40,7 @@
     "stylesheets": 1
   },
   "/admin/bots": {
-    "raw_js": 171008,
+    "raw_js": 184320,
     "gzip_js": 37888,
     "raw_css": 41984,
     "gzip_css": 9216,

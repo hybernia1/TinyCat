@@ -28,6 +28,8 @@ check(users.T.users && !users.T.status && !users.T.bots, "User administration bo
 check(users.definitions.includes("users/admin-fields"), "User administration receives its form definitions");
 const bots = load("/admin/bots/accounts");
 check(bots.T.bots && bots.T.users && !bots.T.status, "Bots load account menu support without the status module");
+const botDetail = load("/admin/bots/detail");
+check(botDetail.T.bots && botDetail.T.status && botDetail.definitions.includes("bots/posts") && botDetail.definitions.includes("status/composer-body"), "Only bot detail loads the post list and shared post editor");
 check(bots.definitions.includes("ui/avatar"), "Component dependencies cross module boundaries without loading unrelated scripts");
 check(load("/admin/moderation/reports").T.moderation, "Moderation loads its module");
 check(load("/admin/cron").T.scheduler, "Scheduler loads its module");
@@ -49,7 +51,7 @@ const rawPublic = load("/", "cs", true);
 check(minifiedPublic.assets[0].url !== rawPublic.assets[0].url && minifiedPublic.assets[3].url !== rawPublic.assets[3].url && minifiedPublic.styles[0] !== rawPublic.styles[0], "Minification selects distinct runtime, application and CSS variants");
 load("/admin/settings", "en", "min");
 const cs = load("/", "cs");
-for (const route of ["/", "/admin/users", "/admin/bots/accounts", "/admin/moderation/reports", "/admin/cron", "/admin/settings", "/install"]) {
+for (const route of ["/", "/admin/users", "/admin/bots/accounts", "/admin/bots/detail", "/admin/moderation/reports", "/admin/cron", "/admin/settings", "/install"]) {
   const compiled = load(route, "cs", true);
   check(compiled.assets.every(item => item.url.startsWith("/assets/build/")), "Release assets use the signed precompiled inventory: " + route);
   check(compiled.T.i18n.has("common.close"), "Compiled catalogs initialize before modules: " + route);

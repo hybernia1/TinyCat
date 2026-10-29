@@ -1,7 +1,8 @@
 [
   {
     "routes": [
-      "public"
+      "public",
+      "/admin/bots/detail"
     ],
     "components": [
       "status/card",

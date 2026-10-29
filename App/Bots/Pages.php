@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace TinyCat\Bots;
 
 use TinyCat\Site\Layout;
-use TinyCat\Status\Posts;
 use TinyCat\Support\AdminViews;
 use TinyCat\Support\Markup;
 use TinyCat\Support\Html;
@@ -65,7 +64,7 @@ final class Pages
         $sources = (array) $detail['sources'];
         $runs = (array) $detail['runs'];
         $stats = (array) $detail['stats'];
-        $lastPosts = array_map(static fn (array $post): array => $post + ['url' => Posts::status_url((int) ($post['id'] ?? 0))], (array) $detail['last_posts']);
+        $posts = (array) $detail['posts'];
         $avatarUrl = Avatars::user_avatar_url($bot);
         $lastRun = $detail['last_run'];
         $profileUrl = (string) $detail['profile_url'];
@@ -74,7 +73,8 @@ final class Pages
         Layout::render([
             'title' => '@' . (string) $bot['username'],
             'current' => '/admin/bots/accounts',
+            'asset_path' => '/admin/bots/detail',
             'actions' => '<a class="btn btn-secondary btn-sm" href="/admin/bots/accounts">' . Html::icon('arrow-left') . ' <span>' . Html::et('common.back') . '</span></a>',
-        ], View::render('detail', compact('avatarUrl', 'botId', 'bot', 'sources', 'runs', 'stats', 'lastPosts', 'lastRun', 'profileUrl', 'statuses'), __DIR__ . '/templates'));
+        ], View::render('detail', compact('avatarUrl', 'botId', 'bot', 'sources', 'runs', 'stats', 'posts', 'lastRun', 'profileUrl', 'statuses'), __DIR__ . '/templates'));
     }
 }

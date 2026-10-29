@@ -14,6 +14,7 @@ if (!defined('TINYCAT')) {
 
 final class Importer
 {
+    public const DEFAULT_PUBLICATION_INTERVAL = 30;
     private const FEED_HISTORY_KEEP = 500;
 
     private function __construct()
@@ -81,9 +82,11 @@ final class Importer
         $summary = [];
         $skipped = [];
         $error = '';
+        $imported = 0;
         foreach ($results as $result) {
             $status = (string) ($result['status'] ?? 'unknown');
             $summary[$status] = (int) ($summary[$status] ?? 0) + 1;
+            $imported += (int) ($result['imported_count'] ?? ($status === 'posted' ? 1 : 0));
             if ($error === '' && !empty($result['error'])) { $error = (string) $result['error']; }
             foreach ((array) ($result['skipped_items'] ?? []) as $item) {
                 $skipped[] = ['source_id' => (int) $result['source_id']] + $item;
@@ -91,7 +94,7 @@ final class Importer
         }
         return \TinyCat\Scheduler\Tasks::result(
             ($summary['error'] ?? 0) > 0 ? 'failed' : 'completed',
-            count($results), (int) ($summary['posted'] ?? 0),
+            count($results), $imported,
             details: ['summary' => $summary, 'skipped_items' => $skipped],
             error: $error, results: $results
         );
@@ -200,14 +203,13 @@ final class Importer
     }
 
     /** @param list<array<mixed>> $preparedLinks */
-    private static function persistFeedPost(int $sourceId, int $botUserId, string $feedHash, string $itemHash, \TinyCat\Status\PostCreation $draft, array $preparedLinks, int $runId, int $itemsSeen): int
+    private static function persistFeedPost(int $sourceId, int $botUserId, string $feedHash, string $itemHash, \TinyCat\Status\PostCreation $draft, array $preparedLinks, ?string $publicationTime = null): int
     {
         $publishedAt = \TinyCat\Support\Dates::dateDb();
-        return \TinyCat\Database\Transactions::run(static function () use ($sourceId, $botUserId, $feedHash, $itemHash, $draft, $preparedLinks, $runId, $itemsSeen, $publishedAt): int {
+        return \TinyCat\Database\Transactions::run(static function () use ($sourceId, $botUserId, $feedHash, $itemHash, $draft, $preparedLinks, $publishedAt, $publicationTime): int {
             self::recordFeedHistory($botUserId, $feedHash, $itemHash, $publishedAt);
-            $contentId = \TinyCat\Status\PostCreation::create($botUserId, $draft, $preparedLinks);
+            $contentId = \TinyCat\Status\PostCreation::create($botUserId, $draft, $preparedLinks, publishedAt: $publicationTime);
             \TinyCat\Database\Connection::update('bot_sources', ['last_imported_at' => $publishedAt], ['id' => $sourceId]);
-            self::finishSourceRun($runId, 'posted', $itemsSeen);
             return $contentId;
         });
     }
@@ -237,7 +239,15 @@ final class Importer
 
     public static function defaultSourceTemplate(): string
     {
-        return "{{title}}\n\n{{description}}\n\n{{url}}";
+        return "{{title}}\n\n{{description}}\n\n{{url}}\n\n#{categories}";
+    }
+
+    /** Legacy or incomplete source payloads receive the same default as the schema.
+     * @param array<string, mixed> $source */
+    public static function publicationInterval(array $source): int
+    {
+        $interval = (int) ($source['publication_interval_minutes'] ?? 0);
+        return $interval >= 5 && $interval <= 43200 ? $interval : self::DEFAULT_PUBLICATION_INTERVAL;
     }
 
     /**
@@ -286,6 +296,7 @@ final class Importer
             'name' => (string) ($source['name'] ?? ''),
             'feed_url' => (string) ($source['feed_url'] ?? ''),
             'interval_minutes' => (int) ($source['interval_minutes'] ?? 60),
+            'publication_interval_minutes' => self::publicationInterval($source),
             'post_template' => (string) ($source['post_template'] ?? ''),
             'enabled' => (bool) ($source['enabled'] ?? false),
             'last_checked_at' => !empty($source['last_checked_at']) ? \TinyCat\Support\Dates::dateIso($source['last_checked_at']) : '',
@@ -393,6 +404,13 @@ final class Importer
      */
     public static function runSource(array $source, bool $force = false, int $schedulerRunId = 0): array
     {
+        return \TinyCat\Http\Client::withConnectionReuse(static fn (): array => self::runSourceBatch($source, $force, $schedulerRunId));
+    }
+
+    /** @param array<string, mixed> $source
+     * @return array<string, mixed> */
+    private static function runSourceBatch(array $source, bool $force, int $schedulerRunId): array
+    {
         $sourceId = (int) ($source['id'] ?? 0);
         $interval = max(5, min(43200, (int) ($source['interval_minutes'] ?? 60)));
         $now = \TinyCat\Support\Dates::dateDb();
@@ -449,10 +467,14 @@ final class Importer
         $feedHash = self::feedSourceHash((string) ($source['feed_url'] ?? ''));
         $itemsSeen = count($items);
         $skippedItems = [];
+        $contentIds = [];
 
         try {
             $itemHashes = array_map(static fn (array $item): string => hash('sha256', (string) ($item['guid'] ?? '')), $items);
             $historyItemHashes = self::feedHistoryHashes($botUserId, $feedHash, $itemHashes);
+            $interval = self::publicationInterval($source);
+            // All sources for a bot append to one timeline under the shared feeds lock.
+            $lastPublication = (string) \TinyCat\Database\Connection::value('SELECT MAX(published_at) FROM content WHERE author_id = ?', [$botUserId]);
 
             foreach ($items as $item) {
                 $hash = hash('sha256', (string) ($item['guid'] ?? ''));
@@ -479,14 +501,22 @@ final class Importer
                         'image_urls' => array_values(array_filter((array) ($item['image_urls'] ?? [$item['image_url'] ?? '']), is_string(...))),
                     ]
                 );
-                $contentId = self::persistFeedPost($sourceId, $botUserId, $feedHash, $hash, $draft, $preparedLinks, $runId, $itemsSeen);
-                return ['source_id' => $sourceId, 'status' => 'posted', 'content_id' => $contentId, 'skipped_items' => $skippedItems];
+                $now = \TinyCat\Support\Dates::dateDb();
+                $nextPublication = $lastPublication !== ''
+                    ? \TinyCat\Support\Dates::dateDb((new \DateTimeImmutable($lastPublication, \TinyCat\Support\Dates::timezone()))->modify('+' . $interval . ' minutes'))
+                    : $now;
+                $publicationTime = max($now, $nextPublication);
+                $contentId = self::persistFeedPost($sourceId, $botUserId, $feedHash, $hash, $draft, $preparedLinks, $publicationTime);
+                $contentIds[] = $contentId;
+                $lastPublication = $publicationTime;
+                $historyItemHashes[$hash] = true;
             }
 
-            self::finishSourceRun($runId, 'current', $itemsSeen);
-            return ['source_id' => $sourceId, 'status' => 'current', 'skipped_items' => $skippedItems];
+            $status = $contentIds !== [] ? 'posted' : 'current';
+            self::finishSourceRun($runId, $status, $itemsSeen);
+            return ['source_id' => $sourceId, 'status' => $status, 'content_id' => $contentIds[0] ?? 0, 'content_ids' => $contentIds, 'imported_count' => count($contentIds), 'skipped_items' => $skippedItems];
         } catch (Throwable $exception) {
-            return self::sourceFailure($sourceId, $runId, $itemsSeen, $exception) + ['skipped_items' => $skippedItems];
+            return self::sourceFailure($sourceId, $runId, $itemsSeen, $exception) + ['imported_count' => count($contentIds), 'content_ids' => $contentIds, 'skipped_items' => $skippedItems];
         }
     }
 

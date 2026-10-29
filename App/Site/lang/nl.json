@@ -138,7 +138,8 @@
     "open_settings": "-instellingen",
     "stats": {
       "users": "-gebruikers",
-      "content": "-palen",
+      "content": "Gepubliceerde berichten",
+      "scheduled_content": "Geplande berichten",
       "links": "-koppelingen",
       "likes": "Vind ik leuk",
       "comments": "Opmerkingen",

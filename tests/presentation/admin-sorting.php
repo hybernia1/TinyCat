@@ -19,7 +19,7 @@ $assert = static function (bool $condition, string $message) use (&$checks): voi
     if (!$condition) { throw new RuntimeException($message); }
 };
 $database->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, email TEXT, role TEXT, status TEXT, updated_at TEXT)');
-$database->exec('CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT)');
+$database->exec("CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT DEFAULT '2026-01-01 00:00:00')");
 $database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, bot_user_id INTEGER, name TEXT, enabled INTEGER, interval_minutes INTEGER, last_imported_at TEXT)');
 $database->exec('CREATE TABLE content_reports (id INTEGER PRIMARY KEY, content_id INTEGER, reporter_id INTEGER, status TEXT, reason TEXT, created_at TEXT)');
 $database->exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, task TEXT, status TEXT, mode TEXT, error TEXT, duration_ms INTEGER, started_at TEXT)');
@@ -30,10 +30,10 @@ for ($id = 1; $id <= 15; $id++) {
 }
 $database->exec("INSERT INTO users VALUES (101, 'Zulu', '', 'bot', 'active', '2026-10-27'), (102, 'Alpha', '', 'bot', 'ban', '2026-10-26')");
 $database->exec("INSERT INTO bot_sources VALUES (1, 101, 'Zulu', 1, 30, NULL), (2, 102, 'Alpha', 0, 60, '2026-10-27')");
-$database->exec("INSERT INTO content VALUES (1, 101, 'Zulu'), (2, 102, 'Alpha')");
+$database->exec("INSERT INTO content (id, author_id, body) VALUES (1, 101, 'Zulu'), (2, 102, 'Alpha')");
 $database->exec("INSERT INTO content_reports VALUES (1, 1, 1, 'open', 'spam', '2026-10-26'), (2, 2, 1, 'resolved', 'other', '2026-10-27')");
 
-foreach (['users', 'accounts', 'sources', 'runs', 'reports'] as $list) {
+foreach (['users', 'accounts', 'sources', 'bot_posts', 'runs', 'reports'] as $list) {
     $_GET = [];
     $default = AdminSorting::order($list);
     $_GET = ['sort' => 'id; DROP TABLE users', 'direction' => 'desc; --'];
@@ -49,6 +49,7 @@ foreach (['users', 'accounts', 'sources', 'runs', 'reports'] as $list) {
                 'users' => \TinyCat\Users\Actions::tc_admin_users_page(),
                 'accounts' => (new ReflectionMethod(\TinyCat\Bots\Administration::class, 'accountsPage'))->invoke(null),
                 'sources' => \TinyCat\Bots\Importer::sources(null, AdminSorting::order('sources')),
+                'bot_posts' => \TinyCat\Bots\Administration::postsPayload(101),
                 'runs' => \TinyCat\Scheduler\Repository::listing([], 1, 10),
                 'reports' => \TinyCat\Moderation\Reports::tc_admin_moderation_reports(),
             };

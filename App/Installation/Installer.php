@@ -373,6 +373,7 @@ final class Installer
                 feed_url VARCHAR(2048) NOT NULL,
                 feed_hash CHAR(64) NOT NULL,
                 interval_minutes INT UNSIGNED NOT NULL DEFAULT 60,
+                publication_interval_minutes INT UNSIGNED NOT NULL DEFAULT 30,
                 post_template VARCHAR(2000) NOT NULL,
                 enabled TINYINT(1) NOT NULL DEFAULT 1,
                 last_checked_at DATETIME NULL,

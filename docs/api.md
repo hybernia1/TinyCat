@@ -284,6 +284,8 @@ Manual imports of one source use the same feeds task and lock, with
 | --- | --- | --- |
 | GET, POST | `/api/bots/accounts` | List / create bot accounts |
 | GET, PATCH, DELETE | `/api/bots/accounts/{id}` | Detail / edit / delete |
+| GET | `/api/bots/accounts/{id}/posts` | Search, sort and paginate the bot's posts, including scheduled posts |
+| GET | `/api/bots/accounts/{id}/posts/{postId}/management` | Administrator payload for the shared post edit modal |
 | GET, POST | `/api/bots/sources` | List / create feed sources |
 | PATCH, DELETE | `/api/bots/sources/{id}` | Edit / delete |
 | POST | `/api/bots/sources/{id}/runs` | Run a feed import |
@@ -298,8 +300,21 @@ Manual imports of one source use the same feeds task and lock, with
 | POST | `/api/site/cache-resets` | Reset OPcache |
 
 Bot accounts accept `q`, `status`, `page` and `per_page`; sources accept `bot`.
+The bot post list accepts `q`, `page`, `per_page`, `sort` (`body` or `published_at`)
+and `direction` (`asc` or `desc`). Its pagination follows `meta.pagination`.
+The management endpoint verifies that the post belongs to the selected bot.
+Edits and confirmed deletion use the existing status API; editing preserves the
+publication time. Public status reads continue to hide future posts.
 Source writes accept `bot_user_id`, `name`, `feed_url`, `interval_minutes`,
-`post_template` and `enabled`. An enabled-only PATCH requests an explicit boolean
+`publication_interval_minutes`, `post_template` and `enabled`.
+`interval_minutes` controls RSS polling; `publication_interval_minutes` controls
+spacing between posts (5–43200 minutes, default 30 for new and migrated sources).
+Omitting publication spacing on an update preserves its current value. Each run
+saves all new usable parsed items, appending to the bot's existing publication
+timeline; future posts remain hidden from public readers. Interval changes affect
+subsequent imports only. Source run results include `content_ids` and
+`imported_count`; scheduler `changed` counts all saved posts, including future posts.
+An enabled-only PATCH requests an explicit boolean
 state; repeating it never toggles the source back. Path IDs always take precedence.
 Lists contain `data.items`; paginated account lists use `meta.pagination`.
 

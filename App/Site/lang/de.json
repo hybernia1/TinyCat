@@ -138,7 +138,8 @@
     "open_settings": "Einstellungen",
     "stats": {
       "users": "Benutzer",
-      "content": "Beiträge",
+      "content": "Veröffentlichte Beiträge",
+      "scheduled_content": "Geplante Beiträge",
       "links": "Links",
       "likes": "Gefällt mir",
       "comments": "Kommentare",

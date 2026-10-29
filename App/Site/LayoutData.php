@@ -22,9 +22,10 @@ final class LayoutData
         $csrfToken = (string) ($csrfToken ?? \TinyCat\Security\Csrf::token());
         $dateFormat = (string) \TinyCat\Settings\Store::config('datetime.datetime', 'Y-m-d H:i:s');
         $dateRelative = (bool) \TinyCat\Settings\Store::config('datetime.relative', false);
-        $scriptUrls = \TinyCat\Support\ClientAssets::scripts($current, array_values(array_map(static fn (mixed $script): string => (string) $script, (array) ($scripts ?? []))));
+        $assetPath = (string) ($asset_path ?? $current);
+        $scriptUrls = \TinyCat\Support\ClientAssets::scripts($assetPath, array_values(array_map(static fn (mixed $script): string => (string) $script, (array) ($scripts ?? []))));
         $styleUrls = array_values(array_unique([
-            ...\TinyCat\Support\ClientAssets::styles($current),
+            ...\TinyCat\Support\ClientAssets::styles($assetPath),
             ...array_map(static fn (mixed $style): string => \TinyCat\Support\Assets::asset((string) $style), (array) ($styles ?? [])),
         ]));
         $actions = (string) ($actions ?? '');

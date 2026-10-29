@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.4.0 - 2026-10-29
+
+- Import all new usable RSS/Atom items in a batch and schedule publication on the bot's existing timeline. Separate polling from publication spacing, defaulting new and migrated sources to 30 minutes without changing polling intervals.
+- Add the publication-interval migration and matching fresh-install schema. Preserve import history, per-item transactions, retry safety and public visibility rules for future posts.
+- Reuse HTTP connections within feed imports while resetting request options and retaining URL, redirect, TLS and download-size checks.
+- Add a standard searchable, sortable and paginated bot post list with the shared edit modal and confirmed deletion, including administrator-only access to scheduled posts. Preserve scheduled times during edits.
+- Normalize bot run tables, separate published and scheduled dashboard counts, and document template variables with category hashtags in the default source template across all 12 interface languages.
+
 ## 5.3.0 - 2026-10-29
 
 - Replace standalone profile and logout controls with a shared avatar menu containing profile, account settings, theme switching and logout in public and administration headers.

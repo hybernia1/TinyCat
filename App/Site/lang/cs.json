@@ -138,7 +138,8 @@
     "open_settings": "Nastavení",
     "stats": {
       "users": "Uživatelé",
-      "content": "Příspěvky",
+      "content": "Publikované příspěvky",
+      "scheduled_content": "Naplánované příspěvky",
       "links": "Odkazy",
       "likes": "Lajky",
       "comments": "Komentáře",

@@ -138,7 +138,8 @@
     "open_settings": "Ajustes",
     "stats": {
       "users": "Usuarios",
-      "content": "Publicaciones",
+      "content": "Publicaciones publicadas",
+      "scheduled_content": "Publicaciones programadas",
       "links": "Campo de golf",
       "likes": "Gustos",
       "comments": "Comentarios",

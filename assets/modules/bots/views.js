@@ -10,6 +10,7 @@ import "../../ui/toasts.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;
+  var pendingPosts = new WeakMap();
   function sourceUrl(suffix) {
     var bot = new URLSearchParams(window.location.search).get("bot");
     return "/api/bots/sources" + (suffix || "") + (Number(bot) > 0 ? "?bot=" + encodeURIComponent(bot) : "");
@@ -24,6 +25,27 @@ import "../../ui/toasts.js";
   function sources(root, data) {
     var view = T.components.render("bots/sources", Object.assign({}, data, { state: data }));
     root.replaceChildren(view); bindSources(view, data);
+  }
+  function posts(root, response) {
+    var data = Object.assign({}, response.data, { pagination: U.pagination(response) });
+    root.dataset.botPostsUrl = data.url;
+    root.dataset.botPostsRevision = String(Number(root.dataset.botPostsRevision || 0) + 1);
+    root.replaceChildren(T.components.render("bots/posts", data));
+    var count = document.querySelector('[data-bot-stat="posts"]');
+    if (count && Number.isFinite(Number(data.total_count))) { count.textContent = String(data.total_count); }
+  }
+  function refreshPosts() {
+    var root = document.querySelector("#bot-posts-list");
+    if (!root || !root.dataset.botPostsUrl) { return; }
+    if (pendingPosts.has(root)) { pendingPosts.get(root).abort(); }
+    var controller = new AbortController(), url = root.dataset.botPostsUrl, revision = root.dataset.botPostsRevision;
+    pendingPosts.set(root, controller);
+    return T.api.request(url, { signal: controller.signal }).then(function (response) {
+      if (!root.isConnected || root.dataset.botPostsUrl !== url || root.dataset.botPostsRevision !== revision) { return; }
+      posts(root, response);
+      if (T.forms.hydrate) { T.forms.hydrate(root); }
+    }).catch(function (error) { if (error.name !== "AbortError") { T.toasts.show(error.message, "danger"); } })
+      .finally(function () { if (pendingPosts.get(root) === controller) { pendingPosts.delete(root); } });
   }
   function bindSources(root, data) {
     if (root.dataset.botSourcesReady === "true") { return; }
@@ -54,14 +76,22 @@ import "../../ui/toasts.js";
     var root = document.querySelector("[data-bot-sources]");
     if (root) { sources(root, { items: data.sources, bots: [data.item] }); }
     document.querySelectorAll("[data-bot-run-history]").forEach(function (node) {
-      node.replaceChildren(T.components.render("bots/runs", { runs: data.runs, latest: node.getAttribute("data-bot-run-latest") !== null }));
+      var latest = node.getAttribute("data-bot-run-latest") !== null;
+      node.replaceChildren(T.components.render("bots/runs", { runs: latest ? data.runs.slice(0, 1) : data.runs }));
     });
+    refreshPosts();
     if (data.item) {
       document.querySelectorAll('[data-avatar-user-id="' + data.item.id + '"]').forEach(function (node) { node.replaceWith(U.avatar(data.item)); });
     }
   }
   T.bots = {
     modal: function (url, response, id) {
+      if (/^\/api\/bots\/accounts\/[0-9]+\/posts\/[0-9]+\/management$/.test(url.pathname)) {
+        var editUrl = new URL("/api/statuses/" + response.data.item.id + "?panel=edit", window.location.href);
+        var dialog = T.status.modal(editUrl, response, id);
+        dialog.addEventListener("tinycat:success", refreshPosts);
+        return dialog;
+      }
       if (!/^\/api\/bots\/accounts\/[0-9]+\/management$/.test(url.pathname)) { return null; }
       var form = U.form("/api/bots/accounts/" + response.data.item.id + window.location.search, "PATCH");
       form.enctype = "multipart/form-data";
@@ -75,14 +105,20 @@ import "../../ui/toasts.js";
       if (!url.pathname.startsWith("/api/bots/")) { return false; }
       if (target && target.id === "bot-accounts-list") { accounts(target, response); }
       if (target && target.id === "bots-list") { sources(target, response.data); }
+      if (target && target.id === "bot-posts-list") { posts(target, response); return true; }
       var owner = document.querySelector("[data-bot-detail-id]");
       if (owner) {
         T.api.request("/api/bots/accounts/" + owner.dataset.botDetailId).then(function (result) { detail(result.data); if (T.forms.hydrate) { T.forms.hydrate(document); } }).catch(function (error) { T.toasts.show(error.message, "danger"); });
       }
       return true;
-    }, sources: sources, bindSources: bindSources, accounts: accounts, sourceForm: sourceForm
+    }, sources: sources, posts: posts, bindSources: bindSources, accounts: accounts, sourceForm: sourceForm
   };
   T.bots.hydrate = function (root) {
+    var list = document.querySelector("#bot-posts-list");
+    if (list && !list.dataset.botPostsReady) {
+      list.dataset.botPostsReady = "true";
+      list.addEventListener("tinycat:success", refreshPosts);
+    }
     if (T.bots && T.bots.bindSources) {
       Array.from((root || document).querySelectorAll("[data-bot-sources-view]")).forEach(function (view) {
         T.bots.bindSources(view, JSON.parse(view.dataset.botSourcesState));

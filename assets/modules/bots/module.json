@@ -44,5 +44,17 @@
       "bot_created": "bots.messages.created",
       "scheduler_already_running": "cron.already_running"
     }
+  },
+  {
+    "routes": [
+      "/admin/bots/detail"
+    ],
+    "components": [
+      "bots/posts"
+    ],
+    "entries": [],
+    "styles": [],
+    "translations": [],
+    "messages": {}
   }
 ]

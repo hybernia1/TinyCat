@@ -6,7 +6,7 @@ declare(strict_types=1);
 /** @var array<mixed> $sources */
 /** @var array<mixed> $runs */
 /** @var array<mixed> $stats */
-/** @var array<mixed> $lastPosts */
+/** @var array<mixed> $posts */
 /** @var array<mixed>|null $lastRun */
 /** @var string $profileUrl */
 /** @var array<string, string> $statuses */
@@ -64,7 +64,7 @@ $botName = '@' . (string) ($bot['username'] ?? '');
     </form>
 </section>
 
-<section class="grid lg:grid-2">
+<section class="stack">
     <article class="card">
         <div class="card-header split">
             <h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('link') ?> <?= \TinyCat\Support\Html::et('bots.detail_sources') ?></h2>
@@ -77,12 +77,12 @@ $botName = '@' . (string) ($bot['username'] ?? '');
     <article class="card">
         <div class="card-header"><h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('refresh') ?> <?= \TinyCat\Support\Html::et('bots.detail_last_run') ?></h2></div>
         <div class="card-body stack" data-bot-run-history data-bot-run-latest>
-            <?= \TinyCat\Bots\Views::runs($lastRun !== null ? [$lastRun] : [], true) ?>
+            <?= \TinyCat\Bots\Views::runs($lastRun !== null ? [$lastRun] : []) ?>
         </div>
     </article>
 </section>
 
-<section class="grid lg:grid-2">
+<section class="stack">
     <article class="card">
         <div class="card-header"><h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('clock') ?> <?= \TinyCat\Support\Html::et('bots.detail_history') ?></h2></div>
         <div class="card-body" data-bot-run-history>
@@ -92,14 +92,8 @@ $botName = '@' . (string) ($bot['username'] ?? '');
 
     <article class="card">
         <div class="card-header"><h2 class="text-lg m-0 cluster gap-2"><?= \TinyCat\Support\Html::icon('file') ?> <?= \TinyCat\Support\Html::et('bots.detail_posts') ?></h2></div>
-        <div class="card-body stack">
-            <?php if ($lastPosts === []): ?>
-                <p class="text-muted mb-0"><?= \TinyCat\Support\Html::et('bots.detail_no_posts') ?></p>
-            <?php else: ?>
-                <?php foreach ($lastPosts as $post): ?>
-                    <a class="result-item" href="<?= \TinyCat\Support\Html::e($post['url']) ?>"><strong><?= \TinyCat\Support\Html::e(\TinyCat\Support\Text::plain_text_limit((string) ($post['body'] ?? ''), 180)) ?></strong><small class="table-meta"><?= \TinyCat\Support\Html::e(\TinyCat\Support\Dates::displayDateTime((string) ($post['published_at'] ?? ''))) ?></small></a>
-                <?php endforeach; ?>
-            <?php endif; ?>
+        <div class="card-body" id="bot-posts-list" data-bot-posts-url="<?= \TinyCat\Support\Html::e((string) ($posts['url'] ?? '')) ?>">
+            <?= \TinyCat\Support\Components::render('bots/posts', $posts) ?>
         </div>
     </article>
 </section>

@@ -138,7 +138,8 @@
     "open_settings": "Settings",
     "stats": {
       "users": "Users",
-      "content": "Posts",
+      "content": "Published posts",
+      "scheduled_content": "Scheduled posts",
       "links": "Links",
       "likes": "Likes",
       "comments": "Comments",

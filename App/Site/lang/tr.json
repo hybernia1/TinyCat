@@ -138,7 +138,8 @@
     "open_settings": "Ayarları",
     "stats": {
       "users": "Kullanıcılar",
-      "content": "Gönderiler",
+      "content": "Yayımlanan gönderiler",
+      "scheduled_content": "Planlanmış gönderiler",
       "links": "Bağlantılar",
       "likes": "Beğeniler",
       "comments": "Yorumlar",
