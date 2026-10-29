@@ -21,6 +21,7 @@ $assert = static function (bool $condition, string $message) use (&$checks): voi
 $database->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, email TEXT, role TEXT, status TEXT, updated_at TEXT)');
 $database->exec("CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT DEFAULT '2026-01-01 00:00:00')");
 $database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, bot_user_id INTEGER, name TEXT, enabled INTEGER, interval_minutes INTEGER, last_imported_at TEXT)');
+$database->exec('CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY, source_id INTEGER NOT NULL)');
 $database->exec('CREATE TABLE content_reports (id INTEGER PRIMARY KEY, content_id INTEGER, reporter_id INTEGER, status TEXT, reason TEXT, created_at TEXT)');
 $database->exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, task TEXT, status TEXT, mode TEXT, error TEXT, duration_ms INTEGER, started_at TEXT)');
 for ($id = 1; $id <= 15; $id++) {

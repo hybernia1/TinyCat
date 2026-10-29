@@ -32,6 +32,7 @@ foreach ([
     'CREATE TABLE moderation_actions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, action TEXT, created_at TEXT)',
     'CREATE TABLE ip_action_limits (ip_address TEXT, action_name TEXT, bucket_start TEXT, action_count INTEGER, updated_at TEXT, UNIQUE(ip_address, action_name, bucket_start))',
     'CREATE TABLE bot_sources (id INTEGER PRIMARY KEY AUTOINCREMENT, bot_user_id INTEGER NOT NULL, name TEXT NOT NULL, feed_url TEXT NOT NULL, feed_hash TEXT UNIQUE NOT NULL, interval_minutes INTEGER DEFAULT 60, publication_interval_minutes INTEGER DEFAULT 30, post_template TEXT NOT NULL, enabled INTEGER DEFAULT 1, last_checked_at TEXT, last_imported_at TEXT, next_run_at TEXT, last_error TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)',
+    'CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY, source_id INTEGER NOT NULL)',
     'CREATE TABLE bot_feed_history (bot_user_id INTEGER, feed_hash TEXT, item_hash TEXT, created_at TEXT, PRIMARY KEY (bot_user_id, feed_hash, item_hash))',
     'CREATE TABLE bot_source_runs (id INTEGER PRIMARY KEY, source_id INTEGER, status TEXT, started_at TEXT, items_seen INTEGER, error TEXT)',
     'CREATE TABLE settings (id INTEGER PRIMARY KEY AUTOINCREMENT, setting_key TEXT UNIQUE NOT NULL, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER DEFAULT 1)',

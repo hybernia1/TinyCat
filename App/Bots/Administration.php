@@ -11,6 +11,28 @@ if (!defined('TINYCAT')) {
 
 final class Administration
 {
+    public static function sourceFilter(mixed $value): string
+    {
+        if ($value === 'unknown') { return 'unknown'; }
+        return (is_string($value) || is_int($value)) && ctype_digit((string) $value) && (int) $value > 0 ? (string) (int) $value : '';
+    }
+
+    public static function filterSource(\TinyCat\Database\Query $query, string $source): void
+    {
+        if ($source === 'unknown') { $query->where('bs.id IS NULL'); }
+        elseif ($source !== '') { $query->where('bs.id = ?', (int) $source); }
+    }
+
+    /** @return array<string|int, string> */
+    public static function sourceChoices(?int $botId = null): array
+    {
+        $choices = ['' => \TinyCat\Support\Localization::t('bots.all_sources'), 'unknown' => \TinyCat\Support\Localization::t('bots.unknown_source')];
+        $query = new \TinyCat\Database\Query('SELECT bs.id, bs.name, u.username FROM bot_sources bs INNER JOIN users u ON u.id = bs.bot_user_id');
+        $query->where('u.role = ?', 'bot');
+        if ($botId !== null && $botId > 0) { $query->where('u.id = ?', $botId); }
+        foreach ($query->order('bs.name ASC, bs.id ASC')->all() as $row) { $choices[(string) $row['id']] = (string) $row['name'] . ' (@' . (string) $row['username'] . ')'; }
+        return $choices;
+    }
     private static ?int $filterBotId = null;
     /** @var array<array<string, mixed>>|null */
     private static ?array $bots = null;
@@ -139,13 +161,19 @@ final class Administration
      * @return array<string, mixed> */
     public static function postsPayload(int $botId): array
     {
-        $query = new \TinyCat\Database\Query('SELECT id, body, published_at FROM content');
-        $query->where('author_id = ?', $botId);
+        $query = new \TinyCat\Database\Query('SELECT c.id, c.body, c.published_at, bs.id AS source_id, bs.name AS source_name
+            FROM content c LEFT JOIN bot_source_posts bsp ON bsp.content_id = c.id LEFT JOIN bot_sources bs ON bs.id = bsp.source_id');
+        $query->where('c.author_id = ?', $botId);
+        $source = self::sourceFilter(\TinyCat\Http\Web::get('source', ''));
+        self::filterSource($query, $source);
+        $publication = (string) \TinyCat\Http\Web::get('publication', '');
+        $publication = in_array($publication, ['published', 'queued'], true) ? $publication : '';
+        if ($publication !== '') { $query->where('c.published_at ' . ($publication === 'published' ? '<=' : '>') . ' ?', \TinyCat\Support\Dates::dateDb()); }
         $q = \TinyCat\Support\AdminViews::admin_filter_text((string) \TinyCat\Http\Web::get('q', ''));
-        if ($q !== '') { $query->where("body LIKE ? ESCAPE '!'", '%' . \TinyCat\Database\Connection::escapeLike($q) . '%'); }
+        if ($q !== '') { $query->where("c.body LIKE ? ESCAPE '!'", '%' . \TinyCat\Database\Connection::escapeLike($q) . '%'); }
         $sortingState = \TinyCat\Support\AdminSorting::state('bot_posts');
         $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
-        $params = ['q' => $q, 'per_page' => $pagination['per_page']] + $sortingState;
+        $params = ['q' => $q, 'source' => $source, 'publication' => $publication, 'per_page' => $pagination['per_page']] + $sortingState;
         $apiUrl = '/api/bots/accounts/' . $botId . '/posts';
         $pageUrl = '/admin/bots/' . $botId;
         $items = $query->order(\TinyCat\Support\AdminSorting::order('bot_posts', $sortingState))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
@@ -153,14 +181,14 @@ final class Administration
         $items = array_map(static function (array $post) use ($botId, $now): array {
             $id = (int) $post['id'];
             $published = (string) $post['published_at'] <= $now;
-            return $post + ['excerpt' => \TinyCat\Support\Text::plain_text_limit((string) $post['body'], 180),
+            return $post + ['source' => Resource::postSource($post, $botId), 'excerpt' => \TinyCat\Support\Text::plain_text_limit((string) $post['body'], 180),
                 'published' => $published, 'url' => $published ? \TinyCat\Status\Posts::status_url($id) : '',
                 'edit_url' => '/api/bots/accounts/' . $botId . '/posts/' . $id . '/management?panel=edit',
                 'action_url' => '/api/statuses/' . $id, 'published_iso' => \TinyCat\Support\Dates::dateIso((string) $post['published_at'])];
         }, $items);
         $sorting = \TinyCat\Support\AdminSorting::headings('bot_posts', $params, $apiUrl, $pageUrl);
-        $totalCount = $q === '' ? (int) $pagination['total'] : (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM content WHERE author_id = ?', [$botId]);
-        return ['items' => $items, 'total_count' => $totalCount, 'pagination' => $pagination, 'sorting' => $sorting, 'filters' => $params, 'api_url' => $apiUrl, 'history_url' => $pageUrl,
+        $totalCount = $q === '' && $source === '' && $publication === '' ? (int) $pagination['total'] : (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM content WHERE author_id = ?', [$botId]);
+        return ['items' => $items, 'total_count' => $totalCount, 'sources' => self::sourceChoices($botId), 'pagination' => $pagination, 'sorting' => $sorting, 'filters' => $params, 'api_url' => $apiUrl, 'history_url' => $pageUrl,
             'url' => \TinyCat\Support\AdminViews::admin_list_url($apiUrl, $params + ['page' => $pagination['page']]),
             'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $apiUrl, '#bot-posts-list', $params, historyPath: $pageUrl)];
     }

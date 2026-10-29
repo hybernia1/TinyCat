@@ -125,6 +125,14 @@
     "queue_empty": "Kuyrukta filtrelerle eşleşen gönderi yok.",
     "publish_now": "Şimdi yayımla",
     "publish_now_confirm": "Bu gönderi şimdi yayımlansın mı?",
-    "queue_published": "Gönderi yayımlandı."
+    "queue_published": "Gönderi yayımlandı.",
+    "all_sources": "Tüm RSS kaynakları",
+    "source_label": "RSS kaynağı",
+    "unknown_source": "Bilinmeyen kaynak",
+    "unknown_source_help": "Bu gönderinin özgün RSS kaynağı kayıtlı değil.",
+    "published_queued": "Yayımlanan / kuyrukta",
+    "source_counts_help": "Yalnızca RSS kaynağı kayıtlı gönderiler sayılır. Kaynak bağlantısı olmayan eski gönderiler dahil edilmez.",
+    "queued_posts": "Kuyrukta",
+    "publication_status": "Yayın"
   }
 }

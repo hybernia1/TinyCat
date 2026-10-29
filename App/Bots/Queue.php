@@ -23,13 +23,17 @@ final class Queue
     {
         $bot = max(0, (int) Web::get('bot', 0));
         $status = (string) Web::get('status', '');
+        $source = Administration::sourceFilter(Web::get('source', ''));
         $filters = ['q' => AdminViews::admin_filter_text((string) Web::get('q', '')), 'bot' => $bot > 0 ? (string) $bot : '',
-            'status' => array_key_exists($status, AdminViews::admin_user_statuses()) ? $status : ''] + AdminSorting::state('bot_queue');
-        $query = new Query('SELECT c.id, c.body, c.published_at, u.id AS bot_id, u.username, u.status FROM content c INNER JOIN users u ON u.id = c.author_id');
+            'status' => array_key_exists($status, AdminViews::admin_user_statuses()) ? $status : '', 'source' => $source] + AdminSorting::state('bot_queue');
+        $query = new Query('SELECT c.id, c.body, c.published_at, u.id AS bot_id, u.username, u.status, bs.id AS source_id, bs.name AS source_name
+            FROM content c INNER JOIN users u ON u.id = c.author_id
+            LEFT JOIN bot_source_posts bsp ON bsp.content_id = c.id LEFT JOIN bot_sources bs ON bs.id = bsp.source_id');
         $query->where('u.role = ?', 'bot')->where('c.published_at > ?', Dates::dateDb());
         if ($filters['q'] !== '') { $query->where("c.body LIKE ? ESCAPE '!'", '%' . Connection::escapeLike($filters['q']) . '%'); }
         if ($bot > 0) { $query->where('u.id = ?', $bot); }
         if ($filters['status'] !== '') { $query->where('u.status = ?', $filters['status']); }
+        Administration::filterSource($query, $source);
         $pagination = Pagination::paginationMeta($query->count(), AdminViews::admin_page(), AdminViews::admin_per_page());
         $params = $filters + ['per_page' => $pagination['per_page']];
         $items = [];
@@ -38,13 +42,14 @@ final class Queue
             $items[] = ['id' => $id, 'bot_id' => (int) $row['bot_id'], 'username' => (string) $row['username'], 'status' => (string) $row['status'],
                 'bot_url' => '/admin/bots/' . (int) $row['bot_id'], 'excerpt' => Text::plain_text_limit((string) $row['body'], 180),
                 'published_at' => Dates::dateIso((string) $row['published_at']), 'can_publish' => $row['status'] === 'active',
+                'source' => Resource::postSource($row, (int) $row['bot_id']),
                 'publish_url' => AdminViews::admin_list_url('/api/bots/queue/' . $id . '/publication', $params + ['page' => $pagination['page']])];
         }
         $bots = ['' => Localization::t('bots.all_bots')];
         foreach (Connection::all('SELECT id, username FROM users WHERE role = ? ORDER BY username, id', ['bot']) as $row) { $bots[(string) $row['id']] = (string) $row['username']; }
         $navigation = AdminViews::admin_pagination_view_data($pagination, '/api/bots/queue', '#bot-queue-list', $params, historyPath: '/admin/bots/queue');
         unset($navigation['target']);
-        return ['items' => $items, 'filters' => $filters, 'pagination' => $pagination, 'bots' => $bots, 'statuses' => array_keys(AdminViews::admin_user_statuses()),
+        return ['items' => $items, 'filters' => $filters, 'pagination' => $pagination, 'bots' => $bots, 'sources' => Administration::sourceChoices($bot), 'statuses' => array_keys(AdminViews::admin_user_statuses()),
             'sorting' => AdminSorting::headings('bot_queue', $params), 'navigation' => $navigation];
     }
 

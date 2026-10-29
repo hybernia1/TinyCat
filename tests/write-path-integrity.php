@@ -226,6 +226,8 @@ foreach ([0, 1] as $authorId) {
 }
 
 $database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, last_imported_at TEXT, last_error TEXT)');
+$database->exec('PRAGMA foreign_keys = ON');
+$database->exec('CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY REFERENCES content(id) ON DELETE CASCADE, source_id INTEGER NOT NULL)');
 $database->exec('CREATE TABLE bot_feed_history (bot_user_id INTEGER, feed_hash TEXT, item_hash TEXT, created_at TEXT, UNIQUE (bot_user_id, feed_hash, item_hash))');
 $database->exec('INSERT INTO bot_sources (id) VALUES (1)');
 $persistFeed = new ReflectionMethod(\TinyCat\Bots\Importer::class, 'persistFeedPost');
@@ -320,7 +322,8 @@ $retried = $importItems->invoke(null, $source, $technical, 1);
 $assert($retried['status'] === 'posted', 'A technical failure can be retried successfully.');
 
 // Missing legacy settings, batch imports, duplicate GUIDs and queue continuation.
-$queueSource = array_replace($source, ['bot_user_id' => 900, 'feed_url' => 'https://queue.example/rss']);
+$database->exec('INSERT INTO bot_sources (id) VALUES (3), (4)');
+$queueSource = array_replace($source, ['id' => 3, 'bot_user_id' => 900, 'feed_url' => 'https://queue.example/rss']);
 foreach ([[], ['publication_interval_minutes' => null], ['publication_interval_minutes' => 0]] as $legacy) {
     $assert(\TinyCat\Bots\Importer::publicationInterval($legacy) === 30, 'Unset legacy publication intervals default to 30 minutes.');
 }
@@ -341,10 +344,10 @@ $queueSource['publication_interval_minutes'] = 45;
 $continuation = $importItems->invoke(null, $queueSource, [['guid' => 'queue-c', 'title' => 'Queue third'], ['guid' => 'queue-d', 'title' => 'Queue fourth']], 1);
 $continuedAt = (string) $value('SELECT published_at FROM content WHERE id = ' . $continuation['content_id']);
 $assert($continuation['imported_count'] === 1 && strtotime($continuedAt) - strtotime($queueRows[2]['published_at']) === 2700, 'Later imports append after the existing queue using the newly configured interval.');
-$otherSource = array_replace($queueSource, ['feed_url' => 'https://queue.example/other']);
+$otherSource = array_replace($queueSource, ['id' => 4, 'feed_url' => 'https://queue.example/other']);
 $otherBatch = $importItems->invoke(null, $otherSource, [['guid' => 'other-source', 'title' => 'Other source']], 1);
 $otherAt = (string) $value('SELECT published_at FROM content WHERE id = ' . $otherBatch['content_id']);
-$assert(strtotime($otherAt) - strtotime($continuedAt) === 2700, 'Multiple sources for the same bot share the publication timeline.');
+$assert(abs(strtotime($otherAt) - time()) < 5 && $otherAt < $continuedAt, 'A second source starts its own timeline independently of the same bot account.');
 $database->exec("CREATE TRIGGER fail_second_queue_item BEFORE INSERT ON content WHEN NEW.body = 'Queue failure' BEGIN SELECT RAISE(ABORT, 'forced second item failure'); END");
 $partialItems = [['guid' => 'queue-e', 'title' => 'Before failure'], ['guid' => 'queue-f', 'title' => 'Queue failure'], ['guid' => 'queue-g', 'title' => 'After failure']];
 $partial = $importItems->invoke(null, $queueSource, $partialItems, 1);
@@ -461,6 +464,8 @@ $assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = ' . 
 $database->exec("INSERT INTO users (id, username, role, bio, password, status) VALUES (3, 'feedbot', 'bot', '', '', 'active')");
 $botSource = $source;
 $botSource['bot_user_id'] = 3;
+$database->exec('INSERT INTO bot_sources (id) VALUES (5)');
+$botSource['id'] = 5;
 $botPublication = $importItems->invoke(null, $botSource, [['guid' => 'bot-mention', 'title' => 'Bot mention @owner']], 1);
 $botPublicationId = (int) $botPublication['content_id'];
 $assert((string) $value('SELECT published_at FROM content WHERE id = ' . $botPublicationId) <= \TinyCat\Support\Dates::dateDb(), 'Bot imports publish immediately through the shared writer.');

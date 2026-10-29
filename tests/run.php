@@ -49,6 +49,7 @@ $tests = [
     'Asset dependency graph' => 'tests/asset-optimizer/graph.php',
     'Built-in Bots' => 'tests/bots/run.php',
     'Bot publication queue' => 'tests/bots/queue.php',
+    'Per-feed publication queues' => 'tests/bots/feed-queue.php',
     'Bot publication migration' => 'tests/bots/publication-migration.php',
     'Updater' => 'tests/updater/run.php',
     'MySQL migration registry' => 'tests/updater/mysql-registry.php',

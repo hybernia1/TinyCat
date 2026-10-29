@@ -125,6 +125,14 @@
     "queue_empty": "No hay publicaciones en cola que coincidan con los filtros.",
     "publish_now": "Publicar ahora",
     "publish_now_confirm": "¿Publicar esta entrada ahora?",
-    "queue_published": "La entrada se ha publicado."
+    "queue_published": "La entrada se ha publicado.",
+    "all_sources": "Todas las fuentes RSS",
+    "source_label": "Fuente RSS",
+    "unknown_source": "Fuente desconocida",
+    "unknown_source_help": "No se ha registrado la fuente RSS original de esta entrada.",
+    "published_queued": "Publicados / en cola",
+    "source_counts_help": "Los recuentos solo incluyen entradas con una fuente RSS registrada. Se excluyen las entradas antiguas sin esta relación.",
+    "queued_posts": "En cola",
+    "publication_status": "Publicación"
   }
 }

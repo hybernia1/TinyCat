@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **5.5.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+Current release: **5.6.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -140,7 +140,7 @@ Keep independent tasks in separate scheduler entries. For example, poll feeds ev
 17 * * * * php /path/to/tinycat/scheduled-tasks.php --task=cleanup --cleanup-batch=500
 ```
 
-Routine database cleanup runs at most once per hour and every task has its own database lock. Bot source check intervals decide which feeds are due. Each run imports all new usable items returned by the bounded feed parser (up to 100 entries), retaining GUID history to prevent duplicates. The separate publication interval defaults to 30 minutes, including existing sources after migration. Posts append to the bot’s publication timeline; the first post appears immediately if the timeline is empty or its previous interval has elapsed. Future posts stay hidden until their publication time. Changing the interval affects subsequent imports only. `--task=all` remains available for simple installations that prefer one scheduler entry.
+Routine database cleanup runs at most once per hour and every task has its own database lock. Bot source check intervals decide which feeds are due. Each run imports all new usable items returned by the bounded feed parser (up to 100 entries), retaining GUID history to prevent duplicates. The separate publication interval defaults to 30 minutes, including existing sources after migration. Posts append to the RSS source’s own publication timeline; sources sharing a bot account do not delay each other. The first post appears immediately if that source’s timeline is empty or its previous interval has elapsed. Future posts stay hidden until their publication time. Changing the interval affects subsequent imports only. Legacy posts without a recorded source keep their existing times and do not delay the new per-feed queues. `--task=all` remains available for simple installations that prefer one scheduler entry.
 
 Cleanup also removes avatars belonging to deleted users after 24 hours, known abandoned upload/cache temporary files after 48 hours, and obsolete update work files under the updater lock. Avatar recovery backups and unrelated files are preserved. Rate-limit buckets are retained for at least 24 hours and twice the longest policy window. Image and cache scans checkpoint their position and bound inspected entries as well as deletions; `has_more` can therefore mean that inspection is still in progress, even when nothing was removed. Directory enumeration can revisit entries after concurrent filesystem changes; subsequent complete passes reconcile them.
 

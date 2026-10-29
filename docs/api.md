@@ -181,7 +181,7 @@ Unknown columns retain the list's default order. Supported sort keys are:
 | `/api/users` | `username`, `role`, `status`, `updated_at` |
 | `/api/bots/accounts` | `username`, `status`, `source_count`, `post_count`, `updated_at` |
 | `/api/bots/sources` | `name`, `bot`, `status`, `interval`, `last_import` |
-| `/api/bots/queue` | `bot`, `body`, `published_at` |
+| `/api/bots/queue` | `bot`, `source`, `body`, `published_at` |
 | `/api/scheduler/tasks` | `task`, `started_at`, `status`, `duration_ms` (run history) |
 | `/api/moderation/reports` | `content`, `reason`, `status` |
 
@@ -290,7 +290,7 @@ Manual imports of one source use the same feeds task and lock, with
 | GET, POST | `/api/bots/sources` | List / create feed sources |
 | PATCH, DELETE | `/api/bots/sources/{id}` | Edit / delete |
 | POST | `/api/bots/sources/{id}/runs` | Run a feed import |
-| GET | `/api/bots/queue` | Paginated future bot posts; filter by `q` (text), `bot` (account ID), and `status` (account status) |
+| GET | `/api/bots/queue` | Paginated future bot posts; filter by `q` (text), `bot` (account ID), `status` (account status), and `source` (RSS source ID or `unknown`) |
 | POST | `/api/bots/queue/{id}/publication` | Publish immediately and return the refreshed queue; administrator and CSRF token required |
 | GET | `/api/moderation/reports` | List moderation reports |
 | PATCH | `/api/moderation/reports/{id}` | Review with `decision=remove|dismiss` |
@@ -310,18 +310,28 @@ keep their schedules. List filters, sorting, and pagination can be included in t
 publication URL and are applied to the returned list.
 
 Bot accounts accept `q`, `status`, `page` and `per_page`; sources accept `bot`.
-The bot post list accepts `q`, `page`, `per_page`, `sort` (`body` or `published_at`)
+Source resources expose `published_count`, `queued_count` and `post_count`, plus
+links to their published and queued lists. Counts include only posts with a stored
+source relation. A post moves between published and queued counts according to
+its current publication time; deleted posts are excluded.
+
+The bot post list accepts `q`, `source` (RSS source ID or `unknown`),
+`publication` (`published` or `queued`), `page`, `per_page`, `sort` (`body`, `source` or `published_at`)
 and `direction` (`asc` or `desc`). Its pagination follows `meta.pagination`.
 The management endpoint verifies that the post belongs to the selected bot.
 Edits and confirmed deletion use the existing status API; editing preserves the
 publication time. Public status reads continue to hide future posts.
+Bot post and queue resources include `source: {id, name, url}` when the source is
+known, otherwise `source: null`. Unknown-source filters retain access to legacy
+posts and posts whose source has been deleted; they do not infer attribution.
 Source writes accept `bot_user_id`, `name`, `feed_url`, `interval_minutes`,
 `publication_interval_minutes`, `post_template` and `enabled`.
 `interval_minutes` controls RSS polling; `publication_interval_minutes` controls
 spacing between posts (5–43200 minutes, default 30 for new and migrated sources).
 Omitting publication spacing on an update preserves its current value. Each run
-saves all new usable parsed items, appending to the bot's existing publication
-timeline; future posts remain hidden from public readers. Interval changes affect
+saves all new usable parsed items, appending to that RSS source's publication
+timeline. Sources sharing a bot account have independent queues; future posts
+remain hidden from public readers. Interval changes affect
 subsequent imports only. Source run results include `content_ids` and
 `imported_count`; scheduler `changed` counts all saved posts, including future posts.
 An enabled-only PATCH requests an explicit boolean

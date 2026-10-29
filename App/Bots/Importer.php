@@ -48,6 +48,7 @@ final class Importer
         return [
             'bot_sources',
             'bot_feed_history',
+            'bot_source_posts',
             'bot_source_runs',
         ];
     }
@@ -203,12 +204,22 @@ final class Importer
     }
 
     /** @param list<array<mixed>> $preparedLinks */
-    private static function persistFeedPost(int $sourceId, int $botUserId, string $feedHash, string $itemHash, \TinyCat\Status\PostCreation $draft, array $preparedLinks, ?string $publicationTime = null): int
+    private static function persistFeedPost(int $sourceId, int $botUserId, string $feedHash, string $itemHash, \TinyCat\Status\PostCreation $draft, array $preparedLinks, int $publicationInterval = self::DEFAULT_PUBLICATION_INTERVAL): int
     {
         $publishedAt = \TinyCat\Support\Dates::dateDb();
-        return \TinyCat\Database\Transactions::run(static function () use ($sourceId, $botUserId, $feedHash, $itemHash, $draft, $preparedLinks, $publishedAt, $publicationTime): int {
+        return \TinyCat\Database\Transactions::run(static function () use ($sourceId, $botUserId, $feedHash, $itemHash, $draft, $preparedLinks, $publishedAt, $publicationInterval): int {
             self::recordFeedHistory($botUserId, $feedHash, $itemHash, $publishedAt);
+            // Feed executions share the scheduler lock; each source owns its timeline.
+            $lastPublication = (string) \TinyCat\Database\Connection::value(
+                'SELECT MAX(c.published_at) FROM bot_source_posts bsp INNER JOIN content c ON c.id = bsp.content_id WHERE bsp.source_id = ?',
+                [$sourceId]
+            );
+            $nextPublication = $lastPublication !== ''
+                ? \TinyCat\Support\Dates::dateDb((new \DateTimeImmutable($lastPublication, \TinyCat\Support\Dates::timezone()))->modify('+' . $publicationInterval . ' minutes'))
+                : $publishedAt;
+            $publicationTime = max($publishedAt, $nextPublication);
             $contentId = \TinyCat\Status\PostCreation::create($botUserId, $draft, $preparedLinks, publishedAt: $publicationTime);
+            \TinyCat\Database\Connection::insert('bot_source_posts', ['source_id' => $sourceId, 'content_id' => $contentId]);
             \TinyCat\Database\Connection::update('bot_sources', ['last_imported_at' => $publishedAt], ['id' => $sourceId]);
             return $contentId;
         });
@@ -250,19 +261,27 @@ final class Importer
         return $interval >= 5 && $interval <= 43200 ? $interval : self::DEFAULT_PUBLICATION_INTERVAL;
     }
 
+    private static function sourceSelect(): string
+    {
+        return 'SELECT bs.*, u.username,
+            (SELECT COUNT(*) FROM bot_source_posts bsp INNER JOIN content c ON c.id = bsp.content_id WHERE bsp.source_id = bs.id AND c.published_at <= ?) AS published_count,
+            (SELECT COUNT(*) FROM bot_source_posts bsp INNER JOIN content c ON c.id = bsp.content_id WHERE bsp.source_id = bs.id AND c.published_at > ?) AS queued_count
+            FROM bot_sources bs';
+    }
+
     /**
      * @return array<string, mixed>|null
      */
     public static function findSource(int $id): ?array
     {
+        $now = \TinyCat\Support\Dates::dateDb();
         return $id > 0
             ? \TinyCat\Database\Connection::one(
-                'SELECT bs.*, u.username
-                 FROM bot_sources bs
+                self::sourceSelect() . '
                  LEFT JOIN users u ON u.id = bs.bot_user_id AND u.role = ?
                  WHERE bs.id = ?
                  LIMIT 1',
-                ['bot', $id]
+                [$now, $now, 'bot', $id]
             )
             : null;
     }
@@ -272,8 +291,9 @@ final class Importer
      */
     public static function sources(?int $botUserId = null, ?string $order = null): array
     {
-        $sql = 'SELECT bs.*, u.username FROM bot_sources bs INNER JOIN users u ON u.id = bs.bot_user_id WHERE u.role = ?';
-        $params = ['bot'];
+        $sql = self::sourceSelect() . ' INNER JOIN users u ON u.id = bs.bot_user_id WHERE u.role = ?';
+        $now = \TinyCat\Support\Dates::dateDb();
+        $params = [$now, $now, 'bot'];
 
         if ($botUserId !== null && $botUserId > 0) {
             $sql .= ' AND bs.bot_user_id = ?';
@@ -295,6 +315,11 @@ final class Importer
             'bot_username' => (string) ($source['username'] ?? ''),
             'name' => (string) ($source['name'] ?? ''),
             'feed_url' => (string) ($source['feed_url'] ?? ''),
+            'published_count' => (int) ($source['published_count'] ?? 0),
+            'queued_count' => (int) ($source['queued_count'] ?? 0),
+            'post_count' => (int) ($source['published_count'] ?? 0) + (int) ($source['queued_count'] ?? 0),
+            'published_url' => '/admin/bots/' . (int) ($source['bot_user_id'] ?? 0) . '?source=' . (int) ($source['id'] ?? 0) . '&publication=published',
+            'queue_url' => '/admin/bots/queue?source=' . (int) ($source['id'] ?? 0),
             'interval_minutes' => (int) ($source['interval_minutes'] ?? 60),
             'publication_interval_minutes' => self::publicationInterval($source),
             'post_template' => (string) ($source['post_template'] ?? ''),
@@ -473,8 +498,6 @@ final class Importer
             $itemHashes = array_map(static fn (array $item): string => hash('sha256', (string) ($item['guid'] ?? '')), $items);
             $historyItemHashes = self::feedHistoryHashes($botUserId, $feedHash, $itemHashes);
             $interval = self::publicationInterval($source);
-            // All sources for a bot append to one timeline under the shared feeds lock.
-            $lastPublication = (string) \TinyCat\Database\Connection::value('SELECT MAX(published_at) FROM content WHERE author_id = ?', [$botUserId]);
 
             foreach ($items as $item) {
                 $hash = hash('sha256', (string) ($item['guid'] ?? ''));
@@ -501,14 +524,8 @@ final class Importer
                         'image_urls' => array_values(array_filter((array) ($item['image_urls'] ?? [$item['image_url'] ?? '']), is_string(...))),
                     ]
                 );
-                $now = \TinyCat\Support\Dates::dateDb();
-                $nextPublication = $lastPublication !== ''
-                    ? \TinyCat\Support\Dates::dateDb((new \DateTimeImmutable($lastPublication, \TinyCat\Support\Dates::timezone()))->modify('+' . $interval . ' minutes'))
-                    : $now;
-                $publicationTime = max($now, $nextPublication);
-                $contentId = self::persistFeedPost($sourceId, $botUserId, $feedHash, $hash, $draft, $preparedLinks, $publicationTime);
+                $contentId = self::persistFeedPost($sourceId, $botUserId, $feedHash, $hash, $draft, $preparedLinks, $interval);
                 $contentIds[] = $contentId;
-                $lastPublication = $publicationTime;
                 $historyItemHashes[$hash] = true;
             }
 

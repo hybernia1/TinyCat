@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.6.0 - 2026-10-29
+
+- Show RSS source identity and source filters in the publication queue and bot post lists. Add linked published/queued counts to RSS source tables, and explicit unknown-source labels and filters for unattributed posts.
+- Schedule RSS/Atom publications per source instead of sharing the bot account's timeline. Persist source/post relations atomically with posts and GUID claims, with a restart-safe migration and matching fresh-install schema.
+- Preserve legacy publication times and deduplication history; unattributed legacy posts do not delay new per-feed queues. Early publication and deletion affect only the associated feed's remaining timeline.
+
 ## 5.5.0 - 2026-10-29
 
 - Add a bot publication queue with text search, bot and account-status filters, sortable columns, pagination and a confirmed Publish now action. Preserve other publication times and guard administrator access, CSRF, inactive accounts and repeated requests.
