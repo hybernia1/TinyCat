@@ -43,6 +43,20 @@ the canonical module APIs described in `docs/api.md`; legacy page POSTs return 4
 Public document URLs and formats remain unchanged. This release needs no new
 schema migration, and the update manifest removes the old standalone installer.
 
+## Upgrading to 5.4.0
+
+The normal signed update applies `20261029_002_bot_publication_interval` before
+leaving maintenance mode. It adds `publication_interval_minutes` with a default
+of 30 for existing sources and new rows. Existing `interval_minutes` polling
+settings and GUID histories remain unchanged. Fresh installations include the
+new column directly.
+
+Feed imports now save every new usable item returned by the bounded parser and
+append publication slots to the bot's existing timeline. Public routes continue
+to hide future posts. Changing publication spacing affects subsequent imports;
+editing a scheduled post preserves its publication time. Scheduler URLs and
+credentials do not change.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

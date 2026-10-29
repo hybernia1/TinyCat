@@ -129,13 +129,51 @@ final class Administration
                 ['key' => 'posts', 'value' => \TinyCat\Moderation\Restrictions::moderation_user_post_count($id)],
                 ['key' => 'runs', 'value' => count($runs)],
             ],
-            'last_posts' => \TinyCat\Database\Connection::all(
-                'SELECT id, body, published_at FROM content WHERE author_id = ? ORDER BY published_at DESC, id DESC LIMIT 8',
-                [$id]
-            ),
+            'posts' => self::postsPayload($id),
             'last_run' => $runs[0] ?? null,
             'profile_url' => \TinyCat\Users\Profiles::author_url($id),
         ];
+    }
+
+    /** Administrator-only list, including posts waiting for publication.
+     * @return array<string, mixed> */
+    public static function postsPayload(int $botId): array
+    {
+        $query = new \TinyCat\Database\Query('SELECT id, body, published_at FROM content');
+        $query->where('author_id = ?', $botId);
+        $q = \TinyCat\Support\AdminViews::admin_filter_text((string) \TinyCat\Http\Web::get('q', ''));
+        if ($q !== '') { $query->where("body LIKE ? ESCAPE '!'", '%' . \TinyCat\Database\Connection::escapeLike($q) . '%'); }
+        $sortingState = \TinyCat\Support\AdminSorting::state('bot_posts');
+        $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
+        $params = ['q' => $q, 'per_page' => $pagination['per_page']] + $sortingState;
+        $apiUrl = '/api/bots/accounts/' . $botId . '/posts';
+        $pageUrl = '/admin/bots/' . $botId;
+        $items = $query->order(\TinyCat\Support\AdminSorting::order('bot_posts', $sortingState))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
+        $now = \TinyCat\Support\Dates::dateDb();
+        $items = array_map(static function (array $post) use ($botId, $now): array {
+            $id = (int) $post['id'];
+            $published = (string) $post['published_at'] <= $now;
+            return $post + ['excerpt' => \TinyCat\Support\Text::plain_text_limit((string) $post['body'], 180),
+                'published' => $published, 'url' => $published ? \TinyCat\Status\Posts::status_url($id) : '',
+                'edit_url' => '/api/bots/accounts/' . $botId . '/posts/' . $id . '/management?panel=edit',
+                'action_url' => '/api/statuses/' . $id, 'published_iso' => \TinyCat\Support\Dates::dateIso((string) $post['published_at'])];
+        }, $items);
+        $sorting = \TinyCat\Support\AdminSorting::headings('bot_posts', $params, $apiUrl, $pageUrl);
+        $totalCount = $q === '' ? (int) $pagination['total'] : (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM content WHERE author_id = ?', [$botId]);
+        return ['items' => $items, 'total_count' => $totalCount, 'pagination' => $pagination, 'sorting' => $sorting, 'filters' => $params, 'api_url' => $apiUrl, 'history_url' => $pageUrl,
+            'url' => \TinyCat\Support\AdminViews::admin_list_url($apiUrl, $params + ['page' => $pagination['page']]),
+            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $apiUrl, '#bot-posts-list', $params, historyPath: $pageUrl)];
+    }
+
+    /** @return array<string, mixed> */
+    public static function postManagement(int $botId, int $postId): array
+    {
+        $item = \TinyCat\Database\Connection::one(\TinyCat\Status\Feed::public_status_select_sql() . ' WHERE c.id = ? AND c.author_id = ?', [$postId, $botId]);
+        if ($item === null) { \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
+        $user = \TinyCat\Users\Authentication::auth();
+        return ['item' => \TinyCat\Status\Resource::post($item, $user), 'comments' => [],
+            'viewer' => $user !== null ? \TinyCat\Users\Resource::profile($user) : null,
+            'options' => ['images_enabled' => \TinyCat\Status\Images::status_images_enabled(), 'image_max_bytes' => \TinyCat\Status\Images::status_image_max_upload_bytes()]];
     }
 
     /**
@@ -344,7 +382,7 @@ final class Administration
      */
     public static function sourcePayload(?int $sourceId = null): array
     {
-        \TinyCat\Http\Request::current()->validated(['bot_user_id' => 'required|integer', 'name' => 'required|string', 'feed_url' => 'required|string', 'interval_minutes' => 'integer', 'post_template' => 'required|string', 'enabled' => 'boolean']);
+        \TinyCat\Http\Request::current()->validated(['bot_user_id' => 'required|integer', 'name' => 'required|string', 'feed_url' => 'required|string', 'interval_minutes' => 'integer', 'publication_interval_minutes' => 'integer', 'post_template' => 'required|string', 'enabled' => 'boolean']);
         $botUserId = max(0, (int) \TinyCat\Http\Request::current()->input('bot_user_id', 0));
         $bot = $botUserId > 0
             ? \TinyCat\Database\Connection::one('SELECT id, status FROM users WHERE id = ? AND role = ? LIMIT 1', [$botUserId, 'bot'])
@@ -352,6 +390,8 @@ final class Administration
         $name = trim((string) \TinyCat\Http\Request::current()->input('name', ''));
         $feedUrl = trim((string) \TinyCat\Http\Request::current()->input('feed_url', ''));
         $interval = (int) \TinyCat\Http\Request::current()->input('interval_minutes', 60);
+        $existing = $sourceId !== null ? Importer::findSource($sourceId) : [];
+        $publicationInterval = (int) \TinyCat\Http\Request::current()->input('publication_interval_minutes', Importer::publicationInterval($existing ?? []));
         $template = trim((string) \TinyCat\Http\Request::current()->input('post_template', ''));
         $errors = [];
 
@@ -371,6 +411,9 @@ final class Administration
         if ($interval < 5 || $interval > 43200) {
             $errors['interval_minutes'][] = \TinyCat\Http\Response::issue('bot_interval', \TinyCat\Support\Localization::t('bots.validation.interval'));
         }
+        if ($publicationInterval < 5 || $publicationInterval > 43200) {
+            $errors['publication_interval_minutes'][] = \TinyCat\Http\Response::issue('bot_interval', \TinyCat\Support\Localization::t('bots.validation.interval'));
+        }
         if ($template === '' || strlen($template) > 2000) {
             $errors['post_template'][] = \TinyCat\Http\Response::issue('bot_template', \TinyCat\Support\Localization::t('bots.validation.template'));
         }
@@ -387,6 +430,7 @@ final class Administration
             'feed_url' => $feedUrl,
             'feed_hash' => $feedHash,
             'interval_minutes' => $interval,
+            'publication_interval_minutes' => $publicationInterval,
             'post_template' => $template,
             'enabled' => $enabled ? 1 : 0,
             'next_run_at' => null,

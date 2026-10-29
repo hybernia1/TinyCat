@@ -138,7 +138,8 @@
     "open_settings": "Налаштування",
     "stats": {
       "users": "Користувачі",
-      "content": "Дописи",
+      "content": "Опубліковані дописи",
+      "scheduled_content": "Заплановані дописи",
       "links": "Посилання",
       "likes": "Лайки",
       "comments": "Коментарі",

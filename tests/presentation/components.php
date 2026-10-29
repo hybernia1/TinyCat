@@ -70,6 +70,10 @@ $avatar = UsersViews::avatar(['user' => ['id' => 99, 'author_id' => 2, 'author_n
 $assert(str_contains($avatar, 'data-avatar-user-id="2"') && str_contains($avatar, '#user'), 'Post avatars belong to the author and render the shared fallback icon.');
 
 $source = ['id' => 7, 'bot_user_id' => 3, 'username' => 'Bot', 'name' => 'Source', 'enabled' => true, 'feed_url' => 'https://example.test/feed'];
+$sourceFields = \TinyCat\Support\Components::render('bots/source-fields', ['source' => $source, 'bots' => []]);
+$assert(preg_match('/name="publication_interval_minutes"[^>]*value="30"/', $sourceFields) === 1, 'Legacy source forms display the default 30-minute publication spacing.');
+$configuredFields = \TinyCat\Support\Components::render('bots/source-fields', ['source' => $source + ['interval_minutes' => 60, 'publication_interval_minutes' => 45], 'bots' => []]);
+$assert(preg_match('/name="publication_interval_minutes"[^>]*value="45"/', $configuredFields) === 1 && preg_match('/name="interval_minutes"[^>]*value="60"/', $configuredFields) === 1, 'Source forms display separate polling and publication intervals.');
 $sources = BotsViews::sources(['bots' => [['id' => 3, 'username' => 'Bot']], 'sources' => [$source]]);
 $assert($hasAction($sources, '/api/bots/sources/7/runs') && $hasAction($sources, '/api/bots/sources/7'), 'Source run and edit/delete actions address the same source.');
 $accounts = BotsViews::accounts(['accounts' => [['id' => 3, 'username' => 'Bot', 'status' => 'active', 'updated_at' => '2026-01-01']]]);
@@ -81,7 +85,7 @@ $form = StatusViews::commentForm(['content_id' => 7, 'user' => $member]);
 $assert(str_contains($form, 'action="/api/statuses/7/comments"') && str_contains($form, 'status-comment-input-shell'), 'Comment forms preserve the API action and editor structure.');
 $thread = StatusViews::commentsThread(['item' => $item, 'comments' => [['id' => 1, 'content_id' => 7]], 'user' => null]);
 $assert(str_contains($thread, 'data-modal-url="/api/users/authentication?'), 'Guest comment threads keep the sign-in modal.');
-$detailData = ['botId' => 3, 'bot' => ['id' => 3, 'username' => 'Bot'], 'sources' => [['id' => 7, 'bot_user_id' => 3, 'name' => 'Fixture', 'feed_url' => 'https://example.invalid/rss', 'enabled' => false]], 'runs' => [], 'stats' => [], 'lastPosts' => [], 'lastRun' => null, 'profileUrl' => '/author/3', 'statuses' => [], 'avatarUrl' => ''];
+$detailData = ['botId' => 3, 'bot' => ['id' => 3, 'username' => 'Bot'], 'sources' => [['id' => 7, 'bot_user_id' => 3, 'name' => 'Fixture', 'feed_url' => 'https://example.invalid/rss', 'enabled' => false]], 'runs' => [], 'stats' => [], 'posts' => [], 'lastRun' => null, 'profileUrl' => '/author/3', 'statuses' => [], 'avatarUrl' => ''];
 $detail = \TinyCat\Support\View::render('detail', $detailData, dirname(__DIR__, 2) . '/App/Bots/templates');
 $assert(str_contains($detail, 'id="bots-list"') && str_contains($detail, 'data-bot-sources-view'), 'Bot detail and AJAX updates share the same source component and target.');
 $assert(str_contains($detail, 'data-bot-source-edit="7"'), 'The shared detail source component keeps the edit action.');

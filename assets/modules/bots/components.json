@@ -139,7 +139,7 @@
         "component": "ui/field",
         "data": {
           "label": {
-            "t": "bots.interval",
+            "t": "bots.fetch_interval",
             "values": {}
           },
           "value": {
@@ -173,11 +173,50 @@
         "component": "ui/field",
         "data": {
           "label": {
+            "t": "bots.interval",
+            "values": {}
+          },
+          "value": {
+            "or": [
+              {
+                "get": "source.publication_interval_minutes"
+              },
+              30
+            ]
+          },
+          "textarea": false,
+          "attributes": {
+            "class": "input",
+            "name": "publication_interval_minutes",
+            "type": "number",
+            "value": {
+              "or": [
+                {
+                  "get": "source.publication_interval_minutes"
+                },
+                30
+              ]
+            },
+            "required": true,
+            "min": "5",
+            "max": "43200"
+          }
+        }
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {
             "t": "bots.template",
             "values": {}
           },
           "value": {
-            "get": "source.post_template"
+            "or": [
+              {
+                "get": "source.post_template"
+              },
+              "{{title}}\n\n{{description}}\n\n{{url}}\n\n#{categories}"
+            ]
           },
           "textarea": true,
           "attributes": {
@@ -188,6 +227,231 @@
             "rows": "8"
           }
         }
+      },
+      {
+        "tag": "dl",
+        "attrs": {
+          "class": "grid sm:grid-2 text-sm m-0"
+        },
+        "children": [
+          {
+            "tag": "div",
+            "attrs": {},
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "code",
+                    "attrs": {},
+                    "children": [
+                      "{{title}}"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0 text-muted"
+                },
+                "children": [
+                  {
+                    "t": "bots.template_variables.title",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {},
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "code",
+                    "attrs": {},
+                    "children": [
+                      "{{description}}"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0 text-muted"
+                },
+                "children": [
+                  {
+                    "t": "bots.template_variables.description",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {},
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "code",
+                    "attrs": {},
+                    "children": [
+                      "{{url}}"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0 text-muted"
+                },
+                "children": [
+                  {
+                    "t": "bots.template_variables.url",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {},
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "code",
+                    "attrs": {},
+                    "children": [
+                      "{{author}}"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0 text-muted"
+                },
+                "children": [
+                  {
+                    "t": "bots.template_variables.author",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {},
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "code",
+                    "attrs": {},
+                    "children": [
+                      "{{source}}"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0 text-muted"
+                },
+                "children": [
+                  {
+                    "t": "bots.template_variables.source",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {},
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "code",
+                    "attrs": {},
+                    "children": [
+                      "{{categories}}"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0 text-muted"
+                },
+                "children": [
+                  {
+                    "t": "bots.template_variables.categories",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {},
+            "children": [
+              {
+                "tag": "dt",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "code",
+                    "attrs": {},
+                    "children": [
+                      "#{categories}"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "dd",
+                "attrs": {
+                  "class": "m-0 text-muted"
+                },
+                "children": [
+                  {
+                    "t": "bots.template_variables.category_tags",
+                    "values": {}
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       {
         "tag": "label",
@@ -1272,178 +1536,7 @@
     {
       "tag": "div",
       "attrs": {
-        "class": "stack"
-      },
-      "children": [
-        {
-          "tag": "div",
-          "attrs": {
-            "class": "split"
-          },
-          "children": [
-            {
-              "tag": "span",
-              "attrs": {},
-              "children": [
-                {
-                  "t": "bots.detail_source",
-                  "values": {}
-                }
-              ]
-            },
-            {
-              "tag": "strong",
-              "attrs": {},
-              "children": [
-                {
-                  "get": "runs.0.source_name"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "div",
-          "attrs": {
-            "class": "split"
-          },
-          "children": [
-            {
-              "tag": "span",
-              "attrs": {},
-              "children": [
-                {
-                  "t": "bots.detail_status",
-                  "values": {}
-                }
-              ]
-            },
-            {
-              "tag": "span",
-              "attrs": {
-                "class": {
-                  "concat": [
-                    "badge",
-                    {
-                      "if": [
-                        {
-                          "eq": [
-                            {
-                              "get": "runs.0.status"
-                            },
-                            "error"
-                          ]
-                        },
-                        "",
-                        " badge-primary"
-                      ]
-                    }
-                  ]
-                }
-              },
-              "children": [
-                {
-                  "component": "bots/run-status",
-                  "data": {
-                    "status": {
-                      "get": "runs.0.status"
-                    }
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "div",
-          "attrs": {
-            "class": "split"
-          },
-          "children": [
-            {
-              "tag": "span",
-              "attrs": {},
-              "children": [
-                {
-                  "t": "bots.detail_started",
-                  "values": {}
-                }
-              ]
-            },
-            {
-              "tag": "time",
-              "attrs": {
-                "datetime": {
-                  "get": "runs.0.started_at"
-                }
-              },
-              "children": [
-                {
-                  "date": {
-                    "get": "runs.0.started_at"
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "div",
-          "attrs": {
-            "class": "split"
-          },
-          "children": [
-            {
-              "tag": "span",
-              "attrs": {},
-              "children": [
-                {
-                  "t": "bots.detail_items_seen",
-                  "values": {}
-                }
-              ]
-            },
-            {
-              "tag": "strong",
-              "attrs": {},
-              "children": [
-                {
-                  "get": "runs.0.items_seen"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "div",
-          "attrs": {
-            "class": "alert alert-danger mb-0"
-          },
-          "children": [
-            {
-              "get": "runs.0.error"
-            }
-          ],
-          "when": {
-            "get": "runs.0.error"
-          }
-        }
-      ],
-      "when": {
-        "and": [
-          {
-            "get": "latest"
-          },
-          {
-            "get": "runs"
-          }
-        ]
-      }
-    },
-    {
-      "tag": "div",
-      "attrs": {
-        "class": "table-wrap"
+        "class": "table-wrap min-w-0"
       },
       "children": [
         {
@@ -1462,7 +1555,9 @@
                   "children": [
                     {
                       "tag": "th",
-                      "attrs": {},
+                      "attrs": {
+                        "scope": "col"
+                      },
                       "children": [
                         {
                           "t": "bots.detail_source",
@@ -1472,7 +1567,9 @@
                     },
                     {
                       "tag": "th",
-                      "attrs": {},
+                      "attrs": {
+                        "scope": "col"
+                      },
                       "children": [
                         {
                           "t": "bots.detail_status",
@@ -1482,7 +1579,9 @@
                     },
                     {
                       "tag": "th",
-                      "attrs": {},
+                      "attrs": {
+                        "scope": "col"
+                      },
                       "children": [
                         {
                           "t": "bots.detail_started",
@@ -1492,10 +1591,24 @@
                     },
                     {
                       "tag": "th",
-                      "attrs": {},
+                      "attrs": {
+                        "scope": "col"
+                      },
                       "children": [
                         {
                           "t": "bots.detail_items_seen",
+                          "values": {}
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "th",
+                      "attrs": {
+                        "scope": "col"
+                      },
+                      "children": [
+                        {
+                          "t": "common.note",
                           "values": {}
                         }
                       ]
@@ -1570,6 +1683,22 @@
                               "get": "run.items_seen"
                             }
                           ]
+                        },
+                        {
+                          "tag": "td",
+                          "attrs": {
+                            "class": "table-meta"
+                          },
+                          "children": [
+                            {
+                              "or": [
+                                {
+                                  "get": "run.error"
+                                },
+                                "—"
+                              ]
+                            }
+                          ]
                         }
                       ]
                     }
@@ -1581,16 +1710,7 @@
         }
       ],
       "when": {
-        "and": [
-          {
-            "not": {
-              "get": "latest"
-            }
-          },
-          {
-            "get": "runs"
-          }
-        ]
+        "get": "runs"
       }
     }
   ],
@@ -1825,5 +1945,364 @@
     "default": {
       "get": "status"
     }
+  },
+  "bots/posts": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14"
+    },
+    "children": [
+      {
+        "component": "ui/list-toolbar",
+        "data": {
+          "url": {
+            "get": "api_url"
+          },
+          "target": "#bot-posts-list",
+          "history": {
+            "get": "history_url"
+          },
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          }
+        }
+      },
+      {
+        "tag": "p",
+        "attrs": {
+          "class": "text-muted m-0"
+        },
+        "children": [
+          {
+            "t": "bots.detail_no_posts",
+            "values": {}
+          }
+        ],
+        "when": {
+          "not": {
+            "get": "items"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap min-w-0"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table"
+            },
+            "children": [
+              {
+                "tag": "thead",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.body.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.detail_post",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.body"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "aria-sort": {
+                            "get": "sorting.published_at.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "bots.detail_publication",
+                                "values": {}
+                              },
+                              "order": {
+                                "get": "sorting.published_at"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "common.status",
+                            "values": {}
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "common.actions",
+                            "values": {}
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "attrs": {},
+                "children": [
+                  {
+                    "each": {
+                      "get": "items"
+                    },
+                    "as": "post",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "a",
+                                "attrs": {
+                                  "href": {
+                                    "get": "post.url"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "post.excerpt"
+                                  }
+                                ],
+                                "when": {
+                                  "get": "post.published"
+                                }
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {},
+                                "children": [
+                                  {
+                                    "get": "post.excerpt"
+                                  }
+                                ],
+                                "when": {
+                                  "not": {
+                                    "get": "post.published"
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "time",
+                                "attrs": {
+                                  "datetime": {
+                                    "get": "post.published_iso"
+                                  },
+                                  "class": "table-meta"
+                                },
+                                "children": [
+                                  {
+                                    "date": {
+                                      "get": "post.published_iso"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "span",
+                                "attrs": {
+                                  "class": "badge"
+                                },
+                                "children": [
+                                  {
+                                    "if": [
+                                      {
+                                        "get": "post.published"
+                                      },
+                                      {
+                                        "t": "bots.post_published",
+                                        "values": {}
+                                      },
+                                      {
+                                        "t": "bots.post_scheduled",
+                                        "values": {}
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {
+                              "class": "table-actions-cell"
+                            },
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-actions"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "button",
+                                    "attrs": {
+                                      "type": "button",
+                                      "class": "btn btn-secondary btn-icon btn-sm",
+                                      "title": {
+                                        "t": "common.edit",
+                                        "values": {}
+                                      },
+                                      "aria-label": {
+                                        "t": "common.edit",
+                                        "values": {}
+                                      },
+                                      "data-modal-open": {
+                                        "concat": [
+                                          "bot-post-edit-",
+                                          {
+                                            "get": "post.id"
+                                          }
+                                        ]
+                                      },
+                                      "data-modal-url": {
+                                        "get": "post.edit_url"
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "icon": "edit"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "form",
+                                    "attrs": {
+                                      "method": "post",
+                                      "action": {
+                                        "get": "post.action_url"
+                                      },
+                                      "data-status-form": "",
+                                      "data-status-id": {
+                                        "get": "post.id"
+                                      },
+                                      "data-confirm": {
+                                        "t": "account.status_delete_confirm",
+                                        "values": {}
+                                      },
+                                      "data-confirm-variant": "danger"
+                                    },
+                                    "children": [
+                                      {
+                                        "csrf": true
+                                      },
+                                      {
+                                        "tag": "input",
+                                        "attrs": {
+                                          "type": "hidden",
+                                          "name": "action",
+                                          "value": "delete"
+                                        },
+                                        "children": []
+                                      },
+                                      {
+                                        "tag": "button",
+                                        "attrs": {
+                                          "type": "submit",
+                                          "class": "btn btn-secondary btn-icon btn-sm",
+                                          "title": {
+                                            "t": "common.delete",
+                                            "values": {}
+                                          },
+                                          "aria-label": {
+                                            "t": "common.delete",
+                                            "values": {}
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "icon": "trash"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "when": {
+          "get": "items"
+        }
+      },
+      {
+        "component": "ui/pagination",
+        "data": {
+          "navigation": {
+            "get": "navigation"
+          },
+          "target": "#bot-posts-list"
+        }
+      }
+    ]
   }
 }

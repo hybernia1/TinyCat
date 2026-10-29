@@ -138,7 +138,8 @@
     "open_settings": "Impostazioni",
     "stats": {
       "users": "Utenti",
-      "content": "Post",
+      "content": "Post pubblicati",
+      "scheduled_content": "Post programmati",
       "links": "Link",
       "likes": "Mi piace",
       "comments": "Commenti",

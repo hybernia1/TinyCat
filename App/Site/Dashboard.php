@@ -12,6 +12,7 @@ final class Dashboard
         $stats = [
             ['icon' => 'users', 'label' => \TinyCat\Support\Localization::t('admin.stats.users'), 'table' => 'users'],
             ['icon' => 'file', 'label' => \TinyCat\Support\Localization::t('admin.stats.content'), 'table' => 'content'],
+            ['icon' => 'clock', 'label' => \TinyCat\Support\Localization::t('admin.stats.scheduled_content'), 'table' => 'content', 'count_key' => 'scheduled_content'],
             ['icon' => 'link', 'label' => \TinyCat\Support\Localization::t('admin.stats.links'), 'table' => 'links'],
             ['icon' => 'thumb-up', 'label' => \TinyCat\Support\Localization::t('admin.stats.likes'), 'table' => 'content_likes'],
             ['icon' => 'message-circle', 'label' => \TinyCat\Support\Localization::t('admin.stats.comments'), 'table' => 'content_comments'],
@@ -24,6 +25,8 @@ final class Dashboard
             static fn (array $item): string => (string) $item['table'],
             $stats
         ));
+        // Publication boundaries change with time, independently of writes or the count cache.
+        $counts = array_replace($counts, self::publicationCounts());
         $cache = \TinyCat\Support\Cache::diagnostics();
         $memcached = $cache['memcached'];
         $memcachedStats = $memcached['stats'];
@@ -32,6 +35,22 @@ final class Dashboard
         $opcacheConfig = $opcache['configuration'];
         $recentComments = self::recentComments();
         return compact('stats', 'counts', 'cache', 'memcached', 'memcachedStats', 'opcache', 'opcacheStats', 'opcacheConfig', 'recentComments');
+    }
+
+    /** @return array{content: int|null, scheduled_content: int|null} */
+    private static function publicationCounts(): array
+    {
+        try {
+            $now = \TinyCat\Support\Dates::dateDb();
+            $row = \TinyCat\Database\Connection::one(
+                'SELECT COUNT(CASE WHEN published_at <= ? THEN 1 END) AS published,
+                        COUNT(CASE WHEN published_at > ? THEN 1 END) AS scheduled FROM content',
+                [$now, $now]
+            );
+            return ['content' => (int) ($row['published'] ?? 0), 'scheduled_content' => (int) ($row['scheduled'] ?? 0)];
+        } catch (Throwable) {
+            return ['content' => null, 'scheduled_content' => null];
+        }
     }
     /** @return list<array<string, mixed>> */
     private static function recentComments(int $limit = 8): array
@@ -75,6 +94,7 @@ final class Dashboard
         $counts = [];
 
         foreach ($tables as $table) {
+            if ($table === 'content') { continue; }
             $counts[$table] = self::count($table);
         }
 

@@ -13,9 +13,9 @@ use TinyCat\Users\Usernames;
 final class Views
 {
     /** @param array<mixed> $runs */
-    public static function runs(array $runs, bool $latest = false): string
+    public static function runs(array $runs): string
     {
-        return Components::render('bots/runs', ['runs' => Resource::runs($runs), 'latest' => $latest]);
+        return Components::render('bots/runs', ['runs' => Resource::runs($runs)]);
     }
 
     /** @param array<mixed> $data */

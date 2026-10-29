@@ -12,7 +12,7 @@ declare(strict_types=1);
 ?>
 <section class="grid sm:grid-2 md:grid-4">
     <?php foreach ($stats as $item): ?>
-        <?php $count = $counts[(string) $item['table']] ?? null; ?>
+        <?php $count = $counts[(string) ($item['count_key'] ?? $item['table'])] ?? null; ?>
         <?= \TinyCat\Support\Components::render('ui/stat-card', [
             'heading' => 'h2', 'icon' => (string) $item['icon'], 'label' => $item['label'],
             'value' => $count === null ? null : \TinyCat\Support\Format::number($count),

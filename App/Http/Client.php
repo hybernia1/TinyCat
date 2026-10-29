@@ -10,6 +10,21 @@ final class Client
 {
     /** @var array<string, bool>|null */
     private static ?array $hostChecks = null;
+    private static bool $reuseConnections = false;
+    private static ?\CurlHandle $connection = null;
+
+    /** Reuse connections within one sequential batch; URL checks still run for every transfer. */
+    public static function withConnectionReuse(callable $operation): mixed
+    {
+        if (self::$reuseConnections) { return $operation(); }
+        self::$reuseConnections = true;
+        try { return $operation(); }
+        finally {
+            if (self::$connection !== null) { curl_close(self::$connection); }
+            self::$connection = null;
+            self::$reuseConnections = false;
+        }
+    }
 
     public static function withHostChecks(callable $operation): mixed
     {
@@ -69,7 +84,7 @@ final class Client
         }
         $redirectLimit = max(0, min(5, $options['redirects'] ?? 3));
         for ($redirect = 0; $redirect <= $redirectLimit; $redirect++) {
-            if (!self::isSafeUrl($url) || (isset($options['policy']) && !$options['policy']($url))) { return null; }
+            if ($url === '' || !self::isSafeUrl($url) || (isset($options['policy']) && !$options['policy']($url))) { return null; }
             $body = '';
             $written = 0;
             $overflow = false;
@@ -86,9 +101,13 @@ final class Client
             $raw = [];
             $status = 0;
             if (function_exists('curl_init')) {
-                $curl = curl_init($url);
+                $curl = self::$connection ?? curl_init();
                 if ($curl === false) { return null; }
+                // Reset request headers, callbacks and options, retaining the connection pool.
+                curl_reset($curl);
+                if (self::$reuseConnections) { self::$connection = $curl; }
                 curl_setopt_array($curl, [
+                    CURLOPT_URL => $url,
                     CURLOPT_FOLLOWLOCATION => false,
                     CURLOPT_CONNECTTIMEOUT => min(10, $timeout),
                     CURLOPT_TIMEOUT => $timeout,
@@ -111,7 +130,7 @@ final class Client
                     },
                 ]);
                 $ok = curl_exec($curl);
-                curl_close($curl);
+                if (!self::$reuseConnections) { curl_close($curl); }
                 if ($ok === false && !($overflow && ($options['truncate'] ?? false))) { return null; }
             } else {
                 $context = stream_context_create([

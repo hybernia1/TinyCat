@@ -138,7 +138,8 @@
     "open_settings": "Paramètres",
     "stats": {
       "users": "Utilisateurs",
-      "content": "Messages",
+      "content": "Publications publiées",
+      "scheduled_content": "Publications programmées",
       "links": "Links",
       "likes": "Goûts",
       "comments": "Commentaires",

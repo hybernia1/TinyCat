@@ -31,7 +31,7 @@ foreach ([
     'CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, token_hash TEXT, expires_at TEXT, used_at TEXT)',
     'CREATE TABLE moderation_actions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, action TEXT, created_at TEXT)',
     'CREATE TABLE ip_action_limits (ip_address TEXT, action_name TEXT, bucket_start TEXT, action_count INTEGER, updated_at TEXT, UNIQUE(ip_address, action_name, bucket_start))',
-    'CREATE TABLE bot_sources (id INTEGER PRIMARY KEY AUTOINCREMENT, bot_user_id INTEGER NOT NULL, name TEXT NOT NULL, feed_url TEXT NOT NULL, feed_hash TEXT UNIQUE NOT NULL, interval_minutes INTEGER DEFAULT 60, post_template TEXT NOT NULL, enabled INTEGER DEFAULT 1, last_checked_at TEXT, last_imported_at TEXT, next_run_at TEXT, last_error TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)',
+    'CREATE TABLE bot_sources (id INTEGER PRIMARY KEY AUTOINCREMENT, bot_user_id INTEGER NOT NULL, name TEXT NOT NULL, feed_url TEXT NOT NULL, feed_hash TEXT UNIQUE NOT NULL, interval_minutes INTEGER DEFAULT 60, publication_interval_minutes INTEGER DEFAULT 30, post_template TEXT NOT NULL, enabled INTEGER DEFAULT 1, last_checked_at TEXT, last_imported_at TEXT, next_run_at TEXT, last_error TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)',
     'CREATE TABLE bot_feed_history (bot_user_id INTEGER, feed_hash TEXT, item_hash TEXT, created_at TEXT, PRIMARY KEY (bot_user_id, feed_hash, item_hash))',
     'CREATE TABLE bot_source_runs (id INTEGER PRIMARY KEY, source_id INTEGER, status TEXT, started_at TEXT, items_seen INTEGER, error TEXT)',
     'CREATE TABLE settings (id INTEGER PRIMARY KEY AUTOINCREMENT, setting_key TEXT UNIQUE NOT NULL, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER DEFAULT 1)',
@@ -240,6 +240,13 @@ try {
     [$status, $payload] = $request('POST', '/api/bots/sources', $source, 'admin', $csrf);
     $assert($status === 201 && $payload['data']['item']['name'] === 'Contract feed', 'Bot source creation must return the same 201 contract.');
     $sourceId = $payload['data']['id'];
+    $assert($payload['data']['item']['publication_interval_minutes'] === 30, 'Older API clients receive the default 30-minute publication interval.');
+    [$status, $publicationSaved] = $request('PATCH', '/api/bots/sources/' . $sourceId, $source + ['publication_interval_minutes' => 45], 'admin', $csrf);
+    $assert($status === 200 && $publicationSaved['data']['item']['publication_interval_minutes'] === 45 && $publicationSaved['data']['item']['interval_minutes'] === 60, 'Publication spacing is independent of the RSS check interval.');
+    [$status, $publicationPreserved] = $request('PATCH', '/api/bots/sources/' . $sourceId, $source, 'admin', $csrf);
+    $assert($status === 200 && $publicationPreserved['data']['item']['publication_interval_minutes'] === 45, 'Legacy updates do not reset a configured publication interval.');
+    [$status, $invalidInterval] = $request('PATCH', '/api/bots/sources/' . $sourceId, $source + ['publication_interval_minutes' => 0], 'admin', $csrf);
+    $assert($status === 422 && isset($invalidInterval['error']['details']['errors']['publication_interval_minutes']), 'Invalid publication intervals return field validation errors.');
 
     $sourceDatabase = new PDO('sqlite:' . $databasePath);
     [$status] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'user', $csrf);
@@ -274,6 +281,7 @@ try {
     $assert($status === 200 && $payload['data']['id'] === $sourceId, 'POST method overrides must use the same registered PATCH route.');
     [$status] = $request('DELETE', '/api/bots/sources/' . $sourceId, ['id' => 1], 'admin', $csrf);
     $assert($status === 200, 'Source deletion must use the shared response contract.');
+    require __DIR__ . '/bot-post-cases.php';
     require __DIR__ . '/email-check-cases.php';
     require __DIR__ . '/export-contract-cases.php';
     require __DIR__ . '/embed-contract-cases.php';

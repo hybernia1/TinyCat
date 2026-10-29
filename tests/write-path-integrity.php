@@ -234,7 +234,7 @@ $itemHash = hash('sha256', 'fixture-item');
 $beforePosts = (int) $value('SELECT COUNT(*) FROM content');
 $database->exec('CREATE TRIGGER fail_bot_link BEFORE INSERT ON content_links BEGIN SELECT RAISE(ABORT, \'forced bot link failure\'); END');
 try {
-    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links, 0, 1);
+    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links);
     $assert(false, 'Bot link storage errors must propagate.');
 } catch (PDOException) {
     $assert(true, 'Bot link storage errors propagate.');
@@ -245,17 +245,17 @@ $assert((int) $value("SELECT COUNT(*) FROM terms WHERE name = 'rollback'") === 0
 $database->exec('DROP TRIGGER fail_bot_link');
 $database->exec('CREATE TRIGGER fail_bot_history BEFORE INSERT ON bot_feed_history BEGIN SELECT RAISE(ABORT, \'forced history failure\'); END');
 try {
-    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links, 0, 1);
+    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links);
     $assert(false, 'History storage failures must propagate.');
 } catch (PDOException) {
     $assert((int) $value('SELECT COUNT(*) FROM content') === $beforePosts, 'History storage failures cannot leave an untracked post.');
 }
 $database->exec('DROP TRIGGER fail_bot_history');
-$botPost = $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links, 0, 1);
+$botPost = $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Bot post @actor #ROLLBACK'), $links);
 $assert($botPost > 0 && (int) $value('SELECT COUNT(*) FROM bot_feed_history') === 1, 'A retry atomically commits the bot post and history.');
 $assert((int) $value('SELECT COUNT(*) FROM content_links WHERE content_id = ' . $botPost) === 2, 'A successful bot import commits all prepared links.');
 try {
-    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Duplicate bot post'), $links, 0, 1);
+    $persistFeed->invoke(null, 1, 1, $feedHash, $itemHash, \TinyCat\Status\PostCreation::fromText('Duplicate bot post'), $links);
     $assert(false, 'A duplicate feed claim must abort the second post.');
 } catch (PDOException) {
     $assert((int) $value('SELECT COUNT(*) FROM content') === $beforePosts + 1, 'A concurrent duplicate claim cannot leave a second post.');
@@ -318,6 +318,41 @@ $assert((int) $value("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '"
 $database->exec('DROP TRIGGER fail_import_post');
 $retried = $importItems->invoke(null, $source, $technical, 1);
 $assert($retried['status'] === 'posted', 'A technical failure can be retried successfully.');
+
+// Missing legacy settings, batch imports, duplicate GUIDs and queue continuation.
+$queueSource = array_replace($source, ['bot_user_id' => 900, 'feed_url' => 'https://queue.example/rss']);
+foreach ([[], ['publication_interval_minutes' => null], ['publication_interval_minutes' => 0]] as $legacy) {
+    $assert(\TinyCat\Bots\Importer::publicationInterval($legacy) === 30, 'Unset legacy publication intervals default to 30 minutes.');
+}
+$batch = $importItems->invoke(null, $queueSource, [
+    ['guid' => 'queue-a', 'title' => 'Queue first'],
+    ['guid' => 'queue-b', 'title' => 'Queue second'],
+    ['guid' => 'queue-b', 'title' => 'Repeated GUID'],
+    ['guid' => 'queue-c', 'title' => 'Queue third'],
+], 1);
+$queueRows = \TinyCat\Database\Connection::all('SELECT * FROM content WHERE author_id = 900 ORDER BY published_at, id');
+$assert($batch['status'] === 'posted' && $batch['imported_count'] === 3 && count($queueRows) === 3, 'One run saves every new valid item and suppresses repeated GUIDs.');
+$assert(strtotime($queueRows[1]['published_at']) - strtotime($queueRows[0]['published_at']) === 1800
+    && strtotime($queueRows[2]['published_at']) - strtotime($queueRows[1]['published_at']) === 1800, 'Default publication slots are 30 minutes apart.');
+$assert(\TinyCat\Status\Posts::status_can_view($queueRows[0]) && !\TinyCat\Status\Posts::status_can_view($queueRows[1]), 'The first slot is public immediately and later slots remain hidden.');
+$batchSummary = (new ReflectionMethod(\TinyCat\Bots\Importer::class, 'scheduledResult'))->invoke(null, [$batch]);
+$assert($batchSummary['changed'] === 3, 'Scheduler change counts include every imported post.');
+$queueSource['publication_interval_minutes'] = 45;
+$continuation = $importItems->invoke(null, $queueSource, [['guid' => 'queue-c', 'title' => 'Queue third'], ['guid' => 'queue-d', 'title' => 'Queue fourth']], 1);
+$continuedAt = (string) $value('SELECT published_at FROM content WHERE id = ' . $continuation['content_id']);
+$assert($continuation['imported_count'] === 1 && strtotime($continuedAt) - strtotime($queueRows[2]['published_at']) === 2700, 'Later imports append after the existing queue using the newly configured interval.');
+$otherSource = array_replace($queueSource, ['feed_url' => 'https://queue.example/other']);
+$otherBatch = $importItems->invoke(null, $otherSource, [['guid' => 'other-source', 'title' => 'Other source']], 1);
+$otherAt = (string) $value('SELECT published_at FROM content WHERE id = ' . $otherBatch['content_id']);
+$assert(strtotime($otherAt) - strtotime($continuedAt) === 2700, 'Multiple sources for the same bot share the publication timeline.');
+$database->exec("CREATE TRIGGER fail_second_queue_item BEFORE INSERT ON content WHEN NEW.body = 'Queue failure' BEGIN SELECT RAISE(ABORT, 'forced second item failure'); END");
+$partialItems = [['guid' => 'queue-e', 'title' => 'Before failure'], ['guid' => 'queue-f', 'title' => 'Queue failure'], ['guid' => 'queue-g', 'title' => 'After failure']];
+$partial = $importItems->invoke(null, $queueSource, $partialItems, 1);
+$assert($partial['status'] === 'error' && $partial['imported_count'] === 1, 'A partial failure reports the posts already committed.');
+$database->exec('DROP TRIGGER fail_second_queue_item');
+$resumed = $importItems->invoke(null, $queueSource, $partialItems, 1);
+$assert($resumed['imported_count'] === 2 && (int) $value('SELECT COUNT(*) FROM content WHERE author_id = 900') === 8, 'Retrying a partial batch imports only the remaining items.');
+$database->exec('DELETE FROM content WHERE author_id = 900');
 
 // RSS metadata, URL normalization and single-card rendering must share the same path.
 $feedPreviewDirectory = $root . '/uploads/links/' . date('Y/m');

@@ -64,7 +64,7 @@ final readonly class PostCreation
      * @param list<array<mixed>> $preparedLinks
      * @param array<mixed>|null $image
      */
-    public static function create(int $authorId, self $draft, array $preparedLinks, ?array $image = null): int
+    public static function create(int $authorId, self $draft, array $preparedLinks, ?array $image = null, ?string $publishedAt = null): int
     {
         if ($draft->rejection !== null) {
             throw new InvalidArgumentException('Cannot persist rejected post content.');
@@ -73,11 +73,11 @@ final readonly class PostCreation
             throw new InvalidArgumentException('A post requires an author and text or an image.');
         }
 
-        return Transactions::run(static function () use ($authorId, $draft, $preparedLinks, $image): int {
+        return Transactions::run(static function () use ($authorId, $draft, $preparedLinks, $image, $publishedAt): int {
             $contentId = (int) Connection::insert('content', [
                 'body' => $draft->body,
                 'author_id' => $authorId,
-                'published_at' => \TinyCat\Support\Dates::dateDb(),
+                'published_at' => $publishedAt ?? \TinyCat\Support\Dates::dateDb(),
             ]);
 
             if ($image !== null) {
