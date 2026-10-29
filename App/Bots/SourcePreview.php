@@ -28,7 +28,9 @@ final class SourcePreview
         $source = ['name' => (string) $request->input('name', '') ?: $document['title'], 'post_template' => $template];
         $items = Session::withoutLock(static function () use ($document, $source, $template): array {
             $items = [];
-            foreach (array_slice(array_reverse($document['items']), 0, 3) as $item) {
+            $sample = array_slice(array_reverse($document['items']), 0, 3);
+            if (str_contains($template, '{{image}}') && \TinyCat\Status\Images::status_images_enabled()) { $sample = WordPressFeed::images($sample); }
+            foreach ($sample as $item) {
                 $draft = \TinyCat\Status\PostCreation::fromText(Importer::renderPost($source, $item));
                 $attachment = str_contains($template, '{{image}}') && \TinyCat\Status\Images::status_images_enabled() && $item['image_urls'] !== [];
                 $rejection = $draft->rejection['code'] ?? (($draft->body === '' && !$attachment) ? 'status_required' : null);

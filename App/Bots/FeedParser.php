@@ -76,6 +76,14 @@ final class FeedParser
         $channel = $atom ? $feed : ($rdf ? $feed->children('http://purl.org/rss/1.0/')->channel : $feed->channel);
         $baseUrl = self::base($baseUrl, $feed);
         if (!$atom) { $baseUrl = self::base($baseUrl, $channel); }
+        $generator = $atom ? (string) ($channel->children(self::ATOM)->generator->attributes()['uri'] ?? '') : (string) $channel->generator;
+        $home = $atom ? '' : Client::absoluteUrl($baseUrl, (string) $channel->link);
+        if ($atom) {
+            foreach ($channel->children(self::ATOM)->link as $siteLink) {
+                if ((string) ($siteLink['rel'] ?? 'alternate') === 'alternate') { $home = Client::absoluteUrl($baseUrl, (string) $siteLink['href']); break; }
+            }
+        }
+        $wordpressRoot = WordPressFeed::hint($generator, $home, $baseUrl);
         $nodes = $atom ? $feed->children(self::ATOM)->entry : ($rdf ? $feed->children('http://purl.org/rss/1.0/')->item : $channel->item);
         $items = [];
         $seen = 0;
@@ -132,6 +140,7 @@ final class FeedParser
                 'author' => self::text($creator, 200), 'categories' => array_values(array_unique($categories)),
                 'published_at' => $timestamp !== false ? date('Y-m-d H:i:s', $timestamp) : null,
                 '_timestamp' => $timestamp !== false ? $timestamp : 0,
+                '_wordpress_root' => $wordpressRoot,
             ];
         }
         usort($items, static fn (array $a, array $b): int => $a['_timestamp'] <=> $b['_timestamp']);

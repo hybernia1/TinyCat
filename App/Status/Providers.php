@@ -398,6 +398,12 @@ final class Providers
         return 'wordpress-api-v1-' . self::discoveryKey($url);
     }
 
+    /** A verified feed API response may supply the same per-post discovery cache. */
+    public static function rememberWordpressPost(string $url, string $endpoint): void
+    {
+        if (Client::isSafeUrl($endpoint)) { Cache::put('wordpress-post-v1-' . hash('sha256', $url), $endpoint, 604800, 0); }
+    }
+
     /** Only use declared/discovered WordPress APIs, never probe arbitrary domains. */
     public static function wordpressUrl(string $url): string
     {

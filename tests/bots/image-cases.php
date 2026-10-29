@@ -27,6 +27,13 @@ try {
     $assert($duplicateImage['status'] === 'current' && count($GLOBALS['sourceImageRequests']) === $beforeRequests, 'Duplicate image items do not download or create another file.');
     $plainImage = $importItems->invoke(null, $source, [array_replace($imageItem, ['guid' => 'image-opt-in', 'title' => 'Text only'])], 1);
     $assert($plainImage['status'] === 'posted' && \TinyCat\Status\Images::status_image_record((int) $plainImage['content_id']) === null && count($GLOBALS['sourceImageRequests']) === $beforeRequests, 'Templates without the marker retain their existing text-only behavior.');
+    $wpRoot = 'http://93.184.216.34/wp-json/';
+    $GLOBALS['sourceImageFixtures'][$wpRoot . '?_fields=namespaces'] = '{}';
+    $wpWithoutMarker = $importItems->invoke(null, $source, [['guid' => 'wp-no-image-marker', 'title' => 'Text only', 'url' => 'http://93.184.216.34/article', '_wordpress_root' => $wpRoot, 'image_urls' => []]], 1);
+    $assert($wpWithoutMarker['status'] === 'posted' && count($GLOBALS['sourceImageRequests']) === $beforeRequests, 'WordPress hints do not trigger API requests without an image template marker.');
+    $knownWpItem = array_replace($imageItem, ['image_urls' => [], 'url' => 'http://93.184.216.34/article', '_wordpress_root' => $wpRoot]);
+    $knownWp = $importItems->invoke(null, $imageSource, [$knownWpItem], 1);
+    $assert($knownWp['status'] === 'current' && count($GLOBALS['sourceImageRequests']) === $beforeRequests, 'Already imported WordPress GUIDs are filtered before artwork API requests.');
     $missingImage = $importItems->invoke(null, $imageSource, [['guid' => 'image-missing']], 1);
     $assert($missingImage['skipped_items'][0]['code'] === 'status_required', 'An image-only item without an image cannot create an empty post.');
     $blockedImage = $importItems->invoke(null, $imageSource, [['guid' => 'image-private', 'image_urls' => ['http://127.0.0.1/private']]], 1);

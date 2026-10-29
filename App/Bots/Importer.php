@@ -500,6 +500,10 @@ final class Importer
             $itemHashes = array_map(static fn (array $item): string => hash('sha256', (string) ($item['guid'] ?? '')), $items);
             $historyItemHashes = self::feedHistoryHashes($botUserId, $feedHash, $itemHashes);
             $interval = self::publicationInterval($source);
+            if (str_contains((string) ($source['post_template'] ?? ''), '{{image}}') && \TinyCat\Status\Images::status_images_enabled()) {
+                $items = \TinyCat\Http\Session::withoutLock(static fn (): array => WordPressFeed::images(array_values(array_filter($items,
+                    static fn (array $item): bool => !isset($historyItemHashes[hash('sha256', (string) ($item['guid'] ?? ''))])))));
+            }
 
             foreach ($items as $item) {
                 $hash = hash('sha256', (string) ($item['guid'] ?? ''));
