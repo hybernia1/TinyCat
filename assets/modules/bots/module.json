@@ -11,7 +11,8 @@
       "bots/runs",
       "bots/account-edit-fields",
       "bots/queue",
-      "bots/queue-filter-form"
+      "bots/queue-filter-form",
+      "bots/source-preview"
     ],
     "entries": [
       "assets/modules/bots/index.js"
@@ -20,7 +21,12 @@
     "translations": [
       "bots.edit_source",
       "common.save",
-      "bots.edit_account"
+      "bots.edit_account",
+      "bots.preview_title",
+      "bots.preview_loading",
+      "bots.preview_confirm",
+      "bots.preview_invalid",
+      "bots.preview_changed"
     ],
     "messages": {
       "bot_account_created": "bots.messages.account_created",
@@ -46,7 +52,8 @@
       "bot_created": "bots.messages.created",
       "scheduler_already_running": "cron.already_running",
       "bot_queue_published": "bots.queue_published",
-      "status_not_found": "account.messages.status_not_found"
+      "status_not_found": "account.messages.status_not_found",
+      "bot_feed_preview": "bots.preview_invalid"
     }
   },
   {

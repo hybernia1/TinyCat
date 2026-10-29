@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.7.0 - 2026-10-29
+
+- Extend unified sources with automatic JSON Feed 1.0/1.1 and RSS 1.0/RDF support alongside RSS and Atom. Discover advertised feeds from website URLs without introducing stored source types.
+- Preview source content and the current post template in the source modal before saving. Preserve source identity across redirects, reject stale confirmations and keep Run now as a direct import action.
+- Add optional `{{image}}` attachments using the normal upload validation, WebP conversion and configured limits. Keep the default template unchanged and clean up files when persistence fails.
+- Lock and recheck source identity, account and enabled state before atomically saving posts, source relations and GUID history. Preserve independent source queues, deletion behavior and retry safety.
+- Add review-first SQL attribution tools with default rollback and isolated database tests. Retain shared JSON APIs, CSRF, components, form lifecycle and all 12 interface languages. No new database migration is required.
+
 ## 5.6.0 - 2026-10-29
 
 - Show RSS source identity and source filters in the publication queue and bot post lists. Add linked published/queued counts to RSS source tables, and explicit unknown-source labels and filters for unattributed posts.

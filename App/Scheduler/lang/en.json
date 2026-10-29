@@ -16,7 +16,7 @@
       "cleanup": "Automatic cleanup",
       "cleanup_help": "Removes unused tags and links, orphaned post and preview images, expired data caches, old rate-limit buckets, expired reset tokens and read notifications. Also removes orphaned avatars, abandoned temporary files and old completed update backups.",
       "cleanup_schedule": "Schedule hourly. Internal due checks prevent cleanup from running too often.",
-      "feeds": "RSS and Atom sources",
+      "feeds": "sources",
       "feeds_help": "Publishes items from active sources whose interval is due.",
       "feeds_schedule": "Schedule according to the required polling frequency, typically every two minutes."
     },

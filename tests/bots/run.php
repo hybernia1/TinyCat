@@ -72,4 +72,10 @@ foreach (['en', 'cs'] as $code) {
     $assert(\TinyCat\Support\Localization::t('cron.tasks.feeds', [], $code) !== 'cron.tasks.feeds', 'Feed scheduler translations must ship in core: ' . $code);
 }
 
+$assert(!str_contains(\TinyCat\Bots\Importer::defaultSourceTemplate(), '{{image}}'), 'Image uploads remain opt-in.');
+$imageOnly = \TinyCat\Bots\FeedParser::parse('<rss><channel><item><enclosure type="image/png" url="https://93.184.216.34/photo.png"/></item></channel></rss>');
+$assert(count($imageOnly) === 1 && $imageOnly[0]['guid'] === $imageOnly[0]['image_url'], 'Image-only RSS entries receive stable image identity without a title or article URL.');
+$assert($invoke('renderPost', ['post_template' => "{{title}}\n{{image}}"], ['title' => 'Photo']) === 'Photo', 'Image placeholders do not appear in post text.');
+
+require __DIR__ . '/formats.php';
 echo "PASS built-in Bots ({$checks} checks)\n";

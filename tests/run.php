@@ -60,6 +60,7 @@ $tests = [
     'Scheduled tasks' => 'tests/cron/run.php',
     'Scheduler CLI transport' => 'tests/cron/cli.php',
     'Demo importer tooling' => 'tests/tools/demo-import.php',
+    'Bot source attribution SQL' => 'tests/tools/bot-source-attribution.php',
     'One-off link optimizer' => 'tests/tools/link-optimizer.php',
     'Search semantics' => 'tests/search.php',
     'MySQL search semantics' => 'tests/search-mysql.php',

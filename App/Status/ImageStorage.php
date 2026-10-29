@@ -38,18 +38,44 @@ final class ImageStorage
         }
 
         $tmpName = (string) ($file['tmp_name'] ?? '');
-        $maxSize = \TinyCat\Status\Images::status_image_max_upload_bytes();
-
         if ($tmpName === '' || !is_uploaded_file($tmpName)) {
             throw new RuntimeException('Uploaded image is too large or not valid.');
         }
+        return self::storeFile($tmpName, (int) ($file['size'] ?? 0));
+    }
 
+    /** Remote attachments use the same raster validation and conversion as uploads.
+     * @return array<mixed> */
+    public static function fromRemote(string $url): array
+    {
+        if (!Images::status_images_enabled()) { throw new RuntimeException('Image uploads are disabled.'); }
+        $response = \TinyCat\Http\Client::get($url, self::MAX_SOURCE_UPLOAD_SIZE, [
+            'accept' => 'image/jpeg,image/png,image/webp',
+            'policy' => static fn (string $candidate): bool => \TinyCat\Moderation\Blocking::moderation_blocked_url_match($candidate) === '',
+        ]);
+        if ($response === null) { throw new RuntimeException('Source image could not be downloaded.'); }
+        $temporary = tempnam(sys_get_temp_dir(), 'tinycat-image-');
+        if ($temporary === false) { throw new RuntimeException('Could not create image file.'); }
+        try {
+            $size = strlen($response['body']);
+            if (file_put_contents($temporary, $response['body']) !== $size) { throw new RuntimeException('Could not write image file.'); }
+            return self::storeFile($temporary, $size);
+        } finally { if (is_file($temporary)) { unlink($temporary); } }
+    }
+
+    /** @return array<mixed> */
+    private static function storeFile(string $tmpName, int $size): array
+    {
+        if (!extension_loaded('gd') || !function_exists('imagewebp')) {
+            throw new RuntimeException('WebP image conversion is not available.');
+        }
+        $maxSize = Images::status_image_max_upload_bytes();
         clearstatcache(true, $tmpName);
         $actualSize = @filesize($tmpName);
         $info = @getimagesize($tmpName);
         $sourceError = \TinyCat\Security\Images::image_source_error(
             $info,
-            (int) ($file['size'] ?? 0),
+            $size,
             is_int($actualSize) ? $actualSize : 0,
             self::ALLOWED_MIMES,
             self::MAX_SOURCE_UPLOAD_SIZE,

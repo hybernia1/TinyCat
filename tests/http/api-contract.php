@@ -241,6 +241,7 @@ try {
     [$status, $payload] = $request('POST', '/api/bots/sources', $source, 'admin', $csrf);
     $assert($status === 201 && $payload['data']['item']['name'] === 'Contract feed', 'Bot source creation must return the same 201 contract.');
     $sourceId = $payload['data']['id'];
+    $assert(!isset($payload['data']['item']['source_type']) && !isset($payload['data']['source_types']), 'Sources expose one unified resource without a type selector.');
     $assert($payload['data']['item']['publication_interval_minutes'] === 30, 'Older API clients receive the default 30-minute publication interval.');
     [$status, $publicationSaved] = $request('PATCH', '/api/bots/sources/' . $sourceId, $source + ['publication_interval_minutes' => 45], 'admin', $csrf);
     $assert($status === 200 && $publicationSaved['data']['item']['publication_interval_minutes'] === 45 && $publicationSaved['data']['item']['interval_minutes'] === 60, 'Publication spacing is independent of the RSS check interval.');
@@ -250,6 +251,23 @@ try {
     $assert($status === 422 && isset($invalidInterval['error']['details']['errors']['publication_interval_minutes']), 'Invalid publication intervals return field validation errors.');
 
     $sourceDatabase = new PDO('sqlite:' . $databasePath);
+    $previewDocument = json_encode(['version' => 'https://jsonfeed.org/version/1.1', 'title' => 'Preview feed', 'items' => [['id' => 'preview-only', 'title' => 'Preview post', 'content_text' => 'Preview text', 'url' => '/entry']]]);
+    $previewInput = ['document' => $previewDocument, 'feed_url' => 'https://93.184.216.34/feed', 'post_template' => '{{title}}'];
+    [$status] = $request('POST', '/api/bots/sources/previews', $previewInput, 'user', $csrf);
+    $assert($status === 403, 'Source previews require administrator privileges.');
+    [$status] = $request('POST', '/api/bots/sources/previews', $previewInput, 'admin');
+    $assert($status === 403, 'Source previews retain CSRF protection.');
+    $beforePreview = $sourceDatabase->query('SELECT COUNT(*) FROM content')->fetchColumn();
+    [$status, $previewResource] = $request('POST', '/api/bots/sources/previews', $previewInput, 'admin', $csrf);
+    $assert($status === 201 && $previewResource['data']['format'] === 'json_feed_1_1' && $previewResource['data']['items'][0]['body'] === 'Preview post', 'Preview uses the selected template and returns plain JSON resources.');
+    $assert($previewResource['data']['items'][0]['url'] === 'https://93.184.216.34/entry', 'Provided feed documents use the same base URL resolution as downloaded feeds.');
+    $assert($sourceDatabase->query('SELECT COUNT(*) FROM content')->fetchColumn() === $beforePreview && (int) $sourceDatabase->query("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '" . hash('sha256', 'preview-only') . "'")->fetchColumn() === 0, 'Preview never creates posts or claims import history.');
+    [$status, $privatePreview] = $request('POST', '/api/bots/sources/previews', ['feed_url' => 'http://127.0.0.1/private'], 'admin', $csrf);
+    $assert($status === 422 && isset($privatePreview['error']['details']['errors']['feed_url']), 'Unsafe preview URLs use the standard validation envelope.');
+    [$status] = $request('POST', '/api/bots/sources/previews', ['document' => '<opml><body><outline xmlUrl="https://93.184.216.34/feed"/></body></opml>'], 'admin', $csrf);
+    $assert($status === 422, 'Subscription lists are not supported feed documents.');
+    [$status] = $request('POST', '/api/bots/sources/imports', [], 'admin', $csrf);
+    $assert($status === 404, 'No bulk subscription import endpoint is exposed.');
     [$status] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'user', $csrf);
     $assert($status === 403, 'Manual source imports require administrator privileges.');
     [$status] = $request('POST', '/api/bots/sources/' . $sourceId . '/runs', [], 'admin');

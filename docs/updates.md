@@ -70,6 +70,20 @@ history are preserved, and they do not delay new feed-specific queues. The first
 new item for each source can therefore publish immediately, even if legacy posts
 are still scheduled. No legacy posts are rescheduled or imported again.
 
+## Upgrading to 5.7.0: unified feed formats and source previews
+
+This release needs no new database migration. Existing source URLs, IDs, GUID
+history, post mappings and publication times are retained. Sources automatically
+accept RSS, Atom, RSS 1.0/RDF and JSON Feed 1.0/1.1. The source form can discover
+advertised feeds from a website URL and preview its current template before
+saving. Run now continues to import directly.
+
+Add `{{image}}` explicitly to a source template to attach the first usable feed
+image using normal upload rules. Existing templates do not start uploading
+attachments automatically. Source identity and enabled state are checked again
+under a row lock before each post is saved, so edits during a download cannot
+attribute an item to a different feed or bot account.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:
