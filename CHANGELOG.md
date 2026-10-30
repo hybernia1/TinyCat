@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.8.0 - 2026-10-30
+
+- Add the existing archive content filter to the public and following home feeds. Retain the selected type across feed switches, pagination and history navigation, with a clear filtered empty state and reset action.
+- Keep feed tabs and the content filter on one row on mobile. Reuse shared components, dismissal behavior, module-owned styles and all 12 interface languages.
+- Recheck filtered home results through the shared page navigation after creating or editing a post, using the same server-side media predicate as archives. No database migration is required.
+
 ## 5.7.1 - 2026-10-29
 
 - Fill missing WordPress feed artwork through a verified REST API when `{{image}}` is enabled. Batch requests, cache discovery and image results, and retain feed-provided images as the first choice.

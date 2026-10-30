@@ -68,7 +68,8 @@
     "filter_video": "Videa",
     "filter_audio": "Audio",
     "filter_links": "Odkazy",
-    "filter_text": "Pouze text"
+    "filter_text": "Pouze text",
+    "feed_empty_filtered": "Tomuto filtru neodpovídají žádné příspěvky."
   },
   "privacy": {
     "title": "Soukromí a pravidla",

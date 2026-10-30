@@ -68,7 +68,8 @@
     "filter_video": "Відео",
     "filter_audio": "Аудіо",
     "filter_links": "Посилання",
-    "filter_text": "Лише текст"
+    "filter_text": "Лише текст",
+    "feed_empty_filtered": "Немає дописів за цим фільтром."
   },
   "privacy": {
     "title": "Конфіденційність і правила",

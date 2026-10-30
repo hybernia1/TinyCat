@@ -68,7 +68,8 @@
     "filter_video": "Videos",
     "filter_audio": "Audio",
     "filter_links": "Links",
-    "filter_text": "Text only"
+    "filter_text": "Text only",
+    "feed_empty_filtered": "No posts match this filter."
   },
   "privacy": {
     "title": "Privacy and Rules",

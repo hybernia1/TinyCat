@@ -1,6 +1,13 @@
 <?php
 declare(strict_types=1);
 
+[$status, $filteredHome] = $request('GET', '/api/site/pages?path=/&media=video');
+$assert($status === 200 && $filteredHome['data']['archive_type'] === 'video' && $filteredHome['data']['url'] === '/?media=video', 'Home navigation accepts the selected content filter.');
+[$status, $filteredFollowing] = $request('GET', '/api/site/pages?path=/&feed=following&media=images');
+$assert($status === 200 && $filteredFollowing['data']['login_required'] && $filteredFollowing['data']['items'] === [] && $filteredFollowing['data']['archive_options'][1]['url'] === '/?feed=following&media=images', 'Filtered following navigation retains the login requirement and selected feed.');
+[$status] = $request('GET', '/api/site/pages?path=/&media[]=video');
+$assert($status === 422, 'Home navigation rejects malformed content filters.');
+
 foreach (['/' => 'home', '/tag/test' => 'tag', '/author/2' => 'author', '/status/10' => 'status'] as $path => $kind) {
     [$status, $page, $headers] = $request('GET', '/api/site/pages?path=' . rawurlencode($path));
     $assert($status === 200 && $page['data']['kind'] === $kind && $page['data']['viewer'] === null, 'Public navigation returns the same anonymous page model for each supported route.');

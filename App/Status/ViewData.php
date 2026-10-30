@@ -314,11 +314,13 @@ final class ViewData
      * @param array<mixed> $items
      * @return array<mixed>
      */
-    public static function public_home_feed_data(string $feed = 'all', ?array $user = null, ?array $items = null): array
+    public static function public_home_feed_data(string $feed = 'all', ?array $user = null, ?array $items = null, string $type = ''): array
     {
         $user ??= \TinyCat\Users\Authentication::auth();
         $feed = $feed === 'following' ? 'following' : 'all';
+        $type = Feed::archive_type($type);
         $currentFeedUrl = $feed === 'following' ? '/?feed=following' : '/';
+        if ($type !== '') { $currentFeedUrl .= ($feed === 'following' ? '&' : '?') . 'media=' . $type; }
         $followingLoginRequired = $feed === 'following' && $user === null;
         $limit = \TinyCat\Status\Feed::public_status_initial_page_limit();
         $nextLimit = \TinyCat\Status\Feed::public_status_page_limit();
@@ -327,8 +329,8 @@ final class ViewData
             $items = $followingLoginRequired
                 ? []
                 : ($feed === 'following'
-                    ? \TinyCat\Status\Feed::public_status_items_for_user_cursor((int) ($user['id'] ?? 0), $limit)
-                    : \TinyCat\Status\Feed::public_status_items_cursor($limit));
+                    ? \TinyCat\Status\Feed::public_status_items_for_user_cursor((int) ($user['id'] ?? 0), $limit, '', 0, $type)
+                    : \TinyCat\Status\Feed::public_status_items_cursor($limit, '', 0, $type));
         }
 
         $feedId = 'status-feed-' . $feed;
@@ -347,7 +349,7 @@ final class ViewData
                 'home',
                 $items,
                 $limit,
-                ['feed' => $feed],
+                ['feed' => $feed, 'media' => $type],
                 $nextLimit
             ),
         ];

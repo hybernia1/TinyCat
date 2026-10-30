@@ -68,7 +68,8 @@
     "filter_video": "Видео",
     "filter_audio": "Аудио",
     "filter_links": "Ссылки",
-    "filter_text": "Только текст"
+    "filter_text": "Только текст",
+    "feed_empty_filtered": "Нет публикаций по этому фильтру."
   },
   "privacy": {
     "title": "Конфиденциальность и правила",

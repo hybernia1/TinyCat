@@ -94,6 +94,15 @@ API requests are bounded, batched and cached. Feed-provided images retain
 priority, and failed API discovery leaves ordinary feed processing intact.
 Existing source IDs, URLs, publication queues and GUID history are unchanged.
 
+## Upgrading to 5.8.0: home feed content filters
+
+No database migration or configuration change is required. The home page adds
+the same content filter used by author and tag archives to both public and
+following feeds. Filter links use `media=images|video|audio|links|text`; omitting
+the parameter shows all content. Selected filters persist through feed switches,
+pagination and history navigation. After publishing or editing in a filtered
+home feed, shared page navigation reloads the results from the server.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

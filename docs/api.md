@@ -213,9 +213,16 @@ excerpt, URL, read state and timestamps. Cursor pages contain up to 40 items;
 | POST | `/api/moderation/reports` | Report a post, signed-in user |
 
 Feed queries accept `context=home|author|tag`, `feed=all|following`, `author_id`,
-`tag`, `limit` (1–50), `cursor_at` and `cursor_id`. `meta.pagination` contains
-`next_url` and `done`. Posts return author data, literal and editable body, typed
-text/mention/tag/link segments, image/link/video metadata, counts and capabilities.
+`tag`, `limit` (1–50), `cursor_at`, `cursor_id` and
+`media=images|video|audio|links|text`. The media filter applies to all three
+contexts, including both home feeds; omitted or unknown media types show all
+content. Images require an attachment, video/audio require a matching stored
+link type, links include any stored link, and text excludes attachments and
+stored links. Categories can overlap. `meta.pagination` contains `next_url`
+and `done`, retaining the filter. Public page navigation accepts the same
+`media` parameter through `/api/site/pages`. Posts return author data, literal
+and editable body, typed text/mention/tag/link segments, image/link/video
+metadata, counts and capabilities.
 Details include a comment tree. Comment history contains plain `from`/`to` text.
 Nested IDs and reply parents must belong to the status in the path. New posts
 are published immediately using the server's current publication time.

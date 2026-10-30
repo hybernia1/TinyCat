@@ -48,4 +48,35 @@ $params = ['tag' => 'tinycat', 'media' => 'video'] + Feed::status_feed_cursor_pa
 $next = Feed::status_feed_context_items('tag', 2, $params);
 $assert(array_column($next['items'], 'id') === [6, 3], 'Filtered keyset pagination neither skips nor repeats matching posts.');
 $assert(str_contains(Feed::status_feed_next_url('tag', 2, $params), 'media=video'), 'Next-page URL retains the selected filter.');
-echo "PASS archive media filters ({$checks} checks)\n";
+$db->exec('CREATE TABLE user_followers (follower_id INTEGER, user_id INTEGER)');
+$db->exec('INSERT INTO user_followers VALUES (2, 1)');
+foreach (['images' => [6, 2], 'video' => [8, 6, 3], 'audio' => [4], 'links' => [8, 6, 5, 4, 3], 'text' => [1], 'invalid' => [8, 6, 5, 4, 3, 2, 1]] as $media => $expected) {
+    foreach (['all', 'following'] as $mode) {
+        $result = Feed::status_feed_context_items('home', 20, ['feed' => $mode, 'media' => $media], ['id' => 2]);
+        $assert(array_column($result['items'], 'id') === $expected, 'Home media filter: ' . $mode . '/' . $media);
+    }
+}
+$first = Feed::status_feed_context_items('home', 1, ['media' => 'video']);
+$params = ['media' => 'video'] + Feed::status_feed_cursor_params($first['items']);
+$next = Feed::status_feed_context_items('home', 2, $params);
+$assert(array_column($next['items'], 'id') === [6, 3], 'Home filtered pagination neither skips nor repeats posts.');
+$assert(Feed::status_feed_context_items('home', 20, ['feed' => 'following', 'media' => 'video'])['items'] === [], 'Filtering does not expose following posts to guests.');
+$assert(array_column(Feed::public_status_items_for_user_cursor(1, 20, '', 0, 'video'), 'id') === [6, 3], 'Following filters exclude unrelated authors.');
+(new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
+$config = \TinyCat\Support\Config::get();
+$config['public']['status_limit'] = 2;
+(new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $config);
+$home = \TinyCat\Status\ViewData::public_home_feed_data('following', ['id' => 2], null, 'video');
+$assert($home['current_feed_url'] === '/?feed=following&media=video', 'Initial home URL retains feed and filter.');
+$assert(str_contains($home['feed_more']['next_url'], 'media=video'), 'Initial pagination retains the filter.');
+$page = ['title' => 'Tinycat', 'current' => '/', 'meta' => ['url' => '/']];
+$resource = \TinyCat\Site\PublicPages::resource('home', ['page' => $page, 'context' => ['feed' => 'following', 'archiveType' => 'video', 'publicHomeFeedData' => $home]]);
+$assert($resource['all_feed_url'] === '/?media=video' && $resource['following_feed_url'] === '/?feed=following&media=video', 'Switching feeds retains the filter.');
+$assert($resource['archive_options'][0]['url'] === '/?feed=following' && $resource['archive_options'][1]['url'] === '/?feed=following&media=images', 'Filter options retain the selected feed.');
+$html = \TinyCat\Support\Components::render('site/public-page', $resource);
+$assert(str_contains($html, 'home-feed-toolbar') && str_contains($html, 'archive-filter'), 'Shared home renderer includes the toolbar and archive filter.');
+$assert(str_contains($html, 'href="/?feed=following&amp;media=images"'), 'Rendered filter links preserve query parameters.');
+$resource['items'] = [];
+$html = \TinyCat\Support\Components::render('site/public-page', $resource);
+$assert(str_contains($html, \TinyCat\Support\Localization::t('public.feed_empty_filtered')) && str_contains($html, 'href="/?feed=following" class="btn btn-secondary btn-sm"'), 'Empty filtered feeds explain the result and allow clearing the filter.');
+echo "PASS archive and home media filters ({$checks} checks)\n";

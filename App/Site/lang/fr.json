@@ -68,7 +68,8 @@
     "filter_video": "Vidéos",
     "filter_audio": "Audio",
     "filter_links": "Liens",
-    "filter_text": "Texte seul"
+    "filter_text": "Texte seul",
+    "feed_empty_filtered": "Aucune publication ne correspond à ce filtre."
   },
   "privacy": {
     "title": "Confidentialité et règles",

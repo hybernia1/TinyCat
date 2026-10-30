@@ -68,7 +68,8 @@
     "filter_video": "Videolar",
     "filter_audio": "Ses",
     "filter_links": "Bağlantılar",
-    "filter_text": "Yalnızca metin"
+    "filter_text": "Yalnızca metin",
+    "feed_empty_filtered": "Bu filtreye uyan gönderi yok."
   },
   "privacy": {
     "title": "Gizlilik ve Kurallar",
