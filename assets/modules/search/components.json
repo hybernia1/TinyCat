@@ -209,7 +209,9 @@
             "attrs": {
               "type": "hidden",
               "name": "next",
-              "value": { "get": "url" }
+              "value": {
+                "get": "url"
+              }
             },
             "children": []
           },
@@ -346,16 +348,14 @@
         }
       },
       {
-        "tag": "div",
-        "attrs": {
-          "class": "alert alert-info"
-        },
-        "children": [
-          {
+        "component": "ui/empty-state",
+        "data": {
+          "label": {
             "t": "public.search_empty",
             "values": {}
-          }
-        ],
+          },
+          "icon": "search"
+        },
         "when": {
           "and": [
             {

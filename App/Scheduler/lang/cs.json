@@ -1,7 +1,6 @@
 {
   "cron": {
     "title": "Plánované úlohy",
-    "intro": "Jeden malý runner zpřístupňuje samostatné plánované úlohy se společným zabezpečením.",
     "access_title": "Přístup a token",
     "access_help": "Společný endpoint a ověření používané všemi plánovanými úlohami.",
     "url": "URL endpointu",

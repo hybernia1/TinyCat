@@ -89,7 +89,15 @@ final class Reports
      */
     public static function tc_admin_moderation_reports_payload(): array
     {
-        return ['items' => array_map(Resource::report(...), self::tc_admin_moderation_reports()), 'sorting' => \TinyCat\Support\AdminSorting::headings('reports')];
+        $query = self::reportsQuery();
+        $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
+        $filters = self::filters() + ['per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state('reports');
+        return [
+            'items' => array_map(static fn (array $report): array => Resource::report($report) + ['action_url' => \TinyCat\Support\AdminViews::admin_list_url('/api/moderation/reports/' . (int) $report['id'], $filters + ['page' => $pagination['page']])], $query->order(\TinyCat\Support\AdminSorting::order('reports'))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all()),
+            'filters' => $filters, 'pagination' => $pagination,
+            'sorting' => \TinyCat\Support\AdminSorting::headings('reports', $filters),
+            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, '/api/moderation/reports', '#moderation-reports', $filters, historyPath: '/admin/moderation/reports'),
+        ];
     }
 
     /**
@@ -97,17 +105,24 @@ final class Reports
      */
     public static function tc_admin_moderation_reports_view_data(): array
     {
+        return self::tc_admin_moderation_reports_payload();
+    }
+
+    /** @return array<string, string> */
+    private static function filters(): array
+    {
+        $status = \TinyCat\Http\Web::get('status', '');
+        $reason = \TinyCat\Http\Web::get('reason', '');
         return [
-            'reports' => self::tc_admin_moderation_reports(),
+            'q' => \TinyCat\Support\AdminViews::admin_filter_text((string) \TinyCat\Http\Web::get('q', '')),
+            'status' => in_array($status, ['open', 'reviewed', 'resolved', 'dismissed'], true) ? $status : '',
+            'reason' => in_array($reason, ['spam', 'illegal', 'malware', 'abuse', 'other'], true) ? $reason : '',
         ];
     }
 
-    /**
-     * @return array<mixed>
-     */
-    public static function tc_admin_moderation_reports(): array
+    private static function reportsQuery(): \TinyCat\Database\Query
     {
-        return \TinyCat\Database\Connection::all(
+        $query = new \TinyCat\Database\Query(
             'SELECT cr.*,
                 rc.report_count,
                 rc.open_count,
@@ -129,11 +144,18 @@ final class Reports
             INNER JOIN content_reports cr ON cr.id = CASE WHEN rc.open_report_id > 0 THEN rc.open_report_id ELSE rc.latest_report_id END
             LEFT JOIN content c ON c.id = cr.content_id
             LEFT JOIN users au ON au.id = c.author_id
-            LEFT JOIN users ru ON ru.id = cr.reporter_id
-            ORDER BY ' . \TinyCat\Support\AdminSorting::order('reports') . '
-            LIMIT 100',
+            LEFT JOIN users ru ON ru.id = cr.reporter_id',
             ['open', 'open']
         );
+        $filters = self::filters();
+        if ($filters['q'] !== '') {
+            $search = '%' . \TinyCat\Database\Connection::escapeLike($filters['q']) . '%';
+            $query->where("(c.body LIKE ? ESCAPE '!' OR au.username LIKE ? ESCAPE '!' OR ru.username LIKE ? ESCAPE '!')", $search, $search, $search);
+        }
+        if ($filters['status'] === 'open') { $query->where('rc.open_count > 0'); }
+        elseif ($filters['status'] !== '') { $query->where('rc.open_count = 0 AND cr.status = ?', $filters['status']); }
+        if ($filters['reason'] !== '') { $query->where('cr.reason = ?', $filters['reason']); }
+        return $query;
     }
 
 }

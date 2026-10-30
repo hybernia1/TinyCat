@@ -69,9 +69,20 @@
     "leave": "Deixar",
     "stay": "Ficar",
     "validation_failed": "Por favor verifique os valores enviados.",
+    "no_records": "Nenhum registro.",
     "not_found": "Não encontrado.",
     "validation_required": "O campo {field} é obrigatório.",
-    "validation_invalid": "O campo {field} possui um valor inválido."
+    "validation_invalid": "O campo {field} possui um valor inválido.",
+    "activate": "Ativar",
+    "deactivate": "Desativar",
+    "activated": "{entity} ativado.",
+    "deactivated": "{entity} desativado.",
+    "list_results": {
+      "one": "{count} registro encontrado",
+      "few": "{count} registros encontrados",
+      "many": "{count} registros encontrados",
+      "other": "{count} registros encontrados"
+    }
   },
   "relative": {
     "now": "agora",

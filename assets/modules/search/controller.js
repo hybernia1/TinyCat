@@ -17,7 +17,6 @@ import "../../ui/fields.js";
   var hydrateDynamic = TinyCat.lifecycle.hydrate;
   var qs = TinyCat.dom.find;
   var qsa = TinyCat.dom.all;
-  var uiText = TinyCat.i18n.label;
   var unwrapResult = TinyCat.api.unwrap;
   function globalSearchInput(root) {
     return qs("[data-global-search-input]", root);
@@ -152,96 +151,64 @@ import "../../ui/fields.js";
   function openGlobalSearchCaptcha(root, error) {
     var details = searchCaptchaDetails(error);
     var captcha = details.captcha;
-    var verifyUrl = details.verify_url || "/api/security/challenges/search";
+    var verifyUrl = "/api/security/challenges/search";
     var message = (error && error.data && error.data.message) || root.dataset.searchCaptchaRequired || TinyCat.i18n.t("public.search_captcha_required");
     var modal = qs("#global-search-captcha-modal");
-    var panel;
-    var form;
-    var body;
-    var footer;
-    var submit;
-    var title;
-
     if (!captcha || !captcha.enabled) {
       globalSearchShowMessage(root, message);
       return;
     }
 
-    if (modal) {
-      modal.remove();
-    }
+    if (modal) { TinyCat.dialog.close(modal); }
+    var form = createElement("form", "stack");
+    form.setAttribute("data-search-captcha-form", "");
+    form.action = verifyUrl; form.method = "post";
+    var messageNode = document.createElement("p");
+    messageNode.className = "text-muted";
+    messageNode.textContent = message;
+    form.appendChild(messageNode);
+    TinyCat.ui.captcha(form, captcha);
+    var submit = TinyCat.ui.button("common.confirm", { type: "submit", "class": "btn btn-primary" });
+    submit.textContent = root.dataset.searchCaptchaSubmit || TinyCat.i18n.t("common.confirm");
+    form.appendChild(submit);
+    modal = TinyCat.ui.formDialog("global-search-captcha-modal", root.dataset.searchCaptchaTitle || "public.search_captcha_title", form, false, { size: "compact" });
+    form.dataset.confirmUnsaved = "false";
+    modal.addEventListener("tinycat:modal-close", function () { TinyCat.forms.cancel(form); });
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
 
-    modal = createElement("div", "modal");
-    modal.id = "global-search-captcha-modal";
-    modal.setAttribute("aria-hidden", "true");
-    modal.setAttribute("role", "dialog");
-    modal.setAttribute("aria-modal", "true");
-    modal.setAttribute("aria-labelledby", "global-search-captcha-title");
-    modal.innerHTML = ''
-      + '<div class="modal-backdrop" data-modal-close></div>'
-      + '<div class="modal-panel modal-confirm-panel search-captcha-modal-panel">'
-      + '<div class="modal-header">'
-      + '<h2 class="modal-title text-lg m-0" id="global-search-captcha-title"></h2>'
-      + '<button class="btn btn-icon btn-ghost" type="button" data-modal-close></button>'
-      + '</div>'
-      + '<form class="modal-body stack stack-gap-12" data-search-captcha-form></form>'
-      + '</div>';
+      TinyCat.forms.request(form, verifyUrl, {
+        method: "POST",
+        body: new FormData(form)
+      })
+        .then(function () {
+          if (!modal.isConnected) { return; }
+          if (modal.parentNode) {
+            TinyCat.dialog.close(modal);
+            modal.remove();
+          }
 
-    panel = qs(".modal-panel", modal);
-    title = qs(".modal-title", modal);
-    form = qs("[data-search-captcha-form]", modal);
-    qs("[data-modal-close]", modal).setAttribute("aria-label", uiText("close", "Close"));
-    qs("[data-modal-close]", modal).textContent = "×";
-
-    if (title) {
-      title.textContent = root.dataset.searchCaptchaTitle || TinyCat.i18n.t("public.search_captcha_title");
-    }
-
-    if (form) {
-      body = createElement("div", "muted", message);
-      footer = createElement("div", "modal-footer justify-end");
-      submit = createElement("button", "btn btn-primary", root.dataset.searchCaptchaSubmit || TinyCat.i18n.t("common.confirm"));
-      submit.type = "submit";
-      footer.appendChild(submit);
-      form.action = verifyUrl;
-      form.method = "post";
-      form.appendChild(body);
-      TinyCat.ui.captcha(form, captcha);
-      form.appendChild(footer);
-      form.addEventListener("submit", function (event) {
-        event.preventDefault();
-
-        TinyCat.api.request(verifyUrl, {
-          method: "POST",
-          body: new FormData(form)
+          root.__tinycatSearchCache = {};
+          runGlobalSearch(root);
         })
-          .then(function () {
-            if (modal.parentNode) {
-              TinyCat.dialog.close(modal);
-              modal.remove();
-            }
+        .catch(function (submitError) {
+          if (submitError.name === "AbortError" || !modal.isConnected) { return; }
+          var submitDetails = searchCaptchaDetails(submitError);
 
-            root.__tinycatSearchCache = {};
-            runGlobalSearch(root);
-          })
-          .catch(function (submitError) {
-            var submitDetails = searchCaptchaDetails(submitError);
+          if (submitDetails.captcha) {
+            openGlobalSearchCaptcha(root, submitError);
+            return;
+          }
 
-            if (submitDetails.captcha) {
-              openGlobalSearchCaptcha(root, submitError);
-              return;
-            }
-
-            globalSearchShowMessage(root, (submitError && submitError.data && submitError.data.message) || message);
-          });
-      });
-    }
+          globalSearchShowMessage(root, (submitError && submitError.data && submitError.data.message) || message);
+        });
+    });
 
     document.body.appendChild(modal);
     hydrateDynamic(modal);
     TinyCat.dialog.open(modal);
 
-    return panel;
+    return modal.querySelector(".modal-panel");
   }
   function runGlobalSearch(root) {
     var input = globalSearchInput(root);

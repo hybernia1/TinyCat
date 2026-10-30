@@ -69,9 +69,20 @@
     "leave": "Залиште",
     "stay": "Залишайтеся",
     "validation_failed": "Будь ласка, перевірте подані значення.",
+    "no_records": "Немає записів.",
     "not_found": "Не знайдено.",
     "validation_required": "Поле {field} є обов’язковим.",
-    "validation_invalid": "Поле {field} має недійсне значення."
+    "validation_invalid": "Поле {field} має недійсне значення.",
+    "activate": "Активувати",
+    "deactivate": "Деактивувати",
+    "activated": "{entity} активовано.",
+    "deactivated": "{entity} деактивовано.",
+    "list_results": {
+      "one": "Знайдено {count} запис",
+      "few": "Знайдено {count} записи",
+      "many": "Знайдено {count} записів",
+      "other": "Знайдено {count} записів"
+    }
   },
   "relative": {
     "now": "зараз",

@@ -20,20 +20,14 @@ ob_start();
         <input class="input" name="username" autocomplete="off" autocapitalize="none" spellcheck="false" pattern="<?= Html::e($prepared['username_pattern']) ?>" minlength="2" maxlength="32" required>
         <span class="help"><?= Html::e($prepared['username_hint']) ?></span>
     </label>
-    <label class="field">
-        <span class="label"><?= Html::et('common.status') ?></span>
-        <select class="select" name="status">
-            <?php foreach ($prepared['admin_user_statuses'] as $value => $label): ?>
-                <option value="<?= Html::e($value) ?>"<?= $value === 'active' ? ' selected' : '' ?>><?= Html::e($label) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </label>
     <p class="help m-0"><?= Html::et('bots.account_create_help') ?></p>
 </div>
 <?php
 $body = trim((string) ob_get_clean());
-$footer = '<button class="btn btn-secondary" type="button" data-modal-close>' . Html::icon('close') . ' <span>' . Html::et('common.cancel') . '</span></button>'
-    . '<button class="btn btn-primary" type="submit">' . Html::icon('user-plus') . ' <span>' . Html::et('common.create') . '</span></button>';
+$footer = \TinyCat\Support\Components::render('ui/editor-actions', [
+    'cancel_label' => Localization::t('common.cancel'),
+    'primary' => new \TinyCat\Support\Markup('<button class="btn btn-primary" type="submit"><span>' . Html::et('common.create') . '</span></button>'),
+]);
 
 echo View::part('Support/modal', [
     'id' => 'bot-account-create-modal',
@@ -44,6 +38,7 @@ echo View::part('Support/modal', [
     'target' => '#bot-accounts-list',
     'reset' => true,
     'closeOnSuccess' => true,
+    'size' => 'workspace',
     'body' => $body,
     'footer' => $footer,
 ]);

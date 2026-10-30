@@ -30,7 +30,7 @@ final class Pages
         $data = ViewData::tc_admin_users_view_data();
         $content = AdminViews::listCard(
             Localization::t('users.list_title'), 'users', 'users-list', 'users-filter-modal',
-            new Markup(Views::adminList($data)),
+            new Markup(Views::adminList($data)), primary: true,
         );
         Layout::render([
             'title' => Localization::t('users.meta_title'), 'current' => '/admin/users',

@@ -1,5 +1,5 @@
 @media (min-width: 760px) {
-.modal-confirm-panel .modal-footer .btn {
+.modal[data-modal-kind="confirm"] .modal-footer .btn {
     flex: 0 0 auto;
   }
 

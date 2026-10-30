@@ -446,38 +446,12 @@
                         },
                         "children": [
                           {
-                            "tag": "button",
-                            "attrs": {
-                              "class": "avatar avatar-xl profile-avatar-button",
-                              "type": "button",
-                              "data-modal-open": {
-                                "get": "avatar_edit_id"
-                              },
-                              "data-modal-url": {
-                                "get": "avatar_edit_url"
-                              },
-                              "title": {
-                                "t": "account.avatar_edit",
-                                "values": {}
-                              },
-                              "aria-label": {
-                                "t": "account.avatar_edit",
-                                "values": {}
+                            "component": "users/avatar-control",
+                            "data": {
+                              "user": {
+                                "get": "author"
                               }
                             },
-                            "children": [
-                              {
-                                "component": "ui/avatar-content",
-                                "data": {
-                                  "user": {
-                                    "get": "author"
-                                  },
-                                  "alt": {
-                                    "get": "author.username"
-                                  }
-                                }
-                              }
-                            ],
                             "when": {
                               "get": "can_edit"
                             }
@@ -1588,52 +1562,65 @@
                   {
                     "tag": "div",
                     "attrs": {
-                      "class": "alert alert-info cluster",
-                      "data-status-empty": ""
+                      "class": "empty-state",
+                      "data-status-empty": "",
+                      "role": "status"
                     },
                     "children": [
                       {
-                        "if": [
+                        "icon": "file",
+                        "class": "icon empty-state-icon"
+                      },
+                      {
+                        "tag": "p",
+                        "attrs": {
+                          "class": "empty-state-label"
+                        },
+                        "children": [
                           {
-                            "get": "archive_type"
-                          },
-                          {
-                            "t": "public.feed_empty_filtered"
-                          },
-                          {
-                            "lookup": {
-                              "get": "kind"
-                            },
-                            "cases": {
-                              "tag": {
-                                "t": "public.tag_feed_empty",
-                                "values": {}
+                            "if": [
+                              {
+                                "get": "archive_type"
                               },
-                              "author": {
-                                "t": "public.author_feed_empty",
-                                "values": {}
-                              }
-                            },
-                            "default": {
-                              "if": [
-                                {
-                                  "eq": [
+                              {
+                                "t": "public.feed_empty_filtered"
+                              },
+                              {
+                                "lookup": {
+                                  "get": "kind"
+                                },
+                                "cases": {
+                                  "tag": {
+                                    "t": "public.tag_feed_empty",
+                                    "values": {}
+                                  },
+                                  "author": {
+                                    "t": "public.author_feed_empty",
+                                    "values": {}
+                                  }
+                                },
+                                "default": {
+                                  "if": [
                                     {
-                                      "get": "feed"
+                                      "eq": [
+                                        {
+                                          "get": "feed"
+                                        },
+                                        "following"
+                                      ]
                                     },
-                                    "following"
+                                    {
+                                      "t": "public.feed_empty_following",
+                                      "values": {}
+                                    },
+                                    {
+                                      "t": "public.feed_empty",
+                                      "values": {}
+                                    }
                                   ]
-                                },
-                                {
-                                  "t": "public.feed_empty_following",
-                                  "values": {}
-                                },
-                                {
-                                  "t": "public.feed_empty",
-                                  "values": {}
                                 }
-                              ]
-                            }
+                              }
+                            ]
                           }
                         ]
                       },
@@ -1805,7 +1792,7 @@
   "site/archive-filter": {
     "tag": "details",
     "attrs": {
-      "class": "archive-filter",
+      "class": "popover-menu archive-filter",
       "data-dismissible-menu": ""
     },
     "children": [
@@ -1886,7 +1873,7 @@
       {
         "tag": "nav",
         "attrs": {
-          "class": "archive-filter-menu",
+          "class": "context-menu-popover archive-filter-menu",
           "aria-label": {
             "t": "public.filter_content"
           }

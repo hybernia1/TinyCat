@@ -10,7 +10,6 @@
     "report_note": "Примечание",
     "report_submit": "Отправить отчет",
     "profile_muted_until": "Звук аккаунта отключен до {until}.",
-    "url_blocker_title": "Заблокированные URL-адреса",
     "url_blocker_label": "Заблокированные веб-сайты",
     "url_blocker_placeholder": "example.com, bad.example, домен:ru",
     "url_blocker_help": "Разделяйте веб-сайты запятыми или новыми строками. Субдомены тоже заблокированы. Используйте домен:ru, чтобы заблокировать весь суффикс .ru.",

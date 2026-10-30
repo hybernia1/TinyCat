@@ -43,6 +43,7 @@ final class Queue
                 'bot_url' => '/admin/bots/' . (int) $row['bot_id'], 'excerpt' => Text::plain_text_limit((string) $row['body'], 180),
                 'published_at' => Dates::dateIso((string) $row['published_at']), 'can_publish' => $row['status'] === 'active',
                 'source' => Resource::postSource($row, (int) $row['bot_id']),
+                'edit_url' => '/api/bots/accounts/' . (int) $row['bot_id'] . '/posts/' . $id . '/management?panel=edit',
                 'publish_url' => AdminViews::admin_list_url('/api/bots/queue/' . $id . '/publication', $params + ['page' => $pagination['page']])];
         }
         $bots = ['' => Localization::t('bots.all_bots')];

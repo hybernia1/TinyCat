@@ -220,5 +220,19 @@
     ],
     "5.0.0": [
         "Public/install/index.php"
+    ],
+    "5.9.0": [
+        "App/Bots/templates/detail.php",
+        "App/Bots/templates/parts/modals/source.php",
+        "App/Moderation/templates/blocking.php",
+        "App/Settings/Pages.php",
+        "App/Settings/templates/administration.php",
+        "assets/modules/admin/styles/008-settings-grid.css",
+        "assets/modules/admin/styles/083-settings-grid.css",
+        "assets/modules/users/styles/057-auth-modal-panel.css",
+        "assets/modules/users/styles/084-profile-modal-grid.css",
+        "assets/ui/styles/058-modal-panel-full.css",
+        "assets/ui/styles/085-modal-confirm-panel-modal-footer-btn.css",
+        "assets/ui/styles/092-user-modal-panel-modal-panel-full-following-m.css"
     ]
 }

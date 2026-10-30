@@ -46,10 +46,13 @@
   resize: vertical;
 }
 
-.input-lg {
-  min-height: 50px;
-  font-size: 1.125rem;
-  font-weight: 650;
+.input:disabled,
+.select:disabled,
+.textarea:disabled {
+  background: var(--surface-soft);
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .input:focus,

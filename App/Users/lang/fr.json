@@ -11,7 +11,6 @@
     "table_user": "Utilisateur",
     "edit_user": "Modifier @{username}",
     "password_keep": "Laisser vide pour rester inchangé",
-    "username_locked": "Le nom d'utilisateur est l'identité principale et ne peut pas être modifié.",
     "delete_title": "Supprimer un utilisateur",
     "delete_confirm": "Vraiment supprimer l'utilisateur @{username} ?",
     "stats": {

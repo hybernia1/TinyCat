@@ -1,7 +1,6 @@
 {
   "cron": {
     "title": "Tareas programadas",
-    "intro": "Un pequeño corredor expone tareas programadas independientes con autenticación compartida.",
     "access_title": "Acceso y token",
     "access_help": "Punto final compartido y autenticación utilizada por cada tarea programada.",
     "url": "Punto final URL",

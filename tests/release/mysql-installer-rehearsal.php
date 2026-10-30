@@ -7,6 +7,8 @@ $workspaceRoot = dirname(__DIR__, 2);
 $options = getopt('', ['root::']);
 $requestedRoot = trim((string) ($options['root'] ?? $workspaceRoot));
 $root = realpath($requestedRoot);
+// Fresh-install artifacts omit historical migrations; keep those checks as harness fixtures.
+$migrationRoot = is_dir($requestedRoot . '/migrations') ? $requestedRoot : $workspaceRoot;
 $configPath = $workspaceRoot . '/config.php';
 
 if (!is_string($root)
@@ -208,7 +210,7 @@ try {
     ), 'COLUMN_NAME');
     $assert($recentIndex() === ['created_at', 'id'], 'Fresh installs index the latest comments in display order.');
     \TinyCat\Database\Connection::exec('ALTER TABLE content_comments DROP INDEX content_comments_recent_index');
-    $indexRecentComments = require $root . '/migrations/20261026_001_recent_comments_index.php';
+    $indexRecentComments = require $migrationRoot . '/migrations/20261026_001_recent_comments_index.php';
     $indexRecentComments(\TinyCat\Database\Connection::get());
     $indexRecentComments(\TinyCat\Database\Connection::get());
     $assert($recentIndex() === ['created_at', 'id'], 'Recent-comments migration is repeatable on existing installations.');
@@ -218,7 +220,7 @@ try {
     ), 'COLUMN_NAME');
     $assert($searchIndex() === ['status', 'username', 'id'], 'Fresh installs index active-user search and ordering.');
     \TinyCat\Database\Connection::exec('ALTER TABLE users DROP INDEX users_status_username_index');
-    $indexUserSearch = require $root . '/migrations/20261026_002_user_search_index.php';
+    $indexUserSearch = require $migrationRoot . '/migrations/20261026_002_user_search_index.php';
     $indexUserSearch(\TinyCat\Database\Connection::get());
     $indexUserSearch(\TinyCat\Database\Connection::get());
     $assert($searchIndex() === ['status', 'username', 'id'], 'User-search migration is repeatable on existing installations.');
@@ -248,7 +250,7 @@ try {
     $legacyHash = hash('sha256', 'legacy-item');
     \TinyCat\Database\Connection::insert('bot_feed_items', ['source_id' => $sourceId, 'item_hash' => $legacyHash]);
     \TinyCat\Database\Connection::exec('ALTER TABLE bot_sources ADD COLUMN updated_at DATETIME NULL');
-    $adoptBots = require $root . '/migrations/20261025_001_core_bots.php';
+    $adoptBots = require $migrationRoot . '/migrations/20261025_001_core_bots.php';
     $adoptBots(\TinyCat\Database\Connection::get());
     $adoptBots(\TinyCat\Database\Connection::get());
     $assert(\TinyCat\Bots\Administration::accountById($botId)['username'] === 'adopted_feedbot', 'Core adoption preserves the bot account and ID.');
@@ -285,7 +287,7 @@ try {
     \TinyCat\Settings\Store::setSetting('extensions.states', ['bots' => true], 'json', 'extensions');
     \TinyCat\Settings\Store::setSetting('extensions.installed_versions', ['bots' => '1.4.3'], 'json', 'extensions');
     \TinyCat\Database\Connection::insert('schema_migrations', ['migration' => 'extension:bots:fixture', 'version' => '1.4.3', 'checksum' => str_repeat('a', 64), 'applied_at' => \TinyCat\Support\Dates::dateDb()]);
-    $removeExtensionMetadata = require $root . '/migrations/20261025_002_remove_extension_metadata.php';
+    $removeExtensionMetadata = require $migrationRoot . '/migrations/20261025_002_remove_extension_metadata.php';
     $removeExtensionMetadata(\TinyCat\Database\Connection::get());
     $removeExtensionMetadata(\TinyCat\Database\Connection::get());
     $assert((int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM settings WHERE setting_key LIKE 'extensions.%'") === 0, 'Retired extension configuration is removed idempotently.');

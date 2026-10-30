@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.9.0 - 2026-10-30
+
+- Unify administration lists, automatic dropdown filters, filtered result summaries, compact table metadata, empty states, status icons and activation actions. Preserve query state, pagination and entity-specific success notifications.
+- Replace duplicate bot editors and the standalone settings page with shared tabbed workspaces. Add searchable, filtered and paginated bot run history; reuse post editing in the publication queue. Move blocked websites into Security settings.
+- Share account, avatar and modal components across the frontend and administration, with common footer actions, size tokens and mobile keyboard handling. Preserve drafts in other account tabs after partial saves and guard language navigation.
+- Remove redundant headings, header controls, help text and obsolete templates/styles. Signed updates explicitly remove retired runtime files. No new database migration is required.
+
 ## 5.8.0 - 2026-10-30
 
 - Add the existing archive content filter to the public and following home feeds. Retain the selected type across feed switches, pagination and history navigation, with a clear filtered empty state and reset action.

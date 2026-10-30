@@ -10,7 +10,6 @@
     "report_note": "Uwaga",
     "report_submit": "Wyślij raport",
     "profile_muted_until": "Konto jest wyciszone do {until}.",
-    "url_blocker_title": "Zablokowane adresy URL",
     "url_blocker_label": "Zablokowane strony internetowe",
     "url_blocker_placeholder": "przykład.com, zły.przykład, domena:ru",
     "url_blocker_help": "Oddziel strony internetowe przecinkami lub nowymi liniami. Subdomeny też są zablokowane. Użyj domeny:ru, aby zablokować cały sufiks .ru.",

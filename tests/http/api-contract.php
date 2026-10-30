@@ -226,17 +226,47 @@ try {
     $assert(is_string($payload['message']) && !isset($payload['data']['message']), 'Success messages must be exposed consistently.');
 
     $editableBotId = $payload['data']['item']['id'];
-    [$status, $botManagement] = $request('GET', '/api/bots/accounts/' . $editableBotId . '/management', null, 'admin');
-    $assert($status === 200 && $botManagement['data']['item']['id'] === $editableBotId && !isset($botManagement['data']['runs']), 'Bot management loads the editable account without unrelated detail-page history.');
-    [$status] = $request('GET', '/api/bots/accounts/' . $editableBotId . '/management', null, 'user');
+    [$status, $botManagement] = $request('GET', '/api/bots/accounts/' . $editableBotId, null, 'admin');
+    $assert($status === 200 && $botManagement['data']['item']['id'] === $editableBotId && isset($botManagement['data']['item']['active_source_count'], $botManagement['data']['item']['run_count']) && !isset($botManagement['data']['runs'], $botManagement['data']['sources'], $botManagement['data']['profile_url']), 'Bot management loads counts without legacy history, source snapshots or a public profile link.');
+    [$status] = $request('GET', '/api/bots/accounts/' . $editableBotId, null, 'user');
     $assert($status === 403, 'Bot edit resources remain restricted to administrators.');
-    [$status] = $request('GET', '/api/bots/accounts/2/management', null, 'admin');
+    [$status] = $request('GET', '/api/bots/accounts/2', null, 'admin');
     $assert($status === 404, 'Bot management cannot load a regular user account.');
+    [$status] = $request('GET', '/api/bots/accounts/' . $editableBotId . '/management', null, 'admin');
+    $assert($status === 404, 'The duplicate bot editor resource is retired.');
     [$status] = $request('PATCH', '/api/bots/accounts/' . $editableBotId, ['status' => 'active', 'bio' => 'Updated in list'], 'admin');
     $assert($status === 403, 'Bot modal writes retain shared CSRF protection.');
     [$status, $botSaved] = $request('PATCH', '/api/bots/accounts/' . $editableBotId . '?per_page=50', ['status' => 'active', 'bio' => 'Updated in list'], 'admin', $csrf);
     $assert($status === 200 && $botSaved['code'] === 'bot_saved' && $botSaved['data']['item']['bio'] === 'Updated in list' && $botSaved['meta']['pagination']['per_page'] === 50, 'Saving the bot modal returns updated list data and preserves the page-size contract.');
 
+    [$status] = $request('PUT', '/api/users/2/activation', ['enabled' => false], 'user', $csrf);
+    $assert($status === 403, 'Account activation requires an administrator.');
+    [$status] = $request('PUT', '/api/users/2/activation', ['enabled' => false], 'admin');
+    $assert($status === 403, 'Account activation retains CSRF protection.');
+    [$status] = $request('PUT', '/api/users/1/activation', ['enabled' => false], 'admin', $csrf);
+    $assert($status === 409, 'The protected administrator cannot be deactivated.');
+    [$status] = $request('PUT', '/api/users/2/activation', ['enabled' => 'invalid'], 'admin', $csrf);
+    $assert($status === 422, 'Activation rejects non-boolean state.');
+    [$status, $deactivated] = $request('PUT', '/api/users/2/activation', ['enabled' => false], 'admin', $csrf);
+    $assert($status === 200 && $deactivated['data']['item']['status'] === 'ban', 'The explicit row action deactivates an ordinary account.');
+    $assert($deactivated['code'] === 'record_deactivated' && $deactivated['message'] !== '' && !isset($deactivated['data']['message']), 'Deactivation returns a success notice in the shared flash envelope.');
+    [$status, $editedInactive] = $request('PATCH', '/api/users/2', ['scope' => 'administration', 'role' => 'user'], 'admin', $csrf);
+    $assert($status === 200 && $editedInactive['data']['item']['status'] === 'ban', 'User editing preserves activation when the status field is omitted.');
+    [$status, $activated] = $request('PUT', '/api/users/2/activation', ['enabled' => true], 'admin', $csrf);
+    $assert($status === 200 && $activated['data']['item']['status'] === 'active', 'The same action reactivates an account.');
+    $assert($activated['code'] === 'record_activated' && $activated['message'] !== '', 'Activation returns its own success notice.');
+    [$status] = $request('PUT', '/api/bots/accounts/' . $editableBotId . '/activation', ['enabled' => false], 'admin', $csrf);
+    $assert($status === 200, 'Bot accounts use the same explicit activation contract.');
+    [$status, $inactiveSaved] = $request('PATCH', '/api/bots/accounts/' . $editableBotId, ['bio' => 'Still inactive'], 'admin', $csrf);
+    $assert($status === 200 && $inactiveSaved['data']['item']['status'] === 'ban', 'Editing a biography does not change activation.');
+    [$status, $activatedBot] = $request('PUT', '/api/bots/accounts/' . $editableBotId . '/activation', ['enabled' => true], 'admin', $csrf);
+    $assert($status === 200 && $activatedBot['data']['item']['bio'] === 'Still inactive', 'Activation preserves the bot biography.');
+    $assert($activatedBot['code'] === 'record_activated' && $activatedBot['params']['entity'] === '@' . $activatedBot['data']['item']['username'] && str_contains($activatedBot['message'], $activatedBot['params']['entity']), 'Bot activation names the concrete account through the shared entity parameter.');
+
+    [$status, $sourceDefaults] = $request('GET', '/api/bots/sources/management?bot=3', null, 'admin');
+    $assert($status === 200 && $sourceDefaults['data']['item']['bot_user_id'] === 3 && $sourceDefaults['data']['item']['enabled'] && $sourceDefaults['data']['item']['post_template'] !== '', 'Source creation loads defaults for the same sectioned editor as existing sources.');
+    [$status] = $request('GET', '/api/bots/sources/management', null, 'user');
+    $assert($status === 403, 'Source creation options remain administrator-only.');
     $source = ['bot_user_id' => 3, 'name' => 'Contract feed', 'feed_url' => 'https://93.184.216.34/feed', 'interval_minutes' => 60, 'post_template' => '{{title}}', 'enabled' => '1'];
     [$status, $payload] = $request('POST', '/api/bots/sources', $source, 'admin', $csrf);
     $assert($status === 201 && $payload['data']['item']['name'] === 'Contract feed', 'Bot source creation must return the same 201 contract.');
@@ -289,6 +319,11 @@ try {
     $sourceDatabase = null;
     [$status, $payload] = $request('PATCH', '/api/bots/sources/' . $sourceId, ['enabled' => false], 'admin', $csrf);
     $assert($status === 200 && !$payload['data']['item']['enabled'], 'Named action parameters must dispatch through the same API middleware.');
+    $assert($payload['code'] === 'record_deactivated' && $payload['params']['entity'] === $payload['data']['item']['name'] && str_contains($payload['message'], $payload['params']['entity']), 'Source deactivation identifies the source in the flash notice.');
+    $sourceEditWithoutActivation = $source;
+    unset($sourceEditWithoutActivation['enabled']);
+    [$status, $pausedSourceEdited] = $request('PATCH', '/api/bots/sources/' . $sourceId, $sourceEditWithoutActivation, 'admin', $csrf);
+    $assert($status === 200 && !$pausedSourceEdited['data']['item']['enabled'], 'Editing a source without an activation field preserves its paused state.');
     [$status, $payload] = $request('POST', '/api/bots/sources', $source, 'admin', $csrf);
     $assert($status === 422 && isset($payload['error']['details']['errors']['feed_url']), 'Duplicate source validation must use the shared validation envelope.');
 
@@ -301,6 +336,7 @@ try {
     [$status] = $request('DELETE', '/api/bots/sources/' . $sourceId, ['id' => 1], 'admin', $csrf);
     $assert($status === 200, 'Source deletion must use the shared response contract.');
     require __DIR__ . '/bot-post-cases.php';
+    require __DIR__ . '/bot-run-cases.php';
     require __DIR__ . '/email-check-cases.php';
     require __DIR__ . '/export-contract-cases.php';
     require __DIR__ . '/embed-contract-cases.php';

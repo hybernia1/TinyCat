@@ -3,6 +3,17 @@ declare(strict_types=1);
 
 // Uses the disposable database and HTTP server from api-contract.php.
 $seed = new PDO('sqlite:' . $databasePath, options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+foreach (['GET', 'POST'] as $retiredSettingsMethod) {
+    $retiredSettings = file_get_contents('http://' . $address . '/admin/settings', false, stream_context_create(['http' => ['method' => $retiredSettingsMethod, 'header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+    $retiredHeaders = http_get_last_response_headers() ?? [];
+    $assert(preg_match('/\s404\s/', (string) ($retiredHeaders[0] ?? '')) === 1, 'The standalone settings page is retired for ' . $retiredSettingsMethod . '.');
+}
+$settingsHostPage = file_get_contents('http://' . $address . '/admin', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+$assert(is_string($settingsHostPage) && str_contains($settingsHostPage, 'data-modal-open="settings-editor-modal"') && str_contains($settingsHostPage, '<template data-settings-editor>') && !str_contains($settingsHostPage, 'href="/admin/settings"'), 'Admin navigation opens the shared settings modal without a standalone page.');
+$assert(str_contains($settingsHostPage, 'name="settings[moderation.blocked_urls]"') && !str_contains($settingsHostPage, 'href="/admin/moderation/blocking"'), 'Blocked websites are part of the settings editor instead of a separate navigation page.');
+file_get_contents('http://' . $address . '/admin/moderation/blocking', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+$blockingHeaders = http_get_last_response_headers() ?? [];
+$assert(preg_match('/\s404\s/', (string) ($blockingHeaders[0] ?? '')) === 1, 'The standalone URL blocking page is retired.');
 foreach (['/api/admin/bot-accounts', '/api/admin/bots', '/api/admin/settings', '/api/admin/moderation/reports', '/api/admin/cron-token', '/api/sidebar', '/api/status-suggest', '/api/search-captcha'] as $retired) {
     [$status] = $request('GET', $retired, null, 'admin');
     $assert($status === 404, 'Retired endpoints have no compatibility aliases: ' . $retired);
@@ -26,6 +37,10 @@ foreach ([['settings' => 'invalid'], ['settings' => ['site.name' => []]], ['sett
 [$status, $payload] = $request('POST', '/api/scheduler/tokens', [], 'admin', $csrf);
 $assert($status === 201 && strlen($payload['data']['token']) >= 32, 'Token rotation returns the new token directly to its administrator.');
 $pure($payload);
+[$status] = $request('PATCH', '/api/settings', ['settings' => ['moderation.blocked_urls' => "https://WWW.Example.org/path\nexample.org; domain:ru; invalid"]], 'admin', $csrf);
+$assert($status === 200 && $seed->query("SELECT setting_value FROM settings WHERE setting_key = 'moderation.blocked_urls'")->fetchColumn() === 'example.org, domain:ru', 'Settings normalize blocked hosts, remove duplicates and preserve domain rules.');
+[$status] = $request('PATCH', '/api/settings', ['settings' => ['moderation.blocked_urls' => '']], 'admin', $csrf);
+$assert($status === 200 && $seed->query("SELECT setting_value FROM settings WHERE setting_key = 'moderation.blocked_urls'")->fetchColumn() === '', 'Settings can clear the blocking rules.');
 [$status, $payload] = $request('PUT', '/api/moderation/blocked-urls', ['blocked_urls' => 'example.org'], 'admin', $csrf);
 $assert($status === 200 && in_array('example.org', $payload['data']['items'], true), 'URL blocking uses a data response without a redirect.');
 $assert(!isset($payload['data']['redirect']), 'Inline moderation writes preserve AJAX.');
@@ -47,6 +62,14 @@ $assert($seed->query('SELECT body FROM content WHERE id = 10')->fetchColumn() !=
 $assert($status === 409, 'Reviewing a missing or already closed report returns a conflict.');
 $seed->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (9000, 2, 'Review fixture', '2026-01-01 12:00:00')");
 $seed->exec("INSERT INTO content_reports (id, content_id, reporter_id, reason, status, created_at) VALUES (9000, 9000, 1, 'other', 'open', '2026-01-01 12:01:00')");
+[$status, $reportList] = $request('GET', '/api/moderation/reports?q=Review%20fixture&status=open&reason=other&per_page=10', null, 'admin');
+$assert($status === 200 && count($reportList['data']['items']) === 1 && $reportList['data']['items'][0]['id'] === 9000, 'Report search, status and reason filters compose on the grouped list.');
+$assert($reportList['meta']['pagination']['per_page'] === 10 && $reportList['meta']['pagination']['total'] === 1, 'Reports expose shared pagination metadata.');
+$assert(str_contains($reportList['data']['items'][0]['action_url'], 'status=open') && str_contains($reportList['data']['sorting']['content']['url'], 'reason=other'), 'Review actions and sorting preserve active report filters.');
+[$status, $closedReports] = $request('GET', '/api/moderation/reports?q=Review%20fixture&status=dismissed', null, 'admin');
+$assert($status === 200 && $closedReports['data']['items'] === [], 'Open reports are excluded from the dismissed filter.');
+[$status, $wrongReason] = $request('GET', '/api/moderation/reports?q=Review%20fixture&reason=spam', null, 'admin');
+$assert($status === 200 && $wrongReason['data']['items'] === [], 'Report reason filtering excludes other reasons.');
 [$status, $payload] = $request('PATCH', '/api/moderation/reports/9000', ['decision' => 'dismiss', 'report_id' => 1], 'admin', $csrf);
 $assert($status === 200 && $seed->query('SELECT status FROM content_reports WHERE id = 9000')->fetchColumn() === 'dismissed', 'Reviewing a report targets its path ID and updates the report.');
 $pure($payload);
@@ -117,5 +140,22 @@ $seed->exec("INSERT INTO notifications (user_id, actor_id, type, notification_ke
 [$status, $html] = $exportRequest('/notifications', 'GET', ['X-Test-Role' => 'user']);
 $doc->loadHTML($html);
 $assert((new DOMXPath($doc))->query('//form[@action="/api/notifications" and not(@hidden)]')->length === 1, 'New notifications make mark-all available again.');
+$insertSource = $seed->prepare('INSERT INTO bot_sources (id, bot_user_id, name, feed_url, feed_hash, post_template) VALUES (?, 3, ?, ?, ?, ?)');
+foreach (range(1, 12) as $number) {
+    $insertSource->execute([96000 + $number, 'Layout fixture ' . sprintf('%02d', $number), 'https://example.test/layout/' . $number, hash('sha256', 'layout-fixture-' . $number), '{{title}}']);
+}
+[$status, $sourceList] = $request('GET', '/api/bots/sources?q=Layout%20fixture&bot=3&per_page=10&sort=name&direction=asc', null, 'admin');
+$assert($status === 200 && count($sourceList['data']['items']) === 10 && $sourceList['meta']['pagination']['total'] === 12, 'Sources combine search and bot filters with shared pagination.');
+[$status, $sourcePage] = $request('GET', '/api/bots/sources?q=Layout%20fixture&bot=3&per_page=10&page=2&sort=name&direction=asc', null, 'admin');
+$assert($status === 200 && array_column($sourcePage['data']['items'], 'id') === [96011, 96012], 'Source sorting has a stable filtered second page.');
+[$status] = $request('GET', '/api/bots/sources/96001/management', null, 'user');
+$assert($status === 403, 'Only administrators can load source editors.');
+$seed->exec("UPDATE bot_sources SET name = 'Fresh editor value' WHERE id = 96001");
+[$status, $sourceEditor] = $request('GET', '/api/bots/sources/96001/management', null, 'admin');
+$assert($status === 200 && $sourceEditor['data']['item']['name'] === 'Fresh editor value' && $sourceEditor['data']['bots'] !== [], 'Source editors load current values and available bot accounts.');
+[$status] = $request('GET', '/api/bots/sources/999999/management', null, 'admin');
+$assert($status === 404, 'Missing sources do not open an empty editor.');
+$seed->exec('DELETE FROM bot_sources WHERE id BETWEEN 96001 AND 96012');
+$insertSource = null;
 $insertCursor = null;
 $seed = null;

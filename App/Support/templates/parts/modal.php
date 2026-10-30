@@ -16,18 +16,19 @@ $nativeMethod = in_array($method, ['GET', 'POST'], true);
 $formMethod = $nativeMethod ? strtolower($method) : 'post';
 $hiddenMethod = (string) ($methodOverride ?? ($nativeMethod ? '' : $method));
 $titleId = (string) ($labelledBy ?? $id . '-title');
-$panel = ['class' => trim('modal-panel ' . (string) ($size ?? '')), 'tabindex' => '-1'];
+$panel = ['class' => 'modal-panel', 'tabindex' => '-1'];
 if ($hasForm) {
     $panel += ['action' => $action, 'method' => $formMethod,
         'enctype' => !empty($multipart) ? 'multipart/form-data' : null,
         'data-ajax-form' => ($ajax ?? true) ? '' : null,
         'data-ajax-target' => ($target ?? '') !== '' ? $target : null,
         'data-reset' => !empty($reset) ? 'true' : null,
-        'data-modal-close-on-success' => !empty($closeOnSuccess) ? 'true' : null];
+        'data-modal-close-on-success' => !empty($closeOnSuccess) ? 'true' : null,
+        'data-confirm-unsaved' => 'true'];
 }
 $panel += (array) ($hasForm ? ($formAttributes ?? []) : ($panelAttributes ?? []));
 echo Components::render('ui/modal', [
-    'root_attributes' => ['class' => trim('modal ' . (string) ($modalClass ?? '') . ($hasForm ? ' modal-form' : '')),
+    'root_attributes' => ['class' => 'modal', 'data-modal-kind' => $hasForm ? 'editor' : 'content', 'data-modal-size' => (string) ($size ?? 'default'),
         'id' => $id, 'role' => 'dialog', 'aria-modal' => 'true', 'aria-hidden' => 'true',
         'aria-labelledby' => $titleId, 'data-open' => 'false', 'data-modal-dispose-on-close' => 'false'],
     'form' => $hasForm, 'panel_attributes' => $panel, 'title_id' => $titleId,

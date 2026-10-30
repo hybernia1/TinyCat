@@ -10,7 +10,6 @@
     "report_note": "Opmerking",
     "report_submit": "Rapport verzenden",
     "profile_muted_until": "Het account is gedempt tot {until}.",
-    "url_blocker_title": "Geblokkeerde URL's",
     "url_blocker_label": "Geblokkeerde websites",
     "url_blocker_placeholder": "voorbeeld.com, slecht.voorbeeld, domein:ru",
     "url_blocker_help": "Scheid websites met komma's of nieuwe regels. Subdomeinen worden ook geblokkeerd. Gebruik domain:ru om het hele .ru-achtervoegsel te blokkeren.",

@@ -1,7 +1,6 @@
 {
   "cron": {
     "title": "Geplante Aufgaben",
-    "intro": "Ein kleiner Läufer stellt unabhängige geplante Aufgaben mit gemeinsamer Authentifizierung bereit.",
     "access_title": "Zugriff und Token",
     "access_help": "Gemeinsamer Endpunkt und Authentifizierung, die von jeder geplanten Aufgabe verwendet werden.",
     "url": "Endpunkt URL",

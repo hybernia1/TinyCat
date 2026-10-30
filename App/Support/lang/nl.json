@@ -69,9 +69,20 @@
     "leave": "Vertrekken",
     "stay": "Blijf",
     "validation_failed": "Controleer de ingediende waarden.",
+    "no_records": "Geen resultaten.",
     "not_found": "Niet gevonden.",
     "validation_required": "Het veld {field} is verplicht.",
-    "validation_invalid": "Het veld {field} heeft een ongeldige waarde."
+    "validation_invalid": "Het veld {field} heeft een ongeldige waarde.",
+    "activate": "Activeren",
+    "deactivate": "Deactiveren",
+    "activated": "{entity} geactiveerd.",
+    "deactivated": "{entity} gedeactiveerd.",
+    "list_results": {
+      "one": "{count} resultaat gevonden",
+      "few": "{count} resultaten gevonden",
+      "many": "{count} resultaten gevonden",
+      "other": "{count} resultaten gevonden"
+    }
   },
   "relative": {
     "now": "nu",

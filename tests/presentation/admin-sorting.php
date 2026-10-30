@@ -52,7 +52,7 @@ foreach (['users', 'accounts', 'sources', 'bot_posts', 'runs', 'reports'] as $li
                 'sources' => \TinyCat\Bots\Importer::sources(null, AdminSorting::order('sources')),
                 'bot_posts' => \TinyCat\Bots\Administration::postsPayload(101),
                 'runs' => \TinyCat\Scheduler\Repository::listing([], 1, 10),
-                'reports' => \TinyCat\Moderation\Reports::tc_admin_moderation_reports(),
+                'reports' => \TinyCat\Moderation\Reports::tc_admin_moderation_reports_payload()['items'],
             };
             $assert(true, 'Valid SQL: ' . $list . '/' . $key . '/' . $direction);
         }
@@ -70,10 +70,10 @@ $_GET = ['sort' => 'username', 'direction' => 'asc'];
 $accounts = (new ReflectionMethod(\TinyCat\Bots\Administration::class, 'accountsPage'))->invoke(null);
 $assert($accounts['items'][0]['username'] === 'Alpha', 'Bot accounts sort by name');
 $_GET = ['sort' => 'content', 'direction' => 'asc'];
-$reports = \TinyCat\Moderation\Reports::tc_admin_moderation_reports();
-$assert($reports[0]['body'] === 'Alpha', 'Reports sort by content');
+$reports = \TinyCat\Moderation\Reports::tc_admin_moderation_reports_payload()['items'];
+$assert($reports[0]['excerpt'] === 'Alpha', 'Reports sort by content');
 $_GET = [];
-$reports = \TinyCat\Moderation\Reports::tc_admin_moderation_reports();
+$reports = \TinyCat\Moderation\Reports::tc_admin_moderation_reports_payload()['items'];
 $assert($reports[0]['status'] === 'open', 'Reports retain open-first default');
 $_GET = ['sort' => 'username', 'direction' => 'asc'];
 $heading = AdminSorting::headings('users', ['q' => 'A&B', 'role' => 'user', 'per_page' => 50, 'page' => 3])['username'];

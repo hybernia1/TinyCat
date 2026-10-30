@@ -94,6 +94,7 @@ import "./forms.js";
         input.insertAdjacentElement("afterend", error);
       }
 
+      if (!firstInvalid && input.type !== "hidden" && !input.hidden && TinyCat.tabs) { TinyCat.tabs.reveal(input); }
       if (!firstInvalid && input.type !== "hidden" && !input.hidden && !input.closest('[hidden], [aria-hidden="true"]')) {
         firstInvalid = input;
       }

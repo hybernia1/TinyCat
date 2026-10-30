@@ -1,6 +1,16 @@
-.context-menu {
+.context-menu,
+.popover-menu {
   position: relative;
   display: inline-flex;
+}
+
+.popover-menu > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.popover-menu[open] > summary.btn {
+  background: var(--surface-soft);
 }
 
 .user-menu > .user-menu-trigger {

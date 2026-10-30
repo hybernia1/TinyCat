@@ -10,10 +10,6 @@
     max-width: 640px;
   }
 
-.admin-search-submit span {
-    display: inline;
-  }
-
 .admin-filter-actions {
     flex: 0 0 auto;
     justify-content: flex-end;

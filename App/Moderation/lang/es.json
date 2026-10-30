@@ -10,7 +10,6 @@
     "report_note": "Nota",
     "report_submit": "Enviar informe",
     "profile_muted_until": "La cuenta está silenciada hasta {until}.",
-    "url_blocker_title": "URL bloqueadas",
     "url_blocker_label": "Sitios web bloqueados",
     "url_blocker_placeholder": "ejemplo.com, mal.ejemplo, dominio:ru",
     "url_blocker_help": "Separe los sitios web con comas o líneas nuevas. Los subdominios también están bloqueados. Utilice dominio:ru para bloquear todo el sufijo .ru.",

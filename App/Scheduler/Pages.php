@@ -18,7 +18,7 @@ final class Pages
         Access::require_admin();
         $title = Localization::t('cron.list_title');
         $data = Administration::payload();
-        $content = \TinyCat\Support\AdminViews::listCard($title, 'clock', 'scheduler-list', '', new \TinyCat\Support\Markup(\TinyCat\Support\Components::render('scheduler/list', $data + ['state' => $data])));
+        $content = '<div id="scheduler-list">' . \TinyCat\Support\Components::render('scheduler/list', $data + ['state' => $data]) . '</div>';
         Layout::render(['title' => $title, 'current' => '/admin/cron/list'], $content);
     }
 
@@ -63,6 +63,6 @@ final class Pages
             'title' => Localization::t('cron.title'),
             'current' => '/admin/cron',
             'actions' => View::render('actions', [], __DIR__ . '/templates'),
-        ], \TinyCat\Support\AdminViews::listCard(Localization::t('cron.title'), 'clock', 'scheduler-settings', '', new \TinyCat\Support\Markup(View::render('administration', compact('cronToken', 'cronUrl', 'taskViews'), __DIR__ . '/templates'))));
+        ], \TinyCat\Support\AdminViews::listCard(Localization::t('cron.title'), 'clock', 'scheduler-settings', '', new \TinyCat\Support\Markup(View::render('administration', compact('cronToken', 'cronUrl', 'taskViews'), __DIR__ . '/templates')), primary: true));
     }
 }

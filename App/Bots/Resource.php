@@ -25,7 +25,6 @@ final class Resource
     {
         return array_map(static function (array $run): array {
             $at = (string) ($run['started_at'] ?? '');
-            $status = (string) ($run['status'] ?? '');
             return array_replace($run, ['started_at' => $at !== '' ? Dates::dateIso($at) : '']);
         }, $runs);
     }

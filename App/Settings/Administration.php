@@ -26,11 +26,11 @@ final class Administration
                 'icon' => 'home',
                 'fields' => [
                     ['key' => 'site.name', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_name'), 'type' => 'text', 'default' => 'TinyCat', 'max' => 120, 'span' => true],
-                    ['key' => 'app.url', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_url'), 'type' => 'site_url', 'default' => '', 'max' => 2048, 'span' => true, 'help' => \TinyCat\Support\Localization::t('settings.fields.site_url_help')],
-                    ['key' => 'site.home_title', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_home_title'), 'type' => 'optional_text', 'default' => '', 'max' => 160, 'span' => true, 'help' => \TinyCat\Support\Localization::t('settings.fields.site_home_title_help')],
+                    ['key' => 'app.url', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_url'), 'type' => 'site_url', 'default' => '', 'max' => 2048, 'span' => true],
+                    ['key' => 'site.home_title', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_home_title'), 'type' => 'optional_text', 'default' => '', 'max' => 160, 'span' => true],
                     ['key' => 'site.meta_description', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_meta_description'), 'type' => 'textarea', 'default' => '', 'max' => 500, 'span' => true, 'placeholder' => \TinyCat\Support\Localization::t('settings.fields.site_meta_description_placeholder'), 'help' => \TinyCat\Support\Localization::t('settings.fields.site_meta_description_help')],
-                    ['key' => 'site.logo_url', 'path_key' => 'site.logo_path', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_logo'), 'type' => 'site_image', 'variant' => 'logo', 'default' => '', 'compact' => true],
-                    ['key' => 'site.favicon_url', 'path_key' => 'site.favicon_path', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_favicon'), 'type' => 'site_image', 'variant' => 'favicon', 'default' => '', 'compact' => true],
+                    ['key' => 'site.logo_url', 'path_key' => 'site.logo_path', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_logo'), 'type' => 'site_image', 'variant' => 'logo', 'default' => ''],
+                    ['key' => 'site.favicon_url', 'path_key' => 'site.favicon_path', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_favicon'), 'type' => 'site_image', 'variant' => 'favicon', 'default' => ''],
                     ['key' => 'site.footer_html', 'label' => \TinyCat\Support\Localization::t('settings.fields.site_footer'), 'type' => 'textarea', 'default' => '', 'span' => true],
                 ],
             ],
@@ -67,6 +67,7 @@ final class Administration
                 'label' => \TinyCat\Support\Localization::t('settings.sections.security'),
                 'icon' => 'shield',
                 'fields' => [
+                    ['key' => 'moderation.blocked_urls', 'label' => \TinyCat\Support\Localization::t('moderation.url_blocker_label'), 'type' => 'textarea', 'default' => '', 'span' => true, 'placeholder' => \TinyCat\Support\Localization::t('moderation.url_blocker_placeholder'), 'help' => \TinyCat\Support\Localization::t('moderation.url_blocker_help')],
                     ['key' => 'security.captcha.enabled', 'label' => \TinyCat\Support\Localization::t('settings.fields.captcha_enabled'), 'type' => 'bool', 'default' => false],
                     ['key' => 'security.captcha.provider', 'label' => \TinyCat\Support\Localization::t('settings.fields.captcha_provider'), 'type' => 'select', 'default' => 'recaptcha', 'options' => ['recaptcha' => 'Google reCAPTCHA v2 Checkbox', 'turnstile' => 'Cloudflare Turnstile', 'hcaptcha' => 'hCaptcha'], 'help' => \TinyCat\Support\Localization::t('settings.fields.captcha_provider_help')],
                     ['key' => 'security.captcha.site_key', 'label' => \TinyCat\Support\Localization::t('settings.fields.captcha_site_key'), 'type' => 'optional_text', 'default' => '', 'max' => 512],
@@ -250,6 +251,10 @@ final class Administration
 
         if ($type === 'site_image') {
             return \TinyCat\Settings\Administration::tc_admin_settings_site_image_value($field, (string) $raw);
+        }
+
+        if ($key === 'moderation.blocked_urls') {
+            return [implode(', ', \TinyCat\Moderation\Blocking::moderation_blocked_url_rules((string) $raw)), 'string'];
         }
 
         if ($type === 'textarea') {

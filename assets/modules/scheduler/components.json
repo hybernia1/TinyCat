@@ -81,322 +81,191 @@
         ]
       },
       {
-        "tag": "div",
+        "tag": "section",
         "attrs": {
-          "class": "split"
+          "class": "card"
         },
         "children": [
-          {
-            "tag": "h3",
-            "attrs": {
-              "class": "text-lg m-0"
-            },
-            "children": [
-              {
-                "t": "cron.history"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "admin-list-toolbar"
-        },
-        "children": [
-          {
-            "component": "ui/search-form",
-            "data": {
-              "url": "/api/scheduler/tasks",
-              "target": "#scheduler-list",
-              "history": "/admin/cron/list",
-              "filters": {
-                "get": "filters"
-              },
-              "pagination": {
-                "get": "pagination"
-              }
-            }
-          },
           {
             "tag": "div",
             "attrs": {
-              "class": "admin-filter-actions"
+              "class": "card-header split"
             },
             "children": [
               {
-                "component": "ui/modal-trigger",
-                "data": {
-                  "class": "btn btn-secondary btn-sm",
-                  "modal": "scheduler-filter-modal",
-                  "label": {
-                    "t": "common.filters"
-                  },
-                  "icon": "filter"
-                }
-              },
-              {
-                "component": "ui/per-page",
-                "data": {
-                  "url": "/api/scheduler/tasks",
-                  "target": "#scheduler-list",
-                  "history": "/admin/cron/list",
-                  "filters": {
-                    "get": "filters"
-                  },
-                  "pagination": {
-                    "get": "pagination"
-                  },
-                  "choices": {
-                    "10": "10",
-                    "25": "25",
-                    "50": "50",
-                    "100": "100"
-                  }
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "table-wrap"
-        },
-        "children": [
-          {
-            "tag": "table",
-            "attrs": {
-              "class": "table"
-            },
-            "children": [
-              {
-                "tag": "thead",
+                "tag": "h2",
+                "attrs": {
+                  "class": "text-lg m-0 cluster gap-2"
+                },
                 "children": [
                   {
-                    "tag": "tr",
-                    "children": [
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "scope": "col",
-                          "aria-sort": {
-                            "get": "sorting.task.aria"
-                          }
-                        },
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "cron.task"
-                              },
-                              "order": {
-                                "get": "sorting.task"
-                              }
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "scope": "col",
-                          "aria-sort": {
-                            "get": "sorting.started_at.aria"
-                          }
-                        },
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "cron.started"
-                              },
-                              "order": {
-                                "get": "sorting.started_at"
-                              }
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "scope": "col",
-                          "aria-sort": {
-                            "get": "sorting.status.aria"
-                          }
-                        },
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "cron.status"
-                              },
-                              "order": {
-                                "get": "sorting.status"
-                              }
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "scope": "col",
-                          "aria-sort": {
-                            "get": "sorting.duration_ms.aria"
-                          }
-                        },
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "cron.duration"
-                              },
-                              "order": {
-                                "get": "sorting.duration_ms"
-                              }
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "scope": "col"
-                        },
-                        "children": [
-                          {
-                            "t": "cron.result"
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "scope": "col",
-                          "class": "table-actions-cell"
-                        },
-                        "children": [
-                          {
-                            "t": "common.actions"
-                          }
-                        ]
-                      }
-                    ]
+                    "icon": "clock"
+                  },
+                  {
+                    "t": "cron.history"
                   }
                 ]
               },
               {
-                "tag": "tbody",
+                "component": "ui/filter-trigger",
+                "data": {
+                  "id": "scheduler-filter-modal"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "card-body"
+            },
+            "children": [
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": "stack stack-gap-14"
+                },
                 "children": [
                   {
-                    "each": {
-                      "get": "runs"
+                    "component": "ui/list-toolbar",
+                    "data": {
+                      "url": "/api/scheduler/tasks",
+                      "target": "#scheduler-list",
+                      "history": "/admin/cron/list",
+                      "filters": {
+                        "get": "filters"
+                      },
+                      "pagination": {
+                        "get": "pagination"
+                      }
+                    }
+                  },
+                  {
+                    "tag": "div",
+                    "attrs": {
+                      "class": "table-wrap"
                     },
-                    "as": "run",
                     "children": [
                       {
-                        "tag": "tr",
+                        "tag": "table",
+                        "attrs": {
+                          "class": "table"
+                        },
                         "children": [
                           {
-                            "tag": "td",
+                            "tag": "thead",
                             "children": [
                               {
-                                "tag": "span",
-                                "attrs": {
-                                  "class": "cluster gap-2"
-                                },
+                                "tag": "tr",
                                 "children": [
                                   {
-                                    "icon": {
-                                      "lookup": {
-                                        "get": "run.task"
-                                      },
-                                      "cases": {
-                                        "feeds": "rss",
-                                        "cleanup": "database",
-                                        "site-health": "shield"
-                                      },
-                                      "default": ""
-                                    }
-                                  },
-                                  {
-                                    "lookup": {
-                                      "get": "run.task"
-                                    },
-                                    "cases": {
-                                      "feeds": {
-                                        "t": "cron.tasks.feeds"
-                                      },
-                                      "cleanup": {
-                                        "t": "cron.tasks.cleanup"
-                                      },
-                                      "site-health": {
-                                        "t": "health.title"
-                                      }
-                                    },
-                                    "default": ""
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "children": [
-                              {
-                                "tag": "div",
-                                "attrs": {
-                                  "class": "stack stack-gap-4"
-                                },
-                                "children": [
-                                  {
-                                    "tag": "time",
+                                    "tag": "th",
                                     "attrs": {
-                                      "datetime": {
-                                        "get": "run.started_at"
+                                      "scope": "col",
+                                      "aria-sort": {
+                                        "get": "sorting.task.aria"
                                       }
                                     },
                                     "children": [
                                       {
-                                        "date": {
-                                          "get": "run.started_at"
+                                        "component": "ui/sort-heading",
+                                        "data": {
+                                          "label": {
+                                            "t": "cron.task"
+                                          },
+                                          "order": {
+                                            "get": "sorting.task"
+                                          }
                                         }
                                       }
-                                    ],
-                                    "when": {
-                                      "get": "run.started_at"
-                                    }
+                                    ]
                                   },
                                   {
-                                    "tag": "small",
+                                    "tag": "th",
                                     "attrs": {
-                                      "class": "cluster gap-2 text-muted"
+                                      "scope": "col",
+                                      "aria-sort": {
+                                        "get": "sorting.started_at.aria"
+                                      }
                                     },
                                     "children": [
                                       {
-                                        "lookup": {
-                                          "get": "run.mode"
-                                        },
-                                        "cases": {
-                                          "admin": {
-                                            "t": "cron.modes.admin"
+                                        "component": "ui/sort-heading",
+                                        "data": {
+                                          "label": {
+                                            "t": "cron.started"
                                           },
-                                          "http": {
-                                            "t": "cron.modes.http"
-                                          },
-                                          "cli": {
-                                            "t": "cron.modes.cli"
+                                          "order": {
+                                            "get": "sorting.started_at"
                                           }
-                                        },
-                                        "default": ""
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "th",
+                                    "attrs": {
+                                      "scope": "col",
+                                      "aria-sort": {
+                                        "get": "sorting.status.aria"
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "component": "ui/sort-heading",
+                                        "data": {
+                                          "label": {
+                                            "t": "cron.status"
+                                          },
+                                          "order": {
+                                            "get": "sorting.status"
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "th",
+                                    "attrs": {
+                                      "scope": "col",
+                                      "aria-sort": {
+                                        "get": "sorting.duration_ms.aria"
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "component": "ui/sort-heading",
+                                        "data": {
+                                          "label": {
+                                            "t": "cron.duration"
+                                          },
+                                          "order": {
+                                            "get": "sorting.duration_ms"
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "th",
+                                    "attrs": {
+                                      "scope": "col"
+                                    },
+                                    "children": [
+                                      {
+                                        "t": "cron.result"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "th",
+                                    "attrs": {
+                                      "scope": "col",
+                                      "class": "table-actions-cell"
+                                    },
+                                    "children": [
+                                      {
+                                        "t": "common.actions"
                                       }
                                     ]
                                   }
@@ -405,137 +274,276 @@
                             ]
                           },
                           {
-                            "tag": "td",
+                            "tag": "tbody",
                             "children": [
                               {
-                                "component": "scheduler/status",
-                                "data": {
-                                  "status": {
-                                    "get": "run.status"
-                                  }
-                                }
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "children": [
-                              {
-                                "if": [
+                                "each": {
+                                  "get": "runs"
+                                },
+                                "as": "run",
+                                "children": [
                                   {
-                                    "eq": [
+                                    "tag": "tr",
+                                    "children": [
                                       {
-                                        "get": "run.duration_ms"
+                                        "tag": "td",
+                                        "children": [
+                                          {
+                                            "tag": "span",
+                                            "attrs": {
+                                              "class": "cluster gap-2"
+                                            },
+                                            "children": [
+                                              {
+                                                "icon": {
+                                                  "lookup": {
+                                                    "get": "run.task"
+                                                  },
+                                                  "cases": {
+                                                    "feeds": "rss",
+                                                    "cleanup": "database",
+                                                    "site-health": "shield"
+                                                  },
+                                                  "default": ""
+                                                }
+                                              },
+                                              {
+                                                "lookup": {
+                                                  "get": "run.task"
+                                                },
+                                                "cases": {
+                                                  "feeds": {
+                                                    "t": "cron.tasks.feeds"
+                                                  },
+                                                  "cleanup": {
+                                                    "t": "cron.tasks.cleanup"
+                                                  },
+                                                  "site-health": {
+                                                    "t": "health.title"
+                                                  }
+                                                },
+                                                "default": ""
+                                              }
+                                            ]
+                                          }
+                                        ]
                                       },
-                                      null
-                                    ]
-                                  },
-                                  "",
-                                  {
-                                    "concat": [
                                       {
-                                        "get": "run.duration_ms"
+                                        "tag": "td",
+                                        "children": [
+                                          {
+                                            "tag": "div",
+                                            "attrs": {
+                                              "class": "stack stack-gap-4"
+                                            },
+                                            "children": [
+                                              {
+                                                "tag": "time",
+                                                "attrs": {
+                                                  "datetime": {
+                                                    "get": "run.started_at"
+                                                  }
+                                                },
+                                                "children": [
+                                                  {
+                                                    "date": {
+                                                      "get": "run.started_at"
+                                                    }
+                                                  }
+                                                ],
+                                                "when": {
+                                                  "get": "run.started_at"
+                                                }
+                                              },
+                                              {
+                                                "tag": "small",
+                                                "attrs": {
+                                                  "class": "cluster gap-2 table-meta"
+                                                },
+                                                "children": [
+                                                  {
+                                                    "lookup": {
+                                                      "get": "run.mode"
+                                                    },
+                                                    "cases": {
+                                                      "admin": {
+                                                        "t": "cron.modes.admin"
+                                                      },
+                                                      "http": {
+                                                        "t": "cron.modes.http"
+                                                      },
+                                                      "cli": {
+                                                        "t": "cron.modes.cli"
+                                                      }
+                                                    },
+                                                    "default": ""
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
                                       },
-                                      " ms"
+                                      {
+                                        "tag": "td",
+                                        "children": [
+                                          {
+                                            "component": "scheduler/status",
+                                            "data": {
+                                              "status": {
+                                                "get": "run.status"
+                                              }
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "tag": "td",
+                                        "children": [
+                                          {
+                                            "if": [
+                                              {
+                                                "eq": [
+                                                  {
+                                                    "get": "run.duration_ms"
+                                                  },
+                                                  null
+                                                ]
+                                              },
+                                              "",
+                                              {
+                                                "concat": [
+                                                  {
+                                                    "get": "run.duration_ms"
+                                                  },
+                                                  " ms"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "tag": "td",
+                                        "children": [
+                                          {
+                                            "each": [
+                                              {
+                                                "get": "run.summary.count"
+                                              },
+                                              {
+                                                "get": "run.summary.changed"
+                                              }
+                                            ],
+                                            "as": "metric",
+                                            "children": [
+                                              {
+                                                "tag": "div",
+                                                "children": [
+                                                  {
+                                                    "lookup": {
+                                                      "string": {
+                                                        "get": "_key"
+                                                      }
+                                                    },
+                                                    "cases": {
+                                                      "0": {
+                                                        "t": "cron.summary_count",
+                                                        "values": {
+                                                          "count": {
+                                                            "get": "metric"
+                                                          }
+                                                        }
+                                                      },
+                                                      "1": {
+                                                        "t": "cron.summary_changed",
+                                                        "values": {
+                                                          "count": {
+                                                            "get": "metric"
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                ],
+                                                "when": {
+                                                  "not": {
+                                                    "eq": [
+                                                      {
+                                                        "get": "metric"
+                                                      },
+                                                      null
+                                                    ]
+                                                  }
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "tag": "td",
+                                        "attrs": {
+                                          "class": "table-actions-cell"
+                                        },
+                                        "children": [
+                                          {
+                                            "tag": "div",
+                                            "attrs": {
+                                              "class": "table-actions"
+                                            },
+                                            "children": [
+                                              {
+                                                "component": "ui/modal-trigger",
+                                                "data": {
+                                                  "class": "btn btn-sm btn-ghost btn-icon",
+                                                  "modal": {
+                                                    "concat": [
+                                                      "scheduler-run-",
+                                                      {
+                                                        "get": "run.id"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "url": {
+                                                    "get": "run.detail_url"
+                                                  },
+                                                  "label": {
+                                                    "t": "cron.run_details"
+                                                  },
+                                                  "icon": "eye",
+                                                  "icon_only": true
+                                                }
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
                                     ]
                                   }
                                 ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "children": [
+                              },
                               {
-                                "each": [
+                                "tag": "tr",
+                                "children": [
                                   {
-                                    "get": "run.summary.count"
-                                  },
-                                  {
-                                    "get": "run.summary.changed"
+                                    "tag": "td",
+                                    "attrs": {
+                                      "colspan": "6",
+                                      "class": "text-muted"
+                                    },
+                                    "children": [
+                                      {
+                                        "component": "ui/empty-state"
+                                      }
+                                    ]
                                   }
                                 ],
-                                "as": "metric",
-                                "children": [
-                                  {
-                                    "tag": "div",
-                                    "children": [
-                                      {
-                                        "lookup": {
-                                          "string": {
-                                            "get": "_key"
-                                          }
-                                        },
-                                        "cases": {
-                                          "0": {
-                                            "t": "cron.summary_count",
-                                            "values": {
-                                              "count": {
-                                                "get": "metric"
-                                              }
-                                            }
-                                          },
-                                          "1": {
-                                            "t": "cron.summary_changed",
-                                            "values": {
-                                              "count": {
-                                                "get": "metric"
-                                              }
-                                            }
-                                          }
-                                        }
-                                      }
-                                    ],
-                                    "when": {
-                                      "not": {
-                                        "eq": [
-                                          {
-                                            "get": "metric"
-                                          },
-                                          null
-                                        ]
-                                      }
-                                    }
+                                "when": {
+                                  "not": {
+                                    "get": "runs"
                                   }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "attrs": {
-                              "class": "table-actions-cell"
-                            },
-                            "children": [
-                              {
-                                "tag": "div",
-                                "attrs": {
-                                  "class": "table-actions"
-                                },
-                                "children": [
-                                  {
-                                    "component": "ui/modal-trigger",
-                                    "data": {
-                                      "class": "btn btn-sm btn-ghost btn-icon",
-                                      "modal": {
-                                        "concat": [
-                                          "scheduler-run-",
-                                          {
-                                            "get": "run.id"
-                                          }
-                                        ]
-                                      },
-                                      "url": {
-                                        "get": "run.detail_url"
-                                      },
-                                      "label": {
-                                        "t": "cron.run_details"
-                                      },
-                                      "icon": "eye",
-                                      "icon_only": true
-                                    }
-                                  }
-                                ]
+                                }
                               }
                             ]
                           }
@@ -544,28 +552,12 @@
                     ]
                   },
                   {
-                    "tag": "tr",
-                    "children": [
-                      {
-                        "tag": "td",
-                        "attrs": {
-                          "colspan": "6",
-                          "class": "text-muted"
-                        },
-                        "children": [
-                          {
-                            "icon": "info"
-                          },
-                          {
-                            "t": "cron.no_runs"
-                          }
-                        ]
-                      }
-                    ],
-                    "when": {
-                      "not": {
-                        "get": "runs"
-                      }
+                    "component": "ui/pagination",
+                    "data": {
+                      "navigation": {
+                        "get": "navigation"
+                      },
+                      "target": "#scheduler-list"
                     }
                   }
                 ]
@@ -573,15 +565,6 @@
             ]
           }
         ]
-      },
-      {
-        "component": "ui/pagination",
-        "data": {
-          "navigation": {
-            "get": "navigation"
-          },
-          "target": "#scheduler-list"
-        }
       }
     ]
   },
@@ -594,8 +577,7 @@
       "data-api-method": "GET",
       "data-ajax-form": "",
       "data-ajax-target": "#scheduler-list",
-      "data-history": "/admin/cron/list",
-      "data-modal-close-on-success": "true"
+      "data-history": "/admin/cron/list"
     },
     "children": [
       {
@@ -704,8 +686,7 @@
               "data-ajax": "",
               "data-ajax-target": "#scheduler-list",
               "data-history": "/admin/cron/list",
-              "data-modal-close": "",
-              "class": "btn btn-secondary"
+              "class": "btn btn-ghost btn-sm"
             },
             "children": [
               {
@@ -716,26 +697,6 @@
                 "children": [
                   {
                     "t": "common.clear_filters"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "button",
-            "attrs": {
-              "class": "btn btn-primary",
-              "type": "submit"
-            },
-            "children": [
-              {
-                "icon": "filter"
-              },
-              {
-                "tag": "span",
-                "children": [
-                  {
-                    "t": "common.apply_filters"
                   }
                 ]
               }
@@ -1687,9 +1648,7 @@
                   "class": "cluster gap-2 text-muted"
                 },
                 "children": [
-                  {
-                    "t": "cron.never"
-                  }
+                  "—"
                 ],
                 "when": {
                   "not": {

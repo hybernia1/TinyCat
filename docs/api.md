@@ -291,10 +291,14 @@ Manual imports of one source use the same feeds task and lock, with
 | Method | Path | Operation |
 | --- | --- | --- |
 | GET, POST | `/api/bots/accounts` | List / create bot accounts |
-| GET, PATCH, DELETE | `/api/bots/accounts/{id}` | Detail / edit / delete |
+| GET, PATCH, DELETE | `/api/bots/accounts/{id}` | Account metadata and aggregate counts / edit / delete |
+| PUT | `/api/bots/accounts/{id}/activation` | Set account activation with boolean `enabled`; disabling also disables its sources |
+| GET | `/api/bots/accounts/{id}/runs` | Search, filter by `q`, `source`, `status` (one of the returned status choices), sort and paginate source import history |
 | GET | `/api/bots/accounts/{id}/posts` | Search, sort and paginate the bot's posts, including scheduled posts |
 | GET | `/api/bots/accounts/{id}/posts/{postId}/management` | Administrator payload for the shared post edit modal |
 | GET, POST | `/api/bots/sources` | List / create feed sources |
+| GET | `/api/bots/sources/management` | Defaults and bot choices for source creation |
+| GET | `/api/bots/sources/{id}/management` | Current source fields and bot choices for editing |
 | POST | `/api/bots/sources/previews` | Inspect a feed or website and preview its template; administrator and CSRF token required |
 | PATCH, DELETE | `/api/bots/sources/{id}` | Edit / delete |
 | POST | `/api/bots/sources/{id}/runs` | Run a feed import |
@@ -486,11 +490,15 @@ verified image remain text links, with no map SDK or external iframe on render.
 The update migration normalizes stored identities and merges duplicate relations
 transactionally, preserving post associations and complementary cached metadata.
 
+Account activation for regular users uses administrator-only `PUT /api/users/{id}/activation` with boolean `enabled`; protected core administrators cannot be deactivated. Source activation uses `PATCH /api/bots/sources/{id}` with boolean `enabled`. All activation writes require CSRF.
+
+The bot account resource returns `item` with `source_count`, `active_source_count`, `post_count` and `run_count`. Sources, posts and run history are loaded through their separate list resources; the duplicate bot-account `/management` view is retired.
+
 Settings PATCH takes `{ "settings": { "site.name": "Example" } }`. Omitted
 settings remain unchanged. Boolean false disables a setting. Password fields
 retain their value when empty. Read resources contain `key`, `type`, `value` and
 `sensitive`; sensitive values are null. SMTP credentials and raw configuration
-are never returned. Blocked URL replacement takes a `blocked_urls` string.
+are never returned. Blocked URL replacement takes a `blocked_urls` string. The settings modal updates the same rules through `settings[moderation.blocked_urls]`, retaining host normalization and `domain:` rules.
 Token rotation returns the new token only in its authenticated administrator response.
 
 ## Search, challenges and sidebar

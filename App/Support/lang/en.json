@@ -69,9 +69,20 @@
     "leave": "Leave",
     "stay": "Stay",
     "validation_failed": "Please check the submitted values.",
+    "no_records": "No records.",
     "not_found": "Not found.",
     "validation_required": "The {field} field is required.",
-    "validation_invalid": "The {field} field has an invalid value."
+    "validation_invalid": "The {field} field has an invalid value.",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "activated": "{entity} activated.",
+    "deactivated": "{entity} deactivated.",
+    "list_results": {
+      "one": "{count} record found",
+      "few": "{count} records found",
+      "many": "{count} records found",
+      "other": "{count} records found"
+    }
   },
   "relative": {
     "now": "now",

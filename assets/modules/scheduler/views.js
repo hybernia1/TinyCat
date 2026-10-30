@@ -52,14 +52,12 @@ import "../../ui/fields.js";
       T.scheduler.filters(data);
     },
     filters: function (data) {
-      var previous = document.getElementById("scheduler-filter-modal");
-      if (previous) { T.dialog.close(previous); previous.remove(); }
       var form = T.components.render("scheduler/filter-form", data);
       form.querySelectorAll("input, select, textarea").forEach(function (field) {
         field.defaultValue = field.value;
         if (field.options) { Array.from(field.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
       });
-      T.ui.dialog("scheduler-filter-modal", "common.filters", form, true);
+      T.ui.filterPanel("scheduler-filter-modal", form);
     },
     hydrate: function (root) {
       Array.from((root || document).querySelectorAll("[data-scheduler-view]")).forEach(function (view) {

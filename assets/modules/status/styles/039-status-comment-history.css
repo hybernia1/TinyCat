@@ -189,14 +189,6 @@
   justify-self: start;
 }
 
-.status-edit-modal-panel .status-field {
-  margin: 0;
-}
-
-.modal-body.status-edit-modal-body {
-  padding: 14px;
-}
-
 .status-compose-row {
   display: grid;
   grid-template-columns: 38px minmax(0, 1fr);
@@ -478,7 +470,6 @@ img.status-editor-suggestion-avatar {
 .status-comment-like-button:hover { color: var(--primary-strong); }
 .status-comment-like-button:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 .status-modal-form { display: grid; gap: 16px; min-width: 0; }
-.status-modal-form > .btn { justify-self: end; }
 .status-modal-form > .label { margin-bottom: -8px; }
 .status-modal-form .status-editor-input { min-height: 130px; background: var(--surface-soft); }
 .status-comment-history-diff { white-space: pre-wrap; line-height: 1.6; }

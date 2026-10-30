@@ -57,7 +57,8 @@ final class Administration
                 'status' => (string) ($user['status'] ?? ''),
             ], self::bots()),
             'filter_bot_user_id' => $filterBotId,
-            'sorting' => \TinyCat\Support\AdminSorting::headings('sources', ['bot' => $filterBotId > 0 ? $filterBotId : '']),
+            'sorting' => $viewData['sorting'], 'filters' => $viewData['filters'],
+            'pagination' => $viewData['pagination'], 'navigation' => $viewData['navigation'],
         ];
 
         if ($id !== null) {
@@ -115,46 +116,15 @@ final class Administration
             ? \TinyCat\Database\Connection::one(
                 'SELECT u.*,
                     (SELECT COUNT(*) FROM bot_sources bs WHERE bs.bot_user_id = u.id) AS source_count,
-                    (SELECT COUNT(*) FROM content c WHERE c.author_id = u.id) AS post_count
+                    (SELECT COUNT(*) FROM bot_sources bs WHERE bs.bot_user_id = u.id AND bs.enabled = 1) AS active_source_count,
+                    (SELECT COUNT(*) FROM content c WHERE c.author_id = u.id) AS post_count,
+                    (SELECT COUNT(*) FROM bot_source_runs br INNER JOIN bot_sources bs ON bs.id = br.source_id WHERE bs.bot_user_id = u.id) AS run_count
                 FROM users u
                 WHERE u.id = ? AND u.role = ?
                 LIMIT 1',
                 [$id, 'bot']
             )
             : null;
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    public static function accountDetailData(int $id): ?array
-    {
-        $account = self::accountById($id);
-
-        if ($account === null) {
-            return null;
-        }
-
-        $sources = \TinyCat\Bots\Importer::sources($id);
-        $runs = self::accountRuns($id);
-
-        return [
-            'account' => $account,
-            'sources' => $sources,
-            'runs' => $runs,
-            'stats' => [
-                ['key' => 'sources', 'value' => count($sources)],
-                ['key' => 'active_sources', 'value' => count(array_filter(
-                    $sources,
-                    static fn (array $source): bool => (bool) ($source['enabled'] ?? false)
-                ))],
-                ['key' => 'posts', 'value' => \TinyCat\Moderation\Restrictions::moderation_user_post_count($id)],
-                ['key' => 'runs', 'value' => count($runs)],
-            ],
-            'posts' => self::postsPayload($id),
-            'last_run' => $runs[0] ?? null,
-            'profile_url' => \TinyCat\Users\Profiles::author_url($id),
-        ];
     }
 
     /** Administrator-only list, including posts waiting for publication.
@@ -174,6 +144,7 @@ final class Administration
         $sortingState = \TinyCat\Support\AdminSorting::state('bot_posts');
         $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
         $params = ['q' => $q, 'source' => $source, 'publication' => $publication, 'per_page' => $pagination['per_page']] + $sortingState;
+        $params['scope'] = 'modal';
         $apiUrl = '/api/bots/accounts/' . $botId . '/posts';
         $pageUrl = '/admin/bots/' . $botId;
         $items = $query->order(\TinyCat\Support\AdminSorting::order('bot_posts', $sortingState))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all();
@@ -188,9 +159,17 @@ final class Administration
         }, $items);
         $sorting = \TinyCat\Support\AdminSorting::headings('bot_posts', $params, $apiUrl, $pageUrl);
         $totalCount = $q === '' && $source === '' && $publication === '' ? (int) $pagination['total'] : (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM content WHERE author_id = ?', [$botId]);
-        return ['items' => $items, 'total_count' => $totalCount, 'sources' => self::sourceChoices($botId), 'pagination' => $pagination, 'sorting' => $sorting, 'filters' => $params, 'api_url' => $apiUrl, 'history_url' => $pageUrl,
+        $navigation = \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $apiUrl, '#bot-detail-posts-list', $params, historyPath: $pageUrl);
+        foreach ($sorting as &$heading) { $heading['target'] = '#bot-detail-posts-list'; $heading['history'] = false; }
+        unset($heading);
+        foreach (['previous', 'next'] as $key) { if (is_array($navigation[$key] ?? null)) { $navigation[$key]['history_url'] = false; } }
+        foreach ($navigation['pages'] as &$page) { $page['history_url'] = false; }
+        unset($page);
+        return ['items' => $items, 'total_count' => $totalCount, 'sources' => self::sourceChoices($botId), 'pagination' => $pagination, 'sorting' => $sorting, 'filters' => $params, 'api_url' => $apiUrl, 'history_url' => false,
+            'list_target' => '#bot-detail-posts-list',
+            'filter_modal' => 'bot-detail-posts-filter-modal', 'clear_url' => $apiUrl . '?scope=modal',
             'url' => \TinyCat\Support\AdminViews::admin_list_url($apiUrl, $params + ['page' => $pagination['page']]),
-            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $apiUrl, '#bot-posts-list', $params, historyPath: $pageUrl)];
+            'navigation' => $navigation];
     }
 
     /** @return array<string, mixed> */
@@ -204,20 +183,39 @@ final class Administration
             'options' => ['images_enabled' => \TinyCat\Status\Images::status_images_enabled(), 'image_max_bytes' => \TinyCat\Status\Images::status_image_max_upload_bytes()]];
     }
 
-    /**
-     * @return array<array<string, mixed>>
-     */
-    private static function accountRuns(int $id, int $limit = 30): array
+    /** @return array<string, mixed> */
+    public static function runsPayload(int $botId): array
     {
-        return \TinyCat\Database\Connection::all(
-            'SELECT br.*, bs.name AS source_name
-             FROM bot_source_runs br
-             INNER JOIN bot_sources bs ON bs.id = br.source_id
-             WHERE bs.bot_user_id = ?
-             ORDER BY br.started_at DESC, br.id DESC
-             LIMIT ' . max(1, min(100, $limit)),
-            [$id]
-        );
+        $query = new \TinyCat\Database\Query('SELECT br.*, bs.name AS source_name FROM bot_source_runs br INNER JOIN bot_sources bs ON bs.id = br.source_id');
+        $query->where('bs.bot_user_id = ?', $botId);
+        $q = \TinyCat\Support\AdminViews::admin_filter_text((string) \TinyCat\Http\Web::get('q', ''));
+        if ($q !== '') {
+            $pattern = '%' . \TinyCat\Database\Connection::escapeLike($q) . '%';
+            $query->where("bs.name LIKE ? ESCAPE '!' OR br.error LIKE ? ESCAPE '!'", $pattern, $pattern);
+        }
+        $source = self::sourceFilter(\TinyCat\Http\Web::get('source', ''));
+        self::filterSource($query, $source);
+        $statuses = ['success', 'posted', 'current', 'running', 'error', 'skipped', 'completed', 'interrupted'];
+        $status = (string) \TinyCat\Http\Web::get('status', '');
+        $status = in_array($status, $statuses, true) ? $status : '';
+        if ($status !== '') { $query->where('br.status = ?', $status); }
+        $sortingState = \TinyCat\Support\AdminSorting::state('bot_runs');
+        $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
+        $params = ['q' => $q, 'source' => $source, 'status' => $status, 'per_page' => $pagination['per_page']] + $sortingState;
+        $apiUrl = '/api/bots/accounts/' . $botId . '/runs';
+        $sorting = \TinyCat\Support\AdminSorting::headings('bot_runs', $params, $apiUrl);
+        foreach ($sorting as &$heading) { $heading['history'] = false; }
+        unset($heading);
+        $navigation = \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, $apiUrl, '#bot-detail-runs-list', $params);
+        foreach (['previous', 'next'] as $key) { if (is_array($navigation[$key] ?? null)) { $navigation[$key]['history_url'] = false; } }
+        foreach ($navigation['pages'] as &$page) { $page['history_url'] = false; }
+        unset($page);
+        $sources = self::sourceChoices($botId);
+        unset($sources['unknown']);
+        return ['runs' => Resource::runs($query->order(\TinyCat\Support\AdminSorting::order('bot_runs', $sortingState))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all()),
+            'pagination' => $pagination, 'filters' => $params, 'sources' => $sources, 'statuses' => $statuses, 'sorting' => $sorting,
+            'api_url' => $apiUrl, 'history_url' => false, 'list_target' => '#bot-detail-runs-list', 'filter_modal' => 'bot-detail-runs-filter-modal',
+            'clear_url' => $apiUrl, 'url' => \TinyCat\Support\AdminViews::admin_list_url($apiUrl, $params + ['page' => $pagination['page']]), 'navigation' => $navigation];
     }
 
     /**
@@ -339,7 +337,9 @@ final class Administration
             'bio' => (string) ($account['bio'] ?? ''),
             'avatar_url' => \TinyCat\Users\Avatars::user_avatar_url($account),
             'source_count' => (int) ($account['source_count'] ?? 0),
+            'active_source_count' => (int) ($account['active_source_count'] ?? 0),
             'post_count' => (int) ($account['post_count'] ?? 0),
+            'run_count' => (int) ($account['run_count'] ?? 0),
             'created_at' => !empty($account['created_at']) ? \TinyCat\Support\Dates::dateIso($account['created_at']) : '',
             'updated_at' => !empty($account['updated_at']) ? \TinyCat\Support\Dates::dateIso($account['updated_at']) : '',
         ];
@@ -450,10 +450,7 @@ final class Administration
             \TinyCat\Http\Response::validation($errors);
         }
 
-        $enabled = in_array($request->input('enabled', null), [true, 1, '1', 'true', 'on'], true)
-            && (string) ($bot['status'] ?? '') === 'active';
-
-        return [
+        $payload = [
             'bot_user_id' => $botUserId,
             'name' => $name,
             'feed_url' => $feedUrl,
@@ -461,10 +458,14 @@ final class Administration
             'interval_minutes' => $interval,
             'publication_interval_minutes' => $publicationInterval,
             'post_template' => $template,
-            'enabled' => $enabled ? 1 : 0,
             'next_run_at' => null,
             'last_error' => null,
         ];
+        if ($sourceId === null || $request->input('enabled', null) !== null || (string) ($bot['status'] ?? '') !== 'active') {
+            $payload['enabled'] = in_array($request->input('enabled', true), [true, 1, '1', 'true', 'on'], true)
+                && (string) ($bot['status'] ?? '') === 'active' ? 1 : 0;
+        }
+        return $payload;
     }
 
     /**
@@ -535,13 +536,20 @@ final class Administration
      */
     public static function sourcesViewData(): array
     {
-        $bots = self::bots();
         $filterBotId = self::filterId();
-
+        $q = \TinyCat\Support\AdminViews::admin_filter_text((string) \TinyCat\Http\Web::get('q', ''));
+        $query = Importer::sourcesQuery($filterBotId > 0 ? $filterBotId : null);
+        if ($q !== '') {
+            $search = '%' . \TinyCat\Database\Connection::escapeLike($q) . '%';
+            $query->where("(bs.name LIKE ? ESCAPE '!' OR bs.feed_url LIKE ? ESCAPE '!' OR u.username LIKE ? ESCAPE '!')", $search, $search, $search);
+        }
+        $pagination = \TinyCat\Support\Pagination::paginationMeta($query->count(), \TinyCat\Support\AdminViews::admin_page(), \TinyCat\Support\AdminViews::admin_per_page());
+        $filters = ['q' => $q, 'bot' => $filterBotId > 0 ? (string) $filterBotId : '', 'per_page' => $pagination['per_page']] + \TinyCat\Support\AdminSorting::state('sources');
         return [
-            'bots' => $bots,
-            'filter_bot_id' => $filterBotId,
-            'sources' => \TinyCat\Bots\Importer::sources($filterBotId > 0 ? $filterBotId : null, \TinyCat\Support\AdminSorting::order('sources')),
+            'bots' => self::bots(), 'filter_bot_id' => $filterBotId, 'filters' => $filters, 'pagination' => $pagination,
+            'sources' => $query->order(\TinyCat\Support\AdminSorting::order('sources'))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all(),
+            'sorting' => \TinyCat\Support\AdminSorting::headings('sources', $filters),
+            'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data($pagination, '/api/bots/sources', '#bots-list', $filters, historyPath: '/admin/bots/list'),
         ];
     }
 

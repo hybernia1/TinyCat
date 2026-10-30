@@ -1,7 +1,6 @@
 {
   "cron": {
     "title": "Tâches planifiées",
-    "intro": "Un petit exécuteur expose des tâches planifiées indépendantes avec une authentification partagée.",
     "access_title": "Accès et jeton",
     "access_help": "Point de terminaison partagé et authentification utilisés par chaque tâche planifiée.",
     "url": "Point de terminaison URL",

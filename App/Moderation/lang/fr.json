@@ -10,7 +10,6 @@
     "report_note": "Note",
     "report_submit": "Envoyer le rapport",
     "profile_muted_until": "Le compte est masqué jusqu'au {until}.",
-    "url_blocker_title": "URL bloquées",
     "url_blocker_label": "Sites Web bloqués",
     "url_blocker_placeholder": "exemple.com, mauvais.exemple, domaine :ru",
     "url_blocker_help": "Séparez les sites Web par des virgules ou de nouvelles lignes. Les sous-domaines sont également bloqués. Utilisez domain:ru pour bloquer l'intégralité du suffixe .ru.",

@@ -22,7 +22,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), vm = requ
   }
   const document = { body: new Element("body"), getElementById() { return null; } };
   const T = { lifecycle: { register(name, value) { service = value; } }, dom: { element: (tag, attrs, text) => new Element(tag, attrs, text) },
-    ui: { text: key => key, button: (key, attrs) => new Element("button", attrs, key), dialog(id, title, content) { const dialog = new Element("modal"); dialog.appendChild(content); document.body.appendChild(dialog); dialogs.push(dialog); return dialog; } },
+    ui: { text: key => key, button: (key, attrs) => new Element("button", attrs, key), editorActions() { const actions = new Element("div"); actions.appendChild(new Element("button")); return actions; }, dialog(id, title, content, persistent, footer) { const dialog = new Element("modal"); dialog.appendChild(content); if (footer) dialog.appendChild(footer); document.body.appendChild(dialog); dialogs.push(dialog); return dialog; } },
     dialog: { open() {}, close(dialog) { dialog.fire("tinycat:modal-close"); dialog.parent = null; } },
     forms: { request(form, url, options) { return new Promise((resolve, reject) => requests.push({ form, url, options, resolve, reject })); }, cancel() { cancelled++; }, markClean() {} },
     components: { render(name, resource) { const result = new Element("div"); result.resource = resource; return result; } },
@@ -45,7 +45,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), vm = requ
   const feed = { format: "rss", title: "Feed", feed_url: "https://public.example/redirected-feed", items: [{ body: "Sample" }], sources: [] };
   requests[0].resolve({ data: feed }); await flush();
   assert.equal(form.querySelector('[name="feed_url"]').value, "https://public.example/feed", "A preview redirect must not change source identity or reset GUID history.");
-  dialogs.at(-1).children[0].children.at(-1).fire("click");
+  dialogs.at(-1).children.at(-1).children.at(-1).fire("click");
   assert.equal(saves, 1, "Confirming the reviewed form permits exactly one save.");
   form.requestSubmit(); assert.equal(requests.length, 2, "A later save requires a new review.");
   form.querySelector('[name="post_template"]').value = "Changed";
@@ -71,6 +71,6 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), vm = requ
   assert.equal(requests.at(-1).options.body.name, "Existing source");
   assert.equal(requests.at(-1).options.body._method, undefined);
   requests.at(-1).resolve({ data: feed }); await flush();
-  assert.equal(dialogs.at(-1).children[0].children.at(-1).textContent, "bots.preview_confirm", "The edit modal preview loads its sample and confirmation action.");
+  assert.equal(dialogs.at(-1).children.at(-1).children.at(-1).textContent, "bots.preview_confirm", "The edit modal preview loads its sample and confirmation action.");
   console.log("PASS source form previews, direct manual runs, stale data rejection and cancellation");
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -16,14 +16,24 @@ final class Navigation
                 'label' => \TinyCat\Support\Localization::t('moderation.title'),
                 'children' => [
                     ['href' => '/admin/moderation/reports', 'icon' => 'flag', 'label' => \TinyCat\Support\Localization::t('moderation.reports_title')],
-                    ['href' => '/admin/moderation/blocking', 'icon' => 'lock', 'label' => \TinyCat\Support\Localization::t('moderation.url_blocker_title')],
                 ],
             ],
             \TinyCat\Scheduler\Module::adminNavigation(),
             \TinyCat\Health\Module::adminNavigation(),
             ['href' => '/admin/updates', 'icon' => 'download', 'label' => \TinyCat\Support\Localization::t('updates.title')],
-            ['href' => '/admin/settings', 'icon' => 'settings', 'label' => \TinyCat\Support\Localization::t('settings.title')],
+            ['modal' => 'settings-editor-modal', 'icon' => 'settings', 'label' => \TinyCat\Support\Localization::t('settings.title')],
         ];
+    }
+
+    /** @param array<mixed> $items */
+    public static function activeIcon(array $items): string
+    {
+        foreach ($items as $item) {
+            $childIcon = self::activeIcon((array) ($item['children'] ?? []));
+            if ($childIcon !== '') { return $childIcon; }
+            if (!empty($item['active'])) { return (string) ($item['icon'] ?? ''); }
+        }
+        return '';
     }
 
     /** @param array<mixed> $items
@@ -33,8 +43,8 @@ final class Navigation
     {
         $result = [];
         foreach ($items as $item) {
-            $href = (string) ($item['href'] ?? '#');
-            if ($admin) { $href = \TinyCat\Http\Request::current()->path($href); }
+            $href = (string) ($item['href'] ?? (isset($item['modal']) ? '#' . $item['modal'] : '#'));
+            if ($admin && empty($item['modal'])) { $href = \TinyCat\Http\Request::current()->path($href); }
             if (!$admin) { $href = LocaleRouting::url($href); }
             $local = str_starts_with($href, '/') && !str_starts_with($href, '//');
             $active = $local && (LocaleRouting::split($href)['path'] === LocaleRouting::split($current)['path'] || ($admin && empty($item['exact']) && $href !== '/admin' && str_starts_with($current, $href . '/')));

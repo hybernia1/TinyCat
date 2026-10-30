@@ -43,6 +43,11 @@ import "../core/lifecycle.js";
       activeMenu = document.activeElement && document.activeElement.closest
         ? document.activeElement.closest("[data-dismissible-menu][open]")
         : null;
+      activeMenu = activeMenu || qs("[data-dismissible-menu][open]");
+      if (activeMenu) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
       closeMenus(null);
 
       if (activeMenu) {
@@ -52,7 +57,7 @@ import "../core/lifecycle.js";
           summary.focus();
         }
       }
-    });
+    }, true);
 
     document.addEventListener("toggle", function (event) {
       var menu = event.target;

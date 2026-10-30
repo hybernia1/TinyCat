@@ -24,6 +24,11 @@ $database->exec('CREATE TABLE comment_likes (comment_id INTEGER, user_id INTEGER
 (new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
 $admin = ['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status' => 'active', 'avatar_exists' => 0];
 $member = ['id' => 2, 'username' => 'Member', 'role' => 'user', 'status' => 'active', 'avatar_exists' => 0];
+$accountMenu = \TinyCat\Support\View::part('Site/user-menu', [
+    'authUser' => $member, 'profileUrl' => '/author/2', 'profileNeedsEmail' => false, 'theme' => 'system',
+    'displayName' => 'Member', 'editModalId' => \TinyCat\Users\Profiles::author_profile_edit_modal_id(2),
+    'editModalUrl' => \TinyCat\Users\Profiles::author_profile_edit_modal_url(2),
+]);
 \TinyCat\Users\Authentication::reset($admin, true);
 
 $checks = 0;
@@ -44,22 +49,55 @@ set_error_handler(static function (int $severity, string $message, string $file,
 $roles = ['admin' => 'Admin', 'user' => 'User'];
 $statuses = ['active' => 'Active', 'ban' => 'Banned'];
 $locked = UsersViews::adminFormFields(['user' => $admin, 'roles' => $roles, 'statuses' => $statuses]);
-$assert(str_contains($locked, 'name="role_locked" disabled') && str_contains($locked, 'name="status_locked" disabled'), 'The oldest administrator retains locked role and status controls.');
-$assert(str_contains($locked, 'name="role" value="admin"') && str_contains($locked, 'name="status" value="active"'), 'Locked controls preserve submitted values.');
+$assert(str_contains($accountMenu, 'data-modal-open="account-editor-modal-2"') && str_contains($accountMenu, 'data-modal-url="/api/users/2/management?panel=account&amp;focus="') && !str_contains($accountMenu, 'profile-edit-modal-'), 'The account menu targets the unified account editor.');
+$assert(str_contains($locked, 'name="role_locked" disabled') && !str_contains($locked, 'name="status_locked"'), 'The oldest administrator retains a locked role without a status selector.');
+$assert(str_contains($locked, 'name="role" value="admin"') && !str_contains($locked, 'name="status"'), 'Editing preserves the protected role without submitting a cached account status.');
 $assert(str_contains($locked, 'Admin &lt;unsafe&gt;') && !str_contains($locked, 'Admin <unsafe>'), 'Administrative account names remain escaped.');
 $editable = UsersViews::adminFormFields(['user' => $member, 'roles' => $roles, 'statuses' => $statuses]);
 $assert(!str_contains($editable, 'name="role_locked"'), 'An ordinary account retains editable role controls.');
+$assert(!str_contains($editable, 'name="status"'), 'Account editing leaves activation to the row action.');
+$inactiveRow = \TinyCat\Support\Components::render('users/admin-row', ['user' => $member + ['protected' => false]]);
+$assert(str_contains($inactiveRow, '/api/users/2/activation') && !str_contains($inactiveRow, 'table-row-inactive'), 'Active users offer a shared activation action without inactive styling.');
+$inactiveRow = \TinyCat\Support\Components::render('users/admin-row', ['user' => array_replace($member, ['status' => 'waiting', 'protected' => false])]);
+$assert(str_contains($inactiveRow, 'table-row-inactive') && str_contains($inactiveRow, 'name="enabled" value="1"'), 'Waiting users are visually inactive and can be explicitly activated.');
+$protectedRow = \TinyCat\Support\Components::render('users/admin-row', ['user' => $admin + ['protected' => true]]);
+$assert(!str_contains($protectedRow, '/activation'), 'The protected administrator has no deactivation action.');
 $filter = \TinyCat\Support\Components::render('users/filter-form', ['roles' => array_keys($roles), 'statuses' => array_keys($statuses), 'filters' => ['role' => 'user', 'status' => 'ban'], 'pagination' => ['per_page' => 25]]);
 $assert(str_contains($filter, 'value="user" selected') && str_contains($filter, 'value="ban" selected'), 'Shared administrative filters preserve both selected options.');
 $list = UsersViews::adminList(['users' => [$admin, $member], 'roles' => $roles, 'statuses' => $statuses]);
 $assert(!preg_match('/<form[^>]*action="\/api\/users\/1(?:\?|"|&)[^>]*data-confirm=/', $list), 'The protected administrator has no deletion action.');
 $assert($hasAction($list, '/api/users/2') && str_contains($list, 'name="_method" value="DELETE"'), 'Other account deletion addresses its own resource.');
 
+$primaryList = \TinyCat\Support\AdminViews::listCard('Users', 'users', 'users-list', 'users-filter-modal', new \TinyCat\Support\Markup($list), primary: true);
+$assert(!str_contains($primaryList, 'card-header') && str_contains($primaryList, 'aria-label="Users"'), 'Primary lists omit the duplicate visible title while preserving the section name.');
+$assert(substr_count($primaryList, 'data-filter-panel="users-filter-modal"') === 1, 'Primary list filters appear exactly once in the toolbar.');
+$sectionList = \TinyCat\Support\AdminViews::listCard('History', 'clock', 'history-list', '', new \TinyCat\Support\Markup(''));
+$assert(str_contains($sectionList, 'card-header') && str_contains($sectionList, 'History'), 'Secondary list sections keep their own visible headings.');
+$summary = \TinyCat\Support\Components::render('ui/list-summary', ['target' => '#users-list', 'pagination' => ['total' => 12], 'filters' => ['q' => '<needle>']]);
+$assert(str_contains($summary, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::plural('common.list_results', 12))) && str_contains($summary, '&lt;needle&gt;') && str_contains($summary, 'data-list-summary-filters="#users-list"'), 'Shared list summaries render the filtered total, escaped search and a scoped active-filter area on the server.');
+$emptySummary = \TinyCat\Support\Components::render('ui/list-summary', ['target' => '#users-list', 'pagination' => ['total' => 0]]);
+$assert(str_contains($emptySummary, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::plural('common.list_results', 0))), 'Zero matching records have a valid localized summary.');
+$accountFilters = BotsViews::accountFilter(['filters' => ['q' => 'Bot <unsafe>', 'status' => 'ban'], 'per_page' => 25]);
+$assert(str_contains($accountFilters, 'data-filter-content') && str_contains($accountFilters, 'action="/api/bots/accounts') && str_contains($accountFilters, 'name="status"') && str_contains($accountFilters, 'value="ban" selected'), 'The actual bot-account filter renders its trusted body and footer without throwing during page composition.');
+$assert(str_contains($accountFilters, 'Bot &lt;unsafe&gt;') && str_contains($accountFilters, 'data-ajax-target="#bot-accounts-list"') && !str_contains($accountFilters, 'role="dialog"') && !str_contains($accountFilters, 'type="submit"'), 'Bot-account dropdown filters preserve escaped search state and automatic submission without a modal.');
+$sourceFilters = \TinyCat\Support\View::part('Bots/modals/source-filter', ['bots' => [['id' => 3, 'username' => 'Bot <unsafe>']], 'filter_bot_id' => 3, 'filters' => ['q' => 'Feed', 'per_page' => 25]]);
+$assert(str_contains($sourceFilters, 'data-filter-content') && str_contains($sourceFilters, 'action="/api/bots/sources"') && str_contains($sourceFilters, 'value="3" selected'), 'The actual source filter renders its trusted body and footer without throwing during page composition.');
+$assert(str_contains($sourceFilters, 'Bot &lt;unsafe&gt;') && str_contains($sourceFilters, 'data-ajax-target="#bots-list"') && !str_contains($sourceFilters, 'role="dialog"') && !str_contains($sourceFilters, 'type="submit"'), 'Source dropdown filters preserve their scoped controls and automatic submission without a modal.');
+
 foreach (['bool' => true, 'email_templates' => ['welcome' => true], 'email_smtp' => ['host' => 'smtp.example.test'], 'language' => 'cs', 'timezone' => 'Europe/Prague', 'date_format' => 'd.m.Y', 'time_format' => 'H:i', 'datetime_format' => 'd.m.Y H:i', 'select' => 'one', 'password' => 'secret'] as $type => $value) {
     $field = SettingsViews::field(['field' => ['key' => 'fixture.' . $type, 'type' => $type, 'value' => $value, 'options' => ['one' => 'One']]]);
     $assert(str_contains($field, 'settings[fixture.' . $type . ']'), 'Setting renders its own field name: ' . $type);
     if ($type === 'password') { $assert(!str_contains($field, 'value="secret"'), 'Stored passwords never enter the rendered form.'); }
 }
+$settingsSections = \TinyCat\Settings\Administration::tc_admin_settings_view_sections();
+$iconSprite = (string) file_get_contents(dirname(__DIR__, 2) . '/assets/icons.svg');
+foreach ($settingsSections as $section) {
+    $assert(str_contains($iconSprite, 'id="' . $section['icon'] . '"'), 'Every settings section has a real shared SVG icon: ' . $section['icon']);
+}
+$settingsLayout = \TinyCat\Support\View::render('editor', ['settingsSections' => $settingsSections], dirname(__DIR__, 2) . '/App/Settings/templates');
+$assert(str_contains($settingsLayout, 'class="grid sm:grid-2"') && !str_contains($settingsLayout, 'settings-grid') && str_contains($settingsLayout, 'data-editor-icon="chart"'), 'Settings use the shared grid and the analytics tab exposes its actual sprite icon.');
+$imageField = SettingsViews::field(['field' => ['key' => 'site.logo_url', 'type' => 'site_image', 'span' => true, 'value' => '/logo.png']]);
+$assert(str_contains($imageField, 'grid-span-full') && str_contains($imageField, 'image-preview-contain') && !str_contains($imageField, 'settings-field'), 'Settings image controls use shared field, grid-span and contain-preview primitives.');
 $sidebar = SiteViews::sidebar(['authors' => [$admin + ['name' => $admin['username'], 'posts_count' => 5], $member + ['name' => $member['username'], 'posts_count' => 6]], 'tags' => [['name' => 'tinycat']]]);
 $assert(str_contains($sidebar, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::plural('public.active_user_posts', 5))), 'Translation parameter maps preserve a parameter named count.');
 $assert(str_contains($sidebar, 'href="/author/1"') && str_contains($sidebar, 'href="/author/2"'), 'Sidebar authors retain distinct destinations.');
@@ -69,9 +107,21 @@ $assert(str_contains($following, 'Member') && str_contains($following, 'href="/a
 $avatar = UsersViews::avatar(['user' => ['id' => 99, 'author_id' => 2, 'author_name' => 'Member', 'avatar_exists' => 0]]);
 $assert(str_contains($avatar, 'data-avatar-user-id="2"') && str_contains($avatar, '#user'), 'Post avatars belong to the author and render the shared fallback icon.');
 
+$botCreate = \TinyCat\Support\View::part('Bots/modals/account-create', ['prepared' => ['username_pattern' => '[a-z]+', 'username_hint' => 'Hint', 'accounts_url' => '/api/bots/accounts']]);
+$assert(str_contains($botCreate, 'data-modal-kind="editor"') && str_contains($botCreate, 'data-modal-size="workspace"') && str_contains($botCreate, 'data-confirm-unsaved="true"'), 'Server-rendered bot creation uses the editor contract and protects drafts.');
+$settingsModal = \TinyCat\Support\View::render('editor', [
+    'settingsSections' => [
+        'site' => ['label' => 'Site', 'icon' => 'home', 'fields' => [['key' => 'site.name', 'label' => 'Name', 'type' => 'text', 'value' => 'TinyCat']]],
+        'email' => ['label' => 'Email', 'icon' => 'mail', 'fields' => [['key' => 'email.password', 'label' => 'Password', 'type' => 'password', 'value' => 'fixture-secret']]],
+    ],
+], dirname(__DIR__, 2) . '/App/Settings/templates');
+$assert(!str_contains($settingsModal, 'data-settings-page') && str_contains($settingsModal, '<template data-settings-editor>') && str_contains($settingsModal, 'data-editor-section="site"'), 'Settings provide their existing fields to the shared sectioned modal.');
+$assert(str_contains($settingsModal, 'data-api-method="PATCH"') && str_contains($settingsModal, 'enctype="multipart/form-data"') && !str_contains($settingsModal, 'fixture-secret'), 'Settings retain multipart saving without exposing saved passwords.');
+$botStat = \TinyCat\Support\Components::render('bots/stat', ['stat' => ['key' => 'posts', 'value' => 0]]);
+$assert(str_contains($botStat, 'class="card min-w-0"') && str_contains($botStat, '#file') && str_contains($botStat, 'data-bot-stat="posts">0</strong>'), 'Bot counters use the dashboard stat card, include their icon, and preserve zero values and live-update hooks.');
 $source = ['id' => 7, 'bot_user_id' => 3, 'username' => 'Bot', 'name' => 'Source', 'enabled' => true, 'feed_url' => 'https://example.test/feed'];
 $sourceFields = \TinyCat\Support\Components::render('bots/source-fields', ['source' => $source, 'bots' => []]);
-$typedFields = BotsViews::sourceFields(['source' => $source]);
+$typedFields = \TinyCat\Support\Components::render('bots/source-fields', ['source' => $source]);
 $assert(!str_contains($typedFields, 'source_type') && str_contains($typedFields, '{{image}}'), 'Unified source forms retain the optional image marker without a type selector.');
 $previewMarkup = \TinyCat\Support\Components::render('bots/source-preview', ['format' => 'json_feed_1_1', 'title' => '<script>bad</script>', 'items' => [['title' => 'Sample', 'body' => '<img onerror=bad>', 'image_url' => '', 'has_image' => false, 'rejection' => null]], 'sources' => []]);
 $assert(str_contains($previewMarkup, '&lt;script&gt;') && str_contains($previewMarkup, '&lt;img onerror=bad&gt;') && !str_contains($previewMarkup, '<script>'), 'Preview renders untrusted feed content as plain text, never executable markup.');
@@ -91,10 +141,8 @@ $form = StatusViews::commentForm(['content_id' => 7, 'user' => $member]);
 $assert(str_contains($form, 'action="/api/statuses/7/comments"') && str_contains($form, 'status-comment-input-shell'), 'Comment forms preserve the API action and editor structure.');
 $thread = StatusViews::commentsThread(['item' => $item, 'comments' => [['id' => 1, 'content_id' => 7]], 'user' => null]);
 $assert(str_contains($thread, 'data-modal-url="/api/users/authentication?'), 'Guest comment threads keep the sign-in modal.');
-$detailData = ['botId' => 3, 'bot' => ['id' => 3, 'username' => 'Bot'], 'sources' => [['id' => 7, 'bot_user_id' => 3, 'name' => 'Fixture', 'feed_url' => 'https://example.invalid/rss', 'enabled' => false]], 'runs' => [], 'stats' => [], 'posts' => [], 'lastRun' => null, 'profileUrl' => '/author/3', 'statuses' => [], 'avatarUrl' => ''];
-$detail = \TinyCat\Support\View::render('detail', $detailData, dirname(__DIR__, 2) . '/App/Bots/templates');
-$assert(str_contains($detail, 'id="bots-list"') && str_contains($detail, 'data-bot-sources-view'), 'Bot detail and AJAX updates share the same source component and target.');
-$assert(str_contains($detail, 'data-bot-source-edit="7"'), 'The shared detail source component keeps the edit action.');
+$botFields = \TinyCat\Support\Components::render('bots/account-fields', ['item' => ['id' => 3, 'username' => 'Bot', 'status' => 'active', 'bio' => 'Draft']]);
+$assert(str_contains($botFields, 'data-modal-url="/api/users/3/avatar"') && str_contains($botFields, 'name="bio"'), 'The sole bot account form keeps biography and the shared avatar editor.');
 restore_error_handler();
 foreach ([['onclick' => 'alert(1)'], ['style' => 'color:red'], ['srcdoc' => '<script>bad</script>'], ['src' => 'javascript:alert(1)'], ['formaction' => "java\nscript:alert(1)"], ['src' => 'data:text/html,bad']] as $attributes) {
     $rejected = false;

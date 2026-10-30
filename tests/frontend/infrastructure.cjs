@@ -13,7 +13,7 @@ class Element extends EventTarget {
     super(); this.tag = tag; this.attributes = {}; this.children = []; this.textContent = "";
     this.dataset = new Proxy({}, { get: (_, key) => this.getAttribute("data-" + key.replace(/[A-Z]/g, c => "-" + c.toLowerCase())), set: (_, key, value) => { this.setAttribute("data-" + key.replace(/[A-Z]/g, c => "-" + c.toLowerCase()), value); return true; } });
     this.classList = { add() {}, remove() {}, toggle() {} };
-    this.style = { removeProperty() {}, setProperty() {} };
+    this.style = { removeProperty(name) { delete this[name]; }, setProperty(name, value) { this[name] = value; } };
   }
   setAttribute(name, value) { this.attributes[name] = value; }
   getAttribute(name) { return Object.hasOwn(this.attributes, name) ? this.attributes[name] : null; }
@@ -25,7 +25,12 @@ class Element extends EventTarget {
     visit(this); return found;
   }
   querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
-  matches(selector) { return selector.startsWith("#") ? this.getAttribute("id") === selector.slice(1) : selector === this.tag; }
+  matches(selector) {
+    if (selector.includes(',')) return selector.split(',').some(item => this.matches(item.trim()));
+    const attr = selector.match(/^\[([^=]+)="([^"]*)"\]$/);
+    if (attr) return this.getAttribute(attr[1]) === attr[2];
+    return selector.startsWith("#") ? this.getAttribute("id") === selector.slice(1) : selector === this.tag;
+  }
   closest() { return null; }
   focus() { document.activeElement = this; }
   remove() { if (this.parentNode) { this.parentNode.children = this.parentNode.children.filter(child => child !== this); this.parentNode = null; } }
@@ -88,11 +93,29 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
   window.TinyCat.dialog.close(dialog);
   check(window.TinyCat.dialog.current() === null && dialog.dataset.open === "false", "Closing the dialog clears the independently owned stack.");
 
+  window.matchMedia = () => ({ matches: true });
+  window.visualViewport = { width: 390, height: 260, offsetLeft: 0, offsetTop: 34 };
+  window.scrollY = 180;
+  let restoredScroll;
+  window.scrollTo = (_x, y) => { restoredScroll = y; };
+  document.body.style.position = 'relative';
+  const mobileEditor = window.TinyCat.dialog.create({ id: 'mobile-editor', title: 'Editor', closeLabel: 'Close', kind: 'editor', content: dom.element('form') });
+  window.TinyCat.dialog.open(mobileEditor);
+  check(document.body.style.position === 'fixed' && mobileEditor.style['--tinycat-modal-viewport-height'] === '260px' && mobileEditor.style['--tinycat-modal-viewport-top'] === '34px', 'Editor dialogs follow the visible keyboard viewport and retain the page scroll.');
+  const nested = window.TinyCat.dialog.create({ id: 'nested-confirm', title: 'Confirm', closeLabel: 'Close', kind: 'confirm', content: dom.element('p') });
+  window.TinyCat.dialog.open(nested); window.TinyCat.dialog.close(nested);
+  check(window.TinyCat.dialog.current() === mobileEditor && document.body.style.position === 'fixed' && mobileEditor.getAttribute('aria-hidden') === 'false', 'Closing a nested dialog restores its editor without unlocking the page.');
+  window.TinyCat.dialog.close(mobileEditor);
+  check(document.body.style.position === 'relative' && restoredScroll === 180 && mobileEditor.style['--tinycat-modal-viewport-height'] === undefined, 'Closing the final editor restores the original page scroll and clears viewport overrides.');
+  delete window.visualViewport; delete window.matchMedia;
+
   const form = new Element("form");
   form.action = "https://tinycat.test/api/example"; form.method = "POST"; form.values = [["name", "draft"]];
   form.reportValidity = () => true;
   const buttons = [{ disabled: false }, { disabled: true }];
   const inputControl = { disabled: false };
+  const footerSave = { disabled: false };
+  form.elements = [...buttons, inputControl, footerSave];
   form.querySelectorAll = selector => selector.includes("textarea") ? [...buttons, inputControl] : buttons;
   let release;
   context.fetch = async (url, options) => { calls.push({ url, options }); return new Promise(resolve => { release = resolve; }); };
@@ -102,10 +125,12 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
   form.dispatchEvent(new Event("submit", { cancelable: true }));
   form.dispatchEvent(new Event("submit", { cancelable: true }));
   check(calls.length === before + 1 && buttons.every(button => button.disabled), "Pending forms prevent duplicate submits.");
+  check(footerSave.disabled, "An associated modal footer submit is locked with the form.");
   check(inputControl.disabled, "Submitted fields are locked while the request is pending.");
   release(response(envelope(200, { id: 1 }))); await tick();
   check(applied === 1 && !buttons[0].disabled && buttons[1].disabled && form.getAttribute("aria-busy") === null, "Success applies data and restores original controls.");
 
+  check(!footerSave.disabled, "Footer submit actions are restored after a request completes.");
   let errors = 0;
   context.fetch = async () => response(invalid);
   window.TinyCat.forms.bind(form, { error: (_error, fields) => { if (fields.name) { errors++; } } });

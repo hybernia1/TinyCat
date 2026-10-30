@@ -1,7 +1,6 @@
 {
   "cron": {
     "title": "Geplande taken",
-    "intro": "Eén kleine runner maakt onafhankelijke geplande taken mogelijk met gedeelde authenticatie.",
     "access_title": "Toegang en token",
     "access_help": "Gedeeld eindpunt en authenticatie gebruikt voor elke geplande taak.",
     "url": "Eindpunt URL",

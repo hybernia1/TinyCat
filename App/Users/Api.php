@@ -45,6 +45,18 @@ final class Api
         $api->put('/users/me/password', static fn (): Result => self::result(Actions::user_password_update_request(self::actor())));
         $api->get('/users', self::listing(...), 'admin');
         $api->post('/users', static fn (): Result => self::result(self::adminCreate()), 'admin');
+        $api->put('/users/{id:[0-9]+}/activation', static function (Request $r, array $p): Result {
+            $user = Accounts::tc_admin_user_by_id((int) $p['id']);
+            if ($user === null || !Roles::managedByCoreAdmin((string) ($user['role'] ?? ''))) { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }
+            $data = $r->validated(['enabled' => 'required|boolean']);
+            $active = in_array($data['enabled'], [true, 1, '1'], true);
+            try { Accounts::setActive($user, $active); }
+            catch (\DomainException $exception) {
+                if ($exception->getMessage() !== 'super_admin_protected') { throw $exception; }
+                Response::error(\TinyCat\Support\Localization::t('users.messages.super_admin_protected'), 409, 'super_admin_protected');
+            }
+            return Result::from(['item' => Accounts::tc_admin_user_resource(Accounts::tc_admin_user_by_id((int) $p['id']) ?? [])] + \TinyCat\Support\AdminViews::activationNotice($active, '@' . $user['username']));
+        }, 'admin');
         $api->get('/users/{id:[0-9]+}/management', static fn (Request $r, array $p): array => self::editable(self::target((int) $p['id'])), 'user');
         $api->get('/users/{id:[0-9]+}', static function (Request $r, array $p): array {
             $user = Repository::public_author_find((int) $p['id']);

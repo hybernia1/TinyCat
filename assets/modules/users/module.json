@@ -7,7 +7,9 @@
     "components": [
       "ui/avatar",
       "users/following-profile",
-      "users/auth-content"
+      "users/auth-content",
+      "users/avatar-control",
+      "ui/account-status"
     ],
     "entries": [
       "assets/modules/users/index.js"
@@ -17,9 +19,7 @@
       "assets/modules/users/styles/043-profile-avatar-button.css",
       "assets/modules/users/styles/046-profile-layout.css",
       "assets/modules/users/styles/048-profile-stats-strong.css",
-      "assets/modules/users/styles/057-auth-modal-panel.css",
       "assets/modules/users/styles/072-following-modal-grid.css",
-      "assets/modules/users/styles/084-profile-modal-grid.css",
       "assets/modules/users/styles/088-profile-layout.css",
       "assets/modules/users/styles/090-profile-main.css"
     ],
@@ -87,7 +87,13 @@
       "account.avatar_headphones",
       "account.avatar_cap",
       "account.avatar_outfit",
-      "account.avatar_background"
+      "account.avatar_background",
+      "common.account",
+      "account.avatar",
+      "common.username",
+      "users.statuses.active",
+      "users.statuses.waiting",
+      "users.statuses.ban"
     ],
     "messages": {
       "auth_recovery_done": "auth.recovery_done",
@@ -114,7 +120,9 @@
       "user_super_admin_protected": "users.messages.super_admin_protected",
       "user_username_invalid": "users.messages.username_invalid",
       "user_username_taken": "users.messages.username_taken",
-      "email_check_limited": "account.messages.email_check_limited"
+      "email_check_limited": "account.messages.email_check_limited",
+      "record_activated": "common.activated",
+      "record_deactivated": "common.deactivated"
     }
   },
   {

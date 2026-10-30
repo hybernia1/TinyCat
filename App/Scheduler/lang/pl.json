@@ -1,7 +1,6 @@
 {
   "cron": {
     "title": "Zaplanowane zadania",
-    "intro": "Jeden mały moduł uruchamiający udostępnia niezależne zaplanowane zadania ze współdzielonym uwierzytelnianiem.",
     "access_title": "Dostęp i token",
     "access_help": "Współdzielony punkt końcowy i uwierzytelnianie używane przez każde zaplanowane zadanie.",
     "url": "Adres URL punktu końcowego",

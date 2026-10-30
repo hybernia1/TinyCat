@@ -40,7 +40,7 @@ $prepared = is_array($prepared ?? null) ? $prepared : [];
         </div>
     <?php elseif ($type === 'email_smtp'): ?>
         <?php $smtp = is_array($value) ? $value : []; ?>
-        <div class="settings-grid">
+        <div class="grid sm:grid-2">
             <label class="field"><span class="label"><?= Html::et('settings.fields.smtp_host') ?></span><input class="input" name="<?= Html::e($name . '[host]') ?>" value="<?= Html::e((string) ($smtp['host'] ?? '')) ?>" maxlength="190"></label>
             <label class="field"><span class="label"><?= Html::et('settings.fields.smtp_port') ?></span><input class="input" type="number" name="<?= Html::e($name . '[port]') ?>" value="<?= Html::e((int) ($smtp['port'] ?? 587)) ?>" min="1" max="65535" required></label>
             <label class="field"><span class="label"><?= Html::et('settings.fields.smtp_username') ?></span><input class="input" name="<?= Html::e($name . '[username]') ?>" value="<?= Html::e((string) ($smtp['username'] ?? '')) ?>" maxlength="190"></label>

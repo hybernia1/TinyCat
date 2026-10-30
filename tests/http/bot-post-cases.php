@@ -2,16 +2,26 @@
 declare(strict_types=1);
 
 $botPostsDb = new PDO('sqlite:' . $databasePath);
+foreach (['/admin/bots/accounts' => 'bot-accounts-filter-modal', '/admin/bots/list' => 'bots-filter-modal'] as $pagePath => $filterId) {
+    $filterPage = file_get_contents('http://' . $address . $pagePath, false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+    $pageHeaders = http_get_last_response_headers() ?? [];
+    $assert(preg_match('/\s200\s/', (string) ($pageHeaders[0] ?? '')) === 1 && is_string($filterPage) && str_contains($filterPage, 'id="' . $filterId . '"') && str_contains($filterPage, 'data-filter-content'), 'Bot administration pages render their dropdown filter form successfully: ' . $pagePath);
+}
 $seedBotPost = $botPostsDb->prepare('INSERT INTO content (id, author_id, body, published_at) VALUES (?, 3, ?, ?)');
 foreach (range(1, 31) as $number) {
     $seedBotPost->execute([94000 + $number, 'Managed bot post ' . $number, '2999-01-' . sprintf('%02d', $number) . ' 12:00:00']);
 }
 $botPage = file_get_contents('http://' . $address . '/admin/bots/3', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
-$assert(is_string($botPage) && str_contains($botPage, 'id="bot-posts-list"') && str_contains($botPage, 'data-modal-url="/api/bots/accounts/3/posts/') && str_contains($botPage, 'data-status-form'), 'Bot detail renders the complete list with the shared edit modal and confirmed delete form.');
+$assert(is_string($botPage) && str_contains($botPage, 'data-bot-detail-open="3"') && str_contains($botPage, 'id="bot-accounts-list"'), 'Direct bot links host the tabbed detail modal over the accounts list.');
+$retiredBotPage = file_get_contents('http://' . $address . '/admin/bots/3?view=page', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+$assert(is_string($retiredBotPage) && str_contains($retiredBotPage, 'data-bot-detail-open="3"') && !str_contains($retiredBotPage, 'id="bot-posts-list"'), 'The retired page flag cannot restore the classic bot detail.');
 [$status] = $request('GET', '/api/bots/accounts/3/posts');
 $assert($status === 401, 'Bot post administration requires authentication.');
 [$status] = $request('GET', '/api/bots/accounts/3/posts', null, 'user');
 $assert($status === 403, 'Members cannot enumerate scheduled bot posts.');
+[$status, $modalPosts] = $request('GET', '/api/bots/accounts/3/posts?scope=modal&per_page=10', null, 'admin');
+$assert($status === 200 && $modalPosts['data']['history_url'] === false && $modalPosts['data']['list_target'] === '#bot-detail-posts-list', 'Modal post lists have their own target and do not change the parent page URL.');
+$assert($modalPosts['data']['sorting']['body']['history'] === false && str_contains($modalPosts['data']['sorting']['body']['url'], 'scope=modal'), 'Modal post sorting preserves its scope and isolates browser history.');
 [$status, $managedPosts] = $request('GET', '/api/bots/accounts/3/posts?per_page=10&sort=published_at&direction=asc', null, 'admin');
 $assert($status === 200 && count($managedPosts['data']['items']) === 10 && $managedPosts['meta']['pagination']['total'] === 31, 'The standard bot post list is paginated rather than limited to eight recent posts.');
 $assert($managedPosts['data']['items'][0]['id'] === 94001 && !$managedPosts['data']['items'][0]['published'] && $managedPosts['data']['items'][0]['url'] === '', 'Scheduled posts are marked and do not link to an unavailable public page.');

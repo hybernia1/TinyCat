@@ -10,7 +10,6 @@
     "report_note": "Poznámka",
     "report_submit": "Odeslat nahlášení",
     "profile_muted_until": "Účet je umlčen do {until}.",
-    "url_blocker_title": "Blokované URL",
     "url_blocker_label": "Blokované weby",
     "url_blocker_placeholder": "example.com, bad.example, domain:ru",
     "url_blocker_help": "Odděl weby čárkou nebo novým řádkem. Blokuje se i jejich subdoména. Zápis domain:ru zablokuje celou koncovku .ru.",

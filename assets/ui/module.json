@@ -12,7 +12,8 @@
     "components": [
       "ui/modal",
       "ui/field",
-      "ui/select"
+      "ui/select",
+      "ui/editor-actions"
     ],
     "styles": [
       "assets/ui/styles/001-root.css",
@@ -40,7 +41,7 @@
       "assets/ui/styles/049-avatar-upload.css",
       "assets/ui/styles/054-brand-logo.css",
       "assets/ui/styles/056-tabs.css",
-      "assets/ui/styles/058-modal-panel-full.css",
+      "assets/ui/styles/058-modal-layout.css",
       "assets/ui/styles/060-toast-stack.css",
       "assets/ui/styles/061-input-not-type-checkbox-not-type-radio-not-ty.css",
       "assets/ui/styles/062-is-loading.css",
@@ -52,10 +53,10 @@
       "assets/ui/styles/079-home-feed-section-alert.css",
       "assets/ui/styles/080-section.css",
       "assets/ui/styles/082-field-inline.css",
-      "assets/ui/styles/085-modal-confirm-panel-modal-footer-btn.css",
+      "assets/ui/styles/085-modal-confirm-actions.css",
       "assets/ui/styles/087-md-grid-2.css",
       "assets/ui/styles/089-profile-sidebar-stack-public-sidebar.css",
-      "assets/ui/styles/092-user-modal-panel-modal-panel-full-following-m.css",
+      "assets/ui/styles/092-modal-workspace-desktop.css",
       "assets/ui/styles/093-before-after.css",
       "assets/ui/styles/094-is-resource-text.css"
     ],

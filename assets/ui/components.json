@@ -645,28 +645,6 @@
             "children": []
           }
         ]
-      },
-      {
-        "tag": "button",
-        "attrs": {
-          "class": "btn btn-secondary admin-search-submit",
-          "type": "submit"
-        },
-        "children": [
-          {
-            "icon": "search"
-          },
-          {
-            "tag": "span",
-            "attrs": {},
-            "children": [
-              {
-                "t": "common.search",
-                "values": {}
-              }
-            ]
-          }
-        ]
       }
     ]
   },
@@ -727,7 +705,7 @@
           {
             "tag": "span",
             "attrs": {
-              "class": "label"
+              "class": "sr-only"
             },
             "children": [
               {
@@ -794,52 +772,93 @@
   "ui/list-toolbar": {
     "tag": "div",
     "attrs": {
-      "class": "admin-list-toolbar"
+      "class": "stack stack-gap-8"
     },
     "children": [
       {
-        "component": "ui/search-form",
-        "data": {
-          "url": {
-            "get": "url"
+        "tag": "div",
+        "attrs": {
+          "class": "admin-list-toolbar"
+        },
+        "children": [
+          {
+            "component": "ui/search-form",
+            "data": {
+              "url": {
+                "get": "url"
+              },
+              "target": {
+                "get": "target"
+              },
+              "history": {
+                "get": "history"
+              },
+              "filters": {
+                "get": "filters"
+              },
+              "pagination": {
+                "get": "pagination"
+              }
+            }
           },
-          "target": {
-            "get": "target"
-          },
-          "history": {
-            "get": "history"
-          },
-          "filters": {
-            "get": "filters"
-          },
-          "pagination": {
-            "get": "pagination"
+          {
+            "tag": "div",
+            "attrs": {
+              "class": "admin-filter-actions"
+            },
+            "children": [
+              {
+                "component": "ui/filter-trigger",
+                "data": {
+                  "id": {
+                    "get": "filter_modal"
+                  }
+                },
+                "when": {
+                  "get": "filter_modal"
+                }
+              },
+              {
+                "component": "ui/per-page",
+                "data": {
+                  "url": {
+                    "get": "url"
+                  },
+                  "target": {
+                    "get": "target"
+                  },
+                  "history": {
+                    "get": "history"
+                  },
+                  "filters": {
+                    "get": "filters"
+                  },
+                  "pagination": {
+                    "get": "pagination"
+                  },
+                  "choices": {
+                    "10": "10",
+                    "25": "25",
+                    "50": "50",
+                    "100": "100"
+                  }
+                }
+              }
+            ]
           }
-        }
+        ]
       },
       {
-        "component": "ui/per-page",
+        "component": "ui/list-summary",
         "data": {
-          "url": {
-            "get": "url"
-          },
           "target": {
             "get": "target"
-          },
-          "history": {
-            "get": "history"
           },
           "filters": {
             "get": "filters"
           },
           "pagination": {
             "get": "pagination"
-          },
-          "choices": {
-            "10": "10",
-            "25": "25",
-            "50": "50",
-            "100": "100"
           }
         }
       }
@@ -989,7 +1008,18 @@
   "ui/admin-list": {
     "tag": "section",
     "attrs": {
-      "class": "card"
+      "class": "card",
+      "aria-label": {
+        "if": [
+          {
+            "get": "primary"
+          },
+          {
+            "get": "title"
+          },
+          null
+        ]
+      }
     },
     "children": [
       {
@@ -1015,22 +1045,22 @@
             ]
           },
           {
-            "component": "ui/modal-trigger",
+            "component": "ui/filter-trigger",
             "data": {
-              "class": "btn btn-secondary btn-sm",
-              "modal": {
+              "id": {
                 "get": "filter_modal"
-              },
-              "icon": "filter",
-              "label": {
-                "t": "common.filters"
               }
             },
             "when": {
               "get": "filter_modal"
             }
           }
-        ]
+        ],
+        "when": {
+          "not": {
+            "get": "primary"
+          }
+        }
       },
       {
         "tag": "div",
@@ -1051,46 +1081,26 @@
     ]
   },
   "ui/account-status": {
-    "tag": "span",
-    "attrs": {
-      "class": {
-        "concat": [
-          "badge",
+    "component": "ui/status-badge",
+    "data": {
+      "tone": {
+        "if": [
           {
-            "if": [
+            "eq": [
               {
-                "eq": [
-                  {
-                    "get": "status"
-                  },
-                  "active"
-                ]
+                "get": "status"
               },
-              " badge-primary",
-              {
-                "if": [
-                  {
-                    "eq": [
-                      {
-                        "get": "status"
-                      },
-                      "ban"
-                    ]
-                  },
-                  " badge-danger",
-                  ""
-                ]
-              }
+              "active"
             ]
-          }
+          },
+          "ok",
+          "critical"
         ]
-      }
-    },
-    "children": [
-      {
+      },
+      "label": {
         "get": "label"
       }
-    ]
+    }
   },
   "ui/pagination-step": {
     "tag": {
@@ -1250,29 +1260,163 @@
     "tag": "span",
     "attrs": {
       "class": {
-        "concat": [
-          "badge ",
+        "if": [
           {
             "lookup": {
               "get": "tone"
             },
             "cases": {
-              "ok": "badge-success",
-              "success": "badge-success",
-              "warning": "badge-warning",
-              "critical": "badge-danger",
-              "danger": "badge-danger",
-              "primary": "badge-primary",
-              "running": "badge-primary"
+              "ok": true,
+              "success": true,
+              "critical": true,
+              "danger": true,
+              "warning": true
             },
-            "default": ""
+            "default": false
+          },
+          {
+            "concat": [
+              "status-indicator status-indicator-",
+              {
+                "lookup": {
+                  "get": "tone"
+                },
+                "cases": {
+                  "ok": "success",
+                  "success": "success",
+                  "critical": "danger",
+                  "danger": "danger",
+                  "warning": "warning"
+                },
+                "default": ""
+              }
+            ]
+          },
+          {
+            "concat": [
+              "badge ",
+              {
+                "lookup": {
+                  "get": "tone"
+                },
+                "cases": {
+                  "primary": "badge-primary",
+                  "running": "badge-primary"
+                },
+                "default": ""
+              }
+            ]
           }
+        ]
+      },
+      "role": {
+        "if": [
+          {
+            "lookup": {
+              "get": "tone"
+            },
+            "cases": {
+              "ok": true,
+              "success": true,
+              "critical": true,
+              "danger": true,
+              "warning": true
+            },
+            "default": false
+          },
+          "img",
+          null
+        ]
+      },
+      "aria-label": {
+        "if": [
+          {
+            "lookup": {
+              "get": "tone"
+            },
+            "cases": {
+              "ok": true,
+              "success": true,
+              "critical": true,
+              "danger": true,
+              "warning": true
+            },
+            "default": false
+          },
+          {
+            "get": "label"
+          },
+          null
+        ]
+      },
+      "title": {
+        "if": [
+          {
+            "lookup": {
+              "get": "tone"
+            },
+            "cases": {
+              "ok": true,
+              "success": true,
+              "critical": true,
+              "danger": true,
+              "warning": true
+            },
+            "default": false
+          },
+          {
+            "get": "label"
+          },
+          null
         ]
       }
     },
     "children": [
       {
-        "get": "label"
+        "icon": {
+          "lookup": {
+            "get": "tone"
+          },
+          "cases": {
+            "ok": "check-circle",
+            "success": "check-circle",
+            "critical": "x-circle",
+            "danger": "x-circle",
+            "warning": "alert"
+          },
+          "default": ""
+        },
+        "when": {
+          "lookup": {
+            "get": "tone"
+          },
+          "cases": {
+            "ok": true,
+            "success": true,
+            "critical": true,
+            "danger": true,
+            "warning": true
+          },
+          "default": false
+        }
+      },
+      {
+        "get": "label",
+        "when": {
+          "not": {
+            "lookup": {
+              "get": "tone"
+            },
+            "cases": {
+              "ok": true,
+              "success": true,
+              "critical": true,
+              "danger": true,
+              "warning": true
+            },
+            "default": false
+          }
+        }
       }
     ]
   },
@@ -1326,7 +1470,10 @@
                   {
                     "get": "value"
                   }
-                ]
+                ],
+                "attrs": {
+                  "get": "value_attributes"
+                }
               },
               " ",
               {
@@ -1423,6 +1570,273 @@
         ],
         "when": {
           "get": "detail"
+        }
+      }
+    ]
+  },
+  "ui/empty-state": {
+    "tag": "div",
+    "attrs": {
+      "class": "empty-state",
+      "role": "status"
+    },
+    "children": [
+      {
+        "icon": {
+          "or": [
+            {
+              "get": "icon"
+            },
+            "search"
+          ]
+        },
+        "class": "icon empty-state-icon"
+      },
+      {
+        "tag": "p",
+        "attrs": {
+          "class": "empty-state-label"
+        },
+        "children": [
+          {
+            "or": [
+              {
+                "get": "label"
+              },
+              {
+                "t": "common.no_records"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "ui/activation-action": {
+    "component": "ui/api-action",
+    "data": {
+      "url": {
+        "get": "url"
+      },
+      "method": {
+        "or": [
+          {
+            "get": "method"
+          },
+          "PUT"
+        ]
+      },
+      "target": {
+        "get": "target"
+      },
+      "fields": {
+        "enabled": {
+          "if": [
+            {
+              "get": "active"
+            },
+            "0",
+            "1"
+          ]
+        }
+      },
+      "label": {
+        "if": [
+          {
+            "get": "active"
+          },
+          {
+            "t": "common.deactivate"
+          },
+          {
+            "t": "common.activate"
+          }
+        ]
+      },
+      "icon": {
+        "if": [
+          {
+            "get": "active"
+          },
+          "pause",
+          "play"
+        ]
+      },
+      "button_class": "btn btn-sm btn-ghost btn-icon"
+    }
+  },
+  "ui/filter-trigger": {
+    "tag": "details",
+    "attrs": {
+      "class": "popover-menu filter-menu",
+      "data-dismissible-menu": "",
+      "data-filter-menu": ""
+    },
+    "children": [
+      {
+        "tag": "summary",
+        "attrs": {
+          "class": "btn btn-ghost btn-sm",
+          "aria-label": {
+            "t": "common.filters"
+          }
+        },
+        "children": [
+          {
+            "icon": "filter"
+          },
+          {
+            "tag": "span",
+            "children": [
+              {
+                "t": "common.filters"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "context-menu-popover filter-menu-panel",
+          "data-filter-panel": {
+            "get": "id"
+          }
+        }
+      }
+    ]
+  },
+  "ui/filter-content": {
+    "tag": "form",
+    "attrs": {
+      "get": "attributes"
+    },
+    "children": [
+      {
+        "slot": {
+          "get": "body"
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "cluster gap-2"
+        },
+        "children": [
+          {
+            "slot": {
+              "get": "footer"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "ui/list-summary": {
+    "tag": "div",
+    "attrs": {
+      "class": "cluster gap-2 text-sm text-muted",
+      "aria-live": "polite",
+      "aria-atomic": "true",
+      "data-list-summary": {
+        "get": "target"
+      }
+    },
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {
+          "data-list-result-count": ""
+        },
+        "children": [
+          {
+            "plural": "common.list_results",
+            "count": {
+              "if": [
+                {
+                  "get": "pagination.total"
+                },
+                {
+                  "get": "pagination.total"
+                },
+                0
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "badge cluster gap-2",
+          "title": {
+            "t": "common.search"
+          }
+        },
+        "children": [
+          {
+            "icon": "search"
+          },
+          {
+            "get": "filters.q"
+          }
+        ],
+        "when": {
+          "get": "filters.q"
+        }
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "cluster gap-2",
+          "data-list-summary-filters": {
+            "get": "target"
+          }
+        }
+      }
+    ]
+  },
+  "ui/editor-actions": {
+    "tag": "div",
+    "attrs": {
+      "class": "cluster gap-2 modal-editor-actions"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "modal-editor-destructive"
+        },
+        "when": {
+          "get": "destructive"
+        },
+        "children": [
+          {
+            "slot": {
+              "get": "destructive"
+            }
+          }
+        ]
+      },
+      {
+        "tag": "button",
+        "attrs": {
+          "type": "button",
+          "class": "btn btn-secondary",
+          "data-modal-close": ""
+        },
+        "children": [
+          {
+            "get": "cancel_label"
+          }
+        ]
+      },
+      {
+        "slot": {
+          "get": "primary"
+        },
+        "when": {
+          "get": "primary"
         }
       }
     ]

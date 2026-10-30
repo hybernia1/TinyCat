@@ -69,9 +69,20 @@
     "leave": "Verlassen",
     "stay": "Bleiben",
     "validation_failed": "Bitte überprüfen Sie die übermittelten Werte.",
+    "no_records": "Keine Einträge.",
     "not_found": "Nicht gefunden.",
     "validation_required": "Das Feld {field} ist erforderlich.",
-    "validation_invalid": "Das Feld {field} hat einen ungültigen Wert."
+    "validation_invalid": "Das Feld {field} hat einen ungültigen Wert.",
+    "activate": "Aktivieren",
+    "deactivate": "Deaktivieren",
+    "activated": "{entity} aktiviert.",
+    "deactivated": "{entity} deaktiviert.",
+    "list_results": {
+      "one": "{count} Eintrag gefunden",
+      "few": "{count} Einträge gefunden",
+      "many": "{count} Einträge gefunden",
+      "other": "{count} Einträge gefunden"
+    }
   },
   "relative": {
     "now": "Jetzt",

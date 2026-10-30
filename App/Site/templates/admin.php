@@ -11,6 +11,7 @@ declare(strict_types=1);
 /** @var string $profileUrl */
 /** @var bool $profileNeedsEmail */
 /** @var string $userMenu */
+/** @var string $settingsEditor */
 ?>
         <div class="admin-shell" data-admin-shell>
             <aside class="admin-sidebar" id="admin-sidebar" data-admin-sidebar>
@@ -51,7 +52,7 @@ declare(strict_types=1);
                             </details>
                             <?php continue; ?>
                         <?php endif; ?>
-                        <a class="admin-nav-link" href="<?= \TinyCat\Support\Html::e($item['href']) ?>"<?= $item['active'] ? ' aria-current="page"' : '' ?>>
+                        <a class="admin-nav-link" href="<?= \TinyCat\Support\Html::e($item['href']) ?>"<?= $item['active'] ? ' aria-current="page"' : '' ?><?= !empty($item['modal']) ? ' data-modal-open="' . \TinyCat\Support\Html::e($item['modal']) . '"' : '' ?>>
                             <?= \TinyCat\Support\Html::icon((string) ($item['icon'] ?? 'link')) ?>
                             <span><?= \TinyCat\Support\Html::e((string) ($item['label'] ?? $item['href'])) ?></span>
                         </a>
@@ -60,7 +61,7 @@ declare(strict_types=1);
 
                 <div class="admin-sidebar-footer">
                     <div class="admin-user">
-                        <span class="avatar avatar-sm"><?= \TinyCat\Users\Views::avatar(['user' => $authUser]) ?></span>
+                        <?= $userMenu ?>
                         <span>
                             <strong><?= \TinyCat\Support\Html::e($adminIdentity) ?></strong>
                             <small>TinyCat v<?= \TinyCat\Support\Html::e(\TinyCat\Support\Version::CURRENT) ?></small>
@@ -77,14 +78,13 @@ declare(strict_types=1);
                         <?= \TinyCat\Support\Html::icon('menu') ?>
                     </button>
                     <div class="admin-topbar-title">
-                        <strong><?= \TinyCat\Support\Html::e($title) ?></strong>
+                        <strong><?php if (($titleIcon ?? '') !== ''): ?><?= \TinyCat\Support\Html::icon($titleIcon) ?> <?php endif; ?><?= \TinyCat\Support\Html::e($title) ?></strong>
                     </div>
                     <?php if ($actions !== ''): ?>
                         <div class="admin-topbar-actions">
                             <?= $actions ?>
                         </div>
                     <?php endif; ?>
-                    <?= $userMenu ?>
                 </header>
 
                 <main class="admin-content" id="main-content" tabindex="-1">
@@ -94,3 +94,4 @@ declare(strict_types=1);
                 </main>
             </div>
         </div>
+        <?= $settingsEditor ?>

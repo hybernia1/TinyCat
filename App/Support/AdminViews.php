@@ -5,18 +5,26 @@ namespace TinyCat\Support;
 
 final class AdminViews
 {
-    public static function listCard(string $title, string $icon, string $targetId, string $filterModal, Markup $content): string
+    /** @return array{message: string, code: string, params: array{entity: string}} */
+    public static function activationNotice(bool $active, string $entity): array
+    {
+        $state = $active ? 'activated' : 'deactivated';
+        $params = ['entity' => $entity];
+        return ['message' => Localization::t('common.' . $state, $params), 'code' => 'record_' . $state, 'params' => $params];
+    }
+
+    public static function listCard(string $title, string $icon, string $targetId, string $filterModal, Markup $content, bool $primary = false): string
     {
         return Components::render('ui/admin-list', [
             'title' => $title, 'icon' => $icon, 'target_id' => $targetId,
-            'filter_modal' => $filterModal, 'content' => $content,
+            'filter_modal' => $filterModal, 'content' => $content, 'primary' => $primary,
         ]);
     }
 
-    public static function modalAction(string $modal, string $label, string $icon): string
+    public static function modalAction(string $modal, string $label, string $icon, string $url = ''): string
     {
         return Components::render('ui/modal-trigger', [
-            'class' => 'btn btn-primary btn-sm', 'modal' => $modal, 'label' => $label, 'icon' => $icon,
+            'class' => 'btn btn-primary btn-sm', 'modal' => $modal, 'label' => $label, 'icon' => $icon, 'url' => $url,
         ]);
     }
 

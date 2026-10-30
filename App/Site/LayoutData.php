@@ -47,6 +47,7 @@ final class LayoutData
         $isAdminShell = $authUser !== null && (bool) ($adminShell ?? str_starts_with($current, '/admin'));
         $nav = $isAdminShell ? (array) ($nav ?? Navigation::administration()) : (array) ($frontendNav ?? []);
         $nav = Navigation::prepare($nav, $current, $isAdminShell);
+        $titleIcon = $isAdminShell ? (string) ($title_icon ?? Navigation::activeIcon($nav)) : '';
 
         $pageTitle = $title === $appName ? $title : $title . ' | ' . $appName;
         $metaTitle = \TinyCat\Site\Presentation::meta_text((string) ($meta['title'] ?? $pageTitle), 120);
@@ -103,6 +104,7 @@ final class LayoutData
             'editModalUrl' => \TinyCat\Users\Profiles::author_profile_edit_modal_url((int) $authUser['id'], $profileNeedsEmail ? 'email' : ''),
         ]) : '';
         $viewerIsAdmin = \TinyCat\Users\Profiles::user_is_admin($authUser);
+        $settingsEditor = $isAdminShell && $viewerIsAdmin ? \TinyCat\Settings\Views::editor() : '';
         $loginModalId = \TinyCat\Users\Login::auth_modal_id();
         $loginModalUrl = \TinyCat\Users\Login::auth_modal_url();
         $notificationState = [];
@@ -112,6 +114,6 @@ final class LayoutData
             $notificationState = \TinyCat\Notifications\Inbox::state($notificationUserId);
             $notificationItems = \TinyCat\Notifications\Inbox::items($notificationUserId, \TinyCat\Notifications\Inbox::PREVIEW_LIMIT);
         }
-        return compact('userMenu', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageSuggestion', 'pageUrls', 'languageAlternatives', 'languageLinks', 'interfacePrefix', 'interfaceLocales', 'applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'themeAttribute', 'title', 'viewerIsAdmin');
+        return compact('settingsEditor', 'titleIcon', 'userMenu', 'currentLanguageName', 'languageFlagSprite', 'languageFlagId', 'languageSuggestion', 'pageUrls', 'languageAlternatives', 'languageLinks', 'interfacePrefix', 'interfaceLocales', 'applicationVersion', 'privacyUrl', 'dateFormat', 'dateRelative', 'isAdminShell', 'actions', 'adminIdentity', 'analyticsConfigured', 'analyticsConsent', 'appName', 'authUser', 'bodyClasses', 'cookieConsentTextKey', 'csrfToken', 'current', 'flashToasts', 'googleMeasurementId', 'loginModalId', 'loginModalUrl', 'meta', 'metaDescription', 'metaImage', 'metaImageAlt', 'metaImageHeight', 'metaImageType', 'metaImageWidth', 'metaJsonLdJson', 'metaLocale', 'metaNext', 'metaNextUrl', 'metaPrev', 'metaPrevUrl', 'metaRobots', 'metaRss', 'metaRssUrl', 'metaTitle', 'metaType', 'metaUrl', 'nav', 'notificationItems', 'notificationState', 'pageTitle', 'profileNeedsEmail', 'profileUrl', 'scriptUrls', 'searchQuery', 'siteFaviconUrl', 'siteIdentity', 'siteLogoUrl', 'styleUrls', 'theme', 'themeAttribute', 'title', 'viewerIsAdmin');
     }
 }

@@ -42,6 +42,6 @@ final class Pages
             'title' => Localization::t('updates.title'),
             'current' => '/admin/updates',
             'actions' => $actions,
-        ], \TinyCat\Support\AdminViews::listCard(Localization::t('updates.release_title'), 'download', 'updates-overview', '', new \TinyCat\Support\Markup(View::render('administration', compact('release', 'result', 'error', 'maintenance', 'extensions', 'releaseCompatible', 'canInstall', 'history', 'releaseNotesModal'), __DIR__ . '/templates'))));
+        ], \TinyCat\Support\AdminViews::listCard(Localization::t('updates.release_title'), 'download', 'updates-overview', '', new \TinyCat\Support\Markup(View::render('administration', compact('release', 'result', 'error', 'maintenance', 'extensions', 'releaseCompatible', 'canInstall', 'history', 'releaseNotesModal'), __DIR__ . '/templates')), primary: true));
     }
 }

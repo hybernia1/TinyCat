@@ -6,7 +6,7 @@ require_once __DIR__ . '/../cache-isolation.php';
 $root = dirname(__DIR__, 2);
 $options = getopt('', ['baseline-version::']);
 $baselineVersion = (string) ($options['baseline-version'] ?? '2.0.25');
-if (!in_array($baselineVersion, ['2.0.25', '2.1.0', '3.0.0', '3.1.0', '3.2.1', '4.0.0'], true)) {
+if (!in_array($baselineVersion, ['2.0.25', '2.1.0', '3.0.0', '3.1.0', '3.2.1', '4.0.0', '5.8.0'], true)) {
     throw new InvalidArgumentException('Unsupported rehearsal baseline.');
 }
 $temporaryRoot = $root . '/storage/update-rehearsal-' . bin2hex(random_bytes(6));
@@ -290,6 +290,9 @@ PHP;
     $assert(($updateResult['maintenance_during'] ?? null) === true, 'Maintenance mode is active while files change.');
     $assert(($updateResult['maintenance_after'] ?? null) === false, 'Maintenance mode is disabled after success.');
     $assert((int) ($updateResult['deletions'] ?? -1) > 0, 'Candidate declares obsolete runtime removals.');
+    foreach (['App/Settings/Pages.php', 'App/Moderation/templates/blocking.php', 'assets/ui/styles/058-modal-panel-full.css'] as $retiredUiFile) {
+        $assert(!is_file($installRoot . '/' . $retiredUiFile), 'Update removes superseded administration runtime: ' . $retiredUiFile);
+    }
     foreach (['App/Extension.php', 'App/Avatar.php', 'App/UserRoles.php', 'App/StatusImage.php', 'App/StatusLinks.php', 'App/LinkMetadata.php'] as $obsolete) {
         $assert(!is_file($installRoot . '/' . $obsolete), 'Candidate removes obsolete implementation: ' . $obsolete);
     }

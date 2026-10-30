@@ -151,12 +151,12 @@ final class Profiles
 
     public static function author_profile_edit_modal_id(int $authorId): string
     {
-        return 'profile-edit-modal-' . max(0, $authorId);
+        return 'account-editor-modal-' . max(0, $authorId);
     }
 
     public static function author_profile_edit_modal_url(int $authorId, string $focus = ''): string
     {
-        return '/api/users/' . $authorId . '/management?' . http_build_query(['focus' => $focus]);
+        return '/api/users/' . $authorId . '/management?' . http_build_query(['panel' => 'account', 'focus' => $focus]);
     }
 
     public static function app_apply_user_locale(): void

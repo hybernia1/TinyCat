@@ -69,9 +69,20 @@
     "leave": "Оставить",
     "stay": "Оставайся",
     "validation_failed": "Пожалуйста, проверьте отправленные значения.",
+    "no_records": "Нет записей.",
     "not_found": "Не найден.",
     "validation_required": "Поле {field} является обязательным.",
-    "validation_invalid": "Поле {field} имеет недопустимое значение."
+    "validation_invalid": "Поле {field} имеет недопустимое значение.",
+    "activate": "Активировать",
+    "deactivate": "Деактивировать",
+    "activated": "{entity} активировано.",
+    "deactivated": "{entity} деактивировано.",
+    "list_results": {
+      "one": "Найдена {count} запись",
+      "few": "Найдено {count} записи",
+      "many": "Найдено {count} записей",
+      "other": "Найдено {count} записей"
+    }
   },
   "relative": {
     "now": "сейчас",

@@ -1,8 +1,7 @@
 [
   {
     "routes": [
-      "public",
-      "/admin/bots/detail"
+      "public"
     ],
     "components": [
       "status/card",
@@ -96,5 +95,85 @@
       "assets/embed-frame.js",
       "assets/embed.js"
     ]
+  },
+  {
+    "routes": [
+      "/admin/bots"
+    ],
+    "components": [
+      "status/composer-body"
+    ],
+    "entries": [
+      "assets/modules/status/index.js"
+    ],
+    "styles": [
+      "assets/modules/status/styles/039-status-comment-history.css"
+    ],
+    "translations": [
+      "account.status_comment_history",
+      "account.status_comment_placeholder",
+      "account.status_edit",
+      "account.status_embed",
+      "account.status_embed_code",
+      "account.status_embed_help",
+      "account.status_thread_title",
+      "account.translation_continue",
+      "account.translation_failed",
+      "account.translation_hide",
+      "account.translation_machine",
+      "account.translation_preparing",
+      "account.translation_same",
+      "account.translation_translate",
+      "account.translation_unavailable",
+      "auth.forbidden",
+      "auth.login_required",
+      "common.edit",
+      "common.leave",
+      "common.save",
+      "common.stay",
+      "common.unsaved_message",
+      "common.unsaved_title",
+      "moderation.report_note",
+      "moderation.report_reason",
+      "moderation.report_reasons.abuse",
+      "moderation.report_reasons.illegal",
+      "moderation.report_reasons.malware",
+      "moderation.report_reasons.other",
+      "moderation.report_reasons.spam",
+      "moderation.report_submit",
+      "notifications.new_count.few",
+      "notifications.new_count.many",
+      "notifications.new_count.one",
+      "notifications.new_count.other",
+      "public.feed_empty",
+      "public.feed_empty_following"
+    ],
+    "messages": {
+      "action_limited": "moderation.messages.action_limited",
+      "action_too_fast": "moderation.messages.action_too_fast",
+      "comment_created": "account.messages.comment_created",
+      "comment_deleted": "account.messages.comment_deleted",
+      "comment_edit_forbidden": "account.messages.comment_edit_forbidden",
+      "comment_forbidden": "account.messages.comment_forbidden",
+      "comment_not_found": "account.messages.comment_not_found",
+      "comment_required": "account.messages.comment_required",
+      "comment_saved": "account.messages.comment_saved",
+      "duplicate_body": "moderation.messages.duplicate_body",
+      "muted": "moderation.messages.account_muted",
+      "report_already_reviewed": "moderation.messages.report_already_reviewed",
+      "report_created": "moderation.messages.report_created",
+      "report_own_content": "moderation.messages.report_own_content",
+      "status_deleted": "account.messages.status_deleted",
+      "status_edit_locked": "account.messages.status_edit_locked",
+      "status_forbidden": "account.messages.status_forbidden",
+      "status_image_compression": "account.messages.status_image_compression",
+      "status_image_disabled": "account.messages.status_image_disabled",
+      "status_image_invalid": "account.messages.status_image_invalid",
+      "status_not_found": "account.messages.status_not_found",
+      "status_required": "account.messages.status_required",
+      "status_saved": "account.messages.status_saved",
+      "status_tag_too_long": "account.messages.status_tag_too_long",
+      "status_created": "account.messages.status_created"
+    }
   }
 ]

@@ -18,45 +18,49 @@ import "../../ui/toasts.js";
     input.checked = Boolean(checked);
     root.append(input, e("span", {}, U.text(label))); form.appendChild(root);
   }
-  function profile(data, url) {
-    var user = data.user, content = e("div", { "class": "stack", "data-tabs": "" });
+  function accountEditor(data, url, id) {
+    var user = data.user, content = e("div"), sections = e("div", { "data-editor-sections": "" });
+    content.appendChild(sections);
     var focus = url.searchParams.get("focus") || "bio";
-    var active = /^(security|password|current_password)$/.test(focus) ? "security" : (focus === "email" ? "email" : "profile");
-    var tabs = e("div", { "class": "tabs profile-edit-tabs", role: "tablist", "aria-label": U.text("account.profile_settings") });
-    content.appendChild(tabs);
-    function panel(form, key, label) {
-      var panelId = "profile-" + user.id + "-" + key, tabId = panelId + "-tab";
-      tabs.appendChild(U.button(label, { "class": "tab", id: tabId, role: "tab", "data-tab": key, "aria-controls": panelId, "aria-selected": key === active ? "true" : "false" }));
-      form.id = panelId; form.classList.add("tab-panel"); form.classList.add("profile-edit-form");
-      form.setAttribute("role", "tabpanel"); form.setAttribute("aria-labelledby", tabId); form.setAttribute("data-tab-panel", key); form.hidden = key !== active;
-      addSubmit(form); content.appendChild(form);
+    var active = /^(security|password|current_password)$/.test(focus) ? "security" : (focus === "email" ? "email" : (focus === "avatar" ? "avatar" : "account"));
+    function panel(form, key, label, icon) {
+      form.id = id + "-" + key + "-form";
+      form.dataset.editorSection = key; form.dataset.editorLabel = label; form.dataset.editorIcon = icon;
+      sections.appendChild(form);
     }
     var form = U.form("/api/users/" + user.id, "PATCH");
     form.dataset.originalLocale = user.locale || "";
-    var grid = e("div", { "class": "profile-modal-grid" });
+    var grid = e("div", { "class": "grid sm:grid-2" });
+    grid.appendChild(U.field("common.username", "username", user.username, "text", { disabled: true }));
     var languages = {};
     Object.keys(data.options.languages).forEach(function (key) { var value = data.options.languages[key]; languages[key] = typeof value === "object" ? (value.name || value.label || key) : value; });
     grid.appendChild(U.select("common.language", "locale", user.locale, languages));
     grid.appendChild(U.select("account.theme", "theme", user.theme, { system: U.text("account.theme_system"), light: U.text("account.theme_light"), dark: U.text("account.theme_dark") }));
-    var bio = U.field("account.bio", "bio", user.bio, "textarea", { maxlength: "500", rows: "6" }); bio.classList.add("profile-modal-span"); grid.appendChild(bio); form.appendChild(grid);
-    panel(form, "profile", "account.profile_settings");
+    var bio = U.field("account.bio", "bio", user.bio, "textarea", { maxlength: "500", rows: "6" }); bio.classList.add("grid-span-full"); grid.appendChild(bio); form.appendChild(grid);
+    panel(form, "account", "common.account", "user");
     var email = U.form(data.capabilities.password ? "/api/users/me/email" : "/api/users/" + user.id, "PATCH");
     if (!data.capabilities.password) { ["bio", "locale", "theme"].forEach(function (name) { email.appendChild(U.hidden(name, user[name] || "")); }); }
     email.appendChild(U.field("common.email", "email", user.email, "email", { maxlength: "254", autocomplete: "email", "data-email-check-url": "/api/users/" + user.id + "/email-checks" }));
     email.appendChild(e("span", { "class": "help" }, U.text("account.email_optional")));
     email.appendChild(U.hidden("email_notifications", "0")); check(email, "email_notifications", "account.email_notifications", user.email_notifications);
-    panel(email, "email", "common.email");
+    panel(email, "email", "common.email", "mail");
     if (data.capabilities.password) {
       var password = U.form("/api/users/me/password", "PUT");
-      password.dataset.modalCloseOnSuccess = "true";
+      password.dataset.reset = "true";
       password.appendChild(U.field("common.current_password", "current_password", "", "password", { required: true, autocomplete: "current-password" }));
       password.appendChild(U.field("common.password", "password", "", "password", { required: true, minlength: "8", maxlength: String(data.options.password_max_length), autocomplete: "new-password" }));
       password.appendChild(U.field("common.password_confirm", "password_confirm", "", "password", { required: true, minlength: "8", autocomplete: "new-password" }));
-      panel(password, "security", "account.security_settings");
+      panel(password, "security", "account.security_settings", "lock");
     }
-    if (focus) { var field = content.querySelector('[name="' + (active === "security" ? "current_password" : focus.replace(/[^a-z_]/g, "")) + '"]'); if (field) { field.autofocus = true; } }
-    return content;
+    var avatarSection = e("div", { "data-editor-section": "avatar", "data-editor-label": "account.avatar", "data-editor-icon": "user", "data-editor-editable": "false" });
+    avatarSection.appendChild(T.components.render("users/avatar-control", { user: user })); sections.appendChild(avatarSection);
+    var dialog = U.sectionedDialog(id, "@" + user.username, content, false, active);
+    dialog.dataset.accountEditor = "true";
+    U.accountDialogTitle(dialog, user);
+    if (focus) { var field = dialog.querySelector('[name="' + (active === "security" ? "current_password" : focus.replace(/[^a-z_]/g, "")) + '"]'); if (field) { field.autofocus = true; } }
+    return dialog;
   }
+
   function avatar(data) {
     var user = data.user, content = e("div", { "class": "avatar-editor" });
     var form = U.form("/api/users/" + user.id + "/avatar", "PUT");
@@ -102,17 +106,18 @@ import "../../ui/toasts.js";
       appearanceForm.appendChild(U.hidden("appearance", JSON.stringify(settings)));
       content.appendChild(appearanceForm);
     }
-    var footer = e("div", { "class": "avatar-editor-actions" });
+    var remove = null;
     if (user.avatar_url && user.avatar_custom !== false) {
-      var remove = U.form("/api/users/" + user.id + "/avatar", "DELETE");
+      remove = U.form("/api/users/" + user.id + "/avatar", "DELETE");
       remove.dataset.modalCloseOnSuccess = "true";
       remove.dataset.confirm = U.text("account.remove_avatar_confirm");
       remove.dataset.confirmTitle = U.text("account.remove_avatar_title");
       remove.dataset.confirmVariant = "danger";
       var removeButton = U.button("account.remove_avatar", { type: "submit", "class": "btn avatar-editor-remove" });
-      removeButton.replaceChildren(U.icon("trash"), e("span", {}, U.text("account.remove_avatar"))); remove.appendChild(removeButton); footer.appendChild(remove);
+      removeButton.replaceChildren(U.icon("trash"), e("span", {}, U.text("account.remove_avatar"))); remove.appendChild(removeButton);
     }
-    footer.appendChild(U.button("account.save_avatar", { type: "submit", "class": "btn btn-primary", form: appearanceForm ? appearanceForm.id : form.id, "data-avatar-save": "", disabled: true }));
+    var footer = U.editorActions(U.button("account.save_avatar", { type: "submit", "class": "btn btn-primary", form: appearanceForm ? appearanceForm.id : form.id, "data-avatar-save": "", disabled: true }), remove);
+    footer.classList.add("avatar-editor-actions");
     content.appendChild(footer);
     return content;
   }
@@ -130,16 +135,8 @@ import "../../ui/toasts.js";
     form.dataset.adminUserForm = "true";
     form.dataset.modalCloseOnSuccess = "true";
     if (!create) { form.appendChild(U.hidden("scope", "administration")); }
-    form.enctype = "multipart/form-data";
     form.appendChild(T.components.render("users/admin-fields", { user: user, create: create, protected: Boolean(user.protected), options: Object.assign({}, options.options, options) }));
     addSubmit(form, create ? "common.create" : "common.save"); return form;
-  }
-  function adminDialog(id, title, content, persistent) {
-    var dialog = U.dialog(id, title, content, persistent);
-    dialog.classList.add("modal-fullscreen");
-    dialog.querySelector(".modal-panel").classList.add("modal-panel-full");
-    dialog.querySelector(".modal-panel").classList.add("user-modal-panel");
-    return dialog;
   }
   T.users = {
     profiles: function (items) {
@@ -150,12 +147,24 @@ import "../../ui/toasts.js";
     modal: function (url, response, id) {
       var data = response.data, path = url.pathname;
       if (path.indexOf("/api/users/") !== 0) { return null; }
-      if (path === "/api/users/authentication") { return U.dialog(id, data.mode === "register" ? "common.register" : "common.login", authentication(data)); }
+      if (path === "/api/users/authentication") {
+        var authContent = authentication(data), authTitle = data.mode === "register" ? "common.register" : "common.login";
+        return authContent.querySelector("form") ? U.formDialog(id, authTitle, authContent, false, { size: "compact", icon: data.mode === "register" ? "user-plus" : "login" }) : U.dialog(id, authTitle, authContent);
+      }
       if (/\/following$/.test(path)) { return U.dialog(id, "public.following", following(data, U.pagination(response))); }
-      if (/\/avatar$/.test(path)) { var avatarDialog = U.dialog(id, "account.avatar_edit", avatar(data)); avatarDialog.querySelector(".modal-panel").classList.add("avatar-edit-modal-panel"); return avatarDialog; }
+      if (/\/avatar$/.test(path)) {
+        var avatarContent = avatar(data), avatarActions = avatarContent.querySelector(".avatar-editor-actions");
+        avatarActions.remove();
+        var avatarDialog = U.dialog(id, "account.avatar_edit", avatarContent, false, avatarActions, { kind: "editor", size: "compact" });
+        return avatarDialog;
+      }
       if (/\/management$/.test(path)) {
-        if (url.searchParams.get("panel") === "administration") { return adminDialog(id, U.text("users.edit_user", { username: data.user.username }), adminForm(data.user, Object.assign({}, data.administration, { options: data.options }), false)); }
-        var profileDialog = U.dialog(id, "account.profile_settings", profile(data, url)); profileDialog.classList.add("modal-form"); profileDialog.querySelector(".modal-panel").classList.add("modal-panel-lg"); return profileDialog;
+        if (url.searchParams.get("panel") === "administration") {
+          var adminDialog = U.sectionedDialog(id, "@" + data.user.username, adminForm(data.user, Object.assign({}, data.administration, { options: data.options }), false));
+          U.accountDialogTitle(adminDialog, data.user);
+          return adminDialog;
+        }
+        return accountEditor(data, url, id);
       }
       return null;
     },
@@ -173,18 +182,15 @@ import "../../ui/toasts.js";
       T.users.dialogs(root, data, pagination);
     },
     dialogs: function (root, data, pagination) {
-      var filters = document.getElementById("users-filter-modal");
-      if (filters) { if (T.dialog.close) { T.dialog.close(filters); } filters.remove(); }
       var filterForm = T.components.render("users/filter-form", Object.assign({}, data, { pagination: pagination }));
       filterForm.querySelectorAll("input, select, textarea").forEach(function (control) {
         control.defaultValue = control.value; control.defaultChecked = control.checked;
         if (control.options) { Array.from(control.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
       });
-      filterForm.dataset.modalCloseOnSuccess = "true";
-      U.dialog("users-filter-modal", "common.filters", filterForm, true);
+      U.filterPanel("users-filter-modal", filterForm);
       var create = document.getElementById("user-create-modal");
       if (create) { if (T.dialog.close) { T.dialog.close(create); } create.remove(); }
-      adminDialog("user-create-modal", "users.new_user", adminForm({}, data, true), true);
+      U.sectionedDialog("user-create-modal", "users.new_user", adminForm({}, data, true), true);
     },
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.dataset.url || source.getAttribute("href") || "/", window.location.href);
@@ -209,12 +215,15 @@ import "../../ui/toasts.js";
           else { document.documentElement.setAttribute("data-theme", data.user.theme); }
         }
         var modal = source.closest(".modal");
-        if (modal) { T.dialog.close(modal); }
+        if (modal && modal.dataset.accountEditor !== "true") { T.dialog.close(modal); }
         var localeChanged = source.dataset.originalLocale !== undefined && data.user.locale !== source.dataset.originalLocale;
         if (Number(document.body.dataset.currentUserId) === Number(data.user.id) && data.user.locale && data.user.locale !== T.i18n.locale() && (!T.urls.prefix() || localeChanged)) {
           window.setTimeout(function () {
-            if (T.urls.prefix()) { window.location.assign(T.urls.local(window.location.pathname + window.location.search, data.user.locale)); }
-            else { window.location.reload(); }
+            Promise.resolve(T.navigation.canLeave()).then(function (allowed) {
+              if (!allowed) { return; }
+              if (T.urls.prefix()) { window.location.assign(T.urls.local(window.location.pathname + window.location.search, data.user.locale)); }
+              else { window.location.reload(); }
+            });
           }, 0);
         }
       }
