@@ -767,12 +767,13 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   const searchRoot = new Node('form'), searchInput = new Node('input');
   searchInput.dataset.globalSearchInput = ''; searchInput.value = 'captcha'; searchRoot.appendChild(searchInput);
   T.ui.captcha = () => {};
-  T.api.request = async () => { const error = new Error('Verify search'); error.data = { code: 'captcha_required', error: { details: { captcha: { enabled: true } } } }; throw error; };
+  T.api.request = async () => { const error = new Error('Verify search'); error.data = { code: 'captcha_required', message: unsafe, error: { details: { captcha: { enabled: true } } } }; throw error; };
   T.search.hydrate({querySelectorAll: () => [searchRoot]});
   searchInput.listeners.focus();
   await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
   const searchChallenge = document.getElementById('global-search-captcha-modal');
   check(searchChallenge && searchChallenge.dataset.modalKind === 'editor' && searchChallenge.dataset.modalSize === 'compact', 'A real search challenge opens through the shared compact editor.');
+  check(searchChallenge.querySelector('.text-muted').textContent === unsafe && !searchChallenge.querySelector('img'), 'Untrusted search error messages remain literal text in the challenge dialog.');
   check(searchChallenge.querySelector('.modal-footer').querySelector('[type="submit"]').getAttribute('form') === searchChallenge.querySelector('form').id && !searchChallenge.querySelector('.modal-body').querySelector('[type="submit"]'), 'Search verification uses the same associated footer action as other forms.');
   T.dialog.close(searchChallenge);
   T.api.request = savedCaptchaRequest; T.ui.captcha = savedCaptcha; Node.prototype.addEventListener = savedCaptchaListener;
