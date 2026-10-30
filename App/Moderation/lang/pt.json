@@ -10,7 +10,6 @@
     "report_note": "Observação",
     "report_submit": "Enviar relatório",
     "profile_muted_until": "A conta fica silenciada até {until}.",
-    "url_blocker_title": "URLs bloqueados",
     "url_blocker_label": "Sites bloqueados",
     "url_blocker_placeholder": "exemplo.com, mau.exemplo, domínio:ru",
     "url_blocker_help": "Separe os sites com vírgulas ou novas linhas. Os subdomínios também estão bloqueados. Use domain:ru para bloquear todo o sufixo .ru.",

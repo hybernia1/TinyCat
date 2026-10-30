@@ -9,10 +9,15 @@
       "bots/sources",
       "bots/source-fields",
       "bots/runs",
-      "bots/account-edit-fields",
+      "bots/account-fields",
       "bots/queue",
       "bots/queue-filter-form",
-      "bots/source-preview"
+      "bots/source-preview",
+      "bots/posts",
+      "bots/post-filter-form",
+      "bots/stat",
+      "bots/runs-list",
+      "bots/run-filter-form"
     ],
     "entries": [
       "assets/modules/bots/index.js"
@@ -26,7 +31,13 @@
       "bots.preview_loading",
       "bots.preview_confirm",
       "bots.preview_invalid",
-      "bots.preview_changed"
+      "bots.preview_changed",
+      "bots.detail_account",
+      "bots.detail_sources",
+      "bots.detail_history",
+      "bots.detail_posts",
+      "common.refresh",
+      "bots.new_source"
     ],
     "messages": {
       "bot_account_created": "bots.messages.account_created",
@@ -53,19 +64,9 @@
       "scheduler_already_running": "cron.already_running",
       "bot_queue_published": "bots.queue_published",
       "status_not_found": "account.messages.status_not_found",
-      "bot_feed_preview": "bots.preview_invalid"
+      "bot_feed_preview": "bots.preview_invalid",
+      "record_activated": "common.activated",
+      "record_deactivated": "common.deactivated"
     }
-  },
-  {
-    "routes": [
-      "/admin/bots/detail"
-    ],
-    "components": [
-      "bots/posts"
-    ],
-    "entries": [],
-    "styles": [],
-    "translations": [],
-    "messages": {}
   }
 ]

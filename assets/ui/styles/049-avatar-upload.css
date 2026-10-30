@@ -62,16 +62,12 @@
   max-width: 100%;
 }
 
-.avatar-edit-modal-panel { max-width: 440px; }
 .avatar-editor { display: grid; gap: 24px; }
 .avatar-editor .avatar-upload { grid-template-columns: 124px minmax(0, 1fr); align-items: center; gap: 20px; }
 .avatar-editor-controls { display: grid; justify-items: start; gap: 8px; }
 .avatar-editor .avatar-upload-drop { padding: 8px 12px; font-size: 0.875rem; }
-.avatar-editor-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 16px; }
-.avatar-editor-actions form { margin-right: auto; }
 .avatar-editor-remove { color: var(--danger); background: transparent; padding-inline: 0; }
 .avatar-editor-remove:hover { background: transparent; color: var(--danger); text-decoration: underline; }
-.avatar-editor-actions > .btn { margin-left: auto; }
 @media (max-width: 380px) {
   .avatar-editor .avatar-upload { grid-template-columns: 1fr; justify-items: center; }
   .avatar-editor-controls { justify-items: center; }

@@ -2,80 +2,92 @@
   "bots/source-fields": {
     "tag": "div",
     "attrs": {
-      "class": "stack"
+      "class": "stack",
+      "data-editor-sections": ""
     },
     "children": [
       {
         "tag": "div",
         "attrs": {
-          "class": "grid sm:grid-2"
+          "class": "stack stack-gap-16",
+          "data-editor-section": "source",
+          "data-editor-label": "bots.source_label",
+          "data-editor-icon": "rss"
         },
         "children": [
           {
-            "tag": "label",
+            "tag": "div",
             "attrs": {
-              "class": "field"
+              "class": "grid sm:grid-2"
             },
             "children": [
               {
-                "tag": "span",
+                "tag": "label",
                 "attrs": {
-                  "class": "label"
+                  "class": "field"
                 },
                 "children": [
                   {
-                    "t": "bots.bot",
-                    "values": {}
-                  }
-                ]
-              },
-              {
-                "tag": "select",
-                "attrs": {
-                  "class": "select",
-                  "name": "bot_user_id",
-                  "required": true
-                },
-                "children": [
-                  {
-                    "each": {
-                      "get": "bots"
+                    "tag": "span",
+                    "attrs": {
+                      "class": "label"
                     },
-                    "as": "bot",
                     "children": [
                       {
-                        "tag": "option",
-                        "attrs": {
-                          "value": {
-                            "get": "bot.id"
-                          },
-                          "selected": {
-                            "if": [
-                              {
-                                "eq": [
-                                  {
-                                    "string": {
-                                      "get": "bot.id"
-                                    }
-                                  },
-                                  {
-                                    "string": {
-                                      "get": "source.bot_user_id"
-                                    }
-                                  }
-                                ]
-                              },
-                              true,
-                              null
-                            ]
-                          }
+                        "t": "bots.bot",
+                        "values": {}
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "select",
+                    "attrs": {
+                      "class": "select",
+                      "name": "bot_user_id",
+                      "required": true
+                    },
+                    "children": [
+                      {
+                        "each": {
+                          "get": "bots"
                         },
+                        "as": "bot",
                         "children": [
                           {
-                            "concat": [
-                              "@",
+                            "tag": "option",
+                            "attrs": {
+                              "value": {
+                                "get": "bot.id"
+                              },
+                              "selected": {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      {
+                                        "string": {
+                                          "get": "bot.id"
+                                        }
+                                      },
+                                      {
+                                        "string": {
+                                          "get": "source.bot_user_id"
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  true,
+                                  null
+                                ]
+                              }
+                            },
+                            "children": [
                               {
-                                "get": "bot.username"
+                                "concat": [
+                                  "@",
+                                  {
+                                    "get": "bot.username"
+                                  }
+                                ]
                               }
                             ]
                           }
@@ -84,6 +96,29 @@
                     ]
                   }
                 ]
+              },
+              {
+                "component": "ui/field",
+                "data": {
+                  "label": {
+                    "t": "bots.source_name",
+                    "values": {}
+                  },
+                  "value": {
+                    "get": "source.name"
+                  },
+                  "textarea": false,
+                  "attributes": {
+                    "class": "input",
+                    "name": "name",
+                    "type": "text",
+                    "value": {
+                      "get": "source.name"
+                    },
+                    "required": true,
+                    "maxlength": "120"
+                  }
+                }
               }
             ]
           },
@@ -91,455 +126,409 @@
             "component": "ui/field",
             "data": {
               "label": {
-                "t": "bots.source_name",
+                "t": "bots.feed_url",
                 "values": {}
               },
               "value": {
-                "get": "source.name"
+                "get": "source.feed_url"
               },
               "textarea": false,
               "attributes": {
                 "class": "input",
-                "name": "name",
-                "type": "text",
+                "name": "feed_url",
+                "type": "url",
                 "value": {
-                  "get": "source.name"
+                  "get": "source.feed_url"
                 },
                 "required": true,
-                "maxlength": "120"
+                "maxlength": "2048"
               }
             }
           }
         ]
       },
       {
-        "component": "ui/field",
-        "data": {
-          "label": {
-            "t": "bots.feed_url",
-            "values": {}
-          },
-          "value": {
-            "get": "source.feed_url"
-          },
-          "textarea": false,
-          "attributes": {
-            "class": "input",
-            "name": "feed_url",
-            "type": "url",
-            "value": {
-              "get": "source.feed_url"
-            },
-            "required": true,
-            "maxlength": "2048"
-          }
-        }
-      },
-      {
-        "component": "ui/field",
-        "data": {
-          "label": {
-            "t": "bots.fetch_interval",
-            "values": {}
-          },
-          "value": {
-            "or": [
-              {
-                "get": "source.interval_minutes"
-              },
-              60
-            ]
-          },
-          "textarea": false,
-          "attributes": {
-            "class": "input",
-            "name": "interval_minutes",
-            "type": "number",
-            "value": {
-              "or": [
-                {
-                  "get": "source.interval_minutes"
-                },
-                60
-              ]
-            },
-            "required": true,
-            "min": "5",
-            "max": "43200"
-          }
-        }
-      },
-      {
-        "component": "ui/field",
-        "data": {
-          "label": {
-            "t": "bots.interval",
-            "values": {}
-          },
-          "value": {
-            "or": [
-              {
-                "get": "source.publication_interval_minutes"
-              },
-              30
-            ]
-          },
-          "textarea": false,
-          "attributes": {
-            "class": "input",
-            "name": "publication_interval_minutes",
-            "type": "number",
-            "value": {
-              "or": [
-                {
-                  "get": "source.publication_interval_minutes"
-                },
-                30
-              ]
-            },
-            "required": true,
-            "min": "5",
-            "max": "43200"
-          }
-        }
-      },
-      {
-        "component": "ui/field",
-        "data": {
-          "label": {
-            "t": "bots.template",
-            "values": {}
-          },
-          "value": {
-            "or": [
-              {
-                "get": "source.post_template"
-              },
-              "{{title}}\n\n{{description}}\n\n{{url}}\n\n#{categories}"
-            ]
-          },
-          "textarea": true,
-          "attributes": {
-            "class": "textarea",
-            "name": "post_template",
-            "required": true,
-            "maxlength": "2000",
-            "rows": "8"
-          }
-        }
-      },
-      {
-        "tag": "dl",
+        "tag": "div",
         "attrs": {
-          "class": "grid sm:grid-2 text-sm m-0"
+          "class": "stack stack-gap-16",
+          "data-editor-section": "schedule",
+          "data-editor-label": "bots.schedule",
+          "data-editor-icon": "clock"
         },
         "children": [
           {
-            "tag": "div",
-            "attrs": {},
-            "children": [
-              {
-                "tag": "dt",
-                "attrs": {},
-                "children": [
+            "component": "ui/field",
+            "data": {
+              "label": {
+                "t": "bots.fetch_interval",
+                "values": {}
+              },
+              "value": {
+                "or": [
                   {
-                    "tag": "code",
-                    "attrs": {},
-                    "children": [
-                      "{{title}}"
-                    ]
-                  }
+                    "get": "source.interval_minutes"
+                  },
+                  60
                 ]
               },
-              {
-                "tag": "dd",
-                "attrs": {
-                  "class": "m-0 text-muted"
+              "textarea": false,
+              "attributes": {
+                "class": "input",
+                "name": "interval_minutes",
+                "type": "number",
+                "value": {
+                  "or": [
+                    {
+                      "get": "source.interval_minutes"
+                    },
+                    60
+                  ]
                 },
-                "children": [
-                  {
-                    "t": "bots.template_variables.title",
-                    "values": {}
-                  }
-                ]
+                "required": true,
+                "min": "5",
+                "max": "43200"
               }
-            ]
+            }
           },
           {
-            "tag": "div",
-            "attrs": {},
-            "children": [
-              {
-                "tag": "dt",
-                "attrs": {},
-                "children": [
+            "component": "ui/field",
+            "data": {
+              "label": {
+                "t": "bots.interval",
+                "values": {}
+              },
+              "value": {
+                "or": [
                   {
-                    "tag": "code",
-                    "attrs": {},
-                    "children": [
-                      "{{description}}"
-                    ]
-                  }
+                    "get": "source.publication_interval_minutes"
+                  },
+                  30
                 ]
               },
-              {
-                "tag": "dd",
-                "attrs": {
-                  "class": "m-0 text-muted"
+              "textarea": false,
+              "attributes": {
+                "class": "input",
+                "name": "publication_interval_minutes",
+                "type": "number",
+                "value": {
+                  "or": [
+                    {
+                      "get": "source.publication_interval_minutes"
+                    },
+                    30
+                  ]
                 },
-                "children": [
-                  {
-                    "t": "bots.template_variables.description",
-                    "values": {}
-                  }
-                ]
+                "required": true,
+                "min": "5",
+                "max": "43200"
               }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {},
-            "children": [
-              {
-                "tag": "dt",
-                "attrs": {},
-                "children": [
-                  {
-                    "tag": "code",
-                    "attrs": {},
-                    "children": [
-                      "{{url}}"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "dd",
-                "attrs": {
-                  "class": "m-0 text-muted"
-                },
-                "children": [
-                  {
-                    "t": "bots.template_variables.url",
-                    "values": {}
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {},
-            "children": [
-              {
-                "tag": "dt",
-                "attrs": {},
-                "children": [
-                  {
-                    "tag": "code",
-                    "attrs": {},
-                    "children": [
-                      "{{author}}"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "dd",
-                "attrs": {
-                  "class": "m-0 text-muted"
-                },
-                "children": [
-                  {
-                    "t": "bots.template_variables.author",
-                    "values": {}
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {},
-            "children": [
-              {
-                "tag": "dt",
-                "attrs": {},
-                "children": [
-                  {
-                    "tag": "code",
-                    "attrs": {},
-                    "children": [
-                      "{{source}}"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "dd",
-                "attrs": {
-                  "class": "m-0 text-muted"
-                },
-                "children": [
-                  {
-                    "t": "bots.template_variables.source",
-                    "values": {}
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {},
-            "children": [
-              {
-                "tag": "dt",
-                "attrs": {},
-                "children": [
-                  {
-                    "tag": "code",
-                    "attrs": {},
-                    "children": [
-                      "{{categories}}"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "dd",
-                "attrs": {
-                  "class": "m-0 text-muted"
-                },
-                "children": [
-                  {
-                    "t": "bots.template_variables.categories",
-                    "values": {}
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {},
-            "children": [
-              {
-                "tag": "dt",
-                "attrs": {},
-                "children": [
-                  {
-                    "tag": "code",
-                    "attrs": {},
-                    "children": [
-                      "#{categories}"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "dd",
-                "attrs": {
-                  "class": "m-0 text-muted"
-                },
-                "children": [
-                  {
-                    "t": "bots.template_variables.category_tags",
-                    "values": {}
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {},
-            "children": [
-              {
-                "tag": "dt",
-                "attrs": {},
-                "children": [
-                  {
-                    "tag": "code",
-                    "attrs": {},
-                    "children": [
-                      "{{image}}"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "dd",
-                "attrs": {
-                  "class": "m-0 text-muted"
-                },
-                "children": [
-                  {
-                    "t": "bots.template_variables.image",
-                    "values": {}
-                  }
-                ]
-              }
-            ]
+            }
           }
         ]
       },
       {
-        "tag": "label",
+        "tag": "div",
         "attrs": {
-          "class": "check"
+          "class": "stack stack-gap-16",
+          "data-editor-section": "template",
+          "data-editor-label": "bots.template",
+          "data-editor-icon": "file"
         },
         "children": [
           {
-            "tag": "input",
-            "attrs": {
-              "type": "hidden",
-              "name": "enabled",
-              "value": "0"
-            },
-            "children": []
-          },
-          {
-            "tag": "input",
-            "attrs": {
-              "type": "checkbox",
-              "name": "enabled",
-              "value": "1",
-              "checked": {
-                "if": [
+            "component": "ui/field",
+            "data": {
+              "label": {
+                "t": "bots.template",
+                "values": {}
+              },
+              "value": {
+                "or": [
                   {
-                    "get": "source.enabled"
+                    "get": "source.post_template"
                   },
-                  true,
-                  null
+                  "{{title}}\n\n{{description}}\n\n{{url}}\n\n#{categories}"
                 ]
+              },
+              "textarea": true,
+              "attributes": {
+                "class": "textarea",
+                "name": "post_template",
+                "required": true,
+                "maxlength": "2000",
+                "rows": "8"
               }
-            },
-            "children": []
+            }
           },
           {
-            "tag": "span",
-            "attrs": {},
+            "tag": "dl",
+            "attrs": {
+              "class": "grid sm:grid-2 text-sm m-0"
+            },
             "children": [
               {
-                "t": "bots.enabled",
+                "tag": "div",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "dt",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "code",
+                        "attrs": {},
+                        "children": [
+                          "{{title}}"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "dd",
+                    "attrs": {
+                      "class": "m-0 text-muted"
+                    },
+                    "children": [
+                      {
+                        "t": "bots.template_variables.title",
+                        "values": {}
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "dt",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "code",
+                        "attrs": {},
+                        "children": [
+                          "{{description}}"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "dd",
+                    "attrs": {
+                      "class": "m-0 text-muted"
+                    },
+                    "children": [
+                      {
+                        "t": "bots.template_variables.description",
+                        "values": {}
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "dt",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "code",
+                        "attrs": {},
+                        "children": [
+                          "{{url}}"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "dd",
+                    "attrs": {
+                      "class": "m-0 text-muted"
+                    },
+                    "children": [
+                      {
+                        "t": "bots.template_variables.url",
+                        "values": {}
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "dt",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "code",
+                        "attrs": {},
+                        "children": [
+                          "{{author}}"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "dd",
+                    "attrs": {
+                      "class": "m-0 text-muted"
+                    },
+                    "children": [
+                      {
+                        "t": "bots.template_variables.author",
+                        "values": {}
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "dt",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "code",
+                        "attrs": {},
+                        "children": [
+                          "{{source}}"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "dd",
+                    "attrs": {
+                      "class": "m-0 text-muted"
+                    },
+                    "children": [
+                      {
+                        "t": "bots.template_variables.source",
+                        "values": {}
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "dt",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "code",
+                        "attrs": {},
+                        "children": [
+                          "{{categories}}"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "dd",
+                    "attrs": {
+                      "class": "m-0 text-muted"
+                    },
+                    "children": [
+                      {
+                        "t": "bots.template_variables.categories",
+                        "values": {}
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "dt",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "code",
+                        "attrs": {},
+                        "children": [
+                          "#{categories}"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "dd",
+                    "attrs": {
+                      "class": "m-0 text-muted"
+                    },
+                    "children": [
+                      {
+                        "t": "bots.template_variables.category_tags",
+                        "values": {}
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "dt",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "code",
+                        "attrs": {},
+                        "children": [
+                          "{{image}}"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "dd",
+                    "attrs": {
+                      "class": "m-0 text-muted"
+                    },
+                    "children": [
+                      {
+                        "t": "bots.template_variables.image",
+                        "values": {}
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "button",
+            "attrs": {
+              "type": "button",
+              "class": "btn btn-secondary",
+              "data-bot-source-preview": ""
+            },
+            "children": [
+              {
+                "t": "bots.preview_title",
                 "values": {}
               }
             ]
-          }
-        ]
-      },
-      {
-        "tag": "button",
-        "attrs": {
-          "type": "button",
-          "class": "btn btn-secondary",
-          "data-bot-source-preview": ""
-        },
-        "children": [
-          {
-            "t": "bots.preview_title",
-            "values": {}
           }
         ]
       }
@@ -549,14 +538,50 @@
     "tag": "div",
     "attrs": {
       "class": "stack stack-gap-14",
-      "data-bot-sources-view": "",
-      "data-bot-sources-state": {
-        "json": {
-          "get": "state"
-        }
-      }
+      "data-bot-sources-view": ""
     },
     "children": [
+      {
+        "component": "ui/list-toolbar",
+        "data": {
+          "url": "/api/bots/sources",
+          "target": {
+            "or": [
+              {
+                "get": "list_target"
+              },
+              "#bots-list"
+            ]
+          },
+          "history": {
+            "if": [
+              {
+                "get": "scoped"
+              },
+              false,
+              "/admin/bots/list"
+            ]
+          },
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          },
+          "filter_modal": {
+            "if": [
+              {
+                "get": "scoped"
+              },
+              null,
+              "bots-filter-modal"
+            ]
+          }
+        },
+        "when": {
+          "get": "filters"
+        }
+      },
       {
         "tag": "div",
         "attrs": {
@@ -619,19 +644,15 @@
               }
             ]
           }
-        ]
+        ],
+        "when": {
+          "not": {
+            "get": "filters"
+          }
+        }
       },
       {
-        "tag": "div",
-        "attrs": {
-          "class": "alert alert-info"
-        },
-        "children": [
-          {
-            "t": "bots.no_sources",
-            "values": {}
-          }
-        ],
+        "component": "ui/empty-state",
         "when": {
           "not": {
             "get": "items"
@@ -671,7 +692,7 @@
                             "component": "ui/sort-heading",
                             "data": {
                               "label": {
-                                "t": "bots.source_name",
+                                "t": "bots.source_label",
                                 "values": {}
                               },
                               "order": {
@@ -709,29 +730,6 @@
                         "attrs": {
                           "scope": "col",
                           "aria-sort": {
-                            "get": "sorting.status.aria"
-                          }
-                        },
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "common.status",
-                                "values": {}
-                              },
-                              "order": {
-                                "get": "sorting.status"
-                              }
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "scope": "col",
-                          "aria-sort": {
                             "get": "sorting.interval.aria"
                           }
                         },
@@ -753,25 +751,11 @@
                       {
                         "tag": "th",
                         "attrs": {
-                          "scope": "col",
-                          "title": {
-                            "t": "bots.source_counts_help"
-                          }
+                          "scope": "col"
                         },
                         "children": [
                           {
-                            "t": "bots.detail_posts"
-                          },
-                          {
-                            "tag": "div",
-                            "attrs": {
-                              "class": "table-meta"
-                            },
-                            "children": [
-                              {
-                                "t": "bots.published_queued"
-                              }
-                            ]
+                            "t": "bots.published_queued"
                           }
                         ]
                       },
@@ -827,7 +811,17 @@
                     "children": [
                       {
                         "tag": "tr",
-                        "attrs": {},
+                        "attrs": {
+                          "class": {
+                            "if": [
+                              {
+                                "get": "source.enabled"
+                              },
+                              null,
+                              "table-row-inactive"
+                            ]
+                          }
+                        },
                         "children": [
                           {
                             "tag": "td",
@@ -878,6 +872,27 @@
                                 "when": {
                                   "get": "source.last_error"
                                 }
+                              },
+                              {
+                                "tag": "span",
+                                "attrs": {
+                                  "class": "sr-only"
+                                },
+                                "children": [
+                                  {
+                                    "if": [
+                                      {
+                                        "get": "source.enabled"
+                                      },
+                                      {
+                                        "t": "bots.enabled"
+                                      },
+                                      {
+                                        "t": "bots.disabled"
+                                      }
+                                    ]
+                                  }
+                                ]
                               }
                             ]
                           },
@@ -895,6 +910,16 @@
                                         "get": "source.bot_user_id"
                                       }
                                     ]
+                                  },
+                                  "data-modal-open": "bot-detail-modal",
+                                  "data-modal-url": {
+                                    "concat": [
+                                      "/api/bots/accounts/",
+                                      {
+                                        "get": "source.bot_user_id"
+                                      },
+                                      "?panel=detail"
+                                    ]
                                   }
                                 },
                                 "children": [
@@ -903,48 +928,6 @@
                                       "@",
                                       {
                                         "get": "source.bot_username"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "attrs": {},
-                            "children": [
-                              {
-                                "tag": "span",
-                                "attrs": {
-                                  "class": {
-                                    "concat": [
-                                      "badge",
-                                      {
-                                        "if": [
-                                          {
-                                            "get": "source.enabled"
-                                          },
-                                          " badge-primary",
-                                          ""
-                                        ]
-                                      }
-                                    ]
-                                  }
-                                },
-                                "children": [
-                                  {
-                                    "if": [
-                                      {
-                                        "get": "source.enabled"
-                                      },
-                                      {
-                                        "t": "bots.enabled",
-                                        "values": {}
-                                      },
-                                      {
-                                        "t": "bots.disabled",
-                                        "values": {}
                                       }
                                     ]
                                   }
@@ -987,17 +970,27 @@
                           },
                           {
                             "tag": "td",
-                            "attrs": {
-                              "title": {
-                                "t": "bots.source_counts_help"
-                              }
-                            },
+                            "attrs": {},
                             "children": [
                               {
                                 "tag": "a",
                                 "attrs": {
                                   "href": {
                                     "get": "source.published_url"
+                                  },
+                                  "data-modal-open": "bot-detail-modal",
+                                  "data-modal-url": {
+                                    "concat": [
+                                      "/api/bots/accounts/",
+                                      {
+                                        "get": "source.bot_user_id"
+                                      },
+                                      "?panel=detail&tab=posts&source=",
+                                      {
+                                        "get": "source.id"
+                                      },
+                                      "&publication=published"
+                                    ]
                                   }
                                 },
                                 "children": [
@@ -1035,10 +1028,7 @@
                                       "get": "source.last_imported_at"
                                     }
                                   },
-                                  {
-                                    "t": "bots.never_imported",
-                                    "values": {}
-                                  }
+                                  "—"
                                 ]
                               }
                             ]
@@ -1056,29 +1046,39 @@
                                 },
                                 "children": [
                                   {
-                                    "tag": "button",
-                                    "attrs": {
+                                    "component": "ui/modal-trigger",
+                                    "data": {
                                       "class": "btn btn-sm btn-ghost btn-icon",
-                                      "type": "button",
-                                      "data-bot-source-edit": {
-                                        "get": "source.id"
+                                      "modal": {
+                                        "concat": [
+                                          "bot-source-edit-",
+                                          {
+                                            "get": "source.id"
+                                          }
+                                        ]
                                       },
-                                      "aria-label": {
+                                      "url": {
+                                        "concat": [
+                                          "/api/bots/sources/",
+                                          {
+                                            "get": "source.id"
+                                          },
+                                          "/management"
+                                        ]
+                                      },
+                                      "label": {
                                         "t": "bots.edit_source"
                                       },
-                                      "title": {
-                                        "t": "bots.edit_source"
-                                      }
-                                    },
-                                    "children": [
-                                      {
-                                        "icon": "edit"
-                                      }
-                                    ]
+                                      "icon": "edit",
+                                      "icon_only": true
+                                    }
                                   },
                                   {
-                                    "component": "ui/api-action",
+                                    "component": "ui/activation-action",
                                     "data": {
+                                      "active": {
+                                        "get": "source.enabled"
+                                      },
                                       "url": {
                                         "concat": [
                                           "/api/bots/sources/",
@@ -1087,44 +1087,15 @@
                                           }
                                         ]
                                       },
-                                      "method": "PATCH",
-                                      "target": "#bots-list",
-                                      "fields": {
-                                        "enabled": {
-                                          "if": [
-                                            {
-                                              "get": "source.enabled"
-                                            },
-                                            "0",
-                                            "1"
-                                          ]
-                                        }
-                                      },
-                                      "label": {
-                                        "if": [
+                                      "target": {
+                                        "or": [
                                           {
-                                            "get": "source.enabled"
+                                            "get": "list_target"
                                           },
-                                          {
-                                            "t": "bots.detail_pause",
-                                            "values": {}
-                                          },
-                                          {
-                                            "t": "bots.detail_enable",
-                                            "values": {}
-                                          }
+                                          "#bots-list"
                                         ]
                                       },
-                                      "icon": {
-                                        "if": [
-                                          {
-                                            "get": "source.enabled"
-                                          },
-                                          "pause",
-                                          "play"
-                                        ]
-                                      },
-                                      "button_class": "btn btn-sm btn-ghost btn-icon"
+                                      "method": "PATCH"
                                     }
                                   },
                                   {
@@ -1140,7 +1111,14 @@
                                         ]
                                       },
                                       "method": "POST",
-                                      "target": "#bots-list",
+                                      "target": {
+                                        "or": [
+                                          {
+                                            "get": "list_target"
+                                          },
+                                          "#bots-list"
+                                        ]
+                                      },
                                       "label": {
                                         "t": "bots.detail_run_now",
                                         "values": {}
@@ -1161,7 +1139,14 @@
                                         ]
                                       },
                                       "method": "DELETE",
-                                      "target": "#bots-list",
+                                      "target": {
+                                        "or": [
+                                          {
+                                            "get": "list_target"
+                                          },
+                                          "#bots-list"
+                                        ]
+                                      },
                                       "label": {
                                         "t": "common.delete",
                                         "values": {}
@@ -1192,15 +1177,23 @@
         }
       },
       {
-        "tag": "p",
-        "attrs": {
-          "class": "help m-0"
-        },
-        "children": [
-          {
-            "t": "bots.source_counts_help"
+        "component": "ui/pagination",
+        "data": {
+          "navigation": {
+            "get": "navigation"
+          },
+          "target": {
+            "or": [
+              {
+                "get": "list_target"
+              },
+              "#bots-list"
+            ]
           }
-        ]
+        },
+        "when": {
+          "get": "navigation"
+        }
       }
     ]
   },
@@ -1221,7 +1214,8 @@
           },
           "pagination": {
             "get": "pagination"
-          }
+          },
+          "filter_modal": "bot-accounts-filter-modal"
         }
       },
       {
@@ -1262,29 +1256,6 @@
                               },
                               "order": {
                                 "get": "sorting.username"
-                              }
-                            }
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "th",
-                        "attrs": {
-                          "scope": "col",
-                          "aria-sort": {
-                            "get": "sorting.status.aria"
-                          }
-                        },
-                        "children": [
-                          {
-                            "component": "ui/sort-heading",
-                            "data": {
-                              "label": {
-                                "t": "common.status",
-                                "values": {}
-                              },
-                              "order": {
-                                "get": "sorting.status"
                               }
                             }
                           }
@@ -1388,7 +1359,22 @@
                     "children": [
                       {
                         "tag": "tr",
-                        "attrs": {},
+                        "attrs": {
+                          "class": {
+                            "if": [
+                              {
+                                "eq": [
+                                  {
+                                    "get": "account.status"
+                                  },
+                                  "active"
+                                ]
+                              },
+                              null,
+                              "table-row-inactive"
+                            ]
+                          }
+                        },
                         "children": [
                           {
                             "tag": "td",
@@ -1407,20 +1393,14 @@
                                     ]
                                   }
                                 ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "td",
-                            "attrs": {},
-                            "children": [
+                              },
                               {
-                                "component": "ui/account-status",
-                                "data": {
-                                  "status": {
-                                    "get": "account.status"
-                                  },
-                                  "label": {
+                                "tag": "span",
+                                "attrs": {
+                                  "class": "sr-only"
+                                },
+                                "children": [
+                                  {
                                     "lookup": {
                                       "get": "account.status"
                                     },
@@ -1436,7 +1416,7 @@
                                       }
                                     }
                                   }
-                                }
+                                ]
                               }
                             ]
                           },
@@ -1496,21 +1476,14 @@
                                     "component": "ui/modal-trigger",
                                     "data": {
                                       "class": "btn btn-sm btn-ghost btn-icon",
-                                      "modal": {
-                                        "concat": [
-                                          "bot-account-edit-",
-                                          {
-                                            "get": "account.id"
-                                          }
-                                        ]
-                                      },
+                                      "modal": "bot-detail-modal",
                                       "url": {
                                         "concat": [
                                           "/api/bots/accounts/",
                                           {
                                             "get": "account.id"
                                           },
-                                          "/management"
+                                          "?panel=detail"
                                         ]
                                       },
                                       "label": {
@@ -1521,40 +1494,27 @@
                                     }
                                   },
                                   {
-                                    "tag": "a",
-                                    "attrs": {
-                                      "class": "btn btn-sm btn-ghost btn-icon",
-                                      "href": {
+                                    "component": "ui/activation-action",
+                                    "data": {
+                                      "active": {
+                                        "eq": [
+                                          {
+                                            "get": "account.status"
+                                          },
+                                          "active"
+                                        ]
+                                      },
+                                      "url": {
                                         "concat": [
-                                          "/admin/bots/",
+                                          "/api/bots/accounts/",
                                           {
                                             "get": "account.id"
-                                          }
+                                          },
+                                          "/activation"
                                         ]
                                       },
-                                      "aria-label": {
-                                        "t": "bots.detail_title"
-                                      },
-                                      "title": {
-                                        "t": "bots.detail_title"
-                                      }
-                                    },
-                                    "children": [
-                                      {
-                                        "icon": "eye"
-                                      },
-                                      {
-                                        "tag": "span",
-                                        "attrs": {
-                                          "class": "sr-only"
-                                        },
-                                        "children": [
-                                          {
-                                            "t": "bots.detail_title"
-                                          }
-                                        ]
-                                      }
-                                    ]
+                                      "target": "#bot-accounts-list"
+                                    }
                                   },
                                   {
                                     "component": "ui/api-action",
@@ -1600,12 +1560,11 @@
                       {
                         "tag": "td",
                         "attrs": {
-                          "colspan": "6"
+                          "colspan": "5"
                         },
                         "children": [
                           {
-                            "t": "bots.no_bots",
-                            "values": {}
+                            "component": "ui/empty-state"
                           }
                         ]
                       }
@@ -1635,16 +1594,7 @@
   },
   "bots/runs": [
     {
-      "tag": "p",
-      "attrs": {
-        "class": "text-muted mb-0"
-      },
-      "children": [
-        {
-          "t": "bots.detail_no_runs",
-          "values": {}
-        }
-      ],
+      "component": "ui/empty-state",
       "when": {
         "not": {
           "get": "runs"
@@ -1654,7 +1604,7 @@
     {
       "tag": "div",
       "attrs": {
-        "class": "table-wrap min-w-0"
+        "class": "table-wrap"
       },
       "children": [
         {
@@ -1674,48 +1624,92 @@
                     {
                       "tag": "th",
                       "attrs": {
-                        "scope": "col"
+                        "scope": "col",
+                        "aria-sort": {
+                          "get": "sorting.source.aria"
+                        }
                       },
                       "children": [
                         {
-                          "t": "bots.detail_source",
-                          "values": {}
+                          "component": "ui/sort-heading",
+                          "data": {
+                            "label": {
+                              "t": "bots.detail_source",
+                              "values": {}
+                            },
+                            "order": {
+                              "get": "sorting.source"
+                            }
+                          }
                         }
                       ]
                     },
                     {
                       "tag": "th",
                       "attrs": {
-                        "scope": "col"
+                        "scope": "col",
+                        "aria-sort": {
+                          "get": "sorting.status.aria"
+                        }
                       },
                       "children": [
                         {
-                          "t": "bots.detail_status",
-                          "values": {}
+                          "component": "ui/sort-heading",
+                          "data": {
+                            "label": {
+                              "t": "bots.detail_status",
+                              "values": {}
+                            },
+                            "order": {
+                              "get": "sorting.status"
+                            }
+                          }
                         }
                       ]
                     },
                     {
                       "tag": "th",
                       "attrs": {
-                        "scope": "col"
+                        "scope": "col",
+                        "aria-sort": {
+                          "get": "sorting.started_at.aria"
+                        }
                       },
                       "children": [
                         {
-                          "t": "bots.detail_started",
-                          "values": {}
+                          "component": "ui/sort-heading",
+                          "data": {
+                            "label": {
+                              "t": "bots.detail_started",
+                              "values": {}
+                            },
+                            "order": {
+                              "get": "sorting.started_at"
+                            }
+                          }
                         }
                       ]
                     },
                     {
                       "tag": "th",
                       "attrs": {
-                        "scope": "col"
+                        "scope": "col",
+                        "aria-sort": {
+                          "get": "sorting.items_seen.aria"
+                        }
                       },
                       "children": [
                         {
-                          "t": "bots.detail_items_seen",
-                          "values": {}
+                          "component": "ui/sort-heading",
+                          "data": {
+                            "label": {
+                              "t": "bots.detail_items_seen",
+                              "values": {}
+                            },
+                            "order": {
+                              "get": "sorting.items_seen"
+                            }
+                          }
                         }
                       ]
                     },
@@ -1833,241 +1827,112 @@
     }
   ],
   "bots/stat": {
-    "tag": "div",
-    "attrs": {
-      "class": "card"
-    },
-    "children": [
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "card-body stack gap-1"
+    "component": "ui/stat-card",
+    "data": {
+      "label": {
+        "lookup": {
+          "get": "stat.key"
         },
-        "children": [
-          {
-            "tag": "span",
-            "attrs": {
-              "class": "table-meta"
-            },
-            "children": [
-              {
-                "lookup": {
-                  "get": "stat.key"
-                },
-                "cases": {
-                  "sources": {
-                    "t": "bots.detail_stat_sources"
-                  },
-                  "active_sources": {
-                    "t": "bots.detail_stat_active_sources"
-                  },
-                  "posts": {
-                    "t": "bots.detail_stat_posts"
-                  },
-                  "runs": {
-                    "t": "bots.detail_stat_runs"
-                  }
-                }
-              }
-            ]
+        "cases": {
+          "sources": {
+            "t": "bots.detail_stat_sources"
           },
-          {
-            "tag": "strong",
-            "attrs": {
-              "class": "text-2xl",
-              "data-bot-stat": {
-                "get": "stat.key"
-              }
-            },
-            "children": [
-              {
-                "get": "stat.value"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "bots/account-edit-fields": {
-    "tag": "div",
-    "attrs": {
-      "class": "stack"
-    },
-    "children": [
-      {
-        "tag": "strong",
-        "attrs": {},
-        "children": [
-          {
-            "concat": [
-              "@",
-              {
-                "get": "item.username"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "component": "ui/select",
-        "data": {
-          "label": {
-            "t": "common.status"
+          "active_sources": {
+            "t": "bots.detail_stat_active_sources"
           },
-          "attributes": {
-            "class": "select",
-            "name": "status",
-            "required": true
+          "posts": {
+            "t": "bots.detail_stat_posts"
           },
-          "value": {
-            "get": "item.status"
-          },
-          "choices": {
-            "active": {
-              "t": "users.statuses.active"
-            },
-            "waiting": {
-              "t": "users.statuses.waiting"
-            },
-            "ban": {
-              "t": "users.statuses.ban"
-            }
+          "runs": {
+            "t": "bots.detail_stat_runs"
           }
         }
       },
-      {
-        "component": "ui/field",
-        "data": {
-          "label": {
-            "t": "bots.detail_bio"
-          },
-          "value": {
-            "get": "item.bio"
-          },
-          "textarea": true,
-          "attributes": {
-            "class": "textarea",
-            "name": "bio",
-            "rows": "4",
-            "maxlength": "500"
-          }
+      "icon": {
+        "lookup": {
+          "get": "stat.key"
+        },
+        "cases": {
+          "sources": "rss",
+          "active_sources": "check",
+          "posts": "file",
+          "runs": "refresh"
         }
       },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "field stack stack-gap-8"
-        },
-        "children": [
-          {
-            "tag": "span",
-            "attrs": {
-              "class": "label"
-            },
-            "children": [
-              {
-                "t": "account.avatar"
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attrs": {
-              "class": "cluster gap-3"
-            },
-            "children": [
-              {
-                "component": "ui/avatar",
-                "data": {
-                  "user": {
-                    "get": "item"
-                  }
-                }
-              },
-              {
-                "tag": "input",
-                "attrs": {
-                  "type": "file",
-                  "name": "avatar",
-                  "class": "input",
-                  "accept": "image/png,image/jpeg,image/webp"
-                },
-                "children": []
-              }
-            ]
-          },
-          {
-            "tag": "label",
-            "attrs": {
-              "class": "check"
-            },
-            "children": [
-              {
-                "tag": "input",
-                "attrs": {
-                  "type": "checkbox",
-                  "name": "remove_avatar",
-                  "value": "1"
-                },
-                "children": []
-              },
-              {
-                "tag": "span",
-                "attrs": {},
-                "children": [
-                  {
-                    "t": "account.remove_avatar"
-                  }
-                ]
-              }
-            ],
-            "when": {
-              "get": "item.avatar_url"
-            }
-          }
-        ]
+      "value": {
+        "get": "stat.value"
+      },
+      "value_attributes": {
+        "data-bot-stat": {
+          "get": "stat.key"
+        }
       }
-    ]
+    }
   },
   "bots/run-status": {
-    "lookup": {
-      "get": "status"
-    },
-    "cases": {
-      "success": {
-        "t": "bots.run_statuses.posted"
+    "component": "ui/status-badge",
+    "data": {
+      "tone": {
+        "lookup": {
+          "get": "status"
+        },
+        "cases": {
+          "success": "ok",
+          "posted": "ok",
+          "current": "ok",
+          "completed": "ok",
+          "error": "critical",
+          "interrupted": "critical",
+          "running": "primary"
+        },
+        "default": "unknown"
       },
-      "posted": {
-        "t": "bots.run_statuses.posted"
-      },
-      "current": {
-        "t": "bots.run_statuses.current"
-      },
-      "running": {
-        "t": "bots.run_statuses.running"
-      },
-      "error": {
-        "t": "bots.run_statuses.error"
-      },
-      "skipped": {
-        "t": "bots.run_statuses.skipped"
-      },
-      "completed": {
-        "t": "bots.run_statuses.completed"
-      },
-      "interrupted": {
-        "t": "bots.run_statuses.interrupted"
+      "label": {
+        "lookup": {
+          "get": "status"
+        },
+        "cases": {
+          "success": {
+            "t": "bots.run_statuses.posted"
+          },
+          "posted": {
+            "t": "bots.run_statuses.posted"
+          },
+          "current": {
+            "t": "bots.run_statuses.current"
+          },
+          "running": {
+            "t": "bots.run_statuses.running"
+          },
+          "error": {
+            "t": "bots.run_statuses.error"
+          },
+          "skipped": {
+            "t": "bots.run_statuses.skipped"
+          },
+          "completed": {
+            "t": "bots.run_statuses.completed"
+          },
+          "interrupted": {
+            "t": "bots.run_statuses.interrupted"
+          }
+        },
+        "default": {
+          "get": "status"
+        }
       }
-    },
-    "default": {
-      "get": "status"
     }
   },
   "bots/posts": {
     "tag": "div",
     "attrs": {
-      "class": "stack stack-gap-14"
+      "class": "stack stack-gap-14",
+      "data-bot-posts-view": "",
+      "data-bot-posts-state": {
+        "json": {
+          "get": "state"
+        }
+      }
     },
     "children": [
       {
@@ -2076,7 +1941,14 @@
           "url": {
             "get": "api_url"
           },
-          "target": "#bot-posts-list",
+          "target": {
+            "or": [
+              {
+                "get": "list_target"
+              },
+              "#bot-detail-posts-list"
+            ]
+          },
           "history": {
             "get": "history_url"
           },
@@ -2085,37 +1957,14 @@
           },
           "pagination": {
             "get": "pagination"
+          },
+          "filter_modal": {
+            "get": "filter_modal"
           }
         }
       },
       {
-        "component": "bots/post-filters",
-        "data": {
-          "filters": {
-            "get": "filters"
-          },
-          "sources": {
-            "get": "sources"
-          },
-          "api_url": {
-            "get": "api_url"
-          },
-          "history_url": {
-            "get": "history_url"
-          }
-        }
-      },
-      {
-        "tag": "p",
-        "attrs": {
-          "class": "text-muted m-0"
-        },
-        "children": [
-          {
-            "t": "bots.detail_no_posts",
-            "values": {}
-          }
-        ],
+        "component": "ui/empty-state",
         "when": {
           "not": {
             "get": "items"
@@ -2125,7 +1974,7 @@
       {
         "tag": "div",
         "attrs": {
-          "class": "table-wrap min-w-0"
+          "class": "table-wrap"
         },
         "children": [
           {
@@ -2369,7 +2218,7 @@
                                     "tag": "button",
                                     "attrs": {
                                       "type": "button",
-                                      "class": "btn btn-secondary btn-icon btn-sm",
+                                      "class": "btn btn-sm btn-ghost btn-icon",
                                       "title": {
                                         "t": "common.edit",
                                         "values": {}
@@ -2430,7 +2279,7 @@
                                         "tag": "button",
                                         "attrs": {
                                           "type": "submit",
-                                          "class": "btn btn-secondary btn-icon btn-sm",
+                                          "class": "btn btn-sm btn-ghost btn-icon text-danger",
                                           "title": {
                                             "t": "common.delete",
                                             "values": {}
@@ -2471,7 +2320,14 @@
           "navigation": {
             "get": "navigation"
           },
-          "target": "#bot-posts-list"
+          "target": {
+            "or": [
+              {
+                "get": "list_target"
+              },
+              "#bot-detail-posts-list"
+            ]
+          }
         }
       }
     ]
@@ -2499,7 +2355,8 @@
           },
           "pagination": {
             "get": "pagination"
-          }
+          },
+          "filter_modal": "bot-queue-filter-modal"
         }
       },
       {
@@ -2649,6 +2506,16 @@
                                 "attrs": {
                                   "href": {
                                     "get": "post.bot_url"
+                                  },
+                                  "data-modal-open": "bot-detail-modal",
+                                  "data-modal-url": {
+                                    "concat": [
+                                      "/api/bots/accounts/",
+                                      {
+                                        "get": "post.bot_id"
+                                      },
+                                      "?panel=detail"
+                                    ]
                                   }
                                 },
                                 "children": [
@@ -2734,52 +2601,83 @@
                             },
                             "children": [
                               {
-                                "tag": "form",
+                                "tag": "div",
                                 "attrs": {
-                                  "method": "post",
-                                  "action": {
-                                    "get": "post.publish_url"
-                                  },
-                                  "data-ajax-form": "",
-                                  "data-ajax-target": "#bot-queue-list",
-                                  "data-confirm": {
-                                    "t": "bots.publish_now_confirm"
-                                  }
+                                  "class": "table-actions"
                                 },
                                 "children": [
                                   {
-                                    "csrf": true
-                                  },
-                                  {
-                                    "tag": "button",
-                                    "attrs": {
-                                      "type": "submit",
-                                      "class": "btn btn-secondary btn-sm",
-                                      "disabled": {
-                                        "not": {
-                                          "get": "post.can_publish"
-                                        }
-                                      },
-                                      "title": {
-                                        "if": [
+                                    "component": "ui/modal-trigger",
+                                    "data": {
+                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "modal": {
+                                        "concat": [
+                                          "bot-queue-edit-",
                                           {
-                                            "get": "post.can_publish"
-                                          },
-                                          {
-                                            "t": "bots.publish_now"
-                                          },
-                                          {
-                                            "t": "bots.detail_bot_inactive"
+                                            "get": "post.id"
                                           }
                                         ]
-                                      }
+                                      },
+                                      "url": {
+                                        "get": "post.edit_url"
+                                      },
+                                      "label": {
+                                        "t": "common.edit"
+                                      },
+                                      "icon": "edit",
+                                      "icon_only": true
+                                    }
+                                  },
+                                  {
+                                    "tag": "form",
+                                    "attrs": {
+                                      "method": "post",
+                                      "action": {
+                                        "get": "post.publish_url"
+                                      },
+                                      "data-ajax-form": "",
+                                      "data-ajax-target": "#bot-queue-list",
+                                      "data-confirm": {
+                                        "t": "bots.publish_now_confirm"
+                                      },
+                                      "class": "inline-flex"
                                     },
                                     "children": [
                                       {
-                                        "icon": "play"
+                                        "csrf": true
                                       },
                                       {
-                                        "t": "bots.publish_now"
+                                        "tag": "button",
+                                        "attrs": {
+                                          "type": "submit",
+                                          "class": "btn btn-sm btn-ghost btn-icon",
+                                          "disabled": {
+                                            "not": {
+                                              "get": "post.can_publish"
+                                            }
+                                          },
+                                          "title": {
+                                            "if": [
+                                              {
+                                                "get": "post.can_publish"
+                                              },
+                                              {
+                                                "t": "bots.publish_now"
+                                              },
+                                              {
+                                                "t": "bots.detail_bot_inactive"
+                                              }
+                                            ]
+                                          },
+                                          "aria-label": {
+                                            "t": "bots.publish_now"
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "icon": "play"
+                                          }
+                                        ]
                                       }
                                     ]
                                   }
@@ -2803,7 +2701,7 @@
                         },
                         "children": [
                           {
-                            "t": "bots.queue_empty"
+                            "component": "ui/empty-state"
                           }
                         ]
                       }
@@ -2840,8 +2738,7 @@
       "data-api-method": "GET",
       "data-ajax-form": "",
       "data-ajax-target": "#bot-queue-list",
-      "data-history": "/admin/bots/queue",
-      "data-modal-close-on-success": "true"
+      "data-history": "/admin/bots/queue"
     },
     "children": [
       {
@@ -2945,8 +2842,7 @@
               "data-ajax": "",
               "data-ajax-target": "#bot-queue-list",
               "data-history": "/admin/bots/queue",
-              "data-modal-close": "",
-              "class": "btn btn-secondary"
+              "class": "btn btn-ghost btn-sm"
             },
             "children": [
               {
@@ -2957,26 +2853,6 @@
                 "children": [
                   {
                     "t": "common.clear_filters"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "button",
-            "attrs": {
-              "class": "btn btn-primary",
-              "type": "submit"
-            },
-            "children": [
-              {
-                "icon": "filter"
-              },
-              {
-                "tag": "span",
-                "children": [
-                  {
-                    "t": "common.apply_filters"
                   }
                 ]
               }
@@ -3023,130 +2899,6 @@
       }
     }
   ],
-  "bots/post-filters": {
-    "tag": "form",
-    "attrs": {
-      "class": "cluster gap-2",
-      "method": "get",
-      "action": {
-        "get": "api_url"
-      },
-      "data-api-method": "GET",
-      "data-ajax-form": "",
-      "data-ajax-target": "#bot-posts-list",
-      "data-history": {
-        "get": "history_url"
-      }
-    },
-    "children": [
-      {
-        "each": {
-          "get": "filters"
-        },
-        "as": "value",
-        "children": [
-          {
-            "tag": "input",
-            "attrs": {
-              "type": "hidden",
-              "name": {
-                "get": "_key"
-              },
-              "value": {
-                "get": "value"
-              }
-            },
-            "children": [],
-            "when": {
-              "and": [
-                {
-                  "not": {
-                    "eq": [
-                      {
-                        "get": "_key"
-                      },
-                      "source"
-                    ]
-                  }
-                },
-                {
-                  "not": {
-                    "eq": [
-                      {
-                        "get": "_key"
-                      },
-                      "publication"
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      },
-      {
-        "component": "ui/select",
-        "data": {
-          "label": {
-            "t": "bots.source_label"
-          },
-          "choices": {
-            "get": "sources"
-          },
-          "value": {
-            "get": "filters.source"
-          },
-          "attributes": {
-            "class": "select",
-            "name": "source",
-            "data-submit-on-change": ""
-          }
-        }
-      },
-      {
-        "component": "ui/select",
-        "data": {
-          "label": {
-            "t": "bots.publication_status"
-          },
-          "choices": {
-            "": {
-              "t": "common.all"
-            },
-            "published": {
-              "t": "bots.post_published"
-            },
-            "queued": {
-              "t": "bots.queued_posts"
-            }
-          },
-          "value": {
-            "get": "filters.publication"
-          },
-          "attributes": {
-            "class": "select",
-            "name": "publication",
-            "data-submit-on-change": ""
-          }
-        }
-      },
-      {
-        "tag": "button",
-        "attrs": {
-          "type": "submit",
-          "class": "btn btn-secondary btn-sm"
-        },
-        "children": [
-          {
-            "icon": "filter"
-          },
-          {
-            "t": "common.apply_filters"
-          }
-        ]
-      }
-    ]
-  },
   "bots/source-preview": {
     "tag": "div",
     "attrs": {
@@ -3333,6 +3085,456 @@
                   {
                     "t": "bots.preview_title",
                     "values": {}
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "bots/post-filter-form": {
+    "tag": "form",
+    "attrs": {
+      "class": "stack",
+      "method": "get",
+      "action": {
+        "get": "api_url"
+      },
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": {
+        "or": [
+          {
+            "get": "list_target"
+          },
+          "#bot-detail-posts-list"
+        ]
+      },
+      "data-history": {
+        "get": "history_url"
+      }
+    },
+    "children": [
+      {
+        "each": {
+          "get": "filters"
+        },
+        "as": "value",
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": {
+                "get": "_key"
+              },
+              "value": {
+                "get": "value"
+              }
+            },
+            "children": [],
+            "when": {
+              "and": [
+                {
+                  "not": {
+                    "eq": [
+                      {
+                        "get": "_key"
+                      },
+                      "source"
+                    ]
+                  }
+                },
+                {
+                  "not": {
+                    "eq": [
+                      {
+                        "get": "_key"
+                      },
+                      "publication"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "bots.source_label"
+          },
+          "choices": {
+            "get": "sources"
+          },
+          "value": {
+            "get": "filters.source"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "source"
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "bots.publication_status"
+          },
+          "choices": {
+            "": {
+              "t": "common.all"
+            },
+            "published": {
+              "t": "bots.post_published"
+            },
+            "queued": {
+              "t": "bots.queued_posts"
+            }
+          },
+          "value": {
+            "get": "filters.publication"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "publication"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "cluster gap-2"
+        },
+        "children": [
+          {
+            "tag": "a",
+            "attrs": {
+              "href": {
+                "or": [
+                  {
+                    "get": "clear_url"
+                  },
+                  {
+                    "get": "api_url"
+                  }
+                ]
+              },
+              "data-ajax": "",
+              "data-ajax-target": {
+                "or": [
+                  {
+                    "get": "list_target"
+                  },
+                  "#bot-detail-posts-list"
+                ]
+              },
+              "data-history": {
+                "get": "history_url"
+              },
+              "class": "btn btn-ghost btn-sm"
+            },
+            "children": [
+              {
+                "icon": "close"
+              },
+              {
+                "tag": "span",
+                "children": [
+                  {
+                    "t": "common.clear_filters"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "bots/account-fields": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack"
+    },
+    "children": [
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {
+            "t": "bots.detail_bio"
+          },
+          "value": {
+            "get": "item.bio"
+          },
+          "textarea": true,
+          "attributes": {
+            "class": "textarea",
+            "name": "bio",
+            "rows": "4",
+            "maxlength": "500"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "field stack stack-gap-8"
+        },
+        "children": [
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "label"
+            },
+            "children": [
+              {
+                "t": "account.avatar"
+              }
+            ]
+          },
+          {
+            "component": "users/avatar-control",
+            "data": {
+              "user": {
+                "get": "item"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "bots/runs-list": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14"
+    },
+    "children": [
+      {
+        "component": "ui/list-toolbar",
+        "data": {
+          "url": {
+            "get": "api_url"
+          },
+          "target": {
+            "get": "list_target"
+          },
+          "history": {
+            "get": "history_url"
+          },
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          },
+          "filter_modal": {
+            "get": "filter_modal"
+          }
+        }
+      },
+      {
+        "component": "bots/runs",
+        "data": {
+          "runs": {
+            "get": "runs"
+          },
+          "sorting": {
+            "get": "sorting"
+          }
+        }
+      },
+      {
+        "component": "ui/pagination",
+        "data": {
+          "navigation": {
+            "get": "navigation"
+          },
+          "target": {
+            "get": "list_target"
+          }
+        }
+      }
+    ]
+  },
+  "bots/run-filter-form": {
+    "tag": "form",
+    "attrs": {
+      "class": "stack",
+      "method": "get",
+      "action": {
+        "get": "api_url"
+      },
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": {
+        "or": [
+          {
+            "get": "list_target"
+          },
+          "#bot-detail-posts-list"
+        ]
+      },
+      "data-history": {
+        "get": "history_url"
+      }
+    },
+    "children": [
+      {
+        "each": {
+          "get": "filters"
+        },
+        "as": "value",
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": {
+                "get": "_key"
+              },
+              "value": {
+                "get": "value"
+              }
+            },
+            "children": [],
+            "when": {
+              "and": [
+                {
+                  "not": {
+                    "eq": [
+                      {
+                        "get": "_key"
+                      },
+                      "source"
+                    ]
+                  }
+                },
+                {
+                  "not": {
+                    "eq": [
+                      {
+                        "get": "_key"
+                      },
+                      "status"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "bots.source_label"
+          },
+          "choices": {
+            "get": "sources"
+          },
+          "value": {
+            "get": "filters.source"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "source"
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "common.status"
+          },
+          "value": {
+            "get": "filters.status"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "status"
+          },
+          "choices": {
+            "": {
+              "t": "common.all"
+            },
+            "success": {
+              "t": "bots.run_statuses.posted"
+            },
+            "posted": {
+              "t": "bots.run_statuses.posted"
+            },
+            "current": {
+              "t": "bots.run_statuses.current"
+            },
+            "running": {
+              "t": "bots.run_statuses.running"
+            },
+            "error": {
+              "t": "bots.run_statuses.error"
+            },
+            "skipped": {
+              "t": "bots.run_statuses.skipped"
+            },
+            "completed": {
+              "t": "bots.run_statuses.completed"
+            },
+            "interrupted": {
+              "t": "bots.run_statuses.interrupted"
+            }
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "cluster gap-2"
+        },
+        "children": [
+          {
+            "tag": "a",
+            "attrs": {
+              "href": {
+                "or": [
+                  {
+                    "get": "clear_url"
+                  },
+                  {
+                    "get": "api_url"
+                  }
+                ]
+              },
+              "data-ajax": "",
+              "data-ajax-target": {
+                "or": [
+                  {
+                    "get": "list_target"
+                  },
+                  "#bot-detail-posts-list"
+                ]
+              },
+              "data-history": {
+                "get": "history_url"
+              },
+              "class": "btn btn-ghost btn-sm"
+            },
+            "children": [
+              {
+                "icon": "close"
+              },
+              {
+                "tag": "span",
+                "children": [
+                  {
+                    "t": "common.clear_filters"
                   }
                 ]
               }

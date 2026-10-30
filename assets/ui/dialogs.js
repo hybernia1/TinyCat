@@ -20,9 +20,9 @@ import "./forms.js";
       }
       var titleId = options.id + "-title";
       var root = TinyCat.components.render("ui/modal", {
-        root_attributes: { id: options.id, "class": "modal", role: "dialog", "aria-modal": "true", "aria-hidden": "true", "aria-labelledby": titleId, "data-open": "false", "data-modal-dispose-on-close": options.disposeOnClose === false ? "false" : "true" },
-        panel_attributes: { "class": "modal-panel" + (options.panelClass ? " " + options.panelClass : ""), tabindex: "-1" },
-        title_id: titleId, title: options.title, close_label: options.closeLabel,
+        root_attributes: { id: options.id, "class": "modal", role: "dialog", "aria-modal": "true", "aria-hidden": "true", "aria-labelledby": titleId, "data-open": "false", "data-modal-kind": options.kind || "content", "data-modal-size": options.size || "default", "data-modal-mobile": options.mobile || null, "data-modal-dispose-on-close": options.disposeOnClose === false ? "false" : "true" },
+        panel_attributes: { "class": "modal-panel", tabindex: "-1" },
+        title_id: titleId, title: options.title, icon: options.icon || "", close_label: options.closeLabel,
         close_icon: options.closeIcon instanceof Node ? options.closeIcon : document.createTextNode("\u00d7"),
         body: options.content, body_class: "modal-body", has_footer: options.footer instanceof Node, footer: options.footer
       });
@@ -93,7 +93,7 @@ import "./forms.js";
     return Boolean(modal && (modal.dataset.remoteLoaded === "true" || modal.dataset.modalDisposeOnClose === "true"));
   }
   function modalUsesVisualViewport(modal) {
-    return Boolean(modal && modal.matches && modal.matches(".modal-mobile-fullscreen, .modal-form"));
+    return Boolean(modal && modal.matches && modal.matches('[data-modal-kind="editor"], [data-modal-mobile="fullscreen"]'));
   }
   function modalNeedsMobilePageLock(modal) {
     return modalUsesVisualViewport(modal)
@@ -440,7 +440,7 @@ import "./forms.js";
       message.id = modalId + "-description";
       cancel.type = "button"; confirm.type = "button";
       footer.appendChild(cancel); footer.appendChild(confirm);
-      modal = TinyCat.dialog.create({ id: modalId, title: settings.title || TinyCat.i18n.t("common.confirm_action"), closeLabel: TinyCat.i18n.t("common.close"), closeIcon: TinyCat.icons.create("close"), content: message, footer: footer, panelClass: "modal-confirm-panel" });
+      modal = TinyCat.dialog.create({ id: modalId, title: settings.title || TinyCat.i18n.t("common.confirm_action"), closeLabel: TinyCat.i18n.t("common.close"), closeIcon: TinyCat.icons.create("close"), content: message, footer: footer, kind: "confirm", size: "confirm" });
       modal.setAttribute("aria-describedby", message.id);
       backdrop = qs(".modal-backdrop", modal); close = qs("[data-modal-close]", modal);
       backdrop.addEventListener("click", function (event) {

@@ -69,9 +69,20 @@
     "leave": "Wyjdź",
     "stay": "Podpora",
     "validation_failed": "Proszę sprawdzić przesłane wartości.",
+    "no_records": "Brak wyników.",
     "not_found": "Nie znaleziono.",
     "validation_required": "Pole {field} jest wymagane.",
-    "validation_invalid": "Pole {field} ma nieprawidłową wartość."
+    "validation_invalid": "Pole {field} ma nieprawidłową wartość.",
+    "activate": "Aktywuj",
+    "deactivate": "Dezaktywuj",
+    "activated": "{entity} aktywowano.",
+    "deactivated": "{entity} dezaktywowano.",
+    "list_results": {
+      "one": "Znaleziono {count} rekord",
+      "few": "Znaleziono {count} rekordy",
+      "many": "Znaleziono {count} rekordów",
+      "other": "Znaleziono {count} rekordów"
+    }
   },
   "relative": {
     "now": "teraz",

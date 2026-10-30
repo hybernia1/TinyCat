@@ -2,20 +2,35 @@
   "moderation/reports": {
     "tag": "div",
     "attrs": {
-      "class": "stack stack-gap-14"
+      "class": "stack stack-gap-14",
+      "data-moderation-reports-view": "",
+      "data-moderation-reports-state": {
+        "json": {
+          "get": "state"
+        }
+      }
     },
     "children": [
       {
-        "tag": "div",
-        "attrs": {
-          "class": "alert alert-info"
+        "component": "ui/list-toolbar",
+        "data": {
+          "url": "/api/moderation/reports",
+          "target": "#moderation-reports",
+          "history": "/admin/moderation/reports",
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          },
+          "filter_modal": "moderation-filter-modal"
         },
-        "children": [
-          {
-            "t": "moderation.reports_empty",
-            "values": {}
-          }
-        ],
+        "when": {
+          "get": "filters"
+        }
+      },
+      {
+        "component": "ui/empty-state",
         "when": {
           "not": {
             "get": "items"
@@ -351,10 +366,17 @@
                                     "component": "ui/api-action",
                                     "data": {
                                       "url": {
-                                        "concat": [
-                                          "/api/moderation/reports/",
+                                        "or": [
                                           {
-                                            "get": "report.id"
+                                            "get": "report.action_url"
+                                          },
+                                          {
+                                            "concat": [
+                                              "/api/moderation/reports/",
+                                              {
+                                                "get": "report.id"
+                                              }
+                                            ]
                                           }
                                         ]
                                       },
@@ -382,10 +404,17 @@
                                     "component": "ui/api-action",
                                     "data": {
                                       "url": {
-                                        "concat": [
-                                          "/api/moderation/reports/",
+                                        "or": [
                                           {
-                                            "get": "report.id"
+                                            "get": "report.action_url"
+                                          },
+                                          {
+                                            "concat": [
+                                              "/api/moderation/reports/",
+                                              {
+                                                "get": "report.id"
+                                              }
+                                            ]
                                           }
                                         ]
                                       },
@@ -421,6 +450,172 @@
         "when": {
           "get": "items"
         }
+      },
+      {
+        "component": "ui/pagination",
+        "data": {
+          "navigation": {
+            "get": "navigation"
+          },
+          "target": "#moderation-reports"
+        }
+      }
+    ]
+  },
+  "moderation/filter-form": {
+    "tag": "form",
+    "attrs": {
+      "class": "stack",
+      "method": "get",
+      "action": "/api/moderation/reports",
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": "#moderation-reports",
+      "data-history": "/admin/moderation/reports"
+    },
+    "children": [
+      {
+        "each": {
+          "get": "filters"
+        },
+        "as": "value",
+        "children": [
+          {
+            "tag": "input",
+            "attrs": {
+              "type": "hidden",
+              "name": {
+                "get": "_key"
+              },
+              "value": {
+                "get": "value"
+              }
+            },
+            "children": [],
+            "when": {
+              "and": [
+                {
+                  "not": {
+                    "eq": [
+                      {
+                        "get": "_key"
+                      },
+                      "status"
+                    ]
+                  }
+                },
+                {
+                  "not": {
+                    "eq": [
+                      {
+                        "get": "_key"
+                      },
+                      "reason"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "common.status"
+          },
+          "choices": {
+            "": {
+              "t": "common.all"
+            },
+            "open": {
+              "t": "moderation.report_statuses.open"
+            },
+            "reviewed": {
+              "t": "moderation.report_statuses.reviewed"
+            },
+            "resolved": {
+              "t": "moderation.report_statuses.resolved"
+            },
+            "dismissed": {
+              "t": "moderation.report_statuses.dismissed"
+            }
+          },
+          "value": {
+            "get": "filters.status"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "moderation.report_reason"
+          },
+          "choices": {
+            "": {
+              "t": "common.all"
+            },
+            "spam": {
+              "t": "moderation.report_reasons.spam"
+            },
+            "illegal": {
+              "t": "moderation.report_reasons.illegal"
+            },
+            "malware": {
+              "t": "moderation.report_reasons.malware"
+            },
+            "abuse": {
+              "t": "moderation.report_reasons.abuse"
+            },
+            "other": {
+              "t": "moderation.report_reasons.other"
+            }
+          },
+          "value": {
+            "get": "filters.reason"
+          },
+          "attributes": {
+            "class": "select",
+            "name": "reason"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "cluster gap-2"
+        },
+        "children": [
+          {
+            "tag": "a",
+            "attrs": {
+              "href": "/api/moderation/reports",
+              "data-ajax": "",
+              "data-ajax-target": "#moderation-reports",
+              "data-history": "/admin/moderation/reports",
+              "class": "btn btn-ghost btn-sm"
+            },
+            "children": [
+              {
+                "icon": "close"
+              },
+              {
+                "tag": "span",
+                "children": [
+                  {
+                    "t": "common.clear_filters"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }

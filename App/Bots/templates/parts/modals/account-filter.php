@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 use TinyCat\Support\Html;
-use TinyCat\Support\Localization;
 use TinyCat\Support\View;
 
 if (!defined('TINYCAT')) {
@@ -29,18 +28,12 @@ ob_start();
 </label>
 <?php
 $body = trim((string) ob_get_clean());
-$footer = '<a class="btn btn-secondary" href="' . Html::e((string) ($clear_api_url ?? '/api/bots/accounts')) . '" data-ajax data-ajax-target="#bot-accounts-list" data-history="/admin/bots/accounts" data-modal-close>' . Html::icon('close') . ' <span>' . Html::et('common.clear_filters') . '</span></a>'
-    . '<button class="btn btn-primary" type="submit">' . Html::icon('filter') . ' <span>' . Html::et('common.apply_filters') . '</span></button>';
+$footer = '<a class="btn btn-ghost btn-sm" href="' . Html::e((string) ($clear_api_url ?? '/api/bots/accounts')) . '" data-ajax data-ajax-target="#bot-accounts-list" data-history="/admin/bots/accounts">' . Html::icon('close') . ' <span>' . Html::et('common.clear_filters') . '</span></a>';
 
-echo View::part('Support/modal', [
+echo View::part('Support/filter', [
     'id' => 'bot-accounts-filter-modal',
-    'title' => Localization::t('bots.accounts_filter_title'),
-    'icon' => 'filter',
     'action' => $prepared['accounts_url'],
-    'method' => 'GET',
     'target' => '#bot-accounts-list',
-    'closeOnSuccess' => true,
-    'csrf' => false,
     'formAttributes' => ['data-history' => '/admin/bots/accounts'],
     'body' => $body,
     'footer' => $footer,

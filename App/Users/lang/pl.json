@@ -11,7 +11,6 @@
     "table_user": "Użytkownik",
     "edit_user": "Edytuj @{username}",
     "password_keep": "Pozostaw puste, aby zachować niezmienione",
-    "username_locked": "Nazwa użytkownika jest podstawową tożsamością i nie można jej zmienić.",
     "delete_title": "Usuń użytkownika",
     "delete_confirm": "Czy naprawdę usunąć użytkownika @{username}?",
     "stats": {

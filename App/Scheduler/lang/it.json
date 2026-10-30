@@ -1,7 +1,6 @@
 {
   "cron": {
     "title": "Attività pianificate",
-    "intro": "Un piccolo runner espone attività pianificate indipendenti con autenticazione condivisa.",
     "access_title": "Accesso e token",
     "access_help": "Endpoint condiviso e autenticazione utilizzati da ogni attività pianificata.",
     "url": "URL dell'endpoint",

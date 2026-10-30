@@ -521,15 +521,7 @@
     {
       "tag": "div",
       "attrs": {
-        "class": {
-          "if": [
-            {
-              "get": "preview"
-            },
-            "notification-popover-empty",
-            "notification-empty"
-          ]
-        }
+        "class": "notification-popover-empty"
       },
       "children": [
         {
@@ -541,9 +533,39 @@
         }
       ],
       "when": {
-        "not": {
-          "get": "items"
-        }
+        "and": [
+          {
+            "not": {
+              "get": "items"
+            }
+          },
+          {
+            "get": "preview"
+          }
+        ]
+      }
+    },
+    {
+      "component": "ui/empty-state",
+      "data": {
+        "label": {
+          "t": "notifications.empty"
+        },
+        "icon": "bell"
+      },
+      "when": {
+        "and": [
+          {
+            "not": {
+              "get": "items"
+            }
+          },
+          {
+            "not": {
+              "get": "preview"
+            }
+          }
+        ]
       }
     },
     {

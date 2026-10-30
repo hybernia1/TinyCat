@@ -10,7 +10,6 @@
     "report_note": "Примітка",
     "report_submit": "Надіслати звіт",
     "profile_muted_until": "Обліковий запис вимкнено до {until}.",
-    "url_blocker_title": "Заблоковані URL-адреси",
     "url_blocker_label": "Заблоковані веб-сайти",
     "url_blocker_placeholder": "example.com, bad.example, domain:ru",
     "url_blocker_help": "Розділяйте веб-сайти комами або новими рядками. Також блокуються субдомени. Використовуйте домен:ru, щоб заблокувати весь суфікс .ru.",

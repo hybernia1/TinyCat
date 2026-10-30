@@ -8,7 +8,7 @@ import "../../ui/fields.js";
   function base(id) { return "/api/statuses/" + Number(id); }
   function form(url, action, id) {
     var root = e("form", { action: url, method: "post", "data-status-form": "", "data-status-id": id });
-    if (["update", "comment", "comment_update"].indexOf(action) !== -1) {
+    if (["update", "comment", "comment_update", "report"].indexOf(action) !== -1) {
       root.dataset.confirmUnsaved = "true";
       root.dataset.confirmUnsavedTitle = U.text("common.unsaved_title"); root.dataset.confirmUnsavedMessage = U.text("common.unsaved_message");
       root.dataset.confirmUnsavedOk = U.text("common.leave"); root.dataset.confirmUnsavedCancel = U.text("common.stay");
@@ -38,7 +38,7 @@ import "../../ui/fields.js";
         report.appendChild(U.select("moderation.report_reason", "reason", "spam", Object.fromEntries(data.reasons.map(function (reason) { return [reason, U.text("moderation.report_reasons." + reason)]; }))));
         report.appendChild(U.field("moderation.report_note", "note", "", "textarea", { maxlength: "2000" }));
         report.appendChild(U.button("moderation.report_submit", { type: "submit", "class": "btn btn-primary" }));
-        return U.dialog(id, "moderation.report_submit", report);
+        return U.formDialog(id, "moderation.report_submit", report);
       }
       if (!/^\/api\/statuses\//.test(url.pathname)) { return null; }
       if (/\/embed$/.test(url.pathname)) {
@@ -93,9 +93,7 @@ import "../../ui/fields.js";
         if (!item.capabilities.edit) { throw new Error(U.text("auth.forbidden")); }
         var edit = form(base(item.id), "update", item.id); edit.dataset.confirmUnsaved = "true"; edit.enctype = "multipart/form-data";
         edit.appendChild(T.components.render("status/composer-body", { viewer: data.viewer || item.author, value: item.editable_body, image: item.image, enabled: data.options.images_enabled, submit_label: U.text("common.save"), submit_icon: "save" }));
-        var editDialog = U.dialog(id, "account.status_edit", edit); editDialog.classList.add("modal-form");
-        editDialog.querySelector(".modal-panel").classList.add("modal-panel-lg"); editDialog.querySelector(".modal-panel").classList.add("status-edit-modal-panel");
-        editDialog.querySelector(".modal-body").classList.add("status-edit-modal-body"); return editDialog;
+        return U.formDialog(id, "account.status_edit", edit, false, { size: "wide" });
       }
       if (panel === "comment-edit") {
         var wanted = Number(url.searchParams.get("comment_id")), selected;
@@ -107,15 +105,13 @@ import "../../ui/fields.js";
         commentEditor.querySelector("textarea").setAttribute("aria-labelledby", id + "-label");
         commentEditor.querySelector("textarea").required = true;
         commentEdit.append(commentLabel, commentEditor);
-        commentEdit.appendChild(U.button("common.save", { type: "submit", "class": "btn btn-primary" })); return U.dialog(id, "common.edit", commentEdit);
+        commentEdit.appendChild(U.button("common.save", { type: "submit", "class": "btn btn-primary" })); return U.formDialog(id, "common.edit", commentEdit);
       }
       content.className = "status-post-modal-content";
       content.appendChild(T.status.card(item, false, false));
       content.appendChild(T.components.render("status/thread", { item: item, comments: data.comments, viewer: data.viewer, context: "modal" }));
-      var dialog = U.dialog(id, "account.status_thread_title", content);
-      dialog.classList.add("status-post-modal"); dialog.classList.add("modal-mobile-fullscreen");
-      dialog.querySelector(".modal-panel").classList.add("status-post-modal-panel");
-      dialog.querySelector(".modal-body").classList.add("status-post-modal-body");
+      var dialog = U.dialog(id, "account.status_thread_title", content, false, null, { size: "reading", mobile: "fullscreen" });
+      dialog.classList.add("status-post-modal");
       return dialog;
     },
     method: function (form, action) {

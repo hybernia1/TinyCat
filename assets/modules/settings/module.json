@@ -1,14 +1,16 @@
 [
   {
     "routes": [
-      "/admin/settings"
+      "admin"
     ],
     "entries": [
       "assets/modules/settings/index.js"
     ],
     "components": [],
     "styles": [],
-    "translations": [],
+    "translations": [
+      "settings.title"
+    ],
     "messages": {
       "common_request_failed": "common.request_failed",
       "settings_saved": "settings.messages.saved"

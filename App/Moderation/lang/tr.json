@@ -10,7 +10,6 @@
     "report_note": "Not",
     "report_submit": "Raporu gönder",
     "profile_muted_until": "Hesap {until} tarihine kadar sessize alındı.",
-    "url_blocker_title": "Engellenen URL'ler",
     "url_blocker_label": "Engellenen web siteleri",
     "url_blocker_placeholder": "example.com, bad.example, etki alanı:ru",
     "url_blocker_help": "Web sitelerini virgüllerle veya yeni satırlarla ayırın. Alt alanlar da engellendi. .ru son ekinin tamamını engellemek için domain:ru kullanın.",

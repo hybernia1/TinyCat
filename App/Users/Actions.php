@@ -156,7 +156,7 @@ final class Actions
             'email' => 'nullable|string|max:' . \TinyCat\Users\Profiles::user_email_max_length(),
             'password' => $passwordRule,
             'role' => 'required|string|in:' . implode(',', array_keys(\TinyCat\Users\Profiles::tc_admin_roles())),
-            'status' => 'required|string|in:' . implode(',', array_keys(\TinyCat\Support\AdminViews::admin_user_statuses())),
+            'status' => ($id === null ? 'required|' : '') . 'string|in:' . implode(',', array_keys(\TinyCat\Support\AdminViews::admin_user_statuses())),
         ];
 
         if ($id === null) {
@@ -178,7 +178,7 @@ final class Actions
         }
 
         $role = (string) $data['role'];
-        $status = (string) $data['status'];
+        $status = (string) ($data['status'] ?? $existing['status'] ?? 'active');
         $emailProvided = \TinyCat\Http\Request::current()->input('email', null) !== null;
         $email = $emailProvided || $id === null
             ? \TinyCat\Users\Profiles::user_email_normalize((string) ($data['email'] ?? ''))
@@ -205,9 +205,9 @@ final class Actions
 
         $payload = [
             'role' => $role,
-            'status' => $status,
             'bio' => \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('bio', ''), 500),
         ];
+        if ($id === null || array_key_exists('status', $data)) { $payload['status'] = $status; }
 
         if ($id === null || $emailProvided) {
             $payload['email'] = $email !== '' ? $email : null;

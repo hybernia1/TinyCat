@@ -1,5 +1,0 @@
-@media (min-width: 760px) {
-.settings-grid {
-    grid-template-columns: repeat(2, minmax(240px, 1fr));
-  }
-}

@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 use TinyCat\Support\Html;
-use TinyCat\Support\Localization;
 use TinyCat\Support\View;
 
 if (!defined('TINYCAT')) {
@@ -15,6 +14,9 @@ $filterBotId = max(0, (int) ($filter_bot_id ?? 0));
 
 ob_start();
 ?>
+<?php foreach ((array) ($filters ?? []) as $name => $value): ?>
+    <?php if ($name !== 'bot'): ?><input type="hidden" name="<?= Html::e($name) ?>" value="<?= Html::e($value) ?>"><?php endif; ?>
+<?php endforeach; ?>
 <label class="field">
     <span class="label"><?= Html::et('bots.filter_by_bot') ?></span>
     <select class="select" name="bot">
@@ -26,20 +28,13 @@ ob_start();
 </label>
 <?php
 $body = trim((string) ob_get_clean());
-$footer = '<a class="btn btn-secondary" href="/api/bots/sources" data-ajax data-ajax-target="#bots-list" data-history="/admin/bots/list" data-modal-close>' . Html::icon('close') . ' <span>' . Html::et('common.clear_filters') . '</span></a>'
-    . '<button class="btn btn-primary" type="submit">' . Html::icon('filter') . ' <span>' . Html::et('common.apply_filters') . '</span></button>';
+$footer = '<a class="btn btn-ghost btn-sm" href="/api/bots/sources" data-ajax data-ajax-target="#bots-list" data-history="/admin/bots/list">' . Html::icon('close') . ' <span>' . Html::et('common.clear_filters') . '</span></a>';
 
-echo View::part('Support/modal', [
+echo View::part('Support/filter', [
     'id' => 'bots-filter-modal',
-    'title' => Localization::t('bots.filter_by_bot'),
-    'icon' => 'filter',
     'action' => '/api/bots/sources',
-    'method' => 'GET',
-    'ajax' => true,
     'target' => '#bots-list',
-    'closeOnSuccess' => true,
     'formAttributes' => ['data-history' => '/admin/bots/list'],
-    'csrf' => false,
     'body' => $body,
     'footer' => $footer,
 ]);

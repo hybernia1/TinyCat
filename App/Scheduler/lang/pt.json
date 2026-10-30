@@ -1,7 +1,6 @@
 {
   "cron": {
     "title": "Tarefas agendadas",
-    "intro": "Um pequeno executor expõe tarefas agendadas independentes com autenticação compartilhada.",
     "access_title": "Acesso e token",
     "access_help": "Endpoint compartilhado e autenticação usada por cada tarefa agendada.",
     "url": "Ponto final URL",

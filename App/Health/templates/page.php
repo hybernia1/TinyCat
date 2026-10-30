@@ -25,11 +25,11 @@ use TinyCat\Support\Localization;
         <?php if ($snapshot['stale']): ?><p role="status" class="help m-0"><?= Html::et('health.stale') ?></p><?php endif; ?>
         <?php if ($http !== null): $metrics = $http['metrics'] ?? []; ?>
             <div class="grid sm:grid-2 md:grid-3">
-                <?php foreach ([['TTFB', $metrics['ttfb_ms'] ?? null, 'ms'], [Localization::t('health.http.total'), $metrics['total_ms'] ?? null, 'ms'], ['HTTP', !empty($metrics['http_status']) ? $metrics['http_status'] : null, '']] as [$label, $value, $unit]): ?>
-                    <?= Components::render('ui/stat-card', ['label' => $label, 'value' => $value === null ? '-' : (string) round((float) $value, 1), 'unit' => $unit]) ?>
+                <?php foreach ([['clock', 'TTFB', $metrics['ttfb_ms'] ?? null, 'ms'], ['refresh', Localization::t('health.http.total'), $metrics['total_ms'] ?? null, 'ms'], ['globe', 'HTTP', !empty($metrics['http_status']) ? $metrics['http_status'] : null, '']] as [$icon, $label, $value, $unit]): ?>
+                    <?= Components::render('ui/stat-card', ['icon' => $icon, 'label' => $label, 'value' => $value === null ? '-' : (string) round((float) $value, 1), 'unit' => $unit]) ?>
                 <?php endforeach; ?>
             </div>
-        <?php elseif (!is_array($snapshot['report'])): ?><p class="m-0"><?= Html::et('health.empty') ?></p><?php endif; ?>
+        <?php elseif (!is_array($snapshot['report'])): ?><?= Components::render('ui/empty-state', ['label' => Localization::t('health.empty'), 'icon' => 'shield']) ?><?php endif; ?>
 </div>
 <?php if ($issues !== []): ?>
 <section class="card">
@@ -55,13 +55,13 @@ use TinyCat\Support\Localization;
 <section class="card">
     <div class="card-header"><h2 class="text-lg m-0"><?= Html::et('health.history') ?></h2></div>
     <div class="card-body">
-    <?php if ($snapshot['history'] === []): ?><div class="text-muted"><?= Html::et('health.empty') ?></div><?php else: ?>
+    <?php if ($snapshot['history'] === []): ?><?= Components::render('ui/empty-state', ['label' => Localization::t('health.empty'), 'icon' => 'clock']) ?><?php else: ?>
     <div class="table-wrap min-w-0"><table class="table">
         <thead><tr><th><?= Html::et('health.checked_at') ?></th><th><?= Html::et('health.result') ?></th><th>TTFB</th><th><?= Html::et('health.http.total') ?></th><th>HTTP</th><th class="table-actions-cell"><?= Html::et('common.actions') ?></th></tr></thead>
         <tbody><?php foreach ($snapshot['history'] as $run): $timings = $run['http']['metrics'] ?? []; ?>
             <tr>
                 <td><time datetime="<?= Html::e($run['started_at']) ?>"><?= Html::e(Dates::dateTime($run['started_at'])) ?></time></td>
-                <td><?= Components::render('ui/status-badge', ['tone' => $run['health_status'], 'label' => Localization::t('health.status.' . $run['health_status'])]) ?><?php if ($run['status'] !== 'completed'): ?><br><small><?= Html::et('cron.statuses.' . $run['status']) ?></small><?php endif; ?></td>
+                <td><?= Components::render('ui/status-badge', ['tone' => $run['health_status'], 'label' => Localization::t('health.status.' . $run['health_status'])]) ?><?php if ($run['status'] !== 'completed'): ?><br><small class="table-meta"><?= Html::et('cron.statuses.' . $run['status']) ?></small><?php endif; ?></td>
                 <td class="table-meta"><?= isset($timings['ttfb_ms']) ? Html::e(round((float) $timings['ttfb_ms'], 1)) . ' ms' : '&mdash;' ?></td>
                 <td class="table-meta"><?= isset($timings['total_ms']) ? Html::e(round((float) $timings['total_ms'], 1)) . ' ms' : '&mdash;' ?></td>
                 <td><?= !empty($timings['http_status']) ? Html::e($timings['http_status']) : '&mdash;' ?></td>

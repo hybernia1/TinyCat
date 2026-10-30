@@ -13,7 +13,7 @@ $url = trim((string) ($url ?? ''));
 $settingKey = trim(str_replace(['settings[', ']'], '', $name));
 ?>
 <input type="hidden" name="<?= Html::e($name) ?>" value="<?= Html::e($url) ?>">
-<div class="content-image-preview settings-image-preview"<?= $url === '' ? ' data-empty="true"' : '' ?>>
+<div class="content-image-preview image-preview-contain"<?= $url === '' ? ' data-empty="true"' : '' ?>>
     <?php if ($url !== ''): ?>
         <img src="<?= Html::e($url) ?>" alt="" loading="lazy">
     <?php else: ?>

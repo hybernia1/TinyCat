@@ -18,7 +18,7 @@ import "../../ui/toasts.js";
     var action = form ? qs("[data-avatar-upload-action]", form) : null;
     var remove = form ? qs("[data-avatar-upload-remove]", form) : null;
     var editor = root.closest(".avatar-editor");
-    var save = editor ? qs("[data-avatar-save]", editor) : null;
+    var save = editor ? qs("[data-avatar-save]", root.closest(".modal") || editor) : null;
     var appearanceForm = editor ? qs("[data-avatar-appearance-form]", editor) : null;
     var toggle = editor ? qs("[data-avatar-creator-toggle]", editor) : null;
     var parameters = appearanceForm ? TinyCat.dom.all("[data-avatar-parameter]", appearanceForm) : [];

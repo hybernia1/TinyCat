@@ -1,8 +1,7 @@
 [
   {
     "routes": [
-      "public",
-      "/admin/bots/detail"
+      "public"
     ],
     "components": [
       "notifications/items"

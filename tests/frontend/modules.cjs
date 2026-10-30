@@ -1,4 +1,5 @@
 "use strict";
+(async () => {
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -29,6 +30,7 @@ class Node {
   append(...nodes) { nodes.forEach(node => this.appendChild(node)); }
   replaceChildren(...nodes) { this._text = ""; this.children = []; this.append(...nodes); }
   get childNodes() { return this.children; }
+  get tagName() { return this.tag.toUpperCase(); }
   get options() { return this.tag === "select" ? this.children : undefined; }
   remove() { if (this.parent) this.parent.children = this.parent.children.filter(x => x !== this); }
   querySelectorAll(selector) {
@@ -75,6 +77,91 @@ loadPlayer();
 check(playerRoot.querySelector("iframe").src.startsWith("https://www.youtube.com/embed/abc123?"), "The external player is created only after clicking.");
 check(playerRoot.querySelector("a") === playerSource, "Loading a player preserves the original source link.");
 T.components.register(definitions);
+let filterMenuFixture = T.components.render('ui/filter-trigger', { id: 'filter-panel-fixture' });
+document.body.appendChild(filterMenuFixture);
+filterMenuFixture.querySelector('[data-filter-panel="filter-panel-fixture"]').parentElement = filterMenuFixture;
+const filterFormFixture = new Node('form');
+filterFormFixture.dataset.modalCloseOnSuccess = 'true';
+const filterFieldFixture = new Node('input'); filterFieldFixture.setAttribute('name', 'status'); filterFieldFixture.value = 'error';
+const filterClearFixture = new Node('a'); filterClearFixture.setAttribute('data-modal-close', '');
+filterFormFixture.append(filterFieldFixture, filterClearFixture);
+T.ui.filterPanel('filter-panel-fixture', filterFormFixture);
+check(filterMenuFixture.querySelector('[data-filter-panel="filter-panel-fixture"]').querySelector('form') === filterFormFixture && !filterFormFixture.hidden && !filterFormFixture.getAttribute('data-modal-close-on-success') && filterClearFixture.getAttribute('data-modal-close') === null, 'Dropdown filters mount their real form beside the trigger and cannot close an enclosing editor modal.');
+check(filterFieldFixture.getAttribute('data-submit-on-change') !== null, 'Changing a visible filter uses the shared automatic-submit behavior.');
+check(filterMenuFixture.className.includes('popover-menu') && filterMenuFixture.querySelector('.context-menu-popover') && filterMenuFixture.querySelector('summary').className.includes('btn-secondary'), 'Filters reuse the shared popover surface and highlight an active selection with the standard secondary button.');
+filterFieldFixture.value = ''; T.filters.hydrate();
+check(filterMenuFixture.querySelector('summary').className.includes('btn-ghost'), 'An unfiltered list uses the standard quiet ghost trigger.');
+filterFieldFixture.value = 'error'; T.filters.hydrate();
+filterMenuFixture.open = true;
+filterFormFixture.dataset.filterFocus = 'status';
+filterFormFixture.closest = selector => selector === '[data-filter-menu]' ? filterMenuFixture : selector === '[data-filter-content]' ? filterFormFixture : null;
+filterMenuFixture.querySelector('[data-filter-panel="filter-panel-fixture"]').scrollTop = 64;
+const openFilterState = T.filters.capture(filterFormFixture);
+filterMenuFixture.remove();
+filterMenuFixture = T.components.render('ui/filter-trigger', { id: 'filter-panel-fixture' }); document.body.appendChild(filterMenuFixture);
+filterMenuFixture.querySelector('[data-filter-panel="filter-panel-fixture"]').parentElement = filterMenuFixture;
+T.filters.hydrate();
+check(filterMenuFixture.querySelector('input').value === 'error' && T.filters.get('filter-panel-fixture') === filterFormFixture, 'Replacing list controls reattaches the filter form without losing its selected state.');
+filterFieldFixture.focus = options => { filterFieldFixture.focusedWithoutScrolling = options.preventScroll; };
+T.filters.restore(openFilterState);
+check(filterMenuFixture.open && filterMenuFixture.querySelector('[data-filter-panel="filter-panel-fixture"]').scrollTop === 64 && filterFieldFixture.focusedWithoutScrolling, 'Automatically applying a filter preserves the open popover, scroll and keyboard focus after list replacement.');
+filterMenuFixture.open = false;
+const closedFilterState = T.filters.capture(filterFormFixture);
+T.filters.restore(closedFilterState);
+check(closedFilterState === null && !filterMenuFixture.open, 'A menu closed while the request was pending is not reopened by its response.');
+const replacementFilter = new Node('form'), replacementField = new Node('select');
+replacementField.setAttribute('name', 'status'); replacementField.focus = () => { replacementField.restoredFocus = true; }; replacementFilter.appendChild(replacementField);
+T.ui.filterPanel('filter-panel-fixture', replacementFilter);
+T.filters.restore(openFilterState);
+check(filterMenuFixture.open && replacementField.restoredFocus && T.filters.get('filter-panel-fixture') === replacementFilter, 'Filters whose forms are regenerated restore the open state and focus to the new control.');
+T.filters.remove('filter-panel-fixture'); filterMenuFixture.remove();
+check(!T.filters.get('filter-panel-fixture') && !document.getElementById('filter-panel-fixture'), 'Disposing scoped filters removes both their form and stored reference.');
+{
+  const summary = T.components.render('ui/list-summary', { target: '#summary-fixture', pagination: { total: 12 }, filters: { q: '<needle>' } });
+  document.body.appendChild(summary);
+  const form = new Node('form'); form.dataset.ajaxTarget = '#summary-fixture';
+  const statusField = T.ui.select('common.status', 'status', 'active', { '': 'All', active: 'Active', ban: 'Inactive' });
+  const statusSelect = statusField.querySelector('select'); statusSelect.closest = () => statusField;
+  const roleField = T.ui.select('common.role', 'role', 'admin', { '': 'All', admin: 'Administrator' });
+  roleField.querySelector('select').closest = () => roleField;
+  form.append(statusField, roleField, T.ui.hidden('sort', 'username'), T.ui.hidden('per_page', '10'));
+  T.ui.filterPanel('summary-filter-fixture', form);
+  check(summary.querySelector('[data-list-result-count]').textContent === T.i18n.plural('common.list_results', 12) && summary.textContent.includes('<needle>') && !summary.querySelector('needle'), 'The list summary reports the full filtered total and renders search text safely.');
+  check(summary.querySelector('[data-list-summary-filters]').children.length === 2 && summary.textContent.includes(T.ui.text('common.status') + ': Active') && summary.textContent.includes(T.ui.text('common.role') + ': Administrator'), 'Multiple active filters show their localized field and option labels instead of raw codes.');
+  statusSelect.value = ''; roleField.querySelector('select').value = ''; T.filters.hydrate();
+  check(summary.querySelector('[data-list-summary-filters]').children.length === 0, 'Cleared filters disappear from the summary without including sorting or page-size metadata.');
+  T.filters.remove('summary-filter-fixture'); summary.remove();
+}
+{
+  const apiRequest = T.api.request, form = new Node('form');
+  let pendingFilterSignal;
+  T.ui.filterPanel('pending-filter-fixture', form);
+  T.api.request = (_url, options) => { pendingFilterSignal = options.signal; return new Promise(() => {}); };
+  T.forms.request(form, '/api/filter-fixture', { method: 'GET' });
+  T.filters.remove('pending-filter-fixture');
+  check(pendingFilterSignal.aborted && !T.filters.get('pending-filter-fixture'), 'Removing a filter cancels its pending transport rather than updating a closed workspace later.');
+  T.api.request = apiRequest;
+}
+{
+  const listeners = {}, menu = { open: true }, summary = { focus() { this.focused = true; } };
+  const menuDocument = { activeElement: { closest: () => menu }, addEventListener(name, callback, capture) { listeners[name] = { callback, capture }; } };
+  const menuTinyCat = { dom: { find: (_selector, root) => root === menu ? summary : menu, all: () => [menu] }, lifecycle: { register(_name, service) { service.init(); } } };
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'assets/ui/menus.js'), 'utf8').replace(/^import .*;\r?\n/gm, ''), { window: { TinyCat: menuTinyCat }, document: menuDocument });
+  const escape = { key: 'Escape', preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; } };
+  listeners.keydown.callback(escape);
+  check(listeners.keydown.capture === true && escape.prevented && escape.stopped && !menu.open && summary.focused, 'Escape closes a dropdown during capture and restores focus before an enclosing modal can process the key.');
+  menu.open = true; listeners.click.callback({ target: { closest: () => null } });
+  check(!menu.open, 'Clicking outside closes the shared frontend and administration dropdown menus.');
+}
+const emptyState = T.components.render('ui/empty-state', { label: 'Nothing <safe>', icon: 'clock' });
+check(emptyState.className === 'empty-state' && emptyState.getAttribute('role') === 'status' && emptyState.querySelector('.empty-state-icon').querySelector('use').getAttribute('href') === '#clock' && emptyState.querySelector('.empty-state-label').textContent === 'Nothing <safe>' && !emptyState.querySelector('safe'), 'Shared empty states display a contextual icon and safely rendered label with status semantics.');
+check(T.components.render('ui/empty-state', {}).querySelector('.empty-state-label').textContent === T.ui.text('common.no_records'), 'Lists without a custom empty message use the shared no-records translation.');
+for (const [tone, icon, css] of [['ok', 'check-circle', 'success'], ['critical', 'x-circle', 'danger'], ['warning', 'alert', 'warning']]) {
+  const indicator = T.components.render('ui/status-badge', { tone, label: 'Result <safe>' });
+  check(indicator.className.includes('status-indicator-' + css) && indicator.getAttribute('role') === 'img' && indicator.getAttribute('aria-label') === 'Result <safe>' && indicator.getAttribute('title') === 'Result <safe>' && indicator.querySelector('use').getAttribute('href') === '#' + icon && indicator.textContent === '', 'Binary outcomes use accessible, titled success/error icons without a visible text label.');
+}
+check(T.components.render('scheduler/status', { status: 'running' }).textContent === T.ui.text('cron.statuses.running'), 'Running work retains a distinct progress label instead of a success or error icon.');
+
 T.i18n.register("en", labels);
 const embedModal = T.status.modal(new URL("https://tinycat.test/api/statuses/42/embed"), { data: { frame_url: "https://tinycat.test/status/42/embed", snippet: '<iframe title="example"></iframe>' } }, "status-embed-modal-42");
 check(embedModal.getAttribute("role") === "dialog" && embedModal.querySelector("iframe").src === "https://tinycat.test/status/42/embed", "Embedding opens the standard dialog with a same-origin preview.");
@@ -167,7 +254,7 @@ const skippedDetail = T.scheduler.modal(new URL("https://tinycat.test/api/schedu
 check(skippedDetail.textContent.includes("Skipped source") && skippedDetail.textContent.includes("fixture-item-hash"), "Skipped feed diagnostics identify the source and item in the scheduler detail.");
 check(skippedDetail.textContent.includes(T.i18n.t("moderation.messages.blocked_url", { host: "<b>blocked.example</b>" })) && skippedDetail.querySelectorAll("b").length === 0, "Content rejection reasons are localized with parameters and rendered as text.");
 check(schedulerDetail.textContent.includes("<img src=x onerror=bad>") && schedulerDetail.querySelectorAll("img").length === 0, "Scheduler errors render as literal text in the standard detail modal.");
-check(schedulerDetail.textContent.includes("Fixture RSS source") && schedulerDetail.textContent.includes(T.ui.text("bots.run_statuses.interrupted")) && schedulerDetail.textContent.includes("<b>source failure</b>") && schedulerDetail.querySelectorAll("b").length === 0, "The common run modal renders linked source states and escapes their diagnostic errors.");
+check(schedulerDetail.textContent.includes("Fixture RSS source") && schedulerDetail.querySelectorAll(".status-indicator-danger").some(indicator => indicator.getAttribute("aria-label") === T.ui.text("bots.run_statuses.interrupted")) && schedulerDetail.textContent.includes("<b>source failure</b>") && schedulerDetail.querySelectorAll("b").length === 0, "The common run modal renders linked source states and escapes their diagnostic errors.");
 check(!schedulerRoot.textContent.includes("<img src=x onerror=bad>") && schedulerRoot.querySelector('[data-modal-url="/api/scheduler/runs/1"]'), "Run history opens details lazily through the standard resource modal.");
 {
   const query = document.querySelector, queryAll = document.querySelectorAll;
@@ -222,10 +309,23 @@ check(statusDialog.querySelector(".status-comment-input-shell") && statusDialog.
 check(statusDialog.querySelector(".status-time-button").getAttribute("data-modal-open") === null, "A status dialog does not recursively open itself from its timestamp.");
 const editDialog = T.status.modal(new URL("https://tinycat.test/api/statuses/10?panel=edit"), { data: detailData }, "status-editor-fixture");
 check(editDialog.querySelector(".status-compose-main") && editDialog.querySelector('[data-status-image-input]') && editDialog.querySelector('[data-status-image-remove-input]').getAttribute("value") === "0", "Status editing preserves the composer layout, image picker and explicit removal state.");
+check(editDialog.querySelector(".modal-footer").querySelector('[type="submit"]').getAttribute("form") === editDialog.querySelector("form").id && !editDialog.querySelector(".modal-body").querySelector('[type="submit"]'), "Post editors keep the image picker in the body and save in the shared footer.");
 check(editDialog.querySelector('[name="body"]').value === post.editable_body, "Opening the status editor preserves the exact editable text.");
-const profileDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/management?focus=email"), { data: { user, options: { languages: { en: "English" }, password_max_length: 72 }, capabilities: { password: true } } }, "profile-layout-fixture");
-check(profileDialog.querySelector('[data-tab-panel="email"]').hidden === false && profileDialog.querySelector('[data-tab-panel="profile"]').hidden === true, "Profile focus selects the requested tab without mixing all settings into one form.");
-check(profileDialog.querySelector('[data-tab-panel="email"]').getAttribute("action") === "/api/users/me/email", "The email panel submits to its own endpoint.");
+const profileDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/management?panel=account&focus=email"), { data: { user, options: { languages: { en: "English" }, password_max_length: 72 }, capabilities: { password: true } } }, "profile-layout-fixture");
+check(profileDialog.querySelector('[data-editor-sections]') && profileDialog.querySelector('[data-editor-section="account"]'), 'The account-menu target uses the shared sectioned editor instead of a separate profile modal.');
+check(profileDialog.querySelector('[data-tab-panel="email"]').hidden === false && profileDialog.querySelector('[data-tab-panel="account"]').hidden === true, "Profile focus selects the requested tab without mixing all settings into one form.");
+check(profileDialog.querySelector(".modal-footer").querySelector('[data-tab-submit]').getAttribute("form") === profileDialog.querySelector('[data-tab-panel="email"]').querySelector("form").id, "Profile dialogs associate their single footer save with the initially selected tab.");
+const profileTabs = profileDialog.querySelector('[data-tabs]');
+const profileTab = profileTabs.querySelector('[data-tab="account"]');
+profileTab.closest = () => profileTabs;
+profileTabs.closest = () => profileDialog.querySelector('.modal-panel');
+T.tabs.activate(profileTab, false);
+check(profileDialog.querySelector('[data-tab-submit]').getAttribute('form') === profileDialog.querySelector('[data-tab-panel="account"]').querySelector('form').id, "Switching tabs retargets the footer save without submitting another form.");
+check(profileDialog.querySelector('[data-tab-panel="email"]').querySelector("form").getAttribute("action") === "/api/users/me/email", "The email panel submits to its own endpoint.");
+check(profileDialog.dataset.modalKind === 'editor' && profileDialog.dataset.modalSize === 'workspace' && profileTabs.querySelectorAll('[data-tab]').length === 4 && profileTabs.querySelectorAll('[role="tab"]').every(tab => tab.querySelector('svg')), 'Frontend profile editing shares the administration frame and icon tabs.');
+check(profileDialog.querySelector('[name="username"]').getAttribute('disabled') !== null && !profileDialog.querySelector('[name="scope"]') && !profileDialog.querySelector('[name="role"]') && !profileDialog.querySelector('[name="status"]'), 'The shared appearance keeps the username immutable and does not expose administration controls.');
+const avatarTabProfile = T.users.modal(new URL('https://tinycat.test/api/users/2/management?focus=avatar'), { data: { user, options: { languages: { en: 'English' } }, capabilities: { password: false } } }, 'profile-avatar-tab-fixture');
+check(!avatarTabProfile.querySelector('[data-tab-panel="avatar"]').hidden && avatarTabProfile.querySelector('.modal-footer').hidden && avatarTabProfile.querySelector('[data-modal-url="/api/users/2/avatar"]') && !avatarTabProfile.querySelector('[data-tab="security"]'), 'The avatar tab opens the shared avatar editor, hides unrelated saves and respects security capabilities.');
 const avatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user } }, "avatar-layout-fixture");
 check(avatarDialog.querySelector('[data-avatar-upload-input]') && avatarDialog.querySelector('[data-avatar-upload-preview]'), "The avatar dialog provides the existing upload and preview lifecycle hooks.");
 check(avatarDialog.querySelector('.avatar-upload-preview').className.split(/\s+/).includes('avatar'), "The avatar preview retains the shared avatar layout and fallback alignment.");
@@ -243,7 +343,7 @@ check(generatedAvatarDialog.querySelector('[data-avatar-appearance-form]').hidde
 const creatorUpload = generatedAvatarDialog.querySelector('[data-avatar-upload]');
 const creatorUploadForm = generatedAvatarDialog.querySelector('form');
 const creatorEditor = generatedAvatarDialog.querySelector('.avatar-editor');
-creatorUpload.closest = selector => selector === 'form' ? creatorUploadForm : selector === '.avatar-editor' ? creatorEditor : null;
+creatorUpload.closest = selector => selector === 'form' ? creatorUploadForm : selector === '.avatar-editor' ? creatorEditor : selector === '.modal' ? generatedAvatarDialog : null;
 function bindCreatorEvents(node) {
   node.events = {};
   node.addEventListener = (type, callback) => { node.events[type] = callback; };
@@ -260,23 +360,28 @@ const furParameter = creatorSettings.querySelector('[data-avatar-parameter="fur"
 furParameter.value = 'lilac'; furParameter.events.change();
 const previewUrl = creatorEditor.querySelector('[data-avatar-upload-preview]').src;
 const submittedAppearance = JSON.parse(creatorSettings.querySelector('[name="appearance"]').value);
-check(previewUrl.includes('fur=lilac') && submittedAppearance.fur === 'lilac' && !creatorEditor.querySelector('[data-avatar-save]').disabled, "Changing a parameter previews the matching image, serializes JSON and enables saving.");
+check(previewUrl.includes('fur=lilac') && submittedAppearance.fur === 'lilac' && !generatedAvatarDialog.querySelector('[data-avatar-save]').disabled, "Changing a parameter previews the matching image, serializes JSON and enables saving.");
 creatorToggle.events.click();
-check(creatorSettings.hidden && !creatorEditor.querySelector('[data-avatar-save]').disabled, "Collapsing the creator preserves unsaved choices and allows saving.");
+check(creatorSettings.hidden && !generatedAvatarDialog.querySelector('[data-avatar-save]').disabled, "Collapsing the creator preserves unsaved choices and allows saving.");
 furParameter.value = 'auto'; furParameter.events.change();
-check(creatorEditor.querySelector('[data-avatar-save]').disabled, "Restoring the original appearance disables an unnecessary save.");
+check(generatedAvatarDialog.querySelector('[data-avatar-save]').disabled, "Restoring the original appearance disables an unnecessary save.");
 const outfitParameter = creatorSettings.querySelector('[data-avatar-parameter="outfit"]');
 const backgroundParameter = creatorSettings.querySelector('[data-avatar-parameter="background"]');
 outfitParameter.value = 'sage'; outfitParameter.events.change();
 backgroundParameter.value = 'peach'; backgroundParameter.events.change();
 const colourPreview = creatorEditor.querySelector('[data-avatar-upload-preview]').src;
 check(colourPreview.includes('outfit=sage') && colourPreview.includes('background=peach') && JSON.parse(creatorSettings.querySelector('[name="appearance"]').value).background === 'peach', "Outfit and background selections preview and serialize together.");
-const botAccount = { id: 3, username: "FixtureBot", status: "active", bio: unsafe, avatar_url: "", source_count: 2, post_count: 4, updated_at: "2026-10-26T12:00:00Z" };
+const botAccount = { id: 3, username: "FixtureBot", status: "active", bio: unsafe, avatar_url: "", source_count: 2, active_source_count: 0, run_count: 0, post_count: 4, updated_at: "2026-10-26T12:00:00Z" };
 const botAccountTable = T.components.render("bots/accounts", { items: [botAccount], filters: {}, pagination: { per_page: 25 }, navigation: { visible: false } });
-check(!botAccountTable.querySelector("tbody").querySelector("td").querySelector("a") && botAccountTable.querySelector('[data-modal-url="/api/bots/accounts/3/management"]'), "Bot account names are plain text and editing uses the same icon-modal interaction as user rows.");
-const botAccountDialog = T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/3/management"), { data: { item: botAccount } }, "bot-account-edit-fixture");
-check(botAccountDialog.querySelector("form").dataset.apiMethod === "PATCH" && botAccountDialog.querySelector("form").dataset.ajaxTarget === "#bot-accounts-list" && botAccountDialog.querySelector("form").dataset.modalCloseOnSuccess === "true", "Bot edit modals save through the existing PATCH endpoint and refresh the list.");
-check(botAccountDialog.querySelector("textarea").value === unsafe && botAccountDialog.querySelectorAll("input").some(field => field.getAttribute("name") === "avatar"), "Bot edit modals preserve literal biography text and avatar-upload support.");
+check(!botAccountTable.querySelector("tbody").querySelector("td").querySelector("a") && botAccountTable.querySelector('[data-modal-url="/api/bots/accounts/3?panel=detail"]'), "Bot account names are plain text and editing uses the same icon-modal interaction as user rows.");
+const botAccountDialog = T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/3?panel=detail"), { data: { item: botAccount } }, "bot-account-edit-fixture");
+const botTitle = botAccountDialog.querySelector('[id="bot-account-edit-fixture-title"]');
+check(botTitle.children[0].querySelector('.status-indicator-success') && botTitle.children[1].textContent === '@FixtureBot' && !botAccountDialog.querySelector('[href="/author/3"]'), "Bot dialogs put status before the nickname in the header and omit the public profile link.");
+const adminUserDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/management?panel=administration"), { data: { user: { ...user, status: "ban" }, administration: { roles: ["user"], statuses: ["active", "ban"] }, options: {} } }, "admin-user-title-fixture");
+const adminUserTitle = adminUserDialog.querySelector('[id="admin-user-title-fixture-title"]');
+check(adminUserTitle.children[0].querySelector('.status-indicator-danger') && adminUserTitle.children[1].textContent === '@' + user.username, "User administration shares the header status and nickname layout, including inactive accounts.");
+check(botAccountDialog.querySelector("form").dataset.apiMethod === "PATCH" && botAccountDialog.querySelector("form").dataset.ajaxTarget === "#bot-detail-account" && !botAccountDialog.querySelector("form").dataset.modalCloseOnSuccess, "The unified bot account tab saves through PATCH and stays open for the other tabs.");
+check(botAccountDialog.querySelector("textarea").value === unsafe && botAccountDialog.querySelector('[data-modal-url="/api/users/3/avatar"]') && !botAccountDialog.querySelector('[name="avatar"]') && !botAccountDialog.querySelector('[name="remove_avatar"]'), "Bot edit modals retain biography drafts and open the shared avatar editor instead of uploading through the account form.");
 const comment = { id: 20, content_id: 10, parent_id: 0, author: user, body: unsafe, segments: [{ type: "text", text: unsafe }], editable_body: unsafe, created_at: "2026-01-01T12:00:00Z", created_label: "Today", likes_count: 0, liked: false, capabilities: { edit: true, delete: true, interact: true }, replies: [] };
 node = T.status.comment(comment, "modal");
 check(node.dataset.contentId === "10" && node.querySelector(".status-comment-body").textContent === unsafe, "Comment DOM retains its parent status and safe text.");
@@ -296,10 +401,30 @@ check(!node.querySelector('[name="current_password"]'), "Other account profiles 
 check(node.querySelector('[name="bio"]').value === unsafe, "Profile editors retain literal draft data.");
 const target = new Node("div");
 T.users.list(target, { data: { items: [{ ...user, role: "admin", status: "active", updated_at_formatted: "Today", can_delete: false }], filters: { q: "admin", role: "admin", status: "active", updated_from: "", updated_to: "" }, roles: { admin: "Admin", user: "User" }, statuses: { active: "Active" }, role_options: { "": "All", admin: "Admin", user: "User" }, status_options: { "": "All", active: "Active" }, options: { password_max_length: 1024, username_pattern: "[A-Za-z0-9]+", username_hint: "Letters" } }, meta: { pagination: { page: 1, last_page: 1, per_page: 25 } } });
+check(target.querySelector(".admin-filter-actions").querySelector('[data-filter-panel="users-filter-modal"]') && target.querySelector(".admin-filter-actions").querySelector('[name="per_page"]'), "AJAX user lists keep filters and page size together in the compact toolbar.");
 const filterDialog = document.getElementById("users-filter-modal");
+check(!filterDialog.querySelector('[type="submit"]') && filterDialog.querySelector('[name="role"]').getAttribute('data-submit-on-change') !== null && filterDialog.querySelector('[name="q"]').getAttribute('data-submit-on-change') === null, 'Filters apply immediately without an Apply button while hidden search state remains passive.');
 check(filterDialog && filterDialog.querySelector('[name="per_page"]').value === "25" && filterDialog.querySelector('[name="role"]').value === "admin", "AJAX list replacement preserves the filter dialog and its current select values.");
-check(filterDialog.dataset.modalDisposeOnClose === "false" && filterDialog.querySelector('[name="per_page"]').children.find(option => option.getAttribute("value") === "25").defaultSelected, "Locally owned filter dialogs remain reusable and discard restores the current filters.");
+check(filterDialog.dataset.filterContent === "" && filterDialog.querySelector('[name="per_page"]').children.find(option => option.getAttribute("value") === "25").defaultSelected, "Locally owned filter dialogs remain reusable and discard restores the current filters.");
+const adminAvatarFields = T.components.render("users/admin-fields", { user, create: false, options: { roles: {}, statuses: {} } });
+check(adminAvatarFields.querySelector('[data-modal-url="/api/users/2/avatar"]') && !adminAvatarFields.querySelector('[name="avatar"]') && !adminAvatarFields.querySelector('[name="remove_avatar"]'), "User administration reuses the frontend avatar editor without duplicate upload or removal controls.");
 const createDialog = document.getElementById("user-create-modal");
+check(createDialog.querySelectorAll('[data-tab]').length === 2, "User creation uses the standard Account and Access sections.");
+const userTabs = createDialog.querySelector('[data-tabs]');
+const accessPanel = userTabs.querySelector('[data-tab-panel="access"]');
+const requiredPassword = accessPanel.querySelector('[name="password"]');
+userTabs.closest = () => createDialog.querySelector('.modal-panel');
+userTabs.querySelectorAll('[data-tab]').forEach(tab => { tab.closest = () => userTabs; });
+accessPanel.closest = () => userTabs;
+requiredPassword.type = 'password';
+requiredPassword.closest = selector => selector === '[data-tab-panel]' ? accessPanel : selector === '[data-captcha], .field' ? requiredPassword.parent : null;
+createDialog.querySelector('form').elements = { namedItem: name => name === 'password' ? requiredPassword : null };
+check(accessPanel.hidden && requiredPassword.getAttribute('required') !== null, "Required fields retain validation even on initially hidden tabs.");
+const revealedInvalid = T.forms.applyErrors(createDialog.querySelector('form'), { password: ['Required password'] });
+check(!accessPanel.hidden && revealedInvalid === requiredPassword && requiredPassword.getAttribute('aria-invalid') === 'true', "Server validation reveals the tab containing the first invalid field.");
+const createSubmit = createDialog.querySelector(".modal-footer").querySelector('[type="submit"]');
+check(createSubmit && createSubmit.getAttribute("form") === createDialog.querySelector("form").id && !createDialog.querySelector(".modal-body").querySelector('[type="submit"]'), "Administration saves have one footer action associated with the editor form.");
+check(avatarDialog.querySelector(".modal-footer").querySelector('[data-avatar-save]') && !avatarDialog.querySelector(".modal-body").querySelector('[data-avatar-save]'), "The shared avatar editor uses the same fixed footer placement.");
 check(createDialog.dataset.modalDisposeOnClose === "false" && createDialog.querySelector("form").dataset.modalCloseOnSuccess === "true", "Account dialogs can reopen after cancel and close the modal stack after successful writes.");
 check(!target.querySelector('[data-api-method="DELETE"]'), "Protected-account capabilities remove deletion controls from AJAX lists.");
 const existingBio = new Node("p", "Retained profile bio");
@@ -312,6 +437,7 @@ document.body.dataset.currentUserId = "2";
 window.setTimeout = callback => callback();
 window.location.reload = () => { localeReloads++; };
 T.users.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
+await Promise.resolve();
 check(localeReloads === 1, "Changing the current user's locale reloads the document and its hashed catalog.");
 T.users.result(avatarForm, { data: { user: { id: 3, locale: "cs" } } }, null);
 T.users.result(avatarForm, { data: { user: { id: 2, locale: "en" } } }, null);
@@ -322,9 +448,17 @@ document.documentElement.dataset.interfaceLocales = "cs,en,pl,fr";
 window.location.assign = url => localeNavigations.push(url);
 avatarForm.dataset.originalLocale = "cs";
 T.users.result(avatarForm, { data: { user: { id: 2, locale: "cs" } } }, null);
+await Promise.resolve();
 check(localeNavigations.length === 0 && localeReloads === 1, "Saving an unchanged profile language preserves an explicit URL language.");
 T.users.result(avatarForm, { data: { user: { id: 2, locale: "fr" } } }, null);
+await Promise.resolve();
 check(localeNavigations[0] === "/fr/", "Changing the profile language explicitly switches the URL and catalog together.");
+const savedLeaveGuard = T.navigation.canLeave;
+T.navigation.canLeave = () => Promise.resolve(false);
+T.users.result(avatarForm, { data: { user: { id: 2, locale: 'fr' } } }, null);
+await Promise.resolve(); await Promise.resolve();
+check(localeNavigations.length === 1, 'A locale save cannot navigate away when another draft blocks leaving.');
+T.navigation.canLeave = savedLeaveGuard;
 delete avatarForm.dataset.originalLocale;
 delete document.documentElement.dataset.interfacePrefix;
 delete document.documentElement.dataset.interfaceLocales;
@@ -341,8 +475,36 @@ check(sourceRoot.textContent.includes(unsafe) && sourceRoot.querySelectorAll("im
 const sourceActions = sourceRoot.querySelectorAll("form");
 check(sourceActions.some(form => form.getAttribute("action") === "/api/bots/sources/7" && form.dataset.apiMethod === "PATCH" && form.querySelector('[name="enabled"]').getAttribute("value") === "0"), "Source pause requests an explicit disabled state at the resource URL.");
 check(sourceActions.some(form => form.getAttribute("action") === "/api/bots/sources/7/runs" && form.dataset.apiMethod === "POST"), "Manual feed imports create a run resource.");
-node = T.bots.sourceForm({ id: 7, bot_user_id: 2, name: unsafe, post_template: unsafe, enabled: true }, [user]);
+node = T.bots.modal(new URL('https://tinycat.test/api/bots/sources/7/management'), { data: { item: { id: 7, bot_user_id: 2, name: unsafe, post_template: unsafe }, bots: [user] } }, 'source-template-fixture').querySelector('form');
 check(node.dataset.apiMethod === "PATCH" && node.querySelector('[name="post_template"]').value === unsafe, "Source editing uses a local form and preserves the template as text.");
+const sourceEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/7/management"), { data: { item: { id: 7, bot_user_id: 2, name: "Fresh source", feed_url: "https://example.test/feed", post_template: "{{title}}", enabled: true }, bots: [user] } }, "source-editor-test");
+check(T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/2/management"), { data: { item: user } }, "bot-editor-test") === null, "The duplicate bot editor is retired.");
+for (const editor of [createDialog, sourceEditor, botAccountDialog]) {
+  check(editor.dataset.modalKind === "editor" && editor.dataset.modalSize === "workspace", "User and bot editors share the responsive administration frame.");
+}
+const sourceCreateEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/management"), { data: { item: { enabled: true, post_template: '{{title}}', bot_user_id: 2 }, bots: [user] } }, "source-create-test");
+const reportEditor = T.status.modal(new URL('https://tinycat.test/api/moderation/report-options?id=10'), { data: { reasons: ['spam'] } }, 'report-contract-fixture');
+const authEditor = T.users.modal(new URL('https://tinycat.test/api/users/authentication'), { data: { mode: 'login', registration_enabled: true, captcha: { enabled: false }, options: {}, old: {} } }, 'auth-contract-fixture');
+for (const dialog of [commentEditDialog, editDialog, profileDialog, avatarDialog, createDialog, sourceEditor, sourceCreateEditor, botAccountDialog, reportEditor, authEditor]) {
+  check(dialog.dataset.modalKind === 'editor', 'Every editable surface opts into the common mobile and keyboard contract.');
+  check(dialog.querySelector('.modal-footer') && !dialog.querySelector('.modal-body').querySelector('[type="submit"]'), 'Editor primary actions stay in the shared footer, outside the scrollable body.');
+}
+for (const dialog of [reportEditor, authEditor]) {
+  const submit = dialog.querySelector('.modal-footer').querySelector('[type="submit"]');
+  check(submit.getAttribute('form') === dialog.querySelector('form').id && dialog.querySelector('form').dataset.confirmUnsaved === 'true', 'Compact forms retain native submit association and protect unfinished input.');
+}
+const savedAccountClose = T.dialog.close;
+let unexpectedAccountClose = false;
+T.dialog.close = () => { unexpectedAccountClose = true; };
+const accountDraft = profileDialog.querySelector('[name="bio"]'); accountDraft.value = 'Draft in another tab';
+const savedEmailForm = profileDialog.querySelector('[data-editor-section="email"]');
+savedEmailForm.closest = () => profileDialog;
+T.users.result(savedEmailForm, { data: { user: { id: 2, email: 'saved@example.test' } } }, null);
+check(!unexpectedAccountClose && accountDraft.value === 'Draft in another tab', 'Saving one account tab leaves the editor and other tab drafts intact.');
+check(!profileDialog.querySelector('[name="current_password"]').parent.parent.dataset.modalCloseOnSuccess, 'A password change cannot implicitly close the other account forms.');
+T.dialog.close = savedAccountClose;
+check(sourceEditor.querySelectorAll('[data-tab]').length === 3 && sourceCreateEditor.querySelectorAll('[data-tab]').length === 3 && sourceCreateEditor.querySelector('form').dataset.apiMethod === 'POST', "Source create and edit share the same three-section modal.");
+check(sourceEditor.querySelector('[name="name"]').value === "Fresh source" && sourceEditor.querySelector('[data-bot-source-preview]'), "Remote source editors use fetched values and retain the preview workflow.");
 const reportRoot = new Node("div");
 T.moderation.reports(reportRoot, [{ id: 12, content_id: 9, author_name: unsafe, excerpt: unsafe, open_count: 1, report_count: 1, status: "open" }]);
 check(reportRoot.querySelectorAll("form").every(form => form.getAttribute("action") === "/api/moderation/reports/12" && form.dataset.apiMethod === "PATCH"), "Moderation controls address the report by path ID.");
@@ -383,7 +545,6 @@ for (const attributes of [{ onclick: "alert(1)" }, { style: "color:red" }, { src
 }
 assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel_attributes: {}, close_icon: "<img onerror=bad>", body: "<script>bad</script>" })); checks++;
 
-(async () => {
   const schedulerLocation = window.location, schedulerQuery = document.querySelector, schedulerRequest = T.api.request;
   let restoredSchedulerUrl = "";
   const schedulerHydrate = T.lifecycle.hydrate;
@@ -407,18 +568,6 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   } finally {
     window.location = schedulerLocation; document.querySelector = schedulerQuery; T.api.request = schedulerRequest; T.lifecycle.hydrate = schedulerHydrate;
   }
-  const owner = new Node("section"); owner.dataset.botDetailId = "2";
-  const counters = ["sources", "active_sources", "posts", "runs"].map(key => { const node = new Node("strong"); node.dataset.botStat = key; node.textContent = "stale"; return node; });
-  document.querySelector = selector => selector === "[data-bot-detail-id]" ? owner : selector === "[data-bot-sources]" ? sourceRoot : null;
-  document.querySelectorAll = selector => selector === "[data-bot-stat]" ? counters : [];
-  const previousRequest = T.api.request;
-  T.api.request = async () => ({ data: { item: { id: 2, username: "Bot", post_count: 4 }, sources: [{ id: 7, enabled: false }], runs: [{ id: 1 }, { id: 2 }] } });
-  const sourceAction = new Node("form"); sourceAction.setAttribute("action", "/api/bots/sources/7");
-  check(T.bots.result(sourceAction, {}, null), "Bot detail accepts its canonical resource mutation.");
-  await Promise.resolve();
-  check(counters.map(node => node.textContent).join(",") === "1,0,4,2", "AJAX detail refresh updates all source, post and run counters.");
-  check(sourceRoot.querySelector("[data-bot-sources-view]"), "AJAX detail preserves the shared source component.");
-  T.api.request = previousRequest;
   const handlers = {};
   document.readyState = "loading";
   document.addEventListener = (name, callback) => { (handlers[name] ||= []).push(callback); };
@@ -486,23 +635,146 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.forms.hydrate({ querySelectorAll: () => [untouched] });
   handlers.change.forEach(callback => callback({ target: { closest: () => untouched } }));
   check(untouched.dataset.dirty === "false", "An empty upload input with a fresh File timestamp does not mark an unchanged editor dirty.");
+  const modalWithSibling = new Node('div'), dirtySibling = new Node('form'), partSave = new Node('form');
+  dirtySibling.dataset.confirmUnsaved = 'true'; dirtySibling.dataset.dirty = 'true';
+  modalWithSibling.querySelectorAll = selector => selector.includes('data-dirty') ? (dirtySibling.dataset.dirty === 'true' ? [dirtySibling] : []) : [];
+  partSave.setAttribute('action', '/api/test-save'); partSave.setAttribute('method', 'POST');
+  partSave.dataset.modalCloseOnSuccess = 'true'; partSave.dataset.confirmUnsaved = 'true'; partSave.dataset.dirty = 'true';
+  partSave.closest = selector => selector === 'form[data-ajax-form]' ? partSave : selector === '.modal' ? modalWithSibling : null;
+  const savedPartClose = T.dialog.close; let partCloseCount = 0;
+  T.dialog.close = () => { partCloseCount++; };
+  T.api.request = async () => ({ ok: true, data: {} });
+  for (const callback of handlers.submit) { await callback({ target: partSave, preventDefault() {} }); }
+  check(partCloseCount === 0 && partSave.dataset.dirty === 'false' && dirtySibling.dataset.dirty === 'true', 'A successful AJAX save cleans only its form and preserves a dirty sibling before auto-close.');
+  dirtySibling.dataset.dirty = 'false';
+  for (const callback of handlers.submit) { await callback({ target: partSave, preventDefault() {} }); }
+  check(partCloseCount === 1, 'Close-on-success still works after all sibling forms are clean.');
+  T.dialog.close = savedPartClose;
   const queueRoot = new Node("div"); queueRoot.id = "bot-queue-list";
   T.api.csrfToken = () => "queue-test-csrf";
   const queueModel = { items: [{ id: 41, bot_id: 7, username: "QueueBot", status: "active", bot_url: "/admin/bots/7", excerpt: "Waiting post", published_at: "2099-01-01T12:00:00+00:00", can_publish: true, publish_url: "/api/bots/queue/41/publication?bot=7" }],
     filters: { bot: "7", q: "Waiting", status: "active", source: "12" }, bots: { "": "All", "7": "QueueBot" }, sources: { "": "All feeds", "12": "RSS fixture" }, statuses: ["active", "waiting", "ban"], sorting: {}, navigation: { visible: false } };
+  queueModel.items[0].edit_url = "/api/bots/accounts/7/posts/41/management?panel=edit";
   queueModel.items[0].source = { id: 12, name: "RSS fixture", url: "/admin/bots/7?source=12" };
   T.bots.queue(queueRoot, { data: queueModel, meta: { pagination: { page: 1, per_page: 10 } } });
   T.bots.hydrate(queueRoot);
+  check(queueRoot.querySelector('[data-modal-url="/api/bots/accounts/7/posts/41/management?panel=edit"]'), "Queue rows expose the same editor as bot detail posts.");
   const queuePublish = queueRoot.querySelectorAll("form").find(form => (form.getAttribute("action") || "").includes("/publication"));
   check(queuePublish && queuePublish.dataset.ajaxTarget === "#bot-queue-list" && queuePublish.querySelectorAll("input").some(field => field.getAttribute("name") === "_csrf"), "Queued posts publish through the shared CSRF-protected AJAX form.");
   const queueFilter = document.getElementById("bot-queue-filter-modal");
   check(queueFilter && queueFilter.querySelectorAll("select").find(field => field.getAttribute("name") === "bot").value === "7", "Queue filter hydration preserves the selected bot.");
   check(queueFilter.querySelectorAll("select").find(field => field.getAttribute("name") === "source").value === "12" && queueRoot.textContent.includes("RSS fixture"), "The queue shows its RSS source and preserves source selection.");
   T.bots.result(queuePublish, { data: Object.assign({}, queueModel, { items: [] }), meta: { pagination: { page: 1, per_page: 10, total: 0 } } }, queueRoot);
-  check(queueRoot.textContent.includes(T.i18n.t("bots.queue_empty")) && !queueRoot.textContent.includes("Waiting post"), "Publication replaces the queue and removes the published row.");
+  check(queueRoot.textContent.includes(T.i18n.t("common.no_records")) && !queueRoot.textContent.includes("Waiting post"), "Publication replaces the queue and removes the published row.");
   const unknownSource = T.components.render("bots/post-source", { source: null });
   check(unknownSource.textContent.includes(T.i18n.t("bots.unknown_source")), "Legacy posts show an explicit unknown source.");
   const sourceCounts = T.components.render("bots/sources", { items: [{ id: 12, bot_user_id: 7, name: "RSS fixture", bot_username: "QueueBot", interval_minutes: 60, enabled: true, published_count: 120, queued_count: 70, published_url: "/admin/bots/7?source=12&publication=published", queue_url: "/admin/bots/queue?source=12" }], bots: [], sorting: {}, state: {} });
   check(sourceCounts.textContent.includes("120 / 70") && sourceCounts.querySelectorAll("a").some(link => link.getAttribute("href") === "/admin/bots/queue?source=12"), "Source counts link directly to the corresponding feed queue.");
+  const savedRequest = T.api.request, savedQuery = document.querySelector, savedHydrate = T.lifecycle.hydrate;
+  const detailEvents = Node.prototype.addEventListener;
+  Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
+  const workspace = T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/3?panel=detail"), { data: { item: botAccount } }, "bot-detail-modal");
+  Node.prototype.addEventListener = detailEvents;
+  workspace.isConnected = true;
+  const workspaceTabs = workspace.querySelector('[data-tabs]');
+  const detailSources = workspace.querySelector('[id="bot-detail-sources-list"]');
+  const detailPosts = workspace.querySelector('[id="bot-detail-posts-list"]');
+  const detailRuns = workspace.querySelector('[id="bot-detail-runs-list"]');
+  document.querySelector = selector => selector === '[data-bot-workspace-id]' ? workspace : selector.startsWith('#bot-detail-') ? workspace.querySelector('[id="' + selector.slice(1) + '"]') : savedQuery(selector);
+  T.lifecycle.hydrate = () => {};
+  const parentFilter = new Node('div'); parentFilter.id = 'bots-filter-modal';
+  const parentQuery = new Node('input'); parentQuery.name = 'q'; parentQuery.value = 'parent search'; parentFilter.appendChild(parentQuery); document.body.appendChild(parentFilter);
+  check(workspaceTabs.querySelectorAll('[data-tab]').length === 4 && !workspace.querySelector('.modal-footer').hidden, "The bot workspace starts on its editable account tab with one footer save.");
+  const detailDraft = workspace.querySelector('textarea'); detailDraft.value = 'Unsaved account draft';
+  const workspaceCalls = [];
+  T.api.request = async url => {
+    workspaceCalls.push(url);
+    if (url.startsWith('/api/bots/accounts/3/runs')) {
+      return { data: { runs: [], filters: { q: '', status: '', source: '' }, sources: {}, sorting: {}, navigation: { visible: false }, api_url: '/api/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', clear_url: '/api/bots/accounts/3/runs', url }, meta: { pagination: { page: 1, per_page: 25 } } };
+    }
+    return url.startsWith('/api/bots/sources')
+      ? { data: { items: [], bots: [botAccount], filters: { q: '', bot: '3' }, sorting: {}, navigation: { visible: false } }, meta: { pagination: { page: 1, per_page: 25 } } }
+      : { data: { items: [], total_count: 4, filters: { q: '', scope: 'modal' }, sources: {}, sorting: {}, navigation: { visible: false }, api_url: '/api/bots/accounts/3/posts', history_url: false, list_target: '#bot-detail-posts-list', filter_modal: 'bot-detail-posts-filter-modal', clear_url: '/api/bots/accounts/3/posts?scope=modal', url: '/api/bots/accounts/3/posts?scope=modal' }, meta: { pagination: { page: 1, per_page: 25 } } };
+  };
+  workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'sources' } });
+  await new Promise(resolve => setImmediate(resolve));
+  check(workspaceCalls[0] === '/api/bots/sources?bot=3' && detailSources.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-sources-list', "Source tabs load and submit to a dedicated list target.");
+  check(parentQuery.value === 'parent search' && !detailSources.querySelector('.admin-search-form').dataset.history, "Workspace filters do not modify the parent list or browser history.");
+  workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'posts' } });
+  await new Promise(resolve => setImmediate(resolve));
+  check(workspaceCalls[1] === '/api/bots/accounts/3/posts?scope=modal' && detailPosts.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-posts-list', "Posts are loaded lazily with independent modal scope.");
+  check(detailDraft.value === 'Unsaved account draft' && workspace.querySelector('.modal-footer').hidden, "Changing tabs preserves account drafts and hides irrelevant save actions.");
+  workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'history' } });
+  await new Promise(resolve => setImmediate(resolve));
+  check(workspaceCalls[2] === '/api/bots/accounts/3/runs' && detailRuns.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-runs-list' && document.getElementById('bot-detail-runs-filter-modal'), 'History loads lazily with shared search and a dedicated filter dialog.');
+  const runSearch = new Node('form'); runSearch.dataset.apiMethod = 'GET';
+  T.botDetail.result(runSearch, { data: { runs: [], filters: { q: 'failure', status: 'error' }, sources: {}, navigation: { visible: false }, api_url: '/api/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', url: '/api/bots/accounts/3/runs?q=failure&status=error&page=2' }, meta: { pagination: { page: 2, per_page: 10 } } }, detailRuns);
+  workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'posts' } });
+  workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'history' } });
+  check(workspaceCalls.length === 3 && detailRuns.dataset.listUrl.includes('page=2') && detailRuns.querySelector('.admin-search-form').querySelector('[name="q"]').value === 'failure', 'Returning to history preserves its search, filters and page without reloading another tab.');
+  workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'account' } });
+  check(!workspace.querySelector('.modal-footer').hidden && workspaceCalls.length === 3, "Returning to the account restores its footer without reloading fields.");
+  const modalSignals = [];
+  T.api.request = (_url, options) => { modalSignals.push(options.signal); return new Promise(() => {}); };
+  const sourceChange = new Node('form'); sourceChange.dataset.apiMethod = 'PATCH';
+  T.botDetail.result(sourceChange, { data: {} }, detailSources);
+  T.botDetail.dispose(workspace);
+  check(modalSignals.length === 4 && modalSignals.every(signal => signal.aborted) && !document.getElementById('bot-detail-runs-filter-modal'), "Disposing the workspace cancels pending list and metadata requests and removes the history filter dialog.");
+  workspace.remove(); parentFilter.remove();
+  T.api.request = savedRequest; document.querySelector = savedQuery; T.lifecycle.hydrate = savedHydrate;
+  const settingsTemplate = new Node('template'); settingsTemplate.dataset.settingsEditor = ''; settingsTemplate.content = new Node('fragment');
+  const settingsForm = new Node('form'); settingsForm.dataset.apiMethod = 'PATCH'; settingsForm.setAttribute('enctype', 'multipart/form-data');
+  const settingsFields = new Node('div'); settingsFields.dataset.editorSections = '';
+  for (const key of ['site', 'email']) {
+    const section = new Node('div'); section.dataset.editorSection = key; section.dataset.editorLabel = key; section.dataset.editorIcon = key === 'site' ? 'home' : 'mail';
+    const field = new Node('input'); field.setAttribute('name', 'settings[' + key + ']'); section.appendChild(field); settingsFields.appendChild(section);
+  }
+  settingsForm.appendChild(settingsFields); settingsForm.appendChild(T.ui.button('common.save', {type: 'submit'}));
+  settingsTemplate.content.appendChild(settingsForm);
+  const savedOpen = T.dialog.open, savedTabs = T.tabs.activate, savedSettingsHydrate = T.lifecycle.hydrate, savedSettingsListener = Node.prototype.addEventListener;
+  Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
+  let settingsOpenCount = 0;
+  T.dialog.open = () => { settingsOpenCount++; };
+  T.lifecycle.hydrate = () => {};
+  T.tabs.activate = tab => {
+    const tabs = tab.parent.parent;
+    tabs.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-selected', button === tab ? 'true' : 'false'));
+    tabs.querySelectorAll('[data-tab-panel]').forEach(panel => { panel.hidden = panel.dataset.tabPanel !== tab.dataset.tab; });
+  };
+  T.settings.hydrate({querySelectorAll: () => [settingsTemplate]});
+  check(settingsOpenCount === 0 && document.getElementById('settings-editor-modal'), 'Admin hydration prepares settings without opening the modal.');
+  T.settings.open('email');
+  const settingsDialog = document.getElementById('settings-editor-modal');
+  check(settingsDialog.querySelectorAll('[data-tab]').length === 2 && !settingsDialog.querySelector('[data-tab-panel="email"]').hidden, 'Settings open their requested section through the shared tabbed editor.');
+  check(settingsDialog.querySelector('.modal-footer').querySelector('[type="submit"]').getAttribute('form') === settingsForm.id && settingsForm.getAttribute('enctype') === 'multipart/form-data', 'Settings keep one footer save and their image-upload form encoding.');
+  settingsForm.querySelector('input').value = 'Retained settings draft';
+  T.settings.open('site');
+  check(document.getElementById('settings-editor-modal') === settingsDialog && settingsForm.querySelector('input').value === 'Retained settings draft', 'Reopening a settings section reuses the editor without discarding drafts.');
+  let settingsReload;
+  const settingsStorage = new Map();
+  window.sessionStorage = { setItem(key, value) { settingsStorage.set(key, value); }, getItem: key => settingsStorage.get(key) ?? null, removeItem(key) { settingsStorage.delete(key); } };
+  window.location.reload = () => { settingsReload = true; };
+  settingsForm.listeners['tinycat:success']();
+  check(settingsReload && settingsStorage.get('tinycat.settings.section') === 'site', 'Saving settings reloads the current page and remembers its active modal section without a settings page.');
+  settingsTemplate.dataset.settingsReady = 'false';
+  T.settings.hydrate({querySelectorAll: () => [settingsTemplate]});
+  check(settingsOpenCount === 3 && !settingsDialog.querySelector('[data-tab-panel="site"]').hidden && !settingsStorage.has('tinycat.settings.section'), 'Reload hydration restores the saved settings tab once.');
+  delete window.location.reload; delete window.sessionStorage;
+  Node.prototype.addEventListener = savedSettingsListener; T.dialog.open = savedOpen; T.tabs.activate = savedTabs; T.lifecycle.hydrate = savedSettingsHydrate;
+  settingsDialog.remove();
+  const savedCaptchaRequest = T.api.request, savedCaptcha = T.ui.captcha, savedCaptchaListener = Node.prototype.addEventListener;
+  Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
+  const searchRoot = new Node('form'), searchInput = new Node('input');
+  searchInput.dataset.globalSearchInput = ''; searchInput.value = 'captcha'; searchRoot.appendChild(searchInput);
+  T.ui.captcha = () => {};
+  T.api.request = async () => { const error = new Error('Verify search'); error.data = { code: 'captcha_required', error: { details: { captcha: { enabled: true } } } }; throw error; };
+  T.search.hydrate({querySelectorAll: () => [searchRoot]});
+  searchInput.listeners.focus();
+  await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  const searchChallenge = document.getElementById('global-search-captcha-modal');
+  check(searchChallenge && searchChallenge.dataset.modalKind === 'editor' && searchChallenge.dataset.modalSize === 'compact', 'A real search challenge opens through the shared compact editor.');
+  check(searchChallenge.querySelector('.modal-footer').querySelector('[type="submit"]').getAttribute('form') === searchChallenge.querySelector('form').id && !searchChallenge.querySelector('.modal-body').querySelector('[type="submit"]'), 'Search verification uses the same associated footer action as other forms.');
+  T.dialog.close(searchChallenge);
+  T.api.request = savedCaptchaRequest; T.ui.captcha = savedCaptcha; Node.prototype.addEventListener = savedCaptchaListener;
   console.log(`PASS domain JSON renderers and request state (${checks} checks)`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

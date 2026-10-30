@@ -6,6 +6,20 @@ namespace TinyCat\Users;
 
 final class Accounts
 {
+    /** @param array<mixed> $user */
+    public static function setActive(array $user, bool $active): void
+    {
+        if (!$active && self::tc_admin_user_is_super_admin($user)) {
+            throw new \DomainException('super_admin_protected');
+        }
+        \TinyCat\Database\Transactions::run(static function () use ($user, $active): void {
+            \TinyCat\Database\Connection::update('users', ['status' => $active ? 'active' : 'ban'], ['id' => (int) $user['id']]);
+            if (!$active && ($user['role'] ?? '') === 'bot') {
+                \TinyCat\Database\Connection::update('bot_sources', ['enabled' => 0], ['bot_user_id' => (int) $user['id']]);
+            }
+        });
+    }
+
 
     /**
      * @param array<mixed> $registration

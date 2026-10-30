@@ -5,7 +5,6 @@
 @import "../ui/styles/005-field-inline.css";
 @import "../modules/security/styles/006-captcha-provider.css";
 @import "../ui/styles/007-alert.css";
-@import "../modules/admin/styles/008-settings-grid.css";
 @import "../ui/styles/009-check-line.css";
 @import "../modules/notifications/styles/010-notification-nav-link.css";
 @import "../modules/status/styles/011-status-email-notice.css";
@@ -54,8 +53,7 @@
 @import "../ui/styles/054-brand-logo.css";
 @import "../modules/admin/styles/055-admin-brand-span-admin-user-span.css";
 @import "../ui/styles/056-tabs.css";
-@import "../modules/users/styles/057-auth-modal-panel.css";
-@import "../ui/styles/058-modal-panel-full.css";
+@import "../ui/styles/058-modal-layout.css";
 @import "../modules/site/styles/059-cookie-consent.css";
 @import "../ui/styles/060-toast-stack.css";
 @import "../ui/styles/061-input-not-type-checkbox-not-type-radio-not-ty.css";
@@ -80,16 +78,14 @@
 @import "../ui/styles/080-section.css";
 @import "../modules/admin/styles/081-admin-list-toolbar.css";
 @import "../ui/styles/082-field-inline.css";
-@import "../modules/admin/styles/083-settings-grid.css";
-@import "../modules/users/styles/084-profile-modal-grid.css";
-@import "../ui/styles/085-modal-confirm-panel-modal-footer-btn.css";
+@import "../ui/styles/085-modal-confirm-actions.css";
 @import "../modules/admin/styles/086-body-admin-nav-open.css";
 @import "../ui/styles/087-md-grid-2.css";
 @import "../modules/users/styles/088-profile-layout.css";
 @import "../ui/styles/089-profile-sidebar-stack-public-sidebar.css";
 @import "../modules/users/styles/090-profile-main.css";
 @import "../modules/site/styles/091-public-layout.css";
-@import "../ui/styles/092-user-modal-panel-modal-panel-full-following-m.css";
+@import "../ui/styles/092-modal-workspace-desktop.css";
 @import "../ui/styles/093-before-after.css";
 @import "../ui/styles/094-is-resource-text.css";
 @import "../modules/site/styles/092-language.css";

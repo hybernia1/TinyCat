@@ -8,35 +8,39 @@ import "../../ui/form-state.js";
 import "../../ui/forms.js";
 import "../../ui/toasts.js";
 import "./source-preview.js";
+import "./detail.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;
   var pendingPosts = new WeakMap();
   function sourceUrl(suffix) {
-    var bot = new URLSearchParams(window.location.search).get("bot");
+    var workspace = document.querySelector("[data-bot-workspace-id]");
+    var bot = workspace ? workspace.dataset.botWorkspaceId : new URLSearchParams(window.location.search).get("bot");
     return "/api/bots/sources" + (suffix || "") + (Number(bot) > 0 ? "?bot=" + encodeURIComponent(bot) : "");
   }
   function submit(form, key) { form.appendChild(U.button(key || "common.save", { type: "submit", "class": "btn btn-primary btn-sm" })); return form; }
   function sourceForm(source, bots) {
     var form = U.form(sourceUrl(source.id ? "/" + source.id : ""), source.id ? "PATCH" : "POST");
-    form.dataset.ajaxTarget = "#bots-list"; form.dataset.modalCloseOnSuccess = "true";
+    form.dataset.ajaxTarget = document.querySelector("[data-bot-workspace-id]") ? "#bot-detail-sources-list" : "#bots-list"; form.dataset.modalCloseOnSuccess = "true";
     form.appendChild(T.components.render("bots/source-fields", { source: source, bots: bots }));
     return submit(form);
   }
   function sources(root, data) {
-    var view = T.components.render("bots/sources", Object.assign({}, data, { state: data }));
-    root.replaceChildren(view); bindSources(view, data);
+    var view = T.components.render("bots/sources", data);
+    root.replaceChildren(view);
+    if (!data.scoped) { syncFilter("bots-filter-modal", data.filters || { bot: data.filter_bot_user_id }); }
   }
   function posts(root, response) {
     var data = Object.assign({}, response.data, { pagination: U.pagination(response) });
     root.dataset.botPostsUrl = data.url;
     root.dataset.botPostsRevision = String(Number(root.dataset.botPostsRevision || 0) + 1);
-    root.replaceChildren(T.components.render("bots/posts", data));
+    root.replaceChildren(T.components.render("bots/posts", Object.assign({}, data, { state: data })));
+    T.bots.hydrate(root);
     var count = document.querySelector('[data-bot-stat="posts"]');
     if (count && Number.isFinite(Number(data.total_count))) { count.textContent = String(data.total_count); }
   }
   function refreshPosts() {
-    var root = document.querySelector("#bot-posts-list");
+    var root = document.querySelector("#bot-detail-posts-list");
     if (!root || !root.dataset.botPostsUrl) { return; }
     if (pendingPosts.has(root)) { pendingPosts.get(root).abort(); }
     var controller = new AbortController(), url = root.dataset.botPostsUrl, revision = root.dataset.botPostsRevision;
@@ -48,43 +52,27 @@ import "./source-preview.js";
     }).catch(function (error) { if (error.name !== "AbortError") { T.toasts.show(error.message, "danger"); } })
       .finally(function () { if (pendingPosts.get(root) === controller) { pendingPosts.delete(root); } });
   }
-  function bindSources(root, data) {
-    if (root.dataset.botSourcesReady === "true") { return; }
-    root.dataset.botSourcesReady = "true";
-    root.querySelectorAll("[data-bot-source-edit]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        var source = data.items.find(function (item) { return Number(item.id) === Number(button.dataset.botSourceEdit); });
-        if (!source) { return; }
-        var dialog = U.dialog("bot-source-resource-" + source.id, "bots.edit_source", sourceForm(source, data.bots));
-        T.lifecycle.hydrate(dialog);
-        T.dialog.open(dialog);
-      });
+  function syncFilter(id, filters) {
+    var modal = document.getElementById(id) || T.filters.get(id);
+    if (!modal) { return; }
+    modal.querySelectorAll("input, select").forEach(function (control) {
+      if (!Object.prototype.hasOwnProperty.call(filters, control.name)) { return; }
+      control.value = control.name === "bot" && !Number(filters[control.name]) ? "0" : String(filters[control.name]); control.defaultValue = control.value;
+      if (control.options) { Array.from(control.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
     });
   }
   function accounts(root, response) {
     var data = response.data, pagination = U.pagination(response);
-    root.querySelectorAll(".modal").forEach(function (modal) { document.body.appendChild(modal); });
     var model = Object.assign({}, data, { pagination: pagination });
     root.replaceChildren(T.components.render("bots/accounts", model));
-    var filter = document.getElementById("bot-accounts-filter-modal");
-    if (filter) { filter.querySelectorAll("input, select").forEach(function (control) { var value = control.name === "per_page" ? pagination.per_page : data.filters[control.name]; if (value !== undefined) { control.value = String(value); control.defaultValue = String(value); } }); }
+    syncFilter("bot-accounts-filter-modal", Object.assign({}, data.filters, { per_page: pagination.per_page }));
   }
-  function detail(data) {
-    var stats = { sources: data.sources.length, active_sources: data.sources.filter(function (source) { return Boolean(source.enabled); }).length, posts: data.item ? data.item.post_count : 0, runs: data.runs.length };
-    document.querySelectorAll("[data-bot-stat]").forEach(function (node) {
-      var value = stats[node.dataset.botStat];
-      if (Number.isFinite(Number(value))) { node.textContent = String(value); }
-    });
-    var root = document.querySelector("[data-bot-sources]");
-    if (root) { sources(root, { items: data.sources, bots: [data.item] }); }
-    document.querySelectorAll("[data-bot-run-history]").forEach(function (node) {
-      var latest = node.getAttribute("data-bot-run-latest") !== null;
-      node.replaceChildren(T.components.render("bots/runs", { runs: latest ? data.runs.slice(0, 1) : data.runs }));
-    });
-    refreshPosts();
-    if (data.item) {
-      document.querySelectorAll('[data-avatar-user-id="' + data.item.id + '"]').forEach(function (node) { node.replaceWith(U.avatar(data.item)); });
-    }
+  function reloadList(root, path, render) {
+    T.api.request(path + window.location.search).then(function (response) {
+      if (!root.isConnected) { return; }
+      render(root, response);
+      T.lifecycle.hydrate(root);
+    }).catch(function (error) { T.toasts.show(error.message, "danger"); });
   }
   T.bots = {
     queue: function (target, response) {
@@ -92,56 +80,73 @@ import "./source-preview.js";
       target.replaceChildren(T.components.render("bots/queue", Object.assign({}, data, { state: data })));
     },
     modal: function (url, response, id) {
+      if (/^\/api\/bots\/accounts\/[0-9]+$/.test(url.pathname) && url.searchParams.get("panel") === "detail") { return T.botDetail.modal(url, response, id); }
       if (/^\/api\/bots\/accounts\/[0-9]+\/posts\/[0-9]+\/management$/.test(url.pathname)) {
         var editUrl = new URL("/api/statuses/" + response.data.item.id + "?panel=edit", window.location.href);
         var dialog = T.status.modal(editUrl, response, id);
-        dialog.addEventListener("tinycat:success", refreshPosts);
+        dialog.addEventListener("tinycat:success", function () {
+          refreshPosts();
+          var queue = document.querySelector("#bot-queue-list");
+          if (queue) { reloadList(queue, "/api/bots/queue", T.bots.queue); }
+        });
         return dialog;
       }
-      if (!/^\/api\/bots\/accounts\/[0-9]+\/management$/.test(url.pathname)) { return null; }
-      var form = U.form("/api/bots/accounts/" + response.data.item.id + window.location.search, "PATCH");
-      form.enctype = "multipart/form-data";
-      form.dataset.ajaxTarget = "#bot-accounts-list";
-      form.dataset.modalCloseOnSuccess = "true";
-      form.appendChild(T.components.render("bots/account-edit-fields", response.data));
-      return U.dialog(id, "bots.edit_account", submit(form));
+      if (/^\/api\/bots\/sources\/(?:[0-9]+\/)?management$/.test(url.pathname)) {
+        return U.sectionedDialog(id, response.data.item.id ? "bots.edit_source" : "bots.new_source", sourceForm(response.data.item, response.data.bots));
+      }
+      return null;
     },
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
       if (!url.pathname.startsWith("/api/bots/")) { return false; }
+      if (T.botDetail.result(source, response, target)) { return true; }
       if (target && target.id === "bot-queue-list") { T.bots.queue(target, response); return true; }
-      if (target && target.id === "bot-accounts-list") { accounts(target, response); }
-      if (target && target.id === "bots-list") { sources(target, response.data); }
-      if (target && target.id === "bot-posts-list") { posts(target, response); return true; }
-      var owner = document.querySelector("[data-bot-detail-id]");
-      if (owner) {
-        T.api.request("/api/bots/accounts/" + owner.dataset.botDetailId).then(function (result) { detail(result.data); if (T.forms.hydrate) { T.forms.hydrate(document); } }).catch(function (error) { T.toasts.show(error.message, "danger"); });
+      if (target && target.id === "bot-accounts-list") {
+        if ((source.dataset.apiMethod || "").toUpperCase() === "GET" || source.getAttribute("method") === "get" || source.getAttribute("href") && !source.dataset.method) { accounts(target, response); }
+        else { reloadList(target, "/api/bots/accounts", accounts); }
+        return true;
       }
+      if (target && target.id === "bots-list") {
+        if ((source.dataset.apiMethod || "").toUpperCase() === "GET" || source.getAttribute("method") === "get" || source.getAttribute("href") && !source.dataset.method) { sources(target, Object.assign({}, response.data, { pagination: U.pagination(response) })); }
+        else { reloadList(target, "/api/bots/sources", function (root, result) { sources(root, Object.assign({}, result.data, { pagination: U.pagination(result) })); }); }
+        return true;
+      }
+      if (target && target.id === "bot-detail-posts-list") { posts(target, response); return true; }
       return true;
-    }, sources: sources, posts: posts, bindSources: bindSources, accounts: accounts, sourceForm: sourceForm
+    }, sources: sources, posts: posts, accounts: accounts
   };
+  T.bots.dispose = function (root) { T.botDetail.dispose(root); };
   T.bots.hydrate = function (root) {
+    T.botDetail.hydrate(root);
     Array.from((root || document).querySelectorAll("[data-bot-queue-view]")).forEach(function (view) {
       if (view.dataset.botQueueReady === "true") { return; }
       view.dataset.botQueueReady = "true";
-      var previous = document.getElementById("bot-queue-filter-modal");
-      if (previous) { T.dialog.close(previous); previous.remove(); }
       var form = T.components.render("bots/queue-filter-form", JSON.parse(view.dataset.botQueueState));
       form.querySelectorAll("input, select").forEach(function (field) {
         field.defaultValue = field.value;
         if (field.options) { Array.from(field.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
       });
-      U.dialog("bot-queue-filter-modal", "common.filters", form, true);
+      U.filterPanel("bot-queue-filter-modal", form);
     });
-    var list = document.querySelector("#bot-posts-list");
+    Array.from((root || document).querySelectorAll("[data-bot-posts-view]")).forEach(function (view) {
+      if (view.dataset.botPostsReady === "true") { return; }
+      view.dataset.botPostsReady = "true";
+      var state = JSON.parse(view.dataset.botPostsState);
+      var postList = document.querySelector(state.list_target || "#bot-detail-posts-list");
+      if (postList) { postList.dataset.botPostsUrl = JSON.parse(view.dataset.botPostsState).url; }
+      var filterId = state.filter_modal || "bot-detail-posts-filter-modal";
+      var form = T.components.render("bots/post-filter-form", JSON.parse(view.dataset.botPostsState));
+      form.querySelectorAll("input, select").forEach(function (field) {
+        field.defaultValue = field.value;
+        if (field.options) { Array.from(field.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
+      });
+      U.filterPanel(filterId, form);
+    });
+    var list = document.querySelector("#bot-detail-posts-list");
     if (list && !list.dataset.botPostsReady) {
       list.dataset.botPostsReady = "true";
       list.addEventListener("tinycat:success", refreshPosts);
     }
-    if (T.bots && T.bots.bindSources) {
-      Array.from((root || document).querySelectorAll("[data-bot-sources-view]")).forEach(function (view) {
-        T.bots.bindSources(view, JSON.parse(view.dataset.botSourcesState));
-      });
-    }
+
   };
 }());

@@ -1,0 +1,14 @@
+@media (min-width: 900px) and (hover: hover) and (pointer: fine) {
+  .modal[data-modal-size="workspace"] > .modal-panel {
+    width: var(--modal-workspace-width);
+    height: var(--modal-workspace-height);
+    max-height: var(--modal-workspace-height);
+    border-radius: var(--radius-sm);
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding-inline: var(--modal-padding-desktop);
+  }
+}

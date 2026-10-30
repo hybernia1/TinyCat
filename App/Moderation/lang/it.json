@@ -10,7 +10,6 @@
     "report_note": "Nota",
     "report_submit": "Invia rapporto",
     "profile_muted_until": "L'account è disattivato fino al {until}.",
-    "url_blocker_title": "URL bloccati",
     "url_blocker_label": "Siti Web bloccati",
     "url_blocker_placeholder": "esempio.com, bad.esempio, dominio:ru",
     "url_blocker_help": "Separare i siti Web con virgole o nuove righe. Anche i sottodomini sono bloccati. Utilizza dominio:ru per bloccare l'intero suffisso .ru.",

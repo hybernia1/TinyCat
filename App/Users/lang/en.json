@@ -11,7 +11,6 @@
     "table_user": "User",
     "edit_user": "Edit @{username}",
     "password_keep": "Leave empty to keep unchanged",
-    "username_locked": "Username is the primary identity and cannot be changed.",
     "delete_title": "Delete user",
     "delete_confirm": "Really delete user @{username}?",
     "stats": {

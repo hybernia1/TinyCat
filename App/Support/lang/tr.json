@@ -69,9 +69,20 @@
     "leave": "Ayrıl",
     "stay": "Kalma",
     "validation_failed": "Lütfen gönderilen değerleri kontrol edin.",
+    "no_records": "Kayıt yok.",
     "not_found": "Bulunamadı.",
     "validation_required": "{field} alanı gereklidir.",
-    "validation_invalid": "{field} alanı geçersiz bir değere sahip."
+    "validation_invalid": "{field} alanı geçersiz bir değere sahip.",
+    "activate": "Etkinleştir",
+    "deactivate": "Devre dışı bırak",
+    "activated": "{entity} etkinleştirildi.",
+    "deactivated": "{entity} devre dışı bırakıldı.",
+    "list_results": {
+      "one": "{count} kayıt bulundu",
+      "few": "{count} kayıt bulundu",
+      "many": "{count} kayıt bulundu",
+      "other": "{count} kayıt bulundu"
+    }
   },
   "relative": {
     "now": "şimdi",

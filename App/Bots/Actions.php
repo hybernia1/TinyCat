@@ -29,25 +29,26 @@ final class Actions
      */
     public static function adminBotAccountUpdate(int $id): array
     {
-        \TinyCat\Http\Request::current()->validated(['status' => 'required|string', 'bio' => 'string']);
+        \TinyCat\Http\Request::current()->validated(['status' => 'string', 'bio' => 'string']);
         $account = \TinyCat\Bots\Administration::accountById($id);
 
         if ($account === null) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found');
         }
 
-        $status = (string) \TinyCat\Http\Request::current()->input('status', '');
+        $status = (string) \TinyCat\Http\Request::current()->input('status', $account['status']);
         if (!array_key_exists($status, \TinyCat\Support\AdminViews::admin_user_statuses())) {
             \TinyCat\Http\Response::validation(['status' => [\TinyCat\Http\Response::issue('user_status_invalid', \TinyCat\Support\Localization::t('users.validation.status_invalid'))]]);
         }
 
         $payload = [
-            'status' => $status,
             'bio' => \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('bio', ''), 500),
         ];
+        $statusProvided = \TinyCat\Http\Request::current()->input('status', null) !== null;
+        if ($statusProvided) { $payload['status'] = $status; }
         try {
-            \TinyCat\Users\Avatars::admin_user_avatar_save($account, $payload, static function () use ($id, $status): void {
-                if ($status !== 'active') {
+            \TinyCat\Users\Avatars::admin_user_avatar_save($account, $payload, static function () use ($id, $status, $statusProvided): void {
+                if ($statusProvided && $status !== 'active') {
                     \TinyCat\Database\Connection::update('bot_sources', ['enabled' => 0], ['bot_user_id' => $id]);
                 }
             });

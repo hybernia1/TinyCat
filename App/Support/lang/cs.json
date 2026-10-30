@@ -69,9 +69,20 @@
     "leave": "Odejít",
     "stay": "Zůstat",
     "validation_failed": "Zkontrolujte prosím vyplněné údaje.",
+    "no_records": "Žádné záznamy.",
     "not_found": "Nenalezeno.",
     "validation_required": "Pole {field} je povinné.",
-    "validation_invalid": "Pole {field} obsahuje neplatnou hodnotu."
+    "validation_invalid": "Pole {field} obsahuje neplatnou hodnotu.",
+    "activate": "Aktivovat",
+    "deactivate": "Deaktivovat",
+    "activated": "{entity} aktivován.",
+    "deactivated": "{entity} deaktivován.",
+    "list_results": {
+      "one": "Nalezen {count} záznam",
+      "few": "Nalezeny {count} záznamy",
+      "many": "Nalezeno {count} záznamů",
+      "other": "Nalezeno {count} záznamů"
+    }
   },
   "relative": {
     "now": "teď",

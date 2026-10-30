@@ -55,7 +55,7 @@ $assert($status === 429, 'A claimed administrator name or role cannot bypass ano
 $assert($status === 405, 'Logout has no legacy page write handler.');
 [$status, $loggedOut] = $request('DELETE', '/api/users/sessions/current', [], 'user', $csrf);
 $assert($status === 200 && $loggedOut['data']['logged_out'], 'Logout uses the normalized API.');
-foreach (['/admin', '/admin/settings', '/admin/updates', '/notifications', '/search', '/status/10', '/tag/test'] as $retiredPage) {
+foreach (['/admin', '/admin/updates', '/notifications', '/search', '/status/10', '/tag/test'] as $retiredPage) {
     [$status] = $request('POST', $retiredPage, [], 'admin', $csrf + ['Accept' => 'application/json']);
     $assert($status === 405, 'Page writes are retired: ' . $retiredPage);
 }

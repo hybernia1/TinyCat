@@ -31,8 +31,9 @@ import "../core/lifecycle.js";
         return item.dataset.tabPanel === name;
       });
 
-      if (panel && panel.tagName === "FORM" && panel.id) {
-        button.setAttribute("form", panel.id);
+      var form = panel && (panel.tagName === "FORM" ? panel : panel.querySelector("form"));
+      if (form && form.id) {
+        button.setAttribute("form", form.id);
         button.disabled = false;
       } else {
         button.removeAttribute("form");
@@ -45,6 +46,18 @@ import "../core/lifecycle.js";
     }
 
     emit(root, "tinycat:tab", { tab: tab, name: name });
+  };
+  TinyCat.tabs.reveal = function (field) {
+    var panel = field && field.closest ? field.closest("[data-tab-panel]") : null;
+    while (panel) {
+      var root = panel.closest("[data-tabs]");
+      if (!root) { break; }
+      if (panel.hidden) {
+        var tab = qsa("[data-tab]", root).find(function (item) { return item.dataset.tab === panel.dataset.tabPanel; });
+        if (tab) { TinyCat.tabs.activate(tab, false); }
+      }
+      panel = root.parentElement && root.parentElement.closest("[data-tab-panel]");
+    }
   };
   TinyCat.tabs.hydrate = function () {
     qsa("[data-tabs]").forEach(function (root) {
@@ -60,6 +73,8 @@ import "../core/lifecycle.js";
     }
 
     TinyCat.__tabsEventsBound = true;
+
+    document.addEventListener("invalid", function (event) { TinyCat.tabs.reveal(event.target); }, true);
 
     document.addEventListener("click", function (event) {
       var tab = event.target.closest && event.target.closest("[data-tab]");

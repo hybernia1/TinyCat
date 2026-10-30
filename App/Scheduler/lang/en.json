@@ -1,7 +1,6 @@
 {
   "cron": {
     "title": "Scheduled tasks",
-    "intro": "One small runner exposes independent scheduled tasks with shared authentication.",
     "access_title": "Access and token",
     "access_help": "Shared endpoint and authentication used by every scheduled task.",
     "url": "Endpoint URL",

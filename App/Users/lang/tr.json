@@ -11,7 +11,6 @@
     "table_user": "Kullanıcı",
     "edit_user": "@{username} kullanıcısını düzenle",
     "password_keep": "Değiştirmemek için boş bırakın",
-    "username_locked": "Kullanıcı adı temel kimliktir ve değiştirilemez.",
     "delete_title": "Kullanıcıyı sil",
     "delete_confirm": "@{username} kullanıcısı gerçekten silinsin mi?",
     "stats": {

@@ -59,13 +59,13 @@ $available = is_array($release) && !empty($release['available']);
             <ul class="result-list">
                 <?php foreach ($extensions as $extension => $loaded): ?>
                     <li class="result-item">
-                        <?= \TinyCat\Support\Html::icon($loaded ? 'check-circle' : 'x-circle', $loaded ? 'icon text-primary' : 'icon text-danger') ?>
+                        <?= Components::render('ui/status-badge', ['tone' => $loaded ? 'ok' : 'critical', 'label' => Localization::t($loaded ? 'common.done' : 'updates.missing_extensions')]) ?>
                         <span>PHP <?= \TinyCat\Support\Html::e($extension) ?></span>
                     </li>
                 <?php endforeach; ?>
-                <li class="result-item"><?= \TinyCat\Support\Html::icon('check-circle', 'icon text-primary') ?> <span><?= \TinyCat\Support\Html::et('updates.signed_packages') ?></span></li>
-                <li class="result-item"><?= \TinyCat\Support\Html::icon('check-circle', 'icon text-primary') ?> <span><?= \TinyCat\Support\Html::et('updates.automatic_backup') ?></span></li>
-                <li class="result-item"><?= \TinyCat\Support\Html::icon('check-circle', 'icon text-primary') ?> <span><?= \TinyCat\Support\Html::et('updates.protected_runtime') ?></span></li>
+                <li class="result-item"><?= Components::render('ui/status-badge', ['tone' => 'ok', 'label' => Localization::t('common.done')]) ?> <span><?= \TinyCat\Support\Html::et('updates.signed_packages') ?></span></li>
+                <li class="result-item"><?= Components::render('ui/status-badge', ['tone' => 'ok', 'label' => Localization::t('common.done')]) ?> <span><?= \TinyCat\Support\Html::et('updates.automatic_backup') ?></span></li>
+                <li class="result-item"><?= Components::render('ui/status-badge', ['tone' => 'ok', 'label' => Localization::t('common.done')]) ?> <span><?= \TinyCat\Support\Html::et('updates.protected_runtime') ?></span></li>
             </ul>
             <?php if (in_array(false, $extensions, true)): ?>
                 <div class="alert alert-warning"><?= \TinyCat\Support\Html::et('updates.missing_extensions') ?></div>
@@ -88,7 +88,7 @@ $available = is_array($release) && !empty($release['available']);
     <div class="card-header"><h2 class="text-lg m-0"><?= Html::et('updates.migration_history') ?></h2></div>
     <div class="card-body">
         <?php if ($history === []): ?>
-            <p class="text-muted m-0"><?= \TinyCat\Support\Html::et('updates.no_migrations') ?></p>
+            <?= Components::render('ui/empty-state', ['label' => Localization::t('updates.no_migrations'), 'icon' => 'clock']) ?>
         <?php else: ?>
             <div class="table-wrap min-w-0">
                 <table class="table">

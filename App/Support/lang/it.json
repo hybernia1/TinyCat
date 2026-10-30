@@ -69,9 +69,20 @@
     "leave": "Lascia",
     "stay": "Soggiorno",
     "validation_failed": "Controllare i valori inviati.",
+    "no_records": "Nessun record.",
     "not_found": "Non trovato.",
     "validation_required": "Il campo {field} è obbligatorio.",
-    "validation_invalid": "Il campo {field} ha un valore non valido."
+    "validation_invalid": "Il campo {field} ha un valore non valido.",
+    "activate": "Attiva",
+    "deactivate": "Disattiva",
+    "activated": "{entity} attivato.",
+    "deactivated": "{entity} disattivato.",
+    "list_results": {
+      "one": "{count} risultato trovato",
+      "few": "{count} risultati trovati",
+      "many": "{count} risultati trovati",
+      "other": "{count} risultati trovati"
+    }
   },
   "relative": {
     "now": "adesso",

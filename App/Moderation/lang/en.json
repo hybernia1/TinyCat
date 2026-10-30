@@ -10,7 +10,6 @@
     "report_note": "Note",
     "report_submit": "Send report",
     "profile_muted_until": "The account is muted until {until}.",
-    "url_blocker_title": "Blocked URLs",
     "url_blocker_label": "Blocked websites",
     "url_blocker_placeholder": "example.com, bad.example, domain:ru",
     "url_blocker_help": "Separate websites with commas or new lines. Subdomains are blocked too. Use domain:ru to block the whole .ru suffix.",

@@ -1,4 +1,5 @@
-.context-menu > summary::-webkit-details-marker {
+.context-menu > summary::-webkit-details-marker,
+.popover-menu > summary::-webkit-details-marker {
   display: none;
 }
 
@@ -16,7 +17,8 @@
   box-shadow: var(--shadow);
 }
 
-.context-menu[open] .context-menu-popover {
+.context-menu[open] .context-menu-popover,
+.popover-menu[open] > .context-menu-popover {
   display: grid;
 }
 

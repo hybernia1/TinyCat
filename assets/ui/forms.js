@@ -7,6 +7,12 @@ import "../core/http.js";
   var bindings = new WeakMap();
   var requests = new WeakMap();
 
+  function controls(element) {
+    return element.elements
+      ? Array.from(element.elements).filter(function (field) { return "disabled" in field; })
+      : Array.from(qsa("button, input, select, textarea", element));
+  }
+
   function setLoading(element, loading) {
     if (!element) {
       return;
@@ -15,7 +21,7 @@ import "../core/http.js";
     element.classList.toggle("is-loading", loading);
     element.setAttribute("aria-busy", loading ? "true" : "false");
 
-    qsa("button, input, select, textarea", element).forEach(function (field) {
+    controls(element).forEach(function (field) {
       if (loading) {
         field.dataset.tinycatWasDisabled = field.disabled ? "true" : "false";
         field.disabled = true;
@@ -31,16 +37,16 @@ import "../core/http.js";
     request: function (form, url, options) {
       if (requests.has(form)) { return requests.get(form).promise; }
       var controller = new AbortController(), previousBusy = form.getAttribute("aria-busy");
-      var controls = Array.from(form.querySelectorAll("button, input, select, textarea"));
-      var disabled = controls.map(function (control) { return control.disabled; });
+      var fields = controls(form);
+      var disabled = fields.map(function (control) { return control.disabled; });
       var wasLoading = form.classList && form.classList.contains ? form.classList.contains("is-loading") : false;
       var entry = { controller: controller };
-      controls.forEach(function (control) { control.disabled = true; });
+      fields.forEach(function (control) { control.disabled = true; });
       if (form.classList) { form.classList.add("is-loading"); }
       form.setAttribute("aria-busy", "true");
       entry.finish = function () {
         if (requests.get(form) !== entry) { return; }
-        controls.forEach(function (control, index) { control.disabled = disabled[index]; });
+        fields.forEach(function (control, index) { control.disabled = disabled[index]; });
         if (form.classList) { form.classList.toggle("is-loading", wasLoading); }
         if (previousBusy === null) { form.removeAttribute("aria-busy"); } else { form.setAttribute("aria-busy", previousBusy); }
         requests.delete(form);

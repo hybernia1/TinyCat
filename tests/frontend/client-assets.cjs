@@ -27,13 +27,14 @@ const users = load("/admin/users");
 check(users.T.users && !users.T.status && !users.T.bots, "User administration boots independently");
 check(users.definitions.includes("users/admin-fields"), "User administration receives its form definitions");
 const bots = load("/admin/bots/accounts");
-check(bots.T.bots && bots.T.users && !bots.T.status, "Bots load account menu support without the status module");
+check(bots.T.bots && bots.T.users && bots.T.status, "Bot administration includes account controls and the shared post editor");
 const botDetail = load("/admin/bots/detail");
 check(botDetail.T.bots && botDetail.T.status && botDetail.definitions.includes("bots/posts") && botDetail.definitions.includes("status/composer-body"), "Only bot detail loads the post list and shared post editor");
 check(bots.definitions.includes("ui/avatar"), "Component dependencies cross module boundaries without loading unrelated scripts");
+check(bots.definitions.includes("status/composer-body") && !bots.definitions.includes("status/card") && !bots.definitions.includes("notifications/items"), "Bot administration includes the shared post editor without public feed cards or notification lists.");
 check(load("/admin/moderation/reports").T.moderation, "Moderation loads its module");
 check(load("/admin/cron").T.scheduler, "Scheduler loads its module");
-check(load("/admin/settings").T.users, "Settings include the shared account menu and profile dialogs");
+check(load("/admin").T.settings && load("/admin").T.users, "Every admin page includes settings and shared profile dialogs");
 check(!load("/install").T.status, "Installer boots without public modules");
 check(!users.sources.some(s => s.endsWith("/following.js")), "Administration omits public following controller");
 check(!load("/install").sources.some(s => s.includes("/modules/status/") || s.includes("/ui/ajax.js")) && load("/install").sources.some(s => s.includes("/ui/forms.js") && !s.includes("form-state")), "Installer uses shared API form transport without feed and administration controllers");
@@ -49,9 +50,9 @@ for (const mode of [false, true, "min"]) {
 const minifiedPublic = load("/", "cs", "min");
 const rawPublic = load("/", "cs", true);
 check(minifiedPublic.assets[0].url !== rawPublic.assets[0].url && minifiedPublic.assets[3].url !== rawPublic.assets[3].url && minifiedPublic.styles[0] !== rawPublic.styles[0], "Minification selects distinct runtime, application and CSS variants");
-load("/admin/settings", "en", "min");
+load("/admin", "en", "min");
 const cs = load("/", "cs");
-for (const route of ["/", "/admin/users", "/admin/bots/accounts", "/admin/bots/detail", "/admin/moderation/reports", "/admin/cron", "/admin/settings", "/install"]) {
+for (const route of ["/", "/admin/users", "/admin/bots/accounts", "/admin/bots/detail", "/admin/moderation/reports", "/admin/cron", "/admin", "/install"]) {
   const compiled = load(route, "cs", true);
   check(compiled.assets.every(item => item.url.startsWith("/assets/build/")), "Release assets use the signed precompiled inventory: " + route);
   check(compiled.T.i18n.has("common.close"), "Compiled catalogs initialize before modules: " + route);

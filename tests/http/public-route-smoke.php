@@ -133,9 +133,7 @@ $adminScript = str_replace(['__BOOTSTRAP__', '__ENTRY__'], [$bootstrap, $entry],
 foreach ([
     '/admin',
     '/admin/users',
-    '/admin/settings',
     '/admin/moderation/reports',
-    '/admin/moderation/blocking',
     '/admin/cron',
     '/admin/updates',
 ] as $uri) {

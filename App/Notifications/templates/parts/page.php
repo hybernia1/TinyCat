@@ -26,7 +26,7 @@ $nextUrl = (string) ($next_url ?? '');
         </div>
         <div class="notifications-list" id="notifications-list">
             <?php if ($notifications === []): ?>
-                <div class="notification-empty"><?= Html::icon('bell') ?> <span><?= Html::et('notifications.empty') ?></span></div>
+                <?= \TinyCat\Support\Components::render('ui/empty-state', ['label' => \TinyCat\Support\Localization::t('notifications.empty'), 'icon' => 'bell']) ?>
             <?php else: ?>
                 <?= \TinyCat\Notifications\Views::items(['notifications' => $notifications]) ?>
             <?php endif; ?>

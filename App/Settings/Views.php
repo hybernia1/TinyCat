@@ -11,6 +11,11 @@ use TinyCat\Support\View;
 /** Presentation components: prepare inputs, then render their private partial. */
 final class Views
 {
+    public static function editor(): string
+    {
+        return View::render('editor', ['settingsSections' => Administration::tc_admin_settings_view_sections()], __DIR__ . '/templates');
+    }
+
     /** @param array<mixed> $data */
     public static function field(array $data = []): string
     {
@@ -22,19 +27,9 @@ final class Views
         $displayValue = $type === 'password' ? '' : $value;
         $name = 'settings[' . $key . ']';
         $tag = in_array($type, ['site_image', 'email_smtp'], true) ? 'div' : 'label';
-        $classes = ['field', 'settings-field'];
-
-        if ($type === 'site_image') {
-            $classes[] = 'settings-image-field';
-        }
-        if ($type === 'textarea') {
-            $classes[] = 'settings-editor-field';
-        }
+        $classes = ['field', 'min-w-0'];
         if (!empty($field['span'])) {
-            $classes[] = 'settings-field-span';
-        }
-        if (!empty($field['compact'])) {
-            $classes[] = 'settings-field-compact';
+            $classes[] = 'grid-span-full';
         }
         $prepared = [
             'options_html' => match ($type) {

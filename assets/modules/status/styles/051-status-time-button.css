@@ -27,21 +27,6 @@
   border-top: 1px solid var(--border);
 }
 
-.modal-panel.status-post-modal-panel {
-  width: min(100%, 740px);
-}
-
-.status-post-modal-panel.has-editor-suggestions {
-  min-height: min(620px, calc(100vh - 32px));
-}
-
-.modal-body.status-post-modal-body {
-  padding: 14px;
-  overscroll-behavior: contain;
-  scroll-padding-block: 12px;
-  -webkit-overflow-scrolling: touch;
-}
-
 .status-post-modal-content {
   display: grid;
   gap: 12px;

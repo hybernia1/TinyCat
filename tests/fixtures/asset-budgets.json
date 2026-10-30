@@ -1,72 +1,56 @@
 {
-  "/admin/bots/detail": {
-    "raw_js": 327680,
-    "gzip_js": 65536,
-    "raw_css": 67584,
-    "gzip_css": 13312,
-    "scripts": 4,
-    "stylesheets": 1
-  },
   "/admin/site-health": {
     "raw_js": 178176,
-    "gzip_js": 35840,
-    "raw_css": 41984,
+    "gzip_js": 38912,
+    "raw_css": 43008,
     "gzip_css": 9216,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/moderation": {
-    "raw_js": 144384,
-    "gzip_js": 33792,
-    "raw_css": 41984,
-    "gzip_css": 9216,
-    "scripts": 4,
-    "stylesheets": 1
-  },
-  "/admin/settings": {
-    "raw_js": 153600,
-    "gzip_js": 31744,
-    "raw_css": 41984,
+    "raw_js": 172032,
+    "gzip_js": 38912,
+    "raw_css": 43008,
     "gzip_css": 9216,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/users": {
-    "raw_js": 151552,
-    "gzip_js": 35840,
+    "raw_js": 172032,
+    "gzip_js": 38912,
     "raw_css": 44032,
     "gzip_css": 9216,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/bots": {
-    "raw_js": 193536,
-    "gzip_js": 45056,
-    "raw_css": 41984,
-    "gzip_css": 9216,
+    "raw_js": 327680,
+    "gzip_js": 65536,
+    "raw_css": 51200,
+    "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/cron": {
     "raw_js": 197632,
-    "gzip_js": 37888,
-    "raw_css": 41984,
+    "gzip_js": 41984,
+    "raw_css": 43008,
     "gzip_css": 9216,
     "scripts": 4,
     "stylesheets": 1
   },
   "/install": {
-    "raw_js": 36864,
-    "gzip_js": 11264,
-    "raw_css": 32768,
+    "raw_js": 38912,
+    "gzip_js": 11776,
+    "raw_css": 33792,
     "gzip_css": 7168,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin": {
-    "raw_js": 133120,
-    "gzip_js": 31744,
-    "raw_css": 41984,
+    "raw_js": 147456,
+    "gzip_js": 34816,
+    "raw_css": 43008,
     "gzip_css": 9216,
     "scripts": 4,
     "stylesheets": 1
@@ -74,7 +58,7 @@
   "/": {
     "raw_js": 328704,
     "gzip_js": 69632,
-    "raw_css": 67584,
+    "raw_css": 68608,
     "gzip_css": 12288,
     "scripts": 4,
     "stylesheets": 1

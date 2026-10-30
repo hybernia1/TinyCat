@@ -105,6 +105,13 @@
   gap: 10px;
 }
 
+.admin-sidebar-footer .user-menu-popover {
+  top: auto;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: auto;
+}
+
 .admin-main {
   min-width: 0;
 }

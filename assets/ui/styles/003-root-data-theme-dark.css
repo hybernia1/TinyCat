@@ -213,6 +213,10 @@ a:hover {
   gap: var(--grid-gap, 16px);
 }
 
+.grid-span-full {
+  grid-column: 1 / -1;
+}
+
 .inline-flex {
   display: inline-flex;
 }

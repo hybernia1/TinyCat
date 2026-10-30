@@ -5,7 +5,6 @@ declare(strict_types=1);
 /** @var array<mixed> $taskViews */
 ?>
 <div class="stack">
-    <p class="text-muted m-0"><?= \TinyCat\Support\Html::et('cron.intro') ?></p>
         <div class="disclosure-list">
             <details class="disclosure-item" name="scheduled-task">
                 <summary class="disclosure-summary">

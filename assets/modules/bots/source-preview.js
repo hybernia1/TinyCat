@@ -20,7 +20,8 @@ import "../../ui/forms.js";
     var initial = signature(form), fields = values(form);
     var data = { feed_url: override || fields.feed_url, name: fields.name, post_template: fields.post_template };
     var content = T.dom.element("div", { "class": "stack", "aria-live": "polite" }, U.text("bots.preview_loading"));
-    var dialog = U.dialog("bot-source-preview-" + (++serial), "bots.preview_title", content);
+    var actions = U.editorActions();
+    var dialog = U.dialog("bot-source-preview-" + (++serial), "bots.preview_title", content, false, actions);
     dialog.addEventListener("tinycat:modal-close", function () { T.forms.cancel(form); });
     T.dialog.open(dialog);
     try {
@@ -50,7 +51,7 @@ import "../../ui/forms.js";
           binding.approved = approvedSignature;
           form.requestSubmit();
         });
-        content.appendChild(confirm);
+        actions.appendChild(confirm);
       }
     } catch (error) {
       if (error.name !== "AbortError" && dialog.isConnected) { content.textContent = error.message; }

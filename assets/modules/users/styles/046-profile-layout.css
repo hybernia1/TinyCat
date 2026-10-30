@@ -204,10 +204,3 @@
   width: 40px;
   height: 40px;
 }
-
-.following-modal-page {
-  margin-right: auto;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 700;
-}

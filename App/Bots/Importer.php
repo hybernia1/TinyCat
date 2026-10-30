@@ -299,16 +299,16 @@ final class Importer
      */
     public static function sources(?int $botUserId = null, ?string $order = null): array
     {
-        $sql = self::sourceSelect() . ' INNER JOIN users u ON u.id = bs.bot_user_id WHERE u.role = ?';
+        return self::sourcesQuery($botUserId)->order($order ?? 'u.username ASC, bs.name ASC, bs.id ASC')->all();
+    }
+
+    public static function sourcesQuery(?int $botUserId = null): \TinyCat\Database\Query
+    {
         $now = \TinyCat\Support\Dates::dateDb();
-        $params = [$now, $now, 'bot'];
-
-        if ($botUserId !== null && $botUserId > 0) {
-            $sql .= ' AND bs.bot_user_id = ?';
-            $params[] = $botUserId;
-        }
-
-        return \TinyCat\Database\Connection::all($sql . ' ORDER BY ' . ($order ?? 'u.username ASC, bs.name ASC, bs.id ASC'), $params);
+        $query = new \TinyCat\Database\Query(self::sourceSelect() . ' INNER JOIN users u ON u.id = bs.bot_user_id', [$now, $now]);
+        $query->where('u.role = ?', 'bot');
+        if ($botUserId !== null && $botUserId > 0) { $query->where('bs.bot_user_id = ?', $botUserId); }
+        return $query;
     }
 
     /**

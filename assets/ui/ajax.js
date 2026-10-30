@@ -46,6 +46,7 @@ import "./toasts.js";
   }
   function handleResult(source, data, target) {
     var payload = unwrapResult(data);
+    var filterState = TinyCat.filters ? TinyCat.filters.capture(source) : null;
     var modalToClose = source && source.dataset && source.dataset.modalCloseOnSuccess === "true"
       ? source.closest(".modal")
       : null;
@@ -76,10 +77,11 @@ import "./toasts.js";
     TinyCat.modules.result(source, data, target);
 
     hydrateDynamic(target || document);
+    if (filterState) { TinyCat.filters.restore(filterState); }
     resetForm(source);
     markFormClean(source);
 
-    if (modalToClose) {
+    if (modalToClose && !TinyCat.forms.dirty(modalToClose).length) {
       TinyCat.dialog.close(modalToClose);
     }
 
@@ -222,6 +224,10 @@ import "./toasts.js";
 
       if (!field || !field.form) {
         return;
+      }
+
+      if (field.form.hasAttribute("data-filter-content")) {
+        field.form.dataset.filterFocus = field.getAttribute("name") || "";
       }
 
       if (field.form.requestSubmit) {

@@ -16,6 +16,9 @@ $assert($queued['data']['items'][0]['source']['id'] === 902 && $queued['data']['
 $assert($status === 200 && count($unknownQueue['data']['items']) === 1 && $unknownQueue['data']['items'][0]['source'] === null, 'Unknown-source filters preserve unattributed queued posts.');
 [$status, $sourcePosts] = $request('GET', '/api/bots/accounts/901/posts?source=902&publication=queued', null, 'admin');
 $assert($status === 200 && count($sourcePosts['data']['items']) === 1 && $sourcePosts['data']['items'][0]['source']['id'] === 902, 'The bot post list combines source and publication filters.');
+$assert($queued['data']['items'][0]['edit_url'] === '/api/bots/accounts/901/posts/9001/management?panel=edit', 'Queued posts reuse the existing bot post editor endpoint.');
+[$status, $queueEditor] = $request('GET', '/api/bots/accounts/901/posts/9001/management?panel=edit', null, 'admin');
+$assert($status === 200 && $queueEditor['data']['item']['editable_body'] === 'Queue test', 'The queue editor loads the scheduled post body.');
 $publishPath = '/api/bots/queue/9001/publication?bot=901&source=902&per_page=10';
 [$status] = $request('POST', $publishPath, [], 'user', $csrf);
 $assert($status === 403, 'Publishing requires administrator privileges.');

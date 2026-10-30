@@ -42,6 +42,21 @@
   font-size: 0.875rem;
 }
 
+.table .table-meta {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.table .table-meta a {
+  color: inherit;
+}
+
+.table .table-meta.text-danger {
+  color: var(--danger);
+}
+
 .pagination {
   display: flex;
   flex-direction: column;
@@ -122,7 +137,7 @@
   padding: 16px;
 }
 
-.modal-fullscreen {
+.modal[data-modal-size="workspace"] {
   padding: 0;
 }
 
@@ -140,14 +155,26 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  width: min(100%, 560px);
-  max-height: min(760px, calc(100vh - 32px));
+  width: min(100%, var(--modal-width));
+  max-height: min(var(--modal-height), calc(100dvh - 32px));
   overflow: hidden;
   border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
 }
 
-.modal-panel-lg {
-  width: min(100%, 920px);
+.modal[data-modal-size="wide"] > .modal-panel {
+  width: min(100%, var(--modal-width-wide));
+}
+
+.modal[data-modal-size="compact"] > .modal-panel {
+  width: min(100%, var(--modal-width-compact));
+}
+
+.modal[data-modal-size="reading"] > .modal-panel {
+  width: min(100%, var(--modal-width-reading));
+}
+
+.modal-panel.has-editor-suggestions {
+  min-height: min(var(--modal-suggestions-height), calc(100dvh - 32px));
 }

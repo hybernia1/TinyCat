@@ -58,7 +58,7 @@ import "../../ui/fields.js";
     return root.__tinycatStatusCounter || qs("[data-status-editor-counter]", root);
   }
   function syncStatusEditorModalSize(root) {
-    var panel = root && root.closest ? root.closest(".status-post-modal-panel") : null;
+    var panel = root && root.closest ? root.closest('.modal[data-modal-size="reading"] > .modal-panel') : null;
 
     if (!panel) {
       return;

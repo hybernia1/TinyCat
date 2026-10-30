@@ -17,6 +17,5 @@ final class Module implements \TinyCat\StorageModule
             \TinyCat\Http\Web::redirect('/admin/moderation/reports');
         });
         \TinyCat\Http\Router::route('GET', '/admin/moderation/reports', Pages::reports(...));
-        \TinyCat\Http\Router::route('GET', '/admin/moderation/blocking', Pages::blocking(...));
     }
 }

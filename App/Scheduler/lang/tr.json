@@ -1,7 +1,6 @@
 {
   "cron": {
     "title": "Zamanlanmış görevler",
-    "intro": "Küçük bir koşucu, paylaşılan kimlik doğrulamayla bağımsız zamanlanmış görevleri kullanıma sunar.",
     "access_title": "Erişim ve belirteç",
     "access_help": "Zamanlanmış her görev tarafından kullanılan paylaşılan uç nokta ve kimlik doğrulama.",
     "url": "Uç Nokta URL",

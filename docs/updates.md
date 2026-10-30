@@ -103,6 +103,22 @@ the parameter shows all content. Selected filters persist through feed switches,
 pagination and history navigation. After publishing or editing in a filtered
 home feed, shared page navigation reloads the results from the server.
 
+## Upgrading to 5.9.0: consistent administration and account editors
+
+No new database migration or configuration change is required. Settings now
+open from administration navigation in the shared tabbed modal. Blocked websites
+are under Security; `/admin/settings` and `/admin/moderation/blocking` are retired.
+Existing configuration and URL blocking rules are retained.
+
+Bot links and edit actions open the shared workspace, including paginated run
+history. Account/source activation uses explicit actions; deactivating a bot also
+disables its sources, and reactivation does not implicitly re-enable those sources.
+Lists share automatic dropdown filters and filtered result summaries. The update
+manifest removes superseded pages, templates and styles from existing installations.
+Personal account editing uses the same modal frame and preserves other tab drafts
+after a partial save. Security and email verification endpoints retain their access
+checks and behavior.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

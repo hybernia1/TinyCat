@@ -178,15 +178,10 @@ final class Blocking
         return '';
     }
 
-    public static function tc_admin_moderation_blocked_urls_value(): string
-    {
-        return implode(', ', \TinyCat\Moderation\Blocking::moderation_blocked_url_rules());
-    }
-
     /**
      * @return array<mixed>
      */
-    public static function tc_admin_moderation_blocking_payload(bool $redirect = false): array
+    public static function tc_admin_moderation_blocking_payload(): array
     {
         $rules = \TinyCat\Moderation\Blocking::moderation_blocked_url_rules();
 

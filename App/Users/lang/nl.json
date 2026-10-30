@@ -11,7 +11,6 @@
     "table_user": "-gebruiker",
     "edit_user": "Bewerken @{username}",
     "password_keep": "Laat leeg om ongewijzigd te blijven",
-    "username_locked": "Gebruikersnaam is de primaire identiteit en kan niet worden gewijzigd.",
     "delete_title": "Gebruiker verwijderen",
     "delete_confirm": "Gebruiker @{username} echt verwijderen?",
     "stats": {
