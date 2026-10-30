@@ -144,26 +144,26 @@ final class Feed
      * @return array<mixed>
      */
     /** @return array<mixed> */
-    public static function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
+    public static function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = ''): array
     {
-        return \TinyCat\Status\Feed::public_status_cursor_page(\TinyCat\Status\Feed::public_status_id_query(), $limit, $cursorAt, $cursorId);
+        return \TinyCat\Status\Feed::public_status_cursor_page(self::archive_query(\TinyCat\Status\Feed::public_status_id_query(), $type), $limit, $cursorAt, $cursorId);
     }
 
     /**
      * @return array<mixed>
      */
     /** @return array<mixed> */
-    public static function public_status_items_for_user_cursor(int $userId, int $limit = 24, string $cursorAt = '', int $cursorId = 0): array
+    public static function public_status_items_for_user_cursor(int $userId, int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = ''): array
     {
         if ($userId < 1) {
-            return \TinyCat\Status\Feed::public_status_items_cursor($limit, $cursorAt, $cursorId);
+            return \TinyCat\Status\Feed::public_status_items_cursor($limit, $cursorAt, $cursorId, $type);
         }
 
         $authorIds = \TinyCat\Users\Following::public_following_author_ids($userId);
 
         if (count($authorIds) <= 1000) {
             return \TinyCat\Status\Feed::public_status_cursor_page(
-                \TinyCat\Status\Feed::public_status_author_id_query()->whereIn('c.author_id', $authorIds),
+                self::archive_query(\TinyCat\Status\Feed::public_status_author_id_query()->whereIn('c.author_id', $authorIds), $type),
                 $limit,
                 $cursorAt,
                 $cursorId
@@ -171,7 +171,7 @@ final class Feed
         }
 
         return \TinyCat\Status\Feed::public_status_cursor_page(
-            \TinyCat\Status\Feed::public_status_id_query()->where(
+            self::archive_query(\TinyCat\Status\Feed::public_status_id_query(), $type)->where(
                 '(
                         c.author_id = ?
                         OR EXISTS (
@@ -406,13 +406,13 @@ final class Feed
             $userId = (int) ($user['id'] ?? 0);
 
             return [
-                'items' => $userId > 0 ? \TinyCat\Status\Feed::public_status_items_for_user_cursor($userId, $limit, $cursorAt, $cursorId) : [],
+                'items' => $userId > 0 ? \TinyCat\Status\Feed::public_status_items_for_user_cursor($userId, $limit, $cursorAt, $cursorId, $type) : [],
                 'action' => '/?feed=following',
             ];
         }
 
         return [
-            'items' => \TinyCat\Status\Feed::public_status_items_cursor($limit, $cursorAt, $cursorId),
+            'items' => \TinyCat\Status\Feed::public_status_items_cursor($limit, $cursorAt, $cursorId, $type),
             'action' => '/',
         ];
     }

@@ -74,7 +74,7 @@
   "/": {
     "raw_js": 328704,
     "gzip_js": 69632,
-    "raw_css": 66560,
+    "raw_css": 67584,
     "gzip_css": 12288,
     "scripts": 4,
     "stylesheets": 1

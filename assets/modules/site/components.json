@@ -1439,68 +1439,91 @@
                 },
                 "children": [
                   {
-                    "tag": "nav",
+                    "tag": "div",
                     "attrs": {
-                      "class": "feed-switch home-feed-switch",
-                      "aria-label": {
-                        "t": "public.feed_title",
-                        "values": {}
-                      }
+                      "class": "home-feed-toolbar"
                     },
                     "children": [
                       {
-                        "tag": "a",
+                        "tag": "nav",
                         "attrs": {
-                          "href": "/",
-                          "class": "feed-switch-link",
-                          "aria-current": {
-                            "if": [
-                              {
-                                "eq": [
-                                  {
-                                    "get": "feed"
-                                  },
-                                  "all"
-                                ]
-                              },
-                              "page",
-                              null
-                            ]
+                          "class": "feed-switch home-feed-switch",
+                          "aria-label": {
+                            "t": "public.feed_title",
+                            "values": {}
                           }
                         },
                         "children": [
                           {
-                            "t": "public.feed_all",
-                            "values": {}
+                            "tag": "a",
+                            "attrs": {
+                              "href": {
+                                "get": "all_feed_url"
+                              },
+                              "class": "feed-switch-link",
+                              "aria-current": {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      {
+                                        "get": "feed"
+                                      },
+                                      "all"
+                                    ]
+                                  },
+                                  "page",
+                                  null
+                                ]
+                              }
+                            },
+                            "children": [
+                              {
+                                "t": "public.feed_all",
+                                "values": {}
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "a",
+                            "attrs": {
+                              "href": {
+                                "get": "following_feed_url"
+                              },
+                              "class": "feed-switch-link",
+                              "aria-current": {
+                                "if": [
+                                  {
+                                    "eq": [
+                                      {
+                                        "get": "feed"
+                                      },
+                                      "following"
+                                    ]
+                                  },
+                                  "page",
+                                  null
+                                ]
+                              }
+                            },
+                            "children": [
+                              {
+                                "t": "public.feed_following",
+                                "values": {}
+                              }
+                            ]
                           }
                         ]
                       },
                       {
-                        "tag": "a",
-                        "attrs": {
-                          "href": "/?feed=following",
-                          "class": "feed-switch-link",
-                          "aria-current": {
-                            "if": [
-                              {
-                                "eq": [
-                                  {
-                                    "get": "feed"
-                                  },
-                                  "following"
-                                ]
-                              },
-                              "page",
-                              null
-                            ]
+                        "component": "site/archive-filter",
+                        "data": {
+                          "archive_options": {
+                            "get": "archive_options"
+                          },
+                          "archive_type": {
+                            "get": "archive_type"
                           }
-                        },
-                        "children": [
-                          {
-                            "t": "public.feed_following",
-                            "values": {}
-                          }
-                        ]
+                        }
                       }
                     ],
                     "when": {
@@ -1565,43 +1588,70 @@
                   {
                     "tag": "div",
                     "attrs": {
-                      "class": "alert alert-info",
+                      "class": "alert alert-info cluster",
                       "data-status-empty": ""
                     },
                     "children": [
                       {
-                        "lookup": {
-                          "get": "kind"
-                        },
-                        "cases": {
-                          "tag": {
-                            "t": "public.tag_feed_empty",
-                            "values": {}
+                        "if": [
+                          {
+                            "get": "archive_type"
                           },
-                          "author": {
-                            "t": "public.author_feed_empty",
-                            "values": {}
-                          }
-                        },
-                        "default": {
-                          "if": [
-                            {
-                              "eq": [
+                          {
+                            "t": "public.feed_empty_filtered"
+                          },
+                          {
+                            "lookup": {
+                              "get": "kind"
+                            },
+                            "cases": {
+                              "tag": {
+                                "t": "public.tag_feed_empty",
+                                "values": {}
+                              },
+                              "author": {
+                                "t": "public.author_feed_empty",
+                                "values": {}
+                              }
+                            },
+                            "default": {
+                              "if": [
                                 {
-                                  "get": "feed"
+                                  "eq": [
+                                    {
+                                      "get": "feed"
+                                    },
+                                    "following"
+                                  ]
                                 },
-                                "following"
+                                {
+                                  "t": "public.feed_empty_following",
+                                  "values": {}
+                                },
+                                {
+                                  "t": "public.feed_empty",
+                                  "values": {}
+                                }
                               ]
-                            },
-                            {
-                              "t": "public.feed_empty_following",
-                              "values": {}
-                            },
-                            {
-                              "t": "public.feed_empty",
-                              "values": {}
                             }
-                          ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "a",
+                        "attrs": {
+                          "href": {
+                            "get": "clear_filter_url"
+                          },
+                          "class": "btn btn-secondary btn-sm"
+                        },
+                        "children": [
+                          {
+                            "t": "public.filter_all"
+                          }
+                        ],
+                        "when": {
+                          "get": "archive_type"
                         }
                       }
                     ],

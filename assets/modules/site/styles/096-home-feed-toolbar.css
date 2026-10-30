@@ -1,0 +1,48 @@
+.home-feed-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.home-feed-toolbar > .home-feed-switch {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.home-feed-toolbar > .archive-filter {
+  flex: 0 1 140px;
+  min-width: 40px;
+}
+
+.home-feed-toolbar .archive-filter > summary {
+  display: flex;
+  min-height: 40px;
+  gap: 6px;
+}
+
+.home-feed-toolbar .archive-filter > summary span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-feed-toolbar .archive-filter > summary svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 759px) {
+  .home-feed-toolbar {
+    gap: 4px;
+  }
+
+  .home-feed-toolbar > .archive-filter {
+    flex-basis: 110px;
+  }
+
+  .home-feed-toolbar .feed-switch-link {
+    padding-inline: 8px;
+  }
+}

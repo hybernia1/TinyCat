@@ -68,7 +68,8 @@
     "filter_video": "Video’s",
     "filter_audio": "Audio",
     "filter_links": "Links",
-    "filter_text": "Alleen tekst"
+    "filter_text": "Alleen tekst",
+    "feed_empty_filtered": "Geen berichten komen overeen met dit filter."
   },
   "privacy": {
     "title": "Privacy en regels",

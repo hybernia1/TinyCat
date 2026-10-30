@@ -31,7 +31,8 @@ final class Pages
 
         $userIsMuted = $authUser !== null && Restrictions::user_is_muted($authUser);
         $userMutedUntil = $authUser !== null ? Restrictions::user_muted_until($authUser) : '';
-        $publicHomeFeedData = ViewData::public_home_feed_data($feed, $authUser);
+        $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $publicHomeFeedData = ViewData::public_home_feed_data($feed, $authUser, null, $archiveType);
         return ['page' => [
             'title' => Presentation::site_home_title(),
             'current' => '/',
@@ -41,7 +42,7 @@ final class Pages
                 'image' => Presentation::site_meta_image_url(),
                 'type' => 'website',
             ],
-        ], 'context' => compact('authUser', 'feed', 'editor', 'userIsMuted', 'userMutedUntil', 'publicHomeFeedData')];
+        ], 'context' => compact('authUser', 'feed', 'editor', 'userIsMuted', 'userMutedUntil', 'publicHomeFeedData', 'archiveType')];
     }
 
     public static function detail(?int $statusId = null): void

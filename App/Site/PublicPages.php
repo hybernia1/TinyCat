@@ -52,10 +52,11 @@ final class PublicPages
         $item = $context['item'] ?? null;
         $archiveType = (string) ($context['archiveType'] ?? '');
         $archiveOptions = [];
-        if (in_array($kind, ['tag', 'author'], true)) {
-            if ($archiveType !== '') { $url .= '?media=' . rawurlencode($archiveType); }
+        if (in_array($kind, ['home', 'tag', 'author'], true)) {
+            if ($kind !== 'home' && $archiveType !== '') { $url .= '?media=' . rawurlencode($archiveType); }
+            $filterBase = $kind === 'home' && ($context['feed'] ?? '') === 'following' ? '/?feed=following' : (string) $page['current'];
             foreach (['' => 'all', 'images' => 'images', 'video' => 'video', 'audio' => 'audio', 'links' => 'links', 'text' => 'text'] as $type => $label) {
-                $archiveOptions[] = ['url' => LocaleRouting::url((string) $page['current'] . ($type !== '' ? '?media=' . $type : '')),
+                $archiveOptions[] = ['url' => LocaleRouting::url($filterBase . ($type !== '' ? (str_contains($filterBase, '?') ? '&' : '?') . 'media=' . $type : '')),
                     'type' => $label, 'active' => $type === $archiveType];
             }
         }
@@ -94,6 +95,9 @@ final class PublicPages
             'profile_edit_url' => (string) ($context['authorProfileEditModalUrl'] ?? ''), 'profile_edit_id' => (string) ($context['authorProfileEditModalId'] ?? ''),
             'avatar_edit_url' => (string) ($context['authorAvatarEditModalUrl'] ?? ''), 'avatar_edit_id' => (string) ($context['authorAvatarEditModalId'] ?? ''),
             'following_url' => (string) ($context['authorFollowingModalUrl'] ?? ''), 'following_id' => (string) ($context['authorFollowingModalId'] ?? ''),
+            'all_feed_url' => LocaleRouting::url('/' . ($archiveType !== '' ? '?media=' . $archiveType : '')),
+            'following_feed_url' => LocaleRouting::url('/?feed=following' . ($archiveType !== '' ? '&media=' . $archiveType : '')),
+            'clear_filter_url' => LocaleRouting::url($kind === 'home' && ($context['feed'] ?? '') === 'following' ? '/?feed=following' : (string) $page['current']),
             'archive_options' => $archiveOptions,
             'archive_type' => $archiveType,
             'rss_url' => (string) ($context['authorFeedUrl'] ?? $context['tagFeedUrl'] ?? ''),

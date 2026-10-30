@@ -2,6 +2,7 @@ import "../../core/dom.js";
 import "../../core/http.js";
 import "../../core/i18n.js";
 import "../../core/lifecycle.js";
+import "../../core/navigation.js";
 import "./comments.js";
 import "./editor.js";
 import "./feed.js";
@@ -102,8 +103,9 @@ import "../../ui/toasts.js";
       }
     });
   }
-  function handleStatusJsonResponse(form, data) {
+  async function handleStatusJsonResponse(form, data) {
     var payload = unwrapResult(data), action = payload.action || TinyCat.status.controllers.forms.statusFormAction(form), modal = form.closest(".modal");
+    var refreshFilteredHome = payload.item && ["create", "update"].indexOf(action) !== -1 && qs(".home-feed-toolbar") && new URL(window.location.href).searchParams.has("media");
     if (data.message) { TinyCat.toasts.show(data.message, "success"); }
     if (payload.status) { updateStatusSummary(payload.status); }
     if (payload.comment_like) { TinyCat.status.controllers.comments.updateCommentLike(payload.comment_like); }
@@ -120,14 +122,15 @@ import "../../ui/toasts.js";
       });
     }
     if (payload.item) {
-      if (action === "create") { var feed = TinyCat.status.controllers.feed.statusFeedForForm(form) || qs("[data-status-feed]"); if (feed) { feed.prepend(TinyCat.status.card(payload.item)); hydrateDynamic(feed); } resetStatusCreateForm(form); }
-      else { qsa('.status-card[data-status-id="' + Number(payload.item.id) + '"]').forEach(function (card) { var inModal = Boolean(card.closest(".status-post-modal")); if (TinyCat.dialog.current()) { detachModalFromCard(TinyCat.dialog.current(), card); } var next = TinyCat.status.card(payload.item, Boolean(card.id), !inModal); card.replaceWith(next); hydrateDynamic(next); }); }
+      if (action === "create") { var feed = TinyCat.status.controllers.feed.statusFeedForForm(form) || qs("[data-status-feed]"); if (feed && !refreshFilteredHome) { feed.prepend(TinyCat.status.card(payload.item)); hydrateDynamic(feed); } resetStatusCreateForm(form); }
+      else if (!refreshFilteredHome) { qsa('.status-card[data-status-id="' + Number(payload.item.id) + '"]').forEach(function (card) { var inModal = Boolean(card.closest(".status-post-modal")); if (TinyCat.dialog.current()) { detachModalFromCard(TinyCat.dialog.current(), card); } var next = TinyCat.status.card(payload.item, Boolean(card.id), !inModal); card.replaceWith(next); hydrateDynamic(next); }); }
     }
     if (payload.deleted_status_id) { removeStatusCard(payload.deleted_status_id, form); }
     if (payload.deleted_comment_id) { TinyCat.status.controllers.comments.removeStatusComment(payload.deleted_comment_id); }
     markFormClean(form);
     if (modal && ["update", "comment_update", "delete", "report"].indexOf(action) !== -1) { TinyCat.dialog.close(modal); }
     emit(form, "tinycat:success", { data: data, payload: payload });
+    if (refreshFilteredHome) { await TinyCat.navigation.restore({ state: Object.assign({}, window.history.state, { scroll: [window.scrollX, window.scrollY] }) }); }
   }
   function initStatusForms () {
     if (TinyCat.__statusFormEventsBound === true) {
@@ -172,7 +175,7 @@ import "../../ui/toasts.js";
       try {
         form.dataset.statusBusy = "true";
         jsonData = await TinyCat.forms.request(form, url, { method: method, body: body });
-        handleStatusJsonResponse(form, jsonData);
+        await handleStatusJsonResponse(form, jsonData);
       } catch (error) {
         if (error.name === "AbortError") { return; }
         var errors = resultErrors(error);

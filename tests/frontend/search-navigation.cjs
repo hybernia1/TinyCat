@@ -22,6 +22,9 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   assert.equal(route.accepts(new URL("http://tinycat.test/search?q=test&type=users")), true);
   assert.equal(route.accepts(new URL("http://tinycat.test/search?q=test&unexpected=1")), false);
   assert.equal(route.accepts(new URL("http://outside.test/search?q=test")), false);
+  assert.equal(route.accepts(new URL("http://tinycat.test/?media=images")), true);
+  assert.equal(route.accepts(new URL("http://tinycat.test/?feed=following&media=video")), true);
+  assert.equal(route.accepts(new URL("http://tinycat.test/status/10?media=video")), false);
   services["public-pages"].init();
   let prevented = false;
   const form = { action: "http://tinycat.test/search", querySelector: () => ({ value: "quartz" }) };
@@ -34,5 +37,10 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   assert.equal(new URL(requests[0]).searchParams.get("type"), "users");
   assert.equal(input.value, "quartz"); assert.equal(results.hidden, true);
   assert.equal(assigned, 0, "Search does not fall back to a document reload"); assert.equal(disposed, 1);
+  data.kind = "home"; data.url = "/?feed=following&media=video";
+  await route.visit(new URL("http://tinycat.test/?feed=following&media=video"));
+  assert.equal(new URL(requests[1]).searchParams.get("media"), "video");
+  assert.equal(new URL(requests[1]).searchParams.get("feed"), "following");
+  assert.equal(assigned, 0, "Filtered home navigation does not reload the document");
   console.log("PASS search uses shared page navigation, preserves sidebar and submits without reload");
 })().catch(error => { console.error(error); process.exitCode = 1; });
