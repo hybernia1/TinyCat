@@ -151,7 +151,7 @@ import "../../ui/fields.js";
   function openGlobalSearchCaptcha(root, error) {
     var details = searchCaptchaDetails(error);
     var captcha = details.captcha;
-    var verifyUrl = details.verify_url || "/api/security/challenges/search";
+    var verifyUrl = "/api/security/challenges/search";
     var message = (error && error.data && error.data.message) || root.dataset.searchCaptchaRequired || TinyCat.i18n.t("public.search_captcha_required");
     var modal = qs("#global-search-captcha-modal");
     if (!captcha || !captcha.enabled) {
