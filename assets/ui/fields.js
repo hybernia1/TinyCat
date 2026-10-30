@@ -48,7 +48,7 @@ import "./filters.js";
       var status = e("span");
       status.appendChild(T.components.render("ui/account-status", { status: user.status, label: T.ui.text("users.statuses." + user.status) }));
       title.classList.add("cluster", "gap-2");
-      title.replaceChildren(status, e("span", {}, "@" + user.username));
+      title.replaceChildren(status, e("span", {}, user.username));
       return status;
     },
 
@@ -86,6 +86,26 @@ import "./filters.js";
       return { content: content, panels: panels, buttons: buttons, initial: initial };
     },
 
+    pinDialogTabs: function (dialog, content) {
+      var panel = dialog.querySelector(".modal-panel"), navigation = content.querySelector(".tabs");
+      if (!navigation) { return panel; }
+      content.removeAttribute("data-tabs");
+      panel.setAttribute("data-tabs", "");
+      navigation.remove();
+      var row = e("div", { "class": "modal-tabs" });
+      var mobile = e("div", { "class": "modal-tab-switch" });
+      var icon = e("span", { "data-tab-select-icon": "", "aria-hidden": "true" });
+      var select = e("select", { "class": "select", "data-tab-select": "", "aria-label": T.ui.text("common.menu") });
+      navigation.querySelectorAll("[data-tab]").forEach(function (tab) {
+        var selected = tab.getAttribute("aria-selected") === "true";
+        select.appendChild(e("option", { value: tab.dataset.tab, selected: selected ? "" : null }, tab.textContent));
+        if (selected && tab.querySelector("svg")) icon.appendChild(tab.querySelector("svg").cloneNode(true));
+      });
+      mobile.append(icon, select); row.append(mobile, navigation);
+      panel.insertBefore(row, dialog.querySelector(".modal-body"));
+      return panel;
+    },
+
     sectionedDialog: function (id, title, form, persistent, selected) {
       var fields = form.querySelector("[data-editor-sections]");
       var sections = fields ? Array.from(fields.querySelectorAll("[data-editor-section]")).map(function (section) {
@@ -105,7 +125,8 @@ import "./filters.js";
       }
       var footer = dialog.querySelector(".modal-footer");
       footer.hidden = !sections.find(function (item) { return item.name === tabs.initial; }).editable;
-      tabs.content.addEventListener("tinycat:tab", function (event) {
+      var tabRoot = T.ui.pinDialogTabs(dialog, tabs.content);
+      tabRoot.addEventListener("tinycat:tab", function (event) {
         var section = sections.find(function (item) { return item.name === event.detail.name; });
         footer.hidden = Boolean(section && !section.editable);
       });

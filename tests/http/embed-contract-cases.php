@@ -15,6 +15,7 @@ $assert(str_starts_with($headers['content-type'], 'application/json') && !isset(
 $assert($embed['author_name'] === 'embedauthor' && $embed['author_url'] === 'http://localhost/author/910001' && $embed['width'] === 550 && $embed['height'] === 600, 'oEmbed describes the actual public post and provider dimensions.');
 $dom = new DOMDocument(); @$dom->loadHTML($embed['html']); $xpath = new DOMXPath($dom);
 $assert($xpath->query('//iframe')->length === 1 && $xpath->query('//script')->length === 0 && $xpath->evaluate('string(//iframe/@src)') === 'http://localhost/status/910001/embed?maxheight=600', 'oEmbed HTML is a standalone iframe with no required parent script.');
+$assert($xpath->evaluate('string(//iframe/@referrerpolicy)') === 'strict-origin', 'Embed initialization receives only the parent origin, never its path or query.');
 [$status, $body] = $exportRequest($embedUrl . '&maxwidth=320&maxheight=240');
 $small = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
 $assert($status === 200 && $small['width'] === 320 && $small['height'] === 240 && str_contains($small['html'], 'maxheight=240'), 'Consumer maximum dimensions constrain both metadata and the rendered frame.');

@@ -162,68 +162,117 @@
                             "attrs": {},
                             "children": [
                               {
-                                "tag": "strong",
-                                "attrs": {},
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-identity"
+                                },
                                 "children": [
                                   {
-                                    "or": [
+                                    "tag": "div",
+                                    "attrs": {
+                                      "class": "table-identity-body"
+                                    },
+                                    "children": [
                                       {
-                                        "get": "report.excerpt"
+                                        "tag": "strong",
+                                        "attrs": {
+                                          "class": "table-primary",
+                                          "title": {
+                                            "or": [
+                                              {
+                                                "get": "report.excerpt"
+                                              },
+                                              {
+                                                "t": "moderation.empty_content"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "or": [
+                                              {
+                                                "get": "report.excerpt"
+                                              },
+                                              {
+                                                "t": "moderation.empty_content"
+                                              }
+                                            ]
+                                          }
+                                        ]
                                       },
                                       {
-                                        "t": "moderation.empty_content"
+                                        "tag": "div",
+                                        "attrs": {
+                                          "class": "table-meta",
+                                          "title": {
+                                            "concat": [
+                                              "#",
+                                              {
+                                                "get": "report.content_id"
+                                              },
+                                              " · ",
+                                              {
+                                                "get": "report.author_name"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "concat": [
+                                              "#",
+                                              {
+                                                "get": "report.content_id"
+                                              },
+                                              " · ",
+                                              {
+                                                "get": "report.author_name"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "tag": "div",
+                                        "attrs": {
+                                          "class": "table-meta",
+                                          "title": {
+                                            "plural": "moderation.report_count",
+                                            "count": {
+                                              "get": "report.report_count"
+                                            }
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "plural": "moderation.report_count",
+                                            "count": {
+                                              "get": "report.report_count"
+                                            }
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "tag": "div",
+                                        "attrs": {
+                                          "class": "table-meta",
+                                          "title": {
+                                            "get": "report.note"
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "report.note"
+                                          }
+                                        ],
+                                        "when": {
+                                          "get": "report.note"
+                                        }
                                       }
                                     ]
                                   }
                                 ]
-                              },
-                              {
-                                "tag": "div",
-                                "attrs": {
-                                  "class": "table-meta"
-                                },
-                                "children": [
-                                  {
-                                    "concat": [
-                                      "#",
-                                      {
-                                        "get": "report.content_id"
-                                      },
-                                      " · @",
-                                      {
-                                        "get": "report.author_name"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "tag": "div",
-                                "attrs": {
-                                  "class": "table-meta"
-                                },
-                                "children": [
-                                  {
-                                    "plural": "moderation.report_count",
-                                    "count": {
-                                      "get": "report.report_count"
-                                    }
-                                  }
-                                ]
-                              },
-                              {
-                                "tag": "div",
-                                "attrs": {
-                                  "class": "table-meta"
-                                },
-                                "children": [
-                                  {
-                                    "get": "report.note"
-                                  }
-                                ],
-                                "when": {
-                                  "get": "report.note"
-                                }
                               }
                             ]
                           },

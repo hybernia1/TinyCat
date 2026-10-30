@@ -25,6 +25,12 @@ import "../core/lifecycle.js";
     qsa("[data-tab-panel]", root).forEach(function (panel) {
       panel.hidden = panel.dataset.tabPanel !== name;
     });
+    qsa("[data-tab-select]", root).forEach(function (select) { select.value = name; });
+    qsa("[data-tab-select-icon]", root).forEach(function (holder) {
+      var icon = tab.querySelector("svg");
+      holder.replaceChildren();
+      if (icon) holder.appendChild(icon.cloneNode(true));
+    });
 
     qsa("[data-tab-submit]", root.closest(".modal-panel") || root).forEach(function (button) {
       var panel = qsa("[data-tab-panel]", root).find(function (item) {
@@ -73,6 +79,13 @@ import "../core/lifecycle.js";
     }
 
     TinyCat.__tabsEventsBound = true;
+
+    document.addEventListener("change", function (event) {
+      var select = event.target;
+      if (!select.matches || !select.matches("[data-tab-select]")) return;
+      var tab = qsa("[data-tab]", select.closest("[data-tabs]")).find(function (item) { return item.dataset.tab === select.value; });
+      if (tab) TinyCat.tabs.activate(tab, false);
+    });
 
     document.addEventListener("invalid", function (event) { TinyCat.tabs.reveal(event.target); }, true);
 

@@ -289,9 +289,9 @@
                                         "tag": "td",
                                         "children": [
                                           {
-                                            "tag": "span",
+                                            "tag": "div",
                                             "attrs": {
-                                              "class": "cluster gap-2"
+                                              "class": "table-identity"
                                             },
                                             "children": [
                                               {
@@ -308,21 +308,54 @@
                                                 }
                                               },
                                               {
-                                                "lookup": {
-                                                  "get": "run.task"
+                                                "tag": "div",
+                                                "attrs": {
+                                                  "class": "table-identity-body"
                                                 },
-                                                "cases": {
-                                                  "feeds": {
-                                                    "t": "cron.tasks.feeds"
-                                                  },
-                                                  "cleanup": {
-                                                    "t": "cron.tasks.cleanup"
-                                                  },
-                                                  "site-health": {
-                                                    "t": "health.title"
+                                                "children": [
+                                                  {
+                                                    "tag": "span",
+                                                    "children": [
+                                                      {
+                                                        "lookup": {
+                                                          "get": "run.task"
+                                                        },
+                                                        "cases": {
+                                                          "feeds": {
+                                                            "t": "cron.tasks.feeds"
+                                                          },
+                                                          "cleanup": {
+                                                            "t": "cron.tasks.cleanup"
+                                                          },
+                                                          "site-health": {
+                                                            "t": "health.title"
+                                                          }
+                                                        },
+                                                        "default": ""
+                                                      }
+                                                    ],
+                                                    "attrs": {
+                                                      "class": "table-primary",
+                                                      "title": {
+                                                        "lookup": {
+                                                          "get": "run.task"
+                                                        },
+                                                        "cases": {
+                                                          "feeds": {
+                                                            "t": "cron.tasks.feeds"
+                                                          },
+                                                          "cleanup": {
+                                                            "t": "cron.tasks.cleanup"
+                                                          },
+                                                          "site-health": {
+                                                            "t": "health.title"
+                                                          }
+                                                        },
+                                                        "default": ""
+                                                      }
+                                                    }
                                                   }
-                                                },
-                                                "default": ""
+                                                ]
                                               }
                                             ]
                                           }

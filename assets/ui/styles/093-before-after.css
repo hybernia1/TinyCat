@@ -4,6 +4,6 @@
   *::after {
     animation-duration: 1ms !important;
     scroll-behavior: auto !important;
-    transition-duration: 1ms !important;
+    transition-duration: 0s !important;
   }
 }

@@ -1,4 +1,6 @@
 :root {
+  --table-text-width: 24rem;
+  --table-text-lines: 2;
   --modal-width: 560px;
   --modal-width-compact: 440px;
   --modal-width-confirm: 420px;

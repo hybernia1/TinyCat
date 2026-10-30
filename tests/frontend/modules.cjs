@@ -28,6 +28,7 @@ class Node {
   removeAttribute(name) { delete this.attributes[name]; }
   appendChild(node) { if (node.tag === "fragment") { node.children.slice().forEach(child => this.appendChild(child)); return node; } node.parent = this; this.children.push(node); return node; }
   append(...nodes) { nodes.forEach(node => this.appendChild(node)); }
+  insertBefore(node, before) { node.remove(); const index = this.children.indexOf(before); if (index < 0) throw new Error('Missing insertion target'); node.parent = this; this.children.splice(index, 0, node); return node; }
   replaceChildren(...nodes) { this._text = ""; this.children = []; this.append(...nodes); }
   get childNodes() { return this.children; }
   get tagName() { return this.tag.toUpperCase(); }
@@ -43,6 +44,8 @@ class Node {
     const found = []; const visit = node => { for (const child of node.children) { if (match(child)) found.push(child); visit(child); } }; visit(this); return found;
   }
   querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
+  closest() { return null; }
+  getBoundingClientRect() { return { top: 20, bottom: 60, left: 20, right: 300, height: 40 }; }
   cloneNode(deep) { const node = new Node(this.tag); node.attributes = { ...this.attributes }; node.value = this.attributes.value || ""; if (deep) this.children.forEach(child => node.appendChild(child.cloneNode(true))); return node; }
   dispatchEvent() { return true; }
   addEventListener() {}
@@ -51,7 +54,7 @@ const labels = JSON.parse(require("node:child_process").execFileSync(process.env
 const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--templates"], { encoding: "utf8" }));
 const document = { addEventListener() {}, querySelector: () => null, body: new Node("body"), createElement: tag => new Node(tag), createElementNS: (_, tag) => new Node(tag), createTextNode: text => new Node("text", text), createDocumentFragment: () => new Node("fragment"), getElementById: id => document.body.querySelector('[id="' + id + '"]') };
 document.documentElement = { dataset: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--dates"], { encoding: "utf8" })) };
-const window = { setInterval() { return 0; }, TinyCat: {}, location: new URL("https://tinycat.test/") };
+const window = { innerHeight: 812, innerWidth: 390, setInterval() { return 0; }, TinyCat: {}, location: new URL("https://tinycat.test/") };
 const context = vm.createContext({ window, document, Node, AbortController, URL, URLSearchParams, console, Set, Element: Node, RadioNodeList: class {}, CustomEvent: class {} });
 const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
 for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filename: asset.path });
@@ -313,6 +316,7 @@ check(editDialog.querySelector(".modal-footer").querySelector('[type="submit"]')
 check(editDialog.querySelector('[name="body"]').value === post.editable_body, "Opening the status editor preserves the exact editable text.");
 const profileDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/management?panel=account&focus=email"), { data: { user, options: { languages: { en: "English" }, password_max_length: 72 }, capabilities: { password: true } } }, "profile-layout-fixture");
 check(profileDialog.querySelector('[data-editor-sections]') && profileDialog.querySelector('[data-editor-section="account"]'), 'The account-menu target uses the shared sectioned editor instead of a separate profile modal.');
+check(profileDialog.querySelector('.modal-tabs').parent === profileDialog.querySelector('.modal-panel') && !profileDialog.querySelector('.modal-header').querySelector('.tabs') && !profileDialog.querySelector('.modal-body').querySelector('.tabs') && profileDialog.querySelector('.modal-body').querySelectorAll('form').length === 3, 'Fixed account tabs do not overlay the body or move its independent forms.');
 check(profileDialog.querySelector('[data-tab-panel="email"]').hidden === false && profileDialog.querySelector('[data-tab-panel="account"]').hidden === true, "Profile focus selects the requested tab without mixing all settings into one form.");
 check(profileDialog.querySelector(".modal-footer").querySelector('[data-tab-submit]').getAttribute("form") === profileDialog.querySelector('[data-tab-panel="email"]').querySelector("form").id, "Profile dialogs associate their single footer save with the initially selected tab.");
 const profileTabs = profileDialog.querySelector('[data-tabs]');
@@ -321,6 +325,7 @@ profileTab.closest = () => profileTabs;
 profileTabs.closest = () => profileDialog.querySelector('.modal-panel');
 T.tabs.activate(profileTab, false);
 check(profileDialog.querySelector('[data-tab-submit]').getAttribute('form') === profileDialog.querySelector('[data-tab-panel="account"]').querySelector('form').id, "Switching tabs retargets the footer save without submitting another form.");
+check(profileDialog.querySelector('[data-tab-select]').value === 'account' && profileDialog.querySelector('[data-tab-select]').querySelectorAll('option').length === 4 && profileDialog.querySelector('[data-tab-select-icon]').querySelector('svg'), 'The mobile section switch shares tab selection, all section labels and the active icon.');
 check(profileDialog.querySelector('[data-tab-panel="email"]').querySelector("form").getAttribute("action") === "/api/users/me/email", "The email panel submits to its own endpoint.");
 check(profileDialog.dataset.modalKind === 'editor' && profileDialog.dataset.modalSize === 'workspace' && profileTabs.querySelectorAll('[data-tab]').length === 4 && profileTabs.querySelectorAll('[role="tab"]').every(tab => tab.querySelector('svg')), 'Frontend profile editing shares the administration frame and icon tabs.');
 check(profileDialog.querySelector('[name="username"]').getAttribute('disabled') !== null && !profileDialog.querySelector('[name="scope"]') && !profileDialog.querySelector('[name="role"]') && !profileDialog.querySelector('[name="status"]'), 'The shared appearance keeps the username immutable and does not expose administration controls.');
@@ -374,12 +379,26 @@ check(colourPreview.includes('outfit=sage') && colourPreview.includes('backgroun
 const botAccount = { id: 3, username: "FixtureBot", status: "active", bio: unsafe, avatar_url: "", source_count: 2, active_source_count: 0, run_count: 0, post_count: 4, updated_at: "2026-10-26T12:00:00Z" };
 const botAccountTable = T.components.render("bots/accounts", { items: [botAccount], filters: {}, pagination: { per_page: 25 }, navigation: { visible: false } });
 check(!botAccountTable.querySelector("tbody").querySelector("td").querySelector("a") && botAccountTable.querySelector('[data-modal-url="/api/bots/accounts/3?panel=detail"]'), "Bot account names are plain text and editing uses the same icon-modal interaction as user rows.");
+for (const active of [true, false]) {
+  const status = active ? 'active' : 'ban', tone = active ? 'success' : 'danger';
+  const cases = [
+    ['bots/accounts', { items: [{ ...botAccount, status }], filters: {}, pagination: { per_page: 25 }, navigation: { visible: false } }, 'FixtureBot'],
+    ['users/admin-row', { user: { ...user, username: 'ListUser', status } }, 'ListUser'],
+    ['bots/sources', { items: [{ id: 12, name: 'List source', interval_minutes: 60, enabled: active, bot_username: 'FixtureBot' }], filters: {}, bots: [], sorting: {}, state: {} }, 'List source']
+  ];
+  for (const [component, model, name] of cases) {
+    const view = T.components.render(component, model), row = component === 'users/admin-row' ? view : view.querySelector('tbody').querySelector('tr');
+    const identity = row.querySelector('td').children[0], indicator = identity.children[0];
+    check(indicator.className.includes('status-indicator-' + tone) && !!indicator.getAttribute('aria-label') && identity.children[1].textContent === name, 'Administration identities show an accessible status icon before their plain name: ' + component);
+    check(row.className.includes('table-row-inactive') === !active, 'Inactive rows keep the shared muted appearance: ' + component);
+  }
+}
 const botAccountDialog = T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/3?panel=detail"), { data: { item: botAccount } }, "bot-account-edit-fixture");
 const botTitle = botAccountDialog.querySelector('[id="bot-account-edit-fixture-title"]');
-check(botTitle.children[0].querySelector('.status-indicator-success') && botTitle.children[1].textContent === '@FixtureBot' && !botAccountDialog.querySelector('[href="/author/3"]'), "Bot dialogs put status before the nickname in the header and omit the public profile link.");
+check(botTitle.children[0].querySelector('.status-indicator-success') && botTitle.children[1].textContent === 'FixtureBot' && !botAccountDialog.querySelector('[href="/author/3"]'), "Bot dialogs put status before the nickname in the header and omit the public profile link.");
 const adminUserDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/management?panel=administration"), { data: { user: { ...user, status: "ban" }, administration: { roles: ["user"], statuses: ["active", "ban"] }, options: {} } }, "admin-user-title-fixture");
 const adminUserTitle = adminUserDialog.querySelector('[id="admin-user-title-fixture-title"]');
-check(adminUserTitle.children[0].querySelector('.status-indicator-danger') && adminUserTitle.children[1].textContent === '@' + user.username, "User administration shares the header status and nickname layout, including inactive accounts.");
+check(adminUserTitle.children[0].querySelector('.status-indicator-danger') && adminUserTitle.children[1].textContent === user.username, "User administration shares the header status and nickname layout, including inactive accounts.");
 check(botAccountDialog.querySelector("form").dataset.apiMethod === "PATCH" && botAccountDialog.querySelector("form").dataset.ajaxTarget === "#bot-detail-account" && !botAccountDialog.querySelector("form").dataset.modalCloseOnSuccess, "The unified bot account tab saves through PATCH and stays open for the other tabs.");
 check(botAccountDialog.querySelector("textarea").value === unsafe && botAccountDialog.querySelector('[data-modal-url="/api/users/3/avatar"]') && !botAccountDialog.querySelector('[name="avatar"]') && !botAccountDialog.querySelector('[name="remove_avatar"]'), "Bot edit modals retain biography drafts and open the shared avatar editor instead of uploading through the account form.");
 const comment = { id: 20, content_id: 10, parent_id: 0, author: user, body: unsafe, segments: [{ type: "text", text: unsafe }], editable_body: unsafe, created_at: "2026-01-01T12:00:00Z", created_label: "Today", likes_count: 0, liked: false, capabilities: { edit: true, delete: true, interact: true }, replies: [] };
@@ -481,6 +500,8 @@ const sourceEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources
 check(T.bots.modal(new URL("https://tinycat.test/api/bots/accounts/2/management"), { data: { item: user } }, "bot-editor-test") === null, "The duplicate bot editor is retired.");
 for (const editor of [createDialog, sourceEditor, botAccountDialog]) {
   check(editor.dataset.modalKind === "editor" && editor.dataset.modalSize === "workspace", "User and bot editors share the responsive administration frame.");
+  check(editor.querySelector('.modal-tabs').parent === editor.querySelector('.modal-panel') && !editor.querySelector('.modal-header').querySelector('.tabs') && !editor.querySelector('.modal-body').querySelector('.tabs') && editor.querySelector('[data-tabs]') === editor.querySelector('.modal-panel'), 'Tabbed editors keep navigation in a separate row between header and body and their fields in the body.');
+  check(editor.querySelector('.modal-panel').children.map(child => child.className).join('|') === 'modal-header|modal-tabs|modal-body|modal-footer', 'Header, navigation, scrolling body and footer occupy four independent rows.');
 }
 const sourceCreateEditor = T.bots.modal(new URL("https://tinycat.test/api/bots/sources/management"), { data: { item: { enabled: true, post_template: '{{title}}', bot_user_id: 2 }, bots: [user] } }, "source-create-test");
 const reportEditor = T.status.modal(new URL('https://tinycat.test/api/moderation/report-options?id=10'), { data: { reasons: ['spam'] } }, 'report-contract-fixture');
@@ -686,6 +707,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   const parentQuery = new Node('input'); parentQuery.name = 'q'; parentQuery.value = 'parent search'; parentFilter.appendChild(parentQuery); document.body.appendChild(parentFilter);
   check(workspaceTabs.querySelectorAll('[data-tab]').length === 4 && !workspace.querySelector('.modal-footer').hidden, "The bot workspace starts on its editable account tab with one footer save.");
   const detailDraft = workspace.querySelector('textarea'); detailDraft.value = 'Unsaved account draft';
+  const sourceNavigation = { visible: true, from: 1, to: 10, total: 11, previous: null, next: { url: '/api/bots/sources?bot=3&page=2', history_url: false }, pages: [{ page: 1, current: true }, { page: 2, current: false, url: '/api/bots/sources?bot=3&page=2', history_url: false }] };
   const workspaceCalls = [];
   T.api.request = async url => {
     workspaceCalls.push(url);
@@ -693,13 +715,17 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
       return { data: { runs: [], filters: { q: '', status: '', source: '' }, sources: {}, sorting: {}, navigation: { visible: false }, api_url: '/api/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', clear_url: '/api/bots/accounts/3/runs', url }, meta: { pagination: { page: 1, per_page: 25 } } };
     }
     return url.startsWith('/api/bots/sources')
-      ? { data: { items: [], bots: [botAccount], filters: { q: '', bot: '3' }, sorting: {}, navigation: { visible: false } }, meta: { pagination: { page: 1, per_page: 25 } } }
+      ? { data: { items: [], bots: [botAccount], filters: { q: '', bot: '3' }, sorting: {}, navigation: sourceNavigation }, meta: { pagination: { page: 1, per_page: 25 } } }
       : { data: { items: [], total_count: 4, filters: { q: '', scope: 'modal' }, sources: {}, sorting: {}, navigation: { visible: false }, api_url: '/api/bots/accounts/3/posts', history_url: false, list_target: '#bot-detail-posts-list', filter_modal: 'bot-detail-posts-filter-modal', clear_url: '/api/bots/accounts/3/posts?scope=modal', url: '/api/bots/accounts/3/posts?scope=modal' }, meta: { pagination: { page: 1, per_page: 25 } } };
   };
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'sources' } });
   await new Promise(resolve => setImmediate(resolve));
   check(workspaceCalls[0] === '/api/bots/sources?bot=3' && detailSources.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-sources-list', "Source tabs load and submit to a dedicated list target.");
   check(parentQuery.value === 'parent search' && !detailSources.querySelector('.admin-search-form').dataset.history, "Workspace filters do not modify the parent list or browser history.");
+  const workspaceFooter = workspace.querySelector('.modal-footer'), sourcePager = workspaceFooter.querySelector('.pagination');
+  check(sourcePager && !detailSources.querySelector('.pagination') && !workspaceFooter.querySelector('[type="submit"]'), 'Source pagination appears once in the fixed footer and replaces account save actions.');
+  const sourcePageLink = sourcePager.querySelector('a');
+  check(sourcePageLink.dataset.ajaxTarget === '#bot-detail-sources-list' && !sourcePageLink.dataset.history, 'Moving pagination preserves its AJAX list target and disables page history.');
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'posts' } });
   await new Promise(resolve => setImmediate(resolve));
   check(workspaceCalls[1] === '/api/bots/accounts/3/posts?scope=modal' && detailPosts.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-posts-list', "Posts are loaded lazily with independent modal scope.");
@@ -708,12 +734,33 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   await new Promise(resolve => setImmediate(resolve));
   check(workspaceCalls[2] === '/api/bots/accounts/3/runs' && detailRuns.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-runs-list' && document.getElementById('bot-detail-runs-filter-modal'), 'History loads lazily with shared search and a dedicated filter dialog.');
   const runSearch = new Node('form'); runSearch.dataset.apiMethod = 'GET';
-  T.botDetail.result(runSearch, { data: { runs: [], filters: { q: 'failure', status: 'error' }, sources: {}, navigation: { visible: false }, api_url: '/api/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', url: '/api/bots/accounts/3/runs?q=failure&status=error&page=2' }, meta: { pagination: { page: 2, per_page: 10 } } }, detailRuns);
+  T.botDetail.result(runSearch, { data: { runs: [], filters: { q: 'failure', status: 'error' }, sources: {}, navigation: { visible: true, from: 11, to: 20, total: 20, previous: { url: '/api/bots/accounts/3/runs?q=failure&status=error&page=1', history_url: false }, next: null, pages: [{ page: 1, current: false, url: '/api/bots/accounts/3/runs?q=failure&status=error&page=1', history_url: false }, { page: 2, current: true }] }, api_url: '/api/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', url: '/api/bots/accounts/3/runs?q=failure&status=error&page=2' }, meta: { pagination: { page: 2, per_page: 10 } } }, detailRuns);
+  const historyPager = workspaceFooter.querySelector('.pagination');
+  check(historyPager && historyPager !== sourcePager && !detailRuns.querySelector('.pagination') && historyPager.querySelector('a').dataset.ajaxTarget === '#bot-detail-runs-list', 'History filters replace footer pagination without leaving a duplicate in the table body.');
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'posts' } });
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'history' } });
   check(workspaceCalls.length === 3 && detailRuns.dataset.listUrl.includes('page=2') && detailRuns.querySelector('.admin-search-form').querySelector('[name="q"]').value === 'failure', 'Returning to history preserves its search, filters and page without reloading another tab.');
+  check(workspaceFooter.querySelector('.pagination') === historyPager, 'Returning to a tab restores its own current pagination node.');
+  workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'sources' } });
+  check(workspaceFooter.querySelector('.pagination') === sourcePager, 'Source pagination survives history filtering without acquiring its state.');
+  workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'posts' } });
+  const postResponse = { data: { items: [], total_count: 11, filters: { q: 'post draft', scope: 'modal' }, sources: {}, sorting: {}, navigation: { ...sourceNavigation, next: { url: '/api/bots/accounts/3/posts?q=post+draft&scope=modal&page=2', history_url: false }, pages: [] }, api_url: '/api/bots/accounts/3/posts', history_url: false, list_target: '#bot-detail-posts-list', filter_modal: 'bot-detail-posts-filter-modal', clear_url: '/api/bots/accounts/3/posts', url: '/api/bots/accounts/3/posts?q=post+draft&scope=modal&page=1' }, meta: { pagination: { page: 1, per_page: 10 } } };
+  T.bots.posts(detailPosts, postResponse);
+  const postPager = workspaceFooter.querySelector('.pagination'), nextPostPage = postPager.querySelector('a');
+  nextPostPage.closest = selector => selector === '.pagination' ? postPager : null;
+  workspace.querySelector('.modal-body').scrollTop = 400;
+  T.bots.result(nextPostPage, { ...postResponse, data: { ...postResponse.data, navigation: { visible: false }, url: '/api/bots/accounts/3/posts?q=post+draft&scope=modal&page=2' } }, detailPosts);
+  check(workspaceFooter.hidden && !detailPosts.querySelector('.pagination') && workspace.querySelector('.modal-body').scrollTop === 0, 'A page response refreshes the active footer, hides a single-page result and reveals the start of the new rows.');
+
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'account' } });
   check(!workspace.querySelector('.modal-footer').hidden && workspaceCalls.length === 3, "Returning to the account restores its footer without reloading fields.");
+  const savedFooterReplace = workspaceFooter.replaceChildren;
+  let inactiveFooterReplacements = 0;
+  workspaceFooter.replaceChildren = function (...children) { inactiveFooterReplacements++; return savedFooterReplace.apply(this, children); };
+  T.bots.posts(detailPosts, postResponse);
+  check(inactiveFooterReplacements === 0 && workspaceFooter.querySelector('[type="submit"]') && detailDraft.value === 'Unsaved account draft', 'Refreshing an inactive list keeps the active account actions mounted and preserves its draft.');
+  workspaceFooter.replaceChildren = savedFooterReplace;
+
   const modalSignals = [];
   T.api.request = (_url, options) => { modalSignals.push(options.signal); return new Promise(() => {}); };
   const sourceChange = new Node('form'); sourceChange.dataset.apiMethod = 'PATCH';
@@ -737,7 +784,8 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.dialog.open = () => { settingsOpenCount++; };
   T.lifecycle.hydrate = () => {};
   T.tabs.activate = tab => {
-    const tabs = tab.parent.parent;
+    let tabs = tab.parent;
+    while (tabs && tabs.getAttribute("data-tabs") === null) { tabs = tabs.parent; }
     tabs.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-selected', button === tab ? 'true' : 'false'));
     tabs.querySelectorAll('[data-tab-panel]').forEach(panel => { panel.hidden = panel.dataset.tabPanel !== tab.dataset.tab; });
   };
@@ -746,6 +794,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.settings.open('email');
   const settingsDialog = document.getElementById('settings-editor-modal');
   check(settingsDialog.querySelectorAll('[data-tab]').length === 2 && !settingsDialog.querySelector('[data-tab-panel="email"]').hidden, 'Settings open their requested section through the shared tabbed editor.');
+  check(settingsDialog.querySelector('.modal-tabs').parent === settingsDialog.querySelector('.modal-panel') && !settingsDialog.querySelector('.modal-header').querySelector('.tabs') && !settingsDialog.querySelector('.modal-body').querySelector('.tabs') && settingsDialog.querySelector('.modal-body').querySelector('form') === settingsForm, 'Settings retain their original form beneath a separate fixed navigation row below the header.');
   check(settingsDialog.querySelector('.modal-footer').querySelector('[type="submit"]').getAttribute('form') === settingsForm.id && settingsForm.getAttribute('enctype') === 'multipart/form-data', 'Settings keep one footer save and their image-upload form encoding.');
   settingsForm.querySelector('input').value = 'Retained settings draft';
   T.settings.open('site');

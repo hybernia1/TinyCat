@@ -55,6 +55,7 @@
 }
 
 .table-wrap {
+  position: relative;
   min-width: 0;
   overflow-x: auto;
   border: 1px solid var(--border);

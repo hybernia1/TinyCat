@@ -82,12 +82,7 @@
                             },
                             "children": [
                               {
-                                "concat": [
-                                  "@",
-                                  {
-                                    "get": "bot.username"
-                                  }
-                                ]
+                                "get": "bot.username"
                               }
                             ]
                           }
@@ -828,67 +823,101 @@
                             "attrs": {},
                             "children": [
                               {
-                                "tag": "strong",
-                                "attrs": {},
-                                "children": [
-                                  {
-                                    "get": "source.name"
-                                  }
-                                ]
-                              },
-                              {
                                 "tag": "div",
                                 "attrs": {
-                                  "class": "table-meta"
+                                  "class": "table-identity"
                                 },
                                 "children": [
                                   {
-                                    "tag": "a",
-                                    "attrs": {
-                                      "href": {
-                                        "get": "source.feed_url"
+                                    "component": "ui/account-status",
+                                    "data": {
+                                      "status": {
+                                        "if": [
+                                          {
+                                            "get": "source.enabled"
+                                          },
+                                          "active",
+                                          "disabled"
+                                        ]
                                       },
-                                      "target": "_blank",
-                                      "rel": "noopener noreferrer"
+                                      "label": {
+                                        "if": [
+                                          {
+                                            "get": "source.enabled"
+                                          },
+                                          {
+                                            "t": "bots.enabled"
+                                          },
+                                          {
+                                            "t": "bots.disabled"
+                                          }
+                                        ]
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "tag": "div",
+                                    "attrs": {
+                                      "class": "table-identity-body"
                                     },
                                     "children": [
                                       {
-                                        "get": "source.feed_url"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "tag": "div",
-                                "attrs": {
-                                  "class": "table-meta text-danger"
-                                },
-                                "children": [
-                                  {
-                                    "get": "source.last_error"
-                                  }
-                                ],
-                                "when": {
-                                  "get": "source.last_error"
-                                }
-                              },
-                              {
-                                "tag": "span",
-                                "attrs": {
-                                  "class": "sr-only"
-                                },
-                                "children": [
-                                  {
-                                    "if": [
-                                      {
-                                        "get": "source.enabled"
+                                        "tag": "strong",
+                                        "attrs": {
+                                          "class": "table-primary",
+                                          "title": {
+                                            "get": "source.name"
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "source.name"
+                                          }
+                                        ]
                                       },
                                       {
-                                        "t": "bots.enabled"
+                                        "tag": "div",
+                                        "attrs": {
+                                          "class": "table-meta"
+                                        },
+                                        "children": [
+                                          {
+                                            "tag": "a",
+                                            "attrs": {
+                                              "href": {
+                                                "get": "source.feed_url"
+                                              },
+                                              "target": "_blank",
+                                              "rel": "noopener noreferrer",
+                                              "class": "table-text-url",
+                                              "title": {
+                                                "get": "source.feed_url"
+                                              }
+                                            },
+                                            "children": [
+                                              {
+                                                "get": "source.feed_url"
+                                              }
+                                            ]
+                                          }
+                                        ]
                                       },
                                       {
-                                        "t": "bots.disabled"
+                                        "tag": "div",
+                                        "attrs": {
+                                          "class": "table-meta text-danger",
+                                          "title": {
+                                            "get": "source.last_error"
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "source.last_error"
+                                          }
+                                        ],
+                                        "when": {
+                                          "get": "source.last_error"
+                                        }
                                       }
                                     ]
                                   }
@@ -924,12 +953,7 @@
                                 },
                                 "children": [
                                   {
-                                    "concat": [
-                                      "@",
-                                      {
-                                        "get": "source.bot_username"
-                                      }
-                                    ]
+                                    "get": "source.bot_username"
                                   }
                                 ]
                               }
@@ -1381,40 +1405,56 @@
                             "attrs": {},
                             "children": [
                               {
-                                "tag": "strong",
-                                "attrs": {},
-                                "children": [
-                                  {
-                                    "concat": [
-                                      "@",
-                                      {
-                                        "get": "account.username"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "tag": "span",
+                                "tag": "div",
                                 "attrs": {
-                                  "class": "sr-only"
+                                  "class": "table-identity"
                                 },
                                 "children": [
                                   {
-                                    "lookup": {
-                                      "get": "account.status"
-                                    },
-                                    "cases": {
-                                      "active": {
-                                        "t": "users.statuses.active"
+                                    "component": "ui/account-status",
+                                    "data": {
+                                      "status": {
+                                        "get": "account.status"
                                       },
-                                      "waiting": {
-                                        "t": "users.statuses.waiting"
-                                      },
-                                      "ban": {
-                                        "t": "users.statuses.ban"
+                                      "label": {
+                                        "lookup": {
+                                          "get": "account.status"
+                                        },
+                                        "cases": {
+                                          "active": {
+                                            "t": "users.statuses.active"
+                                          },
+                                          "waiting": {
+                                            "t": "users.statuses.waiting"
+                                          },
+                                          "ban": {
+                                            "t": "users.statuses.ban"
+                                          }
+                                        }
                                       }
                                     }
+                                  },
+                                  {
+                                    "tag": "div",
+                                    "attrs": {
+                                      "class": "table-identity-body"
+                                    },
+                                    "children": [
+                                      {
+                                        "tag": "strong",
+                                        "attrs": {
+                                          "class": "table-primary",
+                                          "title": {
+                                            "get": "account.username"
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "account.username"
+                                          }
+                                        ]
+                                      }
+                                    ]
                                   }
                                 ]
                               }
@@ -1748,7 +1788,34 @@
                           "attrs": {},
                           "children": [
                             {
-                              "get": "run.source_name"
+                              "tag": "div",
+                              "attrs": {
+                                "class": "table-identity"
+                              },
+                              "children": [
+                                {
+                                  "tag": "div",
+                                  "attrs": {
+                                    "class": "table-identity-body"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "children": [
+                                        {
+                                          "get": "run.source_name"
+                                        }
+                                      ],
+                                      "attrs": {
+                                        "class": "table-primary",
+                                        "title": {
+                                          "get": "run.source_name"
+                                        }
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
                             }
                           ]
                         },
@@ -1803,11 +1870,27 @@
                           },
                           "children": [
                             {
-                              "or": [
+                              "tag": "span",
+                              "attrs": {
+                                "class": "table-text",
+                                "title": {
+                                  "or": [
+                                    {
+                                      "get": "run.error"
+                                    },
+                                    "—"
+                                  ]
+                                }
+                              },
+                              "children": [
                                 {
-                                  "get": "run.error"
-                                },
-                                "—"
+                                  "or": [
+                                    {
+                                      "get": "run.error"
+                                    },
+                                    "—"
+                                  ]
+                                }
                               ]
                             }
                           ]
@@ -2106,34 +2189,59 @@
                             "attrs": {},
                             "children": [
                               {
-                                "tag": "a",
+                                "tag": "div",
                                 "attrs": {
-                                  "href": {
-                                    "get": "post.url"
-                                  }
+                                  "class": "table-identity"
                                 },
                                 "children": [
                                   {
-                                    "get": "post.excerpt"
+                                    "tag": "div",
+                                    "attrs": {
+                                      "class": "table-identity-body"
+                                    },
+                                    "children": [
+                                      {
+                                        "tag": "a",
+                                        "attrs": {
+                                          "href": {
+                                            "get": "post.url"
+                                          },
+                                          "class": "table-primary",
+                                          "title": {
+                                            "get": "post.excerpt"
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "post.excerpt"
+                                          }
+                                        ],
+                                        "when": {
+                                          "get": "post.published"
+                                        }
+                                      },
+                                      {
+                                        "tag": "span",
+                                        "attrs": {
+                                          "class": "table-primary",
+                                          "title": {
+                                            "get": "post.excerpt"
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "post.excerpt"
+                                          }
+                                        ],
+                                        "when": {
+                                          "not": {
+                                            "get": "post.published"
+                                          }
+                                        }
+                                      }
+                                    ]
                                   }
-                                ],
-                                "when": {
-                                  "get": "post.published"
-                                }
-                              },
-                              {
-                                "tag": "span",
-                                "attrs": {},
-                                "children": [
-                                  {
-                                    "get": "post.excerpt"
-                                  }
-                                ],
-                                "when": {
-                                  "not": {
-                                    "get": "post.published"
-                                  }
-                                }
+                                ]
                               }
                             ]
                           },
@@ -2502,51 +2610,71 @@
                             "attrs": {},
                             "children": [
                               {
-                                "tag": "a",
+                                "tag": "div",
                                 "attrs": {
-                                  "href": {
-                                    "get": "post.bot_url"
-                                  },
-                                  "data-modal-open": "bot-detail-modal",
-                                  "data-modal-url": {
-                                    "concat": [
-                                      "/api/bots/accounts/",
-                                      {
-                                        "get": "post.bot_id"
-                                      },
-                                      "?panel=detail"
-                                    ]
-                                  }
+                                  "class": "table-identity"
                                 },
                                 "children": [
                                   {
-                                    "get": "post.username"
-                                  }
-                                ]
-                              },
-                              {
-                                "component": "ui/account-status",
-                                "data": {
-                                  "status": {
-                                    "get": "post.status"
-                                  },
-                                  "label": {
-                                    "lookup": {
-                                      "get": "post.status"
-                                    },
-                                    "cases": {
-                                      "active": {
-                                        "t": "users.statuses.active"
+                                    "component": "ui/account-status",
+                                    "data": {
+                                      "status": {
+                                        "get": "post.status"
                                       },
-                                      "waiting": {
-                                        "t": "users.statuses.waiting"
-                                      },
-                                      "ban": {
-                                        "t": "users.statuses.ban"
+                                      "label": {
+                                        "lookup": {
+                                          "get": "post.status"
+                                        },
+                                        "cases": {
+                                          "active": {
+                                            "t": "users.statuses.active"
+                                          },
+                                          "waiting": {
+                                            "t": "users.statuses.waiting"
+                                          },
+                                          "ban": {
+                                            "t": "users.statuses.ban"
+                                          }
+                                        }
                                       }
                                     }
+                                  },
+                                  {
+                                    "tag": "div",
+                                    "attrs": {
+                                      "class": "table-identity-body"
+                                    },
+                                    "children": [
+                                      {
+                                        "tag": "a",
+                                        "attrs": {
+                                          "href": {
+                                            "get": "post.bot_url"
+                                          },
+                                          "data-modal-open": "bot-detail-modal",
+                                          "data-modal-url": {
+                                            "concat": [
+                                              "/api/bots/accounts/",
+                                              {
+                                                "get": "post.bot_id"
+                                              },
+                                              "?panel=detail"
+                                            ]
+                                          },
+                                          "class": "table-primary",
+                                          "title": {
+                                            "get": "post.username"
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "post.username"
+                                          }
+                                        ]
+                                      }
+                                    ]
                                   }
-                                }
+                                ]
                               }
                             ]
                           },
@@ -2569,7 +2697,18 @@
                             "attrs": {},
                             "children": [
                               {
-                                "get": "post.excerpt"
+                                "tag": "span",
+                                "attrs": {
+                                  "class": "table-text",
+                                  "title": {
+                                    "get": "post.excerpt"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "post.excerpt"
+                                  }
+                                ]
                               }
                             ]
                           },

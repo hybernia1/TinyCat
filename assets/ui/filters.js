@@ -5,6 +5,24 @@ import "./forms.js";
 (function () {
   "use strict";
   var T = window.TinyCat, forms = new Map();
+  function position(menu) {
+    var panel = menu.querySelector("[data-filter-panel]"), anchor = menu.querySelector("summary");
+    if (!panel || !anchor || !menu.open) { return; }
+    panel.style.transform = "";
+    panel.style.height = "";
+    var body = menu.closest(".modal-body"), clip = body && body.getBoundingClientRect();
+    var top = Math.max(12, clip ? clip.top + 4 : 12);
+    var bottom = Math.min(window.innerHeight - 12, clip ? clip.bottom - 4 : window.innerHeight - 12);
+    var trigger = anchor.getBoundingClientRect(), bounds = panel.getBoundingClientRect();
+    var aboveBottom = Math.min(trigger.top - 4, bottom);
+    var below = Math.max(0, bottom - bounds.top), above = Math.max(0, aboveBottom - top);
+    var upwards = bounds.height > below && above > below;
+    panel.style.height = Math.floor(Math.min(bounds.height, upwards ? above : below)) + "px";
+    bounds = panel.getBoundingClientRect();
+    var x = bounds.left < 12 ? 12 - bounds.left : Math.min(0, window.innerWidth - 12 - bounds.right);
+    var y = upwards ? aboveBottom - bounds.height - bounds.top : 0;
+    panel.style.transform = "translate(" + x + "px, " + y + "px)";
+  }
   function summaries() {
     document.body.querySelectorAll("[data-list-summary-filters]").forEach(function (root) {
       var target = root.dataset.listSummaryFilters;
@@ -67,6 +85,7 @@ import "./forms.js";
       var form = forms.get(state.id);
       if (!panel || !panel.parentElement || !form) { return; }
       panel.parentElement.open = true;
+      position(panel.parentElement);
       panel.scrollTop = state.scroll;
       var field = Array.from(form.querySelectorAll("input, select")).find(function (item) { return item.getAttribute("name") === state.field; });
       if (field) { field.focus({ preventScroll: true }); }
@@ -96,12 +115,14 @@ import "./forms.js";
       document.addEventListener("toggle", function (event) {
         var menu = event.target;
         if (!menu.matches || !menu.matches("[data-filter-menu]") || !menu.open) { return; }
-        var panel = menu.querySelector("[data-filter-panel]");
-        panel.style.transform = "";
-        var bounds = panel.getBoundingClientRect();
-        var offset = bounds.left < 12 ? 12 - bounds.left : Math.min(0, window.innerWidth - 12 - bounds.right);
-        if (offset) { panel.style.transform = "translateX(" + offset + "px)"; }
+        position(menu);
       }, true);
+      function reposition(event) {
+        if (event.target.closest && event.target.closest("[data-filter-panel]")) { return; }
+        document.querySelectorAll("[data-filter-menu][open]").forEach(position);
+      }
+      window.addEventListener("resize", reposition);
+      document.addEventListener("scroll", reposition, true);
     }
   });
 }());

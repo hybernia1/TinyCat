@@ -45,6 +45,28 @@ Settings are opened directly from the administration navigation in a modal.
   values remain an em dash.
 - Keep row actions in `table-actions`. Use small ghost icon buttons;
   destructive actions use `text-danger` and confirmation.
+- First-column identities use `table-identity`: an optional status or type
+  icon followed by `table-identity-body`. The body stacks the main
+  `table-primary` name and `table-meta` details with a shared 4px gap.
+  Metadata aligns with the name, not underneath the icon. Keep icons on
+  the first text line and allow long names and URLs to wrap.
+- Primary names use the same weight and line height whether plain text
+  or a link. Preserve links for explicit navigation (a related account,
+  public post or external URL); do not automatically turn every first
+  cell into an edit link. Editing stays in the action column.
+- Mark action headers and cells explicitly with `table-actions-cell`.
+  They stay compact, right aligned, with `table-actions` on one line.
+  A last column containing ordinary data stays left aligned; never apply
+  action styling using `:last-child`. Empty-state colspan cells also
+  retain their own layout.
+- Long identity names, excerpts and diagnostic notes use a visual two-line
+  clamp; URL metadata uses a single-line ellipsis. Shared tokens
+  `--table-text-width` (24rem) and `--table-text-lines` (2) control the
+  limit. Apply `table-text` to long free text outside an identity and
+  `table-text-url` to its URL links. Keep the complete text in the DOM
+  and the escaped `title`, and preserve the original link destination.
+  Never slice strings in resources or truncate numbers, statuses or dates.
+
 - Keep dialogs outside the DOM region replaced by list requests.
 - Use the same components for initial PHP rendering and AJAX updates.
 - Preserve search, filters, sorting, and page size when refreshing a list
@@ -61,6 +83,64 @@ and result. Sorting, filters and pagination never change browser history
 or another tab. Load the history on first activation and retain its state
 when switching tabs. Dispose its filter form with the workspace.
 The run statistic counts the full history, independently of pagination.
+
+## Mobile tables
+
+Below 600px, simple tables become full-width row cards through the shared
+`tables` lifecycle service. The first cell is the identity; other values
+receive labels from the translated column headings. Identity and metadata
+use the available card width. Action buttons have 44px touch targets and
+may wrap within the action footer. Sort links remain available above the
+cards. At 600px and above the original column layout is retained. Identity
+content keeps a 12rem minimum there, so wider tables scroll locally instead
+of squeezing names down to a few characters.
+Mobile sort links form a regular two-column grid, use normal label casing
+and compact direction icons, and preserve the original AJAX/history links.
+
+Keep native table elements, explicit table/row/cell roles and `headers`
+associations. Visual labels are hidden from assistive technology to avoid
+duplicating column headings. Rehydration updates labels without duplicating
+wrappers or replacing the controls inside a cell. Empty-state colspan rows
+retain their content and do not receive field labels.
+
+Tables with multiple header rows or complex spans keep a readable minimum
+width and local horizontal scrolling. Use `data-table-layout="scroll"` for
+comparison tables that require columns to remain side by side. Mobile
+styles activate only after the service has prepared a simple table, so
+the scroll layout also remains usable without JavaScript.
+
+## Mobile modal navigation
+
+Below 600px, tabbed modals use a full-width section select with the active
+section icon instead of a horizontally clipped tab strip. Keep the full
+translated section names and a minimum 44px control height. The switch is
+in the existing navigation row below the header, outside the scrolling body.
+Desktop tabs remain in their tablist; the mobile select is its sibling.
+
+Both controls call the same tab activation code. Keep selected options,
+icons, panels, lazy loading and the footer save target synchronized, including
+when validation reveals a different section. Selecting a section must not
+submit a form or steal focus from the mobile select.
+
+## Tooltips
+
+Use `data-tooltip` for plain-text hints. The shared tooltip service also
+converts existing body `title` attributes during hydration and when a
+dynamic trigger is first used. Semantic iframe titles remain unchanged.
+Without JavaScript, existing title attributes retain the native fallback.
+
+The tooltip uses shared surface, text, border, radius and shadow tokens.
+Its popover top layer escapes table and modal clipping, while placement
+stays within the visual viewport. It opens after a short pointer hover,
+immediately on keyboard focus or a touch tap, and remains hoverable.
+Escape dismisses the hint before the enclosing modal or menu; scrolling,
+outside taps, tab changes and modal closure dismiss stale hints.
+
+Clipped, otherwise non-interactive table text becomes keyboard focusable.
+Table hints that merely repeat a fully visible label stay hidden.
+`aria-describedby` is added only while the hint is open, preserving any
+existing descriptions. Hints render through `textContent`, never HTML;
+links and buttons keep their normal click action.
 
 ## Editors
 
@@ -94,6 +174,10 @@ shadow tokens from that primitive; filter-specific CSS defines only form
 layout and dimensions. Use standard fields, 12px spacing, and small ghost
 Clear actions. The trigger is ghost by default and secondary when filters
 are active; search, sorting and page size do not count as active filters.
+The open panel stays within the viewport and the modal body. Its height
+uses the available space, opening above the trigger when needed; longer
+forms scroll inside the panel. Recalculate placement on resize and ancestor
+scroll, and after restoring a filter during list replacement.
 Changes to visible filter controls submit immediately through the shared
 `data-submit-on-change` behavior; do not add an Apply button. Clear remains
 available. Both retain the list's target, query state and history policy.
@@ -139,7 +223,24 @@ one `data-tab-submit` action targeting the active panel. Avatar dialogs
 retain their upload/appearance form selection and separate remove action.
 Source preview confirmation also belongs in the footer.
 
+The bot workspace moves each list tab's existing pagination into the modal
+footer. Keep the search/filter/per-page toolbar and result summary above the
+table. Store independent pagination nodes for Sources, History and Posts;
+restore account actions on the Account tab and hide the footer for a single
+page. Refresh the footer after list replacement, including background post
+refreshes, without changing AJAX targets or browser history. Paging reveals
+the start of the new rows inside the modal. Other modal types retain their
+current pagination until this workspace trial is reviewed.
+
 ## Tabbed entity dialogs
+
+Tab navigation occupies a separate full-width row between the modal header
+and scrolling body. It is not nested inside the title/close header.
+Use `pinDialogTabs()` to move only the tab buttons and make the panel their
+shared tab root; fields and forms remain in the scrolling body. Both editor
+factories and the bot workspace use this helper. Never overlay tab navigation
+on the scrolling content or compensate with a guessed tab-height offset.
+Horizontal tab scrolling remains available on narrow screens.
 
 Bot account pencils and bot links in sources/queue open a bot-only detail
 modal with Account, Sources, History, and Posts tabs. The account uses the
@@ -230,3 +331,18 @@ New records start active. Account deactivation uses the existing `ban`
 state; waiting and banned accounts can both be activated. The protected
 administrator cannot be deactivated. Deactivating a bot also disables its
 sources; reactivation leaves individual sources disabled until enabled.
+
+## Viewport containment
+
+Keep the page within the viewport and horizontal scrolling inside `.table-wrap`.
+The wrapper is a positioned containing block so absolutely positioned accessible
+labels in wide action columns cannot expand the document. Do not hide page overflow
+to mask this issue. Long filter-summary badges wrap within the available width.
+On narrow screens, filter panels align with the left edge of the full action row;
+desktop panels retain their right alignment.
+
+`node tests/frontend/admin-viewport.cjs` renders the real admin shell and source
+list at five viewport widths with open/closed filters and long summary values.
+It checks document bounds and preserves local table overflow. Use
+`TINYCAT_TEST_CHROME` for an explicit Chromium executable; otherwise a supported
+local installation is discovered or the render test reports a skip.

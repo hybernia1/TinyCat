@@ -7,6 +7,7 @@
   }
 
   .modal-header,
+  .modal-tabs,
   .modal-body,
   .modal-footer {
     padding-inline: var(--modal-padding-desktop);

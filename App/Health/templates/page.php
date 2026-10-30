@@ -60,7 +60,7 @@ use TinyCat\Support\Localization;
         <thead><tr><th><?= Html::et('health.checked_at') ?></th><th><?= Html::et('health.result') ?></th><th>TTFB</th><th><?= Html::et('health.http.total') ?></th><th>HTTP</th><th class="table-actions-cell"><?= Html::et('common.actions') ?></th></tr></thead>
         <tbody><?php foreach ($snapshot['history'] as $run): $timings = $run['http']['metrics'] ?? []; ?>
             <tr>
-                <td><time datetime="<?= Html::e($run['started_at']) ?>"><?= Html::e(Dates::dateTime($run['started_at'])) ?></time></td>
+                <td><div class="table-identity"><div class="table-identity-body"><time class="table-primary" datetime="<?= Html::e($run['started_at']) ?>"><?= Html::e(Dates::dateTime($run['started_at'])) ?></time></div></div></td>
                 <td><?= Components::render('ui/status-badge', ['tone' => $run['health_status'], 'label' => Localization::t('health.status.' . $run['health_status'])]) ?><?php if ($run['status'] !== 'completed'): ?><br><small class="table-meta"><?= Html::et('cron.statuses.' . $run['status']) ?></small><?php endif; ?></td>
                 <td class="table-meta"><?= isset($timings['ttfb_ms']) ? Html::e(round((float) $timings['ttfb_ms'], 1)) . ' ms' : '&mdash;' ?></td>
                 <td class="table-meta"><?= isset($timings['total_ms']) ? Html::e(round((float) $timings['total_ms'], 1)) . ' ms' : '&mdash;' ?></td>

@@ -72,7 +72,7 @@ final class Embed
         $src = Presentation::absolute_url('/status/' . (int) $item['id'] . '/embed') . '?maxheight=' . $height;
         return '<iframe class="tinycat-embed wp-embedded-content" src="' . Html::e($src) . '" width="' . $width . '" height="' . $height
             . '" title="' . Html::e((string) $item['author_name'] . ' · ' . Presentation::site_name())
-            . '" loading="lazy" referrerpolicy="no-referrer" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation" style="border:0;max-width:100%;width:' . $width . 'px"></iframe>';
+            . '" loading="lazy" referrerpolicy="strict-origin" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation" style="border:0;max-width:100%;width:' . $width . 'px"></iframe>';
     }
 
     /** @param array<string, mixed> $item

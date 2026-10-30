@@ -23,7 +23,27 @@ import "../../ui/tabs.js";
       if (state.dialog.isConnected) { metadata(state, response.data); }
     }).catch(failed);
   }
-  function scopedSources(state, response) {
+  function footer(state) {
+    var content = state.active === "account" ? state.actions : state.pagers[state.active];
+    state.footer.replaceChildren();
+    if (content) { state.footer.appendChild(content); }
+    state.footer.hidden = !content;
+  }
+  function pagination(root, source) {
+    var dialog = owner(), state = dialog && states.get(dialog);
+    if (!state) { return; }
+    var name = root === state.sources ? "sources" : root === state.posts ? "posts" : root === state.history ? "history" : null;
+    if (!name) { return; }
+    var pager = root.querySelector(".pagination");
+    if (pager) { pager.remove(); }
+    state.pagers[name] = pager;
+    if (state.active !== name) { return; }
+    footer(state);
+    if (source && source.closest && source.closest(".pagination")) {
+      state.dialog.querySelector(".modal-body").scrollTop = 0;
+    }
+  }
+  function scopedSources(state, response, source) {
     var data = Object.assign({}, response.data, { pagination: U.pagination(response), scoped: true, list_target: "#bot-detail-sources-list" });
     Object.values(data.sorting || {}).forEach(function (heading) { heading.target = data.list_target; heading.history = false; });
     var navigation = data.navigation || {};
@@ -31,12 +51,14 @@ import "../../ui/tabs.js";
     state.sources.dataset.listUrl = "/api/bots/sources?" + new URLSearchParams(Object.assign({}, data.filters, { bot: state.id, page: data.pagination.page || 1 }));
     T.bots.sources(state.sources, data);
     state.sources.dataset.loaded = "true";
+    pagination(state.sources, source);
   }
-  function scopedRuns(state, response) {
+  function scopedRuns(state, response, source) {
     var data = Object.assign({}, response.data, { pagination: U.pagination(response) });
     state.history.dataset.listUrl = data.url;
     state.history.replaceChildren(T.components.render("bots/runs-list", data));
     state.history.dataset.loaded = "true";
+    pagination(state.history, source);
     var form = T.components.render("bots/run-filter-form", data);
     form.querySelectorAll("input, select").forEach(function (field) {
       field.defaultValue = field.value;
@@ -59,7 +81,9 @@ import "../../ui/tabs.js";
       if (error.name !== "AbortError" && state.dialog.isConnected) {
         var retry = U.button("common.refresh");
         retry.addEventListener("click", function () { load(state, name, true); });
-        root.replaceChildren(retry); failed(error);
+        root.replaceChildren(retry); delete state.pagers[name];
+        if (state.active === name) { footer(state); }
+        failed(error);
       }
     }).finally(function () { delete root.dataset.loading; root.removeAttribute("aria-busy"); });
   }
@@ -85,7 +109,7 @@ import "../../ui/tabs.js";
       var fields = T.components.render("bots/account-fields", data);
       form.appendChild(fields);
       form.appendChild(U.button("common.save", { type: "submit", "class": "btn btn-primary" }));
-      var dialog = U.adminDialog(id, "@" + data.item.username, form);
+      var dialog = U.adminDialog(id, data.item.username, form);
       dialog.dataset.botWorkspaceId = String(botId);
       var content = e("div", { "class": "stack stack-gap-16" });
       var status = U.accountDialogTitle(dialog, data.item);
@@ -102,7 +126,7 @@ import "../../ui/tabs.js";
         { name: "sources", label: "bots.detail_sources", icon: "rss" },
         { name: "history", label: "bots.detail_history", icon: "clock" },
         { name: "posts", label: "bots.detail_posts", icon: "file" }
-      ], initial, "@" + data.item.username);
+      ], initial, data.item.username);
       initial = layout.initial;
       var panels = layout.panels, tabButtons = layout.buttons;
       content.appendChild(layout.content);
@@ -110,10 +134,11 @@ import "../../ui/tabs.js";
       tabButtons.account.setAttribute("aria-controls", panels.account.id);
       panels.account.append(summary, form); panels.sources.appendChild(sources); panels.history.appendChild(history); panels.posts.appendChild(posts);
       dialog.querySelector(".modal-body").replaceChildren(content);
-      var state = { id: botId, dialog: dialog, sources: sources, posts: posts, history: history, summary: summary, status: status, requests: new Set() };
+      var state = { id: botId, dialog: dialog, sources: sources, posts: posts, history: history, summary: summary, status: status, active: initial, footer: dialog.querySelector(".modal-footer"), actions: dialog.querySelector(".modal-editor-actions"), pagers: {}, requests: new Set() };
       states.set(dialog, state); metadata(state, data);
-      var footer = dialog.querySelector(".modal-footer"); footer.hidden = initial !== "account";
-      layout.content.addEventListener("tinycat:tab", function (event) { footer.hidden = event.detail.name !== "account"; load(state, event.detail.name); });
+      var tabRoot = U.pinDialogTabs(dialog, layout.content);
+      footer(state);
+      tabRoot.addEventListener("tinycat:tab", function (event) { state.active = event.detail.name; footer(state); load(state, event.detail.name); });
       content.addEventListener("click", function (event) {
         var link = event.target.closest && event.target.closest("a[href]");
         if (!link) { return; }
@@ -133,8 +158,8 @@ import "../../ui/tabs.js";
       var dialog = owner(), state = dialog && states.get(dialog);
       if (!state || !target || !["bot-detail-account", "bot-detail-sources-list", "bot-detail-runs-list"].includes(target.id)) { return false; }
       var method = (source.dataset.apiMethod || source.getAttribute("method") || "GET").toUpperCase();
-      if (target === state.history && method === "GET") { scopedRuns(state, response); }
-      else if (target === state.sources && method === "GET") { scopedSources(state, response); }
+      if (target === state.history && method === "GET") { scopedRuns(state, response, source); }
+      else if (target === state.sources && method === "GET") { scopedSources(state, response, source); }
       else {
         refreshMetadata(state);
         if (target === state.sources || state.sources.dataset.loaded === "true") { load(state, "sources", true); }
@@ -143,6 +168,7 @@ import "../../ui/tabs.js";
       }
       return true;
     },
+    pagination: pagination,
     dispose: function (root) {
       var state = states.get(root);
       if (!state) { return; }

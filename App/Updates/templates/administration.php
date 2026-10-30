@@ -96,7 +96,7 @@ $available = is_array($release) && !empty($release['available']);
                     <tbody>
                     <?php foreach ($history as $migration): ?>
                         <tr>
-                            <td><code><?= \TinyCat\Support\Html::e((string) ($migration['migration'] ?? '')) ?></code></td>
+                            <td><div class="table-identity"><div class="table-identity-body"><code class="table-primary" title="<?= \TinyCat\Support\Html::e((string) ($migration['migration'] ?? '')) ?>"><?= \TinyCat\Support\Html::e((string) ($migration['migration'] ?? '')) ?></code></div></div></td>
                             <td>v<?= \TinyCat\Support\Html::e((string) ($migration['version'] ?? '')) ?></td>
                             <td><time class="table-meta" datetime="<?= Html::e((string) ($migration['applied_at'] ?? '')) ?>"><?= Html::e(\TinyCat\Support\Dates::displayDateTime((string) ($migration['applied_at'] ?? ''))) ?></time></td>
                         </tr>
