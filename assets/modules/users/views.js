@@ -160,7 +160,7 @@ import "../../ui/toasts.js";
       }
       if (/\/management$/.test(path)) {
         if (url.searchParams.get("panel") === "administration") {
-          var adminDialog = U.sectionedDialog(id, "@" + data.user.username, adminForm(data.user, Object.assign({}, data.administration, { options: data.options }), false));
+          var adminDialog = U.sectionedDialog(id, data.user.username, adminForm(data.user, Object.assign({}, data.administration, { options: data.options }), false));
           U.accountDialogTitle(adminDialog, data.user);
           return adminDialog;
         }

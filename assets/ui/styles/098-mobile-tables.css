@@ -1,0 +1,79 @@
+.table-cell-label { display: none; }
+.table-cell-value { display: contents; }
+
+@media (max-width: 599px) {
+  .table-wrap[data-mobile-table] { border: 0; background: transparent; }
+  .table:not([data-mobile-cards]) { min-width: 44rem; }
+  .table[data-mobile-cards],
+  .table[data-mobile-cards] thead { display: block; }
+  .table[data-mobile-cards] thead > tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-block-end: 10px;
+  }
+  .table[data-mobile-cards] thead th {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    min-width: 0;
+    text-transform: none;
+  }
+  .table[data-mobile-cards] thead:not(:has(.table-sort)),
+  .table[data-mobile-cards] th:not(:has(.table-sort)) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .table[data-mobile-cards] .table-sort {
+    width: 100%;
+    height: 100%;
+    justify-content: space-between;
+    min-height: 36px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+  }
+  .table[data-mobile-cards] .table-sort > span { min-width: 0; overflow-wrap: anywhere; }
+  .table[data-mobile-cards] .table-sort-arrows { flex-shrink: 0; }
+  .table[data-mobile-cards] .table-sort-arrows .icon { width: 12px; height: 12px; }
+  .table[data-mobile-cards] tbody { display: grid; gap: 10px; }
+  .table[data-mobile-cards] tbody > tr {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+  .table[data-mobile-cards] tbody > .table-row-inactive { background: var(--surface-soft); }
+  .table[data-mobile-cards] td {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    align-items: start;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .table[data-mobile-cards] .table-cell-label {
+    display: block;
+    color: var(--muted);
+    font-size: 0.8125rem;
+    font-weight: 650;
+    line-height: 1.4;
+  }
+  .table[data-mobile-cards] .table-cell-value { display: block; min-width: 0; }
+  .table[data-mobile-cards] .table-identity-cell,
+  .table[data-mobile-cards] .table-actions-cell,
+  .table[data-mobile-cards] td[colspan] { display: block; width: auto; padding: 12px; }
+  .table[data-mobile-cards] .table-identity-body { flex: 1; min-inline-size: 0; max-inline-size: none; }
+  .table[data-mobile-cards] .table-actions-cell { border-top: 1px solid var(--border); }
+  .table[data-mobile-cards] .table-actions { flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+  .table[data-mobile-cards] .table-actions .btn { min-width: 44px; min-height: 44px; }
+}

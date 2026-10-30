@@ -26,25 +26,37 @@
   }
   var card = document.querySelector(".embed-card");
   if (!card) return;
+  function httpOrigin(value) {
+    try {
+      var url = new URL(value);
+      return /^https?:$/.test(url.protocol) && !url.username && !url.password ? url.origin : "";
+    } catch (_) { return ""; }
+  }
+  var parentOrigin = httpOrigin(document.referrer);
   function secret() {
     var value = new URLSearchParams(window.location.hash.replace(/^#\??/, "")).get("secret") || "";
     return /^[a-zA-Z0-9]{1,64}$/.test(value) ? value : "";
   }
   function resize() {
+    if (!parentOrigin) return;
     var height = Math.min(Number(document.documentElement.dataset.embedMaxheight) || 600, Math.ceil(card.getBoundingClientRect().height));
-    window.parent.postMessage({ type: "tinycat:embed:resize", height: height }, "*");
+    window.parent.postMessage({ type: "tinycat:embed:resize", height: height }, parentOrigin);
     var token = secret();
-    if (token) window.parent.postMessage({ message: "height", value: height, secret: token }, "*");
+    if (token) window.parent.postMessage({ message: "height", value: height, secret: token }, parentOrigin);
   }
   window.addEventListener("message", function (event) {
-    if (event.source === window.parent && event.data && event.data.message === "ready" && event.data.secret === secret()) resize();
+    if (event.source !== window.parent || !event.data || event.data.message !== "ready" || event.data.secret !== secret()) return;
+    var origin = httpOrigin(event.origin);
+    if (!origin || (parentOrigin && origin !== parentOrigin)) return;
+    parentOrigin = origin;
+    resize();
   });
   document.addEventListener("click", function (event) {
     var link = event.target.closest("a");
     var token = secret();
-    if (link && token && new URL(link.href).origin === window.location.origin) {
+    if (link && token && parentOrigin && new URL(link.href).origin === window.location.origin) {
       event.preventDefault();
-      window.parent.postMessage({ message: "link", value: link.href, secret: token }, "*");
+      window.parent.postMessage({ message: "link", value: link.href, secret: token }, parentOrigin);
     }
   });
   window.addEventListener("load", resize);

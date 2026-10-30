@@ -3,7 +3,7 @@
   width: 100vw;
   height: 100vh;
   max-height: 100vh;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: var(--modal-layout-rows, auto minmax(0, 1fr) auto);
   overflow: hidden;
   border-radius: 0;
 }
@@ -16,6 +16,34 @@
 .modal-body,
 .modal-footer {
   padding: var(--modal-padding);
+}
+
+.modal-panel[data-tabs] {
+  --modal-layout-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.modal-panel > .modal-tabs {
+  min-width: 0;
+  padding-inline: var(--modal-padding);
+  background: var(--bg);
+}
+
+.modal-tab-switch { display: none; }
+
+@media (max-width: 599px) {
+  .modal-panel > .modal-tabs {
+    padding-block: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-tabs > .tabs { display: none; }
+  .modal-tab-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .modal-tab-switch > [data-tab-select-icon] { display: inline-flex; flex-shrink: 0; color: var(--muted); }
+  .modal-tab-switch > .select { flex: 1; min-width: 0; min-height: 44px; }
 }
 
 .modal-body {
@@ -44,6 +72,12 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 6px;
+}
+
+.modal-footer > .pagination {
+  width: 100%;
+  border-top: 0;
+  padding-block-start: 0;
 }
 
 .modal-editor-actions {

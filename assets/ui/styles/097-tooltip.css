@@ -1,0 +1,21 @@
+.tooltip {
+  position: fixed;
+  inset: auto;
+  z-index: 1200;
+  margin: 0;
+  max-width: min(28rem, calc(100vw - 24px));
+  padding: 8px 10px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tooltip[hidden] { display: none; }

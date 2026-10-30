@@ -611,6 +611,12 @@ The optional, small `assets/embed.js` helper in the copy/paste snippet adjusts i
 height, checking both message origin and source window. Without that helper the
 iframe remains usable at its declared height. The child frame also implements the
 WordPress `secret`/`height`/`ready`/`link` message protocol for sandboxed discovery.
+Child replies target the exact HTTP(S) parent origin, taken from the referrer
+or established by a matching `ready` message from the parent window. The origin
+remains pinned for the lifetime of the frame; opaque origins receive no replies.
+Generated iframes use `strict-origin` referrers so initial WordPress resizing
+works without disclosing the parent page path or query. If a consumer suppresses
+referrers, its helper must send `ready`; otherwise the declared height remains.
 
 In WordPress, paste the original post URL into an Embed block, or put the supplied
 HTML into a Custom HTML block if your editor permits iframe markup. WordPress

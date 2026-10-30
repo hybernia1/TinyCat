@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.10.0 - 2026-10-30
+
+- Make administration tables readable on mobile with labeled row cards, touch-sized actions and retained sorting. Keep complex comparison tables locally scrollable and preserve table accessibility, empty states and AJAX refresh behavior.
+- Keep tabbed modal navigation and bot-list pagination outside the scrolling body. Add a compact mobile section switch that shares tab selection, lazy loading, validation and footer actions with desktop tabs.
+- Normalize table identities, activation icons, metadata and action columns. Bound long names, URLs and diagnostic text visually while preserving full values and original links; remove decorative username prefixes from administration identities.
+- Replace browser hints with shared, token-based tooltips supporting pointer, keyboard and touch input, safe plain-text rendering and viewport-aware modal placement. Correct filter positioning and reduced-motion behavior.
+- Restrict embed replies to a pinned HTTP(S) parent origin while retaining TinyCat and WordPress handshakes. Generated iframe referrers disclose only the parent origin. No new database migration is required.
+
 ## 5.9.0 - 2026-10-30
 
 - Unify administration lists, automatic dropdown filters, filtered result summaries, compact table metadata, empty states, status icons and activation actions. Preserve query state, pagination and entity-specific success notifications.

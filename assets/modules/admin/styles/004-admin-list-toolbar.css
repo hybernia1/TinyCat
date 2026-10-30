@@ -19,11 +19,19 @@
 }
 
 .admin-filter-actions {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
+}
+
+[data-list-summary] > *,
+[data-list-summary] .badge {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .admin-per-page-form {

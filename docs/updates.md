@@ -119,6 +119,20 @@ Personal account editing uses the same modal frame and preserves other tab draft
 after a partial save. Security and email verification endpoints retain their access
 checks and behavior.
 
+## Upgrading to 5.10.0: responsive tables and modal navigation
+
+No database migration or configuration change is required. Small-screen lists
+use labeled row cards, while tabbed editors share a compact section selector.
+Bot workspace pagination and navigation stay outside the scrolling content.
+Existing filters, sorting, drafts and activation behavior are retained.
+
+Shared tooltips replace browser hints and expose complete visually truncated
+table text. Embed communication now pins the HTTP(S) parent origin instead of
+broadcasting replies. Newly generated iframe snippets use `strict-origin`
+referrers, revealing no parent path or query. Existing `no-referrer` snippets
+continue to resize after the TinyCat or WordPress helper sends its `ready`
+handshake; without a handshake they retain their declared height.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

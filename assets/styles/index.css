@@ -91,3 +91,5 @@
 @import "../modules/site/styles/092-language.css";
 @import "../modules/status/styles/095-embed-modal.css";
 @import "../modules/site/styles/096-home-feed-toolbar.css";
+@import "../ui/styles/097-tooltip.css";
+@import "../ui/styles/098-mobile-tables.css";

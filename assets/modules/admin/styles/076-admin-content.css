@@ -1,5 +1,19 @@
 @media (max-width: 759px) {
-.admin-content {
+  .admin-filter-actions {
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .admin-filter-actions > .filter-menu {
+    position: static;
+  }
+
+  .admin-filter-actions .filter-menu-panel {
+    left: 0;
+    right: auto;
+  }
+
+  .admin-content {
     padding: 14px 0 24px;
   }
 }

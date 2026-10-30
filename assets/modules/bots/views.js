@@ -30,11 +30,12 @@ import "./detail.js";
     root.replaceChildren(view);
     if (!data.scoped) { syncFilter("bots-filter-modal", data.filters || { bot: data.filter_bot_user_id }); }
   }
-  function posts(root, response) {
+  function posts(root, response, source) {
     var data = Object.assign({}, response.data, { pagination: U.pagination(response) });
     root.dataset.botPostsUrl = data.url;
     root.dataset.botPostsRevision = String(Number(root.dataset.botPostsRevision || 0) + 1);
     root.replaceChildren(T.components.render("bots/posts", Object.assign({}, data, { state: data })));
+    T.botDetail.pagination(root, source);
     T.bots.hydrate(root);
     var count = document.querySelector('[data-bot-stat="posts"]');
     if (count && Number.isFinite(Number(data.total_count))) { count.textContent = String(data.total_count); }
@@ -111,7 +112,7 @@ import "./detail.js";
         else { reloadList(target, "/api/bots/sources", function (root, result) { sources(root, Object.assign({}, result.data, { pagination: U.pagination(result) })); }); }
         return true;
       }
-      if (target && target.id === "bot-detail-posts-list") { posts(target, response); return true; }
+      if (target && target.id === "bot-detail-posts-list") { posts(target, response, source); return true; }
       return true;
     }, sources: sources, posts: posts, accounts: accounts
   };

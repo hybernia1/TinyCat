@@ -407,64 +407,56 @@
         "attrs": {},
         "children": [
           {
-            "tag": "strong",
-            "attrs": {},
+            "tag": "div",
+            "attrs": {
+              "class": "table-identity"
+            },
             "children": [
               {
-                "concat": [
-                  "@",
+                "component": "ui/account-status",
+                "data": {
+                  "status": {
+                    "get": "user.status"
+                  },
+                  "label": {
+                    "lookup": {
+                      "get": "user.status"
+                    },
+                    "cases": {
+                      "active": {
+                        "t": "users.statuses.active"
+                      },
+                      "waiting": {
+                        "t": "users.statuses.waiting"
+                      },
+                      "ban": {
+                        "t": "users.statuses.ban"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "tag": "div",
+                "attrs": {
+                  "class": "table-identity-body"
+                },
+                "children": [
                   {
-                    "get": "user.username"
+                    "tag": "strong",
+                    "attrs": {
+                      "class": "table-primary",
+                      "title": {
+                        "get": "user.username"
+                      }
+                    },
+                    "children": [
+                      {
+                        "get": "user.username"
+                      }
+                    ]
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "tag": "span",
-            "attrs": {
-              "class": "sr-only"
-            },
-            "children": [
-              {
-                "lookup": {
-                  "get": "user.status"
-                },
-                "cases": {
-                  "active": {
-                    "t": "users.statuses.active"
-                  },
-                  "waiting": {
-                    "t": "users.statuses.waiting"
-                  },
-                  "ban": {
-                    "t": "users.statuses.ban"
-                  }
-                }
-              }
-            ]
-          },
-          {
-            "tag": "span",
-            "attrs": {
-              "class": "sr-only"
-            },
-            "children": [
-              {
-                "lookup": {
-                  "get": "user.status"
-                },
-                "cases": {
-                  "active": {
-                    "t": "users.statuses.active"
-                  },
-                  "waiting": {
-                    "t": "users.statuses.waiting"
-                  },
-                  "ban": {
-                    "t": "users.statuses.ban"
-                  }
-                }
               }
             ]
           }
