@@ -61,13 +61,13 @@ declare(strict_types=1);
                         ]) ?>
                         <?= $userMenu ?>
                     <?php else: ?>
-                        <details class="context-menu language-menu" data-language-menu>
+                        <details class="context-menu language-menu" data-language-menu data-dismissible-menu>
                             <summary class="nav-link nav-link-icon" aria-label="<?= \TinyCat\Support\Html::et('common.language') ?>: <?= \TinyCat\Support\Html::e($currentLanguageName) ?>" title="<?= \TinyCat\Support\Html::e($currentLanguageName) ?>">
                                 <svg class="language-flag" viewBox="0 0 24 16" aria-hidden="true" focusable="false"><use href="<?= \TinyCat\Support\Html::e($languageFlagSprite . '#' . $languageFlagId) ?>"></use></svg>
                             </summary>
                             <nav class="context-menu-popover language-menu-list" aria-label="<?= \TinyCat\Support\Html::et('common.language') ?>">
                                 <?php foreach ($languageLinks as $languageLink): ?>
-                                    <a class="context-menu-action language-menu-link" href="<?= \TinyCat\Support\Html::e($languageLink['url']) ?>" lang="<?= \TinyCat\Support\Html::e($languageLink['language']) ?>" data-language-link="<?= \TinyCat\Support\Html::e($languageLink['language']) ?>"<?= $languageLink['active'] ? ' aria-current="true"' : '' ?>>
+                                    <a class="context-menu-action language-menu-link" href="<?= \TinyCat\Support\Html::e($languageLink['url']) ?>" lang="<?= \TinyCat\Support\Html::e($languageLink['language']) ?>" data-dismissible-menu-action data-language-link="<?= \TinyCat\Support\Html::e($languageLink['language']) ?>"<?= $languageLink['active'] ? ' aria-current="true"' : '' ?>>
                                         <svg class="language-flag" viewBox="0 0 24 16" aria-hidden="true" focusable="false"><use href="<?= \TinyCat\Support\Html::e($languageFlagSprite . '#flag-' . $languageLink['language']) ?>"></use></svg>
                                         <span><?= \TinyCat\Support\Html::e($languageLink['name']) ?></span>
                                     </a>
@@ -86,7 +86,7 @@ declare(strict_types=1);
             <aside class="language-suggestion" data-language-suggestion="<?= \TinyCat\Support\Html::e($languageSuggestion['language']) ?>" lang="<?= \TinyCat\Support\Html::e($languageSuggestion['language']) ?>">
                 <div class="container language-suggestion-inner">
                     <span><?= \TinyCat\Support\Html::e($languageSuggestion['message']) ?></span>
-                    <a class="btn btn-secondary btn-sm" href="<?= \TinyCat\Support\Html::e($languageSuggestion['url']) ?>" data-language-link="<?= \TinyCat\Support\Html::e($languageSuggestion['language']) ?>"><?= \TinyCat\Support\Html::e($languageSuggestion['action']) ?></a>
+                    <a class="btn btn-secondary btn-sm" href="<?= \TinyCat\Support\Html::e($languageSuggestion['url']) ?>" data-dismissible-menu-action data-language-link="<?= \TinyCat\Support\Html::e($languageSuggestion['language']) ?>"><?= \TinyCat\Support\Html::e($languageSuggestion['action']) ?></a>
                     <button class="language-suggestion-close nav-link nav-link-icon" type="button" data-language-suggestion-close aria-label="<?= \TinyCat\Support\Html::e($languageSuggestion['close']) ?>"><?= \TinyCat\Support\Html::icon('close') ?></button>
                 </div>
             </aside>

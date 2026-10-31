@@ -21,6 +21,13 @@ import "./translation.js";
     C.editor.initStatusEditors(root); C.feed.initStatusFeedLazy(root);
     C.translation.hydrate(root);
   };
+  TinyCat.status.dispose = function (root) {
+    C.feed.dispose(root);
+    var editors = qsa("[data-status-editor]", root);
+    if (root.matches && root.matches("[data-status-editor]")) { editors.push(root); }
+    editors.forEach(C.editor.hideStatusEditorSuggestions);
+    if (C.translation.dispose) { C.translation.dispose(root); }
+  };
   TinyCat.status.init = function () {
     document.addEventListener("tinycat:form-reset", function (event) { qsa("[data-status-editor]", event.target).forEach(C.editor.resetStatusEditor); });
     C.comments.initCommentReplies(); C.actions.initStatusForms();

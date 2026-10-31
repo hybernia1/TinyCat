@@ -1,3 +1,5 @@
+import "../../ui/content.js";
+import "../../ui/lists.js";
 import "../../core/dates.js";
 import "../../core/components.js";
 import "../../core/http.js";
@@ -12,7 +14,6 @@ import "./detail.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui;
-  var pendingPosts = new WeakMap();
   function sourceUrl(suffix) {
     var workspace = document.querySelector("[data-bot-workspace-id]");
     var bot = workspace ? workspace.dataset.botWorkspaceId : new URLSearchParams(window.location.search).get("bot");
@@ -27,16 +28,15 @@ import "./detail.js";
   }
   function sources(root, data) {
     var view = T.components.render("bots/sources", data);
-    root.replaceChildren(view);
+    T.content.replaceChildren(root, view);
     if (!data.scoped) { syncFilter("bots-filter-modal", Object.assign({}, data.filters || { bot: data.filter_bot_user_id }, data.pagination ? { per_page: data.pagination.per_page } : {})); }
   }
   function posts(root, response, source) {
     var data = Object.assign({}, response.data, { pagination: U.pagination(response) });
     root.dataset.botPostsUrl = data.url;
     root.dataset.botPostsRevision = String(Number(root.dataset.botPostsRevision || 0) + 1);
-    root.replaceChildren(T.components.render("bots/posts", Object.assign({}, data, { state: data })));
+    T.content.replaceChildren(root, T.components.render("bots/posts", Object.assign({}, data, { state: data })));
     T.botDetail.pagination(root, source);
-    T.bots.hydrate(root);
     var count = document.querySelector('[data-bot-stat="posts"]');
     if (count && Number.isFinite(Number(data.total_count))) { count.textContent = String(data.total_count); }
   }
@@ -44,15 +44,13 @@ import "./detail.js";
     T.botDetail.changed();
     var root = document.querySelector("#bot-detail-posts-list");
     if (!root || !root.dataset.botPostsUrl) { return; }
-    if (pendingPosts.has(root)) { pendingPosts.get(root).abort(); }
-    var controller = new AbortController(), url = root.dataset.botPostsUrl, revision = root.dataset.botPostsRevision;
-    pendingPosts.set(root, controller);
-    return T.api.request(url, { signal: controller.signal }).then(function (response) {
-      if (!root.isConnected || root.dataset.botPostsUrl !== url || root.dataset.botPostsRevision !== revision) { return; }
+    var request = T.requests.begin(root), url = root.dataset.botPostsUrl, revision = root.dataset.botPostsRevision;
+    return T.api.request(url, { signal: request.signal }).then(function (response) {
+      if (!request.current() || root.dataset.botPostsUrl !== url || root.dataset.botPostsRevision !== revision) { return; }
       posts(root, response);
-      if (T.forms.hydrate) { T.forms.hydrate(root); }
-    }).catch(function (error) { if (error.name !== "AbortError") { T.toasts.show(error.message, "danger"); } })
-      .finally(function () { if (pendingPosts.get(root) === controller) { pendingPosts.delete(root); } });
+      T.lifecycle.hydrate(root);
+    }).catch(function (error) { if (error.name !== "AbortError" && request.current()) { T.toasts.show(error.message, "danger"); } })
+      .finally(request.finish);
   }
   function syncFilter(id, filters) {
     var modal = document.getElementById(id) || T.filters.get(id);
@@ -66,20 +64,13 @@ import "./detail.js";
   function accounts(root, response) {
     var data = response.data, pagination = U.pagination(response);
     var model = Object.assign({}, data, { pagination: pagination });
-    root.replaceChildren(T.components.render("bots/accounts", model));
+    T.content.replaceChildren(root, T.components.render("bots/accounts", model));
     syncFilter("bot-accounts-filter-modal", Object.assign({}, data.filters, { per_page: pagination.per_page }));
-  }
-  function reloadList(root, path, render) {
-    T.api.request(path + window.location.search).then(function (response) {
-      if (!root.isConnected) { return; }
-      render(root, response);
-      T.lifecycle.hydrate(root);
-    }).catch(function (error) { T.toasts.show(error.message, "danger"); });
   }
   T.bots = {
     queue: function (target, response) {
       var data = Object.assign({}, response.data, { pagination: U.pagination(response) });
-      target.replaceChildren(T.components.render("bots/queue", Object.assign({}, data, { state: data })));
+      T.content.replaceChildren(target, T.components.render("bots/queue", Object.assign({}, data, { state: data })));
     },
     modal: function (url, response, id) {
       if (/^\/api\/bots\/accounts\/[0-9]+$/.test(url.pathname) && url.searchParams.get("panel") === "detail") { return T.botDetail.modal(url, response, id); }
@@ -89,7 +80,7 @@ import "./detail.js";
         dialog.addEventListener("tinycat:success", function () {
           refreshPosts();
           var queue = document.querySelector("#bot-queue-list");
-          if (queue) { reloadList(queue, "/api/bots/queue", T.bots.queue); }
+          if (queue) { T.lists.refresh(queue); }
         });
         return dialog;
       }
@@ -101,20 +92,19 @@ import "./detail.js";
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
       if (!url.pathname.startsWith("/api/bots/")) { return false; }
-      if (T.botDetail.result(source, response, target)) { return true; }
-      if (target && target.id === "bot-queue-list") { T.bots.queue(target, response); return true; }
+      var detail = T.botDetail.result(source, response, target);
+      if (detail) { return detail; }
+      if (target && target.id === "bot-queue-list") { T.bots.queue(target, response); return [target]; }
       if (target && target.id === "bot-accounts-list") {
-        if ((source.dataset.apiMethod || "").toUpperCase() === "GET" || source.getAttribute("method") === "get" || source.getAttribute("href") && !source.dataset.method) { accounts(target, response); }
-        else { reloadList(target, "/api/bots/accounts", accounts); }
-        return true;
+        if (T.lists.isRead(source)) { accounts(target, response); return [target]; }
+        T.lists.refresh(target); return [];
       }
       if (target && target.id === "bots-list") {
-        if ((source.dataset.apiMethod || "").toUpperCase() === "GET" || source.getAttribute("method") === "get" || source.getAttribute("href") && !source.dataset.method) { sources(target, Object.assign({}, response.data, { pagination: U.pagination(response) })); }
-        else { reloadList(target, "/api/bots/sources", function (root, result) { sources(root, Object.assign({}, result.data, { pagination: U.pagination(result) })); }); }
-        return true;
+        if (T.lists.isRead(source)) { sources(target, Object.assign({}, response.data, { pagination: U.pagination(response) })); return [target]; }
+        T.lists.refresh(target); return [];
       }
-      if (target && target.id === "bot-detail-posts-list") { posts(target, response, source); return true; }
-      return true;
+      if (target && target.id === "bot-detail-posts-list") { posts(target, response, source); return [target]; }
+      return [];
     }, sources: sources, posts: posts, accounts: accounts
   };
   T.bots.dispose = function (root) { T.botDetail.dispose(root); };

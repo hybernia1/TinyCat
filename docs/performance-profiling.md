@@ -1,5 +1,7 @@
 # Repeatable performance profiling
 
+New and changed list queries follow the [selection and pagination standard](query-selection-standard.md). The [cross-list audit](list-query-standard-results.md) records where bounded selection helps and where it does not apply.
+
 The first large-data results are in [the 2026-10-26 report](performance-2026-10-26.md).
 PHP and concurrent-cache results are in [the second pass](performance-php-cache-2026-10-26.md).
 

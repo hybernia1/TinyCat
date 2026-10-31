@@ -1,3 +1,5 @@
+import "./lists.js";
+import "../core/requests.js";
 import "../core/dom.js";
 import "../core/http.js";
 import "../core/i18n.js";
@@ -30,15 +32,6 @@ import "./toasts.js";
   var unwrapResult = TinyCat.api.unwrap;
   var resultErrors = TinyCat.api.errors;
   var confirmAction = TinyCat.actions.confirm;
-  function preserveListSorting(url, target) {
-    if (!url || !target || !["users-list", "bot-accounts-list", "bots-list", "bot-queue-list", "scheduler-list", "moderation-reports"].includes(target.id)) { return url; }
-    var next = new URL(url, window.location.href);
-    var current = new URL(window.location.href);
-    ["sort", "direction"].forEach(function (key) {
-      if (!next.searchParams.has(key) && current.searchParams.has(key)) { next.searchParams.set(key, current.searchParams.get(key)); }
-    });
-    return TinyCat.navigation.compact(next);
-  }
   function refreshFormCaptcha(form, data) {
     var details = resultErrorDetails(data);
     if (details.captcha) { TinyCat.ui.captcha(form, details.captcha); }
@@ -74,9 +67,11 @@ import "./toasts.js";
       }
     }
 
-    TinyCat.modules.result(source, data, target);
-
-    hydrateDynamic(target || document);
+    var roots = TinyCat.modules.result(source, data, target);
+    if (Array.isArray(roots)) {
+      roots = Array.from(new Set(roots)).filter(function (root) { return root && root.isConnected !== false; });
+      roots.filter(function (root) { return !roots.some(function (parent) { return parent !== root && parent.contains(root); }); }).forEach(hydrateDynamic);
+    } else { hydrateDynamic(target || document); }
     if (filterState) { TinyCat.filters.restore(filterState); }
     if (menuState) { TinyCat.menus.restore(menuState); }
     resetForm(source);
@@ -88,126 +83,116 @@ import "./toasts.js";
 
     emit(source, "tinycat:success", { data: data, payload: payload, target: target });
   }
+  var mutationLocks = new Set(), loadingLinks = new WeakMap();
+  function connected(source, target) {
+    return source.isConnected !== false && (!target || target.isConnected !== false);
+  }
+  function beginRequest(source, target, method) {
+    var read = method === "GET" || method === "HEAD";
+    var request = TinyCat.requests.begin(read ? target || source : source, read);
+    var generation = null;
+    if (!read && target && target !== source) {
+      TinyCat.requests.cancel(target);
+      generation = Number(target.dataset.apiGeneration || 0) + 1;
+      target.dataset.apiGeneration = String(generation);
+    }
+    return {
+      signal: request.signal,
+      current: function () { return request.current() && connected(source, target) && (generation === null || Number(target.dataset.apiGeneration) === generation); },
+      finish: request.finish
+    };
+  }
   TinyCat.ajax.init = function () {
     document.addEventListener("submit", async function (event) {
       var form = event.target.closest && event.target.closest("form[data-ajax-form]");
-      var invalidField = null;
-
-      if (!form) {
-        return;
-      }
-
+      if (!form) { return; }
       event.preventDefault();
       if (form.dataset.apiBusy === "true") { return; }
       form.dataset.apiBusy = "true";
-
-      if (form.dataset.confirm && !(await confirmAction(form))) {
-        delete form.dataset.apiBusy;
-        return;
-      }
-
-      clearErrors(form);
-
       var target = form.dataset.ajaxTarget ? qs(form.dataset.ajaxTarget) : null;
-      var method = (form.dataset.apiMethod || form.getAttribute("method") || "POST").toUpperCase();
-      var action = form.dataset.ajaxAction || form.getAttribute("action") || window.location.href;
-      var body = new FormData(form);
-      var headers = {};
-      var override = body.get("_method");
-      var url = action;
-      var nextHistory = "";
-      var requestOptions;
-      method = String(form.dataset.apiMethod || override || method).toUpperCase();
-      body.delete("_method");
-
-      if (method === "GET") {
-        url = urlWithFormData(action, body, []);
-        nextHistory = historyUrl(form, action, body);
-        body = null;
-      }
-      url = preserveListSorting(url, target);
-      nextHistory = preserveListSorting(nextHistory, target);
-
-      requestOptions = {
-        method: method,
-        headers: headers
-      };
-
-      if (body) {
-        requestOptions.body = body;
-      }
-
-      var generation = target ? (Number(target.dataset.apiGeneration || 0) + 1) : 0;
-      if (target) { target.dataset.apiGeneration = String(generation); }
+      var request = null, invalidField = null;
       try {
+        if ((form.dataset.ajaxTarget && !target) || !connected(form, target)) { return; }
+        var method = (form.dataset.apiMethod || form.getAttribute("method") || "POST").toUpperCase();
+        var action = form.dataset.ajaxAction || form.getAttribute("action") || window.location.href;
+        var body = new FormData(form);
+        method = String(form.dataset.apiMethod || body.get("_method") || method).toUpperCase();
+        body.delete("_method");
+        var url = action, nextHistory = "";
+        if (method === "GET") {
+          url = urlWithFormData(action, body, []);
+          nextHistory = historyUrl(form, action, body);
+          body = null;
+        }
+        url = TinyCat.lists.url(url, target);
+        nextHistory = TinyCat.lists.url(nextHistory, target);
+        if (method === "GET" || method === "HEAD") { request = beginRequest(form, target, method); }
+        if (form.dataset.confirm && !await confirmAction(form)) { return; }
+        if (!connected(form, target) || (request && !request.current())) { return; }
+        clearErrors(form);
+        if (!request) { request = beginRequest(form, target, method); }
+        var options = { method: method, headers: {} };
+        if (request.signal) { options.signal = request.signal; }
+        if (body) { options.body = body; }
         emit(form, "tinycat:before", { target: target });
-        var data = await TinyCat.forms.request(form, url, requestOptions);
-        if (target && Number(target.dataset.apiGeneration) !== generation) { return; }
+        var data = await TinyCat.forms.request(form, url, options);
+        if (!request.current()) { return; }
         handleResult(form, data, target);
         pushHistory(nextHistory);
       } catch (error) {
-        if (error.name === "AbortError") { return; }
+        if (error.name === "AbortError" || !connected(form, target) || (request && !request.current())) { return; }
         var errors = resultErrors(error);
-
         refreshFormCaptcha(form, error.data);
-
-        if (errors) {
-          invalidField = applyErrors(form, errors);
-        }
-
+        if (errors) { invalidField = applyErrors(form, errors); }
         TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
         emit(form, "tinycat:error", { error: error, target: target });
       } finally {
         delete form.dataset.apiBusy;
-
-        TinyCat.forms.focusInvalid(invalidField);
+        if (invalidField && connected(form, target) && (!request || request.current())) { TinyCat.forms.focusInvalid(invalidField); }
+        if (request) { request.finish(); }
       }
     });
 
     document.addEventListener("click", async function (event) {
       var link = event.target.closest && event.target.closest("[data-ajax]");
-      var url;
-      var target;
-      var method;
-      var headers;
-      var nextHistory;
-
-      if (!link) {
-        return;
-      }
-
+      if (!link) { return; }
       event.preventDefault();
-
-      if (link.dataset.confirm && !await confirmAction(link)) {
-        return;
-      }
-
-      url = link.dataset.ajaxCurrent === "true" ? currentAjaxUrl(link) : (link.dataset.url || link.getAttribute("href"));
-      target = link.dataset.ajaxTarget ? qs(link.dataset.ajaxTarget) : null;
-      method = (link.dataset.method || "GET").toUpperCase();
-      headers = {};
-      nextHistory = historyUrl(link, url);
-      url = preserveListSorting(url, target);
-      nextHistory = preserveListSorting(nextHistory, target);
-
-      if (target && !await TinyCat.forms.confirmDiscard(TinyCat.forms.dirty(target))) {
-        return;
-      }
-
-      var generation = target ? (Number(target.dataset.apiGeneration || 0) + 1) : 0;
-      if (target) { target.dataset.apiGeneration = String(generation); }
+      var method = (link.dataset.method || "GET").toUpperCase();
+      var read = method === "GET" || method === "HEAD";
+      var url = link.dataset.ajaxCurrent === "true" ? currentAjaxUrl(link) : (link.dataset.url || link.getAttribute("href"));
+      var key = read ? null : method + " " + new URL(url, window.location.href).href;
+      if (key && mutationLocks.has(key)) { return; }
+      if (key) { mutationLocks.add(key); }
+      var target = link.dataset.ajaxTarget ? qs(link.dataset.ajaxTarget) : null;
+      var request = null, loading = false;
       try {
-        setLoading(link, true);
+        if ((link.dataset.ajaxTarget && !target) || !connected(link, target)) { return; }
+        // Invalidate older reads before waiting for a confirmation dialog.
+        if (read) { request = beginRequest(link, target, method); }
+        if (link.dataset.confirm && !await confirmAction(link)) { return; }
+        if (!connected(link, target) || (request && !request.current())) { return; }
+        if (target && !await TinyCat.forms.confirmDiscard(TinyCat.forms.dirty(target))) { return; }
+        if (!connected(link, target) || (request && !request.current())) { return; }
+        if (!request) { request = beginRequest(link, target, method); }
+        var nextHistory = TinyCat.lists.url(historyUrl(link, url), target);
+        url = TinyCat.lists.url(url, target);
+        if (!loadingLinks.has(link)) { setLoading(link, true); }
+        loadingLinks.set(link, request); loading = true;
         emit(link, "tinycat:before", { target: target });
-        var data = await TinyCat.api.request(url, { method: method, headers: headers });
-        if (target && Number(target.dataset.apiGeneration) !== generation) { return; }
+        var options = { method: method, headers: {} };
+        if (request.signal) { options.signal = request.signal; }
+        var data = await TinyCat.api.request(url, options);
+        if (!request.current()) { return; }
         handleResult(link, data, target);
         pushHistory(nextHistory);
       } catch (error) {
+        if (error.name === "AbortError" || !connected(link, target) || (request && !request.current())) { return; }
         TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
         emit(link, "tinycat:error", { error: error, target: target });
       } finally {
-        setLoading(link, false);
+        if (key) { mutationLocks.delete(key); }
+        if (loading && loadingLinks.get(link) === request) { loadingLinks.delete(link); setLoading(link, false); }
+        if (request) { request.finish(); }
       }
     });
   };

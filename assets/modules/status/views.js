@@ -1,3 +1,4 @@
+import "../../ui/content.js";
 import "../../core/dates.js";
 import "../../core/components.js";
 import "../../core/dom.js";
@@ -123,9 +124,10 @@ import "../../ui/fields.js";
     feed: function (target, response) {
       var section = target.matches(".home-feed-section") ? target : target.closest(".home-feed-section");
       var feed = section.querySelector("[data-status-feed]");
-      feed.replaceChildren(T.status.fragment(response.data.items).content);
+      T.status.controllers.feed.dispose(feed);
+      T.content.replaceChildren(feed, T.status.fragment(response.data.items).content);
       feed.id = "status-feed-" + (response.data.feed || "all");
-      section.querySelectorAll("[data-status-empty], [data-status-feed-more], [data-feed-login-required]").forEach(function (node) { node.remove(); });
+      section.querySelectorAll("[data-status-empty], [data-status-feed-more], [data-feed-login-required]").forEach(T.content.remove);
       section.querySelectorAll(".feed-switch-link").forEach(function (link) { var following = link.getAttribute("href").indexOf("following") !== -1; if (following === (response.data.feed === "following")) { link.setAttribute("aria-current", "page"); } else { link.removeAttribute("aria-current"); } });
       if (!response.data.items.length) { section.appendChild(e("div", { "class": "alert alert-info", "data-status-empty": "" }, U.text(response.data.login_required ? "auth.login_required" : (response.data.feed === "following" ? "public.feed_empty_following" : "public.feed_empty")))); }
       var pagination = U.pagination(response);
@@ -137,7 +139,7 @@ import "../../ui/fields.js";
   T.status.result = function (source, response, target) {
     var url = new URL(source.dataset.url || source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
     if (url.pathname !== "/api/statuses" || !target || !target.matches(".home-feed-section")) { return false; }
-    T.status.feed(target, response); return true;
+    T.status.feed(target, response); return [target];
   };
   T.status.controllers = {};
 }());

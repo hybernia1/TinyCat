@@ -37,6 +37,12 @@ import "../core/http.js";
     request: function (form, url, options) {
       if (requests.has(form)) { return requests.get(form).promise; }
       var controller = new AbortController(), previousBusy = form.getAttribute("aria-busy");
+      var signal = options && options.signal;
+      function abort() { controller.abort(); }
+      if (signal) {
+        if (signal.aborted) { abort(); }
+        else { signal.addEventListener("abort", abort, { once: true }); }
+      }
       var fields = controls(form);
       var disabled = fields.map(function (control) { return control.disabled; });
       var wasLoading = form.classList && form.classList.contains ? form.classList.contains("is-loading") : false;
@@ -46,6 +52,7 @@ import "../core/http.js";
       form.setAttribute("aria-busy", "true");
       entry.finish = function () {
         if (requests.get(form) !== entry) { return; }
+        if (signal) { signal.removeEventListener("abort", abort); }
         fields.forEach(function (control, index) { control.disabled = disabled[index]; });
         if (form.classList) { form.classList.toggle("is-loading", wasLoading); }
         if (previousBusy === null) { form.removeAttribute("aria-busy"); } else { form.setAttribute("aria-busy", previousBusy); }

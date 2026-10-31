@@ -30,6 +30,7 @@ class Node {
   append(...nodes) { nodes.forEach(node => this.appendChild(node)); }
   insertBefore(node, before) { node.remove(); const index = this.children.indexOf(before); if (index < 0) throw new Error('Missing insertion target'); node.parent = this; this.children.splice(index, 0, node); return node; }
   replaceChildren(...nodes) { this._text = ""; this.children = []; this.append(...nodes); }
+  contains(node) { return node === this || this.children.some(child => child.contains(node)); }
   get childNodes() { return this.children; }
   get tagName() { return this.tag.toUpperCase(); }
   get options() { return this.tag === "select" ? this.children : undefined; }
@@ -54,7 +55,7 @@ const labels = JSON.parse(require("node:child_process").execFileSync(process.env
 const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--templates"], { encoding: "utf8" }));
 const document = { addEventListener() {}, querySelector: () => null, body: new Node("body"), createElement: tag => new Node(tag), createElementNS: (_, tag) => new Node(tag), createTextNode: text => new Node("text", text), createDocumentFragment: () => new Node("fragment"), getElementById: id => document.body.querySelector('[id="' + id + '"]') };
 document.documentElement = { dataset: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--dates"], { encoding: "utf8" })) };
-const window = { innerHeight: 812, innerWidth: 390, setInterval() { return 0; }, TinyCat: {}, location: new URL("https://tinycat.test/") };
+const window = { innerHeight: 812, innerWidth: 390, clearTimeout() {}, setTimeout() { return 0; }, setInterval() { return 0; }, TinyCat: {}, history: { state: null }, location: new URL("https://tinycat.test/") };
 const context = vm.createContext({ window, document, Node, AbortController, URL, URLSearchParams, console, Set, Element: Node, RadioNodeList: class {}, CustomEvent: class {} });
 const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
 for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filename: asset.path });
@@ -432,7 +433,10 @@ node = T.users.modal(new URL("https://tinycat.test/api/users/2/management"), res
 check(node.getAttribute("role") === "dialog" && node.getAttribute("aria-labelledby") === "profile-test-title", "Profile dialogs retain accessible names.");
 check(!node.querySelector('[name="current_password"]'), "Other account profiles never show a password change form.");
 check(node.querySelector('[name="bio"]').value === unsafe, "Profile editors retain literal draft data.");
-const target = new Node("div");
+const disposedListViews = [];
+T.lifecycle.register("list-content-test", { dispose: root => disposedListViews.push(root) });
+const target = new Node("div"), oldUsersView = new Node("section"); target.appendChild(oldUsersView);
+const oldCreateDialog = T.ui.dialog("user-create-modal", "users.new_user", new Node("form"), true);
 T.users.list(target, { data: { items: [{ ...user, role: "admin", status: "active", updated_at_formatted: "Today", can_delete: false }], filters: { q: "admin", role: "admin", status: "active", updated_from: "", updated_to: "" }, roles: { admin: "Admin", user: "User" }, statuses: { active: "Active" }, role_options: { "": "All", admin: "Admin", user: "User" }, status_options: { "": "All", active: "Active" }, options: { password_max_length: 1024, username_pattern: "[A-Za-z0-9]+", username_hint: "Letters" } }, meta: { pagination: { page: 1, last_page: 1, per_page: 25 } } });
 check(target.querySelector(".admin-filter-actions").querySelector('[data-filter-panel="users-filter-modal"]') && target.querySelector(".admin-filter-actions").querySelector('[name="per_page"]'), "AJAX user lists keep filters and page size together in the compact toolbar.");
 const filterDialog = document.getElementById("users-filter-modal");
@@ -442,6 +446,8 @@ check(filterDialog.dataset.filterContent === "" && filterDialog.querySelector('[
 const adminAvatarFields = T.components.render("users/admin-fields", { user, create: false, options: { roles: {}, statuses: {} } });
 check(adminAvatarFields.querySelector('[data-modal-url="/api/users/2/avatar"]') && !adminAvatarFields.querySelector('[name="avatar"]') && !adminAvatarFields.querySelector('[name="remove_avatar"]'), "User administration reuses the frontend avatar editor without duplicate upload or removal controls.");
 const createDialog = document.getElementById("user-create-modal");
+check(disposedListViews.includes(oldUsersView) && !disposedListViews.includes(target), "User list replacement disposes its old view while preserving the list container.");
+check(disposedListViews.includes(oldCreateDialog) && createDialog !== oldCreateDialog, "Replacing the persistent create-user dialog disposes its old controls before removal.");
 check(createDialog.querySelectorAll('[data-tab]').length === 2, "User creation uses the standard Account and Access sections.");
 const userTabs = createDialog.querySelector('[data-tabs]');
 const accessPanel = userTabs.querySelector('[data-tab-panel="access"]');
@@ -540,8 +546,9 @@ check(!profileDialog.querySelector('[name="current_password"]').parent.parent.da
 T.dialog.close = savedAccountClose;
 check(sourceEditor.querySelectorAll('[data-tab]').length === 3 && sourceCreateEditor.querySelectorAll('[data-tab]').length === 3 && sourceCreateEditor.querySelector('form').dataset.apiMethod === 'POST', "Source create and edit share the same three-section modal.");
 check(sourceEditor.querySelector('[name="name"]').value === "Fresh source" && sourceEditor.querySelector('[data-bot-source-preview]'), "Remote source editors use fetched values and retain the preview workflow.");
-const reportRoot = new Node("div");
+const reportRoot = new Node("div"), oldReportView = new Node("section"); reportRoot.appendChild(oldReportView);
 T.moderation.reports(reportRoot, [{ id: 12, content_id: 9, author_name: unsafe, excerpt: unsafe, open_count: 1, report_count: 1, status: "open" }]);
+check(disposedListViews.includes(oldReportView) && !disposedListViews.includes(reportRoot), "Moderation replacement uses child-scoped lifecycle cleanup.");
 check(reportRoot.querySelectorAll("form").every(form => form.getAttribute("action") === "/api/moderation/reports/12" && form.dataset.apiMethod === "PATCH"), "Moderation controls address the report by path ID.");
 check(reportRoot.querySelectorAll("img").length === 0 && reportRoot.textContent.includes(unsafe), "Report excerpts never become markup.");
 const footer = new Node("div");
@@ -748,7 +755,8 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   await new Promise(resolve => setImmediate(resolve));
   check(workspaceCalls[2] === '/api/bots/accounts/3/runs' && detailRuns.querySelector('.admin-search-form').dataset.ajaxTarget === '#bot-detail-runs-list' && document.getElementById('bot-detail-runs-filter-modal'), 'History loads lazily with shared search and a dedicated filter dialog.');
   const runSearch = new Node('form'); runSearch.dataset.apiMethod = 'GET';
-  T.botDetail.result(runSearch, { data: { runs: [], filters: { q: 'failure', status: 'error' }, sources: {}, navigation: { visible: true, from: 11, to: 20, total: 20, previous: { url: '/api/bots/accounts/3/runs?q=failure&status=error&page=1', history_url: false }, next: null, pages: [{ page: 1, current: false, url: '/api/bots/accounts/3/runs?q=failure&status=error&page=1', history_url: false }, { page: 2, current: true }] }, api_url: '/api/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', url: '/api/bots/accounts/3/runs?q=failure&status=error&page=2' }, meta: { pagination: { page: 2, per_page: 10 } } }, detailRuns);
+  const changedHistoryRoots = T.botDetail.result(runSearch, { data: { runs: [], filters: { q: 'failure', status: 'error' }, sources: {}, navigation: { visible: true, from: 11, to: 20, total: 20, previous: { url: '/api/bots/accounts/3/runs?q=failure&status=error&page=1', history_url: false }, next: null, pages: [{ page: 1, current: false, url: '/api/bots/accounts/3/runs?q=failure&status=error&page=1', history_url: false }, { page: 2, current: true }] }, api_url: '/api/bots/accounts/3/runs', history_url: false, list_target: '#bot-detail-runs-list', filter_modal: 'bot-detail-runs-filter-modal', url: '/api/bots/accounts/3/runs?q=failure&status=error&page=2' }, meta: { pagination: { page: 2, per_page: 10 } } }, detailRuns);
+  check(changedHistoryRoots.length === 1 && changedHistoryRoots[0] === detailRuns, "Direct workspace GET results report their real changed root for one hydration pass.");
   const historyPager = workspaceFooter.querySelector('.pagination');
   check(historyPager && historyPager !== sourcePager && !detailRuns.querySelector('.pagination') && historyPager.querySelector('a').dataset.ajaxTarget === '#bot-detail-runs-list', 'History filters replace footer pagination without leaving a duplicate in the table body.');
   workspaceTabs.listeners['tinycat:tab']({ detail: { name: 'posts' } });
@@ -782,7 +790,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.botDetail.dispose(workspace);
   check(modalSignals.length === 4 && modalSignals.every(signal => signal.aborted) && !document.getElementById('bot-detail-runs-filter-modal'), "Disposing the workspace cancels pending list and metadata requests and removes the history filter dialog.");
   workspace.remove(); parentFilter.remove();
-  const backgroundReads = [], backgroundList = {isConnected:true};
+  const backgroundReads = [], backgroundList = {isConnected:true, dataset:{}};
   document.querySelector = selector => selector === '#bot-accounts-list' ? backgroundList : null;
   T.api.request = url => { backgroundReads.push(url); return new Promise(() => {}); };
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };

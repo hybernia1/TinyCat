@@ -1,3 +1,4 @@
+import "../../ui/content.js";
 import "../../core/dom.js";
 import "../../core/http.js";
 import "../../core/i18n.js";
@@ -30,7 +31,11 @@ import "../../ui/toasts.js";
   var confirmAction = TinyCat.actions.confirm;
   var shouldSubmitOnEnter = TinyCat.actions.submitOnEnter;
   var submitForm = TinyCat.actions.submit;
-  var detachModalFromCard = TinyCat.dom.detachFromCard;
+  function detachModalFromCard(modal, card) {
+    if (modal && card && card.contains(modal)) {
+      document.body.appendChild(modal);
+    }
+  }
   function shouldKeepStatusModalOpen(action, modal) {
     return Boolean(
       modal
@@ -83,7 +88,7 @@ import "../../ui/toasts.js";
 
     qsa(".status-card").forEach(function (card) {
       if (TinyCat.status.controllers.feed.statusCardId(card) === id) {
-        card.remove();
+        TinyCat.content.remove(card);
       }
     });
   }
@@ -122,7 +127,7 @@ import "../../ui/toasts.js";
     }
     if (payload.item) {
       if (action === "create") { var feed = TinyCat.status.controllers.feed.statusFeedForForm(form) || qs("[data-status-feed]"); if (feed && !refreshFilteredHome) { feed.prepend(TinyCat.status.card(payload.item)); hydrateDynamic(feed); } resetStatusCreateForm(form); }
-      else if (!refreshFilteredHome) { qsa('.status-card[data-status-id="' + Number(payload.item.id) + '"]').forEach(function (card) { var inModal = Boolean(card.closest(".status-post-modal")); if (TinyCat.dialog.current()) { detachModalFromCard(TinyCat.dialog.current(), card); } var next = TinyCat.status.card(payload.item, Boolean(card.id), !inModal); card.replaceWith(next); hydrateDynamic(next); }); }
+      else if (!refreshFilteredHome) { qsa('.status-card[data-status-id="' + Number(payload.item.id) + '"]').forEach(function (card) { var inModal = Boolean(card.closest(".status-post-modal")); if (TinyCat.dialog.current()) { detachModalFromCard(TinyCat.dialog.current(), card); } var next = TinyCat.status.card(payload.item, Boolean(card.id), !inModal); TinyCat.content.replaceNode(card, next); hydrateDynamic(next); }); }
     }
     if (payload.deleted_status_id) { removeStatusCard(payload.deleted_status_id, form); }
     if (payload.deleted_comment_id) { TinyCat.status.controllers.comments.removeStatusComment(payload.deleted_comment_id); }

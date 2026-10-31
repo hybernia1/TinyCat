@@ -14,7 +14,7 @@ const T = {
   api: { unwrap: response => response.data, errors: () => null, details: () => ({}), async request(url, options) { calls.push({ url, options }); return { data: { url } }; } },
   forms: { clearErrors() {}, applyErrors() {}, focusInvalid() {}, reset() {}, markClean() {}, loading() {}, dirty: () => [], confirmDiscard: async () => true },
   i18n: { label: key => key }, actions: {}, dialog: {},
-  modules: { result(_source, response) { applied.push(response.data.url); } }, toasts: { show() {} }
+  modules: { result(_source, response, target) { applied.push(response.data.url); return [target]; } }, toasts: { show() {} }
 };
 T.forms.request = (_source, url, options) => T.api.request(url, options);
 const window = {
@@ -22,9 +22,10 @@ const window = {
   history: { pushState(_state, _title, url) { window.location = new URL(url, window.location); } }, addEventListener() {}
 };
 const context = vm.createContext({ window, document, URL, FormData, AbortController });
-for (const file of ["assets/core/navigation.js", "assets/ui/ajax.js"]) {
+for (const file of ["assets/core/requests.js", "assets/core/navigation.js", "assets/ui/lists.js", "assets/ui/ajax.js"]) {
   vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../..", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
 }
+T.lists.register("/admin/users", { target: "#users-list", keepQuery: ["sort", "direction"], url: () => "/api/users" + window.location.search, apply: (target, data) => T.modules.result({}, data, target) });
 T.ajax.init();
 function link(url, history, method = "GET") {
   const source = { dataset: { ajaxTarget: "#users-list", history, method }, getAttribute: name => name === "href" ? url : null };
@@ -34,7 +35,7 @@ function link(url, history, method = "GET") {
   const result = T.modules.result;
   trackMenu = true;
   T.menus = { capture() { if (trackMenu) { menuSteps.push('capture'); return {key:'sort:#users-list'}; } return null; }, restore(state) { assert.equal(state.key, 'sort:#users-list'); menuSteps.push('restore'); } };
-  T.modules.result = (...args) => { if (trackMenu) menuSteps.push('render'); result(...args); };
+  T.modules.result = (...args) => { if (trackMenu) menuSteps.push('render'); return result(...args); };
   await handlers.click(link("/api/users?q=old&sort=username&direction=desc&page=1", "/admin/users?q=old&sort=username&direction=desc&page=1"));
   assert.deepEqual(menuSteps, ['capture','render','hydrate','restore'], 'Open sorting menus are restored after the AJAX result and new controls are hydrated.');
   trackMenu = false;
@@ -54,6 +55,7 @@ function link(url, history, method = "GET") {
   const pending = [];
   T.api.request = url => new Promise(resolve => pending.push(() => resolve({ data: { url } })));
   const first = handlers.click(link("/api/users?sort=role&direction=asc", "/admin/users?sort=role&direction=asc"));
+  await new Promise(resolve => setImmediate(resolve));
   const second = handlers.click(link("/api/users?sort=status&direction=desc", "/admin/users?sort=status&direction=desc"));
   await new Promise(resolve => setImmediate(resolve));
   pending[1](); await second; pending[0](); await first;

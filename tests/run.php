@@ -37,6 +37,7 @@ $tests = [
     'Dashboard presentation' => 'tests/presentation/dashboard.php',
     'Public export data' => 'tests/public-exports.php',
     'Archive media filters' => 'tests/archive-filters.php',
+    'MySQL archive media filters' => 'tests/archive-filters-mysql.php',
     'Public route smoke' => 'tests/http/public-route-smoke.php',
     'API HTTP contract' => 'tests/http/api-contract.php',
     'Performance query baseline' => 'tests/performance-baseline.php',

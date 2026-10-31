@@ -225,26 +225,36 @@ final class Queries
             : "COALESCE(l.normalized_url, '') || ' ' || COALESCE(l.title, '') || ' ' || COALESCE(l.description, '')";
         [$link, $linkParams] = self::textPredicate($query, 'l.normalized_url, l.title, l.description', '(' . $linkText . ')');
         $now = \TinyCat\Support\Dates::dateDb();
-        // Group all matching sources before pagination, including multiple links.
+        [$cursorSql, $cursorParams] = \TinyCat\Status\Feed::public_status_cursor_condition($cursorAt, $cursorId);
+        $cursorSql = $cursorSql === '' ? '' : ' AND ' . $cursorSql;
+        // A source ORDER/LIMIT can make MySQL choose a full chronological scan
+        // for rare literal LIKE terms. Keep their selective plan; still limit
+        // the narrow union before joining display rows.
+        $sourcePage = str_contains($body, 'MATCH(') ? ' ORDER BY c.published_at DESC, c.id DESC LIMIT ' . $limit : '';
+        // Each source needs only its first N unique IDs for the union's first N.
+        // Group matching links before that limit to preserve the exact excerpt.
+        // Hydrate bodies/authors only after deduplication and the final limit.
         $selection = new \TinyCat\Database\Query(
             'SELECT c.id, c.body, c.author_id, c.published_at, matches.link_excerpt,
                     u.username AS author_name, u.username AS author_username,
                     u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.updated_at AS author_updated_at
-             FROM (SELECT id, MAX(link_excerpt) AS link_excerpt FROM (
-                 SELECT c.id, NULL AS link_excerpt FROM content c INNER JOIN users u ON u.id = c.author_id
-                 WHERE u.status = ? AND c.published_at <= ? AND ' . $body . '
+             FROM (SELECT id, published_at, MAX(link_excerpt) AS link_excerpt FROM (
+                 SELECT * FROM (SELECT c.id, c.published_at, NULL AS link_excerpt FROM content c INNER JOIN users u ON u.id = c.author_id
+                 WHERE u.status = ? AND c.published_at <= ? AND ' . $body . $cursorSql . '
+                 ' . $sourcePage . ') body_hits
                  UNION ALL
-                 SELECT c.id, ' . $linkText . ' AS link_excerpt FROM links l
+                 SELECT * FROM (SELECT c.id, c.published_at, MAX(' . $linkText . ') AS link_excerpt FROM links l
                  INNER JOIN content_links cl ON cl.link_id = l.id
                  INNER JOIN content c ON c.id = cl.content_id
                  INNER JOIN users u ON u.id = c.author_id
-                 WHERE u.status = ? AND c.published_at <= ? AND ' . $link . '
-             ) hits GROUP BY id) matches
+                 WHERE u.status = ? AND c.published_at <= ? AND ' . $link . $cursorSql . '
+                 GROUP BY c.id, c.published_at' . $sourcePage . ') link_hits
+             ) hits GROUP BY id, published_at ORDER BY published_at DESC, id DESC LIMIT ' . $limit . ') matches
              INNER JOIN content c ON c.id = matches.id
              INNER JOIN users u ON u.id = c.author_id',
-            ['active', $now, ...$bodyParams, 'active', $now, ...$linkParams]
+            ['active', $now, ...$bodyParams, ...$cursorParams, 'active', $now, ...$linkParams, ...$cursorParams]
         );
-        return \TinyCat\Status\Feed::public_status_apply_cursor($selection, $cursorAt, $cursorId)->order('c.published_at DESC, c.id DESC')->limit($limit)->all();
+        return $selection->order('c.published_at DESC, c.id DESC')->limit($limit)->all();
     }
 
     /** Count exactly the posts visible on the target tag page.

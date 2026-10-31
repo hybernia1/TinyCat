@@ -1,3 +1,4 @@
+import "../../ui/menus.js";
 import "../../core/lifecycle.js";
 (function () {
   "use strict";
@@ -12,17 +13,5 @@ import "../../core/lifecycle.js";
         try { window.sessionStorage.setItem(key, "dismissed"); } catch (_) {}
       });
     }
-    document.addEventListener("click", function (event) {
-      document.querySelectorAll("[data-language-menu][open]").forEach(function (menu) {
-        if (!menu.contains(event.target) || (event.target.closest && event.target.closest("a[data-language-link]"))) { menu.open = false; }
-      });
-    });
-    document.addEventListener("keydown", function (event) {
-      if (event.key !== "Escape") { return; }
-      document.querySelectorAll("[data-language-menu][open]").forEach(function (menu) {
-        menu.open = false;
-        if (menu.contains(document.activeElement)) { menu.querySelector("summary").focus(); }
-      });
-    });
   } });
 }());

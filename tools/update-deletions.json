@@ -224,6 +224,12 @@
     "5.13.0": [
         "App/Site/templates/dashboard.php"
     ],
+    "5.14.0": [
+        "assets/core/text.js",
+        "assets/ui/styles/001-root.css",
+        "assets/ui/styles/002-root-not-data-theme-light.css",
+        "assets/ui/styles/003-root-data-theme-dark.css"
+    ],
     "5.9.0": [
         "App/Bots/templates/detail.php",
         "App/Bots/templates/parts/modals/source.php",

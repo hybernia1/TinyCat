@@ -32,7 +32,7 @@ import "./forms.js";
     }
   };
   var qs = TinyCat.dom.find, qsa = TinyCat.dom.all, createElement = TinyCat.dom.create, emit = TinyCat.dom.emit;
-  var isFocusableVisible = TinyCat.dom.visible, setLoading = TinyCat.forms.loading;
+  var setLoading = TinyCat.forms.loading;
   var dirtyForms = TinyCat.forms.dirty, resetDiscardedForms = TinyCat.forms.discard;
   var activeModal = null, modalStack = [], modalPageLock = null, modalCounterId = 0, pending = new Map();
   function getModal(target) {

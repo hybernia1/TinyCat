@@ -4,7 +4,7 @@ import "./views.js";
 (function () {
   "use strict";
   var T = window.TinyCat;
-  var detectorPromise = null;
+  var detectorPromise = null, cleanups = new WeakMap();
   function languageDetector() {
     if (!detectorPromise) {
       detectorPromise = window.LanguageDetector.create().catch(function () {
@@ -35,7 +35,8 @@ import "./views.js";
       var state = document.createElement("span");
       var output = document.createElement("div");
       var controls = document.createElement("div");
-      var source = null, translated = false, translator = null;
+      var source = null, translated = false, translator = null, disposed = false;
+      cleanups.set(body, function () { disposed = true; if (translator) { translator.destroy(); translator = null; } });
       var target = (T.i18n.locale() || document.documentElement.lang || "en").split(/[-_]/)[0];
       controls.className = "status-translation";
       controls.hidden = true;
@@ -107,7 +108,10 @@ import "./views.js";
             return;
           }
           translator = await window.Translator.create(options);
-          output.textContent = await translator.translate(body.innerText);
+          if (disposed) { return; }
+          var translatedText = await translator.translate(body.innerText);
+          if (disposed) { return; }
+          output.textContent = translatedText;
           translated = true;
           output.hidden = false;
           label.textContent = text("hide");
@@ -130,5 +134,9 @@ import "./views.js";
   }
   document.addEventListener("pointerdown", prepareDetection, { once: true });
   document.addEventListener("keydown", prepareDetection, { once: true });
-  T.status.controllers.translation = { hydrate: hydrate };
+  T.status.controllers.translation = { hydrate: hydrate, dispose: function (root) {
+    var nodes = T.dom.all(".status-body", root);
+    if (root.matches && root.matches(".status-body")) { nodes.push(root); }
+    nodes.forEach(function (node) { var cleanup = cleanups.get(node); if (cleanup) { cleanup(); cleanups.delete(node); } });
+  } };
 }());

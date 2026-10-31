@@ -33,7 +33,7 @@ import "./icons.js";
     if (own(expr, "not")) { return !truth(value(expr.not, data)); }
     if (own(expr, "and")) { return expr.and.every(function (part) { return truth(value(part, data)); }); }
     if (own(expr, "or")) { for (var i = 0; i < expr.or.length; i++) { var result = value(expr.or[i], data); if (truth(result)) { return result; } } return null; }
-    var output = Array.isArray(expr) ? [] : {};
+    var output = {};
     Object.keys(expr).forEach(function (key) { if (/^(?:__proto__|constructor|prototype)$/.test(key)) { throw new TypeError("Unsupported component key."); } output[key] = value(expr[key], data); }); return output;
   }
   function bindings(expressions, data) {

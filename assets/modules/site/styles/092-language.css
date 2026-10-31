@@ -1,5 +1,4 @@
-.language-menu { position: relative; }
-.language-menu > summary { display: flex; align-items: center; justify-content: center; width: 36px; min-height: 36px; padding: 6px; list-style: none; cursor: pointer; }
+.language-menu > summary { display: flex; align-items: center; justify-content: center; width: 36px; min-height: 36px; padding: 6px; cursor: pointer; }
 .language-flag { display: block; width: 24px; height: 16px; flex: 0 0 24px; border-radius: 2px; box-shadow: 0 0 0 1px var(--border); }
 .language-menu-list { min-width: 200px; max-width: calc(100vw - 32px); max-height: min(70vh, 480px); overflow-y: auto; }
 .language-menu-link { display: flex; align-items: center; gap: 12px; text-decoration: none; }
