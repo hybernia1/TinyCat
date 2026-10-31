@@ -4,10 +4,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/../cache-isolation.php';
 
 $root = dirname(__DIR__, 2);
+require_once $root . '/App/Support/Version.php';
 $options = getopt('', ['baseline-version::']);
-$baselineVersion = (string) ($options['baseline-version'] ?? '2.0.25');
-if (!in_array($baselineVersion, ['2.0.25', '2.1.0', '3.0.0', '3.1.0', '3.2.1', '4.0.0', '5.8.0', '5.11.0', '5.13.0', '5.14.0'], true)) {
-    throw new InvalidArgumentException('Unsupported rehearsal baseline.');
+$baselineVersion = (string) ($options['baseline-version'] ?? \TinyCat\Support\Version::MINIMUM_UPDATE);
+if ($baselineVersion !== \TinyCat\Support\Version::MINIMUM_UPDATE) {
+    throw new InvalidArgumentException('Use the supported update baseline.');
 }
 $temporaryRoot = $root . '/storage/update-rehearsal-' . bin2hex(random_bytes(6));
 $candidateRoot = $temporaryRoot . '/candidate';
@@ -191,7 +192,7 @@ try {
     $build = escapeshellarg(PHP_BINARY)
         . ' ' . escapeshellarg($candidateRoot . '/tools/build-update.php')
         . ' --version=' . escapeshellarg($candidateVersion)
-        . ' --minimum-version=2.0.25 --allow-dirty --without-migrations'
+        . ' --allow-dirty --without-migrations'
         . ' --output=' . escapeshellarg($artifactRoot)
         . ' --key=' . escapeshellarg($signingKey);
     exec($build . ' 2>&1', $buildOutput, $buildExit);
@@ -232,7 +233,7 @@ PHP);
         'slug' => 'rehearsal_probe',
         'name' => 'Release rehearsal probe',
         'version' => '1.0.0',
-        'requires' => ['tinycat' => '2.0.25', 'php' => '8.4.0'],
+        'requires' => ['tinycat' => $baselineVersion, 'php' => '8.4.0'],
         'entry' => 'bootstrap.php',
         'migrations' => [],
         'autoload' => false,
@@ -245,29 +246,30 @@ PHP);
     $manifestPath = $artifactRoot . '/tinycat-update.json';
     $signaturePath = $artifactRoot . '/tinycat-update.sig';
     $packagePath = $artifactRoot . '/tinycat-' . $candidateVersion . '.zip';
+    $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
     $runner = <<<'PHP'
 define('TINYCAT', true);
 $root = __INSTALL_ROOT__;
 require $root . '/App/bootstrap.php';
 $invoke = static function (string $method, mixed ...$arguments): mixed {
-    return (new ReflectionMethod(TinyCat\Update\Manager::class, $method))->invoke(null, ...$arguments);
+    return (new ReflectionMethod(TinyCat\Updates\Manager::class, $method))->invoke(null, ...$arguments);
 };
-$manifest = TinyCat\Update\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
+$manifest = TinyCat\Updates\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
 $invoke('assertCompatibility', $manifest);
 $stage = $root . '/storage/updates/rehearsal-stage';
 $invoke('extractPackage', __PACKAGE__, $stage, $manifest);
 $invoke('preflightManagedTargets', $manifest);
 $backup = $invoke('createBackup', $manifest, __VERSION__, false);
 $invoke('enableMaintenance', __VERSION__);
-$maintenance = TinyCat\Update\Manager::maintenanceActive();
+$maintenance = TinyCat\Updates\Manager::maintenanceActive();
 $invoke('applyFiles', $stage, $manifest);
 $invoke('deleteLegacyFiles', $manifest);
 $invoke('clearRuntimeCache');
-TinyCat\Update\Manager::disableMaintenance();
+TinyCat\Updates\Manager::disableMaintenance();
 echo json_encode([
     'backup' => $backup,
     'maintenance_during' => $maintenance,
-    'maintenance_after' => TinyCat\Update\Manager::maintenanceActive(),
+    'maintenance_after' => TinyCat\Updates\Manager::maintenanceActive(),
     'files' => count($manifest['files']),
     'deletions' => count($manifest['delete']),
 ], JSON_THROW_ON_ERROR);
@@ -283,18 +285,14 @@ PHP;
         ],
         $runner
     );
-    if (version_compare($baselineVersion, '3.0.0', '>=')) { $runner = str_replace('TinyCat\\Update\\Manager', 'TinyCat\\Updates\\Manager', $runner); }
     [$updateExit, $updateOutput] = $run($runner);
     $updateResult = json_decode(implode("\n", $updateOutput), true);
     $assert($updateExit === 0 && is_array($updateResult), 'Updater rehearsal completes: ' . implode(' ', $updateOutput));
     $assert(($updateResult['maintenance_during'] ?? null) === true, 'Maintenance mode is active while files change.');
     $assert(($updateResult['maintenance_after'] ?? null) === false, 'Maintenance mode is disabled after success.');
-    $assert((int) ($updateResult['deletions'] ?? -1) > 0, 'Candidate declares obsolete runtime removals.');
-    foreach (['App/Settings/Pages.php', 'App/Moderation/templates/blocking.php', 'assets/ui/styles/058-modal-panel-full.css'] as $retiredUiFile) {
-        $assert(!is_file($installRoot . '/' . $retiredUiFile), 'Update removes superseded administration runtime: ' . $retiredUiFile);
-    }
-    foreach (['App/Extension.php', 'App/Avatar.php', 'App/UserRoles.php', 'App/StatusImage.php', 'App/StatusLinks.php', 'App/LinkMetadata.php'] as $obsolete) {
-        $assert(!is_file($installRoot . '/' . $obsolete), 'Candidate removes obsolete implementation: ' . $obsolete);
+    $assert(($updateResult['deletions'] ?? null) === count($manifest['delete']), 'Update applies the declared deletion inventory.');
+    foreach ((array) $manifest['delete'] as $relative) {
+        $assert(!is_file($installRoot . '/' . $relative), 'Update removes declared obsolete file: ' . $relative);
     }
     $assert((string) file_get_contents($installRoot . '/storage/rehearsal-sentinel.txt') === 'storage-preserved', 'Storage survives update.');
     $assert((string) file_get_contents($installRoot . '/uploads/rehearsal-sentinel.txt') === 'uploads-preserved', 'Uploads survive update.');
@@ -399,7 +397,7 @@ PHP;
     $assert($restoredInventory === $baselineInventory, 'Rollback restores the exact baseline managed inventory.');
     $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash, 'Rollback leaves configuration unchanged.');
     $assert(hash_file('sha256', $extensionRoot . '/bootstrap.php') === $extensionHash, 'Rollback leaves legacy extension files unchanged.');
-    $oldVersionConstant = version_compare($baselineVersion, '3.0.0', '>=') ? 'TinyCat\\Support\\Version::CURRENT' : 'Core::VERSION';
+    $oldVersionConstant = 'TinyCat\\Support\\Version::CURRENT';
     $bootOld = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; if (" . $oldVersionConstant . " !== " . var_export($baselineVersion, true) . ") exit(2);";
     [$oldBootExit, $oldBootOutput] = $run($bootOld);

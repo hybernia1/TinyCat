@@ -12,9 +12,10 @@ if (!function_exists('sodium_crypto_sign_detached')) {
 }
 
 $root = dirname(__DIR__);
+require_once $root . '/App/Support/Version.php';
 $options = getopt('', ['version:', 'minimum-version::', 'minimum-php::', 'output::', 'key::', 'allow-dirty', 'without-migrations', 'fresh-install']);
 $version = trim((string) ($options['version'] ?? ''));
-$minimumVersion = trim((string) ($options['minimum-version'] ?? '1.0.14'));
+$minimumVersion = trim((string) ($options['minimum-version'] ?? \TinyCat\Support\Version::MINIMUM_UPDATE));
 $minimumPhp = trim((string) ($options['minimum-php'] ?? '8.4.0'));
 $output = trim((string) ($options['output'] ?? ($root . DIRECTORY_SEPARATOR . 'dist')));
 $keyPath = trim((string) ($options['key'] ?? ($root . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'update-signing.key')));
@@ -26,6 +27,11 @@ $validVersion = static fn (string $value): bool => preg_match('/^[0-9]+\.[0-9]+\
 
 if (!$validVersion($version) || !$validVersion($minimumVersion) || !$validVersion($minimumPhp)) {
     fwrite(STDERR, "Usage: php tools/build-update.php --version=X.Y.Z [--minimum-version=X.Y.Z] [--output=dist] [--without-migrations] [--fresh-install]\n");
+    exit(1);
+}
+
+if (version_compare($minimumVersion, \TinyCat\Support\Version::MINIMUM_UPDATE, '<') || version_compare($minimumVersion, $version, '>')) {
+    fwrite(STDERR, 'Minimum update version must be between ' . \TinyCat\Support\Version::MINIMUM_UPDATE . ' and the package version.' . "\n");
     exit(1);
 }
 

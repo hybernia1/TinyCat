@@ -185,14 +185,17 @@ chipsWork = chipsWork && botField.value === '0' && new FormData(chipForm).get('b
 window.TinyCat.forms = {dispose() {}}; window.TinyCat.filters.remove(chipForm.id); chipRoot.remove();
 const touch = document.createElement('button'), unsafe = '<img src=x onerror=alert(1)> & full text';
 touch.setAttribute('title', unsafe);
+// Keep this probe visible and independent of scrolls queued by the filter focus tests.
+touch.style.cssText = 'position:fixed;top:24px;left:24px;width:24px;height:24px';
 (document.querySelector('.modal-body') || document.body).append(touch);
+await new Promise(resolve => setTimeout(resolve, 100));
 let clicks = 0; touch.addEventListener('click', () => clicks++);
 touch.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubbles:true}));
 const hint = document.querySelector('[role="tooltip"]');
 const touchSafe = !hint.hidden && hint.textContent === unsafe && !hint.querySelector('img') && !touch.hasAttribute('title') && touch.getAttribute('aria-label') === unsafe && touch.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true})) && clicks === 1;
 document.body.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubbles:true}));
 const outsideCloses = hint.hidden;
-let hoverWorks = true;
+let hoverWorks = true, hoverDiagnostics = {};
 if (innerWidth === 320 && innerHeight === 360) {
   await new Promise(resolve => setTimeout(resolve, 100));
   touch.dispatchEvent(new PointerEvent('pointerover', {pointerType:'mouse', bubbles:true}));
@@ -205,6 +208,7 @@ if (innerWidth === 320 && innerHeight === 360) {
   const hoverable = !hint.hidden;
   hint.dispatchEvent(new PointerEvent('pointerout', {pointerType:'mouse', relatedTarget:document.body, bubbles:true}));
   await new Promise(resolve => setTimeout(resolve, 220));
+  hoverDiagnostics = {delayed, shown, hoverable, closed:hint.hidden};
   hoverWorks = delayed && shown && hoverable && hint.hidden;
   touch.dispatchEvent(new PointerEvent('pointerover', {pointerType:'mouse', bubbles:true}));
   touch.dispatchEvent(new PointerEvent('pointerout', {pointerType:'mouse', relatedTarget:document.body, bubbles:true}));
@@ -245,7 +249,7 @@ let lazyHintsReady = initiallyUnfocusable && lazyText.getAttribute('tabindex') =
 lazy.hidden = true; window.tooltipService.hydrate(lazy); lazy.hidden = false;
 lazy.dispatchEvent(new CustomEvent('tinycat:tab', {bubbles:true}));
 lazyHintsReady = lazyHintsReady && lazyText.getAttribute('tabindex') === '0'; lazy.remove();
-results.forEach(result => Object.assign(result, {sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
+results.forEach(result => Object.assign(result, {sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, hoverDiagnostics, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
 const output = document.createElement('pre'); output.id = 'layout-metrics'; output.textContent = JSON.stringify(results); document.body.append(output);
 }());
 </script></body></html>

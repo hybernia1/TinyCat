@@ -9,12 +9,13 @@ if (PHP_SAPI !== 'cli') {
 $root = dirname(__DIR__);
 require_once $root . '/App/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
+$baselineVersion = \TinyCat\Support\Version::MINIMUM_UPDATE;
 $options = getopt('', ['artifact::', 'key::']);
 $artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
 $configPath = $root . '/config.php';
 $temporaryRoot = $root . '/storage/release-update-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . '/install';
-$baselineArchive = $temporaryRoot . '/tinycat-2.0.25.zip';
+$baselineArchive = $temporaryRoot . '/tinycat-' . $baselineVersion . '.zip';
 $databaseName = 'tinycat_release_update_' . bin2hex(random_bytes(6));
 $server = null;
 $database = null;
@@ -194,13 +195,13 @@ try {
     }
 
     exec(
-        'git -C ' . escapeshellarg($root) . ' archive --format=zip --output=' . escapeshellarg($baselineArchive) . ' v2.0.25',
+        'git -C ' . escapeshellarg($root) . ' archive --format=zip --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion),
         $archiveOutput,
         $archiveExit
     );
 
     if ($archiveExit !== 0) {
-        throw new RuntimeException('Unable to archive exact v2.0.25: ' . implode(' ', $archiveOutput));
+        throw new RuntimeException('Unable to archive supported baseline v' . $baselineVersion . ': ' . implode(' ', $archiveOutput));
     }
 
     $extractZip($baselineArchive, $installRoot);
@@ -220,49 +221,34 @@ try {
         }
     }
 
-    file_put_contents($installRoot . '/storage/release-sentinel.txt', 'storage-2.0.25', LOCK_EX);
-    file_put_contents($installRoot . '/uploads/avatars/release-sentinel.txt', 'uploads-2.0.25', LOCK_EX);
-    $extensionRoot = $installRoot . '/Extensions/release_probe';
-    mkdir($extensionRoot, 0775, true);
-    file_put_contents($extensionRoot . '/bootstrap.php', <<<'PHP'
-<?php
-declare(strict_types=1);
-
-TinyCat\Extension\Registry::register('release_probe', ['root' => __DIR__]);
-PHP, LOCK_EX);
-    file_put_contents($extensionRoot . '/extension.json', json_encode([
-        'schema' => 1,
-        'slug' => 'release_probe',
-        'name' => 'Release product probe',
-        'version' => '1.0.0',
-        'requires' => ['tinycat' => '2.0.25', 'php' => '8.4.0'],
-        'entry' => 'bootstrap.php',
-        'migrations' => [],
-        'autoload' => false,
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), LOCK_EX);
-
+    file_put_contents($installRoot . '/storage/release-sentinel.txt', 'storage-' . $baselineVersion, LOCK_EX);
+    file_put_contents($installRoot . '/uploads/avatars/release-sentinel.txt', 'uploads-' . $baselineVersion, LOCK_EX);
     $installRunner = <<<'PHP'
 define('TINYCAT', true);
 require __ROOT__ . '/App/bootstrap.php';
-ob_start();
-require __ROOT__ . '/Public/install/index.php';
-ob_end_clean();
-tc_install_create_tables();
-tc_install_create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
-tc_install_default_settings(['locale' => 'en']);
-Core::setSetting('extensions.states', ['release_probe' => true], 'json', 'extensions');
-Core::setSetting('extensions.installed_versions', ['release_probe' => '1.0.0'], 'json', 'extensions');
+TinyCat\Installation\Installer::create_tables();
+TinyCat\Installation\Installer::create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
+TinyCat\Installation\Installer::default_settings(['locale' => 'en']);
+// The archived installer creates its final schema directly. Model a production
+// baseline whose historical migrations have already completed.
+foreach (glob(__ROOT__ . '/migrations/*.php') ?: [] as $path) {
+    TinyCat\Updates\MigrationRegistry::ensure();
+    TinyCat\Database\Connection::exec(
+        'INSERT INTO schema_migrations (migration, version, checksum, applied_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+        [pathinfo($path, PATHINFO_FILENAME), TinyCat\Support\Version::CURRENT, TinyCat\Updates\MigrationRegistry::checksum($path)]
+    );
+}
 PHP;
     [$installExit, $installOutput] = $run(str_replace('__ROOT__', var_export($installRoot, true), $installRunner));
-    $assert($installExit === 0, 'Exact 2.0.25 installer prepares the representative database: ' . implode(' ', $installOutput));
+    if ($installExit !== 0) {
+        throw new RuntimeException('Baseline installer failed: ' . implode(' ', $installOutput));
+    }
+    $assert(true, 'Supported baseline installer prepares the representative database.');
 
     require_once $root . '/tools/demo-import/Schema.php';
     $seedSchema = new \TinyCat\Tools\DemoImport\Schema($database);
     $seedSchema->validate(false);
-    $uiRejected = false;
-    try { $seedSchema->validate(true); }
-    catch (RuntimeException $exception) { $uiRejected = str_contains($exception->getMessage(), 'bot_sources'); }
-    $assert($uiRejected, 'Legacy schemas allow representative data but reject unavailable UI fixture tables.');
+    $seedSchema->validate(true);
 
     $importCommand = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/demo-import.php')
         . ' --config=' . escapeshellarg($installRoot . '/config.php')
@@ -272,51 +258,30 @@ PHP;
     exec($importCommand . ' 2>&1', $importOutput, $importExit);
     $assert($importExit === 0, 'Batched deterministic representative import completes: ' . implode(' ', array_slice($importOutput, -3)));
 
-    foreach (array_filter(
-        (array) ($manifest['migrations'] ?? []),
-        static fn (mixed $path): bool => !in_array(basename((string) $path), [
-            '20260809_001_remove_user_profile_links.php',
-            '20260809_002_remove_content_created_at.php',
-            '20260809_003_remove_link_embed_url.php',
-            '20260809_004_move_email_template_states_to_settings.php',
-            '20260809_005_move_smtp_settings_to_json.php',
-            '20260813_001_remove_relation_created_at.php',
-            '20261025_001_core_bots.php',
-            '20261025_002_remove_extension_metadata.php',
-            '20261026_001_recent_comments_index.php',
-            '20261026_002_user_search_index.php',
-        ], true),
-    ) as $migrationPath) {
-        $migration = pathinfo((string) $migrationPath, PATHINFO_FILENAME);
-        $checksum = (string) ((array) ($manifest['files'] ?? []))[$migrationPath];
-        $statement = $database->prepare(
-            'INSERT INTO schema_migrations (migration, version, checksum, applied_at)
-             VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-             ON DUPLICATE KEY UPDATE version = VALUES(version), checksum = VALUES(checksum)'
-        );
-        $statement->execute([$migration, '2.0.25', $checksum]);
-    }
-
     $beforeDatabase = $databaseFingerprint($database);
+    $appliedBefore = $database->query('SELECT migration FROM schema_migrations')->fetchAll(PDO::FETCH_COLUMN);
+    $expectedPending = array_values(array_filter(
+        array_map(static fn (string $path): string => pathinfo($path, PATHINFO_FILENAME), (array) ($manifest['migrations'] ?? [])),
+        static fn (string $id): bool => !in_array($id, $appliedBefore, true)
+    ));
     $beforeInventory = $inventory($installRoot);
     $protectedHashes = [
         'config' => hash_file('sha256', $installRoot . '/config.php'),
         'storage' => hash_file('sha256', $installRoot . '/storage/release-sentinel.txt'),
         'uploads' => hash_file('sha256', $installRoot . '/uploads/avatars/release-sentinel.txt'),
-        'extension' => hash_file('sha256', $extensionRoot . '/bootstrap.php'),
     ];
     $probeRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (Core::VERSION !== '2.0.25' || !isset(TinyCat\\Extension\\Loader::loaded()['release_probe'])) exit(2);";
+        . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($baselineVersion, true) . ") exit(2);";
     [$probeExit, $probeOutput] = $run($probeRunner);
-    $assert($probeExit === 0, 'Representative 2.0.25 installation and compatible extension boot before update: ' . implode(' ', $probeOutput));
+    $assert($probeExit === 0, 'Supported baseline boots before update: ' . implode(' ', $probeOutput));
 
     $updateRunner = <<<'PHP'
 define('TINYCAT', true);
 require __ROOT__ . '/App/bootstrap.php';
 $invoke = static function (string $method, mixed ...$arguments): mixed {
-    return (new ReflectionMethod(TinyCat\Update\Manager::class, $method))->invoke(null, ...$arguments);
+    return (new ReflectionMethod(TinyCat\Updates\Manager::class, $method))->invoke(null, ...$arguments);
 };
-$manifest = TinyCat\Update\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
+$manifest = TinyCat\Updates\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
 $invoke('assertCompatibility', $manifest);
 $pending = $invoke('hasPendingMigrations', $manifest);
 $stage = __ROOT__ . '/storage/updates/release-stage';
@@ -331,12 +296,11 @@ $invoke('applyFiles', $stage, $manifest);
 $applied = $invoke('applyMigrations', $stage, $manifest);
 $invoke('deleteLegacyFiles', $manifest);
 $invoke('clearRuntimeCache');
-TinyCat\Update\Manager::disableMaintenance();
+TinyCat\Updates\Manager::disableMaintenance();
 echo json_encode([
     'backup' => $backup,
     'pending_migrations' => $pending,
     'applied_migrations' => $applied,
-    'extension_loaded' => isset(TinyCat\Extension\Loader::loaded()['release_probe']),
 ], JSON_THROW_ON_ERROR);
 PHP;
     $updateRunner = str_replace(
@@ -346,56 +310,27 @@ PHP;
     );
     [$updateExit, $updateOutput] = $run($updateRunner);
     $update = json_decode(implode("\n", $updateOutput), true);
-    $assert($updateExit === 0 && is_array($update), 'Signed production update completes: ' . implode(' ', $updateOutput));
-    $assert(($update['pending_migrations'] ?? null) === true, 'Exact 2.0.25 database has all cleanup migrations pending.');
-    $assert(($update['applied_migrations'] ?? null) === [
-        '20260809_001_remove_user_profile_links',
-        '20260809_002_remove_content_created_at',
-        '20260809_003_remove_link_embed_url',
-        '20260809_004_move_email_template_states_to_settings',
-        '20260809_005_move_smtp_settings_to_json',
-        '20260813_001_remove_relation_created_at',
-        '20261025_001_core_bots',
-        '20261025_002_remove_extension_metadata',
-        '20261026_001_recent_comments_index',
-        '20261026_002_user_search_index',
-    ], 'Update removes obsolete tables and consolidates redundant email settings.');
-    $assert(($update['extension_loaded'] ?? null) === true, 'Compatible extension remains loaded during update.');
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM settings WHERE setting_key LIKE 'extensions.%'")->fetchColumn() === 0,
-        'Update removes obsolete extension settings from the database.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_profile_links'")->fetchColumn() === 0,
-        'Update removes the obsolete profile links table from the representative database.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'content' AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
-        'Update removes the redundant content creation timestamp from the representative database.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('content_images', 'content_likes', 'comment_likes') AND COLUMN_NAME = 'created_at'")->fetchColumn() === 0,
-        'Update removes redundant relation creation timestamps from the representative database.'
-    );
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'links' AND COLUMN_NAME = 'embed_url'")->fetchColumn() === 0,
-        'Update removes the redundant link embed URL from the representative database.'
-    );
-    $emailTemplateStates = json_decode((string) $database->query("SELECT setting_value FROM settings WHERE setting_key = 'email.templates'")->fetchColumn(), true);
-    $assert(is_array($emailTemplateStates) && count($emailTemplateStates) === 10, 'Update preserves email delivery switches in settings.');
-    $smtp = json_decode((string) $database->query("SELECT setting_value FROM settings WHERE setting_key = 'email.smtp'")->fetchColumn(), true);
-    $assert(is_array($smtp) && array_key_exists('password', $smtp), 'Update preserves SMTP configuration in its sensitive JSON setting.');
-    $assert(
-        (int) $database->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'email_templates'")->fetchColumn() === 0,
-        'Update removes the obsolete email template table from the representative database.'
-    );
+    if ($updateExit !== 0 || !is_array($update)) {
+        throw new RuntimeException('Signed production update failed: ' . implode(' ', $updateOutput));
+    }
+    $assert(($update['pending_migrations'] ?? null) === ($expectedPending !== []), 'Pending migrations match the baseline registry.');
+    $assert(($update['applied_migrations'] ?? null) === $expectedPending, 'Only migrations absent from the baseline run.');
+    foreach (['users', 'content', 'content_comments', 'content_likes', 'comment_likes', 'user_followers', 'notifications', 'content_tags', 'terms', 'content_links'] as $table) {
+        $assert((int) $database->query("SELECT COUNT(*) FROM `{$table}`")->fetchColumn() === $beforeDatabase['counts'][$table], 'Update preserves representative records in ' . $table);
+    }
+    foreach ((array) ($manifest['migrations'] ?? []) as $path) {
+        $id = pathinfo((string) $path, PATHINFO_FILENAME);
+        $statement = $database->prepare('SELECT checksum FROM schema_migrations WHERE migration = ?');
+        $statement->execute([$id]);
+        $assert($statement->fetchColumn() === ($manifest['files'][$path] ?? null), 'Updated database records the signed migration: ' . $id);
+    }
 
     foreach ($protectedHashes as $label => $hash) {
         $path = match ($label) {
             'config' => $installRoot . '/config.php',
             'storage' => $installRoot . '/storage/release-sentinel.txt',
             'uploads' => $installRoot . '/uploads/avatars/release-sentinel.txt',
-            default => $extensionRoot . '/bootstrap.php',
+            default => throw new RuntimeException('Unknown protected path.'),
         };
         $assert(hash_file('sha256', $path) === $hash, ucfirst($label) . ' survives update byte-for-byte.');
     }
@@ -407,9 +342,10 @@ PHP;
 
     $backup = is_array($update) ? (string) ($update['backup'] ?? '') : '';
     $metadata = json_decode((string) @file_get_contents($backup . '/backup.json'), true);
-    $assert(is_array($metadata) && ($metadata['from_version'] ?? null) === '2.0.25', 'Rollback backup records exact source version.');
-    $assert(($metadata['database_backup_required'] ?? null) === true, 'A database backup is created before removing the obsolete table.');
-    $assert(is_file($backup . '/database.sql'), 'Rollback backup contains the pre-migration MySQL database.');
+    $assert(is_array($metadata) && ($metadata['from_version'] ?? null) === $baselineVersion, 'Rollback backup records exact source version.');
+    $assert(($metadata['database_backup_required'] ?? null) === (bool) ($update['pending_migrations'] ?? false), 'Database backup requirement matches pending migrations.');
+    $needsDatabaseRestore = (bool) ($update['pending_migrations'] ?? false);
+    $assert(!$needsDatabaseRestore || is_file($backup . '/database.sql'), 'Schema-changing updates include a MySQL snapshot.');
 
     foreach ((array) ($metadata['files'] ?? []) as $relative => $hash) {
         $source = $backup . '/files/' . str_replace('/', DIRECTORY_SEPARATOR, (string) $relative);
@@ -435,7 +371,7 @@ PHP;
         }
     }
 
-    $assert($inventory($installRoot) === $beforeInventory, 'Rollback restores the exact managed 2.0.25 tree.');
+    $assert($inventory($installRoot) === $beforeInventory, 'Rollback restores the exact managed 5.16.0 tree.');
 
     // A rollback of a release with migrations must restore both files and data.
     if (preg_match('/^tinycat_release_update_[a-f0-9]{12}$/', $databaseName) !== 1
@@ -443,30 +379,32 @@ PHP;
     ) {
         throw new RuntimeException('Refusing to restore outside the disposable rehearsal database.');
     }
-    $databaseBackup = file_get_contents($backup . '/database.sql');
-    if (!is_string($databaseBackup) || $databaseBackup === '') {
-        throw new RuntimeException('The rollback database snapshot is unreadable.');
-    }
-    $database->exec('SET FOREIGN_KEY_CHECKS=0');
-    try {
-        $tables = $database->query("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")->fetchAll(PDO::FETCH_COLUMN);
-        foreach ($tables as $table) {
-            if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', (string) $table) !== 1) {
-                throw new RuntimeException('Unsafe table name in the disposable rollback database.');
-            }
-            $database->exec('DROP TABLE `' . $table . '`');
+    if ($needsDatabaseRestore) {
+        $databaseBackup = file_get_contents($backup . '/database.sql');
+        if (!is_string($databaseBackup) || $databaseBackup === '') {
+            throw new RuntimeException('The rollback database snapshot is unreadable.');
         }
-        $database->exec($databaseBackup);
-    } finally {
-        $database->exec('SET FOREIGN_KEY_CHECKS=1');
+        $database->exec('SET FOREIGN_KEY_CHECKS=0');
+        try {
+            $tables = $database->query("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($tables as $table) {
+                if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', (string) $table) !== 1) {
+                    throw new RuntimeException('Unsafe table name in the disposable rollback database.');
+                }
+                $database->exec('DROP TABLE `' . $table . '`');
+            }
+            $database->exec($databaseBackup);
+        } finally {
+            $database->exec('SET FOREIGN_KEY_CHECKS=1');
+        }
     }
     $assert($databaseFingerprint($database) === $beforeDatabase, 'Rollback restores the exact pre-update database content and schema.');
     $clearOldCache = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; (new ReflectionMethod(TinyCat\\Update\\Manager::class, 'clearRuntimeCache'))->invoke(null);";
+        . "; (new ReflectionMethod(TinyCat\\Updates\\Manager::class, 'clearRuntimeCache'))->invoke(null);";
     [$clearCacheExit, $clearCacheOutput] = $run($clearOldCache);
     $assert($clearCacheExit === 0, 'Rollback invalidates settings cached by the updated runtime: ' . implode(' ', $clearCacheOutput));
     [$oldBootExit, $oldBootOutput] = $run($probeRunner);
-    $assert($oldBootExit === 0, 'Rolled-back 2.0.25 runtime and extension boot: ' . implode(' ', $oldBootOutput));
+    $assert($oldBootExit === 0, 'Rolled-back 5.16.0 runtime boots: ' . implode(' ', $oldBootOutput));
 
     echo json_encode([
         'version' => (string) ($manifest['version'] ?? ''),
@@ -508,4 +446,4 @@ if ($failures !== []) {
     exit(1);
 }
 
-echo "PASS exact 2.0.25 representative MySQL update, built-in Bots and rollback ({$checks} checks)\n";
+echo "PASS exact 5.16.0 representative MySQL update, data preservation and rollback ({$checks} checks)\n";

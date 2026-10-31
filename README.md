@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **5.16.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+Current release: **5.16.1**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -103,7 +103,7 @@ Use HTTPS in production. The supplied Apache rules prevent direct web access to 
 
 When Apache terminates TLS, the bundled `.htaccess` also sends `Strict-Transport-Security: max-age=31536000; includeSubDomains`. Enable `includeSubDomains` only when every current and future subdomain is available over HTTPS. If TLS terminates at a reverse proxy or CDN, configure HSTS there instead (or ensure Apache receives the original HTTPS state).
 
-TinyCat 2.0 is a clean application baseline. Upgrade existing installations to 1.0.14 first; the 2.x runtime no longer contains schema or extension-adoption compatibility for older releases.
+Release tooling supports updates from TinyCat 5.16.0 and newer. Older versions must first reach 5.16.0 using historical releases.
 
 ## Updates
 
