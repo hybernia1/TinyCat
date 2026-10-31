@@ -1,3 +1,4 @@
+import "./dialog-history.js";
 import "../core/components.js";
 import "../core/dom.js";
 import "../core/http.js";
@@ -187,7 +188,7 @@ import "./forms.js";
       }, delay);
     });
   }
-  TinyCat.dialog.open = function (target) {
+  TinyCat.dialog.open = function (target, options) {
     var modal = getModal(target);
     var index;
     var previousModal = activeModal;
@@ -214,6 +215,7 @@ import "./forms.js";
     modal.dataset.open = "true";
     modal.setAttribute("aria-hidden", "false");
     modal.__tinycatPreviousFocus = previousModal === modal ? modal.__tinycatPreviousFocus : document.activeElement;
+    if (!options || options.history !== false) TinyCat.dialogHistory.opened(modal, options);
     document.body.classList.add("has-modal");
     lockPageForModal(modal);
     syncModalVisualViewport(modal);
@@ -223,7 +225,7 @@ import "./forms.js";
 
     return modal;
   };
-  TinyCat.dialog.close = function (target) {
+  TinyCat.dialog.close = function (target, options) {
     var modal = getModal(target) || activeModal;
     var index;
     var wasActive;
@@ -270,6 +272,7 @@ import "./forms.js";
 
     delete modal.__tinycatPreviousFocus;
 
+    if (!options || options.history !== false) TinyCat.dialogHistory.closed(modal);
     emit(modal, "tinycat:modal-close");
 
     if (dispose && modal.parentNode) {
@@ -277,7 +280,7 @@ import "./forms.js";
       modal.remove();
     }
   };
-  TinyCat.dialog.requestClose = async function (target) {
+  TinyCat.dialog.requestClose = async function (target, options) {
     var modal = getModal(target) || activeModal;
     var hasUnsavedChanges;
 
@@ -291,11 +294,13 @@ import "./forms.js";
       return false;
     }
 
+    if (options && options.current && !options.current()) return false;
+
     if (hasUnsavedChanges) {
       resetDiscardedForms(modal);
     }
 
-    TinyCat.dialog.close(modal);
+    TinyCat.dialog.close(modal, options);
     return true;
   };
   async function loadRemoteModal(target, url, host, force, trigger) {
@@ -318,7 +323,7 @@ import "./forms.js";
     if (controller.signal.aborted) { throw new DOMException("Dialog request cancelled.", "AbortError"); }
     if (trigger && trigger.isConnected === false) { throw new DOMException("Dialog trigger removed.", "AbortError"); }
     var resourceModal = TinyCat.modules.modal(new URL(url, window.location.href), data, target);
-    if (!resourceModal) { throw new Error("Unsupported modal resource."); }
+    if (!resourceModal) { throw new Error(TinyCat.i18n.t("common.request_failed")); }
 
     if (modal) {
       modalIndex = modalStack.indexOf(modal);
@@ -349,6 +354,15 @@ import "./forms.js";
 
     return modal;
   }
+  TinyCat.dialog.cancelPending = function () { pending.forEach(function (controller) { controller.abort(); }); pending.clear(); };
+  TinyCat.dialog.openResource = async function (id, url, options) {
+    options = options || {};
+    var modal = await loadRemoteModal(id, url, document.body, false);
+    if (options.current && !options.current()) { TinyCat.lifecycle.dispose(modal); modal.remove(); return null; }
+    var tab = qsa("[data-tab]", modal).find(function (item) { return item.dataset.tab === options.tab; });
+    if (tab) TinyCat.tabs.activate(tab, false);
+    return TinyCat.dialog.open(modal, options);
+  };
   async function openRemoteModal(trigger, force) {
     var parent = trigger && trigger.closest ? trigger.closest("[data-modal-parent-open]") : null;
     var target = trigger ? (trigger.dataset.modalOpen || (parent ? parent.dataset.modalParentOpen : "")) : "";
@@ -422,8 +436,7 @@ import "./forms.js";
       function finish(value) {
         if (settled) { return; } settled = true;
         document.removeEventListener("keydown", onKeydown, true);
-        TinyCat.dialog.close(modal);
-        modal.remove();
+        if (modal.dataset.open === "true") TinyCat.dialog.close(modal);
         resolve(value);
       }
 
@@ -443,6 +456,7 @@ import "./forms.js";
       modal = TinyCat.dialog.create({ id: modalId, title: settings.title || TinyCat.i18n.t("common.confirm_action"), closeLabel: TinyCat.i18n.t("common.close"), closeIcon: TinyCat.icons.create("close"), content: message, footer: footer, kind: "confirm", size: "confirm" });
       modal.setAttribute("aria-describedby", message.id);
       backdrop = qs(".modal-backdrop", modal); close = qs("[data-modal-close]", modal);
+      modal.addEventListener("tinycat:modal-close", function () { finish(false); });
       backdrop.addEventListener("click", function (event) {
         event.preventDefault();
         event.stopPropagation();

@@ -89,7 +89,7 @@ import "../../ui/tabs.js";
   }
   function background() {
     var entries = [["#bot-accounts-list", "/api/bots/accounts", T.bots.accounts], ["#bots-list", "/api/bots/sources", function (root, response) { T.bots.sources(root, Object.assign({}, response.data, { pagination: U.pagination(response) })); }], ["#bot-queue-list", "/api/bots/queue", T.bots.queue]];
-    var query = /^\/admin\/bots\/[0-9]+$/.test(window.location.pathname) ? "" : window.location.search;
+    var query = window.location.search;
     entries.forEach(function (entry) {
       var root = document.querySelector(entry[0]);
       if (root) { T.api.request(entry[1] + query).then(function (response) { if (root.isConnected) { entry[2](root, response); T.lifecycle.hydrate(root); } }).catch(failed); }
@@ -134,7 +134,7 @@ import "../../ui/tabs.js";
       tabButtons.account.setAttribute("aria-controls", panels.account.id);
       panels.account.append(summary, form); panels.sources.appendChild(sources); panels.history.appendChild(history); panels.posts.appendChild(posts);
       dialog.querySelector(".modal-body").replaceChildren(content);
-      var state = { id: botId, dialog: dialog, sources: sources, posts: posts, history: history, summary: summary, status: status, active: initial, footer: dialog.querySelector(".modal-footer"), actions: dialog.querySelector(".modal-editor-actions"), pagers: {}, requests: new Set() };
+      var state = { id: botId, dialog: dialog, sources: sources, posts: posts, history: history, summary: summary, status: status, active: initial, footer: dialog.querySelector(".modal-footer"), actions: dialog.querySelector(".modal-editor-actions"), pagers: {}, requests: new Set(), changed: false };
       states.set(dialog, state); metadata(state, data);
       var tabRoot = U.pinDialogTabs(dialog, layout.content);
       footer(state);
@@ -149,15 +149,22 @@ import "../../ui/tabs.js";
         posts.dataset.botPostsUrl = postUrl(botId, target.searchParams); delete posts.dataset.loaded;
         T.tabs.activate(tabButtons.posts, true);
       });
-      dialog.addEventListener("tinycat:modal-close", function () { T.botDetail.dispose(dialog); background(); });
+      dialog.addEventListener("tinycat:success", function (event) {
+        var source = event.target;
+        var method = (source.dataset.apiMethod || source.dataset.method || source.getAttribute("method") || "GET").toUpperCase();
+        if (method !== "GET") state.changed = true;
+      });
+      dialog.addEventListener("tinycat:modal-close", function () { T.botDetail.dispose(dialog); if (state.changed) background(); });
       // Hydration normally activates the selected tab; this also covers direct callers.
       dialog.addEventListener("tinycat:modal-open", function () { load(state, initial); });
       return dialog;
     },
+    changed: function () { var dialog = owner(), state = dialog && states.get(dialog); if (state) state.changed = true; },
     result: function (source, response, target) {
       var dialog = owner(), state = dialog && states.get(dialog);
       if (!state || !target || !["bot-detail-account", "bot-detail-sources-list", "bot-detail-runs-list"].includes(target.id)) { return false; }
-      var method = (source.dataset.apiMethod || source.getAttribute("method") || "GET").toUpperCase();
+      var method = (source.dataset.apiMethod || source.dataset.method || source.getAttribute("method") || "GET").toUpperCase();
+      if (method !== "GET") state.changed = true;
       if (target === state.history && method === "GET") { scopedRuns(state, response, source); }
       else if (target === state.sources && method === "GET") { scopedSources(state, response, source); }
       else {
@@ -185,13 +192,8 @@ import "../../ui/tabs.js";
         query.delete("view");
         query.set("panel", "detail");
         var url = new URL("/api/bots/accounts/" + id + "?" + query, window.location.href);
-        T.api.request(url.pathname + url.search).then(function (response) {
-          if (!marker.isConnected) { return; }
-          var dialog = T.botDetail.modal(url, response, "bot-detail-modal");
-          dialog.addEventListener("tinycat:modal-close", function () {
-            if (window.location.pathname === "/admin/bots/" + id) { window.history.replaceState({}, "", "/admin/bots/accounts"); }
-          });
-          T.lifecycle.hydrate(dialog); T.dialog.open(dialog);
+        T.dialog.openResource("bot-detail-modal", url.pathname + url.search, {
+          baseUrl: "/admin/bots/accounts", current: function () { return marker.isConnected; }
         }).catch(failed);
       });
     }

@@ -113,7 +113,7 @@ import "./filters.js";
       }) : [];
       if (sections.length < 2) { return T.ui.adminDialog(id, title, form, persistent); }
       var tabs = T.ui.tabbedContent(id, sections, selected || sections[0].name, T.ui.text(title));
-      fields.replaceChildren(tabs.content);
+      fields.appendChild(tabs.content);
       var separateForms = form.tagName !== "FORM", dialog;
       if (separateForms) {
         var active = sections.find(function (item) { return item.name === tabs.initial; });

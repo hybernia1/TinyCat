@@ -22,7 +22,6 @@ import "./toasts.js";
   var resetForm = TinyCat.forms.reset;
   var markFormClean = TinyCat.forms.markClean;
   var setLoading = TinyCat.forms.loading;
-  var isFocusableVisible = TinyCat.dom.visible;
   var urlWithFormData = TinyCat.navigation.formUrl;
   var historyUrl = TinyCat.navigation.historyUrl;
   var pushHistory = TinyCat.navigation.push;
@@ -161,9 +160,7 @@ import "./toasts.js";
       } finally {
         delete form.dataset.apiBusy;
 
-        if (invalidField && invalidField.isConnected && invalidField.focus && isFocusableVisible(invalidField)) {
-          invalidField.focus();
-        }
+        TinyCat.forms.focusInvalid(invalidField);
       }
     });
 
