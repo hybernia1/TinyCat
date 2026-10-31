@@ -146,10 +146,20 @@ check(!T.filters.get('filter-panel-fixture') && !document.getElementById('filter
   T.api.request = apiRequest;
 }
 {
-  const listeners = {}, menu = { open: true }, summary = { focus() { this.focused = true; } };
-  const menuDocument = { activeElement: { closest: () => menu }, addEventListener(name, callback, capture) { listeners[name] = { callback, capture }; } };
+  let triggerBindings = 0, triggerClick;
+  const listeners = {}, menu = { open: true, querySelector: () => null }, summary = {
+    parentElement: menu, focus() { this.focused = true; },
+    addEventListener(name, callback) { if (name === 'click') { triggerBindings++; triggerClick = callback; } }
+  };
+  const menuDocument = { querySelectorAll: () => [summary], activeElement: { closest: () => menu }, addEventListener(name, callback, capture) { listeners[name] = { callback, capture }; } };
   const menuTinyCat = { dom: { find: (_selector, root) => root === menu ? summary : menu, all: () => [menu] }, lifecycle: { register(_name, service) { service.init(); } } };
   vm.runInNewContext(fs.readFileSync(path.join(root, 'assets/ui/menus.js'), 'utf8').replace(/^import .*;\r?\n/gm, ''), { window: { TinyCat: menuTinyCat, addEventListener() {} }, document: menuDocument });
+  menuTinyCat.menus.init(); menuTinyCat.menus.prepare(menuDocument);
+  const click = { preventDefault() { this.prevented = true; } };
+  triggerClick(click);
+  check(triggerBindings === 1 && click.prevented && !menu.open, 'Repeated hydration binds the menu trigger only once and direct activation closes it without document delegation.');
+  triggerClick(click);
+  check(menu.open, 'A second direct trigger click reopens the shared menu.');
   const escape = { key: 'Escape', preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; } };
   listeners.keydown.callback(escape);
   check(listeners.keydown.capture === true && escape.prevented && escape.stopped && !menu.open && summary.focused, 'Escape closes a dropdown during capture and restores focus before an enclosing modal can process the key.');
