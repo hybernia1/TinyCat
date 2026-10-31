@@ -64,7 +64,8 @@ import "../../ui/dialogs.js";
     target.replaceChildren(view); metadata(data); T.lifecycle.hydrate(target);
     var searchInput = document.querySelector("[data-global-search-input]");
     if (searchInput) { searchInput.value = data.kind === "search" ? data.search.query : ""; }
-    document.querySelectorAll("[data-global-search-results]").forEach(function (node) { node.hidden = true; });
+    if (T.search && T.search.close) { document.querySelectorAll("[data-global-search]").forEach(T.search.close); }
+    else { document.querySelectorAll("[data-global-search-results]").forEach(function (node) { node.hidden = true; }); }
     document.querySelectorAll("[data-language-link]").forEach(function (node) { node.href = T.urls.local(data.url, node.dataset.languageLink); });
     document.querySelectorAll(".navbar a[aria-current]").forEach(function (node) { node.removeAttribute("aria-current"); });
     document.querySelectorAll(".navbar a[href]").forEach(function (node) { if (new URL(node.href).pathname === new URL(data.url, window.location.href).pathname) { node.setAttribute("aria-current", "page"); } });

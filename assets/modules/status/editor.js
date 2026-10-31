@@ -1,7 +1,6 @@
 import "../../core/dom.js";
 import "../../core/http.js";
 import "../../core/navigation.js";
-import "../../core/text.js";
 import "./views.js";
 import "../../ui/avatars.js";
 import "../../ui/fields.js";
@@ -15,8 +14,43 @@ import "../../ui/fields.js";
   var appendUserAvatar = TinyCat.ui.appendAvatar;
   var compactUrl = TinyCat.navigation.compact;
   var unwrapResult = TinyCat.api.unwrap;
-  var parseJsonArray = TinyCat.text.parseJsonArray;
-  var uniqueList = TinyCat.text.uniqueList;
+  function parseList(value) {
+    return String(value || "")
+      .split(",")
+      .map(function (item) {
+        return item.trim().replace(/\s+/g, " ");
+      })
+      .filter(Boolean);
+  }
+  function parseJsonArray(value) {
+    try {
+      var parsed = JSON.parse(String(value || "[]"));
+
+      if (Array.isArray(parsed)) {
+        return parsed.map(function (item) {
+          return String(item || "").trim();
+        }).filter(Boolean);
+      }
+    } catch (_error) {
+      return parseList(value);
+    }
+
+    return [];
+  }
+  function uniqueList(values) {
+    var seen = {};
+
+    return values.filter(function (value) {
+      var key = value.toLowerCase();
+
+      if (seen[key]) {
+        return false;
+      }
+
+      seen[key] = true;
+      return true;
+    });
+  }
   var statusEditorCounterId = 0;
   function statusSlug(value) {
     var text = String(value || "").trim();
@@ -379,7 +413,7 @@ import "../../ui/fields.js";
           var data = unwrapResult(response) || {};
           var items = token.type === "user" ? data.users : data.tags;
 
-          if (root.__tinycatStatusSuggestFingerprint !== fingerprint) {
+          if (root.isConnected === false || root.__tinycatStatusSuggestFingerprint !== fingerprint) {
             return;
           }
 

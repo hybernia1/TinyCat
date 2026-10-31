@@ -1,9 +1,10 @@
+import "./requests.js";
 import "./dom.js";
 import "./http.js";
 import "./lifecycle.js";
 (function () {
   "use strict";
-  var T = window.TinyCat, routes = new Map(), pending = new WeakMap(), helpUrl = null, pageRoute = null, overlay = null, beforeLeave = function () { return true; };
+  var T = window.TinyCat, routes = new Map(), helpUrl = null, pageRoute = null, overlay = null, beforeLeave = function () { return true; };
   var renderedPage = new URL(window.location.href).pathname + new URL(window.location.href).search;
   function urlWithFormData(action, formData, omit) {
     var url = new URL(action || window.location.href, window.location.href);
@@ -85,18 +86,14 @@ import "./lifecycle.js";
       }
       var route = routes.get(page.pathname), target = route && document.querySelector(route.target);
       if (!target) { return false; }
-      var previous = pending.get(target);
-      if (previous) { previous.abort(); }
-      var controller = new AbortController(); pending.set(target, controller);
-      var generation = Number(target.dataset.apiGeneration || 0) + 1;
-      target.dataset.apiGeneration = String(generation);
+      var request = T.requests.begin(target);
       try {
-        var data = await T.api.request(route.url(), { method: "GET", signal: controller.signal });
-        if (pending.get(target) !== controller || Number(target.dataset.apiGeneration) !== generation) { return; }
+        var data = await T.api.request(route.url(), { method: "GET", signal: request.signal });
+        if (!request.current()) { return; }
         route.apply(target, data); T.lifecycle.hydrate(target); renderedPage = page.pathname + page.search; return true;
       } catch (error) {
-        if (error.name !== "AbortError" && pending.get(target) === controller) { T.dom.emit(document, "tinycat:navigation-error", { error: error }); }
-      } finally { if (pending.get(target) === controller) { pending.delete(target); } }
+        if (error.name !== "AbortError" && request.current()) { T.dom.emit(document, "tinycat:navigation-error", { error: error }); }
+      } finally { request.finish(); }
       return false;
     },
     restore: async function (event) {
@@ -105,13 +102,7 @@ import "./lifecycle.js";
       return T.navigation.restorePage(event);
     }
   };
-  T.lifecycle.register("navigation", { dispose: function (root) {
-    routes.forEach(function (route) {
-      var targets = T.dom.all(route.target, root);
-      if (root.matches && root.matches(route.target)) { targets.push(root); }
-      targets.forEach(function (target) { if (pending.has(target)) { pending.get(target).abort(); pending.delete(target); } });
-    });
-  }, init: function () {
+  T.lifecycle.register("navigation", { init: function () {
     window.addEventListener("popstate", T.navigation.restore);
     document.addEventListener("keydown", function (event) {
       if (!helpUrl || event.key !== "F1" || event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) { return; }

@@ -1,3 +1,4 @@
+import "../../ui/content.js";
 import "../../core/dates.js";
 import "../../core/components.js";
 import "../../ui/fields.js";
@@ -7,7 +8,7 @@ import "../../ui/dialogs.js";
   var T = window.TinyCat;
   function reports(root, items, sorting, data) {
     var model = Object.assign({}, data, { items: items, sorting: sorting });
-    root.replaceChildren(T.components.render("moderation/reports", Object.assign({}, model, { state: model })));
+    T.content.replaceChildren(root, T.components.render("moderation/reports", Object.assign({}, model, { state: model })));
   }
   T.moderation = {
     hydrate: function (root) {
@@ -27,8 +28,8 @@ import "../../ui/dialogs.js";
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
       if (!url.pathname.startsWith("/api/moderation/")) { return false; }
-      if (url.pathname.startsWith("/api/moderation/reports") && target) { reports(target, response.data.items, response.data.sorting, Object.assign({}, response.data, { pagination: T.ui.pagination(response) })); }
-      return true;
+      if (url.pathname.startsWith("/api/moderation/reports") && target) { reports(target, response.data.items, response.data.sorting, Object.assign({}, response.data, { pagination: T.ui.pagination(response) })); return [target]; }
+      return [];
     }, reports: reports
   };
 }());

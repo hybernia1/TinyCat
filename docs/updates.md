@@ -170,6 +170,19 @@ their text and SVG icons. Flash notifications follow the visible mobile viewport
 when a keyboard opens, and touch hover events no longer shorten their display time.
 Existing list state, menu restoration and notification close controls are retained.
 
+## Upgrading to 5.14.0: scoped AJAX and bounded public queries
+
+No new database migration or configuration change is required. AJAX reads reject
+obsolete responses and errors, list definitions preserve their own filter and
+sorting rules, and replaced feed content releases its requests and resources.
+Suggestion caches are bounded by size, age and interface context.
+
+MySQL tag and media selections use bounded recent candidates with a complete
+selective fallback; content search paginates narrow candidates before loading
+post and author details. Visibility, literal matching and continuation URLs are
+preserved. The signed update removes retired JS/CSS sources. Critical CSS and
+inline JavaScript remain experiments; normal assets stay external and cacheable.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

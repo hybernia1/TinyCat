@@ -1,3 +1,4 @@
+import "../../ui/content.js";
 import "../../core/dom.js";
 import "./editor.js";
 import "./forms.js";
@@ -190,7 +191,7 @@ import "../../ui/dialogs.js";
     }
 
     qsa("[data-comment-id]" + dataSelector("data-comment-id", id)).forEach(function (node) {
-      node.remove();
+      TinyCat.content.remove(node);
     });
   }
   function resetStatusCommentForm(form) {

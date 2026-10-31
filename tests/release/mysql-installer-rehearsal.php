@@ -330,6 +330,8 @@ try {
     $database->exec("INSERT INTO terms (name) VALUES ('archive_index_probe')");
     $probeTermId = (int) $database->lastInsertId();
     $database->prepare('INSERT INTO content_tags (content_id, term_id) SELECT id, ? FROM content ORDER BY id LIMIT 3')->execute([$probeTermId]);
+    // Refresh statistics after bulk fixture writes before asserting the optimizer plan.
+    $database->query('ANALYZE TABLE content_tags, content, users')->fetchAll();
     $probeQuery = \TinyCat\Status\Feed::public_status_tag_id_query($probeTermId)->order('c.published_at DESC, c.id DESC')->limit(20);
     \TinyCat\Status\Feed::public_status_apply_cursor($probeQuery, '2099-01-01 00:00:00', PHP_INT_MAX);
     $probeSql = (new ReflectionMethod(\TinyCat\Database\Query::class, 'sql'))->invoke($probeQuery);

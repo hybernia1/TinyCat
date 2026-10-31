@@ -19,7 +19,7 @@ $assert = static function (bool $value, string $message) use (&$checks): void {
 };
 try {
     if ($mysql) {
-        $config = require dirname(__DIR__) . '/config.php';
+        $config = require (getenv('TINYCAT_TEST_MYSQL_CONFIG') ?: dirname(__DIR__) . '/config.php');
         $db = $config['database'];
         $dsn = 'mysql:host=' . $db['host'] . ';port=' . ($db['port'] ?? 3306) . ';charset=utf8mb4';
         $options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false];
@@ -99,6 +99,24 @@ try {
     \TinyCat\Users\Authentication::reset(['id' => 2, 'role' => 'user'], true);
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, "All viewers use the same published tag counts.");
     \TinyCat\Users\Authentication::reset(null, true);
+    $pdo->exec("INSERT INTO links (id, normalized_url, title, description) VALUES (3, 'https://example.test/a', 'unionboundary alpha', ''), (4, 'https://example.test/z', 'unionboundary zeta', '')");
+    for ($i = 1; $i <= 80; $i++) {
+        $id = 40000 + $i;
+        $insert->execute([$id, 1, $i % 3 === 1 ? 'unrelated carrier' : 'unionboundary body', '2024-01-01 00:00:00']);
+        if ($i % 3 !== 0) { $pdo->exec('INSERT INTO content_links (content_id, link_id) VALUES (' . $id . ', 3), (' . $id . ', 4)'); }
+    }
+    $seen = []; $at = ''; $lastId = 0;
+    do {
+        $batch = Queries::public_search_content_rows('unionboundary', 7, $at, $lastId);
+        foreach ($batch as $row) {
+            $seen[] = (int) $row['id'];
+            if (((int) $row['id'] - 40000) % 3 !== 0) { $assert(str_contains((string) $row['link_excerpt'], 'zeta'), 'Limited sources preserve MAX matching-link excerpt, including body/link overlap.'); }
+        }
+        if ($batch !== []) { $last = $batch[array_key_last($batch)]; $at = $last['published_at']; $lastId = (int) $last['id']; }
+    } while ($batch !== [] && count($seen) <= 80);
+    $assert($seen === range(40080, 40001), 'Per-source limits preserve every tied-time result across pages without duplicates or omissions.');
+    $assert(array_column(Queries::public_search_content_rows('unionboundary', 7, 'invalid', 2), 'id') === range(40080, 40074), 'Invalid content cursor uses the first page.');
+    $assert(count(Queries::public_search_content_rows('unionboundary', 0)) === 1 && count(Queries::public_search_content_rows('unionboundary', 100)) === 51, 'Bounded source limits retain public limit normalization.');
     \TinyCat\Http\Session::start();
     $_SESSION['_tinycat_search_guard'] = ['count' => 7];
     \TinyCat\Search\Guard::suggestions();

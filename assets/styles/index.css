@@ -1,6 +1,5 @@
-@import "../ui/styles/001-root.css";
-@import "../ui/styles/002-root-not-data-theme-light.css";
-@import "../ui/styles/003-root-data-theme-dark.css";
+@import "../ui/styles/tokens.css";
+@import "../ui/styles/base.css";
 @import "../modules/admin/styles/004-admin-list-toolbar.css";
 @import "../ui/styles/005-field-inline.css";
 @import "../modules/security/styles/006-captcha-provider.css";

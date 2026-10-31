@@ -14,14 +14,7 @@ import "./urls.js";
     style = window.getComputedStyle ? window.getComputedStyle(element) : null;
     return !style || (style.display !== "none" && style.visibility !== "hidden");
   }
-
-  function detachModalFromCard(modal, card) {
-    if (modal && card && card.contains(modal)) {
-      document.body.appendChild(modal);
-    }
-  }
   TinyCat.dom = {
-    detachFromCard: detachModalFromCard,
     visible: isFocusableVisible,
     focusables: function (root) {
       return TinyCat.dom.all('a[href], area[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), iframe, [contenteditable="true"], [tabindex]:not([tabindex="-1"])', root).filter(isFocusableVisible);

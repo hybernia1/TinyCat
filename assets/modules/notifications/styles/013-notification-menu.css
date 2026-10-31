@@ -91,22 +91,9 @@
 }
 
 .notification-popover-avatar {
-  display: inline-flex;
-  width: 38px;
-  height: 38px;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: var(--avatar-radius);
-  background: var(--surface-muted);
-  color: var(--muted);
-}
-
-.notification-popover-avatar img {
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  object-fit: cover;
+  --avatar-size: 38px;
+  --avatar-border: 0;
+  --avatar-background: var(--surface-muted);
 }
 
 .notification-popover-copy {

@@ -1,6 +1,6 @@
 import "./user-menu.js";
 import "../../core/modules.js";
-import "../../core/navigation.js";
+import "../../ui/lists.js";
 import "./avatar.js";
 import "./views.js";
 import "./email-availability.js";
@@ -10,8 +10,8 @@ import "./email-availability.js";
   var hydrate = TinyCat.users.hydrate;
   TinyCat.users.hydrate = function (root) { hydrate(root); TinyCat.users.avatarUpload.hydrate(root); };
   TinyCat.modules.register("users", TinyCat.users);
-  TinyCat.navigation.register("/admin/users", {
-    target: "#users-list", url: function () { return "/api/users" + window.location.search; },
+  TinyCat.lists.register("/admin/users", {
+    target: "#users-list", keepQuery: ["sort", "direction"], url: function () { return "/api/users" + window.location.search; },
     apply: function (target, response) { TinyCat.users.list(target, response); }
   });
 }());

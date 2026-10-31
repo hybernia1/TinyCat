@@ -1,3 +1,4 @@
+import "../../core/requests.js";
 import "../../core/dates.js";
 import "../../core/dom.js";
 import "../../core/http.js";
@@ -37,7 +38,13 @@ import "../../ui/fields.js";
     box.appendChild(item);
     box.hidden = false;
   }
+  function invalidateGlobalSearch(root) {
+    window.clearTimeout(root.__tinycatSearchTimer);
+    TinyCat.requests.cancel(root);
+    root.removeAttribute("aria-busy");
+  }
   function globalSearchHide(root) {
+    invalidateGlobalSearch(root);
     var box = globalSearchResults(root);
 
     if (box) {
@@ -53,7 +60,7 @@ import "../../ui/fields.js";
       : (item.type === "user" ? "@" + (item.title || "") : (TinyCat.dates.format(item.published_at) || item.excerpt || ""));
     var meta = createElement("span", "global-search-meta", metaText);
     var excerpt = createElement("span", "global-search-excerpt", item.excerpt || "");
-    var avatar = createElement("span", "global-search-avatar");
+    var avatar = createElement("span", "avatar global-search-avatar");
     var text = createElement("span", "global-search-text");
 
     link.href = item.url || "#";
@@ -188,8 +195,8 @@ import "../../ui/fields.js";
             modal.remove();
           }
 
-          root.__tinycatSearchCache = {};
-          runGlobalSearch(root);
+          root.__tinycatSearchCache = new Map();
+          if (root.isConnected !== false) { runGlobalSearch(root); }
         })
         .catch(function (submitError) {
           if (submitError.name === "AbortError" || !modal.isConnected) { return; }
@@ -215,8 +222,8 @@ import "../../ui/fields.js";
     var query = input ? input.value.trim() : "";
     var cacheKey = query.toLowerCase();
     var url;
-    var requestId;
-    var controller;
+    invalidateGlobalSearch(root);
+    if (root.isConnected === false) { return; }
 
     if (query === "") {
       globalSearchHide(root);
@@ -228,21 +235,17 @@ import "../../ui/fields.js";
       return;
     }
 
-    root.__tinycatSearchCache = root.__tinycatSearchCache || {};
-
-    if (root.__tinycatSearchCache[cacheKey]) {
-      renderGlobalSearch(root, root.__tinycatSearchCache[cacheKey]);
-      return;
+    var cache = root.__tinycatSearchCache = root.__tinycatSearchCache || new Map();
+    var context = document.documentElement.lang + ":" + (document.body.dataset.currentUserId || "0") + ":" + (document.body.dataset.applicationVersion || "");
+    var cached = cache.get(cacheKey);
+    if (cached && cached.context === context && cached.expires > Date.now()) {
+      cache.delete(cacheKey); cache.set(cacheKey, cached);
+      renderGlobalSearch(root, cached.data); return;
     }
+    if (cached) { cache.delete(cacheKey); }
 
-    if (root.__tinycatSearchController) {
-      root.__tinycatSearchController.abort();
-    }
-
-    controller = "AbortController" in window ? new AbortController() : null;
-    root.__tinycatSearchController = controller;
-    root.__tinycatSearchRequest = (root.__tinycatSearchRequest || 0) + 1;
-    requestId = root.__tinycatSearchRequest;
+    var request = TinyCat.requests.begin(root);
+    function current() { return request.current() && input && input.value.trim() === query && context === document.documentElement.lang + ":" + (document.body.dataset.currentUserId || "0") + ":" + (document.body.dataset.applicationVersion || ""); }
     url = new URL(root.dataset.searchApi || "/api/search", window.location.href);
     url.searchParams.set("q", query);
     url = compactUrl(url);
@@ -250,18 +253,19 @@ import "../../ui/fields.js";
 
     TinyCat.api.request(url, {
       method: "GET",
-      signal: controller ? controller.signal : undefined
+      signal: request.signal
     })
       .then(function (data) {
-        if (requestId !== root.__tinycatSearchRequest) {
+        if (!current()) {
           return;
         }
 
-        root.__tinycatSearchCache[cacheKey] = data;
+        cache.set(cacheKey, { data: data, context: context, expires: Date.now() + 60000 });
+        while (cache.size > 32) { cache.delete(cache.keys().next().value); }
         renderGlobalSearch(root, data);
       })
       .catch(function (error) {
-        if (error && error.name === "AbortError") {
+        if (!current() || (error && error.name === "AbortError")) {
           return;
         }
 
@@ -270,17 +274,15 @@ import "../../ui/fields.js";
           return;
         }
 
-        if (requestId === root.__tinycatSearchRequest) {
+        if (current()) {
           globalSearchShowMessage(root, (error && error.data && error.data.message) || root.dataset.searchEmpty || TinyCat.i18n.t("public.search_empty"));
         }
       })
       .finally(function () {
-        if (requestId === root.__tinycatSearchRequest) {
+        if (current()) {
           root.removeAttribute("aria-busy");
-          if (root.__tinycatSearchController === controller) {
-            root.__tinycatSearchController = null;
-          }
         }
+        request.finish();
       });
   }
   function initGlobalSearchRoot(root) {
@@ -293,7 +295,7 @@ import "../../ui/fields.js";
     root.dataset.globalSearchReady = "true";
 
     input.addEventListener("input", function () {
-      window.clearTimeout(root.__tinycatSearchTimer);
+      globalSearchHide(root);
       root.__tinycatSearchTimer = window.setTimeout(function () {
         runGlobalSearch(root);
       }, 220);
@@ -336,5 +338,10 @@ import "../../ui/fields.js";
       });
     });
   };
-    TinyCat.search.hydrate = TinyCat.search.hydrate;
+  TinyCat.search.close = globalSearchHide;
+  TinyCat.search.dispose = function (root) {
+    var nodes = qsa("[data-global-search]", root);
+    if (root.matches && root.matches("[data-global-search]")) { nodes.push(root); }
+    nodes.forEach(function (node) { globalSearchHide(node); if (node.__tinycatSearchCache) { node.__tinycatSearchCache.clear(); } });
+  };
 }());

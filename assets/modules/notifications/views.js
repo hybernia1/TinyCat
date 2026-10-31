@@ -6,7 +6,7 @@ import "../../ui/fields.js";
 import "../../ui/toasts.js";
 (function () {
   "use strict";
-  var T = window.TinyCat, U = T.ui, e = T.dom.element;
+  var T = window.TinyCat, U = T.ui;
   var mutationRevision = 0;
   function markItemRead(item) {
     item.classList.remove("is-unread");

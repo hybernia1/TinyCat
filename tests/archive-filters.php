@@ -7,7 +7,8 @@ require_once dirname(__DIR__) . '/App/bootstrap.php';
 
 use TinyCat\Status\Feed;
 
-$db = new PDO('sqlite::memory:', null, null, [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$mysql = isset($archiveMysqlDatabase) && $archiveMysqlDatabase instanceof PDO;
+$db = $mysql ? $archiveMysqlDatabase : new PDO('sqlite::memory:', null, null, [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 \TinyCat\Database\Connection::set($db);
 \TinyCat\Users\Authentication::reset(null, true);
 foreach ([
@@ -23,7 +24,14 @@ foreach ([
     "INSERT INTO users (id, username, status, avatar_exists, updated_at) VALUES (1, 'author', 'active', 0, ''), (2, 'other', 'active', 0, ''), (3, 'hidden', 'inactive', 0, '')",
     "INSERT INTO terms VALUES (1, 'tinycat')",
     "INSERT INTO links (id, link_type) VALUES (1, 'video'), (2, 'video'), (3, 'audio'), (4, 'web')",
-] as $sql) { $db->exec($sql); }
+] as $sql) {
+    if ($mysql) { $sql = str_replace('published_at TEXT', 'published_at DATETIME', $sql); }
+    $db->exec($sql);
+}
+if ($mysql) {
+    $db->exec('CREATE INDEX content_feed_index ON content (published_at, id)');
+    $db->exec('CREATE INDEX content_author_index ON content (author_id, published_at, id)');
+}
 for ($id = 1; $id <= 9; $id++) {
     $author = $id === 8 ? 2 : ($id === 9 ? 3 : 1);
     $date = $id === 7 ? '2999-01-01 00:00:00' : '2020-01-01 00:00:00';
@@ -43,6 +51,11 @@ foreach (['images' => [6, 2], 'video' => [6, 3], 'audio' => [4], 'links' => [6, 
 }
 $items = Feed::public_status_items_by_tag('tinycat', 20, '', 0, 'video');
 $assert(array_column($items, 'id') === [8, 6, 3], 'Tag filter retains other authors, excludes inactive and scheduled posts, and avoids duplicate links.');
+foreach (['' => [8, 6, 5, 4, 3, 2, 1], 'text' => [1]] as $type => $expected) {
+    foreach ([1, 2, 20] as $limit) {
+        $assert(array_column(Feed::public_status_items_by_tag('tinycat', $limit, '', 0, $type), 'id') === array_slice($expected, 0, $limit), 'Tag window or complete fallback: ' . $type . '/' . $limit);
+    }
+}
 $first = Feed::status_feed_context_items('tag', 1, ['tag' => 'tinycat', 'media' => 'video']);
 $params = ['tag' => 'tinycat', 'media' => 'video'] + Feed::status_feed_cursor_params($first['items']);
 $next = Feed::status_feed_context_items('tag', 2, $params);
@@ -79,4 +92,4 @@ $assert(str_contains($html, 'href="/?feed=following&amp;media=images"'), 'Render
 $resource['items'] = [];
 $html = \TinyCat\Support\Components::render('site/public-page', $resource);
 $assert(str_contains($html, \TinyCat\Support\Localization::t('public.feed_empty_filtered')) && str_contains($html, 'href="/?feed=following" class="btn btn-secondary btn-sm"'), 'Empty filtered feeds explain the result and allow clearing the filter.');
-echo "PASS archive and home media filters ({$checks} checks)\n";
+echo 'PASS archive and home media filters (' . ($mysql ? 'MySQL' : 'SQLite') . ", {$checks} checks)\n";

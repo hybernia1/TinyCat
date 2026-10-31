@@ -8,7 +8,10 @@
       modules.set(name, module);
     },
     result: function (source, response, target) {
-      return Array.from(modules.values()).some(function (module) { return typeof module.result === "function" && module.result(source, response, target); });
+      // false = unhandled, true = legacy hydration, Node[] = changed roots.
+      var result = false;
+      modules.forEach(function (module) { if (!result && typeof module.result === "function") { result = module.result(source, response, target); } });
+      return result || false;
     },
     hydrate: function (root) { modules.forEach(function (module) { if (typeof module.hydrate === "function") { module.hydrate(root); } }); },
     dispose: function (root) { modules.forEach(function (module) { if (typeof module.dispose === "function") { module.dispose(root); } }); },

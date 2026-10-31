@@ -1,3 +1,5 @@
+import "../../ui/content.js";
+import "../../ui/lists.js";
 import "../../core/dom.js";
 import "../../core/http.js";
 import "../../ui/fields.js";
@@ -14,17 +16,20 @@ import "../../ui/tabs.js";
   function failed(error) { if (error.name !== "AbortError") { T.toasts.show(error.message, "danger"); } }
   function metadata(state, data) {
     var values = { sources: data.item.source_count, active_sources: data.item.active_source_count, posts: data.item.post_count, runs: data.item.run_count };
-    state.summary.replaceChildren();
-    Object.keys(values).forEach(function (key) { state.summary.appendChild(T.components.render("bots/stat", { stat: { key: key, value: values[key] } })); });
-    state.status.replaceChildren(T.components.render("ui/account-status", { status: data.item.status, label: U.text("users.statuses." + data.item.status) }));
+    var cards = document.createDocumentFragment();
+    Object.keys(values).forEach(function (key) { cards.appendChild(T.components.render("bots/stat", { stat: { key: key, value: values[key] } })); });
+    T.content.replaceChildren(state.summary, cards);
+    T.content.replaceChildren(state.status, T.components.render("ui/account-status", { status: data.item.status, label: U.text("users.statuses." + data.item.status) }));
   }
   function refreshMetadata(state) {
+    var serial = state.metadataRevision = (state.metadataRevision || 0) + 1;
     return request(state, "/api/bots/accounts/" + state.id).then(function (response) {
-      if (state.dialog.isConnected) { metadata(state, response.data); }
-    }).catch(failed);
+      if (state.dialog.isConnected && state.metadataRevision === serial) { metadata(state, response.data); }
+    }).catch(function (error) { if (state.dialog.isConnected && state.metadataRevision === serial) { failed(error); } });
   }
   function footer(state) {
     var content = state.active === "account" ? state.actions : state.pagers[state.active];
+    Array.from(state.footer.children).forEach(function (node) { if (node !== content && node !== state.actions) { T.lifecycle.dispose(node); } });
     state.footer.replaceChildren();
     if (content) { state.footer.appendChild(content); }
     state.footer.hidden = !content;
@@ -56,7 +61,7 @@ import "../../ui/tabs.js";
   function scopedRuns(state, response, source) {
     var data = Object.assign({}, response.data, { pagination: U.pagination(response) });
     state.history.dataset.listUrl = data.url;
-    state.history.replaceChildren(T.components.render("bots/runs-list", data));
+    T.content.replaceChildren(state.history, T.components.render("bots/runs-list", data));
     state.history.dataset.loaded = "true";
     pagination(state.history, source);
     var form = T.components.render("bots/run-filter-form", data);
@@ -78,21 +83,19 @@ import "../../ui/tabs.js";
       else { T.bots.posts(root, response); root.dataset.loaded = "true"; }
       T.lifecycle.hydrate(root);
     }).catch(function (error) {
-      if (error.name !== "AbortError" && state.dialog.isConnected) {
+      if (error.name !== "AbortError" && state.dialog.isConnected && generation === root.dataset.apiGeneration && url === (name === "posts" ? root.dataset.botPostsUrl : root.dataset.listUrl)) {
         var retry = U.button("common.refresh");
         retry.addEventListener("click", function () { load(state, name, true); });
-        root.replaceChildren(retry); delete state.pagers[name];
+        T.content.replaceChildren(root, retry); delete state.pagers[name];
         if (state.active === name) { footer(state); }
         failed(error);
       }
     }).finally(function () { delete root.dataset.loading; root.removeAttribute("aria-busy"); });
   }
   function background() {
-    var entries = [["#bot-accounts-list", "/api/bots/accounts", T.bots.accounts], ["#bots-list", "/api/bots/sources", function (root, response) { T.bots.sources(root, Object.assign({}, response.data, { pagination: U.pagination(response) })); }], ["#bot-queue-list", "/api/bots/queue", T.bots.queue]];
-    var query = window.location.search;
-    entries.forEach(function (entry) {
-      var root = document.querySelector(entry[0]);
-      if (root) { T.api.request(entry[1] + query).then(function (response) { if (root.isConnected) { entry[2](root, response); T.lifecycle.hydrate(root); } }).catch(failed); }
+    ["#bot-accounts-list", "#bots-list", "#bot-queue-list"].forEach(function (selector) {
+      var root = document.querySelector(selector);
+      if (root) { T.lists.refresh(root); }
     });
   }
   function postUrl(id, query) {
@@ -165,15 +168,15 @@ import "../../ui/tabs.js";
       if (!state || !target || !["bot-detail-account", "bot-detail-sources-list", "bot-detail-runs-list"].includes(target.id)) { return false; }
       var method = (source.dataset.apiMethod || source.dataset.method || source.getAttribute("method") || "GET").toUpperCase();
       if (method !== "GET") state.changed = true;
-      if (target === state.history && method === "GET") { scopedRuns(state, response, source); }
-      else if (target === state.sources && method === "GET") { scopedSources(state, response, source); }
+      if (target === state.history && method === "GET") { scopedRuns(state, response, source); return [target]; }
+      else if (target === state.sources && method === "GET") { scopedSources(state, response, source); return [target]; }
       else {
         refreshMetadata(state);
         if (target === state.sources || state.sources.dataset.loaded === "true") { load(state, "sources", true); }
         if (state.posts.dataset.loaded === "true") { load(state, "posts", true); }
         if (state.history.dataset.loaded === "true") { load(state, "history", true); }
       }
-      return true;
+      return [];
     },
     pagination: pagination,
     dispose: function (root) {

@@ -350,7 +350,7 @@
           {
             "tag": "span",
             "attrs": {
-              "class": "notification-avatar"
+              "class": "avatar notification-avatar"
             },
             "children": [
               {
@@ -472,7 +472,7 @@
       {
         "tag": "span",
         "attrs": {
-          "class": "notification-popover-avatar"
+          "class": "avatar notification-popover-avatar"
         },
         "children": [
           {

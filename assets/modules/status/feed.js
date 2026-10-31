@@ -1,3 +1,5 @@
+import "../../core/requests.js";
+import "../../ui/content.js";
 import "../../core/dom.js";
 import "../../core/http.js";
 import "../../core/i18n.js";
@@ -22,8 +24,8 @@ import "../../ui/toasts.js";
   var statusFeedPruneMargin = 700;
   var statusFeedLastScrollY = window.scrollY || 0;
   var statusFeedScrollQueued = false;
-  var statusFeedRequests = new WeakMap();
-  var statusFeedAutoLoadQueued = new WeakMap();
+  var statusFeedRequests = new Map();
+  var statusFeedAutoLoadQueued = new Map();
   function statusFeedPayload(data) {
     var payload = Object.assign({}, unwrapResult(data) || {});
     var pagination = TinyCat.ui.pagination(data);
@@ -121,18 +123,17 @@ import "../../ui/toasts.js";
       return null;
     }
 
-    request = { type: type };
+    request = { type: type, lease: TinyCat.requests.begin(target) };
     statusFeedRequests.set(target, request);
 
     return request;
   }
   function statusFeedRequestActive(target, request) {
-    return statusFeedRequests.get(target) === request;
+    return statusFeedRequests.get(target) === request && request.lease.current();
   }
   function statusFeedFinishRequest(target, request) {
-    if (statusFeedRequestActive(target, request)) {
-      statusFeedRequests.delete(target);
-    }
+    if (statusFeedRequests.get(target) === request) { statusFeedRequests.delete(target); }
+    request.lease.finish();
   }
   function appendStatusFeedItems(target, template) {
     var seen = {};
@@ -158,7 +159,9 @@ import "../../ui/toasts.js";
       }
     });
 
+    var inserted = Array.from(template.content.children);
     target.appendChild(template.content);
+    return inserted;
   }
   function queueStatusFeedMore(control) {
     var target = statusFeedTarget(control);
@@ -167,9 +170,7 @@ import "../../ui/toasts.js";
       return;
     }
 
-    statusFeedAutoLoadQueued.set(target, true);
-
-    window.setTimeout(function () {
+    var timer = window.setTimeout(function () {
       statusFeedAutoLoadQueued.delete(target);
 
       if (
@@ -180,6 +181,7 @@ import "../../ui/toasts.js";
         loadStatusFeedMore(control);
       }
     }, 120);
+    statusFeedAutoLoadQueued.set(target, timer);
   }
   function statusFeedCardProtected(card) {
     return Boolean(
@@ -234,7 +236,7 @@ import "../../ui/toasts.js";
     }
 
     remove.forEach(function (card) {
-      card.remove();
+      TinyCat.content.remove(card);
     });
 
     if (anchor) {
@@ -266,7 +268,7 @@ import "../../ui/toasts.js";
     target.dataset.statusFeedRefreshing = "true";
 
     try {
-      data = await TinyCat.api.request(url, { method: "GET", cache: "no-store" });
+      data = await TinyCat.api.request(url, { method: "GET", cache: "no-store", signal: request.lease.signal });
       payload = statusFeedPayload(data);
       template = statusFeedFragment(target, payload.items);
 
@@ -274,8 +276,7 @@ import "../../ui/toasts.js";
         return;
       }
 
-      target.innerHTML = "";
-      target.appendChild(template.content);
+      TinyCat.content.replaceChildren(target, template.content);
       delete target.dataset.statusFeedPruned;
       control = statusFeedControlForTarget(target);
 
@@ -284,19 +285,20 @@ import "../../ui/toasts.js";
           control.dataset.statusFeedUrl = String(payload.next_url || "");
           control.hidden = false;
         } else {
-          control.remove();
+          removeControl(control);
         }
       }
 
       hydrateDynamic(target);
 
       window.requestAnimationFrame(function () {
+        if (target.isConnected === false) { return; }
         target.scrollIntoView({ block: "start" });
       });
     } catch (error) {
-      TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
+      if (error.name !== "AbortError" && statusFeedRequestActive(target, request)) { TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger"); }
     } finally {
-      delete target.dataset.statusFeedRefreshing;
+      if (statusFeedRequests.get(target) === request) { delete target.dataset.statusFeedRefreshing; }
       statusFeedFinishRequest(target, request);
 
       if (control && control.isConnected && statusFeedNearViewport(control)) {
@@ -368,7 +370,7 @@ import "../../ui/toasts.js";
     }
 
     try {
-      data = await TinyCat.api.request(url, { method: "GET" });
+      data = await TinyCat.api.request(url, { method: "GET", signal: request.lease.signal });
       payload = statusFeedPayload(data);
 
       if (!statusFeedRequestActive(target, request) || !control.isConnected) {
@@ -377,9 +379,9 @@ import "../../ui/toasts.js";
 
       if (Array.isArray(payload.items)) {
         template = statusFeedFragment(target, payload.items);
-        appendStatusFeedItems(target, template);
+        var inserted = appendStatusFeedItems(target, template);
         pruneStatusFeed(target, url);
-        hydrateDynamic(target);
+        inserted.forEach(function (node) { if (node.isConnected !== false) { hydrateDynamic(node); } });
       }
 
       if (!payload.next_url || payload.done === true || Number(payload.count || 0) < 1) {
@@ -388,13 +390,13 @@ import "../../ui/toasts.js";
           return;
         }
 
-        control.remove();
+        removeControl(control);
         return;
       }
 
       control.dataset.statusFeedUrl = String(payload.next_url || "");
     } catch (error) {
-      TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
+      if (error.name !== "AbortError" && statusFeedRequestActive(target, request)) { TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger"); }
     } finally {
       delete control.dataset.statusFeedBusy;
       control.classList.remove("is-loading");
@@ -414,6 +416,27 @@ import "../../ui/toasts.js";
     if (control.isConnected && statusFeedControlForTarget(target) === control && statusFeedNearViewport(control)) {
       queueStatusFeedMore(control);
     }
+  }
+  function removeControl(control) {
+    if (TinyCat.__statusFeedObserver) { TinyCat.__statusFeedObserver.unobserve(control); }
+    TinyCat.content.remove(control);
+  }
+  function dispose(root) {
+    statusFeedRequests.forEach(function (request, target) {
+      if (root === target || (root.contains && root.contains(target))) {
+        request.lease.controller.abort(); request.lease.finish(); statusFeedRequests.delete(target);
+        delete target.dataset.statusFeedRefreshing;
+      }
+    });
+    statusFeedAutoLoadQueued.forEach(function (timer, target) {
+      if (root === target || (root.contains && root.contains(target))) { window.clearTimeout(timer); statusFeedAutoLoadQueued.delete(target); }
+    });
+    var controls = qsa("[data-status-feed-more]", root);
+    if (root.matches && root.matches("[data-status-feed-more]")) { controls.push(root); }
+    controls.forEach(function (control) {
+      if (TinyCat.__statusFeedObserver) { TinyCat.__statusFeedObserver.unobserve(control); }
+      delete control.dataset.statusFeedReady;
+    });
   }
   function statusCardId(card) {
     var match = card && card.id ? /^status-(\d+)$/.exec(card.id) : null;
@@ -476,5 +499,5 @@ import "../../ui/toasts.js";
     });
 
   }
-  TinyCat.status.controllers.feed = { statusFeedPayload: statusFeedPayload, statusFeedTarget: statusFeedTarget, statusFeedNearViewport: statusFeedNearViewport, statusFeedCards: statusFeedCards, statusFeedGap: statusFeedGap, statusFeedSpacer: statusFeedSpacer, statusFeedSpacerHeight: statusFeedSpacerHeight, setStatusFeedSpacerHeight: setStatusFeedSpacerHeight, statusFeedFirstPageUrl: statusFeedFirstPageUrl, statusFeedControlForTarget: statusFeedControlForTarget, statusFeedStartRequest: statusFeedStartRequest, statusFeedRequestActive: statusFeedRequestActive, statusFeedFinishRequest: statusFeedFinishRequest, appendStatusFeedItems: appendStatusFeedItems, queueStatusFeedMore: queueStatusFeedMore, statusFeedCardProtected: statusFeedCardProtected, pruneStatusFeed: pruneStatusFeed, refreshPrunedStatusFeed: refreshPrunedStatusFeed, maybeRefreshPrunedStatusFeeds: maybeRefreshPrunedStatusFeeds, queuePrunedStatusFeedRefreshCheck: queuePrunedStatusFeedRefreshCheck, loadStatusFeedMore: loadStatusFeedMore, statusCardId: statusCardId, statusFeedScope: statusFeedScope, statusFeedForForm: statusFeedForForm, initStatusFeedLazy: initStatusFeedLazy };
+  TinyCat.status.controllers.feed = { dispose: dispose, statusFeedPayload: statusFeedPayload, statusFeedTarget: statusFeedTarget, statusFeedNearViewport: statusFeedNearViewport, statusFeedCards: statusFeedCards, statusFeedGap: statusFeedGap, statusFeedSpacer: statusFeedSpacer, statusFeedSpacerHeight: statusFeedSpacerHeight, setStatusFeedSpacerHeight: setStatusFeedSpacerHeight, statusFeedFirstPageUrl: statusFeedFirstPageUrl, statusFeedControlForTarget: statusFeedControlForTarget, statusFeedStartRequest: statusFeedStartRequest, statusFeedRequestActive: statusFeedRequestActive, statusFeedFinishRequest: statusFeedFinishRequest, appendStatusFeedItems: appendStatusFeedItems, queueStatusFeedMore: queueStatusFeedMore, statusFeedCardProtected: statusFeedCardProtected, pruneStatusFeed: pruneStatusFeed, refreshPrunedStatusFeed: refreshPrunedStatusFeed, maybeRefreshPrunedStatusFeeds: maybeRefreshPrunedStatusFeeds, queuePrunedStatusFeedRefreshCheck: queuePrunedStatusFeedRefreshCheck, loadStatusFeedMore: loadStatusFeedMore, statusCardId: statusCardId, statusFeedScope: statusFeedScope, statusFeedForForm: statusFeedForForm, initStatusFeedLazy: initStatusFeedLazy };
 }());

@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.14.0 - 2026-10-31
+
+- Share scoped ownership of AJAX reads, reject stale results and errors, and lock duplicate action links before confirmation. Retain list filters and sorting through module-owned definitions and refreshes.
+- Dispose replaced feed and list content consistently, cancel obsolete cursor requests and queued loads, hydrate appended cards once, and bound search suggestion caches by size, age and interface context. Preserve AbortError during JSON response cancellation.
+- Limit chronological probes for MySQL tag and media feeds, with a complete selective fallback for sparse results. Select and paginate narrow content-search candidates before loading post and author details; preserve literal matching, link excerpts, visibility and cursor ordering.
+- Consolidate shared CSS tokens, avatar and menu styles and remove unused helpers and superseded stylesheets. Extend MySQL, SQLite, native-browser, lifecycle and request-race coverage.
+- Keep critical CSS and inline JavaScript as measured experiments; production assets remain external and cacheable. No new database migration or configuration change is required. Signed updates remove retired source files.
+
 ## 5.13.0 - 2026-10-31
 
 - Rebuild the administration dashboard with shared cards, list containers and empty states. Replace the recent-comment panel with a responsive table showing authors, posts and timestamps; keep recent activity above cache diagnostics. Remove database table names, the hardcoded product title and the unrelated reports link.

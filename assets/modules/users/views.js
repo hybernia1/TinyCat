@@ -1,3 +1,5 @@
+import "../../ui/lists.js";
+import "../../ui/content.js";
 import "../../core/dates.js";
 import "../../core/components.js";
 import "../../core/dom.js";
@@ -178,7 +180,7 @@ import "../../ui/toasts.js";
       var data = response.data, pagination = U.pagination(response);
       var model = Object.assign({}, data, { pagination: pagination });
       var root = T.components.render("users/list", Object.assign({}, model, { state: model }));
-      target.replaceChildren(root); root.dataset.usersReady = "true";
+      T.content.replaceChildren(target, root); root.dataset.usersReady = "true";
       T.users.dialogs(root, data, pagination);
     },
     dialogs: function (root, data, pagination) {
@@ -189,19 +191,18 @@ import "../../ui/toasts.js";
       });
       U.filterPanel("users-filter-modal", filterForm);
       var create = document.getElementById("user-create-modal");
-      if (create) { if (T.dialog.close) { T.dialog.close(create); } create.remove(); }
+      if (create) { if (T.dialog.close) { T.dialog.close(create); } T.lifecycle.dispose(create); create.remove(); }
       U.sectionedDialog("user-create-modal", "users.new_user", adminForm({}, data, true), true);
     },
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.dataset.url || source.getAttribute("href") || "/", window.location.href);
       if (!/^\/api\/users(?:\/|$)/.test(url.pathname)) { return false; }
       var data = response.data;
-      if (url.pathname === "/api/users" && source.dataset.apiMethod === "GET" || source.getAttribute("method") === "get") { T.users.list(target, response); return true; }
+      if (url.pathname === "/api/users" && target && T.lists.isRead(source)) { T.users.list(target, response); return [target]; }
       if (target && target.id === "users-list" || source.dataset.adminUserForm) {
         var list = document.getElementById("users-list");
-        var query = new URLSearchParams(window.location.search);
-        T.api.request("/api/users?" + query).then(function (result) { T.users.list(list, result); if (T.lifecycle.hydrate) { T.lifecycle.hydrate(list); } }).catch(function (error) { T.toasts.show(error.message, "danger"); });
-        return true;
+        T.lists.refresh(list);
+        return [];
       }
       if (data.user) {
         if (Object.prototype.hasOwnProperty.call(data.user, "bio")) {

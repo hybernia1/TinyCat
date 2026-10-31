@@ -1,3 +1,4 @@
+import "../../ui/content.js";
 import "../../core/components.js";
 import "../../core/dates.js";
 import "../../ui/fields.js";
@@ -47,7 +48,7 @@ import "../../ui/fields.js";
     list: function (target, response) {
       var data = Object.assign({}, response.data, { pagination: T.ui.pagination(response) });
       var view = T.components.render("scheduler/list", Object.assign({}, data, { state: data }));
-      target.replaceChildren(view);
+      T.content.replaceChildren(target, view);
       view.dataset.schedulerReady = "true";
       T.scheduler.filters(data);
     },
@@ -71,14 +72,14 @@ import "../../ui/fields.js";
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.dataset.url || source.getAttribute("href") || "/", window.location.href);
       if (url.pathname === "/api/scheduler/tasks" || /^\/api\/scheduler\/tasks\/[a-z-]+\/runs$/.test(url.pathname)) {
         var root = target || document.querySelector("#scheduler-list");
-        if (root) { T.scheduler.list(root, response); }
-        return true;
+        if (root) { T.scheduler.list(root, response); return [root]; }
+        return [];
       }
       if (url.pathname !== "/api/scheduler/tokens") { return false; }
       var current = document.querySelector("[data-scheduler-token]"), token = response.data.token;
       document.querySelectorAll("[data-scheduler-command]").forEach(function (node) { node.textContent = node.textContent.replace(/(Authorization: Bearer )[^"]*/g, function (_, prefix) { return prefix + token; }); });
       if (current) { current.value = token; }
-      return true;
+      return [];
     }
   };
 }());

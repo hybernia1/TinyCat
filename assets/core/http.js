@@ -59,6 +59,7 @@ import "./urls.js";
     try {
       result = await response.json();
     } catch (_error) {
+      if (_error.name === "AbortError") { throw _error; }
       throw failure("The API returned invalid JSON.", response);
     }
     if (!result || typeof result !== "object" || Array.isArray(result)

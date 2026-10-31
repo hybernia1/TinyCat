@@ -19,9 +19,8 @@
       "ui/filter-chip"
     ],
     "styles": [
-      "assets/ui/styles/001-root.css",
-      "assets/ui/styles/002-root-not-data-theme-light.css",
-      "assets/ui/styles/003-root-data-theme-dark.css",
+      "assets/ui/styles/tokens.css",
+      "assets/ui/styles/base.css",
       "assets/ui/styles/005-field-inline.css",
       "assets/ui/styles/007-alert.css",
       "assets/ui/styles/009-check-line.css",
