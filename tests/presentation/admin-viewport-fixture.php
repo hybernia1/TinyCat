@@ -118,28 +118,33 @@ for (const long of [false, true]) {
   badge.remove();
 }
 const mobileSort = document.querySelector('.table-mobile-sort');
-let sortingWorks = true;
+let sortingWorks = true; const sortingDiagnostics = {};
 if (innerWidth < 600) {
   const summary = mobileSort.querySelector('summary'), originals = [...document.querySelectorAll('table .table-sort')], choices = [...mobileSort.querySelectorAll('.table-sort-option')];
   const actions = mobileSort.closest('.admin-filter-actions'), filterButton = actions.querySelector('.filter-menu > summary'), pageSize = actions.querySelector('.admin-per-page-form');
   sortingWorks = choices.length === originals.length && choices.filter(link => link.getAttribute('aria-current') === 'true').length === 1 && choices.every((link,index) => ['href','data-history','data-ajax-target'].every(attr => link.getAttribute(attr) === originals[index].getAttribute(attr)));
   sortingWorks = sortingWorks && Math.abs(summary.getBoundingClientRect().height - filterButton.getBoundingClientRect().height) < 1 && Math.abs(summary.getBoundingClientRect().top - filterButton.getBoundingClientRect().top) < 1 && summary.getBoundingClientRect().right <= pageSize.getBoundingClientRect().left;
+  sortingDiagnostics.controls = [sortingWorks, summary.getBoundingClientRect().toJSON(), filterButton.getBoundingClientRect().toJSON(), pageSize.getBoundingClientRect().toJSON()];
   summary.click(); await new Promise(resolve => setTimeout(resolve, 100));
   const popup = mobileSort.querySelector('.list-menu-panel'), bounds = popup.getBoundingClientRect(), body = mobileSort.closest('.modal-body');
   sortingWorks = sortingWorks && mobileSort.open && bounds.width <= 300 && bounds.left >= 0 && bounds.right <= innerWidth && bounds.top >= 0 && bounds.bottom <= (body ? body.getBoundingClientRect().bottom : innerHeight);
+  sortingDiagnostics.popup = [sortingWorks, mobileSort.open, bounds.toJSON(), body && body.getBoundingClientRect().toJSON()];
   summary.focus({preventScroll:true}); summary.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}));
   sortingWorks = sortingWorks && !mobileSort.open && document.activeElement === summary;
+  sortingDiagnostics.escape = [sortingWorks, mobileSort.open, document.activeElement === summary];
   summary.click(); await new Promise(resolve => setTimeout(resolve, 100));
   let activated = false;
   document.addEventListener('click', event => { if (event.target.closest('.table-sort-option')) { event.preventDefault(); activated = true; } }, true);
   choices[0].focus({preventScroll:true}); choices[0].click();
   const state = window.TinyCat.menus.capture(choices[0]);
   sortingWorks = sortingWorks && activated && mobileSort.open && !!state;
+  sortingDiagnostics.choice = [sortingWorks, activated, mobileSort.open, state];
   const host = document.querySelector('.table-wrap').parentElement, replacement = host.cloneNode(true);
   replacement.querySelector('.table-mobile-sort').remove(); host.replaceWith(replacement);
   window.tableService.hydrate(replacement); window.TinyCat.menus.restore(state);
   const restored = replacement.querySelector('.table-mobile-sort');
   sortingWorks = sortingWorks && restored.open && restored.querySelector('.list-menu-panel').contains(document.activeElement);
+  sortingDiagnostics.restored = [sortingWorks, restored.open, restored.querySelector('.list-menu-panel').contains(document.activeElement)];
   restored.open = false;
   sortingWorks = sortingWorks && window.TinyCat.menus.capture(restored.querySelector('a')) === null;
   document.activeElement.blur();
@@ -248,7 +253,7 @@ let lazyHintsReady = initiallyUnfocusable && lazyText.getAttribute('tabindex') =
 lazy.hidden = true; window.tooltipService.hydrate(lazy); lazy.hidden = false;
 lazy.dispatchEvent(new CustomEvent('tinycat:tab', {bubbles:true}));
 lazyHintsReady = lazyHintsReady && lazyText.getAttribute('tabindex') === '0'; lazy.remove();
-results.forEach(result => Object.assign(result, {sortingWorks, chipsWork, touchSafe, outsideCloses, hoverWorks, frameTitleKept, disposeCloses, shortHidden, hydrationStable, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
+results.forEach(result => Object.assign(result, {sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, frameTitleKept, disposeCloses, shortHidden, hydrationStable, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
 const output = document.createElement('pre'); output.id = 'layout-metrics'; output.textContent = JSON.stringify(results); document.body.append(output);
 }());
 </script></body></html>
