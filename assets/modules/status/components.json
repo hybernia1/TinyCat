@@ -7,7 +7,6 @@
     "children": [
       {
         "tag": "span",
-        "attrs": {},
         "children": [
           {
             "get": "segment.text"
@@ -259,8 +258,7 @@
                 ]
               },
               "loading": "lazy"
-            },
-            "children": []
+            }
           }
         ],
         "when": {
@@ -301,7 +299,6 @@
           },
           "loading": "lazy"
         },
-        "children": [],
         "when": {
           "not": {
             "get": "open_modal"
@@ -317,7 +314,25 @@
     {
       "tag": "div",
       "attrs": {
-        "class": "status-video-card status-audio-card",
+        "class": {
+          "concat": [
+            "status-video-card",
+            {
+              "if": [
+                {
+                  "eq": [
+                    {
+                      "get": "link.card_kind"
+                    },
+                    "audio"
+                  ]
+                },
+                " status-audio-card",
+                ""
+              ]
+            }
+          ]
+        },
         "data-status-video": "",
         "data-embed-url": {
           "get": "link.embed_url"
@@ -354,91 +369,16 @@
             "link": {
               "get": "link"
             }
-          }
-        },
-        {
-          "tag": "div",
-          "attrs": {
-            "data-status-video-mount": ""
           },
-          "children": [
-            {
-              "tag": "button",
-              "attrs": {
-                "class": "status-video-placeholder",
-                "type": "button",
-                "data-status-video-load": "",
-                "aria-label": {
-                  "get": "link.title"
-                }
-              },
-              "children": [
-                {
-                  "tag": "span",
-                  "attrs": {
-                    "class": "status-video-play"
-                  },
-                  "children": [
-                    {
-                      "icon": "play"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
           "when": {
-            "or": [
+            "eq": [
               {
-                "get": "link.audio_url"
+                "get": "link.card_kind"
               },
-              {
-                "get": "link.embed_allowed"
-              }
+              "audio"
             ]
           }
-        }
-      ],
-      "when": {
-        "eq": [
-          {
-            "get": "link.card_kind"
-          },
-          "audio"
-        ]
-      }
-    },
-    {
-      "tag": "div",
-      "attrs": {
-        "class": "status-video-card",
-        "data-status-video": "",
-        "data-embed-url": {
-          "get": "link.embed_url"
         },
-        "data-embed-origin": {
-          "get": "link.embed_origin"
-        },
-        "data-embed-width-param": {
-          "get": "link.embed_width_param"
-        },
-        "data-embed-autoplay-param": {
-          "get": "link.embed_autoplay_param"
-        },
-        "data-embed-autoplay-value": {
-          "get": "link.embed_autoplay_value"
-        },
-        "data-embed-height": {
-          "get": "link.embed_height"
-        },
-        "data-card-kind": {
-          "get": "link.card_kind"
-        },
-        "data-provider": {
-          "get": "link.provider"
-        }
-      },
-      "children": [
         {
           "tag": "div",
           "attrs": {
@@ -467,7 +407,21 @@
                     }
                   ],
                   "when": {
-                    "get": "link.provider_name"
+                    "and": [
+                      {
+                        "not": {
+                          "eq": [
+                            {
+                              "get": "link.card_kind"
+                            },
+                            "audio"
+                          ]
+                        }
+                      },
+                      {
+                        "get": "link.provider_name"
+                      }
+                    ]
                   }
                 },
                 {
@@ -484,7 +438,6 @@
                         },
                         "type": "image/webp"
                       },
-                      "children": [],
                       "when": {
                         "get": "link.thumbnail_webp_url"
                       }
@@ -508,12 +461,25 @@
                         "loading": "lazy",
                         "decoding": "async",
                         "referrerpolicy": "no-referrer"
-                      },
-                      "children": []
+                      }
                     }
                   ],
                   "when": {
-                    "get": "link.thumbnail_url"
+                    "and": [
+                      {
+                        "not": {
+                          "eq": [
+                            {
+                              "get": "link.card_kind"
+                            },
+                            "audio"
+                          ]
+                        }
+                      },
+                      {
+                        "get": "link.thumbnail_url"
+                      }
+                    ]
                   }
                 },
                 {
@@ -535,7 +501,6 @@
                   "children": [
                     {
                       "tag": "strong",
-                      "attrs": {},
                       "children": [
                         {
                           "get": "link.title"
@@ -544,7 +509,6 @@
                     },
                     {
                       "tag": "small",
-                      "attrs": {},
                       "children": [
                         {
                           "or": [
@@ -558,11 +522,31 @@
                         }
                       ]
                     }
-                  ]
+                  ],
+                  "when": {
+                    "not": {
+                      "eq": [
+                        {
+                          "get": "link.card_kind"
+                        },
+                        "audio"
+                      ]
+                    }
+                  }
                 }
               ]
             }
-          ]
+          ],
+          "when": {
+            "or": [
+              {
+                "get": "link.embed_allowed"
+              },
+              {
+                "get": "link.audio_url"
+              }
+            ]
+          }
         },
         {
           "tag": "a",
@@ -598,15 +582,8 @@
                 }
               ]
             }
-          ]
-        }
-      ],
-      "when": {
-        "and": [
-          {
-            "get": "link.embed_allowed"
-          },
-          {
+          ],
+          "when": {
             "not": {
               "eq": [
                 {
@@ -615,6 +592,21 @@
                 "audio"
               ]
             }
+          }
+        }
+      ],
+      "when": {
+        "or": [
+          {
+            "get": "link.embed_allowed"
+          },
+          {
+            "eq": [
+              {
+                "get": "link.card_kind"
+              },
+              "audio"
+            ]
           }
         ]
       }
@@ -731,7 +723,6 @@
           "children": [
             {
               "tag": "span",
-              "attrs": {},
               "children": [
                 {
                   "get": "link.description"
@@ -797,8 +788,7 @@
                     "alt": "",
                     "loading": "lazy",
                     "data-status-link-image": ""
-                  },
-                  "children": []
+                  }
                 },
                 {
                   "tag": "span",
@@ -891,8 +881,7 @@
           "value": {
             "get": "action"
           }
-        },
-        "children": []
+        }
       },
       {
         "tag": "button",
@@ -1272,8 +1261,7 @@
               "react"
             ]
           }
-        },
-        "children": []
+        }
       },
       {
         "tag": "button",
@@ -2054,8 +2042,7 @@
           "type": "hidden",
           "name": "action",
           "value": "comment"
-        },
-        "children": []
+        }
       },
       {
         "tag": "input",
@@ -2070,8 +2057,7 @@
               0
             ]
           }
-        },
-        "children": []
+        }
       },
       {
         "component": "ui/avatar",
@@ -2350,7 +2336,6 @@
                 "children": [
                   {
                     "tag": "summary",
-                    "attrs": {},
                     "children": [
                       {
                         "t": "account.status_reply",
@@ -2623,8 +2608,7 @@
           "name": "remove_image",
           "value": "0",
           "data-status-image-remove-input": ""
-        },
-        "children": []
+        }
       },
       {
         "tag": "button",
@@ -2709,8 +2693,7 @@
                   null
                 ]
               }
-            },
-            "children": []
+            }
           }
         ]
       },
@@ -2755,8 +2738,7 @@
               "data-status-image-input": "",
               "data-client-image-max-dimension": "800",
               "data-client-image-max-bytes": "26214400"
-            },
-            "children": []
+            }
           },
           {
             "icon": "upload"
@@ -2810,8 +2792,7 @@
                 "attrs": {
                   "class": "status-compose-counter",
                   "data-status-editor-meta-slot": ""
-                },
-                "children": []
+                }
               },
               {
                 "tag": "div",
@@ -2898,7 +2879,6 @@
           },
           {
             "tag": "span",
-            "attrs": {},
             "children": [
               {
                 "if": [
@@ -3202,25 +3182,6 @@
           },
           {
             "get": "link.provider_name"
-          },
-          {
-            "tag": "span",
-            "attrs": {
-              "class": "status-link-account"
-            },
-            "children": [
-              {
-                "get": "link.title"
-              }
-            ],
-            "when": {
-              "eq": [
-                {
-                  "get": "link.card_kind"
-                },
-                "social"
-              ]
-            }
           }
         ],
         "when": {
@@ -3244,8 +3205,7 @@
               "alt": "",
               "loading": "lazy",
               "data-status-link-image": ""
-            },
-            "children": []
+            }
           },
           {
             "tag": "span",
@@ -3295,7 +3255,6 @@
         "children": [
           {
             "tag": "strong",
-            "attrs": {},
             "children": [
               {
                 "or": [
@@ -3307,21 +3266,10 @@
                   }
                 ]
               }
-            ],
-            "when": {
-              "not": {
-                "eq": [
-                  {
-                    "get": "link.card_kind"
-                  },
-                  "social"
-                ]
-              }
-            }
+            ]
           },
           {
             "tag": "span",
-            "attrs": {},
             "children": [
               {
                 "get": "link.description"
@@ -3333,7 +3281,6 @@
           },
           {
             "tag": "small",
-            "attrs": {},
             "children": [
               {
                 "or": [

@@ -199,7 +199,7 @@ check(playCalls === 0 && podcastRoot.querySelectorAll("audio").length === 0, "In
 loadPodcast();
 document.createElement = originalCreateElement;
 const podcastPlayer = podcastRoot.querySelector("audio");
-check(podcastPlayer && podcastPlayer.src === "https://example.com/episode.mp3" && podcastPlayer.preload === "none" && podcastPlayer.controls && playCalls === 1, "Clicking the shared play button mounts and plays native audio.");
+check(podcastPlayer && podcastPlayer.getAttribute("src") === "https://example.com/episode.mp3" && podcastPlayer.getAttribute("preload") === "none" && podcastPlayer.getAttribute("controls") !== null && playCalls === 1, "Clicking the shared play button mounts and plays native audio.");
 check(podcastRoot.querySelector(".status-link-copy").textContent.includes("Podcast") && podcastRoot.querySelectorAll("iframe").length === 0, "Native playback retains the same summary and stays inside the audio card.");
 let stoppedAudio = 0, releasedAudio = 0;
 podcastPlayer.pause = () => stoppedAudio++;
