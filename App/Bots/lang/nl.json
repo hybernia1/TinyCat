@@ -18,8 +18,6 @@
     "no_sources": "Er zijn nog geen bronnen geconfigureerd.",
     "no_sources_filtered": "Deze bot heeft nog geen bronnen.",
     "bot": "Bot-account",
-    "filter_by_bot": "Filteren op bot",
-    "all_bots": "Alle bots",
     "sources_count": {
       "one": "{count} bron",
       "few": "{count} bronnen",
@@ -122,7 +120,6 @@
     "publish_now": "Nu publiceren",
     "publish_now_confirm": "Dit bericht nu publiceren?",
     "queue_published": "Het bericht is gepubliceerd.",
-    "all_sources": "Alle-bronnen",
     "source_label": "RSS-bron",
     "unknown_source": "Onbekende bron",
     "unknown_source_help": "De oorspronkelijke-bron van dit bericht is niet vastgelegd.",

@@ -129,7 +129,7 @@ check(!T.filters.get('filter-panel-fixture') && !document.getElementById('filter
   roleField.querySelector('select').closest = () => roleField;
   form.append(statusField, roleField, T.ui.hidden('sort', 'username'), T.ui.hidden('per_page', '10'));
   T.ui.filterPanel('summary-filter-fixture', form);
-  check(summary.querySelector('[data-list-result-count]').textContent === T.i18n.plural('common.list_results', 12) && summary.textContent.includes('<needle>') && !summary.querySelector('needle'), 'The list summary reports the full filtered total and renders search text safely.');
+  check(!summary.querySelector('[data-list-result-count]') && summary.textContent.includes('<needle>') && !summary.querySelector('needle'), 'The list summary contains only active filter badges and safely rendered search text, without a record-count prefix.');
   check(summary.querySelector('[data-list-summary-filters]').children.length === 2 && summary.textContent.includes(T.ui.text('common.status') + ': Active') && summary.textContent.includes(T.ui.text('common.role') + ': Administrator'), 'Multiple active filters show their localized field and option labels instead of raw codes.');
   statusSelect.value = ''; roleField.querySelector('select').value = ''; T.filters.hydrate();
   check(summary.querySelector('[data-list-summary-filters]').children.length === 0, 'Cleared filters disappear from the summary without including sorting or page-size metadata.');
@@ -149,7 +149,7 @@ check(!T.filters.get('filter-panel-fixture') && !document.getElementById('filter
   const listeners = {}, menu = { open: true }, summary = { focus() { this.focused = true; } };
   const menuDocument = { activeElement: { closest: () => menu }, addEventListener(name, callback, capture) { listeners[name] = { callback, capture }; } };
   const menuTinyCat = { dom: { find: (_selector, root) => root === menu ? summary : menu, all: () => [menu] }, lifecycle: { register(_name, service) { service.init(); } } };
-  vm.runInNewContext(fs.readFileSync(path.join(root, 'assets/ui/menus.js'), 'utf8').replace(/^import .*;\r?\n/gm, ''), { window: { TinyCat: menuTinyCat }, document: menuDocument });
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'assets/ui/menus.js'), 'utf8').replace(/^import .*;\r?\n/gm, ''), { window: { TinyCat: menuTinyCat, addEventListener() {} }, document: menuDocument });
   const escape = { key: 'Escape', preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; } };
   listeners.keydown.callback(escape);
   check(listeners.keydown.capture === true && escape.prevented && escape.stopped && !menu.open && summary.focused, 'Escape closes a dropdown during capture and restores focus before an enclosing modal can process the key.');
@@ -200,7 +200,11 @@ const sortHeading = T.components.render("ui/sort-heading", {
 const sortLink = sortHeading.querySelector("a");
 check(sortLink.getAttribute("href") === "/api/users?sort=username&direction=desc&page=1" && sortLink.getAttribute("data-history") === "/admin/users?sort=username&direction=desc&page=1", "Sort headings share server-prepared AJAX and history URLs.");
 check(sortLink.textContent === "Name <safe>" && sortLink.querySelectorAll("[data-active]").length === 1, "Sort headings render literal labels and highlight only the active direction.");
-check(sortLink.querySelectorAll("use").map(node => node.getAttribute("href")).join(",") === "#arrow-up,#arrow-down", "Sort arrows use the shared SVG icon sprite.");
+check(sortLink.querySelectorAll("use").map(node => node.getAttribute("href")).join(",") === "#arrow-up", "Ascending sorting shows one shared SVG arrow.");
+for (const descending of [true, false]) {
+  const heading = T.components.render('ui/sort-heading', { label: 'Name', order: { descending, ascending: false } });
+  check(heading.querySelectorAll('use').length === 1 && heading.querySelector('use').getAttribute('href') === (descending ? '#arrow-down' : '#arrow-up') && heading.querySelectorAll('[data-active]').length === (descending ? 1 : 0), 'Descending and inactive headings retain one arrow with the correct direction and active state.');
+}
 const plainHeading = T.components.render("ui/sort-heading", { label: "Name" });
 check(plainHeading.textContent === "Name" && plainHeading.querySelector("a") === null, "Embedded detail tables without sort state retain plain headings.");
 const dateCases = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--date-fixtures"], { encoding: "utf8" }));
@@ -424,7 +428,7 @@ check(target.querySelector(".admin-filter-actions").querySelector('[data-filter-
 const filterDialog = document.getElementById("users-filter-modal");
 check(!filterDialog.querySelector('[type="submit"]') && filterDialog.querySelector('[name="role"]').getAttribute('data-submit-on-change') !== null && filterDialog.querySelector('[name="q"]').getAttribute('data-submit-on-change') === null, 'Filters apply immediately without an Apply button while hidden search state remains passive.');
 check(filterDialog && filterDialog.querySelector('[name="per_page"]').value === "25" && filterDialog.querySelector('[name="role"]').value === "admin", "AJAX list replacement preserves the filter dialog and its current select values.");
-check(filterDialog.dataset.filterContent === "" && filterDialog.querySelector('[name="per_page"]').children.find(option => option.getAttribute("value") === "25").defaultSelected, "Locally owned filter dialogs remain reusable and discard restores the current filters.");
+check(filterDialog.dataset.filterContent === "" && filterDialog.querySelector('[name="per_page"]').getAttribute("type") === "hidden", "Locally owned filter dialogs remain reusable and discard restores the current filters.");
 const adminAvatarFields = T.components.render("users/admin-fields", { user, create: false, options: { roles: {}, statuses: {} } });
 check(adminAvatarFields.querySelector('[data-modal-url="/api/users/2/avatar"]') && !adminAvatarFields.querySelector('[name="avatar"]') && !adminAvatarFields.querySelector('[name="remove_avatar"]'), "User administration reuses the frontend avatar editor without duplicate upload or removal controls.");
 const createDialog = document.getElementById("user-create-modal");

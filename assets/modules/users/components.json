@@ -1537,74 +1537,24 @@
         }
       },
       {
-        "component": "ui/select",
-        "data": {
-          "label": {
-            "t": "common.per_page",
-            "values": {}
-          },
-          "attributes": {
-            "class": "select",
-            "name": "per_page",
-            "disabled": null
-          },
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "per_page",
           "value": {
             "get": "pagination.per_page"
-          },
-          "choices": {
-            "10": "10",
-            "25": "25",
-            "50": "50",
-            "100": "100"
-          }
-        }
-      },
-      {
-        "tag": "a",
-        "attrs": {
-          "class": "btn btn-ghost btn-sm",
-          "href": {
-            "concat": [
-              "/api/users?per_page=",
-              {
-                "or": [
-                  {
-                    "get": "pagination.per_page"
-                  },
-                  25
-                ]
-              }
-            ]
-          },
-          "data-ajax": "",
-          "data-ajax-target": "#users-list",
-          "data-history": {
-            "concat": [
-              "/admin/users?per_page=",
-              {
-                "or": [
-                  {
-                    "get": "pagination.per_page"
-                  },
-                  25
-                ]
-              }
-            ]
           }
         },
-        "children": [
-          {
-            "icon": "close"
-          },
-          {
-            "tag": "span",
-            "children": [
-              {
-                "t": "common.clear_filters"
-              }
-            ]
-          }
-        ]
+        "children": []
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "page",
+          "value": "1"
+        },
+        "children": []
       }
     ]
   },

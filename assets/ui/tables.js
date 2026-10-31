@@ -1,7 +1,45 @@
 import "../core/lifecycle.js";
+import "../core/i18n.js";
+import "../core/icons.js";
+import "./menus.js";
 (function () {
   "use strict";
-  var count = 0;
+  var count = 0, sorting = new WeakMap();
+  function sortControl(table, headings, labels, wrapper) {
+    var links = headings.map(function (heading) { return heading.querySelector(".table-sort"); });
+    var signature = JSON.stringify(links.map(function (link, index) { return link && [link.getAttribute("href"), link.dataset.history, link.dataset.ajaxTarget, headings[index].getAttribute("aria-sort"), labels[index]]; }));
+    var old = sorting.get(table);
+    if (old && old.control.isConnected && old.signature === signature) return;
+    if (old) { old.control.remove(); sorting.delete(table); }
+    if (!links.some(Boolean)) { delete table.dataset.mobileSort; return; }
+    var parent = wrapper ? wrapper.parentElement : table.parentElement;
+    if (!parent) return;
+    var control = document.createElement("details"), summary = document.createElement("summary"), options = document.createElement("div");
+    control.className = "popover-menu table-mobile-sort"; control.setAttribute("data-dismissible-menu", ""); control.setAttribute("data-list-menu", "");
+    control.dataset.menuKey = "sort:" + (links.find(Boolean).dataset.ajaxTarget || table.id || table.dataset.mobileTableId);
+    summary.className = "btn btn-ghost btn-sm";
+    var activeIndex = headings.findIndex(function (heading) { return ["ascending", "descending"].includes(heading.getAttribute("aria-sort")); });
+    summary.appendChild(window.TinyCat.icons.create(activeIndex >= 0 && headings[activeIndex].getAttribute("aria-sort") === "descending" ? "arrow-down" : "arrow-up"));
+    if (activeIndex >= 0) summary.className = "btn btn-secondary btn-sm";
+    var label = document.createElement("span"); label.textContent = window.TinyCat.i18n.t("common.sort"); summary.appendChild(label);
+    options.className = "context-menu-popover list-menu-panel table-sort-options";
+    links.forEach(function (link, index) {
+      if (!link) return;
+      var active = ["ascending", "descending"].includes(headings[index].getAttribute("aria-sort"));
+      var option = link.cloneNode(true);
+      option.className = "btn btn-sm table-sort-option " + (active ? "btn-secondary" : "btn-ghost");
+      if (active) {
+        option.setAttribute("aria-current", "true");
+      }
+      options.appendChild(option);
+    });
+    control.append(summary, options);
+    var actions = parent.querySelector(".admin-filter-actions");
+    if (actions) actions.insertBefore(control, actions.querySelector(".admin-per-page-form"));
+    else parent.insertBefore(control, wrapper || table);
+    table.dataset.mobileSort = "";
+    sorting.set(table, { control: control, signature: signature });
+  }
   function prepare(table) {
     if (table.dataset.tableLayout === "scroll" || !table.tHead || table.tHead.rows.length !== 1) return;
     var headings = Array.from(table.tHead.rows[0].cells), rows = [];
@@ -42,6 +80,7 @@ import "../core/lifecycle.js";
     table.dataset.mobileCards = "";
     var wrapper = table.closest(".table-wrap");
     if (wrapper) wrapper.dataset.mobileTable = "";
+    sortControl(table, headings, labels, wrapper);
   }
   window.TinyCat.lifecycle.register("tables", {
     hydrateOrder: 10,

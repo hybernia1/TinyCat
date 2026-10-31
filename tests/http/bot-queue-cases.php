@@ -19,6 +19,12 @@ $assert($status === 200 && count($sourcePosts['data']['items']) === 1 && $source
 $assert($queued['data']['items'][0]['edit_url'] === '/api/bots/accounts/901/posts/9001/management?panel=edit', 'Queued posts reuse the existing bot post editor endpoint.');
 [$status, $queueEditor] = $request('GET', '/api/bots/accounts/901/posts/9001/management?panel=edit', null, 'admin');
 $assert($status === 200 && $queueEditor['data']['item']['editable_body'] === 'Queue test', 'The queue editor loads the scheduled post body.');
+[$status, $invalidFilters] = $request('GET', '/api/bots/queue?bot=999999&source=999999', null, 'admin');
+$assert($status === 200 && $invalidFilters['data']['filters']['bot'] === '' && $invalidFilters['data']['filters']['source'] === '', 'Queue normalizes filters missing from its available choices.');
+[$status, $invalidSource] = $request('GET', '/api/bots/accounts/901/posts?source=999999', null, 'admin');
+$assert($status === 200 && $invalidSource['data']['filters']['source'] === '', 'Bot posts normalize unavailable source filters.');
+[$status, $unknownRun] = $request('GET', '/api/bots/accounts/901/runs?source=unknown', null, 'admin');
+$assert($status === 200 && $unknownRun['data']['filters']['source'] === '', 'Run history rejects unknown-source filters.');
 $publishPath = '/api/bots/queue/9001/publication?bot=901&source=902&per_page=10';
 [$status] = $request('POST', $publishPath, [], 'user', $csrf);
 $assert($status === 403, 'Publishing requires administrator privileges.');

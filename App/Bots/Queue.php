@@ -22,8 +22,13 @@ final class Queue
     public static function payload(): array
     {
         $bot = max(0, (int) Web::get('bot', 0));
+        $bots = ['' => Localization::t('common.all')];
+        foreach (Connection::all('SELECT id, username FROM users WHERE role = ? ORDER BY username, id', ['bot']) as $row) { $bots[(string) $row['id']] = (string) $row['username']; }
+        if ($bot > 0 && !array_key_exists((string) $bot, $bots)) { $bot = 0; }
+        $sources = Administration::sourceChoices($bot > 0 ? $bot : null);
         $status = (string) Web::get('status', '');
         $source = Administration::sourceFilter(Web::get('source', ''));
+        if (!array_key_exists($source, $sources)) { $source = ''; }
         $filters = ['q' => AdminViews::admin_filter_text((string) Web::get('q', '')), 'bot' => $bot > 0 ? (string) $bot : '',
             'status' => array_key_exists($status, AdminViews::admin_user_statuses()) ? $status : '', 'source' => $source] + AdminSorting::state('bot_queue');
         $query = new Query('SELECT c.id, c.body, c.published_at, u.id AS bot_id, u.username, u.status, bs.id AS source_id, bs.name AS source_name
@@ -46,11 +51,9 @@ final class Queue
                 'edit_url' => '/api/bots/accounts/' . (int) $row['bot_id'] . '/posts/' . $id . '/management?panel=edit',
                 'publish_url' => AdminViews::admin_list_url('/api/bots/queue/' . $id . '/publication', $params + ['page' => $pagination['page']])];
         }
-        $bots = ['' => Localization::t('bots.all_bots')];
-        foreach (Connection::all('SELECT id, username FROM users WHERE role = ? ORDER BY username, id', ['bot']) as $row) { $bots[(string) $row['id']] = (string) $row['username']; }
         $navigation = AdminViews::admin_pagination_view_data($pagination, '/api/bots/queue', '#bot-queue-list', $params, historyPath: '/admin/bots/queue');
         unset($navigation['target']);
-        return ['items' => $items, 'filters' => $filters, 'pagination' => $pagination, 'bots' => $bots, 'sources' => Administration::sourceChoices($bot), 'statuses' => array_keys(AdminViews::admin_user_statuses()),
+        return ['items' => $items, 'filters' => $filters, 'pagination' => $pagination, 'bots' => $bots, 'sources' => $sources, 'statuses' => array_keys(AdminViews::admin_user_statuses()),
             'sorting' => AdminSorting::headings('bot_queue', $params), 'navigation' => $navigation];
     }
 

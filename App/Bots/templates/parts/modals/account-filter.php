@@ -28,7 +28,6 @@ ob_start();
 </label>
 <?php
 $body = trim((string) ob_get_clean());
-$footer = '<a class="btn btn-ghost btn-sm" href="' . Html::e((string) ($clear_api_url ?? '/api/bots/accounts')) . '" data-ajax data-ajax-target="#bot-accounts-list" data-history="/admin/bots/accounts">' . Html::icon('close') . ' <span>' . Html::et('common.clear_filters') . '</span></a>';
 
 echo View::part('Support/filter', [
     'id' => 'bot-accounts-filter-modal',
@@ -36,5 +35,4 @@ echo View::part('Support/filter', [
     'target' => '#bot-accounts-list',
     'formAttributes' => ['data-history' => '/admin/bots/accounts'],
     'body' => $body,
-    'footer' => $footer,
 ]);

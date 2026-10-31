@@ -26,11 +26,13 @@ final class Administration
     /** @return array<string|int, string> */
     public static function sourceChoices(?int $botId = null): array
     {
-        $choices = ['' => \TinyCat\Support\Localization::t('bots.all_sources'), 'unknown' => \TinyCat\Support\Localization::t('bots.unknown_source')];
+        $choices = ['' => \TinyCat\Support\Localization::t('common.all'), 'unknown' => \TinyCat\Support\Localization::t('bots.unknown_source')];
         $query = new \TinyCat\Database\Query('SELECT bs.id, bs.name, u.username FROM bot_sources bs INNER JOIN users u ON u.id = bs.bot_user_id');
         $query->where('u.role = ?', 'bot');
         if ($botId !== null && $botId > 0) { $query->where('u.id = ?', $botId); }
-        foreach ($query->order('bs.name ASC, bs.id ASC')->all() as $row) { $choices[(string) $row['id']] = (string) $row['name'] . ' (@' . (string) $row['username'] . ')'; }
+        foreach ($query->order('bs.name ASC, bs.id ASC')->all() as $row) {
+            $choices[(string) $row['id']] = (string) $row['name'] . ($botId === null ? ' · ' . (string) $row['username'] : '');
+        }
         return $choices;
     }
     private static ?int $filterBotId = null;
@@ -134,7 +136,9 @@ final class Administration
         $query = new \TinyCat\Database\Query('SELECT c.id, c.body, c.published_at, bs.id AS source_id, bs.name AS source_name
             FROM content c LEFT JOIN bot_source_posts bsp ON bsp.content_id = c.id LEFT JOIN bot_sources bs ON bs.id = bsp.source_id');
         $query->where('c.author_id = ?', $botId);
+        $sources = self::sourceChoices($botId);
         $source = self::sourceFilter(\TinyCat\Http\Web::get('source', ''));
+        if (!array_key_exists($source, $sources)) { $source = ''; }
         self::filterSource($query, $source);
         $publication = (string) \TinyCat\Http\Web::get('publication', '');
         $publication = in_array($publication, ['published', 'queued'], true) ? $publication : '';
@@ -165,7 +169,7 @@ final class Administration
         foreach (['previous', 'next'] as $key) { if (is_array($navigation[$key] ?? null)) { $navigation[$key]['history_url'] = false; } }
         foreach ($navigation['pages'] as &$page) { $page['history_url'] = false; }
         unset($page);
-        return ['items' => $items, 'total_count' => $totalCount, 'sources' => self::sourceChoices($botId), 'pagination' => $pagination, 'sorting' => $sorting, 'filters' => $params, 'api_url' => $apiUrl, 'history_url' => false,
+        return ['items' => $items, 'total_count' => $totalCount, 'sources' => $sources, 'pagination' => $pagination, 'sorting' => $sorting, 'filters' => $params, 'api_url' => $apiUrl, 'history_url' => false,
             'list_target' => '#bot-detail-posts-list',
             'filter_modal' => 'bot-detail-posts-filter-modal', 'clear_url' => $apiUrl . '?scope=modal',
             'url' => \TinyCat\Support\AdminViews::admin_list_url($apiUrl, $params + ['page' => $pagination['page']]),
@@ -193,7 +197,10 @@ final class Administration
             $pattern = '%' . \TinyCat\Database\Connection::escapeLike($q) . '%';
             $query->where("bs.name LIKE ? ESCAPE '!' OR br.error LIKE ? ESCAPE '!'", $pattern, $pattern);
         }
+        $sources = self::sourceChoices($botId);
+        unset($sources['unknown']);
         $source = self::sourceFilter(\TinyCat\Http\Web::get('source', ''));
+        if (!array_key_exists($source, $sources)) { $source = ''; }
         self::filterSource($query, $source);
         $statuses = ['success', 'posted', 'current', 'running', 'error', 'skipped', 'completed', 'interrupted'];
         $status = (string) \TinyCat\Http\Web::get('status', '');
@@ -210,8 +217,6 @@ final class Administration
         foreach (['previous', 'next'] as $key) { if (is_array($navigation[$key] ?? null)) { $navigation[$key]['history_url'] = false; } }
         foreach ($navigation['pages'] as &$page) { $page['history_url'] = false; }
         unset($page);
-        $sources = self::sourceChoices($botId);
-        unset($sources['unknown']);
         return ['runs' => Resource::runs($query->order(\TinyCat\Support\AdminSorting::order('bot_runs', $sortingState))->limit((int) $pagination['per_page'], (int) $pagination['offset'])->all()),
             'pagination' => $pagination, 'filters' => $params, 'sources' => $sources, 'statuses' => $statuses, 'sorting' => $sorting,
             'api_url' => $apiUrl, 'history_url' => false, 'list_target' => '#bot-detail-runs-list', 'filter_modal' => 'bot-detail-runs-filter-modal',

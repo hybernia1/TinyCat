@@ -48,7 +48,7 @@ import "../../ui/tabs.js";
     Object.values(data.sorting || {}).forEach(function (heading) { heading.target = data.list_target; heading.history = false; });
     var navigation = data.navigation || {};
     [navigation.previous, navigation.next].concat(navigation.pages || []).forEach(function (link) { if (link) { link.history_url = false; } });
-    state.sources.dataset.listUrl = "/api/bots/sources?" + new URLSearchParams(Object.assign({}, data.filters, { bot: state.id, page: data.pagination.page || 1 }));
+    state.sources.dataset.listUrl = "/api/bots/sources?" + new URLSearchParams(Object.assign({}, data.filters, { bot: state.id, page: data.pagination.page || 1, per_page: data.pagination.per_page }));
     T.bots.sources(state.sources, data);
     state.sources.dataset.loaded = "true";
     pagination(state.sources, source);

@@ -1,5 +1,6 @@
 {
   "common": {
+    "sort": "Řazení",
     "refresh": "Obnovit",
     "save": "Uložit",
     "create": "Vytvořit",
@@ -76,13 +77,7 @@
     "activate": "Aktivovat",
     "deactivate": "Deaktivovat",
     "activated": "{entity} aktivován.",
-    "deactivated": "{entity} deaktivován.",
-    "list_results": {
-      "one": "Nalezen {count} záznam",
-      "few": "Nalezeny {count} záznamy",
-      "many": "Nalezeno {count} záznamů",
-      "other": "Nalezeno {count} záznamů"
-    }
+    "deactivated": "{entity} deaktivován."
   },
   "relative": {
     "now": "teď",

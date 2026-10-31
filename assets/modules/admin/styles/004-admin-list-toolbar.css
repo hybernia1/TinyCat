@@ -47,17 +47,14 @@
   text-decoration: none;
 }
 
-.table-sort-arrows {
+.table-sort-indicator {
   display: inline-flex;
   font-size: 0.8em;
   color: var(--muted);
-}
-
-.table-sort-arrows > span {
   opacity: 0.35;
 }
 
-.table-sort-arrows > [data-active] {
+.table-sort-indicator[data-active] {
   color: var(--primary);
   opacity: 1;
 }

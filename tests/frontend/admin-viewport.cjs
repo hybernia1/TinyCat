@@ -70,6 +70,9 @@ try {
     assert.ok(item.touchSafe && item.outsideCloses && item.hoverWorks && item.frameTitleKept && item.disposeCloses && item.shortHidden && item.lazyHintsReady, "Tooltip hover, touch, safe text, lazy panels and frame semantics remain usable: " + label);
     assert.ok(item.actionsAligned, "Action cells stay right aligned with controls on one line: " + label);
     assert.ok(item.navigationFits && item.navigationChanges, "The compact section switch fits below the header and activates the same tab panels: " + label);
+    assert.ok(item.sortingWorks, "Sorting preserves links, stays open across rendering and respects explicit dismissal: " + label);
+    assert.ok(item.chipsWork, "Removing one filter preserves other filters, sorting and page size, resets the page and retains keyboard focus: " + label);
+    assert.ok(item.summaryClean, "Filter summaries contain badges only and collapse when empty: " + label);
     assert.ok(item.cardsFit && item.desktopTable && item.sortAvailable && item.hydrationStable && item.fallbackUsable && item.complexSpansKept && item.emptyKept, "Mobile cards stay readable, sortable and touchable while desktop tables, complex spans and empty states remain usable: " + label);
   }
   for (const context of ['page', 'modal', 'accounts']) {

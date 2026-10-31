@@ -24,8 +24,9 @@ Settings are opened directly from the administration navigation in a modal.
 - Inside `card-body`, use one `stack stack-gap-14` containing
   `ui/list-toolbar`, `table-wrap > table.table`, and `ui/pagination`.
 - `ui/list-toolbar` includes the shared `ui/list-summary` below its controls.
-  Show the full filtered result count from pagination metadata, search text,
-  and small neutral chips for active filter labels and selected values.
+  Show only small neutral chips for search text and active filter labels
+  and selected values. Do not prefix them with a result-count sentence.
+  Hide the complete summary row when it contains no badges.
   Filter summaries are scoped by list target and rebuilt from the matching
   filter form after hydration. Exclude sorting, page size and hidden state.
   Reuse standard cluster, typography and badge tokens; do not add another card.
@@ -94,8 +95,12 @@ may wrap within the action footer. Sort links remain available above the
 cards. At 600px and above the original column layout is retained. Identity
 content keeps a 12rem minimum there, so wider tables scroll locally instead
 of squeezing names down to a few characters.
-Mobile sort links form a regular two-column grid, use normal label casing
-and compact direction icons, and preserve the original AJAX/history links.
+Mobile sorting is collapsed into a single control beside Filters. Reuse
+the same small ghost/secondary button and `list-menu-panel` popover surface,
+dimensions and positioning. The active option is highlighted; choosing it
+reverses its single direction arrow. Clone the original server-prepared links
+so filters, pagination resets, AJAX targets and modal history policy survive.
+Desktop column headings remain the sorting controls on larger screens.
 
 Keep native table elements, explicit table/row/cell roles and `headers`
 associations. Visual labels are hidden from assistive technology to avoid
@@ -162,6 +167,11 @@ links and buttons keep their normal click action.
 
 ## Filters
 
+Use short field names such as Bot, Source, Status and Role rather than
+instructions such as Filter by bot. Use `common.all` for the neutral option
+under a named field. Omit repeated bot names from source options when the
+list is already scoped to that bot; retain them to disambiguate global lists.
+
 Administration filters use a dismissible dropdown beside the toolbar,
 following the frontend archive filter interaction. `ui/filter-trigger`
 provides native details/summary controls; `ui.filterPanel(id, form)` mounts
@@ -171,21 +181,28 @@ replacement, then remount it during hydration so selections survive.
 Both frontend and administration use the shared `popover-menu` and
 `context-menu-popover` primitives. Inherit surface, border, radius and
 shadow tokens from that primitive; filter-specific CSS defines only form
-layout and dimensions. Use standard fields, 12px spacing, and small ghost
-Clear actions. The trigger is ghost by default and secondary when filters
+layout and dimensions. Use standard fields and 12px spacing; do not add a
+Clear-all action. Active summary badges use `ui/filter-chip` buttons with a
+close icon. Removing one chip clears only that field, resets the page to one
+and preserves other filters, sorting and page size. Search chips also clear
+the matching search input. Keyboard removal moves focus to the next chip
+or the search input when none remain. The trigger is ghost by default and secondary when filters
 are active; search, sorting and page size do not count as active filters.
 The open panel stays within the viewport and the modal body. Its height
 uses the available space, opening above the trigger when needed; longer
 forms scroll inside the panel. Recalculate placement on resize and ancestor
 scroll, and after restoring a filter during list replacement.
 Changes to visible filter controls submit immediately through the shared
-`data-submit-on-change` behavior; do not add an Apply button. Clear remains
-available. Both retain the list's target, query state and history policy.
+`data-submit-on-change` behavior; do not add an Apply button. Chip removal
+uses the same form transport and retains the target and history policy.
 Automatic updates keep the dropdown open across list/form replacement,
 including its scroll position and focus on the changed field. Respect a
 menu explicitly closed while a request was pending. Errors leave it open. Escape closes
 the menu and returns focus to its summary, without closing an enclosing
 editor. Filter controls must not carry modal-close attributes.
+Sorting choices likewise keep their menu open across an AJAX refresh,
+including scroll and keyboard focus. `data-menu-key` scopes restoration to
+the list target; a menu dismissed during the request must stay closed.
 
 ## Consolidation summary
 
@@ -346,3 +363,5 @@ list at five viewport widths with open/closed filters and long summary values.
 It checks document bounds and preserves local table overflow. Use
 `TINYCAT_TEST_CHROME` for an explicit Chromium executable; otherwise a supported
 local installation is discovered or the render test reports a skip.
+
+Filter state must agree between the query, popover and removable chips. Normalize unavailable bot/source choices before querying; source choices follow the selected bot. Removing a chip resets only that field to its neutral option, preserves search, sorting and page size, and returns to page 1. Hidden transport fields and unchecked controls do not mark filters active. Page size belongs only in the list toolbar.

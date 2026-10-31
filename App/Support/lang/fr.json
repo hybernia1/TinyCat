@@ -1,5 +1,6 @@
 {
   "common": {
+    "sort": "Trier",
     "refresh": "Rafraîchir",
     "save": "Enregistrer",
     "create": "Créer",
@@ -76,13 +77,7 @@
     "activate": "Activer",
     "deactivate": "Désactiver",
     "activated": "{entity} activé.",
-    "deactivated": "{entity} désactivé.",
-    "list_results": {
-      "one": "{count} résultat trouvé",
-      "few": "{count} résultats trouvés",
-      "many": "{count} résultats trouvés",
-      "other": "{count} résultats trouvés"
-    }
+    "deactivated": "{entity} désactivé."
   },
   "relative": {
     "now": "maintenant",

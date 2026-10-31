@@ -1,5 +1,6 @@
 {
   "common": {
+    "sort": "Сортування",
     "refresh": "Оновити",
     "save": "Зберегти",
     "create": "Створити",
@@ -76,13 +77,7 @@
     "activate": "Активувати",
     "deactivate": "Деактивувати",
     "activated": "{entity} активовано.",
-    "deactivated": "{entity} деактивовано.",
-    "list_results": {
-      "one": "Знайдено {count} запис",
-      "few": "Знайдено {count} записи",
-      "many": "Знайдено {count} записів",
-      "other": "Знайдено {count} записів"
-    }
+    "deactivated": "{entity} деактивовано."
   },
   "relative": {
     "now": "зараз",

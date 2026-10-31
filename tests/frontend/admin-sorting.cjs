@@ -4,11 +4,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const handlers = {}, calls = [], applied = [], target = { id: "users-list", dataset: {} };
+const menuSteps = [];
+let trackMenu = false;
 const document = { querySelector: () => target, addEventListener(name, fn) { handlers[name] = fn; } };
 class FormData extends Map { constructor(form) { super(form.fields); } }
 const T = {
   dom: { find: () => target, emit() {} },
-  lifecycle: { register() {}, hydrate() {} },
+  lifecycle: { register() {}, hydrate() { if (trackMenu) menuSteps.push('hydrate'); } },
   api: { unwrap: response => response.data, errors: () => null, details: () => ({}), async request(url, options) { calls.push({ url, options }); return { data: { url } }; } },
   forms: { clearErrors() {}, applyErrors() {}, reset() {}, markClean() {}, loading() {}, dirty: () => [], confirmDiscard: async () => true },
   i18n: { label: key => key }, actions: {}, dialog: {},
@@ -29,7 +31,13 @@ function link(url, history, method = "GET") {
   return { target: { closest: () => source }, preventDefault() {} };
 }
 (async function () {
+  const result = T.modules.result;
+  trackMenu = true;
+  T.menus = { capture() { if (trackMenu) { menuSteps.push('capture'); return {key:'sort:#users-list'}; } return null; }, restore(state) { assert.equal(state.key, 'sort:#users-list'); menuSteps.push('restore'); } };
+  T.modules.result = (...args) => { if (trackMenu) menuSteps.push('render'); result(...args); };
   await handlers.click(link("/api/users?q=old&sort=username&direction=desc&page=1", "/admin/users?q=old&sort=username&direction=desc&page=1"));
+  assert.deepEqual(menuSteps, ['capture','render','hydrate','restore'], 'Open sorting menus are restored after the AJAX result and new controls are hydrated.');
+  trackMenu = false;
   assert.equal(window.location.searchParams.get("direction"), "desc");
   assert.equal(window.location.searchParams.get("page"), "1");
   const form = { fields: [["q", "new"], ["role", "user"]], dataset: { ajaxTarget: "#users-list", apiMethod: "GET", history: "/admin/users" }, getAttribute: name => name === "action" ? "/api/users" : "get" };

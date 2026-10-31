@@ -133,6 +133,15 @@ referrers, revealing no parent path or query. Existing `no-referrer` snippets
 continue to resize after the TinyCat or WordPress helper sends its `ready`
 handshake; without a handshake they retain their declared height.
 
+## Upgrading to 5.11.0: compact list controls
+
+No database migration or configuration change is required. Mobile sorting shares
+the filter popover appearance and remains open while choices update the list.
+Active filters are removable chips; removing one preserves other filters, search,
+sorting and page size, and returns to the first page. Unavailable bot/source
+choices are normalized to All before querying, including source choices from a
+different bot. List controls and URL state retain the existing access checks.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

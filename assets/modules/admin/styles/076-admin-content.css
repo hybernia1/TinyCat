@@ -1,14 +1,13 @@
 @media (max-width: 759px) {
   .admin-filter-actions {
     justify-content: space-between;
-    gap: 16px;
   }
 
-  .admin-filter-actions > .filter-menu {
+  .admin-filter-actions > [data-list-menu] {
     position: static;
   }
 
-  .admin-filter-actions .filter-menu-panel {
+  .admin-filter-actions .list-menu-panel {
     left: 0;
     right: auto;
   }
