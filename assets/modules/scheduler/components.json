@@ -705,37 +705,6 @@
             "name": "status"
           }
         }
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "cluster gap-2"
-        },
-        "children": [
-          {
-            "tag": "a",
-            "attrs": {
-              "href": "/api/scheduler/tasks",
-              "data-ajax": "",
-              "data-ajax-target": "#scheduler-list",
-              "data-history": "/admin/cron/list",
-              "class": "btn btn-ghost btn-sm"
-            },
-            "children": [
-              {
-                "icon": "close"
-              },
-              {
-                "tag": "span",
-                "children": [
-                  {
-                    "t": "common.clear_filters"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
       }
     ]
   },

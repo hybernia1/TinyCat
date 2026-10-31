@@ -1,5 +1,6 @@
 {
   "common": {
+    "sort": "Sortierung",
     "refresh": "Aktualisieren",
     "save": "Speichern",
     "create": "Erstellen",
@@ -76,13 +77,7 @@
     "activate": "Aktivieren",
     "deactivate": "Deaktivieren",
     "activated": "{entity} aktiviert.",
-    "deactivated": "{entity} deaktiviert.",
-    "list_results": {
-      "one": "{count} Eintrag gefunden",
-      "few": "{count} Einträge gefunden",
-      "many": "{count} Einträge gefunden",
-      "other": "{count} Einträge gefunden"
-    }
+    "deactivated": "{entity} deaktiviert."
   },
   "relative": {
     "now": "Jetzt",

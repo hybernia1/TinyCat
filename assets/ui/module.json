@@ -15,7 +15,8 @@
       "ui/modal",
       "ui/field",
       "ui/select",
-      "ui/editor-actions"
+      "ui/editor-actions",
+      "ui/filter-chip"
     ],
     "styles": [
       "assets/ui/styles/001-root.css",
@@ -66,6 +67,7 @@
     ],
     "translations": [
       "common.menu",
+      "common.sort",
       "common.all",
       "common.cancel",
       "common.close",

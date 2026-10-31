@@ -1,5 +1,6 @@
 {
   "common": {
+    "sort": "Sıralama",
     "refresh": "Yenile",
     "save": "Kaydet",
     "create": "Oluştur",
@@ -76,13 +77,7 @@
     "activate": "Etkinleştir",
     "deactivate": "Devre dışı bırak",
     "activated": "{entity} etkinleştirildi.",
-    "deactivated": "{entity} devre dışı bırakıldı.",
-    "list_results": {
-      "one": "{count} kayıt bulundu",
-      "few": "{count} kayıt bulundu",
-      "many": "{count} kayıt bulundu",
-      "other": "{count} kayıt bulundu"
-    }
+    "deactivated": "{entity} devre dışı bırakıldı."
   },
   "relative": {
     "now": "şimdi",

@@ -2967,37 +2967,6 @@
             "name": "status"
           }
         }
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "cluster gap-2"
-        },
-        "children": [
-          {
-            "tag": "a",
-            "attrs": {
-              "href": "/api/bots/queue",
-              "data-ajax": "",
-              "data-ajax-target": "#bot-queue-list",
-              "data-history": "/admin/bots/queue",
-              "class": "btn btn-ghost btn-sm"
-            },
-            "children": [
-              {
-                "icon": "close"
-              },
-              {
-                "tag": "span",
-                "children": [
-                  {
-                    "t": "common.clear_filters"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
       }
     ]
   },
@@ -3344,55 +3313,6 @@
             "name": "publication"
           }
         }
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "cluster gap-2"
-        },
-        "children": [
-          {
-            "tag": "a",
-            "attrs": {
-              "href": {
-                "or": [
-                  {
-                    "get": "clear_url"
-                  },
-                  {
-                    "get": "api_url"
-                  }
-                ]
-              },
-              "data-ajax": "",
-              "data-ajax-target": {
-                "or": [
-                  {
-                    "get": "list_target"
-                  },
-                  "#bot-detail-posts-list"
-                ]
-              },
-              "data-history": {
-                "get": "history_url"
-              },
-              "class": "btn btn-ghost btn-sm"
-            },
-            "children": [
-              {
-                "icon": "close"
-              },
-              {
-                "tag": "span",
-                "children": [
-                  {
-                    "t": "common.clear_filters"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
       }
     ]
   },
@@ -3631,55 +3551,6 @@
             }
           }
         }
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "cluster gap-2"
-        },
-        "children": [
-          {
-            "tag": "a",
-            "attrs": {
-              "href": {
-                "or": [
-                  {
-                    "get": "clear_url"
-                  },
-                  {
-                    "get": "api_url"
-                  }
-                ]
-              },
-              "data-ajax": "",
-              "data-ajax-target": {
-                "or": [
-                  {
-                    "get": "list_target"
-                  },
-                  "#bot-detail-posts-list"
-                ]
-              },
-              "data-history": {
-                "get": "history_url"
-              },
-              "class": "btn btn-ghost btn-sm"
-            },
-            "children": [
-              {
-                "icon": "close"
-              },
-              {
-                "tag": "span",
-                "children": [
-                  {
-                    "t": "common.clear_filters"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
       }
     ]
   }

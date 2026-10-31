@@ -1,5 +1,6 @@
 {
   "common": {
+    "sort": "Sorteren",
     "refresh": "Vernieuwen",
     "save": "Opslaan",
     "create": "Maken",
@@ -76,13 +77,7 @@
     "activate": "Activeren",
     "deactivate": "Deactiveren",
     "activated": "{entity} geactiveerd.",
-    "deactivated": "{entity} gedeactiveerd.",
-    "list_results": {
-      "one": "{count} resultaat gevonden",
-      "few": "{count} resultaten gevonden",
-      "many": "{count} resultaten gevonden",
-      "other": "{count} resultaten gevonden"
-    }
+    "deactivated": "{entity} gedeactiveerd."
   },
   "relative": {
     "now": "nu",

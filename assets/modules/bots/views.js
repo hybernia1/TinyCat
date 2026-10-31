@@ -28,7 +28,7 @@ import "./detail.js";
   function sources(root, data) {
     var view = T.components.render("bots/sources", data);
     root.replaceChildren(view);
-    if (!data.scoped) { syncFilter("bots-filter-modal", data.filters || { bot: data.filter_bot_user_id }); }
+    if (!data.scoped) { syncFilter("bots-filter-modal", Object.assign({}, data.filters || { bot: data.filter_bot_user_id }, data.pagination ? { per_page: data.pagination.per_page } : {})); }
   }
   function posts(root, response, source) {
     var data = Object.assign({}, response.data, { pagination: U.pagination(response) });

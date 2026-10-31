@@ -27,7 +27,7 @@ $assert($status === 200 && $filteredRuns['meta']['pagination']['total'] === 16 &
 [$status, $searchedRuns] = $request('GET', '/api/bots/accounts/3/runs?q=History%20note%2031', null, 'admin');
 $assert($status === 200 && $searchedRuns['meta']['pagination']['total'] === 1 && $searchedRuns['data']['runs'][0]['id'] === 96031, 'History search includes diagnostic notes.');
 [$status, $foreignRuns] = $request('GET', '/api/bots/accounts/3/runs?source=95002', null, 'admin');
-$assert($status === 200 && $foreignRuns['meta']['pagination']['total'] === 0, 'A supplied foreign source never escapes bot scoping.');
+$assert($status === 200 && $foreignRuns['meta']['pagination']['total'] === 31 && $foreignRuns['data']['filters']['source'] === '' && count(array_filter($foreignRuns['data']['runs'], static fn(array $run): bool => $run['source_id'] !== 95001)) === 0, 'An unavailable source is normalized while results remain scoped to the bot.');
 [$status, $runMetadata] = $request('GET', '/api/bots/accounts/3', null, 'admin');
 $assert($status === 200 && $runMetadata['data']['item']['run_count'] === 31, 'The workspace statistic counts all runs, beyond the old thirty-record limit.');
 $botRunsDb->exec('DELETE FROM bot_source_runs WHERE id BETWEEN 96001 AND 96999');

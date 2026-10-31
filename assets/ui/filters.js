@@ -1,27 +1,21 @@
 import "../core/dom.js";
 import "../core/lifecycle.js";
+import "../core/components.js";
 import "./menus.js";
 import "./forms.js";
 (function () {
   "use strict";
   var T = window.TinyCat, forms = new Map();
-  function position(menu) {
-    var panel = menu.querySelector("[data-filter-panel]"), anchor = menu.querySelector("summary");
-    if (!panel || !anchor || !menu.open) { return; }
-    panel.style.transform = "";
-    panel.style.height = "";
-    var body = menu.closest(".modal-body"), clip = body && body.getBoundingClientRect();
-    var top = Math.max(12, clip ? clip.top + 4 : 12);
-    var bottom = Math.min(window.innerHeight - 12, clip ? clip.bottom - 4 : window.innerHeight - 12);
-    var trigger = anchor.getBoundingClientRect(), bounds = panel.getBoundingClientRect();
-    var aboveBottom = Math.min(trigger.top - 4, bottom);
-    var below = Math.max(0, bottom - bounds.top), above = Math.max(0, aboveBottom - top);
-    var upwards = bounds.height > below && above > below;
-    panel.style.height = Math.floor(Math.min(bounds.height, upwards ? above : below)) + "px";
-    bounds = panel.getBoundingClientRect();
-    var x = bounds.left < 12 ? 12 - bounds.left : Math.min(0, window.innerWidth - 12 - bounds.right);
-    var y = upwards ? aboveBottom - bounds.height - bounds.top : 0;
-    panel.style.transform = "translate(" + x + "px, " + y + "px)";
+  function neutral(field) {
+    if (field.options && !Array.from(field.options).some(function (option) { return option.value === ""; })
+      && Array.from(field.options).some(function (option) { return option.value === "0"; })) return "0";
+    return "";
+  }
+  function active(field) {
+    var name = field.getAttribute("name"), type = field.getAttribute("type");
+    return name && !["q", "page", "per_page", "sort", "direction", "scope", "_csrf", "_method"].includes(name)
+      && type !== "hidden" && !field.disabled && (!["checkbox", "radio"].includes(type) || field.checked)
+      && field.value !== neutral(field);
   }
   function summaries() {
     document.body.querySelectorAll("[data-list-summary-filters]").forEach(function (root) {
@@ -31,13 +25,13 @@ import "./forms.js";
       if (!form) { return; }
       form.querySelectorAll("input, select").forEach(function (field) {
         var name = field.getAttribute("name");
-        if (!name || field.getAttribute("type") === "hidden" || ["q", "page", "per_page", "sort", "direction", "scope"].includes(name) || !field.value || field.value === "0") { return; }
+        if (!active(field)) { return; }
         var container = field.closest && field.closest(".field");
         var label = container && container.querySelector(".label");
         var selected = field.options && Array.from(field.options).find(function (option) { return option.selected; });
         var value = selected ? selected.textContent.trim() : field.value;
         var text = label ? label.textContent.trim() + ": " + value : value;
-        root.appendChild(T.dom.element("span", { "class": "badge" }, text));
+        root.appendChild(T.components.render("ui/filter-chip", { target: target, name: name, label: text }));
       });
     });
   }
@@ -59,13 +53,9 @@ import "./forms.js";
       form.hidden = false;
       var summary = panel.parentElement && panel.parentElement.querySelector("summary");
       if (summary) {
-        var active = Array.from(form.querySelectorAll("input, select")).some(function (field) {
-          var name = field.getAttribute("name");
-          return name && !["q", "page", "per_page", "sort", "direction", "scope", "_csrf", "_method"].includes(name)
-            && field.value !== "" && field.value !== "0";
-        });
-        summary.classList.toggle("btn-secondary", active);
-        summary.classList.toggle("btn-ghost", !active);
+        var hasActive = Array.from(form.querySelectorAll("input, select")).some(active);
+        summary.classList.toggle("btn-secondary", hasActive);
+        summary.classList.toggle("btn-ghost", !hasActive);
       }
     });
     summaries();
@@ -74,18 +64,30 @@ import "./forms.js";
     get: function (id) { return forms.get(id); },
     capture: function (source) {
       var menu = source && source.closest && source.closest("[data-filter-menu]");
-      var form = source && source.closest && source.closest("[data-filter-content]");
+      var form = source && source.closest && (source.closest("[data-filter-content]") || source.closest(".admin-search-form"));
+      if (form && form.dataset.filterRemoveFocus) {
+        delete form.dataset.filterRemoveFocus;
+        return { removed: true, target: form.dataset.ajaxTarget };
+      }
       if (!menu || !menu.open || !form) { return null; }
       var panel = menu.querySelector("[data-filter-panel]");
       return { id: form.id, field: form.dataset.filterFocus || "", scroll: panel.scrollTop };
     },
     restore: function (state) {
       if (!state) { return; }
+      if (state.removed) {
+        var summary = Array.from(document.body.querySelectorAll("[data-list-summary]")).find(function (item) { return item.dataset.listSummary === state.target; });
+        var search = Array.from(document.body.querySelectorAll(".admin-search-form")).find(function (item) { return item.dataset.ajaxTarget === state.target; });
+        var focus = summary && summary.querySelector("[data-filter-remove]");
+        focus = focus || (search && search.querySelector('[name="q"]'));
+        if (focus) focus.focus({ preventScroll: true });
+        return;
+      }
       var panel = Array.from(document.body.querySelectorAll("[data-filter-panel]")).find(function (item) { return item.dataset.filterPanel === state.id; });
       var form = forms.get(state.id);
       if (!panel || !panel.parentElement || !form) { return; }
       panel.parentElement.open = true;
-      position(panel.parentElement);
+      T.menus.position(panel.parentElement);
       panel.scrollTop = state.scroll;
       var field = Array.from(form.querySelectorAll("input, select")).find(function (item) { return item.getAttribute("name") === state.field; });
       if (field) { field.focus({ preventScroll: true }); }
@@ -95,7 +97,30 @@ import "./forms.js";
       if (form) { T.forms.dispose(form); form.remove(); }
       forms.delete(id);
     },
-    hydrate: hydrate
+    hydrate: hydrate,
+    init: function () {
+      document.addEventListener("click", function (event) {
+        var chip = event.target.closest && event.target.closest("[data-filter-remove]");
+        if (!chip) return;
+        var target = chip.dataset.filterTarget, name = chip.dataset.filterRemove;
+        var form = Array.from(forms.values()).find(function (item) { return item.dataset.ajaxTarget === target; });
+        if (!form) form = Array.from(document.body.querySelectorAll(".admin-search-form")).find(function (item) { return item.dataset.ajaxTarget === target; });
+        if (!form || form.dataset.apiBusy === "true") return;
+        var field = Array.from(form.querySelectorAll("input, select")).find(function (item) { return item.getAttribute("name") === name; });
+        if (!field) return;
+        event.preventDefault();
+        field.value = neutral(field);
+        if (field.type === "checkbox" || field.type === "radio") field.checked = false;
+        if (name === "q") {
+          Array.from(document.body.querySelectorAll(".admin-search-form")).filter(function (item) { return item.dataset.ajaxTarget === target; }).forEach(function (item) {
+            var input = item.querySelector('[name="q"]'); if (input) input.value = "";
+          });
+        }
+        var page = form.querySelector('[name="page"]'); if (page) page.value = "1";
+        if (event.detail === 0 && document.activeElement === chip) form.dataset.filterRemoveFocus = "true";
+        form.requestSubmit();
+      });
+    }
   };
   T.ui = T.ui || {};
   T.ui.filterPanel = function (id, form) {
@@ -110,19 +135,7 @@ import "./forms.js";
   };
   T.lifecycle.register("filters", {
     hydrateOrder: 5,
-    hydrate: hydrate,
-    init: function () {
-      document.addEventListener("toggle", function (event) {
-        var menu = event.target;
-        if (!menu.matches || !menu.matches("[data-filter-menu]") || !menu.open) { return; }
-        position(menu);
-      }, true);
-      function reposition(event) {
-        if (event.target.closest && event.target.closest("[data-filter-panel]")) { return; }
-        document.querySelectorAll("[data-filter-menu][open]").forEach(position);
-      }
-      window.addEventListener("resize", reposition);
-      document.addEventListener("scroll", reposition, true);
-    }
+    init: T.filters.init,
+    hydrate: hydrate
   });
 }());

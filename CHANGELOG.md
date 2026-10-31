@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.11.0 - 2026-10-31
+
+- Simplify table sorting to one direction indicator and reuse the filter popover appearance for mobile sorting. Keep sorting menus open across selections and AJAX refreshes, including keyboard focus and scroll position.
+- Show active filters as removable chips, remove redundant result-count text and Clear all controls, and shorten filter labels in all 12 interface languages. Preserve search, sorting and page size when removing one filter.
+- Normalize unavailable bot/source combinations consistently with the visible choices, share active-filter detection, and remove duplicate page-size selection. Keep scoped source refreshes on the selected page size and prevent chip edits during an in-flight request. No new database migration is required.
+
 ## 5.10.0 - 2026-10-30
 
 - Make administration tables readable on mobile with labeled row cards, touch-sized actions and retained sorting. Keep complex comparison tables locally scrollable and preserve table accessibility, empty states and AJAX refresh behavior.

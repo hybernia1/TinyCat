@@ -634,37 +634,6 @@
             "name": "reason"
           }
         }
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "cluster gap-2"
-        },
-        "children": [
-          {
-            "tag": "a",
-            "attrs": {
-              "href": "/api/moderation/reports",
-              "data-ajax": "",
-              "data-ajax-target": "#moderation-reports",
-              "data-history": "/admin/moderation/reports",
-              "class": "btn btn-ghost btn-sm"
-            },
-            "children": [
-              {
-                "icon": "close"
-              },
-              {
-                "tag": "span",
-                "children": [
-                  {
-                    "t": "common.clear_filters"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
       }
     ]
   }

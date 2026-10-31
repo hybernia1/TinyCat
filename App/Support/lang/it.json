@@ -1,5 +1,6 @@
 {
   "common": {
+    "sort": "Ordina",
     "refresh": "Aggiorna",
     "save": "Salva",
     "create": "Crea",
@@ -76,13 +77,7 @@
     "activate": "Attiva",
     "deactivate": "Disattiva",
     "activated": "{entity} attivato.",
-    "deactivated": "{entity} disattivato.",
-    "list_results": {
-      "one": "{count} risultato trovato",
-      "few": "{count} risultati trovati",
-      "many": "{count} risultati trovati",
-      "other": "{count} risultati trovati"
-    }
+    "deactivated": "{entity} disattivato."
   },
   "relative": {
     "now": "adesso",

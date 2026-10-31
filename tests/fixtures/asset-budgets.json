@@ -1,63 +1,63 @@
 {
   "/admin/site-health": {
-    "raw_js": 179200,
-    "gzip_js": 40960,
+    "raw_js": 185344,
+    "gzip_js": 43008,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/moderation": {
-    "raw_js": 179200,
-    "gzip_js": 40960,
+    "raw_js": 184320,
+    "gzip_js": 41984,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/users": {
-    "raw_js": 177152,
-    "gzip_js": 40960,
+    "raw_js": 182272,
+    "gzip_js": 41984,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/bots": {
-    "raw_js": 327680,
-    "gzip_js": 68608,
+    "raw_js": 329728,
+    "gzip_js": 69632,
     "raw_css": 55296,
     "gzip_css": 11264,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin/cron": {
-    "raw_js": 197632,
-    "gzip_js": 44032,
+    "raw_js": 202752,
+    "gzip_js": 45056,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/install": {
-    "raw_js": 47104,
-    "gzip_js": 14336,
+    "raw_js": 51200,
+    "gzip_js": 15360,
     "raw_css": 38912,
     "gzip_css": 8192,
     "scripts": 4,
     "stylesheets": 1
   },
   "/admin": {
-    "raw_js": 157696,
-    "gzip_js": 37888,
+    "raw_js": 163840,
+    "gzip_js": 38912,
     "raw_css": 47104,
     "gzip_css": 10240,
     "scripts": 4,
     "stylesheets": 1
   },
   "/": {
-    "raw_js": 338944,
-    "gzip_js": 71680,
+    "raw_js": 344064,
+    "gzip_js": 72704,
     "raw_css": 71680,
     "gzip_css": 13312,
     "scripts": 4,

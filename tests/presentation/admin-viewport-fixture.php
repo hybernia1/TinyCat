@@ -8,20 +8,23 @@ require $root . '/App/bootstrap.php';
 TinyCat\Users\Authentication::reset(null, true);
 $filters = ['q' => '', 'bot' => '3'];
 $items = [['id' => 7, 'name' => str_repeat('Source', 25), 'feed_url' => 'https://example.test/' . str_repeat('long-path', 30), 'bot_user_id' => 3, 'bot_username' => 'demo_bot', 'enabled' => true, 'interval_minutes' => 60, 'publication_interval_minutes' => 30, 'last_error' => str_repeat('Error ', 25)]];
-$list = TinyCat\Support\Components::render('bots/sources', ['items' => $items, 'bots' => [['id' => 3, 'username' => 'demo_bot']], 'filters' => $filters, 'sorting' => [], 'navigation' => ['visible' => false], 'pagination' => ['page' => 1, 'per_page' => 25, 'total' => 1]]);
+$list = TinyCat\Support\Components::render('bots/sources', ['items' => $items, 'bots' => [['id' => 3, 'username' => 'demo_bot']], 'filters' => $filters, 'sorting' => TinyCat\Support\AdminSorting::headings('sources', $filters + ['sort' => 'name', 'direction' => 'asc']), 'navigation' => ['visible' => false], 'pagination' => ['page' => 1, 'per_page' => 25, 'total' => 1]]);
 $content = TinyCat\Support\AdminViews::listCard('Sources', 'rss', 'bots-list', 'bots-filter-modal', new TinyCat\Support\Markup($list), primary: true);
 $content .= TinyCat\Support\View::part('Bots/modals/source-filter', ['bots' => [['id' => 3, 'username' => str_repeat('bot', 50)]], 'filter_bot_id' => 3, 'filters' => $filters]);
 $html = TinyCat\Support\View::render('admin', ['content' => $content, 'actions' => '<button class="btn btn-primary btn-sm">New source</button>', 'adminIdentity' => '@admin', 'appName' => 'TinyCat', 'nav' => [], 'siteLogoUrl' => '', 'title' => 'Sources', 'authUser' => null, 'profileUrl' => '', 'profileNeedsEmail' => false, 'userMenu' => '', 'settingsEditor' => '', 'titleIcon' => 'rss'], $root . '/App/Site/templates');
 $context = match ($argv[1] ?? '') { '--modal' => 'modal', '--accounts' => 'accounts', default => 'page' };
 if ($context === 'accounts') {
     $account = ['id' => 3, 'username' => str_repeat('demo_bot_', 20), 'status' => 'active', 'source_count' => 1, 'post_count' => 12, 'updated_at' => '2026-10-30T12:00:00Z'];
-    $list = TinyCat\Support\Components::render('bots/accounts', ['items' => [$account, array_replace($account, ['id' => 4, 'status' => 'ban'])], 'filters' => [], 'sorting' => [], 'navigation' => ['visible' => false], 'pagination' => ['page' => 1, 'per_page' => 25, 'total' => 2]]);
+    $list = TinyCat\Support\Components::render('bots/accounts', ['items' => [$account, array_replace($account, ['id' => 4, 'status' => 'ban'])], 'filters' => [], 'sorting' => TinyCat\Support\AdminSorting::headings('accounts', ['sort' => 'source_count', 'direction' => 'desc']), 'navigation' => ['visible' => false], 'pagination' => ['page' => 1, 'per_page' => 25, 'total' => 2]]);
     $content = TinyCat\Support\AdminViews::listCard('Accounts', 'users', 'bot-accounts-list', 'bot-accounts-filter-modal', new TinyCat\Support\Markup($list), primary: true);
     $content .= TinyCat\Support\View::part('Bots/modals/account-filter', ['filters' => [], 'prepared' => ['accounts_url' => '/api/bots/accounts', 'admin_user_statuses' => ['active' => 'Active', 'ban' => 'Inactive']]]);
     $html = TinyCat\Support\View::render('admin', ['content' => $content, 'actions' => '', 'adminIdentity' => '@admin', 'appName' => 'TinyCat', 'nav' => [], 'siteLogoUrl' => '', 'title' => 'Accounts', 'authUser' => null, 'profileUrl' => '', 'profileNeedsEmail' => false, 'userMenu' => '', 'settingsEditor' => '', 'titleIcon' => 'users'], $root . '/App/Site/templates');
 }
 if ($context === 'modal') {
     $model = ['runs' => [['source_name' => str_repeat('Source', 25), 'status' => 'error', 'started_at' => '2026-10-30T09:00:00Z', 'items_seen' => 0, 'error' => 'Feed unavailable']], 'filters' => ['q' => '', 'source' => '', 'status' => ''], 'sources' => ['' => 'All sources', '7' => str_repeat('Long source name ', 20)], 'sorting' => [], 'navigation' => ['visible' => false], 'pagination' => ['page' => 1, 'per_page' => 25, 'total' => 1], 'api_url' => '/api/bots/accounts/3/runs', 'history_url' => false, 'list_target' => '#bot-detail-runs-list', 'filter_modal' => 'bot-detail-runs-filter-modal'];
+    $model['sorting'] = TinyCat\Support\AdminSorting::headings('bot_runs', ['sort' => 'started_at', 'direction' => 'desc'], '/api/bots/accounts/3/runs', '/admin/bots/3');
+    foreach ($model['sorting'] as &$heading) { $heading['history'] = false; }
+    unset($heading);
     $html = TinyCat\Support\Components::render('ui/modal', ['root_attributes' => ['class' => 'modal', 'data-open' => 'true', 'data-modal-kind' => 'editor', 'data-modal-size' => 'workspace'], 'panel_attributes' => ['class' => 'modal-panel', 'data-tabs' => ''], 'title' => '@demo_bot', 'title_id' => 'fixture-title', 'close_label' => 'Close', 'close_icon' => new TinyCat\Support\Markup(TinyCat\Support\Html::icon('close')), 'body' => new TinyCat\Support\Markup(TinyCat\Support\Components::render('bots/runs-list', $model)), 'has_footer' => true, 'footer' => new TinyCat\Support\Markup('<button class="btn">Close</button>')]);
     $html .= TinyCat\Support\Components::render('bots/run-filter-form', $model);
 }
@@ -30,12 +33,15 @@ echo '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" con
 ?>
 <script>
 window.TinyCat = { lifecycle: { register: function (name, hooks) { if (hooks.init) hooks.init(); if (name === 'tables') { window.tableService = hooks; hooks.hydrate(document); } if (name === 'tooltips') { window.tooltipService = hooks; hooks.hydrate(document); } } } };
+window.TinyCat.i18n = { t: key => ({'common.menu':'Menu', 'common.sort':'Řazení'})[key] || key };
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/dom.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/icons.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/components.js')) ?>
+window.TinyCat.components.register(<?= json_encode(array_intersect_key(TinyCat\Support\Components::templates(), array_flip(['ui/filter-chip', 'ui/list-summary'])), JSON_HEX_TAG | JSON_THROW_ON_ERROR) ?>);
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/filters.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tables.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tooltips.js')) ?>
-window.TinyCat.i18n = { t: key => key === 'common.menu' ? 'Menu' : key };
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/dom.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/icons.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/menus.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/fields.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tabs.js')) ?>
 let escapedToModal = 0;
@@ -65,7 +71,8 @@ if (context === 'modal') {
 }
 const form = document.querySelector('[data-filter-content]') || document.querySelector('form:not(.admin-search-form):not(.admin-per-page-form)');
 const panel = document.querySelector('[data-filter-panel]');
-panel.append(form); form.hidden = false;
+panel.append(form); form.hidden = false; form.id = panel.dataset.filterPanel; form.dataset.filterContent = '';
+window.TinyCat.filters.hydrate();
 const menu = panel.parentElement, summary = document.querySelector('[data-list-summary]');
 const results = [];
 const labelsBefore = document.querySelectorAll('.table-cell-label').length;
@@ -78,6 +85,7 @@ for (const long of [false, true]) {
     menu.open = open;
     await new Promise(resolve => setTimeout(resolve, 100));
     const bounds = panel.getBoundingClientRect(), wrap = document.querySelector('.table-wrap');
+    const summaryClean = !summary.querySelector('[data-list-result-count]') && (getComputedStyle(summary).display !== 'none') === !!summary.querySelector('.badge');
     const identity = wrap.querySelector('.table-identity'), primary = identity.querySelector('.table-primary');
     const primaryBounds = primary.getBoundingClientRect(), details = [...identity.querySelectorAll('.table-meta')];
     const identityAligned = details.every(detail => Math.abs(detail.getBoundingClientRect().left - primaryBounds.left) < 1 && detail.getBoundingClientRect().top >= primaryBounds.bottom && parseFloat(getComputedStyle(detail).fontSize) < parseFloat(getComputedStyle(primary).fontSize));
@@ -101,13 +109,80 @@ for (const long of [false, true]) {
     }
     const cardsFit = !mobile || (wrap.scrollWidth <= wrap.clientWidth && primaryBounds.width >= Math.min(200, wrap.clientWidth - 64) && [...table.querySelectorAll('tbody td')].every(cell => cell.getBoundingClientRect().right <= wrap.getBoundingClientRect().right + 1) && [...table.querySelectorAll('.table-cell-label')].every(label => getComputedStyle(label).display !== 'none' && label.textContent.trim()) && [...table.querySelectorAll('.table-actions .btn')].every(button => button.getBoundingClientRect().width >= 44 && button.getBoundingClientRect().height >= 44));
     const desktopTable = mobile || (getComputedStyle(table).display === 'table' && [...table.querySelectorAll('.table-cell-label')].every(label => getComputedStyle(label).display === 'none'));
-    const sortAvailable = [...table.querySelectorAll('.table-sort')].every(link => link.getBoundingClientRect().width > 1 && link.getBoundingClientRect().height >= (mobile ? 36 : 1));
+    const sortMenu = wrap.parentElement.querySelector('.table-mobile-sort');
+    const sortAvailable = mobile ? !!sortMenu && !sortMenu.open && sortMenu.querySelector('summary').getBoundingClientRect().height >= 30 && sortMenu.getBoundingClientRect().right <= innerWidth : [...table.querySelectorAll('.table-sort')].every(link => link.getBoundingClientRect().width > 1);
     wrap.scrollLeft = 64; const tableScrollLeft = wrap.scrollLeft; wrap.scrollLeft = 0;
-    results.push({context, navigationFits, navigationChanges, cardsFit, desktopTable, sortAvailable, tooltipFits, tooltipClosed, identityAligned, textLimited, fullTextKept, actionsAligned, height:innerHeight, width:innerWidth, long, open, documentWidth:document.documentElement.scrollWidth, bodyWidth:document.body.scrollWidth, filterLeft:bounds.left, filterRight:bounds.right, filterWidth:bounds.width, filterBottom:bounds.bottom, filterTop:bounds.top, filterLimit:context === 'modal' ? document.querySelector('.modal-body').getBoundingClientRect().bottom : innerHeight, filterClientWidth:panel.clientWidth, filterScrollWidth:panel.scrollWidth, tableWidth:wrap.clientWidth, tableScrollWidth:wrap.scrollWidth, tableScrollLeft, tableOverflow:getComputedStyle(wrap).overflowX,
+    results.push({context, summaryClean, navigationFits, navigationChanges, cardsFit, desktopTable, sortAvailable, tooltipFits, tooltipClosed, identityAligned, textLimited, fullTextKept, actionsAligned, height:innerHeight, width:innerWidth, long, open, documentWidth:document.documentElement.scrollWidth, bodyWidth:document.body.scrollWidth, filterLeft:bounds.left, filterRight:bounds.right, filterWidth:bounds.width, filterBottom:bounds.bottom, filterTop:bounds.top, filterLimit:context === 'modal' ? document.querySelector('.modal-body').getBoundingClientRect().bottom : innerHeight, filterClientWidth:panel.clientWidth, filterScrollWidth:panel.scrollWidth, tableWidth:wrap.clientWidth, tableScrollWidth:wrap.scrollWidth, tableScrollLeft, tableOverflow:getComputedStyle(wrap).overflowX,
       offenders:[...document.querySelectorAll('body *')].filter(el => !el.closest('script,style,.admin-sidebar,.table-wrap') && el.getBoundingClientRect().width && (el.getBoundingClientRect().right > innerWidth + 1 || el.getBoundingClientRect().left < -1)).map(el => ({tag:el.tagName,cls:el.className,left:el.getBoundingClientRect().left,right:el.getBoundingClientRect().right})).slice(0,8)});
   }
   badge.remove();
 }
+const mobileSort = document.querySelector('.table-mobile-sort');
+let sortingWorks = true;
+if (innerWidth < 600) {
+  const summary = mobileSort.querySelector('summary'), originals = [...document.querySelectorAll('table .table-sort')], choices = [...mobileSort.querySelectorAll('.table-sort-option')];
+  const actions = mobileSort.closest('.admin-filter-actions'), filterButton = actions.querySelector('.filter-menu > summary'), pageSize = actions.querySelector('.admin-per-page-form');
+  sortingWorks = choices.length === originals.length && choices.filter(link => link.getAttribute('aria-current') === 'true').length === 1 && choices.every((link,index) => ['href','data-history','data-ajax-target'].every(attr => link.getAttribute(attr) === originals[index].getAttribute(attr)));
+  sortingWorks = sortingWorks && Math.abs(summary.getBoundingClientRect().height - filterButton.getBoundingClientRect().height) < 1 && Math.abs(summary.getBoundingClientRect().top - filterButton.getBoundingClientRect().top) < 1 && summary.getBoundingClientRect().right <= pageSize.getBoundingClientRect().left;
+  summary.click(); await new Promise(resolve => setTimeout(resolve, 100));
+  const popup = mobileSort.querySelector('.list-menu-panel'), bounds = popup.getBoundingClientRect(), body = mobileSort.closest('.modal-body');
+  sortingWorks = sortingWorks && mobileSort.open && bounds.width <= 300 && bounds.left >= 0 && bounds.right <= innerWidth && bounds.top >= 0 && bounds.bottom <= (body ? body.getBoundingClientRect().bottom : innerHeight);
+  summary.focus({preventScroll:true}); summary.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}));
+  sortingWorks = sortingWorks && !mobileSort.open && document.activeElement === summary;
+  summary.click(); await new Promise(resolve => setTimeout(resolve, 100));
+  let activated = false;
+  document.addEventListener('click', event => { if (event.target.closest('.table-sort-option')) { event.preventDefault(); activated = true; } }, true);
+  choices[0].focus({preventScroll:true}); choices[0].click();
+  const state = window.TinyCat.menus.capture(choices[0]);
+  sortingWorks = sortingWorks && activated && mobileSort.open && !!state;
+  const host = document.querySelector('.table-wrap').parentElement, replacement = host.cloneNode(true);
+  replacement.querySelector('.table-mobile-sort').remove(); host.replaceWith(replacement);
+  window.tableService.hydrate(replacement); window.TinyCat.menus.restore(state);
+  const restored = replacement.querySelector('.table-mobile-sort');
+  sortingWorks = sortingWorks && restored.open && restored.querySelector('.list-menu-panel').contains(document.activeElement);
+  restored.open = false;
+  sortingWorks = sortingWorks && window.TinyCat.menus.capture(restored.querySelector('a')) === null;
+  document.activeElement.blur();
+}
+const chipRoot = document.createElement('div'), searchForm = document.createElement('form'), chipForm = document.createElement('form');
+searchForm.className = 'admin-search-form'; searchForm.dataset.ajaxTarget = chipForm.dataset.ajaxTarget = '#chip-test';
+chipForm.id = 'chip-filter-test'; chipForm.dataset.filterContent = '';
+const searchInput = document.createElement('input'); searchInput.type = 'search'; searchInput.name = 'q'; searchInput.value = 'needle'; searchForm.append(searchInput);
+for (const [name,value] of [['q','needle'],['page','4'],['per_page','50'],['sort','updated_at'],['direction','desc']]) {
+  const input = document.createElement('input'); input.type = 'hidden'; input.name = name; input.value = value; chipForm.append(input);
+}
+for (const [name,value] of [['status','active'],['role','admin']]) {
+  const field = document.createElement('select'); field.name = name;
+  for (const optionValue of ['',value]) { const option = document.createElement('option'); option.value = option.textContent = optionValue; field.append(option); }
+  field.value = value; chipForm.append(field);
+}
+let chipSummary = window.TinyCat.components.render('ui/list-summary', {target:'#chip-test',filters:{q:'needle'}}), submissions = 0;
+chipRoot.append(searchForm, chipSummary, chipForm); document.body.append(chipRoot);
+chipForm.addEventListener('submit', event => { event.preventDefault(); submissions++; });
+window.TinyCat.filters.hydrate();
+const statusChip = chipSummary.querySelector('[data-filter-remove="status"]');
+chipForm.dataset.apiBusy = 'true'; statusChip.click();
+const busyChipSafe = submissions === 0 && chipForm.elements.status.value === 'active'; delete chipForm.dataset.apiBusy;
+statusChip.focus({preventScroll:true}); statusChip.click();
+const chipState = window.TinyCat.filters.capture(chipForm);
+let chipsWork = busyChipSafe && submissions === 1 && chipForm.elements.status.value === '' && chipForm.elements.role.value === 'admin' && chipForm.elements.q.value === 'needle' && chipForm.elements.page.value === '1' && chipForm.elements.per_page.value === '50' && chipForm.elements.sort.value === 'updated_at' && chipForm.elements.direction.value === 'desc';
+window.TinyCat.filters.hydrate(); window.TinyCat.filters.restore(chipState);
+chipsWork = chipsWork && !chipSummary.querySelector('[data-filter-remove="status"]') && document.activeElement === chipSummary.querySelector('[data-filter-remove="q"]');
+chipSummary.querySelector('[data-filter-remove="role"]').click(); window.TinyCat.filters.hydrate();
+const queryChip = chipSummary.querySelector('[data-filter-remove="q"]'); queryChip.focus({preventScroll:true}); queryChip.click();
+const searchState = window.TinyCat.filters.capture(chipForm);
+const newSummary = window.TinyCat.components.render('ui/list-summary', {target:'#chip-test',filters:{q:chipForm.elements.q.value}}); chipSummary.replaceWith(newSummary); chipSummary = newSummary;
+window.TinyCat.filters.hydrate(); window.TinyCat.filters.restore(searchState);
+chipsWork = chipsWork && submissions === 3 && searchInput.value === '' && chipForm.elements.q.value === '' && document.activeElement === searchInput && getComputedStyle(chipSummary).display === 'none';
+const botField = document.createElement('select'); botField.name = 'bot';
+for (const value of ['0','3']) { const option = document.createElement('option'); option.value = option.textContent = value; botField.append(option); }
+botField.value = '3'; chipForm.append(botField);
+const passive = document.createElement('input'); passive.type = 'checkbox'; passive.name = 'passive'; passive.value = 'yes'; chipForm.append(passive);
+window.TinyCat.filters.hydrate();
+chipsWork = chipsWork && !chipSummary.querySelector('[data-filter-remove="passive"]');
+chipSummary.querySelector('[data-filter-remove="bot"]').click(); window.TinyCat.filters.hydrate();
+chipsWork = chipsWork && botField.value === '0' && new FormData(chipForm).get('bot') === '0' && !chipSummary.querySelector('[data-filter-remove="bot"]');
+window.TinyCat.forms = {dispose() {}}; window.TinyCat.filters.remove(chipForm.id); chipRoot.remove();
 const touch = document.createElement('button'), unsafe = '<img src=x onerror=alert(1)> & full text';
 touch.setAttribute('title', unsafe);
 (document.querySelector('.modal-body') || document.body).append(touch);
@@ -173,7 +248,7 @@ let lazyHintsReady = initiallyUnfocusable && lazyText.getAttribute('tabindex') =
 lazy.hidden = true; window.tooltipService.hydrate(lazy); lazy.hidden = false;
 lazy.dispatchEvent(new CustomEvent('tinycat:tab', {bubbles:true}));
 lazyHintsReady = lazyHintsReady && lazyText.getAttribute('tabindex') === '0'; lazy.remove();
-results.forEach(result => Object.assign(result, {touchSafe, outsideCloses, hoverWorks, frameTitleKept, disposeCloses, shortHidden, hydrationStable, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
+results.forEach(result => Object.assign(result, {sortingWorks, chipsWork, touchSafe, outsideCloses, hoverWorks, frameTitleKept, disposeCloses, shortHidden, hydrationStable, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
 const output = document.createElement('pre'); output.id = 'layout-metrics'; output.textContent = JSON.stringify(results); document.body.append(output);
 }());
 </script></body></html>

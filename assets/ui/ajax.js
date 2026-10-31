@@ -47,6 +47,7 @@ import "./toasts.js";
   function handleResult(source, data, target) {
     var payload = unwrapResult(data);
     var filterState = TinyCat.filters ? TinyCat.filters.capture(source) : null;
+    var menuState = TinyCat.menus && TinyCat.menus.capture ? TinyCat.menus.capture(source) : null;
     var modalToClose = source && source.dataset && source.dataset.modalCloseOnSuccess === "true"
       ? source.closest(".modal")
       : null;
@@ -78,6 +79,7 @@ import "./toasts.js";
 
     hydrateDynamic(target || document);
     if (filterState) { TinyCat.filters.restore(filterState); }
+    if (menuState) { TinyCat.menus.restore(menuState); }
     resetForm(source);
     markFormClean(source);
 

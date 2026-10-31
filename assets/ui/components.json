@@ -856,9 +856,6 @@
           },
           "filters": {
             "get": "filters"
-          },
-          "pagination": {
-            "get": "pagination"
           }
         }
       }
@@ -1210,35 +1207,30 @@
         {
           "tag": "span",
           "attrs": {
-            "class": "table-sort-arrows",
-            "aria-hidden": "true"
+            "class": "table-sort-indicator",
+            "aria-hidden": "true",
+            "data-active": {
+              "or": [
+                {
+                  "get": "order.ascending"
+                },
+                {
+                  "get": "order.descending"
+                }
+              ]
+            }
           },
           "children": [
             {
-              "tag": "span",
-              "attrs": {
-                "data-active": {
-                  "get": "order.ascending"
-                }
-              },
-              "children": [
-                {
-                  "icon": "arrow-up"
-                }
-              ]
-            },
-            {
-              "tag": "span",
-              "attrs": {
-                "data-active": {
-                  "get": "order.descending"
-                }
-              },
-              "children": [
-                {
-                  "icon": "arrow-down"
-                }
-              ]
+              "icon": {
+                "if": [
+                  {
+                    "get": "order.descending"
+                  },
+                  "arrow-down",
+                  "arrow-up"
+                ]
+              }
             }
           ]
         }
@@ -1670,7 +1662,8 @@
     "attrs": {
       "class": "popover-menu filter-menu",
       "data-dismissible-menu": "",
-      "data-filter-menu": ""
+      "data-filter-menu": "",
+      "data-list-menu": ""
     },
     "children": [
       {
@@ -1698,7 +1691,7 @@
       {
         "tag": "div",
         "attrs": {
-          "class": "context-menu-popover filter-menu-panel",
+          "class": "context-menu-popover list-menu-panel filter-menu-panel",
           "data-filter-panel": {
             "get": "id"
           }
@@ -1716,19 +1709,6 @@
         "slot": {
           "get": "body"
         }
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "class": "cluster gap-2"
-        },
-        "children": [
-          {
-            "slot": {
-              "get": "footer"
-            }
-          }
-        ]
       }
     ]
   },
@@ -1744,43 +1724,17 @@
     },
     "children": [
       {
-        "tag": "span",
-        "attrs": {
-          "data-list-result-count": ""
-        },
-        "children": [
-          {
-            "plural": "common.list_results",
-            "count": {
-              "if": [
-                {
-                  "get": "pagination.total"
-                },
-                {
-                  "get": "pagination.total"
-                },
-                0
-              ]
-            }
-          }
-        ]
-      },
-      {
-        "tag": "span",
-        "attrs": {
-          "class": "badge cluster gap-2",
-          "title": {
-            "t": "common.search"
-          }
-        },
-        "children": [
-          {
-            "icon": "search"
-          },
-          {
+        "component": "ui/filter-chip",
+        "data": {
+          "label": {
             "get": "filters.q"
-          }
-        ],
+          },
+          "target": {
+            "get": "target"
+          },
+          "name": "q",
+          "icon": "search"
+        },
         "when": {
           "get": "filters.q"
         }
@@ -1838,6 +1792,51 @@
         "when": {
           "get": "primary"
         }
+      }
+    ]
+  },
+  "ui/filter-chip": {
+    "tag": "button",
+    "attrs": {
+      "type": "button",
+      "class": "badge filter-chip",
+      "data-filter-remove": {
+        "get": "name"
+      },
+      "data-filter-target": {
+        "get": "target"
+      },
+      "aria-label": {
+        "concat": [
+          {
+            "t": "common.clear_filters"
+          },
+          ": ",
+          {
+            "get": "label"
+          }
+        ]
+      }
+    },
+    "children": [
+      {
+        "icon": {
+          "get": "icon"
+        },
+        "when": {
+          "get": "icon"
+        }
+      },
+      {
+        "tag": "span",
+        "children": [
+          {
+            "get": "label"
+          }
+        ]
+      },
+      {
+        "icon": "close"
       }
     ]
   }
