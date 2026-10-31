@@ -205,7 +205,7 @@ not backfilled and old episodes are not imported again.
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=5.0.0 --minimum-version=2.0.25
+php tools/build-update.php --version=5.16.1
 php tools/verify-update.php dist
 ```
 
@@ -219,12 +219,12 @@ Source checkouts without the inventory retain an on-demand development fallback.
 The builder creates:
 
 ```text
-dist/tinycat-5.0.0.zip
+dist/tinycat-5.16.1.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v5.0.0` tag and upload all three files
+Create a GitHub release for the matching `v5.16.1` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -235,24 +235,20 @@ new top-level managed file requires a prior updater bridge release. Removed runt
 listed by target version in `tools/update-deletions.json`; this prevents legacy
 PHP files from surviving an overlay update.
 
-TinyCat 2.x has a fixed 1.0.14 database and updater baseline. Install 1.0.14
-before entering the 2.x series. Historical 1.x migrations remain available in
-Git history and signed 1.x releases, but are no longer shipped as active runtime
-files.
-
-TinyCat 3.0.0 accepts signed upgrades from 2.0.25 and newer, including 2.1.0.
-It replaces legacy API routes and HTML fragment responses with module-owned
-JSON APIs. Update external integrations using `docs/api.md`; the built-in UI
-is updated with the application. The database baseline and PHP 8.4 requirement
-are retained.
+Release tools use **5.16.0** as the minimum supported update source, defined by
+`TinyCat\Support\Version::MINIMUM_UPDATE`. Production update rehearsals start
+from the exact `v5.16.0` tag and verify signed installation, protected files,
+migration checksums and rollback. Older releases and upgrade instructions remain
+available in Git history. Historical performance comparisons against 2.0.25 are
+benchmark references, not supported upgrade paths.
 
 For a fresh installation, build into a separate output directory:
 
 ```bash
-php tools/build-update.php --version=5.0.0 --fresh-install --output=dist/fresh
+php tools/build-update.php --version=5.16.1 --fresh-install --output=dist/fresh
 ```
 
-The fresh-install outputs are `tinycat-5.0.0-install.zip`, `tinycat-install.json`
+The fresh-install outputs are `tinycat-5.16.1-install.zip`, `tinycat-install.json`
 and `tinycat-install.sig`; they cannot overwrite or be mistaken for updater assets.
 Verify them with `php tools/verify-update.php dist/fresh --fresh-install`.
 This package excludes `migrations/` and update deletions. The installer creates
@@ -306,7 +302,7 @@ Fresh installations must also be updated in `App/Installation/Installer.php`. Th
 installer creates the latest schema directly and does not replay historical
 migrations.
 
-## Upgrading to 5.16.0: search feeds and native tables
+## Upgrading to 5.0.0: search feeds and native tables
 
 No new database migration or configuration change is required. Search pages now
 show posts only; existing category URLs still open the post search. Media filters

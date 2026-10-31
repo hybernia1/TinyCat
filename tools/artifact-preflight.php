@@ -69,20 +69,11 @@ try {
     $packagePath = $artifact . DIRECTORY_SEPARATOR . $packageName;
     $assert($packageName === 'tinycat-' . $version . '.zip' && is_file($packagePath), 'The versioned package is present.');
     $assert(($manifest['version'] ?? null) === $version, 'Manifest targets the current version.');
-    $assert(($manifest['minimum_version'] ?? null) === '2.0.25', 'Manifest accepts exact 2.0.25 as its minimum.');
+    $assert(($manifest['minimum_version'] ?? null) === \TinyCat\Support\Version::MINIMUM_UPDATE, 'Manifest uses the supported update baseline.');
     $assert(($manifest['minimum_php'] ?? null) === '8.4.0', 'Manifest retains the PHP 8.4 runtime floor.');
-    $assert(in_array('Public/parts/profile/link-fields.php', (array) ($manifest['delete'] ?? []), true), 'Patch release removes the obsolete profile link fields.');
-    $assert(in_array('Public/parts/profile/links.php', (array) ($manifest['delete'] ?? []), true), 'Patch release removes the obsolete profile link view.');
-    $assert(in_array('Public/admin/email-templates.php', (array) ($manifest['delete'] ?? []), true), 'Patch release removes the obsolete email template page.');
-    $assert(in_array('assets/css/tinycat-core.css', (array) ($manifest['delete'] ?? []), true), 'Patch release removes the split core stylesheet.');
-    $assert(in_array('assets/css/tinycat-feed.css', (array) ($manifest['delete'] ?? []), true), 'Patch release removes the split feed stylesheet.');
-    $assert(in_array('migrations/20260809_002_remove_content_created_at.php', (array) ($manifest['migrations'] ?? []), true), 'Patch release removes the redundant content timestamp.');
-    $assert(in_array('migrations/20260809_003_remove_link_embed_url.php', (array) ($manifest['migrations'] ?? []), true), 'Patch release removes the redundant link embed URL.');
-    $assert(in_array('migrations/20260809_004_move_email_template_states_to_settings.php', (array) ($manifest['migrations'] ?? []), true), 'Patch release moves email delivery switches into settings.');
-    $assert(in_array('migrations/20260809_005_move_smtp_settings_to_json.php', (array) ($manifest['migrations'] ?? []), true), 'Patch release consolidates SMTP settings into sensitive JSON.');
-    $assert(in_array('migrations/20260810_001_remove_content_links_position_index.php', (array) ($manifest['migrations'] ?? []), true), 'Patch release removes the unused content-link position column.');
-    $assert(in_array('migrations/20260810_002_remove_user_activity_timestamps.php', (array) ($manifest['migrations'] ?? []), true), 'Patch release removes obsolete user activity timestamps.');
-    $assert(in_array('migrations/20260813_001_remove_relation_created_at.php', (array) ($manifest['migrations'] ?? []), true), 'Patch release removes redundant relation timestamps.');
+    foreach ((array) ($manifest['migrations'] ?? []) as $migration) {
+        $assert(isset($manifest['files'][$migration]), 'Declared migration is included in the signed inventory: ' . $migration);
+    }
     $assert(hash_file('sha256', $packagePath) === ($manifest['sha256'] ?? null), 'Package hash matches the signed manifest.');
 
     $verifyOutput = [];

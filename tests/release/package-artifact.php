@@ -60,7 +60,6 @@ try {
     $command = escapeshellarg(PHP_BINARY)
         . ' ' . escapeshellarg($root . '/tools/build-update.php')
         . ' --version=' . escapeshellarg($version)
-        . ' --minimum-version=' . escapeshellarg($version)
         . ' --allow-dirty'
         . (in_array('--fresh-install', $argv, true) ? ' --fresh-install' : ' --without-migrations')
         . ' --output=' . escapeshellarg($output)
@@ -69,6 +68,12 @@ try {
 
     if ($exitCode !== 0) {
         throw new RuntimeException('Package builder failed: ' . implode(' ', $buildOutput));
+    }
+
+    $unsupportedOutput = [];
+    exec($command . ' --minimum-version=5.15.0 2>&1', $unsupportedOutput, $unsupportedExit);
+    if ($unsupportedExit === 0 || !str_contains(implode(' ', $unsupportedOutput), 'Minimum update version must be between')) {
+        throw new RuntimeException('Package builder must reject unsupported update baselines.');
     }
 
     $repeatedCommand = str_replace(
@@ -90,6 +95,10 @@ try {
     $signaturePath = $output . '/' . $manifestName . '.sig';
     $repeatedPackage = $repeatedOutput . '/' . $packageName;
     $manifestJson = (string) file_get_contents($manifestPath);
+    $manifest = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+    if (($manifest['minimum_version'] ?? null) !== \TinyCat\Support\Version::MINIMUM_UPDATE) {
+        throw new RuntimeException('Package builder must default to the supported update baseline.');
+    }
     $signature = base64_decode(trim((string) file_get_contents($signaturePath)), true);
 
     if (!is_string($signature) || !sodium_crypto_sign_verify_detached($signature, $manifestJson, $publicKey)) {
@@ -102,8 +111,8 @@ try {
         $failures[] = 'Repeated builds from the same source are not byte-identical.';
     }
 
-    if (($manifest['version'] ?? null) !== $version || ($manifest['minimum_version'] ?? null) !== $version) {
-        $failures[] = 'Artifact version boundary does not match the monolith baseline.';
+    if (($manifest['version'] ?? null) !== $version) {
+        $failures[] = 'Artifact target version does not match the current release.';
     }
 
     if (($manifest['migrations'] ?? null) !== []) {

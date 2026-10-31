@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.16.1 - 2026-11-01
+
+- Set the release tooling update baseline to 5.16.0 and rehearse signed upgrades and rollback from its exact tag. Replace fixed 2.0.25 cleanup assertions with migration inventory and data-preservation checks.
+- Stabilize the browser tooltip probe by keeping its target visible and waiting for preceding focus-induced scrolling; include hover phase diagnostics on failure.
+
 ## 5.16.0 - 2026-10-31
 
 - Show posts only on search result pages, replacing profile/tag tabs with the shared RSS and media-filter controls. Preserve queries and filters through AJAX navigation, cursor pagination and public RSS exports.
