@@ -196,3 +196,7 @@
 .status-indicator-warning {
   color: var(--warning);
 }
+
+@media (max-width: 599px) {
+  .table { min-width: 44rem; }
+}

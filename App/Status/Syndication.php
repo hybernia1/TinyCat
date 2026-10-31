@@ -12,7 +12,23 @@ final class Syndication
         $rssLink = '/';
         $rssItems = [];
 
-        if ($rssType === 'tag') {
+        if ($rssType === 'search') {
+            $request = \TinyCat\Http\Request::current();
+            $request->validated(['q' => 'string|max:80', 'media' => 'string']);
+            $query = \TinyCat\Search\Queries::public_search_normalize_query((string) $request->input('q', ''));
+            if (\TinyCat\Search\Queries::length($query) < 3 || \TinyCat\Search\Queries::public_search_query_too_short($query)) {
+                \TinyCat\Http\Document::notFound('Feed not found.');
+                return;
+            }
+            $media = Feed::archive_type((string) $request->input('media', ''));
+            $params = http_build_query(['q' => $query, ...($media !== '' ? ['media' => $media] : [])]);
+            $rssTitle = \TinyCat\Support\Localization::t('public.search_title_query', ['query' => $query]);
+            $rssDescription = $rssTitle;
+            $rssLink = '/search?' . $params;
+            $rssSelfLink = '/search/feed?' . $params;
+            $rows = \TinyCat\Search\Queries::public_search_content_rows($query, 50, '', 0, $media);
+            $rssItems = Export::byIds(array_map('intval', array_column($rows, 'id')));
+        } elseif ($rssType === 'tag') {
             $tag = \TinyCat\Status\Tags::status_tag_normalize($tag);
 
             $termId = $tag !== '' ? \TinyCat\Status\Tags::status_term_id_exact($tag) : 0;

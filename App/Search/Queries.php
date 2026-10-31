@@ -93,8 +93,17 @@ final class Queries
 
         $tags = [];
 
-        $rows = Connection::all("SELECT id, name FROM terms WHERE name LIKE ? ESCAPE '!' ORDER BY name ASC LIMIT " . max(1, min(12, $limit)), [Connection::escapeLike($tagQuery) . '%']);
-        foreach (self::tagCounts($rows) as $tag) {
+        $rows = Connection::all(
+            "SELECT t.id, t.name,
+                (SELECT COUNT(*) FROM content_tags ct
+                 INNER JOIN content c ON c.id = ct.content_id
+                 INNER JOIN users u ON u.id = c.author_id
+                 WHERE ct.term_id = t.id AND u.status = ? AND c.published_at <= ?) AS posts_count
+             FROM terms t WHERE t.name LIKE ? ESCAPE '!'
+             ORDER BY posts_count DESC, t.name ASC, t.id ASC LIMIT " . max(1, min(12, $limit)),
+            ['active', \TinyCat\Support\Dates::dateDb(), Connection::escapeLike($tagQuery) . '%']
+        );
+        foreach ($rows as $tag) {
             $name = \TinyCat\Status\Tags::status_tag_normalize((string) ($tag['name'] ?? ''));
 
             if ($name === '') {
@@ -212,7 +221,7 @@ final class Queries
     }
 
     /** @return array<mixed> */
-    public static function public_search_content_rows(string $query, int $limit, string $cursorAt = '', int $cursorId = 0): array
+    public static function public_search_content_rows(string $query, int $limit, string $cursorAt = '', int $cursorId = 0, string $media = ''): array
     {
         $query = self::public_search_normalize_query($query);
         if (self::length($query) < 3 || self::length($query) > self::MAX_QUERY_LENGTH) {
@@ -224,6 +233,13 @@ final class Queries
             ? "CONCAT_WS(' ', l.normalized_url, l.title, l.description)"
             : "COALESCE(l.normalized_url, '') || ' ' || COALESCE(l.title, '') || ' ' || COALESCE(l.description, '')";
         [$link, $linkParams] = self::textPredicate($query, 'l.normalized_url, l.title, l.description', '(' . $linkText . ')');
+        [$mediaSql, $mediaParams] = \TinyCat\Status\Feed::archive_predicate($media);
+        if ($mediaSql !== '') {
+            $body = '(' . $body . ') AND ' . $mediaSql;
+            $link = '(' . $link . ') AND ' . $mediaSql;
+            $bodyParams = [...$bodyParams, ...$mediaParams];
+            $linkParams = [...$linkParams, ...$mediaParams];
+        }
         $now = \TinyCat\Support\Dates::dateDb();
         [$cursorSql, $cursorParams] = \TinyCat\Status\Feed::public_status_cursor_condition($cursorAt, $cursorId);
         $cursorSql = $cursorSql === '' ? '' : ' AND ' . $cursorSql;
@@ -319,9 +335,10 @@ final class Queries
      * @param array<string, mixed> $cursor
      * @return array<string, mixed>
      */
-    public static function collection(string $query, string $type = 'content', array $cursor = [], int $limit = 0): array
+    public static function collection(string $query, string $type = 'content', array $cursor = [], int $limit = 0, string $media = ''): array
     {
         $query = self::public_search_normalize_query($query);
+        $media = \TinyCat\Status\Feed::archive_type($media);
         $type = in_array($type, ['content', 'users', 'tags'], true) ? $type : 'content';
         $limit = $limit > 0 ? min(50, $limit) : \TinyCat\Status\Feed::public_status_page_limit();
         $minimum = $type === 'content' ? 3 : 2;
@@ -330,7 +347,7 @@ final class Queries
         $nextCursor = [];
         if ($valid) {
             if ($type === 'content') {
-                $rows = self::public_search_content_rows($query, $limit + 1, (string) ($cursor['cursor_at'] ?? ''), (int) ($cursor['cursor_id'] ?? 0));
+                $rows = self::public_search_content_rows($query, $limit + 1, (string) ($cursor['cursor_at'] ?? ''), (int) ($cursor['cursor_id'] ?? 0), $media);
                 $nextCursor = \TinyCat\Status\Feed::status_feed_cursor_params(array_slice($rows, 0, $limit));
                 $items = array_map(static fn (array $row): array => self::public_search_content_result($row, $query, $row['link_excerpt'] ?? null), $rows);
             } else {
@@ -343,7 +360,7 @@ final class Queries
         $items = array_slice($items, 0, $limit);
         foreach ($items as &$item) { unset($item['cursor_rank'], $item['cursor_name']); }
         unset($item);
-        $next = $done ? '' : '/api/search/results?' . http_build_query(['q' => $query, 'type' => $type, 'limit' => \TinyCat\Status\Feed::public_status_page_limit(), ...$nextCursor]);
+        $next = $done ? '' : '/api/search/results?' . http_build_query(['q' => $query, 'type' => $type, ...($media !== '' ? ['media' => $media] : []), 'limit' => \TinyCat\Status\Feed::public_status_page_limit(), ...$nextCursor]);
         return ['query' => $query, 'type' => $type, 'items' => $items, 'next_url' => $next, 'done' => $done,
             'minimum_length' => $minimum, 'valid_query' => $valid];
     }

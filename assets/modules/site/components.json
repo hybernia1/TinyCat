@@ -1761,6 +1761,15 @@
               },
               "login_modal_url": {
                 "get": "login_modal_url"
+              },
+              "rss_url": {
+                "get": "rss_url"
+              },
+              "archive_options": {
+                "get": "archive_options"
+              },
+              "archive_type": {
+                "get": "archive_type"
               }
             },
             "when": {

@@ -243,5 +243,9 @@
         "assets/ui/styles/058-modal-panel-full.css",
         "assets/ui/styles/085-modal-confirm-panel-modal-footer-btn.css",
         "assets/ui/styles/092-user-modal-panel-modal-panel-full-following-m.css"
+    ],
+    "5.16.0": [
+        "assets/ui/tables.js",
+        "assets/ui/styles/098-mobile-tables.css"
     ]
 }

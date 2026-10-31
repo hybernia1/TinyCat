@@ -27,7 +27,7 @@ $seed->exec("INSERT INTO settings (setting_key, setting_value, setting_type, set
 $assert($status === 200 && !str_contains(json_encode($payload), 'fixture-secret'), 'Settings resources never disclose SMTP passwords.');
 $pure($payload);
 [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Modular fixture', 'auth.registration.enabled' => false]], 'admin', $csrf);
-$assert($status === 200 && $payload['data'] === ['saved' => true], 'Settings PATCH accepts partial updates and returns only confirmation data.');
+$assert($status === 200 && $payload['data']['saved'] && array_keys($payload['data']['images']) === ['site.logo_url', 'site.favicon_url'], 'Settings PATCH returns confirmation and saved public image paths for repeated AJAX saves.');
 $assert($seed->query("SELECT setting_value FROM settings WHERE setting_key = 'i18n.locale'")->fetchColumn() === 'en', 'Partial settings changes preserve omitted settings.');
 $assert($seed->query("SELECT setting_value FROM settings WHERE setting_key = 'auth.registration.enabled'")->fetchColumn() === '0', 'A JSON false value disables a setting.');
 foreach ([['settings' => 'invalid'], ['settings' => ['site.name' => []]], ['settings' => ['email.smtp' => ['password' => []]]]] as $invalid) {
@@ -101,9 +101,9 @@ foreach (['/api/search?q=' . str_repeat('a', 81), '/api/search/results?q=quartz&
 }
 [$status, $html] = $exportRequest('/search?q=nebula%20quartz');
 $assert($status === 200 && str_contains($html, 'quartz bright nebula') && !str_contains($html, 'unrelated post'), 'Search documents render matching posts without unrelated author posts.');
-[$status, $html] = $exportRequest('/search?q=member&type=users');
-$assert($status === 200 && str_contains($html, '/author/2') && !str_contains($html, 'unrelated post'), 'Profile results render profiles, not their posts.');
-$assert(str_contains($html, 'aria-current="page"') && str_contains($html, 'type=tags'), 'Search documents expose an active category and category navigation.');
+[$status, $html] = $exportRequest('/search?q=nebula%20quartz&type=users');
+$assert($status === 200 && str_contains($html, 'quartz bright nebula') && !str_contains($html, 'unrelated post'), 'Retired category URLs render matching posts.');
+$assert(str_contains($html, 'archive-filter') && !str_contains($html, 'type=tags'), 'Search documents expose media filters instead of category navigation.');
 [$status] = $exportRequest('/search?q[]=invalid');
 $assert($status === 422, 'Malformed document queries fail without PHP warnings.');
 [$status, $payload] = $request('GET', '/api/search/results?q=quartz%22');
@@ -124,7 +124,7 @@ $assert($status === 200 && count($nextBatch['data']['items']) === 5 && $nextBatc
 $assert($status === 200 && str_contains($html, 'data-status-feed-more') && str_contains($html, 'cursor_at') && !str_contains($html, 'rel="next"'), 'Search documents use the existing feed loader instead of numbered pagination.');
 foreach (['content', 'users', 'tags'] as $type) {
     [$status, $resource] = $request('GET', '/api/site/pages?path=/search&q=quartz&type=' . $type);
-    $assert($status === 200 && $resource['data']['kind'] === 'search' && $resource['data']['sidebar'] && $resource['data']['search']['type'] === $type, 'Search categories use the shared public-page resource and sidebar slot.');
+    $assert($status === 200 && $resource['data']['kind'] === 'search' && $resource['data']['sidebar'] && $resource['data']['search']['type'] === 'content', 'Legacy search category parameters retain the shared post feed and sidebar.');
     $pure($resource);
 }
 [$status, $resource] = $request('GET', '/api/site/pages?path=/cs/search&q=quartz');

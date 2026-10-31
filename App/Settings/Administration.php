@@ -12,7 +12,15 @@ final class Administration
      */
     public static function tc_admin_settings_payload(): array
     {
-        return ['saved' => true];
+        $images = [];
+        foreach (self::tc_admin_settings_sections() as $section) {
+            foreach ($section['fields'] as $field) {
+                if ($field['type'] === 'site_image') {
+                    $images[$field['key']] = (string) \TinyCat\Settings\Store::config($field['key'], '');
+                }
+            }
+        }
+        return ['saved' => true, 'images' => $images];
     }
 
     /**

@@ -1,6 +1,16 @@
 <?php
 declare(strict_types=1);
 
+[$status, $searchPage] = $request('GET', '/api/site/pages?path=/search&q=Export&type=tags&media=text');
+$assert($status === 200 && $searchPage['data']['search']['type'] === 'content' && !isset($searchPage['data']['search']['tabs']) && $searchPage['data']['archive_type'] === 'text', 'Search pages always return posts and expose the shared media filter.');
+$assert($searchPage['data']['archive_options'][1]['url'] === '/search?q=Export&media=images' && $searchPage['data']['rss_url'] === '/search/feed?q=Export&media=text' && $searchPage['data']['url'] === '/search?q=Export&media=text', 'Search filters and RSS retain the query and selected media without retired tabs.');
+[$status, $searchHtml] = $exportRequest('/search?q=Export&media=text');
+$assert($status === 200 && str_contains($searchHtml, 'archive-actions') && str_contains($searchHtml, '/search/feed?q=Export&amp;media=text') && !str_contains($searchHtml, 'type=users') && !str_contains($searchHtml, 'type=tags'), 'Direct search rendering replaces entity tabs with working RSS and shared filter controls.');
+[$status, $searchPosts] = $request('GET', '/api/search/results?q=Export&media=images');
+$assert($status === 200 && $searchPosts['data']['items'] === [], 'Search API applies media filters before returning cards.');
+[$status] = $request('GET', '/api/site/pages?path=/search&q=Export&media[]=video');
+$assert($status === 422, 'Search navigation rejects malformed media filters.');
+
 [$status, $filteredHome] = $request('GET', '/api/site/pages?path=/&media=video');
 $assert($status === 200 && $filteredHome['data']['archive_type'] === 'video' && $filteredHome['data']['url'] === '/?media=video', 'Home navigation accepts the selected content filter.');
 [$status, $filteredFollowing] = $request('GET', '/api/site/pages?path=/&feed=following&media=images');

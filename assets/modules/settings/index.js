@@ -20,10 +20,22 @@ import "../../core/modules.js";
         var form = template && template.content.querySelector("form");
         if (!form) { return null; }
         dialog = T.ui.sectionedDialog("settings-editor-modal", "settings.title", form, true);
-        form.addEventListener("tinycat:success", function () { window.location.reload(); });
         T.lifecycle.hydrate(dialog);
       }
       return dialog;
+    },
+    result: function (source, response) {
+      var action = source.getAttribute("action");
+      if (!action || new URL(action, window.location.href).pathname !== "/api/settings") { return false; }
+      var images = response.data.images || {};
+      source.querySelectorAll("input").forEach(function (input) {
+        var name = input.name || input.getAttribute("name") || "";
+        var key = name.startsWith("settings[") ? name.slice(9, -1) : "";
+        if (Object.prototype.hasOwnProperty.call(images, key)) { input.value = images[key]; }
+        if (input.type === "file" || input.type === "password") { input.value = ""; }
+        if (name.startsWith("settings_remove[")) { input.checked = false; }
+      });
+      return [];
     },
     hydrate: function (root) {
       Array.from((root || document).querySelectorAll("[data-settings-editor]")).forEach(function (template) {

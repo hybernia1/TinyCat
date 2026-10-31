@@ -18,7 +18,7 @@ try {
         await new Promise(resolve => {
           frame.srcdoc = source; document.body.append(frame);
           const timer = setInterval(() => {
-            if (!frame.contentDocument.querySelector('table[data-mobile-cards]')) return;
+            if (!frame.contentDocument.querySelector('table')) return;
             clearInterval(timer); resolve();
           }, 10);
         });
@@ -28,8 +28,8 @@ try {
           rows:rows.length, cards:table.hasAttribute('data-mobile-cards'),
           stats:doc.querySelectorAll('article h2').length,
           display:win.getComputedStyle(table).display,
-          labels:rows.every(row => [...row.cells].slice(1).every(cell => cell.querySelector('.table-cell-label').textContent.trim())),
-          fits:rows.every(row => [...row.cells].every(cell => cell.getBoundingClientRect().right <= width)),
+          headers:table.tHead.rows[0].cells.length > 0 && win.getComputedStyle(table.tHead).display === 'table-header-group',
+          fits:table.closest('.table-wrap').getBoundingClientRect().right <= width, scrollable:['auto','scroll'].includes(win.getComputedStyle(table.closest('.table-wrap')).overflowX),
           clipped:rows.every(row => row.cells[0].querySelector('.table-primary').getBoundingClientRect().height <= 2 * parseFloat(win.getComputedStyle(row.cells[0].querySelector('.table-primary')).lineHeight) + 1),
           noUnrelatedSort:!doc.querySelector('.table-mobile-sort'),
           resetFits:[...doc.querySelectorAll('form button')].every(button => button.getBoundingClientRect().right <= width)
@@ -46,10 +46,10 @@ try {
   assert.equal(results.length,7);
   for (const item of results) {
     assert.ok(item.documentWidth <= item.width && item.fits && item.resetFits, "Dashboard overflow: "+JSON.stringify(item));
-    assert.ok(item.rows === 8 && item.stats === 10 && item.cards && item.labels && item.clipped && item.noUnrelatedSort, "Dashboard content and shared table behavior: "+JSON.stringify(item));
-    assert.equal(item.display, item.width < 600 ? "block" : "table");
+    assert.ok(item.rows === 8 && item.stats === 10 && !item.cards && item.headers && item.scrollable && item.clipped && item.noUnrelatedSort, "Dashboard content and shared table behavior: "+JSON.stringify(item));
+    assert.equal(item.display, "table");
   }
-  console.log("PASS dashboard desktop table and mobile cards, long comments and diagnostics (7 viewports)");
+  console.log("PASS dashboard native tables on desktop and mobile, long comments and diagnostics (7 viewports)");
 } finally {
   const resolved = fs.realpathSync(temporary), parent = fs.realpathSync(os.tmpdir());
   assert.equal(path.dirname(resolved),parent); assert.ok(path.basename(resolved).startsWith("tinycat-dashboard-"));

@@ -4,7 +4,6 @@
       "public"
     ],
     "components": [
-      "search/items",
       "search/page"
     ],
     "entries": [
