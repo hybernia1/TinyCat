@@ -11,6 +11,15 @@ use TinyCat\Status\Tags;
 final class Views
 {
     /** @param array<mixed> $data */
+    public static function dashboard(array $data): string
+    {
+        $model = DashboardViewData::prepare($data);
+        $model['comments_html'] = new \TinyCat\Support\Markup(Components::render('site/dashboard-comments', ['items' => $model['comments']]));
+        $model['cache_html'] = new \TinyCat\Support\Markup(Components::render('site/dashboard-cache', $model['cache']));
+        return Components::render('site/dashboard', $model);
+    }
+
+    /** @param array<mixed> $data */
     public static function sidebar(array $data = []): string
     {
         $active_tag = $data['active_tag'] ?? null;

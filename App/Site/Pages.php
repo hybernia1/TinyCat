@@ -23,9 +23,9 @@ final class Pages
         }
 
         Layout::render([
-            'title' => Localization::t('admin.dashboard_title'),
+            'title' => Localization::t('common.dashboard'),
             'current' => '/admin',
-        ], View::render('dashboard', Dashboard::data(), __DIR__ . '/templates'));
+        ], Views::dashboard(Dashboard::data()));
     }
 
     public static function privacy(): void

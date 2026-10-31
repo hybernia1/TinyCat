@@ -57,7 +57,7 @@ final class Dashboard
     {
         try {
             $rows = \TinyCat\Database\Connection::all(
-                'SELECT cc.id, cc.content_id, cc.body, cc.created_at, u.username, c.body AS content_body
+                'SELECT cc.id, cc.content_id, cc.user_id, cc.body, cc.created_at, u.username, c.body AS content_body
                  FROM content_comments cc
                  INNER JOIN users u ON u.id = cc.user_id
                  INNER JOIN content c ON c.id = cc.content_id

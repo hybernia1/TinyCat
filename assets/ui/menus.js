@@ -4,6 +4,21 @@ import "../core/lifecycle.js";
   "use strict";
   var TinyCat = window.TinyCat = window.TinyCat || {};
   TinyCat.menus = {};
+  var triggers = new WeakSet();
+  TinyCat.menus.prepare = function (root) {
+    root.querySelectorAll('[data-list-menu] > summary').forEach(function (summary) {
+      if (triggers.has(summary)) return;
+      triggers.add(summary);
+      // Bind on the actual trigger: do not depend on a bubbled SVG/use target
+      // or the browser's native summary activation reaching document.
+      summary.addEventListener("click", function (event) {
+        event.preventDefault();
+        var menu = summary.parentElement;
+        menu.open = !menu.open;
+        if (menu.open) TinyCat.menus.position(menu);
+      });
+    });
+  };
   TinyCat.menus.capture = function (source) {
     var menu = source && source.closest && source.closest("[data-menu-key]");
     if (!menu || !menu.open) return null;
@@ -43,6 +58,7 @@ import "../core/lifecycle.js";
   var qs = TinyCat.dom.find;
   var qsa = TinyCat.dom.all;
   TinyCat.menus.init = function () {
+    TinyCat.menus.prepare(document);
     if (TinyCat.__dismissibleMenuEventsBound === true) {
       return;
     }
@@ -62,13 +78,6 @@ import "../core/lifecycle.js";
       var action = event.target.closest && event.target.closest("[data-dismissible-menu-action]");
 
       closeMenus(menu);
-
-      var summary = event.target.closest && event.target.closest("summary");
-      if (menu && menu.hasAttribute("data-list-menu") && summary && summary.parentElement === menu) {
-        event.preventDefault();
-        menu.open = !menu.open;
-        if (menu.open) TinyCat.menus.position(menu);
-      }
 
       if (menu && action) {
         menu.open = false;
@@ -119,5 +128,5 @@ import "../core/lifecycle.js";
     window.addEventListener("resize", reposition);
     document.addEventListener("scroll", reposition, true);
   };
-  TinyCat.lifecycle.register("menus", { init: TinyCat.menus.init });
+  TinyCat.lifecycle.register("menus", { init: TinyCat.menus.init, hydrateOrder: 20, hydrate: TinyCat.menus.prepare });
 }());

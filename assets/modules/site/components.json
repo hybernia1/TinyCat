@@ -1997,5 +1997,508 @@
     "default": {
       "t": "public.filter_content"
     }
+  },
+  "site/dashboard": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14",
+      "data-dashboard": ""
+    },
+    "children": [
+      {
+        "tag": "section",
+        "attrs": {
+          "class": "grid sm:grid-2 md:grid-4",
+          "aria-label": {
+            "t": "common.dashboard"
+          }
+        },
+        "children": [
+          {
+            "each": {
+              "get": "stats"
+            },
+            "as": "stat",
+            "children": [
+              {
+                "component": "ui/stat-card",
+                "data": {
+                  "heading": {
+                    "get": "stat.heading"
+                  },
+                  "icon": {
+                    "get": "stat.icon"
+                  },
+                  "label": {
+                    "get": "stat.label"
+                  },
+                  "value": {
+                    "get": "stat.value"
+                  },
+                  "note": {
+                    "get": "stat.note"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "component": "ui/admin-list",
+        "data": {
+          "title": {
+            "t": "admin.recent_comments"
+          },
+          "icon": "message-circle",
+          "target_id": "dashboard-comments",
+          "content": {
+            "get": "comments_html"
+          }
+        }
+      },
+      {
+        "component": "ui/admin-list",
+        "data": {
+          "title": {
+            "t": "admin.cache.title"
+          },
+          "icon": "database",
+          "target_id": "dashboard-cache",
+          "content": {
+            "get": "cache_html"
+          }
+        }
+      }
+    ]
+  },
+  "site/dashboard-comments": {
+    "tag": "div",
+    "children": [
+      {
+        "component": "ui/empty-state",
+        "data": {
+          "label": {
+            "t": "admin.no_recent_comments"
+          },
+          "icon": "message-circle"
+        },
+        "when": {
+          "not": {
+            "get": "items"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table",
+              "id": "dashboard-comments-table"
+            },
+            "children": [
+              {
+                "tag": "caption",
+                "attrs": {
+                  "class": "sr-only"
+                },
+                "children": [
+                  {
+                    "t": "admin.recent_comments"
+                  }
+                ]
+              },
+              {
+                "tag": "thead",
+                "children": [
+                  {
+                    "tag": "tr",
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "admin.stats.comments"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "common.username"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "public.status_title"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "common.created"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "children": [
+                  {
+                    "each": {
+                      "get": "items"
+                    },
+                    "as": "comment",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "children": [
+                          {
+                            "tag": "td",
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-identity"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "div",
+                                    "attrs": {
+                                      "class": "table-identity-body"
+                                    },
+                                    "children": [
+                                      {
+                                        "tag": "span",
+                                        "attrs": {
+                                          "class": "table-primary",
+                                          "title": {
+                                            "get": "comment.body"
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "comment.body"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "children": [
+                              {
+                                "tag": "a",
+                                "attrs": {
+                                  "href": {
+                                    "get": "comment.author_url"
+                                  },
+                                  "class": "table-text",
+                                  "title": {
+                                    "get": "comment.username"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "comment.username"
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "children": [
+                              {
+                                "tag": "a",
+                                "attrs": {
+                                  "href": {
+                                    "get": "comment.content_url"
+                                  },
+                                  "class": "table-text",
+                                  "title": {
+                                    "or": [
+                                      {
+                                        "get": "comment.content_body"
+                                      },
+                                      {
+                                        "t": "common.open"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "or": [
+                                      {
+                                        "get": "comment.content_body"
+                                      },
+                                      {
+                                        "t": "common.open"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "children": [
+                              {
+                                "tag": "time",
+                                "attrs": {
+                                  "datetime": {
+                                    "get": "comment.created_iso"
+                                  }
+                                },
+                                "children": [
+                                  {
+                                    "get": "comment.created_label"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "when": {
+          "get": "items"
+        }
+      }
+    ]
+  },
+  "site/dashboard-cache": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "split"
+        },
+        "children": [
+          {
+            "tag": "p",
+            "attrs": {
+              "class": "m-0 text-muted"
+            },
+            "children": [
+              {
+                "get": "driver"
+              }
+            ]
+          },
+          {
+            "tag": "span",
+            "attrs": {
+              "class": {
+                "if": [
+                  {
+                    "get": "available"
+                  },
+                  "badge badge-primary",
+                  "badge badge-danger"
+                ]
+              }
+            },
+            "children": [
+              {
+                "if": [
+                  {
+                    "get": "available"
+                  },
+                  {
+                    "t": "admin.cache.available"
+                  },
+                  {
+                    "t": "admin.cache.fallback"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "grid sm:grid-2 gap-3"
+        },
+        "children": [
+          {
+            "each": {
+              "get": "services"
+            },
+            "as": "service",
+            "children": [
+              {
+                "tag": "section",
+                "attrs": {
+                  "class": "stack gap-2"
+                },
+                "children": [
+                  {
+                    "tag": "div",
+                    "attrs": {
+                      "class": "split"
+                    },
+                    "children": [
+                      {
+                        "tag": "h3",
+                        "attrs": {
+                          "class": "text-lg m-0"
+                        },
+                        "children": [
+                          {
+                            "get": "service.label"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "form",
+                        "attrs": {
+                          "method": "post",
+                          "action": "/api/site/cache-resets",
+                          "data-ajax-form": "",
+                          "data-confirm": {
+                            "t": "admin.cache.opcache_reset_confirm"
+                          },
+                          "data-confirm-title": {
+                            "t": "admin.cache.opcache_reset"
+                          },
+                          "data-confirm-ok": {
+                            "t": "admin.cache.opcache_reset"
+                          },
+                          "data-confirm-cancel": {
+                            "t": "common.cancel"
+                          }
+                        },
+                        "children": [
+                          {
+                            "csrf": true
+                          },
+                          {
+                            "tag": "input",
+                            "attrs": {
+                              "type": "hidden",
+                              "name": "action",
+                              "value": "reset-opcache"
+                            }
+                          },
+                          {
+                            "tag": "button",
+                            "attrs": {
+                              "class": "btn btn-secondary btn-sm",
+                              "type": "submit"
+                            },
+                            "children": [
+                              {
+                                "icon": "refresh"
+                              },
+                              {
+                                "tag": "span",
+                                "children": [
+                                  {
+                                    "t": "admin.cache.opcache_reset"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ],
+                        "when": {
+                          "get": "service.resettable"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "p",
+                    "attrs": {
+                      "class": "m-0 text-muted"
+                    },
+                    "children": [
+                      {
+                        "get": "service.status"
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "div",
+                    "attrs": {
+                      "class": "stack gap-1"
+                    },
+                    "children": [
+                      {
+                        "each": {
+                          "get": "service.details"
+                        },
+                        "as": "detail",
+                        "children": [
+                          {
+                            "tag": "p",
+                            "attrs": {
+                              "class": "m-0 table-meta"
+                            },
+                            "children": [
+                              {
+                                "get": "detail"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "when": {
+                      "get": "service.details"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

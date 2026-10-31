@@ -158,6 +158,18 @@ editors, and displays errors without an editable target inside the form. Tabbed
 forms retain hidden transport controls, including the new user's active status.
 Existing authorized APIs and server validation remain in effect.
 
+## Upgrading to 5.13.0: dashboard and mobile controls
+
+No database migration or configuration change is required. The dashboard uses
+shared administration components and a responsive recent-comment table. Cache
+diagnostics and the protected OPcache reset remain available below recent activity.
+The update manifest removes the superseded dashboard PHP template.
+
+Filter and sorting triggers handle activation directly, including clicks on
+their text and SVG icons. Flash notifications follow the visible mobile viewport
+when a keyboard opens, and touch hover events no longer shorten their display time.
+Existing list state, menu restoration and notification close controls are retained.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

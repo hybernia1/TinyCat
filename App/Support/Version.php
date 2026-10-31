@@ -5,5 +5,5 @@ namespace TinyCat\Support;
 
 final class Version
 {
-    public const string CURRENT = '5.12.0';
+    public const string CURRENT = '5.13.0';
 }
