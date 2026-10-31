@@ -9,6 +9,20 @@ import "../core/lifecycle.js";
   var qs = TinyCat.dom.find;
   var qsa = TinyCat.dom.all;
   var uiText = TinyCat.i18n.label;
+  function positionStack() {
+    var stack = qs(".toast-stack"), viewport = window.visualViewport;
+    if (!stack) return;
+    if (!viewport || viewport.width <= 0 || viewport.height <= 0) {
+      stack.style.transform = "";
+      stack.style.maxWidth = "";
+      return;
+    }
+    // Fixed elements use the layout viewport, which can extend behind the mobile keyboard.
+    var x = viewport.offsetLeft + viewport.width - window.innerWidth;
+    var y = Math.min(0, viewport.offsetTop + viewport.height - window.innerHeight);
+    stack.style.transform = "translate(" + Math.round(x) + "px, " + Math.round(y) + "px)";
+    stack.style.maxWidth = Math.max(0, viewport.width - 20) + "px";
+  }
   function toastIconName(type) {
     if (type === "success") {
       return "check-circle";
@@ -72,19 +86,23 @@ import "../core/lifecycle.js";
     toast.appendChild(body);
     toast.appendChild(close);
     stack.appendChild(toast);
+    positionStack();
 
     function removeToast() {
+      window.clearTimeout(closeTimeout);
       toast.remove();
     }
 
     close.addEventListener("click", removeToast);
     closeTimeout = window.setTimeout(removeToast, timeout || (normalizedType === "danger" ? 5600 : 4200));
 
-    toast.addEventListener("mouseenter", function () {
-      window.clearTimeout(closeTimeout);
+    toast.addEventListener("pointerenter", function (event) {
+      if (event.pointerType === "mouse") window.clearTimeout(closeTimeout);
     });
 
-    toast.addEventListener("mouseleave", function () {
+    toast.addEventListener("pointerleave", function (event) {
+      if (event.pointerType !== "mouse") return;
+      window.clearTimeout(closeTimeout);
       closeTimeout = window.setTimeout(removeToast, 1800);
     });
 
@@ -116,6 +134,13 @@ import "../core/lifecycle.js";
     });
   }
   TinyCat.toasts.init = function () {
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", positionStack);
+      window.visualViewport.addEventListener("scroll", positionStack);
+    }
+    window.addEventListener("resize", positionStack);
+    document.addEventListener("tinycat:modal-open", positionStack);
+    document.addEventListener("tinycat:modal-close", positionStack);
     renderFlashMessages(document);
 
     document.addEventListener("click", function (event) {

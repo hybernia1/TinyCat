@@ -34,6 +34,7 @@ import "./menus.js";
       options.appendChild(option);
     });
     control.append(summary, options);
+    window.TinyCat.menus.prepare(control);
     var actions = parent.querySelector(".admin-filter-actions");
     if (actions) actions.insertBefore(control, actions.querySelector(".admin-per-page-form"));
     else parent.insertBefore(control, wrapper || table);

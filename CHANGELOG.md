@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.13.0 - 2026-10-31
+
+- Rebuild the administration dashboard with shared cards, list containers and empty states. Replace the recent-comment panel with a responsive table showing authors, posts and timestamps; keep recent activity above cache diagnostics. Remove database table names, the hardcoded product title and the unrelated reports link.
+- Preserve all cache diagnostics and the protected OPcache reset action. Keep published and scheduled counts, bounded comment queries, escaped text and canonical author/post links.
+- Bind filter and sorting activation directly to their triggers, including text and SVG icon clicks, instead of relying on document-level click delegation. Retain explicit dismissal and open-menu restoration after AJAX updates.
+- Keep flash notifications inside the mobile visual viewport when editors or the keyboard open. Ignore touch hover events when managing notification duration and clear dismissal timers consistently.
+- Extend dashboard, mobile viewport, trigger and notification regression coverage. No database migration or configuration change is required; signed updates remove the superseded dashboard template.
+
 ## 5.12.0 - 2026-10-31
 
 - Add shared modal URLs and browser history across the frontend and administration. Back closes the current editor, Forward restores it, tabs replace the current entry, and direct links/reload restore nested editors without serializing drafts. Preserve list state, scroll and focus and guard unsaved changes and stale responses.

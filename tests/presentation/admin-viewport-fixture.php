@@ -38,10 +38,10 @@ window.TinyCat.i18n = { t: key => ({'common.menu':'Menu', 'common.sort':'≈òazen√
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/icons.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/components.js')) ?>
 window.TinyCat.components.register(<?= json_encode(array_intersect_key(TinyCat\Support\Components::templates(), array_flip(['ui/filter-chip', 'ui/list-summary'])), JSON_HEX_TAG | JSON_THROW_ON_ERROR) ?>);
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/menus.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/filters.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tables.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tooltips.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/menus.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/fields.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tabs.js')) ?>
 let escapedToModal = 0;
@@ -78,6 +78,25 @@ const filterSummary = menu.querySelector('summary');
 menu.open = false; filterSummary.click();
 let filterToggleWorks = menu.open;
 filterSummary.querySelector('span').click(); filterToggleWorks = filterToggleWorks && !menu.open;
+// Trigger activation must work without document-level click delegation.
+function localTriggerWorks(trigger, owner) {
+  const stop = event => event.stopPropagation();
+  trigger.addEventListener('click', stop);
+  owner.open = false;
+  let works = true;
+  for (const target of [trigger, trigger.querySelector('span'), trigger.querySelector('.icon use') || trigger.querySelector('.icon')]) {
+    for (const expected of [true, false]) {
+      const event = new MouseEvent('click', {bubbles:true, cancelable:true});
+      target.dispatchEvent(event);
+      works = works && owner.open === expected && event.defaultPrevented;
+    }
+  }
+  trigger.removeEventListener('click', stop);
+  return works;
+}
+window.TinyCat.menus.prepare(document);
+window.TinyCat.menus.prepare(document);
+filterToggleWorks = filterToggleWorks && localTriggerWorks(filterSummary, menu);
 const results = [];
 const labelsBefore = document.querySelectorAll('.table-cell-label').length;
 window.tableService.hydrate(document);
@@ -129,6 +148,7 @@ if (innerWidth < 600) {
   sortingWorks = choices.length === originals.length && choices.filter(link => link.getAttribute('aria-current') === 'true').length === 1 && choices.every((link,index) => ['href','data-history','data-ajax-target'].every(attr => link.getAttribute(attr) === originals[index].getAttribute(attr)));
   sortingWorks = sortingWorks && Math.abs(summary.getBoundingClientRect().height - filterButton.getBoundingClientRect().height) < 1 && Math.abs(summary.getBoundingClientRect().top - filterButton.getBoundingClientRect().top) < 1 && summary.getBoundingClientRect().right <= pageSize.getBoundingClientRect().left;
   sortingDiagnostics.controls = [sortingWorks, summary.getBoundingClientRect().toJSON(), filterButton.getBoundingClientRect().toJSON(), pageSize.getBoundingClientRect().toJSON()];
+  sortingWorks = sortingWorks && localTriggerWorks(summary, mobileSort);
   summary.click(); await new Promise(resolve => setTimeout(resolve, 100));
   const popup = mobileSort.querySelector('.list-menu-panel'), bounds = popup.getBoundingClientRect(), body = mobileSort.closest('.modal-body');
   sortingWorks = sortingWorks && mobileSort.open && bounds.width <= 300 && bounds.left >= 0 && bounds.right <= innerWidth && bounds.top >= 0 && bounds.bottom <= (body ? body.getBoundingClientRect().bottom : innerHeight);

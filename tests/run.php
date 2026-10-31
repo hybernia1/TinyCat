@@ -34,6 +34,7 @@ $tests = [
     'HTML sanitizer' => 'tests/html-sanitizer.php',
     'Presentation templates' => 'tests/presentation/view-templates.php',
     'Module presentation components' => 'tests/presentation/components.php',
+    'Dashboard presentation' => 'tests/presentation/dashboard.php',
     'Public export data' => 'tests/public-exports.php',
     'Archive media filters' => 'tests/archive-filters.php',
     'Public route smoke' => 'tests/http/public-route-smoke.php',

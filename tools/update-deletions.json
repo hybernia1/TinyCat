@@ -221,6 +221,9 @@
     "5.0.0": [
         "Public/install/index.php"
     ],
+    "5.13.0": [
+        "App/Site/templates/dashboard.php"
+    ],
     "5.9.0": [
         "App/Bots/templates/detail.php",
         "App/Bots/templates/parts/modals/source.php",
