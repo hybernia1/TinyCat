@@ -87,8 +87,6 @@ import "../core/lifecycle.js";
       if (tab) TinyCat.tabs.activate(tab, false);
     });
 
-    document.addEventListener("invalid", function (event) { TinyCat.tabs.reveal(event.target); }, true);
-
     document.addEventListener("click", function (event) {
       var tab = event.target.closest && event.target.closest("[data-tab]");
 

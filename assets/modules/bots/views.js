@@ -41,6 +41,7 @@ import "./detail.js";
     if (count && Number.isFinite(Number(data.total_count))) { count.textContent = String(data.total_count); }
   }
   function refreshPosts() {
+    T.botDetail.changed();
     var root = document.querySelector("#bot-detail-posts-list");
     if (!root || !root.dataset.botPostsUrl) { return; }
     if (pendingPosts.has(root)) { pendingPosts.get(root).abort(); }

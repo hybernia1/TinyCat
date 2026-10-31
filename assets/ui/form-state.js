@@ -2,14 +2,15 @@ import "../core/dom.js";
 import "../core/lifecycle.js";
 import "../core/navigation.js";
 import "./forms.js";
+import "./tabs.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat, qsa = TinyCat.dom.all, emit = TinyCat.dom.emit;
-  var fieldErrorCounterId = 0, discarding = false;
+  var fieldErrorCounterId = 0, discarding = false, nativeErrors = new WeakMap();
   var confirmDiscard = function () { throw new Error("Discard confirmation is not configured."); };
   function clearErrors(form, name) {
-    qsa('[aria-invalid="true"]', form).forEach(function (field) {
-      if (name && field.name !== name) { return; }
+    qsa('[aria-invalid="true"], [data-tinycat-field-error-id]', form).forEach(function (field) {
+      if (name && (field.name || field.dataset.validationFor) !== name) { return; }
       var errorId = field.dataset.tinycatFieldErrorId || "";
       var describedBy;
 
@@ -37,29 +38,37 @@ import "./forms.js";
     });
   }
   function applyErrors(form, errors) {
-    var firstInvalid = null;
+    var firstInvalid = null, fallback = null;
 
     if (!errors || typeof errors !== "object") {
       return firstInvalid;
     }
 
     Object.keys(errors).forEach(function (name) {
-      var field = form.elements.namedItem(name);
+      clearErrors(form, name);
+      var field = form.elements.namedItem(name) || form.elements.namedItem(name.replace(/\.([^.[\]]+)/g, "[$1]"));
       var fields;
       var input;
       var message;
       var error;
       var container;
 
-      if (!field) {
-        return;
+      fields = !field ? [] : field instanceof RadioNodeList ? Array.prototype.slice.call(field) : [field];
+      input = fields.find(function (control) { return control && control.type !== "hidden" && !control.disabled; });
+      if (input) {
+        if (input.name !== name) clearErrors(form, input.name);
+        var proxy = qsa("[data-validation-for]", form).find(function (control) { return control.dataset.validationFor === input.name; });
+        if (proxy) { fields.push(proxy); input = proxy; }
       }
-
-      fields = field instanceof RadioNodeList ? Array.prototype.slice.call(field) : [field];
-      input = fields[0];
       message = Array.isArray(errors[name]) ? errors[name][0] : errors[name];
 
       if (!input) {
+        var summary = document.createElement("div");
+        summary.className = "alert alert-danger";
+        summary.dataset.fieldError = name;
+        summary.setAttribute("role", "alert"); summary.setAttribute("tabindex", "-1");
+        summary.textContent = String(message || ""); form.appendChild(summary);
+        if (!fallback) fallback = summary;
         return;
       }
 
@@ -67,7 +76,7 @@ import "./forms.js";
       error = document.createElement("span");
       error.id = "field-error-" + fieldErrorCounterId;
       error.className = "field-error";
-      error.dataset.fieldError = name;
+      error.dataset.fieldError = input.name || input.dataset.validationFor || name;
       error.textContent = String(message || "");
 
       fields.filter(Boolean).forEach(function (control) {
@@ -94,14 +103,27 @@ import "./forms.js";
         input.insertAdjacentElement("afterend", error);
       }
 
-      if (!firstInvalid && input.type !== "hidden" && !input.hidden && TinyCat.tabs) { TinyCat.tabs.reveal(input); }
-      if (!firstInvalid && input.type !== "hidden" && !input.hidden && !input.closest('[hidden], [aria-hidden="true"]')) {
-        firstInvalid = input;
-      }
+      if (!firstInvalid) firstInvalid = input;
     });
 
+    firstInvalid = firstInvalid || fallback;
+    if (firstInvalid) TinyCat.tabs.reveal(firstInvalid);
     return firstInvalid;
   }
+  function focusInvalid(field) {
+    if (!field || field.isConnected === false || field.disabled) return;
+    TinyCat.tabs.reveal(field);
+    if (!TinyCat.dom.visible(field)) return;
+    field.focus({ preventScroll: true });
+    var modal = field.closest(".modal"), scroller = modal && TinyCat.dialog.scrollElement(modal);
+    if (scroller) {
+      var bounds = field.getBoundingClientRect(), area = scroller.getBoundingClientRect();
+      if (bounds.top < area.top + 12 || bounds.bottom > area.bottom - 12) {
+        scroller.scrollTop += bounds.top - area.top - Math.max(12, (area.height - bounds.height) / 2);
+      }
+    } else if (field.scrollIntoView) field.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+
   function resetForm(form) {
     if (!form || form.dataset.reset !== "true") {
       return;
@@ -202,8 +224,28 @@ import "./forms.js";
     return true;
   }
   function init() {
+    document.addEventListener("invalid", function (event) {
+      var field = event.target, form = field.form;
+      if (!form || !field.name || field.disabled) return;
+      event.preventDefault();
+      var errors = nativeErrors.get(form);
+      if (!errors) {
+        errors = {}; nativeErrors.set(form, errors);
+        Promise.resolve().then(function () {
+          nativeErrors.delete(form);
+          if (form.isConnected === false) return;
+          clearErrors(form); focusInvalid(applyErrors(form, errors));
+        });
+      }
+      errors[field.name] = [field.validationMessage];
+    }, true);
     ["input", "change", "tinycat:editor-sync"].forEach(function (name) {
-      document.addEventListener(name, function (event) { updateDirtyForm(event.target.closest && event.target.closest('form[data-confirm-unsaved="true"]')); });
+      document.addEventListener(name, function (event) {
+        var field = event.target, form = field.form || (field.closest && field.closest("form"));
+        var fieldName = field.name || (field.dataset && field.dataset.validationFor);
+        if (form && fieldName) clearErrors(form, fieldName);
+        updateDirtyForm(field.closest && field.closest('form[data-confirm-unsaved="true"]'));
+      });
     });
     document.addEventListener("click", function (event) {
       var link = event.target.closest && event.target.closest("a[href]"), url;
@@ -218,6 +260,6 @@ import "./forms.js";
     });
     TinyCat.navigation.guard(beforeLeave);
   }
-  Object.assign(TinyCat.forms, { confirmWith: function (confirm) { confirmDiscard = confirm; }, clearErrors: clearErrors, applyErrors: applyErrors, reset: resetForm, markClean: markFormClean, dirty: dirtyForms, confirmDiscard: confirmDirtyForms, discard: resetDiscardedForms, hydrate: hydrate });
+  Object.assign(TinyCat.forms, { confirmWith: function (confirm) { confirmDiscard = confirm; }, clearErrors: clearErrors, applyErrors: applyErrors, focusInvalid: focusInvalid, reset: resetForm, markClean: markFormClean, dirty: dirtyForms, confirmDiscard: confirmDirtyForms, discard: resetDiscardedForms, hydrate: hydrate });
   TinyCat.lifecycle.register("form-state", { init: init, hydrate: hydrate, hydrateOrder: 10, dispose: dispose });
 }());

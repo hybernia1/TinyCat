@@ -74,6 +74,10 @@ const panel = document.querySelector('[data-filter-panel]');
 panel.append(form); form.hidden = false; form.id = panel.dataset.filterPanel; form.dataset.filterContent = '';
 window.TinyCat.filters.hydrate();
 const menu = panel.parentElement, summary = document.querySelector('[data-list-summary]');
+const filterSummary = menu.querySelector('summary');
+menu.open = false; filterSummary.click();
+let filterToggleWorks = menu.open;
+filterSummary.querySelector('span').click(); filterToggleWorks = filterToggleWorks && !menu.open;
 const results = [];
 const labelsBefore = document.querySelectorAll('.table-cell-label').length;
 window.tableService.hydrate(document);
@@ -118,7 +122,7 @@ for (const long of [false, true]) {
   badge.remove();
 }
 const mobileSort = document.querySelector('.table-mobile-sort');
-let sortingWorks = true; const sortingDiagnostics = {};
+let sortingWorks = filterToggleWorks; const sortingDiagnostics = {};
 if (innerWidth < 600) {
   const summary = mobileSort.querySelector('summary'), originals = [...document.querySelectorAll('table .table-sort')], choices = [...mobileSort.querySelectorAll('.table-sort-option')];
   const actions = mobileSort.closest('.admin-filter-actions'), filterButton = actions.querySelector('.filter-menu > summary'), pageSize = actions.querySelector('.admin-per-page-form');
@@ -129,6 +133,10 @@ if (innerWidth < 600) {
   const popup = mobileSort.querySelector('.list-menu-panel'), bounds = popup.getBoundingClientRect(), body = mobileSort.closest('.modal-body');
   sortingWorks = sortingWorks && mobileSort.open && bounds.width <= 300 && bounds.left >= 0 && bounds.right <= innerWidth && bounds.top >= 0 && bounds.bottom <= (body ? body.getBoundingClientRect().bottom : innerHeight);
   sortingDiagnostics.popup = [sortingWorks, mobileSort.open, bounds.toJSON(), body && body.getBoundingClientRect().toJSON()];
+  summary.querySelector('span').click();
+  sortingWorks = sortingWorks && !mobileSort.open;
+  summary.querySelector('.icon').dispatchEvent(new MouseEvent('click', {bubbles:true,cancelable:true}));
+  sortingWorks = sortingWorks && mobileSort.open;
   summary.focus({preventScroll:true}); summary.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}));
   sortingWorks = sortingWorks && !mobileSort.open && document.activeElement === summary;
   sortingDiagnostics.escape = [sortingWorks, mobileSort.open, document.activeElement === summary];

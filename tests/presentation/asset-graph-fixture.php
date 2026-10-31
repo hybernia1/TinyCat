@@ -27,7 +27,7 @@ if ($mode === '--styles') {
     echo json_encode(\TinyCat\Support\AssetGraph::stylesheet(array_values(array_unique($styles))), JSON_THROW_ON_ERROR);
     exit;
 }
-$roots = $mode === '--core' ? ['assets/ui/fields.js', 'assets/ui/dialogs.js'] : [];
+$roots = $mode === '--core' ? ['assets/ui/fields.js', 'assets/ui/dialogs.js'] : ($mode === '--validation' ? ['assets/ui/ajax.js', 'assets/modules/status/editor.js'] : []);
 if ($mode === '--all') {
     foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) {
         foreach (\TinyCat\Support\ClientAssets::entries($scope) as $entry) { if ($entry !== 'assets/bootstrap.js') { $roots[] = $entry; } }

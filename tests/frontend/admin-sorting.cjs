@@ -12,7 +12,7 @@ const T = {
   dom: { find: () => target, emit() {} },
   lifecycle: { register() {}, hydrate() { if (trackMenu) menuSteps.push('hydrate'); } },
   api: { unwrap: response => response.data, errors: () => null, details: () => ({}), async request(url, options) { calls.push({ url, options }); return { data: { url } }; } },
-  forms: { clearErrors() {}, applyErrors() {}, reset() {}, markClean() {}, loading() {}, dirty: () => [], confirmDiscard: async () => true },
+  forms: { clearErrors() {}, applyErrors() {}, focusInvalid() {}, reset() {}, markClean() {}, loading() {}, dirty: () => [], confirmDiscard: async () => true },
   i18n: { label: key => key }, actions: {}, dialog: {},
   modules: { result(_source, response) { applied.push(response.data.url); } }, toasts: { show() {} }
 };

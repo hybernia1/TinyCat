@@ -142,6 +142,22 @@ sorting and page size, and returns to the first page. Unavailable bot/source
 choices are normalized to All before querying, including source choices from a
 different bot. List controls and URL state retain the existing access checks.
 
+## Upgrading to 5.12.0: modal history and validation
+
+No database migration or configuration change is required. Remote modals and
+persistent local editors share fragment URLs, for example
+`/admin/bots/accounts#modal=bots/accounts/123&panel=detail&tab=history`.
+Back closes an editor through the existing unsaved-change guard; Forward,
+reload and direct links restore the editor and selected tab. Tab changes replace
+the current entry. Nested editors have separate steps, while short-lived prompts
+do not create bookmark URLs. Draft contents are never stored in URLs or history.
+
+Lists keep their filters, scroll and focus on a read-only modal return. Validation
+reveals and marks the first failing field, including inactive tabs and rich-text
+editors, and displays errors without an editable target inside the form. Tabbed
+forms retain hidden transport controls, including the new user's active status.
+Existing authorized APIs and server validation remain in effect.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

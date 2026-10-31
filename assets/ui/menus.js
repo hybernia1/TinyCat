@@ -63,6 +63,13 @@ import "../core/lifecycle.js";
 
       closeMenus(menu);
 
+      var summary = event.target.closest && event.target.closest("summary");
+      if (menu && menu.hasAttribute("data-list-menu") && summary && summary.parentElement === menu) {
+        event.preventDefault();
+        menu.open = !menu.open;
+        if (menu.open) TinyCat.menus.position(menu);
+      }
+
       if (menu && action) {
         menu.open = false;
       }

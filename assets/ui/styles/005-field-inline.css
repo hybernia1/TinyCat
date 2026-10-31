@@ -65,7 +65,9 @@
 
 .input[aria-invalid="true"],
 .select[aria-invalid="true"],
-.textarea[aria-invalid="true"] {
+.textarea[aria-invalid="true"],
+[data-validation-for][aria-invalid="true"],
+[data-validation-for][aria-invalid="true"]:focus {
   border-color: var(--danger);
 }
 

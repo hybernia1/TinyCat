@@ -70,7 +70,7 @@ import "../../ui/dialogs.js";
     document.querySelectorAll(".navbar a[href]").forEach(function (node) { if (new URL(node.href).pathname === new URL(data.url, window.location.href).pathname) { node.setAttribute("aria-current", "page"); } });
     var main = document.getElementById("main-content"); main.focus({ preventScroll: true });
   }
-  async function visit(url, restored) {
+  async function visit(url, restored, replace) {
     window.clearTimeout(scrollSaveTimer);
     scrollSaveTimer = null;
     if (pending) { pending.abort(); }
@@ -81,26 +81,28 @@ import "../../ui/dialogs.js";
     url.searchParams.forEach(function (value, key) { request.searchParams.set(key, value); });
     try {
       var response = await T.api.request(request.href, { signal: controller.signal, cache: "no-store" });
-      if (pending !== controller) { return; }
+      if (pending !== controller) { return false; }
       var next = new URL(response.data.url, window.location.href);
-      if (!restored) { currentIndex++; window.history.pushState({ publicIndex: currentIndex, scroll: [0, 0] }, "", next.pathname + next.search); }
+      if (!restored) { currentIndex++; window.history[replace ? "replaceState" : "pushState"]({ publicIndex: currentIndex, scroll: [0, 0] }, "", next.pathname + next.search); }
       apply(target, response.data);
       var scroll = restored && restored.scroll || [0, 0];
       window.scrollTo(scroll[0], scroll[1]);
+      return true;
     } catch (error) {
-      if (error.name !== "AbortError" && pending === controller) { window.location.assign(url.href); }
+      if (error.name !== "AbortError" && pending === controller) { window.location[replace ? "replace" : "assign"](url.href); }
+      return false;
     } finally {
       if (pending === controller) { pending = null; target.removeAttribute("aria-busy"); delete target.dataset.navigationBusy; }
     }
   }
-  T.navigation.registerPage({ accepts: supported, visit: visit, restore: async function (event) {
-    if (rollback) { rollback = false; return; }
+  T.navigation.registerPage({ accepts: supported, visit: visit, restore: async function (event, url) {
+    if (rollback) { rollback = false; return false; }
     var state = event && event.state || window.history.state || {};
     if (!(await T.navigation.canLeave())) {
-      rollback = true; window.history.go(currentIndex - (state.publicIndex || 0)); return;
+      rollback = true; window.history.go(currentIndex - (state.publicIndex || 0)); return false;
     }
     currentIndex = state.publicIndex || 0;
-    return visit(new URL(window.location.href), state);
+    return visit(url || new URL(window.location.href), state);
   } });
   T.lifecycle.register("public-pages", { init: function () {
     if (!document.querySelector("[data-public-page]")) { return; }

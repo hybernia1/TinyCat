@@ -365,3 +365,41 @@ It checks document bounds and preserves local table overflow. Use
 local installation is discovered or the render test reports a skip.
 
 Filter state must agree between the query, popover and removable chips. Normalize unavailable bot/source choices before querying; source choices follow the selected bot. Removing a chip resets only that field to its neutral option, preserves search, sorting and page size, and returns to page 1. Hidden transport fields and unchecked controls do not mark filters active. Page size belongs only in the list toolbar.
+
+## Modal URLs and browser history
+
+Remote resource modals and persistent local editors use the shared dialog-history
+service. Opening adds one entry; selecting a tab replaces that entry. For example,
+`/admin/bots/accounts?status=active#modal=bots/accounts/123&panel=detail&tab=history`
+keeps list filters in the page query and modal identity/tab in the fragment.
+Ordinary anchors are restored on close. Do not put form drafts or credentials in
+URLs, history state or browser storage.
+
+Back closes the top modal through the shared unsaved-change guard. Forward,
+direct links and reload restore the editor/tab using the existing authorized
+JSON resource and module renderer. Same-page traversal keeps the list DOM,
+filters, scroll and opener focus; cross-page traversal first restores the page.
+An avatar or other nested editor adds one step, while short-lived confirmation
+and preview dialogs do not create bookmark URLs. Standalone confirmations are
+cancelled before ordinary page history restoration. Confirmation cancellation
+restores the original history position and draft. Stale resource reads are
+cancelled and cannot reopen a dismissed modal.
+
+Use `dialog.open`, `openResource`, `requestClose` and `close`; avoid module-owned
+`pushState`, close redirects or session-storage tab restoration. Internal history
+reconciliation uses `{history: false}` to prevent recursive history changes.
+Legacy full-page bot links provide only their list fallback to `openResource`.
+
+## Validation in tabbed editors
+
+Moving editor sections into tabs must retain controls outside those sections,
+including hidden status, scope and CSRF inputs. Native constraint failures and
+JSON validation errors use the shared form-state service: mark all failing
+controls, reveal the first failing tab, synchronize its mobile selector, focus
+the field and scroll only the modal body. Preserve existing help descriptions.
+Editing clears only that field's feedback. Unknown or non-editable field errors
+must remain visible as a focusable form-level alert.
+
+Custom editors expose their visible input with `data-validation-for="field_name"`.
+The form-state service applies and clears error state on both the submitted
+control and that proxy; UI modules do not duplicate validation or tab logic.

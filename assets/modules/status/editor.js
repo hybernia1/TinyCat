@@ -446,6 +446,7 @@ import "../../ui/fields.js";
     editor = document.createElement("div");
     editor.className = "status-editor-input";
     editor.dataset.statusEditorInput = "true";
+    editor.dataset.validationFor = source.name;
     editor.dataset.placeholder = source.dataset.statusPlaceholder || source.getAttribute("placeholder") || "";
     editor.setAttribute("contenteditable", "plaintext-only");
     editor.setAttribute("role", "textbox");

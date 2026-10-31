@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.12.0 - 2026-10-31
+
+- Add shared modal URLs and browser history across the frontend and administration. Back closes the current editor, Forward restores it, tabs replace the current entry, and direct links/reload restore nested editors without serializing drafts. Preserve list state, scroll and focus and guard unsaved changes and stale responses.
+- Share native and server validation feedback across tabbed editors, including visible rich-text proxies, field focus, modal scrolling, nested field names and form-level errors. Preserve hidden controls when arranging sections, fixing new-user submissions that lost the required active status.
+- Make list sorting and filtering close on repeated trigger clicks. Refresh the bot workspace background only after actual changes, remove module-specific history/session-storage workarounds, and cancel standalone confirmations during page history restoration.
+- Extend native-browser, renderer, source-ownership and update rehearsal coverage. No database migration or configuration change is required.
+
 ## 5.11.0 - 2026-10-31
 
 - Simplify table sorting to one direction indicator and reuse the filter popover appearance for mobile sorting. Keep sorting menus open across selections and AJAX refreshes, including keyboard focus and scroll position.

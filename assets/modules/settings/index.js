@@ -20,11 +20,7 @@ import "../../core/modules.js";
         var form = template && template.content.querySelector("form");
         if (!form) { return null; }
         dialog = T.ui.sectionedDialog("settings-editor-modal", "settings.title", form, true);
-        form.addEventListener("tinycat:success", function () {
-          var selected = Array.from(dialog.querySelectorAll("[data-tab]")).find(function (tab) { return tab.getAttribute("aria-selected") === "true"; });
-          try { window.sessionStorage.setItem("tinycat.settings.section", selected ? selected.dataset.tab : ""); } catch (_) {}
-          window.location.reload();
-        });
+        form.addEventListener("tinycat:success", function () { window.location.reload(); });
         T.lifecycle.hydrate(dialog);
       }
       return dialog;
@@ -34,9 +30,6 @@ import "../../core/modules.js";
         if (template.dataset.settingsReady === "true") { return; }
         template.dataset.settingsReady = "true";
         T.settings.editor(template);
-        var section = null;
-        try { section = window.sessionStorage.getItem("tinycat.settings.section"); window.sessionStorage.removeItem("tinycat.settings.section"); } catch (_) {}
-        if (section !== null) { T.settings.open(section); }
       });
     }
   };

@@ -26,7 +26,7 @@ class Node {
   setAttribute(name, value) { this.attributes[name] = String(value); if (name === "value") this._value = String(value); if (name === "selected") this.selected = true; if (name === "disabled") this.disabled = true; }
   getAttribute(name) { return Object.hasOwn(this.attributes, name) ? this.attributes[name] : null; }
   removeAttribute(name) { delete this.attributes[name]; }
-  appendChild(node) { if (node.tag === "fragment") { node.children.slice().forEach(child => this.appendChild(child)); return node; } node.parent = this; this.children.push(node); return node; }
+  appendChild(node) { if (node.tag === "fragment") { node.children.slice().forEach(child => this.appendChild(child)); return node; } if (node.parent) node.remove(); node.parent = this; this.children.push(node); return node; }
   append(...nodes) { nodes.forEach(node => this.appendChild(node)); }
   insertBefore(node, before) { node.remove(); const index = this.children.indexOf(before); if (index < 0) throw new Error('Missing insertion target'); node.parent = this; this.children.splice(index, 0, node); return node; }
   replaceChildren(...nodes) { this._text = ""; this.children = []; this.append(...nodes); }
@@ -772,6 +772,18 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   T.botDetail.dispose(workspace);
   check(modalSignals.length === 4 && modalSignals.every(signal => signal.aborted) && !document.getElementById('bot-detail-runs-filter-modal'), "Disposing the workspace cancels pending list and metadata requests and removes the history filter dialog.");
   workspace.remove(); parentFilter.remove();
+  const backgroundReads = [], backgroundList = {isConnected:true};
+  document.querySelector = selector => selector === '#bot-accounts-list' ? backgroundList : null;
+  T.api.request = url => { backgroundReads.push(url); return new Promise(() => {}); };
+  Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
+  const readOnlyWorkspace = T.bots.modal(new URL('https://tinycat.test/api/bots/accounts/3?panel=detail'), {data:{item:botAccount}}, 'read-only-workspace');
+  readOnlyWorkspace.listeners['tinycat:modal-close'](); readOnlyWorkspace.remove();
+  check(backgroundReads.length === 0, 'Closing a read-only workspace preserves the background list DOM and its focused opener.');
+  const editedWorkspace = T.bots.modal(new URL('https://tinycat.test/api/bots/accounts/3?panel=detail'), {data:{item:botAccount}}, 'edited-workspace');
+  editedWorkspace.listeners['tinycat:success']({target:sourceChange});
+  editedWorkspace.listeners['tinycat:modal-close'](); editedWorkspace.remove();
+  check(backgroundReads.length === 1 && backgroundReads[0] === '/api/bots/accounts' + window.location.search, 'Closing a changed workspace still refreshes the filtered background list.');
+  Node.prototype.addEventListener = detailEvents;
   T.api.request = savedRequest; document.querySelector = savedQuery; T.lifecycle.hydrate = savedHydrate;
   const settingsTemplate = new Node('template'); settingsTemplate.dataset.settingsEditor = ''; settingsTemplate.content = new Node('fragment');
   const settingsForm = new Node('form'); settingsForm.dataset.apiMethod = 'PATCH'; settingsForm.setAttribute('enctype', 'multipart/form-data');
@@ -808,10 +820,10 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   window.sessionStorage = { setItem(key, value) { settingsStorage.set(key, value); }, getItem: key => settingsStorage.get(key) ?? null, removeItem(key) { settingsStorage.delete(key); } };
   window.location.reload = () => { settingsReload = true; };
   settingsForm.listeners['tinycat:success']();
-  check(settingsReload && settingsStorage.get('tinycat.settings.section') === 'site', 'Saving settings reloads the current page and remembers its active modal section without a settings page.');
+  check(settingsReload && settingsStorage.size === 0, 'Saving settings reloads the URL without a separate session-storage navigation mechanism.');
   settingsTemplate.dataset.settingsReady = 'false';
   T.settings.hydrate({querySelectorAll: () => [settingsTemplate]});
-  check(settingsOpenCount === 3 && !settingsDialog.querySelector('[data-tab-panel="site"]').hidden && !settingsStorage.has('tinycat.settings.section'), 'Reload hydration restores the saved settings tab once.');
+  check(settingsOpenCount === 2 && !settingsDialog.querySelector('[data-tab-panel="site"]').hidden && !settingsStorage.has('tinycat.settings.section'), 'Settings prepare their editor without competing with shared modal URL restoration.');
   delete window.location.reload; delete window.sessionStorage;
   Node.prototype.addEventListener = savedSettingsListener; T.dialog.open = savedOpen; T.tabs.activate = savedTabs; T.lifecycle.hydrate = savedSettingsHydrate;
   settingsDialog.remove();
