@@ -306,6 +306,22 @@ Fresh installations must also be updated in `App/Installation/Installer.php`. Th
 installer creates the latest schema directly and does not replay historical
 migrations.
 
+## Upgrading to 5.16.0: search feeds and native tables
+
+No new database migration or configuration change is required. Search pages now
+show posts only; existing category URLs still open the post search. Media filters
+use the same `media=images|video|audio|links|text` values as other feeds and remain
+selected during pagination. `/search/feed?q=...` exports up to 50 matching public
+posts and accepts the same media filter. Autocomplete still suggests profiles
+and tags; matching tag suggestions are ordered by published post count.
+
+Administration settings save without a forced document reload. The ordinary
+AJAX confirmation remains visible; changes to already-rendered global branding
+appear on the next page load. Tables retain native rows and sortable headers on
+all viewport sizes, scrolling horizontally inside their wrapper when necessary.
+The signed update removes `assets/ui/tables.js` and
+`assets/ui/styles/098-mobile-tables.css` from existing installations.
+
 ## Installation sequence
 
 The web updater performs these steps:

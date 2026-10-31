@@ -17,6 +17,13 @@ final class Export
             : ($authorId !== null ? Feed::public_status_author_id_query() : Feed::public_status_id_query());
         if ($authorId !== null) { $query->where('c.author_id = ?', $authorId); }
         $ids = Feed::public_status_ids_page($query, $limit);
+        return self::byIds($ids);
+    }
+
+    /** @param list<int> $ids
+     * @return array<mixed> */
+    public static function byIds(array $ids): array
+    {
         if ($ids === []) { return []; }
         // Reuse the indexed feed ID selection, then load only export fields.
         // Recheck visibility in case an author or publication changed between queries.

@@ -5,7 +5,6 @@
     ],
     "entries": [
       "assets/ui/tooltips.js",
-      "assets/ui/tables.js",
       "assets/ui/toasts.js",
       "assets/ui/tabs.js",
       "assets/ui/menus.js",
@@ -61,8 +60,7 @@
       "assets/ui/styles/092-modal-workspace-desktop.css",
       "assets/ui/styles/093-before-after.css",
       "assets/ui/styles/094-is-resource-text.css",
-      "assets/ui/styles/097-tooltip.css",
-      "assets/ui/styles/098-mobile-tables.css"
+      "assets/ui/styles/097-tooltip.css"
     ],
     "translations": [
       "common.menu",

@@ -35,7 +35,8 @@ try {
     $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username VARCHAR(80), bio TEXT, status VARCHAR(16), avatar_exists INTEGER DEFAULT 0, avatar_appearance TEXT, updated_at DATETIME)');
     $pdo->exec('CREATE TABLE terms (id INTEGER PRIMARY KEY, name VARCHAR(80))');
     $pdo->exec('CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at DATETIME' . ($mysql ? ', FULLTEXT KEY content_body_fulltext (body)' : '') . ')');
-    $pdo->exec('CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT, title TEXT, description TEXT' . ($mysql ? ', FULLTEXT KEY links_search_fulltext (normalized_url, title, description)' : '') . ')');
+    $pdo->exec('CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT, title TEXT, description TEXT, link_type VARCHAR(16)' . ($mysql ? ', FULLTEXT KEY links_search_fulltext (normalized_url, title, description)' : '') . ')');
+    $pdo->exec('CREATE TABLE content_images (content_id INTEGER)');
     $pdo->exec('CREATE TABLE content_tags (content_id INTEGER, term_id INTEGER)');
     $pdo->exec('CREATE TABLE content_links (content_id INTEGER, link_id INTEGER)');
     $pdo->exec("INSERT INTO users (id, username, status, bio) VALUES (1, 'nebula', 'active', 'secret biography'), (2, 'xnebula', 'active', ''), (3, 'nebula-more', 'active', ''), (4, 'nebula-hidden', 'blocked', ''), (5, 'name_under', 'active', ''), (6, 'nameXunder', 'active', ''), (7, '100%real', 'active', '')");
@@ -88,8 +89,16 @@ try {
     $assert(count(Queries::public_search_suggestion_users('100%', 5)) === 1, 'Percent signs are literal in autocomplete.');
     $assert(Queries::public_search_suggestion_users('name%', 5) === [], 'Wildcard input cannot list unrelated suggestions.');
     $assert(count(Queries::collection('100%')['items']) === 1, 'Post punctuation is literal.');
+    $pdo->exec("UPDATE links SET link_type = 'video' WHERE id = 1");
+    $pdo->exec('INSERT INTO content_images VALUES (10025), (10024)');
+    $assert(array_column(Queries::collection('nebula quartz', 'content', [], 20, 'video')['items'], 'id') === [20003, 10025], 'Search media filters apply to both body and link matches without duplicates.');
+    $imagePage = Queries::collection('nebula quartz', 'content', [], 1, 'images');
+    parse_str((string) parse_url($imagePage['next_url'], PHP_URL_QUERY), $imageCursor);
+    $assert($imageCursor['media'] === 'images' && array_column($imagePage['items'], 'id') === [10025] && array_column(Queries::collection('nebula quartz', 'content', $imageCursor, 1, 'images')['items'], 'id') === [10024], 'Filtered search continuation retains the filter and advances without omissions.');
+    $assert(Queries::collection('nebula quartz', 'content', [], 20, 'audio')['items'] === [], 'Nonmatching media produces an empty result.');
+    $assert(!in_array(20003, array_column(Queries::collection('nebula quartz', 'content', [], 50, 'text')['items'], 'id'), true), 'Text-only search excludes link attachments.');
     $assert(Queries::collection('%nebula', 'tags')['items'] === [], 'Percent signs do not turn into a valid tag query.');
-    $assert(Queries::public_search_suggestions('nebula')['content'] === [], 'Autocomplete never queries posts.');
+    $assert(Queries::public_search_suggestions('nebula')['content'] === [], 'Autocomplete does not return post suggestions.');
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Guests count only published posts from active authors.');
     \TinyCat\Users\Authentication::reset(['id' => 1, 'role' => 'admin'], true);
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Admins use the same published tag counts as public readers.');
@@ -99,6 +108,11 @@ try {
     \TinyCat\Users\Authentication::reset(['id' => 2, 'role' => 'user'], true);
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, "All viewers use the same published tag counts.");
     \TinyCat\Users\Authentication::reset(null, true);
+    $pdo->exec("INSERT INTO terms (id, name) VALUES (10, 'ranking-a'), (11, 'ranking-b'), (12, 'ranking-c'), (13, 'ranking-d'), (14, 'ranking-e'), (15, 'ranking-f'), (16, 'ranking-z')");
+    $pdo->exec('INSERT INTO content_tags (content_id, term_id) VALUES (10001, 10), (20001, 10), (20002, 10), (10001, 11), (10001, 16), (10002, 16), (10003, 16)');
+    $rankedTags = Queries::public_search_suggestion_tags('ranking', 2);
+    $assert(array_column($rankedTags, 'id') === [16, 10], 'Popularity is applied before the suggestion limit, with alphabetical ties.');
+    $assert(array_column($rankedTags, 'posts_count') === [3, 1], 'Popularity excludes future posts and inactive authors.');
     $pdo->exec("INSERT INTO links (id, normalized_url, title, description) VALUES (3, 'https://example.test/a', 'unionboundary alpha', ''), (4, 'https://example.test/z', 'unionboundary zeta', '')");
     for ($i = 1; $i <= 80; $i++) {
         $id = 40000 + $i;

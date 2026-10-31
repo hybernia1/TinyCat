@@ -52,9 +52,9 @@ final class PublicPages
         $item = $context['item'] ?? null;
         $archiveType = (string) ($context['archiveType'] ?? '');
         $archiveOptions = [];
-        if (in_array($kind, ['home', 'tag', 'author'], true)) {
-            if ($kind !== 'home' && $archiveType !== '') { $url .= '?media=' . rawurlencode($archiveType); }
-            $filterBase = $kind === 'home' && ($context['feed'] ?? '') === 'following' ? '/?feed=following' : (string) $page['current'];
+        if (in_array($kind, ['home', 'tag', 'author', 'search'], true)) {
+            if (in_array($kind, ['tag', 'author'], true) && $archiveType !== '') { $url .= '?media=' . rawurlencode($archiveType); }
+            $filterBase = $kind === 'home' && ($context['feed'] ?? '') === 'following' ? '/?feed=following' : (string) ($context['archiveBaseUrl'] ?? $page['current']);
             foreach (['' => 'all', 'images' => 'images', 'video' => 'video', 'audio' => 'audio', 'links' => 'links', 'text' => 'text'] as $type => $label) {
                 $archiveOptions[] = ['url' => LocaleRouting::url($filterBase . ($type !== '' ? (str_contains($filterBase, '?') ? '&' : '?') . 'media=' . $type : '')),
                     'type' => $label, 'active' => $type === $archiveType];
@@ -97,10 +97,10 @@ final class PublicPages
             'following_url' => (string) ($context['authorFollowingModalUrl'] ?? ''), 'following_id' => (string) ($context['authorFollowingModalId'] ?? ''),
             'all_feed_url' => LocaleRouting::url('/' . ($archiveType !== '' ? '?media=' . $archiveType : '')),
             'following_feed_url' => LocaleRouting::url('/?feed=following' . ($archiveType !== '' ? '&media=' . $archiveType : '')),
-            'clear_filter_url' => LocaleRouting::url($kind === 'home' && ($context['feed'] ?? '') === 'following' ? '/?feed=following' : (string) $page['current']),
+            'clear_filter_url' => LocaleRouting::url($kind === 'home' && ($context['feed'] ?? '') === 'following' ? '/?feed=following' : (string) ($context['archiveBaseUrl'] ?? $page['current'])),
             'archive_options' => $archiveOptions,
             'archive_type' => $archiveType,
-            'rss_url' => (string) ($context['authorFeedUrl'] ?? $context['tagFeedUrl'] ?? ''),
+            'rss_url' => (string) ($context['authorFeedUrl'] ?? $context['tagFeedUrl'] ?? $context['searchFeedUrl'] ?? ''),
             'login_url' => \TinyCat\Users\Login::auth_url_with_next('/login', $url),
             'login_modal_url' => \TinyCat\Users\Login::auth_modal_url('login', $url),
         ] + ($kind === 'search' ? ['search' => $context['search']] : []);

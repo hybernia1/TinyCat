@@ -13,7 +13,7 @@ final class Discovery
     {
         return in_array($path, ['/robots.txt', '/robots', '/llms.txt', '/llms-full.txt', '/llms', '/sitemap.xml', '/sitemap'], true)
             || preg_match('~^/sitemap-[a-z][a-z0-9_-]{0,63}-[1-9][0-9]*[.]xml$~D', $path) === 1
-            || preg_match('~^/(?:author/[0-9]+|tag/[^/]+)/feed$~D', $path) === 1;
+            || preg_match('~^/(?:search|author/[0-9]+|tag/[^/]+)/feed$~D', $path) === 1;
     }
 
     public static function locale(): string
@@ -65,7 +65,7 @@ final class Discovery
                 . '`, and available interface locales are `' . implode('`, `', $availableLocales) . "`.\n\n";
             echo "Public HTML pages support explicit interface prefixes, such as `/en/`, `/pl/status/123` and `/de/privacy`. A prefix takes precedence over account/browser preferences. User-generated content remains in its original language; optional browser-local translation is not an indexable translated document. Localized policy pages expose reciprocal hreflang alternatives; post, profile and feed interface variants retain the original canonical URL. APIs, assets and RSS feeds use their unprefixed URLs.\n\n";
             echo "Public posts may contain text, one attached WebP image, and links with optional previews. The platform has no private messages, private profiles, or private storage; publicly accessible content is intended to be public. The feed has no personalization or recommendation algorithm. Visitors can tailor their following feed by following public profiles.\n\n";
-            echo "Use `GET /search?q={query}` with a URL-encoded query between 2 and 80 characters to find matching public tags, profiles, and posts. Search result pages are `noindex`, but their canonical public result URLs may be used for navigation. Respect rate limits and any CAPTCHA response; do not use API endpoints directly.\n\n";
+            echo "Use `GET /search?q={query}` with a URL-encoded query between 3 and 80 characters to find matching public posts. Add `media=images`, `video`, `audio`, `links`, or `text` to filter the results. Search result pages are `noindex`, but their canonical public result URLs may be used for navigation. Respect rate limits and any CAPTCHA response; do not use API endpoints directly.\n\n";
             echo "Public RSS feeds are available at `/tag/{tag}/feed` and `/author/{id}/feed`. Public URL patterns are `/author/{id}`, `/author/{id}/feed`, `/tag/{tag}`, `/tag/{tag}/feed`, and `/status/{id}`. Only publicly visible content should be indexed. Do not index private account pages, administration, notifications, search results, login, registration, recovery, or API endpoints. Use the sitemap and canonical page URLs as the complete, current URL inventory.\n\n";
             echo "## Public resources\n\n";
             echo '- [Homepage](' . \TinyCat\Site\Presentation::absolute_url('/') . '): Public site homepage and latest posts.' . "\n";

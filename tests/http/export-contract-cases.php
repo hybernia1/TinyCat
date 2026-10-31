@@ -21,7 +21,7 @@ $exportRequest = static function (string $path, string $method = 'GET', array $e
     $assert(is_string($body), 'Machine-readable endpoints complete HTTP requests.');
     return [(int) ($match[1] ?? 0), (string) $body, $responseHeaders];
 };
-foreach (['/robots.txt', '/llms.txt', '/llms-full.txt', '/sitemap.xml', '/sitemap-pages-1.xml', '/sitemap-tags-1.xml', '/sitemap-status-1.xml', '/author/900001/feed', '/tag/exportpublic/feed'] as $path) {
+foreach (['/robots.txt', '/llms.txt', '/llms-full.txt', '/sitemap.xml', '/sitemap-pages-1.xml', '/sitemap-tags-1.xml', '/sitemap-status-1.xml', '/author/900001/feed', '/tag/exportpublic/feed', '/search/feed?q=Export&media=text'] as $path) {
     [$status, $body, $headers] = $exportRequest($path);
     $assert($status === 200 && isset($headers['etag']) && str_contains($headers['cache-control'], 'public'), $path . ' exposes shared validators and public cache headers.');
     $assert(!isset($headers['set-cookie']) && !isset($headers['pragma']), $path . ' does not create a visitor session.');
@@ -36,6 +36,10 @@ foreach (['/robots.txt', '/llms.txt', '/llms-full.txt', '/sitemap.xml', '/sitema
         $assert(simplexml_load_string($body) !== false, $path . ' returns well-formed XML.');
     }
 }
+[$status, $rss] = $exportRequest('/search/feed?q=Export&media=images');
+$assert($status === 200 && count(simplexml_load_string($rss)->channel->item) === 0, 'Search RSS applies the selected media filter.');
+[$status] = $exportRequest('/search/feed?q=ab');
+$assert($status === 404, 'Search RSS rejects queries below the post search minimum.');
 [$status, $rss] = $exportRequest('/author/900001/feed?tracking=ignored');
 $feed = simplexml_load_string($rss);
 $feed->registerXPathNamespace('atom', 'http://www.w3.org/2005/Atom');

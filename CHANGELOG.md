@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.16.0 - 2026-10-31
+
+- Show posts only on search result pages, replacing profile/tag tabs with the shared RSS and media-filter controls. Preserve queries and filters through AJAX navigation, cursor pagination and public RSS exports.
+- Rank matching tag suggestions by published post count, excluding inactive authors and scheduled posts, with deterministic alphabetical ties.
+- Save administration settings through the shared AJAX form flow without reloading the page, preserving the normal success notification and editor state.
+- Keep native tables and sortable column headers on mobile, with horizontal scrolling contained inside table wrappers. Remove card conversion and the duplicated mobile sorting menu from pages, dashboard and modal lists.
+- Extend search, RSS, notification/editor and native-browser viewport coverage. No new database migration or configuration change is required; signed updates remove the retired table-conversion script and styles.
+
 ## 5.15.0 - 2026-10-31
 
 - Use Spotify's 152px compact embeds and SoundCloud's 166px classic players, including playlists. Hide duplicate SoundCloud artwork, comments and optional buttons.

@@ -32,7 +32,7 @@ $css = TinyCat\Support\AssetGraph::stylesheet(TinyCat\Support\ClientAssets::sour
 echo '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>' . $css . '</style></head><body class="admin-shell-page">' . $html;
 ?>
 <script>
-window.TinyCat = { lifecycle: { register: function (name, hooks) { if (hooks.init) hooks.init(); if (name === 'tables') { window.tableService = hooks; hooks.hydrate(document); } if (name === 'tooltips') { window.tooltipService = hooks; hooks.hydrate(document); } } } };
+window.TinyCat = { lifecycle: { register: function (name, hooks) { if (hooks.init) hooks.init(); if (name === 'tooltips') { window.tooltipService = hooks; hooks.hydrate(document); } } } };
 window.TinyCat.i18n = { t: key => ({'common.menu':'Menu', 'common.sort':'Řazení'})[key] || key };
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/dom.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/icons.js')) ?>
@@ -40,7 +40,6 @@ window.TinyCat.i18n = { t: key => ({'common.menu':'Menu', 'common.sort':'Řazen�
 window.TinyCat.components.register(<?= json_encode(array_intersect_key(TinyCat\Support\Components::templates(), array_flip(['ui/filter-chip', 'ui/list-summary'])), JSON_HEX_TAG | JSON_THROW_ON_ERROR) ?>);
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/menus.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/filters.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tables.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tooltips.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/fields.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tabs.js')) ?>
@@ -98,9 +97,6 @@ window.TinyCat.menus.prepare(document);
 window.TinyCat.menus.prepare(document);
 filterToggleWorks = filterToggleWorks && localTriggerWorks(filterSummary, menu);
 const results = [];
-const labelsBefore = document.querySelectorAll('.table-cell-label').length;
-window.tableService.hydrate(document);
-const hydrationStable = labelsBefore === document.querySelectorAll('.table-cell-label').length;
 for (const long of [false, true]) {
   const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = 'x'.repeat(400);
   if (long) summary.append(badge);
@@ -122,7 +118,7 @@ for (const long of [false, true]) {
     primary.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}));
     const tooltipClosed = tooltip.hidden && primary.getAttribute('aria-describedby') === 'fixture-description' && escapedToModal === 0;
     primary.blur();
-    const actionsAligned = [...wrap.querySelectorAll('.table-actions-cell')].every(cell => getComputedStyle(cell).textAlign === 'right') && [...wrap.querySelectorAll('.table-actions')].every(actions => getComputedStyle(actions).flexWrap === (innerWidth < 600 ? 'wrap' : 'nowrap') && actions.getBoundingClientRect().right <= actions.parentElement.getBoundingClientRect().right);
+    const actionsAligned = [...wrap.querySelectorAll('.table-actions-cell')].every(cell => getComputedStyle(cell).textAlign === 'right') && [...wrap.querySelectorAll('.table-actions')].every(actions => getComputedStyle(actions).flexWrap === 'nowrap' && actions.getBoundingClientRect().right <= actions.parentElement.getBoundingClientRect().right);
     const table = wrap.querySelector('table'), mobile = innerWidth < 600;
     let navigationFits = true;
     if (context === 'modal') {
@@ -130,53 +126,24 @@ for (const long of [false, true]) {
       navigationFits = mobile ? getComputedStyle(tabs).display === 'none' && row.getBoundingClientRect().height <= 64 && select.getBoundingClientRect().width >= 200 && select.getBoundingClientRect().height >= 44 : getComputedStyle(tabs).display === 'flex' && getComputedStyle(row.querySelector('.modal-tab-switch')).display === 'none';
       navigationFits = navigationFits && document.querySelector('.modal-body').getBoundingClientRect().top >= row.getBoundingClientRect().bottom - 1 && row.getBoundingClientRect().top >= document.querySelector('.modal-header').getBoundingClientRect().bottom - 1;
     }
-    const cardsFit = !mobile || (wrap.scrollWidth <= wrap.clientWidth && primaryBounds.width >= Math.min(200, wrap.clientWidth - 64) && [...table.querySelectorAll('tbody td')].every(cell => cell.getBoundingClientRect().right <= wrap.getBoundingClientRect().right + 1) && [...table.querySelectorAll('.table-cell-label')].every(label => getComputedStyle(label).display !== 'none' && label.textContent.trim()) && [...table.querySelectorAll('.table-actions .btn')].every(button => button.getBoundingClientRect().width >= 44 && button.getBoundingClientRect().height >= 44));
-    const desktopTable = mobile || (getComputedStyle(table).display === 'table' && [...table.querySelectorAll('.table-cell-label')].every(label => getComputedStyle(label).display === 'none'));
-    const sortMenu = wrap.parentElement.querySelector('.table-mobile-sort');
-    const sortAvailable = mobile ? !!sortMenu && !sortMenu.open && sortMenu.querySelector('summary').getBoundingClientRect().height >= 30 && sortMenu.getBoundingClientRect().right <= innerWidth : [...table.querySelectorAll('.table-sort')].every(link => link.getBoundingClientRect().width > 1);
+    const tableLayout = getComputedStyle(table).display === 'table' && getComputedStyle(table.tHead).display === 'table-header-group' && !table.hasAttribute('data-mobile-cards');
+    const sortAvailable = !document.querySelector('.table-mobile-sort') && [...table.querySelectorAll('.table-sort')].every(link => link.getBoundingClientRect().width > 1 && link.closest('th').getBoundingClientRect().height > 1);
     wrap.scrollLeft = 64; const tableScrollLeft = wrap.scrollLeft; wrap.scrollLeft = 0;
-    results.push({context, summaryClean, navigationFits, navigationChanges, cardsFit, desktopTable, sortAvailable, tooltipFits, tooltipClosed, identityAligned, textLimited, fullTextKept, actionsAligned, height:innerHeight, width:innerWidth, long, open, documentWidth:document.documentElement.scrollWidth, bodyWidth:document.body.scrollWidth, filterLeft:bounds.left, filterRight:bounds.right, filterWidth:bounds.width, filterBottom:bounds.bottom, filterTop:bounds.top, filterLimit:context === 'modal' ? document.querySelector('.modal-body').getBoundingClientRect().bottom : innerHeight, filterClientWidth:panel.clientWidth, filterScrollWidth:panel.scrollWidth, tableWidth:wrap.clientWidth, tableScrollWidth:wrap.scrollWidth, tableScrollLeft, tableOverflow:getComputedStyle(wrap).overflowX,
+    results.push({context, summaryClean, navigationFits, navigationChanges, tableLayout, sortAvailable, tooltipFits, tooltipClosed, identityAligned, textLimited, fullTextKept, actionsAligned, height:innerHeight, width:innerWidth, long, open, documentWidth:document.documentElement.scrollWidth, bodyWidth:document.body.scrollWidth, filterLeft:bounds.left, filterRight:bounds.right, filterWidth:bounds.width, filterBottom:bounds.bottom, filterTop:bounds.top, filterLimit:context === 'modal' ? document.querySelector('.modal-body').getBoundingClientRect().bottom : innerHeight, filterClientWidth:panel.clientWidth, filterScrollWidth:panel.scrollWidth, tableWidth:wrap.clientWidth, tableScrollWidth:wrap.scrollWidth, tableScrollLeft, tableOverflow:getComputedStyle(wrap).overflowX,
       offenders:[...document.querySelectorAll('body *')].filter(el => !el.closest('script,style,.admin-sidebar,.table-wrap') && el.getBoundingClientRect().width && (el.getBoundingClientRect().right > innerWidth + 1 || el.getBoundingClientRect().left < -1)).map(el => ({tag:el.tagName,cls:el.className,left:el.getBoundingClientRect().left,right:el.getBoundingClientRect().right})).slice(0,8)});
   }
   badge.remove();
 }
-const mobileSort = document.querySelector('.table-mobile-sort');
-let sortingWorks = filterToggleWorks; const sortingDiagnostics = {};
-if (innerWidth < 600) {
-  const summary = mobileSort.querySelector('summary'), originals = [...document.querySelectorAll('table .table-sort')], choices = [...mobileSort.querySelectorAll('.table-sort-option')];
-  const actions = mobileSort.closest('.admin-filter-actions'), filterButton = actions.querySelector('.filter-menu > summary'), pageSize = actions.querySelector('.admin-per-page-form');
-  sortingWorks = choices.length === originals.length && choices.filter(link => link.getAttribute('aria-current') === 'true').length === 1 && choices.every((link,index) => ['href','data-history','data-ajax-target'].every(attr => link.getAttribute(attr) === originals[index].getAttribute(attr)));
-  sortingWorks = sortingWorks && Math.abs(summary.getBoundingClientRect().height - filterButton.getBoundingClientRect().height) < 1 && Math.abs(summary.getBoundingClientRect().top - filterButton.getBoundingClientRect().top) < 1 && summary.getBoundingClientRect().right <= pageSize.getBoundingClientRect().left;
-  sortingDiagnostics.controls = [sortingWorks, summary.getBoundingClientRect().toJSON(), filterButton.getBoundingClientRect().toJSON(), pageSize.getBoundingClientRect().toJSON()];
-  sortingWorks = sortingWorks && localTriggerWorks(summary, mobileSort);
-  summary.click(); await new Promise(resolve => setTimeout(resolve, 100));
-  const popup = mobileSort.querySelector('.list-menu-panel'), bounds = popup.getBoundingClientRect(), body = mobileSort.closest('.modal-body');
-  sortingWorks = sortingWorks && mobileSort.open && bounds.width <= 300 && bounds.left >= 0 && bounds.right <= innerWidth && bounds.top >= 0 && bounds.bottom <= (body ? body.getBoundingClientRect().bottom : innerHeight);
-  sortingDiagnostics.popup = [sortingWorks, mobileSort.open, bounds.toJSON(), body && body.getBoundingClientRect().toJSON()];
-  summary.querySelector('span').click();
-  sortingWorks = sortingWorks && !mobileSort.open;
-  summary.querySelector('.icon').dispatchEvent(new MouseEvent('click', {bubbles:true,cancelable:true}));
-  sortingWorks = sortingWorks && mobileSort.open;
-  summary.focus({preventScroll:true}); summary.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}));
-  sortingWorks = sortingWorks && !mobileSort.open && document.activeElement === summary;
-  sortingDiagnostics.escape = [sortingWorks, mobileSort.open, document.activeElement === summary];
-  summary.click(); await new Promise(resolve => setTimeout(resolve, 100));
-  let activated = false;
-  document.addEventListener('click', event => { if (event.target.closest('.table-sort-option')) { event.preventDefault(); activated = true; } }, true);
-  choices[0].focus({preventScroll:true}); choices[0].click();
-  const state = window.TinyCat.menus.capture(choices[0]);
-  sortingWorks = sortingWorks && activated && mobileSort.open && !!state;
-  sortingDiagnostics.choice = [sortingWorks, activated, mobileSort.open, state];
-  const host = document.querySelector('.table-wrap').parentElement, replacement = host.cloneNode(true);
-  replacement.querySelector('.table-mobile-sort').remove(); host.replaceWith(replacement);
-  window.tableService.hydrate(replacement); window.TinyCat.menus.restore(state);
-  const restored = replacement.querySelector('.table-mobile-sort');
-  sortingWorks = sortingWorks && restored.open && restored.querySelector('.list-menu-panel').contains(document.activeElement);
-  sortingDiagnostics.restored = [sortingWorks, restored.open, restored.querySelector('.list-menu-panel').contains(document.activeElement)];
-  restored.open = false;
-  sortingWorks = sortingWorks && window.TinyCat.menus.capture(restored.querySelector('a')) === null;
-  document.activeElement.blur();
-}
+const originals = [...document.querySelectorAll('table .table-sort')];
+let sortingWorks = filterToggleWorks && originals.length > 0 && !document.querySelector('.table-mobile-sort');
+let activatedSort = null;
+document.addEventListener('click', event => {
+  const link = event.target.closest('.table-sort');
+  if (link) { event.preventDefault(); activatedSort = link; }
+}, true);
+originals[0].click();
+sortingWorks = sortingWorks && activatedSort === originals[0] && originals.every(link => link.getAttribute('href') && link.dataset.ajaxTarget && link.closest('thead'));
+const sortingDiagnostics = {};
 const chipRoot = document.createElement('div'), searchForm = document.createElement('form'), chipForm = document.createElement('form');
 searchForm.className = 'admin-search-form'; searchForm.dataset.ajaxTarget = chipForm.dataset.ajaxTarget = '#chip-test';
 chipForm.id = 'chip-filter-test'; chipForm.dataset.filterContent = '';
@@ -256,21 +223,18 @@ short.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubble
 const shortHidden = hint.hidden && !short.hasAttribute('tabindex'); short.remove();
 touch.remove();
 const fallback = document.createElement('div'); fallback.className = 'table-wrap';
-const matrix = document.createElement('table'); matrix.className = 'table'; matrix.dataset.tableLayout = 'scroll';
+const matrix = document.createElement('table'); matrix.className = 'table';
 matrix.createTHead().insertRow().append(document.createElement('th'), document.createElement('th'));
 matrix.createTBody().insertRow().append(document.createElement('td'), document.createElement('td'));
 fallback.append(matrix); document.querySelector('.table-wrap').parentElement.append(fallback);
-window.tableService.hydrate(fallback);
 fallback.scrollLeft = 64;
 const fallbackUsable = !matrix.hasAttribute('data-mobile-cards') && (innerWidth >= 600 || (fallback.scrollWidth > fallback.clientWidth && fallback.scrollLeft > 0));
-delete matrix.dataset.tableLayout; matrix.tHead.rows[0].cells[0].colSpan = 2;
-window.tableService.hydrate(matrix);
+matrix.tHead.rows[0].cells[0].colSpan = 2;
 const complexSpansKept = !matrix.hasAttribute('data-mobile-cards');
 const empty = document.createElement('table'); empty.className = 'table';
 empty.createTHead().insertRow().append(document.createElement('th'), document.createElement('th'));
 const emptyCell = empty.createTBody().insertRow().insertCell(); emptyCell.colSpan = 2; emptyCell.textContent = 'No results';
-fallback.replaceChildren(empty); window.tableService.hydrate(emptyCell);
-const emptyKept = empty.hasAttribute('data-mobile-cards') && !emptyCell.querySelector('.table-cell-label') && emptyCell.textContent === 'No results';
+const emptyKept = !empty.hasAttribute('data-mobile-cards') && !emptyCell.querySelector('.table-cell-label') && emptyCell.textContent === 'No results';
 fallback.remove();
 const lazy = document.createElement('div'), lazyText = document.createElement('span');
 lazy.hidden = true; lazyText.className = 'table-text'; lazyText.style.width = '80px'; lazyText.title = lazyText.textContent = 'Long hidden content '.repeat(30);
@@ -281,7 +245,7 @@ let lazyHintsReady = initiallyUnfocusable && lazyText.getAttribute('tabindex') =
 lazy.hidden = true; window.tooltipService.hydrate(lazy); lazy.hidden = false;
 lazy.dispatchEvent(new CustomEvent('tinycat:tab', {bubbles:true}));
 lazyHintsReady = lazyHintsReady && lazyText.getAttribute('tabindex') === '0'; lazy.remove();
-results.forEach(result => Object.assign(result, {sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, frameTitleKept, disposeCloses, shortHidden, hydrationStable, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
+results.forEach(result => Object.assign(result, {sortingWorks, sortingDiagnostics, chipsWork, touchSafe, outsideCloses, hoverWorks, frameTitleKept, disposeCloses, shortHidden, fallbackUsable, complexSpansKept, emptyKept, lazyHintsReady}));
 const output = document.createElement('pre'); output.id = 'layout-metrics'; output.textContent = JSON.stringify(results); document.body.append(output);
 }());
 </script></body></html>

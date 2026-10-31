@@ -9,7 +9,7 @@ import "../../ui/dialogs.js";
     if (url.origin !== window.location.origin || url.hash || !document.querySelector("[data-public-page]")) { return false; }
     var parts = T.urls.split(url.pathname);
     if (parts.locale !== T.urls.prefix() || !(parts.path === "/" || parts.path === "/search" || /^\/(?:tag\/[^/]+|author\/[1-9][0-9]*|status\/[1-9][0-9]*)$/.test(parts.path))) { return false; }
-    return Array.from(url.searchParams.keys()).every(function (key) { return parts.path === "/search" ? key === "q" || key === "type" : key === "feed" || key === "compact" || ((parts.path === "/" || parts.path.startsWith("/tag/") || parts.path.startsWith("/author/")) && key === "media"); });
+    return Array.from(url.searchParams.keys()).every(function (key) { return parts.path === "/search" ? key === "q" || key === "type" || key === "media" : key === "feed" || key === "compact" || ((parts.path === "/" || parts.path.startsWith("/tag/") || parts.path.startsWith("/author/")) && key === "media"); });
   }
   function saveScroll() {
     window.clearTimeout(scrollSaveTimer);

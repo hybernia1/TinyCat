@@ -12,14 +12,21 @@ final class Feed
 
     private static function archive_query(\TinyCat\Database\Query $query, string $type): \TinyCat\Database\Query
     {
+        [$condition, $params] = self::archive_predicate($type);
+        return $condition !== '' ? $query->where($condition, ...$params) : $query;
+    }
+
+    /** @return array{string, list<string>} */
+    public static function archive_predicate(string $type): array
+    {
         $image = 'EXISTS (SELECT 1 FROM content_images fi WHERE fi.content_id = c.id)';
         $link = 'EXISTS (SELECT 1 FROM content_links fl WHERE fl.content_id = c.id)';
         return match (self::archive_type($type)) {
-            'images' => $query->where($image),
-            'video', 'audio' => $query->where('EXISTS (SELECT 1 FROM content_links fl INNER JOIN links l ON l.id = fl.link_id WHERE fl.content_id = c.id AND l.link_type = ?)', $type),
-            'links' => $query->where($link),
-            'text' => $query->where('NOT ' . $image . ' AND NOT ' . $link),
-            default => $query,
+            'images' => [$image, []],
+            'video', 'audio' => ['EXISTS (SELECT 1 FROM content_links fl INNER JOIN links l ON l.id = fl.link_id WHERE fl.content_id = c.id AND l.link_type = ?)', [$type]],
+            'links' => [$link, []],
+            'text' => ['NOT ' . $image . ' AND NOT ' . $link, []],
+            default => ['', []],
         };
     }
 

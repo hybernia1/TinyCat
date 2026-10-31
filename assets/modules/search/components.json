@@ -1,59 +1,4 @@
 {
-  "search/items": {
-    "each": {
-      "get": "items"
-    },
-    "as": "item",
-    "children": [
-      {
-        "tag": "article",
-        "attrs": {
-          "class": "card",
-          "data-feed-item": "",
-          "data-feed-id": {
-            "get": "item.id"
-          }
-        },
-        "children": [
-          {
-            "tag": "div",
-            "attrs": {
-              "class": "card-body"
-            },
-            "children": [
-              {
-                "tag": "a",
-                "attrs": {
-                  "href": {
-                    "get": "item.url"
-                  }
-                },
-                "children": [
-                  {
-                    "get": "item.title"
-                  }
-                ]
-              },
-              {
-                "tag": "p",
-                "attrs": {
-                  "class": "muted m-0"
-                },
-                "when": {
-                  "get": "item.excerpt"
-                },
-                "children": [
-                  {
-                    "get": "item.excerpt"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
   "search/page": {
     "tag": "div",
     "attrs": {
@@ -92,73 +37,23 @@
                 ]
               }
             ]
-          }
-        ]
-      },
-      {
-        "tag": "nav",
-        "attrs": {
-          "class": "cluster gap-2",
-          "aria-label": {
-            "t": "public.search_title",
-            "values": {}
-          }
-        },
-        "children": [
+          },
           {
-            "each": {
-              "get": "search.tabs"
-            },
-            "as": "tab",
-            "children": [
-              {
-                "tag": "a",
-                "attrs": {
-                  "class": {
-                    "if": [
-                      {
-                        "get": "tab.active"
-                      },
-                      "btn btn-primary",
-                      "btn btn-ghost"
-                    ]
-                  },
-                  "href": {
-                    "get": "tab.url"
-                  },
-                  "aria-current": {
-                    "if": [
-                      {
-                        "get": "tab.active"
-                      },
-                      "page",
-                      false
-                    ]
-                  }
-                },
-                "children": [
-                  {
-                    "lookup": {
-                      "get": "tab.type"
-                    },
-                    "cases": {
-                      "content": {
-                        "t": "public.search_content",
-                        "values": {}
-                      },
-                      "users": {
-                        "t": "public.search_users",
-                        "values": {}
-                      },
-                      "tags": {
-                        "t": "public.search_tags",
-                        "values": {}
-                      }
-                    }
-                  }
-                ]
+            "component": "site/archive-actions",
+            "data": {
+              "rss_url": {
+                "get": "rss_url"
+              },
+              "archive_options": {
+                "get": "archive_options"
+              },
+              "archive_type": {
+                "get": "archive_type"
               }
-            ]
+            },
+            "when": {
+              "get": "search.valid"
+            }
           }
         ]
       },
@@ -423,63 +318,6 @@
               "not": {
                 "get": "search.empty"
               }
-            },
-            {
-              "eq": [
-                {
-                  "get": "search.type"
-                },
-                "content"
-              ]
-            }
-          ]
-        }
-      },
-      {
-        "tag": "div",
-        "attrs": {
-          "id": "search-results",
-          "class": "stack stack-gap-12",
-          "data-feed-component": "search/items"
-        },
-        "children": [
-          {
-            "component": "search/items",
-            "data": {
-              "items": {
-                "get": "search.entities"
-              }
-            }
-          }
-        ],
-        "when": {
-          "and": [
-            {
-              "and": [
-                {
-                  "get": "search.valid"
-                },
-                {
-                  "not": {
-                    "get": "search.blocked"
-                  }
-                }
-              ]
-            },
-            {
-              "not": {
-                "get": "search.empty"
-              }
-            },
-            {
-              "not": {
-                "eq": [
-                  {
-                    "get": "search.type"
-                  },
-                  "content"
-                ]
-              }
             }
           ]
         }
@@ -490,23 +328,6 @@
           "target": "#search-results",
           "url": {
             "get": "next_url"
-          },
-          "label": {
-            "if": [
-              {
-                "eq": [
-                  {
-                    "get": "search.type"
-                  },
-                  "content"
-                ]
-              },
-              null,
-              {
-                "t": "notifications.load_more",
-                "values": {}
-              }
-            ]
           }
         },
         "when": {
