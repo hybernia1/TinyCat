@@ -1,7 +1,6 @@
 @media (max-width: 759px) {
   .admin-filter-actions {
     justify-content: space-between;
-    gap: 16px;
   }
 
   .admin-filter-actions > [data-list-menu] {
