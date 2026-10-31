@@ -33,6 +33,12 @@ textarea { display: block; resize: vertical; width: 100%; padding: 12px; margin-
 .embed-avatar { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
 .embed-avatar-initial { display: grid; place-items: center; background: #e6ebf6; color: #315dc7; font-weight: 700; }
 .embed-link { margin-top: 18px; border: 1px solid #dce0e7; border-radius: 10px; overflow: hidden; }
+.status-audio-player { display: block; width: 100%; }
+.embed-audio-summary { display: flex; align-items: center; gap: 0; color: inherit; text-decoration: none; }
+.embed-audio-summary img { flex: 0 0 92px; width: 92px; height: 92px; object-fit: cover; }
+.embed-audio-summary .embed-link-copy { min-width: 0; }
+.embed-audio-summary .embed-link-copy span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.embed-link[data-card-kind="audio"] .embed-play { min-height: 56px; padding: 8px; }
 .embed-link-copy { display: grid; gap: 4px; padding: 14px; }
 .embed-link-copy span, .embed-link-copy small { color: #687180; font-size: 13px; }
 .embed-link-image, .embed-play img { display: block; width: 100%; max-height: 320px; object-fit: cover; }

@@ -12,6 +12,7 @@ final class FeedParser
     private const ATOM = 'http://www.w3.org/2005/Atom';
     private const MEDIA = 'http://search.yahoo.com/mrss/';
     private const CONTENT = 'http://purl.org/rss/1.0/modules/content/';
+    private const ITUNES = 'http://www.itunes.com/dtds/podcast-1.0.dtd';
     private const SEZNAM = 'https://www.seznam.cz';
 
     /** @return list<array<string, mixed>> */
@@ -91,6 +92,7 @@ final class FeedParser
             if (++$seen > 100) { break; }
             $entry = $atom ? $node->children(self::ATOM) : ($rdf ? $node->children('http://purl.org/rss/1.0/') : $node);
             $base = self::base($baseUrl, $node);
+            $audio = \TinyCat\Status\Audio::enclosure($node, $base);
             $link = '';
             if ($atom) {
                 foreach ($entry->link as $linkNode) {
@@ -101,6 +103,7 @@ final class FeedParser
                     }
                 }
             } else { $link = Client::absoluteUrl($base, trim((string) $entry->link)); }
+            if ($link === '') { $link = $audio; }
             $seznam = $node->children(self::SEZNAM);
             $creator = trim((string) $node->children('http://purl.org/dc/elements/1.1/')->creator);
             if ($creator === '') { $creator = trim((string) ($entry->author->name ?? $entry->author)); }
@@ -125,9 +128,16 @@ final class FeedParser
             if ($atom && (string) ($entry->content->attributes()['type'] ?? '') === 'xhtml') { $content = $entry->content->asXML() ?: ''; }
             if ($atom && (string) ($entry->summary->attributes()['type'] ?? '') === 'xhtml') { $description = $entry->summary->asXML() ?: ''; }
             $descriptionSource = $description !== '' ? $description : ($encoded !== '' ? $encoded : $content);
+            if (trim($descriptionSource) === '') {
+                $podcast = $node->children(self::ITUNES);
+                $descriptionSource = trim((string) $podcast->summary) !== '' ? (string) $podcast->summary : (string) $podcast->subtitle;
+            }
             $guid = trim((string) ($entry->guid ?: $entry->id));
             if ($rdf) { $guid = trim((string) $node->attributes('http://www.w3.org/1999/02/22-rdf-syntax-ns#')['about']); }
             $images = self::images($node, $base, [$description, $encoded, $content]);
+            if ($images === [] && isset($channel->children(self::ITUNES)->image)) {
+                $images = self::images($channel, $baseUrl, []);
+            }
             if ($guid === '') { $guid = $link; }
             if ($guid === '') { $guid = $images[0] ?? ''; }
             if ($guid === '' || ($title === '' && $link === '' && $images === [])) { continue; }
@@ -137,6 +147,7 @@ final class FeedParser
                 'guid' => $guid, 'title' => $title, 'description' => self::descriptionText($descriptionSource, 1200),
                 'url' => Client::isSafeUrl($link) ? $link : '',
                 'image_url' => $images[0] ?? '', 'image_urls' => $images,
+                'audio_url' => $audio,
                 'author' => self::text($creator, 200), 'categories' => array_values(array_unique($categories)),
                 'published_at' => $timestamp !== false ? date('Y-m-d H:i:s', $timestamp) : null,
                 '_timestamp' => $timestamp !== false ? $timestamp : 0,
@@ -169,8 +180,12 @@ final class FeedParser
             if (!is_array($item) || !is_string($item['id'] ?? null) || $item['id'] === '' || strlen($item['id']) > 8192
                 || (!is_string($item['content_text'] ?? null) && !is_string($item['content_html'] ?? null))) { continue; }
             $html = self::string($item['content_html'] ?? '');
+            $audio = '';
             $urls = [self::string($item['image'] ?? ''), self::string($item['banner_image'] ?? '')];
             foreach (array_slice(is_array($item['attachments'] ?? null) ? $item['attachments'] : [], 0, 8) as $attachment) {
+                if (is_array($attachment) && $audio === '' && str_starts_with(self::string($attachment['mime_type'] ?? ''), 'audio/')) {
+                    $audio = \TinyCat\Status\Audio::remote(Client::absoluteUrl($base, self::string($attachment['url'] ?? '')));
+                }
                 if (is_array($attachment) && str_starts_with(self::string($attachment['mime_type'] ?? ''), 'image/')) { $urls[] = self::string($attachment['url'] ?? ''); }
             }
             $images = [];
@@ -180,6 +195,7 @@ final class FeedParser
                 if ($url !== '' && strlen($url) <= 2048 && count($images) < 8 && Client::isSafeUrl($url) && !in_array($url, $images, true)) { $images[] = $url; }
             }
             $url = Client::absoluteUrl($base, self::string($item['url'] ?? $item['external_url'] ?? ''));
+            if ($url === '') { $url = $audio; }
             $authors = $item['authors'] ?? (isset($item['author']) ? [$item['author']] : ($feed['authors'] ?? [$feed['author'] ?? []]));
             $names = [];
             foreach (array_slice(is_array($authors) ? $authors : [], 0, 10) as $author) {
@@ -194,6 +210,7 @@ final class FeedParser
                 'description' => self::descriptionText($description, 1200), 'url' => Client::isSafeUrl($url) ? $url : '',
                 'author' => self::text(implode(', ', array_filter($names)), 200), 'categories' => $tags,
                 'image_url' => $images[0] ?? '', 'image_urls' => $images,
+                'audio_url' => $audio,
                 'published_at' => $timestamp !== false ? date('Y-m-d H:i:s', $timestamp) : null, '_timestamp' => $timestamp !== false ? $timestamp : 0];
         }
         usort($items, static fn (array $a, array $b): int => $a['_timestamp'] <=> $b['_timestamp']);
@@ -257,6 +274,9 @@ final class FeedParser
         }
         foreach ($node->children(self::SEZNAM)->image as $image) {
             $add((string) $image->children(self::SEZNAM)->url, self::base($base, $image));
+        }
+        foreach ($node->children(self::ITUNES)->image as $image) {
+            $add((string) $image->attributes()['href'], self::base($base, $image));
         }
         foreach ($node->enclosure as $image) {
             $type = strtolower((string) $image->attributes()['type']);

@@ -36,6 +36,15 @@ $assert(substr_count($tags, '#category-') === 12, 'All feed category tags must s
 $assert(\TinyCat\Bots\FeedParser::parse( '<invalid') === [], 'Invalid XML must not produce posts.');
 
 // Public literal IPs avoid DNS and external network requests in these parser tests.
+$podcast = '<rss xmlns:p="http://www.itunes.com/dtds/podcast-1.0.dtd"><channel><p:image href="https://93.184.216.34/cover.jpg"/><item><guid>episode</guid><title>Episode</title><p:summary>Podcast summary</p:summary><enclosure type="audio/mpeg" url="https://93.184.216.34/audio.mp3"/></item><item><guid>own</guid><title>Own image</title><description>RSS description</description><p:summary>Other summary</p:summary><p:image href="https://93.184.216.34/episode.jpg"/></item></channel></rss>';
+$podcastItems = \TinyCat\Bots\FeedParser::parse($podcast);
+$assert($podcastItems[0]['description'] === 'Podcast summary' && $podcastItems[0]['image_urls'] === ['https://93.184.216.34/cover.jpg'], 'Podcast episodes use iTunes summaries and channel artwork without treating audio as an image.');
+$assert($podcastItems[1]['description'] === 'RSS description' && $podcastItems[1]['image_urls'] === ['https://93.184.216.34/episode.jpg'], 'Episode artwork and RSS descriptions take precedence over podcast fallbacks.');
+$sourceOnly = \TinyCat\Status\Links::status_link_prepare_metadata(
+    ['normalized_url' => 'https://93.184.216.34/episode'], null, false,
+    ['url_hash' => '', 'title' => 'Episode', 'description' => 'RSS description', 'image_urls' => []]
+);
+$assert($sourceOnly['description'] === 'RSS description' && $sourceOnly['title'] === 'Episode', 'Feed metadata survives even when the feed provides no artwork.');
 $rss = '<rss version="2.0"><channel><item><guid>second</guid><title>Second</title><link>https://93.184.216.34/second</link><pubDate>Tue, 02 Jun 2026 10:00:00 GMT</pubDate></item><item><guid>first</guid><title>First</title><link>https://93.184.216.34/first</link><pubDate>Mon, 01 Jun 2026 10:00:00 GMT</pubDate><category>World News</category></item></channel></rss>';
 $items = \TinyCat\Bots\FeedParser::parse( $rss);
 $assert(array_column($items, 'guid') === ['first', 'second'], 'RSS posts must be ordered oldest first.');

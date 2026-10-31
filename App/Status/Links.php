@@ -203,6 +203,7 @@ final class Links
             'description' => \TinyCat\Support\Text::plain_text_limit((string) ($link['description'] ?? ''), 500),
             'image_url' => \TinyCat\Support\Text::plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
             'video_id' => \TinyCat\Support\Text::plain_text_limit((string) ($link['video_id'] ?? ''), 80),
+            'audio_url' => \TinyCat\Support\Text::plain_text_limit((string) ($link['audio_url'] ?? ''), 2048),
             'updated_at' => (string) ($link['_metadata_updated_at'] ?? \TinyCat\Support\Dates::dateDb()),
         ];
     }
@@ -286,6 +287,7 @@ final class Links
         $type = (string) ($link['link_type'] ?? 'web');
         $title = trim((string) ($link['title'] ?? ''));
         $description = trim((string) ($link['description'] ?? ''));
+        if ($type === 'audio' && !empty($link['audio_url'])) { return true; }
 
         if (Providers::googleMap((string) ($link['normalized_url'] ?? '')) !== null) { return $title !== ''; }
 
@@ -309,7 +311,7 @@ final class Links
      */
     public static function status_link_apply_cached_metadata(array $link, array $cached, bool $preserveTimestamp): array
     {
-        foreach (['provider', 'link_type', 'title', 'description', 'image_url', 'video_id'] as $key) {
+        foreach (['provider', 'link_type', 'title', 'description', 'image_url', 'video_id', 'audio_url'] as $key) {
             $value = (string) ($cached[$key] ?? '');
 
             if ($value !== '') {
@@ -472,12 +474,12 @@ final class Links
      * @param array<mixed> $link
      * @param array<mixed> $cached
      * @return array<mixed>
-     * @param array{url_hash: string, title: string, description: string, image_urls: list<string>}|null $source
+     * @param array{url_hash: string, title: string, description: string, image_urls: list<string>, audio_url?: string}|null $source
      */
     public static function status_link_prepare_metadata(array $link, ?array $cached, bool $localizeImage = false, ?array $source = null): array
     {
         $failureKey = 'link-metadata-failure-v1-' . hash('sha256', (string) ($link['normalized_url'] ?? ''));
-        $fromSource = $source !== null && $source['title'] !== '' && $source['image_urls'] !== [];
+        $fromSource = $source !== null && $source['title'] !== '';
         if ($fromSource) {
             $prepared = array_replace($link, ['title' => $source['title'], 'description' => $source['description'], '_metadata_updated_at' => \TinyCat\Support\Dates::dateDb()]);
         } elseif ($cached !== null && self::status_link_metadata_fresh($cached)) {
@@ -500,6 +502,10 @@ final class Links
             }
         }
 
+        if (!empty($source['audio_url'])) {
+            $audio = Audio::remote((string) $source['audio_url']);
+            if ($audio !== '') { $prepared['audio_url'] = $audio; $prepared['link_type'] = 'audio'; }
+        }
         if ($localizeImage) {
             $kind = Providers::presentation($prepared)['card_kind'];
             $variant = in_array($kind, ['social', 'video', 'reel'], true) ? $kind : 'card';
@@ -517,12 +523,13 @@ final class Links
             }
         }
 
+        if (!empty($prepared['audio_url'])) { $prepared['audio_url'] = Audio::remote((string) $prepared['audio_url']); }
         return $prepared;
     }
 
     /**
      * @param array<mixed> $links
-     * @param array{url_hash: string, title: string, description: string, image_urls: list<string>}|null $source
+     * @param array{url_hash: string, title: string, description: string, image_urls: list<string>, audio_url?: string}|null $source
      */
     public static function status_sync_links(int $contentId, array $links, ?array $source = null): void
     {
@@ -534,7 +541,7 @@ final class Links
     }
 
     /** @param array<mixed> $links
-     * @param array{url_hash: string, title: string, description: string, image_urls: list<string>}|null $source
+     * @param array{url_hash: string, title: string, description: string, image_urls: list<string>, audio_url?: string}|null $source
      * @return list<array<mixed>>
      */
     public static function prepareLinks(array $links, ?array $source = null): array
@@ -673,6 +680,7 @@ final class Links
                         l.description,
                         l.image_url,
                         l.video_id,
+                        l.audio_url,
                         l.created_at,
                         l.updated_at
                     FROM content_links cl

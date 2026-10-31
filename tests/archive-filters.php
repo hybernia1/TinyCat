@@ -16,7 +16,7 @@ foreach ([
     'CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT, edit_locked_at TEXT)',
     'CREATE TABLE content_images (content_id INTEGER, path TEXT, width INTEGER, height INTEGER, bytes INTEGER)',
     'CREATE TABLE content_links (content_id INTEGER, link_id INTEGER)',
-    'CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)',
+    'CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
     'CREATE TABLE content_likes (content_id INTEGER, user_id INTEGER)',
     'CREATE TABLE content_comments (content_id INTEGER)',
     'CREATE TABLE terms (id INTEGER PRIMARY KEY, name TEXT)',

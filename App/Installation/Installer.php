@@ -189,6 +189,7 @@ final class Installer
                 description VARCHAR(500) NULL,
                 image_url VARCHAR(2048) NULL,
                 video_id VARCHAR(80) NULL,
+                audio_url VARCHAR(2048) NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),

@@ -16,7 +16,7 @@ $database = new PDO('sqlite::memory:');
 $database->exec('CREATE TABLE users (id INTEGER, username TEXT, role TEXT, created_at TEXT)');
 $database->exec("INSERT INTO users VALUES (1, 'admin', 'admin', '2026-01-01')");
 $database->exec('CREATE TABLE content_links (content_id INTEGER, link_id INTEGER)');
-$database->exec('CREATE TABLE links (id INTEGER, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)');
+$database->exec('CREATE TABLE links (id INTEGER, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)');
 $database->exec('CREATE TABLE content_images (content_id INTEGER, path TEXT)');
 $database->exec('CREATE TABLE content_likes (content_id INTEGER, user_id INTEGER)');
 $database->exec('CREATE TABLE comment_likes (comment_id INTEGER, user_id INTEGER)');

@@ -23,6 +23,7 @@ import "./translation.js";
   };
   TinyCat.status.dispose = function (root) {
     C.feed.dispose(root);
+    C.media.dispose(root);
     var editors = qsa("[data-status-editor]", root);
     if (root.matches && root.matches("[data-status-editor]")) { editors.push(root); }
     editors.forEach(C.editor.hideStatusEditorSuggestions);

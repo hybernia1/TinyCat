@@ -97,6 +97,7 @@ final class Resource
         if ($map !== null) { $link = array_replace($link, $map); }
         $rule = Providers::classify((string) ($link['normalized_url'] ?? ''));
         foreach (['provider', 'link_type', 'video_id'] as $key) { if (isset($rule[$key])) { $link[$key] = $rule[$key]; } }
+        $link = array_replace($link, Providers::taxonomy($link));
         $thumbnails = Links::status_video_thumbnail_sources($link);
         $displayUrl = $map['display_url'] ?? Links::status_link_display_url($link);
         $title = trim((string) ($link['title'] ?? ''));
@@ -106,8 +107,9 @@ final class Resource
         return ['outbound_url' => ContentLinks::url($contentId, (string) ($link['normalized_url'] ?? ''), 0, isset($link['url_hash']) ? (string) $link['url_hash'] : null), 'url' => (string) ($link['normalized_url'] ?? ''), 'title' => ($title !== '' ? $title : ($displayUrl !== '' ? $displayUrl : (string) ($link['normalized_url'] ?? ''))),
             'display_url' => $displayUrl,
             'provider' => !empty($link['provider']) && $link['provider'] !== 'web' ? $link['provider'] : null,
-            'link_type' => in_array($link['link_type'] ?? '', ['video', 'audio'], true) ? $link['link_type'] : 'web',
+            'link_type' => in_array($link['link_type'], ['video', 'audio'], true) ? $link['link_type'] : 'web',
             'description' => (string) ($link['description'] ?? ''), 'image_url' => $image,
+            'audio_url' => (string) ($link['audio_url'] ?? ''),
             'embed_url' => $embedUrl, 'embed_allowed' => Providers::embedAllowed($embedUrl), 'embed_origin' => $embedUrl !== '' ? 'https://' . parse_url($embedUrl, PHP_URL_HOST) : '',
             'thumbnail_url' => (string) ($thumbnails['fallback'] ?? ''), 'thumbnail_webp_url' => (string) ($thumbnails['webp'] ?? '')] + Providers::presentation($link);
     }

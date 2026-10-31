@@ -4,6 +4,21 @@
     var button = root.querySelector("button");
     if (!button) return;
     button.addEventListener("click", function () {
+      if (root.dataset.playerKind === "audio" && root.dataset.audioUrl) {
+        var audioUrl;
+        try { audioUrl = new URL(root.dataset.audioUrl); } catch (_) { return; }
+        if (audioUrl.username || audioUrl.password || (audioUrl.protocol !== "https:" && audioUrl.origin !== window.location.origin)) return;
+        var audio = document.createElement("audio");
+        audio.className = "status-audio-player";
+        audio.controls = true;
+        audio.preload = "none";
+        audio.src = audioUrl.href;
+        audio.setAttribute("aria-label", button.getAttribute("aria-label") || "");
+        root.replaceChildren(audio);
+        var playback = audio.play();
+        if (playback && playback.catch) playback.catch(function () {});
+        return;
+      }
       var url;
       try { url = new URL(root.dataset.playerUrl); } catch (_) { return; }
       if (url.protocol !== "https:" || url.username || url.password || url.origin !== root.dataset.playerOrigin) return;

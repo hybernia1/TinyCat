@@ -90,15 +90,22 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
                 $canonical = $group[0]['canonical'];
                 foreach (array_slice($group, 1) as $entry) {
                     $loser = $entry['row'];
-                    foreach (['title', 'description', 'image_url', 'video_id'] as $field) {
+                    foreach (['title', 'description', 'image_url', 'video_id', 'audio_url'] as $field) {
                         if (trim((string) ($winner[$field] ?? '')) === '' && !empty($loser[$field])) { $winner[$field] = $loser[$field]; }
                     }
                     foreach ($references[(int) $loser['id']] as $reference) { $attach->execute([$reference['content_id'], $winner['id'], $reference['created_at']]); }
                     $database->prepare('DELETE FROM content_links WHERE link_id = ?')->execute([$loser['id']]);
                     $database->prepare('DELETE FROM links WHERE id = ?')->execute([$loser['id']]);
                 }
-                $database->prepare('UPDATE links SET normalized_url = ?, url_hash = ?, title = ?, description = ?, image_url = ?, video_id = ? WHERE id = ?')
-                    ->execute([$canonical['normalized_url'], $canonical['url_hash'], $winner['title'] ?? '', $winner['description'] ?? '', $winner['image_url'] ?? '', $canonical['video_id'] ?: ($winner['video_id'] ?? ''), $winner['id']]);
+                $values = [$canonical['normalized_url'], $canonical['url_hash'], $winner['title'] ?? '', $winner['description'] ?? '', $winner['image_url'] ?? '', $canonical['video_id'] ?: ($winner['video_id'] ?? '')];
+                $audioColumns = '';
+                if (array_key_exists('audio_url', $group[0]['row'])) {
+                    $audioColumns = ', audio_url = ?, link_type = ?';
+                    $values[] = $winner['audio_url'] ?? '';
+                    $values[] = \TinyCat\Status\Providers::taxonomy($winner)['link_type'];
+                }
+                $values[] = $winner['id'];
+                $database->prepare('UPDATE links SET normalized_url = ?, url_hash = ?, title = ?, description = ?, image_url = ?, video_id = ?' . $audioColumns . ' WHERE id = ?')->execute($values);
             }
             foreach ($report['orphans'] as $id) { $database->prepare('DELETE FROM links WHERE id = ?')->execute([$id]); }
         }

@@ -87,6 +87,12 @@ try {
         throw new RuntimeException('The link embed URL removal migration did not drop its column.');
     }
     $database->exec("ALTER TABLE links ADD COLUMN provider VARCHAR(40) NOT NULL DEFAULT 'web', ADD COLUMN link_type VARCHAR(20) NOT NULL DEFAULT 'link'");
+    $addAudio = require dirname(__DIR__, 2) . '/migrations/20261031_001_link_audio.php';
+    $addAudio($database);
+    $addAudio($database);
+    if ((int) $database->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'links' AND COLUMN_NAME = 'audio_url' AND IS_NULLABLE = 'YES' AND CHARACTER_MAXIMUM_LENGTH = 2048")->fetchColumn() !== 1) {
+        throw new RuntimeException('Audio migration must add one nullable playback URL and support repeat execution.');
+    }
     $database->exec("INSERT INTO links (id, provider, link_type) VALUES (1, 'web', 'link'), (2, 'youtube', 'video')");
     $normalizeLinks = require dirname(__DIR__, 2) . '/migrations/20261027_001_link_taxonomy.php';
     $normalizeLinks($database);

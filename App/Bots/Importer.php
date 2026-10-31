@@ -534,6 +534,7 @@ final class Importer
                         [
                             'url_hash' => (string) ($feedLink['url_hash'] ?? ''),
                             'title' => (string) ($item['title'] ?? ''), 'description' => (string) ($item['description'] ?? ''),
+                            'audio_url' => (string) ($item['audio_url'] ?? ''),
                             'image_urls' => array_values(array_filter((array) ($item['image_urls'] ?? [$item['image_url'] ?? '']), is_string(...))),
                         ]
                     );

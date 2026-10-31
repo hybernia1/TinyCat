@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.15.0 - 2026-10-31
+
+- Use Spotify's 152px compact embeds and SoundCloud's 166px classic players, including playlists. Hide duplicate SoundCloud artwork, comments and optional buttons.
+- Use one audio card layout and play button for RSS recordings, Spotify and SoundCloud. Load players only after interaction and retain artwork and episode details during playback.
+- Play podcast audio from RSS/Atom enclosures, JSON Feed attachments, direct audio links and web audio metadata using native controls. Resolve mujRozhlas episode links through its API. Preserve playback URLs in link storage and show imported episodes in the Audio archive; existing installations require the link audio migration.
+- Read iTunes podcast summaries and artwork, use show artwork when an episode has none, and retain feed descriptions in link cards without images.
+
 ## 5.14.0 - 2026-10-31
 
 - Share scoped ownership of AJAX reads, reject stale results and errors, and lock duplicate action links before confirmation. Retain list filters and sorting through module-owned definitions and refreshes.

@@ -7,7 +7,6 @@
     "children": [
       {
         "tag": "span",
-        "attrs": {},
         "children": [
           {
             "get": "segment.text"
@@ -259,8 +258,7 @@
                 ]
               },
               "loading": "lazy"
-            },
-            "children": []
+            }
           }
         ],
         "when": {
@@ -301,7 +299,6 @@
           },
           "loading": "lazy"
         },
-        "children": [],
         "when": {
           "not": {
             "get": "open_modal"
@@ -317,7 +314,25 @@
     {
       "tag": "div",
       "attrs": {
-        "class": "status-video-card",
+        "class": {
+          "concat": [
+            "status-video-card",
+            {
+              "if": [
+                {
+                  "eq": [
+                    {
+                      "get": "link.card_kind"
+                    },
+                    "audio"
+                  ]
+                },
+                " status-audio-card",
+                ""
+              ]
+            }
+          ]
+        },
         "data-status-video": "",
         "data-embed-url": {
           "get": "link.embed_url"
@@ -342,9 +357,28 @@
         },
         "data-provider": {
           "get": "link.provider"
+        },
+        "data-audio-url": {
+          "get": "link.audio_url"
         }
       },
       "children": [
+        {
+          "component": "status/link-summary",
+          "data": {
+            "link": {
+              "get": "link"
+            }
+          },
+          "when": {
+            "eq": [
+              {
+                "get": "link.card_kind"
+              },
+              "audio"
+            ]
+          }
+        },
         {
           "tag": "div",
           "attrs": {
@@ -373,7 +407,21 @@
                     }
                   ],
                   "when": {
-                    "get": "link.provider_name"
+                    "and": [
+                      {
+                        "not": {
+                          "eq": [
+                            {
+                              "get": "link.card_kind"
+                            },
+                            "audio"
+                          ]
+                        }
+                      },
+                      {
+                        "get": "link.provider_name"
+                      }
+                    ]
                   }
                 },
                 {
@@ -390,7 +438,6 @@
                         },
                         "type": "image/webp"
                       },
-                      "children": [],
                       "when": {
                         "get": "link.thumbnail_webp_url"
                       }
@@ -414,12 +461,25 @@
                         "loading": "lazy",
                         "decoding": "async",
                         "referrerpolicy": "no-referrer"
-                      },
-                      "children": []
+                      }
                     }
                   ],
                   "when": {
-                    "get": "link.thumbnail_url"
+                    "and": [
+                      {
+                        "not": {
+                          "eq": [
+                            {
+                              "get": "link.card_kind"
+                            },
+                            "audio"
+                          ]
+                        }
+                      },
+                      {
+                        "get": "link.thumbnail_url"
+                      }
+                    ]
                   }
                 },
                 {
@@ -441,7 +501,6 @@
                   "children": [
                     {
                       "tag": "strong",
-                      "attrs": {},
                       "children": [
                         {
                           "get": "link.title"
@@ -450,7 +509,6 @@
                     },
                     {
                       "tag": "small",
-                      "attrs": {},
                       "children": [
                         {
                           "or": [
@@ -464,11 +522,31 @@
                         }
                       ]
                     }
-                  ]
+                  ],
+                  "when": {
+                    "not": {
+                      "eq": [
+                        {
+                          "get": "link.card_kind"
+                        },
+                        "audio"
+                      ]
+                    }
+                  }
                 }
               ]
             }
-          ]
+          ],
+          "when": {
+            "or": [
+              {
+                "get": "link.embed_allowed"
+              },
+              {
+                "get": "link.audio_url"
+              }
+            ]
+          }
         },
         {
           "tag": "a",
@@ -504,216 +582,42 @@
                 }
               ]
             }
-          ]
-        }
-      ],
-      "when": {
-        "get": "link.embed_allowed"
-      }
-    },
-    {
-      "tag": "a",
-      "attrs": {
-        "class": {
-          "concat": [
-            "status-link-card",
-            {
-              "if": [
-                {
-                  "get": "link.image_url"
-                },
-                " has-image",
-                ""
-              ]
-            }
-          ]
-        },
-        "href": {
-          "or": [
-            {
-              "get": "link.outbound_url"
-            },
-            {
-              "get": "link.url"
-            }
-          ]
-        },
-        "target": "_blank",
-        "rel": "nofollow noopener noreferrer ugc",
-        "data-card-kind": {
-          "get": "link.card_kind"
-        },
-        "data-provider": {
-          "get": "link.provider"
-        }
-      },
-      "children": [
-        {
-          "tag": "span",
-          "attrs": {
-            "class": "status-link-provider"
-          },
-          "children": [
-            {
-              "icon": {
-                "or": [
-                  {
-                    "get": "link.card_icon"
-                  },
-                  "external-link"
-                ]
-              }
-            },
-            {
-              "get": "link.provider_name"
-            },
-            {
-              "tag": "span",
-              "attrs": {
-                "class": "status-link-account"
-              },
-              "children": [
-                {
-                  "get": "link.title"
-                }
-              ],
-              "when": {
-                "eq": [
-                  {
-                    "get": "link.card_kind"
-                  },
-                  "social"
-                ]
-              }
-            }
-          ],
-          "when": {
-            "get": "link.provider_name"
-          }
-        },
-        {
-          "tag": "span",
-          "attrs": {
-            "class": "status-link-media",
-            "data-status-link-media": ""
-          },
-          "children": [
-            {
-              "tag": "img",
-              "attrs": {
-                "class": "status-link-image",
-                "src": {
-                  "get": "link.image_url"
-                },
-                "alt": "",
-                "loading": "lazy",
-                "data-status-link-image": ""
-              },
-              "children": []
-            },
-            {
-              "tag": "span",
-              "attrs": {
-                "class": "status-link-icon status-link-fallback-icon",
-                "data-status-link-fallback": ""
-              },
-              "children": [
-                {
-                  "icon": "image"
-                }
-              ]
-            }
-          ],
-          "when": {
-            "get": "link.image_url"
-          }
-        },
-        {
-          "tag": "span",
-          "attrs": {
-            "class": "status-link-icon"
-          },
-          "children": [
-            {
-              "icon": {
-                "or": [
-                  {
-                    "get": "link.card_icon"
-                  },
-                  "external-link"
-                ]
-              }
-            }
           ],
           "when": {
             "not": {
-              "get": "link.image_url"
-            }
-          }
-        },
-        {
-          "tag": "span",
-          "attrs": {
-            "class": "status-link-copy"
-          },
-          "children": [
-            {
-              "tag": "strong",
-              "attrs": {},
-              "children": [
+              "eq": [
                 {
-                  "or": [
-                    {
-                      "get": "link.title"
-                    },
-                    {
-                      "get": "link.url"
-                    }
-                  ]
-                }
-              ],
-              "when": {
-                "not": {
-                  "eq": [
-                    {
-                      "get": "link.card_kind"
-                    },
-                    "social"
-                  ]
-                }
-              }
-            },
-            {
-              "tag": "span",
-              "attrs": {},
-              "children": [
-                {
-                  "get": "link.description"
-                }
-              ],
-              "when": {
-                "get": "link.description"
-              }
-            },
-            {
-              "tag": "small",
-              "attrs": {},
-              "children": [
-                {
-                  "or": [
-                    {
-                      "get": "link.display_url"
-                    },
-                    {
-                      "get": "link.url"
-                    }
-                  ]
-                }
+                  "get": "link.card_kind"
+                },
+                "audio"
               ]
             }
-          ]
+          }
         }
       ],
+      "when": {
+        "or": [
+          {
+            "get": "link.embed_allowed"
+          },
+          {
+            "eq": [
+              {
+                "get": "link.card_kind"
+              },
+              "audio"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "component": "status/link-summary",
+      "data": {
+        "link": {
+          "get": "link"
+        }
+      },
       "when": {
         "and": [
           {
@@ -728,6 +632,16 @@
                   "get": "link.card_kind"
                 },
                 "social"
+              ]
+            }
+          },
+          {
+            "not": {
+              "eq": [
+                {
+                  "get": "link.card_kind"
+                },
+                "audio"
               ]
             }
           }
@@ -809,7 +723,6 @@
           "children": [
             {
               "tag": "span",
-              "attrs": {},
               "children": [
                 {
                   "get": "link.description"
@@ -875,8 +788,7 @@
                     "alt": "",
                     "loading": "lazy",
                     "data-status-link-image": ""
-                  },
-                  "children": []
+                  }
                 },
                 {
                   "tag": "span",
@@ -969,8 +881,7 @@
           "value": {
             "get": "action"
           }
-        },
-        "children": []
+        }
       },
       {
         "tag": "button",
@@ -1350,8 +1261,7 @@
               "react"
             ]
           }
-        },
-        "children": []
+        }
       },
       {
         "tag": "button",
@@ -2132,8 +2042,7 @@
           "type": "hidden",
           "name": "action",
           "value": "comment"
-        },
-        "children": []
+        }
       },
       {
         "tag": "input",
@@ -2148,8 +2057,7 @@
               0
             ]
           }
-        },
-        "children": []
+        }
       },
       {
         "component": "ui/avatar",
@@ -2428,7 +2336,6 @@
                 "children": [
                   {
                     "tag": "summary",
-                    "attrs": {},
                     "children": [
                       {
                         "t": "account.status_reply",
@@ -2701,8 +2608,7 @@
           "name": "remove_image",
           "value": "0",
           "data-status-image-remove-input": ""
-        },
-        "children": []
+        }
       },
       {
         "tag": "button",
@@ -2787,8 +2693,7 @@
                   null
                 ]
               }
-            },
-            "children": []
+            }
           }
         ]
       },
@@ -2833,8 +2738,7 @@
               "data-status-image-input": "",
               "data-client-image-max-dimension": "800",
               "data-client-image-max-bytes": "26214400"
-            },
-            "children": []
+            }
           },
           {
             "icon": "upload"
@@ -2888,8 +2792,7 @@
                 "attrs": {
                   "class": "status-compose-counter",
                   "data-status-editor-meta-slot": ""
-                },
-                "children": []
+                }
               },
               {
                 "tag": "div",
@@ -2976,7 +2879,6 @@
           },
           {
             "tag": "span",
-            "attrs": {},
             "children": [
               {
                 "if": [
@@ -3220,6 +3122,177 @@
                 ]
               }
             }
+          }
+        ]
+      }
+    ]
+  },
+  "status/link-summary": {
+    "tag": "a",
+    "attrs": {
+      "class": {
+        "concat": [
+          "status-link-card",
+          {
+            "if": [
+              {
+                "get": "link.image_url"
+              },
+              " has-image",
+              ""
+            ]
+          }
+        ]
+      },
+      "href": {
+        "or": [
+          {
+            "get": "link.outbound_url"
+          },
+          {
+            "get": "link.url"
+          }
+        ]
+      },
+      "target": "_blank",
+      "rel": "nofollow noopener noreferrer ugc",
+      "data-card-kind": {
+        "get": "link.card_kind"
+      },
+      "data-provider": {
+        "get": "link.provider"
+      }
+    },
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "status-link-provider"
+        },
+        "children": [
+          {
+            "icon": {
+              "or": [
+                {
+                  "get": "link.card_icon"
+                },
+                "external-link"
+              ]
+            }
+          },
+          {
+            "get": "link.provider_name"
+          }
+        ],
+        "when": {
+          "get": "link.provider_name"
+        }
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "status-link-media",
+          "data-status-link-media": ""
+        },
+        "children": [
+          {
+            "tag": "img",
+            "attrs": {
+              "class": "status-link-image",
+              "src": {
+                "get": "link.image_url"
+              },
+              "alt": "",
+              "loading": "lazy",
+              "data-status-link-image": ""
+            }
+          },
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "status-link-icon status-link-fallback-icon",
+              "data-status-link-fallback": ""
+            },
+            "children": [
+              {
+                "icon": "image"
+              }
+            ]
+          }
+        ],
+        "when": {
+          "get": "link.image_url"
+        }
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "status-link-icon"
+        },
+        "children": [
+          {
+            "icon": {
+              "or": [
+                {
+                  "get": "link.card_icon"
+                },
+                "external-link"
+              ]
+            }
+          }
+        ],
+        "when": {
+          "not": {
+            "get": "link.image_url"
+          }
+        }
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "status-link-copy"
+        },
+        "children": [
+          {
+            "tag": "strong",
+            "children": [
+              {
+                "or": [
+                  {
+                    "get": "link.title"
+                  },
+                  {
+                    "get": "link.url"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "span",
+            "children": [
+              {
+                "get": "link.description"
+              }
+            ],
+            "when": {
+              "get": "link.description"
+            }
+          },
+          {
+            "tag": "small",
+            "children": [
+              {
+                "or": [
+                  {
+                    "get": "link.display_url"
+                  },
+                  {
+                    "get": "link.url"
+                  }
+                ]
+              }
+            ]
           }
         ]
       }

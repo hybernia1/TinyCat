@@ -10,48 +10,21 @@ import "../../ui/toasts.js";
   var compactUrl = TinyCat.navigation.compact;
   var prepareClientImageInput = TinyCat.images.prepare;
   var replaceImageInputFile = TinyCat.images.replace;
-  function markStatusLinkImageMissing(image) {
-    var media = image && image.closest ? image.closest("[data-status-link-media]") : null;
-    var card = image && image.closest ? image.closest(".status-link-card") : null;
+  function markStatusLinkImage(image, ready) {
+    if (!image) return;
+    var media = image.closest ? image.closest("[data-status-link-media]") : null;
+    var card = image.closest ? image.closest(".status-link-card") : null;
     var fallback = media ? qs("[data-status-link-fallback]", media) : null;
-
-    if (!image) {
-      return;
-    }
-
-    image.hidden = true;
-    image.dataset.statusLinkImageMissing = "true";
-
+    image.hidden = !ready;
+    image.dataset.statusLinkImageMissing = String(!ready);
     if (card) {
-      card.classList.add("is-image-missing");
-      card.classList.remove("is-image-ready");
+      card.classList.toggle("is-image-missing", !ready);
+      card.classList.toggle("is-image-ready", ready);
     }
-
-    if (fallback) {
-      fallback.hidden = false;
-    }
+    if (fallback) fallback.hidden = ready;
   }
-  function markStatusLinkImageReady(image) {
-    var media = image && image.closest ? image.closest("[data-status-link-media]") : null;
-    var card = image && image.closest ? image.closest(".status-link-card") : null;
-    var fallback = media ? qs("[data-status-link-fallback]", media) : null;
-
-    if (!image) {
-      return;
-    }
-
-    image.hidden = false;
-    image.dataset.statusLinkImageMissing = "false";
-
-    if (card) {
-      card.classList.add("is-image-ready");
-      card.classList.remove("is-image-missing");
-    }
-
-    if (fallback) {
-      fallback.hidden = true;
-    }
-  }
+  function linkImageMissing(image) { markStatusLinkImage(image, false); }
+  function linkImageReady(image) { markStatusLinkImage(image, true); }
   function initStatusLinkImageRoot(image) {
     if (!image || image.dataset.statusLinkImageReady === "true") {
       return;
@@ -59,17 +32,17 @@ import "../../ui/toasts.js";
 
     image.dataset.statusLinkImageReady = "true";
     image.addEventListener("load", function () {
-      markStatusLinkImageReady(image);
+      linkImageReady(image);
     });
     image.addEventListener("error", function () {
-      markStatusLinkImageMissing(image);
+      linkImageMissing(image);
     });
 
     if (image.complete) {
       if (image.naturalWidth > 0) {
-        markStatusLinkImageReady(image);
+        linkImageReady(image);
       } else {
-        markStatusLinkImageMissing(image);
+        linkImageMissing(image);
       }
     }
   }
@@ -91,45 +64,67 @@ import "../../ui/toasts.js";
   function initStatusVideoRoot(root) {
     var button;
     var embedUrl;
+    var audioUrl = "";
+    var data = root && root.dataset;
 
-    if (!root || root.dataset.statusVideoReady === "true") {
+    if (!root || data.statusVideoReady === "true") {
       return;
     }
 
     button = qs("[data-status-video-load]", root);
-    embedUrl = allowedStatusVideoUrl(root.dataset.embedUrl || "", root.dataset.embedOrigin || "");
+    embedUrl = allowedStatusVideoUrl(data.embedUrl || "", data.embedOrigin || "");
+    if (data.cardKind === "audio" && data.audioUrl) {
+      try { audioUrl = allowedStatusVideoUrl(data.audioUrl, new URL(data.audioUrl).origin); }
+      catch (_) { /* Invalid recordings keep their source link. */ }
+    }
 
-    if (!button || !embedUrl) {
+    if (!button || (!embedUrl && !audioUrl)) {
       return;
     }
 
-    root.dataset.statusVideoReady = "true";
+    data.statusVideoReady = "true";
     button.addEventListener("click", function () {
+      if (audioUrl) {
+        var player = TinyCat.dom.element("audio", { "class": "status-audio-player", controls: true, preload: "none", src: audioUrl, "aria-label": button.getAttribute("aria-label") || "" });
+        (qs("[data-status-video-mount]", root) || root).replaceChildren(player);
+        var playback = player.play();
+        if (playback && playback.catch) playback.catch(function () {});
+        return;
+      }
       var iframe = document.createElement("iframe");
       var url = new URL(embedUrl);
 
-      var autoplayParam = root.dataset.embedAutoplayParam || "autoplay";
+      var autoplayParam = data.embedAutoplayParam || "autoplay";
       if (/^[a-z_]+$/.test(autoplayParam)) {
-        url.searchParams.set(autoplayParam, root.dataset.embedAutoplayValue || "1");
+        url.searchParams.set(autoplayParam, data.embedAutoplayValue || "1");
       }
-      if (root.dataset.cardKind !== "audio") {
+      if (data.cardKind !== "audio") {
         url.searchParams.set("playsinline", "1");
       }
-      if (root.dataset.embedWidthParam && /^[a-z_]+$/.test(root.dataset.embedWidthParam)) {
-        url.searchParams.set(root.dataset.embedWidthParam, String(Math.max(220, Math.min(1280, Math.round(root.getBoundingClientRect().width)))));
+      if (data.embedWidthParam && /^[a-z_]+$/.test(data.embedWidthParam)) {
+        url.searchParams.set(data.embedWidthParam, String(Math.max(220, Math.min(1280, Math.round(root.getBoundingClientRect().width)))));
       }
 
       iframe.className = "status-video-frame";
       iframe.title = button.getAttribute("aria-label") || "";
-      if (root.dataset.cardKind === "audio") {
-        iframe.height = String(Math.max(80, Math.min(600, Number(root.dataset.embedHeight) || 166)));
+      if (data.cardKind === "audio") {
+        iframe.height = String(Math.max(80, Math.min(600, Number(data.embedHeight) || 166)));
       }
       iframe.src = url.href;
       iframe.loading = "lazy";
       iframe.referrerPolicy = "strict-origin-when-cross-origin";
-      iframe.allow = root.dataset.cardKind === "audio" ? "autoplay" : "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share";
-      iframe.allowFullscreen = root.dataset.cardKind !== "audio";
+      iframe.allow = data.cardKind === "audio" ? "autoplay" : "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share";
+      iframe.allowFullscreen = data.cardKind !== "audio";
       (qs("[data-status-video-mount]", root) || root).replaceChildren(iframe);
+    });
+  }
+  function dispose(root) {
+    var players = TinyCat.dom.all("audio.status-audio-player", root);
+    if (root.matches && root.matches("audio.status-audio-player")) players.push(root);
+    players.forEach(function (player) {
+      player.pause();
+      player.removeAttribute("src");
+      player.load();
     });
   }
   function initStatusImageRoot(root) {
@@ -310,5 +305,5 @@ import "../../ui/toasts.js";
     url.searchParams.set("compact", "1");
     return compactUrl(url);
   }
-  TinyCat.status.controllers.media = { markStatusLinkImageMissing: markStatusLinkImageMissing, markStatusLinkImageReady: markStatusLinkImageReady, initStatusLinkImageRoot: initStatusLinkImageRoot, allowedStatusVideoUrl: allowedStatusVideoUrl, initStatusVideoRoot: initStatusVideoRoot, initStatusImageRoot: initStatusImageRoot, mobileStatusUrl: mobileStatusUrl, mobileStatusPageUrl: mobileStatusPageUrl };
+  TinyCat.status.controllers.media = { dispose: dispose, markStatusLinkImageMissing: linkImageMissing, markStatusLinkImageReady: linkImageReady, initStatusLinkImageRoot: initStatusLinkImageRoot, allowedStatusVideoUrl: allowedStatusVideoUrl, initStatusVideoRoot: initStatusVideoRoot, initStatusImageRoot: initStatusImageRoot, mobileStatusUrl: mobileStatusUrl, mobileStatusPageUrl: mobileStatusPageUrl };
 }());
