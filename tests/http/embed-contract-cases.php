@@ -74,6 +74,11 @@ foreach ([['https://www.youtube.com/watch?v=abcdefghijk', 'youtube', 'video', 'a
 $mediaDom = new DOMDocument(); @$mediaDom->loadHTML($mediaHtml); $mediaXPath = new DOMXPath($mediaDom);
 $assert($status === 200 && $mediaXPath->query('//*[@data-embed-player]')->length === 3 && $mediaXPath->query('//iframe')->length === 0, 'Video, SoundCloud and Spotify have playable placeholders and do not load remote frames before interaction.');
 $assert($mediaXPath->query('//*[@data-player-kind="audio"]')->length === 2 && str_contains($mediaHeaders['content-security-policy'], 'https://open.spotify.com') && str_contains($mediaHeaders['content-security-policy'], 'https://w.soundcloud.com'), 'Audio uses the central provider rules and explicit player origins.');
+$embedDb->prepare('UPDATE links SET audio_url = ?, provider = ?, link_type = ? WHERE id = ?')->execute(['https://93.184.216.34/episode.mp3', '', 'audio', $embedLinks[0]]);
+[$status, $nativeHtml, $nativeHeaders] = $exportRequest('/status/910001/embed');
+$nativeDom = new DOMDocument(); @$nativeDom->loadHTML($nativeHtml); $nativeXPath = new DOMXPath($nativeDom);
+$assert($status === 200 && $nativeXPath->query('//*[@data-audio-url="https://93.184.216.34/episode.mp3"]//button')->length === 1 && $nativeXPath->query('//audio')->length === 0 && str_contains($nativeHeaders['content-security-policy'], "media-src 'self' https:"), 'Exported podcast cards wait for interaction using the shared player placeholder.');
+$embedDb->prepare('UPDATE links SET audio_url = NULL, provider = ?, link_type = ? WHERE id = ?')->execute(['youtube', 'video', $embedLinks[0]]);
 $assert($mediaXPath->query('//section[contains(@class,"embed-link")]//script')->length === 0 && str_contains($mediaHtml, '&lt;script&gt;unsafe&lt;/script&gt;'), 'Provider metadata remains escaped in rich media cards.');
 [$status, $mediaMetadata] = $exportRequest($embedUrl);
 $assert($status === 200 && str_starts_with(json_decode($mediaMetadata, true)['thumbnail_url'], 'https://i.ytimg.com/'), 'Video oEmbed responses include a standard thumbnail fallback.');

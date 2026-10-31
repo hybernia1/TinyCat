@@ -41,7 +41,7 @@ final class Metadata
 
             $link['_metadata_fetched'] = true;
 
-            foreach (['title', 'description', 'provider', 'link_type'] as $key) {
+            foreach (['title', 'description', 'provider', 'link_type', 'audio_url'] as $key) {
                 if (!empty($meta[$key])) {
                     $link[$key] = (string) $meta[$key];
                 }
@@ -121,6 +121,8 @@ final class Metadata
     public static function fetch(string $url): array
     {
         return \TinyCat\Http\Client::withHostChecks(static function () use ($url): array {
+            $audio = Audio::direct($url);
+            if ($audio !== '') { return ['audio_url' => $audio, 'link_type' => 'audio']; }
             $structured = Providers::structuredRequest($url);
             if ($structured !== null) {
                 $metadata = self::cleanMetadata(Providers::structuredMetadata(self::fetchJson($structured['url'], self::HTML_LIMIT, $structured['headers']), $url));
@@ -291,6 +293,19 @@ final class Metadata
         $meta['title'] = $candidates['title'] ?: $candidates['og_title'] ?: $candidates['twitter_title'];
         $meta['description'] = $candidates['description'] ?: $candidates['og_description'] ?: $candidates['twitter_description'];
         $meta['image_url'] = $candidates['og_image_secure'] ?: $candidates['og_image'] ?: $candidates['twitter_image'] ?: $candidates['image'];
+        foreach ($dom->getElementsByTagName('meta') as $node) {
+            if (!in_array(strtolower((string) $node->getAttribute('property')), ['og:audio', 'og:audio:url', 'og:audio:secure_url'], true)) { continue; }
+            $audio = Audio::remote(\TinyCat\Http\Client::absoluteUrl($baseUrl, (string) $node->getAttribute('content')));
+            if ($audio !== '') { $meta['audio_url'] = $audio; $meta['link_type'] = 'audio'; break; }
+        }
+        if (empty($meta['audio_url'])) {
+            foreach ($dom->getElementsByTagName('audio') as $node) {
+                $candidate = (string) $node->getAttribute('src');
+                if ($candidate === '') { $candidate = (string) $node->getElementsByTagName('source')->item(0)?->getAttribute('src'); }
+                $audio = Audio::remote(\TinyCat\Http\Client::absoluteUrl($baseUrl, $candidate));
+                if ($audio !== '') { $meta['audio_url'] = $audio; $meta['link_type'] = 'audio'; break; }
+            }
+        }
         $endpoint = Providers::discover($dom, $baseUrl);
         if (Providers::wordpressUrl($baseUrl) !== '') {
             $meta['provider'] = 'wordpress';

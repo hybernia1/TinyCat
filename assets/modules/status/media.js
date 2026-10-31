@@ -91,6 +91,7 @@ import "../../ui/toasts.js";
   function initStatusVideoRoot(root) {
     var button;
     var embedUrl;
+    var audioUrl = "";
 
     if (!root || root.dataset.statusVideoReady === "true") {
       return;
@@ -98,13 +99,31 @@ import "../../ui/toasts.js";
 
     button = qs("[data-status-video-load]", root);
     embedUrl = allowedStatusVideoUrl(root.dataset.embedUrl || "", root.dataset.embedOrigin || "");
+    if (root.dataset.cardKind === "audio" && root.dataset.audioUrl) {
+      try {
+        var audio = new URL(root.dataset.audioUrl);
+        if (!audio.username && !audio.password && (audio.protocol === "https:" || audio.origin === window.location.origin)) audioUrl = audio.href;
+      } catch (_) { /* Keep the source link available for invalid media URLs. */ }
+    }
 
-    if (!button || !embedUrl) {
+    if (!button || (!embedUrl && !audioUrl)) {
       return;
     }
 
     root.dataset.statusVideoReady = "true";
     button.addEventListener("click", function () {
+      if (audioUrl) {
+        var player = document.createElement("audio");
+        player.className = "status-audio-player";
+        player.controls = true;
+        player.preload = "none";
+        player.src = audioUrl;
+        player.setAttribute("aria-label", button.getAttribute("aria-label") || "");
+        (qs("[data-status-video-mount]", root) || root).replaceChildren(player);
+        var playback = player.play();
+        if (playback && playback.catch) playback.catch(function () {});
+        return;
+      }
       var iframe = document.createElement("iframe");
       var url = new URL(embedUrl);
 
@@ -130,6 +149,15 @@ import "../../ui/toasts.js";
       iframe.allow = root.dataset.cardKind === "audio" ? "autoplay" : "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share";
       iframe.allowFullscreen = root.dataset.cardKind !== "audio";
       (qs("[data-status-video-mount]", root) || root).replaceChildren(iframe);
+    });
+  }
+  function dispose(root) {
+    var players = TinyCat.dom.all("audio.status-audio-player", root);
+    if (root.matches && root.matches("audio.status-audio-player")) players.push(root);
+    players.forEach(function (player) {
+      player.pause();
+      player.removeAttribute("src");
+      player.load();
     });
   }
   function initStatusImageRoot(root) {
@@ -310,5 +338,5 @@ import "../../ui/toasts.js";
     url.searchParams.set("compact", "1");
     return compactUrl(url);
   }
-  TinyCat.status.controllers.media = { markStatusLinkImageMissing: markStatusLinkImageMissing, markStatusLinkImageReady: markStatusLinkImageReady, initStatusLinkImageRoot: initStatusLinkImageRoot, allowedStatusVideoUrl: allowedStatusVideoUrl, initStatusVideoRoot: initStatusVideoRoot, initStatusImageRoot: initStatusImageRoot, mobileStatusUrl: mobileStatusUrl, mobileStatusPageUrl: mobileStatusPageUrl };
+  TinyCat.status.controllers.media = { dispose: dispose, markStatusLinkImageMissing: markStatusLinkImageMissing, markStatusLinkImageReady: markStatusLinkImageReady, initStatusLinkImageRoot: initStatusLinkImageRoot, allowedStatusVideoUrl: allowedStatusVideoUrl, initStatusVideoRoot: initStatusVideoRoot, initStatusImageRoot: initStatusImageRoot, mobileStatusUrl: mobileStatusUrl, mobileStatusPageUrl: mobileStatusPageUrl };
 }());

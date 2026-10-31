@@ -317,6 +317,100 @@
     {
       "tag": "div",
       "attrs": {
+        "class": "status-video-card status-audio-card",
+        "data-status-video": "",
+        "data-embed-url": {
+          "get": "link.embed_url"
+        },
+        "data-embed-origin": {
+          "get": "link.embed_origin"
+        },
+        "data-embed-width-param": {
+          "get": "link.embed_width_param"
+        },
+        "data-embed-autoplay-param": {
+          "get": "link.embed_autoplay_param"
+        },
+        "data-embed-autoplay-value": {
+          "get": "link.embed_autoplay_value"
+        },
+        "data-embed-height": {
+          "get": "link.embed_height"
+        },
+        "data-card-kind": {
+          "get": "link.card_kind"
+        },
+        "data-provider": {
+          "get": "link.provider"
+        },
+        "data-audio-url": {
+          "get": "link.audio_url"
+        }
+      },
+      "children": [
+        {
+          "component": "status/link-summary",
+          "data": {
+            "link": {
+              "get": "link"
+            }
+          }
+        },
+        {
+          "tag": "div",
+          "attrs": {
+            "data-status-video-mount": ""
+          },
+          "children": [
+            {
+              "tag": "button",
+              "attrs": {
+                "class": "status-video-placeholder",
+                "type": "button",
+                "data-status-video-load": "",
+                "aria-label": {
+                  "get": "link.title"
+                }
+              },
+              "children": [
+                {
+                  "tag": "span",
+                  "attrs": {
+                    "class": "status-video-play"
+                  },
+                  "children": [
+                    {
+                      "icon": "play"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "when": {
+            "or": [
+              {
+                "get": "link.audio_url"
+              },
+              {
+                "get": "link.embed_allowed"
+              }
+            ]
+          }
+        }
+      ],
+      "when": {
+        "eq": [
+          {
+            "get": "link.card_kind"
+          },
+          "audio"
+        ]
+      }
+    },
+    {
+      "tag": "div",
+      "attrs": {
         "class": "status-video-card",
         "data-status-video": "",
         "data-embed-url": {
@@ -508,212 +602,30 @@
         }
       ],
       "when": {
-        "get": "link.embed_allowed"
+        "and": [
+          {
+            "get": "link.embed_allowed"
+          },
+          {
+            "not": {
+              "eq": [
+                {
+                  "get": "link.card_kind"
+                },
+                "audio"
+              ]
+            }
+          }
+        ]
       }
     },
     {
-      "tag": "a",
-      "attrs": {
-        "class": {
-          "concat": [
-            "status-link-card",
-            {
-              "if": [
-                {
-                  "get": "link.image_url"
-                },
-                " has-image",
-                ""
-              ]
-            }
-          ]
-        },
-        "href": {
-          "or": [
-            {
-              "get": "link.outbound_url"
-            },
-            {
-              "get": "link.url"
-            }
-          ]
-        },
-        "target": "_blank",
-        "rel": "nofollow noopener noreferrer ugc",
-        "data-card-kind": {
-          "get": "link.card_kind"
-        },
-        "data-provider": {
-          "get": "link.provider"
+      "component": "status/link-summary",
+      "data": {
+        "link": {
+          "get": "link"
         }
       },
-      "children": [
-        {
-          "tag": "span",
-          "attrs": {
-            "class": "status-link-provider"
-          },
-          "children": [
-            {
-              "icon": {
-                "or": [
-                  {
-                    "get": "link.card_icon"
-                  },
-                  "external-link"
-                ]
-              }
-            },
-            {
-              "get": "link.provider_name"
-            },
-            {
-              "tag": "span",
-              "attrs": {
-                "class": "status-link-account"
-              },
-              "children": [
-                {
-                  "get": "link.title"
-                }
-              ],
-              "when": {
-                "eq": [
-                  {
-                    "get": "link.card_kind"
-                  },
-                  "social"
-                ]
-              }
-            }
-          ],
-          "when": {
-            "get": "link.provider_name"
-          }
-        },
-        {
-          "tag": "span",
-          "attrs": {
-            "class": "status-link-media",
-            "data-status-link-media": ""
-          },
-          "children": [
-            {
-              "tag": "img",
-              "attrs": {
-                "class": "status-link-image",
-                "src": {
-                  "get": "link.image_url"
-                },
-                "alt": "",
-                "loading": "lazy",
-                "data-status-link-image": ""
-              },
-              "children": []
-            },
-            {
-              "tag": "span",
-              "attrs": {
-                "class": "status-link-icon status-link-fallback-icon",
-                "data-status-link-fallback": ""
-              },
-              "children": [
-                {
-                  "icon": "image"
-                }
-              ]
-            }
-          ],
-          "when": {
-            "get": "link.image_url"
-          }
-        },
-        {
-          "tag": "span",
-          "attrs": {
-            "class": "status-link-icon"
-          },
-          "children": [
-            {
-              "icon": {
-                "or": [
-                  {
-                    "get": "link.card_icon"
-                  },
-                  "external-link"
-                ]
-              }
-            }
-          ],
-          "when": {
-            "not": {
-              "get": "link.image_url"
-            }
-          }
-        },
-        {
-          "tag": "span",
-          "attrs": {
-            "class": "status-link-copy"
-          },
-          "children": [
-            {
-              "tag": "strong",
-              "attrs": {},
-              "children": [
-                {
-                  "or": [
-                    {
-                      "get": "link.title"
-                    },
-                    {
-                      "get": "link.url"
-                    }
-                  ]
-                }
-              ],
-              "when": {
-                "not": {
-                  "eq": [
-                    {
-                      "get": "link.card_kind"
-                    },
-                    "social"
-                  ]
-                }
-              }
-            },
-            {
-              "tag": "span",
-              "attrs": {},
-              "children": [
-                {
-                  "get": "link.description"
-                }
-              ],
-              "when": {
-                "get": "link.description"
-              }
-            },
-            {
-              "tag": "small",
-              "attrs": {},
-              "children": [
-                {
-                  "or": [
-                    {
-                      "get": "link.display_url"
-                    },
-                    {
-                      "get": "link.url"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ],
       "when": {
         "and": [
           {
@@ -728,6 +640,16 @@
                   "get": "link.card_kind"
                 },
                 "social"
+              ]
+            }
+          },
+          {
+            "not": {
+              "eq": [
+                {
+                  "get": "link.card_kind"
+                },
+                "audio"
               ]
             }
           }
@@ -3220,6 +3142,210 @@
                 ]
               }
             }
+          }
+        ]
+      }
+    ]
+  },
+  "status/link-summary": {
+    "tag": "a",
+    "attrs": {
+      "class": {
+        "concat": [
+          "status-link-card",
+          {
+            "if": [
+              {
+                "get": "link.image_url"
+              },
+              " has-image",
+              ""
+            ]
+          }
+        ]
+      },
+      "href": {
+        "or": [
+          {
+            "get": "link.outbound_url"
+          },
+          {
+            "get": "link.url"
+          }
+        ]
+      },
+      "target": "_blank",
+      "rel": "nofollow noopener noreferrer ugc",
+      "data-card-kind": {
+        "get": "link.card_kind"
+      },
+      "data-provider": {
+        "get": "link.provider"
+      }
+    },
+    "children": [
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "status-link-provider"
+        },
+        "children": [
+          {
+            "icon": {
+              "or": [
+                {
+                  "get": "link.card_icon"
+                },
+                "external-link"
+              ]
+            }
+          },
+          {
+            "get": "link.provider_name"
+          },
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "status-link-account"
+            },
+            "children": [
+              {
+                "get": "link.title"
+              }
+            ],
+            "when": {
+              "eq": [
+                {
+                  "get": "link.card_kind"
+                },
+                "social"
+              ]
+            }
+          }
+        ],
+        "when": {
+          "get": "link.provider_name"
+        }
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "status-link-media",
+          "data-status-link-media": ""
+        },
+        "children": [
+          {
+            "tag": "img",
+            "attrs": {
+              "class": "status-link-image",
+              "src": {
+                "get": "link.image_url"
+              },
+              "alt": "",
+              "loading": "lazy",
+              "data-status-link-image": ""
+            },
+            "children": []
+          },
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "status-link-icon status-link-fallback-icon",
+              "data-status-link-fallback": ""
+            },
+            "children": [
+              {
+                "icon": "image"
+              }
+            ]
+          }
+        ],
+        "when": {
+          "get": "link.image_url"
+        }
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "status-link-icon"
+        },
+        "children": [
+          {
+            "icon": {
+              "or": [
+                {
+                  "get": "link.card_icon"
+                },
+                "external-link"
+              ]
+            }
+          }
+        ],
+        "when": {
+          "not": {
+            "get": "link.image_url"
+          }
+        }
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "status-link-copy"
+        },
+        "children": [
+          {
+            "tag": "strong",
+            "attrs": {},
+            "children": [
+              {
+                "or": [
+                  {
+                    "get": "link.title"
+                  },
+                  {
+                    "get": "link.url"
+                  }
+                ]
+              }
+            ],
+            "when": {
+              "not": {
+                "eq": [
+                  {
+                    "get": "link.card_kind"
+                  },
+                  "social"
+                ]
+              }
+            }
+          },
+          {
+            "tag": "span",
+            "attrs": {},
+            "children": [
+              {
+                "get": "link.description"
+              }
+            ],
+            "when": {
+              "get": "link.description"
+            }
+          },
+          {
+            "tag": "small",
+            "attrs": {},
+            "children": [
+              {
+                "or": [
+                  {
+                    "get": "link.display_url"
+                  },
+                  {
+                    "get": "link.url"
+                  }
+                ]
+              }
+            ]
           }
         ]
       }

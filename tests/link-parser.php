@@ -123,7 +123,10 @@ $soundcloud = LinkParser::fromRaw('https://soundcloud.com/forss/flickermood');
 $soundcloudResource = (new ReflectionMethod(\TinyCat\Status\Resource::class, 'link'))->invoke(null, $soundcloud);
 $assert($soundcloudResource['link_type'] === 'audio' && $soundcloudResource['card_kind'] === 'audio' && $soundcloudResource['embed_allowed'], 'SoundCloud remains audio content with a supported click-to-play widget.');
 $assert($soundcloudResource['embed_origin'] === 'https://w.soundcloud.com' && $soundcloudResource['embed_height'] === 166 && $soundcloudResource['embed_autoplay_param'] === 'auto_play', 'SoundCloud player options belong to the provider.');
-$assert(\TinyCat\Status\Providers::presentation(['provider' => 'soundcloud', 'link_type' => 'audio', 'normalized_url' => 'https://soundcloud.com/artist/sets/album'])['embed_height'] === 450, 'Playlists have room for their track list.');
+$assert(\TinyCat\Status\Providers::presentation(['provider' => 'soundcloud', 'link_type' => 'audio', 'normalized_url' => 'https://soundcloud.com/artist/sets/album'])['embed_height'] === 166, 'SoundCloud playlists use the compact player height.');
+$assert(\TinyCat\Status\Providers::presentation(['provider' => 'spotify', 'link_type' => 'audio'])['embed_height'] === 152, 'Spotify uses its compact player height.');
+parse_str((string) parse_url($soundcloudResource['embed_url'], PHP_URL_QUERY), $compactSoundcloud);
+$assert($compactSoundcloud['show_artwork'] === 'false' && $compactSoundcloud['show_comments'] === 'false' && $compactSoundcloud['sharing'] === 'false', 'SoundCloud avoids duplicate artwork, timed comments and sharing controls.');
 foreach (['https://w.soundcloud.com/player/?url=http%3A%2F%2F127.0.0.1%2Fprivate', 'https://w.soundcloud.com/player/api.js?url=https%3A%2F%2Fsoundcloud.com%2Fforss%2Fflickermood', 'https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com.evil.example%2Fartist%2Ftrack'] as $invalidPlayer) {
     $assert(!\TinyCat\Status\Providers::embedAllowed($invalidPlayer), 'SoundCloud widgets only accept recognized SoundCloud audio targets.');
 }

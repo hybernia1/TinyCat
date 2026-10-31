@@ -128,12 +128,14 @@ final class LinkParser
         }
 
         $displayUrl = $host . (($parts['path'] ?? '') !== '/' ? (string) ($parts['path'] ?? '') : '');
+        $audio = Audio::isDirect($normalizedUrl) ? $normalizedUrl : '';
 
         return [
             'normalized_url' => $normalizedUrl,
             'url_hash' => self::hash($normalizedUrl),
             'provider' => '',
-            'link_type' => 'web',
+            'link_type' => $audio !== '' ? 'audio' : 'web',
+            'audio_url' => $audio,
             'title' => self::title($host, (string) ($parts['path'] ?? '')),
             'description' => $displayUrl,
             'video_id' => '',

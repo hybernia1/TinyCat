@@ -159,7 +159,7 @@ final class Embed
         header('X-Robots-Tag: noindex, nofollow');
         if (!$share) {
             header_remove('X-Frame-Options');
-            header("Content-Security-Policy: default-src 'none'; img-src 'self' https: data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors *; frame-src " . implode(' ', Providers::playerOrigins()));
+            header("Content-Security-Policy: default-src 'none'; media-src 'self' https:; img-src 'self' https: data:; style-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors *; frame-src " . implode(' ', Providers::playerOrigins()));
         }
         $height = self::dimension('maxheight', 600);
         if ($height === null) { self::error(400, 'Invalid dimensions.'); return; }

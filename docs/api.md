@@ -458,7 +458,13 @@ the provider cannot play the video. Signed/share URLs without a public video ID
 remain links rather than guessing a player target.
 SoundCloud tracks and playlists remain `audio` content and use its official
 widget only after a click. Provider rules supply its `auto_play` option and
-track/playlist height; previews and artwork remain local until playback starts.
+compact 166px height; Spotify uses a 152px embed. Previews and artwork remain
+local until playback starts. Link resources also expose `audio_url` for playable
+RSS/Atom enclosures, JSON Feed audio attachments, direct recordings and page
+audio metadata. These sources share the same audio card and click-to-load
+placeholder, then use native controls instead of a provider iframe. URL checks
+and metadata downloads run before link persistence; parsing and rendering do
+not resolve audio hostnames. Existing cached links may have an empty `audio_url`.
 X post metadata first uses the JSON supplied to its official embed widget,
 including an attached photo or video poster, with oEmbed as a fallback. Only
 media belonging to the requested post is used; avatars and quoted-post photos

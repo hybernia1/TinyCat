@@ -186,6 +186,26 @@ const socialCard = T.components.render("status/link", { link: { url: "https://fa
 check(socialCard.querySelector('[data-card-kind="social"]').textContent.includes("Facebook"), "Social cards have a provider header and keep post text local.");
 const audioCard = T.components.render("status/link", { link: { url: "https://open.spotify.com/track/example", title: "Track", provider: "spotify", provider_name: "Spotify", card_kind: "audio", card_icon: "music" } });
 check(audioCard.querySelector('[data-card-kind="audio"]').querySelectorAll("use").some(icon => icon.getAttribute("href").endsWith("#music")), "Audio cards use the local music icon.");
+const podcastCard = T.components.render("status/link", { link: { url: "https://example.com/episode", title: "Podcast", audio_url: "https://example.com/episode.mp3", card_kind: "audio" } });
+const podcastRoot = podcastCard.querySelector(".status-audio-card");
+check(podcastRoot.querySelectorAll("audio").length === 0 && podcastRoot.querySelectorAll("button").length === 1, "RSS audio uses the same play placeholder as embedded audio.");
+let loadPodcast;
+podcastRoot.querySelector("button").addEventListener = (event, callback) => { if (event === "click") loadPodcast = callback; };
+const originalCreateElement = document.createElement;
+let playCalls = 0;
+document.createElement = tag => { const element = originalCreateElement(tag); if (tag === "audio") element.play = () => { playCalls++; return Promise.resolve(); }; return element; };
+mediaController.initStatusVideoRoot(podcastRoot);
+check(playCalls === 0 && podcastRoot.querySelectorAll("audio").length === 0, "Initializing audio cards does not start playback or create media elements.");
+loadPodcast();
+document.createElement = originalCreateElement;
+const podcastPlayer = podcastRoot.querySelector("audio");
+check(podcastPlayer && podcastPlayer.src === "https://example.com/episode.mp3" && podcastPlayer.preload === "none" && podcastPlayer.controls && playCalls === 1, "Clicking the shared play button mounts and plays native audio.");
+check(podcastRoot.querySelector(".status-link-copy").textContent.includes("Podcast") && podcastRoot.querySelectorAll("iframe").length === 0, "Native playback retains the same summary and stays inside the audio card.");
+let stoppedAudio = 0, releasedAudio = 0;
+podcastPlayer.pause = () => stoppedAudio++;
+podcastPlayer.load = () => releasedAudio++;
+mediaController.dispose({ querySelectorAll: () => [podcastPlayer] });
+check(stoppedAudio === 1 && releasedAudio === 1, "Disposing replaced content stops native playback and releases its media request.");
 const reelCard = T.components.render("status/link", { link: { url: "https://facebook.com/reel/123456789", title: "Reel", provider: "facebook", provider_name: "Facebook", card_kind: "reel", embed_url: "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F123456789", embed_origin: "https://www.facebook.com", embed_width_param: "width", embed_allowed: true } });
 const reelRoot = reelCard.querySelector('[data-card-kind="reel"]');
 reelRoot.getBoundingClientRect = () => ({ width: 320 });
@@ -205,6 +225,9 @@ loadSoundcloud();
 const soundcloudFrame = soundcloudRoot.querySelector("iframe"), soundcloudUrl = new URL(soundcloudFrame.src);
 check(soundcloudUrl.searchParams.get("auto_play") === "true" && !soundcloudUrl.searchParams.has("autoplay") && soundcloudFrame.height === "166", "Audio players use their provider's autoplay parameter and compact height.");
 check(soundcloudRoot.querySelector("a") !== null && soundcloudFrame.allow === "autoplay" && !soundcloudFrame.allowFullscreen, "Audio playback preserves the source link without requesting video-only permissions.");
+check(soundcloudRoot.className.includes("status-audio-card") && soundcloudRoot.querySelector(".status-link-copy").textContent.includes("Flickermood"), "SoundCloud retains the same audio summary as RSS after playback starts.");
+const spotifyCard = T.components.render("status/link", { link: { url: "https://open.spotify.com/track/1234567890123456789012", title: "Spotify track", card_kind: "audio", embed_allowed: true, provider: "spotify", provider_name: "Spotify" } });
+check(spotifyCard.querySelectorAll(".status-audio-card").length === 1 && spotifyCard.querySelectorAll(".status-link-copy").length === 1 && spotifyCard.querySelectorAll("audio").length === 0, "Spotify uses the shared audio card with its provider player.");
 const sortHeading = T.components.render("ui/sort-heading", {
   label: "Name <safe>", order: { url: "/api/users?sort=username&direction=desc&page=1", history: "/admin/users?sort=username&direction=desc&page=1", target: "#users-list", ascending: true, descending: false }
 });

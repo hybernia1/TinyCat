@@ -46,6 +46,10 @@ namespace {
     $GLOBALS['dnsCalls'] = $GLOBALS['dns6Calls'] = $GLOBALS['httpCalls'] = [];
     $GLOBALS['dnsAnswers'] = ['public.example' => ['93.184.216.34'], 'private.example' => ['10.0.0.1']];
     $GLOBALS['dns6Answers'] = [];
+    $audioLink = \TinyCat\Status\LinkParser::fromRaw('https://audio.example/episode.mp3');
+    $assert($audioLink['link_type'] === 'audio' && $GLOBALS['dnsCalls'] === [] && $GLOBALS['dns6Calls'] === [], 'Audio URL classification stays free of DNS and network operations.');
+    \TinyCat\Status\Links::status_link_data($audioLink);
+    $assert($GLOBALS['dnsCalls'] === [], 'Serializing prepared link data does not perform network checks inside a transaction.');
     $GLOBALS['responses'] = [
         'https://public.example/start' => ['HTTP/1.1 302 Found', 'Location: /next'],
         'https://public.example/next' => ['HTTP/1.1 302 Found', 'Location: https://private.example/secret'],

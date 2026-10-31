@@ -73,12 +73,12 @@ for (const referrer of ['', 'invalid', 'data:text/html,test', 'file:///tmp/paren
 const plain = child('', '');
 plain.childListeners.message({ source: plain.parent, origin: 'https://blog.test', data: { message: 'ready', secret: '' } });
 check(plain.messages.length === 1 && plain.origins[0] === 'https://blog.test', 'The TinyCat helper handshake works without a WordPress secret or a referrer.');
-function player(url, origin, kind) {
+function player(url, origin, kind, audioUrl = "") {
   let load, mounted;
   const button = { addEventListener(name, fn) { load = fn; }, getAttribute() { return "Media"; } };
-  const root = { dataset: { playerUrl: url, playerOrigin: origin, playerKind: kind, playerHeight: "166", playerAutoplayParam: "auto_play", playerAutoplayValue: "true" }, querySelector() { return button; }, replaceChildren(frame) { mounted = frame; } };
-  const win = {}; win.parent = win;
-  const doc = { querySelectorAll() { return [root]; }, getElementById() { return null; }, createElement() { return {}; } };
+  const root = { dataset: { audioUrl, playerUrl: url, playerOrigin: origin, playerKind: kind, playerHeight: "166", playerAutoplayParam: "auto_play", playerAutoplayValue: "true" }, querySelector() { return button; }, replaceChildren(frame) { mounted = frame; } };
+  const win = { location: new URL("https://tinycat.test") }; win.parent = win;
+  const doc = { querySelectorAll() { return [root]; }, getElementById() { return null; }, createElement(tag) { return { tag, setAttribute() {}, playCalls: 0, play() { this.playCalls++; return Promise.resolve(); } }; } };
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, "../../assets/embed-frame.js"), "utf8"), { window: win, document: doc, URL, Number, Math });
   check(!mounted, "External players stay unloaded before interaction.");
   load(); return mounted;
@@ -87,4 +87,7 @@ const audio = player("https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcl
 check(audio && audio.height === "166" && new URL(audio.src).searchParams.get("auto_play") === "true", "The audio placeholder mounts the approved compact player on click.");
 check(!player("https://evil.test/player", "https://w.soundcloud.com", "audio"), "A media frame cannot change its approved provider origin.");
 check(!player("http://w.soundcloud.com/player/", "http://w.soundcloud.com", "audio"), "Media frames require HTTPS.");
+const nativeAudio = player("", "", "audio", "https://example.com/episode.mp3");
+check(nativeAudio.tag === "audio" && nativeAudio.controls && nativeAudio.preload === "none" && nativeAudio.playCalls === 1, "The same placeholder starts native audio only after clicking.");
+check(!player("", "", "audio", "javascript:alert(1)"), "Native media rejects executable URLs.");
 console.log("PASS embed resizing, origin/source checks and WordPress protocol (" + checks + " checks)");

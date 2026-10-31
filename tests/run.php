@@ -20,6 +20,7 @@ $tests = [
     'Metadata DNS scope' => 'tests/metadata-dns.php',
     'HTTP batch connection reuse' => 'tests/http-client-reuse.php',
     'Link parser' => 'tests/link-parser.php',
+    'Audio playback' => 'tests/audio.php',
     'Content link resolution and UTM policy' => 'tests/content-links.php',
     'Rate limiter isolation' => 'tests/rate-limiter.php',
     'MySQL rate limiter' => 'tests/rate-limiter-mysql.php',

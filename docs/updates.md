@@ -183,6 +183,23 @@ post and author details. Visibility, literal matching and continuation URLs are
 preserved. The signed update removes retired JS/CSS sources. Critical CSS and
 inline JavaScript remain experiments; normal assets stay external and cacheable.
 
+## Upgrading to 5.15.0: podcast audio and shared cards
+
+Migration `20261031_001_link_audio` adds the nullable `links.audio_url` column.
+It is safe to restart and fresh installations include the column directly.
+Imported RSS/Atom enclosures and JSON Feed audio attachments now retain their
+playback URL alongside the episode page. Direct audio links, web audio metadata
+and mujRozhlas episode API links can also supply a playable source.
+
+RSS, Spotify and SoundCloud share a card summary and play placeholder. Players
+load only after interaction; native recordings release playback when AJAX
+navigation disposes their card. Spotify uses a 152px embed and SoundCloud uses
+its 166px classic player without duplicate artwork or timed comments.
+
+Existing posts and GUID history are preserved. Refreshing existing link metadata
+can discover page or provider audio, but missing historical RSS enclosures are
+not backfilled and old episodes are not imported again.
+
 ## Creating a release
 
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:

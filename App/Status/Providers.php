@@ -131,6 +131,7 @@ final class Providers
         if ($provider === 'web') { $provider = ''; }
         if ($provider === '' && self::wordpressUrl($url) !== '') { $provider = 'wordpress'; }
         $type = (string) ($rule['link_type'] ?? $link['link_type'] ?? 'web');
+        if ($rule === null && !empty($link['audio_url'])) { $type = 'audio'; }
         return ['provider' => $provider, 'link_type' => in_array($type, ['web', 'video', 'audio'], true) ? $type : 'web'];
     }
 
@@ -310,6 +311,8 @@ final class Providers
     /** @return array{url: string, headers: list<string>}|null */
     public static function structuredRequest(string $url): ?array
     {
+        $episode = Audio::rozhlasId($url);
+        if ($episode !== '') { return ['url' => 'https://api.mujrozhlas.cz/episodes/' . $episode, 'headers' => []]; }
         $id = self::xPostId($url);
         return $id !== '' ? ['url' => 'https://cdn.syndication.twimg.com/tweet-result?' . http_build_query(['id' => $id, 'lang' => 'en', 'token' => '0']),
             'headers' => ['Referer: https://platform.twitter.com/']] : null;
@@ -319,6 +322,8 @@ final class Providers
      * @return array<string, string> */
     public static function structuredMetadata(array $payload, string $url): array
     {
+        $episode = Audio::rozhlasId($url);
+        if ($episode !== '') { return Audio::rozhlasMetadata($payload, $episode); }
         $id = self::xPostId($url);
         if ($id === '') { return []; }
         $valid = ($payload['__typename'] ?? '') === 'Tweet' && ($payload['id_str'] ?? '') === $id;
@@ -502,7 +507,11 @@ final class Providers
         }
         $soundcloud = self::soundcloudUrl((string) ($link['normalized_url'] ?? ''));
         if ($soundcloud !== '') {
-            return 'https://w.soundcloud.com/player/?' . http_build_query(['url' => $soundcloud, 'auto_play' => 'false', 'visual' => 'false', 'show_artwork' => 'true'], '', '&', PHP_QUERY_RFC3986);
+            return 'https://w.soundcloud.com/player/?' . http_build_query([
+                'url' => $soundcloud, 'auto_play' => 'false', 'visual' => 'false', 'show_artwork' => 'false',
+                'show_comments' => 'false', 'show_user' => 'false', 'show_playcount' => 'false',
+                'buying' => 'false', 'sharing' => 'false', 'download' => 'false',
+            ], '', '&', PHP_QUERY_RFC3986);
         }
         $video = self::facebookVideo((string) ($link['normalized_url'] ?? ''));
         if ($video !== null) {
@@ -558,8 +567,8 @@ final class Providers
             'embed_width_param' => $provider === 'facebook' && $type === 'video' ? 'width' : '',
             'embed_autoplay_param' => $provider === 'soundcloud' ? 'auto_play' : 'autoplay',
             'embed_autoplay_value' => $provider === 'soundcloud' ? 'true' : '1',
-            'embed_height' => $provider === 'spotify' && $type === 'audio' ? 352 : ($provider === 'soundcloud' && $type === 'audio' ? (str_contains($path, '/sets/') || str_starts_with($path, '/playlists/') ? 450 : 166) : 0),
-            'provider_name' => self::googleMap((string) ($link['normalized_url'] ?? '')) !== null ? 'Google Maps' : ($labels[$provider] ?? '')];
+            'embed_height' => $provider === 'spotify' && $type === 'audio' ? 152 : ($provider === 'soundcloud' && $type === 'audio' ? 166 : 0),
+            'provider_name' => self::googleMap((string) ($link['normalized_url'] ?? '')) !== null ? 'Google Maps' : ($provider === 'mujrozhlas' ? 'mujRozhlas' : ($labels[$provider] ?? ($type === 'audio' ? (string) parse_url((string) ($link['normalized_url'] ?? ''), PHP_URL_HOST) : '')))];
     }
 
     /** @param array<mixed> $link
