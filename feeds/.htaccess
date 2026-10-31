@@ -1,0 +1,5 @@
+Options -Indexes
+RewriteEngine On
+RewriteRule ^(?:var|src|modules|examples)(?:/|$) - [F,L]
+RewriteRule ^config(?:\.example)?\.php$ - [F,L]
+RewriteRule ^ index.php [L,QSA]
