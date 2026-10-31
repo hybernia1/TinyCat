@@ -2,6 +2,7 @@
 // Native Chromium + local deterministic HTTP JSON fixtures. No application DB writes.
 const fs = require("node:fs"), path = require("node:path"), os = require("node:os"), http = require("node:http");
 const zlib = require("node:zlib");
+const devtoolsPipe = require("./devtools-pipe.cjs");
 const { createHash } = require("node:crypto");
 const { spawn, execFileSync } = require("node:child_process");
 const root = path.resolve(__dirname, "../.."), out = path.join(root, "storage/performance/ajax-final");
@@ -59,7 +60,7 @@ const server = http.createServer((req, res) => {
 });
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 class CDP {
-  constructor(ws) { this.ws = ws; this.serial = 0; this.pending = new Map(); ws.addEventListener("message", event => { const msg = JSON.parse(event.data); if (msg.id) { const p = this.pending.get(msg.id); this.pending.delete(msg.id); if (msg.error) p.reject(Error(JSON.stringify(msg.error))); else p.resolve(msg.result); } }); }
+  constructor(ws) { this.ws = ws; this.serial = 0; this.pending = new Map(); ws.addEventListener("close", () => { for (const pending of this.pending.values()) pending.reject(Error("Browser pipe closed")); this.pending.clear(); }); ws.addEventListener("message", event => { const msg = JSON.parse(event.data); if (msg.id) { const p = this.pending.get(msg.id); this.pending.delete(msg.id); if (msg.error) p.reject(Error(JSON.stringify(msg.error))); else p.resolve(msg.result); } }); }
   send(method, params = {}, sessionId) { return new Promise((resolve, reject) => { const id = ++this.serial; this.pending.set(id, { resolve, reject }); this.ws.send(JSON.stringify({ id, method, params, sessionId })); }); }
   async evaluate(session, expression) { const r = await this.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true, timeout: 180000 }, session); if (r.exceptionDetails) throw Error(JSON.stringify(r.exceptionDetails)); return r.result.value; }
   async snapshot(session, name) {
@@ -77,10 +78,8 @@ class CDP {
   report.source_sha256 = Object.fromEntries(Object.entries(scripts).map(([name, value]) => [name, createHash("sha256").update(value).digest("hex")]));
   try {
     await new Promise(resolve => server.listen(0, "127.0.0.1", resolve)); const port = server.address().port;
-    chrome = spawn(browser, ["--headless", "--disable-gpu", "--no-first-run", "--disable-extensions", "--site-per-process", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--remote-debugging-port=0", "--user-data-dir=" + temporary, "about:blank"], { windowsHide: true, stdio: "ignore" });
-    const active = path.join(temporary, "DevToolsActivePort"); for (let i = 0; i < 200 && !fs.existsSync(active); i++) await sleep(50);
-    const [debugPort, endpoint] = fs.readFileSync(active, "utf8").trim().split(/\r?\n/); const ws = new WebSocket("ws://127.0.0.1:" + debugPort + endpoint);
-    await new Promise((resolve, reject) => { ws.addEventListener("open", resolve, { once: true }); ws.addEventListener("error", reject, { once: true }); }); cdp = new CDP(ws);
+    chrome = spawn(browser, ["--headless", "--disable-gpu", "--no-first-run", "--disable-extensions", "--site-per-process", "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows", "--remote-debugging-pipe", "--user-data-dir=" + temporary, "about:blank"], { windowsHide: true, stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+    cdp = new CDP(devtoolsPipe(chrome));
     report.browser = await cdp.send("Browser.getVersion");
     const sessions = [];
     for (let round = 0; round < rounds; round++) for (const variant of round % 2 ? ["final", "baseline"] : ["baseline", "final"]) {

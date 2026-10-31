@@ -169,7 +169,6 @@ final class Feed
     /**
      * @return array<mixed>
      */
-    /** @return array<mixed> */
     public static function public_status_items_cursor(int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = ''): array
     {
         $type = self::archive_type($type);
@@ -185,7 +184,6 @@ final class Feed
     /**
      * @return array<mixed>
      */
-    /** @return array<mixed> */
     public static function public_status_items_for_user_cursor(int $userId, int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = ''): array
     {
         if ($userId < 1) {
@@ -226,7 +224,6 @@ final class Feed
     /**
      * @return array<mixed>
      */
-    /** @return array<mixed> */
     public static function public_status_items_by_author_cursor(int $authorId, int $limit = 24, string $cursorAt = '', int $cursorId = 0, string $type = ''): array
     {
         if ($authorId < 1) {
@@ -259,7 +256,6 @@ final class Feed
     /**
      * @return array<mixed>
      */
-    /** @return array<mixed> */
     public static function public_status_items_by_tag(
         string $tag,
         int $limit = 24,

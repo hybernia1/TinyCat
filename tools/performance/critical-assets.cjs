@@ -2,6 +2,7 @@
 // Experimental delivery only. Does not alter templates, CSP or production assets.
 const fs = require("node:fs"), path = require("node:path"), os = require("node:os"), http = require("node:http"), zlib = require("node:zlib");
 const { spawn, execFileSync } = require("node:child_process"), { createHash } = require("node:crypto");
+const devtoolsPipe = require("./devtools-pipe.cjs");
 const root = path.resolve(__dirname, "../.."), directory = path.resolve(process.argv.find(x => x.startsWith("--directory="))?.slice(12) || path.join(root, "storage/performance/critical-assets-20261031"));
 const rounds = Number(process.argv.find(x => x.startsWith("--rounds="))?.slice(9) || 3);
 const fixedCritical = process.argv.find(x => x.startsWith("--fixed-critical="))?.slice(17);
@@ -19,11 +20,9 @@ const loader = '(()=>{const l=document.querySelector("link[data-async-style]");c
 const scriptHash = source => "'sha256-" + createHash("sha256").update(source).digest("base64") + "'";
 const scriptEscape = source => source.replace(/<\/script/gi, "<\\/script");
 function html(name, variant, theme = "light") {
+  if (![...variants, "critical-only"].includes(variant) || !["light", "dark"].includes(theme)) throw Error("Invalid fixture variant");
   const page = fixture.pages[name], css = fixture.assets[page.style], scripts = [...page.scripts];
   let value = page.html.replace(/ data-theme="[^"]*"/g, "").replace(/<html\b/, '<html data-theme="' + theme + '"');
-  let count = 0;
-  value = value.replace(/<script\b[^>]*\bsrc="[^"]+"[^>]*>\s*<\/script>/g, () => { count++; return ""; });
-  if (count !== 4) throw Error("Expected four external SSR scripts, got " + count);
   let style = '<link rel="stylesheet" href="' + page.style + '">', inline = [];
   if (variant === "full-css") style = "<style>" + css + "</style>";
   if (variant.startsWith("critical")) style = "<style>" + critical + "</style>" + (variant === "critical-only" ? "" : style);
@@ -31,9 +30,8 @@ function html(name, variant, theme = "light") {
     inline.push(loader);
     style = '<style>' + critical + '</style><link rel="preload" as="style" href="' + page.style + '" data-async-style><script>' + loader + '</script><noscript><link rel="stylesheet" href="' + page.style + '"></noscript>';
   }
-  let styles = 0;
-  value = value.replace(/<link\b[^>]*rel="stylesheet"[^>]*>/g, () => { styles++; return style; });
-  if (styles !== 1) throw Error("Expected one stylesheet");
+  if (value.split("<!--TINYCAT_STYLE-->").length !== 2) throw Error("Re-export the HTML5-parsed SSR fixture");
+  value = value.replace("<!--TINYCAT_STYLE-->", () => style);
   if (variant === "runtime-inline") {
     const source = scriptEscape(fixture.assets[scripts.shift()]); inline.push(source);
     value = value.replace("</body>", () => "<script>" + source + "</script></body>");
@@ -42,6 +40,8 @@ function html(name, variant, theme = "light") {
   return { value, csp: "default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' " + inline.map(scriptHash).join(" ") + "; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src 'self'; worker-src 'self'" };
 }
 const zipped = new Map();
+const icons = fs.readFileSync(path.join(root, "assets/icons.svg"));
+const avatar = fs.readFileSync(path.join(root, "assets/fallback/avatar.svg"));
 function send(res, body, type, cached = true, extra = {}) {
   const buffer = Buffer.isBuffer(body) ? body : Buffer.from(body), key = hash(buffer);
   if (!zipped.has(key)) zipped.set(key, gzip(buffer));
@@ -52,21 +52,18 @@ const server = http.createServer((req, res) => {
   try {
     const url = new URL(req.url, "http://fixture.test"), pathname = url.pathname;
     if (fixture.assets[pathname] !== undefined) return send(res, fixture.assets[pathname], pathname.endsWith(".css") ? "text/css" : pathname.endsWith(".svg") ? "image/svg+xml" : "text/javascript");
-    if (pathname.startsWith("/assets/")) {
-      const file = path.resolve(root, "." + pathname), allowed = path.join(root, "assets") + path.sep;
-      if (file.startsWith(allowed) && fs.existsSync(file) && fs.statSync(file).isFile()) return send(res, fs.readFileSync(file), pathname.endsWith(".svg") ? "image/svg+xml" : "application/octet-stream");
-    }
-    if (pathname.startsWith("/avatar/")) return send(res, fs.readFileSync(path.join(root, "assets/fallback/avatar.svg")), "image/svg+xml");
+    if (pathname === "/assets/icons.svg") return send(res, icons, "image/svg+xml");
+    if (pathname.startsWith("/avatar/")) return send(res, avatar, "image/svg+xml");
     if (pathname === "/api/site/sidebar") return send(res, JSON.stringify(fixture.sidebar), "application/json", false);
     if (pathname.startsWith("/api/")) return send(res, JSON.stringify({ ok: true, data: { items: [] }, meta: { pagination: { done: true } } }), "application/json", false);
     if (pathname.endsWith(".webmanifest")) return send(res, JSON.stringify({ name: "Fixture", start_url: "/" }), "application/manifest+json");
     const entry = Object.entries(fixture.pages).find(([, page]) => page.path === pathname);
     if (entry) { const page = html(entry[0], req.headers["x-critical-variant"] || "external", req.headers["x-critical-theme"] || "light"); return send(res, page.value, "text/html; charset=utf-8", false, { "Content-Security-Policy": page.csp }); }
     res.writeHead(404); res.end();
-  } catch (error) { res.writeHead(500); res.end(String(error)); }
+  } catch (_) { res.writeHead(500, { "Content-Type": "application/json" }); res.end('{"error":"Fixture request failed"}'); }
 });
 class CDP {
-  constructor(ws) { this.ws = ws; this.serial = 0; this.pending = new Map(); this.events = new Map(); ws.addEventListener("message", event => { const msg = JSON.parse(event.data); if (msg.id) { const p = this.pending.get(msg.id); this.pending.delete(msg.id); if (msg.error) p.reject(Error(JSON.stringify(msg.error))); else p.resolve(msg.result); } else if (msg.sessionId) { const events = this.events.get(msg.sessionId); if (events) events.push(msg); } }); }
+  constructor(ws) { this.ws = ws; this.serial = 0; this.pending = new Map(); ws.addEventListener("close", () => { for (const pending of this.pending.values()) pending.reject(Error("Browser pipe closed")); this.pending.clear(); }); this.events = new Map(); ws.addEventListener("message", event => { const msg = JSON.parse(event.data); if (msg.id) { const p = this.pending.get(msg.id); this.pending.delete(msg.id); if (msg.error) p.reject(Error(JSON.stringify(msg.error))); else p.resolve(msg.result); } else if (msg.sessionId) { const events = this.events.get(msg.sessionId); if (events) events.push(msg); } }); }
   send(method, params = {}, sessionId) { const id = ++this.serial; return new Promise((resolve, reject) => { this.pending.set(id, { resolve, reject }); this.ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); }
   async evaluate(session, expression) { const result = await this.send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true }, session); if (result.exceptionDetails) throw Error(JSON.stringify(result.exceptionDetails)); return result.result.value; }
 }
@@ -91,10 +88,8 @@ function fingerprint() {
   try {
     await new Promise(resolve => server.listen(0, "127.0.0.1", resolve)); const origin = "http://127.0.0.1:" + server.address().port;
     const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "tinycat-critical-"));
-    chrome = spawn(browser, ["--headless", "--disable-gpu", "--no-first-run", "--disable-extensions", "--remote-debugging-port=0", "--user-data-dir=" + temporary, "about:blank"], { windowsHide: true, stdio: "ignore" });
-    const active = path.join(temporary, "DevToolsActivePort"); for (let i = 0; i < 200 && !fs.existsSync(active); i++) await sleep(50);
-    const [port, endpoint] = fs.readFileSync(active, "utf8").trim().split(/\r?\n/), ws = new WebSocket("ws://127.0.0.1:" + port + endpoint);
-    await new Promise((resolve, reject) => { ws.addEventListener("open", resolve, { once: true }); ws.addEventListener("error", reject, { once: true }); }); cdp = new CDP(ws); report.browser = await cdp.send("Browser.getVersion");
+    chrome = spawn(browser, ["--headless", "--disable-gpu", "--no-first-run", "--disable-extensions", "--remote-debugging-pipe", "--user-data-dir=" + temporary, "about:blank"], { windowsHide: true, stdio: ["ignore", "ignore", "ignore", "pipe", "pipe"] });
+    cdp = new CDP(devtoolsPipe(chrome)); report.browser = await cdp.send("Browser.getVersion");
     async function target(profile, js = true) {
       const { browserContextId } = await cdp.send("Target.createBrowserContext", { disposeOnDetach: true });
       const { targetId } = await cdp.send("Target.createTarget", { url: "about:blank", browserContextId });

@@ -28,6 +28,16 @@ try {
     foreach (['home' => '/', 'author' => '/author/2', 'status' => '/status/' . $id] as $name => $path) {
         $page = $get($path); $page['path'] = $path;
         preg_match('/<html\s+lang="([^"]+)"/', $page['html'], $match); $page['locale'] = $match[1] ?? 'en';
+        $document = \Dom\HTMLDocument::createFromString($page['html'], LIBXML_NOERROR);
+        $scripts = [];
+        foreach ($document->getElementsByTagName('script') as $script) { if ($script->hasAttribute('src')) { $scripts[] = $script; } }
+        if (count($scripts) !== 4) { throw new RuntimeException('Expected four SSR script elements.'); }
+        foreach ($scripts as $script) { $script->parentNode->removeChild($script); }
+        $styles = [];
+        foreach ($document->getElementsByTagName('link') as $link) { if (strtolower($link->getAttribute('rel')) === 'stylesheet') { $styles[] = $link; } }
+        if (count($styles) !== 1) { throw new RuntimeException('Expected one SSR stylesheet.'); }
+        $styles[0]->parentNode->replaceChild($document->createComment('TINYCAT_STYLE'), $styles[0]);
+        $page['html'] = $document->saveHtml();
         $pages[$name] = $page;
     }
     $sidebar = $get('/api/site/sidebar');
