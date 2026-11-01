@@ -434,12 +434,12 @@
                       "tag": "source",
                       "attrs": {
                         "srcset": {
-                          "get": "link.thumbnail_webp_url"
+                          "get": "link.thumbnail_mobile_url"
                         },
-                        "type": "image/webp"
+                        "media": "(max-width: 759px)"
                       },
                       "when": {
-                        "get": "link.thumbnail_webp_url"
+                        "get": "link.thumbnail_mobile_url"
                       }
                     },
                     {

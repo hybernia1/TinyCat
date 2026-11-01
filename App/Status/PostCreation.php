@@ -21,7 +21,7 @@ final readonly class PostCreation
 
     public static function fromText(string $text): self
     {
-        $body = \TinyCat\Support\Text::plain_text_limit($text, 2000);
+        $body = \TinyCat\Support\Text::plain_text_limit(PostText::normalize(\TinyCat\Support\Text::strip_html_tags_preserving_text($text)), 2000);
         $host = \TinyCat\Moderation\Blocking::moderation_blocked_url_match($body);
         $rejection = $host !== ''
             ? ['code' => 'blocked_url', 'message_key' => 'moderation.messages.blocked_url', 'params' => ['host' => $host]]

@@ -560,6 +560,7 @@ final class Importer
      * @return array<mixed>|null */
     private static function prepareImage(array $source, array $item): ?array
     {
+        if (\TinyCat\Status\Providers::youtubeThumbnails((string) ($item['url'] ?? '')) !== []) { return null; }
         if (!str_contains((string) ($source['post_template'] ?? ''), '{{image}}') || !\TinyCat\Status\Images::status_images_enabled()) { return null; }
         $urls = array_slice(array_values(array_unique(array_filter((array) ($item['image_urls'] ?? [$item['image_url'] ?? '']), static fn (mixed $url): bool => is_string($url) && $url !== ''))), 0, 8);
         $failure = null;

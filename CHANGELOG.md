@@ -1,5 +1,14 @@
 # Changelog
 
+## 5.19.0 - 2026-11-01
+
+- Load YouTube thumbnails directly from its image CDN, using small mobile and medium desktop sources in cards and exported players. Stop caching thumbnails or attaching them to imported YouTube posts; provide a backed-up cleanup for existing thumbnail paths.
+- Normalize post whitespace, truncation markers and read-more/WordPress boilerplate through the same text preparation for manual posts, edits and imports. Preserve paragraph boundaries and ordinary sentences containing these words.
+- Remove read-more anchor labels and preserve HTML block spacing in feed summaries. Add a CLI plan/apply/restore tool for historical text cleanup with exact backups, relation checks and transactional conflict detection.
+- Apply the same cleanup when storing link descriptions and displaying cached link cards.
+- Add the standalone ČSFD cinema-premieres RSS endpoint with premiere dates, posters, stable film/date IDs and month-specific caching. Standalone feeds remain outside the managed updater package.
+- Preserve the 5.16.0 update baseline; no new schema migration or configuration change is required. Historical content and thumbnail cleanup remain explicit, backed-up maintenance operations.
+
 ## 5.18.1 - 2026-11-01
 
 - Keep popovers and their rows compact in older WebKit instead of stretching to the available viewport height.

@@ -214,6 +214,10 @@ $assert((int) $value('SELECT COUNT(*) FROM content_links WHERE content_id = 100'
 $draft = \TinyCat\Status\PostCreation::fromText("  <b>Hello</b> @actor #Mixed_CASE\r\nhttps://alpha.example  ");
 $assert($draft->body === "Hello @2 #mixed-case\nhttps://alpha.example", 'The shared draft cleans markup, line endings, mentions and tags.');
 $assert($draft->tags === ['mixed-case'] && count($draft->links) === 1, 'Draft relations are extracted from the normalized stored text.');
+$cleanDraft = \TinyCat\Status\PostCreation::fromText("  Manual  post […]\n\n\nRead more → https://alpha.example #Mixed_CASE");
+$assert($cleanDraft->body === "Manual post …\n\nhttps://alpha.example #mixed-case" && $cleanDraft->tags === ['mixed-case'] && count($cleanDraft->links) === 1, 'Manual posts, edits and bot imports share whitespace and boilerplate cleanup before relation extraction.');
+$cleanCard = \TinyCat\Status\Resource::link(['normalized_url' => 'https://alpha.example', 'description' => 'Cached  preview […] Read more', 'link_type' => 'web']);
+$assert($cleanCard['description'] === 'Cached preview …', 'Previously cached metadata follows the same rules in server and API link-card resources.');
 $boundedDraft = \TinyCat\Status\PostCreation::fromText(str_repeat('x', 2000) . ' #outside');
 $assert(mb_strlen($boundedDraft->body) === 2000 && $boundedDraft->tags === [], 'Tags outside the shared text limit cannot leave invisible relations.');
 $image = ['path' => 'fixture.webp', 'width' => 10, 'height' => 20, 'bytes' => 100];

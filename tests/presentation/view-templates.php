@@ -80,10 +80,11 @@ $assert(!str_contains($statusCard, 'id="status-7"'), 'Modal status cards can omi
 $assert(str_contains($statusCard, 'data-modal-parent-url="/api/statuses/7"'), 'Status cards consume their prepared modal route.');
 $assert(preg_match('/status-time-button[^>]*data-modal-open/', $statusCard) !== 1, 'Modal status cards keep their time link in the current modal.');
 
-$link = \TinyCat\Support\Components::render('status/link', ['link' => ['url' => 'https://www.youtube.com/watch?v=abc123', 'title' => 'Demo <video>', 'embed_url' => 'https://www.youtube.com/embed/abc123', 'embed_allowed' => true, 'thumbnail_url' => 'https://i.ytimg.com/vi/abc123/hqdefault.jpg', 'thumbnail_webp_url' => 'https://i.ytimg.com/vi_webp/abc123/hqdefault.webp']]);
+$link = \TinyCat\Support\Components::render('status/link', ['link' => ['url' => 'https://www.youtube.com/watch?v=abc123', 'title' => 'Demo <video>', 'embed_url' => 'https://www.youtube.com/embed/abc123', 'embed_allowed' => true, 'thumbnail_url' => 'https://i.ytimg.com/vi/abc123/mqdefault.jpg', 'thumbnail_mobile_url' => 'https://i.ytimg.com/vi/abc123/default.jpg', 'thumbnail_webp_url' => '']]);
+$assert(str_contains($link, 'media="(max-width: 759px)" srcset="https://i.ytimg.com/vi/abc123/default.jpg"') || str_contains($link, 'srcset="https://i.ytimg.com/vi/abc123/default.jpg" media="(max-width: 759px)"'), 'A media source selects the tiny image on mobile regardless of pixel density.');
 $assert(str_contains($link, 'data-embed-url="https://www.youtube.com/embed/abc123"'), 'Video card emits a normalized embed URL.');
 $assert(str_contains($link, 'Demo &lt;video&gt;'), 'Video card escapes its title.');
-$assert(str_contains($link, 'vi_webp/abc123/hqdefault.webp'), 'Video card emits the expected thumbnail source.');
+$assert(str_contains($link, 'src="https://i.ytimg.com/vi/abc123/mqdefault.jpg"') && !str_contains($link, 'hqdefault'), 'Desktop uses only the medium image without a high-resolution source.');
 
 $pagination = \TinyCat\Support\Components::render('ui/pagination', [
     'navigation' => \TinyCat\Support\AdminViews::admin_pagination_view_data(

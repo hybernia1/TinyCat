@@ -232,6 +232,24 @@ Writes retain ownership, moderation, rate limits and transaction checks. Creatio
 returns 201; reads, updates and deletions return 200. Like/follow PUT and DELETE
 request a state, so repeating an accepted request cannot toggle it back.
 
+### Post text preparation
+
+Manual posts, API creation/edits and bot imports use the same preparation before
+the 2,000-character limit and extraction of links, mentions and hashtags. Line
+endings become LF, horizontal whitespace is collapsed, line edges are trimmed,
+and paragraph gaps contain at most one empty line. ZWJ emoji remain intact.
+Bracketed truncation markers `[…]` and `[...]` become `…`; missing article text
+is not reconstructed. Isolated read-more calls, terminal calls after sentence
+punctuation and automatic `The post … appeared first on …` suffixes are removed.
+Ordinary sentences containing these words remain text. Link descriptions use
+the same cleanup, including already-cached descriptions when displayed.
+Comments and other account text fields retain their existing rules.
+
+YouTube link resources expose `thumbnail_mobile_url` and `thumbnail_url` for
+small and medium direct CDN images. Cards use the mobile source through a
+`max-width: 759px` media condition, independently of display pixel density.
+YouTube `image_url` is empty; other providers retain their local image rules.
+
 Signed-in post, comment, like, report and search quotas are per account, independent
 of IP address. Public email checks and failed-login CAPTCHA counters remain IP-based.
 Quotas use fixed time buckets; existing hourly thresholds are unchanged. Short

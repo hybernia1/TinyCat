@@ -57,7 +57,7 @@ use TinyCat\Support\Localization;
                 <?php if ($link['audio_url'] !== '' || $link['embed_allowed']): ?>
                     <div class="embed-player" data-embed-player data-audio-url="<?= Html::e($link['audio_url']) ?>" data-player-url="<?= Html::e($link['embed_url']) ?>" data-player-origin="<?= Html::e($link['embed_origin']) ?>" data-player-height="<?= (int) $link['embed_height'] ?>" data-player-kind="<?= Html::e($link['link_type']) ?>" data-player-autoplay-param="<?= Html::e($link['embed_autoplay_param']) ?>" data-player-autoplay-value="<?= Html::e($link['embed_autoplay_value']) ?>">
                         <button class="embed-play" type="button" aria-label="<?= Html::e($link['title']) ?>">
-                            <?php if ($link['card_kind'] !== 'audio' && $link['thumbnail_url'] !== ''): ?><img src="<?= Html::e($link['thumbnail_url']) ?>" alt="" loading="lazy" referrerpolicy="no-referrer"><?php endif; ?>
+                            <?php if ($link['card_kind'] !== 'audio' && $link['thumbnail_url'] !== ''): ?><picture><?php if ($link['thumbnail_mobile_url'] !== ''): ?><source media="(max-width: 759px)" srcset="<?= Html::e($link['thumbnail_mobile_url']) ?>"><?php endif; ?><img src="<?= Html::e($link['thumbnail_url']) ?>" alt="" loading="lazy" referrerpolicy="no-referrer"></picture><?php endif; ?>
                             <span class="embed-play-icon" aria-hidden="true">▶</span><?php if ($link['card_kind'] !== 'audio'): ?><strong><?= Html::e($link['title']) ?></strong><?php endif; ?>
                         </button>
                     </div>

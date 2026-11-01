@@ -575,13 +575,19 @@ final class Providers
      * @return list<string> */
     public static function imageCandidates(array $link): array
     {
+        if (self::youtubeThumbnails((string) ($link['normalized_url'] ?? '')) !== []) { return []; }
         $images = [];
         if (!empty($link['image_url'])) { $images[] = (string) $link['image_url']; }
-        $id = (string) ($link['video_id'] ?? '');
-        if (($link['provider'] ?? '') === 'youtube' && self::videoIdToken($id) !== '') {
-            $images[] = 'https://i.ytimg.com/vi/' . rawurlencode($id) . '/hqdefault.jpg';
-        }
         return array_values(array_unique($images));
+    }
+
+    /** @return array{mobile: string, desktop: string}|array{} */
+    public static function youtubeThumbnails(string $url): array
+    {
+        $video = self::classify($url);
+        if (($video['provider'] ?? '') !== 'youtube' || ($video['video_id'] ?? '') === '') { return []; }
+        $base = 'https://i.ytimg.com/vi/' . rawurlencode($video['video_id']) . '/';
+        return ['mobile' => $base . 'default.jpg', 'desktop' => $base . 'mqdefault.jpg'];
     }
 
     public static function titleIsPlaceholder(string $title): bool

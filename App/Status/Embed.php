@@ -86,10 +86,6 @@ final class Embed
             $card['outbound_url'] = Presentation::absolute_url($card['outbound_url']);
             $card['url'] = \TinyCat\Security\Sanitizer::sanitize_html_url($card['url']);
             if ($card['url'] === '') { continue; }
-            if ($card['thumbnail_url'] === '' && $card['provider'] === 'youtube' && $card['embed_allowed']) {
-                $images = Providers::imageCandidates(['provider' => 'youtube', 'video_id' => basename((string) parse_url($card['embed_url'], PHP_URL_PATH))]);
-                $card['thumbnail_url'] = $images[0] ?? '';
-            }
             $media[] = $card;
         }
         return $media;
