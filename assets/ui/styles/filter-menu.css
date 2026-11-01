@@ -6,10 +6,16 @@
 
 .filter-menu-panel > form.stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
 .filter-menu-panel > form.stack > * {
   margin-block: 0;
+}
+
+.filter-menu-panel .field {
+  overflow-x: clip;
+  overflow-clip-margin: 4px;
 }
 

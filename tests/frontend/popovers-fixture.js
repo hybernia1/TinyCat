@@ -15,6 +15,7 @@
     trigger.textContent = kind; root.append(trigger);
     const panel = document.createElement('div'); panel.className = 'popover-panel' + (kind === 'notifications' ? ' notification-panel' : kind === 'filters' ? ' filter-menu-panel' : '');
     const first = document.createElement('button'), last = document.createElement('button');
+    first.className = 'context-menu-action'; last.className = 'context-menu-action';
     first.textContent = 'First'; last.textContent = 'Last'; last.dataset.popoverClose = '';
     panel.append(first, last); root.append(panel); document.body.append(root);
     return { root, trigger, panel, first, last };
@@ -33,6 +34,8 @@
     check(menu.root.open && menu.panel.matches(':popover-open'), 'One activation after repeated hydration opens exactly once in top layer');
     check(menu.trigger.getAttribute('aria-expanded') === 'true' && menu.trigger.getAttribute('aria-controls') === menu.panel.id, 'Trigger exposes state and panel identity');
     check(fits(menu.panel), 'Panel stays inside horizontal and vertical viewport bounds');
+    const actionBounds = menu.panel.getBoundingClientRect();
+    check(actionBounds.width <= 200 && actionBounds.height <= 120, 'A two-action context menu keeps compact intrinsic dimensions: '+JSON.stringify(actionBounds.toJSON()));
     key(menu.trigger, 'ArrowDown'); check(document.activeElement === menu.first, 'ArrowDown opens and focuses first action');
     key(menu.first, 'End'); check(document.activeElement === menu.last, 'End focuses last action');
     key(menu.last, 'ArrowDown'); check(document.activeElement === menu.first, 'Arrow navigation wraps');
@@ -103,6 +106,19 @@
       check(fits(specific.panel) && specific.panel.scrollWidth <= specific.panel.clientWidth, surface+' fits the mobile viewport without horizontal content scrolling');
       P.close(specific.root); specific.root.remove();
     }
+    const focusHost = document.createElement('main'); focusHost.tabIndex = -1; document.body.append(focusHost);
+    const touchMenu = make('touch-focus'); focusHost.append(touchMenu.root); P.prepare(touchMenu.root); P.open(touchMenu.root);
+    touchMenu.last.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' })); focusHost.focus();
+    check(touchMenu.root.open, 'An in-panel touch keeps the panel open when WebKit focuses its ancestor before click');
+    touchMenu.last.click(); check(!touchMenu.root.open, 'The touched action still closes its panel on click');
+    P.open(touchMenu.root); touchMenu.first.focus();
+    touchMenu.first.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }));
+    touchMenu.first.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true, pointerType: 'touch' })); focusHost.focus();
+    check(!touchMenu.root.open, 'A cancelled touch does not suppress subsequent outside focus');
+    P.open(touchMenu.root); touchMenu.first.focus();
+    touchMenu.first.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' })); key(touchMenu.first, 'Tab'); focusHost.focus();
+    check(!touchMenu.root.open, 'Keyboard navigation still closes a panel on outside focus after a touch');
+    focusHost.remove();
     const fallback = make('fallback'); fallback.panel.showPopover = undefined; fallback.panel.hidePopover = undefined;
     P.prepare(fallback.root); fallback.trigger.click(); await tick();
     check(fallback.root.open && fits(fallback.panel), 'Browsers without the native API use the same bounded controller');

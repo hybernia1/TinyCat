@@ -6,3 +6,14 @@
 .notifications-list {
   display: grid;
 }
+
+.notifications-page .card-header {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.notifications-page .card-header > form {
+  margin-inline-start: auto;
+}

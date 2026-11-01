@@ -1,5 +1,14 @@
 # Changelog
 
+## 5.18.1 - 2026-11-01
+
+- Keep popovers and their rows compact in older WebKit instead of stretching to the available viewport height.
+- Preserve touch activation when WebKit focuses a popover's page or modal ancestor before dispatching the click. Restore comment editing and revision history without changing the shared modal loader.
+- Constrain date inputs and long selected filter values to their panels. Center the public search icon and keep the notifications page action aligned to the right.
+- Preserve native searchbox semantics without unsupported aria-expanded attributes.
+- Add WebKit regression checks for all popover families, focusable page and modal ancestors, comment dialogs, mobile viewport changes and long filter values. Run the older affected WebKit in CI.
+- No new migration or configuration change is required; signed updates remain supported from 5.16.0.
+
 ## 5.18.0 - 2026-11-01
 
 - Load settings, user and bot-account creation, and release notes through authorized JSON resources on demand. Dispose closed dialogs and preserve drafts through list refreshes, forced reloads and late responses.
