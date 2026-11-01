@@ -127,6 +127,9 @@ IGDB navíc podporuje `theme` (číselná ID oddělená čárkou, kterýkoliv z 
 
 RSS: `/feeds/csfd/news?token=TVUJ_TOKEN`.
 
+Kino premiéry: `/feeds/csfd/premieres?token=TVUJ_TOKEN`.
+Vrací filmy z aktuálního měsíce na https://www.csfd.cz/kino/premiery/ v pořadí zdroje. Každá položka obsahuje název, odkaz na film, dostupný plakát a v popisu datum premiéry, žánry, tvůrce a distributora podle dostupnosti. Kategorie je Kino premiéry; stabilní ID `csfd:premieres:123:2026-11-05` rozlišuje film i datum uvedení. Datum premiéry není vydáváno za čas publikace RSS. Používá společný token a `cache_seconds`, oddělenou cache `var/csfd/premieres-YYYY-MM.json` podle měsíce v Europe/Prague. Prázdná nebo nerozpoznaná stránka vrací 502 stejně jako blokování zdroje. Regresní kontrola: `php tests/bots/csfd-premieres.php`.
+
 Modul `modules/csfd/` načítá veřejný seznam https://www.csfd.cz/novinky/ a vrací nejvýše 20 krátkých anotací, názvy, původní odkazy na články, dostupné obrázky a autory. Plné články nestahuje. Kategorie je Filmové novinky; stabilní ID má tvar `csfd:news:123`. Relativní datum typu „včera“ nepřevádí na vymyšlený čas publikace. Pro obrázek přidej `{{image}}`, pro dostupného autora `{{author}}` do šablony bota.
 
 Platí společný přístupový token a `cache_seconds` (výchozí 30 minut). Cache: `var/csfd/news.json`. Parser používá DOM, odstraňuje odkaz „více“ a text prochází společným čištěním. HTTP chyba, blokovací stránka nebo změna HTML bez rozpoznaných položek vrátí chybu 502 místo úspěšného prázdného feedu. Modul ochrany webu neobchází; dostupnost může záviset na IP serveru. Při změně struktury ČSFD bude potřeba aktualizovat parser.

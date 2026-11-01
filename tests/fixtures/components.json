@@ -239,6 +239,7 @@
         "embed_allowed": true,
         "embed_url": "https://www.youtube-nocookie.com/embed/example",
         "thumbnail_url": "https://example.test/thumb.jpg",
+        "thumbnail_mobile_url": "https://example.test/thumb-small.jpg",
         "thumbnail_webp_url": "https://example.test/thumb.webp",
         "provider": "youtube"
       }

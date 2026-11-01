@@ -103,15 +103,16 @@ final class Resource
         $title = trim((string) ($link['title'] ?? ''));
         $embedUrl = Providers::embedUrl($link);
         $image = (string) ($link['image_url'] ?? '');
-        $image = Links::status_link_image_exists($image) ? $image : '';
+        $image = $thumbnails['mobile'] === '' && Links::status_link_image_exists($image) ? $image : '';
         return ['outbound_url' => ContentLinks::url($contentId, (string) ($link['normalized_url'] ?? ''), 0, isset($link['url_hash']) ? (string) $link['url_hash'] : null), 'url' => (string) ($link['normalized_url'] ?? ''), 'title' => ($title !== '' ? $title : ($displayUrl !== '' ? $displayUrl : (string) ($link['normalized_url'] ?? ''))),
             'display_url' => $displayUrl,
             'provider' => !empty($link['provider']) && $link['provider'] !== 'web' ? $link['provider'] : null,
             'link_type' => in_array($link['link_type'], ['video', 'audio'], true) ? $link['link_type'] : 'web',
-            'description' => (string) ($link['description'] ?? ''), 'image_url' => $image,
+            'description' => PostText::normalize((string) ($link['description'] ?? '')), 'image_url' => $image,
             'audio_url' => (string) ($link['audio_url'] ?? ''),
             'embed_url' => $embedUrl, 'embed_allowed' => Providers::embedAllowed($embedUrl), 'embed_origin' => $embedUrl !== '' ? 'https://' . parse_url($embedUrl, PHP_URL_HOST) : '',
-            'thumbnail_url' => (string) ($thumbnails['fallback'] ?? ''), 'thumbnail_webp_url' => (string) ($thumbnails['webp'] ?? '')] + Providers::presentation($link);
+            'thumbnail_url' => (string) ($thumbnails['fallback'] ?? ''), 'thumbnail_webp_url' => (string) ($thumbnails['webp'] ?? ''),
+            'thumbnail_mobile_url' => $thumbnails['mobile']] + Providers::presentation($link);
     }
 
     /**

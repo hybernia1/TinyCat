@@ -314,6 +314,8 @@ final class FeedParser
             '~<a\b([^>]*)>(.*?)</a\s*>~is',
             static function (array $match): string {
                 $label = (string) $match[2];
+                $plainLabel = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($label, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                if (\TinyCat\Status\PostText::isReadMore($plainLabel)) { return ' '; }
                 $videoUrl = self::feedHtmlVideoUrl((string) $match[1], 'href');
                 if ($videoUrl === '') {
                     return $label;
@@ -335,6 +337,7 @@ final class FeedParser
             static fn (array $match): string => self::feedHtmlVideoUrl((string) $match[1], 'src'),
             $value
         ) ?? $value;
+        $value = preg_replace('~<(?:br\b[^>]*|/(?:p|div|li|h[1-6]|blockquote)\s*)>~iu', ' ', $value) ?? $value;
         $value = \TinyCat\Support\Text::strip_html_tags_preserving_text(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         $value = preg_replace_callback(
             \TinyCat\Status\LinkParser::pattern(),
@@ -347,8 +350,7 @@ final class FeedParser
         ) ?? '';
         $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
         $value = preg_replace('/\s+([.,;:!?])/u', '$1', $value) ?? $value;
-        $value = preg_replace('/(?:^|\s)The post\b.*?\bappeared first on\s*[.!?]*\s*$/iu', '', $value) ?? $value;
-        $value = trim($value);
+        $value = \TinyCat\Status\PostText::normalize(trim($value));
 
         return function_exists('mb_substr') ? mb_substr($value, 0, $limit, 'UTF-8') : substr($value, 0, $limit);
     }

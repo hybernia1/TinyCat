@@ -200,8 +200,8 @@ final class Links
             'provider' => \TinyCat\Support\Text::plain_text_limit($taxonomy['provider'], 40),
             'link_type' => $taxonomy['link_type'],
             'title' => \TinyCat\Support\Text::plain_text_limit((string) ($link['title'] ?? ''), 255),
-            'description' => \TinyCat\Support\Text::plain_text_limit((string) ($link['description'] ?? ''), 500),
-            'image_url' => \TinyCat\Support\Text::plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
+            'description' => \TinyCat\Support\Text::plain_text_limit(PostText::normalize((string) ($link['description'] ?? '')), 500),
+            'image_url' => Providers::youtubeThumbnails($normalizedUrl) !== [] ? '' : \TinyCat\Support\Text::plain_text_limit((string) ($link['image_url'] ?? ''), 2048),
             'video_id' => \TinyCat\Support\Text::plain_text_limit((string) ($link['video_id'] ?? ''), 80),
             'audio_url' => \TinyCat\Support\Text::plain_text_limit((string) ($link['audio_url'] ?? ''), 2048),
             'updated_at' => (string) ($link['_metadata_updated_at'] ?? \TinyCat\Support\Dates::dateDb()),
@@ -506,7 +506,9 @@ final class Links
             $audio = Audio::remote((string) $source['audio_url']);
             if ($audio !== '') { $prepared['audio_url'] = $audio; $prepared['link_type'] = 'audio'; }
         }
-        if ($localizeImage) {
+        if (Providers::youtubeThumbnails((string) ($prepared['normalized_url'] ?? '')) !== []) {
+            $prepared['image_url'] = '';
+        } elseif ($localizeImage) {
             $kind = Providers::presentation($prepared)['card_kind'];
             $variant = in_array($kind, ['social', 'video', 'reel'], true) ? $kind : 'card';
             $sources = array_values(array_unique(array_merge($source['image_urls'] ?? [], Providers::imageCandidates($prepared))));
@@ -753,7 +755,9 @@ final class Links
      */
     public static function status_video_thumbnail_sources(array $link): array
     {
+        $youtube = Providers::youtubeThumbnails((string) ($link['normalized_url'] ?? ''));
+        if ($youtube !== []) { return ['webp' => '', 'fallback' => $youtube['desktop'], 'mobile' => $youtube['mobile']]; }
         $image = (string) ($link['image_url'] ?? '');
-        return ['webp' => '', 'fallback' => self::status_link_image_exists($image) ? $image : ''];
+        return ['webp' => '', 'fallback' => self::status_link_image_exists($image) ? $image : '', 'mobile' => ''];
     }
 }

@@ -3,6 +3,35 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+## Upgrading to 5.19.0: post text and YouTube thumbnails
+
+No new schema migration or configuration change is required. Signed updates
+remain supported from 5.16.0. Manual post creation, edits, imports and link
+descriptions share whitespace, read-more and truncation-marker cleanup. Existing
+post bodies are not rewritten automatically during an upgrade; explicit CLI
+plan/apply/restore maintenance tools live in the source repository under `tools/`.
+Those development tools and their private backups are not release-package files.
+
+### YouTube thumbnails
+
+YouTube cards and exported players use direct `i.ytimg.com` URLs derived from
+the verified video address: `default.jpg` for viewports up to 759 CSS pixels and
+`mqdefault.jpg` for larger viewports. High-DPI mobile screens still select the
+small source. The typical sizes are 120 × 90 and 320 × 180 pixels respectively.
+Titles, descriptions and click-to-play behavior remain available.
+
+New YouTube links no longer cache thumbnail files or retain an `image_url` value.
+Feed imports also skip downloading those thumbnails as post attachments. Existing
+cards render direct URLs even before optional historical thumbnail cleanup.
+The source-repository cleanup tool backs up and clears old thumbnail paths;
+deleting old files is a separate operation requiring an exact path and a check
+for remaining references. Normal upgrades preserve stored data and uploads.
+
+The separate `feeds/` service gains `/feeds/csfd/premieres`. It is versioned in
+the repository but remains outside the managed application package. The updater
+does not replace or delete an existing `feeds/` installation; deploy standalone
+feed changes from the matching source tag when needed.
+
 ## Upgrading to 5.18.0: shared UI and on-demand dialogs
 
 No new database migration or configuration change is required. Updates remain

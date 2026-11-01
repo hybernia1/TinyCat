@@ -88,7 +88,14 @@ $assert(str_starts_with(\TinyCat\Status\Providers::oembedUrl('https://open.spoti
 $assert(\TinyCat\Status\Providers::embedUrl(['provider' => 'youtube', 'video_id' => 'abc123']) === 'https://www.youtube.com/embed/abc123', 'Player construction belongs to provider rules.');
 $assert(!\TinyCat\Status\Providers::embedAllowed('http://www.youtube.com/embed/abc123') && !\TinyCat\Status\Providers::embedAllowed('https://www.youtube.com.evil.example/embed/abc123'), 'Player origins require HTTPS and an exact allowed host.');
 $resource = (new ReflectionMethod(\TinyCat\Status\Resource::class, 'link'))->invoke(null, ['normalized_url' => 'https://youtube.com/watch?v=abc123', 'provider' => 'youtube', 'video_id' => 'abc123', 'image_url' => 'https://i.ytimg.com/vi/abc123/hqdefault.jpg']);
-$assert($resource['image_url'] === '' && $resource['thumbnail_url'] === '' && $resource['embed_allowed'] === true, 'Rendering suppresses remote thumbnails while preserving click-to-play.');
+$assert($resource['image_url'] === '' && $resource['thumbnail_url'] === 'https://i.ytimg.com/vi/abc123/mqdefault.jpg' && $resource['thumbnail_mobile_url'] === 'https://i.ytimg.com/vi/abc123/default.jpg' && $resource['embed_allowed'] === true, 'YouTube renders small mobile and medium desktop thumbnails directly from the verified video URL.');
+$assert(\TinyCat\Status\Providers::youtubeThumbnails('https://youtube.com.evil.example/watch?v=abc123') === [], 'Lookalike hosts cannot produce YouTube thumbnails.');
+$assert(\TinyCat\Status\Providers::youtubeThumbnails('https://www.youtube.com/@channel') === [], 'Channel pages are not video thumbnails.');
+$assert(\TinyCat\Status\Providers::imageCandidates($video + ['image_url' => 'https://example.com/large.jpg']) === [], 'YouTube artwork never enters the download candidate queue.');
+$youtubeSource = ['url_hash' => $video['url_hash'], 'title' => 'Feed title', 'description' => 'Feed excerpt', 'image_urls' => ['https://example.com/large.jpg']];
+$preparedVideo = \TinyCat\Status\Links::status_link_prepare_metadata($video, null, true, $youtubeSource);
+$assert($preparedVideo['image_url'] === '' && $preparedVideo['title'] === 'Feed title', 'New feed videos keep metadata without fetching their artwork.');
+$assert(\TinyCat\Status\Links::status_link_data($video + ['image_url' => '/uploads/links/2026/11/' . str_repeat('a', 40) . '.webp'])['image_url'] === '', 'YouTube persistence cannot retain a stale local thumbnail path.');
 $fbPost = 'https://www.facebook.com/ExamplePage/posts/pfbidExample123';
 $fbPlugin = 'https://www.facebook.com/plugins/post.php?href=' . rawurlencode($fbPost) . '&width=50';
 $assert(LinkParser::fromRaw($fbPlugin)['normalized_url'] === $fbPost && LinkParser::fromRaw($fbPlugin)['url_hash'] === LinkParser::fromRaw($fbPost)['url_hash'], 'Facebook plugin URLs unwrap to the same canonical post.');
