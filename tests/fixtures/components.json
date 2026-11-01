@@ -1187,5 +1187,57 @@
     "slots": {
       "content": "Prepared list <safe>"
     }
+  },
+  {
+    "component": "ui/empty-state",
+    "data": {
+      "compact": true,
+      "label": "Empty <safe>",
+      "icon": "users"
+    }
+  },
+  {
+    "component": "ui/notice",
+    "data": {
+      "tone": "danger",
+      "label": "Failure <safe>"
+    }
+  },
+  {
+    "component": "notifications/items",
+    "data": {
+      "items": [],
+      "preview": true
+    }
+  },
+  {
+    "component": "notifications/items",
+    "data": {
+      "items": [],
+      "preview": false
+    }
+  },
+  {
+    "component": "ui/notice",
+    "data": {
+      "tone": "warning",
+      "title": "Health <title>",
+      "description": "Advice <description>",
+      "detail": "HTTP <error>"
+    }
+  },
+  {
+    "component": "ui/notice",
+    "data": {
+      "tone": "critical",
+      "title": "Missing extensions"
+    }
+  },
+  {
+    "component": "ui/notice",
+    "data": {
+      "tone": "ok",
+      "title": "Passed"
+    }
   }
 ]

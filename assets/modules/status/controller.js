@@ -1,0 +1,145 @@
+import "../../ui/content-updates.js";
+import "../../core/dates.js";
+import "../../core/component-renderer.js";
+import "../../core/dom.js";
+import "../../ui/component-builders.js";
+(function () {
+  "use strict";
+  var T = window.TinyCat, U = T.ui, e = T.dom.element;
+  function base(id) { return "/api/statuses/" + Number(id); }
+  function form(url, action, id) {
+    var root = e("form", { action: url, method: "post", "data-status-form": "", "data-status-id": id });
+    if (["update", "comment", "comment_update", "report"].indexOf(action) !== -1) {
+      root.dataset.confirmUnsaved = "true";
+      root.dataset.confirmUnsavedTitle = U.text("common.unsaved_title"); root.dataset.confirmUnsavedMessage = U.text("common.unsaved_message");
+      root.dataset.confirmUnsavedOk = U.text("common.leave"); root.dataset.confirmUnsavedCancel = U.text("common.stay");
+    }
+    root.appendChild(U.hidden("action", action)); return root;
+  }
+  function editor(name, body, placeholder) {
+    return T.components.render("status/editor", { name: name, comment: false, value: body || "", placeholder: U.text(placeholder) });
+  }
+  T.status = {
+    segments: function (segments) {
+      return T.components.render("status/segments", { segments: segments || [] });
+    },
+    card: function (item, anchor, openModal) {
+      return T.components.render("status/card", { item: item, anchor: anchor !== false, open_modal: openModal !== false, action: window.location.pathname });
+    },
+    fragment: function (items) { var fragment = document.createDocumentFragment(); (items || []).forEach(function (item) { fragment.appendChild(T.status.card(item)); }); return { content: fragment }; },
+    comment: function (item, context, viewer) {
+      return T.components.render("status/comment", { item: item, context: context || "", viewer: viewer, show_replies: true, show_reply_form: true });
+    },
+    modal: function (url, response, id) {
+      var data = response.data, content = e("div", { "class": "stack" }), item = data.item;
+      if (url.pathname === "/api/moderation/report-options") {
+        var report = form("/api/moderation/reports", "report", url.searchParams.get("id"));
+        report.classList.add("status-modal-form");
+        report.appendChild(U.hidden("id", url.searchParams.get("id")));
+        report.appendChild(U.select("moderation.report_reason", "reason", "spam", Object.fromEntries(data.reasons.map(function (reason) { return [reason, U.text("moderation.report_reasons." + reason)]; }))));
+        report.appendChild(U.field("moderation.report_note", "note", "", "textarea", { maxlength: String(data.note_max_length || 1000) }));
+        report.appendChild(U.button("moderation.report_submit", { type: "submit", "class": "btn btn-primary" }));
+        return U.formDialog(id, "moderation.report_submit", report);
+      }
+      if (!/^\/api\/statuses\//.test(url.pathname)) { return null; }
+      if (/\/embed$/.test(url.pathname)) {
+        content.appendChild(e("p", { "class": "muted" }, U.text("account.status_embed_help")));
+        var previewUrl = new URL(data.frame_url, window.location.href);
+        if (previewUrl.origin !== window.location.origin || !/\/status\/[1-9][0-9]*\/embed$/.test(previewUrl.pathname)) throw new TypeError("Invalid embed preview URL.");
+        var preview = document.createElement("iframe");
+        preview.src = previewUrl.href; preview.className = "status-embed-preview";
+        preview.title = U.text("account.status_embed"); preview.loading = "lazy"; preview.referrerPolicy = "no-referrer"; preview.height = "340";
+        var previewObserver;
+        preview.addEventListener("load", function () {
+          if (previewObserver) previewObserver.disconnect();
+          var card = preview.contentDocument && preview.contentDocument.querySelector(".embed-card");
+          if (!card) return;
+          function resize() { preview.height = String(Math.min(600, Math.ceil(card.getBoundingClientRect().height))); }
+          if (window.ResizeObserver) { previewObserver = new window.ResizeObserver(resize); previewObserver.observe(card); }
+          resize();
+        });
+        content.appendChild(preview);
+        var field = U.field("account.status_embed_code", "embed_code", data.snippet, "textarea", { readonly: "", rows: "6", spellcheck: "false" });
+        var code = field.querySelector("textarea");
+        code.addEventListener("click", function () { code.select(); });
+        content.appendChild(field);
+        var embedDialog = U.dialog(id, "account.status_embed", content);
+        embedDialog.addEventListener("tinycat:modal-close", function () { if (previewObserver) previewObserver.disconnect(); });
+        return embedDialog;
+      }
+      if (/\/revisions$/.test(url.pathname)) {
+        content.className = "status-comment-history";
+        data.items.forEach(function (revision) {
+          var change = revision.changes && revision.changes.body || {};
+          var entry = e("article", { "class": "status-comment-history-entry" });
+          var at = revision.at || revision.created_at || "";
+          entry.appendChild(e("time", { "class": "status-comment-history-meta", datetime: at }, T.dates && T.dates.format ? T.dates.format(at) : at));
+          var before = String(change.from || ""), after = String(change.to || ""), start = 0, end = 0;
+          while (start < before.length && start < after.length && before[start] === after[start]) { start++; }
+          while (end < before.length - start && end < after.length - start && before[before.length - end - 1] === after[after.length - end - 1]) { end++; }
+          [[before, "del", "removed"], [after, "ins", "added"]].forEach(function (version) {
+            var row = e("div", { "class": "status-comment-history-diff" });
+            row.appendChild(e("span", { "class": "status-comment-diff-marker", "aria-hidden": "true" }, version[1] === "del" ? "-" : "+"));
+            row.appendChild(document.createTextNode(version[0].slice(0, start)));
+            row.appendChild(e(version[1], { "class": "status-comment-diff-" + version[2] }, version[0].slice(start, version[0].length - end)));
+            row.appendChild(document.createTextNode(end ? version[0].slice(-end) : ""));
+            entry.appendChild(row);
+          });
+          content.appendChild(entry);
+        });
+        return U.dialog(id, "account.status_comment_history", content);
+      }
+      var panel = url.searchParams.get("panel");
+      if (panel === "edit") {
+        if (!item.capabilities.edit) { throw new Error(U.text("auth.forbidden")); }
+        var edit = form(base(item.id), "update", item.id); edit.dataset.confirmUnsaved = "true"; edit.enctype = "multipart/form-data";
+        edit.appendChild(T.components.render("status/composer-body", { viewer: data.viewer || item.author, value: item.editable_body, image: item.image, enabled: data.options.images_enabled, submit_label: U.text("common.save"), submit_icon: "save" }));
+        return U.formDialog(id, "account.status_edit", edit, false, { size: "wide" });
+      }
+      if (panel === "comment-edit") {
+        var wanted = Number(url.searchParams.get("comment_id")), selected;
+        data.comments.forEach(function (comment) { if (comment.id === wanted) { selected = comment; } comment.replies.forEach(function (reply) { if (reply.id === wanted) { selected = reply; } }); });
+        if (!selected || !selected.capabilities.edit) { throw new Error(U.text("auth.forbidden")); }
+        var commentEdit = form(base(item.id) + "/comments/" + selected.id, "comment_update", item.id); commentEdit.dataset.confirmUnsaved = "true"; commentEdit.classList.add("status-modal-form");
+        var commentLabel = e("div", { "class": "label", id: id + "-label" }, U.text("account.status_comment_placeholder"));
+        var commentEditor = editor("comment", selected.editable_body, "account.status_comment_placeholder");
+        commentEditor.querySelector("textarea").setAttribute("aria-labelledby", id + "-label");
+        commentEditor.querySelector("textarea").required = true;
+        commentEdit.append(commentLabel, commentEditor);
+        commentEdit.appendChild(U.button("common.save", { type: "submit", "class": "btn btn-primary" })); return U.formDialog(id, "common.edit", commentEdit);
+      }
+      content.className = "status-post-modal-content";
+      content.appendChild(T.status.card(item, false, false));
+      content.appendChild(T.components.render("status/thread", { item: item, comments: data.comments, viewer: data.viewer, context: "modal" }));
+      var dialog = U.dialog(id, "account.status_thread_title", content, false, null, { size: "reading", mobile: "fullscreen" });
+      dialog.classList.add("status-post-modal");
+      return dialog;
+    },
+    method: function (form, action) {
+      if (action === "react" || action === "like" || action === "comment_like") {
+        var button = form.querySelector("[aria-pressed]"); return button && button.getAttribute("aria-pressed") === "true" ? "DELETE" : "PUT";
+      }
+      return { update: "PATCH", comment_update: "PATCH", delete: "DELETE", comment_delete: "DELETE" }[action] || "POST";
+    },
+    feed: function (target, response) {
+      var section = target.matches(".home-feed-section") ? target : target.closest(".home-feed-section");
+      var feed = section.querySelector("[data-status-feed]");
+      T.status.controllers.feed.dispose(feed);
+      T.content.replaceChildren(feed, T.status.fragment(response.data.items).content);
+      feed.id = "status-feed-" + (response.data.feed || "all");
+      section.querySelectorAll("[data-status-empty], [data-status-feed-more], [data-feed-login-required]").forEach(T.content.remove);
+      section.querySelectorAll(".feed-switch-link").forEach(function (link) { var following = link.getAttribute("href").indexOf("following") !== -1; if (following === (response.data.feed === "following")) { link.setAttribute("aria-current", "page"); } else { link.removeAttribute("aria-current"); } });
+      if (!response.data.items.length) { section.appendChild(e("div", { "class": "alert alert-info", "data-status-empty": "" }, U.text(response.data.login_required ? "auth.login_required" : (response.data.feed === "following" ? "public.feed_empty_following" : "public.feed_empty")))); }
+      var pagination = U.pagination(response);
+      if (pagination.next_url) {
+        section.appendChild(T.components.render("status/feed-more", { target: "#" + feed.id, url: pagination.next_url }));
+      }
+    }
+  };
+  T.status.result = function (source, response, target) {
+    var url = new URL(source.dataset.url || source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
+    if (url.pathname !== "/api/statuses" || !target || !target.matches(".home-feed-section")) { return false; }
+    T.status.feed(target, response); return [target];
+  };
+  T.status.controllers = {};
+}());

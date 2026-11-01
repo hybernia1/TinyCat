@@ -36,12 +36,12 @@ window.TinyCat = { lifecycle: { register: function (name, hooks) { if (hooks.ini
 window.TinyCat.i18n = { t: key => ({'common.menu':'Menu', 'common.sort':'Řazení'})[key] || key };
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/dom.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/icons.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/components.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/core/component-renderer.js')) ?>
 window.TinyCat.components.register(<?= json_encode(array_intersect_key(TinyCat\Support\Components::templates(), array_flip(['ui/filter-chip', 'ui/list-summary'])), JSON_HEX_TAG | JSON_THROW_ON_ERROR) ?>);
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/menus.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/popovers.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/filters.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tooltips.js')) ?>
-<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/fields.js')) ?>
+<?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/component-builders.js')) ?>
 <?= preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/assets/ui/tabs.js')) ?>
 let escapedToModal = 0;
 document.addEventListener('keydown', event => { if (event.key === 'Escape') escapedToModal++; }, true);
@@ -137,8 +137,8 @@ function localTriggerWorks(trigger, owner) {
   trigger.removeEventListener('click', stop);
   return works;
 }
-window.TinyCat.menus.prepare(document);
-window.TinyCat.menus.prepare(document);
+window.TinyCat.popovers.prepare(document);
+window.TinyCat.popovers.prepare(document);
 filterToggleWorks = filterToggleWorks && localTriggerWorks(filterSummary, menu);
 const results = [];
 for (const long of [false, true]) {

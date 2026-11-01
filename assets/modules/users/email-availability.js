@@ -1,6 +1,6 @@
-import "../../core/http.js";
+import "../../core/api-client.js";
 import "../../core/lifecycle.js";
-import "../../ui/fields.js";
+import "../../ui/component-builders.js";
 import "../../ui/form-state.js";
 (function () {
   var T = window.TinyCat, states = new WeakMap(), sequence = 0;

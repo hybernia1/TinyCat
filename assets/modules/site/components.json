@@ -48,16 +48,15 @@
             },
             "children": [
               {
-                "tag": "p",
-                "attrs": {
-                  "class": "text-muted m-0"
-                },
-                "children": [
-                  {
+                "component": "ui/empty-state",
+                "data": {
+                  "label": {
                     "t": "public.favorite_topics_empty",
                     "values": {}
-                  }
-                ],
+                  },
+                  "icon": "hash",
+                  "compact": true
+                },
                 "when": {
                   "not": {
                     "get": "tags"
@@ -201,16 +200,15 @@
             },
             "children": [
               {
-                "tag": "p",
-                "attrs": {
-                  "class": "text-muted m-0"
-                },
-                "children": [
-                  {
+                "component": "ui/empty-state",
+                "data": {
+                  "label": {
                     "t": "public.active_users_empty",
                     "values": {}
-                  }
-                ],
+                  },
+                  "icon": "users",
+                  "compact": true
+                },
                 "when": {
                   "not": {
                     "get": "authors"
@@ -236,7 +234,7 @@
                       {
                         "tag": "a",
                         "attrs": {
-                          "class": "sidebar-user-link",
+                          "class": "identity-row identity-row-compact",
                           "href": {
                             "get": "author.url"
                           }
@@ -254,7 +252,7 @@
                           {
                             "tag": "span",
                             "attrs": {
-                              "class": "sidebar-user-main"
+                              "class": "identity-copy identity-copy-truncate"
                             },
                             "children": [
                               {
@@ -1801,8 +1799,8 @@
   "site/archive-filter": {
     "tag": "details",
     "attrs": {
-      "class": "popover-menu archive-filter",
-      "data-dismissible-menu": ""
+      "class": "archive-filter",
+      "data-popover": ""
     },
     "children": [
       {
@@ -1882,7 +1880,7 @@
       {
         "tag": "nav",
         "attrs": {
-          "class": "context-menu-popover archive-filter-menu",
+          "class": "popover-panel archive-filter-menu",
           "aria-label": {
             "t": "public.filter_content"
           }
@@ -1910,7 +1908,7 @@
                       false
                     ]
                   },
-                  "data-dismissible-menu-action": ""
+                  "data-popover-close": ""
                 },
                 "children": [
                   {

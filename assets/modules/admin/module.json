@@ -8,12 +8,12 @@
     ],
     "components": [],
     "styles": [
-      "assets/modules/admin/styles/004-admin-list-toolbar.css",
-      "assets/modules/admin/styles/053-admin-shell-page.css",
-      "assets/modules/admin/styles/055-admin-brand-span-admin-user-span.css",
-      "assets/modules/admin/styles/076-admin-content.css",
-      "assets/modules/admin/styles/081-admin-list-toolbar.css",
-      "assets/modules/admin/styles/086-body-admin-nav-open.css"
+      "assets/modules/admin/styles/admin-lists.css",
+      "assets/modules/admin/styles/admin-shell.css",
+      "assets/modules/admin/styles/admin-navigation-and-content.css",
+      "assets/modules/admin/styles/admin-content-mobile.css",
+      "assets/modules/admin/styles/admin-lists-desktop.css",
+      "assets/modules/admin/styles/admin-shell-desktop.css"
     ],
     "translations": []
   }

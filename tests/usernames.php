@@ -53,7 +53,6 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
 foreach ([
     \TinyCat\Users\Views::authForm(['mode' => 'register']),
     \TinyCat\Users\Views::adminFormFields(['create' => true]),
-    \TinyCat\Bots\Views::accountCreate(),
 ] as $form) {
     $assert(str_contains($form, 'pattern="' . \TinyCat\Support\Html::e(\TinyCat\Users\Usernames::username_pattern()) . '"'), 'Rendered username forms must use the shared validation pattern.');
 }

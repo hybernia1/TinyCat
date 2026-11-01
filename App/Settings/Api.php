@@ -10,6 +10,7 @@ final class Api
     {
 
         $api->get('/settings', static fn (): array => ['items' => Resource::items()], 'admin');
+        $api->get('/settings/editor', static fn (): array => Resource::editor(), 'admin');
         $api->patch('/settings', static fn (): Result => Result::from(Actions::adminSettingsSave()), 'admin');
     }
 }

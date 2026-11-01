@@ -107,7 +107,7 @@ final class ClientAssets
     /** @return list<string> */
     public static function runtime(): array
     {
-        return AssetGraph::order(['assets/core/components.js']);
+        return AssetGraph::order(['assets/core/component-renderer.js']);
     }
 
     /** @return list<string> */

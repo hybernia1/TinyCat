@@ -6,6 +6,15 @@ namespace TinyCat\Users;
 final class Resource
 {
     /** @return array<string, mixed> */
+    public static function creation(): array
+    {
+        return ['user' => [], 'options' => self::options() + [
+            'roles' => array_keys(Profiles::tc_admin_roles()),
+            'statuses' => array_keys(\TinyCat\Support\AdminViews::admin_user_statuses()),
+        ]];
+    }
+
+    /** @return array<string, mixed> */
     public static function authentication(string $mode, string $next): array
     {
         $mode = Login::auth_modal_mode($mode);

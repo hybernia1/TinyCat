@@ -1,9 +1,9 @@
 import "../../core/dom.js";
-import "../../core/http.js";
+import "../../core/api-client.js";
 import "../../core/navigation.js";
-import "./views.js";
-import "../../ui/avatars.js";
-import "../../ui/fields.js";
+import "./controller.js";
+import "../../ui/avatar-rendering.js";
+import "../../ui/component-builders.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

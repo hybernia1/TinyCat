@@ -9,8 +9,8 @@ foreach (['GET', 'POST'] as $retiredSettingsMethod) {
     $assert(preg_match('/\s404\s/', (string) ($retiredHeaders[0] ?? '')) === 1, 'The standalone settings page is retired for ' . $retiredSettingsMethod . '.');
 }
 $settingsHostPage = file_get_contents('http://' . $address . '/admin', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
-$assert(is_string($settingsHostPage) && str_contains($settingsHostPage, 'data-modal-open="settings-editor-modal"') && str_contains($settingsHostPage, '<template data-settings-editor>') && !str_contains($settingsHostPage, 'href="/admin/settings"'), 'Admin navigation opens the shared settings modal without a standalone page.');
-$assert(str_contains($settingsHostPage, 'name="settings[moderation.blocked_urls]"') && !str_contains($settingsHostPage, 'href="/admin/moderation/blocking"'), 'Blocked websites are part of the settings editor instead of a separate navigation page.');
+$assert(is_string($settingsHostPage) && str_contains($settingsHostPage, 'data-modal-open="modal-settings-editor"') && str_contains($settingsHostPage, 'data-modal-url="/api/settings/editor"') && !str_contains($settingsHostPage, 'data-settings-editor') && !str_contains($settingsHostPage, 'href="/admin/settings"'), 'Admin navigation opens the shared settings modal without a standalone page.');
+$assert(!str_contains($settingsHostPage, 'name="settings[') && !str_contains($settingsHostPage, 'id="modal-settings-editor"') && !str_contains($settingsHostPage, 'href="/admin/moderation/blocking"'), 'Settings fields and editor DOM are absent from the initial page and blocked websites have no separate navigation page.');
 file_get_contents('http://' . $address . '/admin/moderation/blocking', false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
 $blockingHeaders = http_get_last_response_headers() ?? [];
 $assert(preg_match('/\s404\s/', (string) ($blockingHeaders[0] ?? '')) === 1, 'The standalone URL blocking page is retired.');
@@ -18,14 +18,30 @@ foreach (['/api/admin/bot-accounts', '/api/admin/bots', '/api/admin/settings', '
     [$status] = $request('GET', $retired, null, 'admin');
     $assert($status === 404, 'Retired endpoints have no compatibility aliases: ' . $retired);
 }
-foreach (['/api/settings', '/api/moderation/reports', '/api/moderation/blocked-urls', '/api/bots/accounts'] as $private) {
+foreach (['/api/users/creation', '/api/bots/accounts/creation', '/api/updates/release-notes', '/api/settings/editor', '/api/settings', '/api/moderation/reports', '/api/moderation/blocked-urls', '/api/bots/accounts'] as $private) {
     [$status] = $request('GET', $private, null, 'user');
     $assert($status === 403, 'Remaining modules retain administrator authorization.');
 }
+foreach (['/api/users/creation' => 'roles', '/api/bots/accounts/creation' => 'username_pattern'] as $endpoint => $option) {
+    [$status, $creation] = $request('GET', $endpoint, null, 'admin');
+    $assert($status === 200 && isset($creation['data']['options'][$option]), 'Creation metadata loads through an authorized resource: ' . $endpoint);
+    $pure($creation);
+}
+foreach (['/admin/users' => 'modal-users-creation', '/admin/bots/accounts' => 'modal-bots-accounts-creation'] as $page => $id) {
+    $html = file_get_contents('http://' . $address . $page, false, stream_context_create(['http' => ['header' => "X-Test-Role: admin\r\nAccept: text/html", 'ignore_errors' => true]]));
+    $assert(str_contains($html, 'data-modal-open="' . $id . '"') && !str_contains($html, 'id="' . $id . '"') && !str_contains($html, 'class="modal"'), 'Creation pages contain resource triggers, never hidden dialogs: ' . $page);
+}
+[$status] = $request('GET', '/api/updates/release-notes', null, 'admin');
+$assert($status === 404, 'Missing release notes return a normal resource 404 without fetching remote releases.');
 $seed->exec("INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES ('email.smtp', '{\"password\":\"fixture-secret\"}', 'json', 'email')");
 [$status, $payload] = $request('GET', '/api/settings?view=html', null, 'admin');
 $assert($status === 200 && !str_contains(json_encode($payload), 'fixture-secret'), 'Settings resources never disclose SMTP passwords.');
 $pure($payload);
+[$status, $schema] = $request('GET', '/api/settings/editor', null, 'admin');
+$assert($status === 200 && count($schema['data']['sections']) >= 2 && !str_contains(json_encode($schema), 'fixture-secret'), 'Deferred settings editor is authorized, complete and never exposes saved passwords.');
+$pure($schema);
+$fields = array_merge(...array_column($schema['data']['sections'], 'fields'));
+$assert(in_array('moderation.blocked_urls', array_column($fields, 'key'), true), 'Remote settings include URL blocking.');
 [$status, $payload] = $request('PATCH', '/api/settings', ['settings' => ['site.name' => 'Modular fixture', 'auth.registration.enabled' => false]], 'admin', $csrf);
 $assert($status === 200 && $payload['data']['saved'] && array_keys($payload['data']['images']) === ['site.logo_url', 'site.favicon_url'], 'Settings PATCH returns confirmation and saved public image paths for repeated AJAX saves.');
 $assert($seed->query("SELECT setting_value FROM settings WHERE setting_key = 'i18n.locale'")->fetchColumn() === 'en', 'Partial settings changes preserve omitted settings.');

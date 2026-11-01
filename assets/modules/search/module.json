@@ -4,14 +4,16 @@
       "public"
     ],
     "components": [
-      "search/page"
+      "search/page",
+      "ui/notice"
     ],
     "entries": [
       "assets/modules/search/index.js"
     ],
     "styles": [
-      "assets/modules/search/styles/015-global-search-control.css",
-      "assets/modules/search/styles/066-global-search-input.css"
+      "assets/modules/search/styles/global-search-controls.css",
+      "assets/modules/search/styles/global-search-mobile.css",
+      "assets/modules/search/styles/global-search.css"
     ],
     "translations": [
       "auth.login_title",

@@ -119,7 +119,7 @@ try {
     try {
         foreach (['missing.catalog_entry', null] as $dependency) {
             $features = $saved;
-            $features['/'] = [['entries' => ['assets/modules/users/views.js'], 'translations' => $dependency === null ? $dateKeys : [...$dateKeys, $dependency]]];
+            $features['/'] = [['entries' => ['assets/modules/users/controller.js'], 'translations' => $dependency === null ? $dateKeys : [...$dateKeys, $dependency]]];
             $featuresProperty->setValue(null, $features);
             try {
                 $validateClients($real);

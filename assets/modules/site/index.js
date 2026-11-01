@@ -1,10 +1,10 @@
 import "../../core/modules.js";
 import "./analytics.js";
-import "./controller.js";
-import "./layout.js";
+import "./sidebar-data.js";
+import "./sticky-sidebars.js";
 import "./views.js";
-import "./navigation.js";
-import "./language.js";
+import "./page-navigation.js";
+import "./language-suggestion.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

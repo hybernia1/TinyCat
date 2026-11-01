@@ -22,7 +22,7 @@ const window = {
   history: { pushState(_state, _title, url) { window.location = new URL(url, window.location); } }, addEventListener() {}
 };
 const context = vm.createContext({ window, document, URL, FormData, AbortController });
-for (const file of ["assets/core/requests.js", "assets/core/navigation.js", "assets/ui/lists.js", "assets/ui/ajax.js"]) {
+for (const file of ["assets/core/request-lifecycle.js", "assets/core/navigation.js", "assets/ui/list-navigation.js", "assets/ui/ajax-bindings.js"]) {
   vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../..", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
 }
 T.lists.register("/admin/users", { target: "#users-list", keepQuery: ["sort", "direction"], url: () => "/api/users" + window.location.search, apply: (target, data) => T.modules.result({}, data, target) });
@@ -34,7 +34,7 @@ function link(url, history, method = "GET") {
 (async function () {
   const result = T.modules.result;
   trackMenu = true;
-  T.menus = { capture() { if (trackMenu) { menuSteps.push('capture'); return {key:'sort:#users-list'}; } return null; }, restore(state) { assert.equal(state.key, 'sort:#users-list'); menuSteps.push('restore'); } };
+  T.popovers = { capture() { if (trackMenu) { menuSteps.push('capture'); return {key:'sort:#users-list'}; } return null; }, restore(state) { assert.equal(state.key, 'sort:#users-list'); menuSteps.push('restore'); } };
   T.modules.result = (...args) => { if (trackMenu) menuSteps.push('render'); return result(...args); };
   await handlers.click(link("/api/users?q=old&sort=username&direction=desc&page=1", "/admin/users?q=old&sort=username&direction=desc&page=1"));
   assert.deepEqual(menuSteps, ['capture','render','hydrate','restore'], 'Open sorting menus are restored after the AJAX result and new controls are hydrated.');

@@ -1,8 +1,8 @@
 import "./user-menu.js";
 import "../../core/modules.js";
-import "../../ui/lists.js";
-import "./avatar.js";
-import "./views.js";
+import "../../ui/list-navigation.js";
+import "./avatar-editor.js";
+import "./controller.js";
 import "./email-availability.js";
 (function () {
   "use strict";

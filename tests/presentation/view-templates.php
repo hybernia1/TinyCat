@@ -26,11 +26,14 @@ $assert = static function (bool $condition, string $message) use (&$checks, &$fa
     }
 };
 
-$modal = \TinyCat\Support\View::part('Support/modal', [
-    'id' => 'snapshot-modal',
+$modal = \TinyCat\Support\Components::render('ui/modal', [
+    'root_attributes' => ['id' => 'snapshot-modal', 'class' => 'modal', 'role' => 'dialog', 'aria-modal' => 'true', 'aria-labelledby' => 'snapshot-modal-title'],
+    'panel_attributes' => ['class' => 'modal-panel', 'data-snapshot' => 'a&b'],
+    'title_id' => 'snapshot-modal-title',
     'title' => 'Title <unsafe>',
-    'body' => '<p id="snapshot-body">Safe body</p>',
-    'panelAttributes' => ['data-snapshot' => 'a&b'],
+    'close_label' => 'Close', 'close_icon' => new \TinyCat\Support\Markup(\TinyCat\Support\Html::icon('close')),
+    'body_class' => 'modal-body',
+    'body' => new \TinyCat\Support\Markup('<p id="snapshot-body">Safe body</p>'),
 ]);
 $assert(str_contains($modal, 'Title &lt;unsafe&gt;'), 'Modal title is escaped.');
 $assert(str_contains($modal, 'data-snapshot="a&amp;b"'), 'Prepared modal attributes are escaped.');

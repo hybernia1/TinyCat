@@ -4,6 +4,10 @@ declare(strict_types=1);
 return static function (): array {
     if (!defined('TINYCAT')) { define('TINYCAT', true); }
     require_once dirname(__DIR__) . '/App/autoload.php';
+    $validateModals = require __DIR__ . '/modal-contracts.php';
+    $validateModals();
+    $validateUi = require __DIR__ . '/ui-contracts.php';
+    $validateUi();
     $validateTranslations = require __DIR__ . '/translation-catalogs.php';
     $catalogs = $validateTranslations(dirname(__DIR__));
     $validateClients = require __DIR__ . '/client-translations.php';

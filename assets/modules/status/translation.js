@@ -1,6 +1,6 @@
 import "../../core/i18n.js";
 import "../../core/icons.js";
-import "./views.js";
+import "./controller.js";
 (function () {
   "use strict";
   var T = window.TinyCat;

@@ -69,7 +69,7 @@ const response = label => ({ data: { items: [label], tasks: [], filters: {} }, m
   const steps = [], render = s.T.users.list;
   s.T.filters.capture = node => { assert.equal(node, focused); steps.push("filter capture"); return {}; };
   s.T.filters.restore = () => steps.push("filter restore");
-  s.T.menus = { capture: node => { assert.equal(node, focused); steps.push("menu capture"); return {}; }, restore: () => steps.push("menu restore") };
+  s.T.popovers = { capture: node => { assert.equal(node, focused); steps.push("menu capture"); return {}; }, restore: () => steps.push("menu restore") };
   s.T.users.list = (...args) => { steps.push("render"); render(...args); };
   s.T.lifecycle.hydrate = node => { assert.equal(node, root); steps.push("hydrate"); };
   const preserving = s.T.lists.refresh(root); s.pending[0].resolve(response("new")); await preserving;

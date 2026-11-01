@@ -1,0 +1,10 @@
+.public-sidebar-footer {
+  padding: 2px 2px 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.public-sidebar-footer a {
+  color: var(--primary-strong);
+  font-weight: 650;
+}

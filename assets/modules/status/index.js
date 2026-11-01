@@ -1,13 +1,13 @@
 import "../../core/dom.js";
 import "../../core/modules.js";
 import "../../core/navigation.js";
-import "./actions.js";
+import "./form-actions.js";
 import "./comments.js";
 import "./editor.js";
-import "./feed.js";
-import "./forms.js";
+import "./feed-loader.js";
+import "./form-context.js";
 import "./media.js";
-import "./views.js";
+import "./controller.js";
 import "./translation.js";
 (function () {
   "use strict";

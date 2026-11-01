@@ -888,7 +888,7 @@
         "attrs": {
           "class": "context-menu-action is-danger",
           "type": "submit",
-          "data-dismissible-menu-action": ""
+          "data-popover-close": ""
         },
         "children": [
           {
@@ -916,7 +916,7 @@
           }
         ]
       },
-      "data-dismissible-menu": ""
+      "data-popover": ""
     },
     "children": [
       {
@@ -937,7 +937,7 @@
       {
         "tag": "div",
         "attrs": {
-          "class": "context-menu-popover"
+          "class": "popover-panel"
         },
         "children": [
           {
@@ -945,7 +945,7 @@
             "attrs": {
               "class": "context-menu-action",
               "type": "button",
-              "data-dismissible-menu-action": "",
+              "data-popover-close": "",
               "data-modal-open": {
                 "concat": [
                   {
@@ -1009,7 +1009,7 @@
             "attrs": {
               "class": "context-menu-action",
               "type": "button",
-              "data-dismissible-menu-action": "",
+              "data-popover-close": "",
               "data-modal-open": {
                 "concat": [
                   "status-comment-history-modal-",
@@ -1112,7 +1112,7 @@
             "attrs": {
               "class": "context-menu-action",
               "type": "button",
-              "data-dismissible-menu-action": "",
+              "data-popover-close": "",
               "data-modal-open": {
                 "concat": [
                   "status-report-modal-",
@@ -2911,65 +2911,37 @@
     ]
   },
   "status/feed-more": {
-    "tag": "div",
-    "attrs": {
-      "class": "status-feed-more",
-      "data-status-feed-more": "",
-      "data-status-feed-target": {
-        "get": "target"
-      },
-      "data-status-feed-url": {
-        "get": "url"
-      }
-    },
-    "children": [
-      {
-        "tag": "button",
-        "attrs": {
-          "class": "btn btn-secondary status-feed-more-button",
-          "type": "button",
-          "data-status-feed-load": ""
+    "component": "ui/load-more",
+    "data": {
+      "attributes": {
+        "class": "load-more status-feed-more",
+        "data-status-feed-more": "",
+        "data-status-feed-target": {
+          "get": "target"
         },
-        "children": [
+        "data-status-feed-url": {
+          "get": "url"
+        }
+      },
+      "button_attributes": {
+        "class": "btn btn-secondary status-feed-more-button",
+        "type": "button",
+        "data-status-feed-load": ""
+      },
+      "label": {
+        "or": [
           {
-            "icon": "plus"
+            "get": "label"
           },
           {
-            "tag": "span",
-            "children": [
-              {
-                "if": [
-                  {
-                    "get": "label"
-                  },
-                  {
-                    "get": "label"
-                  },
-                  {
-                    "t": "public.load_more_posts",
-                    "values": {}
-                  }
-                ]
-              }
-            ]
+            "t": "public.load_more_posts"
           }
         ]
       },
-      {
-        "tag": "span",
-        "attrs": {
-          "class": "status-feed-more-state",
-          "data-status-feed-state": "",
-          "hidden": true
-        },
-        "children": [
-          {
-            "t": "public.loading_posts",
-            "values": {}
-          }
-        ]
+      "loading_label": {
+        "t": "public.loading_posts"
       }
-    ],
+    },
     "when": {
       "get": "url"
     }

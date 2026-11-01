@@ -1,0 +1,8437 @@
+{
+  "date": "2026-11-01",
+  "planned_version": "6.0.0",
+  "runtime_version": "5.16.1",
+  "git_head": "dccaa09a54f415ec1cdacb65fa3c7b4b36751870",
+  "scope": "Current working tree, including the pending moderation/status changes; not only committed HEAD.",
+  "app_php_fingerprint": "39f56b36a41193d546487b64c9ba77c99336ee0aee325647c4da5d1050cc2460",
+  "method": {
+    "php_references": "PHP token names/imports and fully qualified string references; not runtime call tracing.",
+    "sql": "Heuristic literal table references to declared owners; dynamic SQL, column ownership and deletion cascades need manual review."
+  },
+  "summary": {
+    "registered_backend_modules": 13,
+    "app_php_files": 236,
+    "installer_ddl_tables": 22,
+    "module_owned_tables": 21,
+    "root_migration_files": 26,
+    "cross_namespace_file_class_pairs": 964,
+    "foreign_table_file_operation_pairs": 94,
+    "foreign_table_write_file_pairs": 13,
+    "explicit_cross_module_js_imports": 1
+  },
+  "modules": {
+    "Installation": {
+      "class": "TinyCat\\Installation\\Module",
+      "tables": []
+    },
+    "Users": {
+      "class": "TinyCat\\Users\\Module",
+      "tables": [
+        "users",
+        "user_followers",
+        "password_reset_tokens"
+      ]
+    },
+    "Notifications": {
+      "class": "TinyCat\\Notifications\\Module",
+      "tables": [
+        "notifications"
+      ]
+    },
+    "Status": {
+      "class": "TinyCat\\Status\\Module",
+      "tables": [
+        "content",
+        "content_images",
+        "terms",
+        "content_tags",
+        "links",
+        "content_links",
+        "content_likes",
+        "content_comments",
+        "comment_likes"
+      ]
+    },
+    "Bots": {
+      "class": "TinyCat\\Bots\\Module",
+      "tables": [
+        "bot_sources",
+        "bot_feed_history",
+        "bot_source_posts",
+        "bot_source_runs"
+      ]
+    },
+    "Settings": {
+      "class": "TinyCat\\Settings\\Module",
+      "tables": [
+        "settings"
+      ]
+    },
+    "Moderation": {
+      "class": "TinyCat\\Moderation\\Module",
+      "tables": [
+        "content_reports"
+      ]
+    },
+    "Search": {
+      "class": "TinyCat\\Search\\Module",
+      "tables": []
+    },
+    "Security": {
+      "class": "TinyCat\\Security\\Module",
+      "tables": [
+        "ip_action_limits"
+      ]
+    },
+    "Scheduler": {
+      "class": "TinyCat\\Scheduler\\Module",
+      "tables": [
+        "scheduler_runs"
+      ]
+    },
+    "Health": {
+      "class": "TinyCat\\Health\\Module",
+      "tables": []
+    },
+    "Updates": {
+      "class": "TinyCat\\Updates\\Module",
+      "tables": []
+    },
+    "Site": {
+      "class": "TinyCat\\Site\\Module",
+      "tables": []
+    }
+  },
+  "table_owners": {
+    "users": [
+      "Users"
+    ],
+    "user_followers": [
+      "Users"
+    ],
+    "password_reset_tokens": [
+      "Users"
+    ],
+    "notifications": [
+      "Notifications"
+    ],
+    "content": [
+      "Status"
+    ],
+    "content_images": [
+      "Status"
+    ],
+    "terms": [
+      "Status"
+    ],
+    "content_tags": [
+      "Status"
+    ],
+    "links": [
+      "Status"
+    ],
+    "content_links": [
+      "Status"
+    ],
+    "content_likes": [
+      "Status"
+    ],
+    "content_comments": [
+      "Status"
+    ],
+    "comment_likes": [
+      "Status"
+    ],
+    "bot_sources": [
+      "Bots"
+    ],
+    "bot_feed_history": [
+      "Bots"
+    ],
+    "bot_source_posts": [
+      "Bots"
+    ],
+    "bot_source_runs": [
+      "Bots"
+    ],
+    "settings": [
+      "Settings"
+    ],
+    "content_reports": [
+      "Moderation"
+    ],
+    "ip_action_limits": [
+      "Security"
+    ],
+    "scheduler_runs": [
+      "Scheduler"
+    ]
+  },
+  "system_tables_without_module_claim": [
+    "schema_migrations"
+  ],
+  "declared_tables_not_created_by_installer": [],
+  "sizes": {
+    "(composition)": {
+      "files": 5,
+      "lines": 91
+    },
+    "Bots": {
+      "files": 16,
+      "lines": 2481
+    },
+    "Database": {
+      "files": 5,
+      "lines": 791
+    },
+    "Health": {
+      "files": 7,
+      "lines": 329
+    },
+    "Http": {
+      "files": 12,
+      "lines": 1543
+    },
+    "Installation": {
+      "files": 5,
+      "lines": 1138
+    },
+    "Mail": {
+      "files": 2,
+      "lines": 264
+    },
+    "Moderation": {
+      "files": 9,
+      "lines": 779
+    },
+    "Notifications": {
+      "files": 10,
+      "lines": 820
+    },
+    "Scheduler": {
+      "files": 16,
+      "lines": 1001
+    },
+    "Search": {
+      "files": 5,
+      "lines": 653
+    },
+    "Security": {
+      "files": 9,
+      "lines": 985
+    },
+    "Settings": {
+      "files": 10,
+      "lines": 941
+    },
+    "Site": {
+      "files": 27,
+      "lines": 2471
+    },
+    "Status": {
+      "files": 32,
+      "lines": 6899
+    },
+    "Support": {
+      "files": 31,
+      "lines": 4067
+    },
+    "Updates": {
+      "files": 9,
+      "lines": 1980
+    },
+    "Users": {
+      "files": 26,
+      "lines": 3738
+    }
+  },
+  "namespace_dependency_weights": {
+    "(composition)": {
+      "Bots": 1,
+      "Database": 1,
+      "Health": 1,
+      "Http": 3,
+      "Installation": 1,
+      "Moderation": 1,
+      "Notifications": 1,
+      "Scheduler": 1,
+      "Search": 1,
+      "Security": 1,
+      "Settings": 2,
+      "Site": 1,
+      "Status": 1,
+      "Updates": 1,
+      "Users": 3
+    },
+    "Bots": {
+      "Database": 10,
+      "Http": 25,
+      "Moderation": 2,
+      "Scheduler": 2,
+      "Site": 1,
+      "Status": 17,
+      "Support": 45,
+      "Users": 9
+    },
+    "Database": {
+      "Support": 1
+    },
+    "Health": {
+      "Database": 3,
+      "Http": 7,
+      "Notifications": 1,
+      "Scheduler": 4,
+      "Settings": 1,
+      "Site": 1,
+      "Support": 15,
+      "Updates": 1,
+      "Users": 2
+    },
+    "Http": {
+      "Scheduler": 1,
+      "Security": 1,
+      "Settings": 2,
+      "Status": 1,
+      "Support": 8
+    },
+    "Installation": {
+      "Database": 5,
+      "Http": 11,
+      "Mail": 2,
+      "Security": 1,
+      "Settings": 2,
+      "Site": 1,
+      "Status": 1,
+      "Support": 9,
+      "Users": 7
+    },
+    "Mail": {
+      "Database": 1,
+      "Settings": 2,
+      "Site": 1,
+      "Support": 4,
+      "Users": 2
+    },
+    "Moderation": {
+      "Database": 4,
+      "Http": 11,
+      "Notifications": 1,
+      "Security": 3,
+      "Settings": 2,
+      "Site": 1,
+      "Status": 8,
+      "Support": 15,
+      "Users": 5
+    },
+    "Notifications": {
+      "Database": 5,
+      "Http": 9,
+      "Mail": 1,
+      "Security": 1,
+      "Site": 3,
+      "Status": 5,
+      "Support": 17,
+      "Users": 6
+    },
+    "Scheduler": {
+      "Bots": 3,
+      "Database": 5,
+      "Health": 1,
+      "Http": 14,
+      "Security": 2,
+      "Settings": 2,
+      "Site": 3,
+      "Status": 2,
+      "Support": 25,
+      "Updates": 1,
+      "Users": 3
+    },
+    "Search": {
+      "Database": 3,
+      "Http": 9,
+      "Moderation": 1,
+      "Security": 4,
+      "Site": 2,
+      "Status": 9,
+      "Support": 3,
+      "Users": 6
+    },
+    "Security": {
+      "Database": 1,
+      "Http": 13,
+      "Moderation": 1,
+      "Search": 1,
+      "Settings": 1,
+      "Site": 1,
+      "Support": 9,
+      "Users": 3
+    },
+    "Settings": {
+      "Database": 1,
+      "Http": 6,
+      "Mail": 3,
+      "Moderation": 1,
+      "Security": 3,
+      "Support": 18,
+      "Users": 2
+    },
+    "Site": {
+      "Bots": 1,
+      "Database": 2,
+      "Health": 1,
+      "Http": 21,
+      "Moderation": 1,
+      "Notifications": 1,
+      "Scheduler": 1,
+      "Search": 1,
+      "Security": 3,
+      "Settings": 5,
+      "Status": 13,
+      "Support": 64,
+      "Users": 16
+    },
+    "Status": {
+      "Database": 29,
+      "Http": 22,
+      "Moderation": 5,
+      "Notifications": 3,
+      "Search": 2,
+      "Security": 9,
+      "Settings": 3,
+      "Site": 14,
+      "Support": 55,
+      "Users": 27
+    },
+    "Support": {
+      "Http": 2,
+      "Security": 2,
+      "Settings": 6
+    },
+    "Updates": {
+      "Database": 2,
+      "Http": 8,
+      "Security": 2,
+      "Settings": 1,
+      "Site": 2,
+      "Support": 25,
+      "Users": 1
+    },
+    "Users": {
+      "Database": 16,
+      "Http": 27,
+      "Mail": 2,
+      "Moderation": 1,
+      "Notifications": 1,
+      "Security": 14,
+      "Settings": 1,
+      "Site": 10,
+      "Status": 8,
+      "Support": 46
+    }
+  },
+  "namespace_strongly_connected_components": [
+    [
+      "Bots",
+      "Database",
+      "Health",
+      "Http",
+      "Mail",
+      "Moderation",
+      "Notifications",
+      "Scheduler",
+      "Search",
+      "Security",
+      "Settings",
+      "Site",
+      "Status",
+      "Support",
+      "Updates",
+      "Users"
+    ],
+    [
+      "Installation"
+    ],
+    [
+      "(composition)"
+    ]
+  ],
+  "cross_namespace_file_class_pairs": [
+    {
+      "file": "App/bootstrap.php",
+      "line": 16,
+      "from": "(composition)",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/bootstrap.php",
+      "line": 16,
+      "from": "(composition)",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/bootstrap.php",
+      "line": 19,
+      "from": "(composition)",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/bootstrap.php",
+      "line": 19,
+      "from": "(composition)",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/bootstrap.php",
+      "line": 25,
+      "from": "(composition)",
+      "to": "Database",
+      "class": "Database\\Schema"
+    },
+    {
+      "file": "App/bootstrap.php",
+      "line": 25,
+      "from": "(composition)",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 23,
+      "from": "Bots",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 24,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 32,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 36,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 40,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 45,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 50,
+      "from": "Bots",
+      "to": "Users",
+      "class": "Users\\Avatars"
+    },
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 75,
+      "from": "Bots",
+      "to": "Users",
+      "class": "Users\\Accounts"
+    },
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 117,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 147,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 20,
+      "from": "Bots",
+      "to": "Database",
+      "class": "Database\\Query"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 29,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 81,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 83,
+      "from": "Bots",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 109,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 145,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 148,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminSorting"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 149,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Pagination"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 159,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 160,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 182,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Feed"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 183,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 184,
+      "from": "Bots",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 185,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Resource"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 186,
+      "from": "Bots",
+      "to": "Users",
+      "class": "Users\\Resource"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 187,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Images"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 231,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 232,
+      "from": "Bots",
+      "to": "Users",
+      "class": "Users\\Usernames"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 343,
+      "from": "Bots",
+      "to": "Users",
+      "class": "Users\\Avatars"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 440,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Metadata"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 516,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 516,
+      "from": "Bots",
+      "to": "Scheduler",
+      "class": "Scheduler\\Execution"
+    },
+    {
+      "file": "App/Bots/Api.php",
+      "line": 5,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Bots/Api.php",
+      "line": 6,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Bots/Api.php",
+      "line": 7,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Bots/Api.php",
+      "line": 11,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Bots/Api.php",
+      "line": 20,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Bots/Api.php",
+      "line": 28,
+      "from": "Bots",
+      "to": "Users",
+      "class": "Users\\Accounts"
+    },
+    {
+      "file": "App/Bots/Api.php",
+      "line": 29,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Bots/Cleanup.php",
+      "line": 22,
+      "from": "Bots",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Bots/FeedParser.php",
+      "line": 7,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Client"
+    },
+    {
+      "file": "App/Bots/FeedParser.php",
+      "line": 95,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Audio"
+    },
+    {
+      "file": "App/Bots/FeedParser.php",
+      "line": 306,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Bots/FeedParser.php",
+      "line": 323,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\LinkParser"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 66,
+      "from": "Bots",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 96,
+      "from": "Bots",
+      "to": "Scheduler",
+      "class": "Scheduler\\Tasks"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 199,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 208,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\PostCreation"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 211,
+      "from": "Bots",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 305,
+      "from": "Bots",
+      "to": "Database",
+      "class": "Database\\Query"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 401,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Tags"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 441,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Client"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 470,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 503,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Images"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 531,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\LinkParser"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 532,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Links"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 543,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\ImageStorage"
+    },
+    {
+      "file": "App/Bots/Module.php",
+      "line": 20,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Bots/Module.php",
+      "line": 29,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Bots/Module.php",
+      "line": 32,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Bots/Module.php",
+      "line": 34,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Bots/Pages.php",
+      "line": 6,
+      "from": "Bots",
+      "to": "Site",
+      "class": "Site\\Layout"
+    },
+    {
+      "file": "App/Bots/Pages.php",
+      "line": 7,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Bots/Pages.php",
+      "line": 8,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Markup"
+    },
+    {
+      "file": "App/Bots/Pages.php",
+      "line": 9,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Bots/Pages.php",
+      "line": 10,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Bots/Pages.php",
+      "line": 11,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Bots/Pages.php",
+      "line": 12,
+      "from": "Bots",
+      "to": "Users",
+      "class": "Users\\Access"
+    },
+    {
+      "file": "App/Bots/Pages.php",
+      "line": 23,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 5,
+      "from": "Bots",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 6,
+      "from": "Bots",
+      "to": "Database",
+      "class": "Database\\Query"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 7,
+      "from": "Bots",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 8,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 9,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 10,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 11,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminSorting"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 12,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 13,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 14,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 15,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Pagination"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 16,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Bots/Resource.php",
+      "line": 6,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Bots/Resource.php",
+      "line": 7,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Bots/Resource.php",
+      "line": 49,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminSorting"
+    },
+    {
+      "file": "App/Bots/SourcePreview.php",
+      "line": 6,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Bots/SourcePreview.php",
+      "line": 7,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Bots/SourcePreview.php",
+      "line": 8,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Bots/SourcePreview.php",
+      "line": 9,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Bots/SourcePreview.php",
+      "line": 23,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Client"
+    },
+    {
+      "file": "App/Bots/SourcePreview.php",
+      "line": 32,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Images"
+    },
+    {
+      "file": "App/Bots/SourcePreview.php",
+      "line": 34,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\PostCreation"
+    },
+    {
+      "file": "App/Bots/SourcePreview.php",
+      "line": 38,
+      "from": "Bots",
+      "to": "Moderation",
+      "class": "Moderation\\Blocking"
+    },
+    {
+      "file": "App/Bots/SourcePreview.php",
+      "line": 39,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Links"
+    },
+    {
+      "file": "App/Bots/templates/parts/modals/account-create.php",
+      "line": 4,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Bots/templates/parts/modals/account-create.php",
+      "line": 5,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Bots/templates/parts/modals/account-create.php",
+      "line": 6,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Bots/templates/parts/modals/account-create.php",
+      "line": 27,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Bots/templates/parts/modals/account-create.php",
+      "line": 29,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Markup"
+    },
+    {
+      "file": "App/Bots/templates/parts/modals/account-filter.php",
+      "line": 4,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Bots/templates/parts/modals/account-filter.php",
+      "line": 5,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Bots/templates/parts/modals/source-filter.php",
+      "line": 4,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Bots/templates/parts/modals/source-filter.php",
+      "line": 5,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Bots/Views.php",
+      "line": 6,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Bots/Views.php",
+      "line": 8,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Bots/Views.php",
+      "line": 9,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Bots/Views.php",
+      "line": 10,
+      "from": "Bots",
+      "to": "Users",
+      "class": "Users\\Usernames"
+    },
+    {
+      "file": "App/Bots/Views.php",
+      "line": 48,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\AdminSorting"
+    },
+    {
+      "file": "App/Bots/WordPressFeed.php",
+      "line": 6,
+      "from": "Bots",
+      "to": "Http",
+      "class": "Http\\Client"
+    },
+    {
+      "file": "App/Bots/WordPressFeed.php",
+      "line": 7,
+      "from": "Bots",
+      "to": "Status",
+      "class": "Status\\Providers"
+    },
+    {
+      "file": "App/Bots/WordPressFeed.php",
+      "line": 8,
+      "from": "Bots",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Bots/WordPressFeed.php",
+      "line": 42,
+      "from": "Bots",
+      "to": "Moderation",
+      "class": "Moderation\\Blocking"
+    },
+    {
+      "file": "App/Database/Connection.php",
+      "line": 12,
+      "from": "Database",
+      "to": "Support",
+      "class": "Support\\Config"
+    },
+    {
+      "file": "App/Health/Api.php",
+      "line": 7,
+      "from": "Health",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Health/Api.php",
+      "line": 10,
+      "from": "Health",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Health/Api.php",
+      "line": 11,
+      "from": "Health",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Health/Api.php",
+      "line": 12,
+      "from": "Health",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Health/Api.php",
+      "line": 12,
+      "from": "Health",
+      "to": "Scheduler",
+      "class": "Scheduler\\Execution"
+    },
+    {
+      "file": "App/Health/Api.php",
+      "line": 13,
+      "from": "Health",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Health/Checks.php",
+      "line": 5,
+      "from": "Health",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Health/Checks.php",
+      "line": 6,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Health/Checks.php",
+      "line": 7,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Health/Checks.php",
+      "line": 8,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Storage"
+    },
+    {
+      "file": "App/Health/Checks.php",
+      "line": 25,
+      "from": "Health",
+      "to": "Updates",
+      "class": "Updates\\Manager"
+    },
+    {
+      "file": "App/Health/Checks.php",
+      "line": 75,
+      "from": "Health",
+      "to": "Scheduler",
+      "class": "Scheduler\\Repository"
+    },
+    {
+      "file": "App/Health/HttpCheck.php",
+      "line": 10,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Config"
+    },
+    {
+      "file": "App/Health/HttpCheck.php",
+      "line": 21,
+      "from": "Health",
+      "to": "Http",
+      "class": "Http\\SiteProbe"
+    },
+    {
+      "file": "App/Health/Module.php",
+      "line": 13,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Health/Module.php",
+      "line": 16,
+      "from": "Health",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Health/Module.php",
+      "line": 19,
+      "from": "Health",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Health/Pages.php",
+      "line": 9,
+      "from": "Health",
+      "to": "Users",
+      "class": "Users\\Access"
+    },
+    {
+      "file": "App/Health/Pages.php",
+      "line": 17,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Health/Pages.php",
+      "line": 17,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Health/Pages.php",
+      "line": 18,
+      "from": "Health",
+      "to": "Site",
+      "class": "Site\\Layout"
+    },
+    {
+      "file": "App/Health/Pages.php",
+      "line": 18,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Health/Pages.php",
+      "line": 18,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Markup"
+    },
+    {
+      "file": "App/Health/Pages.php",
+      "line": 18,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Health/Service.php",
+      "line": 5,
+      "from": "Health",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Health/Service.php",
+      "line": 6,
+      "from": "Health",
+      "to": "Scheduler",
+      "class": "Scheduler\\Tasks"
+    },
+    {
+      "file": "App/Health/Service.php",
+      "line": 7,
+      "from": "Health",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Health/Service.php",
+      "line": 8,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Health/Service.php",
+      "line": 45,
+      "from": "Health",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Health/Service.php",
+      "line": 46,
+      "from": "Health",
+      "to": "Notifications",
+      "class": "Notifications\\Delivery"
+    },
+    {
+      "file": "App/Health/Service.php",
+      "line": 61,
+      "from": "Health",
+      "to": "Scheduler",
+      "class": "Scheduler\\Resource"
+    },
+    {
+      "file": "App/Health/templates/page.php",
+      "line": 8,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Health/templates/page.php",
+      "line": 9,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Health/templates/page.php",
+      "line": 10,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Health/templates/page.php",
+      "line": 11,
+      "from": "Health",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Http/Client.php",
+      "line": 81,
+      "from": "Http",
+      "to": "Support",
+      "class": "Support\\Version"
+    },
+    {
+      "file": "App/Http/Middleware.php",
+      "line": 7,
+      "from": "Http",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Http/Middleware.php",
+      "line": 15,
+      "from": "Http",
+      "to": "Scheduler",
+      "class": "Scheduler\\Tokens"
+    },
+    {
+      "file": "App/Http/Request.php",
+      "line": 8,
+      "from": "Http",
+      "to": "Support",
+      "class": "Support\\Values"
+    },
+    {
+      "file": "App/Http/Router.php",
+      "line": 8,
+      "from": "Http",
+      "to": "Support",
+      "class": "Support\\Values"
+    },
+    {
+      "file": "App/Http/SiteProbe.php",
+      "line": 5,
+      "from": "Http",
+      "to": "Support",
+      "class": "Support\\Config"
+    },
+    {
+      "file": "App/Http/SiteProbe.php",
+      "line": 15,
+      "from": "Http",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Http/SiteProbe.php",
+      "line": 32,
+      "from": "Http",
+      "to": "Support",
+      "class": "Support\\Version"
+    },
+    {
+      "file": "App/Http/Validator.php",
+      "line": 7,
+      "from": "Http",
+      "to": "Support",
+      "class": "Support\\Values"
+    },
+    {
+      "file": "App/Http/Validator.php",
+      "line": 186,
+      "from": "Http",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Http/Web.php",
+      "line": 12,
+      "from": "Http",
+      "to": "Support",
+      "class": "Support\\LocalUrls"
+    },
+    {
+      "file": "App/Http/Web.php",
+      "line": 22,
+      "from": "Http",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Http/Web.php",
+      "line": 48,
+      "from": "Http",
+      "to": "Status",
+      "class": "Status\\Providers"
+    },
+    {
+      "file": "App/Installation/Actions.php",
+      "line": 21,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Installation/Actions.php",
+      "line": 25,
+      "from": "Installation",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Installation/Actions.php",
+      "line": 33,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Installation/Actions.php",
+      "line": 44,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Installation/Actions.php",
+      "line": 99,
+      "from": "Installation",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Installation/Actions.php",
+      "line": 135,
+      "from": "Installation",
+      "to": "Users",
+      "class": "Users\\Usernames"
+    },
+    {
+      "file": "App/Installation/Actions.php",
+      "line": 151,
+      "from": "Installation",
+      "to": "Users",
+      "class": "Users\\Login"
+    },
+    {
+      "file": "App/Installation/Actions.php",
+      "line": 164,
+      "from": "Installation",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Installation/Api.php",
+      "line": 7,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Installation/Api.php",
+      "line": 10,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Installation/Api.php",
+      "line": 10,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 15,
+      "from": "Installation",
+      "to": "Support",
+      "class": "Support\\Config"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 15,
+      "from": "Installation",
+      "to": "Database",
+      "class": "Database\\Schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 21,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 34,
+      "from": "Installation",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 50,
+      "from": "Installation",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 77,
+      "from": "Installation",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 99,
+      "from": "Installation",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 176,
+      "from": "Installation",
+      "to": "Status",
+      "class": "Status\\Schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 473,
+      "from": "Installation",
+      "to": "Mail",
+      "class": "Mail\\Smtp"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 474,
+      "from": "Installation",
+      "to": "Mail",
+      "class": "Mail\\Templates"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 485,
+      "from": "Installation",
+      "to": "Users",
+      "class": "Users\\Usernames"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 489,
+      "from": "Installation",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Installation/Module.php",
+      "line": 7,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Installation/Module.php",
+      "line": 10,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 16,
+      "from": "Installation",
+      "to": "Site",
+      "class": "Site\\Errors"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 19,
+      "from": "Installation",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 22,
+      "from": "Installation",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 23,
+      "from": "Installation",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 32,
+      "from": "Installation",
+      "to": "Database",
+      "class": "Database\\Schema"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 48,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 56,
+      "from": "Installation",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 85,
+      "from": "Installation",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 91,
+      "from": "Installation",
+      "to": "Support",
+      "class": "Support\\ClientAssets"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 96,
+      "from": "Installation",
+      "to": "Support",
+      "class": "Support\\Assets"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 110,
+      "from": "Installation",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 229,
+      "from": "Installation",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 297,
+      "from": "Installation",
+      "to": "Users",
+      "class": "Users\\Usernames"
+    },
+    {
+      "file": "App/Installation/Pages.php",
+      "line": 303,
+      "from": "Installation",
+      "to": "Users",
+      "class": "Users\\Login"
+    },
+    {
+      "file": "App/Mail/Smtp.php",
+      "line": 14,
+      "from": "Mail",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Mail/Smtp.php",
+      "line": 51,
+      "from": "Mail",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Mail/Templates.php",
+      "line": 20,
+      "from": "Mail",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Mail/Templates.php",
+      "line": 52,
+      "from": "Mail",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Mail/Templates.php",
+      "line": 65,
+      "from": "Mail",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Mail/Templates.php",
+      "line": 65,
+      "from": "Mail",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Mail/Templates.php",
+      "line": 74,
+      "from": "Mail",
+      "to": "Support",
+      "class": "Support\\CompiledTranslations"
+    },
+    {
+      "file": "App/Mail/Templates.php",
+      "line": 76,
+      "from": "Mail",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Mail/Templates.php",
+      "line": 92,
+      "from": "Mail",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Mail/Templates.php",
+      "line": 99,
+      "from": "Mail",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Moderation/Actions.php",
+      "line": 12,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Moderation/Actions.php",
+      "line": 29,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Moderation/Actions.php",
+      "line": 52,
+      "from": "Moderation",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Moderation/Api.php",
+      "line": 5,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Moderation/Api.php",
+      "line": 6,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Moderation/Api.php",
+      "line": 10,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Moderation/Api.php",
+      "line": 15,
+      "from": "Moderation",
+      "to": "Status",
+      "class": "Status\\Feed"
+    },
+    {
+      "file": "App/Moderation/Api.php",
+      "line": 16,
+      "from": "Moderation",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Moderation/Api.php",
+      "line": 17,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Moderation/Api.php",
+      "line": 17,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Moderation/Api.php",
+      "line": 23,
+      "from": "Moderation",
+      "to": "Status",
+      "class": "Status\\Actions"
+    },
+    {
+      "file": "App/Moderation/Api.php",
+      "line": 24,
+      "from": "Moderation",
+      "to": "Users",
+      "class": "Users\\Access"
+    },
+    {
+      "file": "App/Moderation/Api.php",
+      "line": 26,
+      "from": "Moderation",
+      "to": "Security",
+      "class": "Security\\RateLimiter"
+    },
+    {
+      "file": "App/Moderation/Blocking.php",
+      "line": 13,
+      "from": "Moderation",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Moderation/Blocking.php",
+      "line": 89,
+      "from": "Moderation",
+      "to": "Status",
+      "class": "Status\\LinkParser"
+    },
+    {
+      "file": "App/Moderation/Blocking.php",
+      "line": 118,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Moderation/Blocking.php",
+      "line": 118,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Moderation/Module.php",
+      "line": 13,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Moderation/Module.php",
+      "line": 16,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Moderation/Module.php",
+      "line": 17,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Moderation/Pages.php",
+      "line": 5,
+      "from": "Moderation",
+      "to": "Site",
+      "class": "Site\\Layout"
+    },
+    {
+      "file": "App/Moderation/Pages.php",
+      "line": 6,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Moderation/Pages.php",
+      "line": 7,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Moderation/Pages.php",
+      "line": 8,
+      "from": "Moderation",
+      "to": "Users",
+      "class": "Users\\Access"
+    },
+    {
+      "file": "App/Moderation/Pages.php",
+      "line": 18,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Markup"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 12,
+      "from": "Moderation",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 13,
+      "from": "Moderation",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 17,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 17,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 52,
+      "from": "Moderation",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 60,
+      "from": "Moderation",
+      "to": "Notifications",
+      "class": "Notifications\\Inbox"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 72,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 103,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Pagination"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 103,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 104,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\AdminSorting"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 130,
+      "from": "Moderation",
+      "to": "Status",
+      "class": "Status\\Feed"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 141,
+      "from": "Moderation",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 150,
+      "from": "Moderation",
+      "to": "Database",
+      "class": "Database\\Query"
+    },
+    {
+      "file": "App/Moderation/Resource.php",
+      "line": 23,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Moderation/Resource.php",
+      "line": 24,
+      "from": "Moderation",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Moderation/Resource.php",
+      "line": 25,
+      "from": "Moderation",
+      "to": "Status",
+      "class": "Status\\Resource"
+    },
+    {
+      "file": "App/Moderation/Resource.php",
+      "line": 45,
+      "from": "Moderation",
+      "to": "Status",
+      "class": "Status\\Comments"
+    },
+    {
+      "file": "App/Moderation/Restrictions.php",
+      "line": 17,
+      "from": "Moderation",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Moderation/Restrictions.php",
+      "line": 30,
+      "from": "Moderation",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Moderation/Restrictions.php",
+      "line": 54,
+      "from": "Moderation",
+      "to": "Security",
+      "class": "Security\\RateLimitPolicy"
+    },
+    {
+      "file": "App/Moderation/Restrictions.php",
+      "line": 74,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Moderation/Restrictions.php",
+      "line": 86,
+      "from": "Moderation",
+      "to": "Security",
+      "class": "Security\\RateLimiter"
+    },
+    {
+      "file": "App/Moderation/Restrictions.php",
+      "line": 97,
+      "from": "Moderation",
+      "to": "Users",
+      "class": "Users\\Roles"
+    },
+    {
+      "file": "App/Moderation/Restrictions.php",
+      "line": 147,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Moderation/Views.php",
+      "line": 6,
+      "from": "Moderation",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Module.php",
+      "line": 6,
+      "from": "(composition)",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 5,
+      "from": "(composition)",
+      "to": "Installation",
+      "class": "Installation\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 6,
+      "from": "(composition)",
+      "to": "Users",
+      "class": "Users\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 7,
+      "from": "(composition)",
+      "to": "Notifications",
+      "class": "Notifications\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 8,
+      "from": "(composition)",
+      "to": "Status",
+      "class": "Status\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 9,
+      "from": "(composition)",
+      "to": "Bots",
+      "class": "Bots\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 10,
+      "from": "(composition)",
+      "to": "Settings",
+      "class": "Settings\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 11,
+      "from": "(composition)",
+      "to": "Moderation",
+      "class": "Moderation\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 12,
+      "from": "(composition)",
+      "to": "Search",
+      "class": "Search\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 13,
+      "from": "(composition)",
+      "to": "Security",
+      "class": "Security\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 14,
+      "from": "(composition)",
+      "to": "Scheduler",
+      "class": "Scheduler\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 15,
+      "from": "(composition)",
+      "to": "Health",
+      "class": "Health\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 16,
+      "from": "(composition)",
+      "to": "Updates",
+      "class": "Updates\\Module"
+    },
+    {
+      "file": "App/modules.php",
+      "line": 17,
+      "from": "(composition)",
+      "to": "Site",
+      "class": "Site\\Module"
+    },
+    {
+      "file": "App/Notifications/Api.php",
+      "line": 5,
+      "from": "Notifications",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Notifications/Api.php",
+      "line": 6,
+      "from": "Notifications",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Notifications/Api.php",
+      "line": 7,
+      "from": "Notifications",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Notifications/Api.php",
+      "line": 9,
+      "from": "Notifications",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Notifications/Api.php",
+      "line": 10,
+      "from": "Notifications",
+      "to": "Users",
+      "class": "Users\\Api"
+    },
+    {
+      "file": "App/Notifications/Api.php",
+      "line": 19,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Notifications/Api.php",
+      "line": 29,
+      "from": "Notifications",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 17,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 18,
+      "from": "Notifications",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 45,
+      "from": "Notifications",
+      "to": "Users",
+      "class": "Users\\Roles"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 50,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 99,
+      "from": "Notifications",
+      "to": "Status",
+      "class": "Status\\Mentions"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 136,
+      "from": "Notifications",
+      "to": "Status",
+      "class": "Status\\PostCreation"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 179,
+      "from": "Notifications",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 219,
+      "from": "Notifications",
+      "to": "Status",
+      "class": "Status\\Comments"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 258,
+      "from": "Notifications",
+      "to": "Mail",
+      "class": "Mail\\Templates"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 260,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 261,
+      "from": "Notifications",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Notifications/Inbox.php",
+      "line": 41,
+      "from": "Notifications",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Notifications/Inbox.php",
+      "line": 42,
+      "from": "Notifications",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Notifications/Inbox.php",
+      "line": 75,
+      "from": "Notifications",
+      "to": "Database",
+      "class": "Database\\Queries"
+    },
+    {
+      "file": "App/Notifications/Inbox.php",
+      "line": 104,
+      "from": "Notifications",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Notifications/Inbox.php",
+      "line": 206,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Notifications/Inbox.php",
+      "line": 217,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Notifications/Inbox.php",
+      "line": 230,
+      "from": "Notifications",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Notifications/Module.php",
+      "line": 13,
+      "from": "Notifications",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Notifications/Module.php",
+      "line": 16,
+      "from": "Notifications",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Notifications/Module.php",
+      "line": 17,
+      "from": "Notifications",
+      "to": "Users",
+      "class": "Users\\Access"
+    },
+    {
+      "file": "App/Notifications/Module.php",
+      "line": 18,
+      "from": "Notifications",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Notifications/Module.php",
+      "line": 18,
+      "from": "Notifications",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Notifications/Pages.php",
+      "line": 5,
+      "from": "Notifications",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Notifications/Pages.php",
+      "line": 6,
+      "from": "Notifications",
+      "to": "Site",
+      "class": "Site\\Layout"
+    },
+    {
+      "file": "App/Notifications/Pages.php",
+      "line": 7,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Notifications/Pages.php",
+      "line": 8,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Notifications/Pages.php",
+      "line": 9,
+      "from": "Notifications",
+      "to": "Users",
+      "class": "Users\\Access"
+    },
+    {
+      "file": "App/Notifications/Resource.php",
+      "line": 22,
+      "from": "Notifications",
+      "to": "Users",
+      "class": "Users\\Avatars"
+    },
+    {
+      "file": "App/Notifications/Resource.php",
+      "line": 25,
+      "from": "Notifications",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Notifications/Resource.php",
+      "line": 26,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Notifications/templates/page.php",
+      "line": 8,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Notifications/templates/parts/menu.php",
+      "line": 4,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Notifications/templates/parts/menu.php",
+      "line": 5,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Notifications/templates/parts/page.php",
+      "line": 4,
+      "from": "Notifications",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Notifications/templates/parts/page.php",
+      "line": 5,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Notifications/templates/parts/page.php",
+      "line": 6,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Notifications/templates/parts/page.php",
+      "line": 29,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Notifications/templates/parts/page.php",
+      "line": 29,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Notifications/Views.php",
+      "line": 6,
+      "from": "Notifications",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Scheduler/Actions.php",
+      "line": 5,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Scheduler/Actions.php",
+      "line": 6,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Scheduler/Actions.php",
+      "line": 7,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Scheduler/Actions.php",
+      "line": 28,
+      "from": "Scheduler",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Scheduler/Actions.php",
+      "line": 29,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Scheduler/Administration.php",
+      "line": 5,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Scheduler/Administration.php",
+      "line": 6,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Scheduler/Administration.php",
+      "line": 22,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\AdminSorting"
+    },
+    {
+      "file": "App/Scheduler/Administration.php",
+      "line": 26,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Scheduler/Administration.php",
+      "line": 42,
+      "from": "Scheduler",
+      "to": "Bots",
+      "class": "Bots\\Resource"
+    },
+    {
+      "file": "App/Scheduler/Api.php",
+      "line": 5,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Scheduler/Api.php",
+      "line": 6,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Scheduler/Api.php",
+      "line": 10,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Scheduler/Api.php",
+      "line": 14,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Scheduler/Api.php",
+      "line": 18,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 53,
+      "from": "Scheduler",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 114,
+      "from": "Scheduler",
+      "to": "Status",
+      "class": "Status\\ImageStorage"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 115,
+      "from": "Scheduler",
+      "to": "Status",
+      "class": "Status\\Links"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 116,
+      "from": "Scheduler",
+      "to": "Users",
+      "class": "Users\\Avatar"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 118,
+      "from": "Scheduler",
+      "to": "Updates",
+      "class": "Updates\\Cleanup"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 119,
+      "from": "Scheduler",
+      "to": "Bots",
+      "class": "Bots\\Cleanup"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 120,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 143,
+      "from": "Scheduler",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 168,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 168,
+      "from": "Scheduler",
+      "to": "Security",
+      "class": "Security\\RateLimitPolicy"
+    },
+    {
+      "file": "App/Scheduler/FileCleanup.php",
+      "line": 5,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\FileSweep"
+    },
+    {
+      "file": "App/Scheduler/FileCleanup.php",
+      "line": 6,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Scheduler/FileCleanup.php",
+      "line": 7,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Scheduler/History.php",
+      "line": 5,
+      "from": "Scheduler",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Scheduler/History.php",
+      "line": 6,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Scheduler/History.php",
+      "line": 32,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Scheduler/Module.php",
+      "line": 15,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Scheduler/Module.php",
+      "line": 23,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Scheduler/Module.php",
+      "line": 26,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 5,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 6,
+      "from": "Scheduler",
+      "to": "Site",
+      "class": "Site\\Layout"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 7,
+      "from": "Scheduler",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 8,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 9,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 10,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 11,
+      "from": "Scheduler",
+      "to": "Users",
+      "class": "Users\\Access"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 21,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 31,
+      "from": "Scheduler",
+      "to": "Site",
+      "class": "Site\\Errors"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 66,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Scheduler/Pages.php",
+      "line": 66,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Markup"
+    },
+    {
+      "file": "App/Scheduler/Repository.php",
+      "line": 5,
+      "from": "Scheduler",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Scheduler/Repository.php",
+      "line": 6,
+      "from": "Scheduler",
+      "to": "Database",
+      "class": "Database\\Query"
+    },
+    {
+      "file": "App/Scheduler/Repository.php",
+      "line": 31,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\AdminSorting"
+    },
+    {
+      "file": "App/Scheduler/Resource.php",
+      "line": 5,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Scheduler/Resource.php",
+      "line": 31,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\AdminSorting"
+    },
+    {
+      "file": "App/Scheduler/Resource.php",
+      "line": 59,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Scheduler/Runner.php",
+      "line": 6,
+      "from": "Scheduler",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Scheduler/Runner.php",
+      "line": 7,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Scheduler/Tasks.php",
+      "line": 10,
+      "from": "Scheduler",
+      "to": "Bots",
+      "class": "Bots\\Importer"
+    },
+    {
+      "file": "App/Scheduler/Tasks.php",
+      "line": 29,
+      "from": "Scheduler",
+      "to": "Health",
+      "class": "Health\\Service"
+    },
+    {
+      "file": "App/Scheduler/templates/actions.php",
+      "line": 4,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Scheduler/templates/actions.php",
+      "line": 5,
+      "from": "Scheduler",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Scheduler/templates/administration.php",
+      "line": 12,
+      "from": "Scheduler",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Scheduler/Tokens.php",
+      "line": 13,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Scheduler/Tokens.php",
+      "line": 17,
+      "from": "Scheduler",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Scheduler/Tokens.php",
+      "line": 56,
+      "from": "Scheduler",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Search/Api.php",
+      "line": 5,
+      "from": "Search",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Search/Api.php",
+      "line": 9,
+      "from": "Search",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Search/Api.php",
+      "line": 17,
+      "from": "Search",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Search/Api.php",
+      "line": 29,
+      "from": "Search",
+      "to": "Status",
+      "class": "Status\\Feed"
+    },
+    {
+      "file": "App/Search/Api.php",
+      "line": 30,
+      "from": "Search",
+      "to": "Status",
+      "class": "Status\\Resource"
+    },
+    {
+      "file": "App/Search/Api.php",
+      "line": 30,
+      "from": "Search",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Search/Api.php",
+      "line": 38,
+      "from": "Search",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Search/Guard.php",
+      "line": 11,
+      "from": "Search",
+      "to": "Security",
+      "class": "Security\\RateLimitPolicy"
+    },
+    {
+      "file": "App/Search/Guard.php",
+      "line": 11,
+      "from": "Search",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Search/Guard.php",
+      "line": 12,
+      "from": "Search",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Search/Guard.php",
+      "line": 19,
+      "from": "Search",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Search/Guard.php",
+      "line": 19,
+      "from": "Search",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Search/Guard.php",
+      "line": 99,
+      "from": "Search",
+      "to": "Moderation",
+      "class": "Moderation\\Restrictions"
+    },
+    {
+      "file": "App/Search/Guard.php",
+      "line": 106,
+      "from": "Search",
+      "to": "Security",
+      "class": "Security\\RateLimiter"
+    },
+    {
+      "file": "App/Search/Guard.php",
+      "line": 117,
+      "from": "Search",
+      "to": "Security",
+      "class": "Security\\Captcha"
+    },
+    {
+      "file": "App/Search/Module.php",
+      "line": 7,
+      "from": "Search",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Search/Module.php",
+      "line": 10,
+      "from": "Search",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Search/Module.php",
+      "line": 10,
+      "from": "Search",
+      "to": "Status",
+      "class": "Status\\Syndication"
+    },
+    {
+      "file": "App/Search/Pages.php",
+      "line": 5,
+      "from": "Search",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Search/Pages.php",
+      "line": 6,
+      "from": "Search",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Search/Pages.php",
+      "line": 7,
+      "from": "Search",
+      "to": "Security",
+      "class": "Security\\Captcha"
+    },
+    {
+      "file": "App/Search/Pages.php",
+      "line": 8,
+      "from": "Search",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Search/Pages.php",
+      "line": 9,
+      "from": "Search",
+      "to": "Status",
+      "class": "Status\\Feed"
+    },
+    {
+      "file": "App/Search/Pages.php",
+      "line": 10,
+      "from": "Search",
+      "to": "Status",
+      "class": "Status\\ViewData"
+    },
+    {
+      "file": "App/Search/Pages.php",
+      "line": 11,
+      "from": "Search",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Search/Pages.php",
+      "line": 12,
+      "from": "Search",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Search/Pages.php",
+      "line": 19,
+      "from": "Search",
+      "to": "Site",
+      "class": "Site\\PublicPages"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 6,
+      "from": "Search",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 75,
+      "from": "Search",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 76,
+      "from": "Search",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 77,
+      "from": "Search",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 78,
+      "from": "Search",
+      "to": "Users",
+      "class": "Users\\Avatars"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 88,
+      "from": "Search",
+      "to": "Status",
+      "class": "Status\\Tags"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 131,
+      "from": "Search",
+      "to": "Users",
+      "class": "Users\\Usernames"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 139,
+      "from": "Search",
+      "to": "Database",
+      "class": "Database\\Queries"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 236,
+      "from": "Search",
+      "to": "Status",
+      "class": "Status\\Feed"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 253,
+      "from": "Search",
+      "to": "Database",
+      "class": "Database\\Query"
+    },
+    {
+      "file": "App/Security/Api.php",
+      "line": 5,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Security/Api.php",
+      "line": 6,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Security/Api.php",
+      "line": 10,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Security/Api.php",
+      "line": 14,
+      "from": "Security",
+      "to": "Search",
+      "class": "Search\\Guard"
+    },
+    {
+      "file": "App/Security/Api.php",
+      "line": 14,
+      "from": "Security",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Security/Api.php",
+      "line": 15,
+      "from": "Security",
+      "to": "Users",
+      "class": "Users\\Login"
+    },
+    {
+      "file": "App/Security/Api.php",
+      "line": 15,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Security/Captcha.php",
+      "line": 44,
+      "from": "Security",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Security/Captcha.php",
+      "line": 68,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Security/Captcha.php",
+      "line": 84,
+      "from": "Security",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Security/Captcha.php",
+      "line": 89,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Security/Captcha.php",
+      "line": 127,
+      "from": "Security",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Security/Csrf.php",
+      "line": 6,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Security/Csrf.php",
+      "line": 7,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Security/Csrf.php",
+      "line": 8,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Security/Csrf.php",
+      "line": 54,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Security/Images.php",
+      "line": 190,
+      "from": "Security",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Security/Images.php",
+      "line": 195,
+      "from": "Security",
+      "to": "Support",
+      "class": "Support\\Storage"
+    },
+    {
+      "file": "App/Security/Images.php",
+      "line": 201,
+      "from": "Security",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Security/Images.php",
+      "line": 216,
+      "from": "Security",
+      "to": "Site",
+      "class": "Site\\Identity"
+    },
+    {
+      "file": "App/Security/Module.php",
+      "line": 13,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Security/RateLimiter.php",
+      "line": 22,
+      "from": "Security",
+      "to": "Moderation",
+      "class": "Moderation\\Restrictions"
+    },
+    {
+      "file": "App/Security/RateLimiter.php",
+      "line": 24,
+      "from": "Security",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Security/RateLimiter.php",
+      "line": 45,
+      "from": "Security",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Security/RateLimiter.php",
+      "line": 73,
+      "from": "Security",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Security/RateLimiter.php",
+      "line": 91,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Security/RequestLimits.php",
+      "line": 13,
+      "from": "Security",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Security/RequestLimits.php",
+      "line": 14,
+      "from": "Security",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Security/Sanitizer.php",
+      "line": 21,
+      "from": "Security",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Security/Sanitizer.php",
+      "line": 21,
+      "from": "Security",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Settings/Actions.php",
+      "line": 17,
+      "from": "Settings",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Settings/Actions.php",
+      "line": 20,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 33,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 92,
+      "from": "Settings",
+      "to": "Mail",
+      "class": "Mail\\Smtp"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 93,
+      "from": "Settings",
+      "to": "Mail",
+      "class": "Mail\\Templates"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 130,
+      "from": "Settings",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 132,
+      "from": "Settings",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 191,
+      "from": "Settings",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 196,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 207,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 245,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 265,
+      "from": "Settings",
+      "to": "Moderation",
+      "class": "Moderation\\Blocking"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 358,
+      "from": "Settings",
+      "to": "Security",
+      "class": "Security\\RequestLimits"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 358,
+      "from": "Settings",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Settings/Administration.php",
+      "line": 359,
+      "from": "Settings",
+      "to": "Security",
+      "class": "Security\\Images"
+    },
+    {
+      "file": "App/Settings/Api.php",
+      "line": 5,
+      "from": "Settings",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Settings/Api.php",
+      "line": 9,
+      "from": "Settings",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Settings/Module.php",
+      "line": 13,
+      "from": "Settings",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Settings/Store.php",
+      "line": 9,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Settings/Store.php",
+      "line": 10,
+      "from": "Settings",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Settings/Store.php",
+      "line": 11,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Config"
+    },
+    {
+      "file": "App/Settings/Store.php",
+      "line": 127,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Settings/Store.php",
+      "line": 275,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Settings/Store.php",
+      "line": 307,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Values"
+    },
+    {
+      "file": "App/Settings/templates/editor.php",
+      "line": 4,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Settings/templates/editor.php",
+      "line": 9,
+      "from": "Settings",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Settings/templates/parts/field.php",
+      "line": 4,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Settings/templates/parts/field.php",
+      "line": 5,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Settings/templates/parts/field.php",
+      "line": 6,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Settings/templates/parts/site-image.php",
+      "line": 4,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Settings/Views.php",
+      "line": 6,
+      "from": "Settings",
+      "to": "Mail",
+      "class": "Mail\\Templates"
+    },
+    {
+      "file": "App/Settings/Views.php",
+      "line": 7,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Settings/Views.php",
+      "line": 8,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Settings/Views.php",
+      "line": 9,
+      "from": "Settings",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Site/Api.php",
+      "line": 7,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Site/Api.php",
+      "line": 10,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Site/Api.php",
+      "line": 14,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Tags"
+    },
+    {
+      "file": "App/Site/Api.php",
+      "line": 14,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Resource"
+    },
+    {
+      "file": "App/Site/Api.php",
+      "line": 14,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Repository"
+    },
+    {
+      "file": "App/Site/Api.php",
+      "line": 14,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\RichText"
+    },
+    {
+      "file": "App/Site/Api.php",
+      "line": 15,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Site/Dashboard.php",
+      "line": 13,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/Dashboard.php",
+      "line": 30,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Site/Dashboard.php",
+      "line": 44,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Site/Dashboard.php",
+      "line": 45,
+      "from": "Site",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Site/Dashboard.php",
+      "line": 67,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Site/Dashboard.php",
+      "line": 110,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Roles"
+    },
+    {
+      "file": "App/Site/DashboardViewData.php",
+      "line": 6,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Site/DashboardViewData.php",
+      "line": 7,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Format"
+    },
+    {
+      "file": "App/Site/DashboardViewData.php",
+      "line": 8,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/DashboardViewData.php",
+      "line": 9,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Site/DashboardViewData.php",
+      "line": 31,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Site/Discovery.php",
+      "line": 6,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Document"
+    },
+    {
+      "file": "App/Site/Discovery.php",
+      "line": 7,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Site/Discovery.php",
+      "line": 8,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Xml"
+    },
+    {
+      "file": "App/Site/Discovery.php",
+      "line": 21,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Site/Discovery.php",
+      "line": 21,
+      "from": "Site",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Site/Discovery.php",
+      "line": 60,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/Discovery.php",
+      "line": 80,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Export"
+    },
+    {
+      "file": "App/Site/Discovery.php",
+      "line": 82,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Images"
+    },
+    {
+      "file": "App/Site/Discovery.php",
+      "line": 92,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Site/Discovery.php",
+      "line": 106,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Site/Errors.php",
+      "line": 7,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Site/Errors.php",
+      "line": 8,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Site/Errors.php",
+      "line": 9,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Site/Errors.php",
+      "line": 10,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/Errors.php",
+      "line": 55,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Embed"
+    },
+    {
+      "file": "App/Site/Errors.php",
+      "line": 66,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Site/Identity.php",
+      "line": 9,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Site/Identity.php",
+      "line": 145,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Site/Identity.php",
+      "line": 180,
+      "from": "Site",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Site/Identity.php",
+      "line": 220,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Document"
+    },
+    {
+      "file": "App/Site/Identity.php",
+      "line": 247,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Site/Layout.php",
+      "line": 5,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Assets"
+    },
+    {
+      "file": "App/Site/Layout.php",
+      "line": 6,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Site/Layout.php",
+      "line": 7,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Values"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 13,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Version"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 18,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 20,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 22,
+      "from": "Site",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 23,
+      "from": "Site",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 26,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\ClientAssets"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 29,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Assets"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 36,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 46,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 58,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 58,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 87,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 88,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 100,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 107,
+      "from": "Site",
+      "to": "Settings",
+      "class": "Settings\\Views"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 108,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Login"
+    },
+    {
+      "file": "App/Site/LayoutData.php",
+      "line": 114,
+      "from": "Site",
+      "to": "Notifications",
+      "class": "Notifications\\Inbox"
+    },
+    {
+      "file": "App/Site/LocaleRouting.php",
+      "line": 6,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Site/LocaleRouting.php",
+      "line": 7,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Site/LocaleRouting.php",
+      "line": 8,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/Module.php",
+      "line": 7,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Site/Module.php",
+      "line": 9,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\LocalUrls"
+    },
+    {
+      "file": "App/Site/Module.php",
+      "line": 11,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Site/Module.php",
+      "line": 12,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Site/Module.php",
+      "line": 19,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Document"
+    },
+    {
+      "file": "App/Site/Navigation.php",
+      "line": 11,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/Navigation.php",
+      "line": 13,
+      "from": "Site",
+      "to": "Bots",
+      "class": "Bots\\Module"
+    },
+    {
+      "file": "App/Site/Navigation.php",
+      "line": 21,
+      "from": "Site",
+      "to": "Scheduler",
+      "class": "Scheduler\\Module"
+    },
+    {
+      "file": "App/Site/Navigation.php",
+      "line": 22,
+      "from": "Site",
+      "to": "Health",
+      "class": "Health\\Module"
+    },
+    {
+      "file": "App/Site/Navigation.php",
+      "line": 47,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Site/Pages.php",
+      "line": 5,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Site/Pages.php",
+      "line": 6,
+      "from": "Site",
+      "to": "Moderation",
+      "class": "Moderation\\Restrictions"
+    },
+    {
+      "file": "App/Site/Pages.php",
+      "line": 7,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Site/Pages.php",
+      "line": 8,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/Pages.php",
+      "line": 9,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Site/Pages.php",
+      "line": 10,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Access"
+    },
+    {
+      "file": "App/Site/Presentation.php",
+      "line": 10,
+      "from": "Site",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Site/Presentation.php",
+      "line": 38,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/Presentation.php",
+      "line": 74,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Site/Presentation.php",
+      "line": 93,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Site/Presentation.php",
+      "line": 111,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Tags"
+    },
+    {
+      "file": "App/Site/Presentation.php",
+      "line": 115,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Site/Presentation.php",
+      "line": 119,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Repository"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 6,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 7,
+      "from": "Site",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 8,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Resource"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 9,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 10,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 11,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Resource"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 21,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Pages"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 22,
+      "from": "Site",
+      "to": "Search",
+      "class": "Search\\Pages"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 24,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Pages"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 35,
+      "from": "Site",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 49,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 64,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Version"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 74,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 91,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Site/PublicPages.php",
+      "line": 104,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Login"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 39,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 62,
+      "from": "Site",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 66,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 138,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 139,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Tags"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 140,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 148,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\ImageStorage"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 163,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Site/templates/admin.php",
+      "line": 21,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/templates/admin.php",
+      "line": 67,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Version"
+    },
+    {
+      "file": "App/Site/templates/document.php",
+      "line": 14,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/templates/errorFallback.php",
+      "line": 9,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/templates/head.php",
+      "line": 43,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/templates/head.php",
+      "line": 43,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Site/templates/head.php",
+      "line": 93,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Site/templates/head.php",
+      "line": 147,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Site/templates/notFound.php",
+      "line": 12,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/templates/parts/install/steps.php",
+      "line": 4,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/templates/parts/sidebar-slot.php",
+      "line": 4,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/templates/parts/user-menu.php",
+      "line": 4,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/templates/parts/user-menu.php",
+      "line": 16,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Views"
+    },
+    {
+      "file": "App/Site/templates/parts/user-menu.php",
+      "line": 32,
+      "from": "Site",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Site/templates/privacy.php",
+      "line": 49,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/templates/public.php",
+      "line": 31,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Site/templates/public.php",
+      "line": 57,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Site/Views.php",
+      "line": 6,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Site/Views.php",
+      "line": 8,
+      "from": "Site",
+      "to": "Status",
+      "class": "Status\\Tags"
+    },
+    {
+      "file": "App/Site/Views.php",
+      "line": 17,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\Markup"
+    },
+    {
+      "file": "App/Site/Views.php",
+      "line": 41,
+      "from": "Site",
+      "to": "Users",
+      "class": "Users\\Resource"
+    },
+    {
+      "file": "App/Site/Views.php",
+      "line": 50,
+      "from": "Site",
+      "to": "Support",
+      "class": "Support\\RichText"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 15,
+      "from": "Status",
+      "to": "Security",
+      "class": "Security\\RateLimiter"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 22,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 23,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 62,
+      "from": "Status",
+      "to": "Moderation",
+      "class": "Moderation\\Restrictions"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 65,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 74,
+      "from": "Status",
+      "to": "Security",
+      "class": "Security\\RateLimitPolicy"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 100,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 147,
+      "from": "Status",
+      "to": "Security",
+      "class": "Security\\RequestLimits"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 168,
+      "from": "Status",
+      "to": "Notifications",
+      "class": "Notifications\\Delivery"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 239,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 264,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 267,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 311,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 434,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Login"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 469,
+      "from": "Status",
+      "to": "Moderation",
+      "class": "Moderation\\Blocking"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 5,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 6,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 7,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 8,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 10,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 11,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Api"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 22,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 98,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Access"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 100,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 107,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Resource"
+    },
+    {
+      "file": "App/Status/Api.php",
+      "line": 133,
+      "from": "Status",
+      "to": "Security",
+      "class": "Security\\RateLimiter"
+    },
+    {
+      "file": "App/Status/Audio.php",
+      "line": 48,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Client"
+    },
+    {
+      "file": "App/Status/Comments.php",
+      "line": 48,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Query"
+    },
+    {
+      "file": "App/Status/Comments.php",
+      "line": 50,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Queries"
+    },
+    {
+      "file": "App/Status/Comments.php",
+      "line": 132,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Status/Comments.php",
+      "line": 158,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Comments.php",
+      "line": 177,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Status/Comments.php",
+      "line": 249,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Comments.php",
+      "line": 366,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Status/Comments.php",
+      "line": 370,
+      "from": "Status",
+      "to": "Notifications",
+      "class": "Notifications\\Inbox"
+    },
+    {
+      "file": "App/Status/ContentLinks.php",
+      "line": 5,
+      "from": "Status",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Status/ContentLinks.php",
+      "line": 28,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/ContentLinks.php",
+      "line": 28,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 6,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 7,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Document"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 8,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 9,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 10,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Discovery"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 11,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\LocaleRouting"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 12,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 13,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Assets"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 14,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 15,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 16,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 17,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 18,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Xml"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 87,
+      "from": "Status",
+      "to": "Security",
+      "class": "Security\\Sanitizer"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 184,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Avatars"
+    },
+    {
+      "file": "App/Status/Export.php",
+      "line": 6,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Export.php",
+      "line": 7,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 13,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Query"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 65,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 70,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 74,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Queries"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 200,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Following"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 334,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 394,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 405,
+      "from": "Status",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 432,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Status/Images.php",
+      "line": 13,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Images.php",
+      "line": 38,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Status/Images.php",
+      "line": 42,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Status/Images.php",
+      "line": 71,
+      "from": "Status",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Status/ImageStorage.php",
+      "line": 52,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Client"
+    },
+    {
+      "file": "App/Status/ImageStorage.php",
+      "line": 54,
+      "from": "Status",
+      "to": "Moderation",
+      "class": "Moderation\\Blocking"
+    },
+    {
+      "file": "App/Status/ImageStorage.php",
+      "line": 76,
+      "from": "Status",
+      "to": "Security",
+      "class": "Security\\Images"
+    },
+    {
+      "file": "App/Status/ImageStorage.php",
+      "line": 109,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Status/ImageStorage.php",
+      "line": 111,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Storage"
+    },
+    {
+      "file": "App/Status/ImageStorage.php",
+      "line": 171,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\FileSweep"
+    },
+    {
+      "file": "App/Status/ImageStorage.php",
+      "line": 180,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 52,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 67,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 167,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Queries"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 200,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 207,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 243,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 336,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 407,
+      "from": "Status",
+      "to": "Security",
+      "class": "Security\\Images"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 410,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Storage"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 439,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\FileSweep"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 487,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 561,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Status/Links.php",
+      "line": 577,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Status/Mentions.php",
+      "line": 14,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Status/Mentions.php",
+      "line": 28,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Queries"
+    },
+    {
+      "file": "App/Status/Mentions.php",
+      "line": 39,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Usernames"
+    },
+    {
+      "file": "App/Status/Mentions.php",
+      "line": 59,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\LocaleRouting"
+    },
+    {
+      "file": "App/Status/Metadata.php",
+      "line": 28,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Client"
+    },
+    {
+      "file": "App/Status/Module.php",
+      "line": 13,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Status/Module.php",
+      "line": 16,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Status/Module.php",
+      "line": 19,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Document"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 5,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 6,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 7,
+      "from": "Status",
+      "to": "Moderation",
+      "class": "Moderation\\Restrictions"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 8,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Pages"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 9,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 10,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 11,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 12,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 13,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 14,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 22,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\PublicPages"
+    },
+    {
+      "file": "App/Status/Pages.php",
+      "line": 141,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Errors"
+    },
+    {
+      "file": "App/Status/PostCreation.php",
+      "line": 7,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/PostCreation.php",
+      "line": 8,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Status/PostCreation.php",
+      "line": 24,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Status/PostCreation.php",
+      "line": 25,
+      "from": "Status",
+      "to": "Moderation",
+      "class": "Moderation\\Blocking"
+    },
+    {
+      "file": "App/Status/PostCreation.php",
+      "line": 80,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 16,
+      "from": "Status",
+      "to": "Security",
+      "class": "Security\\RateLimitPolicy"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 26,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\LocalUrls"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 48,
+      "from": "Status",
+      "to": "Search",
+      "class": "Search\\Queries"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 80,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Usernames"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 109,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Queries"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 125,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 198,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 216,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 217,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 223,
+      "from": "Status",
+      "to": "Notifications",
+      "class": "Notifications\\Inbox"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 268,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Providers.php",
+      "line": 6,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Client"
+    },
+    {
+      "file": "App/Status/Providers.php",
+      "line": 7,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Status/Reactions.php",
+      "line": 32,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Status/Reactions.php",
+      "line": 45,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Queries"
+    },
+    {
+      "file": "App/Status/Reactions.php",
+      "line": 73,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Resource.php",
+      "line": 55,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Resource.php",
+      "line": 58,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Login"
+    },
+    {
+      "file": "App/Status/Resource.php",
+      "line": 60,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Status/Resource.php",
+      "line": 87,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Status/Resource.php",
+      "line": 87,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Avatars"
+    },
+    {
+      "file": "App/Status/Segments.php",
+      "line": 51,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Status/Syndication.php",
+      "line": 16,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Status/Syndication.php",
+      "line": 18,
+      "from": "Status",
+      "to": "Search",
+      "class": "Search\\Queries"
+    },
+    {
+      "file": "App/Status/Syndication.php",
+      "line": 20,
+      "from": "Status",
+      "to": "Http",
+      "class": "Http\\Document"
+    },
+    {
+      "file": "App/Status/Syndication.php",
+      "line": 25,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Status/Syndication.php",
+      "line": 46,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Repository"
+    },
+    {
+      "file": "App/Status/Syndication.php",
+      "line": 53,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Status/Syndication.php",
+      "line": 64,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Status/Syndication.php",
+      "line": 66,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Discovery"
+    },
+    {
+      "file": "App/Status/Syndication.php",
+      "line": 85,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Xml"
+    },
+    {
+      "file": "App/Status/Tags.php",
+      "line": 14,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\LocalUrls"
+    },
+    {
+      "file": "App/Status/Tags.php",
+      "line": 31,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Status/Tags.php",
+      "line": 34,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Status/Tags.php",
+      "line": 47,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Status/Tags.php",
+      "line": 50,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Queries"
+    },
+    {
+      "file": "App/Status/Tags.php",
+      "line": 93,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Status/Tags.php",
+      "line": 243,
+      "from": "Status",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Status/templates/embed.php",
+      "line": 3,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Status/templates/embed.php",
+      "line": 4,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Status/templates/parts/composer.php",
+      "line": 4,
+      "from": "Status",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Status/templates/parts/composer.php",
+      "line": 6,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Status/templates/parts/composer.php",
+      "line": 7,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Status/templates/parts/feed.php",
+      "line": 4,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Status/templates/parts/home-feed.php",
+      "line": 4,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Status/templates/parts/home-feed.php",
+      "line": 5,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Status/ViewData.php",
+      "line": 15,
+      "from": "Status",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Status/ViewData.php",
+      "line": 33,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Status/ViewData.php",
+      "line": 125,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Avatars"
+    },
+    {
+      "file": "App/Status/ViewData.php",
+      "line": 205,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Status/ViewData.php",
+      "line": 319,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Authentication"
+    },
+    {
+      "file": "App/Status/Views.php",
+      "line": 6,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Status/Views.php",
+      "line": 8,
+      "from": "Status",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Status/Views.php",
+      "line": 9,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Login"
+    },
+    {
+      "file": "App/Status/Views.php",
+      "line": 10,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Profiles"
+    },
+    {
+      "file": "App/Status/Views.php",
+      "line": 49,
+      "from": "Status",
+      "to": "Users",
+      "class": "Users\\Resource"
+    },
+    {
+      "file": "App/Support/AdminSorting.php",
+      "line": 25,
+      "from": "Support",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Support/AdminViews.php",
+      "line": 102,
+      "from": "Support",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Support/Assets.php",
+      "line": 30,
+      "from": "Support",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Support/Cache.php",
+      "line": 676,
+      "from": "Support",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Support/ClientAssets.php",
+      "line": 139,
+      "from": "Support",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Support/Components.php",
+      "line": 178,
+      "from": "Support",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Support/Dates.php",
+      "line": 16,
+      "from": "Support",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Support/Localization.php",
+      "line": 38,
+      "from": "Support",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Support/RichText.php",
+      "line": 27,
+      "from": "Support",
+      "to": "Security",
+      "class": "Security\\Sanitizer"
+    },
+    {
+      "file": "App/Support/View.php",
+      "line": 52,
+      "from": "Support",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Updates/Api.php",
+      "line": 5,
+      "from": "Updates",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Updates/Api.php",
+      "line": 9,
+      "from": "Updates",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Updates/Api.php",
+      "line": 15,
+      "from": "Updates",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Updates/Cleanup.php",
+      "line": 5,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\FileSweep"
+    },
+    {
+      "file": "App/Updates/Cleanup.php",
+      "line": 6,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Storage"
+    },
+    {
+      "file": "App/Updates/Cleanup.php",
+      "line": 7,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Updates/Cleanup.php",
+      "line": 123,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Config"
+    },
+    {
+      "file": "App/Updates/Manager.php",
+      "line": 15,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Updates/Manager.php",
+      "line": 37,
+      "from": "Updates",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Updates/Manager.php",
+      "line": 89,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Version"
+    },
+    {
+      "file": "App/Updates/Manager.php",
+      "line": 289,
+      "from": "Updates",
+      "to": "Site",
+      "class": "Site\\Errors"
+    },
+    {
+      "file": "App/Updates/Manager.php",
+      "line": 549,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Updates/Manager.php",
+      "line": 655,
+      "from": "Updates",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Updates/Manager.php",
+      "line": 897,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Storage"
+    },
+    {
+      "file": "App/Updates/MigrationRegistry.php",
+      "line": 21,
+      "from": "Updates",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Updates/MigrationRegistry.php",
+      "line": 166,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Updates/Module.php",
+      "line": 7,
+      "from": "Updates",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Updates/Module.php",
+      "line": 10,
+      "from": "Updates",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Updates/Package.php",
+      "line": 113,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Storage"
+    },
+    {
+      "file": "App/Updates/Package.php",
+      "line": 128,
+      "from": "Updates",
+      "to": "Http",
+      "class": "Http\\Client"
+    },
+    {
+      "file": "App/Updates/Package.php",
+      "line": 130,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Version"
+    },
+    {
+      "file": "App/Updates/Pages.php",
+      "line": 5,
+      "from": "Updates",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Updates/Pages.php",
+      "line": 6,
+      "from": "Updates",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Updates/Pages.php",
+      "line": 7,
+      "from": "Updates",
+      "to": "Site",
+      "class": "Site\\Layout"
+    },
+    {
+      "file": "App/Updates/Pages.php",
+      "line": 8,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Updates/Pages.php",
+      "line": 9,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Updates/Pages.php",
+      "line": 10,
+      "from": "Updates",
+      "to": "Users",
+      "class": "Users\\Access"
+    },
+    {
+      "file": "App/Updates/Pages.php",
+      "line": 38,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Updates/Pages.php",
+      "line": 38,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Updates/Pages.php",
+      "line": 45,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Updates/Pages.php",
+      "line": 45,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Markup"
+    },
+    {
+      "file": "App/Updates/templates/actions.php",
+      "line": 9,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Updates/templates/actions.php",
+      "line": 9,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Updates/templates/actions.php",
+      "line": 12,
+      "from": "Updates",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Updates/templates/actions.php",
+      "line": 14,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Updates/templates/administration.php",
+      "line": 12,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Updates/templates/administration.php",
+      "line": 13,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Updates/templates/administration.php",
+      "line": 14,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Updates/templates/administration.php",
+      "line": 22,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Version"
+    },
+    {
+      "file": "App/Updates/templates/administration.php",
+      "line": 26,
+      "from": "Updates",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Updates/templates/administration.php",
+      "line": 101,
+      "from": "Updates",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Users/Access.php",
+      "line": 20,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Users/Access.php",
+      "line": 20,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Users/Access.php",
+      "line": 21,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Users/Access.php",
+      "line": 21,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/Access.php",
+      "line": 24,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Users/Access.php",
+      "line": 67,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 15,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 16,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 37,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 42,
+      "from": "Users",
+      "to": "Mail",
+      "class": "Mail\\Templates"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 43,
+      "from": "Users",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 56,
+      "from": "Users",
+      "to": "Settings",
+      "class": "Settings\\Store"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 112,
+      "from": "Users",
+      "to": "Status",
+      "class": "Status\\Tags"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 113,
+      "from": "Users",
+      "to": "Status",
+      "class": "Status\\Links"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 118,
+      "from": "Users",
+      "to": "Status",
+      "class": "Status\\ImageStorage"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 146,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Query"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 223,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 16,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 22,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 65,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 68,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\RequestLimits"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 70,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\Captcha"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 118,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 125,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 135,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\AdminSorting"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 208,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Text"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 235,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 255,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Users/Actions.php",
+      "line": 413,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Pagination"
+    },
+    {
+      "file": "App/Users/Api.php",
+      "line": 6,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Users/Api.php",
+      "line": 7,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Users/Api.php",
+      "line": 8,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Result"
+    },
+    {
+      "file": "App/Users/Api.php",
+      "line": 10,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Users/Api.php",
+      "line": 19,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/Api.php",
+      "line": 26,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\RequestLimits"
+    },
+    {
+      "file": "App/Users/Api.php",
+      "line": 58,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Users/Api.php",
+      "line": 105,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\Captcha"
+    },
+    {
+      "file": "App/Users/Api.php",
+      "line": 176,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/Authentication.php",
+      "line": 7,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Users/Authentication.php",
+      "line": 8,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Users/Authentication.php",
+      "line": 9,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/Authentication.php",
+      "line": 10,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Values"
+    },
+    {
+      "file": "App/Users/Avatar.php",
+      "line": 62,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\Images"
+    },
+    {
+      "file": "App/Users/Avatar.php",
+      "line": 96,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Paths"
+    },
+    {
+      "file": "App/Users/Avatar.php",
+      "line": 98,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Storage"
+    },
+    {
+      "file": "App/Users/Avatar.php",
+      "line": 123,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/Avatar.php",
+      "line": 191,
+      "from": "Users",
+      "to": "Site",
+      "class": "Site\\Errors"
+    },
+    {
+      "file": "App/Users/Avatar.php",
+      "line": 225,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\FileSweep"
+    },
+    {
+      "file": "App/Users/Avatars.php",
+      "line": 46,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Users/Avatars.php",
+      "line": 60,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Users/Avatars.php",
+      "line": 60,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/Avatars.php",
+      "line": 63,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Users/Avatars.php",
+      "line": 106,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/Avatars.php",
+      "line": 146,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\RequestLimits"
+    },
+    {
+      "file": "App/Users/EmailAvailability.php",
+      "line": 6,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Users/EmailAvailability.php",
+      "line": 7,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Users/EmailAvailability.php",
+      "line": 8,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/EmailAvailability.php",
+      "line": 16,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\RequestLimits"
+    },
+    {
+      "file": "App/Users/Following.php",
+      "line": 14,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/Following.php",
+      "line": 39,
+      "from": "Users",
+      "to": "Notifications",
+      "class": "Notifications\\Delivery"
+    },
+    {
+      "file": "App/Users/GeneratedAvatar.php",
+      "line": 119,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Users/Login.php",
+      "line": 26,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Users/Login.php",
+      "line": 48,
+      "from": "Users",
+      "to": "Site",
+      "class": "Site\\LocaleRouting"
+    },
+    {
+      "file": "App/Users/Login.php",
+      "line": 98,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\LocalUrls"
+    },
+    {
+      "file": "App/Users/Login.php",
+      "line": 157,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Users/Login.php",
+      "line": 188,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\RequestLimits"
+    },
+    {
+      "file": "App/Users/Login.php",
+      "line": 189,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\Captcha"
+    },
+    {
+      "file": "App/Users/Login.php",
+      "line": 191,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Response"
+    },
+    {
+      "file": "App/Users/Login.php",
+      "line": 191,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/Module.php",
+      "line": 13,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Api"
+    },
+    {
+      "file": "App/Users/Module.php",
+      "line": 16,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Router"
+    },
+    {
+      "file": "App/Users/Module.php",
+      "line": 19,
+      "from": "Users",
+      "to": "Status",
+      "class": "Status\\Syndication"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 6,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Request"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 7,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Session"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 8,
+      "from": "Users",
+      "to": "Http",
+      "class": "Http\\Web"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 9,
+      "from": "Users",
+      "to": "Moderation",
+      "class": "Moderation\\Restrictions"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 10,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\Captcha"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 11,
+      "from": "Users",
+      "to": "Site",
+      "class": "Site\\Layout"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 12,
+      "from": "Users",
+      "to": "Site",
+      "class": "Site\\Pages"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 13,
+      "from": "Users",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 14,
+      "from": "Users",
+      "to": "Status",
+      "class": "Status\\Feed"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 15,
+      "from": "Users",
+      "to": "Status",
+      "class": "Status\\Images"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 16,
+      "from": "Users",
+      "to": "Status",
+      "class": "Status\\Posts"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 17,
+      "from": "Users",
+      "to": "Status",
+      "class": "Status\\ViewData"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 18,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 19,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Markup"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 20,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 21,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 22,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\View"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 44,
+      "from": "Users",
+      "to": "Site",
+      "class": "Site\\Errors"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 46,
+      "from": "Users",
+      "to": "Site",
+      "class": "Site\\PublicPages"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 216,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\LocalUrls"
+    },
+    {
+      "file": "App/Users/Pages.php",
+      "line": 217,
+      "from": "Users",
+      "to": "Site",
+      "class": "Site\\LocaleRouting"
+    },
+    {
+      "file": "App/Users/Profiles.php",
+      "line": 116,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/Profiles.php",
+      "line": 124,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\LocalUrls"
+    },
+    {
+      "file": "App/Users/Profiles.php",
+      "line": 166,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Users/Profiles.php",
+      "line": 170,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/Profiles.php",
+      "line": 187,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Schema"
+    },
+    {
+      "file": "App/Users/Recovery.php",
+      "line": 14,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/Recovery.php",
+      "line": 17,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Users/Recovery.php",
+      "line": 18,
+      "from": "Users",
+      "to": "Mail",
+      "class": "Mail\\Templates"
+    },
+    {
+      "file": "App/Users/Recovery.php",
+      "line": 18,
+      "from": "Users",
+      "to": "Site",
+      "class": "Site\\Presentation"
+    },
+    {
+      "file": "App/Users/Recovery.php",
+      "line": 26,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/Recovery.php",
+      "line": 40,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Transactions"
+    },
+    {
+      "file": "App/Users/Repository.php",
+      "line": 19,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Queries"
+    },
+    {
+      "file": "App/Users/Repository.php",
+      "line": 64,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/Repository.php",
+      "line": 98,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Dates"
+    },
+    {
+      "file": "App/Users/Repository.php",
+      "line": 121,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Cache"
+    },
+    {
+      "file": "App/Users/Resource.php",
+      "line": 19,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\Captcha"
+    },
+    {
+      "file": "App/Users/Resource.php",
+      "line": 35,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Users/Resource.php",
+      "line": 38,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\AdminSorting"
+    },
+    {
+      "file": "App/Users/Resource.php",
+      "line": 86,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Languages"
+    },
+    {
+      "file": "App/Users/Roles.php",
+      "line": 112,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/templates/login.php",
+      "line": 11,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Users/templates/logout.php",
+      "line": 6,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Users/templates/logout.php",
+      "line": 11,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Users/templates/parts/follow-button.php",
+      "line": 4,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Users/templates/parts/follow-button.php",
+      "line": 5,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Users/templates/recovery.php",
+      "line": 11,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Users/templates/recovery.php",
+      "line": 16,
+      "from": "Users",
+      "to": "Security",
+      "class": "Security\\Csrf"
+    },
+    {
+      "file": "App/Users/templates/register.php",
+      "line": 9,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Html"
+    },
+    {
+      "file": "App/Users/Usernames.php",
+      "line": 35,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Localization"
+    },
+    {
+      "file": "App/Users/Usernames.php",
+      "line": 55,
+      "from": "Users",
+      "to": "Database",
+      "class": "Database\\Connection"
+    },
+    {
+      "file": "App/Users/ViewData.php",
+      "line": 22,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\AdminViews"
+    },
+    {
+      "file": "App/Users/Views.php",
+      "line": 6,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\Components"
+    },
+    {
+      "file": "App/Users/Views.php",
+      "line": 7,
+      "from": "Users",
+      "to": "Support",
+      "class": "Support\\View"
+    }
+  ],
+  "foreign_table_file_operation_pairs": [
+    {
+      "file": "App/Bots/Actions.php",
+      "line": 23,
+      "module": "Bots",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 30,
+      "module": "Bots",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Bots/Administration.php",
+      "line": 122,
+      "module": "Bots",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 68,
+      "module": "Bots",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Bots/Importer.php",
+      "line": 222,
+      "module": "Bots",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 26,
+      "module": "Bots",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 35,
+      "module": "Bots",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Bots/Queue.php",
+      "line": 74,
+      "module": "Bots",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Health/Checks.php",
+      "line": 69,
+      "module": "Health",
+      "table": "bot_sources",
+      "owners": [
+        "Bots"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Health/Checks.php",
+      "line": 74,
+      "module": "Health",
+      "table": "scheduler_runs",
+      "owners": [
+        "Scheduler"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Health/Service.php",
+      "line": 57,
+      "module": "Health",
+      "table": "scheduler_runs",
+      "owners": [
+        "Scheduler"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 486,
+      "module": "Installation",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 497,
+      "module": "Installation",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 100,
+      "module": "Installation",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 253,
+      "module": "Installation",
+      "table": "user_followers",
+      "owners": [
+        "Users"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 329,
+      "module": "Installation",
+      "table": "password_reset_tokens",
+      "owners": [
+        "Users"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 265,
+      "module": "Installation",
+      "table": "notifications",
+      "owners": [
+        "Notifications"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 128,
+      "module": "Installation",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 144,
+      "module": "Installation",
+      "table": "content_images",
+      "owners": [
+        "Status"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 157,
+      "module": "Installation",
+      "table": "terms",
+      "owners": [
+        "Status"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 166,
+      "module": "Installation",
+      "table": "content_tags",
+      "owners": [
+        "Status"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 179,
+      "module": "Installation",
+      "table": "links",
+      "owners": [
+        "Status"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 199,
+      "module": "Installation",
+      "table": "content_links",
+      "owners": [
+        "Status"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 211,
+      "module": "Installation",
+      "table": "content_likes",
+      "owners": [
+        "Status"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 222,
+      "module": "Installation",
+      "table": "content_comments",
+      "owners": [
+        "Status"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 242,
+      "module": "Installation",
+      "table": "comment_likes",
+      "owners": [
+        "Status"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 367,
+      "module": "Installation",
+      "table": "bot_sources",
+      "owners": [
+        "Bots"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 396,
+      "module": "Installation",
+      "table": "bot_feed_history",
+      "owners": [
+        "Bots"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 388,
+      "module": "Installation",
+      "table": "bot_source_posts",
+      "owners": [
+        "Bots"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 405,
+      "module": "Installation",
+      "table": "bot_source_runs",
+      "owners": [
+        "Bots"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 312,
+      "module": "Installation",
+      "table": "settings",
+      "owners": [
+        "Settings"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 290,
+      "module": "Installation",
+      "table": "content_reports",
+      "owners": [
+        "Moderation"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 355,
+      "module": "Installation",
+      "table": "ip_action_limits",
+      "owners": [
+        "Security"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Installation/Installer.php",
+      "line": 426,
+      "module": "Installation",
+      "table": "scheduler_runs",
+      "owners": [
+        "Scheduler"
+      ],
+      "operation": "schema"
+    },
+    {
+      "file": "App/Mail/Templates.php",
+      "line": 20,
+      "module": "Mail",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 133,
+      "module": "Moderation",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 14,
+      "module": "Moderation",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Moderation/Reports.php",
+      "line": 19,
+      "module": "Moderation",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Moderation/Restrictions.php",
+      "line": 129,
+      "module": "Moderation",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Moderation/Restrictions.php",
+      "line": 150,
+      "module": "Moderation",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Moderation/Restrictions.php",
+      "line": 17,
+      "module": "Moderation",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Notifications/Delivery.php",
+      "line": 18,
+      "module": "Notifications",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Notifications/Inbox.php",
+      "line": 137,
+      "module": "Notifications",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Notifications/Inbox.php",
+      "line": 138,
+      "module": "Notifications",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Notifications/Inbox.php",
+      "line": 75,
+      "module": "Notifications",
+      "table": "content_reports",
+      "owners": [
+        "Moderation"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 172,
+      "module": "Scheduler",
+      "table": "password_reset_tokens",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 221,
+      "module": "Scheduler",
+      "table": "password_reset_tokens",
+      "owners": [
+        "Users"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 180,
+      "module": "Scheduler",
+      "table": "notifications",
+      "owners": [
+        "Notifications"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 228,
+      "module": "Scheduler",
+      "table": "notifications",
+      "owners": [
+        "Notifications"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 145,
+      "module": "Scheduler",
+      "table": "terms",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 197,
+      "module": "Scheduler",
+      "table": "terms",
+      "owners": [
+        "Status"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 148,
+      "module": "Scheduler",
+      "table": "content_tags",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 155,
+      "module": "Scheduler",
+      "table": "links",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 206,
+      "module": "Scheduler",
+      "table": "links",
+      "owners": [
+        "Status"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 158,
+      "module": "Scheduler",
+      "table": "content_links",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 165,
+      "module": "Scheduler",
+      "table": "ip_action_limits",
+      "owners": [
+        "Security"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Scheduler/Cleanup.php",
+      "line": 215,
+      "module": "Scheduler",
+      "table": "ip_action_limits",
+      "owners": [
+        "Security"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Scheduler/Repository.php",
+      "line": 51,
+      "module": "Scheduler",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Scheduler/Repository.php",
+      "line": 45,
+      "module": "Scheduler",
+      "table": "bot_sources",
+      "owners": [
+        "Bots"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Scheduler/Repository.php",
+      "line": 45,
+      "module": "Scheduler",
+      "table": "bot_source_runs",
+      "owners": [
+        "Bots"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 100,
+      "module": "Search",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 99,
+      "module": "Search",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 102,
+      "module": "Search",
+      "table": "terms",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 98,
+      "module": "Search",
+      "table": "content_tags",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 262,
+      "module": "Search",
+      "table": "links",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Search/Queries.php",
+      "line": 263,
+      "module": "Search",
+      "table": "content_links",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Site/Dashboard.php",
+      "line": 62,
+      "module": "Site",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Site/Dashboard.php",
+      "line": 47,
+      "module": "Site",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Site/Dashboard.php",
+      "line": 61,
+      "module": "Site",
+      "table": "content_comments",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 63,
+      "module": "Site",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 69,
+      "module": "Site",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 124,
+      "module": "Site",
+      "table": "content_images",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 66,
+      "module": "Site",
+      "table": "terms",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Site/Sitemap.php",
+      "line": 82,
+      "module": "Site",
+      "table": "content_tags",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 277,
+      "module": "Status",
+      "table": "content_reports",
+      "owners": [
+        "Moderation"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Status/Actions.php",
+      "line": 281,
+      "module": "Status",
+      "table": "content_reports",
+      "owners": [
+        "Moderation"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Status/Comments.php",
+      "line": 69,
+      "module": "Status",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Status/ContentLinks.php",
+      "line": 28,
+      "module": "Status",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Status/Embed.php",
+      "line": 38,
+      "module": "Status",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Status/Export.php",
+      "line": 33,
+      "module": "Status",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 59,
+      "module": "Status",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Status/Feed.php",
+      "line": 217,
+      "module": "Status",
+      "table": "user_followers",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Status/Mentions.php",
+      "line": 28,
+      "module": "Status",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Status/Posts.php",
+      "line": 232,
+      "module": "Status",
+      "table": "content_reports",
+      "owners": [
+        "Moderation"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Status/Tags.php",
+      "line": 56,
+      "module": "Status",
+      "table": "users",
+      "owners": [
+        "Users"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 84,
+      "module": "Users",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 103,
+      "module": "Users",
+      "table": "content_images",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 83,
+      "module": "Users",
+      "table": "content_tags",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 93,
+      "module": "Users",
+      "table": "content_links",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Users/Accounts.php",
+      "line": 18,
+      "module": "Users",
+      "table": "bot_sources",
+      "owners": [
+        "Bots"
+      ],
+      "operation": "write"
+    },
+    {
+      "file": "App/Users/Repository.php",
+      "line": 71,
+      "module": "Users",
+      "table": "content",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Users/Repository.php",
+      "line": 77,
+      "module": "Users",
+      "table": "content_likes",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Users/Repository.php",
+      "line": 90,
+      "module": "Users",
+      "table": "content_comments",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    },
+    {
+      "file": "App/Users/Repository.php",
+      "line": 81,
+      "module": "Users",
+      "table": "comment_likes",
+      "owners": [
+        "Status"
+      ],
+      "operation": "read"
+    }
+  ],
+  "client_manifest_scopes": {
+    "admin": [
+      {
+        "routes": [
+          "admin"
+        ],
+        "entries": [
+          "assets/modules/admin/index.js"
+        ],
+        "component_roots": []
+      }
+    ],
+    "bots": [
+      {
+        "routes": [
+          "/admin/bots"
+        ],
+        "entries": [
+          "assets/modules/bots/index.js"
+        ],
+        "component_roots": [
+          "ui/avatar",
+          "bots/accounts",
+          "bots/sources",
+          "bots/source-fields",
+          "bots/runs",
+          "bots/account-fields",
+          "bots/queue",
+          "bots/queue-filter-form",
+          "bots/source-preview",
+          "bots/posts",
+          "bots/post-filter-form",
+          "bots/stat",
+          "bots/runs-list",
+          "bots/run-filter-form"
+        ]
+      }
+    ],
+    "health": [
+      {
+        "routes": [
+          "/admin/site-health"
+        ],
+        "entries": [
+          "assets/modules/scheduler/index.js"
+        ],
+        "component_roots": [
+          "scheduler/run-detail"
+        ]
+      }
+    ],
+    "installation": [
+      {
+        "routes": [
+          "/install"
+        ],
+        "entries": [
+          "assets/modules/installation/index.js"
+        ],
+        "component_roots": []
+      }
+    ],
+    "moderation": [
+      {
+        "routes": [
+          "/admin/moderation"
+        ],
+        "entries": [
+          "assets/modules/moderation/index.js"
+        ],
+        "component_roots": [
+          "moderation/reports",
+          "moderation/filter-form",
+          "ui/api-action",
+          "moderation/history",
+          "moderation/report-preview"
+        ]
+      }
+    ],
+    "notifications": [
+      {
+        "routes": [
+          "public"
+        ],
+        "entries": [
+          "assets/modules/notifications/index.js"
+        ],
+        "component_roots": [
+          "notifications/items"
+        ]
+      }
+    ],
+    "scheduler": [
+      {
+        "routes": [
+          "/admin/cron"
+        ],
+        "entries": [
+          "assets/modules/scheduler/index.js"
+        ],
+        "component_roots": [
+          "scheduler/list",
+          "scheduler/filter-form",
+          "scheduler/run-detail"
+        ]
+      }
+    ],
+    "search": [
+      {
+        "routes": [
+          "public"
+        ],
+        "entries": [
+          "assets/modules/search/index.js"
+        ],
+        "component_roots": [
+          "search/page"
+        ]
+      }
+    ],
+    "security": [
+      {
+        "routes": [
+          "public"
+        ],
+        "entries": [
+          "assets/modules/security/index.js"
+        ],
+        "component_roots": [
+          "ui/captcha"
+        ]
+      }
+    ],
+    "settings": [
+      {
+        "routes": [
+          "admin"
+        ],
+        "entries": [
+          "assets/modules/settings/index.js"
+        ],
+        "component_roots": []
+      }
+    ],
+    "site": [
+      {
+        "routes": [
+          "public"
+        ],
+        "entries": [
+          "assets/modules/site/index.js"
+        ],
+        "component_roots": [
+          "site/sidebar",
+          "site/public-page"
+        ]
+      }
+    ],
+    "status": [
+      {
+        "routes": [
+          "public"
+        ],
+        "entries": [
+          "assets/modules/status/index.js"
+        ],
+        "component_roots": [
+          "status/card",
+          "status/thread",
+          "status/composer-body",
+          "status/editor",
+          "status/feed-more"
+        ]
+      },
+      {
+        "routes": [
+          "/admin/bots"
+        ],
+        "entries": [
+          "assets/modules/status/index.js"
+        ],
+        "component_roots": [
+          "status/composer-body"
+        ]
+      },
+      {
+        "routes": [
+          "/admin/moderation"
+        ],
+        "entries": [
+          "assets/modules/status/preview.js"
+        ],
+        "component_roots": [
+          "status/card",
+          "status/thread"
+        ]
+      }
+    ],
+    "users": [
+      {
+        "routes": [
+          "public",
+          "admin"
+        ],
+        "entries": [
+          "assets/modules/users/index.js"
+        ],
+        "component_roots": [
+          "ui/avatar",
+          "users/following-profile",
+          "users/auth-content",
+          "users/avatar-control",
+          "ui/account-status"
+        ]
+      },
+      {
+        "routes": [
+          "/admin/users"
+        ],
+        "entries": [
+          "assets/modules/users/admin.js"
+        ],
+        "component_roots": [
+          "users/list",
+          "users/filter-form",
+          "users/admin-fields"
+        ]
+      },
+      {
+        "routes": [
+          "public"
+        ],
+        "entries": [
+          "assets/modules/users/public.js"
+        ],
+        "component_roots": []
+      }
+    ]
+  },
+  "explicit_client_cross_module_imports": [
+    {
+      "from": "assets/modules/status/feed.js",
+      "to": "assets/modules/notifications/views.js",
+      "line": 8
+    }
+  ],
+  "root_migrations": [
+    "20260806_001_comment_history.php",
+    "20260806_003_content_images.php",
+    "20260809_001_remove_user_profile_links.php",
+    "20260809_002_remove_content_created_at.php",
+    "20260809_003_remove_link_embed_url.php",
+    "20260809_004_move_email_template_states_to_settings.php",
+    "20260809_005_move_smtp_settings_to_json.php",
+    "20260809_006_optimize_user_followers_recent_index.php",
+    "20260810_001_remove_content_links_position_index.php",
+    "20260810_002_remove_user_activity_timestamps.php",
+    "20260811_001_simplify_avatar_storage.php",
+    "20260813_001_remove_relation_created_at.php",
+    "20261025_001_core_bots.php",
+    "20261025_002_remove_extension_metadata.php",
+    "20261026_001_recent_comments_index.php",
+    "20261026_002_user_search_index.php",
+    "20261026_003_scheduler_runs.php",
+    "20261026_004_bot_scheduler_runs.php",
+    "20261027_001_link_taxonomy.php",
+    "20261027_002_link_normalization.php",
+    "20261028_001_tag_archive_index.php",
+    "20261029_001_avatar_appearance.php",
+    "20261029_002_bot_publication_interval.php",
+    "20261029_003_feed_publication_queue.php",
+    "20261031_001_link_audio.php",
+    "20261101_001_content_status.php"
+  ],
+  "verified_architecture_checks": [
+    {
+      "command": "php tests/quality/module-boundaries.php",
+      "result": "PASS",
+      "checks": 806
+    },
+    {
+      "command": "php tests/quality/dependencies.php",
+      "result": "PASS",
+      "observed_edges": 1132
+    }
+  ]
+}

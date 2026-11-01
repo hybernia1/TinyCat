@@ -177,6 +177,8 @@ try {
 
     $copyTree($root . '/tools/build-update.php', $candidateRoot . '/tools/build-update.php');
     $copyTree($root . '/tools/compile-assets.php', $candidateRoot . '/tools/compile-assets.php');
+    $copyTree($root . '/tools/modal-contracts.php', $candidateRoot . '/tools/modal-contracts.php');
+    $copyTree($root . '/tools/ui-contracts.php', $candidateRoot . '/tools/ui-contracts.php');
     $copyTree($root . '/tools/translation-catalogs.php', $candidateRoot . '/tools/translation-catalogs.php');
     $copyTree($root . '/tools/client-translations.php', $candidateRoot . '/tools/client-translations.php');
     $copyTree($root . '/tools/update-deletions.json', $candidateRoot . '/tools/update-deletions.json');

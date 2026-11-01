@@ -3,6 +3,20 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+## Upgrading to 5.18.0: shared UI and on-demand dialogs
+
+No new database migration or configuration change is required. Updates remain
+supported from 5.16.0 and apply any earlier pending migrations normally.
+Settings, user creation, bot-account creation and release notes now load through
+authorized JSON resources when opened; closed editors are discarded and list
+refreshes preserve open drafts. Popovers and search suggestions share mobile
+placement, focus and dismissal behavior. Site-health and update notices retain
+their complete warning text.
+
+The signed update removes 127 retired PHP, CSS and JavaScript source paths,
+including renamed files and the superseded server-rendered modal templates.
+Configuration, uploads, stored data and user preferences are preserved.
+
 ## Upgrading to 5.17.0: independent moderation visibility
 
 Migration `20261101_001_content_status` replaces `content.edit_locked_at`,
@@ -222,7 +236,7 @@ not backfilled and old episodes are not imported again.
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=5.17.0
+php tools/build-update.php --version=5.18.0
 php tools/verify-update.php dist
 ```
 
@@ -236,12 +250,12 @@ Source checkouts without the inventory retain an on-demand development fallback.
 The builder creates:
 
 ```text
-dist/tinycat-5.17.0.zip
+dist/tinycat-5.18.0.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v5.17.0` tag and upload all three files
+Create a GitHub release for the matching `v5.18.0` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -262,10 +276,10 @@ benchmark references, not supported upgrade paths.
 For a fresh installation, build into a separate output directory:
 
 ```bash
-php tools/build-update.php --version=5.17.0 --fresh-install --output=dist/fresh
+php tools/build-update.php --version=5.18.0 --fresh-install --output=dist/fresh
 ```
 
-The fresh-install outputs are `tinycat-5.17.0-install.zip`, `tinycat-install.json`
+The fresh-install outputs are `tinycat-5.18.0-install.zip`, `tinycat-install.json`
 and `tinycat-install.sig`; they cannot overwrite or be mistaken for updater assets.
 Verify them with `php tools/verify-update.php dist/fresh --fresh-install`.
 This package excludes `migrations/` and update deletions. The installer creates

@@ -2,7 +2,7 @@
 
 HTML struktura komponent, které se zobrazují při prvním načtení i přes AJAX,
 má jeden zdroj v `assets/modules/<modul>/components.json` a `assets/ui/components.json`. PHP ji vykreslí přes
-`Support/Components`; prohlížeč přes `assets/core/components.js`.
+`Support/Components`; prohlížeč přes `assets/core/component-renderer.js`.
 Veřejný obsah zůstává v serverovém HTML a nevyžaduje JavaScript.
 
 Definice jsou rozdělené mezi `users`, `status`, `notifications`, `site`, `bots`,

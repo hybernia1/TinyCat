@@ -1,0 +1,26 @@
+.status-time-button {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  justify-self: start;
+  text-align: left;
+}
+
+.status-time-button:hover,
+.status-time-button:focus {
+  color: var(--primary-strong);
+  text-decoration: underline;
+}
+
+.status-comments-thread {
+  border-top: 1px solid var(--border);
+}
+
+.status-post-modal-content {
+  display: grid;
+  gap: 12px;
+}
+
+.status-post-modal-content .status-body {
+  font-size: 1rem;
+}

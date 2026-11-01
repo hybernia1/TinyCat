@@ -1,7 +1,7 @@
 import "../core/dom.js";
 import "../core/lifecycle.js";
 import "../core/navigation.js";
-import "./forms.js";
+import "./form-requests.js";
 import "./tabs.js";
 (function () {
   "use strict";

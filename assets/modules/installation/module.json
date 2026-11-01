@@ -1,10 +1,20 @@
 [
   {
-    "routes": ["/install"],
-    "entries": ["assets/modules/installation/index.js"],
+    "routes": [
+      "/install"
+    ],
+    "entries": [
+      "assets/modules/installation/index.js"
+    ],
     "components": [],
-    "styles": [],
-    "translations": ["common.request_failed"],
+    "styles": [
+      "assets/modules/installation/styles/install-steps.css",
+      "assets/modules/installation/styles/install-choices.css",
+      "assets/modules/installation/styles/install-steps-desktop.css"
+    ],
+    "translations": [
+      "common.request_failed"
+    ],
     "messages": {}
   }
 ]

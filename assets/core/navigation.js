@@ -1,6 +1,6 @@
-import "./requests.js";
+import "./request-lifecycle.js";
 import "./dom.js";
-import "./http.js";
+import "./api-client.js";
 import "./lifecycle.js";
 (function () {
   "use strict";

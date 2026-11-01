@@ -21,8 +21,9 @@ final class AdminViews
         ]);
     }
 
-    public static function modalAction(string $modal, string $label, string $icon, string $url = ''): string
+    public static function modalAction(string $modal, string $label, string $icon, string $url): string
     {
+        if (!str_starts_with($url, '/api/')) { throw new \InvalidArgumentException('Resource dialog actions require an API URL.'); }
         return Components::render('ui/modal-trigger', [
             'class' => 'btn btn-primary btn-sm', 'modal' => $modal, 'label' => $label, 'icon' => $icon, 'url' => $url,
         ]);

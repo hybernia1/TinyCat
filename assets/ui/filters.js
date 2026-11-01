@@ -1,8 +1,8 @@
 import "../core/dom.js";
 import "../core/lifecycle.js";
-import "../core/components.js";
-import "./menus.js";
-import "./forms.js";
+import "../core/component-renderer.js";
+import "./popovers.js";
+import "./form-requests.js";
 (function () {
   "use strict";
   var T = window.TinyCat, forms = new Map();
@@ -86,8 +86,7 @@ import "./forms.js";
       var panel = Array.from(document.body.querySelectorAll("[data-filter-panel]")).find(function (item) { return item.dataset.filterPanel === state.id; });
       var form = forms.get(state.id);
       if (!panel || !panel.parentElement || !form) { return; }
-      panel.parentElement.open = true;
-      T.menus.position(panel.parentElement);
+      T.popovers.open(panel.parentElement);
       panel.scrollTop = state.scroll;
       var field = Array.from(form.querySelectorAll("input, select")).find(function (item) { return item.getAttribute("name") === state.field; });
       if (field) { field.focus({ preventScroll: true }); }

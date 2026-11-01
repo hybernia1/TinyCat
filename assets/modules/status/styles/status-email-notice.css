@@ -1,0 +1,20 @@
+.status-email-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.status-email-notice > .icon {
+  flex: 0 0 auto;
+  color: var(--info);
+}
+
+.status-email-notice-copy {
+  flex: 1 1 auto;
+  min-width: 220px;
+}
+
+.status-email-notice .btn {
+  flex: 0 0 auto;
+}

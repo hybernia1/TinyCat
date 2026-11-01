@@ -1,19 +1,20 @@
 import "./dialog-history.js";
-import "../core/components.js";
+import "../core/component-renderer.js";
 import "../core/dom.js";
-import "../core/http.js";
+import "../core/api-client.js";
 import "../core/i18n.js";
 import "../core/icons.js";
 import "../core/lifecycle.js";
 import "../core/modules.js";
 import "./form-state.js";
-import "./forms.js";
+import "./form-requests.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat = window.TinyCat || {};
 
   TinyCat.dialog = {
     create: function (options) {
+      if (TinyCat.lifecycle.preparing && TinyCat.lifecycle.preparing()) { throw new TypeError("Dialogs must be created on demand, never during initialization or hydration."); }
       if (!(options.content instanceof Node) || !/^[a-z][a-z0-9_-]*$/i.test(options.id)
         || typeof options.title !== "string" || !options.title.trim()
         || typeof options.closeLabel !== "string" || !options.closeLabel.trim()) {
@@ -308,19 +309,26 @@ import "./forms.js";
     var modalIndex;
     var data;
 
-    if (!url) {
-      return modal;
-    }
+    var address = new URL(url || "", window.location.href);
+    if (!url || address.origin !== window.location.origin || !address.pathname.startsWith("/api/")) { throw new TypeError("Resource dialogs require a same-origin API URL."); }
 
     if (modal && modal.dataset.remoteLoaded === "true" && modal.dataset.modalUrl === url && force !== true) {
       return modal;
     }
+    if (modal && !await confirmModalClose(modal)) { throw new DOMException("Dialog replacement cancelled.", "AbortError"); }
 
     if (pending.has(target)) { pending.get(target).abort(); }
     var controller = new AbortController(); pending.set(target, controller);
+    var changedDuringRead = false, replacementEvents = ["input", "change", "tinycat:tab"];
+    function changed() { changedDuringRead = true; controller.abort(); }
+    if (modal) replacementEvents.forEach(function (name) { modal.addEventListener(name, changed); });
     try { data = await TinyCat.api.request(url, { method: "GET", signal: controller.signal }); }
-    finally { if (pending.get(target) === controller) { pending.delete(target); } }
+    finally {
+      if (pending.get(target) === controller) { pending.delete(target); }
+      if (modal) replacementEvents.forEach(function (name) { modal.removeEventListener(name, changed); });
+    }
     if (controller.signal.aborted) { throw new DOMException("Dialog request cancelled.", "AbortError"); }
+    if (changedDuringRead) { throw new DOMException("Dialog changed during resource loading.", "AbortError"); }
     if (trigger && trigger.isConnected === false) { throw new DOMException("Dialog trigger removed.", "AbortError"); }
     var resourceModal = TinyCat.modules.modal(new URL(url, window.location.href), data, target);
     if (!resourceModal) { throw new Error(TinyCat.i18n.t("common.request_failed")); }
@@ -370,9 +378,7 @@ import "./forms.js";
     var host = document.body;
     var modal;
 
-    if (!url) {
-      return TinyCat.dialog.open(target);
-    }
+    if (!url) { throw new TypeError("Resource dialog triggers require data-modal-url."); }
 
     trigger.dataset.modalBusy = "true";
     setLoading(trigger, true);

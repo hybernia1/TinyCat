@@ -42,7 +42,7 @@ if (($argv[1] ?? '') === '--fixture') {
     $layout = TinyCat\Support\View::render('admin', ['content' => $html, 'actions' => '', 'adminIdentity' => '@admin', 'appName' => 'TinyCat', 'nav' => [], 'siteLogoUrl' => '', 'title' => Localization::t('common.dashboard'), 'authUser' => null, 'profileUrl' => '', 'profileNeedsEmail' => false, 'userMenu' => '', 'settingsEditor' => '', 'titleIcon' => 'dashboard'], $root . '/App/Site/templates');
     echo '<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' . $css . '</style></head><body class="admin-shell-page">' . $layout . '<script>';
     echo 'window.TinyCat={lifecycle:{register(name, service){if(service.init)service.init();if(service.hydrate)service.hydrate(document);}}};';
-    foreach (['assets/core/dom.js', 'assets/core/icons.js', 'assets/ui/menus.js'] as $file) {
+    foreach (['assets/core/dom.js', 'assets/core/icons.js', 'assets/ui/popovers.js'] as $file) {
         echo preg_replace('/^import .*;\R/m', '', file_get_contents($root . '/' . $file));
     }
     echo '</script></body></html>';

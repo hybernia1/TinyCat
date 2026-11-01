@@ -15,7 +15,7 @@ const vm = require("node:vm");
     api: { unwrap: r => r.data, request() { requests++; return new Promise((yes, no) => { resolve = yes; reject = no; }); } } };
   T.site.sidebar = () => ({ childNodes: [{}] });
   const window = { TinyCat: T, matchMedia: () => ({ matches: true, addEventListener() {} }), setInterval: () => 1 };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/modules/site/controller.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, Date, URL });
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/modules/site/sidebar-data.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, Date, URL });
   const settle = async () => { for (let i = 0; i < 12; i++) { await Promise.resolve(); } };
   const assertReady = () => {
     assert.equal(classes.has("is-loading"), false, "Completed sidebar refresh must restore pointer events");

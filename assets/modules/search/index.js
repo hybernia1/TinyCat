@@ -1,5 +1,5 @@
 import "../../core/modules.js";
-import "./controller.js";
+import "./global-search.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

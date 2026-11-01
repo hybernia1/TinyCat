@@ -1,0 +1,66 @@
+.disclosure-list {
+  display: grid;
+  gap: 8px;
+}
+
+.disclosure-item {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.disclosure-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure-summary:hover,
+.disclosure-summary:focus-visible {
+  background: var(--primary-soft);
+}
+
+.disclosure-heading {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 10px;
+}
+
+.disclosure-heading > .icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--primary-strong);
+}
+
+.disclosure-heading small {
+  color: var(--muted);
+}
+
+.disclosure-chevron {
+  flex: 0 0 auto;
+  transition: transform 160ms ease;
+}
+
+.disclosure-item[open] > .disclosure-summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.disclosure-item[open] > .disclosure-summary .disclosure-chevron {
+  transform: rotate(180deg);
+}
+
+.disclosure-body {
+  padding: 12px;
+  background: var(--surface-soft);
+}
+

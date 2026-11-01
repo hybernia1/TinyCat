@@ -8,6 +8,12 @@ use TinyCat\Support\Dates;
 
 final class Resource
 {
+    /** @return array{options: array{username_pattern: string}} */
+    public static function creation(): array
+    {
+        return ['options' => ['username_pattern' => \TinyCat\Users\Usernames::username_pattern()]];
+    }
+
     /** @param array<string, mixed> $row
      * @return array{id: int, name: string, url: string}|null
      */

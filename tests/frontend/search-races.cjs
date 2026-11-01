@@ -4,7 +4,7 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
 class Node {
   constructor(text = "") { this.children = []; this.dataset = {}; this.hidden = true; this.text = text; this.handlers = {}; this.isConnected = true; this.classList = { add() {} }; }
   appendChild(node) { this.children.push(node); }
-  set innerHTML(_) { this.children = []; }
+  replaceChildren(...nodes) { this.children = nodes; }
   get textContent() { return this.text + this.children.map(child => child.textContent).join(""); }
   set textContent(text) { this.text = text; this.children = []; }
   setAttribute() {} removeAttribute() {} blur() {}
@@ -14,14 +14,17 @@ function setup() {
   const input = new Node(), box = new Node(), root = new Node(), pending = [], timers = new Map(), services = {};
   let timer = 0, clock = Date.now();
   class FixtureDate extends Date { static now() { return clock; } }
+  box.parentElement = root;
   root.contains = node => node === input; root.matches = selector => selector === "[data-global-search]"; root.querySelectorAll = () => [];
   const document = { body: { dataset: {} }, documentElement: { lang: "en" }, addEventListener() {} };
   const T = { dom: { find: selector => selector === "[data-global-search-input]" ? input : box, all: (selector, scope) => scope === root ? [] : [root], create: (_, __, text) => new Node(text || "") },
+    components: { render: (_name, data) => new Node(data.label || "") },
+    popovers: { open() { box.hidden = false; }, close() { box.hidden = true; if (root.handlers["tinycat:popover-close"]) root.handlers["tinycat:popover-close"](); }, restoringFocus: () => false },
     ui: {}, lifecycle: { register: (name, service) => { services[name] = service; }, hydrate() {} }, navigation: { compact: url => url.pathname + url.search },
-    api: { unwrap: response => response.data, request: (url, options) => new Promise((resolve, reject) => { pending.push({ url, options, resolve, reject }); }) }, i18n: { t: key => key, plural: key => key }, dates: { format: () => "" } };
+    api: { unwrap: response => response.data, request: (url, options) => new Promise((resolve, reject) => { pending.push({ url, options, resolve, reject }); }) }, i18n: { label: key => key, t: key => key, plural: key => key }, dates: { format: () => "" } };
   const window = { TinyCat: T, location: new URL("https://tinycat.test/"), AbortController, setTimeout: callback => { timers.set(++timer, callback); return timer; }, clearTimeout: id => timers.delete(id) };
   const context = vm.createContext({ window, document, URL, AbortController, Date: FixtureDate });
-  for (const file of ["assets/core/requests.js", "assets/modules/search/controller.js"]) {
+  for (const file of ["assets/core/request-lifecycle.js", "assets/modules/search/global-search.js"]) {
     const absolute = path.resolve(__dirname, "../..", file);
     vm.runInContext(fs.readFileSync(absolute, "utf8").replace(/^import .*;\r?\n/gm, ""), context);
   }
@@ -47,7 +50,7 @@ function setup() {
   s.pending[0].resolve({ data: { query: "alpha" } }); await tick(); assert(!s.box.textContent.includes("alpha"));
   s.flush(); s.pending[1].resolve({ data: { query: "beta" } }); await tick(); assert(s.box.textContent.includes("beta"));
 
-  s = setup(); s.type("alpha"); s.input.handlers.keydown({ key: "Escape" });
+  s = setup(); s.type("alpha"); s.T.popovers.close(s.box.parentElement);
   s.pending[0].resolve({ data: { query: "alpha" } }); await tick(); assert.equal(s.box.hidden, true, "Escape keeps pending results closed.");
   assert.equal(s.timers.size, 0);
 

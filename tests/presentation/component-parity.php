@@ -7,6 +7,7 @@ require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
 (new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Support\Localization::locale('en');
 if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Support\Components::json(); exit(0); }
+if (($argv[1] ?? '') === '--settings') { echo json_encode(\TinyCat\Settings\Resource::editor(), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--translation-fixtures') {
     $cases = [];
     foreach ([...array_keys(\TinyCat\Support\Languages::language_packages()), 'cs-CZ', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'uk-UA'] as $locale) {

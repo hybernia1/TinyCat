@@ -1,0 +1,63 @@
+(async function () {
+  const T = TinyCat, checks = [], reads = [];
+  const tick = () => new Promise(resolve => setTimeout(resolve, 50));
+  function check(value, label) { if (!value) throw new Error(label); checks.push(label); }
+  function key(node, value) { return node.dispatchEvent(new KeyboardEvent('keydown', { key: value, bubbles: true, cancelable: true })); }
+  function empty(preview) { const node = document.createElement('div'); node.append(T.notifications.items([], preview)); return node; }
+  try {
+    const form = document.createElement('form'); form.className = 'global-search'; form.style.cssText = 'position:fixed;top:12px;left:12px;width:calc(100% - 24px)'; form.dataset.globalSearch = '';
+    const anchor = document.createElement('div'); anchor.className = 'global-search-control'; anchor.dataset.popover = ''; anchor.dataset.popoverMode = 'input'; anchor.dataset.popoverMatchWidth = 'true';
+    const input = document.createElement('input'); input.className = 'input global-search-input'; input.type = 'search'; input.dataset.globalSearchInput = ''; input.dataset.popoverTrigger = '';
+    const box = document.createElement('div'); box.className = 'popover-panel global-search-results'; box.dataset.globalSearchResults = ''; box.hidden = true;
+    anchor.append(input, box); form.append(anchor); document.body.append(form);
+    T.api.request = (url, options) => new Promise((resolve, reject) => reads.push({ url, options, resolve, reject }));
+    T.popovers.init(); T.search.hydrate(document);
+    input.focus(); input.value = 'alpha'; input.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise(resolve => setTimeout(resolve, 250));
+    check(reads.length === 1, 'Search retains debounce and starts one request');
+    reads[0].resolve({ ok: true, data: { query: 'alpha', users: [{ type: 'user', title: 'Alpha', url: '/@alpha' }] } }); await tick();
+    check(box.matches(':popover-open') && document.activeElement === input, 'Search uses shared top layer without moving input focus');
+    const rect = box.getBoundingClientRect(), trigger = input.getBoundingClientRect();
+    check(Math.abs(rect.width - trigger.width) < 2 && rect.left >= 11 && rect.right <= innerWidth - 11, 'Suggestion panel follows input width and viewport bounds');
+    input.click(); check(box.matches(':popover-open'), 'Clicking inside search input does not toggle its panel closed');
+    key(input, 'ArrowDown'); check(box.contains(document.activeElement) && document.activeElement.matches('a'), 'Shared keyboard navigation enters search results');
+    key(document.activeElement, 'Escape'); await tick();
+    check(!box.matches(':popover-open') && document.activeElement === input && reads.length === 1, 'Escape returns focus without reopening cached search results');
+    input.value = 'pending'; input.dispatchEvent(new Event('input', { bubbles: true })); await new Promise(resolve => setTimeout(resolve, 250));
+    key(input, 'Escape');
+    check(reads[1].options.signal.aborted, 'Escape cancels search while results are still loading');
+    reads[1].resolve({ ok: true, data: { query: 'pending' } }); await tick(); check(!box.matches(':popover-open'), 'A late reply after Escape stays closed');
+    input.value = 'outside'; input.dispatchEvent(new Event('input', { bubbles: true })); await new Promise(resolve => setTimeout(resolve, 250));
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+    check(reads[2].options.signal.aborted, 'Shared outside dismissal cancels a pending search');
+    reads[2].resolve({ ok: true, data: { query: 'outside' } }); await tick(); check(!box.matches(':popover-open'), 'A late reply after outside dismissal stays closed');
+    input.value = 'empty'; input.dispatchEvent(new Event('input', { bubbles: true })); await new Promise(resolve => setTimeout(resolve, 250));
+    reads[3].resolve({ ok: true, data: { query: 'empty' } }); await tick();
+    check(box.querySelector('.empty-state-compact[role="status"]') && box.querySelector('[data-global-search-link]'), 'Empty suggestions use the shared compact state and keep full-search navigation');
+    input.value = 'failure'; input.dispatchEvent(new Event('input', { bubbles: true })); await new Promise(resolve => setTimeout(resolve, 250));
+    reads[4].reject({ data: { message: '<img src=x> unavailable' } }); await tick();
+    check(box.querySelector('.alert-danger[role="alert"]') && box.textContent.includes('<img src=x>') && !box.querySelector('img'), 'Request failures use an accessible alert with literal untrusted text');
+    input.value = 'z'; input.dispatchEvent(new Event('input', { bubbles: true })); await new Promise(resolve => setTimeout(resolve, 250));
+    check(box.querySelector('.alert-info[role="status"]') && !box.querySelector('.empty-state'), 'Short-query guidance is distinct from empty results and failures');
+    T.search.close(form);
+    const sidebar = T.components.render('site/sidebar', { tags: [], authors: [] }); document.body.append(sidebar);
+    check(sidebar.querySelectorAll('.empty-state-compact').length === 2, 'Both empty sidebar lists reuse the shared compact state');
+    const preview = empty(true), page = empty(false);
+    check(preview.querySelector('.empty-state[role="status"]') && preview.innerHTML === page.innerHTML, 'Notification preview and page render the same shared empty component');
+    const row = document.createElement('a'); row.className = 'identity-row identity-row-compact';
+    row.append(T.components.render('ui/avatar', { user: {}, small: true }));
+    const copy = document.createElement('span'); copy.className = 'identity-copy'; const title = document.createElement('strong'); title.textContent = 'Name'; const meta = document.createElement('small'); meta.textContent = 'Metadata'; copy.append(title, meta); row.append(copy); document.body.append(row);
+    check(row.querySelector('.avatar').getBoundingClientRect().width === 36 && getComputedStyle(meta).fontSize === '13px', 'Compact identity rows share avatar sizing and secondary typography');
+    const modal = document.createElement('div'); modal.className = 'modal'; modal.dataset.open = 'true';
+    const grid = document.createElement('div'); grid.className = 'following-modal-grid'; modal.append(grid);
+    const more = T.components.render('ui/load-more', { attributes: { class: 'load-more' }, button_attributes: { class: 'btn btn-secondary', type: 'button', 'data-following-more': '', 'data-following-url': '/api/following' }, label: 'More', loading_label: 'Loading' }); modal.append(more); document.body.append(modal);
+    const button = more.querySelector('button'), state = more.querySelector('.load-more-state');
+    let finish; T.api.request = () => new Promise(resolve => { finish = resolve; });
+    const pending = T.users.following.loadMore(button);
+    check(button.disabled && more.classList.contains('is-loading') && more.getAttribute('aria-busy') === 'true' && !state.hidden, 'Following pagination uses the shared loading frame and live status');
+    finish({ data: { items: [], done: true }, meta: { pagination: { page: 1, per_page: 25, total: 0 } } }); await pending;
+    check(!more.isConnected, 'Exhausted following pagination removes its entire frame');
+    modal.remove(); sidebar.remove(); row.remove(); form.remove();
+    document.getElementById('results').textContent = JSON.stringify({ ok: true, checks });
+  } catch (error) { document.getElementById('results').textContent = JSON.stringify({ ok: false, error: String(error.stack || error), checks }); }
+}());

@@ -1,5 +1,5 @@
 import "../../core/modules.js";
-import "./views.js";
+import "./controller.js";
 (function () {
   "use strict";
   var TinyCat = window.TinyCat;

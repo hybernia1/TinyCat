@@ -14,24 +14,30 @@
       "assets/modules/status/index.js"
     ],
     "styles": [
-      "assets/modules/status/styles/011-status-email-notice.css",
-      "assets/modules/status/styles/017-feed-switch.css",
-      "assets/modules/status/styles/020-home-feed-switch-feed-switch-link.css",
-      "assets/modules/status/styles/025-status-feed.css",
-      "assets/modules/status/styles/027-status-header.css",
-      "assets/modules/status/styles/029-status-author-a-hover.css",
-      "assets/modules/status/styles/031-status-inline-link.css",
-      "assets/modules/status/styles/033-status-links.css",
-      "assets/modules/status/styles/035-status-comment-heading-context-menu.css",
-      "assets/modules/status/styles/037-status-manage-menu-summary.css",
-      "assets/modules/status/styles/039-status-comment-history.css",
-      "assets/modules/status/styles/041-status-header-avatar.css",
-      "assets/modules/status/styles/051-status-time-button.css",
-      "assets/modules/status/styles/063-status-email-notice-copy.css",
-      "assets/modules/status/styles/069-feed-switch.css",
-      "assets/modules/status/styles/071-status-link-card-has-image.css",
-      "assets/modules/status/styles/075-status-feed.css",
-      "assets/modules/status/styles/095-embed-modal.css"
+      "assets/modules/status/styles/status-email-notice.css",
+      "assets/modules/status/styles/feed-switch.css",
+      "assets/modules/status/styles/home-feed-switch-links.css",
+      "assets/modules/status/styles/status-feed.css",
+      "assets/modules/status/styles/status-header.css",
+      "assets/modules/status/styles/status-text.css",
+      "assets/modules/status/styles/status-inline-link.css",
+      "assets/modules/status/styles/status-content.css",
+      "assets/modules/status/styles/comment-menu.css",
+      "assets/modules/status/styles/status-menu.css",
+      "assets/modules/status/styles/status-editing.css",
+      "assets/modules/status/styles/status-avatars.css",
+      "assets/modules/status/styles/status-detail.css",
+      "assets/modules/status/styles/status-email-notice-mobile.css",
+      "assets/modules/status/styles/feed-switch-mobile.css",
+      "assets/modules/status/styles/status-content-mobile.css",
+      "assets/modules/status/styles/status-feed-mobile.css",
+      "assets/modules/status/styles/embed-preview.css",
+      "assets/modules/status/styles/home-feed.css",
+      "assets/modules/status/styles/composer-loading.css",
+      "assets/modules/status/styles/author-meta.css",
+      "assets/modules/status/styles/home-feed-mobile.css",
+      "assets/modules/status/styles/home-feed-switch-mobile.css",
+      "assets/modules/status/styles/feedback-mobile.css"
     ],
     "translations": [
       "account.translation_translate",
@@ -105,7 +111,7 @@
       "assets/modules/status/index.js"
     ],
     "styles": [
-      "assets/modules/status/styles/039-status-comment-history.css"
+      "assets/modules/status/styles/status-editing.css"
     ],
     "translations": [
       "account.status_comment_history",
@@ -181,19 +187,20 @@
       "status/thread"
     ],
     "entries": [
-      "assets/modules/status/preview.js"
+      "assets/modules/status/media-preview.js"
     ],
     "styles": [
-      "assets/modules/status/styles/027-status-header.css",
-      "assets/modules/status/styles/029-status-author-a-hover.css",
-      "assets/modules/status/styles/031-status-inline-link.css",
-      "assets/modules/status/styles/033-status-links.css",
-      "assets/modules/status/styles/035-status-comment-heading-context-menu.css",
-      "assets/modules/status/styles/037-status-manage-menu-summary.css",
-      "assets/modules/status/styles/039-status-comment-history.css",
-      "assets/modules/status/styles/041-status-header-avatar.css",
-      "assets/modules/status/styles/051-status-time-button.css",
-      "assets/modules/status/styles/071-status-link-card-has-image.css"
+      "assets/modules/status/styles/status-header.css",
+      "assets/modules/status/styles/status-text.css",
+      "assets/modules/status/styles/status-inline-link.css",
+      "assets/modules/status/styles/status-content.css",
+      "assets/modules/status/styles/comment-menu.css",
+      "assets/modules/status/styles/status-menu.css",
+      "assets/modules/status/styles/status-editing.css",
+      "assets/modules/status/styles/status-avatars.css",
+      "assets/modules/status/styles/status-detail.css",
+      "assets/modules/status/styles/status-content-mobile.css",
+      "assets/modules/status/styles/author-meta.css"
     ],
     "translations": [
       "account.translation_translate",

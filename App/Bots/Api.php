@@ -14,6 +14,7 @@ final class Api
         $api->post('/bots/queue/{id:[0-9]+}/publication', static fn (Request $r, array $p): Result => Queue::publish((int) $p['id']), 'admin');
 
         $api->get('/bots/accounts', static fn (): Result => Result::from(Actions::adminBotAccounts()), 'admin');
+        $api->get('/bots/accounts/creation', static fn (): array => Resource::creation(), 'admin');
         $api->post('/bots/accounts', static fn (): Result => Result::from(Actions::adminBotAccountCreate()), 'admin');
         $api->get('/bots/accounts/{id:[0-9]+}/runs', static function (Request $r, array $p): Result {
             $id = (int) $p['id'];

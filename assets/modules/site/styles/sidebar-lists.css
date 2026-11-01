@@ -1,0 +1,48 @@
+.topic-list {
+  display: grid;
+  gap: 6px;
+}
+
+.topic-link {
+  display: grid;
+  min-height: 38px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  padding: 7px 9px;
+  text-decoration: none;
+}
+
+.topic-link:hover,
+.topic-link:focus,
+.topic-link.is-active {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.topic-name {
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topic-link .badge {
+  min-width: 28px;
+  font-weight: 850;
+}
+
+.topic-link:hover .badge,
+.topic-link:focus .badge,
+.topic-link.is-active .badge {
+  background: var(--surface);
+  color: var(--primary-strong);
+}
+
+.sidebar-user-list {
+  display: grid;
+  gap: 6px;
+}
+

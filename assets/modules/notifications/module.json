@@ -4,16 +4,18 @@
       "public"
     ],
     "components": [
-      "notifications/items"
+      "notifications/items",
+      "ui/load-more"
     ],
     "entries": [
       "assets/modules/notifications/index.js"
     ],
     "styles": [
-      "assets/modules/notifications/styles/010-notification-nav-link.css",
-      "assets/modules/notifications/styles/013-notification-menu.css",
-      "assets/modules/notifications/styles/023-notification-empty.css",
-      "assets/modules/notifications/styles/065-notification-badge.css"
+      "assets/modules/notifications/styles/notification-nav.css",
+      "assets/modules/notifications/styles/notification-preview.css",
+      "assets/modules/notifications/styles/notification-items.css",
+      "assets/modules/notifications/styles/notification-badge-mobile.css",
+      "assets/modules/notifications/styles/notifications-page.css"
     ],
     "translations": [
       "notifications.new_count.one",

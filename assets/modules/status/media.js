@@ -1,7 +1,7 @@
 import "../../core/dom.js";
 import "../../core/navigation.js";
-import "./views.js";
-import "../../ui/images.js";
+import "./controller.js";
+import "../../ui/image-uploads.js";
 import "../../ui/toasts.js";
 (function () {
   "use strict";

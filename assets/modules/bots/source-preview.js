@@ -1,7 +1,7 @@
 import "../../core/lifecycle.js";
-import "../../core/components.js";
-import "../../ui/fields.js";
-import "../../ui/forms.js";
+import "../../core/component-renderer.js";
+import "../../ui/component-builders.js";
+import "../../ui/form-requests.js";
 (function () {
   "use strict";
   var T = window.TinyCat, U = T.ui, bindings = new WeakMap(), serial = 0;
