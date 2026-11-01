@@ -4,6 +4,53 @@
   const pause = () => new Promise(resolve => setTimeout(resolve, 25));
   async function wait(test, message) { for (let i=0;i<100 && !test();i++) await pause(); check(test(), message); }
   const mode = new URL(location.href).searchParams.get('case');
+  if (mode === 'moderation') {
+    const author = {id:1,username:'Evidence author',url:'/author/1',avatar_url:'',avatar_initial:'E'};
+    const post = {id:42,url:'/status/42',author,segments:[{type:'text',text:'Original frontend card'}],published_at:'2026-01-01',image:{url:''},links:[],likes_count:3,comments_count:1,capabilities:{edit:false,delete:false,report:false,interact:false}};
+    const data = {content:{id:42,status:'hidden'},preview:{item:post,comments:[{id:9,content_id:42,author,created_at:'2026-01-01',segments:[{type:'text',text:'Preserved comment'}],likes_count:1,capabilities:{edit:false,delete:false,interact:false},replies:[]}]},reports:[{id:12,reporter_name:'Reporter',reason:'spam',status:'resolved',created_at:'2026-01-01',note:'Full note <b>literal</b>'}]};
+    T.modules.register('moderation',T.moderation);
+    const dialog = T.moderation.modal(new URL('/api/moderation/reports/12',location.href),{data},'moderation-native');
+    T.lifecycle.start(); T.dialog.open(dialog);
+    check(dialog.querySelector('.status-card .status-body').textContent === 'Original frontend card', 'Moderation renders the frontend card');
+    check(dialog.querySelector('.status-comment-body').textContent === 'Preserved comment', 'Moderation includes the actual frontend comment thread');
+    check(!dialog.querySelector('[data-tab-panel="preview"] form'), 'The evidence preview has no mutation forms');
+    check(dialog.querySelector('form').action.includes('/api/moderation/posts/42/publication'), 'Only an explicit admin publication action can restore hidden content');
+    T.tabs.activate(dialog.querySelector('[data-tab="reports"]'),false);
+    const table = dialog.querySelector('table'), eye = table.querySelector('[data-modal-url]');
+    check(table.querySelectorAll('th').length === 5 && table.querySelectorAll('tbody tr').length === 1, 'Report history uses the standard table columns and rows');
+    check(eye.classList.contains('btn-icon') && eye.querySelector('svg'), 'Every row uses the standard icon preview action');
+    window.fetch = async () => new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data,meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
+    eye.click();
+    await wait(() => T.dialog.current() !== dialog, 'The eye action opens the nested report preview');
+    const detail = T.dialog.current();
+    check(detail.textContent.includes(data.reports[0].note) && !detail.querySelector('script'), 'The report preview renders the complete note as safe text');
+    T.dialog.close(detail);
+    check(T.dialog.current() === dialog && !dialog.querySelector('[data-tab-panel="reports"]').hidden, 'Closing the preview returns to the report table');
+    check(document.documentElement.scrollWidth <= innerWidth, 'The standard report table fits the mobile modal viewport');
+    document.getElementById('validation-test-results').textContent = JSON.stringify({ok:true,mode,checks});
+    return;
+  }
+  if (mode === 'report') {
+    const dialog = T.status.modal(new URL('/api/moderation/report-options?id=42', location.href), {data:{reasons:['spam','abuse']}}, 'status-report-modal-42');
+    const form = dialog.querySelector('form'), submit = dialog.querySelector('.modal-footer [type="submit"]');
+    document.body.append(dialog);
+    check(form.elements.namedItem('id').value === '42', 'The report retains its content ID field');
+    check(submit.form === form, 'The footer submit is associated with the report form despite its named id control');
+    let calls = 0;
+    window.fetch = async (url, options) => {
+      calls++;
+      check(new URL(url).pathname === '/api/moderation/reports' && options.method === 'POST', 'Reporting uses the canonical POST endpoint');
+      check(options.body.get('id') === '42' && options.body.get('reason') === 'abuse' && options.body.get('note') === 'Report fixture', 'Reporting sends the content ID, selected reason and note');
+      return new Response(JSON.stringify({ok:true,status:201,code:'report_created',params:{},message:'Report sent',data:{action:'report',status_id:42},meta:{}}), {status:201,headers:{'Content-Type':'application/json'}});
+    };
+    T.lifecycle.start(); T.status.controllers.actions.initStatusForms(); T.dialog.open(dialog);
+    form.elements.namedItem('reason').value = 'abuse';
+    form.elements.namedItem('note').value = 'Report fixture';
+    submit.click();
+    await wait(() => calls === 1 && !T.dialog.current(), 'A report submission sends one request and closes the modal after success');
+    document.getElementById('validation-test-results').textContent = JSON.stringify({ok:true,mode,checks});
+    return;
+  }
   const form = T.ui.form('/api/users', 'POST'); form.dataset.modalCloseOnSuccess = 'true';
   form.append(T.components.render('users/admin-fields', {user:{},create:true,options:{username_pattern:'[A-Za-z0-9_]+',role_options:{admin:'Admin',user:'User'},password_max_length:1024}}));
   const accountSection = form.querySelector('[data-editor-section="account"]');

@@ -98,7 +98,7 @@ final class Queries
                 (SELECT COUNT(*) FROM content_tags ct
                  INNER JOIN content c ON c.id = ct.content_id
                  INNER JOIN users u ON u.id = c.author_id
-                 WHERE ct.term_id = t.id AND u.status = ? AND c.published_at <= ?) AS posts_count
+                 WHERE ct.term_id = t.id AND u.status = ? AND c.published_at <= ? AND c.status = 'published') AS posts_count
              FROM terms t WHERE t.name LIKE ? ESCAPE '!'
              ORDER BY posts_count DESC, t.name ASC, t.id ASC LIMIT " . max(1, min(12, $limit)),
             ['active', \TinyCat\Support\Dates::dateDb(), Connection::escapeLike($tagQuery) . '%']
@@ -256,14 +256,14 @@ final class Queries
                     u.avatar_exists AS author_avatar_exists, u.avatar_appearance AS author_avatar_appearance, u.updated_at AS author_updated_at
              FROM (SELECT id, published_at, MAX(link_excerpt) AS link_excerpt FROM (
                  SELECT * FROM (SELECT c.id, c.published_at, NULL AS link_excerpt FROM content c INNER JOIN users u ON u.id = c.author_id
-                 WHERE u.status = ? AND c.published_at <= ? AND ' . $body . $cursorSql . '
+                 WHERE u.status = ? AND c.published_at <= ? AND c.status = \'published\' AND ' . $body . $cursorSql . '
                  ' . $sourcePage . ') body_hits
                  UNION ALL
                  SELECT * FROM (SELECT c.id, c.published_at, MAX(' . $linkText . ') AS link_excerpt FROM links l
                  INNER JOIN content_links cl ON cl.link_id = l.id
                  INNER JOIN content c ON c.id = cl.content_id
                  INNER JOIN users u ON u.id = c.author_id
-                 WHERE u.status = ? AND c.published_at <= ? AND ' . $link . $cursorSql . '
+                 WHERE u.status = ? AND c.published_at <= ? AND c.status = \'published\' AND ' . $link . $cursorSql . '
                  GROUP BY c.id, c.published_at' . $sourcePage . ') link_hits
              ) hits GROUP BY id, published_at ORDER BY published_at DESC, id DESC LIMIT ' . $limit . ') matches
              INNER JOIN content c ON c.id = matches.id

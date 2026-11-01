@@ -13,8 +13,6 @@
     "url_blocker_label": "Заблоковані веб-сайти",
     "url_blocker_placeholder": "example.com, bad.example, domain:ru",
     "url_blocker_help": "Розділяйте веб-сайти комами або новими рядками. Також блокуються субдомени. Використовуйте домен:ru, щоб заблокувати весь суфікс .ru.",
-    "remove_content": "Видалити вміст",
-    "keep_and_lock": "Зберігати та блокувати",
     "empty_content": "Порожній вміст",
     "report_reasons": {
       "spam": "Спам",
@@ -36,18 +34,28 @@
       "blocked_url": "Це посилання заборонено: {host}.",
       "duplicate_body": "Ця публікація надто схожа на вашу недавню публікацію.",
       "report_created": "Звіт подано.",
-      "report_already_reviewed": "Цю публікацію вже переглянуто, і звіт не відкривався повторно.",
       "report_own_content": "Ви не можете повідомити про власну публікацію.",
       "reports_unavailable": "Звіти недоступні.",
       "report_not_found": "Скаргу не знайдено.",
       "report_reviewed": "Звіт розглянуто.",
-      "url_blocker_saved": "Заблоковані URL-адреси збережено."
+      "url_blocker_saved": "Заблоковані URL-адреси збережено.",
+      "content_published": "Допис знову опубліковано."
     },
     "report_count": {
       "one": "{count} скарга",
       "few": "{count} скарги",
       "many": "{count} скарг",
       "other": "{count} скарги"
-    }
+    },
+    "detail": "Подробиці скарги",
+    "preview": "Перегляд допису",
+    "hide_content": "Приховати допис",
+    "hide_confirm": "Приховати допис і заборонити автору писати на 24 години?",
+    "hidden": "Цей допис приховано.",
+    "reporter": "Автор скарги",
+    "reviewer": "Перевірив",
+    "dismiss_report": "Відхилити скарги",
+    "publish_content": "Опублікувати знову",
+    "publish_confirm": "Опублікувати цей допис знову?"
   }
 }

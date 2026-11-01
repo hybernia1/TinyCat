@@ -32,7 +32,7 @@ final class Export
             ci.path AS image_path, ci.bytes AS image_bytes
             FROM content c INNER JOIN users u ON u.id = c.author_id
             LEFT JOIN content_images ci ON ci.content_id = c.id
-            WHERE u.status = ? AND c.published_at <= ? AND c.id IN (' . $placeholders . ')
+            WHERE u.status = ? AND c.published_at <= ? AND c.status = \'published\' AND c.id IN (' . $placeholders . ')
             ORDER BY c.published_at DESC, c.id DESC', ['active', Dates::dateDb(), ...$ids]);
     }
 }

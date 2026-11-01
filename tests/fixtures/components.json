@@ -159,7 +159,7 @@
         },
         "login_url": "/login?next=%2Fstatus%2F10",
         "login_modal_url": "/api/users/authentication?mode=login&next=%2Fstatus%2F10",
-        "edit_locked": true
+        "status": "published"
       },
       "anchor": false,
       "open_modal": false,

@@ -3,6 +3,23 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+## Upgrading to 5.17.0: independent moderation visibility
+
+Migration `20261101_001_content_status` replaces `content.edit_locked_at`,
+`edit_locked_by` and `edit_lock_reason` with `content.status`, defaulting to
+`published`. Existing `moderation_hide` markers become `hidden`; other old edit
+locks are removed without hiding their posts. Post IDs, text, media, comments,
+relationships and report history are preserved. The migration is safe to retry
+and does not undo a later administrative publication.
+
+The former unique `(content_id, reporter_id)` report key becomes a non-unique
+lookup index including report status. Reporting and review serialize on the
+parent post: repeated submissions update a user's existing open report, while
+a new reporting cycle appends a new row after review. A report never hides a
+post automatically. Only administrative hide/publication actions change its
+visibility. Editing preserves that state, and dismissal no longer locks edits.
+Fresh installations include the current schema directly.
+
 ## Bootstrap
 
 The first release containing the updater must be deployed once by the existing
@@ -205,7 +222,7 @@ not backfilled and old episodes are not imported again.
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/build-update.php --version=5.16.1
+php tools/build-update.php --version=5.17.0
 php tools/verify-update.php dist
 ```
 
@@ -219,12 +236,12 @@ Source checkouts without the inventory retain an on-demand development fallback.
 The builder creates:
 
 ```text
-dist/tinycat-5.16.1.zip
+dist/tinycat-5.17.0.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v5.16.1` tag and upload all three files
+Create a GitHub release for the matching `v5.17.0` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -245,10 +262,10 @@ benchmark references, not supported upgrade paths.
 For a fresh installation, build into a separate output directory:
 
 ```bash
-php tools/build-update.php --version=5.16.1 --fresh-install --output=dist/fresh
+php tools/build-update.php --version=5.17.0 --fresh-install --output=dist/fresh
 ```
 
-The fresh-install outputs are `tinycat-5.16.1-install.zip`, `tinycat-install.json`
+The fresh-install outputs are `tinycat-5.17.0-install.zip`, `tinycat-install.json`
 and `tinycat-install.sig`; they cannot overwrite or be mistaken for updater assets.
 Verify them with `php tools/verify-update.php dist/fresh --fresh-install`.
 This package excludes `migrations/` and update deletions. The installer creates

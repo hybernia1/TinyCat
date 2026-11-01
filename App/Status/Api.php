@@ -94,8 +94,13 @@ final class Api
     private static function detail(int $id): array
     {
         $user = Authentication::auth();
-        $item = Feed::public_status_item($id);
-        if ($item === null || !Posts::status_can_view($item)) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
+        $editing = Request::current()->input('panel') === 'edit';
+        if ($editing) { $user = \TinyCat\Users\Access::requireAuth(); }
+        $item = $editing
+            ? \TinyCat\Database\Connection::one(Feed::public_status_select_sql() . ' WHERE c.id = ?', [$id])
+            : Feed::public_status_item($id);
+        if ($item === null || (!$editing && !Posts::status_can_view($item))) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
+        if ($editing && !Posts::status_can_edit($item, $user)) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden'); }
         $items = Resource::posts([$item], $user);
         $comments = Comments::status_comments($id);
         return ['item' => $items[0], 'comments' => Resource::comments($comments, $user),

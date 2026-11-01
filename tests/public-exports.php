@@ -27,6 +27,7 @@ foreach ([
     "INSERT INTO terms VALUES (1, 'public'), (2, 'orphan'), (3, 'hidden'), (4, 'future')",
     'INSERT INTO content_tags VALUES (1, 1), (3, 3), (4, 4)',
 ] as $sql) { $db->exec($sql); }
+$db->exec('ALTER TABLE content ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT \'published\'');
 $checks = 0;
 $assert = static function (bool $ok, string $why) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($why); } };
 $db->queries = [];
@@ -38,6 +39,10 @@ $assert(Sitemap::count('tags') === 1 && array_column(Sitemap::entries('tags', 10
 $assert(Sitemap::count('status') === 2 && count(Sitemap::entries('status', 1000, 0)) === 2, 'Sitemap and export visibility agree.');
 $assert(Sitemap::count('pages') === 2 + count(\TinyCat\Support\Languages::language_packages()) && Sitemap::entries('pages', 1, 1)[0]['url'] === '/privacy', 'Public static pages and their translated policies share count and pagination rules.');
 $assert(Sitemap::entries('status', 1000, 0)[0]['last_modified'] === null, 'Publication time is not presented as a modification timestamp.');
+$db->exec("UPDATE content SET status = 'hidden' WHERE id = 1");
+$assert(array_column(Export::posts(), 'id') === [2], 'Moderation-hidden posts stay in storage but disappear from exports.');
+$assert(Sitemap::count('status') === 1 && Sitemap::count('tags') === 0, 'Sitemaps exclude moderation-hidden posts and their orphaned public tags.');
+$assert((int) $db->query('SELECT COUNT(*) FROM content WHERE id = 1')->fetchColumn() === 1, 'Moderation visibility preserves the original content.');
 $assert(Xml::escape("A\x01<&B") === 'A&lt;&amp;B', 'XML escapes entities and removes forbidden control characters.');
 $xml = simplexml_load_string('<value>' . Xml::cdata('a]]>b') . '</value>');
 $assert($xml !== false && (string) $xml === 'a]]>b', 'CDATA terminators remain valid and round-trip without changes.');

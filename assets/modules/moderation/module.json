@@ -5,19 +5,43 @@
     ],
     "components": [
       "moderation/reports",
-      "moderation/filter-form"
+      "moderation/filter-form",
+      "ui/api-action",
+      "moderation/history",
+      "moderation/report-preview"
     ],
     "entries": [
       "assets/modules/moderation/index.js"
     ],
     "styles": [],
-    "translations": [],
+    "translations": [
+      "moderation.detail",
+      "moderation.preview",
+      "moderation.hidden",
+      "moderation.hide_content",
+      "moderation.hide_confirm",
+      "moderation.empty_content",
+      "moderation.reports_title",
+      "moderation.report_reasons.spam",
+      "moderation.report_reasons.illegal",
+      "moderation.report_reasons.malware",
+      "moderation.report_reasons.abuse",
+      "moderation.report_reasons.other",
+      "moderation.report_statuses.open",
+      "moderation.report_statuses.reviewed",
+      "moderation.report_statuses.resolved",
+      "moderation.report_statuses.dismissed",
+      "moderation.dismiss_report",
+      "moderation.publish_content",
+      "moderation.publish_confirm"
+    ],
     "messages": {
       "blocked_url": "moderation.messages.blocked_url",
       "common_request_failed": "common.request_failed",
       "report_reviewed": "moderation.messages.report_reviewed",
       "status_not_found": "account.messages.status_not_found",
-      "url_blocker_saved": "moderation.messages.url_blocker_saved"
+      "url_blocker_saved": "moderation.messages.url_blocker_saved",
+      "content_published": "moderation.messages.content_published"
     }
   }
 ]

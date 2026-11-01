@@ -13,8 +13,6 @@
     "url_blocker_label": "Blocked websites",
     "url_blocker_placeholder": "example.com, bad.example, domain:ru",
     "url_blocker_help": "Separate websites with commas or new lines. Subdomains are blocked too. Use domain:ru to block the whole .ru suffix.",
-    "remove_content": "Remove content",
-    "keep_and_lock": "Keep and lock",
     "empty_content": "Empty content",
     "report_reasons": {
       "spam": "Spam",
@@ -36,18 +34,28 @@
       "blocked_url": "This link is not allowed: {host}.",
       "duplicate_body": "This post is too similar to your recent post.",
       "report_created": "The report was submitted.",
-      "report_already_reviewed": "This post has already been reviewed and the report was not reopened.",
       "report_own_content": "You cannot report your own post.",
       "reports_unavailable": "Reports are not available.",
       "report_not_found": "Report was not found.",
       "report_reviewed": "The report was reviewed.",
-      "url_blocker_saved": "Blocked URLs were saved."
+      "url_blocker_saved": "Blocked URLs were saved.",
+      "content_published": "The post was published again."
     },
     "report_count": {
       "one": "{count} report",
       "few": "{count} reports",
       "many": "{count} reports",
       "other": "{count} reports"
-    }
+    },
+    "detail": "Report details",
+    "preview": "Post preview",
+    "hide_content": "Hide post",
+    "hide_confirm": "Hide this post and mute its author for 24 hours?",
+    "hidden": "This post is hidden.",
+    "reporter": "Reported by",
+    "reviewer": "Reviewed by",
+    "dismiss_report": "Dismiss reports",
+    "publish_content": "Publish again",
+    "publish_confirm": "Publish this post again?"
   }
 }

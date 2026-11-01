@@ -6,6 +6,8 @@ namespace TinyCat\Status;
 
 final class Posts
 {
+    public const REPORT_NOTE_MAX_LENGTH = 1000;
+
     /**
      * @return array<mixed>
      */
@@ -112,33 +114,6 @@ final class Posts
 
     /**
      * @param array<mixed> $item
-     */
-    public static function status_edit_locked(?array $item): bool
-    {
-        return $item !== null && trim((string) ($item['edit_locked_at'] ?? '')) !== '';
-    }
-
-    /**
-     * @param array<mixed> $actor
-     */
-    public static function status_edit_lock(int $contentId, array $actor, string $reason = ''): void
-    {
-        if ($contentId < 1) {
-            return;
-        }
-
-        $actorId = (int) ($actor['id'] ?? 0);
-        $data = [
-            'edit_locked_at' => \TinyCat\Support\Dates::dateDb(),
-            'edit_locked_by' => $actorId > 0 ? $actorId : null,
-            'edit_lock_reason' => \TinyCat\Support\Text::plain_text_limit($reason, 80),
-        ];
-
-        \TinyCat\Database\Connection::update('content', $data, ['id' => $contentId]);
-    }
-
-    /**
-     * @param array<mixed> $item
      * @param array<mixed> $user
      */
     public static function status_can_edit(?array $item, ?array $user): bool
@@ -151,8 +126,7 @@ final class Posts
             return true;
         }
 
-        return !\TinyCat\Status\Posts::status_edit_locked($item)
-            && (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0);
+        return (int) ($item['author_id'] ?? 0) === (int) ($user['id'] ?? 0);
     }
 
     /**
@@ -229,34 +203,6 @@ final class Posts
         ];
     }
 
-    /**
-     * @return array<mixed>|null
-     */
-    public static function status_report_dismissal_lock(int $contentId): ?array
-    {
-        if ($contentId < 1) {
-            return null;
-        }
-
-        $openCount = (int) \TinyCat\Database\Connection::value(
-            'SELECT COUNT(*) FROM content_reports WHERE content_id = ? AND status = ?',
-            [$contentId, 'open']
-        );
-
-        if ($openCount > 0) {
-            return null;
-        }
-
-        return \TinyCat\Database\Connection::one(
-            'SELECT *
-                FROM content_reports
-                WHERE content_id = ? AND status = ? AND reviewed_at IS NOT NULL
-                ORDER BY reviewed_at DESC, id DESC
-                LIMIT 1',
-            [$contentId, 'dismissed']
-        );
-    }
-
     public static function status_delete_content(int $contentId, bool $deleteReports = true, bool $deleteNotifications = true, bool $deleteImageFile = true): string
     {
         if ($contentId < 1) {
@@ -319,6 +265,6 @@ final class Posts
     /** @param array<string, mixed>|null $item */
     public static function status_can_view(?array $item): bool
     {
-        return $item !== null && (string) ($item['published_at'] ?? '') <= \TinyCat\Support\Dates::dateDb();
+        return $item !== null && ($item['status'] ?? 'published') === 'published' && (string) ($item['published_at'] ?? '') <= \TinyCat\Support\Dates::dateDb();
     }
 }

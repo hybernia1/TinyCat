@@ -19,7 +19,7 @@ try {
   server = spawn(process.execPath, ['-e', 'const fs=require("node:fs"),http=require("node:http");http.createServer((req,res)=>{res.setHeader("Content-Type","text/html");res.end(fs.readFileSync(process.argv[1]));}).listen(0,"127.0.0.1",function(){process.stdout.write(String(this.address().port)+"\\n");});', file], {stdio:['ignore','pipe','pipe']});
   const port = await new Promise((resolve,reject) => { server.once('error',reject); server.stdout.once('data',data=>resolve(Number(String(data).trim()))); });
   let checks = 0;
-  for (const mode of ['server','native','success','scroll','summary','nested','proxy']) {
+  for (const mode of ['moderation','report','server','native','success','scroll','summary','nested','proxy']) {
     const url = new URL('http://127.0.0.1:'+port+'/fixture.html'); url.searchParams.set('case',mode);
     const output = execFileSync(browser, ['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--disable-background-networking','--disable-sync','--hide-scrollbars','--window-size=375,812','--virtual-time-budget=15000','--user-data-dir='+path.join(temporary,'profile-'+mode),'--dump-dom',url.href], {encoding:'utf8',timeout:30000,maxBuffer:8e6,stdio:['ignore','pipe','pipe']});
     const match = output.match(/<pre id="validation-test-results">([\s\S]*?)<\/pre>/);

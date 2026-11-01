@@ -37,7 +37,7 @@ final class Embed
             ci.path AS image_path, ci.width AS image_width, ci.height AS image_height
             FROM content c INNER JOIN users u ON u.id = c.author_id
             LEFT JOIN content_images ci ON ci.content_id = c.id
-            WHERE c.id = ? AND u.status = ? AND c.published_at <= ? LIMIT 1', [$id, 'active', Dates::dateDb()]);
+            WHERE c.id = ? AND u.status = ? AND c.published_at <= ? AND c.status = \'published\' LIMIT 1', [$id, 'active', Dates::dateDb()]);
     }
 
     /** Resolve only this installation's public URLs; never fetch the supplied URL. */

@@ -261,76 +261,31 @@ final class Actions
         $reasons = array_keys(\TinyCat\Status\Posts::status_report_reasons());
         $reason = (string) \TinyCat\Http\Request::current()->input('reason', 'other');
         $reason = in_array($reason, $reasons, true) ? $reason : 'other';
-        $note = \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('note', ''), 1000);
+        $note = \TinyCat\Support\Text::plain_text_limit((string) \TinyCat\Http\Request::current()->input('note', ''), \TinyCat\Status\Posts::REPORT_NOTE_MAX_LENGTH);
         $now = \TinyCat\Support\Dates::dateDb();
-        $existing = \TinyCat\Database\Connection::one(
-            'SELECT *
-                FROM content_reports
-                WHERE content_id = ? AND reporter_id = ?
-                LIMIT 1',
-            [$contentId, $userId]
-        );
-
-        if ($existing !== null && (string) ($existing['status'] ?? '') !== 'open') {
-            return [
-                'action' => 'report',
-                'status_id' => $contentId,
-
-                'message' => \TinyCat\Support\Localization::t('moderation.messages.report_already_reviewed'), 'code' => 'report_already_reviewed',
-                'type' => 'info',
-            ];
-        }
-
-        $dismissed = \TinyCat\Status\Posts::status_report_dismissal_lock($contentId);
-
-        if ($dismissed !== null && $existing === null) {
-            try {
-                \TinyCat\Database\Connection::insert('content_reports', [
-                    'content_id' => $contentId,
-                    'reporter_id' => $userId,
-                    'reason' => $reason,
-                    'note' => $note,
-                    'status' => 'dismissed',
-                    'created_at' => $now,
-                    'reviewed_at' => $now,
-                    'reviewed_by' => (int) ($dismissed['reviewed_by'] ?? 0) ?: null,
-                    'action_note' => 'already_dismissed',
-                ]);
-            } catch (Throwable $exception) {
-                if (!\TinyCat\Database\Connection::uniqueViolation($exception)) {
-                    throw $exception;
-                }
-                // A race on the unique report key behaves like an already reviewed report.
-            }
-
-            return [
-                'action' => 'report',
-                'status_id' => $contentId,
-
-                'message' => \TinyCat\Support\Localization::t('moderation.messages.report_already_reviewed'), 'code' => 'report_already_reviewed',
-                'type' => 'info',
-            ];
-        }
-
         \TinyCat\Status\Actions::status_json_require_action($user, 'report');
-
-        if ($existing !== null) {
-            \TinyCat\Database\Connection::update('content_reports', [
-                'reason' => $reason,
-                'note' => $note,
-                'created_at' => $now,
-            ], ['content_id' => $contentId, 'reporter_id' => $userId]);
-        } else {
-            \TinyCat\Database\Connection::insert('content_reports', [
-                'content_id' => $contentId,
-                'reporter_id' => $userId,
-                'reason' => $reason,
-                'note' => $note,
-                'status' => 'open',
-                'created_at' => $now,
-            ]);
-        }
-
+        \TinyCat\Database\Transactions::run(static function () use ($contentId, $userId, $reason, $note, $now): void {
+            // Use the same parent lock as review/publication so a late report cannot
+            // reopen a post while a moderator is hiding it.
+            $content = \TinyCat\Database\Connection::one(
+                \TinyCat\Database\Connection::lockingSelect('SELECT * FROM content WHERE id = ?'), [$contentId]
+            );
+            if (!\TinyCat\Status\Posts::status_can_view($content)) {
+                \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
+            }
+            $existing = \TinyCat\Database\Connection::one(
+                'SELECT id FROM content_reports WHERE content_id = ? AND reporter_id = ? AND status = ? ORDER BY id DESC LIMIT 1',
+                [$contentId, $userId, 'open']
+            );
+            if ($existing !== null) {
+                \TinyCat\Database\Connection::update('content_reports', ['reason' => $reason, 'note' => $note], ['id' => (int) $existing['id']]);
+            } else {
+                \TinyCat\Database\Connection::insert('content_reports', [
+                    'content_id' => $contentId, 'reporter_id' => $userId,
+                    'reason' => $reason, 'note' => $note, 'status' => 'open', 'created_at' => $now,
+                ]);
+            }
+        });
         \TinyCat\Moderation\Restrictions::moderation_record_action($user, 'report');
 
         return [
@@ -348,10 +303,6 @@ final class Actions
     public static function status_json_update(int $contentId, array $user, string $redirect = '/'): array
     {
         $item = \TinyCat\Status\Posts::status_find($contentId);
-
-        if (\TinyCat\Status\Posts::status_edit_locked($item) && !\TinyCat\Users\Profiles::user_is_admin($user)) {
-            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_edit_locked'), 423, 'status_edit_locked');
-        }
 
         if (!\TinyCat\Status\Posts::status_can_edit($item, $user)) {
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden');
@@ -437,7 +388,7 @@ final class Actions
         if ($oldPath !== '') {
             \TinyCat\Status\ImageStorage::delete($oldPath);
         }
-        if (PostCreation::sendsMentionNotifications((string) ($author['role'] ?? ''))) {
+        if (\TinyCat\Status\Posts::status_can_view(\TinyCat\Status\Posts::status_find($contentId)) && PostCreation::sendsMentionNotifications((string) ($author['role'] ?? ''))) {
             \TinyCat\Notifications\Delivery::notifyMentions($body, $user, $contentId, 0, $oldMentionIds);
         }
 
@@ -449,7 +400,7 @@ final class Actions
             'message' => \TinyCat\Support\Localization::t('account.messages.status_saved'), 'code' => 'status_saved',
         ];
 
-        $resource = \TinyCat\Status\Feed::public_status_item($contentId);
+        $resource = \TinyCat\Database\Connection::one(\TinyCat\Status\Feed::public_status_select_sql() . ' WHERE c.id = ?', [$contentId]);
         $data['item'] = $resource !== null ? Resource::posts([$resource], $user)[0] : null;
 
         return $data;
@@ -688,10 +639,6 @@ final class Actions
                 'body' => $body,
                 'comments_diff' => $history,
             ], ['id' => $commentId]);
-
-            if (\TinyCat\Users\Profiles::user_is_admin($user) && !\TinyCat\Status\Posts::status_edit_locked($status)) {
-                \TinyCat\Status\Posts::status_edit_lock($contentId, $user, 'admin_comment_edit');
-            }
 
             return [
                 'changed' => true,

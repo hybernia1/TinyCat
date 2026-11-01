@@ -58,8 +58,9 @@ import "./filters.js";
       form.dataset.confirmUnsaved = "true";
       var submit = Array.from(form.querySelectorAll("button")).filter(function (button) { return button.getAttribute("type") === "submit"; }).pop();
       if (!submit) { throw new TypeError("An editor dialog requires a submit action."); }
-      if (!form.id) { form.id = id + "-form"; }
-      submit.setAttribute("form", form.id);
+      var formId = form.getAttribute("id");
+      if (!formId) { formId = id + "-form"; form.setAttribute("id", formId); }
+      submit.setAttribute("form", formId);
       submit.className = "btn btn-primary";
       if (!submit.textContent.trim()) { submit.appendChild(e("span", {}, T.ui.text("common.save"))); }
       submit.remove();

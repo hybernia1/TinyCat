@@ -13,8 +13,6 @@
     "url_blocker_label": "Engellenen web siteleri",
     "url_blocker_placeholder": "example.com, bad.example, etki alanı:ru",
     "url_blocker_help": "Web sitelerini virgüllerle veya yeni satırlarla ayırın. Alt alanlar da engellendi. .ru son ekinin tamamını engellemek için domain:ru kullanın.",
-    "remove_content": "İçeriği kaldır",
-    "keep_and_lock": "Sakla ve kilitle",
     "empty_content": "Boş içerik",
     "report_reasons": {
       "spam": "Spam",
@@ -36,18 +34,28 @@
       "blocked_url": "Bu bağlantıya izin verilmiyor: {host}.",
       "duplicate_body": "Bu gönderi son gönderinize çok benziyor.",
       "report_created": "Rapor gönderildi.",
-      "report_already_reviewed": "Bu gönderi zaten incelendi ve rapor yeniden açılmadı.",
       "report_own_content": "Kendi gönderinizi bildiremezsiniz.",
       "reports_unavailable": "Raporlar mevcut değil.",
       "report_not_found": "Raporu bulunamadı.",
       "report_reviewed": "Rapor incelendi.",
-      "url_blocker_saved": "Engellenen URL'ler kaydedildi."
+      "url_blocker_saved": "Engellenen URL'ler kaydedildi.",
+      "content_published": "Gönderi yeniden yayınlandı."
     },
     "report_count": {
       "one": "{count} bildirim",
       "few": "{count} bildirim",
       "many": "{count} bildirim",
       "other": "{count} bildirim"
-    }
+    },
+    "detail": "Şikâyet ayrıntıları",
+    "preview": "Gönderi önizlemesi",
+    "hide_content": "Gönderiyi gizle",
+    "hide_confirm": "Bu gönderi gizlensin ve yazarı 24 saatliğine susturulsun mu?",
+    "hidden": "Bu gönderi gizli.",
+    "reporter": "Şikâyet eden",
+    "reviewer": "İnceleyen",
+    "dismiss_report": "Şikâyetleri reddet",
+    "publish_content": "Yeniden yayınla",
+    "publish_confirm": "Bu gönderi yeniden yayınlansın mı?"
   }
 }

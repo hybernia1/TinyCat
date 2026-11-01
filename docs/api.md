@@ -203,14 +203,14 @@ excerpt, URL, read state and timestamps. Cursor pages contain up to 40 items;
 | Method | Path | Operation |
 | --- | --- | --- |
 | GET, POST | `/api/statuses` | Read feed / create post |
-| GET, PATCH, DELETE | `/api/statuses/{id}` | Detail / edit / delete |
+| GET, PATCH, DELETE | `/api/statuses/{id}` | Public detail / authorized edit / delete; `GET ?panel=edit` is a private owner/admin edit read, including hidden posts |
 | GET, POST | `/api/statuses/{id}/comments` | Read / create comment or reply |
 | PATCH, DELETE | `/api/statuses/{id}/comments/{commentId}` | Edit / delete |
 | GET | `/api/statuses/{id}/comments/{commentId}/revisions` | Authorized text history |
 | PUT, DELETE | `/api/statuses/{id}/likes/me` | Desired post like state |
 | PUT, DELETE | `/api/statuses/{id}/comments/{commentId}/likes/me` | Desired comment like state |
-| GET | `/api/moderation/report-options` | Report reasons, signed-in user |
-| POST | `/api/moderation/reports` | Report a post, signed-in user |
+| GET | `/api/moderation/report-options` | Report reasons and `note_max_length`, signed-in user |
+| POST | `/api/moderation/reports` | Report a post, signed-in user; notes exceeding the published limit receive field validation errors |
 
 Feed queries accept `context=home|author|tag`, `feed=all|following`, `author_id`,
 `tag`, `limit` (1–50), `cursor_at`, `cursor_id` and
@@ -305,7 +305,9 @@ Manual imports of one source use the same feeds task and lock, with
 | GET | `/api/bots/queue` | Paginated future bot posts; filter by `q` (text), `bot` (account ID), `status` (account status), and `source` (RSS source ID or `unknown`) |
 | POST | `/api/bots/queue/{id}/publication` | Publish immediately and return the refreshed queue; administrator and CSRF token required |
 | GET | `/api/moderation/reports` | List moderation reports |
-| PATCH | `/api/moderation/reports/{id}` | Review with `decision=remove|dismiss` |
+| GET | `/api/moderation/reports/{id}` | Admin-only preserved post preview and all reports, notes and reviewers for that post |
+| PATCH | `/api/moderation/reports/{id}` | Review with `decision=remove|dismiss`; `remove` sets post status to `hidden`, while `dismiss` leaves visibility unchanged |
+| POST | `/api/moderation/posts/{id}/publication` | Administrator and CSRF required; explicitly restore a hidden post to `published` without changing report outcomes |
 | GET, PUT | `/api/moderation/blocked-urls` | Read / replace blocked URL rules |
 | GET, PATCH | `/api/settings` | Read setting resources / update supplied settings |
 | POST | `/api/scheduler/tokens` | Rotate the scheduler token |
@@ -313,6 +315,21 @@ Manual imports of one source use the same feeds task and lock, with
 | POST | `/api/updates/installations` | Install the verified update |
 | DELETE | `/api/updates/maintenance` | Disable maintenance after recovery |
 | POST | `/api/site/cache-resets` | Reset OPcache |
+
+Moderation detail returns `content` with its `id` and `status`, canonical
+report entries with ISO timestamps, and `preview.item` / `preview.comments`
+using the normal frontend post and comment resources. This administrator-only
+read can inspect preserved hidden content; public status endpoints retain their
+visibility checks. Report history and its eye previews use the same shared
+table, status indicator and dialog components as other administration lists.
+
+Post status (`published` / `hidden`) is independent of report status
+(`open` / `resolved` / `dismissed`). Submitting a report never changes post
+visibility. Authors can edit their posts without a moderation edit lock;
+account restrictions still apply, and edits cannot change a hidden status.
+After a report is reviewed, the same user can submit a new open report under
+the normal rate limits. One open report per reporter/post is updated in place;
+earlier reviewed rows, notes and decisions are retained.
 
 The publication queue is available at `/admin/bots/queue`. It includes future
 posts belonging to bot accounts, ordered by planned publication time by default.
