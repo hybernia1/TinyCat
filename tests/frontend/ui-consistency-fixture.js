@@ -65,6 +65,33 @@
     finish({ data: { items: [], done: true }, meta: { pagination: { page: 1, per_page: 25, total: 0 } } }); await pending;
     check(!more.isConnected, 'Exhausted following pagination removes its entire frame');
     modal.remove(); sidebar.remove(); row.remove(); form.remove();
+    const draft = document.createElement('form'); draft.style.cssText = 'position:fixed;top:100px;left:12px;right:12px';
+    draft.append(T.components.render('status/editor', {name:'body',value:'',placeholder:'Text',comment:false})); document.body.append(draft);
+    const E = T.status.controllers.editor, pendingSuggestions = [];
+    T.api.request = (url, options) => new Promise(resolve => pendingSuggestions.push({url,options,resolve}));
+    E.initStatusEditors(draft);
+    const editorRoot = draft.querySelector('[data-status-editor]'), editorInput = E.statusEditorInput(editorRoot), suggestions = E.statusEditorBox(editorRoot);
+    function typeDraft(text) { E.setStatusEditorText(editorInput,text,text.length); editorInput.dispatchEvent(new Event('input',{bubbles:true})); }
+    editorInput.focus(); typeDraft('@jan'); await new Promise(resolve => setTimeout(resolve,160));
+    check(pendingSuggestions.length === 1, 'Mention autocomplete starts one debounced request');
+    typeDraft('#');
+    check(pendingSuggestions[0].options.signal.aborted, 'Switching to an empty tag cancels the user request immediately');
+    pendingSuggestions[0].resolve({ok:true,data:{users:[{type:'user',value:'jana',title:'@jana'}]}}); await tick();
+    check(suggestions.hidden, 'An obsolete user response cannot populate a new empty tag');
+    typeDraft('#1'); await new Promise(resolve => setTimeout(resolve,160));
+    check(pendingSuggestions.length === 1 && suggestions.hidden && E.statusEditorSource(editorRoot).value === '#1', 'A numeric hash literal remains text without a proposed numeric tag');
+    for (const [typed,canonical] of [['#1980s','1980s'],['#straße','strasse'],['#Cafe\u0301','cafe']]) {
+      typeDraft(typed); await new Promise(resolve => setTimeout(resolve,160));
+      pendingSuggestions[pendingSuggestions.length-1].resolve({ok:true,data:{tags:[{type:'tag',value:canonical,title:'#'+canonical}]}}); await tick();
+      check(!suggestions.hidden && suggestions.textContent === '#'+canonical, 'Autocomplete preserves the server canonical tag: '+typed);
+      key(editorInput,'Enter');
+      check(E.statusEditorSource(editorRoot).value === '#'+canonical+' ', 'Selecting a tag inserts its canonical value without a second transliteration');
+    }
+    for (const text of ['mail@jana','https://example.test/@jana','example.test/path#tag','##tag','word.#tag']) {
+      typeDraft(text); check(E.statusEditorActiveToken(editorRoot) === null, 'Autocomplete ignores URL, email and invalid token boundaries: '+text);
+    }
+    typeDraft('Ahoj,@jana'); check(E.statusEditorActiveToken(editorRoot).query === 'jana', 'Autocomplete recognizes the same punctuation boundary as the server');
+    E.hideStatusEditorSuggestions(editorRoot); draft.remove();
     document.getElementById('results').textContent = JSON.stringify({ ok: true, checks });
   } catch (error) { document.getElementById('results').textContent = JSON.stringify({ ok: false, error: String(error.stack || error), checks }); }
 }());

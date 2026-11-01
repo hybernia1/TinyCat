@@ -2,6 +2,10 @@
 declare(strict_types=1);
 
 // Runs against the same isolated HTTP server and disposable database as api-contract.php.
+[$status, $tagSuggestion] = $request('GET', '/api/search/suggestions?type=tag&q=1980s', null, 'user');
+$assert($status === 200 && in_array('1980s', array_column($tagSuggestion['data']['tags'], 'value'), true), 'Authenticated autocomplete preserves mixed numeric-letter tags.');
+[$status, $numericSuggestion] = $request('GET', '/api/search/suggestions?type=tag&q=2026', null, 'user');
+$assert($status === 200 && !in_array('2026', array_column($numericSuggestion['data']['tags'], 'value'), true), 'Autocomplete never proposes a purely numeric tag.');
 [$status, $legacyPost] = $request('GET', '/api/statuses/12');
 $legacyItem = $legacyPost['data']['item'];
 $assert($status === 200 && count($legacyItem['links']) === 1 && $legacyItem['links'][0]['url'] === 'https://www.legacy.example/article/'

@@ -77,7 +77,8 @@
     "activate": "Activar",
     "deactivate": "Desactivar",
     "activated": "{entity} activado.",
-    "deactivated": "{entity} desactivado."
+    "deactivated": "{entity} desactivado.",
+    "action_for": "{action} — {context}"
   },
   "relative": {
     "now": "ahora",

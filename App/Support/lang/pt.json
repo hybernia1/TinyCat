@@ -77,7 +77,8 @@
     "activate": "Ativar",
     "deactivate": "Desativar",
     "activated": "{entity} ativado.",
-    "deactivated": "{entity} desativado."
+    "deactivated": "{entity} desativado.",
+    "action_for": "{action} — {context}"
   },
   "relative": {
     "now": "agora",

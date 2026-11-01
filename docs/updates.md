@@ -3,6 +3,23 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+## Upgrading to 5.19.1: inline tokens and accessible links
+
+Signed updates remain supported from 5.16.0. Migration
+`20261101_002_numeric_tags` removes purely numeric terms and their content
+relationships. Post and comment bodies remain unchanged: `#1` and `#2026`
+are plain text, while mixed names such as `#1980s`, `#3d` and `#gothic-1`
+remain supported tags. The updater creates its normal database backup before
+applying pending migrations. The cleanup is transactional and safe to retry.
+Fresh installations start without legacy numeric terms.
+
+Tag and mention processing protects URL paths, queries and fragments.
+Autocomplete uses canonical server values and cancels obsolete suggestions.
+Repeated links expose their purpose and content context to assistive technology,
+including current counts after AJAX updates. Scheduler polling and history
+navigation encode only supported filters against a fixed API endpoint.
+No configuration change is required.
+
 ## Upgrading to 5.19.0: post text and YouTube thumbnails
 
 No new schema migration or configuration change is required. Signed updates

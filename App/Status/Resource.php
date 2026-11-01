@@ -165,7 +165,7 @@ final class Resource
     {
         $mentionIds = [];
         foreach (Comments::status_comment_tree_rows($comments) as $comment) {
-            if (preg_match_all(Mentions::mention_id_pattern(), (string) ($comment['body'] ?? ''), $matches)) {
+            if (preg_match_all(Mentions::mention_id_pattern(), InlineText::withoutLinks((string) ($comment['body'] ?? '')), $matches)) {
                 foreach ($matches[1] as $id) { $mentionIds[] = (int) $id; }
             }
         }

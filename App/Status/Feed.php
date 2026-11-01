@@ -376,7 +376,7 @@ final class Feed
         $mentionIds = [];
 
         foreach ($items as $item) {
-            if (!preg_match_all(\TinyCat\Status\Mentions::mention_id_pattern(), (string) ($item['body'] ?? ''), $matches)) {
+            if (!preg_match_all(\TinyCat\Status\Mentions::mention_id_pattern(), \TinyCat\Status\InlineText::withoutLinks((string) ($item['body'] ?? '')), $matches)) {
                 continue;
             }
 

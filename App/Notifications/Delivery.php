@@ -96,7 +96,7 @@ final class Delivery
      */
     public static function mentionedUserIds(string $text): array
     {
-        if ($text === '' || !preg_match_all(\TinyCat\Status\Mentions::mention_id_pattern(), $text, $matches)) {
+        if ($text === '' || !preg_match_all(\TinyCat\Status\Mentions::mention_id_pattern(), \TinyCat\Status\InlineText::withoutLinks($text), $matches)) {
             return [];
         }
 

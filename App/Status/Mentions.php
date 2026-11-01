@@ -83,9 +83,9 @@ final class Mentions
     public static function normalize_mentions_for_storage(string $text): string
     {
         $text = \TinyCat\Status\Mentions::normalize_author_urls_for_storage($text);
-        $pattern = '/(?<![\p{L}\p{N}\p{M}_.@-])@([\p{L}\p{N}](?:[\p{L}\p{N}\p{M}_.-]{0,30}[\p{L}\p{N}\p{M}_])?)(?![\p{L}\p{N}\p{M}_-]|\.[\p{L}\p{N}\p{M}_.-])/u';
+        $pattern = '/(?<![\p{L}\p{N}\p{M}_.@#-])@([\p{L}\p{N}](?:[\p{L}\p{N}\p{M}_.-]{0,30}[\p{L}\p{N}\p{M}_])?)(?![\p{L}\p{N}\p{M}_-]|\.[\p{L}\p{N}\p{M}_.-])/u';
 
-        if (!preg_match_all($pattern, $text, $matches)) {
+        if (!preg_match_all($pattern, InlineText::withoutLinks($text), $matches)) {
             return $text;
         }
 
@@ -127,7 +127,7 @@ final class Mentions
             }
         }
 
-        return (string) preg_replace_callback($pattern, static function (array $match) use ($map, $users): string {
+        return InlineText::map($text, static fn (string $part): string => (string) preg_replace_callback($pattern, static function (array $match) use ($map, $users): string {
             $token = \TinyCat\Users\Usernames::username_key((string) $match[1]);
 
             if (ctype_digit($token) && isset($users[(int) $token])) {
@@ -139,24 +139,24 @@ final class Mentions
             }
 
             return (string) $match[0];
-        }, $text);
+        }, $part));
     }
 
     public static function mention_id_pattern(): string
     {
-        return '/(?<![\p{L}\p{N}\p{M}_.@-])@([1-9][0-9]*)(?![\p{L}\p{N}\p{M}_-]|\.[\p{L}\p{N}\p{M}_.-])/u';
+        return '/(?<![\p{L}\p{N}\p{M}_.@#-])@([1-9][0-9]*)(?![\p{L}\p{N}\p{M}_-]|\.[\p{L}\p{N}\p{M}_.-])/u';
     }
 
     public static function mentions_for_editing(string $text): string
     {
-        if ($text === '' || !preg_match_all(\TinyCat\Status\Mentions::mention_id_pattern(), $text, $matches)) {
+        if ($text === '' || !preg_match_all(\TinyCat\Status\Mentions::mention_id_pattern(), InlineText::withoutLinks($text), $matches)) {
             return $text;
         }
 
         $ids = \TinyCat\Support\Text::positive_int_ids($matches[1]);
         $users = \TinyCat\Status\Mentions::author_mention_users_by_ids($ids);
 
-        return (string) preg_replace_callback(
+        return InlineText::map($text, static fn (string $part): string => (string) preg_replace_callback(
             \TinyCat\Status\Mentions::mention_id_pattern(),
             static function (array $match) use ($users): string {
                 $id = (int) $match[1];
@@ -164,7 +164,7 @@ final class Mentions
 
                 return $handle !== '' ? '@' . $handle : (string) $match[0];
             },
-            $text
-        );
+            $part
+        ));
     }
 }

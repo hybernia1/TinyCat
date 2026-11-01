@@ -124,21 +124,22 @@
         }
       },
       "aria-label": {
-        "or": [
-          {
+        "use": "ui/action-label",
+        "data": {
+          "action": {
+            "date": {
+              "get": "item.published_at"
+            }
+          },
+          "context": {
             "use": "status/permalink",
             "data": {
               "item": {
                 "get": "item"
               }
             }
-          },
-          {
-            "date": {
-              "get": "item.published_at"
-            }
           }
-        ]
+        }
       },
       "data-modal-open": {
         "if": [
@@ -222,6 +223,14 @@
                 "get": "item.id"
               }
             ]
+          },
+          "aria-label": {
+            "use": "status/permalink",
+            "data": {
+              "item": {
+                "get": "item"
+              }
+            }
           }
         },
         "children": [
@@ -1591,34 +1600,15 @@
         "attrs": {
           "class": "btn btn-ghost btn-sm status-reaction",
           "href": {
-            "if": [
+            "concat": [
               {
-                "get": "open_modal"
+                "get": "item.url"
               },
+              "#status-comments-thread-",
               {
-                "concat": [
-                  {
-                    "get": "item.url"
-                  },
-                  "#status-comments-thread-",
-                  {
-                    "get": "item.id"
-                  }
-                ]
-              },
-              {
-                "concat": [
-                  "#status-comments-thread-",
-                  {
-                    "get": "item.id"
-                  }
-                ]
+                "get": "item.id"
               }
             ]
-          },
-          "aria-label": {
-            "t": "account.status_comments",
-            "values": {}
           },
           "data-modal-open": {
             "if": [
@@ -1671,6 +1661,31 @@
           {
             "tag": "span",
             "attrs": {
+              "class": "sr-only"
+            },
+            "children": [
+              {
+                "use": "ui/action-label",
+                "data": {
+                  "action": {
+                    "t": "account.status_comments"
+                  },
+                  "context": {
+                    "use": "status/context",
+                    "data": {
+                      "item": {
+                        "get": "item"
+                      }
+                    }
+                  }
+                }
+              },
+              ": "
+            ]
+          },
+          {
+            "tag": "span",
+            "attrs": {
               "data-status-count": "comments"
             },
             "children": [
@@ -1695,7 +1710,20 @@
             ]
           },
           "aria-label": {
-            "t": "account.status_embed"
+            "use": "ui/action-label",
+            "data": {
+              "action": {
+                "t": "account.status_embed"
+              },
+              "context": {
+                "use": "status/context",
+                "data": {
+                  "item": {
+                    "get": "item"
+                  }
+                }
+              }
+            }
           },
           "data-modal-open": {
             "concat": [
@@ -1716,7 +1744,20 @@
           },
           "data-modal-refresh": "true",
           "title": {
-            "t": "account.status_embed"
+            "use": "ui/action-label",
+            "data": {
+              "action": {
+                "t": "account.status_embed"
+              },
+              "context": {
+                "use": "status/context",
+                "data": {
+                  "item": {
+                    "get": "item"
+                  }
+                }
+              }
+            }
           }
         },
         "children": [

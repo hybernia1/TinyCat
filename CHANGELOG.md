@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.19.1 - 2026-11-02
+
+- Build scheduler polling and history URLs from an allowlisted, encoded query instead of forwarding the raw page query. Keep the API endpoint fixed and cover crafted filter values and stale responses with regression tests (CodeQL alert #15).
+
+- Give repeated comment, embed, image and administration count links contextual accessible names. Preserve visible dates and live counts in the name, distinguish bot management from public profiles, and keep comment destinations canonical inside dialogs. Add shared label formatting and native axe-core regression checks for PHP and client rendering.
+
+- Treat purely numeric hashtags such as `#1` and `#2026` as plain text while retaining mixed names such as `#1980s`, `#3d` and `#gothic-1`. Remove legacy numeric terms and their relationships through an idempotent migration without rewriting post or comment bodies.
+- Protect URL paths, queries and fragments from mention and tag normalization, editing, tag validation and mention notifications. Align inline token boundaries between parsing, rendering and the editor.
+- Cancel obsolete autocomplete reads immediately, including transitions to an empty marker. Use canonical tag values from the server instead of a second, inconsistent client transliteration, and remove the unused preload of 300 tags.
+
 ## 5.19.0 - 2026-11-01
 
 - Load YouTube thumbnails directly from its image CDN, using small mobile and medium desktop sources in cards and exported players. Stop caching thumbnails or attaching them to imported YouTube posts; provide a backed-up cleanup for existing thumbnail paths.

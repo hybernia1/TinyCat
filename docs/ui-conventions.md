@@ -13,6 +13,23 @@ UI služby, CSS třídy i manifesty a trasy jednotlivých stylů.
 
 ## Jeden zdroj struktury
 
+Opakované odkazy na konkrétní obsah mají přístupný název složený z účelu
+a kontextu cíle. Pro akce používat `ui/action-label` a společný kontext
+příspěvku; ten obsahuje také ID, aby odlišil shodné autory a úryvky.
+Samotné „Komentáře“, „Vložit“ nebo číselná hodnota mezi opakovanými odkazy
+nestačí. Veřejný profil a správa účtu jsou odlišné účely.
+
+Viditelný text zůstává součástí přístupného názvu. U číselných odkazů přidat
+účel a kontext přes `.sr-only` vedle skutečného počítadla, nikoli přepsat
+počet statickým `aria-label`. Název se tak aktualizuje i po AJAXové změně.
+Ikonové a obrázkové odkazy mohou používat `aria-label`; datumový odkaz
+zahrnuje viditelné datum i kontext příspěvku. Odkaz na komentáře má stejnou
+kanonickou URL na stránce i v modalu; posun uvnitř modalu řídí společný loader.
+
+`node tests/frontend/link-labels.cjs` kontroluje PHP i klientské vykreslení,
+shodné úryvky, chybějící kontext, změnu počtu a pravidla axe-core pro názvy
+odkazů. Běží ve WebKitu na mobilní i desktopové šířce ve třech jazycích.
+
 Prázdné seznamy používají `ui/empty-state`. Pro sidebar a našeptávání se
 nastavuje `compact: true`; nevytvářet další vlastní prázdné hlášky.
 Prázdný výsledek, nápověda a selhání požadavku jsou odlišné stavy:

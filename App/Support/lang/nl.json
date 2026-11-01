@@ -77,7 +77,8 @@
     "activate": "Activeren",
     "deactivate": "Deactiveren",
     "activated": "{entity} geactiveerd.",
-    "deactivated": "{entity} gedeactiveerd."
+    "deactivated": "{entity} gedeactiveerd.",
+    "action_for": "{action} — {context}"
   },
   "relative": {
     "now": "nu",

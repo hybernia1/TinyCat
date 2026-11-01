@@ -77,7 +77,8 @@
     "activate": "Etkinleştir",
     "deactivate": "Devre dışı bırak",
     "activated": "{entity} etkinleştirildi.",
-    "deactivated": "{entity} devre dışı bırakıldı."
+    "deactivated": "{entity} devre dışı bırakıldı.",
+    "action_for": "{action} — {context}"
   },
   "relative": {
     "now": "şimdi",

@@ -24,6 +24,7 @@
       "source": "assets/modules/bots/components.json",
       "dependencies": [
         "ui/account-status",
+        "ui/action-label",
         "ui/activation-action",
         "ui/api-action",
         "ui/empty-state",
@@ -866,7 +867,8 @@
       "name": "status/time",
       "source": "assets/modules/status/components.json",
       "dependencies": [
-        "status/permalink"
+        "status/permalink",
+        "ui/action-label"
       ],
       "inputs": [
         "item",
@@ -879,8 +881,11 @@
     {
       "name": "status/image",
       "source": "assets/modules/status/components.json",
-      "dependencies": [],
+      "dependencies": [
+        "status/permalink"
+      ],
       "inputs": [
+        "item",
         "item.id",
         "item.image.author",
         "item.image.description",
@@ -913,8 +918,8 @@
         "link.outbound_url",
         "link.provider",
         "link.provider_name",
+        "link.thumbnail_mobile_url",
         "link.thumbnail_url",
-        "link.thumbnail_webp_url",
         "link.title",
         "link.url"
       ]
@@ -977,7 +982,8 @@
       "source": "assets/modules/status/components.json",
       "dependencies": [
         "status/context",
-        "status/like"
+        "status/like",
+        "ui/action-label"
       ],
       "inputs": [
         "item",
@@ -1680,6 +1686,15 @@
         "button_attributes",
         "label",
         "loading_label"
+      ]
+    },
+    {
+      "name": "ui/action-label",
+      "source": "assets/ui/components.json",
+      "dependencies": [],
+      "inputs": [
+        "action",
+        "context"
       ]
     }
   ],
@@ -3127,6 +3142,18 @@
         "selector": ".public-sidebar-card .card-header"
       },
       {
+        "source": "assets/modules/notifications/styles/notifications-page.css",
+        "line": 10,
+        "context": [],
+        "selector": ".notifications-page .card-header"
+      },
+      {
+        "source": "assets/modules/notifications/styles/notifications-page.css",
+        "line": 17,
+        "context": [],
+        "selector": ".notifications-page .card-header > form"
+      },
+      {
         "source": "assets/ui/styles/cards-mobile.css",
         "line": 11,
         "context": [
@@ -3657,6 +3684,12 @@
         "selector": ".field"
       },
       {
+        "source": "assets/ui/styles/filter-menu.css",
+        "line": 17,
+        "context": [],
+        "selector": ".filter-menu-panel .field"
+      },
+      {
         "source": "assets/modules/users/styles/avatar-upload.css",
         "line": 77,
         "context": [],
@@ -3666,7 +3699,7 @@
     "field-error": [
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 60,
+        "line": 68,
         "context": [],
         "selector": ".field-error"
       }
@@ -3734,9 +3767,15 @@
       },
       {
         "source": "assets/ui/styles/filter-menu.css",
-        "line": 12,
+        "line": 13,
         "context": [],
         "selector": ".filter-menu-panel > form.stack > *"
+      },
+      {
+        "source": "assets/ui/styles/filter-menu.css",
+        "line": 17,
+        "context": [],
+        "selector": ".filter-menu-panel .field"
       }
     ],
     "following-modal-grid": [
@@ -3956,7 +3995,7 @@
     "help": [
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 55,
+        "line": 63,
         "context": [],
         "selector": ".help"
       }
@@ -4370,25 +4409,31 @@
     "input": [
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 12,
+        "line": 14,
         "context": [],
         "selector": ".input"
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 30,
+        "line": 29,
+        "context": [],
+        "selector": ".input[type=\"date\"]"
+      },
+      {
+        "source": "assets/ui/styles/fields.css",
+        "line": 38,
         "context": [],
         "selector": ".input:disabled"
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 39,
+        "line": 47,
         "context": [],
         "selector": ".input:focus"
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 47,
+        "line": 55,
         "context": [],
         "selector": ".input[aria-invalid=\"true\"]"
       },
@@ -4656,7 +4701,7 @@
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 6,
+        "line": 8,
         "context": [],
         "selector": ".label"
       },
@@ -5579,6 +5624,18 @@
         "line": 1,
         "context": [],
         "selector": ".notifications-page"
+      },
+      {
+        "source": "assets/modules/notifications/styles/notifications-page.css",
+        "line": 10,
+        "context": [],
+        "selector": ".notifications-page .card-header"
+      },
+      {
+        "source": "assets/modules/notifications/styles/notifications-page.css",
+        "line": 17,
+        "context": [],
+        "selector": ".notifications-page .card-header > form"
       }
     ],
     "pagination": [
@@ -5684,37 +5741,37 @@
       },
       {
         "source": "assets/ui/styles/popovers.css",
-        "line": 25,
+        "line": 27,
         "context": [],
         "selector": ".popover-panel:popover-open"
       },
       {
         "source": "assets/ui/styles/popovers.css",
-        "line": 25,
+        "line": 27,
         "context": [],
         "selector": "[data-popover][open] > .popover-panel:not([popover])"
       },
       {
         "source": "assets/ui/styles/popovers.css",
-        "line": 25,
+        "line": 27,
         "context": [],
         "selector": "[data-popover][data-popover-open=\"true\"] > .popover-panel:not([popover])"
       },
       {
         "source": "assets/ui/styles/popovers.css",
-        "line": 28,
+        "line": 30,
         "context": [],
         "selector": ".popover-panel[hidden]"
       },
       {
         "source": "assets/ui/styles/popovers.css",
-        "line": 29,
+        "line": 31,
         "context": [],
         "selector": ".popover-panel form"
       },
       {
         "source": "assets/ui/styles/popovers.css",
-        "line": 32,
+        "line": 34,
         "context": [],
         "selector": "[data-popover][open] > .popover-panel:not([popover])"
       }
@@ -6256,25 +6313,25 @@
     "select": [
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 12,
+        "line": 14,
         "context": [],
         "selector": ".select"
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 30,
+        "line": 38,
         "context": [],
         "selector": ".select:disabled"
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 39,
+        "line": 47,
         "context": [],
         "selector": ".select:focus"
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 47,
+        "line": 55,
         "context": [],
         "selector": ".select[aria-invalid=\"true\"]"
       },
@@ -6388,7 +6445,7 @@
       },
       {
         "source": "assets/ui/styles/filter-menu.css",
-        "line": 12,
+        "line": 13,
         "context": [],
         "selector": ".filter-menu-panel > form.stack > *"
       }
@@ -8666,31 +8723,31 @@
     "textarea": [
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 12,
+        "line": 14,
         "context": [],
         "selector": ".textarea"
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 25,
+        "line": 33,
         "context": [],
         "selector": ".textarea"
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 30,
+        "line": 38,
         "context": [],
         "selector": ".textarea:disabled"
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 39,
+        "line": 47,
         "context": [],
         "selector": ".textarea:focus"
       },
       {
         "source": "assets/ui/styles/fields.css",
-        "line": 47,
+        "line": 55,
         "context": [],
         "selector": ".textarea[aria-invalid=\"true\"]"
       }
@@ -9297,10 +9354,18 @@
           "selector": ".textarea",
           "context": [],
           "source": "assets/ui/styles/fields.css",
-          "line": 12,
+          "line": 14,
           "declarations": [
             [
               "width",
+              "100%"
+            ],
+            [
+              "min-width",
+              "0"
+            ],
+            [
+              "max-width",
               "100%"
             ],
             [
@@ -9337,7 +9402,7 @@
           "selector": ".textarea",
           "context": [],
           "source": "assets/ui/styles/fields.css",
-          "line": 25,
+          "line": 33,
           "declarations": [
             [
               "min-height",
@@ -9667,7 +9732,7 @@
           "selector": "[data-popover][open] > .popover-panel:not([popover])",
           "context": [],
           "source": "assets/ui/styles/popovers.css",
-          "line": 25,
+          "line": 27,
           "declarations": [
             [
               "display",
@@ -9679,7 +9744,7 @@
           "selector": "[data-popover][open] > .popover-panel:not([popover])",
           "context": [],
           "source": "assets/ui/styles/popovers.css",
-          "line": 32,
+          "line": 34,
           "declarations": [
             [
               "position",
@@ -10807,23 +10872,23 @@
       "methods": [
         {
           "name": "restoringFocus",
-          "line": 137
+          "line": 142
         },
         {
           "name": "capture",
-          "line": 138
-        },
-        {
-          "name": "restore",
           "line": 143
         },
         {
+          "name": "restore",
+          "line": 148
+        },
+        {
           "name": "init",
-          "line": 152
+          "line": 157
         },
         {
           "name": "dispose",
-          "line": 198
+          "line": 211
         }
       ]
     },

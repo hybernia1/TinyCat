@@ -16,12 +16,12 @@ import "../../ui/component-builders.js";
     var target = document.querySelector("#scheduler-list");
     if (!target || pending || editing(target)) { return; }
     var view = target.firstElementChild, generation = target.dataset.apiGeneration;
-    var url = "/api/scheduler/tasks" + window.location.search;
+    var url = T.scheduler.listUrl();
     var controller = new AbortController(); pending = controller;
     try {
       var response = await T.api.request(url, { method: "GET", cache: "no-store", signal: controller.signal });
       if (!target.isConnected || target.firstElementChild !== view || target.dataset.apiGeneration !== generation ||
-          url !== "/api/scheduler/tasks" + window.location.search || editing(target)) { return; }
+          url !== T.scheduler.listUrl() || editing(target)) { return; }
       var data = Object.assign({}, response.data, { pagination: T.ui.pagination(response) });
       if (JSON.stringify(data) === JSON.stringify(JSON.parse(view.dataset.schedulerState))) { return; }
       T.scheduler.list(target, response);
@@ -31,6 +31,14 @@ import "../../ui/component-builders.js";
     } finally { if (pending === controller) { pending = null; } }
   }
   T.scheduler = {
+    listUrl: function () {
+      var query = new URLSearchParams();
+      new URLSearchParams(window.location.search).forEach(function (value, name) {
+        if (["q", "task", "status", "page", "per_page", "sort", "direction"].includes(name)) { query.append(name, value); }
+      });
+      var search = query.toString();
+      return "/api/scheduler/tasks" + (search ? "?" + search : "");
+    },
     init: function () {
       document.addEventListener("visibilitychange", function () { if (!document.hidden) { poll(); } });
     },

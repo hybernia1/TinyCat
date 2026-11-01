@@ -35,7 +35,7 @@ final class Segments
     private static function mentions(string $text): array
     {
         // Use the same boundaries as the server presentation and stored stable IDs.
-        $pattern = '/(?<![\p{L}\p{N}\p{M}_.@-])(?|(@)([\p{L}\p{N}](?:[\p{L}\p{N}\p{M}_-]|\.(?=[\p{L}\p{N}\p{M}_-]))*)|(#)([\p{L}\p{N}][\p{L}\p{N}_-]*))/u';
+        $pattern = '/(?<![\p{L}\p{N}\p{M}_.@#-])(?|(@)([\p{L}\p{N}](?:[\p{L}\p{N}\p{M}_-]|\.(?=[\p{L}\p{N}\p{M}_-]))*)|(#)([\p{L}\p{N}][\p{L}\p{N}\p{M}_-]*))/u';
         preg_match_all($pattern, $text, $matches, PREG_OFFSET_CAPTURE);
         $ids = [];
         foreach ($matches[2] as [$value]) { if (ctype_digit($value)) { $ids[] = (int) $value; } }

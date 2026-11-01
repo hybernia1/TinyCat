@@ -29,7 +29,7 @@ final class Tags
         $limit = max(1, min(30, $limit));
         $days = max(1, min(365, $days));
         $since = \TinyCat\Support\Dates::dateDb('-' . $days . ' days');
-        $cacheKey = 'public_trending_tags_v2_' . $limit . '_' . $days;
+        $cacheKey = 'public_trending_tags_v3_' . $limit . '_' . $days;
 
         $cached = \TinyCat\Support\Cache::get($cacheKey, 3600);
 
@@ -92,7 +92,7 @@ final class Tags
         $tag = ltrim($tag, "# \t\n\r\0\x0B");
         $tag = \TinyCat\Support\Text::slug($tag);
 
-        return strlen($tag) <= \TinyCat\Status\Tags::status_tag_max_length() ? $tag : '';
+        return !ctype_digit($tag) && strlen($tag) <= \TinyCat\Status\Tags::status_tag_max_length() ? $tag : '';
     }
 
     public static function status_tag_max_length(): int
@@ -105,11 +105,11 @@ final class Tags
      */
     public static function status_tag_tokens_from_text(string $text): array
     {
-        if (!preg_match_all('/(?<![\\p{L}\\p{N}_])#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)/u', $text, $matches)) {
+        if (!preg_match_all('/(?<![\\p{L}\\p{N}\\p{M}_.@#-])#([\\p{L}\\p{N}][\\p{L}\\p{N}\\p{M}_-]*)/u', InlineText::withoutLinks($text), $matches)) {
             return [];
         }
 
-        return array_map('strval', (array) $matches[1]);
+        return array_values(array_filter(array_map('strval', (array) $matches[1]), static fn (string $tag): bool => preg_match('/^\\p{N}+$/u', $tag) !== 1));
     }
 
     /**
@@ -132,43 +132,15 @@ final class Tags
 
     public static function normalize_tags_for_storage(string $text): string
     {
-        return (string) preg_replace_callback(
-            '/(?<![\\p{L}\\p{N}_])#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)/u',
+        return InlineText::map($text, static fn (string $part): string => (string) preg_replace_callback(
+            '/(?<![\\p{L}\\p{N}\\p{M}_.@#-])#([\\p{L}\\p{N}][\\p{L}\\p{N}\\p{M}_-]*)/u',
             static function (array $match): string {
                 $tag = \TinyCat\Status\Tags::status_tag_normalize((string) $match[1]);
 
                 return $tag !== '' ? '#' . $tag : (string) $match[0];
             },
-            $text
-        );
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    public static function status_tag_suggestions(): array
-    {
-        static $tags = null;
-
-        if ($tags !== null) {
-            return $tags;
-        }
-
-        $tags = [];
-
-        try {
-            foreach (\TinyCat\Database\Queries::db_select('SELECT name FROM terms')->order('name ASC')->limit(300)->all() as $row) {
-                $tag = \TinyCat\Status\Tags::status_tag_normalize((string) ($row['name'] ?? ''));
-
-                if ($tag !== '') {
-                    $tags[$tag] = $tag;
-                }
-            }
-        } catch (Throwable) {
-            $tags = [];
-        }
-
-        return array_values($tags);
+            $part
+        ));
     }
 
     public static function status_term_id(string $tag): int

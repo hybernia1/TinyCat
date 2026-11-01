@@ -14,61 +14,10 @@ import "../../ui/component-builders.js";
   var appendUserAvatar = TinyCat.ui.appendAvatar;
   var compactUrl = TinyCat.navigation.compact;
   var unwrapResult = TinyCat.api.unwrap;
-  function parseList(value) {
-    return String(value || "")
-      .split(",")
-      .map(function (item) {
-        return item.trim().replace(/\s+/g, " ");
-      })
-      .filter(Boolean);
-  }
-  function parseJsonArray(value) {
-    try {
-      var parsed = JSON.parse(String(value || "[]"));
-
-      if (Array.isArray(parsed)) {
-        return parsed.map(function (item) {
-          return String(item || "").trim();
-        }).filter(Boolean);
-      }
-    } catch (_error) {
-      return parseList(value);
-    }
-
-    return [];
-  }
-  function uniqueList(values) {
-    var seen = {};
-
-    return values.filter(function (value) {
-      var key = value.toLowerCase();
-
-      if (seen[key]) {
-        return false;
-      }
-
-      seen[key] = true;
-      return true;
-    });
-  }
   var statusEditorCounterId = 0;
-  function statusSlug(value) {
-    var text = String(value || "").trim();
-
-    if (text.charAt(0) === "#") {
-      text = text.slice(1);
-    }
-
-    if (text.normalize) {
-      text = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    }
-
-    return text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 32);
+  function statusTagValue(value) {
+    var tag = String(value || "");
+    return tag.length <= 32 && /^(?![0-9]+$)[a-z0-9]+(?:-[a-z0-9]+)*$/.test(tag) ? tag : "";
   }
   function statusUsername(value) {
     var text = String(value || "").trim();
@@ -102,14 +51,6 @@ import "../../ui/component-builders.js";
       "has-editor-suggestions",
       Boolean(qs("[data-status-editor-suggestions]:not([hidden])", panel))
     );
-  }
-  function statusEditorTags(root) {
-    if (!root.__tinycatStatusTags) {
-      var source = statusEditorSource(root);
-      root.__tinycatStatusTags = uniqueList(parseJsonArray(source ? source.dataset.statusTags : "[]").map(statusSlug).filter(Boolean));
-    }
-
-    return root.__tinycatStatusTags;
   }
   function statusEditorSuggestUrl(root) {
     var source = statusEditorSource(root);
@@ -222,17 +163,19 @@ import "../../ui/component-builders.js";
     text = statusEditorText(editor);
     caret = statusEditorCaret(editor);
     before = text.slice(0, caret);
-    match = /(^|[\s([{])([#@])([^\s#@]*)$/.exec(before);
+    if (/(?:https?:\/\/|www\.|(?:[a-z0-9-]+\.)+[a-z]{2,}[/?#])[^\s]*$/i.test(before)) return null;
+    match = /(?<![\p{L}\p{N}\p{M}_.@#-])(?:(@)([\p{L}\p{N}\p{M}_.-]*)|(#)([\p{L}\p{N}\p{M}_-]*))$/u.exec(before);
 
     if (!match) {
       return null;
     }
 
+    var marker = match[1] || match[3], query = match[2] || match[4] || "";
     return {
-      marker: String(match[2] || "#"),
-      type: String(match[2] || "#") === "@" ? "user" : "tag",
-      query: String(match[3] || ""),
-      start: caret - String(match[3] || "").length - 1,
+      marker: marker,
+      type: marker === "@" ? "user" : "tag",
+      query: query,
+      start: caret - query.length - 1,
       end: caret
     };
   }
@@ -303,31 +246,6 @@ import "../../ui/component-builders.js";
       item.setAttribute("aria-selected", active ? "true" : "false");
     });
   }
-  function statusEditorLocalSuggestions(root, token) {
-    var needle;
-    var tags;
-
-    if (!token || token.type !== "tag") {
-      return [];
-    }
-
-    needle = statusSlug(token.query);
-    tags = statusEditorTags(root).filter(function (tag) {
-      return !needle || tag.indexOf(needle) !== -1;
-    });
-
-    if (needle && tags.indexOf(needle) === -1) {
-      tags.unshift(needle);
-    }
-
-    return tags.slice(0, 8).map(function (tag) {
-      return {
-        type: "tag",
-        title: "#" + tag,
-        value: tag
-      };
-    });
-  }
   function renderStatusEditorSuggestionItems(root, items) {
     var box = statusEditorBox(root);
     var seen = {};
@@ -341,7 +259,7 @@ import "../../ui/component-builders.js";
 
     items.forEach(function (item) {
       var type = item && item.type === "user" ? "user" : "tag";
-      var value = type === "user" ? statusUsername(item.value || item.title) : statusSlug(item.value || item.title);
+      var value = type === "user" ? statusUsername(item.value || item.title) : statusTagValue(item.value);
       var title = item.title || (type === "user" ? "@" + value : "#" + value);
       var key = type + ":" + value;
       var button;
@@ -383,21 +301,21 @@ import "../../ui/component-builders.js";
     var suggestUrl = statusEditorSuggestUrl(root);
     var fingerprint;
 
-    if (!suggestUrl || !token || !token.query) {
+    window.clearTimeout(root.__tinycatStatusSuggestTimer);
+    root.__tinycatStatusSuggestFingerprint = "";
+    if (root.__tinycatStatusSuggestAbort) root.__tinycatStatusSuggestAbort.abort();
+    root.__tinycatStatusSuggestAbort = null;
+
+    if (!suggestUrl || !token || !token.query || (token.type === "tag" && /^\p{N}+$/u.test(token.query))) {
       return;
     }
 
-    window.clearTimeout(root.__tinycatStatusSuggestTimer);
     fingerprint = token.type + ":" + token.start + ":" + token.end + ":" + token.query;
     root.__tinycatStatusSuggestFingerprint = fingerprint;
 
     root.__tinycatStatusSuggestTimer = window.setTimeout(function () {
       var url = new URL(suggestUrl, window.location.href);
       var controller = window.AbortController ? new AbortController() : null;
-
-      if (root.__tinycatStatusSuggestAbort) {
-        root.__tinycatStatusSuggestAbort.abort();
-      }
 
       root.__tinycatStatusSuggestAbort = controller;
       url.searchParams.set("type", token.type);
@@ -413,7 +331,7 @@ import "../../ui/component-builders.js";
           var data = unwrapResult(response) || {};
           var items = token.type === "user" ? data.users : data.tags;
 
-          if (root.isConnected === false || root.__tinycatStatusSuggestFingerprint !== fingerprint) {
+          if ((controller && controller.signal.aborted) || root.isConnected === false || root.__tinycatStatusSuggestFingerprint !== fingerprint) {
             return;
           }
 
@@ -429,16 +347,13 @@ import "../../ui/component-builders.js";
   function renderStatusEditorSuggestions(root) {
     var box = statusEditorBox(root);
     var token = statusEditorActiveToken(root);
-    var items;
-
     if (!box || !token) {
       hideStatusEditorSuggestions(root);
       return;
     }
 
     root.__tinycatStatusToken = token;
-    items = statusEditorLocalSuggestions(root, token);
-    renderStatusEditorSuggestionItems(root, items);
+    renderStatusEditorSuggestionItems(root, []);
     requestStatusEditorSuggestions(root, token);
   }
   function insertStatusEditorSuggestion(root, value, type) {
@@ -446,7 +361,7 @@ import "../../ui/component-builders.js";
     var token = root.__tinycatStatusToken || statusEditorActiveToken(root);
     var suggestionType = type || (token ? token.type : "tag");
     var marker = suggestionType === "user" ? "@" : "#";
-    var clean = suggestionType === "user" ? statusUsername(value) : statusSlug(value);
+    var clean = suggestionType === "user" ? statusUsername(value) : statusTagValue(value);
 
     if (!editor || !token || !clean) {
       hideStatusEditorSuggestions(root);
@@ -627,5 +542,5 @@ import "../../ui/component-builders.js";
   function initStatusEditors (scope) {
     qsa("[data-status-editor]", scope || document).forEach(initStatusEditorRoot);
   }
-  TinyCat.status.controllers.editor = { statusSlug: statusSlug, statusUsername: statusUsername, statusEditorSource: statusEditorSource, statusEditorInput: statusEditorInput, statusEditorBox: statusEditorBox, statusEditorCounter: statusEditorCounter, syncStatusEditorModalSize: syncStatusEditorModalSize, statusEditorTags: statusEditorTags, statusEditorSuggestUrl: statusEditorSuggestUrl, statusEditorText: statusEditorText, setStatusEditorText: setStatusEditorText, statusSelectionOffsets: statusSelectionOffsets, statusEditorCaret: statusEditorCaret, replaceStatusEditorRange: replaceStatusEditorRange, statusEditorActiveToken: statusEditorActiveToken, syncStatusEditor: syncStatusEditor, hideStatusEditorSuggestions: hideStatusEditorSuggestions, selectStatusEditorSuggestion: selectStatusEditorSuggestion, statusEditorLocalSuggestions: statusEditorLocalSuggestions, renderStatusEditorSuggestionItems: renderStatusEditorSuggestionItems, requestStatusEditorSuggestions: requestStatusEditorSuggestions, renderStatusEditorSuggestions: renderStatusEditorSuggestions, insertStatusEditorSuggestion: insertStatusEditorSuggestion, initStatusEditorRoot: initStatusEditorRoot, resetStatusEditor: resetStatusEditor, initStatusEditors: initStatusEditors };
+  TinyCat.status.controllers.editor = { statusUsername: statusUsername, statusEditorSource: statusEditorSource, statusEditorInput: statusEditorInput, statusEditorBox: statusEditorBox, statusEditorCounter: statusEditorCounter, syncStatusEditorModalSize: syncStatusEditorModalSize, statusEditorSuggestUrl: statusEditorSuggestUrl, statusEditorText: statusEditorText, setStatusEditorText: setStatusEditorText, statusSelectionOffsets: statusSelectionOffsets, statusEditorCaret: statusEditorCaret, replaceStatusEditorRange: replaceStatusEditorRange, statusEditorActiveToken: statusEditorActiveToken, syncStatusEditor: syncStatusEditor, hideStatusEditorSuggestions: hideStatusEditorSuggestions, selectStatusEditorSuggestion: selectStatusEditorSuggestion, renderStatusEditorSuggestionItems: renderStatusEditorSuggestionItems, requestStatusEditorSuggestions: requestStatusEditorSuggestions, renderStatusEditorSuggestions: renderStatusEditorSuggestions, insertStatusEditorSuggestion: insertStatusEditorSuggestion, initStatusEditorRoot: initStatusEditorRoot, resetStatusEditor: resetStatusEditor, initStatusEditors: initStatusEditors };
 }());
