@@ -13,7 +13,7 @@ const vm = require("node:vm");
   const T = { api: { request(url, options) { calls++; assert.equal(url, "/api/scheduler/tasks?task=feeds&page=2"); assert.equal(options.cache, "no-store"); return new Promise((yes, no) => { resolve = yes; reject = no; }); } },
     ui: { pagination: response => response.meta.pagination }, lifecycle: { hydrate() {} } };
   const window = { TinyCat: T, location: { search: "?task=feeds&page=2" }, setInterval(fn, delay) { timers++; assert.equal(delay, 5000); tick = fn; return 1; }, clearInterval() { cleared = true; } };
-  vm.runInNewContext(fs.readFileSync(require("node:path").join(__dirname, "../../assets/modules/scheduler/views.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, AbortController, URL });
+  vm.runInNewContext(fs.readFileSync(require("node:path").join(__dirname, "../../assets/modules/scheduler/controller.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, AbortController, URL });
   T.scheduler.filters = () => {};
   T.scheduler.list = () => { renders++; };
   T.scheduler.init(); T.scheduler.hydrate(document);

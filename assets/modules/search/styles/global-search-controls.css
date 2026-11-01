@@ -1,0 +1,19 @@
+.global-search > [data-popover] { display: grid; min-width: 0; }
+.global-search-control > .icon { position: absolute; left: 12px; width: 18px; height: 18px; color: var(--muted); pointer-events: none; }
+.global-search-input { padding-left: 38px; }
+.global-search[aria-busy="true"] .global-search-input { background: var(--surface-soft); }
+.global-search-results { --popover-max-height: min(70vh, 520px); --popover-padding: 8px; gap: 6px; }
+
+.global-search-section {
+  display: grid;
+  gap: 4px;
+}
+
+.global-search-heading {
+  padding: 6px 8px 3px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+

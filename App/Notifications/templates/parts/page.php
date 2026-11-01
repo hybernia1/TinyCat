@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 use TinyCat\Security\Csrf;
 use TinyCat\Support\Html;
-use TinyCat\Support\View;
 
 if (!defined('TINYCAT')) {
     http_response_code(403);
@@ -25,19 +24,15 @@ $nextUrl = (string) ($next_url ?? '');
             </form>
         </div>
         <div class="notifications-list" id="notifications-list">
-            <?php if ($notifications === []): ?>
-                <?= \TinyCat\Support\Components::render('ui/empty-state', ['label' => \TinyCat\Support\Localization::t('notifications.empty'), 'icon' => 'bell']) ?>
-            <?php else: ?>
-                <?= \TinyCat\Notifications\Views::items(['notifications' => $notifications]) ?>
-            <?php endif; ?>
+            <?= \TinyCat\Notifications\Views::items(['notifications' => $notifications]) ?>
         </div>
     </article>
     <?php if ($nextUrl !== ''): ?>
-        <div class="status-feed-more" data-status-feed-more data-status-feed-target="#notifications-list" data-status-feed-url="<?= Html::e($nextUrl) ?>">
-            <button class="btn btn-secondary status-feed-more-button" type="button" data-status-feed-load>
-                <?= Html::icon('plus') ?> <span><?= Html::et('notifications.load_more') ?></span>
-            </button>
-            <span class="status-feed-more-state" data-status-feed-state hidden><?= Html::et('notifications.loading') ?></span>
-        </div>
+        <?= \TinyCat\Support\Components::render('ui/load-more', [
+            'attributes' => ['class' => 'load-more status-feed-more', 'data-status-feed-more' => '', 'data-status-feed-target' => '#notifications-list', 'data-status-feed-url' => $nextUrl],
+            'button_attributes' => ['class' => 'btn btn-secondary status-feed-more-button', 'type' => 'button', 'data-status-feed-load' => ''],
+            'label' => \TinyCat\Support\Localization::t('notifications.load_more'),
+            'loading_label' => \TinyCat\Support\Localization::t('notifications.loading'),
+        ]) ?>
     <?php endif; ?>
 </section>

@@ -1,0 +1,7 @@
+[data-list-summary]:not(:has(.badge)) { display: none; }
+
+.filter-chip { gap: 6px; border: 0; font-family: inherit; text-align: left; cursor: pointer; }
+.filter-chip > span { min-width: 0; overflow-wrap: anywhere; }
+.filter-chip > .icon { width: 12px; height: 12px; flex-shrink: 0; }
+.filter-chip:hover { background: var(--primary-soft); color: var(--primary-strong); }
+

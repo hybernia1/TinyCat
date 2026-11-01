@@ -123,6 +123,16 @@ try {
         $failures[] = 'Fresh installation artifact unexpectedly declares update deletions.';
     }
 
+    if (!in_array('--fresh-install', $argv, true)) {
+        $retiredFiles = json_decode((string) file_get_contents($root . '/tools/update-deletions.json'), true, 512, JSON_THROW_ON_ERROR);
+        foreach ($retiredFiles as $release => $paths) {
+            if (version_compare((string) $release, $manifest['minimum_version'], '<=') || version_compare((string) $release, $version, '>')) { continue; }
+            foreach ($paths as $path) {
+                if (!in_array($path, $manifest['delete'], true)) { $failures[] = 'Missing overlay cleanup: ' . $path; }
+                if (isset($manifest['files'][$path])) { $failures[] = 'Retired file is still packaged: ' . $path; }
+            }
+        }
+    }
     $archive = new PharData($package);
     $iterator = new RecursiveIteratorIterator($archive);
 
@@ -190,13 +200,13 @@ try {
         }
     }
 
-    foreach (['App/Http/Api.php', 'App/Http/Request.php', 'App/Http/Response.php', 'App/Http/Validator.php', 'App/Database/Connection.php', 'App/Support/Config.php', 'App/Module.php', 'App/modules.php', 'assets/core/http.js', 'assets/core/dom.js', 'assets/ui/forms.js', 'assets/ui/dialogs.js'] as $required) {
+    foreach (['App/Http/Api.php', 'App/Http/Request.php', 'App/Http/Response.php', 'App/Http/Validator.php', 'App/Database/Connection.php', 'App/Support/Config.php', 'App/Module.php', 'App/modules.php', 'assets/core/api-client.js', 'assets/core/dom.js', 'assets/ui/form-requests.js', 'assets/ui/dialogs.js'] as $required) {
         if (!in_array($required, $names, true)) {
             $failures[] = "Required module infrastructure missing from artifact: {$required}";
         }
     }
 
-    foreach (['App/Users/Module.php', 'App/Users/Api.php', 'App/Users/Avatar.php', 'App/Users/Roles.php', 'App/Notifications/Module.php', 'App/Notifications/Api.php', 'App/Status/Module.php', 'App/Status/Api.php', 'App/Status/ImageStorage.php', 'App/Status/LinkParser.php', 'App/Status/Metadata.php', 'assets/ui/fields.js', 'assets/modules/users/views.js', 'assets/modules/status/views.js', 'assets/modules/notifications/views.js'] as $required) {
+    foreach (['App/Users/Module.php', 'App/Users/Api.php', 'App/Users/Avatar.php', 'App/Users/Roles.php', 'App/Notifications/Module.php', 'App/Notifications/Api.php', 'App/Status/Module.php', 'App/Status/Api.php', 'App/Status/ImageStorage.php', 'App/Status/LinkParser.php', 'App/Status/Metadata.php', 'assets/ui/component-builders.js', 'assets/modules/users/controller.js', 'assets/modules/status/controller.js', 'assets/modules/notifications/controller.js'] as $required) {
         if (!in_array($required, $names, true)) { $failures[] = 'Required domain runtime missing: ' . $required; }
     }
     foreach (['App/Core.php', 'App/functions.php', 'App/Api.php', 'App/Bots.php', 'App/BotAdmin.php', 'App/Captcha.php', 'App/Cache.php', 'App/Minifier.php', 'App/SiteIdentity.php', 'App/Sitemap.php', 'App/PackageManager.php', 'App/Notifications.php', 'App/Avatar.php', 'App/UserRoles.php', 'App/StatusImage.php', 'App/StatusLinks.php', 'App/LinkMetadata.php'] as $retired) {

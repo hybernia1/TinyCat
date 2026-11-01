@@ -44,6 +44,7 @@ final class Api
         $api->patch('/users/me/email', static fn (): Result => self::result(Actions::user_email_update_request(self::actor())));
         $api->put('/users/me/password', static fn (): Result => self::result(Actions::user_password_update_request(self::actor())));
         $api->get('/users', self::listing(...), 'admin');
+        $api->get('/users/creation', static fn (): array => Resource::creation(), 'admin');
         $api->post('/users', static fn (): Result => self::result(self::adminCreate()), 'admin');
         $api->put('/users/{id:[0-9]+}/activation', static function (Request $r, array $p): Result {
             $user = Accounts::tc_admin_user_by_id((int) $p['id']);

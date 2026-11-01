@@ -1,0 +1,50 @@
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  place-items: center;
+  padding: 16px;
+}
+
+.modal[data-modal-size="workspace"] {
+  padding: 0;
+}
+
+.modal[data-open="true"] {
+  display: grid;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay);
+}
+
+.modal-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, var(--modal-width));
+  max-height: min(var(--modal-height), calc(100dvh - 32px));
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.modal[data-modal-size="wide"] > .modal-panel {
+  width: min(100%, var(--modal-width-wide));
+}
+
+.modal[data-modal-size="compact"] > .modal-panel {
+  width: min(100%, var(--modal-width-compact));
+}
+
+.modal[data-modal-size="reading"] > .modal-panel {
+  width: min(100%, var(--modal-width-reading));
+}
+
+.modal-panel.has-editor-suggestions {
+  min-height: min(var(--modal-suggestions-height), calc(100dvh - 32px));
+}

@@ -1,0 +1,5 @@
+.badge-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+

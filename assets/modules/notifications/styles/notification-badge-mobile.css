@@ -1,0 +1,11 @@
+@media (max-width: 759px) {
+  .notification-badge {
+    top: -3px;
+    right: -3px;
+    min-width: 17px;
+    height: 17px;
+    border-width: 2px;
+    font-size: 0.5625rem;
+  }
+
+}

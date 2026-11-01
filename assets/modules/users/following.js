@@ -1,10 +1,9 @@
 import "../../core/dom.js";
-import "../../core/http.js";
+import "../../core/api-client.js";
 import "../../core/i18n.js";
-import "../../core/lifecycle.js";
-import "./views.js";
-import "../../ui/fields.js";
-import "../../ui/forms.js";
+import "./controller.js";
+import "../../ui/component-builders.js";
+import "../../ui/form-requests.js";
 import "../../ui/toasts.js";
 (function () {
   "use strict";
@@ -12,7 +11,6 @@ import "../../ui/toasts.js";
   var qs = TinyCat.dom.find;
   var qsa = TinyCat.dom.all;
   var dataSelector = TinyCat.dom.dataSelector;
-  var hydrateDynamic = TinyCat.lifecycle.hydrate;
   var uiText = TinyCat.i18n.label;
   var unwrapResult = TinyCat.api.unwrap;
 
@@ -20,9 +18,9 @@ import "../../ui/toasts.js";
     var modal = button ? button.closest(".modal") : null;
     var grid = modal ? qs(".following-modal-grid", modal) : null;
     var url = button ? button.dataset.followingUrl : "";
+    var control = button && button.closest(".load-more"), state = control && qs(".load-more-state", control);
     var data;
     var payload;
-    var template;
 
     if (!button || !grid || !url || button.dataset.followingBusy === "true") {
       return;
@@ -30,32 +28,35 @@ import "../../ui/toasts.js";
 
     button.dataset.followingBusy = "true";
     button.disabled = true;
+    if (control) { control.classList.add("is-loading"); control.setAttribute("aria-busy", "true"); }
+    if (state) state.hidden = false;
 
     try {
       data = await TinyCat.api.request(url, { method: "GET" });
+      if (!grid.isConnected || !button.isConnected) return;
       payload = data && data.data ? data.data : data;
       payload = Object.assign({}, payload, TinyCat.ui.pagination(data));
-      template = { content: TinyCat.users.profiles(payload.items) };
-      grid.appendChild(template.content);
+      if (payload.items.length) grid.appendChild(TinyCat.users.profiles(payload.items));
 
       if (payload && payload.next_url && payload.done !== true) {
         button.dataset.followingUrl = String(payload.next_url);
         button.disabled = false;
       } else {
-        button.remove();
+        (control || button).remove();
       }
     } catch (error) {
-      TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
+      if (button.isConnected && error.name !== "AbortError") TinyCat.toasts.show((error.data && error.data.message) || error.message || uiText("requestFailed", "Request failed"), "danger");
       button.disabled = false;
     } finally {
       delete button.dataset.followingBusy;
+      if (control) { control.classList.remove("is-loading"); control.removeAttribute("aria-busy"); }
+      if (state) state.hidden = true;
     }
   }
   function updateFollowResult(form, data) {
     var payload = unwrapResult(data) || {};
     var authorId = payload.author_id ? String(payload.author_id) : (form ? form.dataset.authorId : "");
     TinyCat.users.follow(form, payload);
-    var next = null;
 
     if (data && data.message) {
       TinyCat.toasts.show(data.message, data.type || "success");
@@ -70,11 +71,6 @@ import "../../ui/toasts.js";
       qsa("[data-author-stat='following']" + dataSelector("data-author-id", authorId)).forEach(function (node) {
         node.textContent = String(payload.following_count || 0);
       });
-    }
-
-    if (form && next) {
-      form.replaceWith(next);
-      hydrateDynamic(next);
     }
   }
   function initFollowForms () {

@@ -1,0 +1,36 @@
+.cookie-consent {
+  position: fixed;
+  z-index: 1000;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: .8rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.cookie-consent-copy {
+  display: grid;
+  gap: .2rem;
+  min-width: 0;
+}
+
+.cookie-consent-copy span {
+  color: var(--muted);
+  font-size: .875rem;
+}
+
+.cookie-consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  flex: 0 0 auto;
+}

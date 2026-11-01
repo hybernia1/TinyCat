@@ -13,7 +13,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
     status: { card: item => item, controllers: { feed: { statusFeedForForm: () => feed, statusCardId: card => String(card.id) }, forms: { statusFormAction: () => action, statusFormCard: () => null }, editor: {} } }
   };
   const window = { TinyCat: T, location: { href: "https://tinycat.test/?feed=following&media=images" }, history: { state: { publicIndex: 3 } }, scrollX: 0, scrollY: 480 };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/modules/status/actions.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document: {}, URL });
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/modules/status/form-actions.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document: {}, URL });
   const handle = T.status.controllers.actions.handleStatusJsonResponse;
   await handle(form, { data: { action, item: { id: 20 } } });
   assert.equal(prepended, 0, "Filtered results are determined by the server after publishing");

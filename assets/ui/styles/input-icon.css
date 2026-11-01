@@ -1,0 +1,18 @@
+.input-icon {
+  position: relative;
+  display: block;
+}
+
+.input-icon .icon {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 11px;
+  color: var(--muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.input-icon .input {
+  padding-inline-start: 36px;
+}
+

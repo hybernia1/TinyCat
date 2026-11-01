@@ -1,0 +1,21 @@
+.identity-row {
+  --avatar-size: 44px;
+  display: grid;
+  grid-template-columns: var(--avatar-size) minmax(0, 1fr);
+  align-items: start;
+  min-width: 0;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+.identity-row-compact { --avatar-size: 36px; padding: 8px 10px; }
+.identity-row-inset { padding: 0; }
+.identity-row > .avatar { --avatar-size: inherit; --avatar-border: 0; --avatar-background: var(--surface-muted); width: var(--avatar-size); height: var(--avatar-size); }
+.identity-row:hover, .identity-row:focus-visible { background: var(--primary-soft); }
+.identity-row.is-unread { background: var(--unread-surface); }
+.identity-copy { display: grid; min-width: 0; gap: 2px; overflow-wrap: anywhere; }
+.identity-copy > strong { font-size: 0.875rem; line-height: 1.35; }
+.identity-copy > span, .identity-copy > small, .identity-copy > time { color: var(--muted); font-size: 0.8125rem; line-height: 1.5; }
+.identity-copy-truncate > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -37,7 +37,12 @@
       "bots.detail_history",
       "bots.detail_posts",
       "common.refresh",
-      "bots.new_source"
+      "bots.new_source",
+      "common.username",
+      "common.create",
+      "bots.new_account",
+      "bots.account_create_help",
+      "account.username_hint"
     ],
     "messages": {
       "bot_account_created": "bots.messages.account_created",

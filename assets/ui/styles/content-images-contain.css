@@ -1,0 +1,5 @@
+.image-preview-contain img {
+  object-fit: contain;
+  background: var(--surface-soft);
+}
+

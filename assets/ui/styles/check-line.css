@@ -1,0 +1,12 @@
+.check-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.check-line input {
+  accent-color: var(--primary);
+}
+

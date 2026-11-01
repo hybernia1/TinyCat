@@ -1,0 +1,22 @@
+.status-feed {
+  display: grid;
+  gap: 8px;
+  max-width: 760px;
+}
+
+.status-feed-spacer {
+  min-height: 0;
+  pointer-events: none;
+}
+
+.status-feed-more { max-width: 760px; }
+
+.status-card {
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.status-card-body {
+  display: grid;
+  gap: 8px;
+}

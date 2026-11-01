@@ -1,0 +1,7 @@
+.min-w-0 { min-width: 0; }
+
+@media (max-width: 899px) {
+  .desktop-only {
+    display: none;
+  }
+}

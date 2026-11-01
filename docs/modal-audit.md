@@ -2,6 +2,11 @@
 
 ## Stav po sjednocení
 
+Následná oprava settings odstranila předem vložený formulář z administračního
+shellu. Nastavení nyní načítají `/api/settings/editor` přes společný resource
+loader a po zavření se odstraňují. Dřívější popis persistentního lokálního
+settings editoru níže je historický stav.
+
 Níže je původní nálezový stav. Navazující implementace zavedla společné
 typy `content` / `editor` / `confirm`, pojmenované velikosti a tokeny rámu.
 JS a PHP editory sdílejí `ui/editor-actions`. Všechny editory používají

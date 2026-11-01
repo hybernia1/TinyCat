@@ -1,4 +1,4 @@
-import "../../core/http.js";
+import "../../core/api-client.js";
 import "../../core/dom.js";
 import "../../core/lifecycle.js";
 import "../../ui/toasts.js";

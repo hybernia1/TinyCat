@@ -9,19 +9,23 @@
       "users/following-profile",
       "users/auth-content",
       "users/avatar-control",
-      "ui/account-status"
+      "ui/account-status",
+      "ui/load-more"
     ],
     "entries": [
       "assets/modules/users/index.js"
     ],
     "styles": [
-      "assets/modules/users/styles/012-profile-nav-link.css",
-      "assets/modules/users/styles/043-profile-avatar-button.css",
-      "assets/modules/users/styles/046-profile-layout.css",
-      "assets/modules/users/styles/048-profile-stats-strong.css",
-      "assets/modules/users/styles/072-following-modal-grid.css",
-      "assets/modules/users/styles/088-profile-layout.css",
-      "assets/modules/users/styles/090-profile-main.css"
+      "assets/modules/users/styles/profile-navigation.css",
+      "assets/modules/users/styles/profile-avatar.css",
+      "assets/modules/users/styles/profile.css",
+      "assets/modules/users/styles/profile-details.css",
+      "assets/modules/users/styles/following-mobile.css",
+      "assets/modules/users/styles/profile-layout-desktop.css",
+      "assets/modules/users/styles/profile-main-desktop.css",
+      "assets/modules/users/styles/account-security-page.css",
+      "assets/modules/users/styles/account-security-card.css",
+      "assets/modules/users/styles/avatar-upload.css"
     ],
     "translations": [
       "account.avatar_edit",
@@ -52,6 +56,7 @@
       "common.register",
       "common.save",
       "notifications.load_more",
+      "notifications.loading",
       "public.follow",
       "public.following",
       "public.unfollow",
@@ -149,7 +154,9 @@
       "assets/modules/users/public.js"
     ],
     "components": [],
-    "styles": [],
+    "styles": [
+      "assets/modules/users/styles/user-menu.css"
+    ],
     "translations": []
   }
 ]

@@ -1,0 +1,36 @@
+[data-popover] { position: relative; display: inline-flex; }
+[data-popover] > summary { list-style: none; cursor: pointer; }
+[data-popover] > summary::-webkit-details-marker { display: none; }
+[data-popover][open] > summary.btn { background: var(--surface-soft); }
+
+.popover-panel {
+  position: fixed;
+  inset: auto;
+  z-index: 70;
+  display: none;
+  width: var(--popover-width, max-content);
+  min-width: min(var(--popover-min-width, 132px), var(--popover-available-width, calc(100vw - 24px)));
+  max-width: var(--popover-available-width, calc(100vw - 24px));
+  max-height: var(--popover-max-height, calc(100dvh - 24px));
+  margin: 0;
+  padding: var(--popover-padding, 0);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.popover-panel:popover-open,
+[data-popover][open] > .popover-panel:not([popover]),
+[data-popover][data-popover-open="true"] > .popover-panel:not([popover]) { display: grid; }
+.popover-panel[hidden] { display: none; }
+.popover-panel form { display: block; }
+
+/* Native disclosure remains usable before JavaScript is available. */
+[data-popover][open] > .popover-panel:not([popover]) {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+}

@@ -30,13 +30,13 @@ final class Pages
         $data = Administration::accountsViewData();
         $title = Localization::t('bots.accounts_title');
         $content = AdminViews::listCard($title, 'users', 'bot-accounts-list', 'bot-accounts-filter-modal', new Markup(Views::accounts($data)), primary: true)
-            . Views::accountCreate() . Views::accountFilter($data);
+            . Views::accountFilter($data);
         if ($openBot !== null) {
             $content .= '<span hidden data-bot-detail-open="' . Html::e($openBot) . '" data-bot-detail-query="' . Html::e((string) ($_SERVER['QUERY_STRING'] ?? '')) . '"></span>';
         }
         Layout::render([
             'title' => $title, 'current' => '/admin/bots/accounts',
-            'actions' => AdminViews::modalAction('bot-account-create-modal', Localization::t('bots.new_account'), 'user-plus'),
+            'actions' => AdminViews::modalAction('modal-bots-accounts-creation', Localization::t('bots.new_account'), 'user-plus', '/api/bots/accounts/creation'),
         ], $content);
     }
 

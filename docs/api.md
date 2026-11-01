@@ -143,6 +143,7 @@ and do not implement a second set of operations.
 | GET, POST | `/api/users` | Administrator, list/create |
 | GET | `/api/users/{id}` | Public profile whitelist |
 | GET | `/api/users/{id}/management` | Owner or administrator |
+| GET | `/api/users/creation` | Administrator-only fresh options and constraints for creating an account |
 | PATCH | `/api/users/{id}` | Owner profile; `scope=administration` requires administrator |
 | DELETE | `/api/users/{id}` | Administrator, protected administrator rules apply |
 | GET, PUT, PATCH, DELETE | `/api/users/{id}/avatar` | Owner or administrator |
@@ -291,6 +292,7 @@ Manual imports of one source use the same feeds task and lock, with
 | Method | Path | Operation |
 | --- | --- | --- |
 | GET, POST | `/api/bots/accounts` | List / create bot accounts |
+| GET | `/api/bots/accounts/creation` | Administrator-only bot account creation constraints |
 | GET, PATCH, DELETE | `/api/bots/accounts/{id}` | Account metadata and aggregate counts / edit / delete |
 | PUT | `/api/bots/accounts/{id}/activation` | Set account activation with boolean `enabled`; disabling also disables its sources |
 | GET | `/api/bots/accounts/{id}/runs` | Search, filter by `q`, `source`, `status` (one of the returned status choices), sort and paginate source import history |
@@ -310,6 +312,8 @@ Manual imports of one source use the same feeds task and lock, with
 | POST | `/api/moderation/posts/{id}/publication` | Administrator and CSRF required; explicitly restore a hidden post to `published` without changing report outcomes |
 | GET, PUT | `/api/moderation/blocked-urls` | Read / replace blocked URL rules |
 | GET, PATCH | `/api/settings` | Read setting resources / update supplied settings |
+| GET | `/api/updates/release-notes` | Administrator-only cached release version and notes; 404 when unavailable, no remote release fetch |
+| GET | `/api/settings/editor` | Administrator-only current editor values, field constraints and available choices; fetched when opening settings |
 | POST | `/api/scheduler/tokens` | Rotate the scheduler token |
 | POST | `/api/updates/checks` | Check signed release metadata |
 | POST | `/api/updates/installations` | Install the verified update |
@@ -520,9 +524,17 @@ The bot account resource returns `item` with `source_count`, `active_source_coun
 Settings PATCH takes `{ "settings": { "site.name": "Example" } }`. Omitted
 settings remain unchanged. Boolean false disables a setting. Password fields
 retain their value when empty. Read resources contain `key`, `type`, `value` and
-`sensitive`; sensitive values are null. SMTP credentials and raw configuration
+`sensitive`; sensitive values are null. Stored passwords and raw configuration
 are never returned. Blocked URL replacement takes a `blocked_urls` string. The settings modal updates the same rules through `settings[moderation.blocked_urls]`, retaining host normalization and `domain:` rules.
 Token rotation returns the new token only in its authenticated administrator response.
+
+The settings editor resource supplies `sections` with stable keys and field
+values, types, limits and available options. Password inputs, including the
+nested SMTP password, are always blank. Labels, help text, examples and layout
+belong to the client presentation module and its declared translation catalog.
+The admin shell contains only the resource trigger, never editor markup or
+values. Opening and closing use the shared resource-dialog service; closing
+disposes the editor after the standard unsaved-change guard accepts it.
 
 ## Search, challenges and sidebar
 
@@ -551,7 +563,7 @@ cannot override the method. Unsupported methods return 405 with `Allow` and
 `error.details.allowed`; unknown paths return 404. Internal failures return JSON
 without exposing exception details in production.
 
-AJAX stays enabled through `assets/core/http.js` and domain renderers in
+AJAX stays enabled through `assets/core/api-client.js` and domain renderers in
 `assets/modules`. Server pages remain valid initial renders. Tests exercise
 the actual front controller with an isolated database, safe DOM rendering,
 authentication, authorization, CSRF, state writes, pagination, history, recovery

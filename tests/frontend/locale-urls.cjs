@@ -14,7 +14,7 @@ const context = vm.createContext({ window, document, URL, Headers, FormData, Blo
 } });
 vm.runInContext(source("urls"), context);
 vm.runInContext(source("i18n"), context);
-vm.runInContext(source("http"), context);
+vm.runInContext(source("api-client"), context);
 const urls = window.TinyCat.urls;
 let checks = 0;
 const cases = [

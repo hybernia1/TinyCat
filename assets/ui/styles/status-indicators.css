@@ -1,0 +1,13 @@
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.status-indicator-success {
+  color: var(--success);
+}
+
+.status-indicator-danger {
+  color: var(--danger);
+}

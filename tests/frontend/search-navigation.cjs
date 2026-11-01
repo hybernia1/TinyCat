@@ -18,7 +18,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
     lifecycle: { register: (name, service) => { services[name] = service; }, dispose: () => { disposed++; }, hydrate() {} },
     components: { render: () => ({ querySelector: () => slot }) }, site: { activateSidebar() {} } };
   const window = { TinyCat: T, location: { href: "http://tinycat.test/", origin: "http://tinycat.test", assign() { assigned++; } }, history: { replaceState() { replacements++; }, pushState() { pushes++; }, go(distance) { rollbackDistance = distance; } }, matchMedia: () => ({ matches: true }), clearTimeout() {}, setTimeout() {}, addEventListener() {}, scrollTo() {} };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/modules/site/navigation.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, URL, AbortController });
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/modules/site/page-navigation.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, URL, AbortController });
   assert.equal(route.accepts(new URL("http://tinycat.test/search?q=test&type=users")), true);
   assert.equal(route.accepts(new URL("http://tinycat.test/search?q=test&media=video")), true);
   assert.equal(route.accepts(new URL("http://tinycat.test/search?q=test&unexpected=1")), false);

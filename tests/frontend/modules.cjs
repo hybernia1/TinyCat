@@ -60,6 +60,8 @@ const context = vm.createContext({ window, document, Node, AbortController, URL,
 const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
 for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filename: asset.path });
 const T = window.TinyCat;
+// Minimal DOM fixture covers filter data; native popover interaction has its own browser suite.
+T.popovers.open = menu => { menu.open = true; };
 const mediaController = T.status.controllers.media;
 check(mediaController.allowedStatusVideoUrl("https://www.youtube.com/embed/abc123", "https://www.youtube.com") !== "", "Players use the origin supplied by central provider rules.");
 check(mediaController.allowedStatusVideoUrl("https://evil.example/embed/abc123", "https://www.youtube.com") === "", "A player cannot change the server-approved origin.");
@@ -92,7 +94,7 @@ filterFormFixture.append(filterFieldFixture, filterClearFixture);
 T.ui.filterPanel('filter-panel-fixture', filterFormFixture);
 check(filterMenuFixture.querySelector('[data-filter-panel="filter-panel-fixture"]').querySelector('form') === filterFormFixture && !filterFormFixture.hidden && !filterFormFixture.getAttribute('data-modal-close-on-success') && filterClearFixture.getAttribute('data-modal-close') === null, 'Dropdown filters mount their real form beside the trigger and cannot close an enclosing editor modal.');
 check(filterFieldFixture.getAttribute('data-submit-on-change') !== null, 'Changing a visible filter uses the shared automatic-submit behavior.');
-check(filterMenuFixture.className.includes('popover-menu') && filterMenuFixture.querySelector('.context-menu-popover') && filterMenuFixture.querySelector('summary').className.includes('btn-secondary'), 'Filters reuse the shared popover surface and highlight an active selection with the standard secondary button.');
+check(filterMenuFixture.getAttribute('data-popover') !== null && filterMenuFixture.querySelector('.popover-panel') && filterMenuFixture.querySelector('summary').className.includes('btn-secondary'), 'Filters reuse the shared popover surface and highlight an active selection with the standard secondary button.');
 filterFieldFixture.value = ''; T.filters.hydrate();
 check(filterMenuFixture.querySelector('summary').className.includes('btn-ghost'), 'An unfiltered list uses the standard quiet ghost trigger.');
 filterFieldFixture.value = 'error'; T.filters.hydrate();
@@ -145,27 +147,6 @@ check(!T.filters.get('filter-panel-fixture') && !document.getElementById('filter
   T.filters.remove('pending-filter-fixture');
   check(pendingFilterSignal.aborted && !T.filters.get('pending-filter-fixture'), 'Removing a filter cancels its pending transport rather than updating a closed workspace later.');
   T.api.request = apiRequest;
-}
-{
-  let triggerBindings = 0, triggerClick;
-  const listeners = {}, menu = { open: true, querySelector: () => null }, summary = {
-    parentElement: menu, focus() { this.focused = true; },
-    addEventListener(name, callback) { if (name === 'click') { triggerBindings++; triggerClick = callback; } }
-  };
-  const menuDocument = { querySelectorAll: () => [summary], activeElement: { closest: () => menu }, addEventListener(name, callback, capture) { listeners[name] = { callback, capture }; } };
-  const menuTinyCat = { dom: { find: (_selector, root) => root === menu ? summary : menu, all: () => [menu] }, lifecycle: { register(_name, service) { service.init(); } } };
-  vm.runInNewContext(fs.readFileSync(path.join(root, 'assets/ui/menus.js'), 'utf8').replace(/^import .*;\r?\n/gm, ''), { window: { TinyCat: menuTinyCat, addEventListener() {} }, document: menuDocument });
-  menuTinyCat.menus.init(); menuTinyCat.menus.prepare(menuDocument);
-  const click = { preventDefault() { this.prevented = true; } };
-  triggerClick(click);
-  check(triggerBindings === 1 && click.prevented && !menu.open, 'Repeated hydration binds the menu trigger only once and direct activation closes it without document delegation.');
-  triggerClick(click);
-  check(menu.open, 'A second direct trigger click reopens the shared menu.');
-  const escape = { key: 'Escape', preventDefault() { this.prevented = true; }, stopImmediatePropagation() { this.stopped = true; } };
-  listeners.keydown.callback(escape);
-  check(listeners.keydown.capture === true && escape.prevented && escape.stopped && !menu.open && summary.focused, 'Escape closes a dropdown during capture and restores focus before an enclosing modal can process the key.');
-  menu.open = true; listeners.click.callback({ target: { closest: () => null } });
-  check(!menu.open, 'Clicking outside closes the shared frontend and administration dropdown menus.');
 }
 const emptyState = T.components.render('ui/empty-state', { label: 'Nothing <safe>', icon: 'clock' });
 check(emptyState.className === 'empty-state' && emptyState.getAttribute('role') === 'status' && emptyState.querySelector('.empty-state-icon').querySelector('use').getAttribute('href') === '#clock' && emptyState.querySelector('.empty-state-label').textContent === 'Nothing <safe>' && !emptyState.querySelector('safe'), 'Shared empty states display a contextual icon and safely rendered label with status semantics.');
@@ -459,7 +440,8 @@ check(node.querySelector('[name="bio"]').value === unsafe, "Profile editors reta
 const disposedListViews = [];
 T.lifecycle.register("list-content-test", { dispose: root => disposedListViews.push(root) });
 const target = new Node("div"), oldUsersView = new Node("section"); target.appendChild(oldUsersView);
-const oldCreateDialog = T.ui.dialog("user-create-modal", "users.new_user", new Node("form"), true);
+const oldCreateDialog = T.users.modal(new URL('/api/users/creation',window.location.href), {data:{user:{},options:{roles:['admin','user'],statuses:['active','ban'],password_max_length:1024,username_pattern:'[A-Za-z0-9]+'}}}, 'modal-users-creation');
+oldCreateDialog.querySelector('[name="username"]').value = 'UnsavedAccount';
 T.users.list(target, { data: { items: [{ ...user, role: "admin", status: "active", updated_at_formatted: "Today", can_delete: false }], filters: { q: "admin", role: "admin", status: "active", updated_from: "", updated_to: "" }, roles: { admin: "Admin", user: "User" }, statuses: { active: "Active" }, role_options: { "": "All", admin: "Admin", user: "User" }, status_options: { "": "All", active: "Active" }, options: { password_max_length: 1024, username_pattern: "[A-Za-z0-9]+", username_hint: "Letters" } }, meta: { pagination: { page: 1, last_page: 1, per_page: 25 } } });
 check(target.querySelector(".admin-filter-actions").querySelector('[data-filter-panel="users-filter-modal"]') && target.querySelector(".admin-filter-actions").querySelector('[name="per_page"]'), "AJAX user lists keep filters and page size together in the compact toolbar.");
 const filterDialog = document.getElementById("users-filter-modal");
@@ -468,9 +450,9 @@ check(filterDialog && filterDialog.querySelector('[name="per_page"]').value === 
 check(filterDialog.dataset.filterContent === "" && filterDialog.querySelector('[name="per_page"]').getAttribute("type") === "hidden", "Locally owned filter dialogs remain reusable and discard restores the current filters.");
 const adminAvatarFields = T.components.render("users/admin-fields", { user, create: false, options: { roles: {}, statuses: {} } });
 check(adminAvatarFields.querySelector('[data-modal-url="/api/users/2/avatar"]') && !adminAvatarFields.querySelector('[name="avatar"]') && !adminAvatarFields.querySelector('[name="remove_avatar"]'), "User administration reuses the frontend avatar editor without duplicate upload or removal controls.");
-const createDialog = document.getElementById("user-create-modal");
+const createDialog = document.getElementById("modal-users-creation");
 check(disposedListViews.includes(oldUsersView) && !disposedListViews.includes(target), "User list replacement disposes its old view while preserving the list container.");
-check(disposedListViews.includes(oldCreateDialog) && createDialog !== oldCreateDialog, "Replacing the persistent create-user dialog disposes its old controls before removal.");
+check(!disposedListViews.includes(oldCreateDialog) && createDialog === oldCreateDialog && createDialog.querySelector('[name="username"]').value === "UnsavedAccount", "Refreshing users preserves the open creation resource and its draft.");
 check(createDialog.querySelectorAll('[data-tab]').length === 2, "User creation uses the standard Account and Access sections.");
 const userTabs = createDialog.querySelector('[data-tabs]');
 const accessPanel = userTabs.querySelector('[data-tab-panel="access"]');
@@ -487,7 +469,7 @@ check(!accessPanel.hidden && revealedInvalid === requiredPassword && requiredPas
 const createSubmit = createDialog.querySelector(".modal-footer").querySelector('[type="submit"]');
 check(createSubmit && createSubmit.getAttribute("form") === createDialog.querySelector("form").id && !createDialog.querySelector(".modal-body").querySelector('[type="submit"]'), "Administration saves have one footer action associated with the editor form.");
 check(avatarDialog.querySelector(".modal-footer").querySelector('[data-avatar-save]') && !avatarDialog.querySelector(".modal-body").querySelector('[data-avatar-save]'), "The shared avatar editor uses the same fixed footer placement.");
-check(createDialog.dataset.modalDisposeOnClose === "false" && createDialog.querySelector("form").dataset.modalCloseOnSuccess === "true", "Account dialogs can reopen after cancel and close the modal stack after successful writes.");
+check(createDialog.dataset.modalDisposeOnClose === "true" && createDialog.querySelector("form").dataset.modalCloseOnSuccess === "true", "Creation resources are disposable and use shared close-on-success handling.");
 check(!target.querySelector('[data-api-method="DELETE"]'), "Protected-account capabilities remove deletion controls from AJAX lists.");
 const existingBio = new Node("p", "Retained profile bio");
 document.querySelectorAll = selector => selector.includes("data-author-bio") ? [existingBio] : [];
@@ -849,52 +831,36 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   check(backgroundReads.length === 1 && backgroundReads[0] === '/api/bots/accounts' + window.location.search, 'Closing a changed workspace still refreshes the filtered background list.');
   Node.prototype.addEventListener = detailEvents;
   T.api.request = savedRequest; document.querySelector = savedQuery; T.lifecycle.hydrate = savedHydrate;
-  const settingsTemplate = new Node('template'); settingsTemplate.dataset.settingsEditor = ''; settingsTemplate.content = new Node('fragment');
-  const settingsForm = new Node('form'); settingsForm.dataset.apiMethod = 'PATCH'; settingsForm.setAttribute('enctype', 'multipart/form-data');
-  const settingsFields = new Node('div'); settingsFields.dataset.editorSections = '';
-  for (const key of ['site', 'email']) {
-    const section = new Node('div'); section.dataset.editorSection = key; section.dataset.editorLabel = key; section.dataset.editorIcon = key === 'site' ? 'home' : 'mail';
-    const field = new Node('input'); field.setAttribute('name', 'settings[' + key + ']'); section.appendChild(field); settingsFields.appendChild(section);
-  }
-  settingsForm.appendChild(settingsFields); settingsForm.appendChild(T.ui.button('common.save', {type: 'submit'}));
-  settingsTemplate.content.appendChild(settingsForm);
-  const savedOpen = T.dialog.open, savedTabs = T.tabs.activate, savedSettingsHydrate = T.lifecycle.hydrate, savedSettingsListener = Node.prototype.addEventListener;
+  check(!T.settings.hydrate && !document.getElementById('modal-settings-editor'), 'Settings do not create a modal during initial hydration.');
+  const savedResourceOpen = T.dialog.openResource;
+  let settingsOpenOptions;
+  T.dialog.openResource = (id,url,options) => { settingsOpenOptions = {id,url,options}; return Promise.resolve(null); };
+  await T.settings.open('email');
+  check(settingsOpenOptions.url === '/api/settings/editor' && settingsOpenOptions.options.tab === 'email', 'Settings delegate resource loading and section selection to the shared dialog service.');
+  T.dialog.openResource = savedResourceOpen;
+  const savedSettingsListener = Node.prototype.addEventListener;
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
-  let settingsOpenCount = 0;
-  T.dialog.open = () => { settingsOpenCount++; };
-  T.lifecycle.hydrate = () => {};
-  T.tabs.activate = tab => {
-    let tabs = tab.parent;
-    while (tabs && tabs.getAttribute("data-tabs") === null) { tabs = tabs.parent; }
-    tabs.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-selected', button === tab ? 'true' : 'false'));
-    tabs.querySelectorAll('[data-tab-panel]').forEach(panel => { panel.hidden = panel.dataset.tabPanel !== tab.dataset.tab; });
-  };
-  T.settings.hydrate({querySelectorAll: () => [settingsTemplate]});
-  check(settingsOpenCount === 0 && document.getElementById('settings-editor-modal'), 'Admin hydration prepares settings without opening the modal.');
-  T.settings.open('email');
-  const settingsDialog = document.getElementById('settings-editor-modal');
-  check(settingsDialog.querySelectorAll('[data-tab]').length === 2 && !settingsDialog.querySelector('[data-tab-panel="email"]').hidden, 'Settings open their requested section through the shared tabbed editor.');
-  check(settingsDialog.querySelector('.modal-tabs').parent === settingsDialog.querySelector('.modal-panel') && !settingsDialog.querySelector('.modal-header').querySelector('.tabs') && !settingsDialog.querySelector('.modal-body').querySelector('.tabs') && settingsDialog.querySelector('.modal-body').querySelector('form') === settingsForm, 'Settings retain their original form beneath a separate fixed navigation row below the header.');
-  check(settingsDialog.querySelector('.modal-footer').querySelector('[type="submit"]').getAttribute('form') === settingsForm.id && settingsForm.getAttribute('enctype') === 'multipart/form-data', 'Settings keep one footer save and their image-upload form encoding.');
-  settingsForm.querySelector('input').value = 'Retained settings draft';
-  T.settings.open('site');
-  check(document.getElementById('settings-editor-modal') === settingsDialog && settingsForm.querySelector('input').value === 'Retained settings draft', 'Reopening a settings section reuses the editor without discarding drafts.');
-  check(!settingsForm.listeners?.['tinycat:success'], 'Settings use shared AJAX feedback without a reload listener or a separate notification path.');
-  settingsForm.setAttribute('action', '/api/settings');
+  const settingsDialog = T.settings.modal(new URL('/api/settings/editor', window.location.href), {data:{sections:[
+    {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current name'}, {key:'site.meta_description',label:'Description',type:'textarea',value:'Draft'}]},
+    {key:'email',label:'Email',icon:'mail',fields:[{key:'email.smtp',label:'SMTP',type:'email_smtp',value:{host:'smtp.example.test',password:''}}]}
+  ]}}, 'modal-settings-editor');
+  const settingsForm = settingsDialog.querySelector('form');
+  check(settingsDialog.dataset.modalDisposeOnClose === 'true' && settingsDialog.querySelectorAll('[data-tab]').length === 2, 'Settings are disposable resource editors using shared sections.');
+  check(settingsDialog.querySelector('.modal-footer').querySelector('[type="submit"]').getAttribute('form') === settingsForm.id && settingsForm.getAttribute('enctype') === 'multipart/form-data', 'Deferred settings keep a shared footer and multipart uploads.');
+  check(settingsForm.querySelector('textarea').textContent === 'Draft' && settingsForm.querySelectorAll('input').some(input => input.getAttribute('name') === 'settings[email.smtp][host]' && input.getAttribute('value') === 'smtp.example.test'), 'Deferred settings retain textareas and nested SMTP field names.');
+  check(settingsForm.dataset.confirmUnsaved === 'true', 'Deferred settings protect unsaved changes.');
   const savedLogo = new Node('input'); savedLogo.setAttribute('name', 'settings[site.logo_url]'); savedLogo.value = '/old.webp';
   const pendingLogo = new Node('input'); pendingLogo.type = 'file'; pendingLogo.value = 'selected.webp';
   const savedPassword = new Node('input'); savedPassword.type = 'password'; savedPassword.value = 'submitted secret';
   const removeLogo = new Node('input'); removeLogo.setAttribute('name', 'settings_remove[site.logo_url]'); removeLogo.checked = true;
   [savedLogo, pendingLogo, savedPassword, removeLogo].forEach(input => settingsForm.appendChild(input));
-  check(T.settings.result(settingsForm, {data:{saved:true,images:{'site.logo_url':'/new.webp'}}}).length === 0 && savedLogo.value === '/new.webp' && !pendingLogo.value && !savedPassword.value && !removeLogo.checked, 'Repeated settings saves retain the server image path and clear submitted uploads, passwords and removal flags.');
-  settingsTemplate.dataset.settingsReady = 'false';
-  T.settings.hydrate({querySelectorAll: () => [settingsTemplate]});
-  check(settingsOpenCount === 2 && !settingsDialog.querySelector('[data-tab-panel="site"]').hidden, 'Settings prepare their editor without competing with shared modal URL restoration.');
-  Node.prototype.addEventListener = savedSettingsListener; T.dialog.open = savedOpen; T.tabs.activate = savedTabs; T.lifecycle.hydrate = savedSettingsHydrate;
+  check(T.settings.result(settingsForm, {data:{saved:true,images:{'site.logo_url':'/new.webp'}}}).length === 0 && savedLogo.value === '/new.webp' && !pendingLogo.value && !savedPassword.value && !removeLogo.checked, 'Repeated settings saves retain image paths and clear submitted uploads and secrets.');
+  Node.prototype.addEventListener = savedSettingsListener;
   settingsDialog.remove();
   const savedCaptchaRequest = T.api.request, savedCaptcha = T.ui.captcha, savedCaptchaListener = Node.prototype.addEventListener;
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };
-  const searchRoot = new Node('form'), searchInput = new Node('input');
+  const searchRoot = new Node('form'), searchInput = new Node('input'), searchResults = new Node('div');
+  searchResults.setAttribute('data-global-search-results', ''); searchResults.parentElement = searchRoot; searchRoot.appendChild(searchResults);
   searchInput.dataset.globalSearchInput = ''; searchInput.value = 'captcha'; searchRoot.appendChild(searchInput);
   T.ui.captcha = () => {};
   T.api.request = async () => { const error = new Error('Verify search'); error.data = { code: 'captcha_required', message: unsafe, error: { details: { verify_url: 'javascript:alert(1)', captcha: { enabled: true } } } }; throw error; };

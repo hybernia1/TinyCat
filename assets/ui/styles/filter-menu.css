@@ -1,0 +1,15 @@
+.filter-menu-panel {
+  --popover-width: min(300px, calc(100vw - 32px));
+  --popover-max-height: min(580px, 65vh);
+  --popover-padding: 12px;
+}
+
+.filter-menu-panel > form.stack {
+  display: grid;
+  gap: 12px;
+}
+
+.filter-menu-panel > form.stack > * {
+  margin-block: 0;
+}
+

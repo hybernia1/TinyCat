@@ -2,15 +2,7 @@
   "notifications/copy": {
     "tag": "span",
     "attrs": {
-      "class": {
-        "if": [
-          {
-            "get": "preview"
-          },
-          "notification-popover-copy",
-          "notification-copy"
-        ]
-      }
+      "class": "identity-copy"
     },
     "children": [
       {
@@ -322,7 +314,7 @@
       {
         "tag": "a",
         "attrs": {
-          "class": "notification-main",
+          "class": "identity-row identity-row-inset",
           "href": {
             "get": "item.url"
           },
@@ -350,7 +342,7 @@
           {
             "tag": "span",
             "attrs": {
-              "class": "avatar notification-avatar"
+              "class": "avatar"
             },
             "children": [
               {
@@ -430,7 +422,7 @@
     "attrs": {
       "class": {
         "concat": [
-          "notification-popover-item",
+          "identity-row identity-row-compact notification-preview-item",
           {
             "if": [
               {
@@ -472,7 +464,7 @@
       {
         "tag": "span",
         "attrs": {
-          "class": "avatar notification-popover-avatar"
+          "class": "avatar"
         },
         "children": [
           {
@@ -519,33 +511,6 @@
   },
   "notifications/items": [
     {
-      "tag": "div",
-      "attrs": {
-        "class": "notification-popover-empty"
-      },
-      "children": [
-        {
-          "icon": "bell"
-        },
-        {
-          "t": "notifications.empty",
-          "values": {}
-        }
-      ],
-      "when": {
-        "and": [
-          {
-            "not": {
-              "get": "items"
-            }
-          },
-          {
-            "get": "preview"
-          }
-        ]
-      }
-    },
-    {
       "component": "ui/empty-state",
       "data": {
         "label": {
@@ -554,18 +519,9 @@
         "icon": "bell"
       },
       "when": {
-        "and": [
-          {
-            "not": {
-              "get": "items"
-            }
-          },
-          {
-            "not": {
-              "get": "preview"
-            }
-          }
-        ]
+        "not": {
+          "get": "items"
+        }
       }
     },
     {

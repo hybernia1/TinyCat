@@ -34,7 +34,7 @@ final class Pages
         );
         Layout::render([
             'title' => Localization::t('users.meta_title'), 'current' => '/admin/users',
-            'actions' => AdminViews::modalAction('user-create-modal', Localization::t('users.new_user'), 'user-plus'),
+            'actions' => AdminViews::modalAction('modal-users-creation', Localization::t('users.new_user'), 'user-plus', '/api/users/creation'),
         ], $content);
     }
 

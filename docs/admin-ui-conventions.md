@@ -1,5 +1,10 @@
 # Administration lists and editors
 
+All dialogs follow the authoritative [modal contract](modal-contract.md).
+This includes new-record forms and read-only release notes. Creation editors
+load `/api/users/creation` or `/api/bots/accounts/creation` on demand; refreshing
+their background list never rebuilds or removes an open editor.
+
 `/admin/users` is the reference for administration lists.
 
 The admin bar owns the page title for all administration pages, including
@@ -96,7 +101,7 @@ cards. At 600px and above the original column layout is retained. Identity
 content keeps a 12rem minimum there, so wider tables scroll locally instead
 of squeezing names down to a few characters.
 Mobile sorting is collapsed into a single control beside Filters. Reuse
-the same small ghost/secondary button and `list-menu-panel` popover surface,
+the same small ghost/secondary button and `popover-panel` surface,
 dimensions and positioning. The active option is highlighted; choosing it
 reverses its single direction arrow. Clone the original server-prepared links
 so filters, pagination resets, AJAX targets and modal history policy survive.
@@ -178,8 +183,8 @@ provides native details/summary controls; `ui.filterPanel(id, form)` mounts
 the existing GET form into the dropdown. Server-rendered filter forms use
 `Support/filter`. Keep the form in the shared filter registry across list
 replacement, then remount it during hydration so selections survive.
-Both frontend and administration use the shared `popover-menu` and
-`context-menu-popover` primitives. Inherit surface, border, radius and
+Both frontend and administration follow the [shared popover contract](popover-contract.md),
+using `data-popover`, `.popover-panel` and `TinyCat.popovers`. Inherit surface, border, radius and
 shadow tokens from that primitive; filter-specific CSS defines only form
 layout and dimensions. Use standard fields and 12px spacing; do not add a
 Clear-all action. Active summary badges use `ui/filter-chip` buttons with a
@@ -298,14 +303,18 @@ the shared leave guard. Close-on-success must not discard dirty sibling forms.
 
 ## Settings
 
-Settings use a persistent sectioned administration modal without a standalone
-page. Existing server-rendered field types are supplied through a template
-in the authenticated admin shell; there is no
-separate settings tab implementation. One multipart PATCH form retains
-image uploads, SMTP controls, password masking and shared validation.
-A successful save reloads the current page and restores the active tab
-from session storage, so branding, localization and asset settings take
-effect and uploaded files/password fields reset safely.
+Settings use a disposable resource editor loaded from administrator-only
+`GET /api/settings/editor` when the user opens it. The admin shell contains
+only `data-modal-open` and `data-modal-url`; it must not embed the form, a
+template with its fields, or create the dialog during hydration. The settings
+module implements `modal(url, response, id)` and delegates opening to
+`dialog.openResource`. Tabs, history, focus, cancellation, validation and the
+unsaved-change guard belong to the shared services.
+One multipart PATCH form retains image uploads, SMTP controls and password
+masking. A successful save keeps the editor open, marks the submitted form
+clean and clears submitted file/password/removal controls. Closing disposes
+the dialog; reopening fetches current values. Reload/deep links restore it
+from `#modal=settings/editor&tab=...`, without session-storage drafts.
 Blocked websites belong to the Security settings tab and use the shared save action; their rules are normalized by the moderation service.
 Settings and frontend profile forms use the standard responsive grid,
 `grid-span-full`, fields and shared image previews. They do not own
@@ -368,7 +377,7 @@ Filter state must agree between the query, popover and removable chips. Normaliz
 
 ## Modal URLs and browser history
 
-Remote resource modals and persistent local editors use the shared dialog-history
+Resource modals use the shared dialog-history
 service. Opening adds one entry; selecting a tab replaces that entry. For example,
 `/admin/bots/accounts?status=active#modal=bots/accounts/123&panel=detail&tab=history`
 keeps list filters in the page query and modal identity/tab in the fragment.

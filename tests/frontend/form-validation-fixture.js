@@ -4,6 +4,109 @@
   const pause = () => new Promise(resolve => setTimeout(resolve, 25));
   async function wait(test, message) { for (let i=0;i<100 && !test();i++) await pause(); check(test(), message); }
   const mode = new URL(location.href).searchParams.get('case');
+  if (mode === 'creation') {
+    const options = {username_pattern:'[A-Za-z][A-Za-z0-9_]+',password_max_length:1024,roles:['admin','user'],statuses:['active','ban']};
+    const listing = {items:[],filters:{},options,roles:['admin','user'],statuses:['active','ban']};
+    const reads = {};
+    window.fetch = async (url, config) => {
+      const path = new URL(url).pathname;
+      reads[path] = (reads[path] || 0) + 1;
+      const data = path === '/api/users/creation' ? {user:{},options} : path === '/api/bots/accounts/creation' ? {options} : path === '/api/updates/release-notes' ? {notes:'<img src=x onerror=alert(1)>Literal release notes'} : path === '/api/users' && config.method === 'GET' ? listing : {item:{id:8}};
+      return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data,meta:{pagination:{page:1,per_page:25,total:0}}}),{status:200,headers:{'Content-Type':'application/json'}});
+    };
+    let initBlocked = false;
+    T.lifecycle.register('eager-modal-negative-test',{init:() => {
+      try { T.dialog.create({id:'forbidden',title:'Forbidden',closeLabel:'Close',content:document.createElement('div')}); }
+      catch (error) { initBlocked = /initialization or hydration/.test(error.message); }
+    }});
+    T.lifecycle.start();
+    check(initBlocked && !document.querySelector('.modal'), 'Initialization cannot construct a hidden modal');
+    const list = T.dom.element('div',{id:'users-list'}); document.body.append(list);
+    T.users.list(list,{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}});
+    T.lifecycle.hydrate(list);
+    check(!document.querySelector('.modal') && !Object.keys(reads).length, 'List hydration contains filters but no creation modal or resource read');
+    const editor = await T.dialog.openResource('modal-users-creation','/api/users/creation');
+    const username = editor.querySelector('[name="username"]'); username.value='UnsentAccount'; username.dispatchEvent(new Event('input',{bubbles:true}));
+    T.users.list(list,{data:listing,meta:{pagination:{page:1,per_page:25,total:0}}}); T.lifecycle.hydrate(list);
+    check(document.getElementById('modal-users-creation') === editor && username.value === 'UnsentAccount', 'Refreshing the list preserves an open creation draft');
+    const confirmation = T.dialog.confirm; T.forms.confirmWith(async () => false);
+    const trigger = T.dom.element('button',{'data-modal-open':'modal-users-creation','data-modal-url':'/api/users/creation','data-modal-refresh':'true'}); document.body.append(trigger); trigger.click(); await pause();
+    check(reads['/api/users/creation'] === 1 && editor.isConnected && username.value === 'UnsentAccount', 'Forced resource refresh cannot bypass the unsaved-change guard');
+    const normalFetch = window.fetch; let releaseReload;
+    window.fetch = (url,config) => new URL(url).pathname === '/api/users/creation' ? new Promise(resolve => { releaseReload = () => normalFetch(url,config).then(resolve); }) : normalFetch(url,config);
+    T.forms.confirmWith(async () => true); trigger.click();
+    await wait(() => Boolean(releaseReload), 'An accepted refresh may begin its resource read');
+    username.value='NewerDraft'; username.dispatchEvent(new Event('input',{bubbles:true})); releaseReload();
+    await wait(() => trigger.dataset.modalBusy !== 'true', 'The pending replacement settles');
+    check(editor.isConnected && username.value === 'NewerDraft', 'Edits made while a refresh is loading cannot be overwritten by its late response');
+    window.fetch = normalFetch;
+    T.forms.confirmWith(confirmation);
+    editor.querySelector('[name="password"]').value='TestPassword123!';
+    editor.querySelector('.modal-footer [type="submit"]').click();
+    await wait(() => !editor.isConnected, 'Successful account creation closes and disposes its resource editor');
+    const beforeReopen = reads['/api/users/creation'];
+    const again = await T.dialog.openResource('modal-users-creation','/api/users/creation');
+    check(reads['/api/users/creation'] === beforeReopen + 1 && again !== editor && !again.querySelector('[name="username"]').value, 'Reopening creation fetches a fresh empty form');
+    T.dialog.close(again,{history:false});
+    const bot = await T.dialog.openResource('modal-bots-accounts-creation','/api/bots/accounts/creation');
+    check(bot.querySelector('[name="username"]').pattern === options.username_pattern && bot.querySelector('form').getAttribute('action') === '/api/bots/accounts', 'Bot creation uses remote constraints and its existing POST resource');
+    check(document.getElementById(bot.querySelector('[name="username"]').getAttribute('aria-describedby')), 'Bot username constraints retain an accessible help description');
+    T.dialog.close(bot,{history:false});
+    const notes = await T.dialog.openResource('modal-updates-release-notes','/api/updates/release-notes');
+    check(notes.querySelector('code').textContent.includes('<img') && !notes.querySelector('img'), 'Release notes load on demand as safe literal text');
+    T.dialog.close(notes,{history:false});
+    check(!document.querySelector('.modal'), 'All resource dialogs are removed after closing');
+    document.getElementById('validation-test-results').textContent=JSON.stringify({ok:true,mode,checks}); return;
+  }
+  if (mode === 'settings') {
+    const schema = window.settingsSchema || {sections:[
+      {key:'site',label:'Site',icon:'home',fields:[{key:'site.name',label:'Name',type:'text',value:'Current site'},{key:'site.footer_html',label:'Footer',type:'textarea',value:'Saved footer'}]},
+      {key:'email',label:'Email',icon:'mail',fields:[{key:'email.smtp',label:'SMTP',type:'email_smtp',value:{host:'smtp.example.test',port:587}}]}
+    ]};
+    for (const section of schema.sections) for (const field of section.fields) {
+      if (field.key === 'site.name') field.value = 'Current site';
+      if (field.key === 'site.footer_html') field.value = 'Saved footer';
+      if (field.key === 'email.smtp') field.value = {host:'smtp.example.test',port:587};
+    }
+    let reads=0, writes=0;
+    window.fetch = async (url, options) => {
+      const get = new URL(url).pathname === '/api/settings/editor';
+      if (get) reads++; else writes++;
+      if (!get) {
+        check(options.body.get('settings[email.smtp][host]') === 'smtp.example.test', 'Settings keep nested multipart field names');
+        check(options.body.get('settings[site.footer_html]') === 'Edited footer', 'Settings submit the textarea draft');
+      }
+      return new Response(JSON.stringify({ok:true,status:200,code:'ok',params:{},message:null,data:get ? schema : {saved:true,images:{}},meta:{}}),{status:200,headers:{'Content-Type':'application/json'}});
+    };
+    T.lifecycle.start();
+    check(reads === 0 && !document.querySelector('#modal-settings-editor'), 'Initial hydration neither requests nor creates settings');
+    const dialog = await T.settings.open('email');
+    check(reads === 1 && dialog.dataset.modalDisposeOnClose === 'true', 'Settings are fetched only when opened and are disposable');
+    check(!dialog.querySelector('[data-tab-panel="email"]').hidden && location.hash.includes('modal=settings/editor'), 'Requested section and canonical resource history are shared');
+    const form = dialog.querySelector('form'), footer = form.elements.namedItem('settings[site.footer_html]');
+    for (const section of schema.sections) for (const spec of section.fields) {
+      const suffix = spec.type === 'email_smtp' ? '[host]' : spec.type === 'email_templates' ? '[_present]' : '';
+      check(Boolean(form.elements.namedItem('settings['+spec.key+']'+suffix)), 'The editor retains the submitted field for '+spec.key);
+    }
+    check(dialog.querySelectorAll('.image-preview-contain').length === 2 && dialog.querySelector('.grid-span-full'), 'Site images and full-width settings retain shared layout primitives');
+    check([...dialog.querySelectorAll('.field > .label')].every(label => label.textContent.trim()), 'Every server field has a client-owned presentation label');
+    check(footer.value === 'Saved footer' && form.elements.namedItem('settings[email.smtp][port]').value === '587', 'Textareas and nested SMTP values hydrate correctly');
+    footer.value='Edited footer'; footer.dispatchEvent(new Event('input',{bubbles:true}));
+    check(T.forms.dirty(dialog).length === 1, 'Settings edits use the shared draft guard');
+    const confirmation = T.dialog.confirm;
+    T.forms.confirmWith(async () => false);
+    check(await T.dialog.requestClose(dialog,{history:false}) === false && dialog.isConnected && footer.value === 'Edited footer', 'Declining close preserves the complete settings draft');
+    T.forms.confirmWith(confirmation);
+    dialog.querySelector('.modal-footer [type="submit"]').click();
+    await wait(() => writes === 1 && !T.forms.dirty(dialog).length, 'Saving settings uses shared AJAX and clears the saved draft');
+    T.dialog.close(dialog,{history:false});
+    check(!document.querySelector('#modal-settings-editor'), 'Closing settings disposes the editor DOM');
+    const reopened = await T.settings.open('site');
+    check(reads === 2 && reopened !== dialog, 'Reopening settings fetches current server data');
+    T.dialog.close(reopened,{history:false});
+    document.getElementById('validation-test-results').textContent = JSON.stringify({ok:true,mode,checks});
+    return;
+  }
   if (mode === 'moderation') {
     const author = {id:1,username:'Evidence author',url:'/author/1',avatar_url:'',avatar_initial:'E'};
     const post = {id:42,url:'/status/42',author,segments:[{type:'text',text:'Original frontend card'}],published_at:'2026-01-01',image:{url:''},links:[],likes_count:3,comments_count:1,capabilities:{edit:false,delete:false,report:false,interact:false}};

@@ -7,22 +7,10 @@ use TinyCat\Support\Components;
 
 use TinyCat\Support\AdminViews;
 use TinyCat\Support\View;
-use TinyCat\Users\Usernames;
 
 /** Presentation components: prepare inputs, then render their private partial. */
 final class Views
 {
-    /** @param array<mixed> $data */
-    public static function accountCreate(array $data = []): string
-    {
-
-        $prepared = [];
-        $prepared['accounts_url'] = Administration::accountsApiUrl();
-        $prepared['username_hint'] = Usernames::username_hint();
-        $prepared['username_pattern'] = Usernames::username_pattern();
-        return View::part('Bots/modals/account-create', array_replace($data, compact('prepared')));
-    }
-
     /** @param array<mixed> $data */
     public static function accountFilter(array $data = []): string
     {

@@ -35,9 +35,10 @@ check(bots.definitions.includes("status/composer-body") && !bots.definitions.inc
 check(load("/admin/moderation/reports").T.moderation, "Moderation loads its module");
 check(load("/admin/cron").T.scheduler, "Scheduler loads its module");
 check(load("/admin").T.settings && load("/admin").T.users, "Every admin page includes settings and shared profile dialogs");
+check(load("/admin/updates").sources.includes("assets/modules/updates/index.js") && !load("/admin").sources.includes("assets/modules/updates/index.js"), "The release-notes renderer is scoped to the updates page.");
 check(!load("/install").T.status, "Installer boots without public modules");
 check(!users.sources.some(s => s.endsWith("/following.js")), "Administration omits public following controller");
-check(!load("/install").sources.some(s => s.includes("/modules/status/") || s.includes("/ui/ajax.js")) && load("/install").sources.some(s => s.includes("/ui/forms.js") && !s.includes("form-state")), "Installer uses shared API form transport without feed and administration controllers");
+check(!load("/install").sources.some(s => s.includes("/modules/status/") || s.includes("/ui/ajax-bindings.js")) && load("/install").sources.some(s => s.includes("/ui/form-requests.js") && !s.includes("form-state")), "Installer uses shared API form transport without feed and administration controllers");
 const schedulerPage = load("/admin/cron/list");
 check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.definitions.includes("scheduler/filter-form"), "The scheduler page independently loads date formatting and shared filter components.");
 check(load("/admin/cron/list", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");
@@ -52,7 +53,7 @@ const rawPublic = load("/", "cs", true);
 check(minifiedPublic.assets[0].url !== rawPublic.assets[0].url && minifiedPublic.assets[3].url !== rawPublic.assets[3].url && minifiedPublic.styles[0] !== rawPublic.styles[0], "Minification selects distinct runtime, application and CSS variants");
 load("/admin", "en", "min");
 const cs = load("/", "cs");
-for (const route of ["/", "/admin/users", "/admin/bots/accounts", "/admin/bots/detail", "/admin/moderation/reports", "/admin/cron", "/admin", "/install"]) {
+for (const route of ["/", "/admin/users", "/admin/bots/accounts", "/admin/bots/detail", "/admin/moderation/reports", "/admin/cron", "/admin/updates", "/admin", "/install"]) {
   const compiled = load(route, "cs", true);
   check(compiled.assets.every(item => item.url.startsWith("/assets/build/")), "Release assets use the signed precompiled inventory: " + route);
   check(compiled.T.i18n.has("common.close"), "Compiled catalogs initialize before modules: " + route);

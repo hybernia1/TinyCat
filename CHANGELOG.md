@@ -1,5 +1,19 @@
 # Changelog
 
+## 5.18.0 - 2026-11-01
+
+- Load settings, user and bot-account creation, and release notes through authorized JSON resources on demand. Dispose closed dialogs and preserve drafts through list refreshes, forced reloads and late responses.
+- Share one popover controller and surface across notifications, filters, account/language menus, context actions and search suggestions. Keep keyboard focus, touch dismissal and panels within mobile and zoomed visual viewports.
+- Unify empty states, notices, identity rows and load-more controls. Preserve structured warning content on site health and updates as well as simple search messages.
+- Organize CSS and JavaScript by responsibility, remove unused selectors and unreachable following refresh code, and enforce component, modal, asset ownership and lifecycle contracts during builds.
+- Remove 127 retired runtime paths from overlay updates. No new migration or configuration change is required; updates remain supported from 5.16.0.
+
+## 5.17.0 - 2026-11-01
+
+- Fix report submission and review reports through shared tables, previews and tabbed history.
+- Give moderated posts independent published/hidden visibility. Preserve content, media, discussion and report history; editing or reporting does not implicitly publish or hide a post.
+- Replace legacy edit-lock fields with content.status and allow new reporting cycles after review. Apply visibility consistently to feeds, search, exports, embeds and public links.
+
 ## 5.16.1 - 2026-11-01
 
 - Set the release tooling update baseline to 5.16.0 and rehearse signed upgrades and rollback from its exact tag. Replace fixed 2.0.25 cleanup assertions with migration inventory and data-preservation checks.

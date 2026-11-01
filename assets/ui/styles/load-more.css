@@ -1,0 +1,10 @@
+.load-more {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.load-more > .btn { align-self: center; }
+.load-more-state { color: var(--muted); font-size: 0.875rem; font-weight: 600; }
+.load-more:not(.is-loading) .load-more-state { display: none; }

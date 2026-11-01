@@ -1,0 +1,23 @@
+.context-menu-action {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.context-menu-action:hover,
+.context-menu-action:focus-visible {
+  background: var(--surface-soft);
+  color: var(--primary-strong);
+}
+
+.context-menu-action.is-danger {
+  color: var(--danger);
+}
+

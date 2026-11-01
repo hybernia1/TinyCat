@@ -51,6 +51,21 @@ window.TinyCat.components.register(definitions);
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
 (async () => {
+  const controlOptions = { "class": "custom-control input", required: true, disabled: true, "aria-describedby": "help", "data-example": "value" };
+  for (const [label, render, base] of [
+    ["input", () => window.TinyCat.ui.field("name", "name", "draft", "text", controlOptions), "input"],
+    ["textarea", () => window.TinyCat.ui.field("name", "name", "draft", "textarea", controlOptions), "textarea"],
+    ["select", () => window.TinyCat.ui.select("name", "name", "one", { one: "One" }, controlOptions), "select"]
+  ]) {
+    const control = render().querySelector("." + base);
+    check(control !== null, label + " preserves its base class when attributes add classes.");
+    check(control.getAttribute("class").split(" ").filter(name => name === base).length === 1, label + " deduplicates the base class.");
+    check(control.getAttribute("class").includes("custom-control"), label + " accepts additional classes.");
+    check(control.getAttribute("required") !== null && control.getAttribute("disabled") !== null, label + " accepts validation and disabled attributes.");
+    check(control.getAttribute("aria-describedby") === "help" && control.getAttribute("data-example") === "value", label + " preserves accessibility and data attributes.");
+    check(control.getAttribute("name") === "name", label + " retains its default name.");
+  }
+  check(controlOptions.class === "custom-control input", "Control helpers do not mutate caller attributes.");
   const api = window.TinyCat.api;
   await api.request("/api/example", { method: "POST", body: { name: "Žaneta" } });
   check(calls[0].options.headers.get("Accept") === "application/json", "Only JSON is negotiated.");
@@ -210,6 +225,15 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
   const readCore = name => fs.readFileSync(path.join(root, name === "modal" ? "assets/ui/dialogs.js" : "assets/core/" + name + ".js"), "utf8");
   check(!/TinyCat\.(?:users|status|openModal|closeModal)/.test(readCore("modal")), "Dialog infrastructure has no domain dispatch or reverse shell dependency.");
   check(!/\/api\/(?:users|statuses)/.test(readCore("navigation")), "History infrastructure does not own domain API routes.");
-  check(!readCore("components").includes("T.ui."), "Component rendering depends on primitives instead of widget composition.");
+  check(!readCore("component-renderer").includes("T.ui."), "Component rendering depends on primitives instead of widget composition.");
+  let blocked = 0;
+  T.lifecycle.register("modal-policy-fixture", { hydrate: () => {
+    try { T.dialog.create({ id: "forbidden-eager", title: "Editor", closeLabel: "Close", content: new Element("div") }); }
+    catch (error) { if (/initialization or hydration/.test(error.message)) blocked++; else throw error; }
+  } });
+  T.lifecycle.hydrate(document);
+  check(blocked === 1 && !T.lifecycle.preparing(), "Shared dialog creation rejects eager hydration and restores the lifecycle phase.");
+  await assert.rejects(T.dialog.openResource("foreign", "https://other.test/api/example"), /same-origin API URL/);
+  await assert.rejects(T.dialog.openResource("non-api", "/page"), /same-origin API URL/);
   console.log(`PASS JSON AJAX client and UI primitives (${checks} checks)`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

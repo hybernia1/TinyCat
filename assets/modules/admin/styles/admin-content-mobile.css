@@ -1,0 +1,9 @@
+@media (max-width: 759px) {
+  .admin-filter-actions {
+    justify-content: space-between;
+  }
+
+  .admin-content {
+    padding: 14px 0 24px;
+  }
+}

@@ -17,7 +17,7 @@ function setup() {
   T.forms.request = (form, url, options) => T.api.request(url, options);
   const window = { TinyCat: T, location: new URL("https://tinycat.test/admin/users"), history: { pushState: (_, __, url) => { history.push(url); } }, addEventListener() {} };
   const context = vm.createContext({ window, document, URL, FormData, AbortController });
-  for (const file of ["assets/core/requests.js", "assets/core/navigation.js", "assets/ui/lists.js", "assets/ui/ajax.js"]) {
+  for (const file of ["assets/core/request-lifecycle.js", "assets/core/navigation.js", "assets/ui/list-navigation.js", "assets/ui/ajax-bindings.js"]) {
     const absolute = path.resolve(__dirname, "../..", file);
     vm.runInContext(fs.readFileSync(absolute, "utf8").replace(/^import .*;\r?\n/gm, ""), context);
   }

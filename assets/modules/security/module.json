@@ -10,7 +10,7 @@
       "ui/captcha"
     ],
     "styles": [
-      "assets/modules/security/styles/006-captcha-provider.css"
+      "assets/modules/security/styles/captcha.css"
     ],
     "translations": [],
     "messages": {

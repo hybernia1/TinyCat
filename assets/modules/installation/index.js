@@ -1,5 +1,5 @@
 import "../../core/lifecycle.js";
-import "../../ui/forms.js";
+import "../../ui/form-requests.js";
 import "../../ui/toasts.js";
 (function () {
   "use strict";

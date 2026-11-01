@@ -1517,30 +1517,50 @@
     "attrs": {
       "class": {
         "concat": [
-          "alert stack stack-gap-8 ",
+          "alert stack stack-gap-8 alert-",
           {
             "lookup": {
               "get": "tone"
             },
             "cases": {
-              "warning": "alert-warning",
-              "critical": "alert-danger",
-              "ok": "alert-success",
-              "info": "alert-info"
+              "danger": "danger",
+              "warning": "warning",
+              "success": "success",
+              "critical": "danger",
+              "ok": "success"
             },
-            "default": ""
+            "default": "info"
           }
         ]
+      },
+      "role": {
+        "lookup": {
+          "get": "tone"
+        },
+        "cases": {
+          "critical": "alert",
+          "danger": "alert"
+        },
+        "default": "status"
       }
     },
     "children": [
+      {
+        "get": "label",
+        "when": {
+          "get": "label"
+        }
+      },
       {
         "tag": "strong",
         "children": [
           {
             "get": "title"
           }
-        ]
+        ],
+        "when": {
+          "get": "title"
+        }
       },
       {
         "tag": "span",
@@ -1569,7 +1589,20 @@
   "ui/empty-state": {
     "tag": "div",
     "attrs": {
-      "class": "empty-state",
+      "class": {
+        "concat": [
+          "empty-state",
+          {
+            "if": [
+              {
+                "get": "compact"
+              },
+              " empty-state-compact",
+              ""
+            ]
+          }
+        ]
+      },
       "role": "status"
     },
     "children": [
@@ -1660,10 +1693,9 @@
   "ui/filter-trigger": {
     "tag": "details",
     "attrs": {
-      "class": "popover-menu filter-menu",
-      "data-dismissible-menu": "",
-      "data-filter-menu": "",
-      "data-list-menu": ""
+      "class": "filter-menu",
+      "data-popover": "",
+      "data-filter-menu": ""
     },
     "children": [
       {
@@ -1691,7 +1723,7 @@
       {
         "tag": "div",
         "attrs": {
-          "class": "context-menu-popover list-menu-panel filter-menu-panel",
+          "class": "popover-panel filter-menu-panel",
           "data-filter-panel": {
             "get": "id"
           }
@@ -1837,6 +1869,46 @@
       },
       {
         "icon": "close"
+      }
+    ]
+  },
+  "ui/load-more": {
+    "tag": "div",
+    "attrs": {
+      "get": "attributes"
+    },
+    "children": [
+      {
+        "tag": "button",
+        "attrs": {
+          "get": "button_attributes"
+        },
+        "children": [
+          {
+            "icon": "plus"
+          },
+          {
+            "tag": "span",
+            "children": [
+              {
+                "get": "label"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "span",
+        "attrs": {
+          "class": "load-more-state",
+          "role": "status",
+          "hidden": true
+        },
+        "children": [
+          {
+            "get": "loading_label"
+          }
+        ]
       }
     ]
   }

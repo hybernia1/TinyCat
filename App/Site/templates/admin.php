@@ -11,7 +11,6 @@ declare(strict_types=1);
 /** @var string $profileUrl */
 /** @var bool $profileNeedsEmail */
 /** @var string $userMenu */
-/** @var string $settingsEditor */
 ?>
         <div class="admin-shell" data-admin-shell>
             <aside class="admin-sidebar" id="admin-sidebar" data-admin-sidebar>
@@ -52,7 +51,7 @@ declare(strict_types=1);
                             </details>
                             <?php continue; ?>
                         <?php endif; ?>
-                        <a class="admin-nav-link" href="<?= \TinyCat\Support\Html::e($item['href']) ?>"<?= $item['active'] ? ' aria-current="page"' : '' ?><?= !empty($item['modal']) ? ' data-modal-open="' . \TinyCat\Support\Html::e($item['modal']) . '"' : '' ?>>
+                        <a class="admin-nav-link" href="<?= \TinyCat\Support\Html::e($item['href']) ?>"<?= $item['active'] ? ' aria-current="page"' : '' ?><?= !empty($item['modal']) ? ' data-modal-open="' . \TinyCat\Support\Html::e($item['modal']) . '"' : '' ?><?= !empty($item['modal_url']) ? ' data-modal-url="' . \TinyCat\Support\Html::e($item['modal_url']) . '"' : '' ?>>
                             <?= \TinyCat\Support\Html::icon((string) ($item['icon'] ?? 'link')) ?>
                             <span><?= \TinyCat\Support\Html::e((string) ($item['label'] ?? $item['href'])) ?></span>
                         </a>
@@ -94,4 +93,3 @@ declare(strict_types=1);
                 </main>
             </div>
         </div>
-        <?= $settingsEditor ?>

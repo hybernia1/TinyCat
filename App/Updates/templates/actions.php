@@ -6,7 +6,7 @@ declare(strict_types=1);
 ?>
         <div class="cluster gap-2">
             <?php if (is_array($release) && trim((string) ($release['notes'] ?? '')) !== ''): ?>
-                <?= \TinyCat\Support\Components::render('ui/modal-trigger', ['class' => 'btn btn-secondary btn-sm', 'modal' => 'updates-release-notes', 'label' => \TinyCat\Support\Localization::t('updates.changelog'), 'icon' => 'file']) ?>
+                <?= \TinyCat\Support\Components::render('ui/modal-trigger', ['class' => 'btn btn-secondary btn-sm', 'modal' => 'modal-updates-release-notes', 'url' => '/api/updates/release-notes', 'label' => \TinyCat\Support\Localization::t('updates.changelog'), 'icon' => 'file']) ?>
             <?php endif; ?>
             <form method="post" action="/api/updates/checks" data-ajax-form>
                 <?= \TinyCat\Security\Csrf::field() ?>

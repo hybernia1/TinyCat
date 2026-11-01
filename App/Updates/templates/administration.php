@@ -8,7 +8,6 @@ declare(strict_types=1);
 /** @var bool $releaseCompatible */
 /** @var bool $canInstall */
 /** @var array<mixed> $history */
-/** @var string $releaseNotesModal */
 use TinyCat\Support\Components;
 use TinyCat\Support\Localization;
 use TinyCat\Support\Html;
@@ -49,9 +48,7 @@ $available = is_array($release) && !empty($release['available']);
             <?= Components::render('ui/notice', ['tone' => 'warning', 'title' => Localization::t('updates.incompatible', ['version' => (string) ($release['manifest']['minimum_version'] ?? '?'), 'php' => (string) ($release['manifest']['minimum_php'] ?? '?')])]) ?>
         <?php endif; ?>
         <?php if (in_array(false, $extensions, true)): ?><?= Components::render('ui/notice', ['tone' => 'critical', 'title' => Localization::t('updates.missing_extensions')]) ?><?php endif; ?>
-        <?php if (is_array($release) && trim((string) ($release['notes'] ?? '')) !== ''): ?>
-            <?= $releaseNotesModal ?>
-        <?php endif; ?>
+
 </div>
     <details class="disclosure-item">
         <summary class="disclosure-summary"><span><?= Html::et('updates.requirements') ?></span><?= Html::icon('chevron-down', 'icon disclosure-chevron') ?></summary>

@@ -11,16 +11,16 @@ use TinyCat\Support\Html;
 /** @var string $editModalId */
 /** @var string $editModalUrl */
 ?>
-<details class="context-menu user-menu" data-dismissible-menu>
+<details class="context-menu user-menu" data-popover>
     <summary class="nav-link user-menu-trigger profile-nav-link" aria-label="<?= Html::et('account.profile_settings') ?>" title="<?= Html::e($displayName) ?>">
         <span class="avatar avatar-sm"><?= \TinyCat\Users\Views::avatar(['user' => $authUser]) ?></span>
         <?= Html::icon('chevron-down') ?>
         <?php if ($profileNeedsEmail): ?><span class="notification-badge profile-email-warning" aria-hidden="true">!</span><span class="sr-only"><?= Html::et('account.email_missing_title') ?></span><?php endif; ?>
     </summary>
-    <div class="context-menu-popover user-menu-popover">
+    <div class="popover-panel user-menu-popover">
         <strong class="user-menu-identity"><?= Html::e($displayName) ?></strong>
-        <a class="context-menu-action" href="<?= Html::e($profileUrl) ?>" data-dismissible-menu-action><?= Html::icon('user') ?> <span><?= Html::et('account.public_profile') ?></span></a>
-        <a class="context-menu-action" href="<?= Html::e($profileUrl) ?>" data-modal-open="<?= Html::e($editModalId) ?>" data-modal-url="<?= Html::e($editModalUrl) ?>" data-dismissible-menu-action><?= Html::icon('settings') ?> <span><?= Html::et('settings.title') ?></span></a>
+        <a class="context-menu-action" href="<?= Html::e($profileUrl) ?>" data-popover-close><?= Html::icon('user') ?> <span><?= Html::et('account.public_profile') ?></span></a>
+        <a class="context-menu-action" href="<?= Html::e($profileUrl) ?>" data-modal-open="<?= Html::e($editModalId) ?>" data-modal-url="<?= Html::e($editModalUrl) ?>" data-popover-close><?= Html::icon('settings') ?> <span><?= Html::et('settings.title') ?></span></a>
         <div class="user-menu-theme">
             <div class="user-menu-theme-switch" role="group" aria-label="<?= Html::et('account.theme') ?>">
                 <?php foreach (['system', 'light', 'dark'] as $option): ?>

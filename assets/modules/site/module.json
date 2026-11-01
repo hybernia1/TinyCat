@@ -11,18 +11,21 @@
       "assets/modules/site/index.js"
     ],
     "styles": [
-      "assets/modules/site/styles/016-public-list-header.css",
-      "assets/modules/site/styles/018-public-layout.css",
-      "assets/modules/site/styles/021-public-sidebar.css",
-      "assets/modules/site/styles/050-public-content-meta.css",
-      "assets/modules/site/styles/052-public-sidebar-footer.css",
-      "assets/modules/site/styles/059-cookie-consent.css",
-      "assets/modules/site/styles/068-public-list-header.css",
-      "assets/modules/site/styles/073-cookie-consent.css",
-      "assets/modules/site/styles/078-section-public-list-header.css",
-      "assets/modules/site/styles/091-public-layout.css",
-      "assets/modules/site/styles/092-language.css",
-      "assets/modules/site/styles/096-home-feed-toolbar.css"
+      "assets/modules/site/styles/public-list-header.css",
+      "assets/modules/site/styles/public-layout.css",
+      "assets/modules/site/styles/public-sidebar.css",
+      "assets/modules/site/styles/public-content-meta.css",
+      "assets/modules/site/styles/public-sidebar-footer.css",
+      "assets/modules/site/styles/cookie-consent.css",
+      "assets/modules/site/styles/public-list-header-mobile.css",
+      "assets/modules/site/styles/cookie-consent-mobile.css",
+      "assets/modules/site/styles/public-list-header-inset-mobile.css",
+      "assets/modules/site/styles/public-layout-desktop.css",
+      "assets/modules/site/styles/language.css",
+      "assets/modules/site/styles/home-feed-toolbar.css",
+      "assets/modules/site/styles/navbar-mobile.css",
+      "assets/modules/site/styles/sidebar-sticky.css",
+      "assets/modules/site/styles/sidebar-lists.css"
     ],
     "translations": []
   }
