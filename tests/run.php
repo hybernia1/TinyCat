@@ -25,6 +25,7 @@ $tests = [
     'Rate limiter isolation' => 'tests/rate-limiter.php',
     'MySQL rate limiter' => 'tests/rate-limiter-mysql.php',
     'Write-path integrity' => 'tests/write-path-integrity.php',
+    'Moderation status migration' => 'tests/moderation-migration.php',
     'Runtime URL and raster hardening' => 'tests/runtime-hardening.php',
     'Browser language detection' => 'tests/language-detection.php',
     'Translation catalogs' => 'tests/presentation/localization.php',

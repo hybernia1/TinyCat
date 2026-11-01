@@ -69,7 +69,7 @@ final class Sitemap
                     FROM content c
                     INNER JOIN users u ON u.id = c.author_id
                     WHERE u.status = ?
-                        AND c.published_at <= ?',
+                        AND c.published_at <= ? AND c.status = \'published\'',
                 ['active', \TinyCat\Support\Dates::dateDb()]
             ),
             default => throw new InvalidArgumentException('Sitemap section is not registered: ' . $section),
@@ -81,7 +81,7 @@ final class Sitemap
         // Avoid indexing orphan tags and tags used only by hidden or future posts.
         return "EXISTS (SELECT 1 FROM content_tags ct INNER JOIN content c ON c.id = ct.content_id
             INNER JOIN users u ON u.id = c.author_id WHERE ct.term_id = t.id AND u.status = 'active'
-            AND c.published_at <= ?)";
+            AND c.published_at <= ? AND c.status = 'published')";
     }
 
     public static function pageCount(string $section, int $pageSize = self::MAX_PAGE_SIZE): int
@@ -123,7 +123,7 @@ final class Sitemap
                     INNER JOIN users u ON u.id = c.author_id
                     LEFT JOIN content_images ci ON ci.content_id = c.id
                     WHERE u.status = ?
-                        AND c.published_at <= ?
+                        AND c.published_at <= ? AND c.status = \'published\'
                     ORDER BY c.id ASC
                     LIMIT ' . $limit . ' OFFSET ' . $offset,
                 ['active', \TinyCat\Support\Dates::dateDb()]

@@ -13,8 +13,6 @@
     "url_blocker_label": "Sites bloqueados",
     "url_blocker_placeholder": "exemplo.com, mau.exemplo, domínio:ru",
     "url_blocker_help": "Separe os sites com vírgulas ou novas linhas. Os subdomínios também estão bloqueados. Use domain:ru para bloquear todo o sufixo .ru.",
-    "remove_content": "Remover conteúdo",
-    "keep_and_lock": "Mantenha e bloqueie",
     "empty_content": "Conteúdo vazio",
     "report_reasons": {
       "spam": "Spam",
@@ -36,18 +34,28 @@
       "blocked_url": "Este link não é permitido: {host}.",
       "duplicate_body": "Esta postagem é muito semelhante à sua postagem recente.",
       "report_created": "O relatório foi enviado.",
-      "report_already_reviewed": "Esta postagem já foi revisada e o relatório não foi reaberto.",
       "report_own_content": "Você não pode denunciar sua própria postagem.",
       "reports_unavailable": "Os relatórios não estão disponíveis.",
       "report_not_found": "O relatório não foi encontrado.",
       "report_reviewed": "O relatório foi revisado.",
-      "url_blocker_saved": "URLs bloqueados foram salvos."
+      "url_blocker_saved": "URLs bloqueados foram salvos.",
+      "content_published": "A publicação foi publicada novamente."
     },
     "report_count": {
       "one": "{count} denúncia",
       "few": "{count} denúncias",
       "many": "{count} denúncias",
       "other": "{count} denúncias"
-    }
+    },
+    "detail": "Detalhes da denúncia",
+    "preview": "Pré-visualização da publicação",
+    "hide_content": "Ocultar publicação",
+    "hide_confirm": "Ocultar esta publicação e silenciar o autor durante 24 horas?",
+    "hidden": "Esta publicação está oculta.",
+    "reporter": "Denunciado por",
+    "reviewer": "Revisto por",
+    "dismiss_report": "Rejeitar denúncias",
+    "publish_content": "Publicar novamente",
+    "publish_confirm": "Publicar esta publicação novamente?"
   }
 }

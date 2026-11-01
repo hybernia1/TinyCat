@@ -37,7 +37,7 @@ import "../../ui/fields.js";
         report.classList.add("status-modal-form");
         report.appendChild(U.hidden("id", url.searchParams.get("id")));
         report.appendChild(U.select("moderation.report_reason", "reason", "spam", Object.fromEntries(data.reasons.map(function (reason) { return [reason, U.text("moderation.report_reasons." + reason)]; }))));
-        report.appendChild(U.field("moderation.report_note", "note", "", "textarea", { maxlength: "2000" }));
+        report.appendChild(U.field("moderation.report_note", "note", "", "textarea", { maxlength: String(data.note_max_length || 1000) }));
         report.appendChild(U.button("moderation.report_submit", { type: "submit", "class": "btn btn-primary" }));
         return U.formDialog(id, "moderation.report_submit", report);
       }

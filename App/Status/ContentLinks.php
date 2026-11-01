@@ -25,7 +25,7 @@ final class ContentLinks
     /** @return array{url: string, original_url: string}|null */
     public static function resolve(int $contentId, string $hash, int $commentId = 0): ?array
     {
-        $item = \TinyCat\Database\Connection::one('SELECT c.body FROM content c INNER JOIN users u ON u.id = c.author_id WHERE c.id = ? AND c.published_at <= ? AND u.status = ?', [$contentId, \TinyCat\Support\Dates::dateDb(), 'active']);
+        $item = \TinyCat\Database\Connection::one('SELECT c.body FROM content c INNER JOIN users u ON u.id = c.author_id WHERE c.id = ? AND c.published_at <= ? AND c.status = \'published\' AND u.status = ?', [$contentId, \TinyCat\Support\Dates::dateDb(), 'active']);
         if ($item === null) { return null; }
         if ($commentId > 0) {
             $comment = \TinyCat\Database\Connection::one('SELECT cc.body FROM content_comments cc INNER JOIN users u ON u.id = cc.user_id WHERE cc.id = ? AND cc.content_id = ? AND u.status = ?', [$commentId, $contentId, 'active']);

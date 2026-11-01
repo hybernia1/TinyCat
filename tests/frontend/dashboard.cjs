@@ -16,9 +16,10 @@ try {
         const frame = document.createElement('iframe');
         frame.style.cssText = 'position:fixed;inset:0;border:0;width:'+width+'px;height:812px';
         await new Promise(resolve => {
-          frame.srcdoc = source; document.body.append(frame);
+          frame.srcdoc = source.replace('</body>', '<div id="dashboard-fixture-ready"></div></body>'); document.body.append(frame);
           const timer = setInterval(() => {
-            if (!frame.contentDocument.querySelector('table')) return;
+            const doc = frame.contentDocument;
+            if (!doc.querySelector('#dashboard-fixture-ready')) return;
             clearInterval(timer); resolve();
           }, 10);
         });

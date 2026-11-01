@@ -70,7 +70,7 @@ final class Repository
                             SELECT COUNT(*)
                             FROM content
                             WHERE author_id = ?
-                                AND published_at <= ?
+                                AND published_at <= ? AND status = \'published\'
                         ) AS posts,
                         (
                             SELECT COUNT(*)
@@ -149,7 +149,7 @@ final class Repository
                     INNER JOIN users u ON u.id = c.author_id'
             )
                 ->where('c.published_at >= ?', \TinyCat\Support\Dates::dateDb('-' . $days . ' days'))
-                ->where('c.published_at <= ?', \TinyCat\Support\Dates::dateDb())
+                ->where('c.published_at <= ? AND c.status = \'published\'', \TinyCat\Support\Dates::dateDb())
                 ->where('u.status = ?', 'active')
                 ->where('u.role IN (' . $rolePlaceholders . ')', ...$rankedRoles)
                 ->group('u.id, u.username, u.avatar_exists, u.avatar_appearance, u.updated_at, u.bio')

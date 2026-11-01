@@ -13,8 +13,6 @@
     "url_blocker_label": "Blokované weby",
     "url_blocker_placeholder": "example.com, bad.example, domain:ru",
     "url_blocker_help": "Odděl weby čárkou nebo novým řádkem. Blokuje se i jejich subdoména. Zápis domain:ru zablokuje celou koncovku .ru.",
-    "remove_content": "Odstranit obsah",
-    "keep_and_lock": "Ponechat a zamknout",
     "empty_content": "Prázdný obsah",
     "report_reasons": {
       "spam": "Spam",
@@ -36,18 +34,28 @@
       "blocked_url": "Tento odkaz není povolen: {host}.",
       "duplicate_body": "Tento příspěvek je příliš podobný tvému nedávnému příspěvku.",
       "report_created": "Nahlášení bylo odesláno.",
-      "report_already_reviewed": "Příspěvek už byl zkontrolován a nahlášení se znovu neotevřelo.",
       "report_own_content": "Vlastní příspěvek nelze nahlásit.",
       "reports_unavailable": "Nahlášení nejsou dostupná.",
       "report_not_found": "Nahlášení nebylo nalezeno.",
       "report_reviewed": "Nahlášení bylo zkontrolováno.",
-      "url_blocker_saved": "Blokované URL byly uloženy."
+      "url_blocker_saved": "Blokované URL byly uloženy.",
+      "content_published": "Příspěvek byl znovu zveřejněn."
     },
     "report_count": {
       "one": "{count} nahlášení",
       "few": "{count} nahlášení",
       "many": "{count} nahlášení",
       "other": "{count} nahlášení"
-    }
+    },
+    "detail": "Detail nahlášení",
+    "preview": "Náhled příspěvku",
+    "hide_content": "Skrýt příspěvek",
+    "hide_confirm": "Skrýt příspěvek a umlčet autora na 24 hodin?",
+    "hidden": "Příspěvek je skrytý.",
+    "reporter": "Nahlásil",
+    "reviewer": "Vyřídil",
+    "dismiss_report": "Zamítnout nahlášení",
+    "publish_content": "Znovu zveřejnit",
+    "publish_confirm": "Znovu zveřejnit tento příspěvek?"
   }
 }

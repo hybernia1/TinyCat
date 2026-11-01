@@ -130,16 +130,13 @@ final class Installer
                 body VARCHAR(2000) NOT NULL,
                 author_id INT UNSIGNED NOT NULL,
                 published_at DATETIME NOT NULL,
-                edit_locked_at DATETIME NULL,
-                edit_locked_by INT UNSIGNED NULL,
-                edit_lock_reason VARCHAR(80) NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'published',
                 PRIMARY KEY (id),
                 KEY content_feed_index (published_at, id),
                 KEY content_sidebar_index (published_at, author_id, id),
                 KEY content_author_index (author_id, published_at, id),
                 FULLTEXT KEY content_body_fulltext (body),
-                CONSTRAINT fk_content_author FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE,
-                CONSTRAINT fk_content_edit_locked_by FOREIGN KEY (edit_locked_by) REFERENCES users (id) ON DELETE SET NULL
+                CONSTRAINT fk_content_author FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
@@ -302,7 +299,7 @@ final class Installer
                 reviewed_by INT UNSIGNED NULL,
                 action_note TEXT NULL,
                 PRIMARY KEY (id),
-                UNIQUE KEY content_reports_unique (content_id, reporter_id),
+                KEY content_reports_content_reporter_status_index (content_id, reporter_id, status),
                 KEY content_reports_status_index (status, created_at),
                 KEY content_reports_reporter_index (reporter_id),
                 CONSTRAINT fk_content_reports_content FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE,

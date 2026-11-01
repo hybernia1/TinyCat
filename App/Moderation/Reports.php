@@ -7,6 +7,19 @@ use DomainException;
 
 final class Reports
 {
+    public static function publish(int $contentId): void
+    {
+        \TinyCat\Database\Transactions::run(static function () use ($contentId): void {
+            $content = \TinyCat\Database\Connection::one(
+                \TinyCat\Database\Connection::lockingSelect('SELECT id FROM content WHERE id = ?'), [$contentId]
+            );
+            if ($content === null) {
+                \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found');
+            }
+            \TinyCat\Database\Connection::update('content', ['status' => 'published'], ['id' => $contentId]);
+        });
+    }
+
     /**
      * @return array<mixed>
      */
@@ -16,10 +29,13 @@ final class Reports
             \TinyCat\Http\Response::validation(['decision' => [\TinyCat\Http\Response::issue('common_request_failed', \TinyCat\Support\Localization::t('common.request_failed'))]]);
         }
 
-        $deletedImagePath = '';
-
+        $contentId = (int) \TinyCat\Database\Connection::value('SELECT content_id FROM content_reports WHERE id = ?', [$reportId]);
         try {
-            $result = \TinyCat\Database\Transactions::run(static function () use ($reportId, $decision, &$deletedImagePath): array {
+            $result = \TinyCat\Database\Transactions::run(static function () use ($reportId, $decision, $contentId): array {
+                // Serialize reviews for the same post even when moderators choose different reports.
+                $content = \TinyCat\Database\Connection::one(
+                    \TinyCat\Database\Connection::lockingSelect('SELECT * FROM content WHERE id = ?'), [$contentId]
+                );
                 $report = \TinyCat\Database\Connection::one(
                     \TinyCat\Database\Connection::lockingSelect('SELECT * FROM content_reports WHERE id = ? AND status = ? LIMIT 1'),
                     [$reportId, 'open']
@@ -29,21 +45,16 @@ final class Reports
                     throw new DomainException('report_not_open');
                 }
 
-                $contentId = (int) ($report['content_id'] ?? 0);
-                $content = \TinyCat\Status\Posts::status_find($contentId);
-
                 if ($content === null) {
                     throw new DomainException('reported_content_not_found');
                 }
 
                 $actor = \TinyCat\Users\Authentication::auth() ?? [];
                 $status = $decision === 'remove' ? 'resolved' : 'dismissed';
-                $note = $decision === 'remove' ? 'removed' : 'kept_locked';
+                $note = $decision === 'remove' ? 'hidden' : 'kept';
 
                 if ($decision === 'remove') {
                     \TinyCat\Moderation\Restrictions::user_mute((int) ($content['author_id'] ?? 0), $actor, '+24 hours', 'moderation_remove');
-                } else {
-                    \TinyCat\Status\Posts::status_edit_lock($contentId, $actor, 'moderation_keep');
                 }
 
                 \TinyCat\Notifications\Inbox::notifyReporters(
@@ -62,7 +73,7 @@ final class Reports
                 );
 
                 if ($decision === 'remove') {
-                    $deletedImagePath = \TinyCat\Status\Posts::status_delete_content($contentId, false, false, false);
+                    \TinyCat\Database\Connection::update('content', ['status' => 'hidden'], ['id' => $contentId]);
                 }
 
                 return [
@@ -72,7 +83,6 @@ final class Reports
                     'status' => $status,
                 ];
             });
-            \TinyCat\Status\ImageStorage::delete($deletedImagePath);
 
             return $result;
         } catch (DomainException $exception) {
@@ -106,6 +116,23 @@ final class Reports
     public static function tc_admin_moderation_reports_view_data(): array
     {
         return self::tc_admin_moderation_reports_payload();
+    }
+
+    /** @return array<string, mixed> */
+    public static function detail(int $reportId): array
+    {
+        $report = \TinyCat\Database\Connection::one('SELECT * FROM content_reports WHERE id = ?', [$reportId]);
+        if ($report === null) {
+            \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('moderation.messages.report_not_found'), 404, 'report_not_found');
+        }
+        $contentId = (int) $report['content_id'];
+        $content = \TinyCat\Database\Connection::one(
+            \TinyCat\Status\Feed::public_status_select_sql() . ' WHERE c.id = ?', [$contentId]
+        );
+        $items = \TinyCat\Database\Connection::all(
+            'SELECT cr.*, ru.username AS reporter_name, au.username AS reviewer_name FROM content_reports cr LEFT JOIN users ru ON ru.id = cr.reporter_id LEFT JOIN users au ON au.id = cr.reviewed_by WHERE cr.content_id = ? ORDER BY cr.created_at DESC, cr.id DESC', [$contentId]
+        );
+        return Resource::detail($reportId, $content, $items);
     }
 
     /** @return array<string, string> */
@@ -154,7 +181,7 @@ final class Reports
         }
         if ($filters['status'] === 'open') { $query->where('rc.open_count > 0'); }
         elseif ($filters['status'] !== '') { $query->where('rc.open_count = 0 AND cr.status = ?', $filters['status']); }
-        if ($filters['reason'] !== '') { $query->where('cr.reason = ?', $filters['reason']); }
+        if ($filters['reason'] !== '') { $query->where('EXISTS (SELECT 1 FROM content_reports matching WHERE matching.content_id = cr.content_id AND matching.reason = ?)', $filters['reason']); }
         return $query;
     }
 

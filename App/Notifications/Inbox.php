@@ -31,6 +31,7 @@ final class Inbox
     public static function targetUrl(array $notification): string
     {
         $contentId = (int) ($notification['content_id'] ?? 0);
+        if (array_key_exists('visible_content_id', $notification) && $notification['visible_content_id'] === null) { $contentId = 0; }
         $actorId = (int) ($notification['actor_id'] ?? 0);
         $type = (string) ($notification['type'] ?? '');
 
@@ -130,10 +131,11 @@ final class Inbox
                     u.username AS actor_username,
                     u.avatar_exists AS actor_avatar_exists, u.avatar_appearance AS actor_avatar_appearance,
                     u.updated_at AS actor_updated_at,
-                    c.body AS content_body
+                    c.body AS content_body,
+                    c.id AS visible_content_id
                 FROM notifications n
                 LEFT JOIN users u ON u.id = n.actor_id
-                LEFT JOIN content c ON c.id = n.content_id'
+                LEFT JOIN content c ON c.id = n.content_id AND c.status = \'published\''
         )->where('n.user_id = ?', $userId);
 
         if ($cursorAt !== '' && $cursorId > 0) {
@@ -184,9 +186,10 @@ final class Inbox
         }
 
         $notification = \TinyCat\Database\Connection::one(
-            'SELECT id, content_id, actor_id, type, read_at
-                FROM notifications
-                WHERE id = ? AND user_id = ?
+            'SELECT n.id, n.content_id, n.actor_id, n.type, n.read_at, c.id AS visible_content_id
+                FROM notifications n
+                LEFT JOIN content c ON c.id = n.content_id AND c.status = \'published\'
+                WHERE n.id = ? AND n.user_id = ?
                 LIMIT 1',
             [$id, $userId]
         );

@@ -13,8 +13,6 @@
     "url_blocker_label": "Sites Web bloqués",
     "url_blocker_placeholder": "exemple.com, mauvais.exemple, domaine :ru",
     "url_blocker_help": "Séparez les sites Web par des virgules ou de nouvelles lignes. Les sous-domaines sont également bloqués. Utilisez domain:ru pour bloquer l'intégralité du suffixe .ru.",
-    "remove_content": "Supprimer le contenu",
-    "keep_and_lock": "Conserver et verrouiller",
     "empty_content": "Contenu vide",
     "report_reasons": {
       "spam": "Courrier indésirable",
@@ -36,18 +34,28 @@
       "blocked_url": "Ce lien n'est pas autorisé : {host}.",
       "duplicate_body": "Ce message ressemble trop à votre message récent.",
       "report_created": "Le rapport a été déposé.",
-      "report_already_reviewed": "Ce message a déjà été examiné et le rapport n'a pas été rouvert.",
       "report_own_content": "Vous ne pouvez pas signaler votre propre message.",
       "reports_unavailable": "Les rapports ne sont pas disponibles.",
       "report_not_found": "Le rapport n'a pas été trouvé.",
       "report_reviewed": "Le rapport a été examiné.",
-      "url_blocker_saved": "Les URL bloquées ont été enregistrées."
+      "url_blocker_saved": "Les URL bloquées ont été enregistrées.",
+      "content_published": "La publication a été republiée."
     },
     "report_count": {
       "one": "{count} signalement",
       "few": "{count} signalements",
       "many": "{count} signalements",
       "other": "{count} signalements"
-    }
+    },
+    "detail": "Détails du signalement",
+    "preview": "Aperçu de la publication",
+    "hide_content": "Masquer la publication",
+    "hide_confirm": "Masquer cette publication et rendre son auteur muet pendant 24 heures ?",
+    "hidden": "Cette publication est masquée.",
+    "reporter": "Signalé par",
+    "reviewer": "Examiné par",
+    "dismiss_report": "Rejeter les signalements",
+    "publish_content": "Republier",
+    "publish_confirm": "Republier cette publication ?"
   }
 }

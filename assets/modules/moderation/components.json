@@ -252,23 +252,6 @@
                                             }
                                           }
                                         ]
-                                      },
-                                      {
-                                        "tag": "div",
-                                        "attrs": {
-                                          "class": "table-meta",
-                                          "title": {
-                                            "get": "report.note"
-                                          }
-                                        },
-                                        "children": [
-                                          {
-                                            "get": "report.note"
-                                          }
-                                        ],
-                                        "when": {
-                                          "get": "report.note"
-                                        }
                                       }
                                     ]
                                   }
@@ -312,52 +295,12 @@
                             "attrs": {},
                             "children": [
                               {
-                                "tag": "span",
-                                "attrs": {
-                                  "class": {
-                                    "concat": [
-                                      "badge",
-                                      {
-                                        "if": [
-                                          {
-                                            "eq": [
-                                              {
-                                                "get": "report.status"
-                                              },
-                                              "open"
-                                            ]
-                                          },
-                                          " badge-primary",
-                                          ""
-                                        ]
-                                      }
-                                    ]
+                                "component": "moderation/status",
+                                "data": {
+                                  "status": {
+                                    "get": "report.status"
                                   }
-                                },
-                                "children": [
-                                  {
-                                    "lookup": {
-                                      "get": "report.status"
-                                    },
-                                    "cases": {
-                                      "open": {
-                                        "t": "moderation.report_statuses.open"
-                                      },
-                                      "resolved": {
-                                        "t": "moderation.report_statuses.resolved"
-                                      },
-                                      "dismissed": {
-                                        "t": "moderation.report_statuses.dismissed"
-                                      },
-                                      "reviewed": {
-                                        "t": "moderation.report_statuses.reviewed"
-                                      }
-                                    },
-                                    "default": {
-                                      "t": "moderation.report_statuses.reviewed"
-                                    }
-                                  }
-                                ]
+                                }
                               },
                               {
                                 "tag": "div",
@@ -387,100 +330,31 @@
                                 },
                                 "children": [
                                   {
-                                    "tag": "a",
-                                    "attrs": {
+                                    "component": "ui/modal-trigger",
+                                    "data": {
                                       "class": "btn btn-sm btn-ghost btn-icon",
-                                      "href": {
-                                        "get": "report.permalink_url"
-                                      },
-                                      "aria-label": {
-                                        "use": "status/permalink",
-                                        "data": {
-                                          "item": {
-                                            "get": "report"
-                                          }
-                                        }
-                                      }
-                                    },
-                                    "children": [
-                                      {
-                                        "icon": "link"
-                                      }
-                                    ],
-                                    "when": {
-                                      "get": "report.permalink_url"
-                                    }
-                                  },
-                                  {
-                                    "component": "ui/api-action",
-                                    "data": {
-                                      "url": {
-                                        "or": [
+                                      "modal": {
+                                        "concat": [
+                                          "report-detail-",
                                           {
-                                            "get": "report.action_url"
-                                          },
-                                          {
-                                            "concat": [
-                                              "/api/moderation/reports/",
-                                              {
-                                                "get": "report.id"
-                                              }
-                                            ]
+                                            "get": "report.id"
                                           }
                                         ]
                                       },
-                                      "method": "PATCH",
-                                      "target": "#moderation-reports",
-                                      "fields": {
-                                        "decision": "remove"
-                                      },
-                                      "label": {
-                                        "t": "moderation.remove_content",
-                                        "values": {}
-                                      },
-                                      "confirm": {
-                                        "t": "account.status_delete_confirm",
-                                        "values": {}
-                                      },
-                                      "icon": "trash",
-                                      "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
-                                    },
-                                    "when": {
-                                      "get": "report.open_count"
-                                    }
-                                  },
-                                  {
-                                    "component": "ui/api-action",
-                                    "data": {
                                       "url": {
-                                        "or": [
+                                        "concat": [
+                                          "/api/moderation/reports/",
                                           {
-                                            "get": "report.action_url"
+                                            "get": "report.id"
                                           },
-                                          {
-                                            "concat": [
-                                              "/api/moderation/reports/",
-                                              {
-                                                "get": "report.id"
-                                              }
-                                            ]
-                                          }
+                                          ""
                                         ]
                                       },
-                                      "method": "PATCH",
-                                      "target": "#moderation-reports",
-                                      "fields": {
-                                        "decision": "dismiss"
-                                      },
                                       "label": {
-                                        "t": "moderation.keep_and_lock",
-                                        "values": {}
+                                        "t": "moderation.detail"
                                       },
-                                      "icon": "shield-check",
-                                      "button_class": "btn btn-sm btn-ghost btn-icon"
-                                    },
-                                    "when": {
-                                      "get": "report.open_count"
+                                      "icon": "eye",
+                                      "icon_only": true
                                     }
                                   }
                                 ]
@@ -636,5 +510,559 @@
         }
       }
     ]
+  },
+  "moderation/history": {
+    "tag": "div",
+    "attrs": {},
+    "children": [
+      {
+        "component": "ui/empty-state",
+        "when": {
+          "not": {
+            "get": "reports"
+          }
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table"
+            },
+            "children": [
+              {
+                "tag": "thead",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "moderation.reporter"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "moderation.report_reason"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "common.status"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col"
+                        },
+                        "children": [
+                          {
+                            "t": "common.created"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "scope": "col",
+                          "class": "table-actions-cell"
+                        },
+                        "children": [
+                          {
+                            "t": "common.actions"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "attrs": {},
+                "children": [
+                  {
+                    "each": {
+                      "get": "reports"
+                    },
+                    "as": "report",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-identity"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "div",
+                                    "attrs": {
+                                      "class": "table-identity-body"
+                                    },
+                                    "children": [
+                                      {
+                                        "tag": "strong",
+                                        "attrs": {
+                                          "class": "table-primary",
+                                          "title": {
+                                            "or": [
+                                              {
+                                                "get": "report.reporter_name"
+                                              },
+                                              "—"
+                                            ]
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "or": [
+                                              {
+                                                "get": "report.reporter_name"
+                                              },
+                                              "—"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "tag": "div",
+                                        "attrs": {
+                                          "class": "table-meta"
+                                        },
+                                        "children": [
+                                          {
+                                            "concat": [
+                                              "#",
+                                              {
+                                                "get": "report.id"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "lookup": {
+                                  "get": "report.reason"
+                                },
+                                "cases": {
+                                  "spam": {
+                                    "t": "moderation.report_reasons.spam"
+                                  },
+                                  "illegal": {
+                                    "t": "moderation.report_reasons.illegal"
+                                  },
+                                  "malware": {
+                                    "t": "moderation.report_reasons.malware"
+                                  },
+                                  "abuse": {
+                                    "t": "moderation.report_reasons.abuse"
+                                  },
+                                  "other": {
+                                    "t": "moderation.report_reasons.other"
+                                  }
+                                },
+                                "default": {
+                                  "t": "moderation.report_reasons.other"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "component": "moderation/status",
+                                "data": {
+                                  "status": {
+                                    "get": "report.status"
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "if": [
+                                  {
+                                    "get": "report.created_at"
+                                  },
+                                  {
+                                    "date": {
+                                      "get": "report.created_at"
+                                    }
+                                  },
+                                  "—"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {
+                              "class": "table-actions-cell"
+                            },
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-actions"
+                                },
+                                "children": [
+                                  {
+                                    "component": "ui/modal-trigger",
+                                    "data": {
+                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "modal": {
+                                        "concat": [
+                                          "report-preview-",
+                                          {
+                                            "get": "report.id"
+                                          }
+                                        ]
+                                      },
+                                      "url": {
+                                        "concat": [
+                                          "/api/moderation/reports/",
+                                          {
+                                            "get": "report.id"
+                                          },
+                                          "?panel=report"
+                                        ]
+                                      },
+                                      "label": {
+                                        "t": "moderation.detail"
+                                      },
+                                      "icon": "eye",
+                                      "icon_only": true
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "when": {
+          "get": "reports"
+        }
+      }
+    ]
+  },
+  "moderation/report-preview": {
+    "tag": "dl",
+    "attrs": {
+      "class": "stack stack-gap-8"
+    },
+    "children": [
+      {
+        "tag": "dt",
+        "attrs": {
+          "class": "text-muted"
+        },
+        "children": [
+          {
+            "t": "moderation.reporter"
+          }
+        ]
+      },
+      {
+        "tag": "dd",
+        "attrs": {
+          "class": "m-0 is-resource-text"
+        },
+        "children": [
+          {
+            "or": [
+              {
+                "get": "report.reporter_name"
+              },
+              "—"
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "dt",
+        "attrs": {
+          "class": "text-muted"
+        },
+        "children": [
+          {
+            "t": "moderation.report_reason"
+          }
+        ]
+      },
+      {
+        "tag": "dd",
+        "attrs": {
+          "class": "m-0 is-resource-text"
+        },
+        "children": [
+          {
+            "lookup": {
+              "get": "report.reason"
+            },
+            "cases": {
+              "spam": {
+                "t": "moderation.report_reasons.spam"
+              },
+              "illegal": {
+                "t": "moderation.report_reasons.illegal"
+              },
+              "malware": {
+                "t": "moderation.report_reasons.malware"
+              },
+              "abuse": {
+                "t": "moderation.report_reasons.abuse"
+              },
+              "other": {
+                "t": "moderation.report_reasons.other"
+              }
+            },
+            "default": {
+              "t": "moderation.report_reasons.other"
+            }
+          }
+        ]
+      },
+      {
+        "tag": "dt",
+        "attrs": {
+          "class": "text-muted"
+        },
+        "children": [
+          {
+            "t": "common.status"
+          }
+        ]
+      },
+      {
+        "tag": "dd",
+        "attrs": {
+          "class": "m-0 is-resource-text"
+        },
+        "children": [
+          {
+            "component": "moderation/status",
+            "data": {
+              "status": {
+                "get": "report.status"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "tag": "dt",
+        "attrs": {
+          "class": "text-muted"
+        },
+        "children": [
+          {
+            "t": "common.created"
+          }
+        ]
+      },
+      {
+        "tag": "dd",
+        "attrs": {
+          "class": "m-0 is-resource-text"
+        },
+        "children": [
+          {
+            "if": [
+              {
+                "get": "report.created_at"
+              },
+              {
+                "date": {
+                  "get": "report.created_at"
+                }
+              },
+              "—"
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "dt",
+        "attrs": {
+          "class": "text-muted"
+        },
+        "children": [
+          {
+            "t": "moderation.report_note"
+          }
+        ]
+      },
+      {
+        "tag": "dd",
+        "attrs": {
+          "class": "m-0 is-resource-text"
+        },
+        "children": [
+          {
+            "or": [
+              {
+                "get": "report.note"
+              },
+              "—"
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "dt",
+        "attrs": {
+          "class": "text-muted"
+        },
+        "children": [
+          {
+            "t": "moderation.reviewer"
+          }
+        ]
+      },
+      {
+        "tag": "dd",
+        "attrs": {
+          "class": "m-0 is-resource-text"
+        },
+        "children": [
+          {
+            "or": [
+              {
+                "get": "report.reviewer_name"
+              },
+              "—"
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "dt",
+        "attrs": {
+          "class": "text-muted"
+        },
+        "children": [
+          {
+            "t": "common.updated"
+          }
+        ]
+      },
+      {
+        "tag": "dd",
+        "attrs": {
+          "class": "m-0 is-resource-text"
+        },
+        "children": [
+          {
+            "if": [
+              {
+                "get": "report.reviewed_at"
+              },
+              {
+                "date": {
+                  "get": "report.reviewed_at"
+                }
+              },
+              "—"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "moderation/status": {
+    "component": "ui/status-badge",
+    "data": {
+      "tone": {
+        "lookup": {
+          "get": "status"
+        },
+        "cases": {
+          "open": "primary",
+          "resolved": "ok",
+          "dismissed": "ok",
+          "reviewed": "ok"
+        },
+        "default": "unknown"
+      },
+      "label": {
+        "lookup": {
+          "get": "status"
+        },
+        "cases": {
+          "open": {
+            "t": "moderation.report_statuses.open"
+          },
+          "resolved": {
+            "t": "moderation.report_statuses.resolved"
+          },
+          "dismissed": {
+            "t": "moderation.report_statuses.dismissed"
+          },
+          "reviewed": {
+            "t": "moderation.report_statuses.reviewed"
+          }
+        },
+        "default": {
+          "t": "moderation.report_statuses.reviewed"
+        }
+      }
+    }
   }
 }

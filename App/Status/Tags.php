@@ -58,7 +58,7 @@ final class Tags
                     INNER JOIN terms t ON t.id = ct.term_id'
             )
                 ->where('c.published_at >= ?', $since)
-                ->where('c.published_at <= ?', \TinyCat\Support\Dates::dateDb())
+                ->where('c.published_at <= ? AND c.status = \'published\'', \TinyCat\Support\Dates::dateDb())
                 ->where('u.status = ?', 'active')
                 ->group('t.id, t.name')
                 ->order('posts_count DESC, latest_at DESC, t.name ASC')

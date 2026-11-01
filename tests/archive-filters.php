@@ -13,7 +13,7 @@ $db = $mysql ? $archiveMysqlDatabase : new PDO('sqlite::memory:', null, null, [P
 \TinyCat\Users\Authentication::reset(null, true);
 foreach ([
     'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, status TEXT, avatar_exists INTEGER, avatar_appearance TEXT, updated_at TEXT)',
-    'CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT, edit_locked_at TEXT)',
+    'CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT)',
     'CREATE TABLE content_images (content_id INTEGER, path TEXT, width INTEGER, height INTEGER, bytes INTEGER)',
     'CREATE TABLE content_links (content_id INTEGER, link_id INTEGER)',
     'CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
@@ -35,11 +35,12 @@ if ($mysql) {
 for ($id = 1; $id <= 9; $id++) {
     $author = $id === 8 ? 2 : ($id === 9 ? 3 : 1);
     $date = $id === 7 ? '2999-01-01 00:00:00' : '2020-01-01 00:00:00';
-    $db->prepare('INSERT INTO content VALUES (?, ?, ?, ?, NULL)')->execute([$id, $author, 'Fixture', $date]);
+    $db->prepare('INSERT INTO content (id, author_id, body, published_at) VALUES (?, ?, ?, ?)')->execute([$id, $author, 'Fixture', $date]);
     $db->prepare('INSERT INTO content_tags VALUES (?, 1)')->execute([$id]);
 }
 $db->exec("INSERT INTO content_images VALUES (2, 'image.webp', 10, 10, 10), (6, 'mixed.webp', 10, 10, 10)");
 $db->exec('INSERT INTO content_links VALUES (3, 1), (3, 2), (4, 3), (5, 4), (6, 1), (7, 1), (8, 1), (9, 1)');
+$db->exec('ALTER TABLE content ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT \'published\'');
 $checks = 0;
 $assert = static function (bool $ok, string $message) use (&$checks): void {
     $checks++;

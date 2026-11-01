@@ -47,6 +47,50 @@ let escapedToModal = 0;
 document.addEventListener('keydown', event => { if (event.key === 'Escape') escapedToModal++; }, true);
 (async function () {
 const context = <?= json_encode($context, JSON_THROW_ON_ERROR) ?>;
+// Exercise delayed hover before the layout probes deliberately queue scroll events.
+const touch = document.createElement('button'), unsafe = '<img src=x onerror=alert(1)> & full text';
+touch.setAttribute('title', unsafe);
+// Keep the tooltip anchor inside the visible viewport.
+touch.style.cssText = 'position:fixed;top:24px;left:24px;width:24px;height:24px';
+(document.querySelector('.modal-body') || document.body).append(touch);
+await new Promise(resolve => setTimeout(resolve, 100));
+let clicks = 0; touch.addEventListener('click', () => clicks++);
+touch.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubbles:true}));
+const hint = document.querySelector('[role="tooltip"]');
+const touchSafe = !hint.hidden && hint.textContent === unsafe && !hint.querySelector('img') && !touch.hasAttribute('title') && touch.getAttribute('aria-label') === unsafe && touch.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true})) && clicks === 1;
+document.body.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubbles:true}));
+const outsideCloses = hint.hidden;
+let hoverWorks = true, hoverDiagnostics = {};
+if (innerWidth === 320 && innerHeight === 360) {
+  await new Promise(resolve => setTimeout(resolve, 100));
+  touch.dispatchEvent(new PointerEvent('pointerover', {pointerType:'mouse', bubbles:true}));
+  const delayed = hint.hidden;
+  await new Promise(resolve => setTimeout(resolve, 400));
+  const shown = !hint.hidden;
+  touch.dispatchEvent(new PointerEvent('pointerout', {pointerType:'mouse', relatedTarget:hint, bubbles:true}));
+  hint.dispatchEvent(new PointerEvent('pointerover', {pointerType:'mouse', relatedTarget:touch, bubbles:true}));
+  await new Promise(resolve => setTimeout(resolve, 220));
+  const hoverable = !hint.hidden;
+  hint.dispatchEvent(new PointerEvent('pointerout', {pointerType:'mouse', relatedTarget:document.body, bubbles:true}));
+  await new Promise(resolve => setTimeout(resolve, 220));
+  hoverDiagnostics = {delayed, shown, hoverable, closed:hint.hidden};
+  hoverWorks = delayed && shown && hoverable && hint.hidden;
+  touch.dispatchEvent(new PointerEvent('pointerover', {pointerType:'mouse', bubbles:true}));
+  touch.dispatchEvent(new PointerEvent('pointerout', {pointerType:'mouse', relatedTarget:document.body, bubbles:true}));
+  await new Promise(resolve => setTimeout(resolve, 400));
+  hoverWorks = hoverWorks && hint.hidden;
+}
+const frame = document.createElement('iframe'); frame.title = 'Embedded content';
+window.tooltipService.hydrate(frame);
+const frameTitleKept = frame.title === 'Embedded content' && !frame.hasAttribute('data-tooltip');
+touch.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubbles:true}));
+window.tooltipService.dispose(touch);
+const disposeCloses = hint.hidden;
+const short = document.createElement('span'); short.className = 'table-primary'; short.title = short.textContent = 'Short';
+touch.parentElement.append(short); window.tooltipService.hydrate(short);
+short.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubbles:true}));
+const shortHidden = hint.hidden && !short.hasAttribute('tabindex'); short.remove();
+touch.remove();
 if (context === 'modal') {
   const body = document.querySelector('.modal-body'), listing = body.firstElementChild;
   const sections = [
@@ -183,49 +227,6 @@ chipsWork = chipsWork && !chipSummary.querySelector('[data-filter-remove="passiv
 chipSummary.querySelector('[data-filter-remove="bot"]').click(); window.TinyCat.filters.hydrate();
 chipsWork = chipsWork && botField.value === '0' && new FormData(chipForm).get('bot') === '0' && !chipSummary.querySelector('[data-filter-remove="bot"]');
 window.TinyCat.forms = {dispose() {}}; window.TinyCat.filters.remove(chipForm.id); chipRoot.remove();
-const touch = document.createElement('button'), unsafe = '<img src=x onerror=alert(1)> & full text';
-touch.setAttribute('title', unsafe);
-// Keep this probe visible and independent of scrolls queued by the filter focus tests.
-touch.style.cssText = 'position:fixed;top:24px;left:24px;width:24px;height:24px';
-(document.querySelector('.modal-body') || document.body).append(touch);
-await new Promise(resolve => setTimeout(resolve, 100));
-let clicks = 0; touch.addEventListener('click', () => clicks++);
-touch.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubbles:true}));
-const hint = document.querySelector('[role="tooltip"]');
-const touchSafe = !hint.hidden && hint.textContent === unsafe && !hint.querySelector('img') && !touch.hasAttribute('title') && touch.getAttribute('aria-label') === unsafe && touch.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true})) && clicks === 1;
-document.body.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubbles:true}));
-const outsideCloses = hint.hidden;
-let hoverWorks = true, hoverDiagnostics = {};
-if (innerWidth === 320 && innerHeight === 360) {
-  await new Promise(resolve => setTimeout(resolve, 100));
-  touch.dispatchEvent(new PointerEvent('pointerover', {pointerType:'mouse', bubbles:true}));
-  const delayed = hint.hidden;
-  await new Promise(resolve => setTimeout(resolve, 400));
-  const shown = !hint.hidden;
-  touch.dispatchEvent(new PointerEvent('pointerout', {pointerType:'mouse', relatedTarget:hint, bubbles:true}));
-  hint.dispatchEvent(new PointerEvent('pointerover', {pointerType:'mouse', relatedTarget:touch, bubbles:true}));
-  await new Promise(resolve => setTimeout(resolve, 220));
-  const hoverable = !hint.hidden;
-  hint.dispatchEvent(new PointerEvent('pointerout', {pointerType:'mouse', relatedTarget:document.body, bubbles:true}));
-  await new Promise(resolve => setTimeout(resolve, 220));
-  hoverDiagnostics = {delayed, shown, hoverable, closed:hint.hidden};
-  hoverWorks = delayed && shown && hoverable && hint.hidden;
-  touch.dispatchEvent(new PointerEvent('pointerover', {pointerType:'mouse', bubbles:true}));
-  touch.dispatchEvent(new PointerEvent('pointerout', {pointerType:'mouse', relatedTarget:document.body, bubbles:true}));
-  await new Promise(resolve => setTimeout(resolve, 400));
-  hoverWorks = hoverWorks && hint.hidden;
-}
-const frame = document.createElement('iframe'); frame.title = 'Embedded content';
-window.tooltipService.hydrate(frame);
-const frameTitleKept = frame.title === 'Embedded content' && !frame.hasAttribute('data-tooltip');
-touch.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubbles:true}));
-window.tooltipService.dispose(touch);
-const disposeCloses = hint.hidden;
-const short = document.createElement('span'); short.className = 'table-primary'; short.title = short.textContent = 'Short';
-touch.parentElement.append(short); window.tooltipService.hydrate(short);
-short.dispatchEvent(new PointerEvent('pointerdown', {pointerType:'touch', bubbles:true}));
-const shortHidden = hint.hidden && !short.hasAttribute('tabindex'); short.remove();
-touch.remove();
 const fallback = document.createElement('div'); fallback.className = 'table-wrap';
 const matrix = document.createElement('table'); matrix.className = 'table';
 matrix.createTHead().insertRow().append(document.createElement('th'), document.createElement('th'));

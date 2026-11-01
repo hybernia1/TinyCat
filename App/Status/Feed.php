@@ -36,7 +36,7 @@ final class Feed
                     c.body,
                     c.author_id,
                     c.published_at,
-                    c.edit_locked_at,
+                    c.status,
                     ci.path AS image_path,
                     ci.width AS image_width,
                     ci.height AS image_height,
@@ -62,7 +62,7 @@ final class Feed
 
     public static function public_status_apply_visibility(\TinyCat\Database\Query $query): \TinyCat\Database\Query
     {
-        return $query->where('c.published_at <= ?', \TinyCat\Support\Dates::dateDb());
+        return $query->where('c.published_at <= ? AND c.status = \'published\'', \TinyCat\Support\Dates::dateDb());
     }
 
     public static function public_status_id_query(bool $ordered = true): \TinyCat\Database\Query
@@ -112,7 +112,7 @@ final class Feed
         $window = max(256, $limit * ($termId === null ? 32 : 16));
         $query = (new \TinyCat\Database\Query(
             'SELECT c.id FROM (SELECT c.id, c.author_id, c.published_at FROM content c FORCE INDEX (content_feed_index)'
-            . ' WHERE c.published_at <= ?' . $enough . ($cursor === '' ? '' : ' AND ' . $cursor)
+            . ' WHERE c.published_at <= ? AND c.status = \'published\'' . $enough . ($cursor === '' ? '' : ' AND ' . $cursor)
             . ' ORDER BY c.published_at DESC, c.id DESC LIMIT ' . $window . ') c'
             . ($termId === null ? '' : ' STRAIGHT_JOIN content_tags ct ON ct.content_id = c.id')
             . ' STRAIGHT_JOIN users u ON u.id = c.author_id',

@@ -76,7 +76,7 @@ $value = static fn (string $sql): mixed => $database->query($sql)->fetchColumn()
 
 foreach ([
     'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, email_notifications INTEGER NOT NULL DEFAULT 0, locale TEXT, theme TEXT, avatar_exists INTEGER DEFAULT 0, avatar_appearance TEXT, updated_at TEXT, role TEXT NOT NULL, bio TEXT NOT NULL, password TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT, muted_until TEXT)',
-    "CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL DEFAULT '', author_id INTEGER NOT NULL, published_at TEXT NOT NULL DEFAULT '2026-01-01 00:00:00', edit_locked_at TEXT)",
+    "CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL DEFAULT '', author_id INTEGER NOT NULL, published_at TEXT NOT NULL DEFAULT '2026-01-01 00:00:00', status TEXT NOT NULL DEFAULT 'published')",
     'CREATE TABLE content_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL)',
     'CREATE TABLE content_comments (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT, created_at TEXT)',
     'CREATE TABLE comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL)',
@@ -557,12 +557,14 @@ foreach (['content', 'content_likes', 'content_comments', 'comment_likes', 'cont
     $assert((int) $value("SELECT COUNT(*) FROM {$table} WHERE {$column} {$where}") === 0, "Successful status deletion removes {$table}.");
 }
 
+$assert(!\TinyCat\Status\Posts::status_can_view(['published_at' => '2020-01-01', 'status' => 'hidden']), 'Moderation-hidden posts cannot be viewed or interacted with.');
+$assert(\TinyCat\Status\Posts::status_can_view(['published_at' => '2020-01-01', 'status' => 'published']), 'Dismissed reports keep published posts visible.');
 $owner = ['id' => 1, 'role' => 'user'];
 $other = ['id' => 2, 'role' => 'user'];
 $admin = ['id' => 9, 'role' => 'admin'];
-$assert(\TinyCat\Status\Posts::status_can_edit(['author_id' => 1], $owner), 'A status owner may edit an unlocked status.');
-$assert(!\TinyCat\Status\Posts::status_can_edit(['author_id' => 1, 'edit_locked_at' => $now], $owner), 'A moderation lock blocks owner edits.');
-$assert(\TinyCat\Status\Posts::status_can_edit(['author_id' => 1, 'edit_locked_at' => $now], $admin), 'An administrator may edit a locked status.');
+$assert(\TinyCat\Status\Posts::status_can_edit(['author_id' => 1], $owner), 'A status owner may edit a published status.');
+$assert(\TinyCat\Status\Posts::status_can_edit(['author_id' => 1, 'status' => 'hidden'], $owner), 'A status owner may edit hidden content without publishing it.');
+$assert(\TinyCat\Status\Posts::status_can_edit(['author_id' => 1, 'status' => 'hidden'], $admin), 'An administrator may edit hidden content.');
 $assert(!\TinyCat\Status\Posts::status_can_delete(['author_id' => 1], $other), 'Another user may not delete a status.');
 $assert(\TinyCat\Status\Posts::status_can_delete(['author_id' => 1], $admin), 'An administrator may delete a status.');
 $assert(\TinyCat\Status\Comments::status_comment_can_edit(['user_id' => 2], $other), 'A comment author may edit the comment.');
@@ -596,7 +598,7 @@ $assert(
 $moderation = (string) file_get_contents($root . '/App/Moderation/Reports.php');
 $assert(
     str_contains($moderation, "\$decision !== 'remove'"),
-    'Removal notifications drop the foreign-key target before content deletion.'
+    'Hide notifications do not link to the unavailable public content.'
 );
 
 try {
@@ -654,6 +656,74 @@ $assert(count($preparedDuplicates) === 1 && $preparedDuplicates[0]['url_hash'] =
 $firstVariantId = \TinyCat\Status\Links::status_link_upsert(['normalized_url' => 'https://twitter.com/account/status/987?s=20', 'url_hash' => 'stale-first']);
 $secondVariantId = \TinyCat\Status\Links::status_link_upsert(['normalized_url' => 'https://x.com/other/status/987/photo/1', 'url_hash' => 'stale-second']);
 $assert($firstVariantId > 0 && $firstVariantId === $secondVariantId, 'Writing equivalent provider variants reuses one database record despite different supplied hashes.');
+
+// Exercise the actual review transaction: evidence must survive a moderation decision.
+$database->exec('ALTER TABLE users ADD COLUMN muted_by INTEGER');
+$database->exec('ALTER TABLE users ADD COLUMN muted_reason TEXT');
+foreach (['reviewed_at TEXT', 'reviewed_by INTEGER', 'action_note TEXT', 'reason TEXT', 'note TEXT', 'created_at TEXT'] as $column) {
+    $database->exec('ALTER TABLE content_reports ADD COLUMN ' . $column);
+}
+\TinyCat\Users\Authentication::reset(null, true);
+$database->exec("INSERT INTO content (id, author_id, body) VALUES (9500, 1, 'Preserved evidence')");
+$database->exec("INSERT INTO content_images (content_id, path) VALUES (9500, '2026/01/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp')");
+$database->exec("INSERT INTO content_reports (id, content_id, reporter_id, status, reason, note, created_at) VALUES (9500, 9500, 2, 'open', 'spam', 'First reason', '2026-01-01'), (9501, 9500, 2, 'open', 'abuse', 'Second reason', '2026-01-02')");
+$database->exec("INSERT INTO content_comments (id, content_id, user_id, body, created_at) VALUES (9500, 9500, 2, 'Preserved discussion', '2026-01-01')");
+$result = \TinyCat\Moderation\Reports::tc_admin_moderation_review_report(9500, 'remove');
+$assert($result['status'] === 'resolved', 'Review resolves a group of reports.');
+$assert($value('SELECT body FROM content WHERE id = 9500') === 'Preserved evidence', 'Review preserves the original post.');
+$assert($value('SELECT path FROM content_images WHERE content_id = 9500') === '2026/01/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp', 'Review preserves image evidence.');
+$assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'resolved'") === 2, 'Review keeps and resolves every open report.');
+$assert(!\TinyCat\Status\Posts::status_can_view(\TinyCat\Status\Posts::status_find(9500)), 'Review hides the preserved post publicly.');
+$assert(count(\TinyCat\Moderation\Reports::detail(9500)['reports']) === 2, 'The administrator detail retains the complete report history after review.');
+$preview = \TinyCat\Moderation\Reports::detail(9500)['preview'];
+$assert($preview['item']['body'] === 'Preserved evidence' && $preview['item']['image']['url'] !== '', 'The hidden post preview retains the standard frontend post and image resource.');
+$assert($preview['comments'][0]['body'] === 'Preserved discussion', 'The hidden post preview includes its preserved discussion.');
+$longReportBody = str_repeat('Complete report context ', 30);
+$assert(\TinyCat\Moderation\Resource::report(['body' => $longReportBody])['excerpt'] === trim($longReportBody), 'Report resources retain complete text for the shared visual table clamp and tooltip.');
+$detail = \TinyCat\Moderation\Reports::detail(9500);
+$assert($detail['content'] === ['id' => 9500, 'status' => 'hidden'], 'Moderation details expose only the necessary content state.');
+$assert(str_contains($detail['reports'][0]['created_at'], 'T') && !array_key_exists('reviewed_by', $detail['reports'][0]), 'Report entries use canonical dates and omit raw database metadata.');
+$database->exec("INSERT INTO notifications (id, user_id, actor_id, content_id, type, notification_key, created_at, updated_at) VALUES (9500, 2, 1, 9500, 'content_like', 'hidden-evidence-notification', '2026-01-01', '2026-01-01')");
+$hiddenNotification = array_values(array_filter(\TinyCat\Notifications\Inbox::items(2), static fn (array $item): bool => (int) $item['id'] === 9500))[0];
+$hiddenNotificationResource = \TinyCat\Notifications\Resource::item($hiddenNotification);
+$assert($hiddenNotificationResource['excerpt'] === '' && $hiddenNotificationResource['url'] === '/notifications', 'Existing notifications do not expose hidden post text or broken post links.');
+$assert(\TinyCat\Notifications\Inbox::open(9500, 2) === '/notifications', 'Opening an old notification respects current post visibility.');
+$assert((int) $value('SELECT content_id FROM notifications WHERE id = 9500') === 9500, 'Hiding preserves the notification record and its original relationship.');
+
+$database->exec("INSERT INTO content (id, author_id, body) VALUES (9502, 1, 'Kept evidence')");
+$database->exec("INSERT INTO content_reports (id, content_id, reporter_id, status) VALUES (9502, 9502, 2, 'open')");
+\TinyCat\Moderation\Reports::tc_admin_moderation_review_report(9502, 'dismiss');
+$kept = \TinyCat\Status\Posts::status_find(9502);
+$assert(\TinyCat\Status\Posts::status_can_view($kept) && \TinyCat\Status\Posts::status_can_edit($kept, $owner), 'Dismissal leaves the original post visible and editable.');
+$assert($value('SELECT status FROM content_reports WHERE id = 9502') === 'dismissed', 'Dismissal remains in the report history.');
+
+$_POST = ['reason' => 'spam', 'note' => 'A new report after dismissal'];
+\TinyCat\Http\Request::reset();
+\TinyCat\Status\Actions::status_json_report(9502, $other);
+$reopenedId = (int) $value("SELECT id FROM content_reports WHERE content_id = 9502 AND status = 'open'");
+$assert($reopenedId !== 9502 && $reopenedId > 0, 'The same reporter may submit a new report after dismissal.');
+$assert($value('SELECT status FROM content WHERE id = 9502') === 'published', 'Reporting never hides a post.');
+\TinyCat\Status\Actions::status_json_report(9502, $other);
+$assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9502 AND reporter_id = 2 AND status = 'open'") === 1, 'Repeated submissions update one open report instead of duplicating it.');
+$assert($value('SELECT status FROM content_reports WHERE id = 9502') === 'dismissed', 'Re-reporting does not overwrite the earlier moderation decision.');
+\TinyCat\Moderation\Reports::tc_admin_moderation_review_report($reopenedId, 'dismiss');
+\TinyCat\Status\Actions::status_json_report(9502, $other);
+$assert((int) $value('SELECT COUNT(*) FROM content_reports WHERE content_id = 9502') === 3, 'A later reporting cycle retains every closed report.');
+
+$database->exec('UPDATE users SET muted_until = NULL WHERE id = 1');
+$_POST = ['body' => 'Edited while hidden', 'status' => 'published'];
+\TinyCat\Http\Request::reset();
+$hiddenEdit = \TinyCat\Status\Actions::status_json_update(9500, $owner);
+$assert($hiddenEdit['item']['body'] === 'Edited while hidden' && $hiddenEdit['item']['status'] === 'hidden', 'An authorized author can edit a hidden post without publishing it.');
+$assert(!\TinyCat\Status\Posts::status_can_view(\TinyCat\Status\Posts::status_find(9500)), 'Editing does not undo the administrator visibility decision.');
+\TinyCat\Moderation\Reports::publish(9500);
+$assert(\TinyCat\Status\Posts::status_can_view(\TinyCat\Status\Posts::status_find(9500)), 'Explicit administrative publication makes hidden content visible again.');
+$assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'resolved'") === 2, 'Publication does not reopen or discard resolved reports.');
+$_POST = ['reason' => 'abuse', 'note' => 'New evidence after administrative publication'];
+\TinyCat\Http\Request::reset();
+\TinyCat\Status\Actions::status_json_report(9500, $other);
+$assert($value('SELECT status FROM content WHERE id = 9500') === 'published', 'A previously hidden and restored post is not hidden automatically by a new report.');
+$assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'resolved'") === 2 && (int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'open'") === 1, 'Re-reporting restored content appends an open report beside the earlier resolved history.');
 
 if ($failures !== []) {
     foreach ($failures as $failure) {

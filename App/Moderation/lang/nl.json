@@ -13,8 +13,6 @@
     "url_blocker_label": "Geblokkeerde websites",
     "url_blocker_placeholder": "voorbeeld.com, slecht.voorbeeld, domein:ru",
     "url_blocker_help": "Scheid websites met komma's of nieuwe regels. Subdomeinen worden ook geblokkeerd. Gebruik domain:ru om het hele .ru-achtervoegsel te blokkeren.",
-    "remove_content": "Inhoud verwijderen",
-    "keep_and_lock": "Bewaren en vergrendelen",
     "empty_content": "Lege inhoud",
     "report_reasons": {
       "spam": "Spam",
@@ -36,18 +34,28 @@
       "blocked_url": "Deze link is niet toegestaan: {host}.",
       "duplicate_body": "Dit bericht lijkt te veel op uw recente bericht.",
       "report_created": "Het rapport is ingediend.",
-      "report_already_reviewed": "Dit bericht is al beoordeeld en het rapport is niet heropend.",
       "report_own_content": "Je kunt je eigen bericht niet rapporteren.",
       "reports_unavailable": "Rapporten zijn niet beschikbaar.",
       "report_not_found": "Rapport is niet gevonden.",
       "report_reviewed": "Het rapport is beoordeeld.",
-      "url_blocker_saved": "Geblokkeerde URL's zijn opgeslagen."
+      "url_blocker_saved": "Geblokkeerde URL's zijn opgeslagen.",
+      "content_published": "Het bericht is opnieuw gepubliceerd."
     },
     "report_count": {
       "one": "{count} melding",
       "few": "{count} meldingen",
       "many": "{count} meldingen",
       "other": "{count} meldingen"
-    }
+    },
+    "detail": "Meldingsdetails",
+    "preview": "Berichtvoorbeeld",
+    "hide_content": "Bericht verbergen",
+    "hide_confirm": "Dit bericht verbergen en de auteur 24 uur dempen?",
+    "hidden": "Dit bericht is verborgen.",
+    "reporter": "Gemeld door",
+    "reviewer": "Beoordeeld door",
+    "dismiss_report": "Meldingen afwijzen",
+    "publish_content": "Opnieuw publiceren",
+    "publish_confirm": "Dit bericht opnieuw publiceren?"
   }
 }

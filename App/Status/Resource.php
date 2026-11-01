@@ -53,7 +53,7 @@ final class Resource
             'editable_body' => Mentions::mentions_for_editing((string) ($item['body'] ?? '')),
             'segments' => Segments::text($body, array_column($cards, 'url_hash'), $id),
             'published_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
-            'edit_locked' => Posts::status_edit_locked($item) && !\TinyCat\Users\Profiles::user_is_admin($user),
+            'status' => (string) ($item['status'] ?? 'published'),
             'context' => self::context($item),
             'login_url' => \TinyCat\Users\Login::auth_url_with_next('/login', Posts::status_url($id)),
             'login_modal_url' => \TinyCat\Users\Login::auth_modal_url('login', Posts::status_url($id)),
@@ -63,7 +63,7 @@ final class Resource
             'comments_count' => (int) ($item['comments_count'] ?? 0),
             'liked' => $user !== null && Reactions::status_user_liked($id, (int) $user['id']),
             'capabilities' => ['edit' => Posts::status_can_edit($item, $user), 'delete' => Posts::status_can_delete($item, $user),
-                'report' => $user !== null && (int) $user['id'] !== (int) ($item['author_id'] ?? 0), 'interact' => $user !== null],
+                'report' => Posts::status_can_view($item) && $user !== null && (int) $user['id'] !== (int) ($item['author_id'] ?? 0), 'interact' => $user !== null && Posts::status_can_view($item)],
         ];
     }
 
