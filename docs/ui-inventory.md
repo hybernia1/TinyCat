@@ -2,14 +2,14 @@
 
 Generováno příkazem `python tools/ui-inventory.py`. Rozsah a omezení viz [audit](ui-audit.md).
 
-96 definic komponent, 399 CSS tříd, 126 CSS importů, 77 JS souborů, 17 UI služeb, 13 PHP partialů.
+97 definic komponent, 399 CSS tříd, 126 CSS importů, 77 JS souborů, 17 UI služeb, 13 PHP partialů.
 
 ## Deklarativní komponenty
 
 | Název | Zdroj | Závislosti |
 | --- | --- | --- |
 | `bots/source-fields` | [assets/modules/bots/components.json](../assets/modules/bots/components.json) | ui/field |
-| `bots/sources` | [assets/modules/bots/components.json](../assets/modules/bots/components.json) | ui/account-status, ui/activation-action, ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
+| `bots/sources` | [assets/modules/bots/components.json](../assets/modules/bots/components.json) | ui/account-status, ui/action-label, ui/activation-action, ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
 | `bots/accounts` | [assets/modules/bots/components.json](../assets/modules/bots/components.json) | ui/account-status, ui/activation-action, ui/api-action, ui/empty-state, ui/list-toolbar, ui/modal-trigger, ui/pagination, ui/sort-heading |
 | `bots/runs` | [assets/modules/bots/components.json](../assets/modules/bots/components.json) | bots/run-status, ui/empty-state, ui/sort-heading |
 | `bots/stat` | [assets/modules/bots/components.json](../assets/modules/bots/components.json) | ui/stat-card |
@@ -50,14 +50,14 @@ Generováno příkazem `python tools/ui-inventory.py`. Rozsah a omezení viz [au
 | `site/dashboard-comments` | [assets/modules/site/components.json](../assets/modules/site/components.json) | ui/empty-state |
 | `site/dashboard-cache` | [assets/modules/site/components.json](../assets/modules/site/components.json) | — |
 | `status/segments` | [assets/modules/status/components.json](../assets/modules/status/components.json) | — |
-| `status/time` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/permalink |
-| `status/image` | [assets/modules/status/components.json](../assets/modules/status/components.json) | — |
+| `status/time` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/permalink, ui/action-label |
+| `status/image` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/permalink |
 | `status/link` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/link-summary |
 | `status/delete` | [assets/modules/status/components.json](../assets/modules/status/components.json) | — |
 | `status/menu` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/delete |
 | `status/manage` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/menu, status/permalink |
 | `status/like` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/context |
-| `status/actions` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/context, status/like |
+| `status/actions` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/context, status/like, ui/action-label |
 | `status/card` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/actions, status/image, status/link, status/manage, status/segments, status/time, ui/avatar |
 | `status/editor` | [assets/modules/status/components.json](../assets/modules/status/components.json) | — |
 | `status/comment-form` | [assets/modules/status/components.json](../assets/modules/status/components.json) | status/editor, ui/avatar |
@@ -104,6 +104,7 @@ Generováno příkazem `python tools/ui-inventory.py`. Rozsah a omezení viz [au
 | `ui/editor-actions` | [assets/ui/components.json](../assets/ui/components.json) | — |
 | `ui/filter-chip` | [assets/ui/components.json](../assets/ui/components.json) | — |
 | `ui/load-more` | [assets/ui/components.json](../assets/ui/components.json) | — |
+| `ui/action-label` | [assets/ui/components.json](../assets/ui/components.json) | — |
 
 ## UI služby a metody zapsané jako `name: function`
 
@@ -493,7 +494,7 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `card` | [assets/ui/styles/cards.css](../assets/ui/styles/cards.css), [assets/ui/styles/containers-mobile.css](../assets/ui/styles/containers-mobile.css) |
 | `card-body` | [assets/ui/styles/cards-mobile.css](../assets/ui/styles/cards-mobile.css), [assets/ui/styles/cards.css](../assets/ui/styles/cards.css) |
 | `card-footer` | [assets/ui/styles/cards-mobile.css](../assets/ui/styles/cards-mobile.css), [assets/ui/styles/cards.css](../assets/ui/styles/cards.css) |
-| `card-header` | [assets/modules/site/styles/public-sidebar.css](../assets/modules/site/styles/public-sidebar.css), [assets/ui/styles/cards-mobile.css](../assets/ui/styles/cards-mobile.css), [assets/ui/styles/cards.css](../assets/ui/styles/cards.css) |
+| `card-header` | [assets/modules/notifications/styles/notifications-page.css](../assets/modules/notifications/styles/notifications-page.css), [assets/modules/site/styles/public-sidebar.css](../assets/modules/site/styles/public-sidebar.css), [assets/ui/styles/cards-mobile.css](../assets/ui/styles/cards-mobile.css), [assets/ui/styles/cards.css](../assets/ui/styles/cards.css) |
 | `check-card` | [assets/ui/styles/check-card.css](../assets/ui/styles/check-card.css) |
 | `check-line` | [assets/ui/styles/check-line.css](../assets/ui/styles/check-line.css) |
 | `choice-card` | [assets/modules/installation/styles/install-choices.css](../assets/modules/installation/styles/install-choices.css) |
@@ -524,7 +525,7 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `empty-state-label` | [assets/ui/styles/empty-state.css](../assets/ui/styles/empty-state.css) |
 | `feed-switch` | [assets/modules/status/styles/feed-switch-mobile.css](../assets/modules/status/styles/feed-switch-mobile.css), [assets/modules/status/styles/feed-switch.css](../assets/modules/status/styles/feed-switch.css) |
 | `feed-switch-link` | [assets/modules/site/styles/home-feed-toolbar.css](../assets/modules/site/styles/home-feed-toolbar.css), [assets/modules/status/styles/feed-switch-mobile.css](../assets/modules/status/styles/feed-switch-mobile.css), [assets/modules/status/styles/feed-switch.css](../assets/modules/status/styles/feed-switch.css), [assets/modules/status/styles/home-feed-switch-links.css](../assets/modules/status/styles/home-feed-switch-links.css), [assets/modules/status/styles/home-feed-switch-mobile.css](../assets/modules/status/styles/home-feed-switch-mobile.css) |
-| `field` | [assets/modules/users/styles/avatar-upload.css](../assets/modules/users/styles/avatar-upload.css), [assets/ui/styles/fields.css](../assets/ui/styles/fields.css) |
+| `field` | [assets/modules/users/styles/avatar-upload.css](../assets/modules/users/styles/avatar-upload.css), [assets/ui/styles/fields.css](../assets/ui/styles/fields.css), [assets/ui/styles/filter-menu.css](../assets/ui/styles/filter-menu.css) |
 | `field-error` | [assets/ui/styles/fields.css](../assets/ui/styles/fields.css) |
 | `field-inline` | [assets/ui/styles/field-inline-desktop.css](../assets/ui/styles/field-inline-desktop.css), [assets/ui/styles/field-inline.css](../assets/ui/styles/field-inline.css) |
 | `filter-chip` | [assets/ui/styles/filter-chips.css](../assets/ui/styles/filter-chips.css) |

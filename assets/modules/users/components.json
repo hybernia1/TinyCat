@@ -5,6 +5,9 @@
       "class": "profile-following-link",
       "href": {
         "get": "user.url"
+      },
+      "aria-label": {
+        "get": "user.username"
       }
     },
     "children": [

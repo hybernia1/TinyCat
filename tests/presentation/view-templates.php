@@ -41,7 +41,7 @@ $assert(str_contains($modal, '<p id="snapshot-body">Safe body</p>'), 'Prepared m
 
 $composerBody = \TinyCat\Status\Views::composerBody([
     'user' => ['id' => 1, 'username' => 'alice', 'avatar_exists' => 0],
-    'editor' => ['item' => ['body' => 'Draft'], 'tags_json' => '[]', 'image' => []],
+    'editor' => ['item' => ['body' => 'Draft'], 'image' => []],
     'submit_name' => 'save',
     'submit_label' => 'Save',
     'submit_icon' => 'save',

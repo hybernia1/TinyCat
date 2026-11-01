@@ -77,7 +77,8 @@
     "activate": "Активувати",
     "deactivate": "Деактивувати",
     "activated": "{entity} активовано.",
-    "deactivated": "{entity} деактивовано."
+    "deactivated": "{entity} деактивовано.",
+    "action_for": "{action} — {context}"
   },
   "relative": {
     "now": "зараз",

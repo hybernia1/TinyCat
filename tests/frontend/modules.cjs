@@ -739,7 +739,9 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   const unknownSource = T.components.render("bots/post-source", { source: null });
   check(unknownSource.textContent.includes(T.i18n.t("bots.unknown_source")), "Legacy posts show an explicit unknown source.");
   const sourceCounts = T.components.render("bots/sources", { items: [{ id: 12, bot_user_id: 7, name: "RSS fixture", bot_username: "QueueBot", interval_minutes: 60, enabled: true, published_count: 120, queued_count: 70, published_url: "/admin/bots/7?source=12&publication=published", queue_url: "/admin/bots/queue?source=12" }], bots: [], sorting: {}, state: {} });
-  check(sourceCounts.textContent.includes("120 / 70") && sourceCounts.querySelectorAll("a").some(link => link.getAttribute("href") === "/admin/bots/queue?source=12"), "Source counts link directly to the corresponding feed queue.");
+  const publishedCount = sourceCounts.querySelectorAll("a").find(link => link.getAttribute("href") === "/admin/bots/7?source=12&publication=published");
+  const queuedCount = sourceCounts.querySelectorAll("a").find(link => link.getAttribute("href") === "/admin/bots/queue?source=12");
+  check(publishedCount && publishedCount.textContent.endsWith(": 120") && queuedCount && queuedCount.textContent.endsWith(": 70"), "Source counts retain accessible context and link directly to the corresponding feed queue.");
   const savedRequest = T.api.request, savedQuery = document.querySelector, savedHydrate = T.lifecycle.hydrate;
   const detailEvents = Node.prototype.addEventListener;
   Node.prototype.addEventListener = function (name, callback) { (this.listeners ||= {})[name] = callback; };

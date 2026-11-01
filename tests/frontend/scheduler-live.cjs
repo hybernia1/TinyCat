@@ -13,10 +13,19 @@ const vm = require("node:vm");
   const T = { api: { request(url, options) { calls++; assert.equal(url, "/api/scheduler/tasks?task=feeds&page=2"); assert.equal(options.cache, "no-store"); return new Promise((yes, no) => { resolve = yes; reject = no; }); } },
     ui: { pagination: response => response.meta.pagination }, lifecycle: { hydrate() {} } };
   const window = { TinyCat: T, location: { search: "?task=feeds&page=2" }, setInterval(fn, delay) { timers++; assert.equal(delay, 5000); tick = fn; return 1; }, clearInterval() { cleared = true; } };
-  vm.runInNewContext(fs.readFileSync(require("node:path").join(__dirname, "../../assets/modules/scheduler/controller.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, AbortController, URL });
+  vm.runInNewContext(fs.readFileSync(require("node:path").join(__dirname, "../../assets/modules/scheduler/controller.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, AbortController, URL, URLSearchParams });
   T.scheduler.filters = () => {};
   T.scheduler.list = () => { renders++; };
   T.scheduler.init(); T.scheduler.hydrate(document);
+  for (const search of ["", "?redirect=https://evil.test&url=//evil.test", "?q=../../scheduler/triggers/feeds%23x%26task%3Dcleanup&task=feeds&page=2&unknown=1", "?q=%2F%2Fevil.test%5C..%2F%3F%23&status=failed&per_page=50&sort=started_at&direction=desc"]) {
+    window.location.search = search;
+    const url = new URL(T.scheduler.listUrl(), "https://tinycat.test");
+    assert.equal(url.origin, "https://tinycat.test"); assert.equal(url.pathname, "/api/scheduler/tasks"); assert.equal(url.hash, "");
+    const input = new URLSearchParams(search);
+    for (const key of ["q", "task", "status", "page", "per_page", "sort", "direction"]) { assert.deepEqual(url.searchParams.getAll(key), input.getAll(key)); }
+    assert.equal(url.searchParams.has("redirect"), false); assert.equal(url.searchParams.has("url"), false); assert.equal(url.searchParams.has("unknown"), false);
+  }
+  window.location.search = "?task=feeds&page=2";
   document.hidden = true; await tick(); assert.equal(calls, 0);
   document.hidden = false; modal = true; await tick(); assert.equal(calls, 0);
   modal = false; focused = true; await tick(); assert.equal(calls, 0); focused = false;
@@ -26,9 +35,12 @@ const vm = require("node:vm");
   resolve({ data: { runs: [1] }, meta: { pagination: {} } }); await request; assert.equal(renders, 0);
   request = tick(); focused = true;
   resolve({ data: { runs: [1] }, meta: { pagination: {} } }); await request; assert.equal(renders, 0); focused = false;
+  request = tick(); window.location.search = "?status=failed";
+  resolve({ data: { runs: [1] }, meta: { pagination: {} } }); await request; assert.equal(renders, 0, "A response for previous filters cannot replace the current view.");
+  window.location.search = "?task=feeds&page=2";
   request = tick(); reject(new Error("offline")); await request;
   request = tick(); resolve({ data: { runs: [1] }, meta: { pagination: {} } }); await request; assert.equal(renders, 1);
   T.scheduler.dispose({ contains: () => true }); assert.equal(cleared, true);
   T.scheduler.hydrate(document); assert.equal(timers, 2, "Returning to an initialized view restarts polling.");
-  console.log("PASS scheduler live updates preserve filters, skip editing and hidden tabs, reject stale results and recover after errors");
+  console.log("PASS scheduler requests keep a fixed endpoint, encode allowed filters, preserve polling state and reject stale results");
 })().catch(error => { console.error(error); process.exitCode = 1; });

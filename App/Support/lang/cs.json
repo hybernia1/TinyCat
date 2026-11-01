@@ -77,7 +77,8 @@
     "activate": "Aktivovat",
     "deactivate": "Deaktivovat",
     "activated": "{entity} aktivován.",
-    "deactivated": "{entity} deaktivován."
+    "deactivated": "{entity} deaktivován.",
+    "action_for": "{action} — {context}"
   },
   "relative": {
     "now": "teď",

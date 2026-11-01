@@ -8,8 +8,8 @@
     "stylesheets": 1
   },
   "/admin/moderation": {
-    "raw_js": 286720,
-    "gzip_js": 60416,
+    "raw_js": 287744,
+    "gzip_js": 60672,
     "raw_css": 63488,
     "gzip_css": 12288,
     "scripts": 4,

@@ -7,7 +7,7 @@ import "../../ui/list-navigation.js";
   TinyCat.modules.register("scheduler", TinyCat.scheduler);
   TinyCat.lists.register("/admin/cron/list", {
     target: "#scheduler-list", keepQuery: ["sort", "direction"],
-    url: function () { return "/api/scheduler/tasks" + window.location.search; },
+    url: function () { return TinyCat.scheduler.listUrl(); },
     apply: function (target, response) { TinyCat.scheduler.list(target, response); }
   });
 }());

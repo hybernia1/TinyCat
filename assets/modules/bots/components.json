@@ -949,6 +949,14 @@
                                       },
                                       "?panel=detail"
                                     ]
+                                  },
+                                  "aria-label": {
+                                    "t": "bots.account_manage",
+                                    "values": {
+                                      "username": {
+                                        "get": "source.bot_username"
+                                      }
+                                    }
                                   }
                                 },
                                 "children": [
@@ -1019,6 +1027,35 @@
                                 },
                                 "children": [
                                   {
+                                    "tag": "span",
+                                    "attrs": {
+                                      "class": "sr-only"
+                                    },
+                                    "children": [
+                                      {
+                                        "use": "ui/action-label",
+                                        "data": {
+                                          "action": {
+                                            "t": "bots.post_published"
+                                          },
+                                          "context": {
+                                            "concat": [
+                                              {
+                                                "get": "source.name"
+                                              },
+                                              " (#",
+                                              {
+                                                "get": "source.id"
+                                              },
+                                              ")"
+                                            ]
+                                          }
+                                        }
+                                      },
+                                      ": "
+                                    ]
+                                  },
+                                  {
                                     "get": "source.published_count"
                                   }
                                 ]
@@ -1032,6 +1069,35 @@
                                   }
                                 },
                                 "children": [
+                                  {
+                                    "tag": "span",
+                                    "attrs": {
+                                      "class": "sr-only"
+                                    },
+                                    "children": [
+                                      {
+                                        "use": "ui/action-label",
+                                        "data": {
+                                          "action": {
+                                            "t": "bots.queued_posts"
+                                          },
+                                          "context": {
+                                            "concat": [
+                                              {
+                                                "get": "source.name"
+                                              },
+                                              " (#",
+                                              {
+                                                "get": "source.id"
+                                              },
+                                              ")"
+                                            ]
+                                          }
+                                        }
+                                      },
+                                      ": "
+                                    ]
+                                  },
                                   {
                                     "get": "source.queued_count"
                                   }

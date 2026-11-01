@@ -221,14 +221,8 @@ final class ViewData
      */
     public static function status_editor_view_data(array $item = []): array
     {
-        $tags = json_encode(
-            \TinyCat\Status\Tags::status_tag_suggestions(),
-            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
-        );
-
         return [
             'item' => $item,
-            'tags_json' => is_string($tags) ? $tags : '[]',
             'image' => [
                 'enabled' => \TinyCat\Status\Images::status_images_enabled(),
                 'url' => \TinyCat\Status\Images::status_image_url($item),

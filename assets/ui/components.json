@@ -1911,5 +1911,16 @@
         ]
       }
     ]
+  },
+  "ui/action-label": {
+    "t": "common.action_for",
+    "values": {
+      "action": {
+        "get": "action"
+      },
+      "context": {
+        "get": "context"
+      }
+    }
   }
 }
