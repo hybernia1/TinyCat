@@ -16,11 +16,8 @@ try {
         const frame = document.createElement('iframe');
         frame.style.cssText = 'position:fixed;inset:0;border:0;width:'+width+'px;height:812px';
         await new Promise(resolve => {
+          frame.addEventListener('load', resolve, {once:true});
           frame.srcdoc = source; document.body.append(frame);
-          const timer = setInterval(() => {
-            if (!frame.contentDocument.querySelector('table')) return;
-            clearInterval(timer); resolve();
-          }, 10);
         });
         const doc = frame.contentDocument, win = frame.contentWindow, table = doc.querySelector('table');
         const rows = [...table.tBodies[0].rows], mobile = width < 600;
