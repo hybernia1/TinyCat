@@ -145,6 +145,8 @@ originals[0].click();
 sortingWorks = sortingWorks && activatedSort === originals[0] && originals.every(link => link.getAttribute('href') && link.dataset.ajaxTarget && link.closest('thead'));
 const sortingDiagnostics = {};
 const chipRoot = document.createElement('div'), searchForm = document.createElement('form'), chipForm = document.createElement('form');
+// State-only controls must not scroll the page before the tooltip interaction probe.
+chipRoot.style.cssText = 'position:fixed;inset:0;overflow:hidden';
 searchForm.className = 'admin-search-form'; searchForm.dataset.ajaxTarget = chipForm.dataset.ajaxTarget = '#chip-test';
 chipForm.id = 'chip-filter-test'; chipForm.dataset.filterContent = '';
 const searchInput = document.createElement('input'); searchInput.type = 'search'; searchInput.name = 'q'; searchInput.value = 'needle'; searchForm.append(searchInput);
@@ -185,7 +187,7 @@ chipsWork = chipsWork && botField.value === '0' && new FormData(chipForm).get('b
 window.TinyCat.forms = {dispose() {}}; window.TinyCat.filters.remove(chipForm.id); chipRoot.remove();
 const touch = document.createElement('button'), unsafe = '<img src=x onerror=alert(1)> & full text';
 touch.setAttribute('title', unsafe);
-// Keep this probe visible and independent of scrolls queued by the filter focus tests.
+// Keep the tooltip probe visible after the state-only filter controls are removed.
 touch.style.cssText = 'position:fixed;top:24px;left:24px;width:24px;height:24px';
 (document.querySelector('.modal-body') || document.body).append(touch);
 await new Promise(resolve => setTimeout(resolve, 100));
