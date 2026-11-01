@@ -11,7 +11,9 @@
   width: var(--popover-width, max-content);
   min-width: min(var(--popover-min-width, 132px), var(--popover-available-width, calc(100vw - 24px)));
   max-width: var(--popover-available-width, calc(100vw - 24px));
+  height: max-content;
   max-height: var(--popover-max-height, calc(100dvh - 24px));
+  align-content: start;
   margin: 0;
   padding: var(--popover-padding, 0);
   overflow: auto;

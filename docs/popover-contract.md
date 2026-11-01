@@ -31,7 +31,10 @@ Doménový modul dodává obsah a jeho akce; nespravuje otevírání ani pozici.
 
 ## Chování a přístupnost
 
-Spouštěč má společně spravované `aria-expanded` a `aria-controls`.
+Spouštěč má společně spravované `aria-controls`. Tlačítka a odkazy mají také
+`aria-expanded`; vstup v režimu `input` si zachovává nativní roli `searchbox`,
+která tento atribut nepodporuje. Výsledky jsou odkazy na cílové stránky,
+nikoli nabídka hodnot přepisujících vstup; nepřidávat umělou roli `combobox`.
 Formulář nebo seznam oznámení není automaticky ARIA menu: používat skutečné
 odkazy, tlačítka a pole. Notifikace mají pojmenovanou oblast.
 
@@ -41,6 +44,10 @@ fokus na spouštěč; událost spotřebuje před obsluhou nadřazeného modalu.
 Tab není uzamčený. Šipky na spouštěči otevřou panel a vyberou první nebo
 poslední ovladatelný prvek. Mezi akcemi fungují šipky, Home a End;
 uvnitř vstupních polí zůstávají nativní klávesy včetně Enter beze změny.
+Při dotyku uvnitř panelu může WebKit před kliknutím zaostřit jeho předka
+(například `main[tabindex="-1"]`). Tento přesun nesmí panel předčasně skrýt;
+ochrana končí kliknutím, zrušením dotyku nebo stiskem klávesy. Skutečný
+dotyk mimo a klávesový přesun fokusu mimo dál panel zavírají.
 
 Controller používá nativní top layer přes Popover API, aby obsah neřezaly
 scrollující kontejnery. Při chybějícím API použije stejný controller běžný
@@ -64,6 +71,9 @@ Rám, pozici, vrstvu, ohraničení, pozadí, stín a přetečení vlastní pouze
 `--popover-width`, `--popover-min-width`, `--popover-max-height` a
 `--popover-padding`. Tím nezávisí na poloze souboru v globální kaskádě.
 Nepřidávat druhý panel s vlastním pozicováním nebo mobilní verzi rámu.
+Výška panelu odpovídá obsahu (`height: max-content`, `align-content: start`);
+limit viewportu pouze zapíná scroll. Nechat výšku na `auto` může ve starším
+WebKitu natáhnout grid i jeho řádky na celou dostupnou výšku.
 
 Tooltipy zůstávají v `tooltips.js`: jsou neinteraktivní popisky s jinou
 sémantikou a reakcí na hover/fokus. Inline disclosure a reply composer také
@@ -79,5 +89,21 @@ Mobilní matice používá 17 skutečných viewportů (šířky 320–414 px,
 výšky 320–812 px, režim na šířku a desktopovou kontrolu). Zmenšení a posun
 `visualViewport` pro přiblížení a klávesnici navíc simuluje; nejde o test
 fyzického zařízení nebo mobilního Safari.
+`node tests/frontend/popover-sizing.cjs` navíc ověřuje skutečné šablony účtu,
+archivu a filtrů uživatelů, fronty, příspěvků, běhů, moderace a plánovače
+ve WebKitu v pěti mobilních rozměrech včetně režimu na šířku. Kontroluje
+také datumová pole a dlouhé vybrané hodnoty bez vodorovného přetékání.
+CI používá Playwright 1.52.0 s WebKitem 18.4, kde se roztažení reprodukovalo.
+Cestu k instalovanému modulu určuje `TINYCAT_TEST_PLAYWRIGHT_MODULE`.
+`node tests/frontend/comment-modals.cjs` ověřuje dotykové otevření editoru
+a historie komentáře uvnitř zaostřitelného `main`, také po posunu stránky
+a změně výšky okna. Tato struktura reprodukuje přesun fokusu před kliknutím.
+`node tests/frontend/popover-touch.cjs` pokrývá všechny rodiny popoverů:
+profil a nastavení, tři přepínače tématu, odhlášení, jazyk, archiv, notifikace,
+akce příspěvku, datumová pole, všechny filtry a výsledky vyhledávání.
+Používá skutečné šablony a dotykové ovládání ve WebKitu při šířkách
+320, 390 a 844 px, v zaostřitelném `main` i panelu modalu. Ověřuje právě
+jedno kliknutí, zachování vstupu, odeslání formuláře a očekávané zavření
+či ponechání nabídky. Neprovádí zápisy na živý server.
 Při změně společné vrstvy spustit také `node tests/frontend/admin-viewport.cjs`,
 `node tests/frontend/modules.cjs` a `php tools/asset-report.php --check`.

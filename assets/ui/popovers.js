@@ -2,7 +2,7 @@ import "../core/dom.js";
 import "../core/lifecycle.js";
 (function () {
   "use strict";
-  var T = window.TinyCat, bindings = new WeakMap(), active = new Set(), restoringFocus = new WeakSet(), sequence = 0, initialized = false, queued = false;
+  var T = window.TinyCat, bindings = new WeakMap(), active = new Set(), restoringFocus = new WeakSet(), pointerRoot = null, sequence = 0, initialized = false, queued = false;
   function parts(root) {
     if (!root) return null;
     var children = Array.from(root.children || []);
@@ -11,16 +11,21 @@ import "../core/lifecycle.js";
     return triggers.length === 1 && panels.length === 1 ? { trigger: triggers[0], panel: panels[0] } : null;
   }
   function isOpen(root) { return root.tagName === "DETAILS" ? root.open : root.dataset.popoverOpen === "true"; }
+  function expanded(pair, value) {
+    if (pair.trigger.matches("input")) pair.trigger.removeAttribute("aria-expanded");
+    else pair.trigger.setAttribute("aria-expanded", String(value));
+  }
   function close(root, focus) {
     var pair = bindings.get(root) || parts(root);
     if (!pair) return;
     var notify = active.has(root) || isOpen(root) || root.dataset.popoverMode === "input";
+    if (pointerRoot === root) pointerRoot = null;
     Array.from(active).forEach(function (child) { if (child !== root && root.contains(child)) close(child); });
     active.delete(root);
     if (pair.panel.hidePopover && pair.panel.matches(":popover-open")) pair.panel.hidePopover();
     if (root.tagName === "DETAILS") root.open = false;
     else { delete root.dataset.popoverOpen; pair.panel.hidden = true; }
-    pair.trigger.setAttribute("aria-expanded", "false");
+    expanded(pair, false);
     if (focus && pair.trigger.isConnected) {
       restoringFocus.add(pair.trigger);
       try { pair.trigger.focus({ preventScroll: true }); } finally { restoringFocus.delete(pair.trigger); }
@@ -71,7 +76,7 @@ import "../core/lifecycle.js";
     pair.panel.hidden = false;
     pair.panel.style.position = "fixed";
     if (pair.panel.showPopover && !pair.panel.matches(":popover-open")) pair.panel.showPopover();
-    pair.trigger.setAttribute("aria-expanded", "true");
+    expanded(pair, true);
     active.add(root);
     position(root);
   }
@@ -90,7 +95,7 @@ import "../core/lifecycle.js";
     }
     if (pair.panel.showPopover) pair.panel.setAttribute("popover", "manual");
     pair.trigger.setAttribute("aria-controls", pair.panel.id);
-    pair.trigger.setAttribute("aria-expanded", isOpen(root) ? "true" : "false");
+    expanded(pair, isOpen(root));
     pair.trigger.addEventListener("click", function (event) {
       if (root.dataset.popoverMode === "input") return;
       if (event.defaultPrevented || event.button > 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || pair.trigger.target === "_blank") return;
@@ -154,16 +159,24 @@ import "../core/lifecycle.js";
       if (initialized) return;
       initialized = true;
       document.addEventListener("click", function (event) {
+        pointerRoot = null;
         var root = event.target.closest && event.target.closest("[data-popover]");
         dismiss(root);
         if (root && event.target.closest("[data-popover-close]")) close(root);
       });
-      document.addEventListener("focusin", function (event) { dismiss(event.target.closest && event.target.closest("[data-popover]")); });
+      document.addEventListener("focusin", function (event) {
+        // WebKit may focus a panel's focusable ancestor before dispatching a touch click.
+        if (pointerRoot && isOpen(pointerRoot) && event.target.contains(pointerRoot)) return;
+        dismiss(event.target.closest && event.target.closest("[data-popover]"));
+      });
       document.addEventListener("pointerdown", function (event) {
         var root = event.target.closest && event.target.closest("[data-popover]");
+        pointerRoot = event.target.closest && event.target.closest(".popover-panel") ? root : null;
         dismiss(root);
       });
+      document.addEventListener("pointercancel", function () { pointerRoot = null; });
       document.addEventListener("keydown", function (event) {
+        pointerRoot = null;
         if (event.key !== "Escape") return;
         var inputRoot = event.target.closest && event.target.closest('[data-popover-mode="input"]');
         if (!active.size && !inputRoot) return;
