@@ -3,6 +3,25 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+## Upgrading to 5.22.0: configurable web-cron batches
+
+Hosting web-cron URLs accept an optional `batch` parameter, using the existing
+HTTP Basic username `scheduler` and cron token as password:
+
+- `/api/scheduler/triggers/cleanup?batch=5000` selects the cleanup subtask batch.
+  Supported sizes are 500, 1000, 2500 and 5000; omission keeps 500.
+- `/api/scheduler/triggers/feeds?batch=50` selects the maximum number of feed
+  sources, clamped to 1?100; omission keeps 20.
+
+The task-specific aliases `cleanup_batch` and `bot_limit` are also supported.
+Specify one batch parameter per URL. Malformed values and unsupported batches
+for `site-health` are rejected before execution. HEAD remains a read-only probe.
+Task locks, due intervals and authentication stay unchanged. Duplicate-post
+merging retains its separate 500-copy cap. See `docs/api.md` for the full contract.
+
+No new migration or configuration change is required. Signed updates support
+5.16.0 and newer and apply any earlier pending migrations normally.
+
 ## Upgrading to 5.21.0: automatic duplicate bot-post cleanup
 
 Migration `20261102_001_compact_content_redirects` adds the two-column
