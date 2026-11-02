@@ -110,28 +110,14 @@
           }
         ],
         "when": {
-          "and": [
-            {
-              "not": {
-                "eq": [
-                  {
-                    "get": "segment.type"
-                  },
-                  "text"
-                ]
-              }
-            },
-            {
-              "not": {
-                "eq": [
-                  {
-                    "get": "segment.type"
-                  },
-                  "tag-overflow"
-                ]
-              }
-            }
-          ]
+          "lookup": {
+            "get": "segment.type"
+          },
+          "cases": {
+            "text": false,
+            "tag-overflow": false
+          },
+          "default": true
         }
       },
       {
@@ -3444,20 +3430,15 @@
             "component": "status/segments",
             "data": {
               "segments": {
-                "or": [
+                "if": [
+                  {
+                    "get": "item.tag_segments"
+                  },
                   {
                     "get": "item.text_segments"
                   },
                   {
-                    "if": [
-                      {
-                        "get": "item.tag_segments"
-                      },
-                      [],
-                      {
-                        "get": "item.segments"
-                      }
-                    ]
+                    "get": "item.segments"
                   }
                 ]
               }
