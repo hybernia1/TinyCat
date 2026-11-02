@@ -20,14 +20,14 @@ function node(value = "") {
 async function flush() { for (let i = 0; i < 12; i++) { await Promise.resolve(); } }
 async function run() {
   let translations = 0, destroyed = 0, fail = false, interfaceLocale = "cs";
-  const pairs = [];
+  const pairs = [], inputs = [];
   const bodies = ["12345", "!!!", "https://example.com", "#testing @user", "Czech post", "English post", "uncertain"].map(node);
   const detector = { detect: async value => [{ detectedLanguage: value === "Czech post" ? "cs" : "en", confidence: value === "uncertain" ? 0.1 : 0.99 }] };
   const T = { i18n: { t: key => key, locale: () => interfaceLocale }, dom: { all: () => bodies }, icons: { create: name => ({ name }) }, status: { controllers: {} } };
   const window = { TinyCat: T, isSecureContext: false,
     LanguageDetector: { availability: async () => "available", create: async () => detector },
     Translator: { availability: async pair => { pairs.push(pair); return "available"; }, create: async () => ({
-      translate: async () => { translations++; if (fail) { throw new Error("Unavailable"); } return "<b>Translated text</b>"; },
+      translate: async value => { inputs.push(value); translations++; if (fail) { throw new Error("Unavailable"); } return "<b>Translated text</b>"; },
       destroy() { destroyed++; }
     }) }
   };
@@ -68,6 +68,19 @@ async function run() {
   bodies.push(polishView); T.status.controllers.translation.hydrate({}); await flush();
   assert.equal(polishView.controls.children[2].lang, "pl", "A prefixed Polish interface selects Polish output");
   assert.ok(pairs.some(pair => pair.sourceLanguage === "en" && pair.targetLanguage === "pl"), "Browser translation availability is checked for the URL-selected language");
+  const tagged = node("English prose #original-tag # +99");
+  tagged.cloneNode = () => {
+    const copy = { textContent: tagged.textContent };
+    copy.querySelectorAll = selector => {
+      assert.ok(selector.includes(".status-tags-overflow"), "Overflow labels are excluded from detection and translation");
+      return [{ remove() { copy.textContent = "English prose"; } }];
+    };
+    return copy;
+  };
+  fail = false;
+  bodies.push(tagged); T.status.controllers.translation.hydrate({}); await flush();
+  await tagged.controls.children[0].handlers.click();
+  assert.equal(inputs.at(-1), "English prose", "Translation receives neither tags nor disclosure counts");
   console.log("PASS local translation eligibility, target language, original preservation, badge, toggle and failure recovery (21 checks)");
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

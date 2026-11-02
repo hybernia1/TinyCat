@@ -3,6 +3,18 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+## Upgrading to 5.19.2: compact tags and prose translation
+
+Hashtags use muted badges. Consecutive runs of five or more show the first three
+and a keyboard-accessible disclosure for the rest; tagging and search are not
+limited. Trailing tags form a separate block below the post text and its local
+translation controls/output. Tags and overflow counts are excluded from
+translation, including when the disclosure is open.
+
+No new database migration or configuration change is required. Existing post
+and comment bodies remain unchanged. Signed updates remain supported from
+5.16.0 and apply any earlier pending migrations normally.
+
 ## Upgrading to 5.19.1: inline tokens and accessible links
 
 Signed updates remain supported from 5.16.0. Migration

@@ -5,6 +5,56 @@ namespace TinyCat\Status;
 final class Segments
 {
     /**
+     * @param list<array<string, mixed>> $segments
+     * @return array{text_segments: list<array<string, mixed>>, tag_segments: list<array<string, mixed>>}
+     */
+    public static function splitTags(array $segments): array
+    {
+        $start = count($segments);
+        $hasTags = false;
+        while ($start > 0) {
+            $segment = $segments[$start - 1];
+            if (in_array($segment['type'], ['tag', 'tag-overflow'], true)) { $hasTags = true; $start--; continue; }
+            if ($segment['type'] === 'text' && trim($segment['text']) === '') { $start--; continue; }
+            break;
+        }
+        return [
+            'text_segments' => $hasTags ? array_slice($segments, 0, $start) : $segments,
+            'tag_segments' => $hasTags ? array_slice($segments, $start) : [],
+        ];
+    }
+
+    /**
+     * Collapse long runs of tags only; prose and stored bodies stay untouched.
+     * @param list<array<string, string>> $segments
+     * @return list<array<string, mixed>>
+     */
+    public static function compactTags(array $segments): array
+    {
+        $result = [];
+        $length = count($segments);
+        for ($i = 0; $i < $length; $i++) {
+            if ($segments[$i]['type'] !== 'tag') { $result[] = $segments[$i]; continue; }
+            $positions = [$i];
+            $end = $i + 1;
+            while ($end < $length) {
+                if ($segments[$end]['type'] === 'tag') { $positions[] = $end; $end++; continue; }
+                if ($segments[$end]['type'] === 'text' && trim($segments[$end]['text']) === '' && isset($segments[$end + 1]) && $segments[$end + 1]['type'] === 'tag') { $end++; continue; }
+                break;
+            }
+            if (count($positions) > 4) {
+                $split = $positions[2] + 1;
+                array_push($result, ...array_slice($segments, $i, $split - $i));
+                $result[] = ['type' => 'tag-overflow', 'count' => count($positions) - 3, 'segments' => array_slice($segments, $split, $end - $split)];
+            } else {
+                array_push($result, ...array_slice($segments, $i, $end - $i));
+            }
+            $i = $end - 1;
+        }
+        return $result;
+    }
+
+    /**
      * @param list<string> $hiddenHashes
      * @return list<array<string, string>>
      */

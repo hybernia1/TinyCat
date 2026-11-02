@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.19.2 - 2026-11-02
+
+- Render hashtags as compact, muted badges. Collapse consecutive runs of five or more to three visible tags and a native disclosure with the remaining count, preserving every tag and destination.
+- Separate trailing tags from post text. Keep local translation controls and output with the prose, exclude tags and disclosure counts from translation, and align the overflow badge without the browser marker.
+- No new migration or configuration change is required; signed updates remain supported from 5.16.0.
+
 ## 5.19.1 - 2026-11-02
 
 - Build scheduler polling and history URLs from an allowlisted, encoded query instead of forwarding the raw page query. Keep the API endpoint fixed and cover crafted filter values and stale responses with regression tests (CodeQL alert #15).

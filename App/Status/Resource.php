@@ -45,13 +45,15 @@ final class Resource
                 }
             }
         }
+        $segments = Segments::compactTags(Segments::text($body, array_column($cards, 'url_hash'), $id));
         $at = (string) ($item['published_at'] ?? '');
         return [
             'id' => $id, 'url' => Posts::status_url($id),
             'author' => self::author($item),
             'body' => $body,
             'editable_body' => Mentions::mentions_for_editing((string) ($item['body'] ?? '')),
-            'segments' => Segments::text($body, array_column($cards, 'url_hash'), $id),
+            'segments' => $segments,
+            ...Segments::splitTags($segments),
             'published_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'status' => (string) ($item['status'] ?? 'published'),
             'context' => self::context($item),
@@ -127,7 +129,7 @@ final class Resource
         return ['id' => $id, 'content_id' => (int) ($comment['content_id'] ?? 0), 'parent_id' => (int) ($comment['parent_id'] ?? 0),
             'author' => self::author($comment), 'body' => (string) ($comment['body'] ?? ''),
             'editable_body' => Mentions::mentions_for_editing((string) ($comment['body'] ?? '')),
-            'segments' => Segments::text((string) ($comment['body'] ?? ''), [], (int) ($comment['content_id'] ?? 0), $id),
+            'segments' => Segments::compactTags(Segments::text((string) ($comment['body'] ?? ''), [], (int) ($comment['content_id'] ?? 0), $id)),
             'created_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'likes_count' => (int) ($comment['likes_count'] ?? 0),
             'liked' => $user !== null && Comments::status_comment_user_liked($id, (int) $user['id']),
