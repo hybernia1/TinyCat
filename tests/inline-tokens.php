@@ -47,6 +47,24 @@ $assert(Mentions::normalize_mentions_for_storage('Ahoj,@jana') === 'Ahoj,@7', 'P
 $assert(Tags::status_tags_from_text('mail@#tag ##tag a.#tag') === [], 'Invalid token boundaries are ignored');
 $segments = TinyCat\Status\Segments::text('Update #1 #1980s');
 $assert(count(array_filter($segments, static fn (array $segment): bool => $segment['type'] === 'tag')) === 1, 'Rendering links only the alphanumeric tag');
+$wall = TinyCat\Status\Segments::text('Article #one #two #three #four #five #six');
+$compact = TinyCat\Status\Segments::compactTags($wall);
+$overflow = $compact[array_key_last($compact)];
+$assert($overflow['type'] === 'tag-overflow' && $overflow['count'] === 3, 'Long tag runs show three tags and an exact overflow count');
+$restored = array_slice($compact, 0, -1);
+array_push($restored, ...$overflow['segments']);
+$assert($restored === $wall, 'Expanding preserves every tag, URL and separator in order');
+$sentence = TinyCat\Status\Segments::text('#one is #two and #three with #four and #five');
+$assert(TinyCat\Status\Segments::compactTags($sentence) === $sentence, 'Tags inside prose are never hidden');
+$short = TinyCat\Status\Segments::text('#one #two #three #four');
+$assert(TinyCat\Status\Segments::compactTags($short) === $short, 'Short tag runs stay visible');
+$html = TinyCat\Support\Components::render('status/segments', ['segments' => $compact]);
+$assert(str_contains($html, '<details class="status-tags-overflow">') && str_contains($html, '# +3') && str_contains($html, '/tag/six'), 'Shared rendering exposes all overflow links through native disclosure');
+$parts = TinyCat\Status\Segments::splitTags($compact);
+$assert(count($parts['text_segments']) === 1 && count($parts['tag_segments']) > 0, 'Trailing tags are separated from the translatable text');
+$bodyHtml = TinyCat\Support\Components::render('status/body', ['item' => $parts]);
+$assert(str_contains($bodyHtml, 'class="status-tags" translate="no"') && str_contains($bodyHtml, '<summary class="badge">'), 'Tags opt out of translation and the disclosure uses a badge');
+$assert(TinyCat\Status\Segments::splitTags(TinyCat\Status\Segments::text('#one sentence'))['tag_segments'] === [], 'Inline tags remain inside prose');
 $database->exec('CREATE TABLE terms (id INTEGER PRIMARY KEY, name TEXT); CREATE TABLE content_tags (content_id INTEGER, term_id INTEGER)');
 foreach ([1 => '1', 2 => '1980s', 3 => '2026', 4 => '3d', 5 => 'gothic-1'] as $id => $name) {
     $database->prepare('INSERT INTO terms VALUES (?, ?)')->execute([$id, $name]);

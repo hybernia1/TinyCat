@@ -16,7 +16,7 @@ import "./controller.js";
   }
   function meaningfulText(body) {
     var copy = body.cloneNode(true);
-    copy.querySelectorAll("a").forEach(function (link) { link.remove(); });
+    copy.querySelectorAll("a, .status-tags-overflow").forEach(function (link) { link.remove(); });
     return copy.textContent.replace(/https?:\/\/\S+|www\.\S+|[@#][\p{L}\p{N}_]+/gu, " ").trim();
   }
   function text(key) { return T.i18n.t("account.translation_" + key); }
@@ -109,7 +109,9 @@ import "./controller.js";
           }
           translator = await window.Translator.create(options);
           if (disposed) { return; }
-          var translatedText = await translator.translate(body.innerText);
+          var copy = body.cloneNode(true);
+          copy.querySelectorAll(".tag-link, .status-tags-overflow").forEach(function (tag) { tag.remove(); });
+          var translatedText = await translator.translate(copy.textContent.trim());
           if (disposed) { return; }
           output.textContent = translatedText;
           translated = true;

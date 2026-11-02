@@ -9,6 +9,61 @@
   white-space: normal;
 }
 
+.tag-link {
+  max-width: 100%;
+  margin-block: 0.1em;
+  font-size: 0.875em;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.tag-link:hover,
+.tag-link:focus-visible,
+.status-tags-overflow > summary:hover,
+.status-tags-overflow > summary:focus-visible {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.status-tags-overflow {
+  display: inline-block;
+  vertical-align: baseline;
+  color: var(--muted);
+  font-size: 0.875em;
+}
+
+.status-tags-overflow > summary {
+  display: inline-flex;
+  list-style: none;
+  margin-inline-start: 0.4em;
+  margin-block: 0.1em;
+  font-size: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.status-tags-overflow > summary::-webkit-details-marker {
+  display: none;
+}
+
+.status-tags {
+  margin-top: 0.75rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.status-tags > span {
+  white-space: normal;
+}
+
+.status-tags-overflow[open] {
+  display: block;
+}
+
+.status-tags-overflow .tag-link {
+  font-size: inherit;
+}
+
 .mention-link {
   color: var(--primary-strong);
   font-weight: 800;

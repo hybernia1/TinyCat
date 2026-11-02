@@ -55,7 +55,7 @@
                       "tag"
                     ]
                   },
-                  "tag-link",
+                  "badge tag-link",
                   "status-inline-link"
                 ]
               }
@@ -88,6 +88,20 @@
               "nofollow noopener noreferrer ugc",
               null
             ]
+          },
+          "translate": {
+            "if": [
+              {
+                "eq": [
+                  {
+                    "get": "segment.type"
+                  },
+                  "tag"
+                ]
+              },
+              "no",
+              null
+            ]
           }
         },
         "children": [
@@ -96,15 +110,55 @@
           }
         ],
         "when": {
-          "not": {
-            "eq": [
-              {
-                "get": "segment.type"
-              },
-              "text"
-            ]
-          }
+          "lookup": {
+            "get": "segment.type"
+          },
+          "cases": {
+            "text": false,
+            "tag-overflow": false
+          },
+          "default": true
         }
+      },
+      {
+        "tag": "details",
+        "attrs": {
+          "class": "status-tags-overflow"
+        },
+        "when": {
+          "eq": [
+            {
+              "get": "segment.type"
+            },
+            "tag-overflow"
+          ]
+        },
+        "children": [
+          {
+            "tag": "summary",
+            "children": [
+              {
+                "concat": [
+                  "# +",
+                  {
+                    "get": "segment.count"
+                  }
+                ]
+              }
+            ],
+            "attrs": {
+              "class": "badge"
+            }
+          },
+          {
+            "component": "status/segments",
+            "data": {
+              "segments": {
+                "get": "segment.segments"
+              }
+            }
+          }
+        ]
       }
     ]
   },
@@ -1901,20 +1955,12 @@
             ]
           },
           {
-            "tag": "div",
-            "attrs": {
-              "class": "status-body is-resource-text"
-            },
-            "children": [
-              {
-                "component": "status/segments",
-                "data": {
-                  "segments": {
-                    "get": "item.segments"
-                  }
-                }
+            "component": "status/body",
+            "data": {
+              "item": {
+                "get": "item"
               }
-            ]
+            }
           },
           {
             "component": "status/image",
@@ -3363,6 +3409,60 @@
                 ]
               }
             ]
+          }
+        ]
+      }
+    ]
+  },
+  "status/body": {
+    "tag": "div",
+    "attrs": {
+      "class": "status-copy"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "status-body is-resource-text"
+        },
+        "children": [
+          {
+            "component": "status/segments",
+            "data": {
+              "segments": {
+                "if": [
+                  {
+                    "get": "item.tag_segments"
+                  },
+                  {
+                    "get": "item.text_segments"
+                  },
+                  {
+                    "get": "item.segments"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "when": {
+          "get": "item.tag_segments"
+        },
+        "attrs": {
+          "class": "status-tags",
+          "translate": "no"
+        },
+        "children": [
+          {
+            "component": "status/segments",
+            "data": {
+              "segments": {
+                "get": "item.tag_segments"
+              }
+            }
           }
         ]
       }
