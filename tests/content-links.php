@@ -35,6 +35,8 @@ $insert->execute([1, 1, $raw, '2000-01-01']); $insert->execute([2, 1, $raw, '299
 $db->prepare('INSERT INTO content_comments VALUES (10, 1, 1, ?)')->execute([$raw]);
 $db->exec('ALTER TABLE content ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT \'published\'');
 \TinyCat\Database\Connection::set($db);
+$redirectMigration = require dirname(__DIR__) . '/migrations/20261102_001_compact_content_redirects.php';
+$redirectMigration($db);
 $hash = LinkParser::fromRaw($raw)['url_hash'];
 $assert(ContentLinks::resolve(1, $hash)['original_url'] === $raw, 'Resolution preserves original UTM stripped by metadata normalization.');
 $assert(ContentLinks::resolve(2, $hash) === null && ContentLinks::resolve(3, $hash) === null, 'Future content and inactive authors are not exposed.');

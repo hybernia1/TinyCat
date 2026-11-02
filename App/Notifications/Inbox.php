@@ -5,6 +5,35 @@ namespace TinyCat\Notifications;
 
 final class Inbox
 {
+    /** Caller locks both posts. Reassign existing events without sending new notifications. */
+    public static function mergeContent(int $oldId, int $keeperId): void
+    {
+        \TinyCat\Database\Transactions::run(static function () use ($oldId, $keeperId): void {
+            foreach (\TinyCat\Database\Connection::all(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM notifications WHERE content_id=? ORDER BY id'), [$oldId]) as $row) {
+                $key = (string) $row['notification_key'];
+                $type = (string) $row['type'];
+                $parts = explode(':', $key, 3);
+                if (in_array($type, ['content_like', 'content_comment', 'content_mention', 'comment_mention'], true)
+                    && count($parts) === 3 && $parts[0] === $type && ctype_digit($parts[1])) {
+                    // Also repair keys left with an earlier alias by a previous merge.
+                    $key = $type . ':' . $keeperId . ':' . $parts[2];
+                }
+                $existing = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM notifications WHERE user_id=? AND notification_key=? AND id<>?'), [$row['user_id'], $key, $row['id']]);
+                if ($existing !== null) {
+                    \TinyCat\Database\Connection::update('notifications', [
+                        'content_id' => $keeperId,
+                        'read_at' => $row['read_at'] === null || $existing['read_at'] === null ? null : max($row['read_at'], $existing['read_at']),
+                        'created_at' => min($row['created_at'], $existing['created_at']),
+                        'updated_at' => max($row['updated_at'], $existing['updated_at']),
+                    ], ['id' => $existing['id']]);
+                    \TinyCat\Database\Connection::delete('notifications', ['id' => $row['id']]);
+                } else {
+                    \TinyCat\Database\Connection::update('notifications', ['content_id' => $keeperId, 'notification_key' => $key], ['id' => $row['id']]);
+                }
+            }
+        });
+    }
+
     public const PREVIEW_LIMIT = 6;
 
     private const PAGE_LIMIT = 40;

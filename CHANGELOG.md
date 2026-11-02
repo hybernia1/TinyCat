@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.21.0 - 2026-11-02
+
+- Add scheduled cleanup of identical published posts from the same active bot, matching exact text, link and tag sets, and attachment metadata. Keep the lowest matching ID and permanently delete newer copies in bounded transactions.
+- Preserve likes, comments and their history, reports, and notifications when merging; deduplicate reactions and notification keys without sending new events.
+- Preserve old public post addresses through 301 redirects backed by the two-column `content_redirects` table. Resolve read-only post and outbound-link resources while keeping edits on deleted IDs unavailable.
+- Apply migration `20261102_001_compact_content_redirects`; fresh installations include the table directly. RSS importing, source configuration and GUID history remain unchanged.
+
 ## 5.20.1 - 2026-11-02
 
 - Fix missing RSS images for posts that use stored link previews or provider thumbnails instead of attachments. Prefer attached images and avoid invented enclosure sizes or MIME types for previews.

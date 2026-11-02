@@ -59,6 +59,7 @@ $tests = [
     'Standalone ČSFD cinema premieres' => 'tests/bots/csfd-premieres.php',
     'Bot publication queue' => 'tests/bots/queue.php',
     'Per-feed publication queues' => 'tests/bots/feed-queue.php',
+    'Bot duplicate housekeeping' => 'tests/bots/duplicate-cleanup.php',
     'Bot publication migration' => 'tests/bots/publication-migration.php',
     'Updater' => 'tests/updater/run.php',
     'MySQL migration registry' => 'tests/updater/mysql-registry.php',
