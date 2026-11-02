@@ -95,6 +95,11 @@ declare(strict_types=1);
     <?php if ($metaType === 'article' && !empty($meta['author'])): ?>
         <meta property="article:author" content="<?= \TinyCat\Support\Html::e((string) $meta['author']) ?>">
     <?php endif; ?>
+    <?php if ($metaType === 'article'): ?>
+        <?php foreach ((array) ($meta['tags'] ?? []) as $tag): ?>
+            <meta property="article:tag" content="<?= \TinyCat\Support\Html::e((string) $tag) ?>">
+        <?php endforeach; ?>
+    <?php endif; ?>
     <?php if ($metaImage !== ''): ?>
         <meta property="og:image" content="<?= \TinyCat\Support\Html::e($metaImage) ?>">
         <?php if ($metaImageType !== ''): ?><meta property="og:image:type" content="<?= \TinyCat\Support\Html::e($metaImageType) ?>"><?php endif; ?>

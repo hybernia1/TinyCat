@@ -1,5 +1,12 @@
 # Changelog
 
+## 5.20.0 - 2026-11-02
+
+- Enrich public RSS with normalized tag categories, author names, safe HTML with links and line breaks, inline image alternative text, Media RSS attachments, readable titles, and channel avatars or configured site artwork.
+- Correct Open Graph article authors to canonical profile URLs and export article tags. Advertise the author's RSS feed from post details and update metadata during client navigation.
+- Export post text through JSON-LD `text`, include visible comments and nested replies, and provide explicit author names, types and profile URLs on profile posts. Retain link-preview images when no attached image exists.
+- No new migration or configuration change is required; signed updates remain supported from 5.16.0.
+
 ## 5.19.2 - 2026-11-02
 
 - Render hashtags as compact, muted badges. Collapse consecutive runs of five or more to three visible tags and a native disclosure with the remaining count, preserving every tag and destination.

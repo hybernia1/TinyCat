@@ -4,7 +4,7 @@ declare(strict_types=1);
 $exportDb = new PDO('sqlite:' . $databasePath);
 $exportDb->exec("INSERT INTO users (id, username, role, status) VALUES (900001, 'exportactive', 'bot', 'active'), (900002, 'exporthidden', 'bot', 'inactive')");
 $insertExport = $exportDb->prepare('INSERT INTO content (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
-$insertExport->execute([900001, 900001, "Export <script>bad</script> & ]]> \x01", '2020-01-01 00:00:00']);
+$insertExport->execute([900001, 900001, "Export <script>bad</script> & ]]> \x01\n#ExportPublic #exportpublic https://example.test/page?a=1&b=2#fragment", '2020-01-01 00:00:00']);
 $insertExport->execute([900002, 900001, 'FUTURE-EXPORT-SECRET', '2999-01-01 00:00:00']);
 $insertExport->execute([900003, 900002, 'HIDDEN-EXPORT-SECRET', '2020-01-01 00:00:00']);
 $exportDb->exec("INSERT INTO terms (id, name) VALUES (900001, 'exportpublic'), (900002, 'exportorphan'), (900003, 'exportfuture')");
@@ -46,6 +46,64 @@ $feed->registerXPathNamespace('atom', 'http://www.w3.org/2005/Atom');
 $selfLink = $feed->xpath('/rss/channel/atom:link/@href');
 $assert((string) $selfLink[0] === 'http://localhost/author/900001/feed' && (string) $feed->channel->language === 'en', 'RSS has a canonical self URL and stable site language: ' . (string) $selfLink[0] . ' / ' . (string) $feed->channel->language);
 $assert(count($feed->channel->item) === 1 && str_contains((string) $feed->channel->item->description, '&lt;script&gt;'), 'RSS descriptions preserve user text without injecting HTML.');
+$assert(array_values(array_map('strval', iterator_to_array($feed->channel->item->category))) === ['exportpublic'], 'RSS categories are normalized and deduplicated hashtags, excluding URL fragments.');
+$assert((string) $feed->channel->item->children('http://purl.org/dc/elements/1.1/')->creator === 'exportactive', 'RSS exports the public author name without inventing an email.');
+$description = (string) $feed->channel->item->description;
+$assert(str_contains($description, '<br>') && str_contains($description, '<a href="https://example.test/page?a=1&amp;b=2#fragment">') && !str_contains($description, '<script>'), 'RSS preserves line breaks and safe links while escaping user HTML.');
+$schemaFromPage = static function (string $html): array {
+    $document = new DOMDocument();
+    libxml_use_internal_errors(true); $document->loadHTML($html); libxml_clear_errors();
+    return json_decode((new DOMXPath($document))->evaluate('string(//script[@type="application/ld+json"])'), true, 512, JSON_THROW_ON_ERROR);
+};
+$exportDb->exec("INSERT INTO content_comments (id, content_id, parent_id, user_id, body, created_at) VALUES
+    (900001, 900001, NULL, 900001, 'Visible comment <b>literal</b>', '2020-01-02 00:00:00'),
+    (900002, 900001, 900001, 900001, 'Visible reply', '2020-01-03 00:00:00'),
+    (900003, 900001, NULL, 900002, 'HIDDEN-COMMENT-SECRET', '2020-01-04 00:00:00'),
+    (900004, 900001, 900003, 900001, 'ORPHAN-REPLY-SECRET', '2020-01-05 00:00:00')");
+[$status, $postHtml] = $exportRequest('/status/900001');
+$postSchema = $schemaFromPage($postHtml);
+$assert($status === 200 && str_contains($postSchema['text'], 'Export <script>') && !isset($postSchema['image']), 'Text-only post JSON-LD contains text and no invented image.');
+$headDocument = new DOMDocument();
+libxml_use_internal_errors(true); $headDocument->loadHTML($postHtml); libxml_clear_errors();
+$headXPath = new DOMXPath($headDocument);
+$assert($headXPath->evaluate('string(//meta[@property="article:author"]/@content)') === 'http://localhost/author/900001', 'Open Graph author is the canonical profile URL.');
+$assert($headXPath->query('//meta[@property="article:tag"]')->length === 1 && $headXPath->evaluate('string(//meta[@property="article:tag"]/@content)') === 'exportpublic', 'Open Graph exports normalized article tags.');
+$assert($headXPath->evaluate('string(//link[@type="application/rss+xml"]/@href)') === 'http://localhost/author/900001/feed', 'Post detail advertises its author RSS feed.');
+[$status, $navigationBody] = $exportRequest('/api/site/pages?path=/status/900001');
+$navigationDocument = json_decode($navigationBody, true, 512, JSON_THROW_ON_ERROR)['data']['document'];
+$assert($status === 200 && $navigationDocument['tags'] === ['exportpublic'] && $navigationDocument['author'] === $postSchema['author']['url'] && $navigationDocument['rss'] === 'http://localhost/author/900001/feed', 'Client navigation carries the same article tags, author URL and RSS discovery as HTML.');
+$commentSchema = $postSchema['comment'][0];
+$assert(count($postSchema['comment']) === 1 && $commentSchema['text'] === 'Visible comment <b>literal</b>' && $commentSchema['comment'][0]['text'] === 'Visible reply', 'JSON-LD includes visible comments and keeps reply nesting.');
+$assert($commentSchema['author']['url'] === $postSchema['author']['url'] && $commentSchema['datePublished'] === '2020-01-02T00:00:00+00:00' && $commentSchema['url'] === $postSchema['url'], 'Comment JSON-LD has canonical author and page URLs and its actual publication date.');
+$assert(!str_contains(json_encode($postSchema), 'HIDDEN-COMMENT-SECRET') && !str_contains($postHtml, 'ORPHAN-REPLY-SECRET'), 'Structured data excludes hidden comments and replies missing their visible parent.');
+$assert(!str_contains((string) $feed->channel->item->title, 'https://') && !str_contains((string) $feed->channel->item->title, '<script>'), 'RSS titles omit long URLs and HTML markup.');
+$assert(str_starts_with((string) $feed->channel->image->url, 'http://localhost/') && (string) $feed->channel->image->link === 'http://localhost/author/900001', 'Author RSS includes an absolute avatar URL and matching channel link.');
+
+[$status, $profileHtml] = $exportRequest('/author/900001');
+$profileSchema = $schemaFromPage($profileHtml);
+$assert($status === 200 && $profileSchema['hasPart'][0]['text'] === $postSchema['text'], 'Profile JSON-LD includes the same original post text as the detail.');
+$assert($profileSchema['hasPart'][0]['author']['name'] === $profileSchema['mainEntity']['name'] && $profileSchema['hasPart'][0]['author']['@type'] === $profileSchema['mainEntity']['@type'], 'Profile post authors include the entity name and schema type directly.');
+
+$assert($postSchema['author']['url'] === 'http://localhost/author/900001' && $profileSchema['mainEntity']['url'] === $postSchema['author']['url'] && $profileSchema['hasPart'][0]['author']['url'] === $postSchema['author']['url'], 'Post and profile JSON-LD expose the canonical author URL directly.');
+$exportDb->exec("INSERT INTO content_images (content_id, path, width, height, bytes) VALUES (900001, '2026/11/0123456789abcdef0123456789abcdef.webp', 640, 480, 1234)");
+[$status, $imageRss] = $exportRequest('/author/900001/feed');
+$imageFeed = simplexml_load_string($imageRss);
+$imageUrl = (string) $imageFeed->channel->item->enclosure['url'];
+$assert($status === 200 && str_starts_with($imageUrl, 'http://localhost/') && (string) $imageFeed->channel->item->enclosure['length'] === '1234', 'RSS retains the absolute image enclosure and its real byte length.');
+$assert((string) $imageFeed->channel->item->children('http://search.yahoo.com/mrss/')->content->attributes()['url'] === $imageUrl && str_contains((string) $imageFeed->channel->item->description, '<img src="' . $imageUrl . '" alt="'), 'RSS includes the same image in Media RSS and safe HTML with alternative text.');
+[$status, $imageHtml] = $exportRequest('/status/900001');
+$imageSchema = $schemaFromPage($imageHtml);
+$assert($imageSchema['image']['contentUrl'] === $imageUrl && $imageSchema['image']['width'] === 640, 'JSON-LD and RSS agree on the attached image.');
+$exportDb->exec('DELETE FROM content_images WHERE content_id = 900001');
+$exportDb->exec("INSERT INTO links (id, normalized_url, url_hash, link_type, image_url) VALUES (900001, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'export-link-image', 'video', '')");
+$exportDb->exec("INSERT INTO content_links (content_id, link_id) VALUES (900001, 900001)");
+[$status, $previewHtml] = $exportRequest('/status/900001');
+$assert($schemaFromPage($previewHtml)['image'] === 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg', 'Post JSON-LD retains the link preview image when no attachment exists.');
+[$status, $previewProfile] = $exportRequest('/author/900001');
+$assert($schemaFromPage($previewProfile)['hasPart'][0]['image'] === 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg', 'Profile posts retain the same link preview fallback.');
+$exportDb->exec('DELETE FROM content_links WHERE content_id = 900001');
+$exportDb->exec('DELETE FROM links WHERE id = 900001');
+
 [$status, $old, $oldHeaders] = $exportRequest('/author/900001/feed');
 $exportDb->exec("UPDATE content SET body = 'Updated export' WHERE id = 900001");
 [$status, $changed, $changedHeaders] = $exportRequest('/author/900001/feed', 'GET', ['If-None-Match' => $oldHeaders['etag']]);
@@ -56,6 +114,7 @@ foreach (['/sitemap-unknown-1.xml', '/sitemap-status-999999999999999999999.xml',
 }
 $exportDb->exec('DELETE FROM content_tags WHERE term_id >= 900001');
 $exportDb->exec('DELETE FROM terms WHERE id >= 900001');
+$exportDb->exec('DELETE FROM content_comments WHERE content_id >= 900001');
 $exportDb->exec('DELETE FROM content WHERE id >= 900001');
 $exportDb->exec('DELETE FROM users WHERE id >= 900001');
 $insertExport = null;

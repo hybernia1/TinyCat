@@ -6,11 +6,12 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   const input = { value: "" }, results = { hidden: false };
   const slot = { replaceWith(node) { retained = node; } };
   const target = { dataset: {}, querySelector: () => side, setAttribute() {}, removeAttribute() {}, replaceChildren() {} };
-  const head = { querySelector: () => null, querySelectorAll: () => [], appendChild() {} };
+  const tagNodes = [];
+  const head = { querySelector: () => null, querySelectorAll: selector => selector === 'meta[property="article:tag"]' ? tagNodes.slice() : [], appendChild(node) { if (node.property === "article:tag") { tagNodes.push(node); } } };
   const document = { head, body: { dataset: { currentUserId: "0", applicationVersion: "4.5.0" } }, documentElement: { lang: "cs" },
     querySelector(selector) { if (selector === "[data-global-search-input]") { return input; } return selector === "#main-content > .container" ? target : {}; },
     querySelectorAll: selector => selector === "[data-global-search-results]" ? [results] : [], getElementById: () => ({ focus() {} }),
-    createElement: () => ({ setAttribute() {} }), addEventListener: (name, fn) => { handlers[name] = fn; } };
+    createElement: () => ({ setAttribute(key, value) { this[key] = value; }, remove() { const index = tagNodes.indexOf(this); if (index >= 0) { tagNodes.splice(index, 1); } } }), addEventListener: (name, fn) => { handlers[name] = fn; } };
   const data = { version: "4.5.0", locale: "cs", viewer: null, kind: "search", url: "/search?q=quartz&type=users", search: { query: "quartz" }, document: { title: "Search quartz", url: "http://tinycat.test/search?q=quartz&type=users" }, sidebar_url: "/api/site/sidebar" };
   const T = { urls: { split: p => ({ path: p, locale: "" }), prefix: () => "" }, dialog: { current: () => null },
     navigation: { registerPage: r => { route = r; }, go: url => { current = url; }, canLeave: async () => true },
@@ -56,5 +57,15 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   await route.restore({state:{publicIndex:1}}, new URL("http://tinycat.test/search?q=restored"));
   assert.equal(new URL(requests.at(-1)).searchParams.get('path'), '/search');
   assert.equal(new URL(requests.at(-1)).searchParams.get('q'), 'restored', "Overlay restoration supplies its clean base-page URL");
+  data.kind = "status"; data.url = "/status/10"; data.document.type = "article"; data.document.tags = ["cats", "news"];
+  await route.visit(new URL("http://tinycat.test/status/10"));
+  assert.deepEqual(tagNodes.map(node => node.content), ["cats", "news"], "Post navigation publishes all article tags");
+  data.document.tags = ["updated"];
+  await route.visit(new URL("http://tinycat.test/status/11"));
+  assert.deepEqual(tagNodes.map(node => node.content), ["updated"], "Next post replaces previous tags without duplicates");
+  data.kind = "home"; data.document.type = "website"; delete data.document.tags;
+  await route.visit(new URL("http://tinycat.test/"));
+  assert.equal(tagNodes.length, 0, "Leaving a post removes its article tags");
+  assert.equal(assigned, 0, "Metadata updates preserve client navigation");
   console.log("PASS search uses shared page navigation, preserves sidebar and submits without reload");
 })().catch(error => { console.error(error); process.exitCode = 1; });

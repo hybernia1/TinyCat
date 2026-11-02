@@ -95,7 +95,9 @@ final class Pages
                 'image_alt' => $statusImageUrl !== '' ? Images::status_image_alt_text($item) : '',
                 'type' => 'article',
                 'published_time' => (string) ($item['published_at'] ?? ''),
-                'author' => (string) ($item['author_name'] ?? ''),
+                'author' => Presentation::absolute_url(Profiles::author_url((int) ($item['author_id'] ?? 0))),
+                'tags' => Tags::status_tags_from_text((string) ($item['body'] ?? '')),
+                'rss' => Profiles::author_feed_url((int) ($item['author_id'] ?? 0)),
                 'jsonld' => array_filter([
                     '@context' => 'https://schema.org',
                     '@type' => 'DiscussionForumPosting',
@@ -103,7 +105,7 @@ final class Pages
                     'url' => Presentation::absolute_url($current),
                     'image' => $statusStructuredImage,
                     'headline' => $statusTitle,
-                    'articleBody' => trim((string) ($item['body'] ?? '')) !== '' ? (string) ($item['body'] ?? '') : null,
+                    'text' => trim((string) ($item['body'] ?? '')) !== '' ? (string) ($item['body'] ?? '') : null,
                     'keywords' => Tags::status_tags_from_text((string) ($item['body'] ?? '')),
                     'datePublished' => Dates::dateIso((string) ($item['published_at'] ?? '')),
                     'author' => [
@@ -111,6 +113,7 @@ final class Pages
                         'name' => (string) ($item['author_name'] ?? ''),
                         'url' => Presentation::absolute_url(Profiles::author_url((int) ($item['author_id'] ?? 0))),
                     ],
+                    'comment' => $comments !== [] ? self::commentSchema($comments, $current) : null,
                     'interactionStatistic' => [
                         [
                             '@type' => 'InteractionCounter',
@@ -127,6 +130,27 @@ final class Pages
             ],
         ], 'context' => compact('authUser', 'item', 'comments', 'compact')];
     }
+    /** @param array<int, array<string, mixed>> $comments
+     * @return list<array<string, mixed>> */
+    private static function commentSchema(array $comments, string $postUrl): array
+    {
+        return array_values(array_map(static function (array $comment) use ($postUrl): array {
+            return array_filter([
+                '@type' => 'Comment',
+                'identifier' => (string) $comment['id'],
+                'url' => Presentation::absolute_url($postUrl),
+                'text' => (string) $comment['body'],
+                'datePublished' => !empty($comment['created_at']) ? Dates::dateIso((string) $comment['created_at']) : null,
+                'author' => [
+                    '@type' => 'Person',
+                    'name' => (string) $comment['author_name'],
+                    'url' => Presentation::absolute_url(Profiles::author_url((int) $comment['author_id'])),
+                ],
+                'comment' => !empty($comment['replies']) ? self::commentSchema($comment['replies'], $postUrl) : null,
+            ], static fn (mixed $value): bool => $value !== null);
+        }, $comments));
+    }
+
     private static function statusNotFound(): void
     {
         http_response_code(404);

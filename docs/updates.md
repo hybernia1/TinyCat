@@ -3,6 +3,24 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+## Upgrading to 5.20.0: public RSS and structured metadata
+
+Public RSS exports normalized categories and author names, escaped HTML with
+clickable links and line breaks, inline attached images with alternative text,
+and Media RSS alongside existing enclosures. Item GUIDs remain canonical post
+URLs. Titles omit external URLs and HTML markup; author feeds include their
+avatar, and other feeds use configured site artwork when available.
+
+Post pages expose the author's RSS subscription URL, canonical Open Graph
+author URLs and article tags. Client navigation replaces these metadata fields
+when moving between pages. JSON-LD uses `text` for posts, includes only visible
+comments and their nested replies, and supplies explicit author names, types
+and URLs on profile posts. Link-preview images remain a fallback when a post
+has no attached image.
+
+No new database migration or configuration change is required. Signed updates
+remain supported from 5.16.0 and apply earlier pending migrations normally.
+
 ## Upgrading to 5.19.2: compact tags and prose translation
 
 Hashtags use muted badges. Consecutive runs of five or more show the first three
