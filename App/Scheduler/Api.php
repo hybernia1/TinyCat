@@ -15,7 +15,17 @@ final class Api
             if ($request->method() === 'HEAD') {
                 return new Result(['task' => $task, 'available' => true], null, [], 'scheduler_healthy');
             }
-            $result = \TinyCat\Http\Session::withoutLock(static fn (): array => Execution::run($task));
+            $query = $request->query();
+            $batchOption = match ($task) { 'cleanup' => 'cleanup_batch', 'feeds' => 'bot_limit', default => null };
+            $options = [];
+            if (array_key_exists('batch', $query)) {
+                if ($batchOption === null) { throw new \InvalidArgumentException('This task does not support a batch.', 400); }
+                if (array_key_exists($batchOption, $query)) { throw new \InvalidArgumentException('Specify only one batch parameter.', 400); }
+                $options[$batchOption] = $query['batch'];
+            } elseif ($batchOption !== null && array_key_exists($batchOption, $query)) {
+                $options[$batchOption] = $query[$batchOption];
+            }
+            $result = \TinyCat\Http\Session::withoutLock(static fn (): array => Execution::run($task, $options));
             if (!$result['ok']) { \TinyCat\Http\Response::error('Scheduled execution failed.', 500, 'scheduler_run_failed', ['execution' => $result]); }
             return new Result($result, null, [], 'scheduler_run_finished');
         }, 'scheduler_trigger');

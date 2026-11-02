@@ -56,6 +56,33 @@ foreach (['all', 'unknown'] as $task) {
 }
 [$status, $execution] = $request('GET', '/api/scheduler/triggers/cleanup?task=feeds&options[cleanup_batch]=1', null, '', $basic + ['X-Test-Scheduler-Lock' => '0']);
 $assert($status === 200 && $execution['data']['selected_task'] === 'cleanup' && $execution['data']['tasks']['cleanup']['status'] === 'already_running', 'Web-cron uses shared execution locks and selects the task from its fixed URL.');
+$systemDb->exec("INSERT OR REPLACE INTO settings (setting_key,setting_value,setting_type,setting_group) VALUES ('cron.cleanup_last_run','" . time() . "','int','cron')");
+foreach (['' => 500, '?cleanup_batch=500' => 500, '?cleanup_batch=1000' => 1000, '?cleanup_batch=2500' => 2500, '?cleanup_batch=5000' => 5000, '?cleanup_batch=99999' => 1000, '?batch=5000' => 5000, '?batch=2500' => 2500] as $query => $expectedBatch) {
+    [$status, $execution] = $request('GET', '/api/scheduler/triggers/cleanup' . $query, null, '', $basic);
+    $storedOptions = json_decode((string) $systemDb->query("SELECT options_json FROM scheduler_runs WHERE task='cleanup' ORDER BY id DESC LIMIT 1")->fetchColumn(), true);
+    $assert($status === 200 && $execution['data']['tasks']['cleanup']['status'] === 'not_due' && $storedOptions['cleanup_batch'] === $expectedBatch, 'Web-cron forwards and normalizes the requested batch while respecting the cleanup interval.');
+}
+foreach (['' => 20, '?batch=50' => 50, '?bot_limit=30' => 30, '?batch=1000' => 100, '?batch=0' => 1] as $query => $expectedBatch) {
+    [$status] = $request('GET', '/api/scheduler/triggers/feeds' . $query, null, '', $basic);
+    $storedOptions = json_decode((string) $systemDb->query("SELECT options_json FROM scheduler_runs WHERE task='feeds' ORDER BY id DESC LIMIT 1")->fetchColumn(), true);
+    $assert($status === 200 && $storedOptions['bot_limit'] === $expectedBatch, 'Feed web-cron shares batch defaults, aliases and limits with normal execution.');
+}
+$beforeInvalid = (int) $systemDb->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn();
+foreach (['abc', '', '1.5', '5000%26force=1', '%5B5000%5D'] as $invalidBatch) {
+    [$status] = $request('GET', '/api/scheduler/triggers/cleanup?cleanup_batch=' . $invalidBatch, null, '', $basic);
+    $assert($status === 400, 'Malformed web-cron batch values are rejected before execution.');
+}
+[$status] = $request('GET', '/api/scheduler/triggers/cleanup?cleanup_batch[]=5000', null, '', $basic);
+$assert($status === 400 && (int) $systemDb->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn() === $beforeInvalid, 'Array batch values cannot execute a task or create a history row.');
+foreach (['cleanup?batch=abc', 'feeds?batch[]=50', 'feeds?batch=1.5', 'cleanup?batch=5000&cleanup_batch=500', 'feeds?batch=50&bot_limit=20', 'site-health?batch=1'] as $invalidQuery) {
+    [$status] = $request('GET', '/api/scheduler/triggers/' . $invalidQuery, null, '', $basic);
+    $assert($status === 400 && (int) $systemDb->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn() === $beforeInvalid, 'Invalid, ambiguous or unsupported batch parameters fail before execution.');
+}
+[$status, $body] = $exportRequest('/api/scheduler/triggers/cleanup?batch=5000', 'HEAD', $basic);
+$assert($status === 200 && $body === '' && (int) $systemDb->query('SELECT COUNT(*) FROM scheduler_runs')->fetchColumn() === $beforeInvalid, 'Batch parameters do not make HEAD probes execute tasks.');
+[$status, $execution] = $request('GET', '/api/scheduler/triggers/feeds?cleanup_batch=invalid', null, '', $basic + ['X-Test-Scheduler-Lock' => '0']);
+$assert($status === 200 && $execution['data']['tasks']['feeds']['status'] === 'already_running', 'Cleanup batch does not change other trigger options.');
+$systemDb->exec("DELETE FROM settings WHERE setting_key='cron.cleanup_last_run'");
 [$status] = $request('GET', '/api/scheduler/triggers/cleanup', null, '', $basic + ['Sec-Fetch-Site' => 'cross-site']);
 $assert($status === 403, 'Cross-site browser requests cannot trigger a web-cron.');
 [$status] = $request('POST', '/api/scheduler/triggers/cleanup', [], '', $basic);

@@ -66,11 +66,29 @@ created or rotated explicitly through the administrator-only token API.
 | --- | --- | --- |
 | GET | `/api/installation` | Public safe setup status, no credentials |
 | POST | `/api/installation/steps/{step}` | Public, CSRF, installation must be open |
-| GET / HEAD | `/api/scheduler/triggers/{task}` | HTTPS HTTP Basic: username `scheduler`, cron token as password; GET executes one task with default options, HEAD never executes |
+| GET / HEAD | `/api/scheduler/triggers/{task}` | HTTPS HTTP Basic: username `scheduler`, cron token as password; GET executes one task, optional `batch` for feeds and cleanup; HEAD never executes |
 | GET | `/api/scheduler/health` | Scheduler Bearer token, no execution |
 | POST | `/api/scheduler/executions` | Scheduler Bearer token |
 | GET | `/api/site-health` | Administrator, latest diagnostic and recent history; no execution |
 | POST | `/api/site-health/checks` | Administrator and CSRF, manual inspection through scheduler execution |
+
+Hosting web-cron accepts a flat optional `batch` query parameter with the same
+HTTP Basic credentials:
+
+| URL | Meaning | Default / limits |
+| --- | --- | --- |
+| `/api/scheduler/triggers/cleanup?batch=5000` | Batch per cleanup subtask | Default 500; allowed 500, 1000, 2500, 5000 |
+| `/api/scheduler/triggers/feeds?batch=50` | Maximum feed sources processed | Default 20; clamped to 1?100 |
+
+The task-specific aliases `cleanup_batch` for cleanup and `bot_limit` for feeds
+are also accepted. Supplying both `batch` and its task-specific alias is rejected.
+Other integer cleanup values normalize to 1000, matching POST execution options.
+Non-integer and array values are rejected before execution. `site-health` has no
+batch and rejects this parameter. Other query parameters do not override the task
+or its execution mode. HEAD probes never execute work.
+The hourly cleanup interval remains in effect. Duplicate bot-post merging keeps
+its independent limit of 500 copies per invocation. POST execution options retain
+their existing task-specific names.
 
 `site-health` is a daily scheduler task, distinct from the scheduler connectivity
 probe `/api/scheduler/health`. It accepts no task options. Each completed check

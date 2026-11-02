@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.22.0 - 2026-11-02
+
+- Accept an optional `batch` URL parameter on hosting web-cron triggers: cleanup batches use the existing 500/1000/2500/5000 sizes, and RSS batches select 1?100 sources. Preserve default sizes and task-specific aliases.
+- Validate batch values before execution, reject ambiguous aliases and unsupported diagnostic batches, and keep HEAD probes free of execution. Authentication, task locks and due intervals remain unchanged.
+- No new migration or configuration change is required. Signed updates remain supported from 5.16.0.
+
 ## 5.21.0 - 2026-11-02
 
 - Add scheduled cleanup of identical published posts from the same active bot, matching exact text, link and tag sets, and attachment metadata. Keep the lowest matching ID and permanently delete newer copies in bounded transactions.
