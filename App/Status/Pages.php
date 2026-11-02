@@ -41,6 +41,11 @@ final class Pages
                 'url' => '/',
                 'image' => Presentation::site_meta_image_url(),
                 'type' => 'website',
+                'jsonld' => [
+                    '@context' => 'https://schema.org', '@type' => 'WebSite',
+                    '@id' => Presentation::absolute_url('/'), 'url' => Presentation::absolute_url('/'),
+                    'name' => Presentation::site_name(), 'description' => Presentation::site_meta_description(),
+                ],
             ],
         ], 'context' => compact('authUser', 'feed', 'editor', 'userIsMuted', 'userMutedUntil', 'publicHomeFeedData', 'archiveType')];
     }
@@ -76,7 +81,6 @@ final class Pages
         $comments = $detail['comments'];
 
         $statusTitle = ViewData::status_meta_title($item);
-        $statusStructuredImage = Images::status_image_jsonld($item) ?? (ViewData::status_meta_link_image($item) ?: null);
         $statusImageUrl = Images::status_image_url($item);
 
         return ['page' => [
@@ -100,19 +104,7 @@ final class Pages
                 'rss' => Profiles::author_feed_url((int) ($item['author_id'] ?? 0)),
                 'jsonld' => array_filter([
                     '@context' => 'https://schema.org',
-                    '@type' => 'DiscussionForumPosting',
-                    '@id' => Presentation::absolute_url($current),
-                    'url' => Presentation::absolute_url($current),
-                    'image' => $statusStructuredImage,
-                    'headline' => $statusTitle,
-                    'text' => trim((string) ($item['body'] ?? '')) !== '' ? (string) ($item['body'] ?? '') : null,
-                    'keywords' => Tags::status_tags_from_text((string) ($item['body'] ?? '')),
-                    'datePublished' => Dates::dateIso((string) ($item['published_at'] ?? '')),
-                    'author' => [
-                        '@type' => 'Person',
-                        'name' => (string) ($item['author_name'] ?? ''),
-                        'url' => Presentation::absolute_url(Profiles::author_url((int) ($item['author_id'] ?? 0))),
-                    ],
+                    ...StructuredData::post($item),
                     'comment' => $comments !== [] ? self::commentSchema($comments, $current) : null,
                     'interactionStatistic' => [
                         [
@@ -140,12 +132,8 @@ final class Pages
                 'identifier' => (string) $comment['id'],
                 'url' => Presentation::absolute_url($postUrl),
                 'text' => (string) $comment['body'],
-                'datePublished' => !empty($comment['created_at']) ? Dates::dateIso((string) $comment['created_at']) : null,
-                'author' => [
-                    '@type' => 'Person',
-                    'name' => (string) $comment['author_name'],
-                    'url' => Presentation::absolute_url(Profiles::author_url((int) $comment['author_id'])),
-                ],
+                'datePublished' => !empty($comment['created_at']) ? Dates::dateTime((string) $comment['created_at'], DATE_ATOM) : null,
+                'author' => StructuredData::author($comment),
                 'comment' => !empty($comment['replies']) ? self::commentSchema($comment['replies'], $postUrl) : null,
             ], static fn (mixed $value): bool => $value !== null);
         }, $comments));
@@ -201,19 +189,10 @@ final class Pages
             'url' => Presentation::absolute_url($pageUrl),
             'name' => Localization::t('public.tag_feed_title', ['tag' => '#' . $tag]),
             'isPartOf' => ['@id' => Presentation::absolute_url('/')],
-            'mainEntity' => [
-                '@type' => 'ItemList',
-                'itemListElement' => array_map(static function (array $item, int $index): array {
-                    return [
-                        '@type' => 'ListItem',
-                        'position' => $index + 1,
-                        'url' => Presentation::absolute_url(Posts::status_url((int) ($item['id'] ?? 0))),
-                    ];
-                }, $statusItems, array_keys($statusItems)),
-            ],
+            'mainEntity' => StructuredData::itemList(array_values($statusItems)),
         ];
 
-        $tagFeedUrl = Tags::tag_feed_url($tag);
+        $tagFeedUrl = Tags::tag_feed_url($tag, $archiveType);
         return ['page' => [
             'title' => Localization::t('public.tag_feed_title', ['tag' => '#' . $tag]),
             'current' => $current,
@@ -221,7 +200,7 @@ final class Pages
                 'description' => Localization::t('public.tag_meta', ['tag' => '#' . $tag]),
                 'url' => $pageUrl,
                 'image' => Presentation::site_meta_image_url(),
-                'rss' => Tags::tag_feed_url($tag),
+                'rss' => Tags::tag_feed_url($tag, $archiveType),
                 'robots' => count($indexableItems) >= 2 ? '' : 'noindex,follow',
                 'jsonld' => $tagStructuredData,
             ],

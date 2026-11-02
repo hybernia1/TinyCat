@@ -62,18 +62,7 @@ final class PublicPages
         }
         return [
             'version' => \TinyCat\Support\Version::CURRENT, 'kind' => $kind, 'url' => LocaleRouting::url($url), 'locale' => Localization::locale(), 'viewer' => $viewer !== null ? Users::profile($viewer) : null,
-            'document' => [
-                'title' => $page['title'] === Presentation::site_name() ? (string) $page['title'] : (string) $page['title'] . ' | ' . Presentation::site_name(),
-                'description' => Presentation::meta_text((string) ($meta['description'] ?? ''), 180),
-                'url' => Presentation::absolute_url(LocaleRouting::canonical((string) $meta['url'])), 'type' => (string) ($meta['type'] ?? 'website'),
-                'image' => !empty($meta['image']) ? Presentation::absolute_url((string) $meta['image']) : '',
-                'image_type' => (string) ($meta['image_type'] ?? ''), 'image_width' => (int) ($meta['image_width'] ?? 0), 'image_height' => (int) ($meta['image_height'] ?? 0), 'image_alt' => (string) ($meta['image_alt'] ?? $page['title']),
-                'oembed' => (string) ($meta['oembed'] ?? ''), 'oembed_xml' => (string) ($meta['oembed_xml'] ?? ''),
-                'rss' => !empty($meta['rss']) ? Presentation::absolute_url((string) $meta['rss']) : '',
-                'robots' => (string) ($meta['robots'] ?? ''), 'jsonld' => isset($meta['jsonld']) && is_array($meta['jsonld']) ? LocaleRouting::schema($meta['jsonld']) : null,
-                'tags' => array_values((array) ($meta['tags'] ?? [])),
-                'published_time' => !empty($meta['published_time']) ? \TinyCat\Support\Dates::dateIso((string) $meta['published_time']) : '', 'author' => (string) ($meta['author'] ?? ''),
-            ],
+            'document' => Metadata::document($page),
             'tag' => (string) ($context['tag'] ?? ''), 'compact' => (bool) ($context['compact'] ?? false),
             'feed' => (string) ($context['feed'] ?? 'all'), 'feed_id' => $feedId,
             'login_required' => (bool) ($home['following_login_required'] ?? false),

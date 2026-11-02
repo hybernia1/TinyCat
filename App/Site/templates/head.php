@@ -90,7 +90,7 @@ declare(strict_types=1);
     <meta property="og:url" content="<?= \TinyCat\Support\Html::e($metaUrl) ?>">
     <meta property="og:locale" content="<?= \TinyCat\Support\Html::e($metaLocale) ?>">
     <?php if ($metaType === 'article' && !empty($meta['published_time'])): ?>
-        <meta property="article:published_time" content="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Dates::dateIso((string) $meta['published_time'])) ?>">
+        <meta property="article:published_time" content="<?= \TinyCat\Support\Html::e(\TinyCat\Support\Dates::dateTime((string) $meta['published_time'], DATE_ATOM)) ?>">
     <?php endif; ?>
     <?php if ($metaType === 'article' && !empty($meta['author'])): ?>
         <meta property="article:author" content="<?= \TinyCat\Support\Html::e((string) $meta['author']) ?>">

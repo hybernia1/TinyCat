@@ -49,10 +49,11 @@ final class LayoutData
         $nav = Navigation::prepare($nav, $current, $isAdminShell);
         $titleIcon = $isAdminShell ? (string) ($title_icon ?? Navigation::activeIcon($nav)) : '';
 
-        $pageTitle = $title === $appName ? $title : $title . ' | ' . $appName;
-        $metaTitle = \TinyCat\Site\Presentation::meta_text((string) ($meta['title'] ?? $pageTitle), 120);
-        $metaDescription = \TinyCat\Site\Presentation::meta_text((string) ($meta['description'] ?? \TinyCat\Site\Presentation::site_meta_description()), 180);
-        $metaUrl = \TinyCat\Site\Presentation::absolute_url(LocaleRouting::canonical((string) ($meta['url'] ?? ($_SERVER['REQUEST_URI'] ?? $current))));
+        $document = Metadata::document(['title' => $title, 'current' => (string) ($_SERVER['REQUEST_URI'] ?? $current), 'meta' => $meta + ['robots' => $isAdminShell ? 'noindex,nofollow' : '']]);
+        $pageTitle = $document['title'];
+        $metaTitle = $document['meta_title'];
+        $metaDescription = $document['description'];
+        $metaUrl = $document['url'];
         $languageAlternatives = http_response_code() < 400 ? LocaleRouting::alternatives($current) : [];
         $languageLinks = LocaleRouting::selector($current, \TinyCat\Http\Request::current()->query());
         $currentLanguageName = (string) (\TinyCat\Support\Languages::language_packages()[\TinyCat\Support\Localization::locale()] ?? \TinyCat\Support\Localization::locale());
@@ -65,24 +66,23 @@ final class LayoutData
         $pageUrls = [];
         foreach (['/', '/search', '/login', '/logout', '/privacy'] as $pagePath) { $pageUrls[$pagePath] = LocaleRouting::url($pagePath); }
         if ($current !== '/privacy' || LocaleRouting::active() !== null) { $pageUrls['/privacy'] = LocaleRouting::url('/privacy', \TinyCat\Support\Localization::locale()); }
-        $metaImageRaw = trim((string) ($meta['image'] ?? \TinyCat\Site\Presentation::site_meta_image_url()));
-        $metaImage = $metaImageRaw !== '' ? \TinyCat\Site\Presentation::absolute_url($metaImageRaw) : '';
-        $metaImageType = trim((string) ($meta['image_type'] ?? ''));
-        $metaImageWidth = max(0, (int) ($meta['image_width'] ?? 0));
-        $metaImageHeight = max(0, (int) ($meta['image_height'] ?? 0));
-        $metaImageAlt = trim((string) ($meta['image_alt'] ?? $metaTitle));
-        $metaType = (string) ($meta['type'] ?? 'website');
-        $metaRss = trim((string) ($meta['rss'] ?? ''));
+        $metaImage = $document['image'];
+        $metaImageType = $document['image_type'];
+        $metaImageWidth = $document['image_width'];
+        $metaImageHeight = $document['image_height'];
+        $metaImageAlt = $document['image_alt'];
+        $metaType = $document['type'];
+        $metaRss = $document['rss'];
         $metaPrev = trim((string) ($meta['prev'] ?? ''));
         $metaNext = trim((string) ($meta['next'] ?? ''));
         $privacyUrl = Presentation::absolute_url($pageUrls['/privacy']);
-        $metaJsonLd = $meta['jsonld'] ?? null;
-        if (is_array($metaJsonLd)) { $metaJsonLd = LocaleRouting::schema($metaJsonLd); }
+        $metaJsonLd = $document['jsonld'];
         $metaJsonLdJson = is_array($metaJsonLd)
             ? json_encode($metaJsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
             : false;
-        $metaRobots = trim((string) ($meta['robots'] ?? ($isAdminShell ? 'noindex,nofollow' : '')));
-        $metaLocale = ['cs' => 'cs_CZ', 'en' => 'en_US', 'de' => 'de_DE', 'es' => 'es_ES', 'fr' => 'fr_FR', 'pt' => 'pt_BR', 'ru' => 'ru_RU', 'it' => 'it_IT', 'nl' => 'nl_NL', 'pl' => 'pl_PL', 'tr' => 'tr_TR', 'uk' => 'uk_UA'][\TinyCat\Support\Localization::locale()] ?? str_replace('-', '_', \TinyCat\Support\Localization::locale());
+        $metaRobots = $document['robots'];
+        $metaLocale = $document['locale'];
+        $meta['author'] = $document['author'];
         $bodyClasses = trim($bodyClass . ($isAdminShell ? ' admin-shell-page' : ''));
         $theme = \TinyCat\Users\Profiles::user_theme($authUser);
         $themeAttribute = $theme !== 'system' ? ' data-theme="' . \TinyCat\Support\Html::e($theme) . '"' : '';

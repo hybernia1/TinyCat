@@ -49,6 +49,12 @@ final class Pages
                 'rss' => $hasQuery ? $searchFeedUrl : '',
                 'image' => Presentation::site_meta_image_url(),
                 'robots' => 'noindex,follow',
+                'jsonld' => $hasQuery ? [
+                    '@context' => 'https://schema.org', '@type' => 'SearchResultsPage',
+                    '@id' => Presentation::absolute_url($filteredUrl), 'url' => Presentation::absolute_url($filteredUrl),
+                    'name' => Localization::t('public.search_title_query', ['query' => $query]),
+                    'mainEntity' => \TinyCat\Status\StructuredData::itemList(array_values($statusItems)),
+                ] : null,
             ],
             'search_query' => $query,
         ], 'context' => [

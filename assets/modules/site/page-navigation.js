@@ -31,13 +31,13 @@ import "../../ui/dialogs.js";
     var doc = data.document;
     document.title = doc.title;
     meta('link[rel="canonical"]', "href", doc.url);
-    var values = { description: doc.description, robots: doc.robots || "index,follow", "twitter:title": doc.title, "twitter:description": doc.description, "twitter:card": doc.image ? "summary_large_image" : "summary", "twitter:image": doc.image, "twitter:image:alt": doc.image_alt };
+    var values = { description: doc.description, robots: doc.robots || "index,follow", "twitter:title": doc.meta_title || doc.title, "twitter:description": doc.description, "twitter:card": doc.image ? "summary_large_image" : "summary", "twitter:image": doc.image, "twitter:image:alt": doc.image_alt };
     Object.keys(values).forEach(function (name) {
       var selector = 'meta[name="' + name + '"]', node = document.head.querySelector(selector);
       if (!node) { node = document.createElement("meta"); node.name = name; document.head.appendChild(node); }
       node.content = values[name] || "";
     });
-    var properties = { "og:title": doc.title, "og:description": doc.description, "og:url": doc.url, "og:type": doc.type, "og:image": doc.image, "og:image:type": doc.image_type, "og:image:width": doc.image_width || "", "og:image:height": doc.image_height || "", "og:image:alt": doc.image_alt, "article:published_time": doc.published_time, "article:author": doc.author };
+    var properties = { "og:title": doc.meta_title || doc.title, "og:locale": doc.locale, "og:description": doc.description, "og:url": doc.url, "og:type": doc.type, "og:image": doc.image, "og:image:type": doc.image_type, "og:image:width": doc.image_width || "", "og:image:height": doc.image_height || "", "og:image:alt": doc.image_alt, "article:published_time": doc.published_time, "article:author": doc.author };
     Object.keys(properties).forEach(function (name) {
       var node = document.head.querySelector('meta[property="' + name + '"]');
       if (!properties[name]) { if (node) { node.remove(); } return; }

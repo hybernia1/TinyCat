@@ -12,7 +12,7 @@ $db = $mysql ? $archiveMysqlDatabase : new PDO('sqlite::memory:', null, null, [P
 \TinyCat\Database\Connection::set($db);
 \TinyCat\Users\Authentication::reset(null, true);
 foreach ([
-    'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, status TEXT, avatar_exists INTEGER, avatar_appearance TEXT, updated_at TEXT)',
+    'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, role TEXT, status TEXT, avatar_exists INTEGER, avatar_appearance TEXT, updated_at TEXT)',
     'CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT)',
     'CREATE TABLE content_images (content_id INTEGER, path TEXT, width INTEGER, height INTEGER, bytes INTEGER)',
     'CREATE TABLE content_links (content_id INTEGER, link_id INTEGER)',

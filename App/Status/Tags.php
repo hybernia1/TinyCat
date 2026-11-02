@@ -14,11 +14,12 @@ final class Tags
         return \TinyCat\Support\LocalUrls::resolve($tag !== '' ? '/tag/' . rawurlencode($tag) : '/');
     }
 
-    public static function tag_feed_url(string $tag): string
+    public static function tag_feed_url(string $tag, string $media = ''): string
     {
         $tag = \TinyCat\Status\Tags::status_tag_normalize($tag);
 
-        return $tag !== '' ? '/tag/' . rawurlencode($tag) . '/feed' : '/';
+        $media = Feed::archive_type($media);
+        return $tag !== '' ? '/tag/' . rawurlencode($tag) . '/feed' . ($media !== '' ? '?media=' . $media : '') : '/';
     }
 
     /**

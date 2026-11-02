@@ -48,6 +48,7 @@ $assert((string) $selfLink[0] === 'http://localhost/author/900001/feed' && (stri
 $assert(count($feed->channel->item) === 1 && str_contains((string) $feed->channel->item->description, '&lt;script&gt;'), 'RSS descriptions preserve user text without injecting HTML.');
 $assert(array_values(array_map('strval', iterator_to_array($feed->channel->item->category))) === ['exportpublic'], 'RSS categories are normalized and deduplicated hashtags, excluding URL fragments.');
 $assert((string) $feed->channel->item->children('http://purl.org/dc/elements/1.1/')->creator === 'exportactive', 'RSS exports the public author name without inventing an email.');
+$assert((string) $feed->xpath('/rss/channel/item/atom:author/atom:uri')[0] === 'http://localhost/author/900001', 'RSS includes the same canonical author URL as page metadata.');
 $description = (string) $feed->channel->item->description;
 $assert(str_contains($description, '<br>') && str_contains($description, '<a href="https://example.test/page?a=1&amp;b=2#fragment">') && !str_contains($description, '<script>'), 'RSS preserves line breaks and safe links while escaping user HTML.');
 $schemaFromPage = static function (string $html): array {
@@ -94,6 +95,48 @@ $assert((string) $imageFeed->channel->item->children('http://search.yahoo.com/mr
 [$status, $imageHtml] = $exportRequest('/status/900001');
 $imageSchema = $schemaFromPage($imageHtml);
 $assert($imageSchema['image']['contentUrl'] === $imageUrl && $imageSchema['image']['width'] === 640, 'JSON-LD and RSS agree on the attached image.');
+// Compare direct HTML and client-navigation metadata while a real attachment exists.
+foreach (['/status/900001', '/author/900001', '/tag/exportpublic', '/search?q=Export', '/pl/status/900001'] as $metadataPath) {
+    [$status, $metadataHtml] = $exportRequest($metadataPath, 'GET', ['Accept-Language' => 'en']);
+    $metadataDom = new DOMDocument();
+    libxml_use_internal_errors(true); $metadataDom->loadHTML($metadataHtml); libxml_clear_errors();
+    $metadataXPath = new DOMXPath($metadataDom);
+    $navigationUrl = '/api/site/pages?path=' . rawurlencode((string) parse_url($metadataPath, PHP_URL_PATH));
+    $metadataQuery = (string) parse_url($metadataPath, PHP_URL_QUERY);
+    if ($metadataQuery !== '') { $navigationUrl .= '&' . $metadataQuery; }
+    [$navigationStatus, $metadataJson] = $exportRequest($navigationUrl, 'GET', ['Accept-Language' => 'en']);
+    $metadataDocument = json_decode($metadataJson, true, 512, JSON_THROW_ON_ERROR)['data']['document'];
+    $assert($status === 200 && $navigationStatus === 200 && $metadataXPath->evaluate('string(//title)') === $metadataDocument['title'], 'HTML and navigation share the document title: ' . $metadataPath);
+    foreach (['og:title' => 'meta_title', 'og:url' => 'url', 'og:type' => 'type', 'og:image' => 'image', 'og:image:alt' => 'image_alt', 'og:locale' => 'locale', 'article:author' => 'author'] as $property => $field) {
+        $assert($metadataXPath->evaluate('string(//meta[@property="' . $property . '"]/@content)') === $metadataDocument[$field], 'HTML and navigation share ' . $property . ': ' . $metadataPath);
+    }
+    $assert($metadataXPath->evaluate('string(//link[@type="application/rss+xml"]/@href)') === $metadataDocument['rss'], 'HTML and navigation advertise the same RSS URL: ' . $metadataPath);
+    $assert($schemaFromPage($metadataHtml) === $metadataDocument['jsonld'], 'HTML and navigation expose identical JSON-LD: ' . $metadataPath);
+    $schema = $metadataDocument['jsonld'];
+    if (str_contains($metadataPath, '/author/')) { $listedPost = $schema['hasPart'][0]; }
+    elseif (str_contains($metadataPath, '/tag/') || str_contains($metadataPath, '/search')) { $listedPost = $schema['mainEntity']['itemListElement'][0]['item']; }
+    else { $listedPost = $schema; }
+    foreach (['url', 'text', 'keywords', 'datePublished', 'author'] as $postField) {
+        $assert($listedPost[$postField] === $imageSchema[$postField], 'All page contexts describe the same post ' . $postField . ': ' . $metadataPath);
+    }
+    $assert($listedPost['image']['contentUrl'] === $imageSchema['image']['contentUrl'] && $listedPost['image']['width'] === $imageSchema['image']['width'], 'All contexts use the same attached image URL and dimensions.');
+}
+foreach (['/author/900001', '/tag/exportpublic', '/search?q=Export'] as $filteredPage) {
+    $separator = str_contains($filteredPage, '?') ? '&' : '?';
+    [$status, $filteredHtml] = $exportRequest($filteredPage . $separator . 'media=images');
+    $filteredDom = new DOMDocument();
+    libxml_use_internal_errors(true); $filteredDom->loadHTML($filteredHtml); libxml_clear_errors();
+    $filteredRssUrl = (new DOMXPath($filteredDom))->evaluate('string(//link[@type="application/rss+xml"]/@href)');
+    $assert(str_contains($filteredRssUrl, 'media=images'), 'Filtered pages advertise a feed with the selected media filter.');
+    $feedPath = (string) parse_url($filteredRssUrl, PHP_URL_PATH) . '?' . (string) parse_url($filteredRssUrl, PHP_URL_QUERY);
+    [$status, $filteredRss] = $exportRequest($feedPath);
+    $filteredFeed = simplexml_load_string($filteredRss);
+    $assert($status === 200 && count($filteredFeed->channel->item) === 1, 'Filtered RSS includes the matching attached-image post.');
+    $filteredFeed->registerXPathNamespace('atom', 'http://www.w3.org/2005/Atom');
+    $assert((string) $filteredFeed->xpath('/rss/channel/atom:link/@href')[0] === $filteredRssUrl && str_contains((string) $filteredFeed->channel->link, 'media=images'), 'Filtered RSS self and page URLs retain the selected media filter.');
+    [$status, $textOnlyRss] = $exportRequest(str_replace('media=images', 'media=text', $feedPath));
+    $assert($status === 200 && count(simplexml_load_string($textOnlyRss)->channel->item) === 0, 'RSS text filtering excludes an attached-image post.');
+}
 $exportDb->exec('DELETE FROM content_images WHERE content_id = 900001');
 $exportDb->exec("INSERT INTO links (id, normalized_url, url_hash, link_type, image_url) VALUES (900001, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'export-link-image', 'video', '')");
 $exportDb->exec("INSERT INTO content_links (content_id, link_id) VALUES (900001, 900001)");
@@ -101,6 +144,18 @@ $exportDb->exec("INSERT INTO content_links (content_id, link_id) VALUES (900001,
 $assert($schemaFromPage($previewHtml)['image'] === 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg', 'Post JSON-LD retains the link preview image when no attachment exists.');
 [$status, $previewProfile] = $exportRequest('/author/900001');
 $assert($schemaFromPage($previewProfile)['hasPart'][0]['image'] === 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg', 'Profile posts retain the same link preview fallback.');
+foreach (['/author/900001/feed', '/tag/exportpublic/feed', '/search/feed?q=Export'] as $previewFeedUrl) {
+    [$status, $previewRss] = $exportRequest($previewFeedUrl);
+    $previewFeed = simplexml_load_string($previewRss);
+    $previewMedia = $previewFeed->channel->item->children('http://search.yahoo.com/mrss/')->content->attributes();
+    $assert($status === 200 && (string) $previewMedia['url'] === 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg' && str_contains((string) $previewFeed->channel->item->description, '<img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg"'), 'RSS uses the same link preview fallback as JSON-LD: ' . $previewFeedUrl);
+    $assert(!isset($previewMedia['type']) && count($previewFeed->channel->item->enclosure) === 0, 'Preview RSS does not invent an attachment byte length or declare JPEG thumbnails as WebP.');
+}
+$exportDb->exec("INSERT INTO content_images (content_id, path, width, height, bytes) VALUES (900001, '2026/11/0123456789abcdef0123456789abcdef.webp', 640, 480, 1234)");
+[$status, $priorityRss] = $exportRequest('/author/900001/feed');
+$priorityFeed = simplexml_load_string($priorityRss);
+$assert((string) $priorityFeed->channel->item->enclosure['url'] === $imageUrl && !str_contains((string) $priorityFeed->channel->item->description, 'i.ytimg.com'), 'An attached image takes priority over a link preview in RSS.');
+$exportDb->exec('DELETE FROM content_images WHERE content_id = 900001');
 $exportDb->exec('DELETE FROM content_links WHERE content_id = 900001');
 $exportDb->exec('DELETE FROM links WHERE id = 900001');
 
