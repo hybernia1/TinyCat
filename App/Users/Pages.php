@@ -12,8 +12,6 @@ use TinyCat\Site\Layout;
 use TinyCat\Site\Pages as SitePages;
 use TinyCat\Site\Presentation;
 use TinyCat\Status\Feed;
-use TinyCat\Status\Images;
-use TinyCat\Status\Posts;
 use TinyCat\Status\ViewData as StatusViewData;
 use TinyCat\Support\AdminViews;
 use TinyCat\Support\Markup;
@@ -93,8 +91,8 @@ final class Pages
             '@type' => 'ProfilePage',
             '@id' => Presentation::absolute_url($pageUrl),
             'url' => Presentation::absolute_url($pageUrl),
-            'dateCreated' => $memberSince !== '' ? Dates::dateIso($memberSince) : null,
-            'dateModified' => (string) ($author['updated_at'] ?? '') !== '' ? Dates::dateIso((string) $author['updated_at']) : null,
+            'dateCreated' => $memberSince !== '' ? Dates::dateTime($memberSince, DATE_ATOM) : null,
+            'dateModified' => (string) ($author['updated_at'] ?? '') !== '' ? Dates::dateTime((string) $author['updated_at'], DATE_ATOM) : null,
             'mainEntity' => [
                 '@type' => Roles::profileSchemaType((string) ($author['role'] ?? '')),
                 '@id' => $authorEntityId,
@@ -105,24 +103,7 @@ final class Pages
                 'description' => $bio !== '' ? $bio : null,
                 'image' => $avatarUrl !== '' ? Presentation::absolute_url($avatarUrl) : null,
             ],
-            'hasPart' => array_values(array_map(static function (array $item) use ($authorEntityId, $current, $authorName, $author): array {
-                $image = Images::status_image_jsonld($item) ?? (StatusViewData::status_meta_link_image($item) ?: null);
-
-                return array_filter([
-                    '@type' => 'DiscussionForumPosting',
-                    'url' => Presentation::absolute_url(Posts::status_url((int) ($item['id'] ?? 0))),
-                    'image' => $image,
-                    'text' => trim((string) ($item['body'] ?? '')) !== '' ? (string) ($item['body'] ?? '') : null,
-                    'headline' => StatusViewData::status_meta_title($item),
-                    'datePublished' => Dates::dateIso((string) ($item['published_at'] ?? '')),
-                    'author' => [
-                        '@type' => Roles::profileSchemaType((string) ($author['role'] ?? '')),
-                        '@id' => $authorEntityId,
-                        'name' => $authorName,
-                        'url' => Presentation::absolute_url($current),
-                    ],
-                ], static fn (mixed $value): bool => $value !== null);
-            }, $statusItems)),
+            'hasPart' => array_map(\TinyCat\Status\StructuredData::post(...), array_values($statusItems)),
         ];
         $authorStructuredData = array_filter($authorStructuredData, static fn (mixed $value): bool => $value !== null && $value !== []);
         $authorStructuredData['mainEntity'] = array_filter($authorStructuredData['mainEntity']);
@@ -133,7 +114,7 @@ final class Pages
         $authorAvatarEditModalUrl = Avatars::author_avatar_edit_modal_url($authorId);
         $authorFollowingModalId = Following::author_following_modal_id($authorId);
         $authorFollowingModalUrl = Following::author_following_modal_url($authorId);
-        $authorFeedUrl = Profiles::author_feed_url($authorId);
+        $authorFeedUrl = Profiles::author_feed_url($authorId, $archiveType);
         return ['page' => [
             'title' => Localization::t('public.author_archive_title', ['author' => $authorName]),
             'current' => $current,
@@ -144,7 +125,7 @@ final class Pages
                 'url' => $pageUrl,
                 'image' => $avatarUrl ?: Presentation::site_meta_image_url(),
                 'type' => 'profile',
-                'rss' => Profiles::author_feed_url($authorId),
+                'rss' => Profiles::author_feed_url($authorId, $archiveType),
                 'robots' => $publicPostCount > 0 ? '' : 'noindex,follow',
                 'jsonld' => $authorStructuredData,
             ],

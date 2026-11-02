@@ -127,6 +127,26 @@ content types, cache validators and HEAD semantics remain intact; these formats
 are not embedded in JSON. CLI and development tools call module services directly
 and do not implement a second set of operations.
 
+### Public metadata and RSS
+
+Post, author, tag and search pages share document metadata between their HTML
+head and `/api/site/pages` navigation response. The document includes separate
+browser and social titles (`title` and `meta_title`), canonical URLs, Open Graph
+locale, image properties, author URL, article tags, RSS discovery and JSON-LD.
+Search results remain `noindex,follow`; their JSON-LD describes the currently
+visible results rather than claiming a complete result count.
+
+Author, tag and search RSS support `media=images|video|audio|links|text`, using
+the same selection rules as the corresponding pages. An omitted or unknown
+media value selects all posts. Advertised feed links and canonical RSS self
+links preserve supported filters; search feeds also retain `q`.
+
+RSS item GUIDs remain canonical post URLs. Attached images take priority over
+stored link previews and verified provider thumbnails. Preview images appear
+in safe HTML and Media RSS without inventing enclosure byte lengths or MIME
+types. Feed rendering reads existing metadata in a batch and does not fetch
+remote pages. RSS authors expose their public names and canonical profile URLs.
+
 ## Users
 
 | Method | Path | Access |

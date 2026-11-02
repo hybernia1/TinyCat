@@ -10,12 +10,14 @@ use TinyCat\Support\Dates;
 final class Export
 {
     /** @return array<mixed> */
-    public static function posts(int $limit = 100, ?int $authorId = null, ?int $termId = null): array
+    public static function posts(int $limit = 100, ?int $authorId = null, ?int $termId = null, string $media = ''): array
     {
         $limit = max(1, min(100, $limit));
         $query = $termId !== null ? Feed::public_status_tag_id_query($termId)
             : ($authorId !== null ? Feed::public_status_author_id_query() : Feed::public_status_id_query());
         if ($authorId !== null) { $query->where('c.author_id = ?', $authorId); }
+        [$predicate, $params] = Feed::archive_predicate($media);
+        if ($predicate !== '') { $query->where($predicate, ...$params); }
         $ids = Feed::public_status_ids_page($query, $limit);
         return self::byIds($ids);
     }

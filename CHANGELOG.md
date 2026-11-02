@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.20.1 - 2026-11-02
+
+- Fix missing RSS images for posts that use stored link previews or provider thumbnails instead of attachments. Prefer attached images and avoid invented enclosure sizes or MIME types for previews.
+- Preserve media filters in author and tag RSS, page subscription links and feed self URLs. Include canonical author profile URLs in RSS.
+- Share metadata preparation between HTML and client navigation, keeping social titles, locales, image alternatives and canonical URLs aligned. Remove invalid title controls and stale properties of absent images.
+- Share JSON-LD post descriptions across detail, profile, tag and search pages. Include consistent author identities and types, tags, images and dates; add SearchResultsPage data and site identity on the homepage.
+- Keep machine-readable dates in ISO 8601 regardless of display-format preferences. No new migration or configuration change is required; signed updates remain supported from 5.16.0.
+
 ## 5.20.0 - 2026-11-02
 
 - Enrich public RSS with normalized tag categories, author names, safe HTML with links and line breaks, inline image alternative text, Media RSS attachments, readable titles, and channel avatars or configured site artwork.

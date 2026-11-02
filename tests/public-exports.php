@@ -49,4 +49,21 @@ $assert($xml !== false && (string) $xml === 'a]]>b', 'CDATA terminators remain v
 $pages = Sitemap::pageCounts();
 $db->exec("UPDATE users SET status = 'inactive' WHERE id = 1");
 $assert(Sitemap::pageCounts() === $pages && Sitemap::entries('status', 1000, 0) === [] && Export::posts() === [], 'A cached sitemap directory never preserves content after its author becomes hidden.');
+// Machine metadata must not inherit a user-selected display format for ISO dates.
+(new ReflectionProperty(Config::class, 'config'))->setValue(null, ['database' => ['driver' => 'sqlite'], 'app' => ['url' => 'https://example.test'], 'datetime' => ['iso' => 'Y', 'timezone' => 'UTC']]);
+(new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
+\TinyCat\Site\LocaleRouting::prepare('/pl/status/7');
+$schema = \TinyCat\Status\StructuredData::post([
+    'id' => 7, 'body' => 'Hello #Example', 'published_at' => '2020-01-01 12:00:00',
+    'author_id' => 1, 'author_name' => 'Bot', 'author_role' => 'bot',
+    'image_path' => '2026/11/0123456789abcdef0123456789abcdef.webp',
+]);
+$document = \TinyCat\Site\Metadata::document(['title' => "Title\x01", 'meta' => [
+    'url' => '/pl/status/7', 'author' => '/pl/author/1', 'published_time' => '2020-01-01 12:00:00',
+    'image' => '', 'image_alt' => 'Stale alt', 'image_width' => 800,
+]]);
+$assert($schema['datePublished'] === '2020-01-01T12:00:00+00:00' && $document['published_time'] === $schema['datePublished'], 'JSON-LD and Open Graph retain ISO 8601 dates independently of display configuration.');
+$assert($schema['author']['@type'] === 'Organization' && $schema['author']['url'] === $document['author'] && $document['author'] === 'https://example.test/author/1', 'Bot entity types and canonical author URLs agree across metadata.');
+$assert(!str_contains($document['title'], "\x01") && $document['image_alt'] === '' && $document['image_width'] === 0, 'Metadata removes forbidden title controls and stale properties of absent images.');
+
 echo "PASS public export visibility and minimal data queries ({$checks} checks)\n";

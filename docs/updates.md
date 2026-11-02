@@ -3,6 +3,23 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+## Upgrading to 5.20.1: RSS preview images and metadata consistency
+
+This fixes missing RSS artwork for posts whose images come from stored link
+previews or provider thumbnails. Attached images keep priority. Preview images
+appear in HTML and Media RSS without fabricated enclosure sizes or MIME types.
+Feed rendering batches stored metadata and does not download remote pages.
+
+Author and tag RSS now preserve the page's media filter, just like search RSS.
+RSS author metadata includes canonical profile URLs. Shared generators keep
+HTML and client-navigation metadata aligned and describe posts consistently in
+JSON-LD across detail, profile, tag and search pages. Search results remain
+noindex and describe only their visible result list. Machine-readable dates
+retain ISO 8601 formatting independently of display preferences.
+
+No new migration or configuration change is required. Stored data, uploads and
+RSS item GUIDs remain unchanged. Signed updates support 5.16.0 and newer.
+
 ## Upgrading to 5.20.0: public RSS and structured metadata
 
 Public RSS exports normalized categories and author names, escaped HTML with

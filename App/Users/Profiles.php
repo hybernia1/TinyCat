@@ -124,9 +124,10 @@ final class Profiles
         return \TinyCat\Support\LocalUrls::resolve($id > 0 ? '/author/' . $id : '/');
     }
 
-    public static function author_feed_url(int $id): string
+    public static function author_feed_url(int $id, string $media = ''): string
     {
-        return $id > 0 ? '/author/' . $id . '/feed' : '/';
+        $media = \TinyCat\Status\Feed::archive_type($media);
+        return $id > 0 ? '/author/' . $id . '/feed' . ($media !== '' ? '?media=' . $media : '') : '/';
     }
 
     /**

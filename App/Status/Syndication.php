@@ -7,6 +7,9 @@ final class Syndication
 {
     public static function respond(string $rssType, string $tag = '', int $authorId = 0): void
     {
+        $request = \TinyCat\Http\Request::current();
+        $request->validated(['media' => 'string']);
+        $media = Feed::archive_type((string) $request->input('media', ''));
         $rssTitle = '';
         $rssDescription = '';
         $rssLink = '/';
@@ -41,8 +44,8 @@ final class Syndication
             $rssTitle = '#' . $tag;
             $rssDescription = 'Public posts tagged #' . $tag;
             $rssLink = \TinyCat\Status\Tags::tag_url($tag);
-            $rssSelfLink = \TinyCat\Status\Tags::tag_feed_url($tag);
-            $rssItems = Export::posts(50, null, $termId);
+            $rssSelfLink = \TinyCat\Status\Tags::tag_feed_url($tag, $media);
+            $rssItems = Export::posts(50, null, $termId, $media);
         } elseif ($rssType === 'author') {
             $author = \TinyCat\Users\Repository::public_author_find($authorId);
 
@@ -56,38 +59,42 @@ final class Syndication
             $rssTitle = $authorName;
             $rssDescription = 'Public posts by ' . $authorName;
             $rssLink = \TinyCat\Users\Profiles::author_url((int) $author['id']);
-            $rssSelfLink = \TinyCat\Users\Profiles::author_feed_url((int) $author['id']);
-            $rssItems = Export::posts(50, (int) $author['id']);
+            $rssSelfLink = \TinyCat\Users\Profiles::author_feed_url((int) $author['id'], $media);
+            $rssItems = Export::posts(50, (int) $author['id'], null, $media);
         } else {
             \TinyCat\Http\Document::notFound('Feed not found.');
             return;
         }
 
+        if ($rssType !== 'search' && $media !== '') { $rssLink .= '?media=' . $media; }
+
         $siteName = \TinyCat\Site\Presentation::site_name();
         $selfUrl = \TinyCat\Site\Presentation::absolute_url($rssSelfLink);
         $locale = \TinyCat\Site\Discovery::locale();
         $items = [];
+        // Load all preview candidates once; exporting a feed must not fetch remote metadata.
+        Links::status_links_cache(array_column($rssItems, 'id'));
         foreach ($rssItems as $item) {
             $body = trim((string) ($item['body'] ?? ''));
-            $plainBody = \TinyCat\Site\Presentation::meta_text(Links::status_strip_external_urls($body), 100);
-            $itemTitle = $plainBody !== '' ? $plainBody : \TinyCat\Support\Localization::t(
-                Images::status_image_url($item) !== '' ? 'public.status_title_image_by' : 'public.status_title_by',
-                ['author' => (string) ($item['author_name'] ?? '')]
-            );
+            $itemTitle = ViewData::status_meta_title($item, 100);
             $itemUrl = \TinyCat\Site\Presentation::absolute_url(\TinyCat\Status\Posts::status_url((int) ($item['id'] ?? 0)));
             $publishedAt = (string) ($item['published_at'] ?? '');
             $publishedDate = $publishedAt !== '' ? \TinyCat\Support\Dates::dateTime($publishedAt, DATE_RSS) : '';
-            $imageUrl = \TinyCat\Status\Images::status_image_url($item);
+            $attachedImage = Images::status_image_url($item);
+            $imageUrl = $attachedImage !== '' ? $attachedImage : ViewData::status_meta_link_image($item);
+            $imageType = $attachedImage !== '' ? 'image/webp' : '';
+            $imageAlt = $attachedImage !== '' ? Images::status_image_alt_text($item) : $itemTitle;
             $imageBytes = max(0, (int) ($item['image_bytes'] ?? 0));
             $rssBody = self::html($body);
             if ($imageUrl !== '') {
                 $rssBody .= '<p><img src="' . \TinyCat\Support\Html::e(\TinyCat\Site\Presentation::absolute_url($imageUrl))
-                    . '" alt="' . \TinyCat\Support\Html::e(Images::status_image_alt_text($item)) . '"></p>';
+                    . '" alt="' . \TinyCat\Support\Html::e($imageAlt) . '"></p>';
             }
             $categories = Tags::status_tags_from_text($body);
             $creator = (string) ($item['author_name'] ?? '');
+            $creatorUrl = \TinyCat\Site\Presentation::absolute_url(\TinyCat\Site\LocaleRouting::canonical(\TinyCat\Users\Profiles::author_url((int) $item['author_id'])));
 
-            $items[] = compact('itemTitle', 'itemUrl', 'publishedDate', 'imageUrl', 'imageBytes', 'rssBody', 'categories', 'creator');
+            $items[] = compact('itemTitle', 'itemUrl', 'publishedDate', 'imageUrl', 'imageBytes', 'attachedImage', 'imageType', 'rssBody', 'categories', 'creator', 'creatorUrl');
         }
         $escape = \TinyCat\Support\Xml::escape(...);
         $body = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
@@ -107,11 +114,15 @@ final class Syndication
             $body .= '<guid isPermaLink="true">' . $escape($item['itemUrl']) . '</guid>';
             if ($item['publishedDate'] !== '') { $body .= '<pubDate>' . $escape($item['publishedDate']) . '</pubDate>'; }
             $body .= '<dc:creator>' . $escape($item['creator']) . '</dc:creator>';
+            $body .= '<atom:author><atom:name>' . $escape($item['creator']) . '</atom:name><atom:uri>' . $escape($item['creatorUrl']) . '</atom:uri></atom:author>';
             foreach ($item['categories'] as $category) {
                 $body .= '<category domain="' . $escape(\TinyCat\Site\Presentation::absolute_url(Tags::tag_url($category))) . '">' . $escape($category) . '</category>';
             }
             if ($item['imageUrl'] !== '') {
-                $body .= '<media:content medium="image" type="image/webp" url="' . $escape(\TinyCat\Site\Presentation::absolute_url($item['imageUrl'])) . '" />';
+                $body .= '<media:content medium="image"' . ($item['imageType'] !== '' ? ' type="' . $escape($item['imageType']) . '"' : '')
+                    . ' url="' . $escape(\TinyCat\Site\Presentation::absolute_url($item['imageUrl'])) . '" />';
+            }
+            if ($item['attachedImage'] !== '') {
                 $body .= '<enclosure url="' . $escape(\TinyCat\Site\Presentation::absolute_url($item['imageUrl'])) . '" length="' . $item['imageBytes'] . '" type="image/webp" />';
             }
             $body .= '<description>' . \TinyCat\Support\Xml::cdata($item['rssBody']) . '</description></item>';
