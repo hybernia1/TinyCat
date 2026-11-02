@@ -41,6 +41,8 @@ foreach ([
     $database->exec($sql);
 }
 define('TINYCAT', true);
+$redirectMigration = require $root . '/migrations/20261102_001_compact_content_redirects.php';
+$redirectMigration($database);
 $schedulerMigration = require $root . '/migrations/20261026_003_scheduler_runs.php';
 $schedulerMigration($database);
 $botSchedulerMigration = require $root . '/migrations/20261026_004_bot_scheduler_runs.php';

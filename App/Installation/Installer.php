@@ -141,6 +141,15 @@ final class Installer
         );
 
         \TinyCat\Database\Connection::exec(
+            "CREATE TABLE IF NOT EXISTS content_redirects (
+                old_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+                content_id BIGINT UNSIGNED NOT NULL,
+                KEY content_redirects_target_index (content_id),
+                CONSTRAINT fk_redirect_target_post FOREIGN KEY (content_id) REFERENCES content (id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        \TinyCat\Database\Connection::exec(
             "CREATE TABLE IF NOT EXISTS content_images (
                 content_id BIGINT UNSIGNED NOT NULL,
                 path VARCHAR(190) NOT NULL,

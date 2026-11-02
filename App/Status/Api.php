@@ -99,6 +99,9 @@ final class Api
         $item = $editing
             ? \TinyCat\Database\Connection::one(Feed::public_status_select_sql() . ' WHERE c.id = ?', [$id])
             : Feed::public_status_item($id);
+        if (!$editing && $item === null && ($canonicalId = Redirects::target($id)) !== null) {
+            $id = $canonicalId; $item = Feed::public_status_item($id);
+        }
         if ($item === null || (!$editing && !Posts::status_can_view($item))) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_not_found'), 404, 'status_not_found'); }
         if ($editing && !Posts::status_can_edit($item, $user)) { Response::error(\TinyCat\Support\Localization::t('account.messages.status_forbidden'), 403, 'status_forbidden'); }
         $items = Resource::posts([$item], $user);

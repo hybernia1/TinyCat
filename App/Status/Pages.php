@@ -71,6 +71,11 @@ final class Pages
 
         $authUser = Authentication::auth();
         $item = Feed::public_status_item($statusId);
+        if ($item === null && ($canonicalId = Redirects::target($statusId)) !== null) {
+            $statusId = $canonicalId;
+            $current = Posts::status_url($statusId);
+            $item = Feed::public_status_item($statusId);
+        }
 
         if ($item === null) {
             return null;

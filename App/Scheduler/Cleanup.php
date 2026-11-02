@@ -34,6 +34,7 @@ final class Cleanup
             'old_read_notifications',
             'old_scheduler_runs',
             'bot_history',
+            'duplicate_bot_posts',
         ];
     }
 
@@ -109,7 +110,7 @@ final class Cleanup
         $batchSize = \TinyCat\Scheduler\Cleanup::cleanup_batch_size($batchSize);
         $startedAt = hrtime(true);
         $error = '';
-        if (in_array($task, ['orphan_status_image_files', 'orphan_link_image_files', 'orphan_avatar_files', 'temporary_files', 'update_files', 'expired_cache_files', 'bot_history'], true)) {
+        if (in_array($task, ['orphan_status_image_files', 'orphan_link_image_files', 'orphan_avatar_files', 'temporary_files', 'update_files', 'expired_cache_files', 'bot_history', 'duplicate_bot_posts'], true)) {
             $result = match ($task) {
                 'orphan_status_image_files' => \TinyCat\Status\ImageStorage::cleanupOrphans($batchSize),
                 'orphan_link_image_files' => \TinyCat\Status\Links::cleanupOrphanImages($batchSize),
@@ -117,6 +118,7 @@ final class Cleanup
                 'temporary_files' => FileCleanup::temporary($batchSize),
                 'update_files' => \TinyCat\Updates\Cleanup::run($batchSize),
                 'bot_history' => \TinyCat\Bots\Cleanup::run($batchSize),
+                'duplicate_bot_posts' => \TinyCat\Bots\DuplicateCleanup::run($batchSize),
                 default => \TinyCat\Support\Cache::cleanupExpired($batchSize),
             };
             $error = (string) ($result['error'] ?? '');

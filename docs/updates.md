@@ -3,6 +3,27 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+## Upgrading to 5.21.0: automatic duplicate bot-post cleanup
+
+Migration `20261102_001_compact_content_redirects` adds the two-column
+`content_redirects(old_id, content_id)` table. The updater creates its normal
+database backup before applying pending migrations. Fresh installations include
+the table directly. Signed updates remain supported from 5.16.0.
+
+The existing cleanup task now permanently merges newer identical public posts
+of the same active bot into the lowest matching ID. Exact text, link and tag
+sets, and attachment metadata must match. Each pair is rechecked and merged in
+one transaction; batches process at most 500 copies. Hidden and future posts,
+human accounts and differing metadata are excluded.
+
+Likes, comments, comment history and reactions, reports and notifications move
+to the surviving post. Duplicate likes and notification keys collapse without
+sending new events or losing unread state. Old public addresses return 301;
+read-only post and outbound-link resources resolve the surviving ID. Shared
+image files remain available. Missing RSS sources do not prevent cleanup.
+RSS imports, source configuration and GUID history remain unchanged. No new
+configuration is required; cleanup begins with the next scheduled cleanup run.
+
 ## Upgrading to 5.20.1: RSS preview images and metadata consistency
 
 This fixes missing RSS artwork for posts whose images come from stored link
