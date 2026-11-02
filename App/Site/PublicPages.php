@@ -71,6 +71,7 @@ final class PublicPages
                 'oembed' => (string) ($meta['oembed'] ?? ''), 'oembed_xml' => (string) ($meta['oembed_xml'] ?? ''),
                 'rss' => !empty($meta['rss']) ? Presentation::absolute_url((string) $meta['rss']) : '',
                 'robots' => (string) ($meta['robots'] ?? ''), 'jsonld' => isset($meta['jsonld']) && is_array($meta['jsonld']) ? LocaleRouting::schema($meta['jsonld']) : null,
+                'tags' => array_values((array) ($meta['tags'] ?? [])),
                 'published_time' => !empty($meta['published_time']) ? \TinyCat\Support\Dates::dateIso((string) $meta['published_time']) : '', 'author' => (string) ($meta['author'] ?? ''),
             ],
             'tag' => (string) ($context['tag'] ?? ''), 'compact' => (bool) ($context['compact'] ?? false),

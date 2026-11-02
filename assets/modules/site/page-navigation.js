@@ -44,6 +44,12 @@ import "../../ui/dialogs.js";
       if (!node) { node = document.createElement("meta"); node.setAttribute("property", name); document.head.appendChild(node); }
       node.content = properties[name];
     });
+    document.head.querySelectorAll('meta[property="article:tag"]').forEach(function (node) { node.remove(); });
+    if (doc.type === "article") {
+      (doc.tags || []).forEach(function (tag) {
+        var node = document.createElement("meta"); node.setAttribute("property", "article:tag"); node.content = tag; document.head.appendChild(node);
+      });
+    }
     document.head.querySelectorAll('link[rel="alternate"][type="application/rss+xml"], link[rel="alternate"][type="application/json+oembed"], link[rel="alternate"][type="text/xml+oembed"], link[rel="prev"], link[rel="next"], script[type="application/ld+json"]').forEach(function (node) { node.remove(); });
     [["oembed", "application/json+oembed"], ["oembed_xml", "text/xml+oembed"]].forEach(function (entry) {
       if (!doc[entry[0]]) return;

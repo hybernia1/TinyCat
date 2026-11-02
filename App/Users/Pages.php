@@ -98,22 +98,29 @@ final class Pages
             'mainEntity' => [
                 '@type' => Roles::profileSchemaType((string) ($author['role'] ?? '')),
                 '@id' => $authorEntityId,
+                'url' => Presentation::absolute_url($current),
                 'name' => $authorName,
                 'alternateName' => (string) ($author['username'] ?? ''),
                 'identifier' => (string) $authorId,
                 'description' => $bio !== '' ? $bio : null,
                 'image' => $avatarUrl !== '' ? Presentation::absolute_url($avatarUrl) : null,
             ],
-            'hasPart' => array_values(array_map(static function (array $item) use ($authorEntityId): array {
+            'hasPart' => array_values(array_map(static function (array $item) use ($authorEntityId, $current, $authorName, $author): array {
                 $image = Images::status_image_jsonld($item) ?? (StatusViewData::status_meta_link_image($item) ?: null);
 
                 return array_filter([
                     '@type' => 'DiscussionForumPosting',
                     'url' => Presentation::absolute_url(Posts::status_url((int) ($item['id'] ?? 0))),
                     'image' => $image,
+                    'text' => trim((string) ($item['body'] ?? '')) !== '' ? (string) ($item['body'] ?? '') : null,
                     'headline' => StatusViewData::status_meta_title($item),
                     'datePublished' => Dates::dateIso((string) ($item['published_at'] ?? '')),
-                    'author' => ['@id' => $authorEntityId],
+                    'author' => [
+                        '@type' => Roles::profileSchemaType((string) ($author['role'] ?? '')),
+                        '@id' => $authorEntityId,
+                        'name' => $authorName,
+                        'url' => Presentation::absolute_url($current),
+                    ],
                 ], static fn (mixed $value): bool => $value !== null);
             }, $statusItems)),
         ];
