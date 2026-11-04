@@ -509,6 +509,20 @@ final class Importer
                 $hash = hash('sha256', (string) ($item['guid'] ?? ''));
                 if (isset($historyItemHashes[$hash])) { continue; }
 
+                // Links outlive the bounded GUID history and source mappings.
+                // Check all of this bot's posts, including its publication queue.
+                $feedLink = \TinyCat\Status\LinkParser::fromRaw((string) ($item['url'] ?? ''));
+                if ($feedLink !== null && \TinyCat\Database\Connection::value(
+                    'SELECT 1 FROM links l
+                     INNER JOIN content_links cl ON cl.link_id = l.id
+                     INNER JOIN content c ON c.id = cl.content_id
+                     WHERE l.url_hash = ? AND c.author_id = ? LIMIT 1',
+                    [$feedLink['url_hash'], $botUserId]
+                ) !== null) {
+                    $historyItemHashes[$hash] = true;
+                    continue;
+                }
+
                 $draft = \TinyCat\Status\PostCreation::fromText(self::renderPost($source, $item));
                 $rejection = $draft->rejection;
                 if ($rejection === null && $draft->body === '' && !str_contains((string) ($source['post_template'] ?? ''), '{{image}}')) {
@@ -528,7 +542,6 @@ final class Importer
                     continue;
                 }
                 try {
-                    $feedLink = \TinyCat\Status\LinkParser::fromRaw((string) ($item['url'] ?? ''));
                     $preparedLinks = \TinyCat\Status\Links::prepareLinks(
                         $draft->links,
                         [

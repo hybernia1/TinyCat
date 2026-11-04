@@ -729,6 +729,26 @@ $_POST = ['reason' => 'abuse', 'note' => 'New evidence after administrative publ
 $assert($value('SELECT status FROM content WHERE id = 9500') === 'published', 'A previously hidden and restored post is not hidden automatically by a new report.');
 $assert((int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'resolved'") === 2 && (int) $value("SELECT COUNT(*) FROM content_reports WHERE content_id = 9500 AND status = 'open'") === 1, 'Re-reporting restored content appends an open report beside the earlier resolved history.');
 
+// URL protection survives lost GUID history and works across feed identities.
+$url = 'https://dedup.example/article';
+$link = \TinyCat\Status\LinkParser::fromRaw($url);
+$database->prepare('INSERT INTO links (normalized_url, url_hash) VALUES (?, ?)')->execute([$link['normalized_url'], $link['url_hash']]);
+$linkId = (int) $database->lastInsertId();
+$database->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (98001, 1, 'Existing queued article', '2099-01-01 00:00:00')");
+$database->prepare('INSERT INTO content_links (content_id, link_id) VALUES (98001, ?)')->execute([$linkId]);
+$database->exec('DELETE FROM bot_feed_history');
+$urlSource = ['id' => 2, 'bot_user_id' => 1, 'feed_url' => 'https://another-feed.example/rss', 'post_template' => '{{title}}'];
+$beforeUrl = (int) $value('SELECT COUNT(*) FROM content');
+$urlResult = $importItems->invoke(null, $urlSource, [['guid' => 'changed-guid', 'title' => 'Duplicate', 'url' => $url . '?utm_source=rss']], 1);
+$assert($urlResult['status'] === 'current' && (int) $value('SELECT COUNT(*) FROM content') === $beforeUrl, 'Normalized article URLs suppress queued duplicates across feeds without GUID history.');
+$database->exec("UPDATE content SET published_at = '2020-01-01 00:00:00' WHERE id = 98001");
+$urlResult = $importItems->invoke(null, $urlSource, [['guid' => 'another-guid', 'title' => 'Duplicate', 'url' => $url]], 1);
+$assert($urlResult['status'] === 'current', 'Published article URLs also suppress changed GUIDs.');
+$database->exec('UPDATE content SET author_id = 999 WHERE id = 98001');
+$database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = 2')->execute([\TinyCat\Bots\Importer::feedSourceHash($urlSource['feed_url'])]);
+$urlResult = $importItems->invoke(null, $urlSource, [['guid' => 'other-author-guid', 'title' => 'Allowed for another bot', 'url' => $url]], 1);
+$assert($urlResult['status'] === 'posted', 'An article linked only by another author does not suppress this bot import.');
+
 if ($failures !== []) {
     foreach ($failures as $failure) {
         echo "FAIL {$failure}\n";

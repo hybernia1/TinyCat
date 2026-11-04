@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.22.1 - 2026-11-04
+
+- Skip RSS items whose normalized article URL is already linked from a post by the same bot, across feeds and including queued posts. This protects against changed GUIDs and pruned GUID history before downloading images or preparing link metadata.
+- Preserve GUID-based protection for items without URLs. URL protection requires an existing stored post link and does not suppress links posted only by other authors.
+- No new migration or configuration change is required. Signed updates remain supported from 5.16.0.
+
 ## 5.22.0 - 2026-11-02
 
 - Accept an optional `batch` URL parameter on hosting web-cron triggers: cleanup batches use the existing 500/1000/2500/5000 sizes, and RSS batches select 1?100 sources. Preserve default sizes and task-specific aliases.

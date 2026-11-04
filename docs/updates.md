@@ -3,6 +3,14 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+## Upgrading to 5.22.1: RSS article URL duplicate protection
+
+RSS import skips an item when its normalized article URL is already linked from
+any post by the same bot, including queued posts and posts imported from another
+feed. This check survives changed GUIDs and pruned GUID history. It requires an
+existing stored post link; links posted only by other authors do not block import.
+No new migration or configuration change is required.
+
 ## Upgrading to 5.22.0: configurable web-cron batches
 
 Hosting web-cron URLs accept an optional `batch` parameter, using the existing
