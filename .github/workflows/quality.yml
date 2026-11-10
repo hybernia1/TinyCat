@@ -17,7 +17,8 @@ concurrency:
 jobs:
   preflight:
     name: PHP 8.4 release preflight
-    runs-on: ubuntu-latest
+    # Keep the reviewed Playwright 1.52 / WebKit 18.4 regression environment.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     services:
