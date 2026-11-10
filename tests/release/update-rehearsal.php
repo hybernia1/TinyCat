@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../cache-isolation.php';
+require_once __DIR__ . '/../support/cache-isolation.php';
 
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/Support/Version.php';
@@ -175,13 +175,15 @@ try {
         $copyTree($root . '/' . $relative, $candidateRoot . '/' . $relative);
     }
 
-    $copyTree($root . '/tools/build-update.php', $candidateRoot . '/tools/build-update.php');
-    $copyTree($root . '/tools/compile-assets.php', $candidateRoot . '/tools/compile-assets.php');
-    $copyTree($root . '/tools/modal-contracts.php', $candidateRoot . '/tools/modal-contracts.php');
-    $copyTree($root . '/tools/ui-contracts.php', $candidateRoot . '/tools/ui-contracts.php');
-    $copyTree($root . '/tools/translation-catalogs.php', $candidateRoot . '/tools/translation-catalogs.php');
-    $copyTree($root . '/tools/client-translations.php', $candidateRoot . '/tools/client-translations.php');
-    $copyTree($root . '/tools/update-deletions.json', $candidateRoot . '/tools/update-deletions.json');
+    $copyTree($root . '/tools/release/build-update.php', $candidateRoot . '/tools/release/build-update.php');
+    $copyTree($root . '/tools/release/zip-timestamps.php', $candidateRoot . '/tools/release/zip-timestamps.php');
+    $copyTree($root . '/tools/release/publish-artifact.php', $candidateRoot . '/tools/release/publish-artifact.php');
+    $copyTree($root . '/tools/assets/compile-assets.php', $candidateRoot . '/tools/assets/compile-assets.php');
+    $copyTree($root . '/tools/quality/modal-contracts.php', $candidateRoot . '/tools/quality/modal-contracts.php');
+    $copyTree($root . '/tools/quality/ui-contracts.php', $candidateRoot . '/tools/quality/ui-contracts.php');
+    $copyTree($root . '/tools/quality/translation-catalogs.php', $candidateRoot . '/tools/quality/translation-catalogs.php');
+    $copyTree($root . '/tools/quality/client-translations.php', $candidateRoot . '/tools/quality/client-translations.php');
+    $copyTree($root . '/tools/release/update-deletions.json', $candidateRoot . '/tools/release/update-deletions.json');
     $core = (string) file_get_contents($candidateRoot . '/App/Support/Version.php');
 
     if (!str_contains($core, "public const string CURRENT = '{$candidateVersion}';")) {
@@ -192,7 +194,7 @@ try {
     $publicKey = base64_encode(sodium_crypto_sign_publickey($keyPair));
     file_put_contents($signingKey, base64_encode($secretKey) . "\n", LOCK_EX);
     $build = escapeshellarg(PHP_BINARY)
-        . ' ' . escapeshellarg($candidateRoot . '/tools/build-update.php')
+        . ' ' . escapeshellarg($candidateRoot . '/tools/release/build-update.php')
         . ' --version=' . escapeshellarg($candidateVersion)
         . ' --allow-dirty --without-migrations'
         . ' --output=' . escapeshellarg($artifactRoot)

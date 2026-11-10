@@ -13,7 +13,8 @@ Novou komponentu upravovat v definici, nikoli přidáním druhé HTML implementa
 ## Odpovědnosti
 
 - `App/<Modul>/Resource` připravuje kanonická JSON data včetně oprávnění,
-  bezpečných URL, popisků a omezení formulářů. Nevrací HTML ani CSS instrukce.
+  bezpečných URL a omezení formulářů. Překládané popisky vlastní prezentace;
+  resource nevrací HTML ani CSS instrukce.
 - `App/<Modul>/Views` je serverová kompozice komponent. Data získává předem;
   šablona nesmí sama provádět databázové dotazy ani rozhodovat o oprávněních.
 - Klientské moduly přijímají stejná data a připojují chování. Pro obsah společný
@@ -86,38 +87,21 @@ Shared infrastructure lives in `assets/core`, UI primitives in `assets/ui`, and 
 
 `assets/styles/index.css` preserves the global cascade order. The selected module styles are composed into one CSS asset. Pages receive four JavaScript assets: shared runtime, selected component definitions, locale catalog and application bundle. Public, administration and installer scopes include their own dependencies. Release compilation produces immutable content hashes and raw/minified variants; development uses the same graph through the asset cache.
 
-Run `php tools/preflight.php`. Frontend tests exercise source and compiled bundles, minified delivery, scoped ownership and parity of all 662 original CSS rules. `tests/asset-optimizer/graph.php` checks graph ordering and invalid imports.
+Run `php tools/preflight.php`. Frontend tests exercise source and compiled bundles, minified delivery, scoped ownership and parity against the reviewed CSS baseline. `tests/assets/graph.php` checks graph ordering and invalid imports.
 
-`php tools/asset-report.php` reports release payload sizes for each scope, using the largest locale and the sum of separately gzipped minified JavaScript responses. Icons are reported separately by the browser and are outside the JS/CSS budgets. `--check` rejects unreachable JS/CSS sources, changed scopes and exceeded limits from `tests/fixtures/asset-budgets.json`. Limits allow approximately 15% growth rounded up to KiB; changing them requires reviewing the size report. This detects unreachable files, not unused branches or selectors, which require behavior-aware review.
+`php tools/assets/asset-report.php` reports release payload sizes for each scope, using the largest locale and the sum of separately gzipped minified JavaScript responses. Icons are reported separately by the browser and are outside the JS/CSS budgets. `--check` rejects unreachable JS/CSS sources, changed scopes and exceeded limits from `tests/fixtures/asset-budgets.json`. Limits allow approximately 15% growth rounded up to KiB; changing them requires reviewing the size report. This detects unreachable files, not unused branches or selectors, which require behavior-aware review.
 
+## Kompozice stránek a testovací data
 
-## Page refactor: first pair
+Modulový `Pages` handler připraví data před vykreslením. `Site/Layout` skládá
+hlavičku, veřejný nebo administrační shell a dokument; `LayoutData` připravuje
+metadata, assety a data účtu, `Navigation` navigační položky. `Support/View`
+zajišťuje vykreslení šablony. `View::part('Module/name', $data)` načítá pouze
+partial daného modulu z `templates/parts`; vstupy jsou explicitní.
 
-`Module` registers each HTTP page handler. Module-owned `Pages` classes authorize the request, load view data before rendering, and compose the page. `Views` composes prepared presentation components; domain services and APIs do not render page shells. Shared visual primitives belong to `assets/ui/components.json`, while domain rows, filters, actions and labels remain in their module definitions.
-
-The first migrated pages are Users administration and Bots accounts/sources. They share `ui/admin-list`, `ui/modal-trigger` and `ui/account-status`. Existing AJAX targets, filter dialogs and API URLs stay stable. Different domain columns and actions remain explicit; the sources API does not get nonfunctional search or pagination controls.
-
-Remaining work proceeds in pairs:
-
-1. Shared list-page primitives (completed for the pilot).
-2. Module-owned Users/Bots list pages and consistent account badges (completed).
-3. Split the common HTML document from public/admin shells; prepare navigation and shell data outside templates (completed).
-4. Migrate the remaining administration pages: dashboard, bot detail, moderation, settings, scheduler and updates (completed).
-5. Migrate public page composition and remaining module partials/forms, using explicit inputs and one rendering source for AJAX content (completed).
-6. Extend template ownership checks and browser coverage, and remove superseded files from release overlays (completed).
-
-
-`App/Site/Layout` composes `templates/head.php`, exactly one of `templates/public.php` and `templates/admin.php`, and `templates/document.php`. `LayoutData` prepares identity, assets, metadata, flash messages, account data and public notification previews; `Navigation` prepares active links and expanded groups. Templates receive explicit inputs and do not load services or handle HTTP actions. `Support/View` remains the generic template renderer and output-buffer utility.
-
-Each administration module now registers `Pages` handlers directly. Page handlers perform access/CSRF checks and existing POST actions before rendering; module templates only compose prepared page content. `Site/Dashboard` owns dashboard reads and formatting instead of global functions declared inside a page. API endpoints and AJAX targets are retained. Public page orchestration and remaining public partials are the next pair; they now use the shared Site layout entry point.
-
-
-## Final page and partial audit (2026-10-26)
-
-Public HTML handlers now belong to Users, Status, Search, Notifications and Site `Pages` classes. `View::part('Module/name', $data)` resolves only below that module's `templates/parts` directory. Page templates receive prepared inputs; shared PHP/browser UI remains in component definitions. The render-only gate covers all module templates and also rejects unreferenced partials. Five obsolete notification/pagination wrappers were removed in favor of existing component renderers. The bootstrap installer and XML/text discovery endpoints remain in `Public`; their separate lifecycle is intentional.
-
-Fixed audit findings: bot detail sources used a different initial renderer from AJAX; summary counters stayed stale after resource mutations; bot account/run states could appear as raw identifiers; demo import wrote retired columns and obsolete setting keys and did not reset Bots relations. Bot source edit actions and initial/AJAX lists now use the same component, status labels use the canonical localized resource, and Users/Bots delete controls use the same API-action component and icon styling. The importer validates tables needed by the selected dataset (UI fixtures additionally require Bots/image tables), resets bot relations before users, and preserves immutable assets while invalidating data caches.
-
-`php tools/demo-import.php --profile=small --users=120 --prefix=demo --ui-fixtures=1 --anchor="YYYY-MM-DD HH:MM:SS"` adds deterministic offline avatars, mixed image/text posts, account states and disabled bot sources with run history. It requires GD/WebP for UI fixtures. Import format 3 prevents resuming obsolete checkpoints. The MySQL installer rehearsal now tests an interrupted/resumed real import, completed checkpoint idempotence and visual fixture idempotence against the fresh current schema. UI fixtures use reserved example.invalid feed URLs and keep imports disabled.
-
-Audit environment: local tinycat.test was reinstalled into a new MySQL database before browser validation. The previous database, configuration, uploads and cache were retained in an ignored local backup. No release is published by this refactor step.
+Pro izolovanou testovací instalaci lze vytvořit vizuální fixture příkazem
+`php tools/data/demo-import.php --profile=small --users=120 --prefix=demo --ui-fixtures=1 --anchor="YYYY-MM-DD HH:MM:SS"`.
+Vyžaduje GD/WebP a přidá offline avatary, textové i obrázkové příspěvky,
+stavy účtů a vypnuté botí zdroje s historií běhů. Zdrojové URL používají
+rezervovanou doménu `example.invalid`; importy zůstávají vypnuté.
+Obecná pravidla importu a resume popisuje [benchmark](../performance/benchmark.md).

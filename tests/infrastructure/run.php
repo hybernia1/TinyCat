@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../cache-isolation.php';
+require_once __DIR__ . '/../support/cache-isolation.php';
 
 use \TinyCat\Database\Connection;
 use \TinyCat\Database\Query;
@@ -12,7 +12,7 @@ use \TinyCat\Security\Csrf;
 use \TinyCat\Http\Session;
 
 define('TINYCAT', true);
-require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
+require_once __DIR__ . '/../../App/bootstrap.php';
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
     $checks++;

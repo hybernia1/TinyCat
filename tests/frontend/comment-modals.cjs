@@ -9,10 +9,10 @@ const {webkit} = require(modulePath);
 function read(file, ...args) {
   return JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(root, file), ...args], {encoding:'utf8', maxBuffer:8e6}));
 }
-const scripts = read('tests/presentation/asset-graph-fixture.php', '--all').map(asset => asset.source).join('\n');
-const templates = read('tests/presentation/component-parity.php', '--templates');
-const labels = read('tests/presentation/asset-graph-fixture.php', '--catalog', 'cs');
-const css = read('tests/presentation/asset-graph-fixture.php', '--styles');
+const scripts = read('tests/presentation/fixtures/asset-graph-fixture.php', '--all').map(asset => asset.source).join('\n');
+const templates = read('tests/presentation/fixtures/component-parity.php', '--templates');
+const labels = read('tests/presentation/fixtures/asset-graph-fixture.php', '--catalog', 'cs');
+const css = read('tests/presentation/fixtures/asset-graph-fixture.php', '--styles');
 const html = '<!doctype html><html lang="cs"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body><main tabindex="-1" id="main-content"></main><script>'+scripts+'\nTinyCat.components.register('+JSON.stringify(templates)+');TinyCat.i18n.register("cs",'+JSON.stringify(labels)+');</script></body></html>';
 (async function () {
   const server = http.createServer((request,response) => { response.setHeader('Content-Type','text/html; charset=utf-8'); response.end(html); });

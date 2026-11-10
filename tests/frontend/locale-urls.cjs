@@ -24,7 +24,7 @@ const cases = [
   ["/author/2/feed", "/author/2/feed"], ["/assets/icons.svg", "/assets/icons.svg"], ["/uploads/image.webp", "/uploads/image.webp"],
   ["/zz/privacy", "/zz/privacy"], ["//other.test/", "//other.test/"], ["https://other.test/privacy", "https://other.test/privacy"], ["#content", "#content"]
 ];
-const serverUrls = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.resolve(__dirname, "../presentation/asset-graph-fixture.php"), "--localized-urls", JSON.stringify(cases.map(item => item[0]))], { encoding: "utf8" }));
+const serverUrls = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.resolve(__dirname, "../presentation/fixtures/asset-graph-fixture.php"), "--localized-urls", JSON.stringify(cases.map(item => item[0]))], { encoding: "utf8" }));
 cases.forEach(([input, expected], index) => { assert.equal(urls.local(input), expected); assert.equal(serverUrls[index], expected, "PHP and JS URL policies agree: " + input); checks += 2; });
 assert.equal(urls.local("/pl/status/10?compact=1", "en"), "/en/status/10?compact=1"); checks++;
 assert.equal(urls.split("/pl/status/10").path, "/status/10"); checks++;

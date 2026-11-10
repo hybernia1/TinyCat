@@ -2,8 +2,8 @@
 declare(strict_types=1);
 
 define('TINYCAT', true);
-require_once dirname(__DIR__, 2) . '/App/autoload.php';
-$validate = require dirname(__DIR__, 2) . '/tools/translation-catalogs.php';
+require_once __DIR__ . '/../../App/autoload.php';
+$validate = require __DIR__ . '/../../tools/quality/translation-catalogs.php';
 $checks = 0;
 $directory = sys_get_temp_dir() . '/tinycat-translations-' . bin2hex(random_bytes(8));
 $app = '{"common":{"greeting":"Hello {name}: {count}","empty":""},"other":{"empty":""}}';
@@ -112,7 +112,7 @@ try {
             $checks++;
         }
     }
-    $validateClients = require dirname(__DIR__, 2) . '/tools/client-translations.php';
+    $validateClients = require __DIR__ . '/../../tools/quality/client-translations.php';
     $featuresProperty = new ReflectionProperty(\TinyCat\Support\ClientAssets::class, 'features');
     $saved = $featuresProperty->getValue();
     $dateKeys = array_values(array_filter(array_keys($real['en']['app']), static fn (string $key): bool => str_starts_with($key, 'relative.')));

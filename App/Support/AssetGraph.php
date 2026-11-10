@@ -8,6 +8,24 @@ use RuntimeException;
 /** Dependency graph for local, side-effect-only ES module sources. */
 final class AssetGraph
 {
+    /** @var array<string, string>|null */
+    private static ?array $buildSources = null;
+    /** @var array<string, list<string>>|null */
+    private static ?array $buildImports = null;
+
+    /**
+     * @template T
+     * @param callable(): T $build
+     * @return T
+     */
+    public static function withSnapshot(callable $build): mixed
+    {
+        $sources = self::$buildSources; $imports = self::$buildImports;
+        self::$buildSources = []; self::$buildImports = [];
+        try { return $build(); }
+        finally { self::$buildSources = $sources; self::$buildImports = $imports; }
+    }
+
     public static function resolve(string $importer, string $relative): string
     {
         if (!str_starts_with($relative, '.')) { throw new RuntimeException('Asset imports must be relative: ' . $relative); }
@@ -23,20 +41,26 @@ final class AssetGraph
 
     public static function read(string $path): string
     {
+        if (self::$buildSources !== null && isset(self::$buildSources[$path])) { return self::$buildSources[$path]; }
         $absolute = realpath(Paths::basePath($path));
         $assets = realpath(Paths::basePath('assets'));
         if (!str_starts_with($path, 'assets/') || !is_string($absolute) || !is_string($assets)
             || !str_starts_with($absolute, $assets . DIRECTORY_SEPARATOR) || !is_file($absolute)) {
             throw new RuntimeException('Missing or invalid asset: ' . $path);
         }
-        return str_replace(["\r\n", "\r"], "\n", (string) file_get_contents($absolute));
+        $source = str_replace(["\r\n", "\r"], "\n", (string) file_get_contents($absolute));
+        if (self::$buildSources !== null) { self::$buildSources[$path] = $source; }
+        return $source;
     }
 
     /** @return list<string> */
     public static function imports(string $path): array
     {
+        if (self::$buildImports !== null && isset(self::$buildImports[$path])) { return self::$buildImports[$path]; }
         preg_match_all('/^import\s+["\']([^"\']+)["\'];[ \t]*$/m', self::read($path), $matches);
-        return array_map(static fn (string $relative): string => self::resolve($path, $relative), $matches[1]);
+        $imports = array_map(static fn (string $relative): string => self::resolve($path, $relative), $matches[1]);
+        if (self::$buildImports !== null) { self::$buildImports[$path] = $imports; }
+        return $imports;
     }
 
     /** @param list<string> $roots

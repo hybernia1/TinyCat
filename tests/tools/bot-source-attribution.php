@@ -29,7 +29,7 @@ try {
     $urls = [1=>['https://WWW.EXAMPLE.COM:443/article'],2=>['https://shared.test/a'],3=>['https://example.com/a','https://news.example.net/b'],4=>['https://example.com/a','https://youtube.com/watch?v=x'],5=>['https://unmatched.test/a'],6=>[],7=>['https://example.com/a'],8=>['https://example.com/a'],9=>['https://example.com.evil.test/a'],10=>['https://EXAMPLE.COM./article'],11=>['https://example.com/a','https://www.example.com/b'],12=>['javascript:example.com'],13=>['https://unknown.test/a'],14=>['https://example.com@evil.test/a'],15=>['https://example.com/?next=https://news.example.net/a'],16=>['https://steamcommunity.com/groups/group-a/announcements/detail/1'],17=>['https://www.steamcommunity.com/groups/group-b/announcements/detail/2'],18=>['https://steamcommunity.com/url?next=/groups/group-a/announcements/detail/3'],19=>['https://steamcommunity.com/groups/group-ax/announcements/detail/4']];
     $link = $db->prepare('INSERT INTO links VALUES (?,?)'); $relation = $db->prepare('INSERT INTO content_links VALUES (?,?)'); $linkId = 0;
     foreach ($urls as $contentId => $items) { foreach ($items as $url) { $link->execute([++$linkId,$url]); $relation->execute([$contentId,$linkId]); } }
-    $directory = $root . '/tools/sql/bot-source-attribution/';
+    $directory = $root . '/tools/maintenance/sql/bot-source-attribution/';
     $checks = 0;
     $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
     $candidates = $db->query((string) file_get_contents($directory . '02_unique_candidates.sql'))->fetchAll();

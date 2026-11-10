@@ -19,7 +19,7 @@ if (!browser) {
 
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "tinycat-admin-viewport-"));
 try {
-  const sources = ['', '--modal', '--accounts'].map(mode => execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.resolve(__dirname, "../presentation/admin-viewport-fixture.php"), ...(mode ? [mode] : [])], { encoding: "utf8", maxBuffer: 8e6 }));
+  const sources = ['', '--modal', '--accounts'].map(mode => execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.resolve(__dirname, "../presentation/fixtures/admin-viewport-fixture.php"), ...(mode ? [mode] : [])], { encoding: "utf8", maxBuffer: 8e6 }));
   const source = JSON.stringify(sources).replace(/<\/script/gi, "<\\/script");
   const page = `<!doctype html><html><body><script>
     (async function () {

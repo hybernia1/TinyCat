@@ -11,6 +11,19 @@ final class Components
     /** @var array<string, mixed>|null */
     private static ?array $templates = null;
 
+    /**
+     * @template T
+     * @param callable(): T $build
+     * @return T
+     */
+    public static function withFreshTemplates(callable $build): mixed
+    {
+        $templates = self::$templates;
+        self::$templates = null;
+        try { return $build(); }
+        finally { self::$templates = $templates; }
+    }
+
     /** @return array<string, mixed> */
     public static function templates(): array
     {

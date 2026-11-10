@@ -4,7 +4,7 @@ declare(strict_types=1);
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
 require $root . '/App/autoload.php';
-$compile = require $root . '/tools/compile-assets.php';
+$compile = require $root . '/tools/assets/compile-assets.php';
 $files = $compile();
 $directory = sys_get_temp_dir() . '/tinycat-compiled-translations-' . bin2hex(random_bytes(8));
 $created = [];
@@ -27,7 +27,7 @@ try {
         if (str_starts_with($relative, 'App/Support/compiled/')) { $write($relative, $source); }
     }
     // No source files, source loader, configuration or database in this runtime.
-    $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/compiled-translations-worker.php') . ' ' . escapeshellarg($directory);
+    $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/fixtures/compiled-translations-worker.php') . ' ' . escapeshellarg($directory);
     exec($command, $output, $exitCode);
     $assert($exitCode === 0, 'Compiled catalogs must work without translation sources or database.');
     $actual = json_decode(implode("\n", $output), true, 512, JSON_THROW_ON_ERROR);

@@ -1,0 +1,1316 @@
+{
+  "audit_date": "2026-11-10",
+  "version": "5.22.1",
+  "head": "a1fa193",
+  "method": "Fresh PHP process per build; filesystem cache uncontrolled; profiled scratch copies; ephemeral signing key generated only in process memory; fixed SOURCE_DATE_EPOCH; no production key or config changes. Two profiled updates, one profiled install, one original-builder control.",
+  "runs": [
+    {
+      "events": [
+        {
+          "label": "setup.end",
+          "ms": 75.8227,
+          "memory": 2097152
+        },
+        {
+          "label": "inventory.end",
+          "ms": 166.1125,
+          "memory": 2097152
+        },
+        {
+          "label": "source_hashing.end",
+          "ms": 271.412,
+          "memory": 2097152
+        },
+        {
+          "label": "compile.start",
+          "ms": 271.9435,
+          "memory": 2097152
+        },
+        {
+          "label": "compile.modal_guard.end",
+          "ms": 345.0024,
+          "memory": 4194304
+        },
+        {
+          "label": "compile.ui_guard.end",
+          "ms": 375.8845,
+          "memory": 6291456
+        },
+        {
+          "label": "compile.catalogs.end",
+          "ms": 490.455,
+          "memory": 14680064
+        },
+        {
+          "label": "compile.client_validation.end",
+          "ms": 4435.8181,
+          "memory": 16777216
+        },
+        {
+          "label": "compile.server_catalogs.end",
+          "ms": 4457.9807,
+          "memory": 18874368
+        },
+        {
+          "label": "compile.runtime.end",
+          "ms": 4602.2624,
+          "memory": 18874368
+        },
+        {
+          "label": "scope.start:/admin/site-health",
+          "ms": 4605.1787,
+          "memory": 18874368
+        },
+        {
+          "label": "scope.end:/admin/site-health",
+          "ms": 6180.0653,
+          "memory": 31457280
+        },
+        {
+          "label": "scope.start:/admin/moderation",
+          "ms": 6180.0816,
+          "memory": 31457280
+        },
+        {
+          "label": "scope.end:/admin/moderation",
+          "ms": 7130.2002,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.start:/admin/updates",
+          "ms": 7130.2052,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.end:/admin/updates",
+          "ms": 8374.5783,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.start:/admin/users",
+          "ms": 8374.5837,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.end:/admin/users",
+          "ms": 9420.9709,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.start:/admin/bots",
+          "ms": 9420.9754,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.end:/admin/bots",
+          "ms": 10802.6874,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.start:/admin/cron",
+          "ms": 10802.6908,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.end:/admin/cron",
+          "ms": 11406.7536,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.start:/install",
+          "ms": 11406.7577,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.end:/install",
+          "ms": 11594.5981,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.start:/admin",
+          "ms": 11594.6021,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.end:/admin",
+          "ms": 12233.3291,
+          "memory": 44040192
+        },
+        {
+          "label": "scope.start:/",
+          "ms": 12233.3335,
+          "memory": 44040192
+        },
+        {
+          "label": "scope.end:/",
+          "ms": 12914.5089,
+          "memory": 44040192
+        },
+        {
+          "label": "compile.scopes.end",
+          "ms": 12914.5126,
+          "memory": 44040192
+        },
+        {
+          "label": "compile.standalone.end",
+          "ms": 12926.0424,
+          "memory": 44040192
+        },
+        {
+          "label": "compilation.end",
+          "ms": 12933.2956,
+          "memory": 44040192
+        },
+        {
+          "label": "archive_prep.end",
+          "ms": 12934.5108,
+          "memory": 44040192
+        },
+        {
+          "label": "zip_creation.end",
+          "ms": 13847.6904,
+          "memory": 54525952
+        },
+        {
+          "label": "timestamp_normalization.end",
+          "ms": 15280.0374,
+          "memory": 54525952
+        },
+        {
+          "label": "archive_hashing.end",
+          "ms": 15309.9337,
+          "memory": 54525952
+        },
+        {
+          "label": "signing_and_manifest.end",
+          "ms": 15321.5906,
+          "memory": 54525952
+        }
+      ],
+      "total_ms": 15352.555,
+      "peak_bytes": 62914560,
+      "signature_valid": true,
+      "php": "8.4.12",
+      "opcache_cli": "0",
+      "memory_limit": "512M",
+      "zip_backend": "ZipArchive",
+      "name": "update-profiled-a",
+      "fresh": false,
+      "profiled": true,
+      "process_ms": 15535.999499999889,
+      "package_bytes": 2537875,
+      "package_sha256": "2d876e75df96bdbf99a7aec918956ab2501fa6d5ca587205345ef8187a432eeb",
+      "file_count": 851,
+      "migrations": 28,
+      "deletions": 129,
+      "uncompressed_bytes": 10190500,
+      "generated_files": 165,
+      "archive_groups": {
+        ".htaccess": [
+          1,
+          2563,
+          950
+        ],
+        "App": [
+          406,
+          2174048,
+          613604
+        ],
+        "server catalogs": [
+          13,
+          952762,
+          226486
+        ],
+        "LICENSE": [
+          1,
+          34523,
+          11752
+        ],
+        "README.md": [
+          1,
+          19426,
+          8094
+        ],
+        "assets": [
+          233,
+          1052803,
+          194803
+        ],
+        "assets/build": [
+          152,
+          5815788,
+          1310558
+        ],
+        "docs": [
+          2,
+          79711,
+          29729
+        ],
+        "index.php": [
+          1,
+          2653,
+          1021
+        ],
+        "lang": [
+          12,
+          356,
+          356
+        ],
+        "migrations": [
+          28,
+          52593,
+          18433
+        ],
+        "scheduled-tasks.php": [
+          1,
+          3274,
+          1133
+        ]
+      },
+      "managed_inventory_sha256": "5aff4fee53c7186be58e2945e8e56d20ad0869d5fc7ea8850d561c932cbb6d5a",
+      "phases_ms": {
+        "setup.end": 75.8227,
+        "inventory.end": 90.28980000000001,
+        "source_hashing.end": 105.29949999999997,
+        "compilation.end": 12661.8836,
+        "archive_prep.end": 1.21520000000055,
+        "zip_creation.end": 913.1795999999995,
+        "timestamp_normalization.end": 1432.3469999999998,
+        "archive_hashing.end": 29.896300000000338,
+        "signing_and_manifest.end": 11.65689999999995
+      }
+    },
+    {
+      "events": [
+        {
+          "label": "setup.end",
+          "ms": 1.7904,
+          "memory": 2097152
+        },
+        {
+          "label": "inventory.end",
+          "ms": 47.3422,
+          "memory": 2097152
+        },
+        {
+          "label": "source_hashing.end",
+          "ms": 109.9399,
+          "memory": 2097152
+        },
+        {
+          "label": "compile.start",
+          "ms": 110.3914,
+          "memory": 2097152
+        },
+        {
+          "label": "compile.modal_guard.end",
+          "ms": 158.1526,
+          "memory": 4194304
+        },
+        {
+          "label": "compile.ui_guard.end",
+          "ms": 182.5897,
+          "memory": 4194304
+        },
+        {
+          "label": "compile.catalogs.end",
+          "ms": 280.8941,
+          "memory": 14680064
+        },
+        {
+          "label": "compile.client_validation.end",
+          "ms": 1842.4611,
+          "memory": 16777216
+        },
+        {
+          "label": "compile.server_catalogs.end",
+          "ms": 1853.7062,
+          "memory": 18874368
+        },
+        {
+          "label": "compile.runtime.end",
+          "ms": 1892.2568,
+          "memory": 18874368
+        },
+        {
+          "label": "scope.start:/admin/site-health",
+          "ms": 1893.9448,
+          "memory": 18874368
+        },
+        {
+          "label": "scope.end:/admin/site-health",
+          "ms": 2221.7989,
+          "memory": 31457280
+        },
+        {
+          "label": "scope.start:/admin/moderation",
+          "ms": 2221.8018,
+          "memory": 31457280
+        },
+        {
+          "label": "scope.end:/admin/moderation",
+          "ms": 2613.8474,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.start:/admin/updates",
+          "ms": 2613.8508,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.end:/admin/updates",
+          "ms": 2960.0102,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.start:/admin/users",
+          "ms": 2960.0142,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.end:/admin/users",
+          "ms": 3269.8718,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.start:/admin/bots",
+          "ms": 3269.8756,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.end:/admin/bots",
+          "ms": 3754.9566,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.start:/admin/cron",
+          "ms": 3754.9612,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.end:/admin/cron",
+          "ms": 4085.9468,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.start:/install",
+          "ms": 4085.9504,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.end:/install",
+          "ms": 4188.1648,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.start:/admin",
+          "ms": 4188.1676,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.end:/admin",
+          "ms": 4495.3752,
+          "memory": 44040192
+        },
+        {
+          "label": "scope.start:/",
+          "ms": 4495.3774,
+          "memory": 44040192
+        },
+        {
+          "label": "scope.end:/",
+          "ms": 5005.9545,
+          "memory": 44040192
+        },
+        {
+          "label": "compile.scopes.end",
+          "ms": 5005.9584,
+          "memory": 44040192
+        },
+        {
+          "label": "compile.standalone.end",
+          "ms": 5023.5813,
+          "memory": 44040192
+        },
+        {
+          "label": "compilation.end",
+          "ms": 5030.2879,
+          "memory": 44040192
+        },
+        {
+          "label": "archive_prep.end",
+          "ms": 5033.2276,
+          "memory": 44040192
+        },
+        {
+          "label": "zip_creation.end",
+          "ms": 5927.4238,
+          "memory": 54525952
+        },
+        {
+          "label": "timestamp_normalization.end",
+          "ms": 7144.8978,
+          "memory": 54525952
+        },
+        {
+          "label": "archive_hashing.end",
+          "ms": 7169.3713,
+          "memory": 54525952
+        },
+        {
+          "label": "signing_and_manifest.end",
+          "ms": 7172.6943,
+          "memory": 54525952
+        }
+      ],
+      "total_ms": 7198.9596,
+      "peak_bytes": 62914560,
+      "signature_valid": true,
+      "php": "8.4.12",
+      "opcache_cli": "0",
+      "memory_limit": "512M",
+      "zip_backend": "ZipArchive",
+      "name": "install-profiled",
+      "fresh": true,
+      "profiled": true,
+      "process_ms": 7287.129500000447,
+      "package_bytes": 2514564,
+      "package_sha256": "a5273181412c3175e8a672216c7fc30d42392ad591951def4d626b878a189685",
+      "file_count": 823,
+      "migrations": 0,
+      "deletions": 0,
+      "uncompressed_bytes": 10137907,
+      "generated_files": 165,
+      "archive_groups": {
+        ".htaccess": [
+          1,
+          2563,
+          950
+        ],
+        "App": [
+          406,
+          2174048,
+          613604
+        ],
+        "server catalogs": [
+          13,
+          952762,
+          226486
+        ],
+        "LICENSE": [
+          1,
+          34523,
+          11752
+        ],
+        "README.md": [
+          1,
+          19426,
+          8094
+        ],
+        "assets": [
+          233,
+          1052803,
+          194803
+        ],
+        "assets/build": [
+          152,
+          5815788,
+          1310558
+        ],
+        "docs": [
+          2,
+          79711,
+          29729
+        ],
+        "index.php": [
+          1,
+          2653,
+          1021
+        ],
+        "lang": [
+          12,
+          356,
+          356
+        ],
+        "scheduled-tasks.php": [
+          1,
+          3274,
+          1133
+        ]
+      },
+      "managed_inventory_sha256": "3ff44da4b0240a73a5cc661b1b98f08ce2024d3095c7a5196f6a8484c72157a8",
+      "phases_ms": {
+        "setup.end": 1.7904,
+        "inventory.end": 45.5518,
+        "source_hashing.end": 62.597699999999996,
+        "compilation.end": 4920.348,
+        "archive_prep.end": 2.9396999999999025,
+        "zip_creation.end": 894.1961999999994,
+        "timestamp_normalization.end": 1217.4740000000002,
+        "archive_hashing.end": 24.473500000000058,
+        "signing_and_manifest.end": 3.32300000000032
+      }
+    },
+    {
+      "events": [
+        {
+          "label": "setup.end",
+          "ms": 1.8262,
+          "memory": 2097152
+        },
+        {
+          "label": "inventory.end",
+          "ms": 45.8964,
+          "memory": 2097152
+        },
+        {
+          "label": "source_hashing.end",
+          "ms": 122.5227,
+          "memory": 2097152
+        },
+        {
+          "label": "compile.start",
+          "ms": 123.0853,
+          "memory": 2097152
+        },
+        {
+          "label": "compile.modal_guard.end",
+          "ms": 183.978,
+          "memory": 4194304
+        },
+        {
+          "label": "compile.ui_guard.end",
+          "ms": 208.1493,
+          "memory": 6291456
+        },
+        {
+          "label": "compile.catalogs.end",
+          "ms": 302.496,
+          "memory": 14680064
+        },
+        {
+          "label": "compile.client_validation.end",
+          "ms": 1961.1168,
+          "memory": 16777216
+        },
+        {
+          "label": "compile.server_catalogs.end",
+          "ms": 1969.8719,
+          "memory": 18874368
+        },
+        {
+          "label": "compile.runtime.end",
+          "ms": 2007.4701,
+          "memory": 18874368
+        },
+        {
+          "label": "scope.start:/admin/site-health",
+          "ms": 2009.0552,
+          "memory": 18874368
+        },
+        {
+          "label": "scope.end:/admin/site-health",
+          "ms": 2337.0155,
+          "memory": 31457280
+        },
+        {
+          "label": "scope.start:/admin/moderation",
+          "ms": 2337.0193,
+          "memory": 31457280
+        },
+        {
+          "label": "scope.end:/admin/moderation",
+          "ms": 2735.277,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.start:/admin/updates",
+          "ms": 2735.2815,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.end:/admin/updates",
+          "ms": 3243.425,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.start:/admin/users",
+          "ms": 3243.4305,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.end:/admin/users",
+          "ms": 4054.3435,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.start:/admin/bots",
+          "ms": 4054.3488,
+          "memory": 33554432
+        },
+        {
+          "label": "scope.end:/admin/bots",
+          "ms": 5065.8625,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.start:/admin/cron",
+          "ms": 5065.8666,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.end:/admin/cron",
+          "ms": 5824.8246,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.start:/install",
+          "ms": 5824.8291,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.end:/install",
+          "ms": 6019.9583,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.start:/admin",
+          "ms": 6019.9613,
+          "memory": 41943040
+        },
+        {
+          "label": "scope.end:/admin",
+          "ms": 6715.7444,
+          "memory": 44040192
+        },
+        {
+          "label": "scope.start:/",
+          "ms": 6715.7497,
+          "memory": 44040192
+        },
+        {
+          "label": "scope.end:/",
+          "ms": 7756.6756,
+          "memory": 44040192
+        },
+        {
+          "label": "compile.scopes.end",
+          "ms": 7756.6829,
+          "memory": 44040192
+        },
+        {
+          "label": "compile.standalone.end",
+          "ms": 7790.1161,
+          "memory": 44040192
+        },
+        {
+          "label": "compilation.end",
+          "ms": 7802.8102,
+          "memory": 44040192
+        },
+        {
+          "label": "archive_prep.end",
+          "ms": 7805.4266,
+          "memory": 44040192
+        },
+        {
+          "label": "zip_creation.end",
+          "ms": 9047.0261,
+          "memory": 54525952
+        },
+        {
+          "label": "timestamp_normalization.end",
+          "ms": 11153.5402,
+          "memory": 54525952
+        },
+        {
+          "label": "archive_hashing.end",
+          "ms": 11182.3901,
+          "memory": 54525952
+        },
+        {
+          "label": "signing_and_manifest.end",
+          "ms": 11188.2843,
+          "memory": 54525952
+        }
+      ],
+      "total_ms": 11216.254,
+      "peak_bytes": 62914560,
+      "signature_valid": true,
+      "php": "8.4.12",
+      "opcache_cli": "0",
+      "memory_limit": "512M",
+      "zip_backend": "ZipArchive",
+      "name": "update-profiled-b",
+      "fresh": false,
+      "profiled": true,
+      "process_ms": 11312.242699999842,
+      "package_bytes": 2537875,
+      "package_sha256": "2d876e75df96bdbf99a7aec918956ab2501fa6d5ca587205345ef8187a432eeb",
+      "file_count": 851,
+      "migrations": 28,
+      "deletions": 129,
+      "uncompressed_bytes": 10190500,
+      "generated_files": 165,
+      "archive_groups": {
+        ".htaccess": [
+          1,
+          2563,
+          950
+        ],
+        "App": [
+          406,
+          2174048,
+          613604
+        ],
+        "server catalogs": [
+          13,
+          952762,
+          226486
+        ],
+        "LICENSE": [
+          1,
+          34523,
+          11752
+        ],
+        "README.md": [
+          1,
+          19426,
+          8094
+        ],
+        "assets": [
+          233,
+          1052803,
+          194803
+        ],
+        "assets/build": [
+          152,
+          5815788,
+          1310558
+        ],
+        "docs": [
+          2,
+          79711,
+          29729
+        ],
+        "index.php": [
+          1,
+          2653,
+          1021
+        ],
+        "lang": [
+          12,
+          356,
+          356
+        ],
+        "migrations": [
+          28,
+          52593,
+          18433
+        ],
+        "scheduled-tasks.php": [
+          1,
+          3274,
+          1133
+        ]
+      },
+      "managed_inventory_sha256": "5aff4fee53c7186be58e2945e8e56d20ad0869d5fc7ea8850d561c932cbb6d5a",
+      "phases_ms": {
+        "setup.end": 1.8262,
+        "inventory.end": 44.0702,
+        "source_hashing.end": 76.6263,
+        "compilation.end": 7680.287499999999,
+        "archive_prep.end": 2.616399999999885,
+        "zip_creation.end": 1241.5994999999994,
+        "timestamp_normalization.end": 2106.5141000000003,
+        "archive_hashing.end": 28.84990000000107,
+        "signing_and_manifest.end": 5.894199999998818
+      }
+    },
+    {
+      "events": [],
+      "total_ms": 10259.2877,
+      "peak_bytes": 62914560,
+      "signature_valid": true,
+      "php": "8.4.12",
+      "opcache_cli": "0",
+      "memory_limit": "512M",
+      "zip_backend": "ZipArchive",
+      "name": "update-control",
+      "fresh": false,
+      "profiled": false,
+      "process_ms": 10358.412800000224,
+      "package_bytes": 2537875,
+      "package_sha256": "2d876e75df96bdbf99a7aec918956ab2501fa6d5ca587205345ef8187a432eeb",
+      "file_count": 851,
+      "migrations": 28,
+      "deletions": 129,
+      "uncompressed_bytes": 10190500,
+      "generated_files": 165,
+      "archive_groups": {
+        ".htaccess": [
+          1,
+          2563,
+          950
+        ],
+        "App": [
+          406,
+          2174048,
+          613604
+        ],
+        "server catalogs": [
+          13,
+          952762,
+          226486
+        ],
+        "LICENSE": [
+          1,
+          34523,
+          11752
+        ],
+        "README.md": [
+          1,
+          19426,
+          8094
+        ],
+        "assets": [
+          233,
+          1052803,
+          194803
+        ],
+        "assets/build": [
+          152,
+          5815788,
+          1310558
+        ],
+        "docs": [
+          2,
+          79711,
+          29729
+        ],
+        "index.php": [
+          1,
+          2653,
+          1021
+        ],
+        "lang": [
+          12,
+          356,
+          356
+        ],
+        "migrations": [
+          28,
+          52593,
+          18433
+        ],
+        "scheduled-tasks.php": [
+          1,
+          3274,
+          1133
+        ]
+      },
+      "managed_inventory_sha256": "5aff4fee53c7186be58e2945e8e56d20ad0869d5fc7ea8850d561c932cbb6d5a",
+      "phases_ms": {}
+    }
+  ],
+  "update_archives_byte_identical": true,
+  "deep_profile": {
+    "total_ms": 7323.3735,
+    "peak_bytes": 62914560,
+    "calls": {
+      "ClientAssets::manifests": {
+        "count": 13,
+        "inclusive_ns": 6470900,
+        "paths": []
+      },
+      "AssetGraph::read": {
+        "count": 18935,
+        "inclusive_ns": 1578733900,
+        "paths": {
+          "assets/ui/tooltips.js": 351,
+          "assets/core/lifecycle.js": 759,
+          "assets/ui/toasts.js": 455,
+          "assets/core/dom.js": 698,
+          "assets/core/i18n.js": 495,
+          "assets/core/icons.js": 416,
+          "assets/core/urls.js": 382,
+          "assets/ui/tabs.js": 385,
+          "assets/ui/popovers.js": 375,
+          "assets/ui/image-placeholders.js": 351,
+          "assets/ui/ajax-bindings.js": 312,
+          "assets/ui/list-navigation.js": 372,
+          "assets/core/request-lifecycle.js": 407,
+          "assets/core/api-client.js": 506,
+          "assets/core/modules.js": 453,
+          "assets/core/navigation.js": 459,
+          "assets/ui/confirm-actions.js": 332,
+          "assets/ui/dialogs.js": 412,
+          "assets/ui/component-builders.js": 426,
+          "assets/ui/form-state.js": 366,
+          "assets/ui/form-requests.js": 427,
+          "assets/ui/dialog-history.js": 328,
+          "assets/core/component-renderer.js": 411,
+          "assets/ui/filters.js": 328,
+          "assets/core/dates.js": 348,
+          "assets/modules/admin/index.js": 273,
+          "assets/modules/admin/navigation.js": 287,
+          "assets/modules/scheduler/index.js": 78,
+          "assets/modules/scheduler/controller.js": 82,
+          "assets/ui/content-updates.js": 356,
+          "assets/modules/settings/index.js": 273,
+          "assets/modules/settings/controller.js": 287,
+          "assets/ui/image-uploads.js": 348,
+          "assets/modules/settings/field-presentation.js": 287,
+          "assets/modules/users/index.js": 316,
+          "assets/modules/users/user-menu.js": 328,
+          "assets/modules/users/avatar-editor.js": 328,
+          "assets/modules/users/controller.js": 346,
+          "assets/modules/users/email-availability.js": 328,
+          "assets/ui/avatar-rendering.js": 336,
+          "assets/bootstrap.js": 351,
+          "assets/modules/moderation/index.js": 39,
+          "assets/modules/moderation/controller.js": 41,
+          "assets/modules/status/media-preview.js": 39,
+          "assets/modules/status/media.js": 123,
+          "assets/modules/status/controller.js": 151,
+          "assets/modules/updates/index.js": 39,
+          "assets/modules/users/admin.js": 39,
+          "assets/modules/bots/index.js": 39,
+          "assets/modules/bots/controller.js": 41,
+          "assets/modules/bots/source-preview.js": 41,
+          "assets/modules/bots/workspace.js": 41,
+          "assets/modules/status/index.js": 78,
+          "assets/modules/status/form-actions.js": 82,
+          "assets/modules/status/comments.js": 86,
+          "assets/modules/status/editor.js": 90,
+          "assets/modules/status/feed-loader.js": 86,
+          "assets/modules/status/form-context.js": 90,
+          "assets/modules/status/translation.js": 82,
+          "assets/modules/notifications/controller.js": 84,
+          "assets/modules/installation/index.js": 39,
+          "assets/modules/notifications/index.js": 39,
+          "assets/modules/search/index.js": 39,
+          "assets/modules/search/global-search.js": 41,
+          "assets/modules/security/index.js": 39,
+          "assets/modules/security/captcha.js": 41,
+          "assets/modules/site/index.js": 39,
+          "assets/modules/site/analytics.js": 41,
+          "assets/modules/site/sidebar-data.js": 41,
+          "assets/modules/site/sticky-sidebars.js": 41,
+          "assets/modules/site/views.js": 43,
+          "assets/modules/site/page-navigation.js": 41,
+          "assets/modules/site/language-suggestion.js": 41,
+          "assets/modules/users/public.js": 39,
+          "assets/modules/users/following.js": 41,
+          "assets/icons.svg": 1,
+          "assets/styles/index.css": 9,
+          "assets/ui/styles/tokens.css": 18,
+          "assets/ui/styles/reset.css": 18,
+          "assets/ui/styles/layout.css": 18,
+          "assets/ui/styles/buttons.css": 18,
+          "assets/ui/styles/cards.css": 18,
+          "assets/ui/styles/check-card.css": 18,
+          "assets/ui/styles/disclosure.css": 18,
+          "assets/ui/styles/visibility.css": 18,
+          "assets/modules/admin/styles/admin-lists.css": 16,
+          "assets/ui/styles/field-inline.css": 18,
+          "assets/ui/styles/fields.css": 18,
+          "assets/modules/security/styles/captcha.css": 10,
+          "assets/ui/styles/alerts.css": 18,
+          "assets/ui/styles/badges.css": 18,
+          "assets/ui/styles/filter-chips.css": 18,
+          "assets/ui/styles/badge-danger.css": 18,
+          "assets/ui/styles/tables.css": 18,
+          "assets/ui/styles/content-images.css": 18,
+          "assets/ui/styles/status-indicators.css": 18,
+          "assets/ui/styles/empty-state.css": 18,
+          "assets/ui/styles/filter-menu.css": 18,
+          "assets/ui/styles/content-images-contain.css": 18,
+          "assets/ui/styles/status-indicator-warning.css": 18,
+          "assets/ui/styles/tables-mobile.css": 18,
+          "assets/ui/styles/check-line.css": 18,
+          "assets/ui/styles/navbar.css": 18,
+          "assets/modules/notifications/styles/notification-nav.css": 10,
+          "assets/modules/status/styles/status-email-notice.css": 10,
+          "assets/modules/users/styles/profile-navigation.css": 17,
+          "assets/modules/notifications/styles/notification-preview.css": 10,
+          "assets/modules/search/styles/global-search.css": 10,
+          "assets/modules/search/styles/global-search-controls.css": 10,
+          "assets/modules/site/styles/public-list-header.css": 10,
+          "assets/modules/status/styles/feed-switch.css": 10,
+          "assets/modules/site/styles/public-layout.css": 10,
+          "assets/modules/status/styles/home-feed.css": 10,
+          "assets/modules/status/styles/home-feed-switch-links.css": 10,
+          "assets/modules/site/styles/public-sidebar.css": 10,
+          "assets/modules/notifications/styles/notifications-page.css": 10,
+          "assets/modules/notifications/styles/notification-items.css": 10,
+          "assets/modules/site/styles/sidebar-lists.css": 10,
+          "assets/modules/status/styles/status-feed.css": 10,
+          "assets/modules/status/styles/composer-loading.css": 10,
+          "assets/modules/status/styles/status-header.css": 11,
+          "assets/modules/status/styles/author-meta.css": 11,
+          "assets/modules/status/styles/status-text.css": 11,
+          "assets/ui/styles/hashtags.css": 18,
+          "assets/modules/status/styles/status-inline-link.css": 11,
+          "assets/ui/styles/inline-link-states.css": 18,
+          "assets/modules/status/styles/status-content.css": 11,
+          "assets/ui/styles/popovers.css": 18,
+          "assets/modules/users/styles/user-menu.css": 10,
+          "assets/modules/status/styles/comment-menu.css": 11,
+          "assets/ui/styles/context-menu-trigger.css": 18,
+          "assets/modules/status/styles/status-menu.css": 11,
+          "assets/ui/styles/context-menu-actions.css": 18,
+          "assets/modules/status/styles/status-editing.css": 12,
+          "assets/ui/styles/avatar.css": 18,
+          "assets/modules/status/styles/status-avatars.css": 11,
+          "assets/ui/styles/avatar-sizes.css": 18,
+          "assets/modules/users/styles/profile-avatar.css": 17,
+          "assets/modules/users/styles/account-security-page.css": 17,
+          "assets/modules/users/styles/account-security-card.css": 17,
+          "assets/modules/users/styles/profile.css": 17,
+          "assets/ui/styles/code-block.css": 18,
+          "assets/modules/users/styles/profile-details.css": 17,
+          "assets/modules/users/styles/avatar-upload.css": 17,
+          "assets/modules/site/styles/public-content-meta.css": 10,
+          "assets/modules/status/styles/status-detail.css": 11,
+          "assets/modules/site/styles/public-sidebar-footer.css": 10,
+          "assets/modules/admin/styles/admin-shell.css": 16,
+          "assets/ui/styles/brand-logo.css": 18,
+          "assets/modules/admin/styles/admin-navigation-and-content.css": 16,
+          "assets/ui/styles/tabs.css": 18,
+          "assets/ui/styles/table-identity.css": 18,
+          "assets/ui/styles/pagination.css": 18,
+          "assets/ui/styles/modal.css": 18,
+          "assets/ui/styles/modal-layout.css": 18,
+          "assets/ui/styles/input-icon.css": 18,
+          "assets/ui/styles/modal-confirm-buttons.css": 18,
+          "assets/modules/installation/styles/install-steps.css": 10,
+          "assets/modules/installation/styles/install-choices.css": 10,
+          "assets/ui/styles/result-list.css": 18,
+          "assets/modules/site/styles/cookie-consent.css": 10,
+          "assets/ui/styles/toasts.css": 18,
+          "assets/ui/styles/mobile-inputs-and-dialogs.css": 18,
+          "assets/ui/styles/loading.css": 18,
+          "assets/modules/status/styles/status-email-notice-mobile.css": 10,
+          "assets/modules/site/styles/navbar-mobile.css": 10,
+          "assets/modules/notifications/styles/notification-badge-mobile.css": 10,
+          "assets/modules/search/styles/global-search-mobile.css": 10,
+          "assets/ui/styles/cards-mobile.css": 18,
+          "assets/modules/site/styles/public-list-header-mobile.css": 10,
+          "assets/modules/status/styles/feed-switch-mobile.css": 10,
+          "assets/modules/status/styles/home-feed-mobile.css": 10,
+          "assets/modules/status/styles/status-content-mobile.css": 11,
+          "assets/modules/users/styles/following-mobile.css": 17,
+          "assets/modules/site/styles/cookie-consent-mobile.css": 10,
+          "assets/ui/styles/containers-mobile.css": 18,
+          "assets/modules/status/styles/status-feed-mobile.css": 10,
+          "assets/modules/admin/styles/admin-content-mobile.css": 16,
+          "assets/modules/status/styles/home-feed-switch-mobile.css": 10,
+          "assets/modules/site/styles/public-list-header-inset-mobile.css": 10,
+          "assets/modules/status/styles/feedback-mobile.css": 10,
+          "assets/ui/styles/section-desktop.css": 18,
+          "assets/ui/styles/pagination-desktop.css": 18,
+          "assets/modules/installation/styles/install-steps-desktop.css": 10,
+          "assets/ui/styles/split-desktop.css": 18,
+          "assets/modules/admin/styles/admin-lists-desktop.css": 16,
+          "assets/ui/styles/field-inline-desktop.css": 18,
+          "assets/ui/styles/modal-confirm-mobile.css": 18,
+          "assets/modules/admin/styles/admin-shell-desktop.css": 16,
+          "assets/ui/styles/grid-desktop.css": 18,
+          "assets/modules/users/styles/profile-layout-desktop.css": 17,
+          "assets/modules/site/styles/sidebar-sticky.css": 10,
+          "assets/modules/users/styles/profile-main-desktop.css": 17,
+          "assets/modules/site/styles/public-layout-desktop.css": 10,
+          "assets/ui/styles/modal-workspace-desktop.css": 18,
+          "assets/ui/styles/reduced-motion.css": 18,
+          "assets/ui/styles/resource-text.css": 18,
+          "assets/modules/site/styles/language.css": 10,
+          "assets/modules/status/styles/embed-preview.css": 10,
+          "assets/modules/site/styles/home-feed-toolbar.css": 10,
+          "assets/ui/styles/tooltip.css": 18,
+          "assets/ui/styles/identity-rows.css": 18,
+          "assets/ui/styles/load-more.css": 18,
+          "assets/embed.css": 3,
+          "assets/embed-frame.js": 3,
+          "assets/embed.js": 3
+        }
+      },
+      "AssetGraph::imports": {
+        "count": 753,
+        "inclusive_ns": 303333500,
+        "paths": {
+          "assets/ui/tooltips.js": 18,
+          "assets/core/lifecycle.js": 18,
+          "assets/ui/toasts.js": 18,
+          "assets/core/dom.js": 19,
+          "assets/core/urls.js": 19,
+          "assets/core/i18n.js": 19,
+          "assets/core/icons.js": 19,
+          "assets/ui/tabs.js": 18,
+          "assets/ui/popovers.js": 18,
+          "assets/ui/image-placeholders.js": 18,
+          "assets/ui/ajax-bindings.js": 16,
+          "assets/ui/list-navigation.js": 16,
+          "assets/core/navigation.js": 18,
+          "assets/core/request-lifecycle.js": 18,
+          "assets/core/api-client.js": 19,
+          "assets/core/modules.js": 18,
+          "assets/ui/confirm-actions.js": 16,
+          "assets/ui/dialogs.js": 16,
+          "assets/ui/dialog-history.js": 16,
+          "assets/core/component-renderer.js": 18,
+          "assets/ui/form-state.js": 16,
+          "assets/ui/form-requests.js": 18,
+          "assets/ui/component-builders.js": 16,
+          "assets/ui/filters.js": 16,
+          "assets/core/dates.js": 16,
+          "assets/modules/admin/index.js": 14,
+          "assets/modules/admin/navigation.js": 14,
+          "assets/modules/scheduler/index.js": 4,
+          "assets/modules/scheduler/controller.js": 4,
+          "assets/ui/content-updates.js": 16,
+          "assets/modules/settings/index.js": 14,
+          "assets/modules/settings/controller.js": 14,
+          "assets/ui/image-uploads.js": 16,
+          "assets/modules/settings/field-presentation.js": 14,
+          "assets/modules/users/index.js": 16,
+          "assets/modules/users/user-menu.js": 16,
+          "assets/modules/users/avatar-editor.js": 16,
+          "assets/modules/users/controller.js": 16,
+          "assets/ui/avatar-rendering.js": 16,
+          "assets/modules/users/email-availability.js": 16,
+          "assets/bootstrap.js": 18,
+          "assets/modules/moderation/index.js": 2,
+          "assets/modules/moderation/controller.js": 2,
+          "assets/modules/status/media-preview.js": 2,
+          "assets/modules/status/media.js": 6,
+          "assets/modules/status/controller.js": 6,
+          "assets/modules/updates/index.js": 2,
+          "assets/modules/users/admin.js": 2,
+          "assets/modules/bots/index.js": 2,
+          "assets/modules/bots/controller.js": 2,
+          "assets/modules/bots/source-preview.js": 2,
+          "assets/modules/bots/workspace.js": 2,
+          "assets/modules/status/index.js": 4,
+          "assets/modules/status/form-actions.js": 4,
+          "assets/modules/status/comments.js": 4,
+          "assets/modules/status/editor.js": 4,
+          "assets/modules/status/form-context.js": 4,
+          "assets/modules/status/feed-loader.js": 4,
+          "assets/modules/notifications/controller.js": 4,
+          "assets/modules/status/translation.js": 4,
+          "assets/modules/installation/index.js": 2,
+          "assets/modules/notifications/index.js": 2,
+          "assets/modules/search/index.js": 2,
+          "assets/modules/search/global-search.js": 2,
+          "assets/modules/security/index.js": 2,
+          "assets/modules/security/captcha.js": 2,
+          "assets/modules/site/index.js": 2,
+          "assets/modules/site/analytics.js": 2,
+          "assets/modules/site/sidebar-data.js": 2,
+          "assets/modules/site/views.js": 2,
+          "assets/modules/site/sticky-sidebars.js": 2,
+          "assets/modules/site/page-navigation.js": 2,
+          "assets/modules/site/language-suggestion.js": 2,
+          "assets/modules/users/public.js": 2,
+          "assets/modules/users/following.js": 2
+        }
+      },
+      "AssetGraph::order": {
+        "count": 28,
+        "inclusive_ns": 305567200,
+        "paths": []
+      },
+      "Components::select": {
+        "count": 225,
+        "inclusive_ns": 96786600,
+        "paths": []
+      },
+      "ClientAssets::definitions": {
+        "count": 225,
+        "inclusive_ns": 98291000,
+        "paths": {
+          "/admin/site-health": 25,
+          "/admin/moderation": 25,
+          "/admin/updates": 25,
+          "/admin/users": 25,
+          "/admin/bots": 25,
+          "/admin/cron": 25,
+          "/install": 25,
+          "/admin": 25,
+          "/": 25
+        }
+      },
+      "Components::labels": {
+        "count": 216,
+        "inclusive_ns": 78944100,
+        "paths": []
+      },
+      "ClientAssets::catalog": {
+        "count": 216,
+        "inclusive_ns": 204151600,
+        "paths": {
+          "/admin/site-health": 24,
+          "/admin/moderation": 24,
+          "/admin/updates": 24,
+          "/admin/users": 24,
+          "/admin/bots": 24,
+          "/admin/cron": 24,
+          "/install": 24,
+          "/admin": 24,
+          "/": 24
+        }
+      },
+      "AssetGraph::javascript": {
+        "count": 10,
+        "inclusive_ns": 31199800,
+        "paths": {
+          "assets/core/component-renderer.js": 1,
+          "assets/bootstrap.js": 9
+        }
+      },
+      "Minifier::minifyJavaScript": {
+        "count": 12,
+        "inclusive_ns": 2284282100,
+        "paths": []
+      },
+      "ClientAssets::componentScript": {
+        "count": 9,
+        "inclusive_ns": 5585900,
+        "paths": {
+          "/admin/site-health": 1,
+          "/admin/moderation": 1,
+          "/admin/updates": 1,
+          "/admin/users": 1,
+          "/admin/bots": 1,
+          "/admin/cron": 1,
+          "/install": 1,
+          "/admin": 1,
+          "/": 1
+        }
+      },
+      "AssetGraph::stylesheet": {
+        "count": 9,
+        "inclusive_ns": 165542700,
+        "paths": {
+          "assets/ui/styles/load-more.css": 9
+        }
+      },
+      "Minifier::minifyCss": {
+        "count": 10,
+        "inclusive_ns": 143672800,
+        "paths": []
+      }
+    },
+    "archive_byte_parity": true,
+    "method": "One separate run with scratch copies of four classes loaded through a prepended audit autoloader. Inclusive timings overlap between methods; they must not be added. Original sources unchanged."
+  },
+  "limitations": [
+    "One Windows workstation; uncontrolled OS caches and concurrent system load; small sequential sample, not p95 or a Linux/CI claim.",
+    "Profiled timings include instrumentation overhead. Control run proves byte parity, not a precise overhead estimate.",
+    "Deep method times are inclusive and overlap.",
+    "Ephemeral audit signing keys; these outputs are not production-trusted releases.",
+    "ZIP archive backend measured was ZipArchive, not PharData fallback.",
+    "No optimization to production implementation was applied."
+  ]
+}

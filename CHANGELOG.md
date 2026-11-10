@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.22.2 - 2026-11-11
+
+- Reduce release-build work with build-scoped asset/import snapshots, component and translation-key selection, one JS declaration scan per source, and deduplicated minification. Fresh builds still validate all modal, popover, UI and language contracts; caches are discarded after each build, including failures.
+- Add `--both` to prepare update and installation packages from one compilation. Preserve standalone commands, generated contents, signatures and reproducible ZIP metadata; optimize timestamp patching for both ZIP backends.
+- Hash and package the same captured source bytes, check archive/manifest/signature writes, and publish completed artifacts from private work directories with rollback of previous output on publication failure.
+- Organize documentation, tools and tests by responsibility, remove obsolete migration reports and acceptance tooling, update callers and preserve existing regression coverage. Add build-cache invalidation, ZIP backend, combined-package and publication checks.
+- Ship updated shared asset/component classes and public documentation in a signed patch release. No database migration or configuration change is required; updates remain supported from 5.16.0.
+
 ## 5.22.1 - 2026-11-04
 
 - Skip RSS items whose normalized article URL is already linked from a post by the same bot, across feeds and including queued posts. This protects against changed GUIDs and pruned GUID history before downloading images or preparing link metadata.
@@ -246,7 +254,7 @@
 - Replace HTTP calls to `/scheduled-tasks.php` with `POST /api/scheduler/executions`, using `Authorization: Bearer TOKEN`. Pass `task` and an optional `options` object in JSON. The old endpoint returns 410; query-string tokens and alternate token headers are no longer accepted.
 - Use authenticated `GET /api/scheduler/health` for health checks. Generate or rotate credentials explicitly through the administrator API; visiting scheduler settings no longer creates a token.
 - CLI commands remain unchanged, but machine-readable output now uses the common API envelope: successful task results are in `data.tasks`, and failures are in `error.details` with exit codes 1 (execution failure) or 2 (invalid arguments).
-- Update callers of legacy page POST URLs to the canonical endpoints in `docs/api.md`. HTML pages and public feeds, media and discovery documents retain their native read-only formats.
+- Update callers of legacy page POST URLs to the canonical endpoints in `docs/reference/api.md`. HTML pages and public feeds, media and discovery documents retain their native read-only formats.
 
 ## 4.11.0 - 2026-10-28
 
@@ -370,7 +378,7 @@
 
 ## 4.0.0 - 2026-10-26
 
-- Breaking: normalize API outcomes around top-level `code`, `params` and a readable fallback `message`; replace `error.code` and string-only validation errors with structured field issues. Update external clients using `docs/api.md`.
+- Breaking: normalize API outcomes around top-level `code`, `params` and a readable fallback `message`; replace `error.code` and string-only validation errors with structured field issues. Update external clients using `docs/reference/api.md`.
 - Return domain values, counts, timestamps and content from APIs; move translated labels, option text, notification icons and accessible names into shared module-owned presentation components.
 - Move translations beside their modules, declare client message dependencies explicitly and compile OPcache-compatible PHP catalogs together with scoped, content-hashed client assets. Keep email templates server-only.
 - Share single-pass `{name}` interpolation, per-key English/base/regional fallback and Czech/English plural rules across PHP, JavaScript and email templates.
@@ -413,7 +421,7 @@
 
 ## 3.0.0 - 2026-10-26
 
-- Breaking: replace legacy API endpoints and HTML fragments with module-owned JSON APIs under `/api/users`, `/api/statuses`, `/api/notifications` and other domain prefixes. Integrations must use the new contract in `docs/api.md`.
+- Breaking: replace legacy API endpoints and HTML fragments with module-owned JSON APIs under `/api/users`, `/api/statuses`, `/api/notifications` and other domain prefixes. Integrations must use the new contract in `docs/reference/api.md`.
 - Share declarative components between server rendering and AJAX rendering, including administration, status dialogs, profile editing, avatars and sidebar content.
 - Distribute scoped component definitions and translations as external content-hashed assets instead of inline JSON catalogs; unify PHP and JavaScript translation fallback and literal parameter substitution.
 

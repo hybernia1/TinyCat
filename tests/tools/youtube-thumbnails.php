@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/../../tools/youtube-thumbnail-cleanup.php';
+require __DIR__ . '/../../tools/maintenance/youtube-thumbnail-cleanup.php';
 if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) { echo "SKIP YouTube cleanup: SQLite unavailable\n"; exit; }
 $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $pdo->exec('CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT, image_url TEXT, title TEXT)');

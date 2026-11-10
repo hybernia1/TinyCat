@@ -5,12 +5,12 @@ const {execFileSync,spawn} = require('node:child_process');
 const browser = [process.env.TINYCAT_TEST_CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].filter(Boolean).find(file => fs.existsSync(file));
 if (!browser) { console.log('SKIP native form validation: set TINYCAT_TEST_CHROME'); process.exit(0); }
 const root = path.resolve(__dirname, '../..'), php = process.env.TINYCAT_TEST_PHP || 'php';
-const assets = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/asset-graph-fixture.php'),'--validation'], {encoding:'utf8',maxBuffer:8e6}));
-const templates = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/component-parity.php'),'--templates'], {encoding:'utf8',maxBuffer:8e6}));
+const assets = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--validation'], {encoding:'utf8',maxBuffer:8e6}));
+const templates = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--templates'], {encoding:'utf8',maxBuffer:8e6}));
 const source = assets.map(asset => asset.source).join('\n');
-const css = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/asset-graph-fixture.php'),'--styles'], {encoding:'utf8',maxBuffer:8e6}));
-const fixture = fs.readFileSync(path.join(__dirname,'form-validation-fixture.js'),'utf8');
-const settingsSchema = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/component-parity.php'),'--settings'], {encoding:'utf8',maxBuffer:8e6}));
+const css = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/asset-graph-fixture.php'),'--styles'], {encoding:'utf8',maxBuffer:8e6}));
+const fixture = fs.readFileSync(path.join(__dirname, 'fixtures/form-validation-fixture.js'),'utf8');
+const settingsSchema = JSON.parse(execFileSync(php, [path.join(root,'tests/presentation/fixtures/component-parity.php'),'--settings'], {encoding:'utf8',maxBuffer:8e6}));
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(),'tinycat-form-validation-'));
 let server;
 (async function () {

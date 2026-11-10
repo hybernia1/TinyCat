@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../cache-isolation.php';
+require_once __DIR__ . '/../support/cache-isolation.php';
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
@@ -58,7 +58,7 @@ try {
     file_put_contents($keyPath, base64_encode($secretKey) . "\n", LOCK_EX);
     $version = \TinyCat\Support\Version::CURRENT;
     $command = escapeshellarg(PHP_BINARY)
-        . ' ' . escapeshellarg($root . '/tools/build-update.php')
+        . ' ' . escapeshellarg($root . '/tools/release/build-update.php')
         . ' --version=' . escapeshellarg($version)
         . ' --allow-dirty'
         . (in_array('--fresh-install', $argv, true) ? ' --fresh-install' : ' --without-migrations')
@@ -88,12 +88,44 @@ try {
     }
 
     $freshInstall = in_array('--fresh-install', $argv, true);
+    if (!$freshInstall) {
+        $bothOutput = $temporaryRoot . '/both';
+        $bothCommand = str_replace('--output=' . escapeshellarg($output), '--output=' . escapeshellarg($bothOutput), $command) . ' --both';
+        exec($bothCommand . ' 2>&1', $bothLog, $bothExit);
+        if ($bothExit !== 0) { throw new RuntimeException('Combined artifact build failed: ' . implode(' ', $bothLog)); }
+        foreach (['update' => 'tinycat-update', 'install' => 'tinycat-install'] as $variant => $manifestName) {
+            $json = (string) file_get_contents($bothOutput . '/' . $variant . '/' . $manifestName . '.json');
+            $combined = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+            $signature = base64_decode(trim((string) file_get_contents($bothOutput . '/' . $variant . '/' . $manifestName . '.sig')), true);
+            if (!is_string($signature) || !sodium_crypto_sign_verify_detached($signature, $json, $publicKey)) { throw new RuntimeException('Invalid combined artifact signature.'); }
+            if ($variant === 'update' && hash_file('sha256', $output . '/tinycat-' . $version . '.zip') !== $combined['sha256']) { throw new RuntimeException('Combined update differs from standalone update.'); }
+            if ($variant === 'install') {
+                if ($combined['migrations'] !== [] || $combined['delete'] !== []) { throw new RuntimeException('Combined installer includes update operations.'); }
+                $update = json_decode((string) file_get_contents($bothOutput . '/update/tinycat-update.json'), true, 512, JSON_THROW_ON_ERROR);
+                $expected = array_filter($update['files'], static fn (string $path): bool => !str_starts_with($path, 'migrations/'), ARRAY_FILTER_USE_KEY);
+                if ($combined['files'] !== $expected) { throw new RuntimeException('Combined installer file hashes differ.'); }
+            }
+        }
+    }
+
     $packageName = 'tinycat-' . $version . ($freshInstall ? '-install' : '') . '.zip';
     $manifestName = $freshInstall ? 'tinycat-install' : 'tinycat-update';
     $package = $output . '/' . $packageName;
     $manifestPath = $output . '/' . $manifestName . '.json';
     $signaturePath = $output . '/' . $manifestName . '.sig';
     $repeatedPackage = $repeatedOutput . '/' . $packageName;
+    if (!$freshInstall) {
+        $publishedHashes = [];
+        foreach ([$package, $manifestPath, $signaturePath] as $publishedPath) { $publishedHashes[$publishedPath] = hash_file('sha256', $publishedPath); }
+        $previousEpoch = getenv('SOURCE_DATE_EPOCH');
+        putenv('SOURCE_DATE_EPOCH=invalid');
+        try { exec($command . ' 2>&1', $failedBuildOutput, $failedBuildExit); }
+        finally { putenv($previousEpoch === false ? 'SOURCE_DATE_EPOCH' : 'SOURCE_DATE_EPOCH=' . $previousEpoch); }
+        if ($failedBuildExit === 0) { throw new RuntimeException('Invalid archive epoch unexpectedly succeeded.'); }
+        foreach ($publishedHashes as $publishedPath => $hash) {
+            if (hash_file('sha256', $publishedPath) !== $hash) { throw new RuntimeException('Failed build replaced a previously published artifact.'); }
+        }
+    }
     $manifestJson = (string) file_get_contents($manifestPath);
     $manifest = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
     if (($manifest['minimum_version'] ?? null) !== \TinyCat\Support\Version::MINIMUM_UPDATE) {
@@ -124,7 +156,7 @@ try {
     }
 
     if (!in_array('--fresh-install', $argv, true)) {
-        $retiredFiles = json_decode((string) file_get_contents($root . '/tools/update-deletions.json'), true, 512, JSON_THROW_ON_ERROR);
+        $retiredFiles = json_decode((string) file_get_contents($root . '/tools/release/update-deletions.json'), true, 512, JSON_THROW_ON_ERROR);
         foreach ($retiredFiles as $release => $paths) {
             if (version_compare((string) $release, $manifest['minimum_version'], '<=') || version_compare((string) $release, $version, '>')) { continue; }
             foreach ($paths as $path) {
@@ -183,12 +215,12 @@ try {
     }
 
     foreach ($names as $name) {
-        if (preg_match('~^docs/(?:translation-refactor|development/|baseline-|performance(?:[.-]|$)|release-2\.0\.26-monolith-plan|stage-[0-9]+)~', $name) === 1) {
+        if (str_starts_with($name, 'docs/') && !in_array($name, ['docs/reference/api.md', 'docs/operations/updates.md'], true)) {
             $failures[] = "Internal release evidence in artifact: {$name}";
         }
     }
 
-    foreach (['App/Support/Version.php', 'App/Support/Localization.php', 'App/Updates/Manager.php', 'App/Bots/Importer.php', 'App/Bots/Administration.php', 'App/Bots/Pages.php', 'index.php', 'scheduled-tasks.php'] as $required) {
+    foreach (['App/Support/Version.php', 'App/Support/Localization.php', 'App/Updates/Manager.php', 'App/Bots/Importer.php', 'App/Bots/Administration.php', 'App/Bots/Pages.php', 'index.php', 'scheduled-tasks.php', 'docs/reference/api.md', 'docs/operations/updates.md'] as $required) {
         if (!in_array($required, $names, true)) {
             $failures[] = "Required modular runtime file missing from artifact: {$required}";
         }

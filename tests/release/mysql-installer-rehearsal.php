@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../cache-isolation.php';
+require_once __DIR__ . '/../support/cache-isolation.php';
 
 $workspaceRoot = dirname(__DIR__, 2);
 $options = getopt('', ['root::']);
@@ -297,7 +297,7 @@ try {
     $assert(is_string($configHash) && hash_file('sha256', $configPath) === $configHash, 'Schema rehearsal does not replace application configuration.');
 
     // Run the real importer against the current fresh schema, including interrupted resume.
-    foreach (['Options', 'DeterministicGenerator', 'ProgressReporter', 'CheckpointStore', 'BatchWriter', 'Schema', 'UiFixtures', 'DemoImporter'] as $tool) { require_once $workspaceRoot . '/tools/demo-import/' . $tool . '.php'; }
+    foreach (['Options', 'DeterministicGenerator', 'ProgressReporter', 'CheckpointStore', 'BatchWriter', 'Schema', 'UiFixtures', 'DemoImporter'] as $tool) { require_once $workspaceRoot . '/tools/data/demo-import/' . $tool . '.php'; }
     mkdir($demoRoot, 0700);
     file_put_contents($demoRoot . '/config.php', "<?php return ['database' => []];");
     mkdir($demoRoot . '/storage/cache/assets', 0775, true);

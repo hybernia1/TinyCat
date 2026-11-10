@@ -11,13 +11,16 @@
     },
     "scripts": {
         "analyse": "phpstan analyse --configuration=phpstan.neon --no-progress",
-        "style": "php tools/style-check.php",
+        "style": "php tools/quality/style-check.php",
         "test": "php tests/run.php",
         "security": [
-            "php tools/security-check.php",
+            "php tools/quality/security-check.php",
             "composer audit --locked --no-interaction"
         ],
-        "preflight": "php tools/preflight.php"
+        "preflight": [
+            "Composer\\Config::disableProcessTimeout",
+            "php tools/preflight.php"
+        ]
     },
     "config": {
         "allow-plugins": false,

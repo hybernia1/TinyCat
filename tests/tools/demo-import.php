@@ -7,10 +7,10 @@ use \TinyCat\Tools\DemoImport\Options;
 use \TinyCat\Tools\Performance\ComparisonOptions;
 
 $root = dirname(__DIR__, 2);
-require_once $root . '/tools/demo-import/Options.php';
-require_once $root . '/tools/demo-import/DeterministicGenerator.php';
-require_once $root . '/tools/demo-import/CheckpointStore.php';
-require_once $root . '/tools/performance/ComparisonOptions.php';
+require_once $root . '/tools/data/demo-import/Options.php';
+require_once $root . '/tools/data/demo-import/DeterministicGenerator.php';
+require_once $root . '/tools/data/demo-import/CheckpointStore.php';
+require_once $root . '/tools/performance/lib/ComparisonOptions.php';
 
 $expect = static function (bool $condition, string $message): void {
     if (!$condition) {

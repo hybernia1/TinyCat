@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/cache-isolation.php';
+require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/autoload.php';
-$optimize = require $root . '/tools/optimize-links.php';
+$optimize = require $root . '/tools/maintenance/optimize-links.php';
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
     $checks++;

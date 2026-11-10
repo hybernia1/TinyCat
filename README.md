@@ -4,7 +4,7 @@ TinyCat is a small, self-hosted social publishing application written in plain P
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **5.22.1**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+Current release: **5.22.2**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -12,18 +12,18 @@ Usernames support 2–32 letters (including accents), numbers, dots, hyphens and
 
 - Public and following-only feeds with incremental loading.
 - Posts with hashtags, mentions, likes, threaded comments, comment likes, and notifications.
-- Shared [post text rules](docs/api.md#post-text-preparation) for manual posts, edits and imports, with a backed-up CLI cleanup for historical posts.
+- Shared [post text rules](docs/reference/api.md#post-text-preparation) for manual posts, edits and imports, with a backed-up CLI cleanup for historical posts.
 - Profiles with avatars, bios, language and appearance preferences, activity statistics, and following lists.
 - Interface, administration, installer and email translations in Czech, English, German, Spanish, French, Portuguese, Russian, Italian, Dutch, Polish, Turkish and Ukrainian; browser language detection initializes new account preferences.
 - Explicit public language URLs such as `/pl/`, `/pl/status/123` and `/pl/privacy`, with a language selector, localized policy discovery and canonical original posts.
 - Search across posts, users, tags, and metadata extracted from linked pages.
 - HTML5 link previews with Open Graph, video embeds, and cached metadata.
-- Direct [YouTube thumbnails](docs/updates.md#youtube-thumbnails) with small mobile and medium desktop image sources.
+- Direct [YouTube thumbnails](docs/operations/updates.md#youtube-thumbnails) with small mobile and medium desktop image sources.
 - Optional email recovery and localized email notifications through PHP mail or SMTP.
 - Administration for users, site and email-delivery settings, scheduled tasks, moderation reports, account muting, and blocked domains.
 - Built-in passwordless bot accounts with scheduled RSS and Atom imports.
 - Author and tag feeds, XML sitemaps, `robots.txt`, `llms.txt`, and a generated web app manifest.
-- English and Czech interfaces with mobile-first CSS and lightweight JavaScript.
+- Mobile-first CSS and lightweight JavaScript.
 
 ## Requirements
 
@@ -87,7 +87,7 @@ exposed directly to the public internet.
 Choose **Embed post** on a public post to open the standard modal with a live
 preview and a copyable iframe snippet. TinyCat also provides oEmbed JSON/XML discovery so compatible editors can
 embed the original post URL. The card includes the author avatar, text, attached images, link previews and
-click-to-load audio/video players, with no visitor session or account controls. See [the embedding API](docs/api.md#embedding-public-posts-oembed-10)
+click-to-load audio/video players, with no visitor session or account controls. See [the embedding API](docs/reference/api.md#embedding-public-posts-oembed-10)
 for endpoint details and WordPress configuration.
 
 ## Installation
@@ -99,7 +99,7 @@ for endpoint details and WordPress configuration.
 5. Open `/install` and select a language.
 6. Enter the database connection, create the schema, and create the first administrator account.
 
-The installer creates the complete TinyCat 2.x schema and writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root only needs to remain writable when web updates are enabled.
+The installer creates the current TinyCat schema and writes `config.php`, which contains the database credentials and is ignored by Git. Once installation is complete, the project root only needs to remain writable when web updates are enabled.
 
 Use HTTPS in production. The supplied Apache rules prevent direct web access to `config.php`, `App/`, `Extensions/`, `lang/`, `migrations/`, `tests/`, `tools/`, and private `storage/` content; equivalent protection is required if the application is adapted to another web server.
 
@@ -113,7 +113,7 @@ Administrators can check and install signed stable releases under **Admin → Up
 
 Before applying files, TinyCat enables maintenance mode and creates a rollback snapshot below `storage/updates/backups/`. It contains only application files that will change or be removed; a database backup is created only when the release has migrations that still need to be applied. Updates never overwrite `config.php`, `storage/`, or `uploads/`. The web-server user needs write access to managed application files while an update is installed; deployments that keep source code read-only can continue to deploy release assets manually.
 
-Database changes are versioned PHP migrations recorded in `schema_migrations`. Fresh installations always receive the current schema directly; migrations exist only to move already running installations forward. See [`docs/updates.md`](docs/updates.md) for package creation, signing, publishing, recovery, and migration rules.
+Database changes are versioned PHP migrations recorded in `schema_migrations`. Fresh installations always receive the current schema directly; migrations exist only to move already running installations forward. See [`docs/operations/updates.md`](docs/operations/updates.md) for package creation, signing, publishing, recovery, and migration rules.
 
 ## Bots
 
@@ -121,7 +121,7 @@ Bots are included in TinyCat. Create passwordless accounts under **Admin → Bot
 
 TinyCat 2.1 removes custom pages and the extension system, including the store and extension APIs. Existing Bots accounts, sources, posts and import history are adopted in place by the core update migration. Custom pages have no conversion migration. Legacy files under `Extensions/` are never loaded and remain blocked from web access; no extension installation or activation is required.
 
-The 3.0.0 update removes the remaining extension settings and extension migration metadata without changing bot data. API routes now share one explicit route table, access and CSRF checks, and JSON response handling. See [`docs/api.md`](docs/api.md) for the API contract.
+The 3.0.0 update removes the remaining extension settings and extension migration metadata without changing bot data. API routes now share one explicit route table, access and CSRF checks, and JSON response handling. See [`docs/reference/api.md`](docs/reference/api.md) for the API contract.
 
 ## Scheduled tasks
 
@@ -146,7 +146,7 @@ Routine database cleanup runs at most once per hour and every task has its own d
 
 Cleanup also removes avatars belonging to deleted users after 24 hours, known abandoned upload/cache temporary files after 48 hours, and obsolete update work files under the updater lock. Avatar recovery backups and unrelated files are preserved. Rate-limit buckets are retained for at least 24 hours and twice the longest policy window. Image and cache scans checkpoint their position and bound inspected entries as well as deletions; `has_more` can therefore mean that inspection is still in progress, even when nothing was removed. Directory enumeration can revisit entries after concurrent filesystem changes; subsequent complete passes reconcile them.
 
-Update backup retention keeps at least the three newest confirmed complete backups and all backups less than 30 days old. Maintenance mode and an active updater prevent update-file cleanup. Incomplete, failed and legacy backups without a completion marker are preserved. See [update retention](docs/updates.md) for configuration.
+Update backup retention keeps at least the three newest confirmed complete backups and all backups less than 30 days old. Maintenance mode and an active updater prevent update-file cleanup. Incomplete, failed and legacy backups without a completion marker are preserved. See [update retention](docs/operations/updates.md) for configuration.
 
 The administrator page **Site health** (`/admin/site-health`) shows the latest diagnostic, freshness, recommendations and the last 20 inspections. Schedule `site-health` once a day, for example `php scheduled-tasks.php --task=site-health` or the HTTPS Basic URL `/api/scheduler/triggers/site-health`. The existing POST/Bearer scheduler API accepts `task=site-health` too. Repeated scheduled calls on the same application-local calendar day are skipped. Manual checks use `POST /api/site-health/checks` with administrator authentication and CSRF, and can run again immediately. Every completed check sends an in-app notification to each active administrator; no email is sent. The new task has no options or database migration.
 
@@ -154,7 +154,7 @@ Checks cover database connectivity, a cache round trip and configured cache avai
 
 An anonymous HTTP GET also measures the configured `app.url` homepage: TTFB, elapsed request time, DNS/TCP/TLS setup, HTTP status, received bytes and transfer completeness. Responses and headers are discarded. No session, cookies or authorization are forwarded; redirects and proxy use are disabled and TLS certificates remain verified. This server-side sample is not a visitor percentile or a browser page-load measurement. Self-requests need another available web worker; prefer running the health task from CLI on a single-worker installation.
 
-Set the canonical website address in **Admin ? Settings ? Site ? Website URL**. This stored `app.url` overrides the server configuration for both absolute links and health probes. An empty override falls back to `config.php`. Only HTTP(S) URLs without credentials, query strings or fragments are accepted.
+Set the canonical website address in **Admin → Settings → Site → Website URL**. This stored `app.url` overrides the server configuration for both absolute links and health probes. An empty override falls back to `config.php`. Only HTTP(S) URLs without credentials, query strings or fragments are accepted.
 
 Configure `health.http` in `config.php`: `enabled` (default `true`), `ttfb_warning_ms` (`800`), `ttfb_critical_ms` (`1800`), `total_warning_ms` (`2000`), `total_critical_ms` (`4000`) and `timeout_ms` (`5000`, clamped to 1000–30000). A threshold is exceeded strictly above its value. Threshold ordering is normalized. HTTP 4xx/5xx, transport failures, timeouts and incomplete oversized responses are critical; unfollowed redirects are warnings. Missing configuration is explicitly unmeasured. Timings and the limits used are stored together in run history, so changing limits never rewrites older results.
 
@@ -188,6 +188,9 @@ safety limits, and commands.
 
 ## Development quality gates
 
+See the [documentation index](docs/README.md) for development contracts,
+API reference, maintenance procedures and performance tooling.
+
 Production does not use Composer or load `vendor/`. Composer installs only the
 development analyzer used by the local and CI preflight:
 
@@ -203,11 +206,11 @@ The preflight validates Composer metadata and advisories, deterministic source
 style, PHP 8.4 syntax, PHPStan level 8, repository secrets and managed update
 paths. It then runs the monolith boundary, HTML, view, route, archived query,
 cache, minifier, bots, updater, cron, importer, signed artifact, rollback
-and restart-safe MySQL installer suites. Module boundaries and the endpoint/function
-migration map are documented in `docs/development/modular-api-inventory.md`.
+and restart-safe MySQL installer suites. Module ownership and the HTTP transport
+are documented in [the module guide](docs/development/modules.md).
 
-PHPStan covers all production PHP against the frozen 2.0.25 legacy baseline.
-New findings fail the build; the baseline must not grow to make a change pass.
+PHPStan checks production PHP at level 8 using `phpstan.neon`.
+New findings fail the build.
 Tests and development tools are excluded from signed production packages.
 
 ## Project layout
@@ -232,4 +235,4 @@ Copyright (C) 2026 TinyCat contributors.
 
 TinyCat is licensed solely under the [GNU Affero General Public License v3.0 or later](LICENSE) (`AGPL-3.0-or-later`), with no permissive or proprietary alternative license. This strong copyleft license requires modified versions offered as a network service to provide their Corresponding Source to the service's users under the same license.
 
-External content links use content-bound API navigation. Configure UTM source, medium and optional campaign under **Admin ? Settings ? Analytics**. Source defaults to the configured website hostname and medium to `referral`; existing UTM values are preserved. This adds attribution without recording clicks or user identifiers.
+External content links use content-bound API navigation. Configure UTM source, medium and optional campaign under **Admin → Settings → Analytics**. Source defaults to the configured website hostname and medium to `referral`; existing UTM values are preserved. This adds attribution without recording clicks or user identifiers.

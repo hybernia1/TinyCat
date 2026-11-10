@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../cache-isolation.php';
+require_once __DIR__ . '/../support/cache-isolation.php';
 
 $root = dirname(__DIR__, 2);
-require_once $root . '/tools/monolith-inventory.php';
+require_once $root . '/tools/quality/monolith-inventory.php';
 
 $inventory = tc_monolith_inventory($root);
 $checks = 0;

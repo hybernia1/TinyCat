@@ -22,11 +22,11 @@ $php = escapeshellarg(PHP_BINARY);
 $commands = [
     'Composer metadata' => 'composer validate --strict --no-interaction',
     'Dependency advisories' => 'composer audit --locked --no-interaction',
-    'Deterministic code style' => $php . ' ' . escapeshellarg($root . '/tools/style-check.php'),
-    'Translation catalogs and client declarations' => $php . ' ' . escapeshellarg($root . '/tools/check-translations.php'),
-    'PHP 8.4 lint' => $php . ' ' . escapeshellarg($root . '/tools/php-lint.php'),
+    'Deterministic code style' => $php . ' ' . escapeshellarg($root . '/tools/quality/style-check.php'),
+    'Translation catalogs and client declarations' => $php . ' ' . escapeshellarg($root . '/tools/quality/check-translations.php'),
+    'PHP 8.4 lint' => $php . ' ' . escapeshellarg($root . '/tools/quality/php-lint.php'),
     'PHPStan level 8' => $php . ' ' . escapeshellarg($root . '/vendor/bin/phpstan') . ' analyse --configuration=' . escapeshellarg($root . '/phpstan.neon') . ' --no-progress',
-    'Repository security' => $php . ' ' . escapeshellarg($root . '/tools/security-check.php'),
+    'Repository security' => $php . ' ' . escapeshellarg($root . '/tools/quality/security-check.php'),
     'Monolith boundaries, behavior, route, release and query-baseline tests' => $php . ' ' . escapeshellarg($root . '/tests/run.php'),
 ];
 

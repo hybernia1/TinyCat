@@ -1,0 +1,74 @@
+{
+  "version_during_comparison": "5.22.1",
+  "runs": [
+    {
+      "name": "candidate-update",
+      "total_ms": 3305.4793,
+      "peak_bytes": 60817408
+    },
+    {
+      "name": "candidate-install",
+      "total_ms": 3415.3299,
+      "peak_bytes": 60817408
+    },
+    {
+      "name": "candidate-both",
+      "total_ms": 4636.0621,
+      "peak_bytes": 60817408
+    }
+  ],
+  "changed_archive_members": [
+    "App/Support/AssetGraph.php",
+    "App/Support/ClientAssets.php",
+    "App/Support/Components.php"
+  ],
+  "generated_files_byte_identical": true,
+  "combined_matches_standalone": true,
+  "signatures_verified": true,
+  "caveat": "Small sequential local sample; audit baseline cache and load uncontrolled. No cross-machine speed claim.",
+  "paired_runs": [
+    {
+      "name": "paired-baseline-a",
+      "baseline": true,
+      "both": false,
+      "total_ms": 11664.7996,
+      "peak_bytes": 62914560,
+      "sha256": "d8adb28039e364564aae7a455ce8ffe0fe2e26274677adce5f4c745c638b6e2a"
+    },
+    {
+      "name": "paired-candidate-a",
+      "baseline": false,
+      "both": false,
+      "total_ms": 4064.4998,
+      "peak_bytes": 60817408,
+      "sha256": "d8adb28039e364564aae7a455ce8ffe0fe2e26274677adce5f4c745c638b6e2a"
+    },
+    {
+      "name": "paired-baseline-b",
+      "baseline": true,
+      "both": false,
+      "total_ms": 11865.2774,
+      "peak_bytes": 62914560,
+      "sha256": "d8adb28039e364564aae7a455ce8ffe0fe2e26274677adce5f4c745c638b6e2a"
+    },
+    {
+      "name": "paired-candidate-b",
+      "baseline": false,
+      "both": false,
+      "total_ms": 3291.0613,
+      "peak_bytes": 60817408,
+      "sha256": "d8adb28039e364564aae7a455ce8ffe0fe2e26274677adce5f4c745c638b6e2a"
+    },
+    {
+      "name": "paired-candidate-both",
+      "baseline": false,
+      "both": true,
+      "total_ms": 5212.373,
+      "peak_bytes": 60817408,
+      "sha256": "d8adb28039e364564aae7a455ce8ffe0fe2e26274677adce5f4c745c638b6e2a"
+    }
+  ],
+  "paired_method": "Alternating original compiler/validator/four classes from a1fa193 and current pipeline; both package the same current source bytes at version 5.22.1. Separate PHP processes, same epoch, memory-only audit signer. Cache and machine load uncontrolled.",
+  "paired_archive_byte_parity": true,
+  "median_speedup": 3.1989506551716365
+}

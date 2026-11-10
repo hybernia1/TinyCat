@@ -1,6 +1,6 @@
 "use strict";
 const assert = require("node:assert/strict");
-const setup = require("./list-fixture.cjs");
+const setup = require("./fixtures/list-fixture.cjs");
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const response = value => ({ data: { items: [value], filters: { q: "active", bot: "3" } }, meta: { pagination: { per_page: 10, page: 2 } } });
 

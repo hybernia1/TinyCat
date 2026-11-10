@@ -1,0 +1,1450 @@
+{
+  "audit_date": "2026-11-10",
+  "head": "a1fa193",
+  "scope": "Tools present before adding the audit index; working tree includes previous documentation cleanup. Literal references are hints, not proof of reachability. Dynamic requires and CLI use are inspected separately.",
+  "files": [
+    {
+      "path": "tools/aggregate-acceptance.php",
+      "git_status": "tracked-modified",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "4811461",
+      "bytes": 13004,
+      "decision": "remove-candidate",
+      "proposed_path": null,
+      "reason": "historical Stage 8 workflow",
+      "literal_references": [
+        "docs/performance/benchmark.md"
+      ],
+      "implementation_status": "removed",
+      "removed_on": "2026-11-10"
+    },
+    {
+      "path": "tools/artifact-preflight.php",
+      "git_status": "tracked-modified",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-11-01",
+      "last_git_commit": "dccaa09",
+      "bytes": 6302,
+      "decision": "keep",
+      "proposed_path": "tools/release/artifact-preflight.php",
+      "reason": "release workflow; manual entry is valid",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/release/artifact-preflight.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/asset-report.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-28",
+      "last_git_commit": "1f8d5e3",
+      "bytes": 3166,
+      "decision": "keep",
+      "proposed_path": "tools/assets/asset-report.php",
+      "reason": "asset build/report or generated UI inventory",
+      "literal_references": [
+        "docs/contracts/modal-contract.md",
+        "docs/contracts/popover-contract.md",
+        "docs/contracts/ui-conventions.md",
+        "docs/development/partials.md",
+        "tests/asset-optimizer/budgets.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/assets/asset-report.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/audit-links.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-27",
+      "last_git_date": "2026-10-27",
+      "last_git_commit": "f11399a",
+      "bytes": 404,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/audit-links.php",
+      "reason": "documented data maintenance",
+      "literal_references": [
+        "docs/reference/api.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/audit-links.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/build-update.php",
+      "git_status": "tracked-modified",
+      "first_git_date": "2026-08-05",
+      "last_git_date": "2026-11-01",
+      "last_git_commit": "dccaa09",
+      "bytes": 12776,
+      "decision": "keep",
+      "proposed_path": "tools/release/build-update.php",
+      "reason": "release workflow; manual entry is valid",
+      "literal_references": [
+        "docs/operations/updates.md",
+        "docs/plans/modularity-6.0.0.md",
+        "tests/release/package-artifact.php",
+        "tests/release/update-rehearsal.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/release/build-update.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/captcha-test/captcha_breaker.py",
+      "git_status": "ignored",
+      "first_git_date": null,
+      "last_git_date": null,
+      "last_git_commit": null,
+      "bytes": 8478,
+      "decision": "review-local",
+      "proposed_path": "storage/dev-tools/captcha-test/captcha_breaker.py",
+      "reason": "ignored local script; legacy login form contract",
+      "literal_references": [],
+      "current_path": "tools/captcha-test/captcha_breaker.py"
+    },
+    {
+      "path": "tools/check-translations.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "516d194",
+      "bytes": 661,
+      "decision": "keep",
+      "proposed_path": "tools/quality/check-translations.php",
+      "reason": "quality/build contracts",
+      "literal_references": [
+        "docs/contracts/translations.md",
+        "tools/preflight.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/quality/check-translations.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/cleanup-acceptance.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "9d6b7b8",
+      "bytes": 1438,
+      "decision": "remove-candidate",
+      "proposed_path": null,
+      "reason": "historical Stage 8 workflow",
+      "literal_references": [
+        "docs/performance/benchmark.md"
+      ],
+      "implementation_status": "removed",
+      "removed_on": "2026-11-10"
+    },
+    {
+      "path": "tools/cleanup-local-artifacts.ps1",
+      "git_status": "untracked",
+      "first_git_date": null,
+      "last_git_date": null,
+      "last_git_commit": null,
+      "bytes": 2241,
+      "decision": "remove-candidate",
+      "proposed_path": null,
+      "reason": "one-off cleanup already completed",
+      "literal_references": [],
+      "implementation_status": "removed",
+      "removed_on": "2026-11-10"
+    },
+    {
+      "path": "tools/client-translations.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-27",
+      "last_git_commit": "b48fea0",
+      "bytes": 4162,
+      "decision": "keep",
+      "proposed_path": "tools/quality/client-translations.php",
+      "reason": "quality/build contracts",
+      "literal_references": [
+        "tests/presentation/translation-catalogs.php",
+        "tests/release/update-rehearsal.php",
+        "tools/check-translations.php",
+        "tools/compile-assets.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/quality/client-translations.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/compare-performance.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "8923947",
+      "bytes": 904,
+      "decision": "keep",
+      "proposed_path": "tools/performance/compare-performance.php",
+      "reason": "documented performance workflow",
+      "literal_references": [
+        "docs/performance/benchmark.md",
+        "tests/tools/demo-import.php",
+        "tools/performance/ComparisonOptions.php",
+        "tools/run-acceptance.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/compare-performance.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/compile-assets.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-11-01",
+      "last_git_commit": "e56b1fd",
+      "bytes": 3931,
+      "decision": "keep",
+      "proposed_path": "tools/assets/compile-assets.php",
+      "reason": "asset build/report or generated UI inventory",
+      "literal_references": [
+        "docs/contracts/translations.md",
+        "tests/presentation/client-assets-fixture.php",
+        "tests/presentation/compiled-translations.php",
+        "tests/release/update-rehearsal.php",
+        "tools/asset-report.php",
+        "tools/build-update.php",
+        "tools/performance/critical-assets-fixture.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/assets/compile-assets.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/demo-import/BatchWriter.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "fa85080",
+      "bytes": 3190,
+      "decision": "keep",
+      "proposed_path": "tools/data/demo-import/BatchWriter.php",
+      "reason": "shared importer and fixtures used by tests and release rehearsal",
+      "literal_references": [
+        "tools/demo-import.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/data/demo-import/BatchWriter.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/demo-import/CheckpointStore.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "fa85080",
+      "bytes": 2627,
+      "decision": "keep",
+      "proposed_path": "tools/data/demo-import/CheckpointStore.php",
+      "reason": "shared importer and fixtures used by tests and release rehearsal",
+      "literal_references": [
+        "tests/tools/demo-import.php",
+        "tools/demo-import.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/data/demo-import/CheckpointStore.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/demo-import/DemoImporter.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "2e7216f",
+      "bytes": 46022,
+      "decision": "keep",
+      "proposed_path": "tools/data/demo-import/DemoImporter.php",
+      "reason": "shared importer and fixtures used by tests and release rehearsal",
+      "literal_references": [
+        "tools/demo-import.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/data/demo-import/DemoImporter.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/demo-import/DeterministicGenerator.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "fa85080",
+      "bytes": 3132,
+      "decision": "keep",
+      "proposed_path": "tools/data/demo-import/DeterministicGenerator.php",
+      "reason": "shared importer and fixtures used by tests and release rehearsal",
+      "literal_references": [
+        "tests/tools/demo-import.php",
+        "tools/demo-import.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/data/demo-import/DeterministicGenerator.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/demo-import/Options.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "a827f89",
+      "bytes": 10285,
+      "decision": "keep",
+      "proposed_path": "tools/data/demo-import/Options.php",
+      "reason": "shared importer and fixtures used by tests and release rehearsal",
+      "literal_references": [
+        "tests/tools/demo-import.php",
+        "tools/demo-import.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/data/demo-import/Options.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/demo-import/ProgressReporter.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "9d6b7b8",
+      "bytes": 2492,
+      "decision": "keep",
+      "proposed_path": "tools/data/demo-import/ProgressReporter.php",
+      "reason": "shared importer and fixtures used by tests and release rehearsal",
+      "literal_references": [
+        "tools/demo-import.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/data/demo-import/ProgressReporter.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/demo-import/Schema.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "2e7216f",
+      "bytes": 4258,
+      "decision": "keep",
+      "proposed_path": "tools/data/demo-import/Schema.php",
+      "reason": "shared importer and fixtures used by tests and release rehearsal",
+      "literal_references": [
+        "tools/demo-import.php",
+        "tools/release-update-rehearsal.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/data/demo-import/Schema.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/demo-import/UiFixtures.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "a827f89",
+      "bytes": 5935,
+      "decision": "keep",
+      "proposed_path": "tools/data/demo-import/UiFixtures.php",
+      "reason": "shared importer and fixtures used by tests and release rehearsal",
+      "literal_references": [
+        "tools/demo-import.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/data/demo-import/UiFixtures.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/demo-import.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "a827f89",
+      "bytes": 2634,
+      "decision": "keep",
+      "proposed_path": "tools/data/demo-import.php",
+      "reason": "shared importer and fixtures used by tests and release rehearsal",
+      "literal_references": [
+        "docs/development/partials.md",
+        "docs/performance/benchmark.md",
+        "docs/performance/profiling.md",
+        "tests/release/mysql-installer-rehearsal.php",
+        "tests/run.php",
+        "tests/tools/demo-import.php",
+        "tools/demo-import/Options.php",
+        "tools/prepare-acceptance.php",
+        "tools/release-update-rehearsal.php",
+        "tools/scale-benchmark.php",
+        "tools/seed.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/data/demo-import.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/instrument-performance.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "b95195b",
+      "bytes": 4242,
+      "decision": "keep",
+      "proposed_path": "tools/performance/instrument-performance.php",
+      "reason": "documented performance workflow",
+      "literal_references": [
+        "docs/performance/profiling.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/instrument-performance.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/modal-contracts.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-11-01",
+      "last_git_date": "2026-11-01",
+      "last_git_commit": "e56b1fd",
+      "bytes": 1720,
+      "decision": "keep",
+      "proposed_path": "tools/quality/modal-contracts.php",
+      "reason": "quality/build contracts",
+      "literal_references": [
+        "AGENTS.md",
+        "docs/contracts/modal-contract.md",
+        "tests/quality/ui-contracts.php",
+        "tests/release/update-rehearsal.php",
+        "tools/compile-assets.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/quality/modal-contracts.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/monolith-inventory.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-25",
+      "last_git_commit": "b328876",
+      "bytes": 8065,
+      "decision": "keep",
+      "proposed_path": "tools/quality/monolith-inventory.php",
+      "reason": "quality/build contracts",
+      "literal_references": [
+        "tests/quality/monolith-inventory.php",
+        "tests/run.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/quality/monolith-inventory.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/optimize-links.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-27",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "614c718",
+      "bytes": 10959,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/optimize-links.php",
+      "reason": "documented data maintenance",
+      "literal_references": [
+        "docs/operations/link-optimization.md",
+        "tests/tools/link-optimizer.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/optimize-links.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/ajax-long-run.cjs",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "0bdc825",
+      "bytes": 14606,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/ajax/ajax-long-run.cjs",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/ajax/ajax-long-run.cjs",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/ajax-session-fixture.js",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "40b9c08",
+      "bytes": 5772,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/ajax/ajax-session-fixture.js",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [
+        "tools/performance/ajax-long-run.cjs"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/ajax/ajax-session-fixture.js",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/ajax-summary.py",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "40b9c08",
+      "bytes": 2089,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/ajax/ajax-summary.py",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/ajax/ajax-summary.py",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/CallProfile.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "b95195b",
+      "bytes": 1744,
+      "decision": "keep",
+      "proposed_path": "tools/performance/lib/CallProfile.php",
+      "reason": "active helper",
+      "literal_references": [
+        "tests/tools/performance-profiler.php",
+        "tools/performance/profile-router.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/lib/CallProfile.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/ComparisonOptions.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "4811461",
+      "bytes": 5823,
+      "decision": "keep",
+      "proposed_path": "tools/performance/lib/ComparisonOptions.php",
+      "reason": "active helper",
+      "literal_references": [
+        "tests/tools/demo-import.php",
+        "tools/compare-performance.php",
+        "tools/run-acceptance.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/lib/ComparisonOptions.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/ComparisonRunner.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "10677c1",
+      "bytes": 25207,
+      "decision": "keep",
+      "proposed_path": "tools/performance/lib/ComparisonRunner.php",
+      "reason": "active helper",
+      "literal_references": [
+        "tools/compare-performance.php",
+        "tools/run-acceptance.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/lib/ComparisonRunner.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/critical-assets-fixture.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "0bdc825",
+      "bytes": 4755,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/critical-assets/critical-assets-fixture.php",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/critical-assets/critical-assets-fixture.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/critical-assets-summary.py",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "40b9c08",
+      "bytes": 2611,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/critical-assets/critical-assets-summary.py",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/critical-assets/critical-assets-summary.py",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/critical-assets.cjs",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "0bdc825",
+      "bytes": 20525,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/critical-assets/critical-assets.cjs",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/critical-assets/critical-assets.cjs",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/devtools-pipe.cjs",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "0bdc825",
+      "bytes": 1221,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/shared/devtools-pipe.cjs",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [
+        "tools/performance/ajax-long-run.cjs",
+        "tools/performance/critical-assets.cjs"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/shared/devtools-pipe.cjs",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/http-sample.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "8923947",
+      "bytes": 664,
+      "decision": "keep",
+      "proposed_path": "tools/performance/http-sample.php",
+      "reason": "manual HTTP sample; no caller required",
+      "literal_references": [],
+      "current_path": "tools/performance/http-sample.php"
+    },
+    {
+      "path": "tools/performance/HttpLoadRunner.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "b95195b",
+      "bytes": 8337,
+      "decision": "keep",
+      "proposed_path": "tools/performance/lib/HttpLoadRunner.php",
+      "reason": "active helper",
+      "literal_references": [
+        "tools/compare-performance.php",
+        "tools/performance/http-sample.php",
+        "tools/profile-performance.php",
+        "tools/run-acceptance.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/lib/HttpLoadRunner.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/list-query-audit.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "40b9c08",
+      "bytes": 5665,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/queries/list-query-audit.php",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/queries/list-query-audit.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/list-standard-benchmark.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "40b9c08",
+      "bytes": 2933,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/queries/list-standard-benchmark.php",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/queries/list-standard-benchmark.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/profile-router.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-28",
+      "last_git_commit": "1f8d5e3",
+      "bytes": 3853,
+      "decision": "keep",
+      "proposed_path": "tools/performance/lib/profile-router.php",
+      "reason": "active helper",
+      "literal_references": [
+        "tools/performance/ProfileServerPool.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/lib/profile-router.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/ProfileDatabase.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "b95195b",
+      "bytes": 1880,
+      "decision": "keep",
+      "proposed_path": "tools/performance/lib/ProfileDatabase.php",
+      "reason": "active helper",
+      "literal_references": [
+        "tests/mysql-tag-window.php",
+        "tests/public-exports.php",
+        "tests/tools/performance-profiler.php",
+        "tools/performance/profile-router.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/lib/ProfileDatabase.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/ProfileServerPool.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "b95195b",
+      "bytes": 2485,
+      "decision": "keep",
+      "proposed_path": "tools/performance/lib/ProfileServerPool.php",
+      "reason": "active helper",
+      "literal_references": [
+        "tools/performance/critical-assets-fixture.php",
+        "tools/profile-performance.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/lib/ProfileServerPool.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/request-probe.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "9d6b7b8",
+      "bytes": 1400,
+      "decision": "remove-candidate",
+      "proposed_path": null,
+      "reason": "historical Stage 8 workflow",
+      "literal_references": [
+        "tools/run-acceptance.php"
+      ],
+      "implementation_status": "removed",
+      "removed_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/scale-analyze.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "3645c26",
+      "bytes": 8031,
+      "decision": "keep",
+      "proposed_path": "tools/performance/lib/scale-analyze.php",
+      "reason": "active helper",
+      "literal_references": [
+        "tools/scale-benchmark.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/lib/scale-analyze.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/scale-worker.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-27",
+      "last_git_commit": "b48fea0",
+      "bytes": 8417,
+      "decision": "keep",
+      "proposed_path": "tools/performance/lib/scale-worker.php",
+      "reason": "active helper",
+      "literal_references": [
+        "tools/performance/scale-analyze.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/lib/scale-worker.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/tag-filter-benchmark.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "40b9c08",
+      "bytes": 4530,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/queries/tag-filter-benchmark.php",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/queries/tag-filter-benchmark.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/tag-filter-summary.py",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "40b9c08",
+      "bytes": 2250,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/queries/tag-filter-summary.py",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/queries/tag-filter-summary.py",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/performance/tag-query-probe.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-31",
+      "last_git_date": "2026-10-31",
+      "last_git_commit": "40b9c08",
+      "bytes": 3652,
+      "decision": "review-experiment",
+      "proposed_path": "tools/experiments/queries/tag-query-probe.php",
+      "reason": "historical experiment; needs current reproduction recipe",
+      "literal_references": [
+        "tools/performance/tag-filter-benchmark.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/experiments/queries/tag-query-probe.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/php-lint.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-25",
+      "last_git_commit": "b328876",
+      "bytes": 1363,
+      "decision": "keep",
+      "proposed_path": "tools/quality/php-lint.php",
+      "reason": "quality/build contracts",
+      "literal_references": [
+        "tools/preflight.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/quality/php-lint.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/post-text-cleanup.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-11-01",
+      "last_git_date": "2026-11-01",
+      "last_git_commit": "70cbb96",
+      "bytes": 6338,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/post-text-cleanup.php",
+      "reason": "documented data maintenance",
+      "literal_references": [
+        "docs/contracts/post-text-contract.md",
+        "tests/post-text.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/post-text-cleanup.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/preflight.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "516d194",
+      "bytes": 1827,
+      "decision": "keep",
+      "proposed_path": "tools/preflight.php",
+      "reason": "stable composer/CI entry point",
+      "literal_references": [
+        "composer.json",
+        "docs/development/partials.md"
+      ],
+      "current_path": "tools/preflight.php"
+    },
+    {
+      "path": "tools/prepare-acceptance.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-28",
+      "last_git_commit": "3090aca",
+      "bytes": 7739,
+      "decision": "remove-candidate",
+      "proposed_path": null,
+      "reason": "historical Stage 8 workflow",
+      "literal_references": [
+        "docs/performance/benchmark.md"
+      ],
+      "implementation_status": "removed",
+      "removed_on": "2026-11-10"
+    },
+    {
+      "path": "tools/prepare-performance.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "b95195b",
+      "bytes": 2229,
+      "decision": "keep",
+      "proposed_path": "tools/performance/prepare-performance.php",
+      "reason": "documented performance workflow",
+      "literal_references": [
+        "docs/performance/profiling.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/prepare-performance.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/profile-performance.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-28",
+      "last_git_commit": "1f8d5e3",
+      "bytes": 7215,
+      "decision": "keep",
+      "proposed_path": "tools/performance/profile-performance.php",
+      "reason": "documented performance workflow",
+      "literal_references": [
+        "docs/performance/profiling.md",
+        "tools/performance/list-standard-benchmark.php",
+        "tools/performance/tag-filter-benchmark.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/profile-performance.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/release-update-rehearsal.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-11-01",
+      "last_git_commit": "dccaa09",
+      "bytes": 21973,
+      "decision": "keep",
+      "proposed_path": "tools/release/release-update-rehearsal.php",
+      "reason": "release workflow; manual entry is valid",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/release/release-update-rehearsal.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/run-acceptance.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-26",
+      "last_git_commit": "8923947",
+      "bytes": 10198,
+      "decision": "remove-candidate",
+      "proposed_path": null,
+      "reason": "historical Stage 8 workflow",
+      "literal_references": [
+        "docs/performance/benchmark.md"
+      ],
+      "implementation_status": "removed",
+      "removed_on": "2026-11-10"
+    },
+    {
+      "path": "tools/runtime-footprint.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "837af44",
+      "bytes": 1965,
+      "decision": "review-redundancy",
+      "proposed_path": "tools/performance/runtime-footprint.php",
+      "reason": "manual in-process probe; compare metrics with profiler before removal",
+      "literal_references": [],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/runtime-footprint.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/scale-benchmark.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-28",
+      "last_git_commit": "3090aca",
+      "bytes": 6518,
+      "decision": "keep",
+      "proposed_path": "tools/performance/scale-benchmark.php",
+      "reason": "documented performance workflow",
+      "literal_references": [
+        "docs/performance/benchmark.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/performance/scale-benchmark.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/security-check.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "9fdce20",
+      "bytes": 3072,
+      "decision": "keep",
+      "proposed_path": "tools/quality/security-check.php",
+      "reason": "quality/build contracts",
+      "literal_references": [
+        "composer.json",
+        "tools/preflight.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/quality/security-check.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/seed.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-08-09",
+      "last_git_commit": "fa85080",
+      "bytes": 144,
+      "decision": "review-compatibility",
+      "proposed_path": "tools/data/seed.php",
+      "reason": "intentional wrapper; not an independent seeder",
+      "literal_references": [
+        "docs/performance/benchmark.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/data/seed.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/00_inventory.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 561,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/00_inventory.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/00_inventory.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/01_summary.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 3691,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/01_summary.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tests/tools/bot-source-attribution.php",
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/01_summary.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/02_unique_candidates.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 3816,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/02_unique_candidates.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tests/tools/bot-source-attribution.php",
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/02_unique_candidates.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/03_review_ambiguous.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 3687,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/03_review_ambiguous.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tests/tools/bot-source-attribution.php",
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/03_review_ambiguous.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/04_unmatched_domains.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 3766,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/04_unmatched_domains.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/04_unmatched_domains.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/05_verify_known.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 889,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/05_verify_known.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/05_verify_known.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/06_feed_collisions.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 3719,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/06_feed_collisions.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tests/tools/bot-source-attribution.php",
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/06_feed_collisions.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/07_steam_group_candidates.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 5163,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/07_steam_group_candidates.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tests/tools/bot-source-attribution.php",
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/07_steam_group_candidates.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/08_steam_group_summary.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 5135,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/08_steam_group_summary.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/08_steam_group_summary.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/09_apokalypsa_aliases_to_review.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 4618,
+      "decision": "review-site-specific",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/09_apokalypsa_aliases_to_review.sql",
+      "reason": "site-specific feed IDs/domains, not a generic maintenance step",
+      "literal_references": [
+        "tests/tools/bot-source-attribution.php",
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/09_apokalypsa_aliases_to_review.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/10_combined_summary.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 6536,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/10_combined_summary.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tests/tools/bot-source-attribution.php",
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/10_combined_summary.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/90_apply_unique_dry_run.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 3845,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/90_apply_unique_dry_run.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tests/tools/bot-source-attribution.php",
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/90_apply_unique_dry_run.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/91_apply_steam_groups_dry_run.sql",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 5104,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/91_apply_steam_groups_dry_run.sql",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "tests/tools/bot-source-attribution.php",
+        "tools/sql/bot-source-attribution/README.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/91_apply_steam_groups_dry_run.sql",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/sql/bot-source-attribution/README.md",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-29",
+      "last_git_date": "2026-10-29",
+      "last_git_commit": "5fc1908",
+      "bytes": 7964,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/sql/bot-source-attribution/README.md",
+      "reason": "source attribution SQL with regression coverage",
+      "literal_references": [
+        "App/Updates/Manager.php",
+        "README.md",
+        "tests/release/update-rehearsal.php",
+        "tools/build-update.php",
+        "tools/release-update-rehearsal.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/sql/bot-source-attribution/README.md",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/style-check.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-09",
+      "last_git_date": "2026-10-25",
+      "last_git_commit": "b328876",
+      "bytes": 2939,
+      "decision": "keep",
+      "proposed_path": "tools/quality/style-check.php",
+      "reason": "quality/build contracts",
+      "literal_references": [
+        "composer.json",
+        "tools/preflight.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/quality/style-check.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/translation-catalogs.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-10-26",
+      "last_git_date": "2026-10-27",
+      "last_git_commit": "36d9b18",
+      "bytes": 3106,
+      "decision": "keep",
+      "proposed_path": "tools/quality/translation-catalogs.php",
+      "reason": "quality/build contracts",
+      "literal_references": [
+        "docs/contracts/translations.md",
+        "tests/presentation/translation-catalogs.php",
+        "tests/release/update-rehearsal.php",
+        "tests/run.php",
+        "tools/check-translations.php",
+        "tools/compile-assets.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/quality/translation-catalogs.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/ui-contracts.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-11-01",
+      "last_git_date": "2026-11-01",
+      "last_git_commit": "e56b1fd",
+      "bytes": 4158,
+      "decision": "keep",
+      "proposed_path": "tools/quality/ui-contracts.php",
+      "reason": "quality/build contracts",
+      "literal_references": [
+        "docs/contracts/modal-contract.md",
+        "docs/contracts/popover-contract.md",
+        "docs/contracts/ui-conventions.md",
+        "tests/quality/ui-contracts.php",
+        "tests/release/update-rehearsal.php",
+        "tests/run.php",
+        "tools/compile-assets.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/quality/ui-contracts.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/ui-inventory.py",
+      "git_status": "tracked-modified",
+      "first_git_date": "2026-11-01",
+      "last_git_date": "2026-11-01",
+      "last_git_commit": "e56b1fd",
+      "bytes": 10393,
+      "decision": "keep",
+      "proposed_path": "tools/assets/ui-inventory.py",
+      "reason": "asset build/report or generated UI inventory",
+      "literal_references": [
+        "docs/README.md",
+        "docs/contracts/ui-conventions.md",
+        "docs/reference/ui-inventory.md"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/assets/ui-inventory.py",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/update-deletions.json",
+      "git_status": "tracked-modified",
+      "first_git_date": "2026-08-05",
+      "last_git_date": "2026-11-01",
+      "last_git_commit": "e56b1fd",
+      "bytes": 16464,
+      "decision": "keep",
+      "proposed_path": "tools/release/update-deletions.json",
+      "reason": "release workflow; manual entry is valid",
+      "literal_references": [
+        "docs/operations/updates.md",
+        "tests/release/package-artifact.php",
+        "tests/release/update-rehearsal.php",
+        "tools/build-update.php",
+        "tools/security-check.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/release/update-deletions.json",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/update-key.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-05",
+      "last_git_date": "2026-08-05",
+      "last_git_commit": "e43190f",
+      "bytes": 1698,
+      "decision": "keep",
+      "proposed_path": "tools/release/update-key.php",
+      "reason": "release workflow; manual entry is valid",
+      "literal_references": [
+        "docs/operations/updates.md",
+        "tools/build-update.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/release/update-key.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/verify-update.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-08-05",
+      "last_git_date": "2026-10-27",
+      "last_git_commit": "b48fea0",
+      "bytes": 1748,
+      "decision": "keep",
+      "proposed_path": "tools/release/verify-update.php",
+      "reason": "release workflow; manual entry is valid",
+      "literal_references": [
+        "docs/operations/updates.md",
+        "tools/artifact-preflight.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/release/verify-update.php",
+      "moved_on": "2026-11-10"
+    },
+    {
+      "path": "tools/youtube-thumbnail-cleanup.php",
+      "git_status": "tracked",
+      "first_git_date": "2026-11-01",
+      "last_git_date": "2026-11-01",
+      "last_git_commit": "70cbb96",
+      "bytes": 3122,
+      "decision": "keep",
+      "proposed_path": "tools/maintenance/youtube-thumbnail-cleanup.php",
+      "reason": "documented data maintenance",
+      "literal_references": [
+        "docs/operations/youtube-thumbnails.md",
+        "tests/tools/youtube-thumbnails.php"
+      ],
+      "implementation_status": "moved",
+      "current_path": "tools/maintenance/youtube-thumbnail-cleanup.php",
+      "moved_on": "2026-11-10"
+    }
+  ]
+}

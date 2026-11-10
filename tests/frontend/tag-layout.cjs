@@ -6,9 +6,9 @@ const modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root,
 if (!fs.existsSync(modulePath)) { console.log("SKIP native tag layout: set TINYCAT_TEST_PLAYWRIGHT_MODULE"); process.exit(0); }
 const {webkit} = require(modulePath);
 function read(file, ...args) { return JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, file), ...args], {encoding:"utf8", maxBuffer:8e6})); }
-const styles = read("tests/presentation/asset-graph-fixture.php", "--styles");
-const templates = read("tests/presentation/component-parity.php", "--templates");
-const fixtures = read("tests/presentation/tag-layout-fixture.php");
+const styles = read("tests/presentation/fixtures/asset-graph-fixture.php", "--styles");
+const templates = read("tests/presentation/fixtures/component-parity.php", "--templates");
+const fixtures = read("tests/presentation/fixtures/tag-layout-fixture.php");
 const scripts = ["core/urls.js", "core/dom.js", "core/i18n.js", "core/icons.js", "core/component-renderer.js", "modules/status/translation.js"].map(file => fs.readFileSync(path.join(root, "assets", file), "utf8").replace(/^import .*;\r?\n/gm, "")).join("\n");
 (async function () {
   const server = http.createServer((request, response) => {

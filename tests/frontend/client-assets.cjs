@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const path = require("node:path");
 const vm = require("node:vm");
 const { execFileSync } = require("node:child_process");
-const fixture = path.resolve(__dirname, "../presentation/client-assets-fixture.php");
+const fixture = path.resolve(__dirname, "../presentation/fixtures/client-assets-fixture.php");
 let checks = 0;
 function check(value, message) { checks++; assert.ok(value, message); }
 function load(route, locale = "en", compiled = false) {

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../cache-isolation.php';
+require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
-require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
+require_once __DIR__ . '/../../App/bootstrap.php';
 
 use TinyCat\Users\Views as UsersViews;
 use TinyCat\Status\Views as StatusViews;
@@ -84,7 +84,7 @@ $assert(str_contains($sourceFilters, 'data-filter-content') && str_contains($sou
 $assert(str_contains($sourceFilters, 'Bot &lt;unsafe&gt;') && str_contains($sourceFilters, 'data-ajax-target="#bots-list"') && !str_contains($sourceFilters, 'role="dialog"') && !str_contains($sourceFilters, 'type="submit"'), 'Source dropdown filters preserve their scoped controls and automatic submission without a modal.');
 
 $settingsSections = \TinyCat\Settings\Administration::tc_admin_settings_view_sections();
-$iconSprite = (string) file_get_contents(dirname(__DIR__, 2) . '/assets/icons.svg');
+$iconSprite = (string) file_get_contents(__DIR__ . '/../../assets/icons.svg');
 foreach ($settingsSections as $section) {
     $assert(str_contains($iconSprite, 'id="' . $section['icon'] . '"'), 'Every settings section has a real shared SVG icon: ' . $section['icon']);
 }
@@ -100,7 +100,7 @@ $assert(str_contains($avatar, 'data-avatar-user-id="2"') && str_contains($avatar
 
 $settingsSchema = \TinyCat\Settings\Resource::editor();
 $assert(count($settingsSchema['sections']) >= 2 && $settingsSchema['sections'][0]['key'] === 'site', 'Settings expose a JSON editor schema for deferred loading.');
-$assert(!str_contains((string) file_get_contents(dirname(__DIR__, 2) . '/App/Site/templates/admin.php'), '$settingsEditor'), 'Admin pages do not embed a settings editor.');
+$assert(!str_contains((string) file_get_contents(__DIR__ . '/../../App/Site/templates/admin.php'), '$settingsEditor'), 'Admin pages do not embed a settings editor.');
 $botStat = \TinyCat\Support\Components::render('bots/stat', ['stat' => ['key' => 'posts', 'value' => 0]]);
 $assert(str_contains($botStat, 'class="card min-w-0"') && str_contains($botStat, '#file') && str_contains($botStat, 'data-bot-stat="posts">0</strong>'), 'Bot counters use the dashboard stat card, include their icon, and preserve zero values and live-update hooks.');
 $source = ['id' => 7, 'bot_user_id' => 3, 'username' => 'Bot', 'name' => 'Source', 'enabled' => true, 'feed_url' => 'https://example.test/feed'];
@@ -134,7 +134,7 @@ $healthChecks = [
 $healthHtml = \TinyCat\Support\View::render('page', [
     'snapshot' => ['status' => 'warning', 'latest_failed' => false, 'stale' => false, 'history' => [], 'report' => ['checked_at' => '2026-11-01T12:00:00Z']],
     'checks' => $healthChecks, 'issues' => $healthChecks, 'http' => $healthChecks[1], 'passed' => 0,
-], dirname(__DIR__, 2) . '/App/Health/templates');
+], __DIR__ . '/../../App/Health/templates');
 $healthDocument = new DOMDocument();
 $previousXmlErrors = libxml_use_internal_errors(true);
 try { $healthDocument->loadHTML('<?xml encoding="UTF-8">' . $healthHtml); }

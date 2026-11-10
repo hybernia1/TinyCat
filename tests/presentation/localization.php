@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../cache-isolation.php';
+require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
-require_once dirname(__DIR__, 2) . '/App/bootstrap.php';
+require_once __DIR__ . '/../../App/bootstrap.php';
 
 use TinyCat\Support\Localization;
 

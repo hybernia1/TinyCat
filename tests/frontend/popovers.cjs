@@ -7,8 +7,8 @@ const browser = [process.env.TINYCAT_TEST_CHROME, 'C:/Program Files/Google/Chrom
 if (!browser) { console.log('SKIP native popovers: set TINYCAT_TEST_CHROME'); process.exit(0); }
 const root = path.resolve(__dirname, '../..'), php = process.env.TINYCAT_TEST_PHP || 'php';
 const source = fs.readFileSync(path.join(root, 'assets/ui/popovers.js'), 'utf8').replace(/^import .*;\r?\n/gm, '');
-const css = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/asset-graph-fixture.php'), '--styles'], { encoding: 'utf8', maxBuffer: 8e6 }));
-const fixture = fs.readFileSync(path.join(__dirname, 'popovers-fixture.js'), 'utf8');
+const css = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--styles'], { encoding: 'utf8', maxBuffer: 8e6 }));
+const fixture = fs.readFileSync(path.join(__dirname, 'fixtures/popovers-fixture.js'), 'utf8');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'tinycat-popovers-'));
 try {
   const target = path.join(temporary, 'fixture.html');

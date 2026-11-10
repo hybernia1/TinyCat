@@ -5,12 +5,12 @@ const { execFileSync, spawn } = require('node:child_process');
 const browser = [process.env.TINYCAT_TEST_CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].filter(Boolean).find(file => fs.existsSync(file));
 if (!browser) { console.log('SKIP native UI consistency: set TINYCAT_TEST_CHROME'); process.exit(0); }
 const root = path.resolve(__dirname, '../..'), php = process.env.TINYCAT_TEST_PHP || 'php';
-const assets = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/asset-graph-fixture.php'), '--all'], { encoding: 'utf8', maxBuffer: 8e6 }));
-const templates = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/component-parity.php'), '--templates'], { encoding: 'utf8', maxBuffer: 8e6 }));
-const labels = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/asset-graph-fixture.php'), '--catalog'], { encoding: 'utf8', maxBuffer: 8e6 }));
+const assets = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--all'], { encoding: 'utf8', maxBuffer: 8e6 }));
+const templates = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/component-parity.php'), '--templates'], { encoding: 'utf8', maxBuffer: 8e6 }));
+const labels = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--catalog'], { encoding: 'utf8', maxBuffer: 8e6 }));
 const source = assets.map(asset => asset.source).join('\n') + '\nTinyCat.components.register(' + JSON.stringify(templates).replace(/</g, '\\u003c') + ');TinyCat.i18n.register(\"en\",' + JSON.stringify(labels).replace(/</g, '\\u003c') + ');';
-const css = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/asset-graph-fixture.php'), '--styles'], { encoding: 'utf8', maxBuffer: 8e6 }));
-const fixture = fs.readFileSync(path.join(__dirname, 'ui-consistency-fixture.js'), 'utf8');
+const css = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--styles'], { encoding: 'utf8', maxBuffer: 8e6 }));
+const fixture = fs.readFileSync(path.join(__dirname, 'fixtures/ui-consistency-fixture.js'), 'utf8');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'tinycat-ui-consistency-'));
 (async function () {
 let server;

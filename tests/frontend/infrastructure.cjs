@@ -38,14 +38,14 @@ class Element extends EventTarget {
 class TestFormData extends FormData {
   constructor(form) { super(); for (const [key, value] of (form && form.values) || []) { this.append(key, value); } }
 }
-const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--templates"], { encoding: "utf8" }));
+const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--templates"], { encoding: "utf8" }));
 const document = { addEventListener() {}, querySelectorAll() { return []; }, getElementById: () => null, createTextNode: text => { const node = new Element("text"); node.textContent = text; return node; }, createDocumentFragment: () => new Element("fragment"), querySelector: () => ({ content: "csrf-token" }), createElement: tag => new Element(tag), body: new Element("body") };
 const window = { location: new URL("https://tinycat.test/admin"), TinyCat: {}, addEventListener() {}, setTimeout() {}, requestAnimationFrame(callback) { callback(); }, scrollTo() {} };
 let calls = [];
 const envelope = (status = 200, data = {}, ok = true) => ({ ok, status, code: ok ? "ok" : "validation_error", params: {}, message: ok ? null : "Invalid.", data, meta: {} });
 const response = (data, status = data.status) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json; charset=utf-8" } });
 const context = vm.createContext({ window, document, URL, Headers, FormData: TestFormData, Blob, URLSearchParams, AbortController, CustomEvent, Node: Element, Element, console, fetch: async (url, options) => { calls.push({ url, options }); return response(envelope()); } });
-const coreAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--core"], { encoding: "utf8", maxBuffer: 8e6 }));
+const coreAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--core"], { encoding: "utf8", maxBuffer: 8e6 }));
 for (const asset of coreAssets) vm.runInContext(asset.source, context, { filename: asset.path });
 window.TinyCat.components.register(definitions);
 const tick = () => new Promise(resolve => setImmediate(resolve));

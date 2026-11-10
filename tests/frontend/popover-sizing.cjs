@@ -5,7 +5,7 @@ const root = path.resolve(__dirname, '../..');
 const modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root, 'storage/ui-webkit-tools/node_modules/playwright');
 if (!fs.existsSync(modulePath)) { console.log('SKIP WebKit popover sizing: set TINYCAT_TEST_PLAYWRIGHT_MODULE'); process.exit(0); }
 const { webkit } = require(modulePath);
-const fixture = JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(root, 'tests/presentation/popover-sizing-fixture.php')], { encoding: 'utf8', maxBuffer: 8e6 }));
+const fixture = JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(root, 'tests/presentation/fixtures/popover-sizing-fixture.php')], { encoding: 'utf8', maxBuffer: 8e6 }));
 const html = `<!doctype html><html lang="cs"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${fixture.styles}</style></head><body><div id="account" style="position:fixed;top:60px;right:12px">${fixture.account}</div><div id="archive" style="position:fixed;top:130px;right:12px">${fixture.archive}</div><div id="users" style="position:fixed;top:20px;right:12px">${fixture.users}</div><script>${fixture.scripts}\nTinyCat.popovers.init();</script></body></html>`;
 (async function () {
   const server = http.createServer((request, response) => { response.setHeader('Content-Type', 'text/html; charset=utf-8'); response.end(html); });

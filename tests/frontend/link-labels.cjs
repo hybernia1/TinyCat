@@ -2,15 +2,15 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), http = require('node:http');
 const {execFileSync} = require('node:child_process');
-const root = path.resolve(__dirname,'../..');
+const root = path.resolve(__dirname, '../..');
 const modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root,'storage/ui-webkit-tools/node_modules/playwright');
 if (!fs.existsSync(modulePath)) { console.log('SKIP native link labels: set TINYCAT_TEST_PLAYWRIGHT_MODULE'); process.exit(0); }
 const {webkit} = require(modulePath);
 const axe = fs.readFileSync(require.resolve('axe-core/axe.min.js',{paths:[modulePath]}),'utf8');
 function read(file,...args) { return JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || 'php',[path.join(root,file),...args],{encoding:'utf8',maxBuffer:8e6})); }
-const scripts = read('tests/presentation/asset-graph-fixture.php','--all').map(asset=>asset.source).join('\n');
-const templates = read('tests/presentation/component-parity.php','--templates');
-const styles = read('tests/presentation/asset-graph-fixture.php','--styles');
+const scripts = read('tests/presentation/fixtures/asset-graph-fixture.php','--all').map(asset=>asset.source).join('\n');
+const templates = read('tests/presentation/fixtures/component-parity.php','--templates');
+const styles = read('tests/presentation/fixtures/asset-graph-fixture.php','--styles');
 (async function () {
   const server = http.createServer((request,response)=>{
     response.setHeader('Content-Type',request.url==='/fixture.svg'?'image/svg+xml':'text/html; charset=utf-8');
@@ -20,7 +20,7 @@ const styles = read('tests/presentation/asset-graph-fixture.php','--styles');
   try {
     await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve)); browser=await webkit.launch();
     for (const locale of ['cs','en','de']) {
-      const fixture=read('tests/presentation/link-labels-fixture.php',locale);
+      const fixture=read('tests/presentation/fixtures/link-labels-fixture.php',locale);
       for (const width of [320,1024]) {
         const page=await browser.newPage({viewport:{width,height:812}});
         await page.goto('http://127.0.0.1:'+server.address().port+'/');

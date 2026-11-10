@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 use \TinyCat\Tools\Performance\HttpLoadRunner;
 
-require_once __DIR__ . '/HttpLoadRunner.php';
+require_once __DIR__ . '/lib/HttpLoadRunner.php';
 
 $url = $argv[1] ?? '';
 $requests = filter_var($argv[2] ?? 40, FILTER_VALIDATE_INT);

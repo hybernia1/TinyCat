@@ -4,7 +4,7 @@ const {readFileSync} = require("node:fs");
 const {createHash} = require("node:crypto");
 const assert = require("node:assert/strict");
 const path = require("node:path");
-const fixture = path.resolve(__dirname, "../presentation/asset-graph-fixture.php");
+const fixture = path.resolve(__dirname, "../presentation/fixtures/asset-graph-fixture.php");
 const css = JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || "php", [fixture, "--styles"], {encoding:"utf8"}));
 const hashes = [];
 function parse(source, media = []) {
@@ -29,5 +29,5 @@ function parse(source, media = []) {
   assert.equal(depth,0,"Balanced CSS blocks");
 }
 parse(css);
-assert.deepEqual(hashes, JSON.parse(readFileSync(path.resolve(__dirname,"../fixtures/asset-style-baseline.json"),"utf8")), "Moving styles preserves every rule and cascade order");
+assert.deepEqual(hashes, JSON.parse(readFileSync(path.resolve(__dirname, "../fixtures/asset-style-baseline.json"),"utf8")), "Moving styles preserves every rule and cascade order");
 console.log(`PASS stylesheet cascade parity (${hashes.length} rules)`);

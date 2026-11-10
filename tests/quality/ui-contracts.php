@@ -2,14 +2,14 @@
 declare(strict_types=1);
 
 define('TINYCAT', true);
-require dirname(__DIR__, 2) . '/App/autoload.php';
+require __DIR__ . '/../../App/autoload.php';
 
 use TinyCat\Support\AssetGraph;
 use TinyCat\Support\ClientAssets;
 
-$validate = require dirname(__DIR__, 2) . '/tools/ui-contracts.php';
+$validate = require __DIR__ . '/../../tools/quality/ui-contracts.php';
 $result = $validate();
-$validateModals = require dirname(__DIR__, 2) . '/tools/modal-contracts.php';
+$validateModals = require __DIR__ . '/../../tools/quality/modal-contracts.php';
 $validateModals();
 foreach (["<?php View::part('Support/modal', []);", "<?php View::render('parts/modal', []);", '<div class="modal" hidden></div>', '<template data-settings-editor></template>', '<template><form></form></template>', '<div class=\"modal\"></div>'] as $source) {
     try { $validateModals(['App/Example/page.php' => $source]); }

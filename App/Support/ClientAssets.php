@@ -10,6 +10,23 @@ final class ClientAssets
 {
     /** @var array<string, list<array<mixed>>> */
     private static array $features = [];
+    /** @var array<string, array<string, mixed>>|null */
+    private static ?array $buildDefinitions = null;
+    /** @var array<string, array<string, bool>>|null */
+    private static ?array $buildKeys = null;
+
+    /**
+     * @template T
+     * @param callable(): T $build
+     * @return T
+     */
+    public static function withBuildCache(callable $build): mixed
+    {
+        $features = self::$features; $definitions = self::$buildDefinitions; $keys = self::$buildKeys;
+        self::$features = []; self::$buildDefinitions = []; self::$buildKeys = [];
+        try { return Components::withFreshTemplates($build); }
+        finally { self::$features = $features; self::$buildDefinitions = $definitions; self::$buildKeys = $keys; }
+    }
     /**
      * @return list<array<mixed>>
      */
@@ -36,11 +53,14 @@ final class ClientAssets
     /** @return array<string, mixed> */
     public static function definitions(string $path): array
     {
+        if (self::$buildDefinitions !== null && isset(self::$buildDefinitions[$path])) { return self::$buildDefinitions[$path]; }
         $roots = [];
         foreach (self::features($path) as $feature) {
             foreach ($feature['components'] ?? [] as $root) { $roots[] = (string) $root; }
         }
-        return Components::select(array_values(array_unique($roots)));
+        $definitions = Components::select(array_values(array_unique($roots)));
+        if (self::$buildDefinitions !== null) { self::$buildDefinitions[$path] = $definitions; }
+        return $definitions;
     }
 
     /**
@@ -50,10 +70,14 @@ final class ClientAssets
     public static function catalog(string $path, string $locale, ?array $dictionary = null): array
     {
         $dictionary ??= Localization::catalog($locale);
-        $keys = array_fill_keys(Components::labels(self::definitions($path)), true);
-        foreach (self::features($path) as $feature) {
-            foreach ($feature['translations'] ?? [] as $key) { $keys[(string) $key] = true; }
-            foreach ($feature['messages'] ?? [] as $key) { $keys[(string) $key] = true; }
+        $keys = self::$buildKeys[$path] ?? null;
+        if ($keys === null) {
+            $keys = array_fill_keys(Components::labels(self::definitions($path)), true);
+            foreach (self::features($path) as $feature) {
+                foreach ($feature['translations'] ?? [] as $key) { $keys[(string) $key] = true; }
+                foreach ($feature['messages'] ?? [] as $key) { $keys[(string) $key] = true; }
+            }
+            if (self::$buildKeys !== null) { self::$buildKeys[$path] = $keys; }
         }
         $catalog = [];
         foreach ($keys as $key => $_) {

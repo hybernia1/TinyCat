@@ -1,5 +1,5 @@
 "use strict";
-const assert = require("node:assert/strict"), setup = require("./list-fixture.cjs");
+const assert = require("node:assert/strict"), setup = require("./fixtures/list-fixture.cjs");
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const response = label => ({ data: { items: [label], tasks: [], filters: {} }, meta: { pagination: { page: 2, per_page: 10 } } });
 (async () => {

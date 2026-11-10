@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/cache-isolation.php';
+require_once __DIR__ . '/../support/cache-isolation.php';
 
 if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     echo "SKIP API HTTP contract: pdo_sqlite is unavailable.\n";
@@ -75,7 +75,7 @@ $environment = getenv();
 $environment = is_array($environment) ? $environment : [];
 $pipes = [];
 $server = proc_open(
-    [PHP_BINARY, '-S', $address, $root . '/tests/http/api-contract-router.php'],
+    [PHP_BINARY, '-S', $address, $root . '/tests/http/fixtures/api-contract-router.php'],
     [0 => ['pipe', 'r'], 1 => ['file', $temporary . '/server.log', 'a'], 2 => ['file', $temporary . '/server.log', 'a']],
     $pipes,
     $root,
@@ -337,21 +337,21 @@ try {
     $assert($status === 200 && $payload['data']['id'] === $sourceId, 'POST method overrides must use the same registered PATCH route.');
     [$status] = $request('DELETE', '/api/bots/sources/' . $sourceId, ['id' => 1], 'admin', $csrf);
     $assert($status === 200, 'Source deletion must use the shared response contract.');
-    require __DIR__ . '/bot-post-cases.php';
-    require __DIR__ . '/bot-run-cases.php';
-    require __DIR__ . '/email-check-cases.php';
-    require __DIR__ . '/export-contract-cases.php';
-    require __DIR__ . '/embed-contract-cases.php';
-    require __DIR__ . '/locale-contract-cases.php';
-    require __DIR__ . '/public-page-cases.php';
-    require __DIR__ . '/domain-contract-cases.php';
-    require __DIR__ . '/module-contract-cases.php';
-    require __DIR__ . '/avatar-contract-cases.php';
-    require __DIR__ . '/rate-limit-cases.php';
-    require __DIR__ . '/request-limit-cases.php';
-    require __DIR__ . '/system-api-cases.php';
-    require __DIR__ . '/content-link-cases.php';
-    require __DIR__ . '/bot-queue-cases.php';
+    require __DIR__ . '/cases/bot-post-cases.php';
+    require __DIR__ . '/cases/bot-run-cases.php';
+    require __DIR__ . '/cases/email-check-cases.php';
+    require __DIR__ . '/cases/export-contract-cases.php';
+    require __DIR__ . '/cases/embed-contract-cases.php';
+    require __DIR__ . '/cases/locale-contract-cases.php';
+    require __DIR__ . '/cases/public-page-cases.php';
+    require __DIR__ . '/cases/domain-contract-cases.php';
+    require __DIR__ . '/cases/module-contract-cases.php';
+    require __DIR__ . '/cases/avatar-contract-cases.php';
+    require __DIR__ . '/cases/rate-limit-cases.php';
+    require __DIR__ . '/cases/request-limit-cases.php';
+    require __DIR__ . '/cases/system-api-cases.php';
+    require __DIR__ . '/cases/content-link-cases.php';
+    require __DIR__ . '/cases/bot-queue-cases.php';
     echo "PASS API HTTP contract ({$checks} checks)\n";
 } finally {
     if (is_resource($server)) {

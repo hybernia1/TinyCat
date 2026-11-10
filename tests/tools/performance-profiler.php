@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-require dirname(__DIR__, 2) . '/tools/performance/ProfileDatabase.php';
-require dirname(__DIR__, 2) . '/tools/performance/CallProfile.php';
+require __DIR__ . '/../../tools/performance/lib/ProfileDatabase.php';
+require __DIR__ . '/../../tools/performance/lib/CallProfile.php';
 
 $database = new \TinyCat\Tools\Performance\ProfileDatabase('sqlite::memory:', '', '');
 $database->exec('CREATE TABLE sample (value INTEGER)');

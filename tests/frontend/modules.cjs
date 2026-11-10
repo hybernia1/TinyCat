@@ -51,13 +51,13 @@ class Node {
   dispatchEvent() { return true; }
   addEventListener() {}
 }
-const labels = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--catalog"], { encoding: "utf8" }));
-const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--templates"], { encoding: "utf8" }));
+const labels = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--catalog"], { encoding: "utf8" }));
+const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--templates"], { encoding: "utf8" }));
 const document = { addEventListener() {}, querySelector: () => null, body: new Node("body"), createElement: tag => new Node(tag), createElementNS: (_, tag) => new Node(tag), createTextNode: text => new Node("text", text), createDocumentFragment: () => new Node("fragment"), getElementById: id => document.body.querySelector('[id="' + id + '"]') };
-document.documentElement = { dataset: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--dates"], { encoding: "utf8" })) };
+document.documentElement = { dataset: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--dates"], { encoding: "utf8" })) };
 const window = { innerHeight: 812, innerWidth: 390, clearTimeout() {}, setTimeout() { return 0; }, setInterval() { return 0; }, TinyCat: {}, history: { state: null }, location: new URL("https://tinycat.test/") };
 const context = vm.createContext({ window, document, Node, AbortController, URL, URLSearchParams, console, Set, Element: Node, RadioNodeList: class {}, CustomEvent: class {} });
-const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
+const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
 for (const asset of moduleAssets) vm.runInContext(asset.source, context, { filename: asset.path });
 const T = window.TinyCat;
 // Minimal DOM fixture covers filter data; native popover interaction has its own browser suite.
@@ -222,16 +222,16 @@ for (const descending of [true, false]) {
 }
 const plainHeading = T.components.render("ui/sort-heading", { label: "Name" });
 check(plainHeading.textContent === "Name" && plainHeading.querySelector("a") === null, "Embedded detail tables without sort state retain plain headings.");
-const dateCases = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--date-fixtures"], { encoding: "utf8" }));
+const dateCases = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--date-fixtures"], { encoding: "utf8" }));
 const originalDates = { ...document.documentElement.dataset };
 document.documentElement.dataset.dateRelative = "false";
 dateCases.absolute.forEach(item => { document.documentElement.dataset.dateFormat = item.format; check(T.dates.format(item.value) === item.expected, "PHP/JS date preset and DST offset parity: " + item.format); });
-const localeLabels = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--catalogs"], { encoding: "utf8", maxBuffer: 8e6 }));
+const localeLabels = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--catalogs"], { encoding: "utf8", maxBuffer: 8e6 }));
 const csLabels = localeLabels.cs;
 dateCases.relative.forEach(item => { if (T.i18n.locale() !== item.locale) T.i18n.register(item.locale, localeLabels[item.locale]); check(T.dates.relative(new Date(item.value), item.base) === item.expected, "PHP/JS relative-time threshold and plural parity: " + item.locale + " " + item.value); });
 T.i18n.register("en", labels);
 document.documentElement.dataset = originalDates;
-const pluralCases = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php"), "--translation-fixtures"], { encoding: "utf8" }));
+const pluralCases = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--translation-fixtures"], { encoding: "utf8" }));
 pluralCases.forEach(item => {
   if (T.i18n.locale() !== item.locale) T.i18n.register(item.locale, localeLabels[item.locale]);
   check(item.category === new Intl.PluralRules(item.locale).select(item.count), "Plural category matches CLDR: " + item.locale + " " + item.count);
@@ -584,7 +584,7 @@ T.site.rich(footer, [{ type: "text", text: unsafe }, { type: "element", name: "s
 check(footer.querySelectorAll("script").length === 0 && footer.querySelector("a").getAttribute("onclick") === null && footer.textContent.startsWith(unsafe), "Structured footer rendering ignores executable nodes and event attributes.");
 assert.throws(() => T.site.rich(new Node("div"), [{ type: "element", name: "a", attributes: { href: "javascript:alert(1)" } }])); checks++;
 const parityFixtures = JSON.parse(fs.readFileSync(path.join(root, "tests/fixtures/components.json"), "utf8"));
-const serverTrees = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/component-parity.php")], { encoding: "utf8" }));
+const serverTrees = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php")], { encoding: "utf8" }));
 function semanticTree(rootNode) {
   const nodes = [];
   function visit(node) {
@@ -650,7 +650,7 @@ assert.throws(() => T.components.render("ui/modal", { root_attributes: {}, panel
   };
   let sent;
   T.api = { request: async (url, options) => { sent = { url, options }; return { ok: true, data: { action: "react" }, meta: {} }; }, errors: canonicalFieldErrors };
-  const bootAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/asset-graph-fixture.php"), "--bootstrap"], { encoding: "utf8" }));
+  const bootAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--bootstrap"], { encoding: "utf8" }));
   for (const asset of bootAssets) vm.runInContext(asset.source, context);
   T.status.controllers.actions.initStatusForms();
   const statusForm = new Node("form");
