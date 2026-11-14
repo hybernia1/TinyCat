@@ -12,16 +12,17 @@ use TinyCat\Support\Storage;
 /** Explicit signed migration entry; never called by registration or ordinary startup. */
 final class LegacyUpdate
 {
-    /** @param array<string, string> $history */
-    public static function apply(PDO $pdo, string $root, string $version, string $descriptorHash, array $history, string $fromVersion): void
+    /** @param array<string, string> $history
+     * @param list<string> $legacyOwners */
+    public static function apply(PDO $pdo, string $root, string $version, string $descriptorHash, array $history, string $fromVersion, array $legacyOwners): void
     {
         $descriptor = $root . '/App/distribution-target.json';
         $source = file_get_contents($descriptor);
         if (!is_string($source) || !hash_equals($descriptorHash, hash('sha256', $source))) { throw new RuntimeException('Signed target descriptor changed during legacy conversion.'); }
         $plan = Distribution::validate(json_decode($source, true, 512, JSON_THROW_ON_ERROR));
-        $available = Loader::fromSelection($root, $plan['selection']);
         $state = Deployment::read($root);
-        $legacyOwners = array_keys($available->providers(ProvidesLegacyUpgrade::class));
+        // Signed defaults also work when historical provider classes are already loaded.
+        if (array_diff($legacyOwners, array_keys($plan['selection'])) !== []) { throw new RuntimeException('Invalid legacy activation defaults.'); }
         $plan = PackageRegistry::extend($root, $plan);
         $active = $state === null ? $legacyOwners : Upgrade::ids($plan, $state['active']);
         $active = array_values(array_unique([...$active, ...$plan['required']]));

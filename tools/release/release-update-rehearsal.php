@@ -391,6 +391,7 @@ PHP;
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($version, true) . " || !class_exists('TinyCat\\\\Bots\\\\Importer') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
     $newBootRunner .= "; if (!TinyCat\\Database\\Schema::app_db_ready() || (TinyCat\\Core\\Modules\\Distribution::read(" . var_export($installRoot, true) . ")[\"format\"] ?? null) !== 3) exit(3);";
+    $newBootRunner = str_replace('; if (TinyCat', '; echo json_encode(["status" => TinyCat\\Database\\Schema::app_db_status(), "activation" => TinyCat\\Core\\Modules\\Deployment::read(' . var_export($installRoot, true) . '), "states" => TinyCat\\Database\\Connection::all("SELECT * FROM module_installations")]); if (TinyCat', $newBootRunner);
     [$newBootExit, $newBootOutput] = $run($newBootRunner);
     $assert($newBootExit === 0, 'Updated runtime boots with built-in Bots: ' . implode(' ', $newBootOutput));
 

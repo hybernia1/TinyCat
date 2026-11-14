@@ -258,6 +258,10 @@ nikoli aktivaci povinných služeb core. Historický vlastník může implemento
 `ProvidesLegacyUpgrade::prepareLegacyUpgrade(PDO, callable)`: pouze explicitní
 aktualizace zavolá tento kontrakt a vlastník rozhodne, zda má spustit předaný
 ověřený globální migrační stream. Registrace tento callback nevyhodnocuje.
+Exportovaný root callback může běžet z ověřené pracovní složky balíčku;
+pro cílové soubory a aktivační stav používej kanonický `Paths::basePath()`,
+nikoli `dirname(__DIR__)` migračního souboru. Výchozí aktivace musí být data
+podepsaného buildu, protože běžící updater může mít načtené starší providery.
 
 API registruj přes předaný `TinyCat\Http\Api`. Databázové API stejně jako Blog
 obal kontrolou připravenosti schématu přes `whenReady`. Server ověřuje oprávnění
