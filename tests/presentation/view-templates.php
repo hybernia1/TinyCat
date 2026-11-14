@@ -136,7 +136,7 @@ $assert(str_contains($comment, 'data-comment-like-count') && str_contains($comme
 
 $notification = \TinyCat\Core\Notifications\Views::items(['notifications' => [[
     'id' => 21, 'type' => 'content_mention', 'actor_name' => 'Bob <unsafe>',
-    'content_id' => 7, 'visible_content_id' => 7, 'content_body' => 'Notification content text',
+    'subject_id' => 7, 'subject_url' => '/status/7', 'subject_text' => 'Notification content text',
     'created_at' => '2026-08-09T12:02:00+00:00', 'read_at' => null,
 ]]], true);
 $assert(str_contains($notification, 'href="/status/7"') && str_contains($notification, 'data-url="/api/notifications/21?open=1"') && str_contains($notification, 'data-method="PATCH"'), 'Unread notifications mark read through the API and retain a read-only destination.');
