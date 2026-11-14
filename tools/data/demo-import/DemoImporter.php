@@ -805,7 +805,7 @@ final class DemoImporter
     /** @return list<string> */
     private function notificationColumns(): array
     {
-        return ['user_id', 'actor_id', 'content_id', 'comment_id', 'type', 'notification_key', 'read_at', 'created_at', 'updated_at'];
+        return ['user_id', 'actor_id', 'subject_id', 'type', 'notification_key', 'read_at', 'created_at', 'updated_at'];
     }
 
     /** @return list<mixed> */
@@ -822,7 +822,7 @@ final class DemoImporter
             ? $this->generator->dateAfter('notification-read-date', $key, $created)
             : null;
 
-        return [$userId, $actorId, $contentId, $commentId, $type, $key, $readAt, $created, $created];
+        return [$userId, $actorId, $commentId ?? $contentId, $type, $key, $readAt, $created, $created];
     }
 
     /**
