@@ -20,7 +20,7 @@ $write = static function (string $relative, string $source) use ($directory, &$c
     $created[] = $path;
 };
 try {
-    foreach (['autoload.php', 'Core/Support/Paths.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
+    foreach (['autoload.php', 'Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
         $write('App/' . $relative, (string) file_get_contents($root . '/App/' . $relative));
     }
     foreach ($files as $relative => $source) {
@@ -53,7 +53,7 @@ try {
     }
 } finally {
     foreach (array_reverse($created) as $file) { unlink($file); }
-    foreach (['App/Core/Support/compiled', 'App/Core/Mail', 'App/Core/Support', 'App/Core', 'App/Core/Mail/src', 'App/Modules/Mail', 'App/Modules', 'App', ''] as $relative) {
+    foreach (['App/Core/Support/compiled', 'App/Core/Mail', 'App/Core/Support', 'App/Core/Runtime', 'App/Core', 'App/Core/Mail/src', 'App/Modules/Mail', 'App/Modules', 'App', ''] as $relative) {
         $path = $directory . ($relative !== '' ? '/' . $relative : '');
         if (is_dir($path)) { rmdir($path); }
     }
