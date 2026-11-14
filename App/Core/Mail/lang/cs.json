@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "fields": {
+      "email_from": "Odesílací email",
+      "smtp_username": "SMTP uživatel",
+      "smtp_encryption": "SMTP šifrování",
+      "email_from_name": "Jméno odesílatele",
+      "smtp_host": "SMTP host",
+      "smtp_password": "SMTP heslo",
+      "smtp_port": "SMTP port",
+      "email_templates": "Typy doručovaných emailů",
+      "smtp": "SMTP konfigurace"
+    }
+  }
+}

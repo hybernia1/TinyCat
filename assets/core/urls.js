@@ -7,7 +7,12 @@
     var locales = (document.documentElement && document.documentElement.dataset.interfaceLocales || "").split(",");
     return parts && locales.includes(parts[1]) ? { locale: parts[1], path: parts[2] || "/" } : { locale: "", path: path };
   }
-  function supports(path) { return /^\/(?:privacy|search|login|register|logout|recovery|notifications|author\/[1-9][0-9]*|status\/[1-9][0-9]*|tag\/[^/]+)?$/.test(path); }
+  function supports(path) {
+    var patterns;
+    try { patterns = JSON.parse(document.documentElement.dataset.interfaceRoutes || "[]"); }
+    catch (_) { return false; }
+    return patterns.some(function (pattern) { return new RegExp(pattern, "u").test(path); });
+  }
   function local(url, language) {
     if (typeof url !== "string" || !url.startsWith("/") || url.startsWith("//")) { return url; }
     var match = url.match(/^([^?#]*)(.*)$/), parts = split(match[1]);

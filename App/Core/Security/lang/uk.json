@@ -1,0 +1,19 @@
+{
+  "security": {
+    "captcha_label": "Перевірка безпеки"
+  },
+  "auth": {
+    "invalid_captcha": "Перевірка безпеки не пройшла."
+  },
+  "settings": {
+    "fields": {
+      "captcha_site_key": "Ключ сайту",
+      "captcha_secret_key": "Секретний ключ",
+      "captcha_enabled": "Захист CAPTCHA",
+      "captcha_login_attempts": "Помилка входу до CAPTCHA",
+      "captcha_secret_key_help": "Залиште порожнім, щоб зберегти збережений секретний ключ. Його більше ніколи не показують.",
+      "captcha_provider_help": "Виберіть постачальника, ключ сайту та секретний ключ якого налаштовано нижче.",
+      "captcha_provider": "Постачальник CAPTCHA"
+    }
+  }
+}

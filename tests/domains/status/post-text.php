@@ -6,7 +6,7 @@ define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/autoload.php';
 require_once __DIR__ . '/../../../tools/maintenance/post-text-cleanup.php';
 
-use TinyCat\Status\PostText;
+use TinyCat\Core\Text\PostText;
 
 $checks = 0;
 $assert = static function (bool $condition) use (&$checks): void {
@@ -35,29 +35,29 @@ foreach ($cases as $before => $after) {
 }
 $assert(PostText::isReadMore('READ MORE »'));
 $assert(!PostText::isReadMore('Read more about my work'));
-$description = TinyCat\Bots\FeedParser::descriptionText('<p>First</p><p>Second […] <a href="https://example.com/">Read <b>more</b> »</a></p>', 1200);
+$description = TinyCat\Social\Automation\FeedParser::descriptionText('<p>First</p><p>Second […] <a href="https://example.com/">Read <b>more</b> »</a></p>', 1200);
 $assert($description === 'First Second …');
 $assert(!PostTextCleanup::safe('Read more', ''));
 $assert(!PostTextCleanup::safe('#foo bar', '#foobar'));
 $assert(!PostTextCleanup::safe('https://example.com/', 'https://example.org/'));
-$metadata = TinyCat\Status\Links::status_link_data(['normalized_url' => 'https://example.com/', 'description' => '  Preview  […] Read more']);
+$metadata = TinyCat\Social\Content\Links::status_link_data(['normalized_url' => 'https://example.com/', 'description' => '  Preview  […] Read more']);
 $assert($metadata['description'] === 'Preview …');
 
 if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-    $pdo->exec('CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, published_at TEXT, body TEXT)');
-    $insert = $pdo->prepare('INSERT INTO content VALUES (?, ?, ?, ?)');
+    $pdo->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY, author_id INTEGER, published_at TEXT, body TEXT)');
+    $insert = $pdo->prepare('INSERT INTO social_posts (id, author_id, published_at, body) VALUES (?, ?, ?, ?)');
     $insert->execute([1, 1, '2026-11-01', 'Human  post […]']);
     $insert->execute([2, 2, '2026-12-01', 'Bot  post […]']);
     $plan = PostTextCleanup::plan($pdo);
     $assert(count($plan['changes']) === 2);
-    $pdo->exec("UPDATE content SET body = 'edited' WHERE id = 2");
+    $pdo->exec("UPDATE social_posts SET body = 'edited' WHERE id = 2");
     try { PostTextCleanup::apply($pdo, $plan); throw new LogicException('Conflict accepted'); }
-    catch (RuntimeException) { $assert($pdo->query('SELECT body FROM content WHERE id = 1')->fetchColumn() === 'Human  post […]'); }
-    $pdo->exec("UPDATE content SET body = 'Bot  post […]' WHERE id = 2");
+    catch (RuntimeException) { $assert($pdo->query('SELECT body FROM social_posts WHERE id = 1')->fetchColumn() === 'Human  post […]'); }
+    $pdo->exec("UPDATE social_posts SET body = 'Bot  post […]' WHERE id = 2");
     $assert(PostTextCleanup::apply($pdo, $plan) === 2);
     $assert(PostTextCleanup::plan($pdo)['changes'] === []);
     $assert(PostTextCleanup::apply($pdo, $plan, true) === 2);
-    $assert($pdo->query('SELECT body FROM content WHERE id = 1')->fetchColumn() === 'Human  post […]');
+    $assert($pdo->query('SELECT body FROM social_posts WHERE id = 1')->fetchColumn() === 'Human  post […]');
 }
 echo "PASS post text ({$checks} checks)\n";

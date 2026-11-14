@@ -7,11 +7,13 @@
 /uploads/*
 !/uploads/.gitkeep
 /dist/
-/App/Support/compiled/
+/App/Core/Support/compiled/
+/App/distribution.json
 
 # Tooling
 /.phpunit.cache/
 /vendor/
+/App/module-packages.json
 /.idea/
 /.vscode/
 /.agents/

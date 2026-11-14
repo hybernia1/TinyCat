@@ -1,0 +1,12 @@
+{
+  "templates": {
+    "welcome": {
+      "subject": "Vítej na {site}",
+      "body": "Ahoj {username},\n\nvítej na {site}. Tvůj účet je připravený.\n\nPřihlásit se: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Obnova hesla na {site}",
+      "body": "Ahoj {username},\n\nobdrželi jsme žádost o obnovu tvého hesla.\n\nObnovit heslo: {reset_url}\n\nOdkaz platí 60 minut. Pokud jsi o obnovu nežádal(a), můžeš tento email ignorovat.\n\n{signature}"
+    }
+  }
+}

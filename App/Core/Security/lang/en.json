@@ -1,0 +1,19 @@
+{
+  "security": {
+    "captcha_label": "Security check"
+  },
+  "auth": {
+    "invalid_captcha": "The security check did not pass."
+  },
+  "settings": {
+    "fields": {
+      "captcha_site_key": "Site key",
+      "captcha_secret_key": "Secret key",
+      "captcha_enabled": "CAPTCHA protection",
+      "captcha_login_attempts": "Failed logins before CAPTCHA",
+      "captcha_secret_key_help": "Leave empty to keep the saved secret key. It is never shown again.",
+      "captcha_provider_help": "Choose the provider whose site key and secret key are configured below.",
+      "captcha_provider": "CAPTCHA provider"
+    }
+  }
+}

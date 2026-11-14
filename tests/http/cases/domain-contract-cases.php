@@ -121,7 +121,7 @@ $assert(($payload['data']['item']['links'][0]['provider_name'] ?? '') === 'Faceb
 $postId = $payload['data']['item']['id'];
 $assert(count($payload['data']['item']['links']) === 1 && array_column(array_filter($payload['data']['item']['segments'], static fn (array $segment): bool => $segment['type'] === 'link'), 'url') === ['https://google.com/search?q=TinyCat'], 'Only the first URL becomes a card; the other remains a clickable text link.');
 $relationsDb = new PDO('sqlite:' . $databasePath);
-$assert((int) $relationsDb->query('SELECT COUNT(*) FROM content_links WHERE content_id = ' . $postId)->fetchColumn() === 2, 'Both link relations remain stored despite displaying one card.');
+$assert((int) $relationsDb->query('SELECT COUNT(*) FROM social_post_links WHERE content_id = ' . $postId)->fetchColumn() === 2, 'Both link relations remain stored despite displaying one card.');
 $relationsDb = null;
 $pure($payload);
 [$status, $feedCards] = $request('GET', '/api/statuses?limit=50');
@@ -177,7 +177,7 @@ $seed->prepare('INSERT INTO password_reset_tokens (user_id, token_hash, expires_
 $assert($status === 200 && $payload['data']['password_changed'], 'Recovery consumes the token and updates the password atomically.');
 [$status] = $request('POST', '/api/users/password-resets/confirm', ['token' => 'fixture-recovery-token', 'password' => 'Other-password-46', 'password_confirm' => 'Other-password-46'], '', $csrf);
 $assert($status === 422, 'A consumed recovery token cannot be reused through the API.');
-$seed->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (1000, 2, 'Future timestamp fixture', '2030-01-01 12:00:00')");
+$seed->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (1000, 2, 'Future timestamp fixture', '2030-01-01 12:00:00')");
 [$status] = $request('GET', '/api/statuses/1000');
 $assert($status === 404, 'Future-dated data remains hidden from public API readers.');
 [$status, $payload] = $request('GET', '/api/statuses/1000', null, 'user');
@@ -197,6 +197,9 @@ $assert($status === 200 && $protected['protected'] && !$protected['can_delete'],
 [$status, $payload] = $request('POST', '/api/users', ['username' => 'Čistý.Api', 'password' => 'Managed-password-47', 'role' => 'user', 'status' => 'active'], 'admin', $csrf);
 $assert($status === 201 && $payload['data']['item']['username'] === 'Čistý.Api', 'Administrator creation uses the same relaxed username rules.');
 $managedId = $payload['data']['item']['id'];
+[$status, $passwordLimit] = $request('POST', '/api/users', ['username' => 'ByteLimitFixture', 'password' => str_repeat('ž', 600), 'role' => 'user', 'status' => 'active'], 'admin', $csrf);
+$limitMessage = (string) ($passwordLimit['error']['details']['errors']['password'][0]['message'] ?? '');
+$assert($status === 422 && str_contains($limitMessage, '1024') && !str_contains($limitMessage, '{max}'), 'Administrative password byte limit returns a formatted shared validation issue.');
 [$status, $payload] = $request('PATCH', '/api/users/' . $managedId, ['scope' => 'administration', 'id' => 1, 'role' => 'user', 'status' => 'active', 'bio' => 'Managed profile'], 'admin', $csrf);
 $assert($status === 200 && $payload['data']['item']['id'] === $managedId && $payload['data']['item']['bio'] === 'Managed profile', 'Administrator updates target the path ID and return the changed resource.');
 [$status] = $request('DELETE', '/api/users/1', [], 'admin', $csrf);

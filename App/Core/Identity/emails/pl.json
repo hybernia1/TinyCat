@@ -1,0 +1,12 @@
+{
+  "templates": {
+    "welcome": {
+      "subject": "Witamy w {site}",
+      "body": "Witaj {username},\n\nWitamy w {site}. Twoje konto jest gotowe.\n\nZaloguj się: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Zresetuj swoje hasło {site}",
+      "body": "Witaj {username},\n\nOtrzymaliśmy prośbę o zresetowanie Twojego hasła.\n\nZresetuj swoje hasło: {reset_url}\n\nTen link wygaśnie za 60 minut. Jeśli nie prosiłeś o to, możesz zignorować tę wiadomość e-mail.\n\n{signature}"
+    }
+  }
+}

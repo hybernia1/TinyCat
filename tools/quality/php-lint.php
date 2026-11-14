@@ -24,12 +24,13 @@ foreach (glob($root . DIRECTORY_SEPARATOR . '*.php') ?: [] as $path) {
 sort($files, SORT_STRING);
 
 $failed = [];
-foreach ($files as $file) {
-    $command = escapeshellarg(PHP_BINARY) . ' -l ' . escapeshellarg($file) . ' 2>&1';
+// PHP 8.4 checks every supplied file, including files after a syntax error.
+// Small batches also stay below the Windows command-line length limit.
+foreach (array_chunk($files, 16) as $batch) {
+    $command = escapeshellarg(PHP_BINARY) . ' -l ' . implode(' ', array_map(escapeshellarg(...), $batch)) . ' 2>&1';
     exec($command, $output, $exitCode);
     if ($exitCode !== 0) {
-        $relative = str_replace('\\', '/', substr($file, strlen($root) + 1));
-        $failed[] = $relative . ': ' . implode(' ', $output);
+        $failed[] = str_replace($root . DIRECTORY_SEPARATOR, '', implode("\n", $output));
     }
     $output = [];
 }

@@ -1,0 +1,19 @@
+{
+  "security": {
+    "captcha_label": "Sicherheitskontrolle"
+  },
+  "auth": {
+    "invalid_captcha": "Die Sicherheitskontrolle wurde nicht bestanden."
+  },
+  "settings": {
+    "fields": {
+      "captcha_site_key": "Site-Schlüssel",
+      "captcha_secret_key": "Geheimer Schlüssel",
+      "captcha_enabled": "CAPTCHA-Schutz",
+      "captcha_login_attempts": "Fehlgeschlagene Anmeldungen vor CAPTCHA",
+      "captcha_secret_key_help": "Lassen Sie das Feld leer, um den gespeicherten geheimen Schlüssel aufzubewahren. Es wird nie wieder gezeigt.",
+      "captcha_provider_help": "Wählen Sie den Anbieter aus, dessen Site-Schlüssel und geheimer Schlüssel unten konfiguriert sind.",
+      "captcha_provider": "CAPTCHA-Anbieter"
+    }
+  }
+}

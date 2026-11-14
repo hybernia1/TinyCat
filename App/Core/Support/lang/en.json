@@ -1,0 +1,234 @@
+{
+  "common": {
+    "sort": "Sort",
+    "refresh": "Refresh",
+    "save": "Save",
+    "create": "Create",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "confirm": "Confirm",
+    "confirm_action": "Confirm action",
+    "back": "Back",
+    "previous": "Previous",
+    "next": "Next",
+    "finish": "Finish",
+    "open": "Open",
+    "video": "Video",
+    "menu": "Menu",
+    "close": "Close",
+    "skip_to_content": "Skip to main content",
+    "main_navigation": "Main navigation",
+    "site_logo_alt": "{site} logo",
+    "request_failed": "The request could not be completed.",
+    "edit": "Edit",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "admin": "Admin",
+    "dashboard": "Dashboard",
+    "home": "Index",
+    "language": "Language",
+    "database": "Database",
+    "tables": "Tables",
+    "account": "Account",
+    "done": "Done",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "new_password": "New password",
+    "current_password": "Current password",
+    "password_confirm": "Confirm password",
+    "role": "Role",
+    "status": "Status",
+    "note": "Note",
+    "created": "Created",
+    "updated": "Updated",
+    "route": "Route",
+    "file": "File",
+    "image_prepare_failed": "The selected image could not be prepared for upload.",
+    "image": "Image",
+    "table": "Table",
+    "clean_api": "Clean API",
+    "ui_api": "UI API",
+    "ui": "UI",
+    "actions": "Actions",
+    "search": "Search",
+    "filters": "Filters",
+    "apply_filters": "Apply filters",
+    "clear_filters": "Clear",
+    "pagination": "Pagination",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "Per page",
+    "all": "All",
+    "updated_from": "Updated from",
+    "updated_to": "Updated to",
+    "created_from": "Created from",
+    "created_to": "Created to",
+    "unsaved_title": "Unsaved changes",
+    "unsaved_message": "The form contains unsaved changes. Leave anyway?",
+    "leave": "Leave",
+    "stay": "Stay",
+    "validation_failed": "Please check the submitted values.",
+    "no_records": "No records.",
+    "not_found": "Not found.",
+    "validation_required": "The {field} field is required.",
+    "validation_invalid": "The {field} field has an invalid value.",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "activated": "{entity} activated.",
+    "deactivated": "{entity} deactivated.",
+    "action_for": "{action} — {context}",
+    "search_empty": "Nothing found."
+  },
+  "relative": {
+    "now": "now",
+    "past": {
+      "minute": {
+        "one": "{count} minute ago",
+        "few": "{count} minutes ago",
+        "many": "{count} minutes ago",
+        "other": "{count} minutes ago",
+        "single": "a minute ago"
+      },
+      "hour": {
+        "one": "{count} hour ago",
+        "few": "{count} hours ago",
+        "many": "{count} hours ago",
+        "other": "{count} hours ago",
+        "single": "an hour ago"
+      },
+      "day": {
+        "one": "{count} day ago",
+        "few": "{count} days ago",
+        "many": "{count} days ago",
+        "other": "{count} days ago",
+        "single": "yesterday"
+      },
+      "week": {
+        "one": "{count} week ago",
+        "few": "{count} weeks ago",
+        "many": "{count} weeks ago",
+        "other": "{count} weeks ago",
+        "single": "a week ago"
+      },
+      "month": {
+        "one": "{count} month ago",
+        "few": "{count} months ago",
+        "many": "{count} months ago",
+        "other": "{count} months ago",
+        "single": "a month ago"
+      },
+      "year": {
+        "one": "{count} year ago",
+        "few": "{count} years ago",
+        "many": "{count} years ago",
+        "other": "{count} years ago",
+        "single": "a year ago"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "in {count} minute",
+        "few": "in {count} minutes",
+        "many": "in {count} minutes",
+        "other": "in {count} minutes",
+        "single": "in a minute"
+      },
+      "hour": {
+        "one": "in {count} hour",
+        "few": "in {count} hours",
+        "many": "in {count} hours",
+        "other": "in {count} hours",
+        "single": "in an hour"
+      },
+      "day": {
+        "one": "in {count} day",
+        "few": "in {count} days",
+        "many": "in {count} days",
+        "other": "in {count} days",
+        "single": "tomorrow"
+      },
+      "week": {
+        "one": "in {count} week",
+        "few": "in {count} weeks",
+        "many": "in {count} weeks",
+        "other": "in {count} weeks",
+        "single": "in a week"
+      },
+      "month": {
+        "one": "in {count} month",
+        "few": "in {count} months",
+        "many": "in {count} months",
+        "other": "in {count} months",
+        "single": "in a month"
+      },
+      "year": {
+        "one": "in {count} year",
+        "few": "in {count} years",
+        "many": "in {count} years",
+        "other": "in {count} years",
+        "single": "in a year"
+      }
+    }
+  },
+  "action": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete"
+  },
+  "message": {
+    "welcome": "Welcome to {app}."
+  },
+  "settings": {
+    "messages": {
+      "invalid_language": "Selected language is not available."
+    }
+  },
+  "privacy": {
+    "title": "Privacy and Rules"
+  },
+  "public": {
+    "author_not_found": "Author was not found."
+  },
+  "notifications": {
+    "loading": "Loading...",
+    "load_more": "Load more"
+  },
+  "moderation": {
+    "messages": {
+      "action_limited": "This account has reached the temporary action limit."
+    }
+  },
+  "auth": {
+    "forbidden": "Administration requires an admin account.",
+    "login_required": "Sign in to continue."
+  },
+  "modules": {
+    "title": "Modules",
+    "help": "Manage the available modules. Disabling preserves their data.",
+    "required": "Required",
+    "dependencies": "Dependencies",
+    "dependencies_error": "Keep required modules and active dependencies enabled.",
+    "stale": "The selection changed. Reload the page and try again.",
+    "unavailable": "Module changes require an installed distribution.",
+    "failed": "The change could not be completed. Reload and check the module status.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "enable": "Enable",
+    "disable": "Disable",
+    "enable_group": "Enable group",
+    "disable_group": "Disable group",
+    "needed_by": "Needed by: {modules}",
+    "confirm": "Apply this module change? Dependencies are checked and existing data is retained.",
+    "module": "Module",
+    "packages": {
+      "upload": "Upload module",
+      "file": "ZIP package (up to 32 MiB)",
+      "confirm": "Install this module? The package contains PHP code with application access. A new module stays inactive.",
+      "help": "Use a ZIP built for TinyCat. Activate a new module separately after installation; updates retain its state.",
+      "failed": "Module installation failed. Check the package, compatibility and dependencies; check Updates for any recovery state.",
+      "install": "Install"
+    }
+  }
+}

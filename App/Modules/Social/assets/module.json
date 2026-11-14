@@ -1,0 +1,537 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "users/following-profile"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/users/styles/profile-navigation.css",
+      "App/Modules/Social/assets/users/styles/profile-avatar.css",
+      "App/Modules/Social/assets/users/styles/profile.css",
+      "App/Modules/Social/assets/users/styles/profile-details.css",
+      "App/Modules/Social/assets/users/styles/following-mobile.css",
+      "App/Modules/Social/assets/users/styles/profile-layout-desktop.css",
+      "App/Modules/Social/assets/users/styles/profile-main-desktop.css"
+    ],
+    "translations": [
+      "notifications.load_more",
+      "notifications.loading",
+      "public.follow",
+      "public.following",
+      "public.unfollow"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/users/index.js"
+    ]
+  },
+  {
+    "routes": [
+      "public"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/users/public.js"
+    ],
+    "translations": [],
+    "styles": []
+  },
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "status/card",
+      "status/thread",
+      "status/composer-body",
+      "publishing/editor",
+      "status/feed-more"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/status/index.js"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/status/styles/status-email-notice.css",
+      "App/Modules/Social/assets/status/styles/feed-switch.css",
+      "App/Modules/Social/assets/status/styles/home-feed-switch-links.css",
+      "App/Modules/Social/assets/status/styles/status-feed.css",
+      "App/Modules/Social/assets/status/styles/status-header.css",
+      "App/Modules/Social/assets/status/styles/status-text.css",
+      "App/Modules/Social/assets/status/styles/status-inline-link.css",
+      "App/Modules/Social/assets/status/styles/comment-menu.css",
+      "App/Modules/Social/assets/status/styles/status-menu.css",
+      "App/Modules/Social/assets/status/styles/status-editing.css",
+      "App/Modules/Social/assets/status/styles/status-avatars.css",
+      "App/Modules/Social/assets/status/styles/status-detail.css",
+      "App/Modules/Social/assets/status/styles/status-email-notice-mobile.css",
+      "App/Modules/Social/assets/status/styles/feed-switch-mobile.css",
+      "App/Modules/Social/assets/status/styles/status-content-mobile.css",
+      "App/Modules/Social/assets/status/styles/status-feed-mobile.css",
+      "App/Modules/Social/assets/status/styles/embed-preview.css",
+      "App/Modules/Social/assets/status/styles/home-feed.css",
+      "App/Modules/Social/assets/status/styles/composer-loading.css",
+      "App/Modules/Social/assets/status/styles/author-meta.css",
+      "App/Modules/Social/assets/status/styles/home-feed-mobile.css",
+      "App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css",
+      "App/Modules/Social/assets/status/styles/feedback-mobile.css"
+    ],
+    "translations": [
+      "account.translation_translate",
+      "account.translation_hide",
+      "account.translation_preparing",
+      "account.translation_machine",
+      "account.translation_unavailable",
+      "account.translation_same",
+      "account.translation_continue",
+      "account.translation_failed",
+      "account.status_comment_history",
+      "account.status_comment_placeholder",
+      "account.status_edit",
+      "account.status_thread_title",
+      "auth.forbidden",
+      "auth.login_required",
+      "common.edit",
+      "common.save",
+      "moderation.report_reasons.abuse",
+      "moderation.report_reasons.illegal",
+      "moderation.report_reasons.malware",
+      "moderation.report_reasons.other",
+      "moderation.report_reasons.spam",
+      "moderation.report_submit",
+      "moderation.report_reason",
+      "moderation.report_note",
+      "public.feed_empty",
+      "public.feed_empty_following",
+      "account.status_embed_help",
+      "account.status_embed_code"
+    ],
+    "messages": {
+      "action_limited": "moderation.messages.action_limited",
+      "action_too_fast": "moderation.messages.action_too_fast",
+      "comment_created": "account.messages.comment_created",
+      "comment_deleted": "account.messages.comment_deleted",
+      "comment_edit_forbidden": "account.messages.comment_edit_forbidden",
+      "comment_forbidden": "account.messages.comment_forbidden",
+      "comment_not_found": "account.messages.comment_not_found",
+      "comment_required": "account.messages.comment_required",
+      "comment_saved": "account.messages.comment_saved",
+      "duplicate_body": "moderation.messages.duplicate_body",
+      "muted": "moderation.messages.account_muted",
+      "report_created": "moderation.messages.report_created",
+      "report_own_content": "moderation.messages.report_own_content",
+      "status_deleted": "account.messages.status_deleted",
+      "status_forbidden": "account.messages.status_forbidden",
+      "status_image_compression": "account.messages.status_image_compression",
+      "status_image_disabled": "account.messages.status_image_disabled",
+      "status_image_invalid": "account.messages.status_image_invalid",
+      "status_not_found": "account.messages.status_not_found",
+      "status_required": "account.messages.status_required",
+      "status_saved": "account.messages.status_saved",
+      "status_tag_too_long": "account.messages.status_tag_too_long",
+      "status_created": "account.messages.status_created"
+    },
+    "standalone": [
+      "assets/embed.css",
+      "assets/embed-frame.js",
+      "assets/embed.js"
+    ],
+    "uses": [
+      "publishing.presentation",
+      "publishing.editor",
+      "publishing.discussion-base"
+    ]
+  },
+  {
+    "routes": [
+      "/admin/bots"
+    ],
+    "components": [
+      "status/composer-body"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/status/index.js"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/status/styles/status-editing.css"
+    ],
+    "translations": [
+      "account.status_comment_history",
+      "account.status_comment_placeholder",
+      "account.status_edit",
+      "account.status_embed",
+      "account.status_embed_code",
+      "account.status_embed_help",
+      "account.status_thread_title",
+      "account.translation_continue",
+      "account.translation_failed",
+      "account.translation_hide",
+      "account.translation_machine",
+      "account.translation_preparing",
+      "account.translation_same",
+      "account.translation_translate",
+      "account.translation_unavailable",
+      "auth.forbidden",
+      "auth.login_required",
+      "common.edit",
+      "common.leave",
+      "common.save",
+      "common.stay",
+      "common.unsaved_message",
+      "common.unsaved_title",
+      "moderation.report_note",
+      "moderation.report_reason",
+      "moderation.report_reasons.abuse",
+      "moderation.report_reasons.illegal",
+      "moderation.report_reasons.malware",
+      "moderation.report_reasons.other",
+      "moderation.report_reasons.spam",
+      "moderation.report_submit",
+      "notifications.new_count.few",
+      "notifications.new_count.many",
+      "notifications.new_count.one",
+      "notifications.new_count.other",
+      "public.feed_empty",
+      "public.feed_empty_following"
+    ],
+    "messages": {
+      "action_limited": "moderation.messages.action_limited",
+      "action_too_fast": "moderation.messages.action_too_fast",
+      "comment_created": "account.messages.comment_created",
+      "comment_deleted": "account.messages.comment_deleted",
+      "comment_edit_forbidden": "account.messages.comment_edit_forbidden",
+      "comment_forbidden": "account.messages.comment_forbidden",
+      "comment_not_found": "account.messages.comment_not_found",
+      "comment_required": "account.messages.comment_required",
+      "comment_saved": "account.messages.comment_saved",
+      "duplicate_body": "moderation.messages.duplicate_body",
+      "muted": "moderation.messages.account_muted",
+      "report_created": "moderation.messages.report_created",
+      "report_own_content": "moderation.messages.report_own_content",
+      "status_deleted": "account.messages.status_deleted",
+      "status_forbidden": "account.messages.status_forbidden",
+      "status_image_compression": "account.messages.status_image_compression",
+      "status_image_disabled": "account.messages.status_image_disabled",
+      "status_image_invalid": "account.messages.status_image_invalid",
+      "status_not_found": "account.messages.status_not_found",
+      "status_required": "account.messages.status_required",
+      "status_saved": "account.messages.status_saved",
+      "status_tag_too_long": "account.messages.status_tag_too_long",
+      "status_created": "account.messages.status_created"
+    },
+    "uses": [
+      "publishing.editor"
+    ]
+  },
+  {
+    "routes": [
+      "/admin/moderation"
+    ],
+    "components": [
+      "status/card",
+      "status/thread"
+    ],
+    "entries": [
+      "assets/ui/content/media-preview.js"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/status/styles/status-header.css",
+      "App/Modules/Social/assets/status/styles/status-text.css",
+      "App/Modules/Social/assets/status/styles/status-inline-link.css",
+      "App/Modules/Social/assets/status/styles/comment-menu.css",
+      "App/Modules/Social/assets/status/styles/status-menu.css",
+      "App/Modules/Social/assets/status/styles/status-editing.css",
+      "App/Modules/Social/assets/status/styles/status-avatars.css",
+      "App/Modules/Social/assets/status/styles/status-detail.css",
+      "App/Modules/Social/assets/status/styles/status-content-mobile.css",
+      "App/Modules/Social/assets/status/styles/author-meta.css"
+    ],
+    "translations": [
+      "account.translation_translate",
+      "account.translation_hide",
+      "account.translation_preparing",
+      "account.translation_machine",
+      "account.translation_unavailable",
+      "account.translation_same",
+      "account.translation_continue",
+      "account.translation_failed",
+      "account.status_comment_history",
+      "account.status_comment_placeholder",
+      "account.status_edit",
+      "account.status_thread_title",
+      "auth.forbidden",
+      "auth.login_required",
+      "common.edit",
+      "common.save",
+      "moderation.report_reasons.abuse",
+      "moderation.report_reasons.illegal",
+      "moderation.report_reasons.malware",
+      "moderation.report_reasons.other",
+      "moderation.report_reasons.spam",
+      "moderation.report_submit",
+      "moderation.report_reason",
+      "moderation.report_note",
+      "public.feed_empty",
+      "public.feed_empty_following",
+      "account.status_embed_help",
+      "account.status_embed_code"
+    ],
+    "messages": {
+      "action_limited": "moderation.messages.action_limited",
+      "action_too_fast": "moderation.messages.action_too_fast",
+      "comment_created": "account.messages.comment_created",
+      "comment_deleted": "account.messages.comment_deleted",
+      "comment_edit_forbidden": "account.messages.comment_edit_forbidden",
+      "comment_forbidden": "account.messages.comment_forbidden",
+      "comment_not_found": "account.messages.comment_not_found",
+      "comment_required": "account.messages.comment_required",
+      "comment_saved": "account.messages.comment_saved",
+      "duplicate_body": "moderation.messages.duplicate_body",
+      "muted": "moderation.messages.account_muted",
+      "report_created": "moderation.messages.report_created",
+      "report_own_content": "moderation.messages.report_own_content",
+      "status_deleted": "account.messages.status_deleted",
+      "status_forbidden": "account.messages.status_forbidden",
+      "status_image_compression": "account.messages.status_image_compression",
+      "status_image_disabled": "account.messages.status_image_disabled",
+      "status_image_invalid": "account.messages.status_image_invalid",
+      "status_not_found": "account.messages.status_not_found",
+      "status_required": "account.messages.status_required",
+      "status_saved": "account.messages.status_saved",
+      "status_tag_too_long": "account.messages.status_tag_too_long",
+      "status_created": "account.messages.status_created"
+    },
+    "standalone": [
+      "assets/embed.css",
+      "assets/embed-frame.js",
+      "assets/embed.js"
+    ],
+    "uses": [
+      "publishing.media"
+    ]
+  },
+  {
+    "routes": [
+      "/admin/bots"
+    ],
+    "components": [
+      "ui/avatar",
+      "bots/accounts",
+      "bots/sources",
+      "bots/source-fields",
+      "bots/runs",
+      "bots/account-fields",
+      "bots/queue",
+      "bots/queue-filter-form",
+      "bots/source-preview",
+      "bots/posts",
+      "bots/post-filter-form",
+      "bots/stat",
+      "bots/runs-list",
+      "bots/run-filter-form"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/bots/index.js"
+    ],
+    "styles": [],
+    "translations": [
+      "bots.edit_source",
+      "common.save",
+      "bots.edit_account",
+      "bots.preview_title",
+      "bots.preview_loading",
+      "bots.preview_confirm",
+      "bots.preview_invalid",
+      "bots.preview_changed",
+      "bots.detail_account",
+      "bots.detail_sources",
+      "bots.detail_history",
+      "bots.detail_posts",
+      "common.refresh",
+      "bots.new_source",
+      "common.username",
+      "common.create",
+      "bots.new_account",
+      "bots.account_create_help",
+      "account.username_hint"
+    ],
+    "messages": {
+      "bot_account_created": "bots.messages.account_created",
+      "bot_account_deleted": "bots.messages.account_deleted",
+      "bot_account_not_found": "bots.messages.account_not_found",
+      "bot_bot": "bots.validation.bot",
+      "bot_deleted": "bots.messages.deleted",
+      "bot_feed_duplicate": "bots.validation.feed_duplicate",
+      "bot_feed_url": "bots.validation.feed_url",
+      "bot_inactive": "bots.detail_bot_inactive",
+      "bot_interval": "bots.validation.interval",
+      "bot_name": "bots.validation.name",
+      "bot_saved": "bots.messages.saved",
+      "bot_source_disabled": "bots.detail_source_disabled",
+      "bot_source_not_found": "bots.messages.not_found",
+      "bot_template": "bots.validation.template",
+      "common_request_failed": "common.request_failed",
+      "user_status_invalid": "users.validation.status_invalid",
+      "user_username_invalid": "users.messages.username_invalid",
+      "user_username_taken": "users.messages.username_taken",
+      "bot_run_failed": "bots.detail_run_failed",
+      "bot_run_completed": "bots.detail_run_finished",
+      "bot_created": "bots.messages.created",
+      "scheduler_already_running": "cron.already_running",
+      "bot_queue_published": "bots.queue_published",
+      "status_not_found": "account.messages.status_not_found",
+      "bot_feed_preview": "bots.preview_invalid",
+      "record_activated": "common.activated",
+      "record_deactivated": "common.deactivated"
+    }
+  },
+  {
+    "routes": [
+      "/admin/moderation"
+    ],
+    "components": [
+      "moderation/reports",
+      "moderation/filter-form",
+      "ui/api-action",
+      "moderation/history",
+      "moderation/report-preview"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/moderation/index.js"
+    ],
+    "styles": [],
+    "translations": [
+      "moderation.detail",
+      "moderation.preview",
+      "moderation.hidden",
+      "moderation.hide_content",
+      "moderation.hide_confirm",
+      "moderation.empty_content",
+      "moderation.reports_title",
+      "moderation.report_reasons.spam",
+      "moderation.report_reasons.illegal",
+      "moderation.report_reasons.malware",
+      "moderation.report_reasons.abuse",
+      "moderation.report_reasons.other",
+      "moderation.report_statuses.open",
+      "moderation.report_statuses.reviewed",
+      "moderation.report_statuses.resolved",
+      "moderation.report_statuses.dismissed",
+      "moderation.dismiss_report",
+      "moderation.publish_content",
+      "moderation.publish_confirm"
+    ],
+    "messages": {
+      "blocked_url": "moderation.messages.blocked_url",
+      "common_request_failed": "common.request_failed",
+      "report_reviewed": "moderation.messages.report_reviewed",
+      "status_not_found": "account.messages.status_not_found",
+      "url_blocker_saved": "moderation.messages.url_blocker_saved",
+      "content_published": "moderation.messages.content_published"
+    }
+  },
+  {
+    "routes": [
+      "admin"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/moderation/settings-presentation.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "moderation.url_blocker_help",
+      "moderation.url_blocker_label",
+      "moderation.url_blocker_placeholder"
+    ]
+  },
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "search/page",
+      "ui/notice"
+    ],
+    "entries": [],
+    "styles": [],
+    "translations": [
+      "auth.login_title",
+      "common.confirm",
+      "moderation.messages.action_limited",
+      "notifications.load_more",
+      "public.search_captcha_required",
+      "public.search_captcha_title",
+      "public.search_all",
+      "public.search_min",
+      "public.search_content",
+      "public.search_empty",
+      "public.search_length",
+      "public.search_tag_posts.few",
+      "public.search_tag_posts.many",
+      "public.search_tag_posts.one",
+      "public.search_tag_posts.other",
+      "public.search_tags",
+      "public.search_title",
+      "public.search_title_query",
+      "public.search_users"
+    ],
+    "messages": {
+      "action_limited": "moderation.messages.action_limited",
+      "captcha_required": "public.search_captcha_required",
+      "search_search_captcha_unlocked": "public.search_captcha_unlocked"
+    }
+  },
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "site/sidebar",
+      "site/public-page"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/site/index.js"
+    ],
+    "styles": [
+      "App/Modules/Social/assets/site/styles/public-list-header.css",
+      "App/Modules/Social/assets/site/styles/public-layout.css",
+      "App/Modules/Social/assets/site/styles/public-sidebar.css",
+      "App/Modules/Social/assets/site/styles/public-content-meta.css",
+      "App/Modules/Social/assets/site/styles/public-sidebar-footer.css",
+      "App/Modules/Social/assets/site/styles/public-list-header-mobile.css",
+      "App/Modules/Social/assets/site/styles/public-list-header-inset-mobile.css",
+      "App/Modules/Social/assets/site/styles/public-layout-desktop.css",
+      "App/Modules/Social/assets/site/styles/home-feed-toolbar.css",
+      "App/Modules/Social/assets/site/styles/sidebar-sticky.css",
+      "App/Modules/Social/assets/site/styles/sidebar-lists.css"
+    ],
+    "translations": []
+  },
+  {
+    "routes": [
+      "admin"
+    ],
+    "entries": [
+      "App/Modules/Social/assets/content/settings-presentation.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "settings.fields.content_images_enabled",
+      "settings.fields.content_images_enabled_help",
+      "settings.fields.content_images_max_upload_kb",
+      "settings.fields.content_images_max_upload_kb_help",
+      "settings.fields.utm_campaign",
+      "settings.fields.utm_enabled",
+      "settings.fields.utm_medium",
+      "settings.fields.utm_source",
+      "settings.fields.utm_source_help",
+      "moderation.url_blocker_label",
+      "moderation.url_blocker_placeholder",
+      "moderation.url_blocker_help"
+    ],
+    "messages": {
+      "url_blocker_saved": "moderation.messages.url_blocker_saved"
+    }
+  }
+]

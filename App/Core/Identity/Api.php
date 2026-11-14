@@ -1,0 +1,207 @@
+<?php
+declare(strict_types=1);
+
+namespace TinyCat\Core\Identity;
+use TinyCat\Core\Identity\Authentication;
+use TinyCat\Core\Identity\Roles;
+use TinyCat\Core\Identity\ReadModel;
+use TinyCat\Core\Identity\Integration;
+
+use \TinyCat\Http\Request;
+use \TinyCat\Http\Response;
+use \TinyCat\Http\Result;
+
+use TinyCat\Http\Api as Registrar;
+
+final class Api
+{
+    public static function register(Registrar $api): void
+    {
+        $api->get('/users/authentication', self::authentication(...));
+        $api->post('/users/sessions', static fn (): Result => self::result(Login::auth_login_request()), 'public', 200);
+        $api->post('/users/registrations/email-checks', static function (): array {
+            if (!\TinyCat\Core\Identity\Integration::registrationEnabled()) { Response::error(\TinyCat\Support\Localization::t('auth.registration_disabled'), 403, 'registration_disabled'); }
+            return EmailAvailability::check();
+        }, 'public', 200);
+        $api->post('/users/me/email-checks', static fn (): array => EmailAvailability::check((int) self::actor()['id']), 'user', 200);
+        $api->post('/users/{id:[0-9]+}/email-checks', static fn (Request $r, array $p): array => EmailAvailability::check((int) self::target((int) $p['id'])['id']), 'user', 200);
+        $api->post('/users/registrations', static fn (): Result => self::result(Actions::registration_request()), 'public');
+        $api->post('/users/password-resets', static function (Request $request): Result {
+            \TinyCat\Core\Security\RequestLimits::requireAllowed('recovery');
+            self::recoveryCaptcha();
+            \TinyCat\Core\Identity\Integration::sendRecovery((string) $request->input('email', ''));
+            return new Result(['accepted' => true], \TinyCat\Support\Localization::t('auth.recovery_sent'), [], 'auth_recovery_sent', []);
+        }, 'public');
+        $api->post('/users/password-resets/confirm', static function (Request $request): Result {
+            \TinyCat\Core\Security\RequestLimits::requireAllowed('recovery_confirm');
+            self::recoveryCaptcha();
+            $errors = \TinyCat\Core\Identity\Recovery::confirm(trim((string) $request->input('token', '')), (string) $request->input('password', ''), (string) $request->input('password_confirm', ''));
+            if ($errors !== []) { Response::validation($errors); }
+            return new Result(['password_changed' => true, 'redirect' => '/login'], \TinyCat\Support\Localization::t('auth.recovery_done'), [], 'auth_recovery_done', []);
+        }, 'public', 200);
+        $api->delete('/users/sessions/current', static function (): array {
+            Authentication::authLogout();
+            return ['logged_out' => true, 'redirect' => '/login'];
+        });
+        $api->get('/users/me', static fn (): array => self::editable(self::actor()));
+        $api->patch('/users/me', static fn (): Result => self::profile(self::actor()));
+        $api->patch('/users/me/email', static fn (): Result => self::result(Actions::user_email_update_request(self::actor())));
+        $api->put('/users/me/password', static fn (): Result => self::result(Actions::user_password_update_request(self::actor())));
+        $api->get('/users', self::listing(...), 'admin');
+        $api->get('/users/creation', static fn (): array => Resource::creation(), 'admin');
+        $api->post('/users', static fn (): Result => self::result(self::adminCreate()), 'admin');
+        $api->put('/users/{id:[0-9]+}/activation', static function (Request $r, array $p): Result {
+            $user = ReadModel::tc_admin_user_by_id((int) $p['id']);
+            if ($user === null || !Roles::managedByCoreAdmin((string) ($user['role'] ?? ''))) { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }
+            $data = $r->validated(['enabled' => 'required|boolean']);
+            $active = in_array($data['enabled'], [true, 1, '1'], true);
+            try { \TinyCat\Core\Identity\Administration::setActive(self::actor(), $user, $active, \TinyCat\Core\Identity\Participants::current()); }
+            catch (\DomainException $exception) {
+                if ($exception->getMessage() === 'user_not_found') { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }
+                if ($exception->getMessage() !== 'super_admin_protected') { throw $exception; }
+                Response::error(\TinyCat\Support\Localization::t('users.messages.super_admin_protected'), 409, 'super_admin_protected');
+            }
+            return Result::from(['item' => Resource::legacyUser(ReadModel::tc_admin_user_by_id((int) $p['id']) ?? [])] + \TinyCat\Support\AdminViews::activationNotice($active, '@' . $user['username']));
+        }, 'admin');
+        $api->get('/users/{id:[0-9]+}/management', static fn (Request $r, array $p): array => self::editable(self::target((int) $p['id'])), 'user');
+        $api->patch('/users/{id:[0-9]+}', static function (Request $r, array $p): Result {
+            $target = self::target((int) $p['id']);
+            if ((string) $r->input('scope', '') === 'administration') {
+                \TinyCat\Core\Identity\Access::require_admin();
+                return self::result(self::adminUpdate($target));
+            }
+            return self::profile($target);
+        });
+        $api->delete('/users/{id:[0-9]+}', static function (Request $r, array $p): array {
+            $id = (int) $p['id'];
+            $target = ReadModel::tc_admin_user_by_id($id);
+            if ($target === null) { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }
+            Actions::tc_admin_user_require_deletable($target);
+            try { \TinyCat\Core\Identity\Administration::delete(self::actor(), $id, \TinyCat\Core\Identity\Participants::current(true)); }
+            catch (\DomainException $exception) {
+                if ($exception->getMessage() !== 'super_admin_protected') { throw $exception; }
+                Response::error(\TinyCat\Support\Localization::t('users.messages.super_admin_protected'), 409, 'super_admin_protected');
+            }
+            return ['deleted_id' => $id];
+        }, 'admin');
+        $api->get('/users/{id:[0-9]+}/avatar', static fn (Request $r, array $p): array => ['user' => self::avatarProfile((int) $p['id']), 'appearance_options' => GeneratedAvatar::options()], 'user');
+        $api->patch('/users/{id:[0-9]+}/avatar', static fn (Request $r, array $p): Result => self::result(Avatars::updateAppearance(self::target((int) $p['id']))));
+        foreach (['put', 'delete'] as $method) {
+            $api->$method('/users/{id:[0-9]+}/avatar', static function (Request $r, array $p): Result {
+                return self::result(Avatars::user_avatar_update_request(self::target((int) $p['id'])));
+            });
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function actor(): array
+    {
+        $user = Authentication::auth();
+        if (!is_array($user)) { Response::error(\TinyCat\Support\Localization::t('auth.login_required'), 401, 'unauthenticated'); }
+        return $user;
+    }
+
+    /** @return array<string, mixed> */
+    private static function avatarProfile(int $id): array
+    {
+        $user = self::target($id);
+        return Resource::profile($user, Integration::profileUrl($id));
+    }
+
+    private static function recoveryCaptcha(): void
+    {
+        if (!\TinyCat\Core\Security\Captcha::check('recovery')) {
+            Response::error(\TinyCat\Support\Localization::t('auth.invalid_captcha'), 422, 'captcha_invalid', ['errors' => ['captcha' => [\TinyCat\Support\Localization::t('auth.invalid_captcha')]], 'captcha' => \TinyCat\Core\Security\Captcha::configuration('recovery')]);
+        }
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private static function target(int $id): array
+    {
+        return Actions::user_profile_require_edit_target(self::actor(), $id);
+    }
+
+    /**
+     * @param array<mixed> $user
+     * @return array<string, mixed>
+     */
+    private static function editable(array $user): array
+    {
+        $actor = self::actor();
+        $data = ['user' => Resource::privateProfile($user, Integration::profileUrl((int) ($user['id'] ?? 0))), 'options' => Resource::options(),
+            'capabilities' => ['edit' => true, 'password' => (int) $actor['id'] === (int) $user['id']]];
+        if (Roles::isAdmin($actor)) {
+            $data['administration'] = ['roles' => array_keys(\TinyCat\Core\Identity\ReadModel::roles()), 'statuses' => array_keys(\TinyCat\Support\AdminViews::admin_user_statuses())];
+            $data['user']['protected'] = ReadModel::tc_admin_user_is_super_admin($user);
+        }
+        return $data;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function authentication(Request $request): array
+    {
+        $mode = Login::auth_modal_mode((string) $request->input('mode', 'login'));
+        return AuthResource::make($mode, Login::auth_request_next_url());
+    }
+
+    /**
+     * @param array<mixed> $data
+     */
+    private static function result(array $data): Result
+    {
+        return Result::from($data);
+    }
+
+    /**
+     * @param array<mixed> $target
+     */
+    private static function profile(array $target): Result
+    {
+        $data = Actions::user_profile_update_request($target, self::actor());
+        $updated = ReadModel::tc_admin_user_by_id((int) $target['id']) ?? $target;
+        return Result::from(['user' => Resource::privateProfile($updated, Integration::profileUrl((int) ($updated['id'] ?? 0))), 'message' => (string) $data['message'], 'code' => (string) ($data['code'] ?? 'profile_saved')]);
+    }
+
+    private static function listing(): Result
+    {
+        $data = Actions::tc_admin_users_api_payload();
+        $pagination = $data['pagination'];
+        unset($data['pagination']);
+        $data = Resource::listing($data, $pagination);
+        unset($data['pagination']);
+        return new Result($data, null, ['pagination' => $pagination]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function adminCreate(): array
+    {
+        $id = Actions::adminUserCreate();
+        return ['item' => Resource::legacyUser(ReadModel::tc_admin_user_by_id($id) ?? []), 'message' => \TinyCat\Support\Localization::t('users.messages.created'), 'code' => 'user_created'];
+    }
+
+    /**
+     * @param array<mixed> $target
+     * @return array<string, mixed>
+     */
+    private static function adminUpdate(array $target): array
+    {
+        $id = (int) $target['id'];
+        if (!\TinyCat\Core\Identity\Roles::managedByCoreAdmin((string) ($target['role'] ?? ''))) { Response::error(\TinyCat\Support\Localization::t('users.messages.not_found'), 404, 'user_not_found'); }
+        try { Actions::adminUserUpdate($target); }
+        catch (\InvalidArgumentException $e) { Response::error($e->getMessage(), 422, 'avatar_invalid'); }
+        return ['item' => Resource::legacyUser(ReadModel::tc_admin_user_by_id($id) ?? []), 'message' => \TinyCat\Support\Localization::t('users.messages.saved'), 'code' => 'user_saved'];
+    }
+
+    /**
+     * @param array<string, string> $params
+     */
+
+}

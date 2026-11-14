@@ -258,7 +258,7 @@ final class DemoImporter
             throw new RuntimeException('Benchmark admin must receive user ID 1. Reset the dataset.');
         }
         $terms = array_map(static fn (string $tag): array => [$tag], self::TAGS);
-        $termResult = $this->writer->insert('terms', ['name'], $terms, true);
+        $termResult = $this->writer->insert('social_terms', ['name'], $terms, true);
         $this->schema->configureSettings();
         $state['stats'] = $this->mergeStats((array) ($state['stats'] ?? []), [
             'admins' => 1,
@@ -353,14 +353,14 @@ final class DemoImporter
             }
         }
 
-        $inserted = $this->writer->insert('content', ['body', 'author_id', 'published_at'], $postRows, false, true);
+        $inserted = $this->writer->insert('social_posts', ['body', 'author_id', 'published_at'], $postRows, false, true);
         $tagRows = [];
         foreach ($inserted['ids'] as $offset => $contentId) {
             foreach ($postTags[$offset] as $tag) {
                 $tagRows[] = [$contentId, $termIds[$tag]];
             }
         }
-        $tagResult = $this->writer->insert('content_tags', ['content_id', 'term_id'], $tagRows, true);
+        $tagResult = $this->writer->insert('social_post_tags', ['content_id', 'term_id'], $tagRows, true);
         $last = (int) end($users)['id'];
 
         return $this->result($cursor, $last, $total, count($postRows) + count($tagRows), [
@@ -406,7 +406,7 @@ final class DemoImporter
     private function contentLinksBatch(int $cursor): array
     {
         $posts = $this->postsAfter($cursor);
-        $total = $this->maximumId('content');
+        $total = $this->maximumId('social_posts');
         if ($posts === []) {
             return $this->result($cursor, $total, $total, 0, []);
         }
@@ -423,7 +423,7 @@ final class DemoImporter
             $contentIds[] = (int) $post['id'];
             $contentCreated[(int) $post['id']] = $created;
         }
-        $inserted = $this->writer->insert('links', [
+        $inserted = $this->writer->insert('social_links', [
             'normalized_url', 'url_hash', 'provider', 'link_type', 'title', 'description', 'created_at', 'updated_at',
         ], $links, false, true);
         $relations = [];
@@ -431,7 +431,7 @@ final class DemoImporter
             $contentId = $contentIds[$offset];
             $relations[] = [$contentId, $linkId];
         }
-        $relationResult = $this->writer->insert('content_links', ['content_id', 'link_id'], $relations, true);
+        $relationResult = $this->writer->insert('social_post_links', ['content_id', 'link_id'], $relations, true);
         $last = (int) end($posts)['id'];
 
         return $this->result($cursor, $last, $total, count($links) + count($relations), [
@@ -444,7 +444,7 @@ final class DemoImporter
     private function postLikesBatch(int $cursor): array
     {
         $posts = $this->postsAfter($cursor);
-        $total = $this->maximumId('content');
+        $total = $this->maximumId('social_posts');
         $allUsers = $this->maximumId('users');
         if ($posts === []) {
             return $this->result($cursor, $total, $total, 0, []);
@@ -464,7 +464,7 @@ final class DemoImporter
                 }
             }
         }
-        $likeResult = $this->writer->insert('content_likes', ['content_id', 'user_id'], $likes, true);
+        $likeResult = $this->writer->insert('social_post_likes', ['content_id', 'user_id'], $likes, true);
         $notificationResult = $this->writer->insert('notifications', $this->notificationColumns(), $notifications, true);
         $last = (int) end($posts)['id'];
 
@@ -478,7 +478,7 @@ final class DemoImporter
     private function commentsBatch(int $cursor): array
     {
         $posts = $this->postsAfter($cursor);
-        $total = $this->maximumId('content');
+        $total = $this->maximumId('social_posts');
         $allUsers = $this->maximumId('users');
         if ($posts === []) {
             return $this->result($cursor, $total, $total, 0, []);
@@ -507,7 +507,7 @@ final class DemoImporter
             }
         }
 
-        $rootResult = $this->writer->insert('content_comments', ['content_id', 'parent_id', 'user_id', 'body', 'created_at'], $rootRows, false, true);
+        $rootResult = $this->writer->insert('social_comments', ['content_id', 'parent_id', 'user_id', 'body', 'created_at'], $rootRows, false, true);
         $rootByPost = [];
         $notifications = [];
         foreach ($rootResult['ids'] as $offset => $commentId) {
@@ -535,7 +535,7 @@ final class DemoImporter
                 $levelTwoMeta[] = ['post' => $post, 'parent' => $parent, 'actor_id' => $actorId, 'created_at' => $created];
             }
         }
-        $levelTwoResult = $this->writer->insert('content_comments', ['content_id', 'parent_id', 'user_id', 'body', 'created_at'], $levelTwoRows, false, true);
+        $levelTwoResult = $this->writer->insert('social_comments', ['content_id', 'parent_id', 'user_id', 'body', 'created_at'], $levelTwoRows, false, true);
         $levelTwoByPost = [];
         foreach ($levelTwoResult['ids'] as $offset => $commentId) {
             $meta = $levelTwoMeta[$offset];
@@ -562,7 +562,7 @@ final class DemoImporter
                 $levelThreeMeta[] = ['post' => $post, 'parent' => $parent, 'actor_id' => $actorId, 'created_at' => $created];
             }
         }
-        $levelThreeResult = $this->writer->insert('content_comments', ['content_id', 'parent_id', 'user_id', 'body', 'created_at'], $levelThreeRows, false, true);
+        $levelThreeResult = $this->writer->insert('social_comments', ['content_id', 'parent_id', 'user_id', 'body', 'created_at'], $levelThreeRows, false, true);
         $levelThreeByPost = [];
         foreach ($levelThreeResult['ids'] as $offset => $commentId) {
             $meta = $levelThreeMeta[$offset];
@@ -588,7 +588,7 @@ final class DemoImporter
                 $levelFourMeta[] = ['post' => $post, 'parent' => $parent, 'actor_id' => $actorId, 'created_at' => $created];
             }
         }
-        $levelFourResult = $this->writer->insert('content_comments', ['content_id', 'parent_id', 'user_id', 'body', 'created_at'], $levelFourRows, false, true);
+        $levelFourResult = $this->writer->insert('social_comments', ['content_id', 'parent_id', 'user_id', 'body', 'created_at'], $levelFourRows, false, true);
         foreach ($levelFourResult['ids'] as $offset => $commentId) {
             $meta = $levelFourMeta[$offset];
             if ((int) $meta['parent']['actor_id'] !== (int) $meta['actor_id']) {
@@ -609,7 +609,7 @@ final class DemoImporter
     private function commentLikesBatch(int $cursor): array
     {
         $comments = $this->commentsAfter($cursor);
-        $total = $this->maximumId('content_comments');
+        $total = $this->maximumId('social_comments');
         $allUsers = $this->maximumId('users');
         if ($comments === []) {
             return $this->result($cursor, $total, $total, 0, []);
@@ -629,7 +629,7 @@ final class DemoImporter
                 }
             }
         }
-        $likeResult = $this->writer->insert('comment_likes', ['comment_id', 'user_id'], $likes, true);
+        $likeResult = $this->writer->insert('social_comment_likes', ['comment_id', 'user_id'], $likes, true);
         $notificationResult = $this->writer->insert('notifications', $this->notificationColumns(), $notifications, true);
         $last = (int) end($comments)['id'];
 
@@ -643,7 +643,7 @@ final class DemoImporter
     private function reportsBatch(int $cursor): array
     {
         $posts = $this->postsAfter($cursor);
-        $total = $this->maximumId('content');
+        $total = $this->maximumId('social_posts');
         $allUsers = $this->maximumId('users');
         if ($posts === []) {
             return $this->result($cursor, $total, $total, 0, []);
@@ -708,13 +708,13 @@ final class DemoImporter
     /** @return list<array<string, mixed>> */
     private function postsAfter(int $cursor): array
     {
-        return $this->fetchAfter('content', 'id, body, author_id, published_at', '1 = 1', $cursor);
+        return $this->fetchAfter('social_posts', 'id, body, author_id, published_at', '1 = 1', $cursor);
     }
 
     /** @return list<array<string, mixed>> */
     private function commentsAfter(int $cursor): array
     {
-        return $this->fetchAfter('content_comments', 'id, content_id, user_id, created_at', '1 = 1', $cursor);
+        return $this->fetchAfter('social_comments', 'id, content_id, user_id, created_at', '1 = 1', $cursor);
     }
 
     /** @return list<array<string, mixed>> */
@@ -767,7 +767,7 @@ final class DemoImporter
         if ($this->termIds !== []) {
             return $this->termIds;
         }
-        $statement = $this->database->query('SELECT id, name FROM terms ORDER BY id');
+        $statement = $this->database->query('SELECT id, name FROM social_terms ORDER BY id');
         if ($statement === false) {
             throw new RuntimeException('Unable to read deterministic tags.');
         }
@@ -880,16 +880,16 @@ final class DemoImporter
         $completed = strtotime((string) ($state['completed_at'] ?? '')) ?: time();
         $counts = [];
         foreach ([
-            'users', 'content', 'terms', 'content_tags', 'links', 'content_links', 'content_likes',
-            'content_comments', 'comment_likes', 'user_followers', 'notifications',
-            'content_reports',
-        ] as $table) {
-            $counts[$table] = $this->tableCount($table);
+            'users' => 'users', 'content' => 'social_posts', 'terms' => 'social_terms', 'content_tags' => 'social_post_tags', 'links' => 'social_links', 'content_links' => 'social_post_links', 'content_likes' => 'social_post_likes',
+            'content_comments' => 'social_comments', 'comment_likes' => 'social_comment_likes', 'user_followers' => 'user_followers', 'notifications' => 'notifications',
+            'content_reports' => 'content_reports',
+        ] as $key => $table) {
+            $counts[$key] = $this->tableCount($table);
         }
         $depthStatement = $this->database->query(
-            'SELECT COUNT(*) FROM content_comments child
-             INNER JOIN content_comments parent ON parent.id = child.parent_id
-             INNER JOIN content_comments grandparent ON grandparent.id = parent.parent_id
+            'SELECT COUNT(*) FROM social_comments child
+             INNER JOIN social_comments parent ON parent.id = child.parent_id
+             INNER JOIN social_comments grandparent ON grandparent.id = parent.parent_id
              WHERE grandparent.parent_id IS NULL'
         );
         if ($depthStatement === false) {
@@ -897,9 +897,9 @@ final class DemoImporter
         }
         $depth = (int) $depthStatement->fetchColumn();
         $deepStatement = $this->database->query(
-            'SELECT COUNT(*) FROM content_comments child
-             INNER JOIN content_comments parent ON parent.id = child.parent_id
-             INNER JOIN content_comments grandparent ON grandparent.id = parent.parent_id
+            'SELECT COUNT(*) FROM social_comments child
+             INNER JOIN social_comments parent ON parent.id = child.parent_id
+             INNER JOIN social_comments grandparent ON grandparent.id = parent.parent_id
              WHERE grandparent.parent_id IS NOT NULL'
         );
         if ($deepStatement === false) {

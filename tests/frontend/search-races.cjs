@@ -7,7 +7,7 @@ class Node {
   replaceChildren(...nodes) { this.children = nodes; }
   get textContent() { return this.text + this.children.map(child => child.textContent).join(""); }
   set textContent(text) { this.text = text; this.children = []; }
-  setAttribute() {} removeAttribute() {} blur() {}
+  getAttribute() { return null; } setAttribute() {} removeAttribute() {} blur() {}
   addEventListener(name, callback) { this.handlers[name] = callback; }
 }
 function setup() {
@@ -24,7 +24,7 @@ function setup() {
     api: { unwrap: response => response.data, request: (url, options) => new Promise((resolve, reject) => { pending.push({ url, options, resolve, reject }); }) }, i18n: { label: key => key, t: key => key, plural: key => key }, dates: { format: () => "" } };
   const window = { TinyCat: T, location: new URL("https://tinycat.test/"), AbortController, setTimeout: callback => { timers.set(++timer, callback); return timer; }, clearTimeout: id => timers.delete(id) };
   const context = vm.createContext({ window, document, URL, AbortController, Date: FixtureDate });
-  for (const file of ["assets/core/request-lifecycle.js", "assets/modules/search/global-search.js"]) {
+  for (const file of ["assets/core/request-lifecycle.js", "assets/ui/global-search.js"]) {
     const absolute = path.resolve(__dirname, "../..", file);
     vm.runInContext(fs.readFileSync(absolute, "utf8").replace(/^import .*;\r?\n/gm, ""), context);
   }
@@ -38,6 +38,9 @@ function setup() {
   assert.equal(s.pending[0].options.signal.aborted, true);
   s.pending[0].resolve({ data: { query: "alpha" } }); await tick(); assert.equal(s.box.hidden, true, "Cleared input cannot reopen old results.");
 
+  s = setup(); s.type("article");
+  s.pending[0].resolve({ data: { query: "article", collections: [{ id: "articles", name: "Articles" }], articles: [{ id: 3, type: "article", title: "Canonical article", url: "/articles/3" }] } }); await tick();
+  assert(s.box.textContent.includes("Articles") && s.box.textContent.includes("Canonical article"), "Autocomplete renders contributed collections without hardcoded domain IDs.");
   s = setup(); s.type("alpha"); s.type("x"); s.pending[0].resolve({ data: { query: "alpha" } }); await tick();
   assert.equal(s.box.textContent.includes("alpha"), false, "Short query cannot be replaced by an older result.");
 

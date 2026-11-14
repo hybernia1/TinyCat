@@ -14,17 +14,17 @@ return static function (): array {
         $validateClients = require __DIR__ . '/../quality/client-translations.php';
         $validateClients($catalogs);
         $files = [];
-        $server = ['packages' => \TinyCat\Support\TranslationSources::packages(), 'catalogs' => []];
+        $server = ['selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'packages' => \TinyCat\Support\TranslationSources::packages(), 'catalogs' => []];
         foreach ($catalogs as $locale => $catalog) {
             // Preserve template order as well as content; all sources were validated above.
-            $emails = json_decode((string) file_get_contents(\TinyCat\Support\Paths::basePath('App/Mail/lang/' . $locale . '.json')), true, 512, JSON_THROW_ON_ERROR);
+            $emails = \TinyCat\Support\TranslationSources::channel('emails', $locale);
             $source = "<?php\ndeclare(strict_types=1);\n\nreturn " . var_export(['app' => $catalog['app'], 'emails' => $emails], true) . ";\n";
             $name = $locale . '.' . substr(hash('sha256', $source), 0, 24) . '.php';
-            $files['App/Support/compiled/' . $name] = $source;
+            $files['App/Core/Support/compiled/' . $name] = $source;
             $server['catalogs'][$locale] = $name;
         }
-        $files['App/Support/compiled/translations.php'] = "<?php\ndeclare(strict_types=1);\n\nreturn " . var_export($server, true) . ";\n";
-        $manifest = ['assets' => [], 'clients' => []];
+        $files['App/Core/Support/compiled/translations.php'] = "<?php\ndeclare(strict_types=1);\n\nreturn " . var_export($server, true) . ";\n";
+        $manifest = ['selection' => \TinyCat\Core\Modules\Resources::fingerprint(), 'assets' => [], 'clients' => []];
         $emit = static function (string $prefix, string $source, string $type = 'js') use (&$files): string {
             $relative = 'assets/build/' . $prefix . '.' . substr(hash('sha256', $source), 0, 24) . '.' . $type;
             $files[$relative] = $source;

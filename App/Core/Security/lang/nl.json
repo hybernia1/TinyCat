@@ -1,0 +1,19 @@
+{
+  "security": {
+    "captcha_label": "Veiligheidscontrole"
+  },
+  "auth": {
+    "invalid_captcha": "De veiligheidscontrole is niet geslaagd."
+  },
+  "settings": {
+    "fields": {
+      "captcha_site_key": "Locatiesleutel",
+      "captcha_secret_key": "Geheime sleutel",
+      "captcha_enabled": "CAPTCHA-bescherming",
+      "captcha_login_attempts": "Mislukte aanmeldingen vóór CAPTCHA",
+      "captcha_secret_key_help": "Laat dit leeg om de opgeslagen geheime sleutel te behouden. Het wordt nooit meer getoond.",
+      "captcha_provider_help": "Kies hieronder de provider waarvan de sitesleutel en geheime sleutel zijn geconfigureerd.",
+      "captcha_provider": "CAPTCHA-provider"
+    }
+  }
+}

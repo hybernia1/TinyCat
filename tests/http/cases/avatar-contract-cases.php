@@ -112,7 +112,7 @@ try {
     [$status, $postUpload] = $request('POST', '/api/statuses', $multipartBody(['body' => 'Raster upload fixture ' . $avatarId], $redPng, 'image'), 'admin', $multipartHeaders);
     $assert($status === 201, 'Post images upload through the shared raster processing helpers.');
     $postId = (int) $postUpload['data']['status_id'];
-    $path = $seed->query('SELECT path FROM content_images WHERE content_id = ' . $postId)->fetchColumn();
+    $path = $seed->query('SELECT path FROM social_post_images WHERE content_id = ' . $postId)->fetchColumn();
     $assert(is_string($path) && preg_match('~^\d{4}/\d{2}/[a-f0-9]{32}\.webp$~D', $path) === 1, 'The post image retains its established storage path.');
     $postImageFile = $root . '/uploads/status-images/' . $path;
     try {

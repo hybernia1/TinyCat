@@ -11,3 +11,10 @@ Absolute write targets must be validated by their owner. This supports configure
 Cache retains its namespaces, configured directory, TTL, Memcached fallback and `0664` generated files. Only disposable cache writes enable the Windows unlink replacement fallback. Update state never enables it, so failed replacement preserves the previous state. Upload owners retain image validation, encoding and naming; they share directory creation.
 
 New filesystem consumers should use these primitives. Format, retention, cleanup predicates and domain validation stay with the owning module. Developer tooling with explicit external output destinations remains independent.
+
+Raster conversion is shared by `Core/Files/RasterStorage`; domain subclasses
+provide paths and upload/URL policies. `ProvidesFileReferences` contributes lazy
+retention queries to `Core/Files/References`, including installed inactive owners.
+The core file layer has no publication SQL. Delete superseded files only after
+commit and check retained references before unlinking. Legacy physical paths do
+not imply shared database ownership; see [domain storage](domain-storage.md).

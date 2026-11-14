@@ -18,13 +18,13 @@ feed_domains AS (
 ),
 bot_posts AS (
     SELECT c.id AS content_id, c.author_id, c.published_at, LEFT(c.body, 180) AS excerpt
-    FROM content c INNER JOIN users u ON u.id = c.author_id WHERE u.role = 'bot'
+    FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE u.role = 'bot'
 ),
 link_authorities AS (
     SELECT DISTINCT p.content_id,
         LOWER(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(l.normalized_url, '://', -1), '/', 1), '?', 1), '#', 1)) AS authority
-    FROM bot_posts p INNER JOIN content_links cl ON cl.content_id = p.content_id
-    INNER JOIN links l ON l.id = cl.link_id WHERE LOWER(l.normalized_url) REGEXP '^https?://'
+    FROM bot_posts p INNER JOIN social_post_links cl ON cl.content_id = p.content_id
+    INNER JOIN social_links l ON l.id = cl.link_id WHERE LOWER(l.normalized_url) REGEXP '^https?://'
 ),
 link_hosts AS (
     SELECT content_id, TRIM(TRAILING '.' FROM SUBSTRING_INDEX(SUBSTRING_INDEX(authority, '@', -1), ':', 1)) AS host
@@ -72,7 +72,7 @@ steam_feed_routes AS (
 steam_link_tails AS (
     SELECT c.content_id,c.author_id,l.normalized_url,
         LOWER(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(l.normalized_url,'://',-1),'?',1),'#',1)) AS uri_tail
-    FROM classified c JOIN content_links cl ON cl.content_id=c.content_id JOIN links l ON l.id=cl.link_id
+    FROM classified c JOIN social_post_links cl ON cl.content_id=c.content_id JOIN social_links l ON l.id=cl.link_id
     WHERE c.match_status='ambiguous_sources' AND c.domain_count=1 AND c.domains='steamcommunity.com'
       AND LOWER(l.normalized_url) REGEXP '^https?://(www[.])?steamcommunity[.]com[.]?(:[0-9]+)?/'
 ),

@@ -205,11 +205,11 @@ final class ComparisonRunner
         }
         $content = $this->query($database,
             'SELECT content_id, COUNT(*) AS comment_count
-             FROM content_comments GROUP BY content_id ORDER BY comment_count DESC, content_id ASC LIMIT 1'
+             FROM social_comments GROUP BY content_id ORDER BY comment_count DESC, content_id ASC LIMIT 1'
         )->fetch();
         $author = $this->query($database,
             'SELECT author_id, COUNT(*) AS post_count
-             FROM content GROUP BY author_id ORDER BY post_count DESC, author_id ASC LIMIT 1'
+             FROM social_posts GROUP BY author_id ORDER BY post_count DESC, author_id ASC LIMIT 1'
         )->fetch();
         if (!is_array($content) || !is_array($author)) {
             throw new RuntimeException('Imported dataset is empty.');

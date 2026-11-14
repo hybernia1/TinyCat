@@ -5,30 +5,30 @@ require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../App/bootstrap.php';
 
-use TinyCat\Users\Views as UsersViews;
-use TinyCat\Status\Views as StatusViews;
-use TinyCat\Bots\Views as BotsViews;
-use TinyCat\Site\Views as SiteViews;
+use TinyCat\Social\Profiles\Views as UsersViews;
+use TinyCat\Social\Posts\Views as StatusViews;
+use TinyCat\Social\Automation\Views as BotsViews;
+use TinyCat\Social\Presentation\Views as SiteViews;
 
 // No workspace database or cache is used by this rendering fixture.
 $database = new PDO('sqlite::memory:');
 $database->exec('CREATE TABLE users (id INTEGER, username TEXT, role TEXT, created_at TEXT)');
 $database->exec("INSERT INTO users VALUES (1, 'admin', 'admin', '2026-01-01')");
-$database->exec('CREATE TABLE content_links (content_id INTEGER, link_id INTEGER)');
-$database->exec('CREATE TABLE links (id INTEGER, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)');
-$database->exec('CREATE TABLE content_images (content_id INTEGER, path TEXT)');
-$database->exec('CREATE TABLE content_likes (content_id INTEGER, user_id INTEGER)');
-$database->exec('CREATE TABLE comment_likes (comment_id INTEGER, user_id INTEGER)');
+$database->exec('CREATE TABLE social_post_links (content_id INTEGER, link_id INTEGER)');
+$database->exec('CREATE TABLE social_links (id INTEGER, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)');
+$database->exec('CREATE TABLE social_post_images (content_id INTEGER, path TEXT)');
+$database->exec('CREATE TABLE social_post_likes (content_id INTEGER, user_id INTEGER)');
+$database->exec('CREATE TABLE social_comment_likes (comment_id INTEGER, user_id INTEGER)');
 \TinyCat\Database\Connection::set($database);
-(new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
+(new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $admin = ['id' => 1, 'username' => 'Admin <unsafe>', 'role' => 'admin', 'status' => 'active', 'avatar_exists' => 0];
 $member = ['id' => 2, 'username' => 'Member', 'role' => 'user', 'status' => 'active', 'avatar_exists' => 0];
-$accountMenu = \TinyCat\Support\View::part('Site/user-menu', [
+$accountMenu = \TinyCat\Support\View::part('Identity/user-menu', [
     'authUser' => $member, 'profileUrl' => '/author/2', 'profileNeedsEmail' => false, 'theme' => 'system',
-    'displayName' => 'Member', 'editModalId' => \TinyCat\Users\Profiles::author_profile_edit_modal_id(2),
-    'editModalUrl' => \TinyCat\Users\Profiles::author_profile_edit_modal_url(2),
+    'displayName' => 'Member', 'editModalId' => \TinyCat\Social\Profiles\Profiles::author_profile_edit_modal_id(2),
+    'editModalUrl' => \TinyCat\Social\Profiles\Profiles::author_profile_edit_modal_url(2),
 ]);
-\TinyCat\Users\Authentication::reset($admin, true);
+\TinyCat\Core\Identity\Authentication::reset($admin, true);
 
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
@@ -79,16 +79,16 @@ $assert(strip_tags($emptySummary) === '', 'An unfiltered list has no summary tex
 $accountFilters = BotsViews::accountFilter(['filters' => ['q' => 'Bot <unsafe>', 'status' => 'ban'], 'per_page' => 25]);
 $assert(str_contains($accountFilters, 'data-filter-content') && str_contains($accountFilters, 'action="/api/bots/accounts') && str_contains($accountFilters, 'name="status"') && str_contains($accountFilters, 'value="ban" selected'), 'The actual bot-account filter renders its trusted filter fields without throwing during page composition.');
 $assert(str_contains($accountFilters, 'Bot &lt;unsafe&gt;') && str_contains($accountFilters, 'data-ajax-target="#bot-accounts-list"') && !str_contains($accountFilters, 'role="dialog"') && !str_contains($accountFilters, 'type="submit"'), 'Bot-account dropdown filters preserve escaped search state and automatic submission without a modal.');
-$sourceFilters = \TinyCat\Support\View::part('Bots/modals/source-filter', ['bots' => [['id' => 3, 'username' => 'Bot <unsafe>']], 'filter_bot_id' => 3, 'filters' => ['q' => 'Feed', 'per_page' => 25]]);
+$sourceFilters = \TinyCat\Support\View::part('Social/bots/modals/source-filter', ['bots' => [['id' => 3, 'username' => 'Bot <unsafe>']], 'filter_bot_id' => 3, 'filters' => ['q' => 'Feed', 'per_page' => 25]]);
 $assert(str_contains($sourceFilters, 'data-filter-content') && str_contains($sourceFilters, 'action="/api/bots/sources"') && str_contains($sourceFilters, 'value="3" selected'), 'The actual source filter renders its trusted filter fields without throwing during page composition.');
 $assert(str_contains($sourceFilters, 'Bot &lt;unsafe&gt;') && str_contains($sourceFilters, 'data-ajax-target="#bots-list"') && !str_contains($sourceFilters, 'role="dialog"') && !str_contains($sourceFilters, 'type="submit"'), 'Source dropdown filters preserve their scoped controls and automatic submission without a modal.');
 
-$settingsSections = \TinyCat\Settings\Administration::tc_admin_settings_view_sections();
+$settingsSections = \TinyCat\Core\Settings\Administration::tc_admin_settings_view_sections();
 $iconSprite = (string) file_get_contents(__DIR__ . '/../../assets/icons.svg');
 foreach ($settingsSections as $section) {
     $assert(str_contains($iconSprite, 'id="' . $section['icon'] . '"'), 'Every settings section has a real shared SVG icon: ' . $section['icon']);
 }
-$assert(in_array('analytics', array_column(\TinyCat\Settings\Resource::editor()['sections'], 'key'), true), 'Deferred settings expose the analytics section.');
+$assert(in_array('analytics', array_column(\TinyCat\Core\Settings\Resource::editor()['sections'], 'key'), true), 'Deferred settings expose the analytics section.');
 $sidebar = SiteViews::sidebar(['authors' => [$admin + ['name' => $admin['username'], 'posts_count' => 5], $member + ['name' => $member['username'], 'posts_count' => 6]], 'tags' => [['name' => 'tinycat']]]);
 $assert(str_contains($sidebar, \TinyCat\Support\Html::e(\TinyCat\Support\Localization::plural('public.active_user_posts', 5))), 'Translation parameter maps preserve a parameter named count.');
 $assert(str_contains($sidebar, 'href="/author/1"') && str_contains($sidebar, 'href="/author/2"'), 'Sidebar authors retain distinct destinations.');
@@ -98,9 +98,9 @@ $assert(str_contains($following, 'Member') && str_contains($following, 'href="/a
 $avatar = UsersViews::avatar(['user' => ['id' => 99, 'author_id' => 2, 'author_name' => 'Member', 'avatar_exists' => 0]]);
 $assert(str_contains($avatar, 'data-avatar-user-id="2"') && str_contains($avatar, '#user'), 'Post avatars belong to the author and render the shared fallback icon.');
 
-$settingsSchema = \TinyCat\Settings\Resource::editor();
+$settingsSchema = \TinyCat\Core\Settings\Resource::editor();
 $assert(count($settingsSchema['sections']) >= 2 && $settingsSchema['sections'][0]['key'] === 'site', 'Settings expose a JSON editor schema for deferred loading.');
-$assert(!str_contains((string) file_get_contents(__DIR__ . '/../../App/Site/templates/admin.php'), '$settingsEditor'), 'Admin pages do not embed a settings editor.');
+$assert(!str_contains((string) file_get_contents(__DIR__ . '/../../App/Core/Ui/Admin/templates/shell.php'), '$settingsEditor'), 'Admin pages do not embed a settings editor.');
 $botStat = \TinyCat\Support\Components::render('bots/stat', ['stat' => ['key' => 'posts', 'value' => 0]]);
 $assert(str_contains($botStat, 'class="card min-w-0"') && str_contains($botStat, '#file') && str_contains($botStat, 'data-bot-stat="posts">0</strong>'), 'Bot counters use the dashboard stat card, include their icon, and preserve zero values and live-update hooks.');
 $source = ['id' => 7, 'bot_user_id' => 3, 'username' => 'Bot', 'name' => 'Source', 'enabled' => true, 'feed_url' => 'https://example.test/feed'];
@@ -134,7 +134,7 @@ $healthChecks = [
 $healthHtml = \TinyCat\Support\View::render('page', [
     'snapshot' => ['status' => 'warning', 'latest_failed' => false, 'stale' => false, 'history' => [], 'report' => ['checked_at' => '2026-11-01T12:00:00Z']],
     'checks' => $healthChecks, 'issues' => $healthChecks, 'http' => $healthChecks[1], 'passed' => 0,
-], __DIR__ . '/../../App/Health/templates');
+], __DIR__ . '/../../App/Core/Health/templates');
 $healthDocument = new DOMDocument();
 $previousXmlErrors = libxml_use_internal_errors(true);
 try { $healthDocument->loadHTML('<?xml encoding="UTF-8">' . $healthHtml); }

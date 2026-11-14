@@ -6,9 +6,9 @@ if (!defined('TINYCAT')) { define('TINYCAT', true); }
 require_once __DIR__ . '/../../App/autoload.php';
 
 use TinyCat\Database\Connection;
-use TinyCat\Status\LinkParser;
-use TinyCat\Status\PostText;
-use TinyCat\Status\Tags;
+use TinyCat\Core\Text\LinkParser;
+use TinyCat\Core\Text\PostText;
+use TinyCat\Social\Content\Tags;
 
 /** A saved plan is also the exact before/after backup. No metadata is rewritten. */
 final class PostTextCleanup
@@ -28,7 +28,7 @@ final class PostTextCleanup
         $plan = ['version' => 1, 'database' => self::database($pdo), 'created_at' => gmdate(DATE_ATOM), 'scanned' => 0, 'skipped' => [], 'changes' => []];
         $cursor = 0;
         do {
-            $query = $pdo->prepare('SELECT id, author_id, published_at, body FROM content WHERE id > ? ORDER BY id LIMIT 500');
+            $query = $pdo->prepare('SELECT id, author_id, published_at, body FROM social_posts WHERE id > ? ORDER BY id LIMIT 500');
             $query->execute([$cursor]);
             $rows = $query->fetchAll(PDO::FETCH_ASSOC);
             foreach ($rows as $row) {
@@ -60,7 +60,7 @@ final class PostTextCleanup
                 $ids = array_map(static fn (array $row): int => (int) $row['id'], $batch);
                 if (count(array_unique($ids)) !== count($ids)) { throw new RuntimeException('Duplicate plan IDs.'); }
                 $placeholders = implode(',', array_fill(0, count($ids), '?'));
-                $lock = $pdo->prepare('SELECT id, author_id, published_at, body FROM content WHERE id IN (' . $placeholders . ') ORDER BY id'
+                $lock = $pdo->prepare('SELECT id, author_id, published_at, body FROM social_posts WHERE id IN (' . $placeholders . ') ORDER BY id'
                     . ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' FOR UPDATE' : ''));
                 $lock->execute($ids);
                 $currentRows = [];
@@ -80,7 +80,7 @@ final class PostTextCleanup
                     $cases[] = 'WHEN ? THEN ?';
                     array_push($parameters, (int) $row['id'], $restore ? $row['body'] : $row['after']);
                 }
-                $update = $pdo->prepare('UPDATE content SET body = CASE id ' . implode(' ', $cases) . ' END WHERE id IN (' . $placeholders . ')');
+                $update = $pdo->prepare('UPDATE social_posts SET body = CASE id ' . implode(' ', $cases) . ' END WHERE id IN (' . $placeholders . ')');
                 $update->execute([...$parameters, ...$ids]);
             }
             $pdo->commit();

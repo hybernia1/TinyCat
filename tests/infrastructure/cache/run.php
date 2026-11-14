@@ -68,15 +68,17 @@ $test('Cache facade preserves fresh and stale values', static function () use ($
 
 $test('stale expiry is enforced without cleanup', static function () use ($expect): void {
     $key = 'bounded-stale';
-    \TinyCat\Support\Cache::put($key, ['old'], 1, 2);
+    \TinyCat\Support\Cache::put($key, ['old'], 60, 120);
     $file = \TinyCat\Support\Cache::file($key . '.json');
     // Exercise the filesystem backend independently of the local configuration.
     $put = new ReflectionMethod(\TinyCat\Support\Cache::class, 'filesystemPut');
     $lookup = new ReflectionMethod(\TinyCat\Support\Cache::class, 'filesystemLookup');
-    $put->invoke(null, $key, ['old'], 1, 2);
-    touch($file, time() - 2);
+    $put->invoke(null, $key, ['old'], 60, 120);
+    // Move timestamps into each state instead of giving filesystem I/O a one-second window.
+    // Age 90 is stale (fresh TTL 60), but remains within total retention 180.
+    touch($file, time() - 90);
     $expect($lookup->invoke(null, $key)['found'], 'Allowed stale data remains readable.');
-    touch($file, time() - 4);
+    touch($file, time() - 181);
     $expect(!$lookup->invoke(null, $key)['found'], 'Expired stale data must not be returned.');
     \TinyCat\Support\Cache::forget($key);
 });
@@ -145,10 +147,10 @@ $test('cached autoload settings omit secret values', static function () use ($ex
     $insert->execute(['security.captcha.secret_key', 'security', 'captcha-secret', 'string']);
     $insert->execute(['email.smtp', 'email', '{"password":"smtp-secret"}', 'json']);
     \TinyCat\Support\Cache::forget('core_autoload_settings');
-    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+    \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
 
     try {
-        $expect(\TinyCat\Settings\Store::setting('site.name') === 'Cache fixture');
+        $expect(\TinyCat\Core\Settings\Store::setting('site.name') === 'Cache fixture');
         $settings = \TinyCat\Support\Cache::read('core_autoload_settings');
 
         $expect(is_array($settings), 'Expected the autoload settings cache to be populated.');

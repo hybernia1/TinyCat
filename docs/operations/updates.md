@@ -3,6 +3,39 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
+TinyCat 6.0.0 provides signed product identities, selective
+distributions and independently owned Blog and Social storage. See the
+[module deployment guide](module-deployment.md) for CLI installation,
+activation, migration snapshots and recovery.
+
+## Preparing the 6.0 modular update
+
+The current distribution uses descriptor format 3 and requires the compatibility
+runtime **6.0.0-dev.9.1** before applying its data conversion. Do not install the
+new package directly over 5.x or dev.9. The frozen compatibility source used by
+the update rehearsal is `tests/fixtures/releases/bridge-6.0.0-dev.9.1-source.zip`;
+it is a build input, not an installation ZIP or a signed release asset.
+
+Prepare and verify the signed bridge separately with its own builder and the
+existing release key. The legacy 5.x bridge uses `--assembly=source` and
+`--without-migrations`; it replaces the updater without applying new data
+migrations. The following normal update must apply all pending migrations.
+Existing modular deployments must retain their product identity and available
+modules in both packages; a Social-only package cannot replace a deployment
+that already contains Blog.
+
+The normal update preserves account and publication IDs, public URLs, file
+paths, discussions, reactions and feed history while moving domain storage to
+its owners. It creates the standard database and file snapshot before conversion.
+Fresh installation uses the current owner schemas directly. Publish only after
+the full preflight, extracted-artifact installation and representative MySQL
+update/rollback rehearsal pass for the actual signed candidate.
+
+Updates supporting pre-6 installations retain a generated
+`App/Support/Cache.php` loader so the old updater can finish in its existing
+PHP process. The cache implementation lives only in `App/Core/Support/Cache.php`;
+fresh installation packages do not include this compatibility loader.
+
 ## Upgrading to 5.22.2: release preparation and repository maintenance
 
 This patch updates the shared asset/component helpers used by release compilation.
@@ -201,7 +234,7 @@ php tools/release/update-key.php
 
 The command writes the private key to the ignored
 `storage/update-signing.key` file and prints the public key. The public key is
-pinned in `App/Updates/Manager.php`; the private key must never be committed or uploaded
+pinned in `App/Core/Updates/Manager.php`; the private key must never be committed or uploaded
 to a web release.
 
 Back up the private key in a secret manager before publishing the first signed
@@ -435,7 +468,8 @@ Verify them with `php tools/release/verify-update.php dist/fresh --fresh-install
 This package excludes `migrations/` and update deletions. The installer creates
 all current tables and indexes directly. Use this ZIP only for new installations;
 publish the normal signed update package as the updater release asset.
-Only `docs/reference/api.md` and `docs/operations/updates.md` are shipped as public documentation.
+The shipped operational documentation includes `docs/reference/api.md`,
+`docs/operations/updates.md` and `docs/operations/module-deployment.md`.
 
 To prepare both variants with a single validated compilation:
 
@@ -500,7 +534,7 @@ restart and should inspect existing columns, indexes, and constraints before
 changing them. Do not assume that wrapping `ALTER TABLE` in a transaction makes
 it reversible.
 
-Fresh installations must also be updated in `App/Installation/Installer.php`. The
+Fresh installations must also be updated in `App/Core/Installation/Installer.php`. The
 installer creates the latest schema directly and does not replay historical
 migrations.
 

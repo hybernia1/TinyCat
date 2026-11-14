@@ -59,13 +59,14 @@ final readonly class CheckpointStore
         if (file_put_contents($temporary, $payload, LOCK_EX) === false) {
             throw new RuntimeException('Unable to write demo-import checkpoint.');
         }
-        if (is_file($this->path) && !unlink($this->path)) {
-            @unlink($temporary);
-            throw new RuntimeException('Unable to replace demo-import checkpoint.');
+        // Keep the last checkpoint until its replacement is published. Windows
+        // readers can briefly deny a rename even after closing their handle.
+        for ($attempt = 0; $attempt < 10; $attempt++) {
+            if (@rename($temporary, $this->path)) { return; }
+            if (PHP_OS_FAMILY !== 'Windows') { break; }
+            usleep(50_000);
         }
-        if (!rename($temporary, $this->path)) {
-            @unlink($temporary);
-            throw new RuntimeException('Unable to publish demo-import checkpoint.');
-        }
+        @unlink($temporary);
+        throw new RuntimeException('Unable to publish demo-import checkpoint.');
     }
 }

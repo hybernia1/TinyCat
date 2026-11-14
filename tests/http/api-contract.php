@@ -16,15 +16,15 @@ $database = new PDO('sqlite:' . $databasePath);
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 foreach ([
     'CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT DEFAULT "system", avatar_exists INTEGER DEFAULT 0, avatar_appearance TEXT, bio TEXT DEFAULT "", email_notifications INTEGER DEFAULT 0, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP)',
-    'CREATE TABLE content (id INTEGER PRIMARY KEY AUTOINCREMENT, author_id INTEGER, body TEXT, published_at TEXT, status TEXT NOT NULL DEFAULT \'published\')',
-    'CREATE TABLE content_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, UNIQUE(content_id, user_id))',
-    'CREATE TABLE content_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT, created_at TEXT, comments_diff TEXT)',
-    'CREATE TABLE comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, UNIQUE(comment_id, user_id))',
-    'CREATE TABLE terms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)',
-    'CREATE TABLE content_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, UNIQUE(content_id, term_id))',
-    'CREATE TABLE links (id INTEGER PRIMARY KEY AUTOINCREMENT, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
-    'CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, UNIQUE(content_id, link_id))',
-    'CREATE TABLE content_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
+    'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY AUTOINCREMENT, author_id INTEGER, body TEXT, published_at TEXT, status TEXT NOT NULL DEFAULT \'published\')',
+    'CREATE TABLE social_post_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, UNIQUE(content_id, user_id))',
+    'CREATE TABLE social_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT, created_at TEXT, comments_diff TEXT)',
+    'CREATE TABLE social_comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, UNIQUE(comment_id, user_id))',
+    'CREATE TABLE social_terms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)',
+    'CREATE TABLE social_post_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, UNIQUE(content_id, term_id))',
+    'CREATE TABLE social_links (id INTEGER PRIMARY KEY AUTOINCREMENT, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
+    'CREATE TABLE social_post_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, UNIQUE(content_id, link_id))',
+    'CREATE TABLE social_post_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
     'CREATE TABLE content_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER NOT NULL, reporter_id INTEGER, reason TEXT, note TEXT, status TEXT, created_at TEXT, updated_at TEXT, reviewed_at TEXT, reviewed_by INTEGER, action_note TEXT)',
     'CREATE TABLE notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, actor_id INTEGER, content_id INTEGER, comment_id INTEGER, type TEXT NOT NULL, notification_key TEXT NOT NULL, read_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(user_id, notification_key))',
     'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, follower_id))',
@@ -42,25 +42,28 @@ foreach ([
 }
 define('TINYCAT', true);
 $redirectMigration = require $root . '/migrations/20261102_001_compact_content_redirects.php';
+$database->exec('ALTER TABLE social_posts RENAME TO content');
 $redirectMigration($database);
+$database->exec('ALTER TABLE content RENAME TO social_posts');
+$database->exec('ALTER TABLE content_redirects RENAME TO social_post_redirects');
 $schedulerMigration = require $root . '/migrations/20261026_003_scheduler_runs.php';
 $schedulerMigration($database);
 $botSchedulerMigration = require $root . '/migrations/20261026_004_bot_scheduler_runs.php';
 $botSchedulerMigration($database);
 $password = password_hash('Example-password-42', PASSWORD_DEFAULT);
 $database->prepare('UPDATE users SET password = ?, locale = ?, email = ? WHERE id = 2')->execute([$password, 'en', 'member@example.test']);
-$database->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (10, 1, 'Hello @2 #test <img onerror=alert(1)>', '2026-01-01 12:00:00'), (11, 2, 'Member post', '2026-01-02 12:00:00')");
-$database->exec("INSERT INTO content_comments (id, content_id, user_id, body, created_at) VALUES (10, 10, 2, 'A comment @1', '2026-01-01 12:01:00')");
+$database->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (10, 1, 'Hello @2 #test <img onerror=alert(1)>', '2026-01-01 12:00:00'), (11, 2, 'Member post', '2026-01-02 12:00:00')");
+$database->exec("INSERT INTO social_comments (id, content_id, user_id, body, created_at) VALUES (10, 10, 2, 'A comment @1', '2026-01-01 12:01:00')");
 $linkFixtureUrl = 'https://facebook.com/ExamplePage';
-$database->prepare('INSERT INTO links (normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+$database->prepare('INSERT INTO social_links (normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
     ->execute([$linkFixtureUrl, hash('sha256', $linkFixtureUrl), 'facebook', 'web', 'Example page', 'Cached preview', '', '', gmdate('Y-m-d H:i:s'), gmdate('Y-m-d H:i:s')]);
-$database->exec('INSERT INTO content_links (content_id, link_id) VALUES (10, 1)');
-$database->prepare('INSERT INTO links (normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+$database->exec('INSERT INTO social_post_links (content_id, link_id) VALUES (10, 1)');
+$database->prepare('INSERT INTO social_links (normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
     ->execute(['https://legacy.example/article/', hash('sha256', 'https://legacy.example/article/'), '', 'web', 'Original RSS headline', 'Original RSS summary', '', '', gmdate('Y-m-d H:i:s'), gmdate('Y-m-d H:i:s')]);
 $legacyLinkId = (int) $database->lastInsertId();
-$database->exec("INSERT INTO content (id, author_id, body, published_at) VALUES (12, 1, 'Legacy feed https://www.legacy.example/article/ https://other.example/plain', '2026-01-01 11:00:00')");
-$database->prepare('INSERT INTO content_links (content_id, link_id) VALUES (12, ?)')->execute([$legacyLinkId]);
-$database->prepare('INSERT INTO links (normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+$database->exec("INSERT INTO social_posts (id, author_id, body, published_at) VALUES (12, 1, 'Legacy feed https://www.legacy.example/article/ https://other.example/plain', '2026-01-01 11:00:00')");
+$database->prepare('INSERT INTO social_post_links (content_id, link_id) VALUES (12, ?)')->execute([$legacyLinkId]);
+$database->prepare('INSERT INTO social_links (normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
     ->execute(['https://google.com/search?q=TinyCat', hash('sha256', 'https://google.com/search?q=TinyCat'), 'google', 'web', 'Search results', 'Cached search preview', '', '', gmdate('Y-m-d H:i:s'), gmdate('Y-m-d H:i:s')]);
 $database->exec("INSERT INTO notifications (id, user_id, actor_id, content_id, type, notification_key, created_at, updated_at) VALUES (1, 2, 1, 10, 'content_like', 'fixture-own', '2026-01-01 12:02:00', '2026-01-01 12:02:00'), (2, 1, 2, 11, 'content_like', 'fixture-foreign', '2026-01-01 12:03:00', '2026-01-01 12:03:00')");
 $database->exec("INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES ('auth.registration.enabled', '1', 'bool', 'auth'), ('auth.registration.auto_approve', '1', 'bool', 'auth'), ('i18n.locale', 'en', 'string', 'i18n')");
@@ -289,11 +292,11 @@ try {
     $assert($status === 403, 'Source previews require administrator privileges.');
     [$status] = $request('POST', '/api/bots/sources/previews', $previewInput, 'admin');
     $assert($status === 403, 'Source previews retain CSRF protection.');
-    $beforePreview = $sourceDatabase->query('SELECT COUNT(*) FROM content')->fetchColumn();
+    $beforePreview = $sourceDatabase->query('SELECT COUNT(*) FROM social_posts')->fetchColumn();
     [$status, $previewResource] = $request('POST', '/api/bots/sources/previews', $previewInput, 'admin', $csrf);
     $assert($status === 201 && $previewResource['data']['format'] === 'json_feed_1_1' && $previewResource['data']['items'][0]['body'] === 'Preview post', 'Preview uses the selected template and returns plain JSON resources.');
     $assert($previewResource['data']['items'][0]['url'] === 'https://93.184.216.34/entry', 'Provided feed documents use the same base URL resolution as downloaded feeds.');
-    $assert($sourceDatabase->query('SELECT COUNT(*) FROM content')->fetchColumn() === $beforePreview && (int) $sourceDatabase->query("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '" . hash('sha256', 'preview-only') . "'")->fetchColumn() === 0, 'Preview never creates posts or claims import history.');
+    $assert($sourceDatabase->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === $beforePreview && (int) $sourceDatabase->query("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '" . hash('sha256', 'preview-only') . "'")->fetchColumn() === 0, 'Preview never creates posts or claims import history.');
     [$status, $privatePreview] = $request('POST', '/api/bots/sources/previews', ['feed_url' => 'http://127.0.0.1/private'], 'admin', $csrf);
     $assert($status === 422 && isset($privatePreview['error']['details']['errors']['feed_url']), 'Unsafe preview URLs use the standard validation envelope.');
     [$status] = $request('POST', '/api/bots/sources/previews', ['document' => '<opml><body><outline xmlUrl="https://93.184.216.34/feed"/></body></opml>'], 'admin', $csrf);

@@ -1,0 +1,12 @@
+{
+  "templates": {
+    "welcome": {
+      "subject": "{site}'a hoş geldiniz",
+      "body": "Merhaba {username},\n\n{site}'e hoş geldiniz. Hesabınız hazır.\n\nOturum açın: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "{site} şifrenizi sıfırlayın",
+      "body": "Merhaba {username},\n\nŞifrenizin sıfırlanması yönünde bir talep aldık.\n\nŞifrenizi sıfırlayın: {reset_url}\n\nBu bağlantının süresi 60 dakika içinde dolacaktır. Eğer bunu talep etmediyseniz bu e-postayı yok sayabilirsiniz.\n\n{signature}"
+    }
+  }
+}

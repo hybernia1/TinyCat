@@ -17,8 +17,8 @@ $assert = static function (bool $condition, string $message) use (&$checks, &$fa
     }
 };
 
-$assert(is_file($root . '/App/Http/Api.php'), 'Modular API transport is present.');
-$assert(is_file($root . '/App/Database/Connection.php'), 'Database infrastructure has its own owner.');
+$assert(is_file($root . '/App/Core/Http/Api.php'), 'Modular API transport is present.');
+$assert(is_file($root . '/App/Core/Database/Connection.php'), 'Database infrastructure has its own owner.');
 $assert(is_file($root . '/App/modules.php'), 'Built-in module composition is explicit.');
 $assert($inventory['unreferenced_global_functions'] === [], 'No unreferenced global function remains.');
 $assert($inventory['unreferenced_private_methods'] === [], 'No unreferenced private method remains.');
@@ -38,11 +38,11 @@ $assert(
     \TinyCat\Support\Text::positive_int_ids([3, '2', 3, 0, -1, 'invalid', 2]) === [3, 2],
     'Positive-ID normalization keeps ordered unique positive values.'
 );
-$assert(!\TinyCat\Users\Profiles::user_is_admin(null), 'A missing user is not an administrator.');
-$assert(!\TinyCat\Users\Profiles::user_is_admin(['role' => 'user']), 'A regular user is not an administrator.');
-$assert(\TinyCat\Users\Profiles::user_is_admin(['role' => 'admin']), 'Administrator identity uses the shared policy helper.');
+$assert(!\TinyCat\Social\Profiles\Profiles::user_is_admin(null), 'A missing user is not an administrator.');
+$assert(!\TinyCat\Social\Profiles\Profiles::user_is_admin(['role' => 'user']), 'A regular user is not an administrator.');
+$assert(\TinyCat\Social\Profiles\Profiles::user_is_admin(['role' => 'admin']), 'Administrator identity uses the shared policy helper.');
 
-$commentRows = \TinyCat\Status\Comments::status_comment_tree_rows([
+$commentRows = \TinyCat\Social\Content\Comments::status_comment_tree_rows([
     ['id' => 1, 'replies' => [['id' => 2, 'replies' => []]]],
     ['id' => 3, 'replies' => []],
 ]);

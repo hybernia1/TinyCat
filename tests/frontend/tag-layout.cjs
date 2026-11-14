@@ -9,11 +9,11 @@ function read(file, ...args) { return JSON.parse(execFileSync(process.env.TINYCA
 const styles = read("tests/presentation/fixtures/asset-graph-fixture.php", "--styles");
 const templates = read("tests/presentation/fixtures/component-parity.php", "--templates");
 const fixtures = read("tests/presentation/fixtures/tag-layout-fixture.php");
-const scripts = ["core/urls.js", "core/dom.js", "core/i18n.js", "core/icons.js", "core/component-renderer.js", "modules/status/translation.js"].map(file => fs.readFileSync(path.join(root, "assets", file), "utf8").replace(/^import .*;\r?\n/gm, "")).join("\n");
+const scripts = ["core/urls.js", "core/dom.js", "core/i18n.js", "core/icons.js", "core/component-renderer.js", "../assets/ui/content/translation.js"].map(file => fs.readFileSync(path.join(root, "assets", file), "utf8").replace(/^import .*;\r?\n/gm, "")).join("\n");
 (async function () {
   const server = http.createServer((request, response) => {
     response.setHeader("Content-Type", "text/html; charset=utf-8");
-    response.end('<!doctype html><html lang="cs"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + styles + '</style></head><body><main style="max-width:760px;margin:12px"></main><script>window.TinyCat={status:{controllers:{}}};' + scripts + '</script></body></html>');
+    response.end('<!doctype html><html lang="cs"><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + styles + '</style></head><body><main style="max-width:760px;margin:12px"></main><script>window.TinyCat={publishing:{controllers:{}}};' + scripts + '</script></body></html>');
   });
   await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
   let browser, checks = 0;
@@ -38,7 +38,7 @@ const scripts = ["core/urls.js", "core/dom.js", "core/i18n.js", "core/icons.js",
               document.querySelector("main").append(section);
             }
           }
-          T.status.controllers.translation.hydrate(document.querySelector("main"));
+          T.publishing.controllers.translation.hydrate(document.querySelector("main"));
         }, {templates, fixtures, theme});
         await page.waitForFunction(() => !document.querySelector("#server0 .status-translation").hidden);
         for (const mode of ["server", "client"]) {

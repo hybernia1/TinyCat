@@ -1,0 +1,274 @@
+import "../../core/i18n.js";
+import "../../core/dom.js";
+import "../../core/navigation.js";
+import "./runtime.js";
+import "../image-uploads.js";
+import "../toasts.js";
+(function () {
+  "use strict";
+  var TinyCat = window.TinyCat;
+  var qs = TinyCat.dom.find;
+  var compactUrl = TinyCat.navigation.compact;
+  var prepareClientImageInput = TinyCat.images.prepare;
+  var replaceImageInputFile = TinyCat.images.replace;
+  function markStatusLinkImage(image, ready) {
+    if (!image) return;
+    var media = image.closest ? image.closest("[data-status-link-media]") : null;
+    var card = image.closest ? image.closest(".status-link-card") : null;
+    var fallback = media ? qs("[data-status-link-fallback]", media) : null;
+    image.hidden = !ready;
+    image.dataset.statusLinkImageMissing = String(!ready);
+    if (card) {
+      card.classList.toggle("is-image-missing", !ready);
+      card.classList.toggle("is-image-ready", ready);
+    }
+    if (fallback) fallback.hidden = ready;
+  }
+  function linkImageMissing(image) { markStatusLinkImage(image, false); }
+  function linkImageReady(image) { markStatusLinkImage(image, true); }
+  function initStatusLinkImageRoot(image) {
+    if (!image || image.dataset.statusLinkImageReady === "true") {
+      return;
+    }
+
+    image.dataset.statusLinkImageReady = "true";
+    image.addEventListener("load", function () {
+      linkImageReady(image);
+    });
+    image.addEventListener("error", function () {
+      linkImageMissing(image);
+    });
+
+    if (image.complete) {
+      if (image.naturalWidth > 0) {
+        linkImageReady(image);
+      } else {
+        linkImageMissing(image);
+      }
+    }
+  }
+  function allowedStatusVideoUrl(value, expectedOrigin) {
+    var url;
+
+    try {
+      url = new URL(String(value || ""), window.location.href);
+    } catch (error) {
+      return "";
+    }
+
+    if (url.protocol !== "https:" || url.username || url.password || !expectedOrigin || url.origin !== expectedOrigin) {
+      return "";
+    }
+
+    return url.href;
+  }
+  function initStatusVideoRoot(root) {
+    var button;
+    var embedUrl;
+    var audioUrl = "";
+    var data = root && root.dataset;
+
+    if (!root || data.statusVideoReady === "true") {
+      return;
+    }
+
+    button = qs("[data-status-video-load]", root);
+    embedUrl = allowedStatusVideoUrl(data.embedUrl || "", data.embedOrigin || "");
+    if (data.cardKind === "audio" && data.audioUrl) {
+      try { audioUrl = allowedStatusVideoUrl(data.audioUrl, new URL(data.audioUrl).origin); }
+      catch (_) { /* Invalid recordings keep their source link. */ }
+    }
+
+    if (!button || (!embedUrl && !audioUrl)) {
+      return;
+    }
+
+    data.statusVideoReady = "true";
+    button.addEventListener("click", function () {
+      if (audioUrl) {
+        var player = TinyCat.dom.element("audio", { "class": "status-audio-player", controls: true, preload: "none", src: audioUrl, "aria-label": button.getAttribute("aria-label") || "" });
+        (qs("[data-status-video-mount]", root) || root).replaceChildren(player);
+        var playback = player.play();
+        if (playback && playback.catch) playback.catch(function () {});
+        return;
+      }
+      var iframe = document.createElement("iframe");
+      var url = new URL(embedUrl);
+
+      var autoplayParam = data.embedAutoplayParam || "autoplay";
+      if (/^[a-z_]+$/.test(autoplayParam)) {
+        url.searchParams.set(autoplayParam, data.embedAutoplayValue || "1");
+      }
+      if (data.cardKind !== "audio") {
+        url.searchParams.set("playsinline", "1");
+      }
+      if (data.embedWidthParam && /^[a-z_]+$/.test(data.embedWidthParam)) {
+        url.searchParams.set(data.embedWidthParam, String(Math.max(220, Math.min(1280, Math.round(root.getBoundingClientRect().width)))));
+      }
+
+      iframe.className = "status-video-frame";
+      iframe.title = button.getAttribute("aria-label") || "";
+      if (data.cardKind === "audio") {
+        iframe.height = String(Math.max(80, Math.min(600, Number(data.embedHeight) || 166)));
+      }
+      iframe.src = url.href;
+      iframe.loading = "lazy";
+      iframe.referrerPolicy = "strict-origin-when-cross-origin";
+      iframe.allow = data.cardKind === "audio" ? "autoplay" : "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share";
+      iframe.allowFullscreen = data.cardKind !== "audio";
+      (qs("[data-status-video-mount]", root) || root).replaceChildren(iframe);
+    });
+  }
+  function dispose(root) {
+    var players = TinyCat.dom.all("audio.status-audio-player", root);
+    if (root.matches && root.matches("audio.status-audio-player")) players.push(root);
+    players.forEach(function (player) {
+      player.pause();
+      player.removeAttribute("src");
+      player.load();
+    });
+  }
+  function initStatusImageRoot(root) {
+    var input = qs("[data-status-image-input]", root);
+    var preview = qs("[data-status-image-preview]", root);
+    var previewWrap = qs("[data-status-image-preview-wrap]", root);
+    var picker = qs("[data-status-image-picker]", root);
+    var removeButton = qs("[data-status-image-remove]", root);
+    var removeInput = qs("[data-status-image-remove-input]", root);
+    var altWrap = qs("[data-status-image-alt-wrap]", root);
+    var originalSrc = preview ? String(preview.getAttribute("src") || "") : "";
+    var originalAlt = preview ? String(preview.getAttribute("alt") || "") : "";
+    var previewRequestId = 0;
+    var selectionRequestId = 0;
+
+    if (!input || !preview || root.dataset.statusImageReady === "true") {
+      return;
+    }
+
+    root.dataset.statusImageReady = "true";
+
+    function revokePreview() {
+      previewRequestId++;
+    }
+
+    function showOriginal() {
+      revokePreview();
+      previewWrap.hidden = !originalSrc;
+      preview.hidden = !originalSrc;
+      if (originalSrc) {
+        preview.src = originalSrc;
+      } else {
+        preview.removeAttribute("src");
+      }
+      preview.alt = originalAlt;
+      if (altWrap) {
+        altWrap.hidden = !originalSrc;
+      }
+      if (picker) {
+        picker.hidden = Boolean(originalSrc);
+      }
+    }
+
+    function showFile(file) {
+      var reader;
+      var requestId;
+
+      revokePreview();
+      requestId = previewRequestId;
+      preview.removeAttribute("src");
+      preview.alt = "";
+      preview.hidden = false;
+      previewWrap.hidden = false;
+      if (altWrap) {
+        altWrap.hidden = false;
+      }
+      if (removeInput) {
+        removeInput.value = "0";
+      }
+      if (picker) {
+        picker.hidden = true;
+      }
+
+      reader = new FileReader();
+      reader.addEventListener("load", function () {
+        if (requestId !== previewRequestId || typeof reader.result !== "string") {
+          return;
+        }
+
+        preview.src = reader.result;
+        preview.alt = originalAlt;
+      });
+      reader.addEventListener("error", function () {
+        if (requestId === previewRequestId) {
+          preview.hidden = true;
+          previewWrap.hidden = true;
+          if (picker) {
+            picker.hidden = false;
+          }
+        }
+      });
+      reader.readAsDataURL(file);
+    }
+
+    input.addEventListener("change", async function () {
+      var file = input.files && input.files[0] ? input.files[0] : null;
+      var requestId = ++selectionRequestId;
+      var prepared;
+
+      if (!file) {
+        showOriginal();
+        return;
+      }
+
+      if (["image/jpeg", "image/png", "image/webp"].indexOf(file.type) === -1) {
+        input.value = "";
+        TinyCat.toasts.show(TinyCat.i18n.t("account.messages.status_image_invalid", { size: Math.round(Number(input.dataset.clientImageMaxBytes || 26214400) / 1024) }), "danger");
+        showOriginal();
+        return;
+      }
+
+      try {
+        prepared = await prepareClientImageInput(input, file);
+        if (requestId !== selectionRequestId) {
+          return;
+        }
+        replaceImageInputFile(input, prepared);
+        showFile(prepared);
+      } catch (error) {
+        if (requestId !== selectionRequestId) {
+          return;
+        }
+        input.value = "";
+        TinyCat.toasts.show(TinyCat.i18n.t("account.messages.status_image_invalid", { size: Math.round(Number(input.dataset.clientImageMaxBytes || 26214400) / 1024) }), "danger");
+        showOriginal();
+      }
+    });
+
+    if (removeButton) {
+      removeButton.addEventListener("click", function () {
+        selectionRequestId++;
+        revokePreview();
+        input.value = "";
+        preview.removeAttribute("src");
+        preview.hidden = true;
+        previewWrap.hidden = true;
+        if (altWrap) {
+          altWrap.hidden = true;
+        }
+        if (removeInput) {
+          removeInput.value = "1";
+        }
+        if (picker) {
+          picker.hidden = false;
+        }
+      });
+    }
+
+    if (root.closest("form")) {
+      root.closest("form").addEventListener("reset", function () {
+        window.setTimeout(showOriginal, 0);
+      });
+    }
+  }
+  TinyCat.publishing.controllers.media = { dispose: dispose, markStatusLinkImageMissing: linkImageMissing, markStatusLinkImageReady: linkImageReady, initStatusLinkImageRoot: initStatusLinkImageRoot, allowedStatusVideoUrl: allowedStatusVideoUrl, initStatusVideoRoot: initStatusVideoRoot, initStatusImageRoot: initStatusImageRoot };
+}());

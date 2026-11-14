@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "fields": {
+      "email_from": "Електронна адреса відправника",
+      "smtp_username": "Ім'я користувача SMTP",
+      "smtp_encryption": "Шифрування SMTP",
+      "email_from_name": "Ім'я відправника",
+      "smtp_host": "Хост SMTP",
+      "smtp_password": "Пароль SMTP",
+      "smtp_port": "Порт SMTP",
+      "email_templates": "Типи доставки електронної пошти",
+      "smtp": "Налаштування SMTP"
+    }
+  }
+}

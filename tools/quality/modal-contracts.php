@@ -6,12 +6,19 @@ return static function (?array $sources = null): void {
     if ($sources === null) {
         $sources = [];
         $root = dirname(__DIR__, 2);
-        foreach (['App' => ['php'], 'assets' => ['js', 'json']] as $directory => $extensions) {
+        foreach (['App' => ['php', 'js', 'json'], 'assets' => ['js', 'json']] as $directory => $extensions) {
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/' . $directory, FilesystemIterator::SKIP_DOTS)) as $file) {
                 if (!in_array($file->getExtension(), $extensions, true)) { continue; }
                 $path = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
                 if ($path === 'assets/ui/dialogs.js' || str_starts_with($path, 'assets/build/')) { continue; }
                 $sources[$path] = (string) file_get_contents($file->getPathname());
+            }
+        }
+        foreach (\TinyCat\Core\Modules\Resources::catalog()->definitions() as $definition) {
+            if ($definition->manifest === null) { continue; }
+            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($definition->root, FilesystemIterator::SKIP_DOTS)) as $file) {
+                if (!$file->isFile() || !in_array($file->getExtension(), ['php', 'js', 'json'], true)) { continue; }
+                $sources[$file->getPathname()] = (string) file_get_contents($file->getPathname());
             }
         }
     }

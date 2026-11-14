@@ -1,0 +1,19 @@
+{
+  "security": {
+    "captcha_label": "Проверка безопасности"
+  },
+  "auth": {
+    "invalid_captcha": "Проверка безопасности не пройдена."
+  },
+  "settings": {
+    "fields": {
+      "captcha_site_key": "Ключ сайта",
+      "captcha_secret_key": "Секретный ключ",
+      "captcha_enabled": "Защита CAPTCHA",
+      "captcha_login_attempts": "Не удалось войти в систему перед CAPTCHA",
+      "captcha_secret_key_help": "Оставьте пустым, чтобы сохранить сохраненный секретный ключ. Больше его никогда не показывают.",
+      "captcha_provider_help": "Выберите поставщика, ключ сайта и секретный ключ которого настроены ниже.",
+      "captcha_provider": "Поставщик CAPTCHA"
+    }
+  }
+}

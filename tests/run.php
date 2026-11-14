@@ -9,7 +9,12 @@ if (PHP_SAPI !== 'cli') {
 require_once __DIR__ . '/support/cache-isolation.php';
 
 $root = dirname(__DIR__);
+require_once __DIR__ . '/support/execution.php';
 $tests = [
+    'Module catalog and legacy composition' => 'tests/quality/module-catalog.php',
+    'Unified module resources and selection' => 'tests/quality/module-resources.php',
+    'Offline registries and technical startup' => 'tests/quality/runtime-registries.php',
+    'Manifest module vertical pilot' => 'tests/quality/module-pilot.php',
     'Module infrastructure boundaries' => 'tests/quality/module-boundaries.php',
     'Class dependency boundaries' => 'tests/quality/dependencies.php',
     'UI component and stylesheet contracts' => 'tests/quality/ui-contracts.php',
@@ -36,6 +41,17 @@ $tests = [
     'Inline tokens and numeric tags' => 'tests/domains/status/inline-tokens.php',
     'MySQL numeric tag migration' => 'tests/domains/status/numeric-tags-mysql.php',
     'Relaxed usernames' => 'tests/domains/users/usernames.php',
+    'Account lifecycle ownership' => 'tests/domains/users/account-lifecycle.php',
+    'Standalone account identity' => 'tests/domains/accounts/identity.php',
+    'Standalone registration and recovery' => 'tests/domains/accounts/onboarding.php',
+    'Standalone account profile' => 'tests/domains/accounts/profile.php',
+    'Standalone account administration' => 'tests/domains/accounts/administration.php',
+    'Standalone account resources and avatars' => 'tests/domains/accounts/avatars.php',
+    'Standalone Accounts module and presentation' => 'tests/domains/accounts/module.php',
+    'Core without domain data and Social-owned storage' => 'tests/domains/publishing/module.php',
+    'Isolated Blog product assembly' => 'tests/domains/blog/module.php',
+    'MySQL Blog product installation' => 'tests/domains/blog/mysql.php',
+    'Social data ownership and optional composition' => 'tests/domains/publishing/social-boundaries.php',
     'Render-only partials' => 'tests/quality/render-only-partials.php',
     'HTML sanitizer' => 'tests/domains/security/html-sanitizer.php',
     'Presentation templates' => 'tests/presentation/view-templates.php',
@@ -62,6 +78,8 @@ $tests = [
     'Bot duplicate housekeeping' => 'tests/domains/bots/duplicate-cleanup.php',
     'Bot publication migration' => 'tests/domains/bots/publication-migration.php',
     'Updater' => 'tests/release/updater/run.php',
+    'Database snapshot and restoration' => 'tests/release/database-snapshots.php',
+    'Signed product module lifecycle' => 'tests/release/module-lifecycle.php',
     'MySQL migration registry' => 'tests/release/updater/mysql-registry.php',
     'Scheduled file cleanup' => 'tests/domains/scheduler/files.php',
     'Cleanup retention and bounded scans' => 'tests/domains/scheduler/retention.php',
@@ -85,13 +103,20 @@ $tests = [
 
 $passed = 0;
 
+$items = array_flip($tests);
+if (\TinyCatTests\Execution::listing()) { foreach ($items as $id => $label) { echo $id . ' ' . $label . "\n"; } exit(0); }
+$allItems = $items;
+$items = \TinyCatTests\Execution::select($items);
+\TinyCatTests\Execution::plan($allItems, array_keys($items));
+
 foreach ($tests as $label => $relative) {
+    if (!isset($items[$relative])) { continue; }
     echo "\n=== {$label} ===\n";
     $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relative));
     // Each group owns its fixture cache; its HTTP workers still inherit it.
     $parentCache = getenv('TINYCAT_CACHE_DIRECTORY');
     putenv('TINYCAT_CACHE_DIRECTORY');
-    try { passthru($command, $exitCode); }
+    try { $exitCode = \TinyCatTests\Execution::run($relative, $label, $command); }
     finally { putenv($parentCache === false ? 'TINYCAT_CACHE_DIRECTORY' : 'TINYCAT_CACHE_DIRECTORY=' . $parentCache); }
 
     if ($exitCode !== 0) {

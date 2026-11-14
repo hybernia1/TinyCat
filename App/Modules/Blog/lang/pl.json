@@ -1,0 +1,45 @@
+{
+  "blog": {
+    "navigation": "Nawigacja",
+    "home": "Strona główna",
+    "editor": "Napisz artykuł",
+    "title": "Tytuł",
+    "body": "Treść artykułu",
+    "visibility": "Widoczność",
+    "published": "Opublikowany",
+    "hidden": "Ukryty",
+    "view": "Zobacz artykuł",
+    "empty": "Brak artykułów.",
+    "older": "Starsze artykuły",
+    "not_found": "Nie znaleziono artykułu.",
+    "invalid": "Wpisz tytuł (do 200 znaków) i tekst (do 60 000 bajtów UTF-8).",
+    "articles": "Articles",
+    "scheduled": "Zaplanowano",
+    "feeds": {
+      "title": "Źródła artykułów",
+      "help": "Importuj artykuły bez konta bota. Nowe źródła zapisują ukryte artykuły.",
+      "schedule": "Według interwału źródła",
+      "create": "Dodaj źródło artykułów",
+      "url": "URL kanału",
+      "interval": "Interwał sprawdzania (minuty)",
+      "images": "Importuj obrazy",
+      "checked": "Ostatnio sprawdzono",
+      "run": "Uruchom import",
+      "preview": "Podgląd importu",
+      "preview_empty": "Brak użytecznych elementów.",
+      "invalid": "Sprawdź nazwę, publiczny URL kanału, aktywnego administratora i interwał od 5 do 43 200 minut. Nie można zmienić URL zapisanego źródła."
+    },
+    "settings": {
+      "images_enabled": "Zezwalaj na publikowanie obrazów",
+      "images_max_upload_kb": "Maksymalny rozmiar obrazu (KB)",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "blocked_urls": "Zablokowane strony internetowe"
+    },
+    "messages": {
+      "blocked_url": "Ten link jest niedozwolony: {host}."
+    }
+  }
+}

@@ -5,42 +5,42 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/bootstrap.php';
 
-use TinyCat\Status\Feed;
+use TinyCat\Social\Posts\Feed;
 
 $mysql = isset($archiveMysqlDatabase) && $archiveMysqlDatabase instanceof PDO;
 $db = $mysql ? $archiveMysqlDatabase : new PDO('sqlite::memory:', null, null, [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 \TinyCat\Database\Connection::set($db);
-\TinyCat\Users\Authentication::reset(null, true);
+\TinyCat\Core\Identity\Authentication::reset(null, true);
 foreach ([
     'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, role TEXT, status TEXT, avatar_exists INTEGER, avatar_appearance TEXT, updated_at TEXT)',
-    'CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT)',
-    'CREATE TABLE content_images (content_id INTEGER, path TEXT, width INTEGER, height INTEGER, bytes INTEGER)',
-    'CREATE TABLE content_links (content_id INTEGER, link_id INTEGER)',
-    'CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
-    'CREATE TABLE content_likes (content_id INTEGER, user_id INTEGER)',
-    'CREATE TABLE content_comments (content_id INTEGER)',
-    'CREATE TABLE terms (id INTEGER PRIMARY KEY, name TEXT)',
-    'CREATE TABLE content_tags (content_id INTEGER, term_id INTEGER)',
+    'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT)',
+    'CREATE TABLE social_post_images (content_id INTEGER, path TEXT, width INTEGER, height INTEGER, bytes INTEGER)',
+    'CREATE TABLE social_post_links (content_id INTEGER, link_id INTEGER)',
+    'CREATE TABLE social_links (id INTEGER PRIMARY KEY, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
+    'CREATE TABLE social_post_likes (content_id INTEGER, user_id INTEGER)',
+    'CREATE TABLE social_comments (content_id INTEGER)',
+    'CREATE TABLE social_terms (id INTEGER PRIMARY KEY, name TEXT)',
+    'CREATE TABLE social_post_tags (content_id INTEGER, term_id INTEGER)',
     "INSERT INTO users (id, username, status, avatar_exists, updated_at) VALUES (1, 'author', 'active', 0, ''), (2, 'other', 'active', 0, ''), (3, 'hidden', 'inactive', 0, '')",
-    "INSERT INTO terms VALUES (1, 'tinycat')",
-    "INSERT INTO links (id, link_type) VALUES (1, 'video'), (2, 'video'), (3, 'audio'), (4, 'web')",
+    "INSERT INTO social_terms VALUES (1, 'tinycat')",
+    "INSERT INTO social_links (id, link_type) VALUES (1, 'video'), (2, 'video'), (3, 'audio'), (4, 'web')",
 ] as $sql) {
     if ($mysql) { $sql = str_replace('published_at TEXT', 'published_at DATETIME', $sql); }
     $db->exec($sql);
 }
 if ($mysql) {
-    $db->exec('CREATE INDEX content_feed_index ON content (published_at, id)');
-    $db->exec('CREATE INDEX content_author_index ON content (author_id, published_at, id)');
+    $db->exec('CREATE INDEX content_feed_index ON social_posts (published_at, id)');
+    $db->exec('CREATE INDEX content_author_index ON social_posts (author_id, published_at, id)');
 }
 for ($id = 1; $id <= 9; $id++) {
     $author = $id === 8 ? 2 : ($id === 9 ? 3 : 1);
     $date = $id === 7 ? '2999-01-01 00:00:00' : '2020-01-01 00:00:00';
-    $db->prepare('INSERT INTO content (id, author_id, body, published_at) VALUES (?, ?, ?, ?)')->execute([$id, $author, 'Fixture', $date]);
-    $db->prepare('INSERT INTO content_tags VALUES (?, 1)')->execute([$id]);
+    $db->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, ?, ?, ?)')->execute([$id, $author, 'Fixture', $date]);
+    $db->prepare('INSERT INTO social_post_tags VALUES (?, 1)')->execute([$id]);
 }
-$db->exec("INSERT INTO content_images VALUES (2, 'image.webp', 10, 10, 10), (6, 'mixed.webp', 10, 10, 10)");
-$db->exec('INSERT INTO content_links VALUES (3, 1), (3, 2), (4, 3), (5, 4), (6, 1), (7, 1), (8, 1), (9, 1)');
-$db->exec('ALTER TABLE content ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT \'published\'');
+$db->exec("INSERT INTO social_post_images VALUES (2, 'image.webp', 10, 10, 10), (6, 'mixed.webp', 10, 10, 10)");
+$db->exec('INSERT INTO social_post_links VALUES (3, 1), (3, 2), (4, 3), (5, 4), (6, 1), (7, 1), (8, 1), (9, 1)');
+$db->exec('ALTER TABLE social_posts ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT \'published\'');
 $checks = 0;
 $assert = static function (bool $ok, string $message) use (&$checks): void {
     $checks++;
@@ -76,15 +76,15 @@ $next = Feed::status_feed_context_items('home', 2, $params);
 $assert(array_column($next['items'], 'id') === [6, 3], 'Home filtered pagination neither skips nor repeats posts.');
 $assert(Feed::status_feed_context_items('home', 20, ['feed' => 'following', 'media' => 'video'])['items'] === [], 'Filtering does not expose following posts to guests.');
 $assert(array_column(Feed::public_status_items_for_user_cursor(1, 20, '', 0, 'video'), 'id') === [6, 3], 'Following filters exclude unrelated authors.');
-(new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
+(new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $config = \TinyCat\Support\Config::get();
 $config['public']['status_limit'] = 2;
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $config);
-$home = \TinyCat\Status\ViewData::public_home_feed_data('following', ['id' => 2], null, 'video');
+$home = \TinyCat\Social\Posts\ViewData::public_home_feed_data('following', ['id' => 2], null, 'video');
 $assert($home['current_feed_url'] === '/?feed=following&media=video', 'Initial home URL retains feed and filter.');
 $assert(str_contains($home['feed_more']['next_url'], 'media=video'), 'Initial pagination retains the filter.');
 $page = ['title' => 'Tinycat', 'current' => '/', 'meta' => ['url' => '/']];
-$resource = \TinyCat\Site\PublicPages::resource('home', ['page' => $page, 'context' => ['feed' => 'following', 'archiveType' => 'video', 'publicHomeFeedData' => $home]]);
+$resource = \TinyCat\Social\Presentation\PublicPages::resource('home', ['page' => $page, 'context' => ['feed' => 'following', 'archiveType' => 'video', 'publicHomeFeedData' => $home]]);
 $assert($resource['all_feed_url'] === '/?media=video' && $resource['following_feed_url'] === '/?feed=following&media=video', 'Switching feeds retains the filter.');
 $assert($resource['archive_options'][0]['url'] === '/?feed=following' && $resource['archive_options'][1]['url'] === '/?feed=following&media=images', 'Filter options retain the selected feed.');
 $html = \TinyCat\Support\Components::render('site/public-page', $resource);

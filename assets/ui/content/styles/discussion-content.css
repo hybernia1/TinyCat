@@ -1,0 +1,70 @@
+.status-like-icon-filled {
+  display: none;
+}
+
+.status-reaction.is-active .status-like-icon-outline,
+.status-comment-like-button.is-active .status-like-icon-outline {
+  display: none;
+}
+
+.status-reaction.is-active .status-like-icon-filled,
+.status-comment-like-button.is-active .status-like-icon-filled {
+  display: inline-block;
+  color: var(--primary-strong);
+}
+
+.status-comments {
+  display: grid;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.status-comment-list {
+  display: grid;
+  gap: 10px;
+}
+
+.status-comment {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.status-comment.is-child {
+  margin-left: 20px;
+}
+
+.status-comment-main {
+  min-width: 0;
+}
+
+.status-comment-bubble {
+  display: inline-grid;
+  max-width: min(100%, 680px);
+  gap: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  padding: 8px 11px;
+}
+
+.status-comment-author {
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.status-comment-heading {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.status-comment-heading-time {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}

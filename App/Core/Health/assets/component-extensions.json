@@ -1,0 +1,11 @@
+[
+  {
+    "target": "scheduler/run-detail",
+    "component": "health/scheduler-run-detail",
+    "data": {
+      "item": {
+        "get": "item"
+      }
+    }
+  }
+]

@@ -6,9 +6,9 @@ define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/autoload.php';
 
 use TinyCat\Database\Connection;
-use TinyCat\Moderation\Restrictions;
-use TinyCat\Security\RateLimiter;
-use TinyCat\Status\Posts;
+use TinyCat\Social\Moderation\Restrictions;
+use TinyCat\Core\Security\RateLimiter;
+use TinyCat\Social\Posts\Posts;
 
 if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     echo "SKIP rate limiter: pdo_sqlite unavailable.\n";
@@ -22,7 +22,7 @@ if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
 $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 Connection::set($pdo);
 $pdo->exec('CREATE TABLE ip_action_limits (ip_address VARCHAR(45), action_name VARCHAR(40), bucket_start TEXT, action_count INTEGER, updated_at TEXT, PRIMARY KEY(ip_address, action_name, bucket_start))');
-$pdo->exec('CREATE TABLE content (author_id INTEGER)');
+$pdo->exec('CREATE TABLE social_posts (author_id INTEGER, kind TEXT DEFAULT \'post\')');
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
     $checks++;
@@ -67,7 +67,7 @@ $assert(RateLimiter::consume('user:1', 'atomic', 3600, 2), 'The last permitted r
 $assert(!RateLimiter::consume('user:1', 'atomic', 3600, 2), 'The next reservation is rejected.');
 $assert(RateLimiter::subject_action_count('user:1', 'atomic') === 2, 'Rejected reservations do not increase the counter.');
 $assert(RateLimiter::consume('user:2', 'atomic', 3600, 2), 'A different account retains its budget.');
-$rule = \TinyCat\Security\RateLimitPolicy::requestRule('upload');
+$rule = \TinyCat\Core\Security\RateLimitPolicy::requestRule('upload');
 for ($i = 0; $i < $rule['max']; $i++) {
     $assert(RateLimiter::request_retry_after('upload', 50) === 0, 'Upload attempts up to the policy limit are accepted.');
 }
@@ -75,20 +75,26 @@ $assert(RateLimiter::request_retry_after('upload', 50) > 0, 'Upload attempts bey
 $assert(RateLimiter::request_retry_after('upload', 51) === 0, 'Uploads by another account on the same IP are independent.');
 try { RateLimiter::request_retry_after('upload'); throw new RuntimeException('Missing actor accepted.'); }
 catch (InvalidArgumentException) { $checks++; }
-try { \TinyCat\Security\RateLimitPolicy::requestRule('typo'); throw new RuntimeException('Unknown action accepted.'); }
+try { \TinyCat\Core\Security\RateLimitPolicy::requestRule('typo'); throw new RuntimeException('Unknown action accepted.'); }
 catch (InvalidArgumentException) { $checks++; }
 foreach (['admin', 'bot'] as $role) {
     $exempt = ['id' => 50, 'role' => $role];
-    \TinyCat\Users\Authentication::reset($exempt, true);
-    $assert(\TinyCat\Security\RateLimitPolicy::isExempt($exempt), $role . ' is exempt by policy.');
+    \TinyCat\Core\Identity\Authentication::reset($exempt, true);
+    $assert(\TinyCat\Core\Security\RateLimitPolicy::isExempt($exempt), $role . ' is exempt by policy.');
     $assert(RateLimiter::request_retry_after('upload', 50) === 0, $role . ' bypasses exhausted request budgets.');
     $assert(RateLimiter::session_action_retry_after('status_' . $create, $interval) === 0, $role . ' bypasses active cooldowns.');
     $before = RateLimiter::subject_action_count('user:50', 'post');
     Restrictions::moderation_record_action($exempt, 'post');
     $assert(RateLimiter::subject_action_count('user:50', 'post') === $before, $role . ' does not consume content quotas.');
     $assert(Restrictions::moderation_action_count($exempt, 'post') === 0, $role . ' has no enforced content quota.');
-    \TinyCat\Search\Guard::suggestions();
+    \TinyCat\Social\Search\Guard::suggestions();
     $assert(!isset($_SESSION['_tinycat_suggestion_guard']), $role . ' does not consume the suggestion quota.');
 }
-\TinyCat\Users\Authentication::reset(null, true);
+\TinyCat\Core\Identity\Authentication::reset(null, true);
+$pdo->exec("INSERT INTO social_posts(kind, author_id) VALUES ('post', 1), ('post', 1), ('post', 1)");
+for ($article = 0; $article < 20; $article++) { $pdo->exec("INSERT INTO social_posts(kind, author_id) VALUES ('article', 1)"); }
+$assert(Restrictions::moderation_user_post_count(1) === 3, 'Only status publications count towards Social reputation');
+$assert(Restrictions::moderation_user_reputation(['id' => 1, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s', time() - 8 * 86400)]) === 'normal', 'Articles cannot promote Social reputation to trusted');
+\TinyCat\Core\Security\RateLimitPolicy::retainWindows('fixture.long-window', [100000]);
+$assert(\TinyCat\Core\Security\RateLimitPolicy::retentionSeconds() === 200000, 'Retention follows declared owner windows instead of a core list of Social actions');
 echo "PASS rate limiter isolation and cooldowns ({$checks} checks)\n";

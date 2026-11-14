@@ -2,6 +2,12 @@
 
 Datum: 1. 11. 2026. Stav: otevřený návrh pro rozhodnutí před implementací 6.0.0.
 
+Pro cíl TinyCat jako základu blogu, obchodu i sociálního webu navazuje
+[návrh modulární platformy](modular-platform.md) z 11. 11. 2026. Ten upřesňuje
+hranici jádra, sestavy, formát modulu a registrace. Tento dokument zůstává
+historickým auditem a podkladem pro transakce a kompatibilitu migrací;
+jeho produktová omezení nejsou cílovým rozsahem nového návrhu.
+
 Inventura zachycuje výchozí stav 5.16.1, nikoli aktuální počty souborů a vazeb.
 Před implementací znovu ověřit nálezy proti současnému kódu. Odkazy na přesunuté
 soubory byly při úklidu dokumentace aktualizované; naměřené hodnoty zůstávají původní.

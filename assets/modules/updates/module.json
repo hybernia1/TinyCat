@@ -1,7 +1,0 @@
-[
-  {
-    "routes": ["/admin/updates"],
-    "entries": ["assets/modules/updates/index.js"],
-    "translations": ["updates.changelog"]
-  }
-]

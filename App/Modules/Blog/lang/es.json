@@ -1,0 +1,45 @@
+{
+  "blog": {
+    "navigation": "Navegación",
+    "home": "Inicio",
+    "editor": "Escribir artículo",
+    "title": "Título",
+    "body": "Texto del artículo",
+    "visibility": "Visibilidad",
+    "published": "Publicado",
+    "hidden": "Oculto",
+    "view": "Ver artículo",
+    "empty": "Aún no hay artículos.",
+    "older": "Artículos anteriores",
+    "not_found": "Artículo no encontrado.",
+    "invalid": "Introduce un título (hasta 200 caracteres) y un texto (hasta 60.000 bytes UTF-8).",
+    "articles": "Articles",
+    "scheduled": "Programado",
+    "feeds": {
+      "title": "Fuentes de artículos",
+      "help": "Importar artículos sin cuenta de bot. Las nuevas fuentes guardan artículos ocultos.",
+      "schedule": "Según el intervalo de la fuente",
+      "create": "Añadir fuente de artículos",
+      "url": "URL del feed",
+      "interval": "Intervalo de revisión (minutos)",
+      "images": "Importar imágenes",
+      "checked": "Última revisión",
+      "run": "Ejecutar importación",
+      "preview": "Vista previa",
+      "preview_empty": "No hay elementos utilizables.",
+      "invalid": "Comprueba el nombre, la URL pública del feed, el administrador activo y el intervalo de 5 a 43.200 minutos. La URL de una fuente guardada no se puede cambiar."
+    },
+    "settings": {
+      "images_enabled": "Permitir publicar imágenes",
+      "images_max_upload_kb": "Tamaño máximo de imagen (KB)",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "blocked_urls": "Sitios web bloqueados"
+    },
+    "messages": {
+      "blocked_url": "Este enlace no está permitido: {host}."
+    }
+  }
+}

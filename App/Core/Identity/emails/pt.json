@@ -1,0 +1,12 @@
+{
+  "templates": {
+    "welcome": {
+      "subject": "Bem-vindo ao {site}",
+      "body": "Olá {username},\n\nBem-vindo ao {site}. Sua conta está pronta.\n\nEntrar: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Redefina sua senha {site}",
+      "body": "Olá {username},\n\nRecebemos uma solicitação para redefinir sua senha.\n\nRedefina sua senha: {reset_url}\n\nEste link expira em 60 minutos. Se você não solicitou isso, pode ignorar este e-mail.\n\n{signature}"
+    }
+  }
+}

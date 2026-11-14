@@ -1,7 +1,7 @@
 # Společné vykreslování UI
 
 HTML struktura komponent, které se zobrazují při prvním načtení i přes AJAX,
-má jeden zdroj v `assets/modules/<modul>/components.json` a `assets/ui/components.json`. PHP ji vykreslí přes
+má jeden zdroj v `App/Modules/<Name>/assets/components.json` a `assets/ui/components.json`. PHP ji vykreslí přes
 `Support/Components`; prohlížeč přes `assets/core/component-renderer.js`.
 Veřejný obsah zůstává v serverovém HTML a nevyžaduje JavaScript.
 
@@ -83,7 +83,7 @@ Nahrazené PHP šablony jsou odstraněné a uvedené v manifestu mazání pro ak
 
 ## Frontend asset ownership
 
-Shared infrastructure lives in `assets/core`, UI primitives in `assets/ui`, and domain controllers, component definitions and styles in `assets/modules/<domain>`. Each `module.json` declares route scopes, entry points, component roots and styles. Local side-effect imports declare JavaScript dependencies; `Support/AssetGraph` validates and orders them, rejects cycles and builds classic script bundles without a browser module waterfall.
+Shared infrastructure lives in `assets/core`, UI primitives in `assets/ui`, and domain controllers, component definitions and styles in `App/Modules/<Name>/assets`. Each asset manifest declares route scopes, entry points, component roots and styles. Local side-effect imports declare JavaScript dependencies; `Support/AssetGraph` validates and orders them, rejects cycles and builds classic script bundles without a browser module waterfall.
 
 `assets/styles/index.css` preserves the global cascade order. The selected module styles are composed into one CSS asset. Pages receive four JavaScript assets: shared runtime, selected component definitions, locale catalog and application bundle. Public, administration and installer scopes include their own dependencies. Release compilation produces immutable content hashes and raw/minified variants; development uses the same graph through the asset cache.
 

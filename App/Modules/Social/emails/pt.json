@@ -1,0 +1,44 @@
+{
+  "templates": {
+    "notification_content_like": {
+      "subject": "{actor} gostou da sua postagem",
+      "body": "{actor} gostou da sua postagem.\n\nVeja a postagem: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} comentou sua postagem",
+      "body": "{actor} comentou sua postagem.\n\nVeja a conversa: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} gostou do seu comentário",
+      "body": "{actor} gostou do seu comentário.\n\nVeja a conversa: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_follow": {
+      "subject": "{actor} seguiu você",
+      "body": "{actor} seguiu você.\n\nVeja o perfil deles: {actor_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} mencionou você",
+      "body": "{actor} mencionou você em uma postagem.\n\nVeja a postagem: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} mencionou você",
+      "body": "{actor} mencionou você em um comentário.\n\nVeja a conversa: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_resolved": {
+      "subject": "Seu relatório foi resolvido",
+      "body": "Sua denúncia foi resolvida pela equipe de moderação.\n\nVeja o conteúdo denunciado: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_dismissed": {
+      "subject": "Seu relatório foi rejeitado",
+      "body": "Sua denúncia foi analisada e rejeitada pela equipe de moderação.\n\nVeja o conteúdo denunciado: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    }
+  }
+}

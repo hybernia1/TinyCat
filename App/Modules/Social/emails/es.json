@@ -1,0 +1,44 @@
+{
+  "templates": {
+    "notification_content_like": {
+      "subject": "A {actor} le gustó tu publicación.",
+      "body": "A {actor} le gustó tu publicación.\n\nVer la publicación: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} comentó en tu publicación",
+      "body": "{actor} comentó tu publicación.\n\nVer la conversación: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_like": {
+      "subject": "A {actor} le gustó tu comentario.",
+      "body": "A {actor} le gustó tu comentario.\n\nVer la conversación: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_follow": {
+      "subject": "{actor} te siguió",
+      "body": "{actor} te siguió.\n\nVer su perfil: {actor_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} te mencionó",
+      "body": "{actor} te mencionó en una publicación.\n\nVer la publicación: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} te mencionó",
+      "body": "{actor} te mencionó en un comentario.\n\nVer la conversación: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_resolved": {
+      "subject": "Su informe fue resuelto",
+      "body": "Su informe fue resuelto por el equipo de moderación.\n\nVer el contenido reportado: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_dismissed": {
+      "subject": "Su informe fue rechazado",
+      "body": "Su informe fue revisado y descartado por el equipo de moderación.\n\nVer el contenido reportado: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    }
+  }
+}

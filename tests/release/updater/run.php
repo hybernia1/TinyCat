@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
 
-use \TinyCat\Updates\Manager;
+use \TinyCat\Core\Updates\Manager;
 
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/bootstrap.php';
@@ -70,7 +70,7 @@ $test('maintenance recovery uses canonical API routes', static function () use (
 });
 
 $test('managed update paths reject protected and traversal targets', static function () use ($invoke, $expectFailure): void {
-    foreach (['Extensions/Bots/extension.json', 'config.php', 'storage/cache.php', 'uploads/avatar.php', '../index.php', 'App//Core.php', '/App/Support/Version.php'] as $path) {
+    foreach (['Extensions/Bots/extension.json', 'config.php', 'storage/cache.php', 'uploads/avatar.php', '../index.php', 'App//Core.php', '/App/Core/Support/Version.php'] as $path) {
         $expectFailure(static fn (): mixed => $invoke('managedPath', $path));
     }
 });
@@ -83,19 +83,19 @@ $test('manifest rejects case collisions and write-delete overlap', static functi
         'package' => 'tinycat-1.0.5.zip',
         'sha256' => str_repeat('a', 64),
         'size' => 1024,
-        'files' => ['App/Support/Version.php' => str_repeat('b', 64)],
+        'files' => ['App/Core/Support/Version.php' => str_repeat('b', 64)],
         'delete' => [],
         'migrations' => [],
     ];
     $collision = $base;
-    $collision['files']['App/Support/version.php'] = str_repeat('c', 64);
+    $collision['files']['App/Core/Support/version.php'] = str_repeat('c', 64);
     $expectFailure(static fn (): mixed => $invoke('validateManifest', $collision));
     $overlap = $base;
-    $overlap['delete'] = ['App/Support/Version.php'];
+    $overlap['delete'] = ['App/Core/Support/Version.php'];
     $expectFailure(static fn (): mixed => $invoke('validateManifest', $overlap));
 
     $fileDirectoryCollision = $base;
-    $fileDirectoryCollision['files']['App/Support/Version.php/bootstrap.php'] = str_repeat('d', 64);
+    $fileDirectoryCollision['files']['App/Core/Support/Version.php/bootstrap.php'] = str_repeat('d', 64);
     $expectFailure(static fn (): mixed => $invoke('validateManifest', $fileDirectoryCollision));
 
     $deleteCollision = $base;
@@ -104,7 +104,7 @@ $test('manifest rejects case collisions and write-delete overlap', static functi
 });
 
 $test('file backups exclude unchanged files from a complete release package', static function () use ($invoke, $expect): void {
-    $source = \TinyCat\Support\Paths::basePath('App/Support/Version.php');
+    $source = \TinyCat\Support\Paths::basePath('App/Core/Support/Version.php');
     $sourceHash = hash_file('sha256', $source);
 
     if (!is_string($sourceHash)) {
@@ -112,7 +112,7 @@ $test('file backups exclude unchanged files from a complete release package', st
     }
 
     $backup = $invoke('createBackup', [
-        'files' => ['App/Support/Version.php' => $sourceHash],
+        'files' => ['App/Core/Support/Version.php' => $sourceHash],
         'delete' => [],
         'migrations' => [],
     ], '9.9.9-test', false);
@@ -198,29 +198,29 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+        \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
         $checksum = str_repeat('a', 64);
 
-        $expect(!\TinyCat\Updates\MigrationRegistry::hasPending([]));
-        $expect(\TinyCat\Updates\MigrationRegistry::hasPending(['test_001' => $checksum]));
+        $expect(!\TinyCat\Core\Updates\MigrationRegistry::hasPending([]));
+        $expect(\TinyCat\Core\Updates\MigrationRegistry::hasPending(['test_001' => $checksum]));
 
-        \TinyCat\Updates\MigrationRegistry::ensure();
+        \TinyCat\Core\Updates\MigrationRegistry::ensure();
         \TinyCat\Database\Connection::insert('schema_migrations', [
             'migration' => 'test_001',
             'version' => '1.0.5',
             'checksum' => $checksum,
             'applied_at' => \TinyCat\Support\Dates::dateDb(),
         ]);
-        $expect(!\TinyCat\Updates\MigrationRegistry::hasPending(['test_001' => $checksum]));
-        $expect(\TinyCat\Updates\MigrationRegistry::hasPending(['test_001' => str_repeat('b', 64)]));
+        $expect(!\TinyCat\Core\Updates\MigrationRegistry::hasPending(['test_001' => $checksum]));
+        $expect(\TinyCat\Core\Updates\MigrationRegistry::hasPending(['test_001' => str_repeat('b', 64)]));
     });
 
     $test('migration registry stores version and checksum', static function () use ($expect): void {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
-        \TinyCat\Updates\MigrationRegistry::ensure();
+        \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+        \TinyCat\Core\Updates\MigrationRegistry::ensure();
         \TinyCat\Database\Connection::insert('schema_migrations', [
             'migration' => 'test_001',
             'version' => '1.0.5',
@@ -234,7 +234,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+        \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
         \TinyCat\Database\Connection::exec(
             'CREATE TABLE schema_migrations (
                 version VARCHAR(80) NOT NULL,
@@ -243,14 +243,14 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
             )'
         );
         \TinyCat\Database\Connection::insert('schema_migrations', ['version' => '20260731_legacy']);
-        $expectFailure(static fn (): mixed => \TinyCat\Updates\MigrationRegistry::ensure());
+        $expectFailure(static fn (): mixed => \TinyCat\Core\Updates\MigrationRegistry::ensure());
     });
 
     $test('malformed migration registry is not mistaken for the current schema', static function () use ($expectFailure): void {
         $database = new PDO('sqlite::memory:');
         $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+        \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
         \TinyCat\Database\Connection::exec(
             'CREATE TABLE schema_migrations (
                 migration VARCHAR(190) NOT NULL,
@@ -260,7 +260,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
                 PRIMARY KEY (version)
             )'
         );
-        $expectFailure(static fn (): mixed => \TinyCat\Updates\MigrationRegistry::ensure());
+        $expectFailure(static fn (): mixed => \TinyCat\Core\Updates\MigrationRegistry::ensure());
     });
 } else {
     $skipped++;

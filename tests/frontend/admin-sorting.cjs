@@ -65,7 +65,7 @@ function link(url, history, method = "GET") {
   T.bots = { accounts() {}, sources(_target, data) { applied.push(data.url); } };
   T.moderation = { reports(_target, items) { applied.push(items[0]); } };
   for (const feature of ["bots", "moderation"]) {
-    vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../../assets/modules/" + feature + "/index.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
+    vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../../App/Modules/Social/assets/" + feature + "/index.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
   }
   T.api.request = async url => ({ data: { url, items: [url] } });
   for (const [route, api] of [["/admin/bots/list", "/api/bots/sources"], ["/admin/moderation/reports", "/api/moderation/reports"]]) {

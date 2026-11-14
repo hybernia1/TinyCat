@@ -10,8 +10,8 @@ $config = require $configPath;
 $settings = $config['database'];
 if (preg_match('/^tinycat_perf_[a-z0-9_]+$/D', $settings['name']) !== 1) { throw new RuntimeException('Isolated performance database required.'); }
 $db = new PDO('mysql:host=' . $settings['host'] . ';dbname=' . $settings['name'] . ';charset=utf8mb4', $settings['user'], $settings['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-if ((int) $db->query("SELECT COUNT(*) FROM links WHERE link_type = 'video'")->fetchColumn() !== 0) { throw new RuntimeException('This scenario requires no video matches.'); }
-$cursor = $db->query('SELECT id, published_at FROM content ORDER BY published_at DESC, id DESC LIMIT 1 OFFSET 50000')->fetch(PDO::FETCH_ASSOC);
+if ((int) $db->query("SELECT COUNT(*) FROM social_links WHERE link_type = 'video'")->fetchColumn() !== 0) { throw new RuntimeException('This scenario requires no video matches.'); }
+$cursor = $db->query('SELECT id, published_at FROM social_posts ORDER BY published_at DESC, id DESC LIMIT 1 OFFSET 50000')->fetch(PDO::FETCH_ASSOC);
 $paths = ['/api/statuses?limit=50&media=video', '/api/search/results?q=performance&type=content&limit=50',
     '/api/search/results?' . http_build_query(['q' => 'performance', 'type' => 'content', 'limit' => 50, 'cursor_at' => $cursor['published_at'], 'cursor_id' => $cursor['id']])];
 if (isset($options['search-only'])) {
@@ -23,7 +23,7 @@ $sources = [];
 foreach (['baseline', 'candidate'] as $variant) {
     $root = realpath((string) ($options[$variant] ?? ''));
     if (!$root || !is_file($root . '/index.php')) { throw new RuntimeException('Expected application root.'); }
-    foreach (['App/Status/Feed.php', 'App/Search/Queries.php'] as $file) { $sources[$variant][$file] = hash_file('sha256', $root . '/' . $file); }
+    foreach (['App/Modules/Social/src/Posts/Feed.php', 'App/Modules/Social/src/Search/Queries.php'] as $file) { $sources[$variant][$file] = hash_file('sha256', $root . '/' . $file); }
 }
 file_put_contents($output . '/sources.json', json_encode($sources, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
 foreach (['baseline', 'candidate', 'candidate', 'baseline'] as $round => $variant) {

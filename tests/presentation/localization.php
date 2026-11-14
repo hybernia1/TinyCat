@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../App/bootstrap.php';
 
 use TinyCat\Support\Localization;
 
+Localization::reset();
 (new ReflectionProperty(Localization::class, 'translations'))->setValue(null, [
     'en' => ['test.fallback' => 'English', 'test.empty' => 'Default', 'test.params' => '{a} {b} {count} {counter}'],
     'cs' => ['test.empty' => '', 'test.nested.label' => 'Local'],
@@ -48,7 +49,7 @@ try {
         'en' => ['emails' => ['signature' => 'Signed', 'templates' => ['welcome' => ['subject' => 'English', 'body' => 'Hello {username}'], 'reset' => ['subject' => 'Reset']]]],
         'cs' => ['emails' => ['templates' => ['welcome' => ['subject' => '']]]],
     ]);
-    $email = \TinyCat\Mail\Templates::email_catalog('cs-x-fallback-test');
+    $email = \TinyCat\Core\Mail\Templates::email_catalog('cs-x-fallback-test');
     $check($email['templates']['welcome']['subject'] === '');
     $check($email['templates']['welcome']['body'] === 'Hello {username}');
     $check($email['templates']['reset']['subject'] === 'Reset' && $email['signature'] === 'Signed');

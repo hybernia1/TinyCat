@@ -1,0 +1,96 @@
+[
+  {
+    "routes": [
+      "public",
+      "admin"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [
+      "App/Modules/Blog/assets/styles/blog.css"
+    ],
+    "translations": []
+  },
+  {
+    "routes": [
+      "public"
+    ],
+    "uses": [
+      "publishing.presentation"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [],
+    "translations": []
+  },
+  {
+    "routes": [
+      "/admin/articles"
+    ],
+    "entries": [
+      "App/Modules/Blog/assets/index.js"
+    ],
+    "components": [
+      "blog/articles",
+      "blog/article-filter",
+      "blog/article-fields"
+    ],
+    "styles": [],
+    "translations": [
+      "blog.editor",
+      "blog.invalid",
+      "common.edit",
+      "common.save",
+      "common.unsaved_title",
+      "common.unsaved_message",
+      "common.leave",
+      "common.stay",
+      "common.cancel",
+      "common.close"
+    ],
+    "uses": [
+      "publishing.editor"
+    ]
+  },
+  {
+    "routes": [
+      "/articles"
+    ],
+    "uses": [
+      "publishing.discussion"
+    ],
+    "entries": [],
+    "components": [],
+    "styles": [],
+    "translations": []
+  },
+  {
+    "routes": [
+      "/admin/article-sources"
+    ],
+    "entries": [
+      "App/Modules/Blog/assets/sources.js"
+    ],
+    "components": [
+      "blog/sources",
+      "blog/source-fields",
+      "blog/source-filter",
+      "blog/source-preview"
+    ],
+    "styles": [],
+    "translations": [
+      "blog.feeds.title",
+      "blog.feeds.create",
+      "blog.feeds.preview",
+      "blog.feeds.preview_empty",
+      "common.edit",
+      "common.save",
+      "common.unsaved_title",
+      "common.unsaved_message",
+      "common.leave",
+      "common.stay",
+      "common.cancel",
+      "common.close"
+    ]
+  }
+]

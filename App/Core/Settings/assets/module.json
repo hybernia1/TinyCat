@@ -1,0 +1,58 @@
+[
+  {
+    "routes": [
+      "admin"
+    ],
+    "entries": [
+      "App/Core/Settings/assets/index.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "settings.title",
+      "common.save",
+      "settings.enabled",
+      "settings.image_empty",
+      "settings.image_upload",
+      "settings.image_remove",
+      "settings.footer_placeholder",
+      "settings.sections.site",
+      "settings.sections.performance",
+      "settings.sections.content_images",
+      "settings.sections.localization",
+      "common.email",
+      "settings.sections.analytics",
+      "settings.sections.security",
+      "settings.sections.email",
+      "settings.fields.date_format",
+      "settings.fields.datetime_format",
+      "settings.fields.google_measurement_id",
+      "settings.fields.google_measurement_id_help",
+      "settings.fields.homepage",
+      "settings.fields.locale",
+      "settings.fields.minify_css",
+      "settings.fields.minify_css_help",
+      "settings.fields.minify_html",
+      "settings.fields.minify_html_help",
+      "settings.fields.minify_js",
+      "settings.fields.minify_js_help",
+      "settings.fields.relative_datetime",
+      "settings.fields.site_favicon",
+      "settings.fields.site_footer",
+      "settings.fields.site_home_title",
+      "settings.fields.site_logo",
+      "settings.fields.site_meta_description",
+      "settings.fields.site_meta_description_help",
+      "settings.fields.site_meta_description_placeholder",
+      "settings.fields.site_name",
+      "settings.fields.site_url",
+      "settings.fields.theme",
+      "settings.fields.time_format",
+      "settings.fields.timezone"
+    ],
+    "messages": {
+      "common_request_failed": "common.request_failed",
+      "settings_saved": "settings.messages.saved"
+    }
+  }
+]

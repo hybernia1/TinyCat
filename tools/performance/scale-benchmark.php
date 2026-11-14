@@ -73,8 +73,8 @@ try {
 
     define('TINYCAT', true);
     require_once $root . '/App/bootstrap.php';
-    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
-    \TinyCat\Installation\Installer::create_tables();
+    \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+    \TinyCat\Core\Installation\Installer::create_tables();
 
     $temporaryConfiguration = $baseConfig;
     $temporaryConfiguration['database'] = [

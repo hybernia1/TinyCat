@@ -1,0 +1,216 @@
+<?php
+declare(strict_types=1);
+namespace TinyCat\Social\Posts;
+
+use TinyCat\Social\Content\Redirects;
+
+use TinyCat\Http\Request;
+use TinyCat\Http\Web;
+use TinyCat\Social\Moderation\Restrictions;
+use TinyCat\Social\Presentation\Pages as SitePages;
+use TinyCat\Core\Ui\Site as Presentation;
+use TinyCat\Support\Dates;
+use TinyCat\Support\Localization;
+use TinyCat\Support\Text;
+use TinyCat\Core\Identity\Authentication;
+use TinyCat\Social\Profiles\Profiles;
+
+/** HTTP page actions and prepared presentation composition. */
+final class Pages
+{
+    public static function home(): void
+    {
+        $data = self::homeData();
+        \TinyCat\Social\Presentation\PublicPages::render('home', $data);
+    }
+
+    /** @return array<string, mixed> */
+    public static function homeData(): array
+    {
+        $authUser = Authentication::auth();
+        $feed = (string) Web::get('feed', 'all') === 'following' ? 'following' : 'all';
+        $editor = $authUser !== null ? ViewData::status_editor_view_data() : [];
+
+        $userIsMuted = $authUser !== null && Restrictions::user_is_muted($authUser);
+        $userMutedUntil = $authUser !== null ? Restrictions::user_muted_until($authUser) : '';
+        $archiveType = Feed::archive_type((string) Web::get('media', ''));
+        $publicHomeFeedData = ViewData::public_home_feed_data($feed, $authUser, null, $archiveType);
+        return ['page' => [
+            'title' => Presentation::site_home_title(),
+            'current' => Feed::homePath(),
+            'meta' => [
+                'description' => Presentation::site_meta_description(),
+                'url' => Feed::homePath(),
+                'image' => Presentation::site_meta_image_url(),
+                'type' => 'website',
+                'jsonld' => [
+                    '@context' => 'https://schema.org', '@type' => 'WebSite',
+                    '@id' => Presentation::absolute_url(Feed::homePath()), 'url' => Presentation::absolute_url(Feed::homePath()),
+                    'name' => Presentation::site_name(), 'description' => Presentation::site_meta_description(),
+                ],
+            ],
+        ], 'context' => compact('authUser', 'feed', 'editor', 'userIsMuted', 'userMutedUntil', 'publicHomeFeedData', 'archiveType')];
+    }
+
+    public static function detail(?int $statusId = null): void
+    {
+        $data = self::detailData($statusId);
+        if ($data === null) { self::statusNotFound(); return; }
+        if (Request::current()->method() === 'GET' && Request::current()->path() !== $data['page']['current']) { Web::redirect($data['page']['current'], 301); }
+        \TinyCat\Social\Presentation\PublicPages::render('status', $data);
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function detailData(?int $statusId = null): ?array
+    {
+        $statusId = max(0, $statusId ?? (int) Web::get('id', 0));
+        $current = Posts::status_url($statusId);
+        $compact = (string) Web::get('compact', '') === '1';
+
+        if ($statusId < 1) {
+            return null;
+        }
+
+        $authUser = Authentication::auth();
+        $item = Feed::public_status_item($statusId);
+        if ($item === null && ($canonicalId = Redirects::target($statusId)) !== null) {
+            $statusId = $canonicalId;
+            $current = Posts::status_url($statusId);
+            $item = Feed::public_status_item($statusId);
+        }
+
+        if ($item === null) {
+            return null;
+        }
+
+        $detail = ViewData::status_prepare_detail_view($item, $authUser);
+        $item = $detail['item'];
+        $comments = $detail['comments'];
+
+        $statusTitle = ViewData::status_meta_title($item);
+        $statusImageUrl = \TinyCat\Social\Content\Images::status_image_url($item);
+
+        return ['page' => [
+            'title' => $statusTitle,
+            'current' => $current,
+            'meta' => [
+                'title' => $statusTitle,
+                'oembed' => Embed::discoveryUrl($statusId),
+                'oembed_xml' => Embed::discoveryUrl($statusId, 'xml'),
+                'description' => ViewData::status_meta_description($item),
+                'url' => $current,
+                'image' => ViewData::status_meta_image($item),
+                'image_type' => $statusImageUrl !== '' ? 'image/webp' : '',
+                'image_width' => (int) ($item['image_width'] ?? 0),
+                'image_height' => (int) ($item['image_height'] ?? 0),
+                'image_alt' => $statusImageUrl !== '' ? \TinyCat\Social\Content\Images::status_image_alt_text($item) : '',
+                'type' => 'article',
+                'published_time' => (string) ($item['published_at'] ?? ''),
+                'author' => Presentation::absolute_url(Profiles::author_url((int) ($item['author_id'] ?? 0))),
+                'tags' => Tags::status_tags_from_text((string) ($item['body'] ?? '')),
+                'rss' => Profiles::author_feed_url((int) ($item['author_id'] ?? 0)),
+                'jsonld' => array_filter([
+                    '@context' => 'https://schema.org',
+                    ...StructuredData::post($item),
+                    'comment' => $comments !== [] ? self::commentSchema($comments, $current) : null,
+                    'interactionStatistic' => [
+                        [
+                            '@type' => 'InteractionCounter',
+                            'interactionType' => 'https://schema.org/LikeAction',
+                            'userInteractionCount' => (int) ($item['likes_count'] ?? 0),
+                        ],
+                        [
+                            '@type' => 'InteractionCounter',
+                            'interactionType' => 'https://schema.org/CommentAction',
+                            'userInteractionCount' => (int) ($item['comments_count'] ?? 0),
+                        ],
+                    ],
+                ], static fn (mixed $value): bool => $value !== null),
+            ],
+        ], 'context' => compact('authUser', 'item', 'comments', 'compact')];
+    }
+    /** @param array<int, array<string, mixed>> $comments
+     * @return list<array<string, mixed>> */
+    private static function commentSchema(array $comments, string $postUrl): array
+    {
+        return array_values(array_map(static function (array $comment) use ($postUrl): array {
+            return array_filter([
+                '@type' => 'Comment',
+                'identifier' => (string) $comment['id'],
+                'url' => Presentation::absolute_url($postUrl),
+                'text' => (string) $comment['body'],
+                'datePublished' => !empty($comment['created_at']) ? Dates::dateTime((string) $comment['created_at'], DATE_ATOM) : null,
+                'author' => StructuredData::author($comment),
+                'comment' => !empty($comment['replies']) ? self::commentSchema($comment['replies'], $postUrl) : null,
+            ], static fn (mixed $value): bool => $value !== null);
+        }, $comments));
+    }
+
+    private static function statusNotFound(): void
+    {
+        http_response_code(404);
+        $notFoundTitle = Localization::t('public.status_not_found');
+        $notFoundCurrent = '/status';
+        \TinyCat\Core\Runtime\Errors::respond(404);
+    }
+
+    public static function tag(?string $tag = null): void
+    {
+        $data = self::tagData($tag);
+        if ($data === null) { \TinyCat\Core\Runtime\Errors::respond(404); return; }
+        if (Request::current()->method() === 'GET' && (Request::current()->path() !== $data['page']['current'] || (int) Web::get('page', 0) > 1)) { Web::redirect($data['page']['current'], 301); }
+        \TinyCat\Social\Presentation\PublicPages::render('tag', $data);
+    }
+
+    /** @return array<string, mixed>|null */
+    public static function tagData(?string $tag = null): ?array
+    {
+        $tag = Tags::status_tag_normalize(($tag ?? (string) Web::get('tag', '')));
+
+        if ($tag === '') {
+            return null;
+        }
+
+        $current = Tags::tag_url($tag);
+        $archiveType = Feed::archive_type((string) Web::get('media', ''));
+
+        $statusLimit = Feed::public_status_initial_page_limit();
+        $nextStatusLimit = Feed::public_status_page_limit();
+        $statusItems = Feed::public_status_items_by_tag($tag, $statusLimit, '', 0, $archiveType);
+        $indexableItems = $statusLimit >= 2 ? $statusItems : Feed::public_status_items_by_tag($tag, 2);
+        $authUser = Authentication::auth();
+        $statusItems = ViewData::status_prepare_items_view($statusItems, $authUser);
+        $feedMore = ViewData::status_feed_more_view_data(
+            'status-feed-tag-' . Text::slug($tag),
+            'tag',
+            $statusItems,
+            $statusLimit,
+            ['tag' => $tag, 'media' => $archiveType],
+            $nextStatusLimit
+        );
+        $pageUrl = $current;
+        $tagStructuredData = [
+            '@context' => 'https://schema.org',
+            '@type' => 'CollectionPage',
+            '@id' => Presentation::absolute_url($pageUrl),
+            'url' => Presentation::absolute_url($pageUrl),
+            'name' => Localization::t('public.tag_feed_title', ['tag' => '#' . $tag]),
+            'isPartOf' => ['@id' => Presentation::absolute_url('/')],
+            'mainEntity' => StructuredData::itemList(array_values($statusItems)),
+        ];
+
+        $tagFeedUrl = Tags::tag_feed_url($tag, $archiveType);
+        return ['page' => [
+            'title' => Localization::t('public.tag_feed_title', ['tag' => '#' . $tag]),
+            'current' => $current,
+            'meta' => [
+                'description' => Localization::t('public.tag_meta', ['tag' => '#' . $tag]),
+                'url' => $pageUrl,
+                'image' => Presentation::site_meta_image_url(),
+                'rss' => Tags::tag_feed_url($tag, $archiveType),
+                'robots' => count($indexableItems) >= 2 ? '' : 'noindex,follow',
+                'jsonld' => $tagStructuredData,
+            ],
+        ], 'context' => compact('authUser', 'tag', 'statusItems', 'feedMore', 'tagFeedUrl', 'archiveType')];
+    }
+}

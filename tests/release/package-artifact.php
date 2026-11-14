@@ -76,18 +76,20 @@ try {
         throw new RuntimeException('Package builder must reject unsupported update baselines.');
     }
 
-    $repeatedCommand = str_replace(
-        '--output=' . escapeshellarg($output),
-        '--output=' . escapeshellarg($repeatedOutput),
-        $command
-    );
-    exec($repeatedCommand . ' 2>&1', $repeatedBuildOutput, $repeatedExitCode);
-
-    if ($repeatedExitCode !== 0) {
-        throw new RuntimeException('Repeated package build failed: ' . implode(' ', $repeatedBuildOutput));
-    }
-
     $freshInstall = in_array('--fresh-install', $argv, true);
+    // Update determinism is already checked against the independent --both build.
+    if ($freshInstall) {
+        $repeatedCommand = str_replace(
+            '--output=' . escapeshellarg($output),
+            '--output=' . escapeshellarg($repeatedOutput),
+            $command
+        );
+        exec($repeatedCommand . ' 2>&1', $repeatedBuildOutput, $repeatedExitCode);
+
+        if ($repeatedExitCode !== 0) {
+            throw new RuntimeException('Repeated package build failed: ' . implode(' ', $repeatedBuildOutput));
+        }
+    }
     if (!$freshInstall) {
         $bothOutput = $temporaryRoot . '/both';
         $bothCommand = str_replace('--output=' . escapeshellarg($output), '--output=' . escapeshellarg($bothOutput), $command) . ' --both';
@@ -98,11 +100,15 @@ try {
             $combined = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
             $signature = base64_decode(trim((string) file_get_contents($bothOutput . '/' . $variant . '/' . $manifestName . '.sig')), true);
             if (!is_string($signature) || !sodium_crypto_sign_verify_detached($signature, $json, $publicKey)) { throw new RuntimeException('Invalid combined artifact signature.'); }
-            if ($variant === 'update' && hash_file('sha256', $output . '/tinycat-' . $version . '.zip') !== $combined['sha256']) { throw new RuntimeException('Combined update differs from standalone update.'); }
+            if ($variant === 'update' && hash_file('sha256', $output . '/tinycat-' . $version . '.zip') !== $combined['sha256']) {
+                $standalone = json_decode((string) file_get_contents($output . '/tinycat-update.json'), true, 512, JSON_THROW_ON_ERROR);
+                $changed = array_filter(array_unique([...array_keys($standalone['files']), ...array_keys($combined['files'])]), static fn (string $path): bool => ($standalone['files'][$path] ?? null) !== ($combined['files'][$path] ?? null));
+                throw new RuntimeException('Combined update differs from standalone update; changed files: ' . implode(', ', $changed));
+            }
             if ($variant === 'install') {
                 if ($combined['migrations'] !== [] || $combined['delete'] !== []) { throw new RuntimeException('Combined installer includes update operations.'); }
                 $update = json_decode((string) file_get_contents($bothOutput . '/update/tinycat-update.json'), true, 512, JSON_THROW_ON_ERROR);
-                $expected = array_filter($update['files'], static fn (string $path): bool => !str_starts_with($path, 'migrations/'), ARRAY_FILTER_USE_KEY);
+                $expected = array_filter($update['files'], static fn (string $path): bool => !str_starts_with($path, 'migrations/') && $path !== 'App/Support/Cache.php', ARRAY_FILTER_USE_KEY);
                 if ($combined['files'] !== $expected) { throw new RuntimeException('Combined installer file hashes differ.'); }
             }
         }
@@ -128,7 +134,8 @@ try {
     }
     $manifestJson = (string) file_get_contents($manifestPath);
     $manifest = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
-    if (($manifest['minimum_version'] ?? null) !== \TinyCat\Support\Version::MINIMUM_UPDATE) {
+    $expectedMinimum = \TinyCat\Core\Modules\Distribution::DOMAIN_RUNTIME;
+    if (($manifest['minimum_version'] ?? null) !== $expectedMinimum) {
         throw new RuntimeException('Package builder must default to the supported update baseline.');
     }
     $signature = base64_decode(trim((string) file_get_contents($signaturePath)), true);
@@ -139,7 +146,7 @@ try {
 
     $manifest = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
 
-    if (hash_file('sha256', $package) !== hash_file('sha256', $repeatedPackage)) {
+    if ($freshInstall && hash_file('sha256', $package) !== hash_file('sha256', $repeatedPackage)) {
         $failures[] = 'Repeated builds from the same source are not byte-identical.';
     }
 
@@ -153,6 +160,12 @@ try {
 
     if (in_array('--fresh-install', $argv, true) && ($manifest['delete'] ?? null) !== []) {
         $failures[] = 'Fresh installation artifact unexpectedly declares update deletions.';
+    }
+
+    $legacyCacheLoader = isset($manifest['files']['App/Support/Cache.php']);
+    $needsLegacyCacheLoader = !in_array('--fresh-install', $argv, true) && version_compare($manifest['minimum_version'], '6.0.0-dev.1', '<');
+    if ($legacyCacheLoader !== $needsLegacyCacheLoader) {
+        $failures[] = 'The legacy cache loader belongs only to updates supporting pre-6 installations.';
     }
 
     if (!in_array('--fresh-install', $argv, true)) {
@@ -196,10 +209,17 @@ try {
     }
 
     sort($names, SORT_STRING);
-    if (!in_array('--fresh-install', $argv, true)
+    if ($manifest['distribution']['legacy'] && !in_array('--fresh-install', $argv, true)
         && !in_array('migrations/20261026_003_scheduler_runs.php', $names, true)
     ) {
         $failures[] = 'Updater bridge must retain authenticated migration files.';
+    }
+    if ($manifest['distribution']['format'] === 3) {
+        foreach ($manifest['distribution']['schemas'] as $schema) {
+            foreach ([...$schema['migrations'], ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) {
+                if (!in_array($migration['file'], $names, true) || ($manifest['files'][$migration['file']] ?? '') !== $migration['checksum']) { $failures[] = 'Owner migration or schema operation is missing from the signed artifact: ' . $migration['file']; }
+            }
+        }
     }
     $manifestNames = array_keys((array) ($manifest['files'] ?? []));
     sort($manifestNames, SORT_STRING);
@@ -215,12 +235,12 @@ try {
     }
 
     foreach ($names as $name) {
-        if (str_starts_with($name, 'docs/') && !in_array($name, ['docs/reference/api.md', 'docs/operations/updates.md'], true)) {
+        if (str_starts_with($name, 'docs/') && !in_array($name, ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md'], true)) {
             $failures[] = "Internal release evidence in artifact: {$name}";
         }
     }
 
-    foreach (['App/Support/Version.php', 'App/Support/Localization.php', 'App/Updates/Manager.php', 'App/Bots/Importer.php', 'App/Bots/Administration.php', 'App/Bots/Pages.php', 'index.php', 'scheduled-tasks.php', 'docs/reference/api.md', 'docs/operations/updates.md'] as $required) {
+    foreach (['App/Core/Support/Version.php', 'App/Core/Support/Localization.php', 'App/Core/Updates/Manager.php', 'App/Modules/Social/src/Automation/Importer.php', 'App/Modules/Social/src/Automation/Administration.php', 'App/Modules/Social/src/Automation/Pages.php', 'index.php', 'scheduled-tasks.php', 'docs/reference/api.md', 'docs/operations/updates.md'] as $required) {
         if (!in_array($required, $names, true)) {
             $failures[] = "Required modular runtime file missing from artifact: {$required}";
         }
@@ -232,13 +252,13 @@ try {
         }
     }
 
-    foreach (['App/Http/Api.php', 'App/Http/Request.php', 'App/Http/Response.php', 'App/Http/Validator.php', 'App/Database/Connection.php', 'App/Support/Config.php', 'App/Module.php', 'App/modules.php', 'assets/core/api-client.js', 'assets/core/dom.js', 'assets/ui/form-requests.js', 'assets/ui/dialogs.js'] as $required) {
+    foreach (['App/Core/Http/Api.php', 'App/Core/Http/Request.php', 'App/Core/Http/Response.php', 'App/Core/Http/Validator.php', 'App/Core/Database/Connection.php', 'App/Core/Support/Config.php', 'App/Core/Modules/Module.php', 'App/modules.php', 'assets/core/api-client.js', 'assets/core/dom.js', 'assets/ui/form-requests.js', 'assets/ui/dialogs.js'] as $required) {
         if (!in_array($required, $names, true)) {
             $failures[] = "Required module infrastructure missing from artifact: {$required}";
         }
     }
 
-    foreach (['App/Users/Module.php', 'App/Users/Api.php', 'App/Users/Avatar.php', 'App/Users/Roles.php', 'App/Notifications/Module.php', 'App/Notifications/Api.php', 'App/Status/Module.php', 'App/Status/Api.php', 'App/Status/ImageStorage.php', 'App/Status/LinkParser.php', 'App/Status/Metadata.php', 'assets/ui/component-builders.js', 'assets/modules/users/controller.js', 'assets/modules/status/controller.js', 'assets/modules/notifications/controller.js'] as $required) {
+    foreach (['App/Modules/Social/src/Profiles/Registration.php', 'App/Modules/Social/src/Profiles/Api.php', 'App/Modules/Social/src/Profiles/Avatar.php', 'App/Modules/Social/src/Profiles/Roles.php', 'App/Core/Notifications/ServiceProvider.php', 'App/Core/Notifications/Api.php', 'App/Modules/Social/src/Posts/Registration.php', 'App/Modules/Social/src/Posts/Api.php', 'App/Modules/Social/src/Content/ImageStorage.php', 'App/Core/Text/LinkParser.php', 'App/Core/Links/Metadata.php', 'assets/ui/component-builders.js', 'App/Modules/Social/assets/users/controller.js', 'App/Modules/Social/assets/status/controller.js', 'App/Core/Notifications/assets/controller.js'] as $required) {
         if (!in_array($required, $names, true)) { $failures[] = 'Required domain runtime missing: ' . $required; }
     }
     foreach (['App/Core.php', 'App/functions.php', 'App/Api.php', 'App/Bots.php', 'App/BotAdmin.php', 'App/Captcha.php', 'App/Cache.php', 'App/Minifier.php', 'App/SiteIdentity.php', 'App/Sitemap.php', 'App/PackageManager.php', 'App/Notifications.php', 'App/Avatar.php', 'App/UserRoles.php', 'App/StatusImage.php', 'App/StatusLinks.php', 'App/LinkMetadata.php'] as $retired) {

@@ -220,7 +220,7 @@
     }
   },
   {
-    "component": "status/link",
+    "component": "publishing/link",
     "data": {
       "link": {
         "url": "https://example.test",
@@ -231,7 +231,7 @@
     }
   },
   {
-    "component": "status/link",
+    "component": "publishing/link",
     "data": {
       "link": {
         "url": "https://example.test",

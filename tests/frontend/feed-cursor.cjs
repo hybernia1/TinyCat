@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const source = fs.readFileSync(path.join(__dirname, "../../assets/modules/status/feed-loader.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
+const source = fs.readFileSync(path.join(__dirname, "../../App/Modules/Social/assets/status/feed-loader.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
 (async function () {
   let checks = 0;
   for (const kind of ["posts", "entities", "notifications"]) {

@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "fields": {
+      "email_from": "E-mail afzender",
+      "smtp_username": "SMTP gebruikersnaam",
+      "smtp_encryption": "SMTP-codering",
+      "email_from_name": "Naam afzender",
+      "smtp_host": "SMTP host",
+      "smtp_password": "SMTP wachtwoord",
+      "smtp_port": "SMTP poort",
+      "email_templates": "Soorten e-mailbezorging",
+      "smtp": "SMTP configuratie"
+    }
+  }
+}

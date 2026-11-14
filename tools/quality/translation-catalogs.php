@@ -7,19 +7,19 @@ return static function (string $directory): array {
     if ($packages === []) { throw new RuntimeException($directory . '/lang: no language packages'); }
     if (!isset($packages['en'])) { throw new RuntimeException($directory . '/lang/en.json: missing source locale'); }
     $sources = \TinyCat\Support\TranslationSources::files($directory);
-    if (!isset($sources['Mail'])) { throw new RuntimeException($directory . '/App/Mail/lang: missing email sources'); }
     $catalogs = [];
     $owners = [];
     foreach ($sources as $owner => $files) {
         foreach ($files as $locale => $file) {
             if (!isset($packages[$locale])) { throw new RuntimeException($file . ': undeclared locale ' . $locale); }
         }
-        $baseFile = $directory . '/App/' . $owner . '/lang/en.json';
+        $sourceDirectory = \TinyCat\Core\Modules\Resources::translations($directory)[$owner];
+        $baseFile = $sourceDirectory . '/en.json';
         if (!isset($files['en'])) { throw new RuntimeException($baseFile . ': missing source catalog'); }
         $base = \TinyCat\Support\TranslationSources::read($files['en']);
-        $kind = $owner === 'Mail' ? 'emails' : 'app';
+        $kind = \TinyCat\Core\Modules\Resources::translationDomain($owner, $directory);
         foreach ($packages as $locale => $_) {
-            $file = $directory . '/App/' . $owner . '/lang/' . $locale . '.json';
+            $file = $sourceDirectory . '/' . $locale . '.json';
             if (!isset($files[$locale])) { throw new RuntimeException($file . ': missing catalog'); }
             $catalog = \TinyCat\Support\TranslationSources::read($files[$locale]);
             foreach (array_diff_key($base, $catalog) as $key => $_) { throw new RuntimeException($file . ': missing key ' . $key); }

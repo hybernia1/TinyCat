@@ -1,0 +1,19 @@
+{
+  "security": {
+    "captcha_label": "Contrôle de sécurité"
+  },
+  "auth": {
+    "invalid_captcha": "Le contrôle de sécurité n'a pas réussi."
+  },
+  "settings": {
+    "fields": {
+      "captcha_site_key": "Clé du site",
+      "captcha_secret_key": "Clé secrète",
+      "captcha_enabled": "Protection CAPTCHA",
+      "captcha_login_attempts": "Échec de connexion avant CAPTCHA",
+      "captcha_secret_key_help": "Laissez vide pour conserver la clé secrète enregistrée. Il n'est plus jamais montré.",
+      "captcha_provider_help": "Choisissez le fournisseur dont la clé de site et la clé secrète sont configurées ci-dessous.",
+      "captcha_provider": "Fournisseur CAPTCHA"
+    }
+  }
+}

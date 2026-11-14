@@ -25,13 +25,13 @@ feed_domains AS (
 ),
 bot_posts AS (
     SELECT c.id AS content_id, c.author_id, c.published_at, LEFT(c.body, 180) AS excerpt
-    FROM content c INNER JOIN users u ON u.id = c.author_id WHERE u.role = 'bot'
+    FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE u.role = 'bot'
 ),
 link_authorities AS (
     SELECT DISTINCT p.content_id,
         LOWER(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(l.normalized_url, '://', -1), '/', 1), '?', 1), '#', 1)) AS authority
-    FROM bot_posts p INNER JOIN content_links cl ON cl.content_id = p.content_id
-    INNER JOIN links l ON l.id = cl.link_id WHERE LOWER(l.normalized_url) REGEXP '^https?://'
+    FROM bot_posts p INNER JOIN social_post_links cl ON cl.content_id = p.content_id
+    INNER JOIN social_links l ON l.id = cl.link_id WHERE LOWER(l.normalized_url) REGEXP '^https?://'
 ),
 link_hosts AS (
     SELECT content_id, TRIM(TRAILING '.' FROM SUBSTRING_INDEX(SUBSTRING_INDEX(authority, '@', -1), ':', 1)) AS host

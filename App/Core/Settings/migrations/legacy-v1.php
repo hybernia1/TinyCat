@@ -1,0 +1,10 @@
+<?php
+declare(strict_types=1);
+
+// Explicit adoption of an authenticated legacy global installation.
+return static function (\PDO $pdo): bool {
+    if (!\TinyCat\Database\SchemaInspection::exists($pdo, 'settings')) { return false; }
+    \TinyCat\Database\SchemaInspection::requireMigration($pdo, '20261113_001_shared_interactions', '083cee738cc4821c8e4d84365e2059e3e1f291e4943385def6a3213bd58228c3');
+    \TinyCat\Database\SchemaInspection::requireColumns($pdo, 'settings', ['id', 'setting_key', 'setting_value', 'setting_group', 'setting_type', 'autoload']);
+    return true;
+};

@@ -1,0 +1,44 @@
+{
+  "templates": {
+    "notification_content_like": {
+      "subject": "{actor} vond je bericht leuk",
+      "body": "{actor} vond je bericht leuk.\n\nBekijk het bericht: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} heeft gereageerd op je bericht",
+      "body": "{actor} heeft gereageerd op je bericht.\n\nBekijk het gesprek: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} vond je reactie leuk",
+      "body": "{actor} vond je reactie leuk.\n\nBekijk het gesprek: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_follow": {
+      "subject": "{actor} heeft je gevolgd",
+      "body": "{actor} heeft je gevolgd.\n\nBekijk hun profiel: {actor_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} heeft je genoemd",
+      "body": "{actor} heeft je genoemd in een bericht.\n\nBekijk het bericht: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} heeft je genoemd",
+      "body": "{actor} heeft je genoemd in een reactie.\n\nBekijk het gesprek: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_resolved": {
+      "subject": "Uw melding is opgelost",
+      "body": "Uw melding is opgelost door het moderatieteam.\n\nBekijk de gerapporteerde inhoud: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_dismissed": {
+      "subject": "Uw rapport is afgewezen",
+      "body": "Uw melding is beoordeeld en afgewezen door het moderatieteam.\n\nBekijk de gerapporteerde inhoud: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    }
+  }
+}

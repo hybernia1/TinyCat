@@ -7,7 +7,7 @@ foreach (['/admin/bots/accounts' => 'bot-accounts-filter-modal', '/admin/bots/li
     $pageHeaders = http_get_last_response_headers() ?? [];
     $assert(preg_match('/\s200\s/', (string) ($pageHeaders[0] ?? '')) === 1 && is_string($filterPage) && str_contains($filterPage, 'id="' . $filterId . '"') && str_contains($filterPage, 'data-filter-content'), 'Bot administration pages render their dropdown filter form successfully: ' . $pagePath);
 }
-$seedBotPost = $botPostsDb->prepare('INSERT INTO content (id, author_id, body, published_at) VALUES (?, 3, ?, ?)');
+$seedBotPost = $botPostsDb->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, 3, ?, ?)');
 foreach (range(1, 31) as $number) {
     $seedBotPost->execute([94000 + $number, 'Managed bot post ' . $number, '2999-01-' . sprintf('%02d', $number) . ' 12:00:00']);
 }
@@ -44,12 +44,12 @@ $assert($status === 404, 'Public API visibility stays unchanged for administrato
 $assert($status === 403, 'The shared edit API still enforces CSRF.');
 [$status, $updatedBotPost] = $request('PATCH', '/api/statuses/94001', ['body' => 'Updated scheduled bot post'], 'admin', $csrf);
 $assert($status === 200 && $updatedBotPost['code'] === 'status_saved', 'Scheduled bot posts save through the normal post editor API.');
-$storedBotPost = $botPostsDb->query('SELECT body, published_at FROM content WHERE id = 94001')->fetch(PDO::FETCH_ASSOC);
+$storedBotPost = $botPostsDb->query('SELECT body, published_at FROM social_posts WHERE id = 94001')->fetch(PDO::FETCH_ASSOC);
 $assert($storedBotPost['body'] === 'Updated scheduled bot post' && $storedBotPost['published_at'] === '2999-01-01 12:00:00', 'Editing preserves the queued publication time.');
 [$status] = $request('GET', '/api/statuses/94001');
 $assert($status === 404, 'Saving a scheduled post does not publish it early.');
 [$status] = $request('DELETE', '/api/statuses/94001', [], 'admin', $csrf);
-$assert($status === 200 && (int) $botPostsDb->query('SELECT COUNT(*) FROM content WHERE id = 94001')->fetchColumn() === 0, 'Scheduled posts can be deleted through the standard confirmed-delete API.');
-$botPostsDb->exec('DELETE FROM content WHERE id BETWEEN 94001 AND 94031');
+$assert($status === 200 && (int) $botPostsDb->query('SELECT COUNT(*) FROM social_posts WHERE id = 94001')->fetchColumn() === 0, 'Scheduled posts can be deleted through the standard confirmed-delete API.');
+$botPostsDb->exec('DELETE FROM social_posts WHERE id BETWEEN 94001 AND 94031');
 $seedBotPost = null;
 $botPostsDb = null;

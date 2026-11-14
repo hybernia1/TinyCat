@@ -8,7 +8,7 @@ if (!is_file($root . '/config.php') || !in_array('mysql', PDO::getAvailableDrive
     exit(0);
 }
 require $root . '/App/bootstrap.php';
-(new ReflectionProperty(TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
+(new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $config = require $root . '/config.php';
 $db = $config['database'];
 $database = new PDO('mysql:host=' . $db['host'] . ';port=' . ($db['port'] ?? 3306), $db['user'], $db['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
@@ -19,25 +19,27 @@ try {
     TinyCat\Database\Connection::set($database);
     $database->exec('CREATE TABLE users (id INT UNSIGNED PRIMARY KEY, username VARCHAR(40), role VARCHAR(20), status VARCHAR(20))');
     $database->exec('CREATE TABLE bot_sources (id BIGINT UNSIGNED PRIMARY KEY, bot_user_id INT UNSIGNED, name VARCHAR(80), last_imported_at DATETIME, feed_hash CHAR(64), enabled TINYINT NOT NULL DEFAULT 1)');
-    $database->exec('CREATE TABLE content (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME)');
+    $database->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, author_id INT UNSIGNED, body TEXT, published_at DATETIME)');
     $database->exec('CREATE TABLE bot_feed_history (bot_user_id INT, feed_hash CHAR(64), item_hash CHAR(64), created_at DATETIME, PRIMARY KEY(bot_user_id, feed_hash, item_hash))');
-    $database->exec('CREATE TABLE content_tags (content_id BIGINT, term_id BIGINT)');
-    $database->exec('CREATE TABLE content_links (content_id BIGINT, link_id BIGINT)');
+    $database->exec('CREATE TABLE social_post_tags (content_id BIGINT, term_id BIGINT)');
+    $database->exec('CREATE TABLE social_post_links (content_id BIGINT, link_id BIGINT)');
     $database->exec("INSERT INTO users VALUES (1, 'fixture', 'bot', 'active')");
     $database->exec('INSERT INTO bot_sources (id, bot_user_id, last_imported_at) VALUES (1, 1, NULL), (2, 1, NULL)');
     $database->exec("UPDATE bot_sources SET name = CASE id WHEN 1 THEN 'Feed A' ELSE 'Feed B' END");
     $database->exec("INSERT INTO bot_sources (id, bot_user_id, name) VALUES (3, 1, 'Empty feed')");
-    $database->exec("INSERT INTO content (author_id,body,published_at) VALUES (1,'Legacy queue','2099-01-01 12:00:00')");
+    $database->exec("INSERT INTO social_posts (author_id,body,published_at) VALUES (1,'Legacy queue','2099-01-01 12:00:00')");
     $migrate = require $root . '/migrations/20261029_003_feed_publication_queue.php';
+    $database->exec('RENAME TABLE social_posts TO content');
     $migrate($database); $migrate($database);
+    $database->exec('RENAME TABLE content TO social_posts');
     $setHash = $database->prepare('UPDATE bot_sources SET feed_hash = ? WHERE id = ?');
     foreach ([1, 2, 3] as $sourceId) { $setHash->execute([hash('sha256', 'feed-' . $sourceId), $sourceId]); }
     $checks = 0;
     $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
-    $persist = new ReflectionMethod(TinyCat\Bots\Importer::class, 'persistFeedPost');
-    $draft = TinyCat\Status\PostCreation::fromText('RSS fixture');
-    $append = static fn (int $source, string $item, int $interval): int => $persist->invoke(null, $source, 1, hash('sha256', 'feed-' . $source), hash('sha256', $item), $draft, [], $interval);
-    $at = static fn (int $id): string => (string) $database->query('SELECT published_at FROM content WHERE id = ' . $id)->fetchColumn();
+    $persist = require __DIR__ . '/../../support/feed-writer.php';
+    $draft = TinyCat\Social\Posts\PostCreation::fromText('RSS fixture');
+    $append = static fn (int $source, string $item, int $interval): int => $persist($source, 1, hash('sha256', 'feed-' . $source), hash('sha256', $item), $draft, [], $interval);
+    $at = static fn (int $id): string => (string) $database->query('SELECT published_at FROM social_posts WHERE id = ' . $id)->fetchColumn();
     $firstA = $append(1, 'first', 30);
     $firstB = $append(2, 'first', 60);
     $assert(abs(strtotime($at($firstA)) - time()) < 5 && abs(strtotime($at($firstB)) - time()) < 5, 'Both feeds start immediately, independently of each other and unassigned legacy posts.');
@@ -49,57 +51,57 @@ try {
     $assert(strtotime($at($thirdA)) - strtotime($at($secondA)) === 900, 'A later batch resumes the source timeline using its updated interval.');
     $assert($at($secondB) > $at($thirdA), 'Feed B does not push new feed A posts behind its tail.');
     $assert($at(1) === '2099-01-01 12:00:00', 'Migration and imports preserve existing unassigned schedules.');
-    $sources = array_column(TinyCat\Bots\Importer::sources(), null, 'id');
-    $countsA = TinyCat\Bots\Importer::sourceResource($sources[1]);
-    $countsB = TinyCat\Bots\Importer::sourceResource($sources[2]);
+    $sources = array_column(TinyCat\Social\Automation\Importer::sources(), null, 'id');
+    $countsA = TinyCat\Social\Automation\Importer::sourceResource($sources[1]);
+    $countsB = TinyCat\Social\Automation\Importer::sourceResource($sources[2]);
     $assert($countsA['published_count'] === 1 && $countsA['queued_count'] === 2 && $countsA['post_count'] === 3, 'Source counts split published posts from the queue without counting legacy rows.');
     $assert($countsB['published_count'] === 1 && $countsB['queued_count'] === 1 && (int) $sources[3]['published_count'] === 0, 'Counts remain independent and include empty sources.');
     $_GET = ['source' => '1'];
-    $queue = TinyCat\Bots\Queue::payload();
+    $queue = TinyCat\Social\Automation\Queue::payload();
     $assert(count($queue['items']) === 2 && $queue['items'][0]['source']['name'] === 'Feed A', 'Queue source filtering returns linked source identities.');
     $assert(str_contains($queue['items'][0]['publish_url'], 'source=1') && str_contains($queue['sorting']['body']['url'], 'source=1'), 'Publication and sorting preserve the source filter.');
     $_GET = ['source' => 'unknown'];
-    $unknown = TinyCat\Bots\Queue::payload();
+    $unknown = TinyCat\Social\Automation\Queue::payload();
     $assert(count($unknown['items']) === 1 && $unknown['items'][0]['source'] === null, 'Unattributed legacy posts remain visible under the unknown-source filter.');
     $_GET = ['source' => '1', 'publication' => 'queued'];
-    $posts = TinyCat\Bots\Administration::postsPayload(1);
+    $posts = TinyCat\Social\Automation\Administration::postsPayload(1);
     $assert(count($posts['items']) === 2 && $posts['items'][0]['source']['id'] === 1 && $posts['total_count'] === 6, 'The bot post list filters source and publication state while preserving the overall account total.');
     $_GET = ['source' => '1', 'publication' => 'published'];
-    $assert(TinyCat\Bots\Administration::postsPayload(1)['pagination']['total'] === 1, 'Published count links resolve to the matching filtered list.');
-    $assert(TinyCat\Bots\Administration::sourceFilter(['1']) === '' && TinyCat\Bots\Administration::sourceFilter('1 OR 1=1') === '', 'Source filters reject arrays and SQL expressions.');
-    $before = (int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn();
+    $assert(TinyCat\Social\Automation\Administration::postsPayload(1)['pagination']['total'] === 1, 'Published count links resolve to the matching filtered list.');
+    $assert(TinyCat\Social\Automation\Administration::sourceFilter(['1']) === '' && TinyCat\Social\Automation\Administration::sourceFilter('1 OR 1=1') === '', 'Source filters reject arrays and SQL expressions.');
+    $before = (int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn();
     try { $append(1, 'first', 30); throw new RuntimeException('Duplicate accepted.'); } catch (PDOException) {}
-    $assert((int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn() === $before, 'Duplicate item claims cannot create another post.');
+    $assert((int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === $before, 'Duplicate item claims cannot create another post.');
     try { $append(999, 'rollback', 30); throw new LogicException('Missing source accepted.'); } catch (RuntimeException) {}
-    $assert((int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn() === $before, 'Attribution failure rolls back the post.');
+    $assert((int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === $before, 'Attribution failure rolls back the post.');
     $assert((int) $database->query("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '" . hash('sha256', 'rollback') . "'")->fetchColumn() === 0, 'Attribution failure also rolls back the GUID claim.');
     $_GET = [];
     $savedB = $at($secondB);
-    TinyCat\Bots\Queue::publish($thirdA);
-    $changedCounts = TinyCat\Bots\Importer::sourceResource(TinyCat\Bots\Importer::findSource(1));
+    TinyCat\Social\Automation\Queue::publish($thirdA);
+    $changedCounts = TinyCat\Social\Automation\Importer::sourceResource(TinyCat\Social\Automation\Importer::findSource(1));
     $assert($changedCounts['published_count'] === 2 && $changedCounts['queued_count'] === 1, 'Early publication moves only the selected source post between counts.');
     $nextA = $append(1, 'fourth', 15);
     $assert(strtotime($at($nextA)) - strtotime($at($secondA)) === 900 && $at($secondB) === $savedB, 'Publish now only affects its own feed tail and preserves other feed schedules.');
-    $database->exec('DELETE FROM content WHERE id = ' . $nextA);
+    $database->exec('DELETE FROM social_posts WHERE id = ' . $nextA);
     $assert((int) $database->query('SELECT COUNT(*) FROM bot_source_posts WHERE content_id = ' . $nextA)->fetchColumn() === 0, 'Deleting a post removes its source relation.');
     $database->exec('DELETE FROM bot_sources WHERE id = 1');
     $assert((int) $database->query('SELECT COUNT(*) FROM bot_source_posts WHERE source_id = 1')->fetchColumn() === 0, 'Deleting a feed removes its mappings without deleting posts.');
     $assert($at($secondA) !== '', 'Existing posts survive source deletion.');
     $database->prepare('INSERT INTO bot_sources (id, bot_user_id, name, feed_hash) VALUES (4, 1, ?, ?)')->execute(['Re-added feed A', hash('sha256', 'feed-1')]);
-    $beforeReAdd = (int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn();
+    $beforeReAdd = (int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn();
     try {
-        $persist->invoke(null, 4, 1, hash('sha256', 'feed-1'), hash('sha256', 'first'), $draft, [], 30);
+        $persist(4, 1, hash('sha256', 'feed-1'), hash('sha256', 'first'), $draft, [], 30);
         throw new LogicException('Re-added source duplicated an imported item.');
     } catch (PDOException) {}
-    $assert((int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn() === $beforeReAdd
+    $assert((int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === $beforeReAdd
         && (int) $database->query('SELECT COUNT(*) FROM bot_source_posts WHERE source_id = 4')->fetchColumn() === 0,
         'Re-adding the same feed under a new source ID preserves GUID protection and does not steal old post mappings.');
-    $beforeDrift = (int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn();
+    $beforeDrift = (int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn();
     foreach (['bot_user_id' => 99, 'feed_hash' => hash('sha256', 'changed-feed'), 'enabled' => 0] as $field => $changed) {
         $database->prepare('UPDATE bot_sources SET ' . $field . ' = ? WHERE id = 2')->execute([$changed]);
         try { $append(2, 'drift-retry', 60); throw new LogicException('Stale source accepted.'); }
         catch (RuntimeException $exception) { $assert(str_contains($exception->getMessage(), 'Source changed'), 'In-flight source changes are explicitly rejected.'); }
-        $assert((int) $database->query('SELECT COUNT(*) FROM content')->fetchColumn() === $beforeDrift
+        $assert((int) $database->query('SELECT COUNT(*) FROM social_posts')->fetchColumn() === $beforeDrift
             && (int) $database->query("SELECT COUNT(*) FROM bot_feed_history WHERE item_hash = '" . hash('sha256', 'drift-retry') . "'")->fetchColumn() === 0
             && $at($secondB) === $savedB, 'Source edits cannot save a post under a different feed/account or consume history or move the existing queue.');
         $original = match ($field) { 'bot_user_id' => 1, 'feed_hash' => hash('sha256', 'feed-2'), default => 1 };

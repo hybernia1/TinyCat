@@ -40,25 +40,25 @@ $db = new ListAuditDatabase($dsn, $settings['user'], $settings['password'], $att
 $db->setAttribute(PDO::ATTR_STATEMENT_CLASS, [ListAuditStatement::class, [$db]]);
 $plans = new PDO($dsn, $settings['user'], $settings['password'], $attributes);
 \TinyCat\Database\Connection::set($db);
-\TinyCat\Users\Authentication::reset(null, true);
-$cursor = $plans->query('SELECT id, published_at FROM content ORDER BY published_at DESC, id DESC LIMIT 1 OFFSET 50000')->fetch();
+\TinyCat\Core\Identity\Authentication::reset(null, true);
+$cursor = $plans->query('SELECT id, published_at FROM social_posts ORDER BY published_at DESC, id DESC LIMIT 1 OFFSET 50000')->fetch();
 $cases = [
-    'home' => static fn () => \TinyCat\Status\Feed::public_status_items_cursor(50),
-    'home-text' => static fn () => \TinyCat\Status\Feed::public_status_items_cursor(50, '', 0, 'text'),
-    'home-video-empty' => static fn () => \TinyCat\Status\Feed::public_status_items_cursor(50, '', 0, 'video'),
-    'author' => static fn () => \TinyCat\Status\Feed::public_status_items_by_author_cursor(2, 50),
-    'following' => static fn () => \TinyCat\Status\Feed::public_status_items_for_user_cursor(2, 50),
-    'search-common' => static fn () => \TinyCat\Search\Queries::public_search_content_rows('performance', 50),
-    'search-deep' => static fn () => \TinyCat\Search\Queries::public_search_content_rows('performance', 50, $cursor['published_at'], (int) $cursor['id']),
-    'search-absent' => static fn () => \TinyCat\Search\Queries::public_search_content_rows('zzunmatchedprobe', 50),
-    'search-links' => static fn () => \TinyCat\Search\Queries::public_search_content_rows('https', 50),
-    'search-literal' => static fn () => \TinyCat\Search\Queries::public_search_content_rows('10%', 50),
-    'notifications' => static fn () => \TinyCat\Notifications\Inbox::items(2, 50),
-    'admin-users' => static fn () => \TinyCat\Users\Actions::tc_admin_users_page(\TinyCat\Users\Actions::tc_admin_users_filters()),
-    'admin-reports' => static fn () => \TinyCat\Moderation\Reports::tc_admin_moderation_reports_payload(),
+    'home' => static fn () => \TinyCat\Social\Posts\Feed::public_status_items_cursor(50),
+    'home-text' => static fn () => \TinyCat\Social\Posts\Feed::public_status_items_cursor(50, '', 0, 'text'),
+    'home-video-empty' => static fn () => \TinyCat\Social\Posts\Feed::public_status_items_cursor(50, '', 0, 'video'),
+    'author' => static fn () => \TinyCat\Social\Posts\Feed::public_status_items_by_author_cursor(2, 50),
+    'following' => static fn () => \TinyCat\Social\Posts\Feed::public_status_items_for_user_cursor(2, 50),
+    'search-common' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('performance', 50),
+    'search-deep' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('performance', 50, $cursor['published_at'], (int) $cursor['id']),
+    'search-absent' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('zzunmatchedprobe', 50),
+    'search-links' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('https', 50),
+    'search-literal' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('10%', 50),
+    'notifications' => static fn () => \TinyCat\Social\Posts\LegacyInbox::items(2, 50),
+    'admin-users' => static fn () => \TinyCat\Social\Profiles\Actions::tc_admin_users_page(\TinyCat\Social\Profiles\Actions::tc_admin_users_filters()),
+    'admin-reports' => static fn () => \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload(),
 ];
 $report = ['mysql' => $plans->query('SELECT VERSION()')->fetchColumn(), 'root' => $root,
-    'source_sha256' => ['feed' => hash_file('sha256', $root . '/App/Status/Feed.php'), 'search' => hash_file('sha256', $root . '/App/Search/Queries.php')],
+    'source_sha256' => ['feed' => hash_file('sha256', $root . '/App/Modules/Social/src/Posts/Feed.php'), 'search' => hash_file('sha256', $root . '/App/Modules/Social/src/Search/Queries.php')],
     'method' => 'Read-only in-process SQL audit, not HTTP latency; two invocations, plans from second.', 'cases' => []];
 foreach ($cases as $name => $task) {
     try {

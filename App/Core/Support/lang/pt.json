@@ -1,0 +1,234 @@
+{
+  "common": {
+    "sort": "Ordenar",
+    "refresh": "Atualizar",
+    "save": "Salvar",
+    "create": "Criar",
+    "delete": "Excluir",
+    "cancel": "Cancelar",
+    "continue": "Continuar",
+    "confirm": "Confirmar",
+    "confirm_action": "Confirmar ação",
+    "back": "Voltar",
+    "previous": "Anterior",
+    "next": "Próximo",
+    "finish": "Terminar",
+    "open": "Abrir",
+    "video": "Vídeo",
+    "menu": "Menu",
+    "close": "Fechar",
+    "skip_to_content": "Pular para o conteúdo principal",
+    "main_navigation": "Navegação principal",
+    "site_logo_alt": "Logotipo {site}",
+    "request_failed": "A solicitação não pôde ser concluída.",
+    "edit": "Editar",
+    "login": "Entrar",
+    "logout": "Sair",
+    "register": "Criar conta",
+    "admin": "Administrador",
+    "dashboard": "Painel",
+    "home": "Início",
+    "language": "Idioma",
+    "database": "Banco de dados",
+    "tables": "Tabelas",
+    "account": "Conta",
+    "done": "Feito",
+    "username": "Nome de usuário",
+    "email": "E-mail",
+    "password": "Senha",
+    "new_password": "Nova Senha",
+    "current_password": "Senha atual",
+    "password_confirm": "Confirme sua senha",
+    "role": "Papel",
+    "status": "Status",
+    "note": "Observação",
+    "created": "Criado",
+    "updated": "Atualizado",
+    "route": "Rota",
+    "file": "Arquivo",
+    "image_prepare_failed": "Não foi possível preparar a imagem selecionada para o envio.",
+    "image": "Imagem",
+    "table": "Tabela",
+    "clean_api": "API de dados",
+    "ui_api": "API da interface",
+    "ui": "IU",
+    "actions": "Ações",
+    "search": "Procurar",
+    "filters": "Filtros",
+    "apply_filters": "Aplicar filtros",
+    "clear_filters": "Limpar",
+    "pagination": "Paginação",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "Por página",
+    "all": "Todos",
+    "updated_from": "Atualizado desde",
+    "updated_to": "Atualizado até",
+    "created_from": "Criado desde",
+    "created_to": "Criado até",
+    "unsaved_title": "Alterações não salvas",
+    "unsaved_message": "O formulário contém alterações não salvas. Sair mesmo assim?",
+    "leave": "Deixar",
+    "stay": "Ficar",
+    "validation_failed": "Por favor verifique os valores enviados.",
+    "no_records": "Nenhum registro.",
+    "not_found": "Não encontrado.",
+    "validation_required": "O campo {field} é obrigatório.",
+    "validation_invalid": "O campo {field} possui um valor inválido.",
+    "activate": "Ativar",
+    "deactivate": "Desativar",
+    "activated": "{entity} ativado.",
+    "deactivated": "{entity} desativado.",
+    "action_for": "{action} — {context}",
+    "search_empty": "Nada encontrado."
+  },
+  "relative": {
+    "now": "agora",
+    "past": {
+      "minute": {
+        "one": "há {count} minuto",
+        "few": "há {count} minutos",
+        "many": "há {count} minutos",
+        "other": "há {count} minutos",
+        "single": "um minuto atrás"
+      },
+      "hour": {
+        "one": "há {count} hora",
+        "few": "há {count} horas",
+        "many": "há {count} horas",
+        "other": "há {count} horas",
+        "single": "há uma hora"
+      },
+      "day": {
+        "one": "há {count} dia",
+        "few": "há {count} dias",
+        "many": "há {count} dias",
+        "other": "há {count} dias",
+        "single": "ontem"
+      },
+      "week": {
+        "one": "há {count} semana",
+        "few": "há {count} semanas",
+        "many": "há {count} semanas",
+        "other": "há {count} semanas",
+        "single": "há uma semana"
+      },
+      "month": {
+        "one": "há {count} mês",
+        "few": "há {count} meses",
+        "many": "há {count} meses",
+        "other": "há {count} meses",
+        "single": "há um mês"
+      },
+      "year": {
+        "one": "há {count} ano",
+        "few": "há {count} anos",
+        "many": "há {count} anos",
+        "other": "há {count} anos",
+        "single": "há um ano"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "daqui a {count} minuto",
+        "few": "daqui a {count} minutos",
+        "many": "daqui a {count} minutos",
+        "other": "daqui a {count} minutos",
+        "single": "em um minuto"
+      },
+      "hour": {
+        "one": "daqui a {count} hora",
+        "few": "daqui a {count} horas",
+        "many": "daqui a {count} horas",
+        "other": "daqui a {count} horas",
+        "single": "em uma hora"
+      },
+      "day": {
+        "one": "daqui a {count} dia",
+        "few": "daqui a {count} dias",
+        "many": "daqui a {count} dias",
+        "other": "daqui a {count} dias",
+        "single": "amanhã"
+      },
+      "week": {
+        "one": "daqui a {count} semana",
+        "few": "daqui a {count} semanas",
+        "many": "daqui a {count} semanas",
+        "other": "daqui a {count} semanas",
+        "single": "em uma semana"
+      },
+      "month": {
+        "one": "daqui a {count} mês",
+        "few": "daqui a {count} meses",
+        "many": "daqui a {count} meses",
+        "other": "daqui a {count} meses",
+        "single": "em um mês"
+      },
+      "year": {
+        "one": "daqui a {count} ano",
+        "few": "daqui a {count} anos",
+        "many": "daqui a {count} anos",
+        "other": "daqui a {count} anos",
+        "single": "em um ano"
+      }
+    }
+  },
+  "action": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir"
+  },
+  "message": {
+    "welcome": "Bem-vindo ao {app}."
+  },
+  "settings": {
+    "messages": {
+      "invalid_language": "O idioma selecionado não está disponível."
+    }
+  },
+  "privacy": {
+    "title": "Privacidade e regras"
+  },
+  "public": {
+    "author_not_found": "O autor não foi encontrado."
+  },
+  "notifications": {
+    "loading": "Carregando...",
+    "load_more": "Carregar mais"
+  },
+  "moderation": {
+    "messages": {
+      "action_limited": "Esta conta atingiu o limite de ação temporário."
+    }
+  },
+  "auth": {
+    "forbidden": "A administração requer uma conta de administrador.",
+    "login_required": "Faça login para continuar."
+  },
+  "modules": {
+    "title": "Módulos",
+    "help": "Gerir módulos disponíveis. Desativar preserva os seus dados.",
+    "required": "Obrigatório",
+    "dependencies": "Dependências",
+    "dependencies_error": "Os módulos obrigatórios e as dependências ativas devem continuar ativos.",
+    "stale": "A seleção mudou. Recarregue a página e tente novamente.",
+    "unavailable": "As alterações exigem uma distribuição instalada.",
+    "failed": "Não foi possível concluir a alteração. Recarregue e verifique o estado.",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "enable": "Ativar",
+    "disable": "Desativar",
+    "enable_group": "Ativar grupo",
+    "disable_group": "Desativar grupo",
+    "needed_by": "Exigido por: {modules}",
+    "confirm": "Aplicar a alteração? As dependências são verificadas e os dados preservados.",
+    "module": "Módulo",
+    "packages": {
+      "upload": "Carregar módulo",
+      "file": "Pacote ZIP (até 32 MiB)",
+      "confirm": "Instalar este módulo? O pacote contém código PHP com acesso à aplicação. Um novo módulo permanece inativo.",
+      "help": "Use um ZIP criado para TinyCat. Ative o novo módulo separadamente; as atualizações mantêm o seu estado.",
+      "failed": "A instalação falhou. Verifique o pacote, compatibilidade e dependências; consulte Atualizações para recuperação.",
+      "install": "Instalar"
+    }
+  }
+}

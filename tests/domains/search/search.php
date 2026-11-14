@@ -6,7 +6,7 @@ define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/autoload.php';
 
 use TinyCat\Database\Connection;
-use TinyCat\Search\Queries;
+use TinyCat\Social\Search\Queries;
 
 $mysql = in_array('--mysql', $argv, true);
 $server = null;
@@ -33,15 +33,15 @@ try {
     }
     Connection::set($pdo);
     $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username VARCHAR(80), role VARCHAR(20), bio TEXT, status VARCHAR(16), avatar_exists INTEGER DEFAULT 0, avatar_appearance TEXT, updated_at DATETIME)');
-    $pdo->exec('CREATE TABLE terms (id INTEGER PRIMARY KEY, name VARCHAR(80))');
-    $pdo->exec('CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, status VARCHAR(20) NOT NULL DEFAULT \'published\', published_at DATETIME' . ($mysql ? ', FULLTEXT KEY content_body_fulltext (body)' : '') . ')');
-    $pdo->exec('CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT, title TEXT, description TEXT, link_type VARCHAR(16)' . ($mysql ? ', FULLTEXT KEY links_search_fulltext (normalized_url, title, description)' : '') . ')');
-    $pdo->exec('CREATE TABLE content_images (content_id INTEGER)');
-    $pdo->exec('CREATE TABLE content_tags (content_id INTEGER, term_id INTEGER)');
-    $pdo->exec('CREATE TABLE content_links (content_id INTEGER, link_id INTEGER)');
+    $pdo->exec('CREATE TABLE social_terms (id INTEGER PRIMARY KEY, name VARCHAR(80))');
+    $pdo->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, status VARCHAR(20) NOT NULL DEFAULT \'published\', published_at DATETIME' . ($mysql ? ', FULLTEXT KEY content_body_fulltext (body)' : '') . ')');
+    $pdo->exec('CREATE TABLE social_links (id INTEGER PRIMARY KEY, normalized_url TEXT, title TEXT, description TEXT, link_type VARCHAR(16)' . ($mysql ? ', FULLTEXT KEY links_search_fulltext (normalized_url, title, description)' : '') . ')');
+    $pdo->exec('CREATE TABLE social_post_images (content_id INTEGER)');
+    $pdo->exec('CREATE TABLE social_post_tags (content_id INTEGER, term_id INTEGER)');
+    $pdo->exec('CREATE TABLE social_post_links (content_id INTEGER, link_id INTEGER)');
     $pdo->exec("INSERT INTO users (id, username, status, bio) VALUES (1, 'nebula', 'active', 'secret biography'), (2, 'xnebula', 'active', ''), (3, 'nebula-more', 'active', ''), (4, 'nebula-hidden', 'blocked', ''), (5, 'name_under', 'active', ''), (6, 'nameXunder', 'active', ''), (7, '100%real', 'active', '')");
-    $pdo->exec("INSERT INTO terms (id, name) VALUES (1, 'nebula'), (2, 'xnebula'), (3, 'nebula-more')");
-    $insert = $pdo->prepare('INSERT INTO content (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
+    $pdo->exec("INSERT INTO social_terms (id, name) VALUES (1, 'nebula'), (2, 'xnebula'), (3, 'nebula-more')");
+    $insert = $pdo->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
     $pdo->beginTransaction();
     for ($i = 1; $i <= 3100; $i++) { $insert->execute([$i, 1, 'ordinary unrelated text', '2020-01-01 00:00:00']); }
     for ($i = 1; $i <= 25; $i++) { $insert->execute([10000 + $i, 1, 'quartz bright nebula', '2021-01-01 00:00:00']); }
@@ -51,11 +51,11 @@ try {
     $insert->execute([20003, 1, 'unrelated link carrier', '2023-01-01 00:00:00']);
     $insert->execute([20005, 1, 'Symbols "<>" and comparison < >', '2023-01-01 00:00:00']);
     $insert->execute([20004, 1, 'literal 100% underscore_value marker', '2023-01-01 00:00:00']);
-    $pdo->exec("INSERT INTO links (id, normalized_url, title, description) VALUES (1, 'https://example.test/one', 'quartz', 'bright nebula'), (2, 'https://example.test/two', 'quartz nebula', '')");
-    $pdo->exec('INSERT INTO content_links (content_id, link_id) VALUES (20003, 1), (20003, 2), (10025, 1)');
-    $pdo->exec('INSERT INTO content_tags (content_id, term_id) VALUES (10001, 1), (20001, 1), (20002, 1)');
+    $pdo->exec("INSERT INTO social_links (id, normalized_url, title, description) VALUES (1, 'https://example.test/one', 'quartz', 'bright nebula'), (2, 'https://example.test/two', 'quartz nebula', '')");
+    $pdo->exec('INSERT INTO social_post_links (content_id, link_id) VALUES (20003, 1), (20003, 2), (10025, 1)');
+    $pdo->exec('INSERT INTO social_post_tags (content_id, term_id) VALUES (10001, 1), (20001, 1), (20002, 1)');
     $pdo->commit();
-    \TinyCat\Users\Authentication::reset(null, true);
+    \TinyCat\Core\Identity\Authentication::reset(null, true);
 
     $first = Queries::collection('  nebula   quartz  ');
     parse_str((string) parse_url($first['next_url'], PHP_URL_QUERY), $cursor);
@@ -89,8 +89,8 @@ try {
     $assert(count(Queries::public_search_suggestion_users('100%', 5)) === 1, 'Percent signs are literal in autocomplete.');
     $assert(Queries::public_search_suggestion_users('name%', 5) === [], 'Wildcard input cannot list unrelated suggestions.');
     $assert(count(Queries::collection('100%')['items']) === 1, 'Post punctuation is literal.');
-    $pdo->exec("UPDATE links SET link_type = 'video' WHERE id = 1");
-    $pdo->exec('INSERT INTO content_images VALUES (10025), (10024)');
+    $pdo->exec("UPDATE social_links SET link_type = 'video' WHERE id = 1");
+    $pdo->exec('INSERT INTO social_post_images VALUES (10025), (10024)');
     $assert(array_column(Queries::collection('nebula quartz', 'content', [], 20, 'video')['items'], 'id') === [20003, 10025], 'Search media filters apply to both body and link matches without duplicates.');
     $imagePage = Queries::collection('nebula quartz', 'content', [], 1, 'images');
     parse_str((string) parse_url($imagePage['next_url'], PHP_URL_QUERY), $imageCursor);
@@ -100,24 +100,24 @@ try {
     $assert(Queries::collection('%nebula', 'tags')['items'] === [], 'Percent signs do not turn into a valid tag query.');
     $assert(Queries::public_search_suggestions('nebula')['content'] === [], 'Autocomplete does not return post suggestions.');
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Guests count only published posts from active authors.');
-    \TinyCat\Users\Authentication::reset(['id' => 1, 'role' => 'admin'], true);
+    \TinyCat\Core\Identity\Authentication::reset(['id' => 1, 'role' => 'admin'], true);
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Admins use the same published tag counts as public readers.');
     $assert(Queries::collection('nebula', 'tags')['items'][0]['posts_count'] === 1, 'Tag results share autocomplete counts.');
-    \TinyCat\Users\Authentication::reset(['id' => 1, 'role' => 'user'], true);
+    \TinyCat\Core\Identity\Authentication::reset(['id' => 1, 'role' => 'user'], true);
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, 'Authors use the same published tag counts as public readers.');
-    \TinyCat\Users\Authentication::reset(['id' => 2, 'role' => 'user'], true);
+    \TinyCat\Core\Identity\Authentication::reset(['id' => 2, 'role' => 'user'], true);
     $assert(Queries::public_search_suggestion_tags('nebula', 5)[0]['posts_count'] === 1, "All viewers use the same published tag counts.");
-    \TinyCat\Users\Authentication::reset(null, true);
-    $pdo->exec("INSERT INTO terms (id, name) VALUES (10, 'ranking-a'), (11, 'ranking-b'), (12, 'ranking-c'), (13, 'ranking-d'), (14, 'ranking-e'), (15, 'ranking-f'), (16, 'ranking-z')");
-    $pdo->exec('INSERT INTO content_tags (content_id, term_id) VALUES (10001, 10), (20001, 10), (20002, 10), (10001, 11), (10001, 16), (10002, 16), (10003, 16)');
+    \TinyCat\Core\Identity\Authentication::reset(null, true);
+    $pdo->exec("INSERT INTO social_terms (id, name) VALUES (10, 'ranking-a'), (11, 'ranking-b'), (12, 'ranking-c'), (13, 'ranking-d'), (14, 'ranking-e'), (15, 'ranking-f'), (16, 'ranking-z')");
+    $pdo->exec('INSERT INTO social_post_tags (content_id, term_id) VALUES (10001, 10), (20001, 10), (20002, 10), (10001, 11), (10001, 16), (10002, 16), (10003, 16)');
     $rankedTags = Queries::public_search_suggestion_tags('ranking', 2);
     $assert(array_column($rankedTags, 'id') === [16, 10], 'Popularity is applied before the suggestion limit, with alphabetical ties.');
     $assert(array_column($rankedTags, 'posts_count') === [3, 1], 'Popularity excludes future posts and inactive authors.');
-    $pdo->exec("INSERT INTO links (id, normalized_url, title, description) VALUES (3, 'https://example.test/a', 'unionboundary alpha', ''), (4, 'https://example.test/z', 'unionboundary zeta', '')");
+    $pdo->exec("INSERT INTO social_links (id, normalized_url, title, description) VALUES (3, 'https://example.test/a', 'unionboundary alpha', ''), (4, 'https://example.test/z', 'unionboundary zeta', '')");
     for ($i = 1; $i <= 80; $i++) {
         $id = 40000 + $i;
         $insert->execute([$id, 1, $i % 3 === 1 ? 'unrelated carrier' : 'unionboundary body', '2024-01-01 00:00:00']);
-        if ($i % 3 !== 0) { $pdo->exec('INSERT INTO content_links (content_id, link_id) VALUES (' . $id . ', 3), (' . $id . ', 4)'); }
+        if ($i % 3 !== 0) { $pdo->exec('INSERT INTO social_post_links (content_id, link_id) VALUES (' . $id . ', 3), (' . $id . ', 4)'); }
     }
     $seen = []; $at = ''; $lastId = 0;
     do {
@@ -133,7 +133,7 @@ try {
     $assert(count(Queries::public_search_content_rows('unionboundary', 0)) === 1 && count(Queries::public_search_content_rows('unionboundary', 100)) === 51, 'Bounded source limits retain public limit normalization.');
     \TinyCat\Http\Session::start();
     $_SESSION['_tinycat_search_guard'] = ['count' => 7];
-    \TinyCat\Search\Guard::suggestions();
+    \TinyCat\Social\Search\Guard::suggestions();
     $assert($_SESSION['_tinycat_search_guard'] === ['count' => 7] && $_SESSION['_tinycat_suggestion_guard']['count'] === 1, 'Autocomplete uses a separate search budget.');
     echo 'PASS search semantics (' . ($mysql ? 'MySQL/MariaDB' : 'SQLite') . ", {$checks} checks)\n";
 } finally {

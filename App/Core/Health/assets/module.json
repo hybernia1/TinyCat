@@ -1,0 +1,19 @@
+[
+  {
+    "routes": [
+      "/admin/site-health"
+    ],
+    "components": [
+      "scheduler/run-detail"
+    ],
+    "entries": [
+      "App/Core/Tasks/assets/index.js"
+    ],
+    "styles": [],
+    "translations": [
+      "common.filters",
+      "cron.run_details"
+    ],
+    "messages": {}
+  }
+]

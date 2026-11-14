@@ -4,8 +4,8 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/autoload.php';
 use TinyCat\Support\Config;
-use TinyCat\Health\HttpCheck;
-use TinyCat\Health\Service;
+use TinyCat\Core\Health\HttpCheck;
+use TinyCat\Core\Health\Service;
 use TinyCat\Http\SiteProbe;
 
 $checks = 0;
@@ -65,22 +65,23 @@ try {
     $urlField = ['key' => 'app.url', 'type' => 'site_url'];
     foreach (['http://user:secret@example.com', 'https://example.com/?token=secret', 'https://example.com/#fragment', 'file:///etc/passwd', 'https://example.com/\\evil', "https://example.com/\npath"] as $invalidUrl) {
         $rejected = false;
-        try { \TinyCat\Settings\Administration::tc_admin_settings_value_from_post($urlField, ['app.url' => $invalidUrl]); }
+        try { \TinyCat\Core\Settings\Administration::tc_admin_settings_value_from_post($urlField, ['app.url' => $invalidUrl]); }
         catch (InvalidArgumentException) { $rejected = true; }
         $assert($rejected, 'Admin website URLs reject credential-bearing or ambiguous targets.');
     }
-    [$adminUrl] = \TinyCat\Settings\Administration::tc_admin_settings_value_from_post($urlField, ['app.url' => 'http://' . $address . '/']);
-    \TinyCat\Settings\Store::setSetting('app.url', $adminUrl, 'string', 'site');
+    [$adminUrl] = \TinyCat\Core\Settings\Administration::tc_admin_settings_value_from_post($urlField, ['app.url' => 'http://' . $address . '/']);
+    \TinyCat\Core\Settings\ServiceProvider::initialize();
+    \TinyCat\Core\Settings\Store::setSetting('app.url', $adminUrl, 'string', 'site');
     $configure(['app' => ['url' => 'http://127.0.0.1:1']]);
     $assert(HttpCheck::run()['metrics']['http_status'] === 200, 'A persisted administrator URL overrides file configuration in the actual HTTP probe.');
-    $assert(\TinyCat\Settings\Store::config('app.url') === 'http://' . $address, 'The same administrator address is used by canonical link configuration.');
-    \TinyCat\Settings\Store::setSetting('app.url', '', 'string', 'site');
+    $assert(\TinyCat\Core\Settings\Store::config('app.url') === 'http://' . $address, 'The same administrator address is used by canonical link configuration.');
+    \TinyCat\Core\Settings\Store::setSetting('app.url', '', 'string', 'site');
     $configure(['app' => ['url' => 'http://' . $address]]);
     $assert(HttpCheck::run()['metrics']['http_status'] === 200, 'Clearing the administrator override falls back to the file configuration.');
     $migration = require __DIR__ . '/../../../migrations/20261026_003_scheduler_runs.php';
     $migration($db);
-    $runId = \TinyCat\Scheduler\History::start('site-health', ['mode' => 'cli']);
-    \TinyCat\Scheduler\History::finish($runId, \TinyCat\Scheduler\Tasks::result('completed', details: ['health' => $report]), 5);
+    $runId = \TinyCat\Core\Tasks\History::start('site-health', ['mode' => 'cli']);
+    \TinyCat\Core\Tasks\History::finish($runId, \TinyCat\Core\Tasks\Tasks::result('completed', details: ['health' => $report]), 5);
     $configure(['health' => ['http' => ['ttfb_warning_ms' => 10, 'ttfb_critical_ms' => 20]]]);
     $saved = Service::snapshot();
     $assert($saved['history'][0]['http']['metrics'] == $report['checks'][0]['metrics'] && $saved['history'][0]['http']['limits']['ttfb_warning_ms'] === 800, 'Durable history keeps real measured timings and the original limits after configuration changes.');

@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 $exportDb = new PDO('sqlite:' . $databasePath);
 $exportDb->exec("INSERT INTO users (id, username, role, status) VALUES (900001, 'exportactive', 'bot', 'active'), (900002, 'exporthidden', 'bot', 'inactive')");
-$insertExport = $exportDb->prepare('INSERT INTO content (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
+$insertExport = $exportDb->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
 $insertExport->execute([900001, 900001, "Export <script>bad</script> & ]]> \x01\n#ExportPublic #exportpublic https://example.test/page?a=1&b=2#fragment", '2020-01-01 00:00:00']);
 $insertExport->execute([900002, 900001, 'FUTURE-EXPORT-SECRET', '2999-01-01 00:00:00']);
 $insertExport->execute([900003, 900002, 'HIDDEN-EXPORT-SECRET', '2020-01-01 00:00:00']);
-$exportDb->exec("INSERT INTO terms (id, name) VALUES (900001, 'exportpublic'), (900002, 'exportorphan'), (900003, 'exportfuture')");
-$exportDb->exec('INSERT INTO content_tags VALUES (900001, 900001), (900002, 900003)');
+$exportDb->exec("INSERT INTO social_terms (id, name) VALUES (900001, 'exportpublic'), (900002, 'exportorphan'), (900003, 'exportfuture')");
+$exportDb->exec('INSERT INTO social_post_tags VALUES (900001, 900001), (900002, 900003)');
 $exportRequest = static function (string $path, string $method = 'GET', array $extra = []) use ($address, $assert): array {
     $headers = ['Accept-Language' => 'cs', ...$extra];
     $context = stream_context_create(['http' => ['method' => $method, 'ignore_errors' => true, 'timeout' => 10,
@@ -56,7 +56,7 @@ $schemaFromPage = static function (string $html): array {
     libxml_use_internal_errors(true); $document->loadHTML($html); libxml_clear_errors();
     return json_decode((new DOMXPath($document))->evaluate('string(//script[@type="application/ld+json"])'), true, 512, JSON_THROW_ON_ERROR);
 };
-$exportDb->exec("INSERT INTO content_comments (id, content_id, parent_id, user_id, body, created_at) VALUES
+$exportDb->exec("INSERT INTO social_comments (id, content_id, parent_id, user_id, body, created_at) VALUES
     (900001, 900001, NULL, 900001, 'Visible comment <b>literal</b>', '2020-01-02 00:00:00'),
     (900002, 900001, 900001, 900001, 'Visible reply', '2020-01-03 00:00:00'),
     (900003, 900001, NULL, 900002, 'HIDDEN-COMMENT-SECRET', '2020-01-04 00:00:00'),
@@ -86,7 +86,7 @@ $assert($status === 200 && $profileSchema['hasPart'][0]['text'] === $postSchema[
 $assert($profileSchema['hasPart'][0]['author']['name'] === $profileSchema['mainEntity']['name'] && $profileSchema['hasPart'][0]['author']['@type'] === $profileSchema['mainEntity']['@type'], 'Profile post authors include the entity name and schema type directly.');
 
 $assert($postSchema['author']['url'] === 'http://localhost/author/900001' && $profileSchema['mainEntity']['url'] === $postSchema['author']['url'] && $profileSchema['hasPart'][0]['author']['url'] === $postSchema['author']['url'], 'Post and profile JSON-LD expose the canonical author URL directly.');
-$exportDb->exec("INSERT INTO content_images (content_id, path, width, height, bytes) VALUES (900001, '2026/11/0123456789abcdef0123456789abcdef.webp', 640, 480, 1234)");
+$exportDb->exec("INSERT INTO social_post_images (content_id, path, width, height, bytes) VALUES (900001, '2026/11/0123456789abcdef0123456789abcdef.webp', 640, 480, 1234)");
 [$status, $imageRss] = $exportRequest('/author/900001/feed');
 $imageFeed = simplexml_load_string($imageRss);
 $imageUrl = (string) $imageFeed->channel->item->enclosure['url'];
@@ -137,9 +137,9 @@ foreach (['/author/900001', '/tag/exportpublic', '/search?q=Export'] as $filtere
     [$status, $textOnlyRss] = $exportRequest(str_replace('media=images', 'media=text', $feedPath));
     $assert($status === 200 && count(simplexml_load_string($textOnlyRss)->channel->item) === 0, 'RSS text filtering excludes an attached-image post.');
 }
-$exportDb->exec('DELETE FROM content_images WHERE content_id = 900001');
-$exportDb->exec("INSERT INTO links (id, normalized_url, url_hash, link_type, image_url) VALUES (900001, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'export-link-image', 'video', '')");
-$exportDb->exec("INSERT INTO content_links (content_id, link_id) VALUES (900001, 900001)");
+$exportDb->exec('DELETE FROM social_post_images WHERE content_id = 900001');
+$exportDb->exec("INSERT INTO social_links (id, normalized_url, url_hash, link_type, image_url) VALUES (900001, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'export-link-image', 'video', '')");
+$exportDb->exec("INSERT INTO social_post_links (content_id, link_id) VALUES (900001, 900001)");
 [$status, $previewHtml] = $exportRequest('/status/900001');
 $assert($schemaFromPage($previewHtml)['image'] === 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg', 'Post JSON-LD retains the link preview image when no attachment exists.');
 [$status, $previewProfile] = $exportRequest('/author/900001');
@@ -151,26 +151,26 @@ foreach (['/author/900001/feed', '/tag/exportpublic/feed', '/search/feed?q=Expor
     $assert($status === 200 && (string) $previewMedia['url'] === 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg' && str_contains((string) $previewFeed->channel->item->description, '<img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg"'), 'RSS uses the same link preview fallback as JSON-LD: ' . $previewFeedUrl);
     $assert(!isset($previewMedia['type']) && count($previewFeed->channel->item->enclosure) === 0, 'Preview RSS does not invent an attachment byte length or declare JPEG thumbnails as WebP.');
 }
-$exportDb->exec("INSERT INTO content_images (content_id, path, width, height, bytes) VALUES (900001, '2026/11/0123456789abcdef0123456789abcdef.webp', 640, 480, 1234)");
+$exportDb->exec("INSERT INTO social_post_images (content_id, path, width, height, bytes) VALUES (900001, '2026/11/0123456789abcdef0123456789abcdef.webp', 640, 480, 1234)");
 [$status, $priorityRss] = $exportRequest('/author/900001/feed');
 $priorityFeed = simplexml_load_string($priorityRss);
 $assert((string) $priorityFeed->channel->item->enclosure['url'] === $imageUrl && !str_contains((string) $priorityFeed->channel->item->description, 'i.ytimg.com'), 'An attached image takes priority over a link preview in RSS.');
-$exportDb->exec('DELETE FROM content_images WHERE content_id = 900001');
-$exportDb->exec('DELETE FROM content_links WHERE content_id = 900001');
-$exportDb->exec('DELETE FROM links WHERE id = 900001');
+$exportDb->exec('DELETE FROM social_post_images WHERE content_id = 900001');
+$exportDb->exec('DELETE FROM social_post_links WHERE content_id = 900001');
+$exportDb->exec('DELETE FROM social_links WHERE id = 900001');
 
 [$status, $old, $oldHeaders] = $exportRequest('/author/900001/feed');
-$exportDb->exec("UPDATE content SET body = 'Updated export' WHERE id = 900001");
+$exportDb->exec("UPDATE social_posts SET body = 'Updated export' WHERE id = 900001");
 [$status, $changed, $changedHeaders] = $exportRequest('/author/900001/feed', 'GET', ['If-None-Match' => $oldHeaders['etag']]);
 $assert($status === 200 && $oldHeaders['etag'] !== $changedHeaders['etag'], 'Changed content invalidates the RSS representation immediately.');
 foreach (['/sitemap-unknown-1.xml', '/sitemap-status-999999999999999999999.xml', '/author/900002/feed', '/tag/missingexport/feed'] as $path) {
     [$status, $body, $headers] = $exportRequest($path);
     $assert($status === 404 && $headers['cache-control'] === 'no-store', 'Missing documents and overflowing sitemap pages return non-cacheable 404 responses.');
 }
-$exportDb->exec('DELETE FROM content_tags WHERE term_id >= 900001');
-$exportDb->exec('DELETE FROM terms WHERE id >= 900001');
-$exportDb->exec('DELETE FROM content_comments WHERE content_id >= 900001');
-$exportDb->exec('DELETE FROM content WHERE id >= 900001');
+$exportDb->exec('DELETE FROM social_post_tags WHERE term_id >= 900001');
+$exportDb->exec('DELETE FROM social_terms WHERE id >= 900001');
+$exportDb->exec('DELETE FROM social_comments WHERE content_id >= 900001');
+$exportDb->exec('DELETE FROM social_posts WHERE id >= 900001');
 $exportDb->exec('DELETE FROM users WHERE id >= 900001');
 $insertExport = null;
 $exportDb = null;

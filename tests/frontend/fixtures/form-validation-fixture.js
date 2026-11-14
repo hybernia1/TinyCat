@@ -180,7 +180,7 @@
     const errors = {[errorName]:[{code:'test_validation',message:'Specific validation message.',params:{}}]};
     return new Response(JSON.stringify({ok,status,code:ok?'created':'validation_error',params:{},message:ok?null:'Check the fields.',data:ok?{}:null,meta:{},error:ok?null:{details:{errors}}}),{status,headers:{'Content-Type':'application/json'}});
   };
-  T.lifecycle.start(); T.status.controllers.editor.initStatusEditors(document); T.dialog.open(dialog);
+  T.lifecycle.start(); T.status.controllers.editor.hydrate(document); T.dialog.open(dialog);
   const access = [...dialog.querySelectorAll('[data-tab]')].find(tab => tab.dataset.tab === 'access');
   if (mode === 'scroll') {
     const spacer = document.createElement('div'); spacer.style.height='1100px'; spacer.style.flexShrink='0'; password.closest('.field').before(spacer);

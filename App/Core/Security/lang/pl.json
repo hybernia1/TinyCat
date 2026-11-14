@@ -1,0 +1,19 @@
+{
+  "security": {
+    "captcha_label": "Kontrola bezpieczeństwa"
+  },
+  "auth": {
+    "invalid_captcha": "Kontrola bezpieczeństwa nie przeszła pomyślnie."
+  },
+  "settings": {
+    "fields": {
+      "captcha_site_key": "Klucz witryny",
+      "captcha_secret_key": "Tajny klucz",
+      "captcha_enabled": "Ochrona CAPTCHA",
+      "captcha_login_attempts": "Nieudane logowanie przed CAPTCHA",
+      "captcha_secret_key_help": "Pozostaw puste, aby zachować zapisany tajny klucz. Nigdy więcej tego nie pokazano.",
+      "captcha_provider_help": "Wybierz dostawcę, którego klucz witryny i tajny klucz są skonfigurowane poniżej.",
+      "captcha_provider": "Dostawca CAPTCHA"
+    }
+  }
+}

@@ -19,7 +19,9 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
     lifecycle: { register: (name, service) => { services[name] = service; }, dispose: () => { disposed++; }, hydrate() {} },
     components: { render: () => ({ querySelector: () => slot }) }, site: { activateSidebar() {} } };
   const window = { TinyCat: T, location: { href: "http://tinycat.test/", origin: "http://tinycat.test", assign() { assigned++; } }, history: { replaceState() { replacements++; }, pushState() { pushes++; }, go(distance) { rollbackDistance = distance; } }, matchMedia: () => ({ matches: true }), clearTimeout() {}, setTimeout() {}, addEventListener() {}, scrollTo() {} };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/modules/site/page-navigation.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, URL, AbortController });
+  for (const file of ["assets/ui/document-navigation.js", "App/Modules/Social/assets/site/page-navigation.js"]) {
+    vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../..", file), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, URL, AbortController });
+  }
   assert.equal(route.accepts(new URL("http://tinycat.test/search?q=test&type=users")), true);
   assert.equal(route.accepts(new URL("http://tinycat.test/search?q=test&media=video")), true);
   assert.equal(route.accepts(new URL("http://tinycat.test/search?q=test&unexpected=1")), false);
@@ -32,6 +34,9 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), path = re
   const form = { action: "http://tinycat.test/search", querySelector: () => ({ value: "quartz" }) };
   handlers.submit({ target: { closest: () => form }, preventDefault() { prevented = true; } });
   assert.equal(prevented, true); assert.equal(current, "http://tinycat.test/search?q=quartz");
+  form.action = "http://tinycat.test/search/all"; prevented = false;
+  handlers.submit({ target: { closest: () => form }, preventDefault() { prevented = true; } });
+  assert.equal(prevented, false, "Shared search uses native navigation instead of the specialized social renderer");
   await route.visit(new URL("http://tinycat.test/search?q=quartz&type=users"));
   assert.equal(retained, side, "Search navigation retains the exact sidebar node");
   assert.equal(requests.length, 1); assert.equal(new URL(requests[0]).pathname, "/api/site/pages");

@@ -1,0 +1,44 @@
+{
+  "templates": {
+    "notification_content_like": {
+      "subject": "{actor} сподобався ваш допис",
+      "body": "{actor} сподобався ваш допис.\n\nПереглянути публікацію: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} прокоментував вашу публікацію",
+      "body": "{actor} прокоментував вашу публікацію.\n\nПереглянути розмову: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} сподобався ваш коментар",
+      "body": "{actor} сподобався ваш коментар.\n\nПереглянути розмову: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_follow": {
+      "subject": "{actor} підписався на вас",
+      "body": "{actor} підписався на вас.\n\nПереглянути їхній профіль: {actor_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} згадав вас",
+      "body": "{actor} згадав вас у публікації.\n\nПереглянути публікацію: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} згадав вас",
+      "body": "{actor} згадав вас у коментарі.\n\nПереглянути розмову: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_resolved": {
+      "subject": "Ваше повідомлення було вирішено",
+      "body": "Ваше повідомлення було розглянуто командою модераторів.\n\nПереглянути повідомлений вміст: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_dismissed": {
+      "subject": "Ваш звіт відхилено",
+      "body": "Ваше повідомлення було розглянуто та відхилено командою модераторів.\n\nПереглянути повідомлений вміст: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    }
+  }
+}

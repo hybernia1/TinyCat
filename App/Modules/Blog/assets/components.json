@@ -1,0 +1,1599 @@
+{
+  "blog/articles": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14",
+      "data-article-list-state": {
+        "json": {
+          "filters": {
+            "get": "filters"
+          },
+          "authors": {
+            "get": "authors"
+          },
+          "pagination": {
+            "get": "pagination"
+          }
+        }
+      }
+    },
+    "children": [
+      {
+        "component": "ui/list-toolbar",
+        "data": {
+          "url": "/api/articles/management",
+          "target": "#blog-articles",
+          "history": "/admin/articles",
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          },
+          "filter_modal": "blog-article-filter"
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table"
+            },
+            "children": [
+              {
+                "tag": "thead",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "aria-sort": {
+                            "get": "sorting.title.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "blog.title"
+                              },
+                              "order": {
+                                "get": "sorting.title"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "aria-sort": {
+                            "get": "sorting.author.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "common.username"
+                              },
+                              "order": {
+                                "get": "sorting.author"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "blog.visibility"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "aria-sort": {
+                            "get": "sorting.published_at.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "blog.published"
+                              },
+                              "order": {
+                                "get": "sorting.published_at"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "class": "table-actions-cell"
+                        },
+                        "children": [
+                          {
+                            "t": "common.actions"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "attrs": {},
+                "children": [
+                  {
+                    "each": {
+                      "get": "items"
+                    },
+                    "as": "article",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-identity"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "span",
+                                    "attrs": {
+                                      "class": "table-identity-icon"
+                                    },
+                                    "children": [
+                                      {
+                                        "icon": "file-text"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "div",
+                                    "attrs": {
+                                      "class": "table-identity-body"
+                                    },
+                                    "children": [
+                                      {
+                                        "tag": "strong",
+                                        "attrs": {
+                                          "class": "table-primary table-text",
+                                          "title": {
+                                            "get": "article.title"
+                                          }
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "article.title"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "get": "article.author"
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "component": "ui/status-badge",
+                                "data": {
+                                  "label": {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          {
+                                            "get": "article.state"
+                                          },
+                                          "scheduled"
+                                        ]
+                                      },
+                                      {
+                                        "t": "blog.scheduled"
+                                      },
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              {
+                                                "get": "article.state"
+                                              },
+                                              "published"
+                                            ]
+                                          },
+                                          {
+                                            "t": "blog.published"
+                                          },
+                                          {
+                                            "t": "blog.hidden"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "tone": {
+                                    "if": [
+                                      {
+                                        "eq": [
+                                          {
+                                            "get": "article.state"
+                                          },
+                                          "scheduled"
+                                        ]
+                                      },
+                                      "warning",
+                                      {
+                                        "if": [
+                                          {
+                                            "eq": [
+                                              {
+                                                "get": "article.state"
+                                              },
+                                              "published"
+                                            ]
+                                          },
+                                          "ok",
+                                          "neutral"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "date": {
+                                  "get": "article.published_at"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {
+                              "class": "table-actions-cell"
+                            },
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-actions"
+                                },
+                                "children": [
+                                  {
+                                    "component": "ui/modal-trigger",
+                                    "data": {
+                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "modal": {
+                                        "concat": [
+                                          "modal-articles-",
+                                          {
+                                            "get": "article.id"
+                                          }
+                                        ]
+                                      },
+                                      "url": {
+                                        "concat": [
+                                          "/api/articles/",
+                                          {
+                                            "get": "article.id"
+                                          },
+                                          "/management"
+                                        ]
+                                      },
+                                      "icon": "edit",
+                                      "label": {
+                                        "concat": [
+                                          {
+                                            "t": "common.edit"
+                                          },
+                                          ": ",
+                                          {
+                                            "concat": [
+                                              {
+                                                "get": "article.title"
+                                              },
+                                              " #",
+                                              {
+                                                "get": "article.id"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "icon_only": true
+                                    }
+                                  },
+                                  {
+                                    "tag": "a",
+                                    "attrs": {
+                                      "href": {
+                                        "concat": [
+                                          "/articles/",
+                                          {
+                                            "get": "article.id"
+                                          }
+                                        ]
+                                      },
+                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "aria-label": {
+                                        "concat": [
+                                          {
+                                            "t": "blog.view"
+                                          },
+                                          ": ",
+                                          {
+                                            "concat": [
+                                              {
+                                                "get": "article.title"
+                                              },
+                                              " #",
+                                              {
+                                                "get": "article.id"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "children": [
+                                      {
+                                        "icon": "external-link"
+                                      }
+                                    ],
+                                    "when": {
+                                      "get": "article.publicly_visible"
+                                    }
+                                  },
+                                  {
+                                    "component": "ui/api-action",
+                                    "data": {
+                                      "url": {
+                                        "concat": [
+                                          "/api/articles/",
+                                          {
+                                            "get": "article.id"
+                                          }
+                                        ]
+                                      },
+                                      "method": "DELETE",
+                                      "target": "#blog-articles",
+                                      "confirm": {
+                                        "t": "common.confirm_action"
+                                      },
+                                      "icon": "trash",
+                                      "label": {
+                                        "concat": [
+                                          {
+                                            "t": "common.delete"
+                                          },
+                                          ": ",
+                                          {
+                                            "concat": [
+                                              {
+                                                "get": "article.title"
+                                              },
+                                              " #",
+                                              {
+                                                "get": "article.id"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "td",
+                        "attrs": {
+                          "colspan": "5"
+                        },
+                        "children": [
+                          {
+                            "component": "ui/empty-state",
+                            "data": {
+                              "label": {
+                                "t": "common.no_records"
+                              },
+                              "icon": "file-text"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "when": {
+                      "not": {
+                        "get": "items"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "component": "ui/pagination",
+        "data": {
+          "navigation": {
+            "get": "navigation"
+          },
+          "target": "#blog-articles"
+        }
+      }
+    ]
+  },
+  "blog/article-filter": {
+    "tag": "form",
+    "attrs": {
+      "class": "stack",
+      "method": "get",
+      "action": "/api/articles/management",
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": "#blog-articles",
+      "data-history": "/admin/articles"
+    },
+    "children": [
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "q",
+          "value": {
+            "get": "filters.q"
+          }
+        },
+        "children": []
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "per_page",
+          "value": {
+            "get": "filters.per_page"
+          }
+        },
+        "children": []
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "sort",
+          "value": {
+            "get": "filters.sort"
+          }
+        },
+        "children": []
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "direction",
+          "value": {
+            "get": "filters.direction"
+          }
+        },
+        "children": []
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "blog.visibility"
+          },
+          "value": {
+            "get": "filters.status"
+          },
+          "choices": {
+            "options": [
+              "published",
+              "hidden",
+              "scheduled"
+            ],
+            "cases": {
+              "published": {
+                "t": "blog.published"
+              },
+              "hidden": {
+                "t": "blog.hidden"
+              },
+              "scheduled": {
+                "t": "blog.scheduled"
+              }
+            },
+            "all": true
+          },
+          "attributes": {
+            "class": "select",
+            "name": "status"
+          }
+        }
+      },
+      {
+        "tag": "label",
+        "attrs": {
+          "class": "field"
+        },
+        "children": [
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "label"
+            },
+            "children": [
+              {
+                "t": "common.username"
+              }
+            ]
+          },
+          {
+            "tag": "select",
+            "attrs": {
+              "class": "select",
+              "name": "author"
+            },
+            "children": [
+              {
+                "tag": "option",
+                "attrs": {
+                  "value": ""
+                },
+                "children": [
+                  {
+                    "t": "common.all"
+                  }
+                ]
+              },
+              {
+                "each": {
+                  "get": "authors"
+                },
+                "as": "author",
+                "children": [
+                  {
+                    "tag": "option",
+                    "attrs": {
+                      "value": {
+                        "get": "author.id"
+                      }
+                    },
+                    "children": [
+                      {
+                        "get": "author.username"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "blog/article-fields": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-16"
+    },
+    "children": [
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {
+            "t": "blog.title"
+          },
+          "value": {
+            "get": "item.title"
+          },
+          "attributes": {
+            "class": "input",
+            "name": "title",
+            "value": {
+              "get": "item.title"
+            },
+            "required": true,
+            "maxlength": {
+              "get": "limits.title"
+            }
+          }
+        }
+      },
+      {
+        "component": "publishing/editor",
+        "data": {
+          "name": "body",
+          "value": {
+            "get": "item.body"
+          },
+          "placeholder": {
+            "t": "blog.body"
+          },
+          "max_length": 60000,
+          "required": true,
+          "rows": 16
+        }
+      },
+      {
+        "component": "publishing/image-field",
+        "data": {
+          "image": {
+            "get": "image"
+          },
+          "enabled": {
+            "get": "images_enabled"
+          }
+        }
+      },
+      {
+        "tag": "p",
+        "attrs": {
+          "class": "help m-0"
+        },
+        "children": [
+          {
+            "t": "blog.invalid"
+          }
+        ]
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "blog.visibility"
+          },
+          "value": {
+            "get": "item.status"
+          },
+          "choices": {
+            "options": {
+              "get": "statuses"
+            },
+            "cases": {
+              "published": {
+                "t": "blog.published"
+              },
+              "hidden": {
+                "t": "blog.hidden"
+              },
+              "scheduled": {
+                "t": "blog.scheduled"
+              }
+            }
+          },
+          "attributes": {
+            "class": "select",
+            "name": "status"
+          }
+        }
+      }
+    ]
+  },
+  "blog/source-fields": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-16"
+    },
+    "children": [
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {
+            "t": "blog.title"
+          },
+          "value": {
+            "get": "item.name"
+          },
+          "attributes": {
+            "class": "input",
+            "name": "name",
+            "value": {
+              "get": "item.name"
+            },
+            "required": true,
+            "maxlength": 120
+          }
+        }
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {
+            "t": "blog.feeds.url"
+          },
+          "value": {
+            "get": "item.feed_url"
+          },
+          "attributes": {
+            "class": "input",
+            "name": "feed_url",
+            "value": {
+              "get": "item.feed_url"
+            },
+            "required": true,
+            "maxlength": 2048,
+            "type": "url",
+            "readonly": {
+              "not": {
+                "get": "permissions.change_feed_url"
+              }
+            }
+          }
+        }
+      },
+      {
+        "tag": "label",
+        "attrs": {
+          "class": "field"
+        },
+        "children": [
+          {
+            "tag": "span",
+            "attrs": {
+              "class": "label"
+            },
+            "children": [
+              {
+                "t": "common.username"
+              }
+            ]
+          },
+          {
+            "tag": "select",
+            "attrs": {
+              "class": "select",
+              "name": "author_id",
+              "required": true
+            },
+            "children": [
+              {
+                "each": {
+                  "get": "authors"
+                },
+                "as": "author",
+                "children": [
+                  {
+                    "tag": "option",
+                    "attrs": {
+                      "value": {
+                        "get": "author.id"
+                      },
+                      "selected": {
+                        "eq": [
+                          {
+                            "get": "author.id"
+                          },
+                          {
+                            "get": "item.author_id"
+                          }
+                        ]
+                      }
+                    },
+                    "children": [
+                      {
+                        "get": "author.username"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "component": "ui/field",
+        "data": {
+          "label": {
+            "t": "blog.feeds.interval"
+          },
+          "value": {
+            "get": "item.interval_minutes"
+          },
+          "attributes": {
+            "class": "input",
+            "name": "interval_minutes",
+            "value": {
+              "get": "item.interval_minutes"
+            },
+            "type": "number",
+            "min": 5,
+            "max": 43200,
+            "required": true
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "blog.visibility"
+          },
+          "value": {
+            "get": "item.publication_status"
+          },
+          "choices": {
+            "options": {
+              "get": "statuses"
+            },
+            "cases": {
+              "hidden": {
+                "t": "blog.hidden"
+              },
+              "published": {
+                "t": "blog.published"
+              }
+            },
+            "all": false
+          },
+          "attributes": {
+            "class": "select",
+            "name": "publication_status"
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "settings.enabled"
+          },
+          "value": {
+            "if": [
+              {
+                "get": "item.enabled"
+              },
+              "1",
+              "0"
+            ]
+          },
+          "choices": {
+            "options": [
+              "1",
+              "0"
+            ],
+            "cases": {
+              "1": {
+                "t": "modules.active"
+              },
+              "0": {
+                "t": "modules.inactive"
+              }
+            },
+            "all": false
+          },
+          "attributes": {
+            "class": "select",
+            "name": "enabled"
+          }
+        }
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "blog.feeds.images"
+          },
+          "value": {
+            "if": [
+              {
+                "get": "item.import_images"
+              },
+              "1",
+              "0"
+            ]
+          },
+          "choices": {
+            "options": [
+              "1",
+              "0"
+            ],
+            "cases": {
+              "1": {
+                "t": "modules.active"
+              },
+              "0": {
+                "t": "modules.inactive"
+              }
+            },
+            "all": false
+          },
+          "attributes": {
+            "class": "select",
+            "name": "import_images"
+          }
+        }
+      },
+      {
+        "tag": "p",
+        "attrs": {
+          "class": "help m-0"
+        },
+        "children": [
+          {
+            "t": "blog.feeds.help"
+          }
+        ]
+      }
+    ]
+  },
+  "blog/sources": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14",
+      "data-source-list-state": {
+        "json": {
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          }
+        }
+      }
+    },
+    "children": [
+      {
+        "component": "ui/list-toolbar",
+        "data": {
+          "url": "/api/article-sources/management",
+          "target": "#blog-sources",
+          "history": "/admin/article-sources",
+          "filters": {
+            "get": "filters"
+          },
+          "pagination": {
+            "get": "pagination"
+          },
+          "filter_modal": "blog-source-filter"
+        }
+      },
+      {
+        "tag": "div",
+        "attrs": {
+          "class": "table-wrap"
+        },
+        "children": [
+          {
+            "tag": "table",
+            "attrs": {
+              "class": "table"
+            },
+            "children": [
+              {
+                "tag": "thead",
+                "attrs": {},
+                "children": [
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "aria-sort": {
+                            "get": "sorting.name.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "blog.title"
+                              },
+                              "order": {
+                                "get": "sorting.name"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "aria-sort": {
+                            "get": "sorting.author.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "common.username"
+                              },
+                              "order": {
+                                "get": "sorting.author"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "settings.enabled"
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {
+                          "aria-sort": {
+                            "get": "sorting.last_checked_at.aria"
+                          }
+                        },
+                        "children": [
+                          {
+                            "component": "ui/sort-heading",
+                            "data": {
+                              "label": {
+                                "t": "blog.feeds.checked"
+                              },
+                              "order": {
+                                "get": "sorting.last_checked_at"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "th",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "t": "common.actions"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "tbody",
+                "attrs": {},
+                "children": [
+                  {
+                    "each": {
+                      "get": "items"
+                    },
+                    "as": "source",
+                    "children": [
+                      {
+                        "tag": "tr",
+                        "attrs": {},
+                        "children": [
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-identity"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "span",
+                                    "attrs": {
+                                      "class": "table-identity-icon"
+                                    },
+                                    "children": [
+                                      {
+                                        "icon": "rss"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "div",
+                                    "attrs": {
+                                      "class": "table-identity-body"
+                                    },
+                                    "children": [
+                                      {
+                                        "tag": "strong",
+                                        "attrs": {
+                                          "class": "table-primary"
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "source.name"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "tag": "span",
+                                        "attrs": {
+                                          "class": "table-meta"
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "source.feed_url"
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "tag": "span",
+                                        "attrs": {
+                                          "class": "table-meta text-danger"
+                                        },
+                                        "children": [
+                                          {
+                                            "get": "source.last_error"
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "get": "source.author"
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "component": "ui/status-badge",
+                                "data": {
+                                  "label": {
+                                    "if": [
+                                      {
+                                        "get": "source.enabled"
+                                      },
+                                      {
+                                        "t": "modules.active"
+                                      },
+                                      {
+                                        "t": "modules.inactive"
+                                      }
+                                    ]
+                                  },
+                                  "tone": {
+                                    "if": [
+                                      {
+                                        "get": "source.enabled"
+                                      },
+                                      "ok",
+                                      "neutral"
+                                    ]
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {},
+                            "children": [
+                              {
+                                "date": {
+                                  "get": "source.last_checked_at"
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "td",
+                            "attrs": {
+                              "class": "table-actions-cell"
+                            },
+                            "children": [
+                              {
+                                "tag": "div",
+                                "attrs": {
+                                  "class": "table-actions"
+                                },
+                                "children": [
+                                  {
+                                    "component": "ui/modal-trigger",
+                                    "data": {
+                                      "class": "btn btn-sm btn-ghost btn-icon",
+                                      "modal": {
+                                        "concat": [
+                                          "modal-article-sources-",
+                                          {
+                                            "get": "source.id"
+                                          }
+                                        ]
+                                      },
+                                      "url": {
+                                        "concat": [
+                                          {
+                                            "concat": [
+                                              "/api/article-sources/",
+                                              {
+                                                "get": "source.id"
+                                              }
+                                            ]
+                                          },
+                                          "/management"
+                                        ]
+                                      },
+                                      "icon": "edit",
+                                      "label": {
+                                        "concat": [
+                                          {
+                                            "t": "common.edit"
+                                          },
+                                          ": ",
+                                          {
+                                            "concat": [
+                                              {
+                                                "get": "source.name"
+                                              },
+                                              " #",
+                                              {
+                                                "get": "source.id"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "icon_only": true
+                                    }
+                                  },
+                                  {
+                                    "component": "ui/api-action",
+                                    "data": {
+                                      "url": {
+                                        "concat": [
+                                          {
+                                            "concat": [
+                                              "/api/article-sources/",
+                                              {
+                                                "get": "source.id"
+                                              }
+                                            ]
+                                          },
+                                          "/run"
+                                        ]
+                                      },
+                                      "method": "POST",
+                                      "target": "#blog-sources",
+                                      "icon": "play",
+                                      "label": {
+                                        "concat": [
+                                          {
+                                            "t": "blog.feeds.run"
+                                          },
+                                          ": ",
+                                          {
+                                            "concat": [
+                                              {
+                                                "get": "source.name"
+                                              },
+                                              " #",
+                                              {
+                                                "get": "source.id"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "button_class": "btn btn-sm btn-ghost btn-icon"
+                                    }
+                                  },
+                                  {
+                                    "component": "ui/api-action",
+                                    "data": {
+                                      "url": {
+                                        "concat": [
+                                          "/api/article-sources/",
+                                          {
+                                            "get": "source.id"
+                                          }
+                                        ]
+                                      },
+                                      "method": "DELETE",
+                                      "target": "#blog-sources",
+                                      "confirm": {
+                                        "t": "common.confirm_action"
+                                      },
+                                      "icon": "trash",
+                                      "label": {
+                                        "concat": [
+                                          {
+                                            "t": "common.delete"
+                                          },
+                                          ": ",
+                                          {
+                                            "concat": [
+                                              {
+                                                "get": "source.name"
+                                              },
+                                              " #",
+                                              {
+                                                "get": "source.id"
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      "button_class": "btn btn-sm btn-ghost btn-icon text-danger"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "tr",
+                    "attrs": {},
+                    "children": [
+                      {
+                        "tag": "td",
+                        "attrs": {
+                          "colspan": "5"
+                        },
+                        "children": [
+                          {
+                            "component": "ui/empty-state",
+                            "data": {
+                              "label": {
+                                "t": "common.no_records"
+                              },
+                              "icon": "rss"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "when": {
+                      "not": {
+                        "get": "items"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "component": "ui/pagination",
+        "data": {
+          "navigation": {
+            "get": "navigation"
+          },
+          "target": "#blog-sources"
+        }
+      }
+    ]
+  },
+  "blog/source-filter": {
+    "tag": "form",
+    "attrs": {
+      "class": "stack",
+      "method": "get",
+      "action": "/api/article-sources/management",
+      "data-api-method": "GET",
+      "data-ajax-form": "",
+      "data-ajax-target": "#blog-sources",
+      "data-history": "/admin/article-sources"
+    },
+    "children": [
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "q",
+          "value": {
+            "get": "filters.q"
+          }
+        },
+        "children": []
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "per_page",
+          "value": {
+            "get": "filters.per_page"
+          }
+        },
+        "children": []
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "sort",
+          "value": {
+            "get": "filters.sort"
+          }
+        },
+        "children": []
+      },
+      {
+        "tag": "input",
+        "attrs": {
+          "type": "hidden",
+          "name": "direction",
+          "value": {
+            "get": "filters.direction"
+          }
+        },
+        "children": []
+      },
+      {
+        "component": "ui/select",
+        "data": {
+          "label": {
+            "t": "settings.enabled"
+          },
+          "value": {
+            "get": "filters.enabled"
+          },
+          "choices": {
+            "options": [
+              "1",
+              "0"
+            ],
+            "cases": {
+              "1": {
+                "t": "modules.active"
+              },
+              "0": {
+                "t": "modules.inactive"
+              }
+            },
+            "all": true
+          },
+          "attributes": {
+            "class": "select",
+            "name": "enabled"
+          }
+        }
+      }
+    ]
+  },
+  "blog/source-preview": {
+    "tag": "div",
+    "attrs": {
+      "class": "stack stack-gap-14"
+    },
+    "children": [
+      {
+        "each": {
+          "get": "items"
+        },
+        "as": "item",
+        "children": [
+          {
+            "tag": "section",
+            "attrs": {
+              "class": "stack"
+            },
+            "children": [
+              {
+                "tag": "strong",
+                "children": [
+                  {
+                    "get": "item.title"
+                  }
+                ]
+              },
+              {
+                "tag": "p",
+                "attrs": {
+                  "class": "blog-excerpt"
+                },
+                "children": [
+                  {
+                    "get": "item.body"
+                  }
+                ]
+              },
+              {
+                "tag": "p",
+                "attrs": {
+                  "class": "text-danger"
+                },
+                "children": [
+                  {
+                    "get": "item.rejection.code"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "p",
+        "when": {
+          "not": {
+            "get": "items"
+          }
+        },
+        "children": [
+          {
+            "t": "blog.feeds.preview_empty"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "templates": {
+    "welcome": {
+      "subject": "Bienvenue sur {site}",
+      "body": "Bonjour {username},\n\nBienvenue à {site}. Votre compte est prêt.\n\nConnectez-vous : {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Réinitialisez votre mot de passe {site}",
+      "body": "Bonjour {username},\n\nNous avons reçu une demande de réinitialisation de votre mot de passe.\n\nRéinitialisez votre mot de passe : {reset_url}\n\nCe lien expire dans 60 minutes. Si vous ne l'avez pas demandé, vous pouvez ignorer cet e-mail.\n\n{signature}"
+    }
+  }
+}

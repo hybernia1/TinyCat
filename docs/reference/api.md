@@ -1,12 +1,92 @@
 # TinyCat HTTP API
 
+Blog explicitly enables the shared discussion and reaction service for public
+articles. `GET /api/articles/{id}/discussion` returns the authorized target,
+capabilities, reaction count/state and comment tree. `POST /api/articles/{id}/comments`
+accepts `comment` and optional `parent_id`; `PATCH` and `DELETE` on
+`/api/articles/{id}/comments/{commentId}` edit or remove an authorized comment.
+Authenticated `GET` on that comment loads current editor data and authorized
+revisions on demand. `PUT`/`DELETE /api/articles/{id}/likes/me` and
+`PUT`/`DELETE /api/articles/{id}/comments/{commentId}/likes/me` set the desired
+reaction state idempotently. Writes require an active account and CSRF.
+Hidden, future, inactive-author and unavailable-owner targets are rejected;
+comment and parent IDs must belong to the publication in the route. Editing
+requires the comment author or administrator; deletion also permits the
+publication owner. Reactions and parent changes serialize on the publication
+lock. Blog uses the framework limiter independently of Social reputation.
+The existing `/api/statuses/...` inputs remain restricted to `post` targets and
+delegate persistence to the same service. Article interactions do not create
+Social notification types or contribute to Social statistics.
+
+An active Blog module provides `GET /api/articles/{id}` and
+administrator-only `POST /api/articles`, `PUT /api/articles/{id}` and
+`DELETE /api/articles/{id}`. Administrator-only `GET /api/articles/management`
+returns the paginated selection with literal search (`q`), visibility (`status`),
+author, sorting and page size. List rows omit article bodies. `GET /api/articles/creation`
+and `GET /api/articles/{id}/management` return current editor data, permissions,
+supported states and limits. The shared client resource loader owns the editor UI;
+these resources contain no HTML or translation identifiers. Writes require CSRF. Article resources contain
+`id`, `title`, plain `body`, `author`, `published_at`, `status`, `url`, `image`,
+text segments and shared link resources;
+public reads exclude hidden/future articles and inactive authors. Invalid
+article input returns 422; invalid fields use the common validation envelope.
+These routes are absent when Blog is inactive. Blog can run alone or alongside
+Social through the supported module lifecycle.
+
+An active Blog also provides administrator-only source management:
+`GET /api/article-sources/management` supports literal `q`, `enabled=0|1`,
+sorting and pagination; `GET /api/article-sources/creation` and
+`GET /api/article-sources/{id}/management` return current source data,
+eligible authors and permissions. `POST /api/article-sources`,
+`PUT /api/article-sources/{id}` and `DELETE /api/article-sources/{id}` manage
+sources. Writes require CSRF. A source selects an active administrator,
+an HTTP(S) feed URL, a check interval of 5–43,200 minutes, `enabled`,
+`import_images` and `publication_status=hidden|published` (default hidden).
+Existing feed URLs are immutable; deleting a source retains its articles.
+`POST /api/article-sources/preview` accepts `feed_url` or a bounded `document`
+and returns prepared article data without successful GUID claims or schedule
+changes. `POST /api/article-sources/{id}/run` uses the shared `article_feeds`
+task runner, lock and persistent history, returning its execution result.
+An existing runner returns 409; an executed failure is described in the result
+and danger message metadata. All these routes are absent when Blog is inactive.
+
+Article writes also accept an optional multipart `image` and `remove_image`.
+The shared client sends multipart PUT as POST with `_method=PUT`; authorization
+and CSRF remain unchanged. Images use the common Core/Files raster validation and owner-specific storage.
+Failed specialization rolls back the database and removes the newly created file;
+replacement/removal deletes the previous file only after a successful commit.
+
+`GET /api/articles/{id}/links/{hash}` resolves only a link actually belonging to
+the currently public article. It returns `url` and `original_url`, with Blog’s own
+UTM policy applied to the destination. `navigate=1` with HTML Accept produces
+a temporary redirect; query parameters cannot supply arbitrary redirect targets.
+The administrator-only `GET/PUT /api/moderation/blocked-urls` endpoint belongs
+to Social and is absent when Social is inactive. Blog uses its own settings keys.
+`GET /blog/feed` exports up to twenty visible articles through the common RSS
+serializer. `/oembed` is a core endpoint which selects a lazy active-owner source
+for a canonical local URL. Blog contributes article summaries, Social its public
+status frames. Foreign origins, hidden/future content and inactive owners are rejected.
+
 Built-in modules register their own API and page routes through `App/modules.php`.
-`App/Http/Api.php` only receives registrations and handles authentication, CSRF,
+`App/Core/Http/Api.php` only receives registrations and handles authentication, CSRF,
 request parsing and JSON serialization. There is no filesystem route discovery.
 
 All application APIs use the same JSON transport. `App/Core.php`,
 `App/functions.php` and the central domain `App/Api.php` have been removed.
 Modules own their routes; the entry point only composes and dispatches the app.
+
+`tinycat.accounts` owns authentication, account management, administration and
+avatars under the existing `/api/users/...` URLs. `tinycat.users` owns public
+authors, following and author feeds. An Accounts-only assembly omits social
+endpoints and public profile URLs; product composition supplies those URLs when
+available. Account component IDs and API response codes remain stable.
+
+Social owns status persistence, comments, reactions, tags, links and media in
+its own tables. Blog owns complete articles and their relations independently.
+Core supplies technical text, link, feed, file and UI mechanisms without domain
+tables. `/api/statuses/...` and `/api/articles/...` resolve separate ID spaces;
+the same numeric ID can legitimately exist in both. The former Publishing and
+Status migration stream names remain historical identities, not activatable modules.
 
 ## JSON contract
 
@@ -201,7 +281,7 @@ Users without a custom image receive a deterministic generated cat portrait.
 allowed genders are `neutral`, `male` and `female`. The creator also accepts `fur`,
 `expression`, `accessory`, `outfit` and `background`; `auto` preserves each original generated layer.
 The avatar management GET response includes `appearance_options`, with field
-defaults and valid values from `App/Users/avatar-options.json`. Omitted
+defaults and valid values from `App/Modules/Accounts/src/avatar-options.json`. Omitted
 parameters preserve their saved values. Form submissions may send
 `appearance` as a JSON string. The server validates the schema and saves the
 normalized JSON in `users.avatar_appearance`. Appearance updates require owner or
@@ -301,7 +381,7 @@ keys, so no schema migration is required. Previous IP action buckets expire thro
 normal cleanup and are not applied to the new account quotas. These controls cover
 selected actions; they are not a global request limiter.
 
-All rate-limit policy values live in `App/Security/RateLimitPolicy.php`. Authenticated
+All rate-limit policy values live in `App/Core/Security/RateLimitPolicy.php`. Authenticated
 `admin` and `bot` roles are exempt from quotas, request budgets, autocomplete limits
 and short cooldowns, and do not consume these counters. Anonymous requests have no
 trusted role; submitting an administrator's username does not grant an exemption.
@@ -501,7 +581,7 @@ source relation and GUID history persist atomically; failed writes remove the
 prepared attachment file. Deleting a source retains its posts and publication
 times but removes source attribution, as before.
 
-Link provider rules live in `App/Status/Providers.php`: URL recognition,
+Link provider rules live in `App/Modules/Social/src/Posts/Providers.php`: URL recognition,
 normalization, oEmbed endpoints, video thumbnails and permitted player origins.
 Known providers use structured metadata APIs when useful; service cards otherwise
 need no remote page fetch. Unknown sites may advertise an oEmbed endpoint in
@@ -625,10 +705,41 @@ the actual front controller with an isolated database, safe DOM rendering,
 authentication, authorization, CSRF, state writes, pagination, history, recovery
 token reuse, CAPTCHA configuration and rejection of presentation fields.
 
+## Module administration
+
+`GET /api/modules` requires an administrator and returns `items`, `groups`,
+`manageable`, and `revision`. Items contain canonical IDs, names, activation,
+installation and required flags, functional dependency IDs and active dependent IDs.
+The built-in inventory contains Social and Blog as individual modules; mandatory
+framework capabilities never appear as items. Groups are reserved for explicitly
+declared custom feature groups. The inventory comes
+from the available distribution; it includes inactive owners without executing
+their contribution callbacks. No configuration secrets or PHP source paths are returned.
+
+`POST /api/modules/activation` requires an administrator and CSRF. The JSON or
+form payload is `{id, enabled, revision}`; the target may be a module or declared
+feature group. Enabling includes its dependencies. Required modules and active
+dependents prevent unsafe disabling. A stale revision returns 409, invalid
+dependencies return 422. Success returns 201 with `active`, a backup ID and
+`redirect: /admin/modules`. Clients reload the whole page after a change.
+Both operations belong to core and remain available when Social and Blog are disabled.
+
 ## Search
 
 - `GET /api/search?q=...` is the public autocomplete: at least two characters,
-  up to five tag and five active username prefixes. It does not search posts.
+  up to five items per active source. `data.collections` lists source `id` and
+  human-readable `name`; items are in `data[id]`. Social sources retain `tags`,
+  `users`, and the empty cheap-autocomplete `content` array. Blog adds `articles`
+  with canonical `/articles/{id}` URLs, including when Social/Search is absent.
+- `GET /api/search/query?q=...` aggregates active sources, at most five items
+  per source. Optional `collection` selects one source with `limit=1..20` and
+  a scalar `cursor[...]` map. Each collection has `id`, `name`, canonical
+  `items`, `next_url`, and `done`. Continuation URLs open the shared HTML page
+  `/search/all`; API clients can reuse their collection and cursor parameters.
+  Unknown or inactive collections return 404; nested cursor values return 400.
+  Article search matches all words in the published title/body of active authors,
+  with chronological ID cursors, and excludes hidden and future publications.
+  Blog has separate IP budgets of 120 suggestions / 60 searches per minute.
 - `GET /api/search/results?q=...&type=content` returns the same collection
   as `/search`. Types are `content` (default), `users`, and `tags`. Batches use
   the configured feed limit; `meta.pagination` contains `next_url` and `done`.

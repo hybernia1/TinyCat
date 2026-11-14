@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 $embedDb = new PDO('sqlite:' . $databasePath);
 $embedDb->exec("INSERT INTO users (id, username, role, status) VALUES (910001, 'embedauthor', 'user', 'active'), (910002, 'embedhidden', 'user', 'inactive')");
-$insertEmbed = $embedDb->prepare('INSERT INTO content (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
+$insertEmbed = $embedDb->prepare('INSERT INTO social_posts (id, author_id, body, published_at) VALUES (?, ?, ?, ?)');
 $insertEmbed->execute([910001, 910001, "Embed <script>alert(1)</script> & #test https://example.com/path\nSecond line", '2020-01-01 12:00:00']);
 $insertEmbed->execute([910002, 910001, 'FUTURE-EMBED-SECRET', '2999-01-01 12:00:00']);
 $insertEmbed->execute([910003, 910002, 'HIDDEN-EMBED-SECRET', '2020-01-01 12:00:00']);
@@ -38,11 +38,11 @@ foreach (['https://external.example/status/910001', 'http://localhost.evil.examp
 [$status, $html, $frameHeaders] = $exportRequest('/status/910001/embed');
 $dom = new DOMDocument(); @$dom->loadHTML($html); $xpath = new DOMXPath($dom);
 $assert($status === 200 && !isset($frameHeaders['x-frame-options']) && str_contains($frameHeaders['content-security-policy'], 'frame-ancestors *'), 'Only the standalone embed permits cross-origin framing.');
-$assert(!isset($frameHeaders['set-cookie']) && !isset($frameHeaders['pragma']) && str_contains($frameHeaders['cache-control'], 'must-revalidate'), 'Embed documents neither create sessions nor serve content from a long-lived public cache.');
+$assert(!isset($frameHeaders['set-cookie']) && !isset($frameHeaders['pragma']) && str_contains($frameHeaders['cache-control'], 'must-revalidate'), 'Embed documents neither create sessions nor serve social_posts from a long-lived public cache.');
 $assert(str_contains($frameHeaders['x-robots-tag'], 'noindex') && $xpath->evaluate('string(//link[@rel="canonical"]/@href)') === 'http://localhost/status/910001', 'Embeds preserve the canonical original and are not independently indexed.');
 $assert($xpath->query('//article[contains(@class,"embed-card")]')->length === 1 && $xpath->query('//form | //nav')->length === 0 && $xpath->query('//script[not(@src)]')->length === 0, 'The embed is a read-only card with no account shell or inline scripts.');
 $assert(str_contains($xpath->evaluate('string(//*[@class="embed-body"])'), '<script>alert(1)</script>') && $xpath->query('//*[@class="embed-body"]//script')->length === 0 && $xpath->evaluate('string(//*[@class="embed-body"]//a[contains(@href,"/tag/")]/@href)') === 'http://localhost/tag/test', 'Embed text is escaped while mentions, tags and external links remain usable.');
-$embedDb->exec("INSERT INTO content_images (content_id, path, width, height, bytes) VALUES (910001, '2026/10/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp', 640, 480, 1000)");
+$embedDb->exec("INSERT INTO social_post_images (content_id, path, width, height, bytes) VALUES (910001, '2026/10/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.webp', 640, 480, 1000)");
 [$imageStatus, $imageHtml] = $exportRequest('/status/910001/embed');
 $imageDom = new DOMDocument(); @$imageDom->loadHTML($imageHtml); $imageXPath = new DOMXPath($imageDom);
 $assert($imageStatus === 200 && $imageXPath->query('//article//img[@width="640" and @height="480"]')->length === 1
@@ -50,7 +50,7 @@ $assert($imageStatus === 200 && $imageXPath->query('//article//img[@width="640" 
 [$thumbnailStatus, $thumbnailBody] = $exportRequest($embedUrl);
 $thumbnail = json_decode($thumbnailBody, true, flags: JSON_THROW_ON_ERROR);
 $assert($thumbnailStatus === 200 && $thumbnail['thumbnail_width'] === 640 && $thumbnail['thumbnail_height'] === 480 && str_contains($thumbnail['thumbnail_url'], '/uploads/status-images/'), 'oEmbed exposes the attached image through standard thumbnail metadata.');
-$embedDb->exec('DELETE FROM content_images WHERE content_id = 910001');
+$embedDb->exec('DELETE FROM social_post_images WHERE content_id = 910001');
 [$otherStatus, $otherHtml] = $exportRequest('/status/910001/embed', 'GET', ['Accept-Language' => 'cs', 'X-Test-Role' => 'admin']);
 $assert($otherStatus === 200 && $otherHtml === $html, 'Embed output is independent of viewer identity and preferred language.');
 [$errorStatus, $errorBody, $errorHeaders] = $exportRequest('/status/910001/embed', 'GET', ['X-Test-Embed-Failure' => '1']);
@@ -64,31 +64,31 @@ $avatarDom = new DOMDocument(); @$avatarDom->loadHTML($avatarHtml); $avatarXPath
 $assert($status === 200 && str_starts_with($avatarXPath->evaluate('string(//img[@class="embed-avatar"]/@src)'), '/uploads/avatars/910001.webp?v='), 'The embed shows the author avatar with its normal versioned URL.');
 $embedDb->exec('UPDATE users SET avatar_exists=0 WHERE id=910001');
 $embedLinks = [];
-$insertEmbedLink = $embedDb->prepare('INSERT INTO links (normalized_url, url_hash, provider, link_type, title, description, video_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
+$insertEmbedLink = $embedDb->prepare('INSERT INTO social_links (normalized_url, url_hash, provider, link_type, title, description, video_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
 foreach ([['https://www.youtube.com/watch?v=abcdefghijk', 'youtube', 'video', 'abcdefghijk'], ['https://soundcloud.com/forss/flickermood', 'soundcloud', 'audio', ''], ['https://open.spotify.com/track/0Lr4kGOYn9l83EjuK6cZFQ', 'spotify', 'audio', '']] as [$mediaUrl, $provider, $kind, $videoId]) {
     $insertEmbedLink->execute([$mediaUrl, hash('sha256', $mediaUrl), $provider, $kind, 'Media <script>unsafe</script>', 'Cached media summary', $videoId]);
     $linkId = (int) $embedDb->lastInsertId(); $embedLinks[] = $linkId;
-    $embedDb->exec('INSERT INTO content_links (content_id, link_id) VALUES (910001, ' . $linkId . ')');
+    $embedDb->exec('INSERT INTO social_post_links (content_id, link_id) VALUES (910001, ' . $linkId . ')');
 }
 [$status, $mediaHtml, $mediaHeaders] = $exportRequest('/status/910001/embed');
 $mediaDom = new DOMDocument(); @$mediaDom->loadHTML($mediaHtml); $mediaXPath = new DOMXPath($mediaDom);
 $assert($status === 200 && $mediaXPath->query('//*[@data-embed-player]')->length === 3 && $mediaXPath->query('//iframe')->length === 0, 'Video, SoundCloud and Spotify have playable placeholders and do not load remote frames before interaction.');
 $assert($mediaXPath->query('//picture/source[@media="(max-width: 759px)"][@srcset="https://i.ytimg.com/vi/abcdefghijk/default.jpg"]')->length === 1 && str_contains($mediaHtml, 'https://i.ytimg.com/vi/abcdefghijk/mqdefault.jpg'), 'Exported YouTube players use small mobile and medium desktop thumbnails.');
 $assert($mediaXPath->query('//*[@data-player-kind="audio"]')->length === 2 && str_contains($mediaHeaders['content-security-policy'], 'https://open.spotify.com') && str_contains($mediaHeaders['content-security-policy'], 'https://w.soundcloud.com'), 'Audio uses the central provider rules and explicit player origins.');
-$embedDb->prepare('UPDATE links SET audio_url = ?, provider = ?, link_type = ? WHERE id = ?')->execute(['https://93.184.216.34/episode.mp3', '', 'audio', $embedLinks[0]]);
+$embedDb->prepare('UPDATE social_links SET audio_url = ?, provider = ?, link_type = ? WHERE id = ?')->execute(['https://93.184.216.34/episode.mp3', '', 'audio', $embedLinks[0]]);
 [$status, $nativeHtml, $nativeHeaders] = $exportRequest('/status/910001/embed');
 $nativeDom = new DOMDocument(); @$nativeDom->loadHTML($nativeHtml); $nativeXPath = new DOMXPath($nativeDom);
 $assert($status === 200 && $nativeXPath->query('//*[@data-audio-url="https://93.184.216.34/episode.mp3"]//button')->length === 1 && $nativeXPath->query('//audio')->length === 0 && str_contains($nativeHeaders['content-security-policy'], "media-src 'self' https:"), 'Exported podcast cards wait for interaction using the shared player placeholder.');
-$embedDb->prepare('UPDATE links SET audio_url = NULL, provider = ?, link_type = ? WHERE id = ?')->execute(['youtube', 'video', $embedLinks[0]]);
+$embedDb->prepare('UPDATE social_links SET audio_url = NULL, provider = ?, link_type = ? WHERE id = ?')->execute(['youtube', 'video', $embedLinks[0]]);
 $assert($mediaXPath->query('//section[contains(@class,"embed-link")]//script')->length === 0 && str_contains($mediaHtml, '&lt;script&gt;unsafe&lt;/script&gt;'), 'Provider metadata remains escaped in rich media cards.');
 [$status, $mediaMetadata] = $exportRequest($embedUrl);
 $assert($status === 200 && str_starts_with(json_decode($mediaMetadata, true)['thumbnail_url'], 'https://i.ytimg.com/'), 'Video oEmbed responses include a standard thumbnail fallback.');
-$embedDb->exec("UPDATE links SET normalized_url='https://evil.example/player', video_id='<script>' WHERE id=" . $embedLinks[0]);
+$embedDb->exec("UPDATE social_links SET normalized_url='https://evil.example/player', video_id='<script>' WHERE id=" . $embedLinks[0]);
 [$status, $unsafeMedia] = $exportRequest('/status/910001/embed');
 $unsafeDom = new DOMDocument(); @$unsafeDom->loadHTML($unsafeMedia); $unsafeXPath = new DOMXPath($unsafeDom);
 $assert($status === 200 && $unsafeXPath->query('//*[@data-embed-player]')->length === 2 && !str_contains($unsafeMedia, 'data-player-url="https://evil.example'), 'Unapproved URLs and invalid provider identifiers cannot become player frames.');
-$embedDb->exec('DELETE FROM content_links WHERE content_id=910001');
-$embedDb->exec('DELETE FROM links WHERE id IN (' . implode(',', $embedLinks) . ')');
+$embedDb->exec('DELETE FROM social_post_links WHERE content_id=910001');
+$embedDb->exec('DELETE FROM social_links WHERE id IN (' . implode(',', $embedLinks) . ')');
 $insertEmbedLink = null;
 [$status, $share, $shareHeaders] = $exportRequest('/status/910001/embed-code');
 $dom = new DOMDocument(); @$dom->loadHTML($share); $xpath = new DOMXPath($dom);
@@ -105,7 +105,7 @@ foreach ([$embedUrl, '/status/910001/embed'] as $path) {
 }
 [$status, $empty] = $exportRequest('/status/910001/embed', 'GET', ['If-None-Match' => $frameHeaders['etag']]);
 $assert($status === 304 && $empty === '', 'Unchanged embeds support conditional HTTP revalidation.');
-$embedDb->exec("UPDATE content SET body='Updated embed' WHERE id=910001");
+$embedDb->exec("UPDATE social_posts SET body='Updated embed' WHERE id=910001");
 [$status, $changed, $changedHeaders] = $exportRequest('/status/910001/embed', 'GET', ['If-None-Match' => $frameHeaders['etag']]);
 $assert($status === 200 && str_contains($changed, 'Updated embed') && $changedHeaders['etag'] !== $frameHeaders['etag'], 'Edited posts immediately change the embed representation and validator.');
 $embedDb->exec("UPDATE users SET status='inactive' WHERE id=910001");
@@ -117,7 +117,7 @@ foreach ([910001, 910002, 910003, 99999999] as $id) {
 }
 [$hiddenStatus] = $request('GET', '/api/statuses/910001/embed', null, 'admin');
 $assert($hiddenStatus === 404, 'The modal resource respects public visibility even for administrators.');
-$embedDb->exec('DELETE FROM content WHERE id IN (910001,910002,910003)');
+$embedDb->exec('DELETE FROM social_posts WHERE id IN (910001,910002,910003)');
 $embedDb->exec('DELETE FROM users WHERE id IN (910001,910002)');
 
 $insertEmbed = null;

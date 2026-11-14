@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "fields": {
+      "email_from": "E-mail del mittente",
+      "smtp_username": "Nome utente SMTP",
+      "smtp_encryption": "Crittografia SMTP",
+      "email_from_name": "Nome del mittente",
+      "smtp_host": "Host SMTP",
+      "smtp_password": "Password SMTP",
+      "smtp_port": "Porta SMTP",
+      "email_templates": "Tipi di consegna delle email",
+      "smtp": "Configurazione SMTP"
+    }
+  }
+}

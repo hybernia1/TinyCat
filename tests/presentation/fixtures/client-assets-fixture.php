@@ -4,18 +4,28 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/bootstrap.php';
-(new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
+(new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $path = (string) ($argv[1] ?? '/');
 $locale = (string) ($argv[2] ?? 'en');
 \TinyCat\Support\Localization::locale($locale);
 $assets = [];
 if (($argv[3] ?? '') === '--compiled-min') {
-    (new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, ['performance.minify_js' => true, 'performance.minify_css' => true]);
+    (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, ['performance.minify_js' => true, 'performance.minify_css' => true]);
 }
 $compiledFiles = [];
-if (($argv[3] ?? '') === '--compiled' || ($argv[3] ?? '') === '--compiled-min') {
+if ($path === '--build') {
     $compile = require __DIR__ . '/../../../tools/assets/compile-assets.php';
-    $compiledFiles = $compile();
+    echo json_encode($compile(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+if (($argv[3] ?? '') === '--compiled' || ($argv[3] ?? '') === '--compiled-min') {
+    if (($argv[4] ?? '') === '--prepared') {
+        $compiledFiles = json_decode((string) stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR);
+        if (!is_array($compiledFiles) || !isset($compiledFiles['assets/build/manifest.json'])) { throw new RuntimeException('Missing prepared test build.'); }
+    } else {
+        $compile = require __DIR__ . '/../../../tools/assets/compile-assets.php';
+        $compiledFiles = $compile();
+    }
     (new ReflectionProperty(\TinyCat\Support\CompiledAssets::class, 'manifest'))->setValue(null, json_decode($compiledFiles['assets/build/manifest.json'], true, 512, JSON_THROW_ON_ERROR));
 }
 foreach (\TinyCat\Support\ClientAssets::scripts($path) as $url) {

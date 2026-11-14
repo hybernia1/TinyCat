@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
 
-use \TinyCat\Updates\MigrationRegistry;
+use \TinyCat\Core\Updates\MigrationRegistry;
 
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/bootstrap.php';
 
-$config = (array) \TinyCat\Settings\Store::config('database', []);
+$config = (array) \TinyCat\Core\Settings\Store::config('database', []);
 
 if (($config['driver'] ?? 'mysql') !== 'mysql') {
     echo "SKIP MySQL migration registry: a local MySQL database is required.\n";
@@ -52,7 +52,7 @@ try {
         (string) ($config['password'] ?? ''),
         $options
     );
-    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+    \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     $database->exec('CREATE TABLE user_profile_links (id INT UNSIGNED NOT NULL PRIMARY KEY) ENGINE=InnoDB');
     $removeProfileLinks = require __DIR__ . '/../../../migrations/20260809_001_remove_user_profile_links.php';
 
@@ -130,13 +130,13 @@ try {
             UNIQUE KEY settings_key_unique (setting_key)
         ) ENGINE=InnoDB'
     );
-    \TinyCat\Settings\Store::setSetting('fixture.atomic', 'first');
+    \TinyCat\Core\Settings\Store::setSetting('fixture.atomic', 'first');
     $atomicId = \TinyCat\Database\Connection::find('settings', ['setting_key' => 'fixture.atomic'])['id'];
-    \TinyCat\Settings\Store::setSetting('fixture.atomic', 'updated');
+    \TinyCat\Core\Settings\Store::setSetting('fixture.atomic', 'updated');
     $atomic = \TinyCat\Database\Connection::find('settings', ['setting_key' => 'fixture.atomic']);
     if ($atomic['id'] !== $atomicId || $atomic['setting_value'] !== 'updated'
         || \TinyCat\Database\Connection::count('settings', ['setting_key' => 'fixture.atomic']) !== 1
-        || \TinyCat\Settings\Store::setting('fixture.atomic') !== 'updated') {
+        || \TinyCat\Core\Settings\Store::setting('fixture.atomic') !== 'updated') {
         throw new RuntimeException('Atomic settings writes must preserve row identity and invalidate cached values.');
     }
     try {

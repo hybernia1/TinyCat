@@ -92,32 +92,17 @@ The run statistic counts the full history, independently of pagination.
 
 ## Mobile tables
 
-Below 600px, simple tables become full-width row cards through the shared
-`tables` lifecycle service. The first cell is the identity; other values
-receive labels from the translated column headings. Identity and metadata
-use the available card width. Action buttons have 44px touch targets and
-may wrap within the action footer. Sort links remain available above the
-cards. At 600px and above the original column layout is retained. Identity
-content keeps a 12rem minimum there, so wider tables scroll locally instead
-of squeezing names down to a few characters.
-Mobile sorting is collapsed into a single control beside Filters. Reuse
-the same small ghost/secondary button and `popover-panel` surface,
-dimensions and positioning. The active option is highlighted; choosing it
-reverses its single direction arrow. Clone the original server-prepared links
-so filters, pagination resets, AJAX targets and modal history policy survive.
-Desktop column headings remain the sorting controls on larger screens.
+Administration tables keep native table elements and the same columns at every
+viewport width. On narrow screens the shared `table-wrap` scrolls horizontally;
+the document itself must fit the viewport. The shared mobile minimum width
+preserves readable identities, data and row actions. Do not replace domain tables
+with private mobile cards, a second sorting menu or duplicated row content.
 
-Keep native table elements, explicit table/row/cell roles and `headers`
-associations. Visual labels are hidden from assistive technology to avoid
-duplicating column headings. Rehydration updates labels without duplicating
-wrappers or replacing the controls inside a cell. Empty-state colspan rows
-retain their content and do not receive field labels.
-
-Tables with multiple header rows or complex spans keep a readable minimum
-width and local horizontal scrolling. Use `data-table-layout="scroll"` for
-comparison tables that require columns to remain side by side. Mobile
-styles activate only after the service has prepared a simple table, so
-the scroll layout also remains usable without JavaScript.
+Sorting remains in the original translated column headings, including on mobile.
+Use `ui/sort-heading`, standard `table-identity`, `table-meta` and
+`table-actions-cell` tokens. Filter and page-size controls use the same shared
+toolbar and popover services as desktop. `tests/frontend/admin-viewport.cjs`
+checks these table and sorting invariants against the actual administration shell.
 
 ## Mobile modal navigation
 

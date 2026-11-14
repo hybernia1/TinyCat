@@ -11,7 +11,8 @@ if (PHP_VERSION_ID < 80400) {
 }
 
 $root = dirname(__DIR__);
-require_once $root . '/App/Support/Version.php';
+require_once $root . '/tests/support/execution.php';
+require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
 if (!is_file($root . '/vendor/bin/phpstan')) {
     fwrite(STDERR, "Development tools are missing. Run composer install first.\n");
@@ -30,13 +31,21 @@ $commands = [
     'Monolith boundaries, behavior, route, release and query-baseline tests' => $php . ' ' . escapeshellarg($root . '/tests/run.php'),
 ];
 
+$identify = static fn (string $label): string => 'preflight/' . trim((string) preg_replace('/[^a-z0-9.]+/', '-', strtolower($label)), '-');
+$items = array_combine(array_map($identify, array_keys($commands)), array_keys($commands));
+if (\TinyCatTests\Execution::listing()) { foreach ($items as $id => $label) { echo $id . ' ' . $label . "\n"; } exit(0); }
+$allItems = $items;
+$items = \TinyCatTests\Execution::select($items);
+\TinyCatTests\Execution::plan($allItems, array_keys($items));
 foreach ($commands as $label => $command) {
+    $id = $identify($label);
+    if (!isset($items[$id])) { continue; }
     echo "\n=== {$label} ===\n";
-    passthru($command, $exitCode);
+    $exitCode = \TinyCatTests\Execution::run($id, $label, $command);
     if ($exitCode !== 0) {
         fwrite(STDERR, "\nFAIL TinyCat preflight stopped at: {$label}\n");
         exit($exitCode > 0 ? $exitCode : 1);
     }
 }
 
-echo "\nPASS TinyCat {$version} monolith preflight\n";
+echo count($items) === count($commands) ? "\nPASS TinyCat {$version} monolith preflight\n" : "\nPASS selected preflight checks (partial run)\n";

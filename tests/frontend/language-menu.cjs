@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const source = fs.readFileSync(path.resolve(__dirname, "../../assets/modules/site/language-suggestion.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
+const source = fs.readFileSync(path.resolve(__dirname, "../../assets/ui/language-suggestion.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
 function setup(storage, preferred = "cs") {
   let focused = false;
   const services = [], callbacks = {}, close = {};

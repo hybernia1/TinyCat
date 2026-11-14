@@ -1,0 +1,45 @@
+{
+  "blog": {
+    "navigation": "Gezinme",
+    "home": "Ana sayfa",
+    "editor": "Makale yaz",
+    "title": "Başlık",
+    "body": "Makale metni",
+    "visibility": "Görünürlük",
+    "published": "Yayımlandı",
+    "hidden": "Gizli",
+    "view": "Makaleyi görüntüle",
+    "empty": "Henüz makale yok.",
+    "older": "Eski makaleler",
+    "not_found": "Makale bulunamadı.",
+    "invalid": "Başlık (en fazla 200 karakter) ve metin (en fazla 60.000 UTF-8 baytı) girin.",
+    "articles": "Articles",
+    "scheduled": "Planlandı",
+    "feeds": {
+      "title": "Makale kaynakları",
+      "help": "Bot hesabı olmadan makaleleri içe aktarın. Yeni kaynaklar makaleleri gizli kaydeder.",
+      "schedule": "Kaynak aralığına göre",
+      "create": "Makale kaynağı ekle",
+      "url": "Akış URL’si",
+      "interval": "Kontrol aralığı (dakika)",
+      "images": "Görselleri içe aktar",
+      "checked": "Son kontrol",
+      "run": "İçe aktarmayı başlat",
+      "preview": "İçe aktarma önizlemesi",
+      "preview_empty": "Kullanılabilir öğe yok.",
+      "invalid": "Adı, herkese açık akış URL’sini, etkin yöneticiyi ve 5 ile 43.200 dakika arasındaki aralığı kontrol edin. Kaydedilen kaynak URL’si değiştirilemez."
+    },
+    "settings": {
+      "images_enabled": "Gönderi görsellerine izin ver",
+      "images_max_upload_kb": "Maksimum görüntü boyutu (KB)",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "blocked_urls": "Engellenen web siteleri"
+    },
+    "messages": {
+      "blocked_url": "Bu bağlantıya izin verilmiyor: {host}."
+    }
+  }
+}

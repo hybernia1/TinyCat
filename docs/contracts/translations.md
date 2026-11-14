@@ -76,7 +76,7 @@ namespaces, so historic identifiers remain stable: Status owns `account.status_*
 even though Users owns other `account.*` messages. Multiple modules can contribute
 to a namespace; duplicate ownership of an individual key is rejected. Support owns
 common labels, relative dates and shared action messages. Mail owns its nested
-email templates in `App/Mail/lang/<locale>.json`; these never enter client catalogs.
+email templates in `App/Modules/Mail/lang/<locale>.json`; these never enter client catalogs.
 Settings owns installation messages. `lang/<locale>.json` contains only the native
 language `name`, which declares the set of complete shipped locales.
 
@@ -100,7 +100,7 @@ even if their manifest currently has no matching page scope.
 `tools/assets/compile-assets.php` reads validated sources independently of any loaded
 runtime catalog. It emits the same four scripts and one stylesheet per page,
 including immutable hashed external message files. It also emits
-`App/Support/compiled/translations.php` (language metadata and a catalog index) and
+`App/Core/Support/compiled/translations.php` (language metadata and a catalog index) and
 one content-hashed PHP array per locale. Application lookups and language discovery
 use those PHP arrays; email templates load the compiled server-only section.
 OPcache can cache these arrays without runtime JSON parsing or source discovery.

@@ -1,0 +1,39 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "entries": [
+      "App/Core/Security/assets/index.js"
+    ],
+    "components": [
+      "ui/captcha"
+    ],
+    "styles": [
+      "App/Core/Security/assets/styles/captcha.css"
+    ],
+    "translations": [],
+    "messages": {
+      "captcha_invalid": "auth.invalid_captcha"
+    }
+  },
+  {
+    "routes": [
+      "admin"
+    ],
+    "entries": [
+      "App/Core/Security/assets/settings-presentation.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "settings.fields.captcha_enabled",
+      "settings.fields.captcha_login_attempts",
+      "settings.fields.captcha_provider",
+      "settings.fields.captcha_provider_help",
+      "settings.fields.captcha_secret_key",
+      "settings.fields.captcha_secret_key_help",
+      "settings.fields.captcha_site_key"
+    ]
+  }
+]

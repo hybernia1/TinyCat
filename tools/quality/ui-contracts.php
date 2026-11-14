@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /** Validate source catalogs before JSON decoding can hide duplicate keys. */
 return static function (?array $catalogFiles = null): array {
-    $catalogFiles ??= [\TinyCat\Support\Paths::basePath('assets/ui/components.json'), ...(glob(\TinyCat\Support\Paths::basePath('assets/modules/*/components.json')) ?: [])];
+    $catalogFiles ??= \TinyCat\Core\Modules\Resources::files('components');
     $definitions = [];
     $sources = [];
     $canonical = static function (mixed $value) use (&$canonical): mixed {

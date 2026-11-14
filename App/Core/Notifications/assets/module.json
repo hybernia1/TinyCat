@@ -1,0 +1,31 @@
+[
+  {
+    "routes": [
+      "public"
+    ],
+    "components": [
+      "notifications/items",
+      "ui/load-more"
+    ],
+    "entries": [
+      "App/Core/Notifications/assets/index.js"
+    ],
+    "styles": [
+      "App/Core/Notifications/assets/styles/notification-nav.css",
+      "App/Core/Notifications/assets/styles/notification-preview.css",
+      "App/Core/Notifications/assets/styles/notification-items.css",
+      "App/Core/Notifications/assets/styles/notification-badge-mobile.css",
+      "App/Core/Notifications/assets/styles/notifications-page.css"
+    ],
+    "translations": [
+      "notifications.new_count.one",
+      "notifications.new_count.few",
+      "notifications.new_count.many",
+      "notifications.new_count.other"
+    ],
+    "messages": {
+      "common_request_failed": "common.request_failed",
+      "notification_not_found": "common.not_found"
+    }
+  }
+]

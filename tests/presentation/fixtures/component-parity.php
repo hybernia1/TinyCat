@@ -4,10 +4,10 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/bootstrap.php';
-(new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
+(new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Support\Localization::locale('en');
 if (($argv[1] ?? '') === '--templates') { echo \TinyCat\Support\Components::json(); exit(0); }
-if (($argv[1] ?? '') === '--settings') { echo json_encode(\TinyCat\Settings\Resource::editor(), JSON_THROW_ON_ERROR); exit(0); }
+if (($argv[1] ?? '') === '--settings') { echo json_encode(\TinyCat\Core\Settings\Resource::editor(), JSON_THROW_ON_ERROR); exit(0); }
 if (($argv[1] ?? '') === '--translation-fixtures') {
     $cases = [];
     foreach ([...array_keys(\TinyCat\Support\Languages::language_packages()), 'cs-CZ', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'uk-UA'] as $locale) {
@@ -21,7 +21,7 @@ if (($argv[1] ?? '') === '--translation-fixtures') {
     exit;
 }
 if (($argv[1] ?? '') === '--dates') {
-    echo json_encode(['dateFormat' => \TinyCat\Settings\Store::config('datetime.datetime', 'Y-m-d H:i:s'), 'dateRelative' => \TinyCat\Settings\Store::config('datetime.relative', false) ? 'true' : 'false'], JSON_THROW_ON_ERROR);
+    echo json_encode(['dateFormat' => \TinyCat\Core\Settings\Store::config('datetime.datetime', 'Y-m-d H:i:s'), 'dateRelative' => \TinyCat\Core\Settings\Store::config('datetime.relative', false) ? 'true' : 'false'], JSON_THROW_ON_ERROR);
     exit;
 }
 if (($argv[1] ?? '') === '--date-fixtures') {

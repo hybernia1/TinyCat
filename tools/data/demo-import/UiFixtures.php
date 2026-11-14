@@ -26,13 +26,13 @@ final readonly class UiFixtures
         for ($i = 1; $i <= 4; $i++) {
             $this->post(1, 'Demo UI ' . $i . ': Příspěvek pro kontrolu vzhledu, komentářů a obrázků. #tinycat #testing');
         }
-        $images = $this->database->query('SELECT id FROM content ORDER BY published_at DESC, id DESC LIMIT 18')->fetchAll(PDO::FETCH_COLUMN);
+        $images = $this->database->query('SELECT id FROM social_posts ORDER BY published_at DESC, id DESC LIMIT 18')->fetchAll(PDO::FETCH_COLUMN);
         $imageCount = 0;
         foreach ($images as $offset => $id) {
             if ($offset % 3 !== 0) { continue; }
             $path = gmdate('Y/m', (int) strtotime($this->anchor . ' UTC')) . '/' . md5('tinycat-demo-image-' . $id) . '.webp';
             $bytes = $this->image('uploads/status-images/' . $path, 960, 540, (int) $id);
-            $this->execute('INSERT INTO content_images (content_id, path, width, height, bytes) VALUES (?, ?, 960, 540, ?) ON DUPLICATE KEY UPDATE path = VALUES(path), bytes = VALUES(bytes)', [(int) $id, $path, $bytes]);
+            $this->execute('INSERT INTO social_post_images (content_id, path, width, height, bytes) VALUES (?, ?, 960, 540, ?) ON DUPLICATE KEY UPDATE path = VALUES(path), bytes = VALUES(bytes)', [(int) $id, $path, $bytes]);
             $imageCount++;
         }
         for ($i = 1; $i <= 2; $i++) {
@@ -57,12 +57,12 @@ final readonly class UiFixtures
 
     private function post(int $userId, string $body): void
     {
-        $this->execute('INSERT INTO content (author_id, body, published_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM content WHERE author_id = ? AND body = ?)', [$userId, $body, $this->anchor, $userId, $body]);
+        $this->execute('INSERT INTO social_posts (author_id, body, published_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM social_posts WHERE author_id = ? AND body = ?)', [$userId, $body, $this->anchor, $userId, $body]);
         preg_match_all('/#([a-zA-Z0-9_]+)/', $body, $matches);
         foreach (array_unique($matches[1]) as $tag) {
             $tag = strtolower($tag);
-            $this->execute('INSERT IGNORE INTO terms (name) VALUES (?)', [$tag]);
-            $this->execute('INSERT IGNORE INTO content_tags (content_id, term_id) SELECT c.id, t.id FROM content c INNER JOIN terms t ON t.name = ? WHERE c.author_id = ? AND c.body = ?', [$tag, $userId, $body]);
+            $this->execute('INSERT IGNORE INTO social_terms (name) VALUES (?)', [$tag]);
+            $this->execute('INSERT IGNORE INTO social_post_tags (content_id, term_id) SELECT c.id, t.id FROM social_posts c INNER JOIN social_terms t ON t.name = ? WHERE c.author_id = ? AND c.body = ?', [$tag, $userId, $body]);
         }
     }
 

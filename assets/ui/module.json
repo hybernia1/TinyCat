@@ -101,6 +101,7 @@
     "components": [],
     "translations": [
       "common.leave",
+      "common.save",
       "common.stay",
       "common.unsaved_message",
       "common.unsaved_title"
@@ -208,5 +209,191 @@
       "relative.past.year.single"
     ],
     "styles": []
+  },
+  {
+    "routes": [
+      "public"
+    ],
+    "entries": [
+      "assets/ui/public.js"
+    ],
+    "components": [
+      "ui/notice",
+      "ui/empty-state"
+    ],
+    "styles": [
+      "assets/ui/styles/global-search-controls.css",
+      "assets/ui/styles/global-search-mobile.css",
+      "assets/ui/styles/global-search.css",
+      "assets/ui/styles/cookie-consent.css",
+      "assets/ui/styles/cookie-consent-mobile.css",
+      "assets/ui/styles/language.css",
+      "assets/ui/styles/navbar-mobile.css"
+    ],
+    "translations": [
+      "auth.login_title",
+      "common.confirm",
+      "common.request_failed",
+      "public.search_captcha_required",
+      "public.search_captcha_title",
+      "public.search_all",
+      "public.search_min",
+      "public.search_empty",
+      "public.search_length",
+      "public.language_available",
+      "public.language_switch"
+    ]
+  },
+  {
+    "routes": [
+      "/admin/modules"
+    ],
+    "entries": [
+      "assets/modules/admin/module-packages.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "modules.packages.upload",
+      "modules.packages.file",
+      "modules.packages.confirm",
+      "modules.packages.help",
+      "modules.packages.install",
+      "common.unsaved_title",
+      "common.unsaved_message",
+      "common.leave",
+      "common.stay",
+      "common.cancel",
+      "common.close"
+    ]
+  },
+  {
+    "routes": [],
+    "entries": [
+      "assets/ui/content/presentation.js"
+    ],
+    "components": [
+      "publishing/segments",
+      "publishing/link",
+      "publishing/attached-image"
+    ],
+    "styles": [
+      "assets/ui/content/styles/status-text.css",
+      "assets/ui/content/styles/status-content.css",
+      "assets/ui/content/styles/mobile.css"
+    ],
+    "translations": [
+      "account.status_counter",
+      "account.status_image_add",
+      "account.status_image_remove",
+      "account.translation_continue",
+      "account.translation_failed",
+      "account.translation_hide",
+      "account.translation_machine",
+      "account.translation_preparing",
+      "account.translation_same",
+      "account.translation_translate",
+      "account.translation_unavailable",
+      "public.status_image_alt",
+      "public.status_image_alt_empty",
+      "account.messages.status_image_invalid"
+    ],
+    "id": "publishing.presentation"
+  },
+  {
+    "routes": [],
+    "entries": [
+      "assets/ui/content/editor-entry.js"
+    ],
+    "components": [
+      "publishing/editor",
+      "publishing/image-field"
+    ],
+    "styles": [
+      "assets/ui/content/styles/status-editing.css",
+      "assets/ui/content/styles/mobile.css"
+    ],
+    "translations": [
+      "account.status_counter",
+      "account.status_image_add",
+      "account.status_image_remove",
+      "public.status_image_alt",
+      "public.status_image_alt_empty",
+      "account.status_body",
+      "account.messages.status_image_invalid"
+    ],
+    "id": "publishing.editor"
+  },
+  {
+    "id": "publishing.media",
+    "routes": [],
+    "entries": [
+      "assets/ui/content/media-preview.js"
+    ],
+    "components": [
+      "publishing/link",
+      "publishing/attached-image"
+    ],
+    "styles": [
+      "assets/ui/content/styles/status-content.css",
+      "assets/ui/content/styles/mobile.css"
+    ],
+    "translations": [
+      "account.messages.status_image_invalid"
+    ]
+  },
+  {
+    "id": "publishing.discussion-base",
+    "routes": [],
+    "uses": [
+      "publishing.editor",
+      "publishing.presentation"
+    ],
+    "entries": [
+      "assets/ui/content/comments.js"
+    ],
+    "components": [
+      "publishing/comment",
+      "publishing/comment-form",
+      "publishing/like"
+    ],
+    "styles": [
+      "assets/ui/content/styles/discussion-content.css",
+      "assets/ui/content/styles/discussion-editing.css",
+      "assets/ui/content/styles/discussion-mobile.css"
+    ],
+    "translations": [
+      "account.status_comment",
+      "account.status_comment_placeholder",
+      "account.status_comments",
+      "account.status_like",
+      "account.status_like_for",
+      "account.status_reply",
+      "account.status_reply_placeholder",
+      "account.status_unlike_for",
+      "common.confirm_action",
+      "common.delete",
+      "common.edit",
+      "common.leave",
+      "common.stay",
+      "common.unsaved_message",
+      "common.unsaved_title",
+      "account.status_comment_history"
+    ]
+  },
+  {
+    "id": "publishing.discussion",
+    "routes": [],
+    "uses": [
+      "publishing.discussion-base"
+    ],
+    "entries": [
+      "assets/ui/content/discussion.js"
+    ],
+    "components": [
+      "publishing/discussion"
+    ],
+    "styles": [],
+    "translations": []
   }
 ]

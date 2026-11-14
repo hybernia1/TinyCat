@@ -1,15 +1,17 @@
 <?php
 declare(strict_types=1);
 
+// Exercises the authenticated shared-storage bridge and the supplied domain-owned artifact.
+
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "This tool is available only from the command line.\n");
     exit(1);
 }
 
 $root = dirname(__DIR__, 2);
-require_once $root . '/App/Support/Version.php';
+require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
-$baselineVersion = \TinyCat\Support\Version::MINIMUM_UPDATE;
+$baselineVersion = '6.0.0-dev.9.1';
 $options = getopt('', ['artifact::', 'key::']);
 $artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
 $configPath = $root . '/config.php';
@@ -194,22 +196,14 @@ try {
         throw new RuntimeException('Unable to create product rehearsal directory.');
     }
 
-    exec(
-        'git -C ' . escapeshellarg($root) . ' archive --format=zip --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion),
-        $archiveOutput,
-        $archiveExit
-    );
-
-    if ($archiveExit !== 0) {
-        throw new RuntimeException('Unable to archive supported baseline v' . $baselineVersion . ': ' . implode(' ', $archiveOutput));
-    }
-
+    $baselineArchive = $root . '/tests/fixtures/releases/bridge-6.0.0-dev.9.1-source.zip';
+    if (hash_file('sha256', $baselineArchive) !== '9620cebe0f1fb03d6a49673ebc3daef43a54e53800ffdaedc1bdb660cfeb3df5') { throw new RuntimeException('The frozen compatibility source changed.'); }
     $extractZip($baselineArchive, $installRoot);
     $installConfig = $baseConfig;
     $installConfig['database'] = [...$databaseConfig, 'name' => $databaseName];
     $installConfig['app'] = [...(array) ($baseConfig['app'] ?? []), 'url' => 'http://localhost'];
     $installConfig['install'] = ['complete' => true, 'locale' => 'en'];
-    $installConfig['cache'] = [...(array) ($baseConfig['cache'] ?? []), 'driver' => 'filesystem'];
+    $installConfig['cache'] = [...(array) ($baseConfig['cache'] ?? []), 'driver' => 'filesystem', 'directory' => $installRoot . '/storage/cache'];
     $installConfig['updates'] = [...(array) ($baseConfig['updates'] ?? []), 'public_key' => $publicKey];
     file_put_contents($installRoot . '/config.php', "<?php\ndeclare(strict_types=1);\n\nreturn " . var_export($installConfig, true) . ";\n", LOCK_EX);
 
@@ -226,6 +220,8 @@ try {
     $installRunner = <<<'PHP'
 define('TINYCAT', true);
 require __ROOT__ . '/App/bootstrap.php';
+$plan = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', require __ROOT__ . '/App/modules.php');
+file_put_contents(__ROOT__ . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
 TinyCat\Installation\Installer::create_tables();
 TinyCat\Installation\Installer::create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
 TinyCat\Installation\Installer::default_settings(['locale' => 'en']);
@@ -245,18 +241,8 @@ PHP;
     }
     $assert(true, 'Supported baseline installer prepares the representative database.');
 
-    require_once $root . '/tools/data/demo-import/Schema.php';
-    $seedSchema = new \TinyCat\Tools\DemoImport\Schema($database);
-    $seedSchema->validate(false);
-    $seedSchema->validate(true);
-
-    $importCommand = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/data/demo-import.php')
-        . ' --config=' . escapeshellarg($installRoot . '/config.php')
-        . ' --profile=small --users=60 --min-posts=3 --max-posts=5'
-        . ' --min-comments=8 --max-comments=14 --min-comment-likes=1 --max-comment-likes=3'
-        . ' --batch-size=100 --seed=926 --prefix=release --reset=1 --resume=0 --jsonl=1';
-    exec($importCommand . ' 2>&1', $importOutput, $importExit);
-    $assert($importExit === 0, 'Batched deterministic representative import completes: ' . implode(' ', array_slice($importOutput, -3)));
+    (require $root . '/tests/fixtures/releases/seed-shared-social.php')($database);
+    $assert(true, 'Representative shared-storage users, posts, comments, reactions, tags, links and notifications are seeded.');
 
     $beforeDatabase = $databaseFingerprint($database);
     $appliedBefore = $database->query('SELECT migration FROM schema_migrations')->fetchAll(PDO::FETCH_COLUMN);
@@ -278,30 +264,10 @@ PHP;
     $updateRunner = <<<'PHP'
 define('TINYCAT', true);
 require __ROOT__ . '/App/bootstrap.php';
-$invoke = static function (string $method, mixed ...$arguments): mixed {
-    return (new ReflectionMethod(TinyCat\Updates\Manager::class, $method))->invoke(null, ...$arguments);
-};
-$manifest = TinyCat\Updates\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
-$invoke('assertCompatibility', $manifest);
-$pending = $invoke('hasPendingMigrations', $manifest);
-$stage = __ROOT__ . '/storage/updates/release-stage';
-$invoke('extractPackage', __PACKAGE__, $stage, $manifest);
-$invoke('preflightManagedTargets', $manifest);
-$backup = $invoke('createBackup', $manifest, (string) $manifest['version'], $pending);
-if ($pending) {
-    $invoke('backupDatabase', $backup);
-}
-$invoke('enableMaintenance', (string) $manifest['version']);
-$invoke('applyFiles', $stage, $manifest);
-$applied = $invoke('applyMigrations', $stage, $manifest);
-$invoke('deleteLegacyFiles', $manifest);
-$invoke('clearRuntimeCache');
-TinyCat\Updates\Manager::disableMaintenance();
-echo json_encode([
-    'backup' => $backup,
-    'pending_migrations' => $pending,
-    'applied_migrations' => $applied,
-], JSON_THROW_ON_ERROR);
+$result = TinyCat\Core\Updates\Manager::installLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
+$backup = __ROOT__ . '/' . $result['backup'];
+$metadata = json_decode((string) file_get_contents($backup . '/backup.json'), true, 512, JSON_THROW_ON_ERROR);
+echo json_encode(['backup' => $backup, 'pending_migrations' => isset($metadata['database_identity']), 'applied_migrations' => $result['migrations']], JSON_THROW_ON_ERROR);
 PHP;
     $updateRunner = str_replace(
         ['__ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__'],
@@ -313,10 +279,10 @@ PHP;
     if ($updateExit !== 0 || !is_array($update)) {
         throw new RuntimeException('Signed production update failed: ' . implode(' ', $updateOutput));
     }
-    $assert(($update['pending_migrations'] ?? null) === ($expectedPending !== []), 'Pending migrations match the baseline registry.');
+    $assert(($update['pending_migrations'] ?? null) === ($expectedPending !== [] || ($manifest['distribution']['schemas'] ?? []) !== []), 'Pending migrations match the baseline registry.');
     $assert(($update['applied_migrations'] ?? null) === $expectedPending, 'Only migrations absent from the baseline run.');
-    foreach (['users', 'content', 'content_comments', 'content_likes', 'comment_likes', 'user_followers', 'notifications', 'content_tags', 'terms', 'content_links'] as $table) {
-        $assert((int) $database->query("SELECT COUNT(*) FROM `{$table}`")->fetchColumn() === $beforeDatabase['counts'][$table], 'Update preserves representative records in ' . $table);
+    foreach (['users'=>'users','content'=>'social_posts','content_comments'=>'social_comments','content_likes'=>'social_post_likes','comment_likes'=>'social_comment_likes','user_followers'=>'user_followers','notifications'=>'notifications','content_tags'=>'social_post_tags','terms'=>'social_terms','content_links'=>'social_post_links'] as $old => $table) {
+        $assert((int) $database->query("SELECT COUNT(*) FROM `{$table}`")->fetchColumn() === $beforeDatabase['counts'][$old], 'Update preserves representative records in ' . $table);
     }
     foreach ((array) ($manifest['migrations'] ?? []) as $path) {
         $id = pathinfo((string) $path, PATHINFO_FILENAME);
@@ -347,64 +313,18 @@ PHP;
     $needsDatabaseRestore = (bool) ($update['pending_migrations'] ?? false);
     $assert(!$needsDatabaseRestore || is_file($backup . '/database.sql'), 'Schema-changing updates include a MySQL snapshot.');
 
-    foreach ((array) ($metadata['files'] ?? []) as $relative => $hash) {
-        $source = $backup . '/files/' . str_replace('/', DIRECTORY_SEPARATOR, (string) $relative);
-        $target = $installRoot . '/' . str_replace('/', DIRECTORY_SEPARATOR, (string) $relative);
-
-        if (!is_dir(dirname($target))) {
-            mkdir(dirname($target), 0775, true);
-        }
-        if (!copy($source, $target)) {
-            throw new RuntimeException('Unable to restore release backup file: ' . $relative);
-        }
-    }
-
-    foreach (array_keys((array) ($manifest['files'] ?? [])) as $relative) {
-        if (array_key_exists($relative, $beforeInventory)) {
-            continue;
-        }
-
-        $path = $installRoot . '/' . str_replace('/', DIRECTORY_SEPARATOR, (string) $relative);
-
-        if (is_file($path)) {
-            unlink($path);
-        }
-    }
-
-    $assert($inventory($installRoot) === $beforeInventory, 'Rollback restores the exact managed 5.16.0 tree.');
-
-    // A rollback of a release with migrations must restore both files and data.
-    if (preg_match('/^tinycat_release_update_[a-f0-9]{12}$/', $databaseName) !== 1
-        || (string) $database->query('SELECT DATABASE()')->fetchColumn() !== $databaseName
-    ) {
-        throw new RuntimeException('Refusing to restore outside the disposable rehearsal database.');
-    }
-    if ($needsDatabaseRestore) {
-        $databaseBackup = file_get_contents($backup . '/database.sql');
-        if (!is_string($databaseBackup) || $databaseBackup === '') {
-            throw new RuntimeException('The rollback database snapshot is unreadable.');
-        }
-        $database->exec('SET FOREIGN_KEY_CHECKS=0');
-        try {
-            $tables = $database->query("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")->fetchAll(PDO::FETCH_COLUMN);
-            foreach ($tables as $table) {
-                if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', (string) $table) !== 1) {
-                    throw new RuntimeException('Unsafe table name in the disposable rollback database.');
-                }
-                $database->exec('DROP TABLE `' . $table . '`');
-            }
-            $database->exec($databaseBackup);
-        } finally {
-            $database->exec('SET FOREIGN_KEY_CHECKS=1');
-        }
-    }
+    $rollbackRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
+        . "; TinyCat\\Core\\Updates\\Manager::rollback(" . var_export(basename($backup), true) . ");";
+    [$rollbackExit, $rollbackOutput] = $run($rollbackRunner);
+    $assert($rollbackExit === 0, 'Standard updater restores its recorded database and file snapshot: ' . implode(' ', $rollbackOutput));
+    $assert($inventory($installRoot) === $beforeInventory, 'Rollback restores the exact managed bridge tree.');
     $assert($databaseFingerprint($database) === $beforeDatabase, 'Rollback restores the exact pre-update database content and schema.');
     $clearOldCache = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; (new ReflectionMethod(TinyCat\\Updates\\Manager::class, 'clearRuntimeCache'))->invoke(null);";
     [$clearCacheExit, $clearCacheOutput] = $run($clearOldCache);
     $assert($clearCacheExit === 0, 'Rollback invalidates settings cached by the updated runtime: ' . implode(' ', $clearCacheOutput));
     [$oldBootExit, $oldBootOutput] = $run($probeRunner);
-    $assert($oldBootExit === 0, 'Rolled-back 5.16.0 runtime boots: ' . implode(' ', $oldBootOutput));
+    $assert($oldBootExit === 0, 'Rolled-back compatibility runtime boots: ' . implode(' ', $oldBootOutput));
 
     echo json_encode([
         'version' => (string) ($manifest['version'] ?? ''),
@@ -446,4 +366,4 @@ if ($failures !== []) {
     exit(1);
 }
 
-echo "PASS exact 5.16.0 representative MySQL update, data preservation and rollback ({$checks} checks)\n";
+echo "PASS exact dev.9.1 representative MySQL update, data preservation and rollback ({$checks} checks)\n";

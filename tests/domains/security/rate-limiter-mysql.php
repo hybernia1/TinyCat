@@ -29,7 +29,7 @@ $assert = static function (bool $condition, string $message) use (&$checks): voi
     $checks++;
     if (!$condition) { throw new RuntimeException($message); }
 };
-use TinyCat\Security\RateLimiter;
+use TinyCat\Core\Security\RateLimiter;
 $assert(RateLimiter::consume('user:1', 'upload', 3600, 2), 'The first MySQL reservation succeeds.');
 $assert(RateLimiter::consume('user:1', 'upload', 3600, 2), 'The final permitted MySQL reservation succeeds.');
 $assert(!RateLimiter::consume('user:1', 'upload', 3600, 2), 'A saturated MySQL bucket rejects new attempts.');

@@ -1,10 +1,16 @@
 # TinyCat
 
-TinyCat is a small, self-hosted social publishing application written in plain PHP 8.4. It is designed for pseudonymous communities: a username is enough to create an account, while email and recovery details remain optional.
+TinyCat is a small, self-hosted modular application framework written in plain PHP 8.4. Its default Social module supports pseudonymous communities: a username is enough to create an account, while email and recovery details remain optional.
+
+The development platform provides identity, security and shared technical services;
+functional modules own their complete domain data. Core has no mandatory content,
+comment, tag or media tables. See [domain ownership](docs/development/domain-storage.md). The default assembly provides the social features below;
+[Blog](docs/development/blog-assembly.md) can run independently or alongside Social
+in the platform assembly, with a shared identity and [module lifecycle](docs/operations/module-deployment.md).
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **5.22.2**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`.
+Current release: **6.0.0**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`. Existing installations must follow the [compatibility bridge](docs/operations/updates.md#preparing-the-60-modular-update) before installing the 6.0 update.
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -218,13 +224,13 @@ Tests and development tools are excluded from signed production packages.
 - `index.php` is the HTTP front controller; built-in modules register their own routes.
 - `scheduled-tasks.php` is the CLI adapter for the same execution service used by the authenticated scheduler API.
 - `App/bootstrap.php` initializes the runtime and the small `TinyCat\` PSR-4 autoloader.
-- `App/Bots/` owns feed imports and bot administration.
-- `App/Updates/` contains signed application updates and the migration registry.
+- `App/Modules/Social/src/Automation/` owns social feed imports and bot administration.
+- `App/Core/Updates/` contains signed application updates and the migration registry.
 - Other `App/` directories contain domain modules and shared infrastructure.
-- `App/<Module>/Pages.php` owns page handlers; private page templates and partials live in `App/<Module>/templates/`.
+- Module page handlers live under `App/Modules/<Name>/src/`; private templates and partials live in `App/Modules/<Name>/templates/`. Core services use `App/Core/<Name>/`.
 - `assets/` contains source CSS, JavaScript, the SVG icon sprite, shared UI definitions and module-owned client manifests.
-- `App/<Module>/lang/<locale>.json` contains module-owned translations; `App/Mail/lang/` owns server-only email templates. `lang/<locale>.json` declares language names.
-- Module manifests explicitly declare JavaScript translation dependencies; component definitions declare theirs through static `t` references. Release builds emit hashed page catalogs and OPcache-compatible PHP catalogs in `App/Support/compiled/`.
+- `App/Modules/<Name>/lang/<locale>.json` contains module-owned translations; owners declare server-only email templates through `resources.emails`. `lang/<locale>.json` declares language names.
+- Module manifests explicitly declare JavaScript translation dependencies; component definitions declare theirs through static `t` references. Release builds emit hashed page catalogs and OPcache-compatible PHP catalogs in `App/Core/Support/compiled/`.
 - `storage/` contains private runtime state and generated asset caches.
 - `uploads/` contains user and site media.
 - `tools/` contains versioned development and release utilities; it is excluded from production packages and blocked from web access.

@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "fields": {
+      "email_from": "Gönderenin e-postası",
+      "smtp_username": "SMTP kullanıcı adı",
+      "smtp_encryption": "SMTP şifreleme",
+      "email_from_name": "Gönderenin adı",
+      "smtp_host": "SMTP ana bilgisayarı",
+      "smtp_password": "SMTP şifresi",
+      "smtp_port": "SMTP bağlantı noktası",
+      "email_templates": "E-posta dağıtım türleri",
+      "smtp": "SMTP yapılandırması"
+    }
+  }
+}

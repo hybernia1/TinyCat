@@ -1,0 +1,45 @@
+{
+  "blog": {
+    "navigation": "Navigatie",
+    "home": "Start",
+    "editor": "Artikel schrijven",
+    "title": "Titel",
+    "body": "Artikeltekst",
+    "visibility": "Zichtbaarheid",
+    "published": "Gepubliceerd",
+    "hidden": "Verborgen",
+    "view": "Artikel bekijken",
+    "empty": "Nog geen artikelen.",
+    "older": "Oudere artikelen",
+    "not_found": "Artikel niet gevonden.",
+    "invalid": "Voer een titel (maximaal 200 tekens) en tekst (maximaal 60.000 UTF-8-bytes) in.",
+    "articles": "Articles",
+    "scheduled": "Gepland",
+    "feeds": {
+      "title": "Artikelbronnen",
+      "help": "Importeer artikelen zonder botaccount. Nieuwe bronnen slaan artikelen verborgen op.",
+      "schedule": "Volgens het broninterval",
+      "create": "Artikelbron toevoegen",
+      "url": "Feed-URL",
+      "interval": "Controle-interval (minuten)",
+      "images": "Afbeeldingen importeren",
+      "checked": "Laatst gecontroleerd",
+      "run": "Import starten",
+      "preview": "Importvoorbeeld",
+      "preview_empty": "Geen bruikbare items.",
+      "invalid": "Controleer de naam, openbare feed-URL, actieve beheerder en het interval van 5 tot 43.200 minuten. De URL van een opgeslagen bron kan niet worden gewijzigd."
+    },
+    "settings": {
+      "images_enabled": "Postafbeeldingen toestaan",
+      "images_max_upload_kb": "Maximale beeldgrootte (KB)",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "blocked_urls": "Geblokkeerde websites"
+    },
+    "messages": {
+      "blocked_url": "Deze link is niet toegestaan: {host}."
+    }
+  }
+}

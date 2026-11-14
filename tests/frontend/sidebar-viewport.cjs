@@ -42,7 +42,7 @@ class ResizeObserver {
 window.ResizeObserver = ResizeObserver;
 const context = vm.createContext({ window, document, ResizeObserver, URL });
 for (const file of ["sticky-sidebars", "sidebar-data"]) {
-  vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../../assets/modules/site/" + file + ".js"), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
+  vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../../App/Modules/Social/assets/site/" + file + ".js"), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
 }
 function resize(desktop) { media.matches = desktop; changes.forEach(fn => fn({ matches: desktop })); }
 (async function () {

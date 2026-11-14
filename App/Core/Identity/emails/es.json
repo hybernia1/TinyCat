@@ -1,0 +1,12 @@
+{
+  "templates": {
+    "welcome": {
+      "subject": "Bienvenido a {site}",
+      "body": "Hola {username},\n\nBienvenido a {site}. Tu cuenta está lista.\n\nIniciar sesión: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Restablece tu contraseña {site}",
+      "body": "Hola {username},\n\nRecibimos una solicitud para restablecer su contraseña.\n\nRestablecer su contraseña: {reset_url}\n\nEste enlace caduca en 60 minutos. Si no solicitó esto, puede ignorar este correo electrónico.\n\n{signature}"
+    }
+  }
+}

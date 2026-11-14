@@ -1,0 +1,23 @@
+[
+  {
+    "routes": [
+      "admin"
+    ],
+    "entries": [
+      "App/Core/Mail/assets/settings-presentation.js"
+    ],
+    "components": [],
+    "styles": [],
+    "translations": [
+      "settings.fields.email_from",
+      "settings.fields.email_from_name",
+      "settings.fields.email_templates",
+      "settings.fields.smtp",
+      "settings.fields.smtp_encryption",
+      "settings.fields.smtp_host",
+      "settings.fields.smtp_password",
+      "settings.fields.smtp_port",
+      "settings.fields.smtp_username"
+    ]
+  }
+]

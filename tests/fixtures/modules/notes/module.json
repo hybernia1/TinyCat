@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "id": "demo.notes",
+  "coreApi": 1,
+  "namespace": "TinyCat\\Modules\\PilotNotes\\",
+  "requires": ["tinycat.scheduler"],
+  "providers": {
+    "routes": "TinyCat\\Modules\\PilotNotes\\Module",
+    "contributions": "TinyCat\\Modules\\PilotNotes\\Module",
+    "schema": "TinyCat\\Modules\\PilotNotes\\Schema"
+  },
+  "resources": {
+    "translations": "lang",
+    "templates": "templates",
+    "assets": "assets/module.json",
+    "components": "assets/components.json",
+    "migrations": "database/migrations"
+  }
+}

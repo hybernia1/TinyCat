@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const source = fs.readFileSync(path.resolve(__dirname, "../../assets/modules/status/translation.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
+const source = fs.readFileSync(path.resolve(__dirname, "../../assets/ui/content/translation.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
 function node(value = "") {
   return {
     dataset: {}, hidden: false, textContent: value, innerText: value, children: [], attributes: {}, handlers: {},
@@ -23,7 +23,7 @@ async function run() {
   const pairs = [], inputs = [];
   const bodies = ["12345", "!!!", "https://example.com", "#testing @user", "Czech post", "English post", "uncertain"].map(node);
   const detector = { detect: async value => [{ detectedLanguage: value === "Czech post" ? "cs" : "en", confidence: value === "uncertain" ? 0.1 : 0.99 }] };
-  const T = { i18n: { t: key => key, locale: () => interfaceLocale }, dom: { all: () => bodies }, icons: { create: name => ({ name }) }, status: { controllers: {} } };
+  const T = { i18n: { t: key => key, locale: () => interfaceLocale }, dom: { all: () => bodies }, icons: { create: name => ({ name }) }, publishing: { controllers: {} } };
   const window = { TinyCat: T, isSecureContext: false,
     LanguageDetector: { availability: async () => "available", create: async () => detector },
     Translator: { availability: async pair => { pairs.push(pair); return "available"; }, create: async () => ({
@@ -32,10 +32,10 @@ async function run() {
     }) }
   };
   vm.runInNewContext(source, { window, document: { createElement: () => node(), addEventListener() {}, documentElement: { lang: "en" } }, navigator: { language: "en", userActivation: { isActive: true } } });
-  T.status.controllers.translation.hydrate({});
+  T.publishing.controllers.translation.hydrate({});
   assert.ok(bodies.every(body => !body.controls), "HTTP does not offer translation");
   window.isSecureContext = true;
-  T.status.controllers.translation.hydrate({});
+  T.publishing.controllers.translation.hydrate({});
   await flush();
   assert.ok(bodies.slice(0, 4).every(body => !body.controls), "Nonlinguistic posts do not offer translation");
   assert.equal(bodies[4].controls.hidden, true, "Matching interface language is hidden");
@@ -57,7 +57,7 @@ async function run() {
   assert.equal(translations, 1, "Reopening reuses the in-memory translation");
   assert.equal(button.children[0].name, "translate", "Toggling preserves the icon");
   const retry = node("Another English post");
-  bodies.push(retry); T.status.controllers.translation.hydrate({}); await flush();
+  bodies.push(retry); T.publishing.controllers.translation.hydrate({}); await flush();
   fail = true;
   await retry.controls.children[0].handlers.click();
   assert.equal(retry.controls.children[0].disabled, false, "Failure allows retry");
@@ -65,7 +65,7 @@ async function run() {
   assert.equal(retry.controls.children[1].textContent, "account.translation_failed");
   interfaceLocale = "pl";
   const polishView = node("Another English post in the Polish interface");
-  bodies.push(polishView); T.status.controllers.translation.hydrate({}); await flush();
+  bodies.push(polishView); T.publishing.controllers.translation.hydrate({}); await flush();
   assert.equal(polishView.controls.children[2].lang, "pl", "A prefixed Polish interface selects Polish output");
   assert.ok(pairs.some(pair => pair.sourceLanguage === "en" && pair.targetLanguage === "pl"), "Browser translation availability is checked for the URL-selected language");
   const tagged = node("English prose #original-tag # +99");
@@ -78,7 +78,7 @@ async function run() {
     return copy;
   };
   fail = false;
-  bodies.push(tagged); T.status.controllers.translation.hydrate({}); await flush();
+  bodies.push(tagged); T.publishing.controllers.translation.hydrate({}); await flush();
   await tagged.controls.children[0].handlers.click();
   assert.equal(inputs.at(-1), "English prose", "Translation receives neither tags nor disclosure counts");
   console.log("PASS local translation eligibility, target language, original preservation, badge, toggle and failure recovery (21 checks)");

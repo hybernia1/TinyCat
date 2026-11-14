@@ -1,10 +1,13 @@
 <?php
 declare(strict_types=1);
 
+// One file/rollback rehearsal covers both required runtime hops; domain DDL is
+// exercised by the existing module lifecycle and disposable MySQL fixtures.
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 
 $root = dirname(__DIR__, 2);
-require_once $root . '/App/Support/Version.php';
+require_once $root . '/App/Core/Support/Version.php';
 $options = getopt('', ['baseline-version::']);
 $baselineVersion = (string) ($options['baseline-version'] ?? \TinyCat\Support\Version::MINIMUM_UPDATE);
 if ($baselineVersion !== \TinyCat\Support\Version::MINIMUM_UPDATE) {
@@ -17,7 +20,7 @@ $installRoot = $temporaryRoot . '/install';
 $freshRoot = $temporaryRoot . '/fresh';
 $artifactRoot = $temporaryRoot . '/dist';
 $signingKey = $temporaryRoot . '/signing.key';
-require_once $root . '/App/Support/Version.php';
+require_once $root . '/App/Core/Support/Version.php';
 $candidateVersion = \TinyCat\Support\Version::CURRENT;
 $failures = [];
 $managedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
@@ -184,7 +187,7 @@ try {
     $copyTree($root . '/tools/quality/translation-catalogs.php', $candidateRoot . '/tools/quality/translation-catalogs.php');
     $copyTree($root . '/tools/quality/client-translations.php', $candidateRoot . '/tools/quality/client-translations.php');
     $copyTree($root . '/tools/release/update-deletions.json', $candidateRoot . '/tools/release/update-deletions.json');
-    $core = (string) file_get_contents($candidateRoot . '/App/Support/Version.php');
+    $core = (string) file_get_contents($candidateRoot . '/App/Core/Support/Version.php');
 
     if (!str_contains($core, "public const string CURRENT = '{$candidateVersion}';")) {
         throw new RuntimeException('Candidate Version::CURRENT does not match the release rehearsal.');
@@ -204,6 +207,17 @@ try {
     if ($buildExit !== 0) {
         throw new RuntimeException('Rehearsal package build failed: ' . implode(' ', $buildOutput));
     }
+
+    $bridgeSource = $temporaryRoot . '/bridge-source';
+    $bridgeArchive = $root . '/tests/fixtures/releases/bridge-6.0.0-dev.9.1-source.zip';
+    if (hash_file('sha256', $bridgeArchive) !== '9620cebe0f1fb03d6a49673ebc3daef43a54e53800ffdaedc1bdb660cfeb3df5') { throw new RuntimeException('The frozen compatibility fixture changed.'); }
+    $extractZip($bridgeArchive, $bridgeSource);
+    $bridgeArtifacts = $temporaryRoot . '/bridge-artifact';
+    $bridgeBuild = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($bridgeSource . '/tools/release/build-update.php')
+        . ' --version=6.0.0-dev.9.1 --minimum-version=' . escapeshellarg($baselineVersion)
+        . ' --assembly=source --allow-dirty --without-migrations --output=' . escapeshellarg($bridgeArtifacts) . ' --key=' . escapeshellarg($signingKey);
+    exec($bridgeBuild . ' 2>&1', $bridgeOutput, $bridgeExit);
+    if ($bridgeExit !== 0) { throw new RuntimeException('Compatibility bridge build failed: ' . implode(' ', $bridgeOutput)); }
 
     $archiveCommand = 'git -C ' . escapeshellarg($root) . ' archive --format=zip'
         . ' --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion);
@@ -251,7 +265,7 @@ PHP);
     $signaturePath = $artifactRoot . '/tinycat-update.sig';
     $packagePath = $artifactRoot . '/tinycat-' . $candidateVersion . '.zip';
     $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
-    $runner = <<<'PHP'
+    $runnerTemplate = <<<'PHP'
 define('TINYCAT', true);
 $root = __INSTALL_ROOT__;
 require $root . '/App/bootstrap.php';
@@ -278,6 +292,19 @@ echo json_encode([
     'deletions' => count($manifest['delete']),
 ], JSON_THROW_ON_ERROR);
 PHP;
+    $bridgeRunner = str_replace(
+        ['__INSTALL_ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__VERSION__'],
+        [var_export($installRoot, true), var_export($bridgeArtifacts . '/tinycat-update.json', true), var_export($bridgeArtifacts . '/tinycat-update.sig', true), var_export($bridgeArtifacts . '/tinycat-6.0.0-dev.9.1.zip', true), "'6.0.0-dev.9.1'"],
+        $runnerTemplate
+    );
+    [$bridgeExit, $bridgeOutput] = $run($bridgeRunner);
+    if ($bridgeExit !== 0) { throw new RuntimeException('Legacy-to-bridge file update failed: ' . implode(' ', $bridgeOutput)); }
+    $bridgeBoot = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true) . "; if (TinyCat\\Support\\Version::CURRENT !== '6.0.0-dev.9.1') exit(2);";
+    [$bridgeBootExit, $bridgeBootOutput] = $run($bridgeBoot);
+    $assert($bridgeBootExit === 0, 'The supported legacy runtime reaches the compatibility bridge: ' . implode(' ', $bridgeBootOutput));
+    $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash && file_get_contents($installRoot . '/uploads/rehearsal-sentinel.txt') === 'uploads-preserved', 'The first hop preserves local configuration and uploads');
+    $baselineVersion = '6.0.0-dev.9.1';
+    $baselineInventory = $inventory($installRoot);
     $runner = str_replace(
         ['__INSTALL_ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__VERSION__'],
         [
@@ -287,7 +314,7 @@ PHP;
             var_export($packagePath, true),
             var_export($candidateVersion, true),
         ],
-        $runner
+        $runnerTemplate
     );
     [$updateExit, $updateOutput] = $run($runner);
     $updateResult = json_decode(implode("\n", $updateOutput), true);

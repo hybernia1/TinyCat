@@ -6,7 +6,7 @@ use \TinyCat\Http\Request;
 use \TinyCat\Http\Response;
 use \TinyCat\Http\Result;
 
-$api = new Api(static fn (): ?array => \TinyCat\Users\Authentication::auth());
+$api = new Api(static fn (): ?array => \TinyCat\Core\Identity\Authentication::auth());
 $api->get('/foundation/items/{id:[0-9]+}', static fn (Request $request, array $params): Result => new Result(
     ['id' => (int) $params['id'], 'value' => $request->input('value', '<b>literal user text</b>')],
     'Loaded.',

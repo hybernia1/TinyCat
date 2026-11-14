@@ -24,12 +24,30 @@ testů a CI zůstávají platné.
 funkce; nejde ve všech případech o samostatné CLI příkazy. Používej jejich
 runner nebo release builder.
 
+`asset-report.php --check --assembly=platform` ověřuje kombinovaný výběr
+Blog + Social proti stejným rozpočtům. Tuto nadmnožinu kontroluje také
+`tests/assets/budgets.php`; nepřidává druhý úplný build do testovací skupiny.
+
 ## Release, data a měření
+
+Živá instalace `tinycat.test` má root `E:/laragon/www/tinycat`, nikoli tento
+checkout. Provozní CLI patří do externí instalace; u vývojových nástrojů
+ověř podporovaný cílový parametr a skutečný root před datovou operací.
+Lokální konfigurace checkoutu je jen CLI/test odkaz. [Cesty a synchronizace](../docs/development/local-environment.md).
+
+Lokální release kopie drž jen pro poslední tři publikované verze; shodné
+stažené balíčky a pracovní buildy nehromaď. Tato retence nemaže Git historii,
+publikované migrace, klíče, média ani rollback zálohy. Auditní buildy nejsou
+oficiální release. Provedený [úklid a měření](../docs/audits/test-optimization-and-local-cleanup-2026-11-12.md)
+uvádí zachované cesty a výjimky; builder nic nemaže automaticky.
 
 - [Aktualizace a podpisy](../docs/operations/updates.md): `tools/release/build-update.php`,
   `tools/release/update-key.php`, `tools/release/verify-update.php`. Ruční kontrolu existujícího balíčku
   zajišťuje `tools/release/artifact-preflight.php`; produktový MySQL update scénář má
-  `tools/release/release-update-rehearsal.php`. Nejde o běžné bezparametrové kontroly.
+  `tools/release/release-update-rehearsal.php`: předaný artefakt zkouší na samostatné
+  MySQL databázi proti zmrazenému runtime dev.9.1, včetně dat a standardního rollbacku.
+  První kompatibilní krok ze starší 5.x řady ověřuje existující `tests/release/update-rehearsal.php`.
+  Nejde o běžné bezparametrové kontroly.
 - [Import a porovnání verzí](../docs/performance/benchmark.md):
   `tools/data/demo-import.php`, `tools/performance/compare-performance.php`, `tools/performance/scale-benchmark.php`.
 - [HTTP a SQL profilování](../docs/performance/profiling.md):
@@ -48,7 +66,22 @@ For a release, `php tools/release/build-update.php --version=X.Y.Z --both --outp
 prepares signed update/install variants from one compilation. `release/zip-timestamps.php`
 and `release/publish-artifact.php` are internal build helpers, not standalone commands.
 
+`--assembly=blog` sestaví samostatný produkt; `--product=vendor.product` a
+`--active=id1,id2` určují vlastní identitu a výchozí aktivaci. Distribuce,
+produkční CLI `App/Console.php`, migrace a rescue rollback mají společný
+[provozní návod](../docs/operations/module-deployment.md). CLI je součást aplikace,
+nikoli vývojových tools.
+
 ## Struktura
+
+Samostatný modul sestaví `php tools/release/build-module.php
+--module=App/Modules/Blog --version=1.0.0 --output=storage/releases/modules`.
+Vstupem je přímý modulový adresář s manifestem; výstupem ZIP s inventářem,
+checksumy a migrační historií. `--minimum-core` a `--minimum-php` deklarují
+kompatibilitu. Instalaci přes administraci nebo `module-install` popisuje
+[manuál autora](../docs/development/module-authoring.md#8-samostatný-instalační-zip).
+Core bez volitelných modulů sestaví `build-update.php --assembly=core`;
+explicitní `--active=` nastaví prázdný výchozí seznam aktivací.
 
 | Složka | Obsah |
 | --- | --- |

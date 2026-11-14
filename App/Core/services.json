@@ -1,0 +1,208 @@
+[
+  {
+    "directory": "Identity",
+    "metadata": {
+      "format": 1,
+      "coreApi": 1,
+      "id": "tinycat.accounts",
+      "namespace": "TinyCat\\Core\\Identity\\",
+      "requires": [
+        "tinycat.security"
+      ],
+      "providers": {
+        "routes": "TinyCat\\Core\\Identity\\ServiceProvider",
+        "contributions": "TinyCat\\Core\\Identity\\ServiceProvider",
+        "schema": "TinyCat\\Core\\Identity\\ServiceProvider",
+        "services": "TinyCat\\Core\\Identity\\ServiceProvider"
+      },
+      "resources": {
+        "translations": "lang",
+        "templates": "templates",
+        "migrations": "migrations",
+        "assets": "assets/module.json",
+        "components": "assets/components.json",
+        "emails": "emails"
+      }
+    }
+  },
+  {
+    "directory": "Security",
+    "metadata": {
+      "format": 1,
+      "coreApi": 1,
+      "id": "tinycat.security",
+      "namespace": "TinyCat\\Core\\Security\\",
+      "requires": [],
+      "providers": {
+        "routes": "TinyCat\\Core\\Security\\ServiceProvider",
+        "contributions": "TinyCat\\Core\\Security\\ServiceProvider",
+        "schema": "TinyCat\\Core\\Security\\ServiceProvider",
+        "services": "TinyCat\\Core\\Security\\ServiceProvider"
+      },
+      "resources": {
+        "translations": "lang",
+        "migrations": "migrations",
+        "assets": "assets/module.json"
+      }
+    }
+  },
+  {
+    "directory": "Settings",
+    "metadata": {
+      "format": 1,
+      "coreApi": 1,
+      "id": "tinycat.settings",
+      "namespace": "TinyCat\\Core\\Settings\\",
+      "requires": [],
+      "providers": {
+        "routes": "TinyCat\\Core\\Settings\\ServiceProvider",
+        "contributions": "TinyCat\\Core\\Settings\\ServiceProvider",
+        "services": "TinyCat\\Core\\Settings\\ServiceProvider",
+        "schema": "TinyCat\\Core\\Settings\\ServiceProvider"
+      },
+      "resources": {
+        "translations": "lang",
+        "assets": "assets/module.json",
+        "migrations": "migrations"
+      }
+    }
+  },
+  {
+    "directory": "Installation",
+    "metadata": {
+      "format": 1,
+      "coreApi": 1,
+      "id": "tinycat.installation",
+      "namespace": "TinyCat\\Core\\Installation\\",
+      "requires": [
+        "tinycat.accounts",
+        "tinycat.security",
+        "tinycat.settings"
+      ],
+      "providers": {
+        "routes": "TinyCat\\Core\\Installation\\ServiceProvider",
+        "services": "TinyCat\\Core\\Installation\\ServiceProvider"
+      },
+      "resources": {
+        "assets": "assets/module.json",
+        "templates": "templates"
+      }
+    }
+  },
+  {
+    "directory": "Mail",
+    "metadata": {
+      "format": 1,
+      "coreApi": 1,
+      "id": "tinycat.mail",
+      "namespace": "TinyCat\\Core\\Mail\\",
+      "requires": [
+        "tinycat.accounts",
+        "tinycat.settings"
+      ],
+      "providers": {
+        "services": "TinyCat\\Core\\Mail\\ServiceProvider",
+        "routes": "TinyCat\\Core\\Mail\\ServiceProvider",
+        "contributions": "TinyCat\\Core\\Mail\\ServiceProvider"
+      },
+      "resources": {
+        "translations": "lang",
+        "assets": "assets/module.json",
+        "emails": "emails"
+      }
+    }
+  },
+  {
+    "directory": "Notifications",
+    "metadata": {
+      "format": 1,
+      "coreApi": 1,
+      "id": "tinycat.notifications",
+      "namespace": "TinyCat\\Core\\Notifications\\",
+      "requires": [
+        "tinycat.accounts"
+      ],
+      "providers": {
+        "routes": "TinyCat\\Core\\Notifications\\ServiceProvider",
+        "contributions": "TinyCat\\Core\\Notifications\\ServiceProvider",
+        "schema": "TinyCat\\Core\\Notifications\\ServiceProvider"
+      },
+      "resources": {
+        "translations": "lang",
+        "templates": "templates",
+        "assets": "assets/module.json",
+        "components": "assets/components.json",
+        "migrations": "migrations"
+      }
+    }
+  },
+  {
+    "directory": "Tasks",
+    "metadata": {
+      "format": 1,
+      "coreApi": 1,
+      "id": "tinycat.scheduler",
+      "namespace": "TinyCat\\Core\\Tasks\\",
+      "requires": [
+        "tinycat.accounts",
+        "tinycat.settings"
+      ],
+      "providers": {
+        "routes": "TinyCat\\Core\\Tasks\\ServiceProvider",
+        "contributions": "TinyCat\\Core\\Tasks\\ServiceProvider"
+      },
+      "resources": {
+        "translations": "lang",
+        "templates": "templates",
+        "assets": "assets/module.json",
+        "components": "assets/components.json",
+        "entrypoints": "entrypoints",
+        "migrations": "migrations"
+      }
+    }
+  },
+  {
+    "directory": "Health",
+    "metadata": {
+      "format": 1,
+      "coreApi": 1,
+      "id": "tinycat.health",
+      "namespace": "TinyCat\\Core\\Health\\",
+      "requires": [
+        "tinycat.notifications",
+        "tinycat.scheduler",
+        "tinycat.settings"
+      ],
+      "providers": {
+        "routes": "TinyCat\\Core\\Health\\ServiceProvider",
+        "contributions": "TinyCat\\Core\\Health\\ServiceProvider"
+      },
+      "resources": {
+        "translations": "lang",
+        "templates": "templates",
+        "assets": "assets/module.json",
+        "components": "assets/components.json",
+        "componentExtensions": "assets/component-extensions.json"
+      }
+    }
+  },
+  {
+    "directory": "Updates",
+    "metadata": {
+      "format": 1,
+      "coreApi": 1,
+      "id": "tinycat.updates",
+      "namespace": "TinyCat\\Core\\Updates\\",
+      "requires": [],
+      "providers": {
+        "routes": "TinyCat\\Core\\Updates\\ServiceProvider",
+        "contributions": "TinyCat\\Core\\Updates\\ServiceProvider"
+      },
+      "resources": {
+        "translations": "lang",
+        "templates": "templates",
+        "assets": "assets/module.json"
+      }
+    }
+  }
+]

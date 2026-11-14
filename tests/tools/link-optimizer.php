@@ -33,18 +33,18 @@ try {
     foreach ($connections as $driver => $database) {
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         if ($driver === 'sqlite') { $database->exec('PRAGMA foreign_keys = ON'); }
-        $database->exec('CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL)');
-        $database->exec('CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url VARCHAR(2048) NOT NULL, url_hash CHAR(64) NOT NULL UNIQUE, provider VARCHAR(40), link_type VARCHAR(20), title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)');
-        $database->exec('CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, PRIMARY KEY (content_id, link_id), FOREIGN KEY (content_id) REFERENCES content(id), FOREIGN KEY (link_id) REFERENCES links(id))');
+        $database->exec('CREATE TABLE social_posts (id INTEGER PRIMARY KEY, body TEXT NOT NULL)');
+        $database->exec('CREATE TABLE social_links (id INTEGER PRIMARY KEY, normalized_url VARCHAR(2048) NOT NULL, url_hash CHAR(64) NOT NULL UNIQUE, provider VARCHAR(40), link_type VARCHAR(20), title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)');
+        $database->exec('CREATE TABLE social_post_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, PRIMARY KEY (content_id, link_id), FOREIGN KEY (content_id) REFERENCES social_posts(id), FOREIGN KEY (link_id) REFERENCES social_links(id))');
         $database->exec('CREATE TABLE bot_feed_history (item_hash VARCHAR(64) PRIMARY KEY)');
         $database->exec("INSERT INTO bot_feed_history VALUES ('original-guid')");
         $map = "https://www.google.com/maps/place/50%C2%B006'18.5%22N+14%C2%B025'24.3%22E/@50.105135,14.423416,17z";
         $posts = [1 => 'Article https://www.legacy.example/article/', 2 => 'Again https://www.legacy.example/article/',
             3 => 'https://www.distinct.example/item', 4 => 'https://distinct.example/item', 5 => $map,
             6 => 'https://tracking.example/post?utm_source=rss', 7 => 'Invalid saved link', 8 => 'https://fragment.example/page#/route'];
-        $insertPost = $database->prepare('INSERT INTO content VALUES (?, ?)');
+        $insertPost = $database->prepare('INSERT INTO social_posts VALUES (?, ?)');
         foreach ($posts as $id => $body) { $insertPost->execute([$id, $body]); }
-        $insert = $database->prepare('INSERT INTO links (id, normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $insert = $database->prepare('INSERT INTO social_links (id, normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         foreach ([
             [1, 'https://legacy.example/article/', 'Old RSS title', '', ''],
             [2, 'https://www.legacy.example/article/', 'Best RSS title', 'RSS summary', $imageUrl],
@@ -57,11 +57,11 @@ try {
         ] as [$id, $url, $title, $description, $localImage]) {
             $insert->execute([$id, $url, hash('sha256', $url), '', 'web', $title, $description, $localImage, '', '2026-10-27', '2026-10-27']);
         }
-        $database->exec("INSERT INTO content_links VALUES (1, 1, '2026-10-27'), (1, 2, '2026-10-27'), (2, 2, '2026-10-27'), (3, 4, '2026-10-27'), (4, 4, '2026-10-27'), (5, 5, '2026-10-27'), (6, 6, '2026-10-27'), (7, 7, '2026-10-27'), (8, 8, '2026-10-27')");
-        $database->exec("UPDATE links SET audio_url = 'https://93.184.216.34/episode.mp3', link_type = 'audio' WHERE id = 1");
+        $database->exec("INSERT INTO social_post_links VALUES (1, 1, '2026-10-27'), (1, 2, '2026-10-27'), (2, 2, '2026-10-27'), (3, 4, '2026-10-27'), (4, 4, '2026-10-27'), (5, 5, '2026-10-27'), (6, 6, '2026-10-27'), (7, 7, '2026-10-27'), (8, 8, '2026-10-27')");
+        $database->exec("UPDATE social_links SET audio_url = 'https://93.184.216.34/episode.mp3', link_type = 'audio' WHERE id = 1");
         $snapshot = static function () use ($database): array {
             $result = [];
-            foreach (['links' => 'id', 'content_links' => 'content_id, link_id', 'content' => 'id', 'bot_feed_history' => 'item_hash'] as $table => $order) { $result[$table] = $database->query('SELECT * FROM ' . $table . ' ORDER BY ' . $order)->fetchAll(PDO::FETCH_ASSOC); }
+            foreach (['links' => ['social_links', 'id'], 'content_links' => ['social_post_links', 'content_id, link_id'], 'content' => ['social_posts', 'id'], 'bot_feed_history' => ['bot_feed_history', 'item_hash']] as $key => [$table, $order]) { $result[$key] = $database->query('SELECT * FROM ' . $table . ' ORDER BY ' . $order)->fetchAll(PDO::FETCH_ASSOC); }
             return $result;
         };
         $before = $snapshot();
@@ -73,8 +73,8 @@ try {
         try { $optimize($database, true); } catch (RuntimeException) { $refused = true; }
         $assert($refused && $before === $snapshot(), $driver . ': writes require a backup path.');
         $database->exec($driver === 'mysql'
-            ? "CREATE TRIGGER fail_optimizer BEFORE UPDATE ON links FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced optimizer failure'"
-            : "CREATE TRIGGER fail_optimizer BEFORE UPDATE ON links BEGIN SELECT RAISE(ABORT, 'forced optimizer failure'); END");
+            ? "CREATE TRIGGER fail_optimizer BEFORE UPDATE ON social_links FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced optimizer failure'"
+            : "CREATE TRIGGER fail_optimizer BEFORE UPDATE ON social_links BEGIN SELECT RAISE(ABORT, 'forced optimizer failure'); END");
         $failedBackup = $temporary . '/' . $driver . '-failed.json';
         try { $optimize($database, true, $failedBackup); $assert(false, 'Forced failure ignored.'); } catch (PDOException) { $assert($before === $snapshot(), $driver . ': database failure rolls back all staged identities and relations.'); }
         $assert(json_decode((string) file_get_contents($failedBackup), true)['links'] === $before['links'], $driver . ': verified backup predates database writes.');
@@ -85,11 +85,11 @@ try {
         $assert($refused && $before === $snapshot() && hash_file('sha256', $failedBackup) === $backupHash, $driver . ': existing backups are not overwritten.');
         $applied = $optimize($database, true, $temporary . '/' . $driver . '-before.json');
         $after = $snapshot();
-        $assert($database->query('SELECT audio_url FROM links WHERE id = 2')->fetchColumn() === 'https://93.184.216.34/episode.mp3' && $database->query('SELECT link_type FROM links WHERE id = 2')->fetchColumn() === 'audio', $driver . ': merging retains audio from a duplicate and its archive classification.');
+        $assert($database->query('SELECT audio_url FROM social_links WHERE id = 2')->fetchColumn() === 'https://93.184.216.34/episode.mp3' && $database->query('SELECT link_type FROM social_links WHERE id = 2')->fetchColumn() === 'audio', $driver . ': merging retains audio from a duplicate and its archive classification.');
         $assert($after['content'] === $before['content'] && $after['bot_feed_history'] === $before['bot_feed_history'], $driver . ': post bodies and bot GUID history remain byte-for-byte intact.');
-        $assert((int) $database->query('SELECT COUNT(*) FROM content_links WHERE link_id = 2')->fetchColumn() === 2 && count($after['content_links']) === count($before['content_links']) - 1, $driver . ': merging preserves all posts and collapses overlapping relations.');
-        $assert($database->query('SELECT normalized_url FROM links WHERE id = 5')->fetchColumn() === \TinyCat\Status\LinkParser::fromRaw($map)['normalized_url'], $driver . ': legacy coordinate apostrophes are recovered.');
-        $assert($database->query('SELECT normalized_url FROM links WHERE id = 4')->fetchColumn() === 'https://distinct.example/item', $driver . ': conflicting www hosts are not globally merged.');
+        $assert((int) $database->query('SELECT COUNT(*) FROM social_post_links WHERE link_id = 2')->fetchColumn() === 2 && count($after['content_links']) === count($before['content_links']) - 1, $driver . ': merging preserves all posts and collapses overlapping relations.');
+        $assert($database->query('SELECT normalized_url FROM social_links WHERE id = 5')->fetchColumn() === \TinyCat\Core\Text\LinkParser::fromRaw($map)['normalized_url'], $driver . ': legacy coordinate apostrophes are recovered.');
+        $assert($database->query('SELECT normalized_url FROM social_links WHERE id = 4')->fetchColumn() === 'https://distinct.example/item', $driver . ': conflicting www hosts are not globally merged.');
         $again = $optimize($database);
         $assert($again['normalized'] === [] && $again['recovered'] === [] && $again['merged'] === [] && $again['orphans'] === [], $driver . ': a second run has no changes.');
         $optimize($database, true, $temporary . '/' . $driver . '-noop.json');

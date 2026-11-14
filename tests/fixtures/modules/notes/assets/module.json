@@ -1,0 +1,9 @@
+[
+  {
+    "routes": ["/pilot/notes"],
+    "entries": [],
+    "components": ["pilot-notes/list"],
+    "styles": [],
+    "translations": ["pilot_notes.title"]
+  }
+]

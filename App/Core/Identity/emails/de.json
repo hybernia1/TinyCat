@@ -1,0 +1,12 @@
+{
+  "templates": {
+    "welcome": {
+      "subject": "Willkommen bei {site}",
+      "body": "Hallo {username},\n\nWillkommen bei {site}. Ihr Konto ist fertig.\n\nAnmelden: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Setzen Sie Ihr {site}-Passwort zurück",
+      "body": "Hallo {username},\n\nWir haben eine Anfrage zum Zurücksetzen Ihres Passworts erhalten.\n\nSetzen Sie Ihr Passwort zurück: {reset_url}\n\nDieser Link läuft in 60 Minuten ab. Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren.\n\n{signature}"
+    }
+  }
+}

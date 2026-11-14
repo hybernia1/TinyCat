@@ -1,7 +1,0 @@
-import "../../core/modules.js";
-import "./controller.js";
-(function () {
-  "use strict";
-  var TinyCat = window.TinyCat;
-  TinyCat.modules.register("notifications", TinyCat.notifications);
-}());

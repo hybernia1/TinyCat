@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "coreApi": 1,
+  "id": "tinycat.blog",
+  "namespace": "TinyCat\\Blog\\",
+  "requires": [
+    "tinycat.accounts",
+    "tinycat.security",
+    "tinycat.settings",
+    "tinycat.scheduler"
+  ],
+  "providers": {
+    "routes": "TinyCat\\Blog\\Module",
+    "contributions": "TinyCat\\Blog\\Module",
+    "schema": "TinyCat\\Blog\\Module",
+    "services": "TinyCat\\Blog\\Module"
+  },
+  "resources": {
+    "translations": "lang",
+    "templates": "templates",
+    "migrations": "migrations",
+    "assets": "assets/module.json",
+    "components": "assets/components.json"
+  },
+  "distribution": {
+    "product": "tinycat.blog",
+    "legacy": false,
+    "required": [],
+    "artifact": "tinycat-blog"
+  }
+}

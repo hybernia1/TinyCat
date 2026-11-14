@@ -9,8 +9,8 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
     try {
         $mysql = $database->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
         $lock = $apply && $mysql ? ' FOR UPDATE' : '';
-        $rows = $database->query('SELECT * FROM links ORDER BY id' . $lock)->fetchAll(PDO::FETCH_ASSOC);
-        $relations = $database->query('SELECT cl.*, c.body AS optimizer_body FROM content_links cl LEFT JOIN content c ON c.id = cl.content_id ORDER BY cl.content_id, cl.link_id' . $lock)->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $database->query('SELECT * FROM social_links ORDER BY id' . $lock)->fetchAll(PDO::FETCH_ASSOC);
+        $relations = $database->query('SELECT cl.*, c.body AS optimizer_body FROM social_post_links cl LEFT JOIN social_posts c ON c.id = cl.content_id ORDER BY cl.content_id, cl.link_id' . $lock)->fetchAll(PDO::FETCH_ASSOC);
         $references = [];
         foreach ($relations as $relation) { $references[(int) $relation['link_id']][] = $relation; }
         $report = ['mode' => $apply ? 'apply' : 'dry-run', 'links' => count($rows), 'normalized' => [], 'recovered' => [], 'merged' => [], 'orphans' => [], 'uncertain' => []];
@@ -19,7 +19,7 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
         foreach ($rows as $row) {
             $id = (int) $row['id'];
             if (empty($references[$id])) { $report['orphans'][] = $id; continue; }
-            $canonical = \TinyCat\Status\LinkParser::fromRaw((string) $row['normalized_url']);
+            $canonical = \TinyCat\Core\Text\LinkParser::fromRaw((string) $row['normalized_url']);
             if ($canonical === null) { $report['uncertain'][] = ['id' => $id, 'reason' => 'invalid_url']; continue; }
             $targets = [];
             $complete = true;
@@ -27,10 +27,10 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
                 $contentId = (int) $reference['content_id'];
                 if (!isset($bodyLinks[$contentId])) {
                     $bodyLinks[$contentId] = [];
-                    preg_match_all(\TinyCat\Status\LinkParser::pattern(), (string) $reference['optimizer_body'], $matches);
+                    preg_match_all(\TinyCat\Core\Text\LinkParser::pattern(), (string) $reference['optimizer_body'], $matches);
                     foreach ($matches[0] as $raw) {
-                        [$rawUrl] = \TinyCat\Status\LinkParser::splitTail($raw);
-                        $parsed = \TinyCat\Status\LinkParser::fromRaw($rawUrl);
+                        [$rawUrl] = \TinyCat\Core\Text\LinkParser::splitTail($raw);
+                        $parsed = \TinyCat\Core\Text\LinkParser::fromRaw($rawUrl);
                         if ($parsed !== null) { $bodyLinks[$contentId][$parsed['normalized_url']] = $parsed; }
                     }
                 }
@@ -38,8 +38,8 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
                 foreach ($bodyLinks[$contentId] as $url => $candidate) {
                     // The former normalizer removed www and all fragments.
                     $legacyUrl = explode('#', (string) preg_replace('~^(https?://)www\.~i', '$1', $url), 2)[0];
-                    $legacy = \TinyCat\Status\LinkParser::fromRaw($legacyUrl);
-                    $oldMap = \TinyCat\Status\Providers::googleMap($url) !== null && str_contains($url, "'")
+                    $legacy = \TinyCat\Core\Text\LinkParser::fromRaw($legacyUrl);
+                    $oldMap = \TinyCat\Core\Links\Providers::googleMap($url) !== null && str_contains($url, "'")
                         && explode("'", $legacyUrl, 2)[0] === $canonical['normalized_url'];
                     if ($url === $canonical['normalized_url'] || ($legacy['normalized_url'] ?? null) === $canonical['normalized_url'] || $oldMap) { $candidates[$url] = $candidate; }
                 }
@@ -54,7 +54,7 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
                 $report['uncertain'][] = ['id' => $id, 'reason' => 'conflicting_or_missing_post_urls'];
             }
             if ($row['normalized_url'] !== $canonical['normalized_url'] || $row['url_hash'] !== $canonical['url_hash']) { $report['normalized'][] = $id; }
-            $score = (!empty($row['image_url']) && \TinyCat\Status\Links::status_link_image_exists((string) $row['image_url']) ? 8 : 0)
+            $score = (!empty($row['image_url']) && \TinyCat\Social\Content\Links::status_link_image_exists((string) $row['image_url']) ? 8 : 0)
                 + (!empty($row['title']) && $row['title'] !== $canonical['title'] ? 2 : 0)
                 + (!empty($row['description']) && $row['description'] !== $canonical['description'] ? 1 : 0);
             $groups[$canonical['url_hash']][] = ['row' => $row, 'canonical' => $canonical, 'score' => $score];
@@ -77,14 +77,14 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
             if (hash_file('sha256', (string) $backupPath) !== hash('sha256', $json)) { throw new RuntimeException('Backup verification failed.'); }
             $report['backup'] = $backupPath;
             // Stage hashes to avoid unique-key conflicts while identities move or merge.
-            $stage = $database->prepare('UPDATE links SET url_hash = ? WHERE id = ?');
+            $stage = $database->prepare('UPDATE social_links SET url_hash = ? WHERE id = ?');
             $nonce = bin2hex(random_bytes(16));
             foreach ($groups as $group) {
                 foreach ($group as $entry) { $stage->execute([hash('sha256', $nonce . ':' . $entry['row']['id']), $entry['row']['id']]); }
             }
             $attach = $database->prepare($mysql
-                ? 'INSERT INTO content_links (content_id, link_id, created_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE link_id = VALUES(link_id)'
-                : 'INSERT INTO content_links (content_id, link_id, created_at) VALUES (?, ?, ?) ON CONFLICT (content_id, link_id) DO NOTHING');
+                ? 'INSERT INTO social_post_links (content_id, link_id, created_at) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE link_id = VALUES(link_id)'
+                : 'INSERT INTO social_post_links (content_id, link_id, created_at) VALUES (?, ?, ?) ON CONFLICT (content_id, link_id) DO NOTHING');
             foreach ($groups as $group) {
                 $winner = $group[0]['row'];
                 $canonical = $group[0]['canonical'];
@@ -94,20 +94,20 @@ $optimize = static function (PDO $database, bool $apply = false, ?string $backup
                         if (trim((string) ($winner[$field] ?? '')) === '' && !empty($loser[$field])) { $winner[$field] = $loser[$field]; }
                     }
                     foreach ($references[(int) $loser['id']] as $reference) { $attach->execute([$reference['content_id'], $winner['id'], $reference['created_at']]); }
-                    $database->prepare('DELETE FROM content_links WHERE link_id = ?')->execute([$loser['id']]);
-                    $database->prepare('DELETE FROM links WHERE id = ?')->execute([$loser['id']]);
+                    $database->prepare('DELETE FROM social_post_links WHERE link_id = ?')->execute([$loser['id']]);
+                    $database->prepare('DELETE FROM social_links WHERE id = ?')->execute([$loser['id']]);
                 }
                 $values = [$canonical['normalized_url'], $canonical['url_hash'], $winner['title'] ?? '', $winner['description'] ?? '', $winner['image_url'] ?? '', $canonical['video_id'] ?: ($winner['video_id'] ?? '')];
                 $audioColumns = '';
                 if (array_key_exists('audio_url', $group[0]['row'])) {
                     $audioColumns = ', audio_url = ?, link_type = ?';
                     $values[] = $winner['audio_url'] ?? '';
-                    $values[] = \TinyCat\Status\Providers::taxonomy($winner)['link_type'];
+                    $values[] = \TinyCat\Core\Links\Providers::taxonomy($winner)['link_type'];
                 }
                 $values[] = $winner['id'];
-                $database->prepare('UPDATE links SET normalized_url = ?, url_hash = ?, title = ?, description = ?, image_url = ?, video_id = ?' . $audioColumns . ' WHERE id = ?')->execute($values);
+                $database->prepare('UPDATE social_links SET normalized_url = ?, url_hash = ?, title = ?, description = ?, image_url = ?, video_id = ?' . $audioColumns . ' WHERE id = ?')->execute($values);
             }
-            foreach ($report['orphans'] as $id) { $database->prepare('DELETE FROM links WHERE id = ?')->execute([$id]); }
+            foreach ($report['orphans'] as $id) { $database->prepare('DELETE FROM social_links WHERE id = ?')->execute([$id]); }
         }
         $database->commit();
         return $report;

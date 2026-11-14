@@ -5,9 +5,18 @@ const vm = require("node:vm");
 const { execFileSync } = require("node:child_process");
 const fixture = path.resolve(__dirname, "../presentation/fixtures/client-assets-fixture.php");
 let checks = 0;
+let preparedBuild;
+const bundles = new Map();
 function check(value, message) { checks++; assert.ok(value, message); }
 function load(route, locale = "en", compiled = false) {
-  const bundle = JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || "php", [fixture, route, locale, compiled === "min" ? "--compiled-min" : compiled ? "--compiled" : ""], { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }));
+  const key = JSON.stringify([route, locale, compiled]);
+  if (!bundles.has(key)) {
+    const php = process.env.TINYCAT_TEST_PHP || "php";
+    if (compiled && !preparedBuild) preparedBuild = execFileSync(php, [fixture, "--build"], { maxBuffer: 64 * 1024 * 1024 });
+    bundles.set(key, execFileSync(php, [fixture, route, locale, compiled === "min" ? "--compiled-min" : compiled ? "--compiled" : "", compiled ? "--prepared" : ""], { input: compiled ? preparedBuild : undefined, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }));
+  }
+  // Every call still boots a fresh VM; runtime mutations cannot leak between cases.
+  const bundle = JSON.parse(bundles.get(key));
   check(bundle.assets.length === 4 && bundle.styles.length === 1, "Exactly four scripts and one stylesheet: " + route);
   check(new Set(bundle.assets.map(a => a.url)).size === 4, "No duplicate scripts");
   const emptyRoot = { dataset: {}, classList: { add() {}, remove() {}, toggle() {} }, querySelectorAll() { return []; }, querySelector() { return null; } };
@@ -35,10 +44,10 @@ check(bots.definitions.includes("status/composer-body") && !bots.definitions.inc
 check(load("/admin/moderation/reports").T.moderation, "Moderation loads its module");
 check(load("/admin/cron").T.scheduler, "Scheduler loads its module");
 check(load("/admin").T.settings && load("/admin").T.users, "Every admin page includes settings and shared profile dialogs");
-check(load("/admin/updates").sources.includes("assets/modules/updates/index.js") && !load("/admin").sources.includes("assets/modules/updates/index.js"), "The release-notes renderer is scoped to the updates page.");
+check(load("/admin/updates").sources.includes("App/Core/Updates/assets/index.js") && !load("/admin").sources.includes("App/Core/Updates/assets/index.js"), "The release-notes renderer is scoped to the updates page.");
 check(!load("/install").T.status, "Installer boots without public modules");
 check(!users.sources.some(s => s.endsWith("/following.js")), "Administration omits public following controller");
-check(!load("/install").sources.some(s => s.includes("/modules/status/") || s.includes("/ui/ajax-bindings.js")) && load("/install").sources.some(s => s.includes("/ui/form-requests.js") && !s.includes("form-state")), "Installer uses shared API form transport without feed and administration controllers");
+check(!load("/install").sources.some(s => s.includes("/Modules/Social/") || s.includes("/ui/ajax-bindings.js")) && load("/install").sources.some(s => s.includes("/ui/form-requests.js") && !s.includes("form-state")), "Installer uses shared API form transport without feed and administration controllers");
 const schedulerPage = load("/admin/cron/list");
 check(schedulerPage.T.scheduler && schedulerPage.T.dates && schedulerPage.definitions.includes("scheduler/filter-form"), "The scheduler page independently loads date formatting and shared filter components.");
 check(load("/admin/cron/list", "cs").T.i18n.t("common.filters") === "Filtry", "The cron filter modal receives its Czech title in the independently scoped client catalog.");

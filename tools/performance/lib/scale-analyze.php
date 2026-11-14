@@ -65,11 +65,11 @@ try {
 
     $plans = [];
     $planSql = [
-        'feed' => "SELECT c.id FROM content c FORCE INDEX (content_feed_index) INNER JOIN users u ON u.id = c.author_id WHERE u.status = 'active' ORDER BY c.published_at DESC, c.id DESC LIMIT 24",
-        'status_comments' => 'SELECT cc.id, cc.parent_id, cc.user_id, cc.body, cc.created_at, u.username, (SELECT COUNT(*) FROM comment_likes cl WHERE cl.comment_id = cc.id) AS likes_count FROM content_comments cc INNER JOIN users u ON u.id = cc.user_id WHERE cc.content_id = (SELECT content_id FROM content_comments GROUP BY content_id ORDER BY COUNT(*) DESC LIMIT 1) AND u.status = \'active\' ORDER BY cc.created_at ASC, cc.id ASC',
-        'tag' => "SELECT c.id FROM content c INNER JOIN users u ON u.id = c.author_id INNER JOIN content_tags ct ON ct.content_id = c.id INNER JOIN terms t ON t.id = ct.term_id WHERE u.status = 'active' AND t.name = 'benchmark' ORDER BY c.published_at DESC, c.id DESC LIMIT 24",
-        'author' => "SELECT c.id FROM content c INNER JOIN users u ON u.id = c.author_id WHERE u.status = 'active' AND c.author_id = (SELECT author_id FROM content GROUP BY author_id ORDER BY COUNT(*) DESC LIMIT 1) ORDER BY c.published_at DESC, c.id DESC LIMIT 24",
-        'search' => "SELECT c.id FROM content c INNER JOIN users u ON u.id = c.author_id WHERE u.status = 'active' AND MATCH(c.body) AGAINST ('performance' IN NATURAL LANGUAGE MODE) ORDER BY c.published_at DESC, c.id DESC LIMIT 12",
+        'feed' => "SELECT c.id FROM social_posts c FORCE INDEX (content_feed_index) INNER JOIN users u ON u.id = c.author_id WHERE u.status = 'active' ORDER BY c.published_at DESC, c.id DESC LIMIT 24",
+        'status_comments' => 'SELECT cc.id, cc.parent_id, cc.user_id, cc.body, cc.created_at, u.username, (SELECT COUNT(*) FROM social_comment_likes cl WHERE cl.comment_id = cc.id) AS likes_count FROM social_comments cc INNER JOIN users u ON u.id = cc.user_id WHERE cc.content_id = (SELECT content_id FROM social_comments GROUP BY content_id ORDER BY COUNT(*) DESC LIMIT 1) AND u.status = \'active\' ORDER BY cc.created_at ASC, cc.id ASC',
+        'tag' => "SELECT c.id FROM social_posts c INNER JOIN users u ON u.id = c.author_id INNER JOIN social_post_tags ct ON ct.content_id = c.id INNER JOIN social_terms t ON t.id = ct.term_id WHERE u.status = 'active' AND t.name = 'benchmark' ORDER BY c.published_at DESC, c.id DESC LIMIT 24",
+        'author' => "SELECT c.id FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE u.status = 'active' AND c.author_id = (SELECT author_id FROM social_posts GROUP BY author_id ORDER BY COUNT(*) DESC LIMIT 1) ORDER BY c.published_at DESC, c.id DESC LIMIT 24",
+        'search' => "SELECT c.id FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE u.status = 'active' AND MATCH(c.body) AGAINST ('performance' IN NATURAL LANGUAGE MODE) ORDER BY c.published_at DESC, c.id DESC LIMIT 12",
     ];
     foreach ($planSql as $name => $sql) {
         try {

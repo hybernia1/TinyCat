@@ -1,0 +1,7 @@
+[
+  {
+    "routes": ["/admin/updates"],
+    "entries": ["App/Core/Updates/assets/index.js"],
+    "translations": ["updates.changelog"]
+  }
+]

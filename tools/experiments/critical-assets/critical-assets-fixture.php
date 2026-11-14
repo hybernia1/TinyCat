@@ -12,7 +12,7 @@ if (preg_match('/^tinycat_perf_[a-z0-9_]+$/D', $settings['name']) !== 1) { throw
 $root = dirname(__DIR__, 3);
 require __DIR__ . '/../../performance/lib/ProfileServerPool.php';
 $db = new PDO(sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $settings['host'], $settings['port'] ?? 3306, $settings['name']), $settings['user'], $settings['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$id = (int) $db->query("SELECT c.id FROM content c INNER JOIN users u ON u.id = c.author_id WHERE u.status = 'active' AND c.published_at <= NOW() ORDER BY c.published_at DESC, c.id DESC LIMIT 1")->fetchColumn();
+$id = (int) $db->query("SELECT c.id FROM social_posts c INNER JOIN users u ON u.id = c.author_id WHERE u.status = 'active' AND c.published_at <= NOW() ORDER BY c.published_at DESC, c.id DESC LIMIT 1")->fetchColumn();
 mkdir($output, 0775, true); $output = realpath($output);
 $pool = new \TinyCat\Tools\Performance\ProfileServerPool($root, $configPath, $output . '/ssr.jsonl', 1);
 $get = static function (string $path) use ($pool): array {

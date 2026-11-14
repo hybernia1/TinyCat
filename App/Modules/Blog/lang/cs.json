@@ -1,0 +1,45 @@
+{
+  "blog": {
+    "navigation": "Navigace",
+    "home": "Úvod",
+    "editor": "Napsat článek",
+    "title": "Nadpis",
+    "body": "Text článku",
+    "visibility": "Viditelnost",
+    "published": "Publikováno",
+    "hidden": "Skryto",
+    "view": "Zobrazit článek",
+    "empty": "Zatím žádné články.",
+    "older": "Starší články",
+    "not_found": "Článek nebyl nalezen.",
+    "invalid": "Vyplňte nadpis (do 200 znaků) a text (do 60 000 bajtů UTF-8).",
+    "articles": "Články",
+    "scheduled": "Naplánováno",
+    "feeds": {
+      "title": "Zdroje článků",
+      "help": "Import článků bez botího účtu. Nové zdroje ukládají články jako skryté.",
+      "schedule": "Podle intervalu zdroje",
+      "create": "Přidat zdroj článků",
+      "url": "URL feedu",
+      "interval": "Interval kontroly (minuty)",
+      "images": "Importovat obrázky",
+      "checked": "Poslední kontrola",
+      "run": "Spustit import",
+      "preview": "Náhled importu",
+      "preview_empty": "Žádné použitelné položky.",
+      "invalid": "Zkontrolujte název, veřejnou URL feedu, aktivního správce a interval 5 až 43 200 minut. URL uloženého zdroje nelze měnit."
+    },
+    "settings": {
+      "images_enabled": "Povolit obrázky u příspěvků",
+      "images_max_upload_kb": "Maximální velikost obrázku (KB)",
+      "utm_enabled": "UTM u odchozích odkazů",
+      "utm_source": "UTM zdroj",
+      "utm_medium": "UTM médium",
+      "utm_campaign": "UTM kampaň (volitelná)",
+      "blocked_urls": "Blokované weby"
+    },
+    "messages": {
+      "blocked_url": "Tento odkaz není povolen: {host}."
+    }
+  }
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "target": "scheduler/run-detail",
+    "component": "bots/scheduler-run-detail",
+    "data": {
+      "item": {
+        "get": "item"
+      }
+    }
+  },
+  {
+    "target": "publishing/comment-menu",
+    "component": "status/comment-menu",
+    "data": {
+      "item": {
+        "get": "item"
+      },
+      "submit_controller": {
+        "get": "submit_controller"
+      }
+    }
+  }
+]

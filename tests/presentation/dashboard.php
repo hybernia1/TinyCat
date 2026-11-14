@@ -6,23 +6,23 @@ define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/bootstrap.php';
 
-use TinyCat\Site\Dashboard;
-use TinyCat\Site\DashboardViewData;
-use TinyCat\Site\Views;
+use TinyCat\Social\Presentation\Dashboard;
+use TinyCat\Social\Presentation\DashboardViewData;
+use TinyCat\Social\Presentation\Views;
 use TinyCat\Support\Localization;
 
-(new ReflectionProperty(TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
-TinyCat\Users\Authentication::reset(null, true);
+(new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
+TinyCat\Core\Identity\Authentication::reset(null, true);
 Localization::locale('cs');
 $db = new PDO('sqlite::memory:');
 $db->exec('CREATE TABLE users (id INTEGER, username TEXT, role TEXT)');
-$db->exec('CREATE TABLE content (id INTEGER, body TEXT, published_at TEXT)');
-$db->exec('CREATE TABLE content_comments (id INTEGER, content_id INTEGER, user_id INTEGER, body TEXT, created_at TEXT)');
+$db->exec('CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER, body TEXT, published_at TEXT)');
+$db->exec('CREATE TABLE social_comments (id INTEGER, content_id INTEGER, user_id INTEGER, body TEXT, created_at TEXT)');
 $db->exec("INSERT INTO users VALUES (7, 'author<unsafe>', 'user')");
-$post = $db->prepare('INSERT INTO content VALUES (?, ?, ?)');
+$post = $db->prepare('INSERT INTO social_posts (id, body, published_at) VALUES (?, ?, ?)');
 $post->execute([11, str_repeat('Long post <b>body</b> ', 60), '2020-01-01 00:00:00']);
 $post->execute([12, '', '2099-01-01 00:00:00']);
-$insert = $db->prepare('INSERT INTO content_comments VALUES (?, ?, ?, ?, ?)');
+$insert = $db->prepare('INSERT INTO social_comments VALUES (?, ?, ?, ?, ?)');
 for ($id = 1; $id <= 9; $id++) {
     $insert->execute([$id, 11, 7, str_repeat('Comment ' . $id . ' <3 <script>alert(1)</script> ', 40), '2026-10-31 12:00:00']);
 }
@@ -35,11 +35,11 @@ $data['memcachedStats'] = ['servers' => 1, 'version' => '1.6', 'uptime' => 120, 
 $data['opcache'] = ['enabled' => true, 'resettable' => true];
 $data['opcacheStats'] = ['cached_scripts' => 12, 'used_memory' => 2048, 'wasted_memory' => 0, 'hits' => 8, 'misses' => 2];
 $data['opcacheConfig'] = ['max_scripts' => 1000, 'memory_bytes' => 8192, 'validate_timestamps' => true, 'revalidate_freq' => 2, 'file_cache' => false];
-$html = Views::dashboard($data);
+$html = Views::dashboard($data) . TinyCat\Core\Ui\Admin\Diagnostics::render($data);
 
 if (($argv[1] ?? '') === '--fixture') {
     $css = TinyCat\Support\AssetGraph::stylesheet(TinyCat\Support\ClientAssets::sourceStyles('/admin'));
-    $layout = TinyCat\Support\View::render('admin', ['content' => $html, 'actions' => '', 'adminIdentity' => '@admin', 'appName' => 'TinyCat', 'nav' => [], 'siteLogoUrl' => '', 'title' => Localization::t('common.dashboard'), 'authUser' => null, 'profileUrl' => '', 'profileNeedsEmail' => false, 'userMenu' => '', 'settingsEditor' => '', 'titleIcon' => 'dashboard'], $root . '/App/Site/templates');
+    $layout = TinyCat\Support\View::render('shell', ['content' => $html, 'actions' => '', 'adminIdentity' => '@admin', 'appName' => 'TinyCat', 'nav' => [], 'siteLogoUrl' => '', 'title' => Localization::t('common.dashboard'), 'authUser' => null, 'profileUrl' => '', 'profileNeedsEmail' => false, 'userMenu' => '', 'settingsEditor' => '', 'titleIcon' => 'dashboard'], $root . '/App/Core/Ui/Admin/templates');
     echo '<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' . $css . '</style></head><body class="admin-shell-page">' . $layout . '<script>';
     echo 'window.TinyCat={lifecycle:{register(name, service){if(service.init)service.init();if(service.hydrate)service.hydrate(document);}}};';
     foreach (['assets/core/dom.js', 'assets/core/icons.js', 'assets/ui/popovers.js'] as $file) {
@@ -55,14 +55,15 @@ $check = static function (bool $condition, string $message) use (&$checks): void
     if (!$condition) { throw new RuntimeException($message); }
 };
 $model = DashboardViewData::prepare($data);
+$model['cache'] = TinyCat\Core\Ui\Admin\Diagnostics::model($data);
 $check(count($model['comments']) === 8 && $data['recentComments'][0]['id'] === 9, 'Recent comments are bounded and ties are ordered by ID.');
-$check($data['counts']['content'] === 1 && $data['counts']['scheduled_content'] === 1, 'Published and scheduled counts use actual publication times.');
+$check($data['counts']['social_posts'] === 1 && $data['counts']['scheduled_content'] === 1, 'Published and scheduled counts use actual publication times.');
 $check($model['comments'][0]['author_url'] === '/author/7' && $model['comments'][0]['content_url'] === '/status/11', 'Author and post links use the actual records.');
 $check(!str_contains($html, '<script>') && str_contains($html, '@author&lt;unsafe&gt;') && str_contains($html, '&lt;3'), 'User text remains escaped and emoticons are preserved.');
 $doc = new DOMDocument();
 @$doc->loadHTML('<?xml encoding="UTF-8">' . $html);
 $xpath = new DOMXPath($doc);
-$check($xpath->query('//article//h2')->length === 10 && str_contains($html, Localization::t('admin.stats.content')), 'Statistics retain their actual labels through the shared stat card.');
+$check($xpath->query('//article//h2')->length === 6 && str_contains($html, Localization::t('admin.stats.content')), 'Statistics retain their actual labels through the shared stat card.');
 $check($xpath->query('//article//strong[text()="1"]')->length >= 2, 'Published and scheduled statistics show their prepared values.');
 $check($xpath->query('//table[@id="dashboard-comments-table"]/tbody/tr')->length === 8, 'Comments render as table rows.');
 $check($xpath->query('//table/thead/tr/th[@scope="col"]')->length === 4, 'Every column has an accessible heading.');
@@ -75,7 +76,7 @@ $data['recentComments'] = [];
 $data['cache'] = ['available' => false, 'driver' => 'filesystem'];
 $data['memcached'] = ['configured' => false, 'available' => false, 'extension' => false];
 $data['opcache'] = ['enabled' => false, 'resettable' => false];
-$empty = Views::dashboard($data);
+$empty = Views::dashboard($data) . TinyCat\Core\Ui\Admin\Diagnostics::render($data);
 $check(str_contains($empty, Localization::t('admin.no_recent_comments')) && !str_contains($empty, '<table'), 'Empty comments use the shared empty state.');
 $check(!str_contains($empty, '<form') && str_contains($empty, Localization::t('admin.cache.filesystem')) && str_contains($empty, Localization::t('admin.cache.memcached_disabled')), 'Disabled services show the real fallback and do not offer reset.');
 echo 'PASS dashboard data, shared components, safe comments and cache diagnostics (' . $checks . " checks)\n";

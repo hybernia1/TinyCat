@@ -55,6 +55,7 @@ const labels = JSON.parse(require("node:child_process").execFileSync(process.env
 const definitions = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--templates"], { encoding: "utf8" }));
 const document = { addEventListener() {}, querySelector: () => null, body: new Node("body"), createElement: tag => new Node(tag), createElementNS: (_, tag) => new Node(tag), createTextNode: text => new Node("text", text), createDocumentFragment: () => new Node("fragment"), getElementById: id => document.body.querySelector('[id="' + id + '"]') };
 document.documentElement = { dataset: JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/component-parity.php"), "--dates"], { encoding: "utf8" })) };
+document.documentElement.dataset.interfaceRoutes = require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--locale-routes"], { encoding: "utf8" }).trim();
 const window = { innerHeight: 812, innerWidth: 390, clearTimeout() {}, setTimeout() { return 0; }, setInterval() { return 0; }, TinyCat: {}, history: { state: null }, location: new URL("https://tinycat.test/") };
 const context = vm.createContext({ window, document, Node, AbortController, URL, URLSearchParams, console, Set, Element: Node, RadioNodeList: class {}, CustomEvent: class {} });
 const moduleAssets = JSON.parse(require("node:child_process").execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, "tests/presentation/fixtures/asset-graph-fixture.php"), "--all"], { encoding: "utf8", maxBuffer: 8e6 }));
@@ -163,11 +164,11 @@ check(embedModal.getAttribute("role") === "dialog" && embedModal.querySelector("
 check(embedModal.querySelector("textarea").getAttribute("readonly") !== null && embedModal.querySelector("textarea").value === '<iframe title="example"></iframe>', "The embed modal exposes code as selectable text, never interpreted markup.");
 assert.throws(() => T.status.modal(new URL("https://tinycat.test/api/statuses/42/embed"), { data: { frame_url: "https://evil.test/status/42/embed", snippet: "" } }, "foreign-embed"), /Invalid embed preview/);
 
-const socialCard = T.components.render("status/link", { link: { url: "https://facebook.com/ExamplePage/posts/123", title: "Author", description: "Post text", provider: "facebook", provider_name: "Facebook", card_kind: "social", card_icon: "message-circle" } });
+const socialCard = T.components.render("publishing/link", { link: { url: "https://facebook.com/ExamplePage/posts/123", title: "Author", description: "Post text", provider: "facebook", provider_name: "Facebook", card_kind: "social", card_icon: "message-circle" } });
 check(socialCard.querySelector('[data-card-kind="social"]').textContent.includes("Facebook"), "Social cards have a provider header and keep post text local.");
-const audioCard = T.components.render("status/link", { link: { url: "https://open.spotify.com/track/example", title: "Track", provider: "spotify", provider_name: "Spotify", card_kind: "audio", card_icon: "music" } });
+const audioCard = T.components.render("publishing/link", { link: { url: "https://open.spotify.com/track/example", title: "Track", provider: "spotify", provider_name: "Spotify", card_kind: "audio", card_icon: "music" } });
 check(audioCard.querySelector('[data-card-kind="audio"]').querySelectorAll("use").some(icon => icon.getAttribute("href").endsWith("#music")), "Audio cards use the local music icon.");
-const podcastCard = T.components.render("status/link", { link: { url: "https://example.com/episode", title: "Podcast", audio_url: "https://example.com/episode.mp3", card_kind: "audio" } });
+const podcastCard = T.components.render("publishing/link", { link: { url: "https://example.com/episode", title: "Podcast", audio_url: "https://example.com/episode.mp3", card_kind: "audio" } });
 const podcastRoot = podcastCard.querySelector(".status-audio-card");
 check(podcastRoot.querySelectorAll("audio").length === 0 && podcastRoot.querySelectorAll("button").length === 1, "RSS audio uses the same play placeholder as embedded audio.");
 let loadPodcast;
@@ -187,7 +188,7 @@ podcastPlayer.pause = () => stoppedAudio++;
 podcastPlayer.load = () => releasedAudio++;
 mediaController.dispose({ querySelectorAll: () => [podcastPlayer] });
 check(stoppedAudio === 1 && releasedAudio === 1, "Disposing replaced content stops native playback and releases its media request.");
-const reelCard = T.components.render("status/link", { link: { url: "https://facebook.com/reel/123456789", title: "Reel", provider: "facebook", provider_name: "Facebook", card_kind: "reel", embed_url: "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F123456789", embed_origin: "https://www.facebook.com", embed_width_param: "width", embed_allowed: true } });
+const reelCard = T.components.render("publishing/link", { link: { url: "https://facebook.com/reel/123456789", title: "Reel", provider: "facebook", provider_name: "Facebook", card_kind: "reel", embed_url: "https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F123456789", embed_origin: "https://www.facebook.com", embed_width_param: "width", embed_allowed: true } });
 const reelRoot = reelCard.querySelector('[data-card-kind="reel"]');
 reelRoot.getBoundingClientRect = () => ({ width: 320 });
 let loadReel;
@@ -196,7 +197,7 @@ mediaController.initStatusVideoRoot(reelRoot);
 check(reelRoot.querySelectorAll("iframe").length === 0, "Facebook reels never load an external player during card initialization.");
 loadReel();
 check(new URL(reelRoot.querySelector("iframe").src).searchParams.get("width") === "320" && reelRoot.querySelector("a").getAttribute("href").includes("/reel/"), "Facebook reel players fit the card width and retain their source link after clicking.");
-const soundcloudCard = T.components.render("status/link", { link: { url: "https://soundcloud.com/forss/flickermood", title: "Flickermood", provider: "soundcloud", provider_name: "SoundCloud", card_kind: "audio", embed_url: "https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fforss%2Fflickermood&auto_play=false", embed_origin: "https://w.soundcloud.com", embed_autoplay_param: "auto_play", embed_autoplay_value: "true", embed_height: 166, embed_allowed: true } });
+const soundcloudCard = T.components.render("publishing/link", { link: { url: "https://soundcloud.com/forss/flickermood", title: "Flickermood", provider: "soundcloud", provider_name: "SoundCloud", card_kind: "audio", embed_url: "https://w.soundcloud.com/player/?url=https%3A%2F%2Fsoundcloud.com%2Fforss%2Fflickermood&auto_play=false", embed_origin: "https://w.soundcloud.com", embed_autoplay_param: "auto_play", embed_autoplay_value: "true", embed_height: 166, embed_allowed: true } });
 const soundcloudRoot = soundcloudCard.querySelector('[data-card-kind="audio"]');
 let loadSoundcloud;
 soundcloudRoot.querySelector("button").addEventListener = (event, callback) => { if (event === "click") loadSoundcloud = callback; };
@@ -207,7 +208,7 @@ const soundcloudFrame = soundcloudRoot.querySelector("iframe"), soundcloudUrl = 
 check(soundcloudUrl.searchParams.get("auto_play") === "true" && !soundcloudUrl.searchParams.has("autoplay") && soundcloudFrame.height === "166", "Audio players use their provider's autoplay parameter and compact height.");
 check(soundcloudRoot.querySelector("a") !== null && soundcloudFrame.allow === "autoplay" && !soundcloudFrame.allowFullscreen, "Audio playback preserves the source link without requesting video-only permissions.");
 check(soundcloudRoot.className.includes("status-audio-card") && soundcloudRoot.querySelector(".status-link-copy").textContent.includes("Flickermood"), "SoundCloud retains the same audio summary as RSS after playback starts.");
-const spotifyCard = T.components.render("status/link", { link: { url: "https://open.spotify.com/track/1234567890123456789012", title: "Spotify track", card_kind: "audio", embed_allowed: true, provider: "spotify", provider_name: "Spotify" } });
+const spotifyCard = T.components.render("publishing/link", { link: { url: "https://open.spotify.com/track/1234567890123456789012", title: "Spotify track", card_kind: "audio", embed_allowed: true, provider: "spotify", provider_name: "Spotify" } });
 check(spotifyCard.querySelectorAll(".status-audio-card").length === 1 && spotifyCard.querySelectorAll(".status-link-copy").length === 1 && spotifyCard.querySelectorAll("audio").length === 0, "Spotify uses the shared audio card with its provider player.");
 const sortHeading = T.components.render("ui/sort-heading", {
   label: "Name <safe>", order: { url: "/api/users?sort=username&direction=desc&page=1", history: "/admin/users?sort=username&direction=desc&page=1", target: "#users-list", ascending: true, descending: false }
@@ -358,7 +359,7 @@ const avatarSave = avatarDialog.querySelector('[data-avatar-save]');
 check(avatarSave.getAttribute("form") === avatarDialog.querySelector('form').id && avatarSave.getAttribute("disabled") !== null, "Avatar save belongs to the upload form and starts disabled until a file is ready.");
 const existingAvatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar.webp" } } }, "avatar-existing-fixture");
 check(existingAvatarDialog.querySelector('.avatar-editor-remove') && !existingAvatarDialog.querySelector('.avatar-editor-remove').className.split(/\s+/).includes('btn-primary'), "Avatar removal is a secondary action in the common footer.");
-const generatedAvatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar/generated/v1/2.svg", avatar_custom: false }, appearance_options: JSON.parse(fs.readFileSync(path.join(root, "App/Users/avatar-options.json"), "utf8")) } }, "avatar-generated-fixture");
+const generatedAvatarDialog = T.users.modal(new URL("https://tinycat.test/api/users/2/avatar"), { data: { user: { ...user, avatar_url: "/avatar/generated/v1/2.svg", avatar_custom: false }, appearance_options: JSON.parse(fs.readFileSync(path.join(root, "App/Core/Identity/avatar-options.json"), "utf8")) } }, "avatar-generated-fixture");
 check(generatedAvatarDialog.querySelector('[data-avatar-upload-preview]').getAttribute('src') === '/avatar/generated/v1/2.svg' && !generatedAvatarDialog.querySelector('.avatar-editor-remove'), "Generated avatars appear in the preview and cannot be removed as custom uploads.");
 check(generatedAvatarDialog.querySelector('[data-avatar-appearance-form]') && !existingAvatarDialog.querySelector('[data-avatar-appearance-form]'), "Only generated avatars offer the appearance editor.");
 check(generatedAvatarDialog.querySelector('[data-avatar-gender]') && generatedAvatarDialog.querySelector('[name="appearance"]'), "Gender edits submit a versioned appearance JSON object.");

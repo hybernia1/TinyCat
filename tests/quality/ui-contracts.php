@@ -61,7 +61,7 @@ try {
 
 $owners = [];
 foreach (ClientAssets::manifests() as $file) {
-    $expectedDirectory = str_replace('\\', '/', dirname($file)) . '/styles/';
+    $expectedDirectory = str_replace('\\', '/', dirname($file)) . '/';
     foreach (json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) as $feature) {
         foreach ($feature['styles'] ?? [] as $style) {
             $absolute = str_replace('\\', '/', \TinyCat\Support\Paths::basePath($style));
@@ -77,19 +77,20 @@ $assertStyle = static function (string $route, string $style, bool $expected) us
     if (in_array($style, ClientAssets::sourceStyles($route), true) !== $expected) { throw new RuntimeException('Wrong CSS scope: ' . $route . ' -> ' . $style); }
     $checks++;
 };
-foreach (['/', '/admin/users'] as $route) { $assertStyle($route, 'assets/modules/users/styles/avatar-upload.css', true); }
-foreach (['/', '/admin/moderation'] as $route) { $assertStyle($route, 'assets/modules/status/styles/author-meta.css', true); }
+foreach (['/', '/admin/users'] as $route) { $assertStyle($route, 'App/Core/Identity/assets/styles/avatar-upload.css', true); }
+foreach (['/', '/admin/moderation'] as $route) { $assertStyle($route, 'App/Modules/Social/assets/status/styles/author-meta.css', true); }
 foreach (['/admin', '/install'] as $route) {
-    $assertStyle($route, 'assets/modules/status/styles/home-feed.css', false);
-    $assertStyle($route, 'assets/modules/search/styles/global-search.css', false);
-    $assertStyle($route, 'assets/modules/site/styles/sidebar-lists.css', false);
+    $assertStyle($route, 'App/Modules/Social/assets/status/styles/home-feed.css', false);
+    $assertStyle($route, 'assets/ui/styles/global-search.css', false);
+    $assertStyle($route, 'App/Modules/Social/assets/site/styles/sidebar-lists.css', false);
 }
-foreach (['/', '/admin'] as $route) { $assertStyle($route, 'assets/modules/installation/styles/install-steps.css', false); }
-$assertStyle('/install', 'assets/modules/installation/styles/install-steps.css', true);
-$assertStyle('/install', 'assets/modules/installation/styles/install-steps-desktop.css', true);
+foreach (['/', '/admin'] as $route) { $assertStyle($route, 'App/Core/Installation/assets/styles/install-steps.css', false); }
+$assertStyle('/install', 'App/Core/Installation/assets/styles/install-steps.css', true);
+$assertStyle('/install', 'App/Core/Installation/assets/styles/install-steps-desktop.css', true);
 foreach (['/install', '/admin/site-health', '/admin/updates'] as $route) { $assertStyle($route, 'assets/ui/styles/result-list.css', true); }
-foreach (['/', '/admin'] as $route) { $assertStyle($route, 'assets/modules/installation/styles/install-choices.css', false); }
-foreach (['/admin', '/install'] as $route) { $assertStyle($route, 'assets/modules/users/styles/user-menu.css', false); }
+foreach (['/', '/admin'] as $route) { $assertStyle($route, 'App/Core/Installation/assets/styles/install-choices.css', false); }
+$assertStyle('/admin', 'App/Core/Identity/assets/styles/user-menu.css', true);
+$assertStyle('/install', 'App/Core/Identity/assets/styles/user-menu.css', false);
 foreach (['/', '/install'] as $route) { $assertStyle($route, 'assets/ui/styles/navbar.css', true); }
-$assertStyle('/', 'assets/modules/users/styles/user-menu.css', true);
+$assertStyle('/', 'App/Core/Identity/assets/styles/user-menu.css', true);
 echo "PASS UI catalogs, dependencies, style ownership and delivery scopes ({$result['components']} components, {$checks} checks)\n";

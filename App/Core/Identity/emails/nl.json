@@ -1,0 +1,12 @@
+{
+  "templates": {
+    "welcome": {
+      "subject": "Welkom bij {site}",
+      "body": "Hallo {username},\n\nWelkom bij {site}. Uw account is klaar.\n\nInloggen: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Reset uw {site} wachtwoord",
+      "body": "Hallo {username},\n\nWij hebben een verzoek ontvangen om uw wachtwoord opnieuw in te stellen.\n\nReset uw wachtwoord: {reset_url}\n\nDeze link verloopt over 60 minuten. Als u dit niet heeft aangevraagd, kunt u deze e-mail negeren.\n\n{signature}"
+    }
+  }
+}

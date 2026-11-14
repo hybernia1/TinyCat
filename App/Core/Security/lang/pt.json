@@ -1,0 +1,19 @@
+{
+  "security": {
+    "captcha_label": "Verificação de segurança"
+  },
+  "auth": {
+    "invalid_captcha": "A verificação de segurança não passou."
+  },
+  "settings": {
+    "fields": {
+      "captcha_site_key": "Chave do site",
+      "captcha_secret_key": "Chave secreta",
+      "captcha_enabled": "Proteção CAPTCHA",
+      "captcha_login_attempts": "Falha no login antes do CAPTCHA",
+      "captcha_secret_key_help": "Deixe em branco para manter a chave secreta salva. Nunca mais é mostrado.",
+      "captcha_provider_help": "Escolha o provedor cuja chave de site e chave secreta estão configuradas abaixo.",
+      "captcha_provider": "Provedor CAPTCHA"
+    }
+  }
+}

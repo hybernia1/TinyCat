@@ -1,0 +1,44 @@
+{
+  "templates": {
+    "notification_content_like": {
+      "subject": "{actor} polubił Twój post",
+      "body": "{actor} polubił Twój post.\n\nZobacz wpis: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} skomentował Twój post",
+      "body": "{actor} skomentował Twój post.\n\nZobacz rozmowę: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} polubił Twój komentarz",
+      "body": "{actor} polubił Twój komentarz.\n\nZobacz rozmowę: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_follow": {
+      "subject": "{actor} podążał za tobą",
+      "body": "{actor} podążał za tobą.\n\nZobacz ich profil: {actor_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} wspomniał o Tobie",
+      "body": "{actor} wspomniał o Tobie w poście.\n\nZobacz wpis: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} wspomniał o Tobie",
+      "body": "{actor} wspomniał o Tobie w komentarzu.\n\nZobacz rozmowę: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_resolved": {
+      "subject": "Twój raport został rozwiązany",
+      "body": "Twoje zgłoszenie zostało rozpatrzone przez zespół moderacyjny.\n\nWyświetl zgłoszoną treść: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_dismissed": {
+      "subject": "Twoje zgłoszenie zostało odrzucone",
+      "body": "Twój raport został sprawdzony i odrzucony przez zespół moderacyjny.\n\nWyświetl zgłoszoną treść: {content_url}\n\n{signature}",
+      "channel": "notifications"
+    }
+  }
+}

@@ -255,6 +255,11 @@ import "./tabs.js";
       if (!dirtyForms(document).length) { return; }
       event.preventDefault(); TinyCat.navigation.go(url.href);
     });
+    document.addEventListener("submit", function (event) {
+      var form = event.target;
+      if (!form.dataset || form.dataset.dirty !== "true" || "ajaxForm" in form.dataset) { return; }
+      Promise.resolve().then(function () { if (!event.defaultPrevented) { markFormClean(form); } });
+    });
     window.addEventListener("beforeunload", function (event) {
       if (!discarding && dirtyForms(document).length) { event.preventDefault(); event.returnValue = ""; }
     });

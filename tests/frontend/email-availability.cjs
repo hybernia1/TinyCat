@@ -10,7 +10,7 @@ const input = { value: "", name: "email", dataset: { emailCheckUrl: "/api/users/
   getAttribute(name) { return this.attrs[name] || ""; }, setAttribute(name, value) { this.attrs[name] = value; }, removeAttribute(name) { delete this.attrs[name]; },
   addEventListener(name, callback) { this.handlers[name] = callback; }, removeEventListener(name) { delete this.handlers[name]; } };
 const root = { querySelectorAll: () => [input] };
-vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/modules/users/email-availability.js"), "utf8").replace(/^import .*;$/mg, ""), { window: { TinyCat: T }, document, WeakMap, AbortController, setTimeout: callback => { const id = ++timerId; tasks.set(id, callback); return id; }, clearTimeout: id => tasks.delete(id) });
+vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../App/Core/Identity/assets/email-availability.js"), "utf8").replace(/^import .*;$/mg, ""), { window: { TinyCat: T }, document, WeakMap, AbortController, setTimeout: callback => { const id = ++timerId; tasks.set(id, callback); return id; }, clearTimeout: id => tasks.delete(id) });
 async function runTimer() { const callbacks = [...tasks.values()]; tasks.clear(); callbacks.forEach(callback => callback()); await Promise.resolve(); }
 async function settle() { await Promise.resolve(); await Promise.resolve(); }
 (async () => {

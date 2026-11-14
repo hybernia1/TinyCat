@@ -2,17 +2,5 @@
 declare(strict_types=1);
 
 return [
-    \TinyCat\Installation\Module::class,
-    \TinyCat\Users\Module::class,
-    \TinyCat\Notifications\Module::class,
-    \TinyCat\Status\Module::class,
-    \TinyCat\Bots\Module::class,
-    \TinyCat\Settings\Module::class,
-    \TinyCat\Moderation\Module::class,
-    \TinyCat\Search\Module::class,
-    \TinyCat\Security\Module::class,
-    \TinyCat\Scheduler\Module::class,
-    \TinyCat\Health\Module::class,
-    \TinyCat\Updates\Module::class,
-    \TinyCat\Site\Module::class,
+    'tinycat.social' => 'App/Modules/Social/module.json',
 ];

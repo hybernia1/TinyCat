@@ -7,7 +7,7 @@ const T = { dom: { find: (_, scope) => scope === section ? feed : null, all: () 
   content: { replaceChildren() {}, remove() {} }, navigation: { compact: url => url.pathname + url.search }, i18n: {}, notifications: {} };
 const window = { TinyCat: T, location: new URL("https://tinycat.test/"), clearTimeout() {} };
 const context = vm.createContext({ window, document: {}, URL, AbortController });
-for (const file of ["core/request-lifecycle.js", "modules/status/controller.js", "modules/status/feed-loader.js"]) vm.runInContext(fs.readFileSync(path.join(__dirname, "../../assets/", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
+for (const file of ["assets/core/request-lifecycle.js", "App/Modules/Social/assets/status/controller.js", "App/Modules/Social/assets/status/feed-loader.js"]) vm.runInContext(fs.readFileSync(path.join(__dirname, "../../", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context);
 T.status.fragment = () => ({ content: {} });
 const C = T.status.controllers.feed;
 const old = C.statusFeedStartRequest(feed, "more");

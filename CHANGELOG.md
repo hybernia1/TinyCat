@@ -1,5 +1,15 @@
 # Changelog
 
+## 6.0.0 - 2026-11-14
+
+- Separate the mandatory framework from independently selectable Social and Blog modules. Core owns identity, security, settings, notifications, mail, tasks, diagnostics, installation and updates; functional modules own their registration, resources and domain data.
+- Give Blog and Social independent publication, discussion, reaction, taxonomy, link and media tables, ID spaces and foreign keys. Preserve existing IDs, public URLs, revision history, attachments and feed GUIDs through explicit owner migrations.
+- Add signed product distributions and module ZIPs, administration and CLI lifecycle operations, inactive-owner upgrades, shared locking, snapshots, interruption recovery and rollback. Preserve installed inactive owners during account and file-reference cleanup.
+- Share technical text, feed, link, file and UI mechanisms without mandatory publication tables in core. Keep registration lazy, discovery explicit, API authorization and query budgets intact, and Blog and Social usable together or independently.
+- Repair fresh-install schema registration and restartable index repair in modular artifacts, and validate release baselines against the signed descriptor format.
+- Require the signed 6.0.0-dev.9.1 compatibility bridge before the 6.0.0 data conversion. Historical migration files and checksums remain unchanged; configuration, uploads and runtime storage remain outside managed packages.
+- Verify the full 88-group preflight, extracted signed artifact installation and representative MySQL conversion/rollback. Local Memcached integration and the symlink-escape fixture require their unavailable environment capabilities.
+
 ## 5.22.2 - 2026-11-11
 
 - Reduce release-build work with build-scoped asset/import snapshots, component and translation-key selection, one JS declaration scan per source, and deduplicated minification. Fresh builds still validate all modal, popover, UI and language contracts; caches are discarded after each build, including failures.

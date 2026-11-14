@@ -1,6 +1,8 @@
 # One-off link optimization package
 
-This separate maintenance package is for TinyCat 4.8.0 and newer. Its script is
+This maintenance tool targets the current Social module and its `social_links`,
+`social_post_links` and `social_posts` tables. It does not modify Blog data.
+Historical 4.x/5.x deployments require the matching historical tool. Its script is
 not included in normal update or installation packages and has no web route,
 scheduler entry or administration UI. Run it from outside the web root and remove
 the extracted package after the optimization window. Keep the private backup.

@@ -10,7 +10,7 @@ $assert = static function (bool $condition, string $message) use (&$checks, &$fa
 };
 
 foreach (['Http/Api', 'Http/Router', 'Http/Request', 'Http/Response', 'Http/Middleware', 'Http/Session', 'Http/Validator', 'Database/Connection', 'Database/Query', 'Database/Transactions', 'Support/Config', 'Support/Values', 'Security/Csrf'] as $owner) {
-    $path = $root . '/App/' . $owner . '.php';
+    $path = $root . '/App/Core/' . $owner . '.php';
     $assert(is_file($path), 'Missing infrastructure owner: ' . $owner);
     $source = (string) file_get_contents($path);
     $assert(preg_match('/\b(?:Core::|use Core;|use TinyCat\\\\(?:Users|Status|Notifications|Bots|Moderation)\\\\)/', $source) !== 1, 'Infrastructure depends on a domain or the legacy Core: ' . $owner);
@@ -20,26 +20,36 @@ foreach (['Http/Api', 'Http/Router', 'Http/Request', 'Http/Response', 'Http/Midd
 foreach (['Core.php', 'functions.php', 'Api.php', 'Bots.php', 'BotAdmin.php', 'Notifications.php', 'PackageManager.php'] as $legacy) {
     $assert(!is_file($root . '/App/' . $legacy), 'Removed central adapter must stay absent: ' . $legacy);
 }
+$assert(!is_dir($root . '/App/Composition'), 'Composition directory must not exist');
 $moduleList = (string) file_get_contents($root . '/App/modules.php');
 $assert(!preg_match('/\b(?:glob|scandir|discover|unserialize)\s*\(/', $moduleList), 'Built-in modules must be explicit, without plugin discovery.');
 
-foreach (glob($root . '/App/*/Api.php') ?: [] as $path) {
-    if (str_replace('\\', '/', $path) === $root . '/App/Http/Api.php') { continue; }
+foreach (glob($root . '/App/Modules/*/src/Api.php') ?: [] as $path) {
+    if (str_replace('\\', '/', $path) === $root . '/App/Core/Http/Api.php') { continue; }
     $source = (string) file_get_contents($path);
     $assert(!preg_match('/\b(?:render|part|layout)\s*\(|ViewData/', $source), 'Module API imports presentation logic: ' . $path);
     $assert(!str_contains($source, 'legacyPresentation') && !str_contains($source, 'legacyAliases'), 'Module API uses the legacy presentation escape hatch: ' . $path);
 }
 
-foreach (['Users', 'Notifications', 'Status', 'Bots', 'Settings', 'Moderation', 'Search', 'Security', 'Scheduler', 'Updates', 'Site'] as $owner) {
-    $assert(str_contains($moduleList, 'TinyCat\\' . $owner . '\\Module::class'), 'Missing built-in module: ' . $owner);
-    $source = (string) file_get_contents($root . '/App/' . $owner . '/Module.php');
-    $assert(str_contains($source, 'Api::register($api)'), 'Module owns its API registration: ' . $owner);
+$assert((require $root . '/App/modules.php') === ['tinycat.social' => 'App/Modules/Social/module.json'], 'Source selects one Social module');
+$available = require $root . '/App/available-modules.php';
+$assert(array_keys($available) === ['tinycat.social', 'tinycat.blog'], 'Only functional modules are available for activation');
+$framework = json_decode((string) file_get_contents($root . '/App/Core/services.json'), true, 512, JSON_THROW_ON_ERROR);
+foreach ($framework as $entry) {
+    $assert(!isset($available[$entry['metadata']['id']]), 'Framework capability is not a selectable module');
+    $assert(is_file($root . '/App/Core/' . $entry['directory'] . '/ServiceProvider.php'), 'Framework registration belongs to core');
 }
+foreach (['Social', 'Blog'] as $owner) {
+    $assert(is_file($root . '/App/Modules/' . $owner . '/module.json') && is_file($root . '/App/Modules/' . $owner . '/src/Module.php'), 'Functional module has one manifest and initialization');
+}
+$assert(count(glob($root . '/App/Modules/*/module.json') ?: []) === 2, 'No hidden independently selectable Social fragments or framework manifests');
+$securityModule = (string) file_get_contents($root . '/App/Core/Security/ServiceProvider.php');
+$assert(!str_contains($securityModule, 'Api::register') && !str_contains($securityModule, 'Search\\'), 'Technical Security does not activate consumer challenge routes');
 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/App', FilesystemIterator::SKIP_DOTS)) as $file) {
     if ($file->getExtension() !== 'php') { continue; }
     $source = (string) file_get_contents($file->getPathname());
-    if (str_replace('\\', '/', $file->getPathname()) !== str_replace('\\', '/', $root . '/App/Status/PostCreation.php')) {
-        $assert(!preg_match('/\b(?:insert\s*\(\s*[\'"]content[\'"]|INSERT\s+INTO\s+[`"]?content\b)/i', $source), 'New posts must use Status/PostCreation: ' . $file->getPathname());
+    if (str_replace('\\', '/', $file->getPathname()) !== str_replace('\\', '/', $root . '/App/Modules/Social/src/Content/PostCreation.php')) {
+        $assert(!preg_match('/\b(?:insert\s*\(\s*[\'"]content[\'"]|INSERT\s+INTO\s+[`"]?content\b)/i', $source), 'New posts must use Publishing/PostCreation: ' . $file->getPathname());
     }
     $assert(!preg_match('/(?:Core::|use Core;|\bwants_partial\s*\(|\bapi_payload\s*\(|X_TINYCAT_VIEW|legacyPresentation|legacyAliases)/', $source), 'Removed adapter or HTML negotiation remains: ' . $file->getPathname());
     $assert(!preg_match('/^function &?\w+\(/m', $source), 'Application globals must have a module owner: ' . $file->getPathname());

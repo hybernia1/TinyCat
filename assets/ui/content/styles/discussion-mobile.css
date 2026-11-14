@@ -1,0 +1,12 @@
+@media (max-width: 759px) {
+
+.status-comment-form,
+  .status-comment-form.is-reply {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+.status-comment.is-child {
+    margin-left: 10px;
+  }
+
+}

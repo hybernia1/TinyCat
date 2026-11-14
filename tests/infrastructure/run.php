@@ -8,7 +8,7 @@ use \TinyCat\Database\Query;
 use \TinyCat\Database\Transactions;
 use \TinyCat\Http\Request;
 use \TinyCat\Http\Router;
-use \TinyCat\Security\Csrf;
+use \TinyCat\Core\Security\Csrf;
 use \TinyCat\Http\Session;
 
 define('TINYCAT', true);
@@ -62,14 +62,14 @@ $assert(Session::withoutLock(static fn (): bool => session_status() !== PHP_SESS
 $assert(session_status() === PHP_SESSION_ACTIVE, 'The session is reopened after slow operations.');
 $throws(static fn () => Session::withoutLock(static function (): never { throw new RuntimeException('I/O failure'); }), RuntimeException::class);
 $assert(session_status() === PHP_SESSION_ACTIVE, 'The session is reopened after a failed operation.');
-$assert(\TinyCat\Security\Csrf::token() === Csrf::token(), 'Legacy and module routes share exactly one CSRF token.');
-$assert(Csrf::verify(\TinyCat\Security\Csrf::token()) && !Csrf::verify('incorrect'), 'CSRF verification belongs to shared security infrastructure.');
+$assert(\TinyCat\Core\Security\Csrf::token() === Csrf::token(), 'Legacy and module routes share exactly one CSRF token.');
+$assert(Csrf::verify(\TinyCat\Core\Security\Csrf::token()) && !Csrf::verify('incorrect'), 'CSRF verification belongs to shared security infrastructure.');
 \TinyCat\Http\Session::flash('foundation', 'once');
 $assert(Session::flash('foundation') === 'once' && \TinyCat\Http\Session::flash('foundation') === null, 'Flash state is consumed once across the compatibility boundary.');
 
 if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     $database = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+    \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     $assert(Connection::get() === $database && \TinyCat\Database\Connection::get() === $database, 'Core and modules share one PDO connection.');
     Connection::exec('CREATE TABLE records (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL)');
     $id = Connection::insert('records', ['name' => 'first']);

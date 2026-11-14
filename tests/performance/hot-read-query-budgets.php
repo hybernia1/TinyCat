@@ -74,16 +74,17 @@ function runScenario(string $scenario): void
     define('TINYCAT', true);
     require_once $root . '/App/autoload.php';
 require_once $root . '/App/autoload.php';
-    require_once $root . '/App/Users/Avatar.php';
-    require_once $root . '/App/Status/ImageStorage.php';
-    require_once $root . '/App/Status/LinkParser.php';
-    require_once $root . '/App/Status/Metadata.php';
-    require_once $root . '/App/Users/Roles.php';
+    require_once $root . '/App/Modules/Social/src/Profiles/Avatar.php';
+    require_once $root . '/App/Modules/Social/src/Content/ImageStorage.php';
+    require_once $root . '/App/Core/Text/LinkParser.php';
+    require_once $root . '/App/Core/Links/Metadata.php';
+    require_once $root . '/App/Modules/Social/src/Profiles/Roles.php';
 
     $database = new QueryCountingPdo('sqlite::memory:');
     $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     configureTestCore($database);
+    \TinyCat\Core\Modules\Loader::load(\TinyCat\Support\Paths::basePath())->initialize();
     createFixture($database);
 
     $_GET = [];
@@ -107,7 +108,7 @@ require_once $root . '/App/autoload.php';
     match ($scenario) {
         'feed' => exerciseFeed(),
         'status' => exerciseStatus(),
-        'json-feed' => \TinyCat\Status\Resource::posts(\TinyCat\Status\Feed::public_status_items_cursor(20), \TinyCat\Users\Authentication::auth()),
+        'json-feed' => \TinyCat\Social\Posts\Resource::posts(\TinyCat\Social\Posts\Feed::public_status_items_cursor(20), \TinyCat\Core\Identity\Authentication::auth()),
         'json-status' => exerciseJsonStatus(),
         'tag' => exerciseTag(),
         'author' => exerciseAuthor(),
@@ -130,9 +131,9 @@ function configureTestCore(PDO $database): void
         'cache' => ['driver' => 'filesystem'],
         'security' => ['captcha' => ['enabled' => false]],
     ]);
-    $settings = new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings');
+    $settings = new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings');
     $settings->setValue(null, []);
-    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+    \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     $settings->setValue(null, []);
 }
 
@@ -140,15 +141,15 @@ function createFixture(PDO $database): void
 {
     foreach ([
         'CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL, email TEXT, password TEXT, role TEXT NOT NULL, status TEXT NOT NULL, locale TEXT, theme TEXT, avatar_exists INTEGER NOT NULL DEFAULT 0, avatar_appearance TEXT, bio TEXT, muted_until TEXT, muted_by INTEGER, muted_reason TEXT, created_at TEXT, updated_at TEXT)',
-        'CREATE TABLE content (id INTEGER PRIMARY KEY, body TEXT NOT NULL, author_id INTEGER NOT NULL, published_at TEXT NOT NULL, status TEXT NOT NULL DEFAULT \'published\')',
-        'CREATE TABLE content_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL)',
-        'CREATE TABLE content_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (content_id, user_id))',
-        'CREATE TABLE content_comments (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL)',
-        'CREATE TABLE comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (comment_id, user_id))',
-        'CREATE TABLE terms (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE)',
-        'CREATE TABLE content_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, PRIMARY KEY (content_id, term_id))',
-        'CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
-        'CREATE TABLE content_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, PRIMARY KEY (content_id, link_id))',
+        'CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT \'post\', id INTEGER PRIMARY KEY, body TEXT NOT NULL, author_id INTEGER NOT NULL, published_at TEXT NOT NULL, status TEXT NOT NULL DEFAULT \'published\')',
+        'CREATE TABLE social_post_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER NOT NULL, height INTEGER NOT NULL, bytes INTEGER NOT NULL)',
+        'CREATE TABLE social_post_likes (content_id INTEGER NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (content_id, user_id))',
+        'CREATE TABLE social_comments (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, parent_id INTEGER, user_id INTEGER NOT NULL, body TEXT NOT NULL, created_at TEXT NOT NULL)',
+        'CREATE TABLE social_comment_likes (comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, PRIMARY KEY (comment_id, user_id))',
+        'CREATE TABLE social_terms (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE)',
+        'CREATE TABLE social_post_tags (content_id INTEGER NOT NULL, term_id INTEGER NOT NULL, PRIMARY KEY (content_id, term_id))',
+        'CREATE TABLE social_links (id INTEGER PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, audio_url TEXT, created_at TEXT, updated_at TEXT)',
+        'CREATE TABLE social_post_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, PRIMARY KEY (content_id, link_id))',
         'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL, PRIMARY KEY (user_id, follower_id))',
     ] as $sql) {
         $database->exec($sql);
@@ -157,23 +158,23 @@ function createFixture(PDO $database): void
     $user = $database->prepare('INSERT INTO users (id, username, password, role, status, locale, theme, bio, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $user->execute([1, 'benchmark_author', password_hash('benchmark', PASSWORD_DEFAULT), 'user', 'active', 'en', 'system', 'Performance author', '2026-01-01 00:00:00', '2026-01-01 00:00:00']);
     $user->execute([2, 'benchmark_viewer', password_hash('benchmark', PASSWORD_DEFAULT), 'user', 'active', 'en', 'system', '', '2026-01-01 00:00:00', '2026-01-01 00:00:00']);
-    $database->exec("INSERT INTO terms (id, name) VALUES (1, 'benchmark'), (2, 'performance')");
+    $database->exec("INSERT INTO social_terms (id, name) VALUES (1, 'benchmark'), (2, 'performance')");
 
-    $content = $database->prepare('INSERT INTO content (id, body, author_id, published_at) VALUES (?, ?, 1, ?)');
-    $tag = $database->prepare('INSERT INTO content_tags (content_id, term_id) VALUES (?, ?)');
+    $content = $database->prepare('INSERT INTO social_posts (id, body, author_id, published_at) VALUES (?, ?, 1, ?)');
+    $tag = $database->prepare('INSERT INTO social_post_tags (content_id, term_id) VALUES (?, ?)');
 
     for ($id = 1; $id <= 24; $id++) {
         $day = str_pad((string) $id, 2, '0', STR_PAD_LEFT);
         $createdAt = '2026-01-' . $day . ' 12:00:00';
         $content->execute([$id, "Performance benchmark status {$id} #benchmark https://target.example/article/{$id}?utm_source=original https://other.example/{$id} https://third.example/{$id}", $createdAt]);
         $url = 'https://target.example/article/' . $id;
-        $database->prepare('INSERT INTO links (id, normalized_url, url_hash, provider, link_type, title) VALUES (?, ?, ?, ?, ?, ?)')->execute([$id, $url, hash('sha256', $url), 'web', 'web', 'Stored article ' . $id]);
-        $database->prepare('INSERT INTO content_links (content_id, link_id) VALUES (?, ?)')->execute([$id, $id]);
+        $database->prepare('INSERT INTO social_links (id, normalized_url, url_hash, provider, link_type, title) VALUES (?, ?, ?, ?, ?, ?)')->execute([$id, $url, hash('sha256', $url), 'web', 'web', 'Stored article ' . $id]);
+        $database->prepare('INSERT INTO social_post_links (content_id, link_id) VALUES (?, ?)')->execute([$id, $id]);
         $tag->execute([$id, 1]);
         $tag->execute([$id, 2]);
     }
 
-    $comment = $database->prepare('INSERT INTO content_comments (id, content_id, parent_id, user_id, body, created_at) VALUES (?, 1, ?, 1, ?, ?)');
+    $comment = $database->prepare('INSERT INTO social_comments (id, content_id, parent_id, user_id, body, created_at) VALUES (?, 1, ?, 1, ?, ?)');
 
     for ($id = 1; $id <= 12; $id++) {
         $parentId = $id > 6 ? $id - 6 : null;
@@ -182,37 +183,37 @@ function createFixture(PDO $database): void
         $comment->execute([$id, $parentId, "Benchmark comment {$id} @{$mentionId}", '2026-02-01 12:' . str_pad((string) $id, 2, '0', STR_PAD_LEFT) . ':00']);
     }
 
-    $database->exec('INSERT INTO content_likes (content_id, user_id) VALUES (1, 2)');
-    $database->exec('INSERT INTO comment_likes (comment_id, user_id) VALUES (1, 2)');
+    $database->exec('INSERT INTO social_post_likes (content_id, user_id) VALUES (1, 2)');
+    $database->exec('INSERT INTO social_comment_likes (comment_id, user_id) VALUES (1, 2)');
     $database->exec("INSERT INTO user_followers (user_id, follower_id, created_at) VALUES (1, 2, '2026-01-02 00:00:00')");
 }
 
 function exerciseFeed(): void
 {
-    exerciseStatusImages(\TinyCat\Status\Feed::public_status_items_cursor(20));
+    exerciseStatusImages(\TinyCat\Social\Posts\Feed::public_status_items_cursor(20));
 }
 
 function exerciseJsonStatus(): void
 {
-    $user = \TinyCat\Users\Authentication::auth();
-    $item = \TinyCat\Status\Feed::public_status_item(1);
+    $user = \TinyCat\Core\Identity\Authentication::auth();
+    $item = \TinyCat\Social\Posts\Feed::public_status_item(1);
     if ($item === null) { throw new RuntimeException('JSON status fixture was not found.'); }
-    \TinyCat\Status\Resource::posts([$item], $user);
-    \TinyCat\Status\Resource::comments(\TinyCat\Status\Comments::status_comments(1), $user);
+    \TinyCat\Social\Posts\Resource::posts([$item], $user);
+    \TinyCat\Social\Posts\Resource::comments(\TinyCat\Social\Content\Comments::status_comments(1), $user);
 }
 
 function exerciseStatus(): void
 {
-    $user = \TinyCat\Users\Authentication::auth();
-    $item = \TinyCat\Status\Feed::public_status_item(1);
+    $user = \TinyCat\Core\Identity\Authentication::auth();
+    $item = \TinyCat\Social\Posts\Feed::public_status_item(1);
 
     if ($item === null) {
         throw new RuntimeException('Status fixture was not found.');
     }
 
-    \TinyCat\Status\Feed::status_preload_feed([$item]);
-    $comments = \TinyCat\Status\Comments::status_comments(1);
-    \TinyCat\Status\Comments::status_preload_comment_tree_user_likes($comments, (int) ($user['id'] ?? 0));
+    \TinyCat\Social\Posts\Feed::status_preload_feed([$item]);
+    $comments = \TinyCat\Social\Content\Comments::status_comments(1);
+    \TinyCat\Social\Content\Comments::status_preload_comment_tree_user_likes($comments, (int) ($user['id'] ?? 0));
     exerciseStatusImages([$item]);
 
     $pending = $comments;
@@ -223,29 +224,29 @@ function exerciseStatus(): void
             continue;
         }
 
-        \TinyCat\Status\Comments::status_comment_can_delete($comment, $user);
-        \TinyCat\Status\Posts::status_api_url('comment-like', ['id' => (int) $comment['content_id'], 'comment_id' => (int) $comment['id']]);
-        \TinyCat\Status\ViewData::status_comment_edit_modal_url((int) $comment['id'], (int) $comment['content_id']);
-        \TinyCat\Status\ViewData::status_comment_history_modal_url((int) $comment['id'], (int) $comment['content_id']);
-        \TinyCat\Status\Comments::status_comment_user_liked((int) ($comment['id'] ?? 0), (int) ($user['id'] ?? 0));
+        \TinyCat\Social\Content\Comments::status_comment_can_delete($comment, $user);
+        \TinyCat\Social\Posts\Posts::status_api_url('comment-like', ['id' => (int) $comment['content_id'], 'comment_id' => (int) $comment['id']]);
+        \TinyCat\Social\Posts\ViewData::status_comment_edit_modal_url((int) $comment['id'], (int) $comment['content_id']);
+        \TinyCat\Social\Posts\ViewData::status_comment_history_modal_url((int) $comment['id'], (int) $comment['content_id']);
+        \TinyCat\Social\Content\Comments::status_comment_user_liked((int) ($comment['id'] ?? 0), (int) ($user['id'] ?? 0));
         array_push($pending, ...(array) ($comment['replies'] ?? []));
     }
 
-    \TinyCat\Users\Authentication::auth();
-    \TinyCat\Users\Authentication::auth('id');
+    \TinyCat\Core\Identity\Authentication::auth();
+    \TinyCat\Core\Identity\Authentication::auth('id');
 }
 
 function exerciseTag(): void
 {
-    exerciseStatusImages(\TinyCat\Status\Feed::public_status_items_by_tag('benchmark', 20));
+    exerciseStatusImages(\TinyCat\Social\Posts\Feed::public_status_items_by_tag('benchmark', 20));
 }
 
 function exerciseAuthor(): void
 {
-    \TinyCat\Users\Repository::public_author_find(1);
-    $items = \TinyCat\Status\Feed::public_status_items_by_author_cursor(1, 20);
-    \TinyCat\Users\Following::author_follow_counts(1);
-    $stats = \TinyCat\Users\Repository::author_activity_stats(1);
+    \TinyCat\Social\Profiles\Repository::public_author_find(1);
+    $items = \TinyCat\Social\Posts\Feed::public_status_items_by_author_cursor(1, 20);
+    \TinyCat\Social\Profiles\Following::author_follow_counts(1);
+    $stats = \TinyCat\Social\Profiles\Repository::author_activity_stats(1);
 
     if ($stats !== [
         'posts' => 24,
@@ -261,7 +262,7 @@ function exerciseAuthor(): void
 
 function exerciseSearch(): void
 {
-    $results = \TinyCat\Search\Queries::collection('performance');
+    $results = \TinyCat\Social\Search\Queries::collection('performance');
     $ids = [];
 
     foreach ((array) ($results['items'] ?? []) as $item) {
@@ -269,14 +270,14 @@ function exerciseSearch(): void
         if ($id > 0) $ids[$id] = true;
     }
 
-    exerciseStatusImages(\TinyCat\Status\Feed::public_status_items_by_ids(array_slice(array_keys($ids), 0, 48)));
+    exerciseStatusImages(\TinyCat\Social\Posts\Feed::public_status_items_by_ids(array_slice(array_keys($ids), 0, 48)));
 }
 
 function exerciseStatusImages(array $items): void
 {
     foreach ($items as $item) {
-        \TinyCat\Status\Images::status_image_url((array) $item);
-        \TinyCat\Status\Images::status_image_jsonld((array) $item);
+        \TinyCat\Social\Content\Images::status_image_url((array) $item);
+        \TinyCat\Social\Content\Images::status_image_jsonld((array) $item);
     }
 }
 

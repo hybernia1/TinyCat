@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/bootstrap.php';
 
-$config = (array) \TinyCat\Settings\Store::config('database', []);
+$config = (array) \TinyCat\Core\Settings\Store::config('database', []);
 
 if (($config['driver'] ?? 'mysql') !== 'mysql') {
     echo "SKIP cron tasks: a local MySQL database is required.\n";
@@ -50,7 +50,7 @@ try {
         (string) ($config['password'] ?? ''),
         $options
     );
-    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+    \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
 
     foreach ([
         'CREATE TABLE settings (
@@ -64,32 +64,32 @@ try {
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id), UNIQUE KEY settings_key_unique (setting_key)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
-        'CREATE TABLE content (
+        'CREATE TABLE social_posts (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             body VARCHAR(20) NOT NULL,
             PRIMARY KEY (id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
-        'CREATE TABLE terms (
+        'CREATE TABLE social_terms (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             name VARCHAR(120) NOT NULL,
             PRIMARY KEY (id), UNIQUE KEY terms_name_unique (name)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
-        'CREATE TABLE content_tags (
+        'CREATE TABLE social_post_tags (
             content_id BIGINT UNSIGNED NOT NULL,
             term_id BIGINT UNSIGNED NOT NULL,
             PRIMARY KEY (content_id, term_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
-        'CREATE TABLE links (
+        'CREATE TABLE social_links (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             normalized_url VARCHAR(255) NOT NULL,
             PRIMARY KEY (id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
-        'CREATE TABLE content_links (
+        'CREATE TABLE social_post_links (
             content_id BIGINT UNSIGNED NOT NULL,
             link_id BIGINT UNSIGNED NOT NULL,
             PRIMARY KEY (content_id, link_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
-        'CREATE TABLE content_images (
+        'CREATE TABLE social_post_images (
             content_id BIGINT UNSIGNED NOT NULL,
             path VARCHAR(190) NOT NULL,
             width INT UNSIGNED NOT NULL,
@@ -120,7 +120,7 @@ try {
         $database->exec($statement);
     }
 
-    \TinyCat\Database\Connection::insert('content', ['body' => 'test']);
+    \TinyCat\Database\Connection::insert('social_posts', ['body' => 'test']);
     $contentId = (int) \TinyCat\Database\Connection::get()->lastInsertId();
     $imageDirectory = \TinyCat\Support\Paths::basePath('uploads/status-images/2099/01');
     $orphanImagePath = '2099/01/' . bin2hex(random_bytes(16)) . '.webp';
@@ -136,21 +136,21 @@ try {
     file_put_contents($storedImageFile, 'stored');
     touch($orphanImageFile, time() - 7200);
     touch($storedImageFile, time() - 7200);
-    \TinyCat\Database\Connection::insert('content_images', [
+    \TinyCat\Database\Connection::insert('social_post_images', [
         'content_id' => $contentId,
         'path' => $storedImagePath,
         'width' => 1,
         'height' => 1,
         'bytes' => 6,
     ]);
-    \TinyCat\Database\Connection::insert('terms', ['name' => 'used']);
+    \TinyCat\Database\Connection::insert('social_terms', ['name' => 'used']);
     $usedTermId = (int) \TinyCat\Database\Connection::get()->lastInsertId();
-    \TinyCat\Database\Connection::insert('terms', ['name' => 'orphan']);
-    \TinyCat\Database\Connection::insert('content_tags', ['content_id' => $contentId, 'term_id' => $usedTermId]);
-    \TinyCat\Database\Connection::insert('links', ['normalized_url' => 'https://used.test/']);
+    \TinyCat\Database\Connection::insert('social_terms', ['name' => 'orphan']);
+    \TinyCat\Database\Connection::insert('social_post_tags', ['content_id' => $contentId, 'term_id' => $usedTermId]);
+    \TinyCat\Database\Connection::insert('social_links', ['normalized_url' => 'https://used.test/']);
     $usedLinkId = (int) \TinyCat\Database\Connection::get()->lastInsertId();
-    \TinyCat\Database\Connection::insert('links', ['normalized_url' => 'https://orphan.test/']);
-    \TinyCat\Database\Connection::insert('content_links', ['content_id' => $contentId, 'link_id' => $usedLinkId]);
+    \TinyCat\Database\Connection::insert('social_links', ['normalized_url' => 'https://orphan.test/']);
+    \TinyCat\Database\Connection::insert('social_post_links', ['content_id' => $contentId, 'link_id' => $usedLinkId]);
 
     \TinyCat\Database\Connection::insert('ip_action_limits', [
         'ip_address' => '192.0.2.1',
@@ -177,7 +177,7 @@ try {
     foreach (['-31 days', '-1 day'] as $age) {
         \TinyCat\Database\Connection::insert('scheduler_runs', ['task' => 'cleanup', 'mode' => 'cli', 'status' => 'completed', 'started_at' => \TinyCat\Support\Dates::dateDb($age), 'options_json' => '{}']);
     }
-    $historyCleanup = \TinyCat\Scheduler\Cleanup::cleanup_task_run('old_scheduler_runs', 500);
+    $historyCleanup = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('old_scheduler_runs', 500);
     if ($historyCleanup['changed'] !== 1 || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM scheduler_runs') !== 1) {
         throw new RuntimeException('Scheduler history retention must preserve recent runs.');
     }
@@ -198,7 +198,7 @@ try {
     foreach (['active', 'orphan'] as $hash) {
         \TinyCat\Database\Connection::insert('bot_feed_history', ['bot_user_id' => 1, 'feed_hash' => $hash, 'created_at' => \TinyCat\Support\Dates::dateDb('-15 days')]);
     }
-    $botCleanup = \TinyCat\Scheduler\Cleanup::cleanup_task_run('bot_history', 500);
+    $botCleanup = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('bot_history', 500);
     if ($botCleanup['changed'] !== 8 || (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM bot_source_runs WHERE status = 'current'") !== 50
         || (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM bot_source_runs WHERE status = 'running'") !== 1
         || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_feed_history') !== 1) {
@@ -208,18 +208,18 @@ try {
     \TinyCat\Database\Connection::insert('bot_source_runs', ['source_id' => 1, 'status' => 'error', 'started_at' => \TinyCat\Support\Dates::dateDb('-15 days')]);
     \TinyCat\Database\Connection::insert('bot_feed_history', ['bot_user_id' => 1, 'feed_hash' => 'forced-orphan', 'created_at' => \TinyCat\Support\Dates::dateDb('-15 days')]);
     $database->exec("CREATE TRIGGER fail_bot_history_cleanup BEFORE DELETE ON bot_feed_history FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'forced cleanup failure'");
-    $partialCleanup = \TinyCat\Scheduler\Cleanup::cleanup_task_run('bot_history', 500);
+    $partialCleanup = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('bot_history', 500);
     $database->exec('DROP TRIGGER fail_bot_history_cleanup');
     if (($partialCleanup['changed'] ?? 0) !== 1 || empty($partialCleanup['error']) || $partialCleanup['done']) {
         throw new RuntimeException('Partial cleanup failures must retain completed changes and report unfinished work.');
     }
 
     $databaseCleanupTasks = array_values(array_filter(
-        \TinyCat\Scheduler\Cleanup::cron_cleanup_tasks(),
+        \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks(),
         static fn (string $task): bool => in_array($task, ['orphan_terms', 'orphan_links', 'old_action_limits', 'old_password_reset_tokens', 'old_read_notifications'], true)
     ));
-    $result = \TinyCat\Scheduler\Cleanup::cron_cleanup_run(500, true, $databaseCleanupTasks);
-    $imageCleanup = \TinyCat\Status\ImageStorage::cleanupOrphans(500, '2099/01');
+    $result = \TinyCat\Core\Tasks\Cleanup::cron_cleanup_run(500, true, $databaseCleanupTasks);
+    $imageCleanup = \TinyCat\Social\Content\ImageStorage::cleanupOrphans(500, '2099/01');
     $changed = array_map(
         static fn (array $task): int => (int) ($task['changed'] ?? 0),
         (array) ($result['results'] ?? [])
@@ -239,10 +239,10 @@ try {
         throw new RuntimeException('Scheduled status image cleanup changed an unexpected number of files.');
     }
 
-    if ((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM terms') !== 1
-        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM links') !== 1
-        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM content_tags') !== 1
-        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM content_links') !== 1
+    if ((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_terms') !== 1
+        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_links') !== 1
+        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_post_tags') !== 1
+        || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM social_post_links') !== 1
         || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM ip_action_limits') !== 1
         || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM password_reset_tokens') !== 1
         || (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM notifications') !== 2
@@ -251,9 +251,9 @@ try {
         throw new RuntimeException('Scheduled cleanup did not preserve current rows.');
     }
 
-    $deferred = \TinyCat\Scheduler\Cleanup::cron_cleanup_run(500, false, $databaseCleanupTasks);
+    $deferred = \TinyCat\Core\Tasks\Cleanup::cron_cleanup_run(500, false, $databaseCleanupTasks);
 
-    if (!empty($deferred['due']) || (int) \TinyCat\Settings\Store::setting('cron.cleanup_last_run', 0) < time() - 5) {
+    if (!empty($deferred['due']) || (int) \TinyCat\Core\Settings\Store::setting('cron.cleanup_last_run', 0) < time() - 5) {
         throw new RuntimeException('The hourly cleanup interval was not recorded.');
     }
 

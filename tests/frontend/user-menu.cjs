@@ -20,7 +20,7 @@ const vm = require("node:vm");
     api: { request(url, settings) { requestSettings = { url, ...settings }; return new Promise((resolve, reject) => { finishRequest = { resolve, reject }; }); } },
     toasts: { show(message) { notice = message; } }
   };
-  const source = fs.readFileSync(path.join(__dirname, "../../assets/modules/users/user-menu.js"), "utf8").replace(/^import .+;\r?\n/gm, "");
+  const source = fs.readFileSync(path.join(__dirname, "../../App/Core/Identity/assets/user-menu.js"), "utf8").replace(/^import .+;\r?\n/gm, "");
   vm.runInNewContext(source, { window: { TinyCat }, document });
   const click = button => handlers.click({ target: { closest: () => button } });
   const changing = click(buttons[2]);

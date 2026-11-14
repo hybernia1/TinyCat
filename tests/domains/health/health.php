@@ -23,10 +23,10 @@ if (($argv[1] ?? '') !== '--isolated') {
 define('TINYCAT', true);
 $root = $argv[2];
 require $root . '/App/autoload.php';
-use TinyCat\Health\Service;
-use TinyCat\Scheduler\Execution;
+use TinyCat\Core\Health\Service;
+use TinyCat\Core\Tasks\Execution;
 use TinyCat\Support\Config;
-use TinyCat\Settings\Store;
+use TinyCat\Core\Settings\Store;
 use TinyCat\Database\Connection;
 
 (new ReflectionProperty(Config::class, 'booted'))->setValue(null, true);
@@ -53,7 +53,7 @@ $assert(Service::inspect(['warning' => static fn (): string => 'warning'])['stat
 $assert(Service::inspect([])['status'] === 'unknown', 'An empty diagnostic is never reported healthy.');
 $assert(Service::snapshot()['stale'], 'Before the first run, health is unknown and stale.');
 $db->exec("INSERT INTO scheduler_runs (task, status, started_at) VALUES ('cleanup', 'completed', datetime('now'))");
-$schedulerCheck = \TinyCat\Health\Checks::definitions()['scheduler'];
+$schedulerCheck = \TinyCat\Core\Health\Checks::definitions()['scheduler'];
 $db->exec("INSERT INTO bot_sources VALUES (1)");
 $probe = $schedulerCheck();
 $assert($probe['metrics'] === ['cleanup' => 'ok', 'feeds' => 'missing'], 'Scheduler reports identify the missing task without blaming healthy cleanup.');
@@ -71,8 +71,8 @@ $assert($result['ok'] && $task['status'] === 'completed' && $task['summary']['he
 $assert($task['changed'] === 2 && (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === 2, 'Every active administrator receives a notification, excluding ordinary users, bots and inactive administrators.');
 $assert((int) $db->query('SELECT COUNT(*) FROM notifications WHERE actor_id IS NOT NULL')->fetchColumn() === 0, 'System notifications have no invented human actor.');
 $runId = (int) $db->query("SELECT MAX(id) FROM scheduler_runs WHERE task = 'site-health'")->fetchColumn();
-$assert(\TinyCat\Notifications\Delivery::siteHealth(true, $runId) === 0, 'Retrying notification delivery for one run is idempotent.');
-$assert(\TinyCat\Notifications\Inbox::targetUrl(['type' => 'site_health_attention']) === '/admin/site-health', 'Both health notification variants link to the protected health page.');
+$assert(\TinyCat\Core\Health\Alerts::send(true, $runId) === 0, 'Retrying notification delivery for one run is idempotent.');
+$assert(\TinyCat\Social\Posts\LegacyInbox::targetUrl(['type' => 'site_health_attention']) === '/admin/site-health', 'Both health notification variants link to the protected health page.');
 $repeat = Execution::run('site-health');
 $assert($repeat['tasks']['site-health']['status'] === 'not_due' && (int) $db->query('SELECT COUNT(*) FROM notifications')->fetchColumn() === 2, 'Repeated cron requests on the same day do not rerun probes or send duplicate notifications.');
 $assert(Service::snapshot()['status'] === 'ok' && !Service::snapshot()['stale'], 'A skipped duplicate does not replace the latest diagnostic report.');
@@ -98,4 +98,9 @@ $assert(Service::snapshot()['latest_failed'] && Service::snapshot()['status'] ==
 $retry = Execution::run('site-health');
 $assert($retry['ok'] && $retry['tasks']['site-health']['status'] === 'completed', 'A failed daily inspection can be retried immediately.');
 foreach (glob($root . '/storage/health-probes/*') ?: [] as $path) { $assert(false, 'No storage probes may remain after an inspection.'); }
+$withoutSocial = new \TinyCat\Core\Modules\Catalog(array_values(array_filter(\TinyCat\Core\Modules\Resources::catalog()->definitions(), static fn ($definition): bool => !in_array($definition->id, ['tinycat.social'], true))));
+\TinyCat\Core\Modules\Resources::withCatalog($withoutSocial, static function () use ($assert): void {
+    $item = \TinyCat\Core\Notifications\Resource::item(['id' => 900, 'type' => 'content_like', 'content_body' => 'PRIVATE_STALE_SUBJECT']);
+    $assert($item['type'] === 'generic' && $item['excerpt'] === '' && $item['url'] === '/notifications', 'Inactive subject owners cannot leak stale excerpts or links');
+});
 echo "PASS site health checks and administrator notifications ({$checks} checks)\n";

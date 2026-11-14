@@ -20,11 +20,11 @@ $write = static function (string $relative, string $source) use ($directory, &$c
     $created[] = $path;
 };
 try {
-    foreach (['autoload.php', 'Support/Paths.php', 'Support/CompiledTranslations.php', 'Support/Localization.php', 'Support/Values.php', 'Support/Languages.php', 'Mail/Templates.php'] as $relative) {
+    foreach (['autoload.php', 'Core/Support/Paths.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
         $write('App/' . $relative, (string) file_get_contents($root . '/App/' . $relative));
     }
     foreach ($files as $relative => $source) {
-        if (str_starts_with($relative, 'App/Support/compiled/')) { $write($relative, $source); }
+        if (str_starts_with($relative, 'App/Core/Support/compiled/')) { $write($relative, $source); }
     }
     // No source files, source loader, configuration or database in this runtime.
     $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/fixtures/compiled-translations-worker.php') . ' ' . escapeshellarg($directory);
@@ -36,7 +36,7 @@ try {
     $assert($actual['regional_plural'] === \TinyCat\Support\Localization::plural('bots.sources_count', 2, [], 'cs'), 'Regional plural fallback works without source catalogs.');
     foreach (array_keys($actual['packages']) as $locale) {
         $assert($actual[$locale]['app'] === \TinyCat\Support\Localization::catalog($locale), 'Compiled/server source parity: ' . $locale);
-        $expectedEmails = json_decode((string) file_get_contents($root . '/App/Mail/lang/' . $locale . '.json'), true, 512, JSON_THROW_ON_ERROR);
+        $expectedEmails = \TinyCat\Support\TranslationSources::channel('emails', $locale);
         $assert($actual[$locale]['emails'] === $expectedEmails, 'Compiled email source parity: ' . $locale);
         $assert($actual[$locale]['missing'] === 'missing.translation', 'Unknown-key fallback: ' . $locale);
         $assert($actual[$locale]['parameter'] === \TinyCat\Support\Localization::plural('public.active_user_posts', 7, [], $locale), 'Compiled interpolation: ' . $locale);
@@ -53,7 +53,7 @@ try {
     }
 } finally {
     foreach (array_reverse($created) as $file) { unlink($file); }
-    foreach (['App/Support/compiled', 'App/Support', 'App/Mail', 'App', ''] as $relative) {
+    foreach (['App/Core/Support/compiled', 'App/Core/Mail', 'App/Core/Support', 'App/Core', 'App/Core/Mail/src', 'App/Modules/Mail', 'App/Modules', 'App', ''] as $relative) {
         $path = $directory . ($relative !== '' ? '/' . $relative : '');
         if (is_dir($path)) { rmdir($path); }
     }

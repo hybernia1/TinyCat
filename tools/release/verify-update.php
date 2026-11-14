@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use \TinyCat\Updates\Manager;
+use \TinyCat\Core\Updates\Manager;
 
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "This tool is available only from the command line.\n");
@@ -17,7 +17,11 @@ if (!str_starts_with($directory, DIRECTORY_SEPARATOR) && preg_match('~^[A-Za-z]:
     $directory = $root . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $directory);
 }
 
-$manifestName = in_array('--fresh-install', $argv, true) ? 'tinycat-install' : 'tinycat-update';
+$product = 'tinycat.social';
+foreach ($argv as $argument) { if (str_starts_with($argument, '--product=')) { $product = substr($argument, strlen('--product=')); } }
+if (preg_match('/^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/D', $product) !== 1) { fwrite(STDERR, "Invalid product identity.\n"); exit(1); }
+$stem = match ($product) { 'tinycat.social' => 'tinycat', 'tinycat.blog' => 'tinycat-blog', default => $product };
+$manifestName = $stem . (in_array('--fresh-install', $argv, true) ? '-install' : '-update');
 $manifestPath = $directory . DIRECTORY_SEPARATOR . $manifestName . '.json';
 $signaturePath = $directory . DIRECTORY_SEPARATOR . $manifestName . '.sig';
 

@@ -56,7 +56,9 @@ try {
         $headers = ['Content-Type: application/json', 'Accept: ' . ($json ? 'application/json' : 'text/html')];
         if ($cookie !== '') { $headers[] = 'Cookie: ' . $cookie; }
         if ($token && $csrf !== '') { $headers[] = 'X-CSRF-Token: ' . $csrf; }
-        $context = stream_context_create(['http' => ['method' => $method, 'header' => implode("\r\n", $headers), 'content' => $body === null ? '' : json_encode($body, JSON_THROW_ON_ERROR), 'ignore_errors' => true, 'follow_location' => 0, 'timeout' => 30]]);
+        // Full fresh DDL can exceed a normal request deadline on slow fixture disks.
+        $timeout = $path === '/api/installation/steps/tables' ? 120 : 30;
+        $context = stream_context_create(['http' => ['method' => $method, 'header' => implode("\r\n", $headers), 'content' => $body === null ? '' : json_encode($body, JSON_THROW_ON_ERROR), 'ignore_errors' => true, 'follow_location' => 0, 'timeout' => $timeout]]);
         $text = file_get_contents('http://' . $address . $path, false, $context);
         $received = http_get_last_response_headers() ?? [];
         foreach ($received as $header) {
@@ -116,10 +118,17 @@ try {
     foreach ($pipes ?? [] as $pipe) { if (is_resource($pipe)) { fclose($pipe); } }
     $pdo = null;
     if ($created) { $serverDb->exec('DROP DATABASE `' . $name . '`'); }
-    if (is_dir($root) && str_starts_with($root, $workspace . '/storage/install-api-')) {
-        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $file) {
-            if ($file->isDir()) { rmdir($file->getPathname()); } else { unlink($file->getPathname()); }
+    $resolvedRoot = realpath($root);
+    $resolvedStorage = realpath($workspace . '/storage');
+    if ($resolvedRoot !== false && $resolvedStorage !== false && str_starts_with($resolvedRoot, $resolvedStorage . DIRECTORY_SEPARATOR . 'install-api-')) {
+        // Windows scanners can briefly retain a handle after the HTTP worker exits.
+        for ($attempt = 0; $attempt < 5 && is_dir($resolvedRoot); $attempt++) {
+            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($resolvedRoot, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $file) {
+                if ($file->isDir() && !$file->isLink()) { @rmdir($file->getPathname()); } else { @unlink($file->getPathname()); }
+            }
+            @rmdir($resolvedRoot);
+            if (is_dir($resolvedRoot)) { usleep(100_000 * ($attempt + 1)); }
         }
-        rmdir($root);
+        if (is_dir($resolvedRoot)) { throw new RuntimeException('Unable to remove the isolated installation fixture.'); }
     }
 }

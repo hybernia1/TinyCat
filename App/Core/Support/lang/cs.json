@@ -1,0 +1,234 @@
+{
+  "common": {
+    "sort": "Řazení",
+    "refresh": "Obnovit",
+    "save": "Uložit",
+    "create": "Vytvořit",
+    "delete": "Smazat",
+    "cancel": "Zrušit",
+    "continue": "Pokračovat",
+    "confirm": "Potvrdit",
+    "confirm_action": "Potvrzení akce",
+    "back": "Zpět",
+    "previous": "Předchozí",
+    "next": "Další",
+    "finish": "Dokončit",
+    "open": "Otevřít",
+    "video": "Video",
+    "menu": "Menu",
+    "close": "Zavřít",
+    "skip_to_content": "Přeskočit na hlavní obsah",
+    "main_navigation": "Hlavní navigace",
+    "site_logo_alt": "{site} – logo",
+    "request_failed": "Požadavek se nepodařilo dokončit.",
+    "edit": "Upravit",
+    "login": "Přihlásit",
+    "logout": "Odhlásit",
+    "register": "Registrovat",
+    "admin": "Admin",
+    "dashboard": "Dashboard",
+    "home": "Index",
+    "language": "Jazyk",
+    "database": "Databáze",
+    "tables": "Tabulky",
+    "account": "Účet",
+    "done": "Hotovo",
+    "username": "Uživatelské jméno",
+    "email": "Email",
+    "password": "Heslo",
+    "new_password": "Nové heslo",
+    "current_password": "Aktuální heslo",
+    "password_confirm": "Potvrzení hesla",
+    "role": "Role",
+    "status": "Stav",
+    "note": "Poznámka",
+    "created": "Vytvořeno",
+    "updated": "Upraveno",
+    "route": "Route",
+    "file": "Soubor",
+    "image_prepare_failed": "Vybraný obrázek se nepodařilo připravit k nahrání.",
+    "image": "Obrázek",
+    "table": "Tabulka",
+    "clean_api": "Clean API",
+    "ui_api": "UI API",
+    "ui": "UI",
+    "actions": "Akce",
+    "search": "Hledat",
+    "filters": "Filtry",
+    "apply_filters": "Použít filtry",
+    "clear_filters": "Vyčistit",
+    "pagination": "Stránkování",
+    "pagination_summary": "{from}-{to} / {total}",
+    "per_page": "Na stránku",
+    "all": "Vše",
+    "updated_from": "Upraveno od",
+    "updated_to": "Upraveno do",
+    "created_from": "Vytvořeno od",
+    "created_to": "Vytvořeno do",
+    "unsaved_title": "Neuložené změny",
+    "unsaved_message": "Formulář obsahuje neuložené změny. Opravdu odejít?",
+    "leave": "Odejít",
+    "stay": "Zůstat",
+    "validation_failed": "Zkontrolujte prosím vyplněné údaje.",
+    "no_records": "Žádné záznamy.",
+    "not_found": "Nenalezeno.",
+    "validation_required": "Pole {field} je povinné.",
+    "validation_invalid": "Pole {field} obsahuje neplatnou hodnotu.",
+    "activate": "Aktivovat",
+    "deactivate": "Deaktivovat",
+    "activated": "{entity} aktivován.",
+    "deactivated": "{entity} deaktivován.",
+    "action_for": "{action} — {context}",
+    "search_empty": "Nic nenalezeno."
+  },
+  "relative": {
+    "now": "teď",
+    "past": {
+      "minute": {
+        "one": "před {count} minutou",
+        "few": "před {count} minutami",
+        "many": "před {count} minutami",
+        "other": "před {count} minutami",
+        "single": "před minutou"
+      },
+      "hour": {
+        "one": "před {count} hodinou",
+        "few": "před {count} hodinami",
+        "many": "před {count} hodinami",
+        "other": "před {count} hodinami",
+        "single": "před hodinou"
+      },
+      "day": {
+        "one": "před {count} dnem",
+        "few": "před {count} dny",
+        "many": "před {count} dny",
+        "other": "před {count} dny",
+        "single": "včera"
+      },
+      "week": {
+        "one": "před {count} týdnem",
+        "few": "před {count} týdny",
+        "many": "před {count} týdny",
+        "other": "před {count} týdny",
+        "single": "před týdnem"
+      },
+      "month": {
+        "one": "před {count} měsícem",
+        "few": "před {count} měsíci",
+        "many": "před {count} měsíci",
+        "other": "před {count} měsíci",
+        "single": "před měsícem"
+      },
+      "year": {
+        "one": "před {count} rokem",
+        "few": "před {count} lety",
+        "many": "před {count} lety",
+        "other": "před {count} lety",
+        "single": "před rokem"
+      }
+    },
+    "future": {
+      "minute": {
+        "one": "za {count} minutu",
+        "few": "za {count} minuty",
+        "many": "za {count} minut",
+        "other": "za {count} minut",
+        "single": "za minutu"
+      },
+      "hour": {
+        "one": "za {count} hodinu",
+        "few": "za {count} hodiny",
+        "many": "za {count} hodin",
+        "other": "za {count} hodin",
+        "single": "za hodinu"
+      },
+      "day": {
+        "one": "za {count} den",
+        "few": "za {count} dny",
+        "many": "za {count} dní",
+        "other": "za {count} dní",
+        "single": "zítra"
+      },
+      "week": {
+        "one": "za {count} týden",
+        "few": "za {count} týdny",
+        "many": "za {count} týdnů",
+        "other": "za {count} týdnů",
+        "single": "za týden"
+      },
+      "month": {
+        "one": "za {count} měsíc",
+        "few": "za {count} měsíce",
+        "many": "za {count} měsíců",
+        "other": "za {count} měsíců",
+        "single": "za měsíc"
+      },
+      "year": {
+        "one": "za {count} rok",
+        "few": "za {count} roky",
+        "many": "za {count} let",
+        "other": "za {count} let",
+        "single": "za rok"
+      }
+    }
+  },
+  "action": {
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "delete": "Smazat"
+  },
+  "message": {
+    "welcome": "Vítej v {app}."
+  },
+  "settings": {
+    "messages": {
+      "invalid_language": "Vybraný jazyk není dostupný."
+    }
+  },
+  "privacy": {
+    "title": "Soukromí a pravidla"
+  },
+  "public": {
+    "author_not_found": "Autor nebyl nalezen."
+  },
+  "notifications": {
+    "loading": "Načítání...",
+    "load_more": "Načíst další"
+  },
+  "moderation": {
+    "messages": {
+      "action_limited": "Tento účet dosáhl dočasného limitu akcí."
+    }
+  },
+  "auth": {
+    "forbidden": "Pro administraci je potřeba účet s rolí admin.",
+    "login_required": "Pro tuto akci se přihlas."
+  },
+  "modules": {
+    "title": "Moduly",
+    "help": "Správa dostupných modulů. Vypnutí zachová jejich data.",
+    "required": "Povinný",
+    "dependencies": "Závislosti",
+    "dependencies_error": "Povinné moduly a závislosti aktivních modulů musí zůstat zapnuté.",
+    "stale": "Výběr se změnil. Obnovte stránku a zkuste to znovu.",
+    "unavailable": "Změny modulů vyžadují nainstalovanou distribuci.",
+    "failed": "Změnu se nepodařilo dokončit. Obnovte stránku a ověřte stav modulů.",
+    "active": "Zapnutý",
+    "inactive": "Vypnutý",
+    "enable": "Zapnout",
+    "disable": "Vypnout",
+    "enable_group": "Zapnout skupinu",
+    "disable_group": "Vypnout skupinu",
+    "needed_by": "Vyžadují: {modules}",
+    "confirm": "Provést změnu modulů? Závislosti se ověří a existující data zůstanou zachována.",
+    "module": "Modul",
+    "packages": {
+      "upload": "Nahrát modul",
+      "file": "Balíček ZIP (nejvýše 32 MiB)",
+      "confirm": "Nainstalovat tento modul? Balíček obsahuje PHP kód s přístupem k aplikaci. Nový modul zůstane vypnutý.",
+      "help": "Použijte ZIP vytvořený pro TinyCat. Nový modul po instalaci zapněte samostatně; aktualizace zachová jeho stav.",
+      "failed": "Instalace modulu selhala. Ověřte balíček, kompatibilitu a závislosti; případný stav obnovy najdete v Aktualizacích.",
+      "install": "Nainstalovat"
+    }
+  }
+}

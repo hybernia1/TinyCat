@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../App/bootstrap.php';
 use TinyCat\Support\AdminSorting;
 use TinyCat\Database\Connection;
 
-(new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, []);
+(new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 $database = new PDO('sqlite::memory:');
 $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -19,64 +19,65 @@ $assert = static function (bool $condition, string $message) use (&$checks): voi
     if (!$condition) { throw new RuntimeException($message); }
 };
 $database->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, email TEXT, role TEXT, status TEXT, updated_at TEXT)');
-$database->exec("CREATE TABLE content (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT DEFAULT '2026-01-01 00:00:00')");
+$database->exec("CREATE TABLE social_posts (kind VARCHAR(40) NOT NULL DEFAULT 'post', id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT, published_at TEXT DEFAULT '2026-01-01 00:00:00')");
 $database->exec('CREATE TABLE bot_sources (id INTEGER PRIMARY KEY, bot_user_id INTEGER, name TEXT, enabled INTEGER, interval_minutes INTEGER, last_imported_at TEXT)');
 $database->exec('CREATE TABLE bot_source_posts (content_id INTEGER PRIMARY KEY, source_id INTEGER NOT NULL)');
 $database->exec('CREATE TABLE content_reports (id INTEGER PRIMARY KEY, content_id INTEGER, reporter_id INTEGER, status TEXT, reason TEXT, created_at TEXT)');
-$database->exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, task TEXT, status TEXT, mode TEXT, error TEXT, duration_ms INTEGER, started_at TEXT)');
+$database->exec('CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY, task TEXT, status TEXT, mode TEXT, error TEXT, duration_ms INTEGER, started_at TEXT, actor_id INTEGER, finished_at TEXT, options_json TEXT, summary_json TEXT)');
 for ($id = 1; $id <= 15; $id++) {
     $name = chr(80 - $id);
     $database->prepare('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)')->execute([$id, $name, $name . '@example.test', 'user', 'active', '2026-10-27']);
-    $database->prepare('INSERT INTO scheduler_runs VALUES (?, ?, ?, ?, ?, ?, ?)')->execute([$id, $name, 'completed', 'cron', '', $id, '2026-10-27']);
+    $database->prepare('INSERT INTO scheduler_runs (id, task, status, mode, error, duration_ms, started_at) VALUES (?, ?, ?, ?, ?, ?, ?)')->execute([$id, $name, 'completed', 'cron', '', $id, '2026-10-27']);
 }
 $database->exec("INSERT INTO users VALUES (101, 'Zulu', '', 'bot', 'active', '2026-10-27'), (102, 'Alpha', '', 'bot', 'ban', '2026-10-26')");
 $database->exec("INSERT INTO bot_sources VALUES (1, 101, 'Zulu', 1, 30, NULL), (2, 102, 'Alpha', 0, 60, '2026-10-27')");
-$database->exec("INSERT INTO content (id, author_id, body) VALUES (1, 101, 'Zulu'), (2, 102, 'Alpha')");
+$database->exec("INSERT INTO social_posts (id, author_id, body) VALUES (1, 101, 'Zulu'), (2, 102, 'Alpha')");
 $database->exec("INSERT INTO content_reports VALUES (1, 1, 1, 'open', 'spam', '2026-10-26'), (2, 2, 1, 'resolved', 'other', '2026-10-27')");
 
 foreach (['users', 'accounts', 'sources', 'bot_posts', 'runs', 'reports'] as $list) {
+    $config = match ($list) { 'users' => \TinyCat\Core\Identity\Sorting::LISTS[$list], 'runs' => \TinyCat\Core\Tasks\Sorting::LISTS[$list], 'reports' => \TinyCat\Social\Moderation\Sorting::LISTS[$list], default => \TinyCat\Social\Automation\Sorting::LISTS[$list] };
     $_GET = [];
-    $default = AdminSorting::order($list);
+    $default = AdminSorting::order($config);
     $_GET = ['sort' => 'id; DROP TABLE users', 'direction' => 'desc; --'];
-    $assert(AdminSorting::order($list) === $default, 'Invalid sorting uses the default: ' . $list);
+    $assert(AdminSorting::order($config) === $default, 'Invalid sorting uses the default: ' . $list);
     $_GET = ['sort' => ['username'], 'direction' => ['desc']];
-    $assert(AdminSorting::order($list) === $default, 'Array inputs are rejected: ' . $list);
+    $assert(AdminSorting::order($config) === $default, 'Array inputs are rejected: ' . $list);
     $_GET = [];
-    foreach (AdminSorting::headings($list) as $key => $heading) {
+    foreach (AdminSorting::headings($config) as $key => $heading) {
         foreach (['asc', 'desc'] as $direction) {
             $_GET = ['sort' => $key, 'direction' => $direction];
             // Exercise every allowlisted SQL expression against its real query.
             match ($list) {
-                'users' => \TinyCat\Users\Actions::tc_admin_users_page(),
-                'accounts' => (new ReflectionMethod(\TinyCat\Bots\Administration::class, 'accountsPage'))->invoke(null),
-                'sources' => \TinyCat\Bots\Importer::sources(null, AdminSorting::order('sources')),
-                'bot_posts' => \TinyCat\Bots\Administration::postsPayload(101),
-                'runs' => \TinyCat\Scheduler\Repository::listing([], 1, 10),
-                'reports' => \TinyCat\Moderation\Reports::tc_admin_moderation_reports_payload()['items'],
+                'users' => \TinyCat\Social\Profiles\Actions::tc_admin_users_page(),
+                'accounts' => (new ReflectionMethod(\TinyCat\Social\Automation\Administration::class, 'accountsPage'))->invoke(null),
+                'sources' => \TinyCat\Social\Automation\Importer::sources(null, AdminSorting::order(\TinyCat\Social\Automation\Sorting::LISTS['sources'])),
+                'bot_posts' => \TinyCat\Social\Automation\Administration::postsPayload(101),
+                'runs' => \TinyCat\Core\Tasks\Repository::listing([], 1, 10),
+                'reports' => \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload()['items'],
             };
             $assert(true, 'Valid SQL: ' . $list . '/' . $key . '/' . $direction);
         }
     }
 }
 $_GET = ['sort' => 'username', 'direction' => 'asc', 'per_page' => 10, 'page' => 1];
-$first = \TinyCat\Users\Actions::tc_admin_users_page()['items'];
+$first = \TinyCat\Social\Profiles\Actions::tc_admin_users_page()['items'];
 $_GET['page'] = 2;
-$second = \TinyCat\Users\Actions::tc_admin_users_page()['items'];
+$second = \TinyCat\Social\Profiles\Actions::tc_admin_users_page()['items'];
 $assert($first[0]['username'] === 'A' && $second[0]['username'] === 'K', 'Users sort before pagination');
 $_GET = ['sort' => 'task', 'direction' => 'asc'];
-$runs = \TinyCat\Scheduler\Repository::listing([], 2, 10);
+$runs = \TinyCat\Core\Tasks\Repository::listing([], 2, 10);
 $assert($runs['runs'][0]['task'] === 'K', 'Run history sorts before pagination');
 $_GET = ['sort' => 'username', 'direction' => 'asc'];
-$accounts = (new ReflectionMethod(\TinyCat\Bots\Administration::class, 'accountsPage'))->invoke(null);
+$accounts = (new ReflectionMethod(\TinyCat\Social\Automation\Administration::class, 'accountsPage'))->invoke(null);
 $assert($accounts['items'][0]['username'] === 'Alpha', 'Bot accounts sort by name');
 $_GET = ['sort' => 'content', 'direction' => 'asc'];
-$reports = \TinyCat\Moderation\Reports::tc_admin_moderation_reports_payload()['items'];
+$reports = \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload()['items'];
 $assert($reports[0]['excerpt'] === 'Alpha', 'Reports sort by content');
 $_GET = [];
-$reports = \TinyCat\Moderation\Reports::tc_admin_moderation_reports_payload()['items'];
+$reports = \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload()['items'];
 $assert($reports[0]['status'] === 'open', 'Reports retain open-first default');
 $_GET = ['sort' => 'username', 'direction' => 'asc'];
-$heading = AdminSorting::headings('users', ['q' => 'A&B', 'role' => 'user', 'per_page' => 50, 'page' => 3])['username'];
+$heading = AdminSorting::headings(\TinyCat\Core\Identity\Sorting::LISTS['users'], ['q' => 'A&B', 'role' => 'user', 'per_page' => 50, 'page' => 3])['username'];
 parse_str((string) parse_url($heading['url'], PHP_URL_QUERY), $query);
 $assert($query['q'] === 'A&B' && $query['role'] === 'user' && $query['per_page'] === '50' && $query['page'] === '1' && $query['direction'] === 'desc', 'Sorting retains filters and resets page');
 $assert($heading['aria'] === 'ascending' && $heading['ascending'] === true, 'Active direction is accessible');
@@ -84,6 +85,14 @@ $html = \TinyCat\Support\Components::render('ui/sort-heading', ['label' => '<Nam
 $assert(str_contains($html, '&lt;Name&gt;') && str_contains($html, 'data-ajax-target="#users-list"') && str_contains($html, 'data-history='), 'Shared heading escapes labels and provides AJAX/history state');
 $database->exec("INSERT INTO users VALUES (16, 'A', '', 'user', 'active', '2026-10-27'), (17, 'A', '', 'user', 'active', '2026-10-27')");
 $_GET = ['sort' => 'username', 'direction' => 'asc'];
-$ties = \TinyCat\Users\Actions::tc_admin_users_page()['items'];
+$ties = \TinyCat\Social\Profiles\Actions::tc_admin_users_page()['items'];
 $assert(array_column(array_slice($ties, 0, 3), 'id') === [17, 16, 15], 'Equal values have deterministic ID ordering');
+// Historical task rows remain readable after their domain owner is disabled.
+$database->exec("UPDATE scheduler_runs SET task = 'feeds', summary_json = '{\"count\":2}' WHERE id = 1");
+$withoutBots = new \TinyCat\Core\Modules\Catalog(array_values(array_filter(\TinyCat\Core\Modules\Resources::catalog()->definitions(), static fn ($definition): bool => $definition->id !== 'tinycat.social')));
+\TinyCat\Core\Modules\Resources::withCatalog($withoutBots, static function () use ($assert): void {
+    $detail = \TinyCat\Core\Tasks\Administration::runDetail(1);
+    $assert($detail !== null && $detail['sources'] === [] && $detail['summary'] === ['count' => 2], 'Inactive task history loads without any bot tables or detail callbacks');
+});
+
 echo "PASS admin sorting SQL, pagination, defaults, invalid inputs and headings ({$checks} checks)\n";

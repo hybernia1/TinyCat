@@ -1,6 +1,6 @@
 "use strict";
 const assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path"), vm = require("node:vm");
-const source = fs.readFileSync(path.join(__dirname, "../../assets/modules/notifications/controller.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
+const source = fs.readFileSync(path.join(__dirname, "../../App/Core/Notifications/assets/controller.js"), "utf8").replace(/^import .*;\r?\n/gm, "");
 function harness() {
   const classes = initial => { const s = new Set(initial); return { contains: n => s.has(n), remove: n => s.delete(n), toggle(n, on) { if (on) { s.add(n); } else { s.delete(n); } } }; };
   const action = () => ({ removed: false, remove() { this.removed = true; }, closest() { return this; } });

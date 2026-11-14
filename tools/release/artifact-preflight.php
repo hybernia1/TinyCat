@@ -7,7 +7,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 $root = dirname(__DIR__, 2);
-require_once $root . '/App/Support/Version.php';
+require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
 $options = getopt('', ['artifact::']);
 $artifact = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
@@ -69,7 +69,19 @@ try {
     $packagePath = $artifact . DIRECTORY_SEPARATOR . $packageName;
     $assert($packageName === 'tinycat-' . $version . '.zip' && is_file($packagePath), 'The versioned package is present.');
     $assert(($manifest['version'] ?? null) === $version, 'Manifest targets the current version.');
-    $assert(($manifest['minimum_version'] ?? null) === \TinyCat\Support\Version::MINIMUM_UPDATE, 'Manifest uses the supported update baseline.');
+    define('TINYCAT', true);
+    require_once $root . '/App/autoload.php';
+    $distribution = $manifest['distribution'] ?? null;
+    $minimum = is_array($distribution) && \TinyCat\Core\Modules\Distribution::modular($distribution)
+        ? match ($distribution['format'] ?? 1) {
+            3 => \TinyCat\Core\Modules\Distribution::DOMAIN_RUNTIME,
+            2 => \TinyCat\Core\Modules\Distribution::FRAMEWORK_RUNTIME,
+            default => isset($distribution['schemas']['tinycat.support'])
+                ? \TinyCat\Core\Modules\Distribution::CORE_SCHEMA_RUNTIME
+                : \TinyCat\Core\Modules\Distribution::RUNTIME,
+        }
+        : \TinyCat\Support\Version::MINIMUM_UPDATE;
+    $assert(($manifest['minimum_version'] ?? null) === $minimum, 'Manifest uses its supported runtime baseline.');
     $assert(($manifest['minimum_php'] ?? null) === '8.4.0', 'Manifest retains the PHP 8.4 runtime floor.');
     foreach ((array) ($manifest['migrations'] ?? []) as $migration) {
         $assert(isset($manifest['files'][$migration]), 'Declared migration is included in the signed inventory: ' . $migration);
@@ -92,6 +104,7 @@ try {
     $archive->extractTo($installRoot, null, true);
     unset($archive);
     $inventory = [];
+    $phpFiles = [];
     $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($installRoot, FilesystemIterator::SKIP_DOTS));
 
     foreach ($iterator as $entry) {
@@ -103,9 +116,10 @@ try {
         $inventory[$relative] = hash_file('sha256', $entry->getPathname());
 
         if (str_ends_with($relative, '.php')) {
-            $run([PHP_BINARY, '-l', $entry->getPathname()]);
+            $phpFiles[] = $entry->getPathname();
         }
     }
+    foreach (array_chunk($phpFiles, 16) as $batch) { $run([PHP_BINARY, '-l', ...$batch]); }
 
     ksort($inventory, SORT_STRING);
     $expected = (array) ($manifest['files'] ?? []);
@@ -118,12 +132,12 @@ try {
             'Artifact excludes development and runtime-private path: ' . $relative
         );
         $assert(
-            !str_starts_with($relative, 'docs/') || in_array($relative, ['docs/reference/api.md', 'docs/operations/updates.md'], true),
+            !str_starts_with($relative, 'docs/') || in_array($relative, ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md'], true),
             'Artifact excludes internal release evidence: ' . $relative
         );
     }
 
-    $core = (string) file_get_contents($installRoot . '/App/Support/Version.php');
+    $core = (string) file_get_contents($installRoot . '/App/Core/Support/Version.php');
     $assert(str_contains($core, "public const string CURRENT = '{$version}';"), 'Extracted runtime reports the current version.');
     $run([PHP_BINARY, $root . '/tests/http/public-route-smoke.php', '--root=' . $installRoot]);
     $run([PHP_BINARY, $root . '/tests/release/mysql-installer-rehearsal.php', '--root=' . $installRoot]);

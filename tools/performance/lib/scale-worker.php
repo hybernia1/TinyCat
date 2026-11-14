@@ -113,9 +113,9 @@ try {
         'cache' => ['driver' => 'filesystem', 'prefix' => 'scale_worker_'],
         'security' => ['captcha' => ['enabled' => false]],
     ]);
-    $settings = new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings');
+    $settings = new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings');
     $settings->setValue(null, []);
-    \TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+    \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     $settings->setValue(null, []);
 
     $_GET = $_POST = $_COOKIE = $_FILES = [];
@@ -125,64 +125,64 @@ try {
     ];
 
     $statusId = (int) $database->query(
-        'SELECT c.id FROM content c LEFT JOIN content_comments cc ON cc.content_id = c.id GROUP BY c.id ORDER BY COUNT(cc.id) DESC, c.id DESC LIMIT 1'
+        'SELECT c.id FROM social_posts c LEFT JOIN social_comments cc ON cc.content_id = c.id GROUP BY c.id ORDER BY COUNT(cc.id) DESC, c.id DESC LIMIT 1'
     )->fetchColumn();
     $authorId = (int) $database->query(
-        'SELECT author_id FROM content GROUP BY author_id ORDER BY COUNT(*) DESC, author_id ASC LIMIT 1'
+        'SELECT author_id FROM social_posts GROUP BY author_id ORDER BY COUNT(*) DESC, author_id ASC LIMIT 1'
     )->fetchColumn();
     $writeSequence = 0;
 
     $exercise = match ($scenario) {
         'feed' => static function (): void {
-            \TinyCat\Status\Feed::public_status_items_cursor(24);
+            \TinyCat\Social\Posts\Feed::public_status_items_cursor(24);
         },
         'status' => static function () use ($statusId): void {
-            $item = \TinyCat\Status\Feed::public_status_item($statusId);
+            $item = \TinyCat\Social\Posts\Feed::public_status_item($statusId);
             if ($item === null) {
                 throw new RuntimeException('Representative status was not found.');
             }
-            \TinyCat\Status\Feed::status_preload_feed([$item]);
-            \TinyCat\Status\Comments::status_comments($statusId);
+            \TinyCat\Social\Posts\Feed::status_preload_feed([$item]);
+            \TinyCat\Social\Content\Comments::status_comments($statusId);
         },
         'tag' => static function (): void {
-            \TinyCat\Status\Feed::public_status_items_by_tag('benchmark', 24);
+            \TinyCat\Social\Posts\Feed::public_status_items_by_tag('benchmark', 24);
         },
         'author' => static function () use ($authorId): void {
-            \TinyCat\Users\Repository::public_author_find($authorId);
-            \TinyCat\Status\Feed::public_status_items_by_author_cursor($authorId, 24);
-            \TinyCat\Users\Following::author_follow_counts($authorId);
-            \TinyCat\Users\Repository::author_activity_stats($authorId);
+            \TinyCat\Social\Profiles\Repository::public_author_find($authorId);
+            \TinyCat\Social\Posts\Feed::public_status_items_by_author_cursor($authorId, 24);
+            \TinyCat\Social\Profiles\Following::author_follow_counts($authorId);
+            \TinyCat\Social\Profiles\Repository::author_activity_stats($authorId);
         },
         'search' => static function (): void {
-            \TinyCat\Search\Queries::collection('performance');
+            \TinyCat\Social\Search\Queries::collection('performance');
         },
         'write' => static function () use ($authorId, &$writeSequence): void {
             $writeSequence++;
             $created = date('Y-m-d H:i:s');
-            $contentId = (int) \TinyCat\Database\Connection::insert('content', [
+            $contentId = (int) \TinyCat\Database\Connection::insert('social_posts', [
                 'body' => 'Scale benchmark write ' . $writeSequence . ' #benchmark #performance',
                 'author_id' => $authorId,
                 'published_at' => $created,
             ]);
-            \TinyCat\Status\Tags::status_sync_tags($contentId, ['benchmark', 'performance']);
-            \TinyCat\Database\Connection::insert('content_comments', [
+            \TinyCat\Social\Posts\Tags::status_sync_tags($contentId, ['benchmark', 'performance']);
+            \TinyCat\Database\Connection::insert('social_comments', [
                 'content_id' => $contentId,
                 'parent_id' => null,
                 'user_id' => $authorId,
                 'body' => 'Scale benchmark write comment.',
                 'created_at' => $created,
             ]);
-            \TinyCat\Status\Posts::status_delete_content($contentId);
+            \TinyCat\Social\Posts\Posts::status_delete_content($contentId);
         },
         'maintenance' => static function (): void {
-            \TinyCat\Scheduler\Cleanup::cleanup_task_run('orphan_terms', 500);
+            \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('orphan_terms', 500);
         },
     };
 
     $iterations = $mode === 'warm' ? 10 : 1;
     $warmup = $mode === 'warm' ? 2 : 0;
     if ($scenario === 'maintenance') {
-        $insert = $database->prepare('INSERT IGNORE INTO terms (name) VALUES (?)');
+        $insert = $database->prepare('INSERT IGNORE INTO social_terms (name) VALUES (?)');
         $prefix = bin2hex(random_bytes(6));
         $database->beginTransaction();
         for ($index = 0; $index < ($iterations + $warmup) * 500; $index++) {

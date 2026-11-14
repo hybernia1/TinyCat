@@ -6,7 +6,7 @@ if (!browser) { console.log("SKIP native YouTube thumbnails: browser unavailable
 const root = path.resolve(__dirname, "../..");
 const mobile = "mobile.svg", desktop = "desktop.svg";
 const data = { link: { url: "https://www.youtube.com/watch?v=abc123", title: "Video", embed_allowed: true, thumbnail_url: desktop, thumbnail_mobile_url: mobile } };
-const html = execFileSync(process.env.TINYCAT_TEST_PHP || "php", ["-r", 'define("TINYCAT", true); require "App/autoload.php"; echo TinyCat\\Support\\Components::render("status/link", json_decode($argv[1], true));', JSON.stringify(data)], { cwd: root, encoding: "utf8" }).replace(/<svg\b[\s\S]*?<\/svg>/g, "").replace('loading="lazy"', 'loading="eager"');
+const html = execFileSync(process.env.TINYCAT_TEST_PHP || "php", ["-r", 'define("TINYCAT", true); require "App/autoload.php"; echo TinyCat\\Support\\Components::render("publishing/link", json_decode($argv[1], true));', JSON.stringify(data)], { cwd: root, encoding: "utf8" }).replace(/<svg\b[\s\S]*?<\/svg>/g, "").replace('loading="lazy"', 'loading="eager"');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "tinycat-youtube-thumbnails-"));
 try {
   fs.writeFileSync(path.join(temporary, mobile), '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="90"><rect width="120" height="90" fill="red"/></svg>');

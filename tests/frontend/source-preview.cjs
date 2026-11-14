@@ -31,7 +31,7 @@ const assert = require("node:assert/strict"), fs = require("node:fs"), vm = requ
     constructor(form) { this.form = form; }
     forEach(callback) { this.form.children.filter(child => child.attrs.name).forEach(child => callback(child.value, child.attrs.name)); }
   }
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../assets/modules/bots/source-preview.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window: { TinyCat: T, location: { search: "" } }, document, FormData });
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, "../../App/Modules/Social/assets/bots/source-preview.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window: { TinyCat: T, location: { search: "" } }, document, FormData });
   const flush = async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); };
   const form = document.body.appendChild(new Element("form", { action: "/api/bots/sources" }));
   for (const [name, value] of Object.entries({ feed_url: "https://public.example/feed", name: "Feed", post_template: "{{title}}" })) form.appendChild(new Element("input", { name, value }));

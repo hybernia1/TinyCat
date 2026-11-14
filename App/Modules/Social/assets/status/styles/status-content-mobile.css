@@ -1,0 +1,16 @@
+@media (max-width: 759px) {
+.status-compose-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+.status-composer .status-compose-row .avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+.status-compose-main .btn {
+    min-height: 36px;
+    padding: 7px 11px;
+  }
+}

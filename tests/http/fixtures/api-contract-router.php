@@ -23,7 +23,7 @@ $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $database->sqliteCreateFunction('GET_LOCK', static fn (): int => (int) ($_SERVER['HTTP_X_TEST_SCHEDULER_LOCK'] ?? 1));
 $database->sqliteCreateFunction('RELEASE_LOCK', static fn (): int => 1);
 $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-\TinyCat\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Users\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+\TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
 (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, [
     'app' => ['debug' => false, 'url' => 'http://localhost'],
@@ -40,14 +40,14 @@ $settings = [];
 foreach ($database->query('SELECT setting_key, setting_value, setting_type FROM settings')->fetchAll() as $setting) {
     $settings[$setting['setting_key']] = $setting['setting_type'] === 'bool' ? $setting['setting_value'] === '1' : $setting['setting_value'];
 }
-(new ReflectionProperty(\TinyCat\Settings\Store::class, 'settings'))->setValue(null, $settings);
+(new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, $settings);
 if (($_SERVER['HTTP_X_TEST_CAPTCHA'] ?? '') === '1') {
     $configuration = \TinyCat\Support\Config::get();
     $configuration['security']['captcha'] = ['enabled' => true, 'provider' => 'turnstile', 'site_key' => 'test_public_key', 'secret_key' => 'test_private_key'];
     (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, $configuration);
 }
 
-if (!\TinyCat\Site\Discovery::handles($assetPath) && !\TinyCat\Status\Embed::handles($assetPath)) {
+if (!\TinyCat\Social\Presentation\Discovery::handles($assetPath) && !\TinyCat\Social\Posts\Embed::handles($assetPath)) {
     session_start();
     $_SESSION['_csrf'] = str_repeat('a', 64);
 }
@@ -60,7 +60,7 @@ $user = match ($role) {
 if ($user !== null) {
     $user = \TinyCat\Database\Connection::find('users', ['id' => $user['id']]);
 }
-\TinyCat\Users\Authentication::reset($user, true);
+\TinyCat\Core\Identity\Authentication::reset($user, true);
 
 if (getenv('TINYCAT_API_FOUNDATION_TEST') === '1') {
     require __DIR__ . '/api-fixture.php';
@@ -73,9 +73,9 @@ if (getenv('TINYCAT_API_FOUNDATION_TEST') === '1') {
     throw new RuntimeException('PRIVATE_FAILURE_DETAIL');
 });
 \TinyCat\Http\Router::route(['GET', 'HEAD'], '/fixture-maintenance', static function (): void {
-    header('Retry-After: 300'); \TinyCat\Site\Errors::respond(503);
+    header('Retry-After: 300'); \TinyCat\Core\Runtime\Errors::respond(503);
 });
-if (($_SERVER['HTTP_X_TEST_EMBED_FAILURE'] ?? '') === '1' && \TinyCat\Status\Embed::handles($assetPath)) {
+if (($_SERVER['HTTP_X_TEST_EMBED_FAILURE'] ?? '') === '1' && \TinyCat\Social\Posts\Embed::handles($assetPath)) {
     \TinyCat\Database\Connection::set(new PDO('sqlite::memory:'));
 }
 require __DIR__ . '/../../../index.php';

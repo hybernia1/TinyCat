@@ -29,5 +29,5 @@ function parse(source, media = []) {
   assert.equal(depth,0,"Balanced CSS blocks");
 }
 parse(css);
-assert.deepEqual(hashes, JSON.parse(readFileSync(path.resolve(__dirname, "../fixtures/asset-style-baseline.json"),"utf8")), "Moving styles preserves every rule and cascade order");
+assert.deepEqual(hashes, JSON.parse(readFileSync(path.resolve(__dirname, "../fixtures/asset-style-baseline.json"),"utf8")), "Shared stylesheet rules match the reviewed cascade baseline");
 console.log(`PASS stylesheet cascade parity (${hashes.length} rules)`);

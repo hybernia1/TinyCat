@@ -5,12 +5,12 @@ require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/bootstrap.php';
 
-use TinyCat\Status\Audio;
-use TinyCat\Status\Links;
-use TinyCat\Status\LinkParser;
-use TinyCat\Status\Metadata;
-use TinyCat\Status\Providers;
-use TinyCat\Bots\FeedParser;
+use TinyCat\Core\Links\Audio;
+use TinyCat\Social\Content\Links;
+use TinyCat\Core\Text\LinkParser;
+use TinyCat\Core\Links\Metadata;
+use TinyCat\Core\Links\Providers;
+use TinyCat\Social\Automation\FeedParser;
 
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
@@ -50,18 +50,20 @@ $link = Links::status_link_prepare_metadata(LinkParser::fromRaw('https://93.184.
     ['url_hash'=>'', 'title'=>'Episode', 'description'=>'Summary', 'image_urls'=>[], 'audio_url'=>$media]);
 $assert($link['audio_url'] === $media && $link['link_type'] === 'audio', 'Feed source audio reaches prepared links without artwork.');
 $db = new PDO('sqlite::memory:');
-$db->exec('CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)');
+$db->exec('CREATE TABLE social_links (id INTEGER PRIMARY KEY, normalized_url TEXT, url_hash TEXT, provider TEXT, link_type TEXT, title TEXT, description TEXT, image_url TEXT, video_id TEXT, created_at TEXT, updated_at TEXT)');
 $migration = require __DIR__ . '/../../../migrations/20261031_001_link_audio.php';
+$db->exec('ALTER TABLE social_links RENAME TO links');
 $migration($db);
 $migration($db);
+$db->exec('ALTER TABLE links RENAME TO social_links');
 \TinyCat\Database\Connection::set($db);
 $linkId = Links::status_link_upsert($link);
 $stored = Links::status_link_find_by_hash($link['url_hash']);
 $assert($linkId > 0 && $stored['audio_url'] === $media && $stored['link_type'] === 'audio', 'Audio metadata survives storage and an idempotent migration.');
 $cached = Links::status_link_apply_cached_metadata([], $stored, true);
 $assert($cached['audio_url'] === $media, 'Cached metadata retains playback URLs.');
-$resource = \TinyCat\Status\Resource::link($stored);
-$html = \TinyCat\Support\Components::render('status/link', ['link'=>$resource]);
+$resource = \TinyCat\Social\Posts\Resource::link($stored);
+$html = \TinyCat\Support\Components::render('publishing/link', ['link'=>$resource]);
 $assert(!str_contains($html, '<audio') && str_contains($html, 'data-audio-url=') && str_contains($html, 'data-status-video-load'), 'Audio cards show the shared play button without creating a player before interaction.');
 $assert($resource['card_kind'] === 'audio' && $resource['embed_url'] === '', 'Native audio does not become an iframe.');
 $dom = new DOMDocument(); @$dom->loadHTML($html); $xpath = new DOMXPath($dom);

@@ -1,0 +1,19 @@
+{
+  "security": {
+    "captcha_label": "Bezpečnostní ověření"
+  },
+  "auth": {
+    "invalid_captcha": "Bezpečnostní ověření se nepovedlo."
+  },
+  "settings": {
+    "fields": {
+      "captcha_site_key": "Site key",
+      "captcha_secret_key": "Secret key",
+      "captcha_enabled": "Ochrana CAPTCHA",
+      "captcha_login_attempts": "Neúspěšná přihlášení před CAPTCHA",
+      "captcha_secret_key_help": "Prázdné pole ponechá uložený secret key. Jeho hodnota se znovu nezobrazuje.",
+      "captcha_provider_help": "Vyber poskytovatele, pro kterého jsou níže nastavené site key a secret key.",
+      "captcha_provider": "Poskytovatel CAPTCHA"
+    }
+  }
+}

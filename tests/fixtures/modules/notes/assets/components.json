@@ -1,0 +1,1 @@
+{"pilot-notes/list":{"tag":"ul","attrs":{"class":"pilot-notes-list"},"children":{"each":{"get":"items"},"as":"item","children":{"tag":"li","children":{"get":"item.title"}}}}}

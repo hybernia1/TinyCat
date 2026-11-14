@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "fields": {
+      "email_from": "E-Mail des Absenders",
+      "smtp_username": "SMTP Benutzername",
+      "smtp_encryption": "SMTP-Verschlüsselung",
+      "email_from_name": "Absendername",
+      "smtp_host": "SMTP Host",
+      "smtp_password": "SMTP Passwort",
+      "smtp_port": "SMTP-Port",
+      "email_templates": "E-Mail-Zustellungsarten",
+      "smtp": "SMTP Konfiguration"
+    }
+  }
+}

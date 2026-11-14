@@ -10,12 +10,12 @@ $config = require $configPath;
 $settings = $config['database'];
 if (preg_match('/^tinycat_perf_[a-z0-9_]+$/D', $settings['name']) !== 1) { throw new RuntimeException('Isolated performance database required.'); }
 $db = new PDO('mysql:host=' . $settings['host'] . ';dbname=' . $settings['name'] . ';charset=utf8mb4', $settings['user'], $settings['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-if ((int) $db->query('SELECT COUNT(*) FROM content_images')->fetchColumn() !== 0 || (int) $db->query("SELECT COUNT(*) FROM links WHERE link_type <> 'link'")->fetchColumn() !== 0) { throw new RuntimeException('Unexpected fixture baseline; nothing changed.'); }
+if ((int) $db->query('SELECT COUNT(*) FROM social_post_images')->fetchColumn() !== 0 || (int) $db->query("SELECT COUNT(*) FROM social_links WHERE link_type <> 'link'")->fetchColumn() !== 0) { throw new RuntimeException('Unexpected fixture baseline; nothing changed.'); }
 mkdir($output, 0775, true);
 $output = realpath($output);
 $sources = [];
 foreach (['baseline', 'candidate'] as $variant) {
-    if (isset($options[$variant])) { $sources[$variant] = hash_file('sha256', rtrim((string) $options[$variant], '/\\') . '/App/Status/Feed.php'); }
+    if (isset($options[$variant])) { $sources[$variant] = hash_file('sha256', rtrim((string) $options[$variant], '/\\') . '/App/Modules/Social/src/Posts/Feed.php'); }
 }
 file_put_contents($output . '/sources.json', json_encode(['feed_php_sha256' => $sources, 'php' => PHP_VERSION, 'mysql' => $db->query('SELECT VERSION()')->fetchColumn()], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
 $run = static function (array $command): void {
@@ -24,10 +24,10 @@ $run = static function (array $command): void {
     fclose($pipes[0]);
     if (proc_close($process) !== 0) { throw new RuntimeException('Benchmark failed.'); }
 };
-file_put_contents($output . '/recovery.json', json_encode(['database' => $settings['name'], 'restore_sql' => ["DELETE FROM content_images WHERE path LIKE 'tag-query-probe/%'", "UPDATE links SET link_type = 'link' WHERE link_type IN ('video', 'audio')"]], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+file_put_contents($output . '/recovery.json', json_encode(['database' => $settings['name'], 'restore_sql' => ["DELETE FROM social_post_images WHERE path LIKE 'tag-query-probe/%'", "UPDATE social_links SET link_type = 'link' WHERE link_type IN ('video', 'audio')"]], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
 try {
-    $db->exec("INSERT INTO content_images (content_id, path, width, height, bytes) SELECT id, CONCAT('tag-query-probe/', id, '.webp'), 640, 480, 10000 FROM content WHERE MOD(id, 10) = 0");
-    $db->exec("UPDATE links SET link_type = CASE WHEN MOD(id, 3) = 0 THEN 'video' WHEN MOD(id, 3) = 1 THEN 'audio' ELSE 'link' END");
+    $db->exec("INSERT INTO social_post_images (content_id, path, width, height, bytes) SELECT id, CONCAT('tag-query-probe/', id, '.webp'), 640, 480, 10000 FROM social_posts WHERE MOD(id, 10) = 0");
+    $db->exec("UPDATE social_links SET link_type = CASE WHEN MOD(id, 3) = 0 THEN 'video' WHEN MOD(id, 3) = 1 THEN 'audio' ELSE 'link' END");
     $run([PHP_BINARY, __DIR__ . '/tag-query-probe.php', '--config=' . $configPath, '--output=' . $output . '/plans.json']);
     if (!isset($options['probe-only'])) {
         $paths = [];
@@ -44,9 +44,9 @@ try {
         }
     }
 } finally {
-    $db->exec("DELETE FROM content_images WHERE path LIKE 'tag-query-probe/%'");
-    $db->exec("UPDATE links SET link_type = 'link' WHERE link_type IN ('video', 'audio')");
-    $restored = ['images' => (int) $db->query('SELECT COUNT(*) FROM content_images')->fetchColumn(), 'non_link_types' => (int) $db->query("SELECT COUNT(*) FROM links WHERE link_type <> 'link'")->fetchColumn()];
+    $db->exec("DELETE FROM social_post_images WHERE path LIKE 'tag-query-probe/%'");
+    $db->exec("UPDATE social_links SET link_type = 'link' WHERE link_type IN ('video', 'audio')");
+    $restored = ['images' => (int) $db->query('SELECT COUNT(*) FROM social_post_images')->fetchColumn(), 'non_link_types' => (int) $db->query("SELECT COUNT(*) FROM social_links WHERE link_type <> 'link'")->fetchColumn()];
     file_put_contents($output . '/restored.json', json_encode($restored, JSON_THROW_ON_ERROR));
     echo 'RESTORED ' . json_encode($restored, JSON_THROW_ON_ERROR) . PHP_EOL;
 }

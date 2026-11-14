@@ -51,6 +51,18 @@
     check(sidebar.querySelectorAll('.empty-state-compact').length === 2, 'Both empty sidebar lists reuse the shared compact state');
     const preview = empty(true), page = empty(false);
     check(preview.querySelector('.empty-state[role="status"]') && preview.innerHTML === page.innerHTML, 'Notification preview and page render the same shared empty component');
+    const tableWrap = document.createElement('div'); tableWrap.className = 'table-wrap';
+    const emptyTable = document.createElement('table'); emptyTable.className = 'table';
+    const tableHead = document.createElement('thead'), heading = document.createElement('tr');
+    for (const text of ['Publication title', 'Author username', 'Last checked']) { const cell = document.createElement('th'); cell.textContent = text; heading.append(cell); }
+    tableHead.append(heading);
+    const tableBody = document.createElement('tbody'), emptyRow = document.createElement('tr'), emptyCell = document.createElement('td'); emptyCell.colSpan = 3;
+    emptyCell.append(T.components.render('ui/empty-state', { label: 'No records.', icon: 'file-text' })); emptyRow.append(emptyCell); tableBody.append(emptyRow);
+    emptyTable.append(tableHead, tableBody); tableWrap.append(emptyTable); document.body.append(tableWrap);
+    const emptyLabel = tableWrap.querySelector('.empty-state-label').getBoundingClientRect(), tableBounds = tableWrap.getBoundingClientRect();
+    check(emptyLabel.left >= tableBounds.left && emptyLabel.right <= tableBounds.right, 'Empty table text fits the visible viewport instead of the horizontal scroll width');
+    check(Math.abs((emptyLabel.left + emptyLabel.right) / 2 - (tableBounds.left + tableBounds.right) / 2) < 2, 'Empty table content stays centered on mobile and desktop');
+    tableWrap.remove();
     const row = document.createElement('a'); row.className = 'identity-row identity-row-compact';
     row.append(T.components.render('ui/avatar', { user: {}, small: true }));
     const copy = document.createElement('span'); copy.className = 'identity-copy'; const title = document.createElement('strong'); title.textContent = 'Name'; const meta = document.createElement('small'); meta.textContent = 'Metadata'; copy.append(title, meta); row.append(copy); document.body.append(row);
@@ -66,12 +78,12 @@
     check(!more.isConnected, 'Exhausted following pagination removes its entire frame');
     modal.remove(); sidebar.remove(); row.remove(); form.remove();
     const draft = document.createElement('form'); draft.style.cssText = 'position:fixed;top:100px;left:12px;right:12px';
-    draft.append(T.components.render('status/editor', {name:'body',value:'',placeholder:'Text',comment:false})); document.body.append(draft);
+    draft.append(T.components.render('publishing/editor', {name:'body',value:'',placeholder:'Text',comment:false,suggest_url:'/api/search/suggestions'})); document.body.append(draft);
     const E = T.status.controllers.editor, pendingSuggestions = [];
     T.api.request = (url, options) => new Promise(resolve => pendingSuggestions.push({url,options,resolve}));
-    E.initStatusEditors(draft);
-    const editorRoot = draft.querySelector('[data-status-editor]'), editorInput = E.statusEditorInput(editorRoot), suggestions = E.statusEditorBox(editorRoot);
-    function typeDraft(text) { E.setStatusEditorText(editorInput,text,text.length); editorInput.dispatchEvent(new Event('input',{bubbles:true})); }
+    E.hydrate(draft);
+    const editorRoot = draft.querySelector('[data-status-editor]'), editorInput = E.getInput(editorRoot), suggestions = E.getBox(editorRoot);
+    function typeDraft(text) { E.setText(editorInput,text,text.length); editorInput.dispatchEvent(new Event('input',{bubbles:true})); }
     editorInput.focus(); typeDraft('@jan'); await new Promise(resolve => setTimeout(resolve,160));
     check(pendingSuggestions.length === 1, 'Mention autocomplete starts one debounced request');
     typeDraft('#');
@@ -79,19 +91,19 @@
     pendingSuggestions[0].resolve({ok:true,data:{users:[{type:'user',value:'jana',title:'@jana'}]}}); await tick();
     check(suggestions.hidden, 'An obsolete user response cannot populate a new empty tag');
     typeDraft('#1'); await new Promise(resolve => setTimeout(resolve,160));
-    check(pendingSuggestions.length === 1 && suggestions.hidden && E.statusEditorSource(editorRoot).value === '#1', 'A numeric hash literal remains text without a proposed numeric tag');
+    check(pendingSuggestions.length === 1 && suggestions.hidden && E.getSource(editorRoot).value === '#1', 'A numeric hash literal remains text without a proposed numeric tag');
     for (const [typed,canonical] of [['#1980s','1980s'],['#straße','strasse'],['#Cafe\u0301','cafe']]) {
       typeDraft(typed); await new Promise(resolve => setTimeout(resolve,160));
       pendingSuggestions[pendingSuggestions.length-1].resolve({ok:true,data:{tags:[{type:'tag',value:canonical,title:'#'+canonical}]}}); await tick();
       check(!suggestions.hidden && suggestions.textContent === '#'+canonical, 'Autocomplete preserves the server canonical tag: '+typed);
       key(editorInput,'Enter');
-      check(E.statusEditorSource(editorRoot).value === '#'+canonical+' ', 'Selecting a tag inserts its canonical value without a second transliteration');
+      check(E.getSource(editorRoot).value === '#'+canonical+' ', 'Selecting a tag inserts its canonical value without a second transliteration');
     }
     for (const text of ['mail@jana','https://example.test/@jana','example.test/path#tag','##tag','word.#tag']) {
-      typeDraft(text); check(E.statusEditorActiveToken(editorRoot) === null, 'Autocomplete ignores URL, email and invalid token boundaries: '+text);
+      typeDraft(text); check(E.activeToken(editorRoot) === null, 'Autocomplete ignores URL, email and invalid token boundaries: '+text);
     }
-    typeDraft('Ahoj,@jana'); check(E.statusEditorActiveToken(editorRoot).query === 'jana', 'Autocomplete recognizes the same punctuation boundary as the server');
-    E.hideStatusEditorSuggestions(editorRoot); draft.remove();
+    typeDraft('Ahoj,@jana'); check(E.activeToken(editorRoot).query === 'jana', 'Autocomplete recognizes the same punctuation boundary as the server');
+    E.hideSuggestions(editorRoot); draft.remove();
     document.getElementById('results').textContent = JSON.stringify({ ok: true, checks });
   } catch (error) { document.getElementById('results').textContent = JSON.stringify({ ok: false, error: String(error.stack || error), checks }); }
 }());

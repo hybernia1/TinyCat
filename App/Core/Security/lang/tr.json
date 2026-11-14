@@ -1,0 +1,19 @@
+{
+  "security": {
+    "captcha_label": "Güvenlik kontrolü"
+  },
+  "auth": {
+    "invalid_captcha": "Güvenlik denetimi başarısız oldu."
+  },
+  "settings": {
+    "fields": {
+      "captcha_site_key": "Site anahtarı",
+      "captcha_secret_key": "Gizli anahtar",
+      "captcha_enabled": "CAPTCHA koruması",
+      "captcha_login_attempts": "CAPTCHA'dan önce oturum açma işlemi başarısız oldu",
+      "captcha_secret_key_help": "Kaydedilen gizli anahtarı saklamak için boş bırakın. Bir daha asla gösterilmiyor.",
+      "captcha_provider_help": "Site anahtarı ve gizli anahtarı aşağıda yapılandırılmış olan sağlayıcıyı seçin.",
+      "captcha_provider": "CAPTCHA sağlayıcısı"
+    }
+  }
+}

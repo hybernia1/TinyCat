@@ -12,7 +12,7 @@ $expect = static function (bool $condition, string $message): void {
     }
 };
 
-$html = \TinyCat\Security\Sanitizer::sanitize_html(
+$html = \TinyCat\Core\Security\Sanitizer::sanitize_html(
     '<h2>Heading</h2><p>Safe <strong>content</strong> and <a href="https://example.com" target="_blank">link</a>.</p>'
     . '<a href="&#x6a;avascript:alert(1)">unsafe</a><img src=x onerror=alert(1)><script>alert(1)</script>'
     . '<p style="color:red" onclick="alert(1)">Text</p><a href="mailto:hello@example.com">Mail</a>'

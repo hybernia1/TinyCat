@@ -10,8 +10,8 @@ $app = '{"common":{"greeting":"Hello {name}: {count}","empty":""},"other":{"empt
 $emails = '{"signature":"{site}","templates":{"welcome":{"subject":"{site}","body":"Hello {username}"}}}';
 $reset = static function () use ($directory, $app, $emails): void {
     foreach (['en', 'cs'] as $locale) {
-        file_put_contents($directory . '/App/Support/lang/' . $locale . '.json', $app);
-        file_put_contents($directory . '/App/Mail/lang/' . $locale . '.json', $emails);
+        file_put_contents($directory . '/App/Core/Support/lang/' . $locale . '.json', $app);
+        file_put_contents($directory . '/App/Modules/Mail/lang/' . $locale . '.json', $emails);
     }
 };
 $reject = static function (string $file, string $source, string $expected) use ($validate, $directory, $reset, &$checks): void {
@@ -31,52 +31,55 @@ $reject = static function (string $file, string $source, string $expected) use (
 mkdir($directory);
 mkdir($directory . '/lang');
 mkdir($directory . '/App');
-foreach (['Support', 'Mail', 'Example'] as $owner) {
-    mkdir($directory . '/App/' . $owner);
-    mkdir($directory . '/App/' . $owner . '/lang');
+foreach (['Core/Support', 'Modules/Mail', 'Modules/Example'] as $owner) {
+    mkdir($directory . '/App/' . $owner . '/lang', 0700, true);
+}
+foreach (['Mail', 'Example'] as $owner) {
+    file_put_contents($directory . '/App/Modules/' . $owner . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.' . strtolower($owner), 'namespace' => 'Fixture\\' . $owner . '\\', 'translationDomain' => $owner === 'Mail' ? 'emails' : 'app', 'resources' => ['translations' => 'lang']], JSON_THROW_ON_ERROR));
 }
 foreach (['en', 'cs'] as $locale) {
     file_put_contents($directory . '/lang/' . $locale . '.json', '{"name":"Test"}');
 }
+file_put_contents($directory . '/App/modules.php', '<?php return ["fixture.example" => "App/Modules/Example/module.json", "fixture.mail" => "App/Modules/Mail/module.json"];');
 try {
     $reset();
     $catalogs = $validate($directory);
     if ($catalogs['cs']['app']['common.empty'] !== '') { throw new RuntimeException('Empty translations must remain valid'); }
     $checks++;
-    $reject('App/Support/lang/cs.json', '{"common":{"empty":"a","empty":"b"}}', 'duplicate key common.empty');
-    $reject('App/Support/lang/cs.json', '{"common":{"empty":"a","\u0065mpty":"b"}}', 'duplicate key common.empty');
-    $reject('App/Support/lang/cs.json', '{"common":{"empty":[]}}', 'expected string at common.empty');
-    $reject('App/Support/lang/cs.json', '{"common":{"empty":false}}', 'expected string at common.empty');
-    $reject('App/Support/lang/cs.json', '{"common":{}}', 'empty namespace common');
-    $reject('App/Support/lang/cs.json', '{"common":{"one":"1","other":"many"}}', 'incomplete plural forms at common');
-    $reject('App/Support/lang/cs.json', '{"common":{"one":"1","other":"many","single":"exactly one"}}', 'incomplete plural forms at common');
-    $reject('App/Support/lang/cs.json', str_replace('Hello', 'prob?ha', $app), 'suspicious encoding marker at common.greeting');
-    $reject('App/Support/lang/en.json', str_replace('Hello', 'bad??', $app), 'suspicious encoding marker at common.greeting');
-    $reject('App/Support/lang/en.json', str_replace('Hello', '\ufffd', $app), 'suspicious encoding marker at common.greeting');
-    $reject('App/Support/lang/cs.json', '{"common.empty":"x"}', 'invalid key common.empty');
-    $reject('App/Support/lang/cs.json', '[]', 'catalog must be an object');
-    $reject('App/Support/lang/cs.json', '{', 'Syntax error');
-    $reject('App/Support/lang/cs.json', '{"common":{"empty":""},"other":{"empty":""}}', 'missing key common.greeting');
-    $reject('App/Support/lang/cs.json', str_replace('"other":{', '"extra":"x","other":{', $app), 'unknown key extra');
-    $reject('App/Support/lang/cs.json', str_replace('{count}', '{total}', $app), 'placeholder mismatch at common.greeting');
-    $reject('App/Support/lang/cs.json', str_replace('{name}', '{username}', $app), 'placeholder mismatch at common.greeting');
-    $reject('App/Mail/lang/cs.json', str_replace('{username}', '{user}', $emails), 'placeholder mismatch at templates.welcome.body');
+    $reject('App/Core/Support/lang/cs.json', '{"common":{"empty":"a","empty":"b"}}', 'duplicate key common.empty');
+    $reject('App/Core/Support/lang/cs.json', '{"common":{"empty":"a","\u0065mpty":"b"}}', 'duplicate key common.empty');
+    $reject('App/Core/Support/lang/cs.json', '{"common":{"empty":[]}}', 'expected string at common.empty');
+    $reject('App/Core/Support/lang/cs.json', '{"common":{"empty":false}}', 'expected string at common.empty');
+    $reject('App/Core/Support/lang/cs.json', '{"common":{}}', 'empty namespace common');
+    $reject('App/Core/Support/lang/cs.json', '{"common":{"one":"1","other":"many"}}', 'incomplete plural forms at common');
+    $reject('App/Core/Support/lang/cs.json', '{"common":{"one":"1","other":"many","single":"exactly one"}}', 'incomplete plural forms at common');
+    $reject('App/Core/Support/lang/cs.json', str_replace('Hello', 'prob?ha', $app), 'suspicious encoding marker at common.greeting');
+    $reject('App/Core/Support/lang/en.json', str_replace('Hello', 'bad??', $app), 'suspicious encoding marker at common.greeting');
+    $reject('App/Core/Support/lang/en.json', str_replace('Hello', '\ufffd', $app), 'suspicious encoding marker at common.greeting');
+    $reject('App/Core/Support/lang/cs.json', '{"common.empty":"x"}', 'invalid key common.empty');
+    $reject('App/Core/Support/lang/cs.json', '[]', 'catalog must be an object');
+    $reject('App/Core/Support/lang/cs.json', '{', 'Syntax error');
+    $reject('App/Core/Support/lang/cs.json', '{"common":{"empty":""},"other":{"empty":""}}', 'missing key common.greeting');
+    $reject('App/Core/Support/lang/cs.json', str_replace('"other":{', '"extra":"x","other":{', $app), 'unknown key extra');
+    $reject('App/Core/Support/lang/cs.json', str_replace('{count}', '{total}', $app), 'placeholder mismatch at common.greeting');
+    $reject('App/Core/Support/lang/cs.json', str_replace('{name}', '{username}', $app), 'placeholder mismatch at common.greeting');
+    $reject('App/Modules/Mail/lang/cs.json', str_replace('{username}', '{user}', $emails), 'placeholder mismatch at templates.welcome.body');
     $reset();
-    file_put_contents($directory . '/App/Support/lang/cs.json', str_replace('{name}: {count}', '{count} / {name} / {name}', $app));
+    file_put_contents($directory . '/App/Core/Support/lang/cs.json', str_replace('{name}: {count}', '{count} / {name} / {name}', $app));
     $validate($directory);
     $checks++;
     $reset();
-    unlink($directory . '/App/Mail/lang/cs.json');
+    unlink($directory . '/App/Modules/Mail/lang/cs.json');
     try {
         $validate($directory);
         throw new LogicException('Missing catalog accepted');
     } catch (RuntimeException $error) {
-        if (!str_contains($error->getMessage(), 'App/Mail/lang/cs.json: missing catalog')) { throw $error; }
+        if (!str_contains($error->getMessage(), 'App/Modules/Mail/lang/cs.json: missing catalog')) { throw $error; }
         $checks++;
     }
     $reset();
     foreach (['en', 'cs'] as $locale) {
-        file_put_contents($directory . '/App/Example/lang/' . $locale . '.json', '{"common":{"greeting":"Hello {name}: {count}"}}');
+        file_put_contents($directory . '/App/Modules/Example/lang/' . $locale . '.json', '{"common":{"greeting":"Hello {name}: {count}"}}');
     }
     try {
         $validate($directory);
@@ -86,21 +89,21 @@ try {
         $checks++;
     }
     foreach (['en', 'cs'] as $locale) {
-        file_put_contents($directory . '/App/Example/lang/' . $locale . '.json', '{"common":{"owned":"Module"}}');
+        file_put_contents($directory . '/App/Modules/Example/lang/' . $locale . '.json', '{"common":{"owned":"Module"}}');
     }
     $merged = $validate($directory);
     if ($merged['cs']['app']['common.owned'] !== 'Module' || !isset($merged['cs']['app']['common.greeting'])) {
         throw new RuntimeException('Modules may share namespaces, never individual keys.');
     }
     $checks++;
-    $reject('App/Example/lang/cs.json', '{"common":{"greeting":"Hello {name}: {count}"}}', 'missing key common.owned');
-    file_put_contents($directory . '/App/Example/lang/cs.json', '{"common":{"owned":"Module"}}');
-    unlink($directory . '/App/Example/lang/cs.json');
+    $reject('App/Modules/Example/lang/cs.json', '{"common":{"greeting":"Hello {name}: {count}"}}', 'missing key common.owned');
+    file_put_contents($directory . '/App/Modules/Example/lang/cs.json', '{"common":{"owned":"Module"}}');
+    unlink($directory . '/App/Modules/Example/lang/cs.json');
     try {
         $validate($directory);
         throw new LogicException('Incomplete module locale accepted');
     } catch (RuntimeException $error) {
-        if (!str_contains($error->getMessage(), 'App/Example/lang/cs.json: missing catalog')) { throw $error; }
+        if (!str_contains($error->getMessage(), 'App/Modules/Example/lang/cs.json: missing catalog')) { throw $error; }
         $checks++;
     }
     $reject('lang/cs.json', '{"name":"Test","name":"Duplicate"}', 'duplicate key name');
@@ -119,7 +122,7 @@ try {
     try {
         foreach (['missing.catalog_entry', null] as $dependency) {
             $features = $saved;
-            $features['/'] = [['entries' => ['assets/modules/users/controller.js'], 'translations' => $dependency === null ? $dateKeys : [...$dateKeys, $dependency]]];
+            $features['/'] = [['entries' => ['App/Core/Identity/assets/controller.js'], 'translations' => $dependency === null ? $dateKeys : [...$dateKeys, $dependency]]];
             $featuresProperty->setValue(null, $features);
             try {
                 $validateClients($real);
@@ -144,16 +147,19 @@ try {
         $featuresProperty->setValue(null, $saved);
     }
 } finally {
-foreach (['Support', 'Mail', 'Example'] as $owner) {
+foreach (['Core/Support', 'Modules/Mail', 'Modules/Example'] as $owner) {
         foreach (['en', 'cs'] as $locale) {
             $file = $directory . '/App/' . $owner . '/lang/' . $locale . '.json';
             if (is_file($file)) { unlink($file); }
         }
+        if (is_file($directory . '/App/' . $owner . '/module.json')) { unlink($directory . '/App/' . $owner . '/module.json'); }
         rmdir($directory . '/App/' . $owner . '/lang');
         rmdir($directory . '/App/' . $owner);
     }
     foreach (['en', 'cs'] as $locale) { unlink($directory . '/lang/' . $locale . '.json'); }
     rmdir($directory . '/lang');
+    unlink($directory . '/App/modules.php');
+    rmdir($directory . '/App/Core'); rmdir($directory . '/App/Modules');
     rmdir($directory . '/App');
     rmdir($directory);
 }

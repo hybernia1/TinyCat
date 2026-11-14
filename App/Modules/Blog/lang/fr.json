@@ -1,0 +1,45 @@
+{
+  "blog": {
+    "navigation": "Navigation",
+    "home": "Accueil",
+    "editor": "Écrire un article",
+    "title": "Titre",
+    "body": "Texte de l’article",
+    "visibility": "Visibilité",
+    "published": "Publié",
+    "hidden": "Masqué",
+    "view": "Voir l’article",
+    "empty": "Aucun article pour le moment.",
+    "older": "Articles précédents",
+    "not_found": "Article introuvable.",
+    "invalid": "Saisissez un titre (200 caractères maximum) et un texte (60 000 octets UTF-8 maximum).",
+    "articles": "Articles",
+    "scheduled": "Planifié",
+    "feeds": {
+      "title": "Sources des articles",
+      "help": "Importer des articles sans compte de bot. Les nouvelles sources enregistrent des articles masqués.",
+      "schedule": "Selon l’intervalle de la source",
+      "create": "Ajouter une source d’articles",
+      "url": "URL du flux",
+      "interval": "Intervalle de vérification (minutes)",
+      "images": "Importer les images",
+      "checked": "Dernière vérification",
+      "run": "Lancer l’importation",
+      "preview": "Aperçu de l’importation",
+      "preview_empty": "Aucun élément utilisable.",
+      "invalid": "Vérifiez le nom, l’URL publique du flux, l’administrateur actif et l’intervalle de 5 à 43 200 minutes. L’URL d’une source enregistrée ne peut pas être modifiée."
+    },
+    "settings": {
+      "images_enabled": "Autoriser la publication d'images",
+      "images_max_upload_kb": "Taille maximale de l'image (Ko)",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "blocked_urls": "Sites Web bloqués"
+    },
+    "messages": {
+      "blocked_url": "Ce lien n'est pas autorisé : {host}."
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "settings": {
+    "fields": {
+      "email_from": "Adres e-mail nadawcy",
+      "smtp_username": "Nazwa użytkownika SMTP",
+      "smtp_encryption": "Szyfrowanie SMTP",
+      "email_from_name": "Nazwa nadawcy",
+      "smtp_host": "Host SMTP",
+      "smtp_password": "Hasło SMTP",
+      "smtp_port": "Port SMTP",
+      "email_templates": "Rodzaje dostarczania wiadomości e-mail",
+      "smtp": "Konfiguracja SMTP"
+    }
+  }
+}

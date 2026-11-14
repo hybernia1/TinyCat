@@ -3,10 +3,11 @@ declare(strict_types=1);
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/autoload.php';
 $mode = $argv[1] ?? '--all';
+if ($mode === '--locale-routes') { echo json_encode(\TinyCat\Http\LocaleRouting::patterns(), JSON_THROW_ON_ERROR); exit; }
 if ($mode === '--localized-urls') {
-    \TinyCat\Site\LocaleRouting::prepare('/pl/');
+    \TinyCat\Http\LocaleRouting::prepare('/pl/');
     $urls = json_decode((string) ($argv[2] ?? '[]'), true, 512, JSON_THROW_ON_ERROR);
-    echo json_encode(array_map(\TinyCat\Site\LocaleRouting::url(...), $urls), JSON_THROW_ON_ERROR);
+    echo json_encode(array_map(\TinyCat\Http\LocaleRouting::url(...), $urls), JSON_THROW_ON_ERROR);
     exit;
 }
 if ($mode === '--catalogs') {
@@ -27,7 +28,10 @@ if ($mode === '--styles') {
     echo json_encode(\TinyCat\Support\AssetGraph::stylesheet(array_values(array_unique($styles))), JSON_THROW_ON_ERROR);
     exit;
 }
-$roots = $mode === '--core' ? ['assets/ui/component-builders.js', 'assets/ui/dialogs.js'] : ($mode === '--validation' ? ['assets/ui/ajax-bindings.js', 'assets/modules/status/form-actions.js', 'assets/modules/moderation/controller.js', 'assets/modules/settings/index.js', 'assets/modules/users/index.js', 'assets/modules/bots/index.js', 'assets/modules/updates/index.js'] : []);
+$roots = $mode === '--core' ? ['assets/ui/component-builders.js', 'assets/ui/dialogs.js'] : ($mode === '--validation' ? ['assets/ui/ajax-bindings.js', 'App/Modules/Social/assets/status/form-actions.js', 'App/Modules/Social/assets/moderation/controller.js', 'App/Core/Settings/assets/index.js', 'App/Modules/Social/assets/users/index.js', 'App/Modules/Social/assets/bots/index.js', 'App/Core/Updates/assets/index.js'] : []);
+if ($mode === '--validation') {
+    foreach (\TinyCat\Support\ClientAssets::entries('/admin') as $entry) { if (str_ends_with($entry, '/settings-presentation.js')) { $roots[] = $entry; } }
+}
 if ($mode === '--all') {
     foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) {
         foreach (\TinyCat\Support\ClientAssets::entries($scope) as $entry) { if ($entry !== 'assets/bootstrap.js') { $roots[] = $entry; } }

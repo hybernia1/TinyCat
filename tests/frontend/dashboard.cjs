@@ -47,7 +47,7 @@ try {
   assert.equal(results.length,7);
   for (const item of results) {
     assert.ok(item.documentWidth <= item.width && item.fits && item.resetFits, "Dashboard overflow: "+JSON.stringify(item));
-    assert.ok(item.rows === 8 && item.stats === 10 && !item.cards && item.headers && item.scrollable && item.clipped && item.noUnrelatedSort, "Dashboard content and shared table behavior: "+JSON.stringify(item));
+    assert.ok(item.rows === 8 && item.stats === 6 && !item.cards && item.headers && item.scrollable && item.clipped && item.noUnrelatedSort, "Social widget content and shared table behavior: "+JSON.stringify(item));
     assert.equal(item.display, "table");
   }
   console.log("PASS dashboard native tables on desktop and mobile, long comments and diagnostics (7 viewports)");

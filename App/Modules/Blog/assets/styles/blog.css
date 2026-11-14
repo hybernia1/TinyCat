@@ -1,0 +1,6 @@
+.blog-page { width: min(100% - 32px, 52rem); margin-inline: auto; overflow-wrap: anywhere; }
+.blog-article a { color: var(--text); }
+.blog-title { line-height: 1.2; }
+.blog-body { white-space: pre-wrap; line-height: 1.8; font-size: 1.0625rem; }
+.blog-excerpt { white-space: pre-wrap; line-height: 1.7; }
+.blog-body-input { min-height: 45vh; resize: vertical; line-height: 1.7; }

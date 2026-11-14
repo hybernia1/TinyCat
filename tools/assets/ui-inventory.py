@@ -25,7 +25,7 @@ def walk(value):
 def generate():
     components = []
     structures = collections.defaultdict(list)
-    for path in sorted((ROOT / 'assets').rglob('components.json')):
+    for path in sorted(list((ROOT / 'assets').rglob('components.json')) + list((ROOT / 'App').rglob('assets/components.json'))):
         # Preserve duplicate keys, including duplicates inside one catalog.
         pairs = json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=lambda p: p)
         definitions = json.loads(path.read_text(encoding='utf-8'))
@@ -86,11 +86,11 @@ def generate():
     for path in sorted((ROOT / 'App').rglob('*Views.php')):
         source = path.read_text(encoding='utf-8')
         renderers.append(dict(source=rel(path), methods=re.findall(r'public static function\s+(\w+)', source)))
-    standalone = [dict(source=rel(p), classes=sorted(set(re.findall(r'\.([a-zA-Z_][\w-]*)', p.read_text(encoding='utf-8'))))) for p in sorted((ROOT / 'assets').rglob('*.css')) if p.resolve() not in imports and p != index]
+    standalone = [dict(source=rel(p), classes=sorted(set(re.findall(r'\.([a-zA-Z_][\w-]*)', p.read_text(encoding='utf-8'))))) for p in sorted(list((ROOT / 'assets').rglob('*.css')) + list((ROOT / 'App').rglob('assets/**/*.css'))) if p.resolve() not in imports and p != index]
     ownership = collections.defaultdict(list)
     js_entries = collections.defaultdict(list)
     js_standalone = set()
-    for path in sorted((ROOT / 'assets').rglob('module.json')):
+    for path in sorted(list((ROOT / 'assets').rglob('module.json')) + list((ROOT / 'App').rglob('assets/module.json'))):
         for feature in json.loads(path.read_text(encoding='utf-8')):
             for css in feature.get('styles', []):
                 ownership[css].append(dict(manifest=rel(path), routes=feature['routes']))
@@ -98,8 +98,8 @@ def generate():
                 js_entries[entry].append(dict(manifest=rel(path), routes=feature['routes']))
             js_standalone.update(feature.get('standalone', []))
     javascript = []
-    for path in sorted((ROOT / 'assets').rglob('*.js')):
-        if 'build' in path.relative_to(ROOT / 'assets').parts:
+    for path in sorted(list((ROOT / 'assets').rglob('*.js')) + list((ROOT / 'App').rglob('assets/**/*.js'))):
+        if 'build' in path.relative_to(ROOT).parts:
             continue
         source = path.read_text(encoding='utf-8')
         dependencies = [posixpath.normpath(posixpath.join(posixpath.dirname(rel(path)), target)) for target in re.findall(r'^import\s+["\']([^"\']+)["\'];[ \t]*$', source, re.M)]

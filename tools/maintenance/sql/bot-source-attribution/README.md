@@ -6,7 +6,7 @@ databázi; neobsahují přihlašovací údaje. Skripty 00–10 pouze čtou data.
 ## Co je považováno za shodu
 
 - Příspěvek patří uživateli s rolí `bot` a kandidátní feed patří stejnému botovi.
-- Používají se uložené odkazy `content_links` → `links.normalized_url`, nikoli
+- Používají se uložené odkazy Socialu `social_post_links` → `social_links.normalized_url`, nikoli
   volná zmínka domény v textu.
 - Hostitel se převede na malá písmena a odstraní se úvodní `www.`, port a koncová
   tečka. Ostatní subdomény zůstávají odlišné. `example.com.evil.test` není shoda.

@@ -1,0 +1,45 @@
+{
+  "blog": {
+    "navigation": "Navigation",
+    "home": "Home",
+    "editor": "Write article",
+    "title": "Title",
+    "body": "Article text",
+    "visibility": "Visibility",
+    "published": "Published",
+    "hidden": "Hidden",
+    "view": "View article",
+    "empty": "No articles yet.",
+    "older": "Older articles",
+    "not_found": "Article not found.",
+    "invalid": "Enter a title (up to 200 characters) and text (up to 60,000 UTF-8 bytes).",
+    "articles": "Articles",
+    "scheduled": "Scheduled",
+    "feeds": {
+      "title": "Article sources",
+      "help": "Import articles without a bot account. New sources save articles as hidden.",
+      "schedule": "According to source interval",
+      "create": "Add article source",
+      "url": "Feed URL",
+      "interval": "Check interval (minutes)",
+      "images": "Import images",
+      "checked": "Last checked",
+      "run": "Run import",
+      "preview": "Import preview",
+      "preview_empty": "No usable items.",
+      "invalid": "Check the name, public feed URL, active administrator and interval of 5 to 43,200 minutes. A saved source URL cannot be changed."
+    },
+    "settings": {
+      "images_enabled": "Allow post images",
+      "images_max_upload_kb": "Maximum image size (KB)",
+      "utm_enabled": "UTM on outgoing links",
+      "utm_source": "UTM source",
+      "utm_medium": "UTM medium",
+      "utm_campaign": "UTM campaign (optional)",
+      "blocked_urls": "Blocked websites"
+    },
+    "messages": {
+      "blocked_url": "This link is not allowed: {host}."
+    }
+  }
+}

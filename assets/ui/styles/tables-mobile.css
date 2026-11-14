@@ -1,3 +1,12 @@
 @media (max-width: 599px) {
   .table { min-width: 44rem; }
+
+  .table:has(> tbody > tr:only-child > td:only-child > .empty-state) {
+    min-width: 0;
+    table-layout: fixed;
+  }
+
+  .table:has(> tbody > tr:only-child > td:only-child > .empty-state) > thead {
+    display: none;
+  }
 }

@@ -1,0 +1,12 @@
+{
+  "templates": {
+    "welcome": {
+      "subject": "Benvenuto in {site}",
+      "body": "Ciao {username},\n\nBenvenuto in {site}. Il tuo account è pronto.\n\nAccedi: {login_url}\n\n{signature}"
+    },
+    "password_reset": {
+      "subject": "Reimposta la tua password {site}",
+      "body": "Ciao {username},\n\nAbbiamo ricevuto una richiesta per reimpostare la tua password.\n\nReimposta la tua password: {reset_url}\n\nQuesto collegamento scade tra 60 minuti. Se non lo hai richiesto, puoi ignorare questa email.\n\n{signature}"
+    }
+  }
+}

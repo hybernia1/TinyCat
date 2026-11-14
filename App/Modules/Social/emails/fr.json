@@ -1,0 +1,44 @@
+{
+  "templates": {
+    "notification_content_like": {
+      "subject": "{actor} a aimé votre message",
+      "body": "{actor} a aimé votre message.\n\nVoir le message : {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_comment": {
+      "subject": "{actor} a commenté votre message",
+      "body": "{actor} a commenté votre message.\n\nAfficher la conversation : {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_like": {
+      "subject": "{actor} a aimé votre commentaire",
+      "body": "{actor} a aimé votre commentaire.\n\nAfficher la conversation : {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_follow": {
+      "subject": "{actor} vous a suivi",
+      "body": "{actor} vous a suivi.\n\nVoir leur profil : {actor_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_content_mention": {
+      "subject": "{actor} vous a mentionné",
+      "body": "{actor} vous a mentionné dans un message.\n\nVoir le message : {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_comment_mention": {
+      "subject": "{actor} vous a mentionné",
+      "body": "{actor} vous a mentionné dans un commentaire.\n\nAfficher la conversation : {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_resolved": {
+      "subject": "Votre rapport a été résolu",
+      "body": "Votre signalement a été résolu par l'équipe de modération.\n\nAfficher le contenu signalé : {content_url}\n\n{signature}",
+      "channel": "notifications"
+    },
+    "notification_report_dismissed": {
+      "subject": "Votre rapport a été rejeté",
+      "body": "Votre rapport a été examiné et rejeté par l'équipe de modération.\n\nAfficher le contenu signalé : {content_url}\n\n{signature}",
+      "channel": "notifications"
+    }
+  }
+}

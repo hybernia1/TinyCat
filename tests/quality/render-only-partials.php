@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
-$templateRoots = glob($root . '/App/*/templates') ?: [];
+$templateRoots = array_merge(glob($root . '/App/Modules/*/templates') ?: [], glob($root . '/App/Core/*/templates') ?: [], glob($root . '/App/Core/*/*/templates') ?: []) ?: [];
 if ($templateRoots === []) { throw new RuntimeException('No module templates found.'); }
 $forbiddenFunctions = array_fill_keys([
     'all',
@@ -76,7 +76,7 @@ foreach ($files as $file) {
     }
 
     $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
-    if (preg_match('~^App/([^/]+)/templates/parts/(.+)\.php$~', $relative, $match)) {
+    if (preg_match('~^App/(?:Modules|Core)/([^/]+)/templates/parts/(.+)\.php$~', $relative, $match)) {
         $name = $match[1] . '/' . $match[2];
         if (!str_contains($production, "'" . $name . "'") && !str_contains($production, '"' . $name . '"')) { $failures[] = 'Unreferenced module partial: ' . $relative; }
     }
@@ -111,7 +111,7 @@ foreach ($files as $file) {
 
         if (is_array($nextToken) && $nextToken[0] === T_DOUBLE_COLON) {
             $class = $imports[$name] ?? ltrim($name, '\\');
-            if (preg_match('~^TinyCat\\\\(?:Support\\\\(?:Html|View|Localization|Dates|Text|Format|Components|Version)|Security\\\\Csrf|(?:Users|Status|Bots|Settings|Site|Notifications)\\\\Views)$~', $class) !== 1) {
+            if (preg_match('~^TinyCat\\\\(?:Support\\\\(?:Html|View|Localization|Dates|Text|Format|Components|Version)|Core\\\\Security\\\\Csrf|(?:Core\\\\(?:Identity|Notifications)|Social\\\\(?:Profiles|Posts|Automation|Presentation))\\\\Views)$~', $class) !== 1) {
                 $failures[] = $relative . ':' . $token[2] . ' must compose presentation components instead of calling ' . $class . '::.';
             }
         }
