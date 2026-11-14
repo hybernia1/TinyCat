@@ -430,8 +430,8 @@ check(T.status.method(form, "react") === "PUT", "An unliked resource requests PU
 form.querySelector("button").setAttribute("aria-pressed", "true");
 check(T.status.method(form, "react") === "DELETE", "A liked resource requests DELETE rather than a toggle.");
 check(T.status.method(form, "comment_update") === "PATCH" && T.status.method(form, "comment_delete") === "DELETE", "Comment edits and deletions use resource methods.");
-node = T.notifications.items([{ id: 1, type: "follow", actor: { username: unsafe }, excerpt: unsafe, url: "/status/10", unread: true, created_at: "2026-01-01T12:00:00+00:00" }], false);
-check(node.querySelector("strong").textContent === T.i18n.t("notifications.messages.follow", { actor: unsafe }) && node.querySelectorAll("img").length === 0, "Notifications translate event data and render actors and excerpts as literal text.");
+node = T.notifications.items([{ id: 1, type: "follow", message: unsafe, icon: "user-plus", actor: { username: unsafe }, excerpt: unsafe, url: "/status/10", unread: true, created_at: "2026-01-01T12:00:00+00:00" }], false);
+check(node.querySelector("strong").textContent === unsafe && node.querySelectorAll("img").length === 0, "Notifications render owner-provided messages and excerpts as literal text.");
 check(node.querySelector('[data-api-method="PATCH"]').getAttribute("action") === "/api/notifications/1", "Notification actions address the individual resource.");
 const response = { data: { user, options: { languages: { en: "English" }, password_max_length: 1024 }, capabilities: { password: false } }, meta: {} };
 node = T.users.modal(new URL("https://tinycat.test/api/users/2/management"), response, "profile-test");
