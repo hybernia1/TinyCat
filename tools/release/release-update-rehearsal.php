@@ -238,23 +238,25 @@ try {
     file_put_contents($installRoot . '/uploads/avatars/release-sentinel.txt', 'uploads-' . $baselineVersion, LOCK_EX);
     $installRunner = <<<'PHP'
 define('TINYCAT', true);
-require __ROOT__ . '/App/bootstrap.php';
+require __ROOT__ . '/App/autoload.php';
 if (class_exists(TinyCat\Core\Modules\Distribution::class)) {
     $plan = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', require __ROOT__ . '/App/modules.php');
     file_put_contents(__ROOT__ . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
 }
+require __ROOT__ . '/App/bootstrap.php';
 TinyCat\Installation\Installer::create_tables();
 TinyCat\Installation\Installer::create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
 TinyCat\Installation\Installer::default_settings(['locale' => 'en']);
 // The archived installer creates its final schema directly. Model a production
 // baseline whose historical migrations have already completed.
-foreach (glob(__ROOT__ . '/migrations/*.php') ?: [] as $path) {
+foreach (version_compare(TinyCat\Support\Version::CURRENT, '6.0.0', '>=') ? [] : (glob(__ROOT__ . '/migrations/*.php') ?: []) as $path) {
     TinyCat\Updates\MigrationRegistry::ensure();
     TinyCat\Database\Connection::exec(
         'INSERT INTO schema_migrations (migration, version, checksum, applied_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
         [pathinfo($path, PATHINFO_FILENAME), TinyCat\Support\Version::CURRENT, TinyCat\Updates\MigrationRegistry::checksum($path)]
     );
 }
+if (isset($plan) && !$plan['legacy']) { TinyCat\Core\Modules\Deployment::write(__ROOT__, $plan, $plan['active'], $plan['active'], TinyCat\Support\Version::CURRENT); }
 PHP;
     [$installExit, $installOutput] = $run(str_replace('__ROOT__', var_export($installRoot, true), $installRunner));
     if ($installExit !== 0) {
