@@ -32,11 +32,13 @@ final readonly class Catalog
             }
         }
         ksort($remaining, SORT_STRING);
+        $framework = array_keys(array_filter($remaining, static fn (Definition $definition): bool => $definition->manifest === null));
         $ordered = [];
         while ($remaining !== []) {
             $next = null;
             foreach ($remaining as $id => $definition) {
-                if (array_diff($definition->requires, array_keys($ordered)) === []) { $next = $id; break; }
+                $dependencies = $definition->manifest === null ? $definition->requires : [...$framework, ...$definition->requires];
+                if (array_diff($dependencies, array_keys($ordered)) === []) { $next = $id; break; }
             }
             if ($next === null) { throw new InvalidArgumentException('Cyclic module dependencies: ' . implode(', ', array_keys($remaining))); }
             $ordered[$next] = $remaining[$next];

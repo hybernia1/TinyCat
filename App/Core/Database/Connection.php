@@ -112,12 +112,7 @@ final class Connection
      * @param array<mixed> $params */
     public static function queryOn(PDO $pdo, string $sql, array $params = []): PDOStatement
     {
-        $statement = $pdo->prepare($sql);
-        if ($statement === false || !$statement->execute($params)) {
-            throw new RuntimeException('Database statement failed.');
-        }
-
-        return $statement;
+        return \TinyCat\Core\Database\Statements::query($pdo, $sql, $params);
     }
 
     /**

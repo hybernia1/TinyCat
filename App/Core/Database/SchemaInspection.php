@@ -26,7 +26,7 @@ final class SchemaInspection
     public static function columns(PDO $pdo, string $table): array
     {
         $table = self::identifier($table);
-        $query = \TinyCat\Database\Connection::queryOn($pdo, $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? 'PRAGMA table_info(' . $table . ')' : 'SHOW COLUMNS FROM ' . $table);
+        $query = \TinyCat\Core\Database\Statements::query($pdo, $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? 'PRAGMA table_info(' . $table . ')' : 'SHOW COLUMNS FROM ' . $table);
         return array_values(array_map(static fn (array $row): string => (string) ($row['name'] ?? $row['Field']), $query->fetchAll(PDO::FETCH_ASSOC)));
     }
 
@@ -58,7 +58,7 @@ final class SchemaInspection
             $query = $pdo->prepare('SELECT seq FROM sqlite_sequence WHERE name = ?'); $query->execute([$table]); $last = $query->fetchColumn();
             if ($last !== false) { if ((int) $last >= PHP_INT_MAX) { throw new \RuntimeException('Historical ID space is exhausted.'); } return max(1, (int) $last + 1); }
         }
-        $last = (int) \TinyCat\Database\Connection::queryOn($pdo, 'SELECT COALESCE(MAX(id), 0) FROM ' . $table)->fetchColumn();
+        $last = (int) \TinyCat\Core\Database\Statements::query($pdo, 'SELECT COALESCE(MAX(id), 0) FROM ' . $table)->fetchColumn();
         if ($last >= PHP_INT_MAX) { throw new \RuntimeException('Historical ID space is exhausted.'); }
         return max(1, $last + 1);
     }
@@ -80,7 +80,7 @@ final class SchemaInspection
         self::identifier($table); foreach ($columns as $column) { self::identifier($column); }
         if ($columns === []) { return; }
         if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
-            $query = \TinyCat\Database\Connection::queryOn($pdo, 'PRAGMA foreign_key_list(' . $table . ')');
+            $query = \TinyCat\Core\Database\Statements::query($pdo, 'PRAGMA foreign_key_list(' . $table . ')');
             foreach ($query->fetchAll(PDO::FETCH_ASSOC) as $key) { if (in_array($key['from'], $columns, true)) { throw new \RuntimeException('A custom SQLite legacy reference requires an explicit table rebuild.'); } }
             return;
         }

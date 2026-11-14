@@ -22,6 +22,12 @@ $reject = static function (callable $action, string $message) use ($assert): voi
 
 // This must run before loading any fixture or the application bootstrap.
 $legacy = Loader::load($root);
+$seenFunctional = false; $frameworkFirst = true;
+foreach ($legacy->catalog->definitions() as $definition) {
+    if ($definition->manifest !== null) { $seenFunctional = true; }
+    elseif ($seenFunctional) { $frameworkFirst = false; }
+}
+$assert($frameworkFirst, 'Mandatory framework initializes before functional modules without redundant activation dependencies');
 $selection = require $root . '/App/modules.php';
 $assert(count($legacy->catalog->definitions()) === count($selection) + count(TinyCat\Core\Modules\Upgrade::FRAMEWORK), 'Every functional module and mandatory framework capability has offline metadata');
 foreach (['TinyCat\\Support\\Config', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Database\\Connection', 'TinyCat\\Http\\Router', ...array_values($selection)] as $class) {

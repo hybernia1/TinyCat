@@ -455,6 +455,18 @@ PHP;
         . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($candidateVersion, true) . ") exit(2);";
     [$freshExit, $freshOutput] = $run($freshBoot);
     $assert($freshExit === 0, 'Fresh candidate artifact boots: ' . implode(' ', $freshOutput));
+    if (is_file($root . '/config.php') && in_array('mysql', PDO::getAvailableDrivers(), true)) {
+        $legacyArtifacts = $temporaryRoot . '/legacy-web-artifact';
+        $legacyBuild = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($candidateRoot . '/tools/release/build-update.php')
+            . ' --version=' . escapeshellarg($candidateVersion) . ' --assembly=platform --legacy-upgrade --allow-dirty'
+            . ' --output=' . escapeshellarg($legacyArtifacts) . ' --key=' . escapeshellarg($signingKey);
+        exec($legacyBuild . ' 2>&1', $legacyBuildOutput, $legacyBuildExit);
+        if ($legacyBuildExit !== 0) { throw new RuntimeException('Legacy web artifact build failed: ' . implode(' ', $legacyBuildOutput)); }
+        $legacyRehearsal = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/release/release-update-rehearsal.php')
+            . ' --legacy-baseline=5.22.2 --direct-web --artifact=' . escapeshellarg($legacyArtifacts) . ' --key=' . escapeshellarg($signingKey);
+        passthru($legacyRehearsal, $legacyExit);
+        $assert($legacyExit === 0, 'Published 5.22.2 check/installLatest offers, installs and rolls back the signed release without dev hops');
+    } else { echo "SKIP legacy web update rehearsal: local MySQL configuration unavailable.\n"; }
     sodium_memzero($secretKey);
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();

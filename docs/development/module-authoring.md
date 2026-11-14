@@ -252,6 +252,13 @@ vazby na účet musí mít odpovídající typ. Vlastní entity a jejich vztahy
 zapisuj atomicky. Média a metadata připrav před transakcí, staré soubory
 maž po commitu.
 
+Povinný framework se vždy inicializuje před funkčními manifesty. `coreApi`
+deklaruje jeho kontrakt; `requires` potřebuje uvádět funkční modulové závislosti,
+nikoli aktivaci povinných služeb core. Historický vlastník může implementovat
+`ProvidesLegacyUpgrade::prepareLegacyUpgrade(PDO, callable)`: pouze explicitní
+aktualizace zavolá tento kontrakt a vlastník rozhodne, zda má spustit předaný
+ověřený globální migrační stream. Registrace tento callback nevyhodnocuje.
+
 API registruj přes předaný `TinyCat\Http\Api`. Databázové API stejně jako Blog
 obal kontrolou připravenosti schématu přes `whenReady`. Server ověřuje oprávnění
 při každém čtení i zápisu; zápisy respektují CSRF a společnou JSON obálku.

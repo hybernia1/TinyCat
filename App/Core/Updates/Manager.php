@@ -146,6 +146,49 @@ class Manager extends Package
         }
     }
 
+    /** Called only by the signed compatibility migration while the 5.x updater holds its lock. */
+    public static function prepareLegacyBackup(string $version, string $fromVersion): string
+    {
+        if (!self::maintenanceActive()) { throw new RuntimeException('Legacy backup adoption requires maintenance mode.'); }
+        $base = self::updateRoot() . '/backups'; $matches = [];
+        foreach (scandir($base) ?: [] as $name) {
+            if (!str_starts_with($name, $fromVersion . '-to-' . $version . '-')) { continue; }
+            $path = $base . '/' . $name;
+            if (!is_dir($path) || is_link($path) || !is_file($path . '/backup.json') || is_file($path . '/completed.json')) { continue; }
+            $metadata = self::decodeJson((string) file_get_contents($path . '/backup.json'), 'legacy backup');
+            if (($metadata['from_version'] ?? null) === $fromVersion && ($metadata['to_version'] ?? null) === $version && !isset($metadata['format'])) { $matches[$name] = $metadata; }
+        }
+        if ($matches === []) { throw new RuntimeException('The active legacy updater backup is missing.'); }
+        krsort($matches, SORT_STRING); $name = array_key_first($matches); $metadata = $matches[$name];
+        $backup = $base . '/' . $name . '-domain';
+        if (file_exists($backup)) { throw new RuntimeException('Restore the existing legacy conversion backup before retrying.'); }
+        self::ensureDirectory($backup . '/files');
+        foreach ((array) ($metadata['files'] ?? []) as $relative => $hash) {
+            $relative = self::managedPath((string) $relative);
+            $source = self::pathBelow($base . '/' . $name . '/files', $relative);
+            self::assertNoManagedSymlink($source, $relative); self::verifyFileHash($source, (string) $hash);
+            $destination = self::pathBelow($backup . '/files', $relative); self::ensureDirectory(dirname($destination));
+            if (!copy($source, $destination)) { throw new RuntimeException('Cannot preserve the legacy file backup.'); }
+        }
+        $metadata['format'] = 2;
+        // The old updater never recorded original absence. Preserve ambiguous paths on rollback.
+        $metadata['new_files'] = [];
+        $metadata['deployment'] = \TinyCat\Core\Modules\Deployment::read(\TinyCat\Support\Paths::basePath());
+        $state = \TinyCat\Support\Paths::basePath('storage/deployment.json');
+        $metadata['deployment_source'] = is_file($state) ? file_get_contents($state) : null;
+        $metadata['database_backup_required'] = true;
+        self::writeJsonFile($backup . '/backup.json', $metadata);
+        self::backupDatabase($backup);
+        self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'applying', 'backup' => basename($backup), 'kind' => 'legacy-package']);
+        return $backup;
+    }
+
+    public static function finishLegacyBackup(string $backup): void
+    {
+        // The enclosing 5.x updater still owns file retirement and maintenance completion.
+        self::writeJsonFile(self::updateRoot() . '/operation.json', ['phase' => 'complete', 'backup' => basename($backup), 'kind' => 'legacy-package']);
+    }
+
     private static function completeOperation(string $backup, string $version): void
     {
         self::clearRuntimeCache(); \TinyCat\Support\Cache::resetOpcache();

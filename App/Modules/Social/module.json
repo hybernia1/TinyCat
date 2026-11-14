@@ -3,13 +3,7 @@
   "coreApi": 1,
   "id": "tinycat.social",
   "namespace": "TinyCat\\Social\\",
-  "requires": [
-    "tinycat.accounts",
-    "tinycat.settings",
-    "tinycat.security",
-    "tinycat.scheduler",
-    "tinycat.notifications"
-  ],
+  "requires": [],
   "providers": {
     "services": "TinyCat\\Social\\Module",
     "routes": "TinyCat\\Social\\Module",

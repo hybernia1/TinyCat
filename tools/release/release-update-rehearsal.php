@@ -12,9 +12,11 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
 $baselineVersion = '6.0.0-dev.9.2';
-$options = getopt('', ['artifact::', 'key::', 'legacy-baseline::', 'bridge-bootstrap::', 'bridge-checkpoint::']);
-$legacyBaseline = $options['legacy-baseline'] ?? null;
-if ($legacyBaseline !== null && !in_array($legacyBaseline, ['5.16.0', '5.22.2'], true)) {
+$options = getopt('', ['artifact::', 'key::', 'legacy-baseline::', 'baseline-version::', 'bridge-bootstrap::', 'bridge-checkpoint::', 'direct-web']);
+$directWeb = array_key_exists('direct-web', $options);
+$legacyBaseline = $options['baseline-version'] ?? $options['legacy-baseline'] ?? null;
+if ($directWeb && $legacyBaseline === null) { throw new InvalidArgumentException('Direct web rehearsal requires a published baseline version.'); }
+if ($legacyBaseline !== null && !in_array($legacyBaseline, ['5.16.0', '5.22.2', '6.0.0'], true)) {
     throw new InvalidArgumentException('Use the supported legacy release baseline.');
 }
 $artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
@@ -110,7 +112,9 @@ $inventory = static function (string $base): array {
     ksort($files, SORT_STRING);
     return $files;
 };
-$databaseFingerprint = static function (PDO $pdo): array {
+$databaseFingerprint = static function (PDO $pdo) use ($legacyBaseline): array {
+    $names = ['content' => 'social_posts', 'content_comments' => 'social_comments', 'content_likes' => 'social_post_likes', 'comment_likes' => 'social_comment_likes', 'terms' => 'social_terms', 'content_tags' => 'social_post_tags', 'content_links' => 'social_post_links'];
+    $sql = static fn (string $query): string => $legacyBaseline === '6.0.0' ? (string) preg_replace_callback('/\b(?:' . implode('|', array_keys($names)) . ')\b/', static fn (array $match): string => $names[$match[0]], $query) : $query;
     $tables = [
         'users', 'content', 'content_comments', 'content_likes', 'comment_likes', 'user_followers',
         'notifications', 'content_tags', 'terms', 'content_links', 'settings', 'schema_migrations',
@@ -118,7 +122,7 @@ $databaseFingerprint = static function (PDO $pdo): array {
     $counts = [];
 
     foreach ($tables as $table) {
-        $counts[$table] = (int) $pdo->query("SELECT COUNT(*) FROM `{$table}`")->fetchColumn();
+        $counts[$table] = (int) $pdo->query($sql("SELECT COUNT(*) FROM `{$table}`"))->fetchColumn();
     }
 
     $samples = [];
@@ -130,7 +134,7 @@ $databaseFingerprint = static function (PDO $pdo): array {
         'SELECT setting_key, setting_value, setting_type FROM settings ORDER BY setting_key',
         'SELECT migration, version, checksum FROM schema_migrations ORDER BY migration',
     ] as $query) {
-        $samples[] = $pdo->query($query)->fetchAll(PDO::FETCH_ASSOC);
+        $samples[] = $pdo->query($sql($query))->fetchAll(PDO::FETCH_ASSOC);
     }
 
     $schema = $pdo->query(
@@ -258,10 +262,10 @@ PHP;
     }
     $assert(true, 'Supported baseline installer prepares the representative database.');
 
-    (require $root . '/tests/fixtures/releases/seed-shared-social.php')($database);
+    (require $root . '/tests/fixtures/releases/seed-shared-social.php')($database, $legacyBaseline === '6.0.0');
     $assert(true, 'Representative shared-storage users, posts, comments, reactions, tags, links and notifications are seeded.');
 
-    if ($legacyBaseline !== null) {
+    if ($legacyBaseline !== null && !$directWeb) {
         $legacyCounts = $databaseFingerprint($database)['counts'];
         foreach (['bridge-bootstrap', 'bridge-checkpoint'] as $phase) {
             $directory = realpath((string) ($options[$phase] ?? ''));
@@ -331,6 +335,27 @@ $backup = __ROOT__ . '/' . $result['backup'];
 $metadata = json_decode((string) file_get_contents($backup . '/backup.json'), true, 512, JSON_THROW_ON_ERROR);
 echo json_encode(['backup' => $backup, 'pending_migrations' => isset($metadata['database_identity']), 'applied_migrations' => $result['migrations']], JSON_THROW_ON_ERROR);
 PHP;
+    if ($directWeb) {
+        $releaseSource = $temporaryRoot . '/github-release.json'; $network = [];
+        $release = ['html_url' => 'https://github.com/hybernia1/TinyCat/releases/tag/v' . $version, 'published_at' => '2026-11-14T00:00:00Z', 'body' => 'Signed release fixture', 'assets' => []];
+        foreach (['tinycat-update.json' => $manifestPath, 'tinycat-update.sig' => $signaturePath, basename($packagePath) => $packagePath] as $name => $file) {
+            $url = 'https://github.com/hybernia1/TinyCat/releases/download/v' . $version . '/' . $name;
+            $release['assets'][] = ['name' => $name, 'browser_download_url' => $url]; $network[$url] = realpath($file);
+        }
+        file_put_contents($releaseSource, json_encode($release, JSON_THROW_ON_ERROR));
+        $network['https://api.github.com/repos/hybernia1/TinyCat/releases/latest'] = $releaseSource;
+        $updateRunner = '$GLOBALS[\'signedUpdateFixtures\'] = ' . var_export($network, true) . '; require ' . var_export($root . '/tests/fixtures/releases/github-transport.php', true) . ";\n" . <<<'PHP'
+define('TINYCAT', true);
+require __ROOT__ . '/App/bootstrap.php';
+$check = TinyCat\Updates\Manager::check(true);
+if (empty($check['available']) || empty($check['compatible'])) { throw new RuntimeException('The published updater does not offer the stable update.'); }
+$result = TinyCat\Updates\Manager::installLatest();
+$operation = json_decode((string) file_get_contents(__ROOT__ . '/storage/updates/operation.json'), true, 512, JSON_THROW_ON_ERROR);
+$backup = __ROOT__ . '/storage/updates/backups/' . $operation['backup'];
+$metadata = json_decode((string) file_get_contents($backup . '/backup.json'), true, 512, JSON_THROW_ON_ERROR);
+echo json_encode(['backup' => $backup, 'pending_migrations' => isset($metadata['database_identity']), 'applied_migrations' => $result['migrations']], JSON_THROW_ON_ERROR);
+PHP;
+    }
     $updateRunner = str_replace(
         ['__ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__'],
         [var_export($installRoot, true), var_export($manifestPath, true), var_export($signaturePath, true), var_export($packagePath, true)],
@@ -365,6 +390,7 @@ PHP;
 
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($version, true) . " || !class_exists('TinyCat\\\\Bots\\\\Importer') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
+    $newBootRunner .= "; if (!TinyCat\\Database\\Schema::app_db_ready() || (TinyCat\\Core\\Modules\\Distribution::read(" . var_export($installRoot, true) . ")[\"format\"] ?? null) !== 3) exit(3);";
     [$newBootExit, $newBootOutput] = $run($newBootRunner);
     $assert($newBootExit === 0, 'Updated runtime boots with built-in Bots: ' . implode(' ', $newBootOutput));
 
@@ -379,7 +405,10 @@ PHP;
         . "; TinyCat\\Core\\Updates\\Manager::rollback(" . var_export(basename($backup), true) . ");";
     [$rollbackExit, $rollbackOutput] = $run($rollbackRunner);
     $assert($rollbackExit === 0, 'Standard updater restores its recorded database and file snapshot: ' . implode(' ', $rollbackOutput));
-    $assert($inventory($installRoot) === $beforeInventory, 'Rollback restores the exact managed bridge tree.');
+    $restoredInventory = $inventory($installRoot);
+    if ($directWeb && $legacyBaseline !== null && str_starts_with($legacyBaseline, '5.')) {
+        $assert(array_intersect_key($restoredInventory, $beforeInventory) === $beforeInventory, 'Legacy rollback restores every original managed file; unrecorded new private files are preserved.');
+    } else { $assert($restoredInventory === $beforeInventory, 'Rollback restores the exact managed bridge tree.'); }
     $assert($databaseFingerprint($database) === $beforeDatabase, 'Rollback restores the exact pre-update database content and schema.');
     $clearOldCache = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; (new ReflectionMethod(TinyCat\\Updates\\Manager::class, 'clearRuntimeCache'))->invoke(null);";

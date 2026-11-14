@@ -3,12 +3,7 @@
   "coreApi": 1,
   "id": "tinycat.blog",
   "namespace": "TinyCat\\Blog\\",
-  "requires": [
-    "tinycat.accounts",
-    "tinycat.security",
-    "tinycat.settings",
-    "tinycat.scheduler"
-  ],
+  "requires": [],
   "providers": {
     "routes": "TinyCat\\Blog\\Module",
     "contributions": "TinyCat\\Blog\\Module",

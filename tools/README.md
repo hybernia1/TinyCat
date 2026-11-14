@@ -66,6 +66,14 @@ For a release, `php tools/release/build-update.php --version=X.Y.Z --both --outp
 prepares signed update/install variants from one compilation. `release/zip-timestamps.php`
 and `release/publish-artifact.php` are internal build helpers, not standalone commands.
 
+For the public Social/platform release supporting the stable 5.x web updater,
+add `--legacy-upgrade`. It selects the supported minimum automatically, exports
+a version-specific signed root migration and a final descriptor, and keeps the
+fresh-install variant unchanged. Do not combine it with `--without-migrations`,
+`--minimum-version` or standalone `--fresh-install`. The existing product rehearsal
+uses `--baseline-version=5.22.2 --direct-web` to run the published updater's actual
+check/install flow; 5.16.0 and 6.0.0 are also supported fixture baselines.
+
 `php tools/release/build-bridge.php --output=dist/compatibility-bridge` builds
 the immutable shared-storage compatibility source into the signed file-only
 dev.9.1 bootstrap and the normal dev.9.2 migration checkpoint. `--key` selects

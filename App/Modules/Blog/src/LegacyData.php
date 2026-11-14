@@ -20,8 +20,8 @@ final class LegacyData
         SchemaInspection::requireColumns($pdo, 'content', ['id', 'kind', 'author_id', 'body', 'status', 'published_at']);
         SchemaInspection::requireColumns($pdo, 'blog_source_articles', ['source_id', 'content_id']);
         foreach (['blog_article_images', 'blog_article_redirects', 'blog_terms', 'blog_article_tags', 'blog_links', 'blog_article_links', 'blog_comments', 'blog_article_likes', 'blog_comment_likes', 'blog_articles_legacy_v3', 'blog_source_articles_legacy_v3'] as $table) { if (SchemaInspection::exists($pdo, $table)) { throw new \RuntimeException('Article destination already exists: ' . $table); } }
-        if ((int) \TinyCat\Database\Connection::queryOn($pdo, "SELECT COUNT(*) FROM blog_articles a LEFT JOIN content c ON c.id = a.content_id WHERE c.id IS NULL OR c.kind <> 'article'")->fetchColumn() !== 0
-            || (int) \TinyCat\Database\Connection::queryOn($pdo, "SELECT COUNT(*) FROM content c LEFT JOIN blog_articles a ON a.content_id = c.id WHERE c.kind = 'article' AND a.content_id IS NULL")->fetchColumn() !== 0) { throw new \RuntimeException('Historical article identities do not agree with their publication owner.'); }
+        if ((int) \TinyCat\Core\Database\Statements::query($pdo, "SELECT COUNT(*) FROM blog_articles a LEFT JOIN content c ON c.id = a.content_id WHERE c.id IS NULL OR c.kind <> 'article'")->fetchColumn() !== 0
+            || (int) \TinyCat\Core\Database\Statements::query($pdo, "SELECT COUNT(*) FROM content c LEFT JOIN blog_articles a ON a.content_id = c.id WHERE c.kind = 'article' AND a.content_id IS NULL")->fetchColumn() !== 0) { throw new \RuntimeException('Historical article identities do not agree with their publication owner.'); }
         foreach (['content_images' => ['content_id', 'path', 'width', 'height', 'bytes'], 'content_redirects' => ['old_id', 'content_id'], 'content_comments' => ['id', 'content_id', 'parent_id', 'user_id', 'body', 'comments_diff', 'created_at'], 'content_likes' => ['content_id', 'user_id'], 'comment_likes' => ['comment_id', 'user_id'], 'terms' => ['id', 'name'], 'content_tags' => ['content_id', 'term_id'], 'links' => ['id', 'normalized_url', 'url_hash', 'provider', 'link_type', 'title', 'description', 'image_url', 'video_id', 'audio_url', 'created_at', 'updated_at'], 'content_links' => ['content_id', 'link_id', 'created_at']] as $table => $columns) { SchemaInspection::requireColumns($pdo, $table, $columns); }
         self::validateSubjects($pdo);
         $articleNext = SchemaInspection::nextId($pdo, 'content'); $commentNext = SchemaInspection::nextId($pdo, 'content_comments');
@@ -58,16 +58,16 @@ final class LegacyData
     private static function validateSubjects(PDO $pdo): void
     {
         $cross = "SELECT COUNT(*) FROM content_comments child INNER JOIN content_comments parent ON parent.id = child.parent_id INNER JOIN content c ON c.id = child.content_id INNER JOIN content p ON p.id = parent.content_id WHERE (c.kind = 'article' OR p.kind = 'article') AND (child.content_id <> parent.content_id OR c.kind <> p.kind OR parent.parent_id IS NOT NULL AND parent.parent_id <> 0)";
-        if ((int) \TinyCat\Database\Connection::queryOn($pdo, $cross)->fetchColumn() !== 0) { throw new \RuntimeException('Historical article comments have cross-owner or unsupported ancestry.'); }
-        if (SchemaInspection::exists($pdo, 'content_reports') && (int) \TinyCat\Database\Connection::queryOn($pdo, 'SELECT COUNT(*) FROM content_reports r INNER JOIN blog_articles a ON a.content_id = r.content_id')->fetchColumn() !== 0) { throw new \RuntimeException('A historical moderation producer still references articles.'); }
+        if ((int) \TinyCat\Core\Database\Statements::query($pdo, $cross)->fetchColumn() !== 0) { throw new \RuntimeException('Historical article comments have cross-owner or unsupported ancestry.'); }
+        if (SchemaInspection::exists($pdo, 'content_reports') && (int) \TinyCat\Core\Database\Statements::query($pdo, 'SELECT COUNT(*) FROM content_reports r INNER JOIN blog_articles a ON a.content_id = r.content_id')->fetchColumn() !== 0) { throw new \RuntimeException('A historical moderation producer still references articles.'); }
         foreach (['bot_source_posts', 'bot_source_runs'] as $table) {
-            if (SchemaInspection::exists($pdo, $table) && in_array('content_id', SchemaInspection::columns($pdo, $table), true) && (int) \TinyCat\Database\Connection::queryOn($pdo, 'SELECT COUNT(*) FROM ' . $table . ' r INNER JOIN blog_articles a ON a.content_id = r.content_id')->fetchColumn() !== 0) { throw new \RuntimeException('A historical automation producer still references articles.'); }
+            if (SchemaInspection::exists($pdo, $table) && in_array('content_id', SchemaInspection::columns($pdo, $table), true) && (int) \TinyCat\Core\Database\Statements::query($pdo, 'SELECT COUNT(*) FROM ' . $table . ' r INNER JOIN blog_articles a ON a.content_id = r.content_id')->fetchColumn() !== 0) { throw new \RuntimeException('A historical automation producer still references articles.'); }
         }
         if (SchemaInspection::exists($pdo, 'notifications')) {
             $columns = SchemaInspection::columns($pdo, 'notifications'); $conditions = [];
             if (in_array('content_id', $columns, true)) { $conditions[] = 'n.content_id IN (SELECT content_id FROM blog_articles)'; }
             if (in_array('comment_id', $columns, true)) { $conditions[] = 'n.comment_id IN (SELECT c.id FROM content_comments c INNER JOIN blog_articles a ON a.content_id = c.content_id)'; }
-            if ($conditions !== [] && (int) \TinyCat\Database\Connection::queryOn($pdo, 'SELECT COUNT(*) FROM notifications n WHERE ' . implode(' OR ', $conditions))->fetchColumn() !== 0) { throw new \RuntimeException('A historical notification producer still references articles; convert its subject before upgrading Blog.'); }
+            if ($conditions !== [] && (int) \TinyCat\Core\Database\Statements::query($pdo, 'SELECT COUNT(*) FROM notifications n WHERE ' . implode(' OR ', $conditions))->fetchColumn() !== 0) { throw new \RuntimeException('A historical notification producer still references articles; convert its subject before upgrading Blog.'); }
         }
     }
 
@@ -79,7 +79,7 @@ final class LegacyData
     private static function compare(PDO $pdo, string $source, string $target): void
     {
         $digest = static function (string $sql) use ($pdo): string {
-            $hash = hash_init('sha256'); $query = \TinyCat\Database\Connection::queryOn($pdo, $sql);
+            $hash = hash_init('sha256'); $query = \TinyCat\Core\Database\Statements::query($pdo, $sql);
             while ($row = $query->fetch(PDO::FETCH_NUM)) { hash_update($hash, json_encode(array_map(static fn (mixed $value): ?string => $value === null ? null : (string) $value, $row), JSON_THROW_ON_ERROR) . "\n"); }
             return hash_final($hash);
         };
@@ -110,7 +110,7 @@ final class LegacyData
             ? in_array('tinycat.social', \TinyCat\Core\Modules\Upgrade::ids($plan, $state['installed']), true)
             : \TinyCat\Core\Modules\Resources::catalog()->has('tinycat.social');
         if ($social) { return; }
-        if ((int) \TinyCat\Database\Connection::queryOn($pdo, 'SELECT COUNT(*) FROM content')->fetchColumn() !== 0) { throw new \RuntimeException('Unregistered historical content still has an owner.'); }
+        if ((int) \TinyCat\Core\Database\Statements::query($pdo, 'SELECT COUNT(*) FROM content')->fetchColumn() !== 0) { throw new \RuntimeException('Unregistered historical content still has an owner.'); }
         foreach (['tinycat.publishing' => 3, 'tinycat.status' => 1] as $id => $version) {
             $installation = ModuleSchemas::state($pdo, $id);
             if ($installation !== null) {

@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.0.1 - 2026-11-14
+
+- Restore the normal signed administration update from stable 5.16.0 and newer, including 5.22.2. Release 6.0.0 incorrectly required development bridge runtimes; its attached bridge bundle was not automatically usable by the stable updater.
+- Export one signed legacy migration entry and an authenticated final product descriptor in a transport envelope understood by the published updater. Apply pending historical migrations with their original checksums, synchronize owner schemas, preserve activation and publish the final descriptor during the explicit update operation.
+- Keep explicit PDO execution usable in the already-running 5.x updater process through a shared statement service. Initialize the mandatory framework before functional modules without redundant activation dependencies.
+- Preserve the old updater's original file backups and create a canonical database/activation recovery snapshot before domain conversion. Legacy rollback restores original files and data, conservatively retaining new private files whose previous absence the old updater never recorded.
+- Exercise the actual published `check()` and `installLatest()` methods with signed artifacts, seeded MySQL data and rollback; replace only the network transport in the fixture. Cover 5.16.0, 5.22.2 and 6.0.0 update sources.
+
 ## 6.0.0 - 2026-11-14
 
 - Separate the mandatory framework from independently selectable Social and Blog modules. Core owns identity, security, settings, notifications, mail, tasks, diagnostics, installation and updates; functional modules own their registration, resources and domain data.

@@ -3,12 +3,55 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
-TinyCat 6.0.0 provides signed product identities, selective
+TinyCat 6.0.1 provides signed product identities, selective
 distributions and independently owned Blog and Social storage. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
-## Preparing the 6.0 modular update
+## Upgrading to 6.0.1 from stable 5.x
+
+Use **Admin → Updates** normally from TinyCat 5.16.0 or newer. In particular,
+5.22.2 does not need a manually installed dev runtime. The same release also
+updates 6.0.0. New installations must use the separate installation ZIP.
+
+Release 6.0.0's main update manifest required dev.9.2, so the stable web updater
+could not offer it as compatible. A manually applied bridge bundle was not an
+equivalent replacement for the ordinary update flow. Use 6.0.1 instead.
+
+Build the public Social/platform release with:
+
+```bash
+php tools/release/build-update.php --version=6.0.1 --assembly=platform --both --legacy-upgrade --output=dist/release-6.0.1
+```
+
+The update variant uses a legacy-compatible signed transport descriptor and
+one version-specific exported root migration. Its separately authenticated
+target descriptor declares the complete current framework and owner schemas.
+During the update, owners request any pending historical migrations with their
+unchanged checksums, core synchronizes the declared schemas, and the final
+descriptor and activation state are published explicitly. Startup does not
+perform this conversion. The installation variant keeps the normal format-3
+descriptor and creates the current schema directly.
+
+The old updater's original file backups remain available. Before converting
+domain data, a canonical MySQL/SQLite and activation snapshot is also prepared
+for the normal recovery CLI. For rollback from 5.x, original files and data are
+restored; new private files are conservatively retained because that updater
+never recorded whether those paths previously existed. Modern rollback retains
+its exact managed-file restoration. Configuration and uploaded media are preserved.
+
+Verify the actual stable update path in an isolated database:
+
+```bash
+php tools/release/release-update-rehearsal.php --artifact=dist/release-6.0.1/update --baseline-version=5.22.2 --direct-web
+```
+
+The same command accepts 5.16.0 and 6.0.0. It runs the published updater's
+`check()` and `installLatest()` with the signed release assets; only downloads
+are replaced by deterministic fixture transport. The 5.22.2 scenario is included
+in the existing preflight update rehearsal.
+
+## Historical 6.0.0 development bridge
 
 The current distribution uses descriptor format 3 and requires the compatibility
 runtime **6.0.0-dev.9.2** before applying its data conversion. Do not install the

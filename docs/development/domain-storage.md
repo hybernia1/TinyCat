@@ -95,6 +95,13 @@ Runtime dev.9 nový descriptor nepřijímá. Přechod vyžaduje nejprve kompatib
 runtime dev.9.1, následně dev.9.2 s dokončením odložených globálních migrací
 a potom 6.0.0; před datovou konverzí updater pořizuje snapshot. Samotný
 souborový bridge dev.9.1 nedokládá dokončení databázového checkpointu.
+
+Stabilní 6.0.1 poskytuje také přímou cestu z publikované 5.x: `--legacy-upgrade`
+exportuje ověřený root migrační vstup a cílový descriptor do kompatibilního
+transportu pro původní updater. `ProvidesLegacyUpgrade` nechává vlastníka
+rozhodnout, zda potřebuje historický globální stream; core neodvozuje doménu
+z názvů tabulek. Core framework se vždy seřadí před funkční manifesty,
+takže jejich `requires` popisuje funkční závislosti a `coreApi` kontrakt frameworku.
 Rollback obnovuje schéma, data, soubory i aktivaci společně. Nepřepisuj descriptor
 nebo schéma ručně na živé instalaci. Stav konkrétního nasazení a výsledky kontrol
 patří do auditu etapy, nikoli do předpokladu, že změna zdrojů aktualizovala web.

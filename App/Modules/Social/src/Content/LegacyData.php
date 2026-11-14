@@ -18,7 +18,7 @@ final class LegacyData
             return;
         }
         SchemaInspection::requireColumns($pdo, 'content', ['id', 'kind', 'author_id', 'body', 'published_at', 'status']);
-        if ((int) \TinyCat\Database\Connection::queryOn($pdo, "SELECT COUNT(*) FROM content WHERE kind <> 'post'")->fetchColumn() !== 0) { throw new \RuntimeException('Migrate every installed non-Social content owner before converting Social storage.'); }
+        if ((int) \TinyCat\Core\Database\Statements::query($pdo, "SELECT COUNT(*) FROM content WHERE kind <> 'post'")->fetchColumn() !== 0) { throw new \RuntimeException('Migrate every installed non-Social content owner before converting Social storage.'); }
         foreach (['content_redirects' => ['old_id', 'content_id'], 'content_images' => ['content_id', 'path', 'width', 'height', 'bytes'], 'terms' => ['id', 'name'], 'content_tags' => ['content_id', 'term_id'], 'links' => ['id', 'normalized_url', 'url_hash', 'image_url'], 'content_links' => ['content_id', 'link_id']] as $table => $columns) { SchemaInspection::requireColumns($pdo, $table, $columns); }
         SchemaInspection::rename($pdo, ['content' => 'social_posts', 'content_redirects' => 'social_post_redirects', 'content_images' => 'social_post_images', 'terms' => 'social_terms', 'content_tags' => 'social_post_tags', 'links' => 'social_links', 'content_links' => 'social_post_links']);
     }
@@ -34,7 +34,7 @@ final class LegacyData
         }
         SchemaInspection::requireColumns($pdo, 'social_posts', ['id', 'kind']);
         foreach (['content_comments' => ['id', 'content_id', 'parent_id', 'user_id', 'body', 'comments_diff', 'created_at'], 'content_likes' => ['content_id', 'user_id'], 'comment_likes' => ['comment_id', 'user_id']] as $table => $columns) { SchemaInspection::requireColumns($pdo, $table, $columns); }
-        if ((int) \TinyCat\Database\Connection::queryOn($pdo, "SELECT COUNT(*) FROM content_comments c LEFT JOIN social_posts p ON p.id = c.content_id WHERE p.id IS NULL OR p.kind <> 'post'")->fetchColumn() !== 0) { throw new \RuntimeException('Historical comments still belong to a different owner.'); }
+        if ((int) \TinyCat\Core\Database\Statements::query($pdo, "SELECT COUNT(*) FROM content_comments c LEFT JOIN social_posts p ON p.id = c.content_id WHERE p.id IS NULL OR p.kind <> 'post'")->fetchColumn() !== 0) { throw new \RuntimeException('Historical comments still belong to a different owner.'); }
         SchemaInspection::rename($pdo, ['content_comments' => 'social_comments', 'content_likes' => 'social_post_likes', 'comment_likes' => 'social_comment_likes']);
     }
 
