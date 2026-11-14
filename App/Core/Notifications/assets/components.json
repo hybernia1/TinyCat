@@ -10,152 +10,14 @@
         "attrs": {},
         "children": [
           {
-            "lookup": {
-              "get": "item.type"
-            },
-            "cases": {
-              "follow": {
-                "t": "notifications.messages.follow",
-                "values": {
-                  "actor": {
-                    "or": [
-                      {
-                        "get": "item.actor.username"
-                      },
-                      {
-                        "t": "notifications.someone"
-                      }
-                    ]
-                  }
-                }
+            "or": [
+              {
+                "get": "item.message"
               },
-              "content_like": {
-                "t": "notifications.messages.content_like",
-                "values": {
-                  "actor": {
-                    "or": [
-                      {
-                        "get": "item.actor.username"
-                      },
-                      {
-                        "t": "notifications.someone"
-                      }
-                    ]
-                  }
-                }
-              },
-              "comment_like": {
-                "t": "notifications.messages.comment_like",
-                "values": {
-                  "actor": {
-                    "or": [
-                      {
-                        "get": "item.actor.username"
-                      },
-                      {
-                        "t": "notifications.someone"
-                      }
-                    ]
-                  }
-                }
-              },
-              "content_comment": {
-                "t": "notifications.messages.content_comment",
-                "values": {
-                  "actor": {
-                    "or": [
-                      {
-                        "get": "item.actor.username"
-                      },
-                      {
-                        "t": "notifications.someone"
-                      }
-                    ]
-                  }
-                }
-              },
-              "content_mention": {
-                "t": "notifications.messages.content_mention",
-                "values": {
-                  "actor": {
-                    "or": [
-                      {
-                        "get": "item.actor.username"
-                      },
-                      {
-                        "t": "notifications.someone"
-                      }
-                    ]
-                  }
-                }
-              },
-              "comment_mention": {
-                "t": "notifications.messages.comment_mention",
-                "values": {
-                  "actor": {
-                    "or": [
-                      {
-                        "get": "item.actor.username"
-                      },
-                      {
-                        "t": "notifications.someone"
-                      }
-                    ]
-                  }
-                }
-              },
-              "report_resolved": {
-                "t": "notifications.messages.report_resolved",
-                "values": {
-                  "actor": {
-                    "or": [
-                      {
-                        "get": "item.actor.username"
-                      },
-                      {
-                        "t": "notifications.someone"
-                      }
-                    ]
-                  }
-                }
-              },
-              "report_dismissed": {
-                "t": "notifications.messages.report_dismissed",
-                "values": {
-                  "actor": {
-                    "or": [
-                      {
-                        "get": "item.actor.username"
-                      },
-                      {
-                        "t": "notifications.someone"
-                      }
-                    ]
-                  }
-                }
-              },
-              "site_health_ok": {
-                "t": "health.notification_ok"
-              },
-              "site_health_attention": {
-                "t": "health.notification_attention"
+              {
+                "t": "notifications.messages.generic"
               }
-            },
-            "default": {
-              "t": "notifications.messages.generic",
-              "values": {
-                "actor": {
-                  "or": [
-                    {
-                      "get": "item.actor.username"
-                    },
-                    {
-                      "t": "notifications.someone"
-                    }
-                  ]
-                }
-              }
-            }
+            ]
           }
         ]
       },
@@ -355,22 +217,12 @@
                     "get": "item.actor.username"
                   },
                   "fallback_icon": {
-                    "lookup": {
-                      "get": "item.type"
-                    },
-                    "cases": {
-                      "follow": "user-plus",
-                      "content_like": "thumb-up",
-                      "comment_like": "thumb-up",
-                      "content_comment": "message-circle",
-                      "content_mention": "user",
-                      "comment_mention": "user",
-                      "report_resolved": "check",
-                      "report_dismissed": "flag",
-                      "site_health_ok": "check",
-                      "site_health_attention": "shield"
-                    },
-                    "default": "bell"
+                    "or": [
+                      {
+                        "get": "item.icon"
+                      },
+                      "bell"
+                    ]
                   }
                 }
               }
@@ -477,22 +329,12 @@
                 "get": "item.actor.username"
               },
               "fallback_icon": {
-                "lookup": {
-                  "get": "item.type"
-                },
-                "cases": {
-                  "follow": "user-plus",
-                  "content_like": "thumb-up",
-                  "comment_like": "thumb-up",
-                  "content_comment": "message-circle",
-                  "content_mention": "user",
-                  "comment_mention": "user",
-                  "report_resolved": "check",
-                  "report_dismissed": "flag",
-                  "site_health_ok": "check",
-                  "site_health_attention": "shield"
-                },
-                "default": "bell"
+                "or": [
+                  {
+                    "get": "item.icon"
+                  },
+                  "bell"
+                ]
               }
             }
           }

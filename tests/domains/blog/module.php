@@ -13,7 +13,7 @@ if (!in_array($argv[1] ?? '', ['--isolated', '--combined'], true)) {
         foreach (scandir($source) ?: [] as $entry) { if ($entry !== '.' && $entry !== '..') { $copy($relative . '/' . $entry); } }
     };
     try {
-        foreach (['App', 'assets', 'lang', 'tools'] as $directory) { $copy($directory); }
+        foreach (['App', 'assets', 'tools'] as $directory) { $copy($directory); }
         copy($sourceRoot . '/index.php', $workspace . '/index.php');
         file_put_contents($workspace . '/App/modules.php', "<?php\nreturn require __DIR__ . '/Modules/Blog/selection.php';\n");
         passthru(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__FILE__) . ' --isolated ' . escapeshellarg($workspace), $exitCode);

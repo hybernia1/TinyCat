@@ -14,7 +14,7 @@ if (($argv[1] ?? '') !== '--isolated') {
         foreach (scandir($source) ?: [] as $entry) { if ($entry !== '.' && $entry !== '..') { $copy($relative . '/' . $entry); } }
     };
     try {
-        foreach (['App', 'assets', 'lang', 'tools'] as $directory) { $copy($directory); }
+        foreach (['App', 'assets', 'tools'] as $directory) { $copy($directory); }
         file_put_contents($workspace . '/App/modules.php', "<?php\nreturn [];\n");
         passthru(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__FILE__) . ' --isolated ' . escapeshellarg($workspace), $exitCode);
     } finally {

@@ -63,8 +63,11 @@ foreach ($files as $file) {
             }
         }
         if ($depth !== 0) { throw new RuntimeException('Unbalanced function body.'); }
-        $edits[$offsets[$opening] + 1] = '\TinyCat\Tools\Performance\CallProfile::enter(__METHOD__); try {';
-        $edits[$offsets[$cursor]] = '} finally { \TinyCat\Tools\Performance\CallProfile::leave(); }';
+        $start = $offsets[$opening] + 1;
+        $end = $offsets[$cursor];
+        // Empty bodies share one insertion offset; retain both wrappers in order.
+        $edits[$start] = ($edits[$start] ?? '') . '\TinyCat\Tools\Performance\CallProfile::enter(__METHOD__); try {';
+        $edits[$end] = ($edits[$end] ?? '') . '} finally { \TinyCat\Tools\Performance\CallProfile::leave(); }';
         $count++;
     }
     krsort($edits);

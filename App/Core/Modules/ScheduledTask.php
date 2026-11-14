@@ -7,6 +7,7 @@ use Closure;
 
 final readonly class ScheduledTask
 {
+    public const string ID_PATTERN = '[a-z][a-z0-9_.-]{0,39}';
     /** @var Closure(array<string, mixed>): array<string, mixed> */
     public Closure $runner;
     /** @var Closure(array<string, int>): array<string, int>|null */
@@ -23,8 +24,13 @@ final readonly class ScheduledTask
      * @param (callable(array<string, int>): array<string, int>)|null $normalize
      * @param (callable(): (int|null))|null $healthAge
      * @param (callable(array<string, mixed>): array<string, mixed>)|null $detail */
-    public function __construct(public string $id, callable $runner, public array $options = [], public array $admin = [], public int $order = 100, public array $modeOptions = [], ?callable $normalize = null, ?callable $healthAge = null, ?callable $detail = null)
+    public function __construct(public string $id, callable $runner, public array $options = [], public array $admin = [], public int $order = 100, public array $modeOptions = [], ?callable $normalize = null, ?callable $healthAge = null, ?callable $detail = null, public ?string $batchOption = null)
     {
+        if ($id === 'all' || preg_match('/^' . self::ID_PATTERN . '$/D', $id) !== 1) { throw new \InvalidArgumentException('Invalid scheduled task ID.'); }
+        foreach (array_keys($options) as $key) {
+            if (preg_match('/^[a-z][a-z0-9_]*$/D', $key) !== 1) { throw new \InvalidArgumentException('Invalid scheduled task default option.'); }
+        }
+        if ($batchOption !== null && !array_key_exists($batchOption, $options)) { throw new \InvalidArgumentException('Unknown scheduled task batch option.'); }
         $this->runner = Closure::fromCallable($runner);
         $this->normalize = $normalize === null ? null : Closure::fromCallable($normalize);
         $this->healthAge = $healthAge === null ? null : Closure::fromCallable($healthAge);
@@ -32,6 +38,9 @@ final readonly class ScheduledTask
         foreach ($modeOptions as $mode => $names) {
             if (!in_array($mode, ['cli', 'http', 'admin'], true) || count($names) !== count(array_unique($names))) {
                 throw new \InvalidArgumentException('Invalid scheduled task mode options.');
+            }
+            foreach ($names as $name) {
+                if (preg_match('/^[a-z][a-z0-9_]*$/D', $name) !== 1) { throw new \InvalidArgumentException('Invalid scheduled task option name.'); }
             }
         }
     }

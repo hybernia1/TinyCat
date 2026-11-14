@@ -89,7 +89,7 @@ foreach ([
     'CREATE TABLE social_post_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, UNIQUE (content_id, link_id))',
     'CREATE TABLE social_post_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
     'CREATE TABLE content_reports (id INTEGER PRIMARY KEY, content_id INTEGER NOT NULL, reporter_id INTEGER, status TEXT)',
-    'CREATE TABLE notifications (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, actor_id INTEGER, content_id INTEGER, comment_id INTEGER, type TEXT NOT NULL, notification_key TEXT NOT NULL, read_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE (user_id, notification_key))',
+    'CREATE TABLE notifications (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, actor_id INTEGER, subject_id INTEGER, payload_json TEXT, type TEXT NOT NULL, notification_key TEXT NOT NULL, read_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE (user_id, notification_key))',
     'CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, token_hash TEXT NOT NULL UNIQUE, expires_at TEXT NOT NULL, used_at TEXT)',
     'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE (user_id, follower_id))',
 ] as $sql) {
@@ -435,14 +435,14 @@ $assert(!(bool) ($reaction['status']['liked'] ?? true), 'A status reaction is re
 
 $reaction = \TinyCat\Social\Posts\Actions::status_json_react(200, $actor);
 $assert((bool) ($reaction['status']['liked'] ?? false), 'A status-owner notification is created for a new reaction.');
-$database->exec("UPDATE notifications SET read_at = '2026-08-14 12:00:00' WHERE content_id = 200");
+$database->exec("UPDATE notifications SET read_at = '2026-08-14 12:00:00' WHERE subject_id = 200");
 $reaction = \TinyCat\Social\Posts\Actions::status_json_react(200, $actor);
 $assert(!(bool) ($reaction['status']['liked'] ?? true), 'A notified reaction can be removed.');
 $reaction = \TinyCat\Social\Posts\Actions::status_json_react(200, $actor);
 $assert((bool) ($reaction['status']['liked'] ?? false), 'A removed reaction can be added again.');
-$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = 200') === 1, 'Repeated reactions reuse one notification.');
-$assert($value('SELECT read_at FROM notifications WHERE content_id = 200') === null, 'A repeated reaction restores the notification as unread.');
-$database->exec('DELETE FROM notifications WHERE content_id = 200');
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id = 200') === 1, 'Repeated reactions reuse one notification.');
+$assert($value('SELECT read_at FROM notifications WHERE subject_id = 200') === null, 'A repeated reaction restores the notification as unread.');
+$database->exec('DELETE FROM notifications WHERE subject_id = 200');
 
 $setComment = static function (string $body) : void {
     $_POST = ['comment' => $body];
@@ -490,7 +490,7 @@ $immediateId = (int) $immediate['status_id'];
 $storedAt = (string) $value('SELECT published_at FROM social_posts WHERE id = ' . $immediateId);
 $assert($storedAt >= $createdAt && $storedAt <= \TinyCat\Support\Dates::dateDb(), 'Obsolete scheduling inputs cannot set a future publication date.');
 $assert($immediate['code'] === 'status_created' && !array_key_exists('scheduled', $immediate['item']), 'Creation returns a published post without scheduling metadata.');
-$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = ' . $immediateId . ' AND user_id = 1') === 1, 'Immediate user publication delivers mention notifications.');
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id = ' . $immediateId . ' AND user_id = 1') === 1, 'Immediate user publication delivers mention notifications.');
 $database->exec("INSERT INTO users (id, username, role, bio, password, status) VALUES (3, 'feedbot', 'bot', '', '', 'active')");
 $botSource = $source;
 $botSource['bot_user_id'] = 3;
@@ -501,12 +501,12 @@ $botPublication = $importItems->import($botSource, [['guid' => 'bot-mention', 't
 $botPublicationId = (int) $botPublication['content_id'];
 $assert((string) $value('SELECT published_at FROM social_posts WHERE id = ' . $botPublicationId) <= \TinyCat\Support\Dates::dateDb(), 'Bot imports publish immediately through the shared writer.');
 \TinyCat\Social\Posts\NotificationEvents::notifyMentions('@1', ['id' => 3, 'role' => 'bot'], $botPublicationId);
-$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = ' . $botPublicationId) === 0, 'Bot imports and direct bot mention delivery do not send notifications.');
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id = ' . $botPublicationId) === 0, 'Bot imports and direct bot mention delivery do not send notifications.');
 $assert(\TinyCat\Social\Posts\PostCreation::sendsMentionNotifications('admin') && !\TinyCat\Social\Posts\PostCreation::sendsMentionNotifications('bot'), 'Mention sender policy distinguishes human accounts from bots.');
 $_POST = ['body' => 'Admin edited bot post @actor'];
 \TinyCat\Http\Request::reset();
 \TinyCat\Social\Posts\Actions::status_json_update($botPublicationId, ['id' => 1, 'username' => 'owner', 'role' => 'admin']);
-$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = ' . $botPublicationId) === 0, 'An administrator editing a bot post cannot bypass its mention policy.');
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id = ' . $botPublicationId) === 0, 'An administrator editing a bot post cannot bypass its mention policy.');
 $database->exec('DELETE FROM notifications');
 
 \TinyCat\Social\Profiles\Following::author_follow(2, 1);
@@ -522,7 +522,7 @@ $database->exec("DELETE FROM notifications WHERE user_id = 1 AND notification_ke
 
 $database->exec("INSERT INTO social_comments (id, content_id, parent_id, user_id, body) VALUES (10, 200, NULL, 2, 'parent'), (11, 200, 10, 3, 'reply'), (20, 100, NULL, 2, 'status comment')");
 $database->exec('INSERT INTO social_comment_likes (comment_id, user_id) VALUES (10, 4), (11, 4), (20, 4)');
-$database->exec("INSERT INTO notifications (id, user_id, content_id, comment_id, type, notification_key, created_at, updated_at) VALUES (1, 1, 200, 10, 'content_comment', 'test:1', '$now', '$now'), (2, 1, 200, 11, 'content_comment', 'test:2', '$now', '$now'), (3, 1, 100, 20, 'content_comment', 'test:3', '$now', '$now'), (4, 1, 100, NULL, 'content_like', 'test:4', '$now', '$now')");
+$database->exec("INSERT INTO notifications (id, user_id, subject_id, type, notification_key, created_at, updated_at) VALUES (1, 1, 10, 'content_comment', 'test:1', '$now', '$now'), (2, 1, 11, 'content_comment', 'test:2', '$now', '$now'), (3, 1, 20, 'content_comment', 'test:3', '$now', '$now'), (4, 1, 100, 'content_like', 'test:4', '$now', '$now')");
 $database->exec('CREATE TRIGGER fail_comment_delete BEFORE DELETE ON social_comments WHEN OLD.id = 10 BEGIN SELECT RAISE(ABORT, \'forced comment failure\'); END');
 $commentFailed = false;
 try {
@@ -533,12 +533,12 @@ try {
 $assert($commentFailed, 'A comment aggregate failure is propagated.');
 $assert((int) $value('SELECT COUNT(*) FROM social_comments WHERE content_id = 200') === 2, 'Failed comment deletion restores parent and reply.');
 $assert((int) $value('SELECT COUNT(*) FROM social_comment_likes WHERE comment_id IN (10, 11)') === 2, 'Failed comment deletion restores reactions.');
-$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE comment_id IN (10, 11)') === 2, 'Failed comment deletion restores notifications.');
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id IN (10, 11)') === 2, 'Failed comment deletion restores notifications.');
 $database->exec('DROP TRIGGER fail_comment_delete');
 \TinyCat\Social\Content\Comments::status_delete_comment_rows(10);
 $assert((int) $value('SELECT COUNT(*) FROM social_comments WHERE content_id = 200') === 0, 'Successful comment deletion removes parent and reply.');
 $assert((int) $value('SELECT COUNT(*) FROM social_comment_likes WHERE comment_id IN (10, 11)') === 0, 'Successful comment deletion removes reactions.');
-$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE comment_id IN (10, 11)') === 0, 'Successful comment deletion removes notifications.');
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id IN (10, 11)') === 0, 'Successful comment deletion removes notifications.');
 
 $database->exec("INSERT INTO social_post_likes (content_id, user_id) VALUES (100, 2)");
 $database->exec("INSERT INTO social_post_images (content_id, path) VALUES (100, 'status.webp')");
@@ -556,12 +556,12 @@ foreach (['social_posts', 'social_post_likes', 'social_comments', 'social_commen
     $expected = $table === 'social_comments' || $table === 'social_comment_likes' ? 1 : ($table === 'social_post_links' ? 2 : ($table === 'social_post_tags' ? 12 : 1));
     $assert((int) $value("SELECT COUNT(*) FROM {$table} WHERE {$column} " . ($table === 'social_comment_likes' ? '= 20' : '= 100')) === $expected, "Failed status deletion restores {$table}.");
 }
-$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE content_id = 100') === 2, 'Failed status deletion restores notifications.');
+$assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id IN (100,20)') === 2, 'Failed status deletion restores notifications.');
 $database->exec('DROP TRIGGER fail_content_delete');
 $imagePath = \TinyCat\Social\Posts\Posts::status_delete_content(100, true, true, false);
 $assert($imagePath === 'status.webp', 'Status deletion returns the external file cleanup path.');
 foreach (['social_posts', 'social_post_likes', 'social_comments', 'social_comment_likes', 'social_post_tags', 'social_post_links', 'social_post_images', 'content_reports', 'notifications'] as $table) {
-    $column = $table === 'social_comment_likes' ? 'comment_id' : ($table === 'social_posts' ? 'id' : 'content_id');
+    $column = $table === 'notifications' ? 'subject_id' : ($table === 'social_comment_likes' ? 'comment_id' : ($table === 'social_posts' ? 'id' : 'content_id'));
     $where = $table === 'social_comment_likes' ? '= 20' : '= 100';
     $assert((int) $value("SELECT COUNT(*) FROM {$table} WHERE {$column} {$where}") === 0, "Successful status deletion removes {$table}.");
 }
@@ -694,12 +694,12 @@ $assert(\TinyCat\Social\Moderation\Resource::report(['body' => $longReportBody])
 $detail = \TinyCat\Social\Moderation\Reports::detail(9500);
 $assert($detail['content'] === ['id' => 9500, 'status' => 'hidden'], 'Moderation details expose only the necessary content state.');
 $assert(str_contains($detail['reports'][0]['created_at'], 'T') && !array_key_exists('reviewed_by', $detail['reports'][0]), 'Report entries use canonical dates and omit raw database metadata.');
-$database->exec("INSERT INTO notifications (id, user_id, actor_id, content_id, type, notification_key, created_at, updated_at) VALUES (9500, 2, 1, 9500, 'content_like', 'hidden-evidence-notification', '2026-01-01', '2026-01-01')");
+$database->exec("INSERT INTO notifications (id, user_id, actor_id, subject_id, type, notification_key, created_at, updated_at) VALUES (9500, 2, 1, 9500, 'content_like', 'hidden-evidence-notification', '2026-01-01', '2026-01-01')");
 $hiddenNotification = array_values(array_filter(\TinyCat\Social\Posts\LegacyInbox::items(2), static fn (array $item): bool => (int) $item['id'] === 9500))[0];
 $hiddenNotificationResource = \TinyCat\Core\Notifications\Resource::item($hiddenNotification);
 $assert($hiddenNotificationResource['excerpt'] === '' && $hiddenNotificationResource['url'] === '/notifications', 'Existing notifications do not expose hidden post text or broken post links.');
 $assert(\TinyCat\Social\Posts\LegacyInbox::open(9500, 2) === '/notifications', 'Opening an old notification respects current post visibility.');
-$assert((int) $value('SELECT content_id FROM notifications WHERE id = 9500') === 9500, 'Hiding preserves the notification record and its original relationship.');
+$assert((int) $value('SELECT subject_id FROM notifications WHERE id = 9500') === 9500, 'Hiding preserves the notification record and its original relationship.');
 
 $database->exec("INSERT INTO social_posts (id, author_id, body) VALUES (9502, 1, 'Kept evidence')");
 $database->exec("INSERT INTO content_reports (id, content_id, reporter_id, status) VALUES (9502, 9502, 2, 'open')");

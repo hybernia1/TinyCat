@@ -27,6 +27,11 @@ try {
     $assert(count($pdo->query('SHOW TABLES')->fetchAll()) === 21, 'MySQL fresh blog creates the selected tables only');
     $pdo->exec("INSERT INTO users(id, username, password, role, status) VALUES (1, 'Editor', 'fixture', 'admin', 'active')");
     $actor = TinyCat\Database\Connection::find('users', ['id' => 1]);
+    $taskRun = TinyCat\Core\Tasks\History::start('fixture.history', ['mode' => 'cli', 'options' => ['source_limit' => 20]]);
+    TinyCat\Core\Tasks\History::finish($taskRun, TinyCat\Core\Tasks\Tasks::result('completed'), 1);
+    $latestRuns = TinyCat\Core\Tasks\History::latestFor(['fixture.history', 'missing']);
+    $assert((int) $latestRuns['fixture.history']['id'] === $taskRun && !isset($latestRuns['missing']), 'MySQL bulk task history selects the latest registered run');
+    $assert(isset(TinyCat\Core\Tasks\History::lastSuccessfulFor(['fixture.history'])['fixture.history']), 'MySQL bulk task health selects successful history');
     require $root . '/tests/fixtures/blog/feed-cases.php';
     $body = str_repeat('A long article. ', 300) . ' 🐈';
     $id = TinyCat\Blog\Articles::save(['title' => 'MySQL article', 'body' => $body], $actor);

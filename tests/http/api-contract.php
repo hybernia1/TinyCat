@@ -26,7 +26,7 @@ foreach ([
     'CREATE TABLE social_post_links (content_id INTEGER NOT NULL, link_id INTEGER NOT NULL, created_at TEXT, UNIQUE(content_id, link_id))',
     'CREATE TABLE social_post_images (content_id INTEGER PRIMARY KEY, path TEXT NOT NULL, width INTEGER, height INTEGER, bytes INTEGER)',
     'CREATE TABLE content_reports (id INTEGER PRIMARY KEY AUTOINCREMENT, content_id INTEGER NOT NULL, reporter_id INTEGER, reason TEXT, note TEXT, status TEXT, created_at TEXT, updated_at TEXT, reviewed_at TEXT, reviewed_by INTEGER, action_note TEXT)',
-    'CREATE TABLE notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, actor_id INTEGER, content_id INTEGER, comment_id INTEGER, type TEXT NOT NULL, notification_key TEXT NOT NULL, read_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(user_id, notification_key))',
+    'CREATE TABLE notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, actor_id INTEGER, subject_id INTEGER, payload_json TEXT, type TEXT NOT NULL, notification_key TEXT NOT NULL, read_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(user_id, notification_key))',
     'CREATE TABLE user_followers (user_id INTEGER NOT NULL, follower_id INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, follower_id))',
     'CREATE TABLE password_reset_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, token_hash TEXT, expires_at TEXT, used_at TEXT)',
     'CREATE TABLE moderation_actions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, action TEXT, created_at TEXT)',
@@ -65,7 +65,7 @@ $database->exec("INSERT INTO social_posts (id, author_id, body, published_at) VA
 $database->prepare('INSERT INTO social_post_links (content_id, link_id) VALUES (12, ?)')->execute([$legacyLinkId]);
 $database->prepare('INSERT INTO social_links (normalized_url, url_hash, provider, link_type, title, description, image_url, video_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
     ->execute(['https://google.com/search?q=TinyCat', hash('sha256', 'https://google.com/search?q=TinyCat'), 'google', 'web', 'Search results', 'Cached search preview', '', '', gmdate('Y-m-d H:i:s'), gmdate('Y-m-d H:i:s')]);
-$database->exec("INSERT INTO notifications (id, user_id, actor_id, content_id, type, notification_key, created_at, updated_at) VALUES (1, 2, 1, 10, 'content_like', 'fixture-own', '2026-01-01 12:02:00', '2026-01-01 12:02:00'), (2, 1, 2, 11, 'content_like', 'fixture-foreign', '2026-01-01 12:03:00', '2026-01-01 12:03:00')");
+$database->exec("INSERT INTO notifications (id, user_id, actor_id, subject_id, type, notification_key, created_at, updated_at) VALUES (1, 2, 1, 10, 'content_like', 'fixture-own', '2026-01-01 12:02:00', '2026-01-01 12:02:00'), (2, 1, 2, 11, 'content_like', 'fixture-foreign', '2026-01-01 12:03:00', '2026-01-01 12:03:00')");
 $database->exec("INSERT INTO settings (setting_key, setting_value, setting_type, setting_group) VALUES ('auth.registration.enabled', '1', 'bool', 'auth'), ('auth.registration.auto_approve', '1', 'bool', 'auth'), ('i18n.locale', 'en', 'string', 'i18n')");
 $database = null;
 $listener = stream_socket_server('tcp://127.0.0.1:0', $errorNumber, $errorMessage);

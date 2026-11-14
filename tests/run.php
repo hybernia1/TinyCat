@@ -84,6 +84,7 @@ $tests = [
     'Scheduled file cleanup' => 'tests/domains/scheduler/files.php',
     'Cleanup retention and bounded scans' => 'tests/domains/scheduler/retention.php',
     'Site health and system notifications' => 'tests/domains/health/health.php',
+    'Registered notification subjects' => 'tests/domains/notifications/inbox.php',
     'HTTP health measurements and limits' => 'tests/domains/health/health-http.php',
     'Scheduled tasks' => 'tests/domains/scheduler/run.php',
     'Scheduler CLI transport' => 'tests/domains/scheduler/cli.php',

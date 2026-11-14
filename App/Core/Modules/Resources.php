@@ -13,6 +13,8 @@ final class Resources
     private static ?Catalog $selected = null;
     private static ?string $selectedRoot = null;
     private static int $revision = 0;
+    private static int $fingerprintRevision = -1;
+    private static string $fingerprint = '';
 
     public static function catalog(?string $root = null): Catalog
     {
@@ -33,9 +35,12 @@ final class Resources
 
     public static function fingerprint(): string
     {
+        if (self::$fingerprintRevision === self::$revision) { return self::$fingerprint; }
         $ids = array_map(static fn (\TinyCat\Core\Modules\Definition $definition): string => $definition->id, self::catalog()->definitions());
         sort($ids, SORT_STRING);
-        return hash('sha256', json_encode($ids, JSON_THROW_ON_ERROR));
+        self::$fingerprint = hash('sha256', json_encode($ids, JSON_THROW_ON_ERROR));
+        self::$fingerprintRevision = self::$revision;
+        return self::$fingerprint;
     }
 
     /** Build/test selection scope; no route or installation lifecycle is activated.

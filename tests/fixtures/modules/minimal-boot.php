@@ -47,6 +47,8 @@ ob_start(); \TinyCat\Core\Ui\Page::render([], 'surface');
 $assert(ob_get_clean() === 'surface' && $renders === 1, 'The shared page uses its selected presentation provider.');
 try { \TinyCat\Core\Runtime\Application::boot(new \TinyCat\Core\Runtime\Context()); throw new RuntimeException('Duplicate boot was accepted.'); }
 catch (LogicException) { $assert(\TinyCat\Core\Modules\Resources::revision() === $revision, 'Duplicate boot fails before changing shared state.'); }
+try { \TinyCat\Core\Runtime\Application::start(); throw new RuntimeException('Duplicate start was accepted.'); }
+catch (LogicException) { $assert(\TinyCat\Core\Modules\Resources::revision() === $revision, 'Duplicate start fails before changing shared state.'); }
 
 // Platform services remain available when no functional module is selected.
 foreach ([\TinyCat\Core\Tasks\Runner::class, \TinyCat\Core\Tasks\History::class, \TinyCat\Core\Tasks\Cleanup::class, \TinyCat\Core\Mail\Smtp::class, \TinyCat\Core\Settings\Store::class] as $class) {

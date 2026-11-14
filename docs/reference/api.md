@@ -162,6 +162,12 @@ HTTP Basic credentials:
 
 The task-specific aliases `cleanup_batch` for cleanup and `bot_limit` for feeds
 are also accepted. Supplying both `batch` and its task-specific alias is rejected.
+Task IDs use `[a-z][a-z0-9_.-]{0,39}` consistently in registration, HTTP and
+the CLI `--task=ID` form; `all` is reserved for aggregate execution.
+Each owner declares its optional `batchOption`; Blog's `article_feeds` task
+maps `batch` to `source_limit` (default 20, clamped to 1–100).
+Parameters are normalized once before execution and the effective values are
+stored in run history. Explicit source selectors must be positive integers.
 Other integer cleanup values normalize to 1000, matching POST execution options.
 Non-integer and array values are rejected before execution. `site-health` has no
 batch and rejects this parameter. Other query parameters do not override the task

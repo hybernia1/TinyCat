@@ -16,15 +16,7 @@
       "other": "Masz {count} nowego powiadomienia."
     },
     "messages": {
-      "follow": "{actor} podążał za tobą.",
-      "content_like": "{actor} polubił Twój post.",
-      "comment_like": "{actor} polubił Twój komentarz.",
-      "content_comment": "{actor} skomentował Twój post.",
-      "content_mention": "{actor} wspomniał o Tobie w poście.",
-      "comment_mention": "{actor} wspomniał o Tobie w komentarzu.",
-      "report_resolved": "Twój raport został rozwiązany.",
-      "report_dismissed": "Twój raport został odrzucony.",
-      "generic": "{actor} zareagował na Twój post.",
+      "generic": "To powiadomienie nie jest już dostępne.",
       "read_done": "Powiadomienie zostało oznaczone jako przeczytane.",
       "read_all_done": "Wszystkie powiadomienia zostały oznaczone jako przeczytane.",
       "deleted": "Powiadomienie zostało usunięte."

@@ -11,14 +11,14 @@ final class Api
 {
     public static function register(\TinyCat\Http\Api $api): void
     {
-        $api->get('/scheduler/triggers/{task:[a-z-]+}', static function (Request $request, array $params): Result {
+        $api->get('/scheduler/triggers/{task:' . \TinyCat\Core\Modules\ScheduledTask::ID_PATTERN . '}', static function (Request $request, array $params): Result {
             $task = $params['task'];
             if (!isset(Tasks::definitions()[$task])) { \TinyCat\Http\Response::error('Unknown scheduled task.', 404, 'scheduler_unknown_task'); }
             if ($request->method() === 'HEAD') {
                 return new Result(['task' => $task, 'available' => true], null, [], 'scheduler_healthy');
             }
             $query = $request->query();
-            $batchOption = match ($task) { 'cleanup' => 'cleanup_batch', 'feeds' => 'bot_limit', default => null };
+            $batchOption = \TinyCat\Core\Modules\Registrations::current()->task($task)->batchOption;
             $options = [];
             if (array_key_exists('batch', $query)) {
                 if ($batchOption === null) { throw new \InvalidArgumentException('This task does not support a batch.', 400); }
@@ -45,7 +45,7 @@ final class Api
         }, 'scheduler', 200);
         $api->get('/scheduler/tasks', Actions::listing(...), 'admin');
         $api->get('/scheduler/runs/{id:[0-9]+}', static fn (Request $request, array $params): array => Actions::detail((int) $params['id']), 'admin');
-        $api->post('/scheduler/tasks/{task:[a-z-]+}/runs', static fn (Request $request, array $params): Result => Actions::run((string) $params['task']), 'admin');
+        $api->post('/scheduler/tasks/{task:' . \TinyCat\Core\Modules\ScheduledTask::ID_PATTERN . '}/runs', static fn (Request $request, array $params): Result => Actions::run((string) $params['task']), 'admin');
         $api->post('/scheduler/tokens', Actions::rotateToken(...), 'admin');
     }
 }

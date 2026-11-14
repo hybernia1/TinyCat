@@ -166,6 +166,17 @@ její data, konfiguraci ani účty a nespouštěj na ní destruktivní fresh-ins
 
 ## Ověření
 
+Nezávislé cílené kontroly lze spouštět souběžně, lokálně nejvýše čtyři
+procesy najednou včetně jejich vnořených workerů. Před spuštěním ověř izolaci
+databází, cache, pracovních adresářů, reportů a portů. Například čisté čtecí
+kontroly stylu a hranic mohou běžet současně; build a kontrola jeho výstupu
+musí běžet postupně. Při nejasné izolaci použij postupné spuštění.
+Nespouštěj souběžně více úplných preflightů ani testy měnící stejné generované
+assety, balíčky nebo živou instalaci. Existující runnery zůstávají kanonickým
+vstupem; tato možnost nemění jejich vnitřní pořadí ani nesnižuje rozsah
+požadovaných závěrečných kontrol. Po průběžné změně spusť jen dotčené kontroly;
+úspěšné kontroly opakuj až po další relevantní změně nebo novém zjištění.
+
 Vol odpovídající kontroly podle změny. Hlavní úplná kontrola je `composer preflight`
 po instalaci dev závislostí; nevytvářej alternativní univerzální runner.
 

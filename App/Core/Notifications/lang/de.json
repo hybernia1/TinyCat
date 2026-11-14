@@ -16,15 +16,7 @@
       "other": "Du hast {count} neue Benachrichtigungen."
     },
     "messages": {
-      "follow": "{actor} ist dir gefolgt.",
-      "content_like": "{actor} mochte deinen Beitrag.",
-      "comment_like": "{actor} mochte Ihren Kommentar.",
-      "content_comment": "{actor} hat Ihren Beitrag kommentiert.",
-      "content_mention": "{actor} hat Sie in einem Beitrag erwähnt.",
-      "comment_mention": "{actor} hat Sie in einem Kommentar erwähnt.",
-      "report_resolved": "Ihre Meldung wurde gelöst.",
-      "report_dismissed": "Ihr Bericht wurde abgewiesen.",
-      "generic": "{actor} hat auf Ihren Beitrag reagiert.",
+      "generic": "Diese Benachrichtigung ist nicht mehr verfügbar.",
       "read_done": "Die Benachrichtigung wurde als gelesen markiert.",
       "read_all_done": "Alle Benachrichtigungen wurden als gelesen markiert.",
       "deleted": "Die Benachrichtigung wurde gelöscht."

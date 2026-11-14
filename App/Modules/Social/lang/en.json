@@ -387,5 +387,17 @@
       "content_images_enabled_help": "Existing images remain visible when uploads are disabled.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     }
+  },
+  "notifications": {
+    "messages": {
+      "follow": "{actor} followed you.",
+      "content_like": "{actor} liked your post.",
+      "comment_like": "{actor} liked your comment.",
+      "content_comment": "{actor} commented on your post.",
+      "content_mention": "{actor} mentioned you in a post.",
+      "comment_mention": "{actor} mentioned you in a comment.",
+      "report_resolved": "Your report was resolved.",
+      "report_dismissed": "Your report was dismissed."
+    }
   }
 }

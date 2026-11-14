@@ -40,7 +40,7 @@ final class Execution
         $contexts = self::contexts($task, $options, $mode, $actorId);
         $definitions = Tasks::definitions();
         $results = [];
-        foreach ($contexts as $name => $context) { $results[$name] = Runner::run($name, $definitions[$name]['runner'], $context, $debug); }
+        foreach ($contexts as $name => $context) { $results[$name] = Runner::runPrepared($name, $definitions[$name]['runner'], $context, $debug); }
         return ['ok' => !array_any($results, static fn (array $result): bool => empty($result['ok'])),
             'service' => 'tinycat_scheduled_tasks', 'mode' => $mode, 'selected_task' => $task,
             'checked_at' => date(DATE_ATOM), 'tasks' => $results];

@@ -173,7 +173,7 @@ try {
     $removedReply = (int) Connection::insert('social_comments', ['content_id' => $post, 'parent_id' => $removedComment, 'user_id' => 2, 'body' => 'Dependent reply']);
     Connection::insert('social_comment_likes', ['comment_id' => $removedReply, 'user_id' => 1]);
     Connection::insert('blog_article_likes', ['article_id' => $article, 'user_id' => 3]);
-    Connection::insert('notifications', ['user_id' => 1, 'actor_id' => 3, 'type' => 'content_comment', 'notification_key' => 'retained-cleanup-test', 'content_id' => $post, 'comment_id' => $removedReply]);
+    Connection::insert('notifications', ['user_id' => 1, 'actor_id' => 3, 'type' => 'content_comment', 'notification_key' => 'retained-cleanup-test', 'subject_id' => $removedReply]);
     [$status, $json] = $request('/api/users/3', true, ['_method' => 'DELETE']);
     $assert($status === 200 && Connection::find('users', ['id' => 3]) === null, 'Core account deletion includes installed inactive Social participant: ' . $json . substr((string) file_get_contents($workspace . '/combined-server.log'), -4000));
     $assert(Connection::find('social_comments', ['id' => $removedComment]) === null && Connection::find('social_comments', ['id' => $removedReply]) === null && (int) Connection::value('SELECT COUNT(*) FROM notifications WHERE notification_key = ?', ['retained-cleanup-test']) === 0, 'Inactive-owner cleanup removes dependent replies, reactions and social notification subjects');

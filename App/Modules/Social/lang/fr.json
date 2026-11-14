@@ -387,5 +387,17 @@
       "content_images_enabled_help": "Les images existantes restent visibles lorsque les téléchargements sont désactivés.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     }
+  },
+  "notifications": {
+    "messages": {
+      "follow": "{actor} vous a suivi.",
+      "content_like": "{actor} a aimé votre message.",
+      "comment_like": "{actor} a aimé votre commentaire.",
+      "content_comment": "{actor} a commenté votre message.",
+      "content_mention": "{actor} vous a mentionné dans un message.",
+      "comment_mention": "{actor} vous a mentionné dans un commentaire.",
+      "report_resolved": "Votre rapport a été résolu.",
+      "report_dismissed": "Votre rapport a été rejeté."
+    }
   }
 }

@@ -1,4 +1,7 @@
 {
+  "_meta": {
+    "name": "Nederlands"
+  },
   "common": {
     "sort": "Sorteren",
     "refresh": "Vernieuwen",

@@ -78,7 +78,7 @@ import "../../../../assets/ui/component-builders.js";
     },
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.dataset.url || source.getAttribute("href") || "/", window.location.href);
-      if (url.pathname === "/api/scheduler/tasks" || /^\/api\/scheduler\/tasks\/[a-z-]+\/runs$/.test(url.pathname)) {
+      if (url.pathname === "/api/scheduler/tasks" || /^\/api\/scheduler\/tasks\/[a-z][a-z0-9_.-]{0,39}\/runs$/.test(url.pathname)) {
         var root = target || document.querySelector("#scheduler-list");
         if (root) { T.scheduler.list(root, response); return [root]; }
         return [];

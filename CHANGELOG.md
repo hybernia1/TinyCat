@@ -1,5 +1,15 @@
 # Changelog
 
+## 6.0.3 - 2026-11-14
+
+- Replace domain-specific inbox columns with an indexed subject ID. Registered core and module notification types own subject requirements, lazy batch hydration, text and canonical links.
+- Preserve historical IDs, deduplication keys, read state, timestamps and producer payloads through new core and Social migrations. Unknown historical producer references remain opaque until their owner converts them.
+- Reject unregistered notification writes, keep unavailable-owner rows readable with a generic fallback, and keep Social cleanup scoped to its own types.
+- Reduce duplicate core initialization, cache catalog fingerprints per selection revision, use named contribution arguments and fix profiling of empty function bodies.
+- Unify scheduled task IDs across registration, HTTP, CLI and client updates; normalize parameters once, declare batch aliases with their owners and reject invalid Blog source selectors. Batch scheduler history reads and bound advisory lock names.
+- Discover languages from native-name metadata declared once in Support catalogs, exclude metadata from message catalogs and retire the obsolete root language registry through explicit update deletions.
+- Correct owner-specific dashboard counts, split users by role and narrow the existing administration sidebar.
+
 ## 6.0.2 - 2026-11-14
 
 - Fix stable 5.x web updates with OPcache enabled. The signed conversion entry loads the current autoloader through a new runtime path, instead of executing the cached 5.x autoloader again after files were replaced.

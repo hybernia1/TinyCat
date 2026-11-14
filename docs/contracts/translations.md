@@ -77,8 +77,14 @@ even though Users owns other `account.*` messages. Multiple modules can contribu
 to a namespace; duplicate ownership of an individual key is rejected. Support owns
 common labels, relative dates and shared action messages. Mail owns its nested
 email templates in `App/Modules/Mail/lang/<locale>.json`; these never enter client catalogs.
-Settings owns installation messages. `lang/<locale>.json` contains only the native
-language `name`, which declares the set of complete shipped locales.
+Settings owns installation messages. `App/Core/Support/lang/<locale>.json` declares the native
+language name once in `"_meta": {"name": "Čeština"}` alongside its messages.
+The filename supplies the locale code; key order is irrelevant. Only Support
+catalogs may declare `_meta`, with a nonempty string `name`; metadata is excluded
+from server, email and client message catalogs. Other owners use the same locale
+filenames without repeating metadata. The build discovers supported locales from
+these Support catalogs and includes their names in the compiled manifest, so
+release requests need no source-directory scan. There is no root `lang/` registry.
 
 Every source-owning module supplies every declared locale. The build checks parity
 within each module before merging, so moving a key in only one language fails.

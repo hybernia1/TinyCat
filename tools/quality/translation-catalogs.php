@@ -4,8 +4,8 @@ declare(strict_types=1);
 /** Build-time validation; deliberately reads source catalogs before runtime fallback. */
 return static function (string $directory): array {
     $packages = \TinyCat\Support\TranslationSources::packages($directory);
-    if ($packages === []) { throw new RuntimeException($directory . '/lang: no language packages'); }
-    if (!isset($packages['en'])) { throw new RuntimeException($directory . '/lang/en.json: missing source locale'); }
+    if ($packages === []) { throw new RuntimeException($directory . '/App/Core/Support/lang: no language packages'); }
+    if (!isset($packages['en'])) { throw new RuntimeException($directory . '/App/Core/Support/lang/en.json: missing source locale'); }
     $sources = \TinyCat\Support\TranslationSources::files($directory);
     $catalogs = [];
     $owners = [];

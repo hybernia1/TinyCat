@@ -12,7 +12,7 @@
   inset-inline-start: 0;
   z-index: 60;
   display: flex;
-  width: min(86vw, 286px);
+  width: min(86vw, 264px);
   flex-direction: column;
   border-right: 1px solid var(--border);
   background: var(--surface);
@@ -44,12 +44,12 @@ body.admin-nav-open .admin-backdrop {
 
 .admin-sidebar-header {
   display: flex;
-  min-height: 64px;
+  min-height: 58px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   border-bottom: 1px solid var(--border);
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 
 .admin-brand {

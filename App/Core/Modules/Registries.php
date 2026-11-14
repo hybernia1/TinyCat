@@ -51,7 +51,29 @@ final readonly class Registries
                 $configOverrides[] = $key;
             }
         }
-        $this->entries = new Contributions(self::ordered($tasks), self::ordered($navigation), self::ordered($health), self::ordered($maintenance), self::ordered($temporaryDirectories), $configOverrides, $notificationTypes, $notificationInbox, self::ordered($themes), self::ordered($homepages), self::ordered($dashboards), self::ordered($settings), self::ordered($features), $mailDelivery, self::ordered($sitemaps), self::ordered($search), self::ordered($crawlerHints), self::ordered($localizedRoutes), self::ordered($information), self::ordered($widgets), self::ordered($embeds));
+        $this->entries = new Contributions(
+            tasks: self::ordered($tasks),
+            navigation: self::ordered($navigation),
+            health: self::ordered($health),
+            maintenance: self::ordered($maintenance),
+            temporaryDirectories: self::ordered($temporaryDirectories),
+            configOverrides: $configOverrides,
+            notificationTypes: $notificationTypes,
+            notificationInbox: $notificationInbox,
+            themes: self::ordered($themes),
+            homepages: self::ordered($homepages),
+            dashboards: self::ordered($dashboards),
+            settings: self::ordered($settings),
+            features: self::ordered($features),
+            mailDelivery: $mailDelivery,
+            sitemaps: self::ordered($sitemaps),
+            search: self::ordered($search),
+            crawlerHints: self::ordered($crawlerHints),
+            localizedRoutes: self::ordered($localizedRoutes),
+            information: self::ordered($information),
+            widgets: self::ordered($widgets),
+            embeds: self::ordered($embeds),
+        );
         $this->owners = $owners;
     }
 

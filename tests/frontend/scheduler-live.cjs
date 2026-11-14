@@ -16,6 +16,12 @@ const vm = require("node:vm");
   vm.runInNewContext(fs.readFileSync(require("node:path").join(__dirname, "../../App/Core/Tasks/assets/controller.js"), "utf8").replace(/^import .*;\r?\n/gm, ""), { window, document, AbortController, URL, URLSearchParams });
   T.scheduler.filters = () => {};
   T.scheduler.list = () => { renders++; };
+  window.location.href = "https://tinycat.test/admin/cron/list";
+  for (const task of ["article_feeds", "fixture.task_2"]) {
+    const source = { dataset: { ajaxAction: "/api/scheduler/tasks/" + task + "/runs" } };
+    assert.deepEqual(Array.from(T.scheduler.result(source, { data: initial }, target)), [target]);
+  }
+  renders = 0;
   T.scheduler.init(); T.scheduler.hydrate(document);
   for (const search of ["", "?redirect=https://evil.test&url=//evil.test", "?q=../../scheduler/triggers/feeds%23x%26task%3Dcleanup&task=feeds&page=2&unknown=1", "?q=%2F%2Fevil.test%5C..%2F%3F%23&status=failed&per_page=50&sort=started_at&direction=desc"]) {
     window.location.search = search;

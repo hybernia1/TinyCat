@@ -387,5 +387,17 @@
       "content_images_enabled_help": "Bestaande afbeeldingen blijven zichtbaar als uploads zijn uitgeschakeld.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     }
+  },
+  "notifications": {
+    "messages": {
+      "follow": "{actor} heeft je gevolgd.",
+      "content_like": "{actor} vond je bericht leuk.",
+      "comment_like": "{actor} vond je reactie leuk.",
+      "content_comment": "{actor} heeft gereageerd op je bericht.",
+      "content_mention": "{actor} heeft je genoemd in een bericht.",
+      "comment_mention": "{actor} heeft je genoemd in een reactie.",
+      "report_resolved": "Uw melding is opgelost.",
+      "report_dismissed": "Uw rapport is afgewezen."
+    }
   }
 }

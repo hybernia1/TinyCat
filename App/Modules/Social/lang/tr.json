@@ -387,5 +387,17 @@
       "content_images_enabled_help": "Mevcut resimler, yüklemeler devre dışı bırakıldığında görünür durumda kalır.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     }
+  },
+  "notifications": {
+    "messages": {
+      "follow": "{actor} seni takip etti.",
+      "content_like": "{actor} gönderinizi beğendi.",
+      "comment_like": "{actor} yorumunuzu beğendi.",
+      "content_comment": "{actor} gönderinize yorum yaptı.",
+      "content_mention": "{actor} bir gönderide sizden bahsetti.",
+      "comment_mention": "{actor} bir yorumda sizden bahsetti.",
+      "report_resolved": "Raporunuz çözüldü.",
+      "report_dismissed": "Raporunuz reddedildi."
+    }
   }
 }

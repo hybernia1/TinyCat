@@ -387,5 +387,17 @@
       "content_images_enabled_help": "Vorhandene Bilder bleiben sichtbar, wenn Uploads deaktiviert sind.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     }
+  },
+  "notifications": {
+    "messages": {
+      "follow": "{actor} ist dir gefolgt.",
+      "content_like": "{actor} mochte deinen Beitrag.",
+      "comment_like": "{actor} mochte Ihren Kommentar.",
+      "content_comment": "{actor} hat Ihren Beitrag kommentiert.",
+      "content_mention": "{actor} hat Sie in einem Beitrag erwähnt.",
+      "comment_mention": "{actor} hat Sie in einem Kommentar erwähnt.",
+      "report_resolved": "Ihre Meldung wurde gelöst.",
+      "report_dismissed": "Ihr Bericht wurde abgewiesen."
+    }
   }
 }

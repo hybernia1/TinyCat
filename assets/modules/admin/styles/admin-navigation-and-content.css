@@ -22,18 +22,18 @@
 
 .admin-nav {
   display: grid;
-  gap: 4px;
-  padding: 12px;
+  gap: 2px;
+  padding: 8px;
 }
 
 .admin-nav-link {
   display: flex;
-  min-height: 42px;
+  min-height: 40px;
   align-items: center;
   gap: 10px;
   color: var(--muted);
-  padding: 9px 10px;
-  font-weight: 700;
+  padding: 8px;
+  font-weight: 500;
   text-decoration: none;
 }
 
@@ -81,7 +81,7 @@
 
 .admin-nav-submenu {
   display: grid;
-  gap: 4px;
+  gap: 2px;
   padding: 4px 0 4px 18px;
 }
 
@@ -95,7 +95,7 @@
   gap: 12px;
   margin-block-start: auto;
   border-top: 1px solid var(--border);
-  padding: 14px;
+  padding: 12px;
 }
 
 .admin-user {

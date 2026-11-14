@@ -15,14 +15,15 @@ final class TranslationSources
     {
         $root ??= Paths::basePath();
         $packages = [];
-        foreach (glob($root . '/lang/*.json') ?: [] as $file) {
+        foreach (glob($root . '/App/Core/Support/lang/*.json') ?: [] as $file) {
             $code = basename($file, '.json');
-            $data = self::read($file);
+            $data = self::document($file);
+            $metadata = $data->_meta ?? null;
             if (!preg_match('/^[a-z]{2,3}(?:-[a-z0-9]+)*$/D', $code)
-                || array_keys($data) !== ['name'] || trim($data['name']) === '') {
+                || !$metadata instanceof stdClass || !isset($metadata->name) || !is_string($metadata->name)) {
                 throw new RuntimeException($file . ': expected locale metadata with a nonempty name');
             }
-            $packages[$code] = $data['name'];
+            $packages[$code] = $metadata->name;
         }
         ksort($packages);
         return $packages;
@@ -68,8 +69,7 @@ final class TranslationSources
         return $catalog;
     }
 
-    /** @return array<string, string> */
-    public static function read(string $file): array
+    private static function document(string $file): stdClass
     {
         $source = file_get_contents($file);
         if ($source === false) { throw new RuntimeException($file . ': unreadable catalog'); }
@@ -105,6 +105,22 @@ final class TranslationSources
         };
         $visit('');
         if (!$data instanceof stdClass) { throw new RuntimeException($file . ': catalog must be an object'); }
+        if (property_exists($data, '_meta')) {
+            $metadata = $data->_meta;
+            if (preg_match('~/App/Core/Support/lang/[^/]+\\.json$~D', str_replace('\\', '/', $file)) !== 1
+                || !$metadata instanceof stdClass || array_keys(get_object_vars($metadata)) !== ['name']
+                || !is_string($metadata->name) || trim($metadata->name) === '') {
+                throw new RuntimeException($file . ': invalid locale metadata');
+            }
+        }
+        return $data;
+    }
+
+    /** @return array<string, string> */
+    public static function read(string $file): array
+    {
+        $data = self::document($file);
+        unset($data->_meta);
         $flat = [];
         $flatten = static function (stdClass $object, string $prefix) use (&$flatten, &$flat, $file): void {
             $members = get_object_vars($object);

@@ -14,17 +14,16 @@ final class NotificationHistory
         'comment_mention' => ['email' => 'notification_comment_mention'],
         'report_resolved' => ['email' => 'notification_report_resolved'],
         'report_dismissed' => ['email' => 'notification_report_dismissed'],
-        'site_health_ok' => ['email' => ''],
-        'site_health_attention' => ['email' => ''],
     ];
 
     public static function mergeContent(int $oldId, int $keeperId): void
     {
         if (!\TinyCat\Core\Notifications\Delivery::available()) { return; }
         \TinyCat\Database\Transactions::run(static function () use ($oldId, $keeperId): void {
-            foreach (\TinyCat\Database\Connection::all(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM notifications WHERE content_id=? ORDER BY id'), [$oldId]) as $row) {
+            foreach (\TinyCat\Database\Connection::all(\TinyCat\Database\Connection::lockingSelect("SELECT * FROM notifications WHERE (subject_id=? AND type IN ('content_like','content_mention','report_resolved','report_dismissed')) OR (type IN ('content_comment','comment_mention') AND subject_id IN (SELECT id FROM social_comments WHERE content_id=?) AND (notification_key LIKE ? OR notification_key LIKE ?)) ORDER BY id"), [$oldId, $keeperId, 'content_comment:' . $oldId . ':%', 'comment_mention:' . $oldId . ':%']) as $row) {
                 $key = (string) $row['notification_key'];
                 $type = (string) $row['type'];
+                $subjectId = in_array($type, NotificationPresentation::COMMENT_TYPES, true) ? (int) $row['subject_id'] : $keeperId;
                 $parts = explode(':', $key, 3);
                 if (in_array($type, ['content_like', 'content_comment', 'content_mention', 'comment_mention'], true)
                     && count($parts) === 3 && $parts[0] === $type && ctype_digit($parts[1])) {
@@ -34,14 +33,14 @@ final class NotificationHistory
                 $existing = \TinyCat\Database\Connection::one(\TinyCat\Database\Connection::lockingSelect('SELECT * FROM notifications WHERE user_id=? AND notification_key=? AND id<>?'), [$row['user_id'], $key, $row['id']]);
                 if ($existing !== null) {
                     \TinyCat\Database\Connection::update('notifications', [
-                        'content_id' => $keeperId,
+                        'subject_id' => $subjectId,
                         'read_at' => $row['read_at'] === null || $existing['read_at'] === null ? null : max($row['read_at'], $existing['read_at']),
                         'created_at' => min($row['created_at'], $existing['created_at']),
                         'updated_at' => max($row['updated_at'], $existing['updated_at']),
                     ], ['id' => $existing['id']]);
                     \TinyCat\Database\Connection::delete('notifications', ['id' => $row['id']]);
                 } else {
-                    \TinyCat\Database\Connection::update('notifications', ['content_id' => $keeperId, 'notification_key' => $key], ['id' => $row['id']]);
+                    \TinyCat\Database\Connection::update('notifications', ['subject_id' => $subjectId, 'notification_key' => $key], ['id' => $row['id']]);
                 }
             }
         });
@@ -93,7 +92,7 @@ final class NotificationHistory
     {
         if (!\TinyCat\Core\Notifications\Delivery::available()) { return; }
         if ($contentId > 0) {
-            \TinyCat\Database\Connection::delete('notifications', ['content_id' => $contentId]);
+            \TinyCat\Database\Connection::exec("DELETE FROM notifications WHERE (type IN ('content_like','content_mention','report_resolved','report_dismissed') AND subject_id=?) OR (type IN ('content_comment','comment_like','comment_mention') AND subject_id IN (SELECT id FROM social_comments WHERE content_id=?))", [$contentId, $contentId]);
         }
     }
 
@@ -101,7 +100,7 @@ final class NotificationHistory
     {
         if (!\TinyCat\Core\Notifications\Delivery::available()) { return; }
         if ($commentId > 0) {
-            \TinyCat\Database\Connection::delete('notifications', ['comment_id' => $commentId]);
+            \TinyCat\Database\Connection::exec("DELETE FROM notifications WHERE type IN ('content_comment','comment_like','comment_mention') AND subject_id=?", [$commentId]);
         }
     }
 }

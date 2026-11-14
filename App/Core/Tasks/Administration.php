@@ -30,8 +30,7 @@ final class Administration
             }
         }
         $records = Repository::listing($filters, AdminViews::admin_page(), $filters['per_page'], $aliases);
-        $records['latest'] = [];
-        foreach (array_keys($definitions) as $name) { $records['latest'][$name] = Repository::latest($name); }
+        $records['latest'] = History::latestFor(array_keys($definitions));
         return Resource::listing($records, $definitions, $filters);
     }
 

@@ -42,7 +42,14 @@ $assert(is_file(Cache::file('app.js', 'assets')) && is_file(Cache::file('active.
 $result = \TinyCat\Core\Tasks\Cleanup::cleanup_task_run('expired_cache_files', 500);
 $assert($result['done'] && $result['changed'] === 0, 'The scheduler dispatches file cache cleanup.');
 
-$database = new PDO('sqlite::memory:');
+$database = new class ('sqlite::memory:') extends PDO {
+    public int $prepared = 0;
+    public function prepare(string $query, array $options = []): PDOStatement|false
+    {
+        $this->prepared++;
+        return parent::prepare($query, $options);
+    }
+};
 $database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 \TinyCat\Database\Connection::set($database);
 $database->exec('CREATE TABLE social_links (image_url TEXT)');
@@ -87,7 +94,9 @@ $staleRun = \TinyCat\Core\Tasks\History::start('cleanup', ['mode' => 'cli', 'opt
 $assert($database->query('SELECT status FROM scheduler_runs WHERE id = ' . $staleRun)->fetchColumn() === 'interrupted', 'A new lock owner marks abandoned runs interrupted.');
 $_GET = [];
 \TinyCat\Http\Request::reset();
+$queriesBefore = $database->prepared;
 $model = \TinyCat\Core\Tasks\Administration::payload();
+$assert($database->prepared - $queriesBefore === 3, 'Task listing uses count, page and one bulk latest-history query.');
 $assert(count($model['items']) === 3 && $model['pagination']['total'] === 4, 'The normalized list includes registered tasks and durable run history.');
 $html = \TinyCat\Support\Components::render('scheduler/list', $model);
 $assert(str_contains($html, 'data-ajax-target="#scheduler-list"') && str_contains($html, '/api/scheduler/tasks/cleanup/runs'), 'The shared server component exposes run actions and the standard AJAX target.');
@@ -214,5 +223,56 @@ $deferred = \TinyCat\Core\Tasks\Runner::run('cleanup', \TinyCat\Core\Tasks\Tasks
 $deferredRecord = $database->query('SELECT * FROM scheduler_runs ORDER BY id DESC LIMIT 1')->fetch(PDO::FETCH_ASSOC);
 $assert($deferred['status'] === 'not_due' && $deferred['count'] === 0 && $deferred['changed'] === 0 && $deferred['summary']['tasks'] === [], 'The real cleanup adapter normalizes a not-due run without executing maintenance.');
 $assert(json_decode($deferredRecord['options_json'], true) === ['cleanup_batch' => 1000], 'The real cleanup run records its effective supported batch.');
+
+$latest = \TinyCat\Core\Tasks\History::latestFor(['cleanup', 'feeds', 'missing']);
+$assert($latest['cleanup']['id'] === $deferredRecord['id'] && !isset($latest['missing']), 'Bulk latest history keeps the greatest ID for each task and omits missing tasks.');
+$successful = \TinyCat\Core\Tasks\History::lastSuccessfulFor(['cleanup', 'feeds']);
+$assert(isset($successful['cleanup']), 'Bulk health history includes successful and not-due runs.');
+$assert(\TinyCat\Core\Tasks\History::latestFor([]) === [] && \TinyCat\Core\Tasks\History::lastSuccessfulFor([]) === [], 'Empty task selections require no history query.');
+
+$registered = \TinyCat\Core\Modules\Registrations::current();
+$normalizations = 0; $observed = null; $lockName = '';
+$database->sqliteCreateFunction('GET_LOCK', static function (string $name) use (&$lockName): int { $lockName = $name; return 1; });
+$taskId = 'fixture.task_with_long_identifier_12345';
+$fixture = new \TinyCat\Core\Modules\ScheduledTask($taskId, static function (array $context) use (&$observed): array {
+    $observed = $context['options']['batch'];
+    return \TinyCat\Core\Tasks\Tasks::result('completed');
+}, options: ['batch' => 1], normalize: static function (array $options) use (&$normalizations): array {
+    $normalizations++; $options['batch']++; return $options;
+}, healthAge: static fn (): int => 3600, batchOption: 'batch');
+try {
+    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture' => new \TinyCat\Core\Modules\Contributions(tasks: [$fixture])]));
+    $execution = \TinyCat\Core\Tasks\Execution::run($taskId);
+    $assert($execution['ok'] && $normalizations === 1 && $observed === 2, 'Execution normalizes exactly once even for a non-idempotent owner callback.');
+    $assert(strlen($lockName) <= 64, 'Long valid task IDs fit the MySQL advisory lock name limit.');
+    $queriesBefore = $database->prepared;
+    $health = \TinyCat\Core\Tasks\HealthCheck::run();
+    $assert($health['metrics'][$taskId] === 'ok', 'Bulk health checks recognize a completed contributed task.');
+    $assert($database->prepared - $queriesBefore === 2, 'Scheduler health uses two bulk queries independently of task-specific probes.');
+    $match = new ReflectionMethod(\TinyCat\Http\Router::class, 'routeMatch');
+    $route = '/api/scheduler/tasks/{task:' . \TinyCat\Core\Modules\ScheduledTask::ID_PATTERN . '}/runs';
+    $assert($match->invoke(null, $route, '/api/scheduler/tasks/' . $taskId . '/runs')['task'] === $taskId, 'The real router accepts dotted, underscored and numeric task IDs.');
+    $beforeRelease = $releases;
+    $database->exec("CREATE TRIGGER reject_history_finish BEFORE UPDATE ON scheduler_runs WHEN NEW.task = '" . $taskId . "' AND NEW.status = 'completed' BEGIN SELECT RAISE(FAIL, 'fixture history failure'); END");
+    $failed = \TinyCat\Core\Tasks\Execution::run($taskId);
+    $assert(!$failed['ok'] && $releases === $beforeRelease + 1, 'A final history write failure reports failure and releases the lock.');
+    $database->exec('DROP TRIGGER reject_history_finish');
+    $assert(\TinyCat\Core\Tasks\History::latest($taskId)['status'] === 'failed', 'History records failure when the completion write fails.');
+} finally { \TinyCat\Core\Modules\Registrations::configure($registered); }
+
+require_once __DIR__ . '/../../../App/Modules/Blog/src/FeedSources.php';
+$blogTask = \TinyCat\Blog\FeedSources::task();
+foreach ([0, -1] as $invalidId) {
+    $rejected = false;
+    try { ($blogTask->normalize)(['source_limit' => 20, 'source_id' => $invalidId]); }
+    catch (InvalidArgumentException) { $rejected = true; }
+    $assert($rejected, 'Invalid Blog source selectors cannot expand into a batch.');
+}
+foreach (['all', str_repeat('a', 41)] as $invalidTask) {
+    $rejected = false;
+    try { new \TinyCat\Core\Modules\ScheduledTask($invalidTask, $runner); }
+    catch (InvalidArgumentException) { $rejected = true; }
+    $assert($rejected, 'Registration rejects reserved and oversized task IDs.');
+}
 
 echo "PASS scheduled cache and preview file cleanup ({$checks} checks)\n";

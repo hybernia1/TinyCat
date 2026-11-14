@@ -307,6 +307,14 @@ callbacky se při registraci neprovádějí.
 Úlohy včetně ručního tlačítka a CLI používej přes Core/Tasks, nikoli voláním
 pracovního callbacku mimo runner. Importy používají společnou `FeedPipeline`
 s vlastními `FeedSourceStore` a `FeedTarget`; viz [importy](../operations/feed-imports.md).
+`ScheduledTask` používá ID `[a-z][a-z0-9_.-]{0,39}`; `all` je rezervované
+pro výběr všech úloh. Výchozí parametry jsou celá čísla, další povolené
+parametry jednotlivých transportů deklaruje `modeOptions`. Volitelné
+`batchOption` odkazuje na výchozí parametr, který HTTP trigger přijímá také
+jako `batch`; core nezná doménové názvy parametrů. Normalizace proběhne jednou
+před spuštěním vybraných úloh a stejné hodnoty dostane historie i callback.
+Neplatný konkrétní cíl odmítni; nepřeváděj ho na spuštění celé dávky.
+`healthAge` a `detail` jsou lazy callbacky vlastníka; registrace nečte DB.
 Diskuse a reakce používají `InteractionPolicy` pro explicitní druh publikace.
 Podrobné návaznosti rozebírá [transport](modules.md).
 

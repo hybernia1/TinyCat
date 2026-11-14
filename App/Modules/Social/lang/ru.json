@@ -387,5 +387,17 @@
       "content_images_enabled_help": "Существующие изображения остаются видимыми, даже если загрузка отключена.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
     }
+  },
+  "notifications": {
+    "messages": {
+      "follow": "{actor} подписался на вас.",
+      "content_like": "{actor} понравился ваш пост.",
+      "comment_like": "{actor} понравился ваш комментарий.",
+      "content_comment": "{actor} прокомментировал ваше сообщение.",
+      "content_mention": "{actor} упомянул вас в сообщении.",
+      "comment_mention": "{actor} упомянул вас в комментарии.",
+      "report_resolved": "Ваш отчет решен.",
+      "report_dismissed": "Ваше сообщение отклонено."
+    }
   }
 }

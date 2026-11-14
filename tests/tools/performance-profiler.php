@@ -29,3 +29,33 @@ if ($profile['outer']['calls'] !== 1 || $profile['inner']['calls'] !== 1
     || abs($profile['outer']['inclusive_ms'] - $profile['outer']['self_ms'] - $profile['inner']['inclusive_ms']) > 0.003
 ) { throw new RuntimeException('Call profiling must separate nested and self time without double-counting.'); }
 echo "PASS nested call profiling separates inclusive and self time\n";
+
+$root = dirname(__DIR__, 2);
+$temporary = $root . '/storage/performance/profiler-empty-' . bin2hex(random_bytes(6));
+mkdir($temporary . '/source/App', 0700, true);
+file_put_contents($temporary . '/source/App/autoload.php', "<?php\n");
+copy($root . '/tests/fixtures/performance/profiler-empty.php', $temporary . '/source/App/Fixture.php');
+try {
+    $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/performance/instrument-performance.php')
+        . ' --source=' . escapeshellarg($temporary . '/source') . ' --directory=' . escapeshellarg($temporary . '/instrumented');
+    exec($command . ' 2>&1', $output, $exitCode);
+    if ($exitCode !== 0) { throw new RuntimeException('Instrumenting empty bodies failed: ' . implode(' ', $output)); }
+    require $temporary . '/instrumented/App/Fixture.php';
+    (new ProfilerEmptyFixture())->idle();
+    profilerEmptyFunction();
+    $profile = \TinyCat\Tools\Performance\CallProfile::report();
+    foreach (['ProfilerEmptyFixture::__construct', 'ProfilerEmptyFixture::idle', 'profilerEmptyFunction'] as $name) {
+        if (($profile[$name]['calls'] ?? 0) !== 1) { throw new RuntimeException('Empty body was not profiled: ' . $name); }
+    }
+} finally {
+    foreach (['instrumented', 'source'] as $directory) {
+        foreach (['Fixture.php', 'autoload.php'] as $file) {
+            $path = $temporary . '/' . $directory . '/App/' . $file;
+            if (is_file($path)) { unlink($path); }
+        }
+        if (is_dir($temporary . '/' . $directory . '/App')) { rmdir($temporary . '/' . $directory . '/App'); }
+        if (is_dir($temporary . '/' . $directory)) { rmdir($temporary . '/' . $directory); }
+    }
+    rmdir($temporary);
+}
+echo "PASS instrumentation of empty functions, methods and constructors\n";

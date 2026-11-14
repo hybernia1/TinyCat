@@ -51,6 +51,9 @@ $pdo->exec("DELETE FROM module_migrations WHERE module_id IN ('tinycat.accounts'
 $pdo->exec("DELETE FROM module_installations WHERE module_id IN ('tinycat.accounts','tinycat.security','tinycat.settings','tinycat.notifications')");
 $pdo->exec('CREATE TABLE schema_migrations(migration VARCHAR(190) PRIMARY KEY, checksum CHAR(64))');
 $pdo->exec("INSERT INTO schema_migrations VALUES('20261113_001_shared_interactions','083cee738cc4821c8e4d84365e2059e3e1f291e4943385def6a3213bd58228c3')");
+$referenceType = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? 'BIGINT UNSIGNED' : 'INTEGER';
+$pdo->exec('ALTER TABLE notifications ADD COLUMN content_id ' . $referenceType);
+$pdo->exec('ALTER TABLE notifications ADD COLUMN comment_id ' . $referenceType);
 if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
     $pdo->exec('ALTER TABLE notifications ADD CONSTRAINT fk_legacy_probe_content FOREIGN KEY(content_id) REFERENCES content(id) ON DELETE CASCADE');
     $pdo->exec('ALTER TABLE notifications ADD CONSTRAINT fk_legacy_probe_comment FOREIGN KEY(comment_id) REFERENCES content_comments(id) ON DELETE CASCADE');

@@ -16,15 +16,7 @@
       "other": "Hai {count} nuove notifiche."
     },
     "messages": {
-      "follow": "{actor} ti ha seguito.",
-      "content_like": "A {actor} è piaciuto il tuo post.",
-      "comment_like": "A {actor} è piaciuto il tuo commento.",
-      "content_comment": "{actor} ha commentato il tuo post.",
-      "content_mention": "{actor} ti ha menzionato in un post.",
-      "comment_mention": "{actor} ti ha menzionato in un commento.",
-      "report_resolved": "La tua segnalazione è stata risolta.",
-      "report_dismissed": "La tua segnalazione è stata respinta.",
-      "generic": "{actor} ha reagito al tuo post.",
+      "generic": "Questa notifica non è più disponibile.",
       "read_done": "La notifica è stata contrassegnata come letta.",
       "read_all_done": "Tutte le notifiche sono state contrassegnate come lette.",
       "deleted": "La notifica è stata eliminata."

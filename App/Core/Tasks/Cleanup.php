@@ -21,7 +21,7 @@ final class Cleanup
                 (string) ($errors[0] ?? ''), $results,
             );
         }, options: ['cleanup_batch' => 500], admin: ['icon' => 'database', 'title' => 'cron.tasks.cleanup', 'help' => 'cron.tasks.cleanup_help', 'schedule' => 'cron.tasks.cleanup_schedule'],
-            order: 20, normalize: static fn (array $options): array => ['cleanup_batch' => self::cleanup_batch_size($options['cleanup_batch'])], healthAge: static fn (): int => 4 * 3600);
+            order: 20, normalize: static fn (array $options): array => ['cleanup_batch' => self::cleanup_batch_size($options['cleanup_batch'])], healthAge: static fn (): int => 4 * 3600, batchOption: 'cleanup_batch');
     }
 
     public static function cleanup_batch_size(mixed $value): int

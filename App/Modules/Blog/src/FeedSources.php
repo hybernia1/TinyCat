@@ -17,9 +17,9 @@ final class FeedSources
         return new ScheduledTask('article_feeds', self::scheduled(...), ['source_limit' => 20], ['icon' => 'rss', 'title' => 'blog.feeds.title', 'help' => 'blog.feeds.help', 'schedule' => 'blog.feeds.schedule'], 15,
             modeOptions: ['admin' => ['source_id'], 'cli' => ['source_id']], normalize: static function (array $options): array {
                 $options['source_limit'] = max(1, min(100, (int) $options['source_limit']));
-                if (isset($options['source_id'])) { $options['source_id'] = max(0, (int) $options['source_id']); }
+                if (isset($options['source_id']) && $options['source_id'] < 1) { throw new \InvalidArgumentException('Invalid feed source ID.'); }
                 return $options;
-            });
+            }, batchOption: 'source_limit');
     }
 
     /** @param array<string, mixed> $context

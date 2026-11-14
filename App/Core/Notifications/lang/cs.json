@@ -16,15 +16,7 @@
       "other": "Máš {count} nových notifikací."
     },
     "messages": {
-      "follow": "{actor} tě začal(a) sledovat.",
-      "content_like": "{actor} lajknul/a tvůj příspěvek.",
-      "comment_like": "{actor} lajknul/a tvůj komentář.",
-      "content_comment": "{actor} okomentoval/a tvůj příspěvek.",
-      "content_mention": "{actor} tě označil/a v příspěvku.",
-      "comment_mention": "{actor} tě označil/a v komentáři.",
-      "report_resolved": "Tvoje nahlášení bylo vyřešeno.",
-      "report_dismissed": "Tvoje nahlášení bylo zamítnuto.",
-      "generic": "{actor} reagoval/a na tvůj příspěvek.",
+      "generic": "Toto oznámení již není dostupné.",
       "read_done": "Notifikace byla označena jako přečtená.",
       "read_all_done": "Všechny notifikace byly označeny jako přečtené.",
       "deleted": "Notifikace byla smazána."

@@ -10,6 +10,16 @@ use TinyCat\Support\Text;
 /** Administrative account policy and writes, independent of HTTP and avatar storage. */
 final class Administration
 {
+    /** @return array<string, int> */
+    public static function roleCounts(): array
+    {
+        $counts = array_fill_keys(Roles::rolesWith('managed_by_core_admin'), 0);
+        foreach (Connection::all('SELECT role, COUNT(*) AS total FROM users GROUP BY role ORDER BY role') as $row) {
+            $counts[(string) $row['role']] = (int) $row['total'];
+        }
+        return $counts;
+    }
+
     /** @return list<string> */
     public static function statuses(): array { return ['active', 'waiting', 'ban']; }
 

@@ -17,14 +17,17 @@ final class Resource
     public static function item(array $item, int $excerptLimit = 120): array
     {
         $at = (string) ($item['created_at'] ?? '');
-        $known = \TinyCat\Core\Notifications\Types::find((string) ($item['type'] ?? '')) !== null;
+        $definition = \TinyCat\Core\Notifications\Types::find((string) ($item['type'] ?? ''));
+        $known = $definition !== null;
         return [
             'id' => (int) ($item['id'] ?? 0),
             'type' => $known ? (string) $item['type'] : 'generic',
+            'message' => $definition === null ? \TinyCat\Support\Localization::t('notifications.messages.generic') : ($definition->message)($item),
+            'icon' => $definition === null ? 'bell' : $definition->icon,
             'actor' => ['id' => (int) ($item['actor_id'] ?? 0), 'username' => (string) ($item['actor_name'] ?? ''), 'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($item)],
             'url' => \TinyCat\Core\Notifications\Types::target($item),
             'unread' => trim((string) ($item['read_at'] ?? '')) === '',
-            'excerpt' => $known ? \TinyCat\Support\Text::excerpt((string) ($item['content_body'] ?? ''), $excerptLimit) : '',
+            'excerpt' => $known ? \TinyCat\Support\Text::excerpt((string) ($item['subject_text'] ?? ''), $excerptLimit) : '',
             'created_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
         ];
     }

@@ -16,15 +16,7 @@
       "other": "You have {count} new notifications."
     },
     "messages": {
-      "follow": "{actor} followed you.",
-      "content_like": "{actor} liked your post.",
-      "comment_like": "{actor} liked your comment.",
-      "content_comment": "{actor} commented on your post.",
-      "content_mention": "{actor} mentioned you in a post.",
-      "comment_mention": "{actor} mentioned you in a comment.",
-      "report_resolved": "Your report was resolved.",
-      "report_dismissed": "Your report was dismissed.",
-      "generic": "{actor} reacted to your post.",
+      "generic": "This notification is no longer available.",
       "read_done": "The notification was marked as read.",
       "read_all_done": "All notifications were marked as read.",
       "deleted": "The notification was deleted."

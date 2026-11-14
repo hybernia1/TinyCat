@@ -1902,5 +1902,19 @@
     "App/Core/Publishing/migrations/interactions/001-initial.php",
     "App/Core/Publishing/migrations/v1/mysql.php",
     "App/Core/Publishing/migrations/v1/sqlite.php"
+  ],
+  "6.0.3-dev.2": [
+    "lang/cs.json",
+    "lang/de.json",
+    "lang/en.json",
+    "lang/es.json",
+    "lang/fr.json",
+    "lang/it.json",
+    "lang/nl.json",
+    "lang/pl.json",
+    "lang/pt.json",
+    "lang/ru.json",
+    "lang/tr.json",
+    "lang/uk.json"
   ]
 }

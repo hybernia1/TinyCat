@@ -15,6 +15,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 
 ## Kontrakty
 
+- [Notifikace, registrace typů a vlastnictví předmětů](contracts/notifications.md).
 - [Modaly](contracts/modal-contract.md) a [popovery](contracts/popover-contract.md).
 - [UI komponenty a styly](contracts/ui-conventions.md).
 - [Administrační seznamy a editory](contracts/admin-ui-conventions.md).
@@ -64,6 +65,8 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 - [Provedené optimalizace sestavení](audits/release-build-optimization.md).
 
 ## Provoz a měření
+
+- [Audit čistého core: výkon, struktura a zápis kódu](audits/core-performance-and-code-2026-11-14.md). Naměřený základ a podklady k domluvě o prioritách.
 
 - [Podepsané aktualizace, vydávání a obnova](operations/updates.md).
 - [Úklid duplicit botích příspěvků](operations/bot-duplicate-cleanup.md).

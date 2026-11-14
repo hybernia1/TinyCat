@@ -42,6 +42,7 @@ final class Importer
             normalize: self::normalizeTaskOptions(...),
             healthAge: static fn (): ?int => (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_sources WHERE enabled = 1') > 0 ? 1800 : null,
             detail: RunDetails::present(...),
+            batchOption: 'bot_limit',
         );
     }
 

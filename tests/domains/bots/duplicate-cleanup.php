@@ -29,7 +29,7 @@ $exercise = static function (PDO $db) use ($assert): void {
         'CREATE TABLE social_post_tags (content_id BIGINT UNSIGNED,term_id BIGINT UNSIGNED,PRIMARY KEY(content_id,term_id),FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE)',
         'CREATE TABLE social_post_links (content_id BIGINT UNSIGNED,link_id BIGINT UNSIGNED,PRIMARY KEY(content_id,link_id),FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE)',
         'CREATE TABLE social_post_images (content_id BIGINT UNSIGNED PRIMARY KEY,path VARCHAR(255),width INT,height INT,bytes INT,FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE)',
-        'CREATE TABLE notifications (id BIGINT UNSIGNED PRIMARY KEY,user_id INT UNSIGNED,actor_id INT UNSIGNED NULL,content_id BIGINT UNSIGNED,comment_id BIGINT UNSIGNED NULL,type VARCHAR(40),notification_key VARCHAR(190),read_at DATETIME NULL,created_at DATETIME,updated_at DATETIME,UNIQUE(user_id,notification_key),FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE,FOREIGN KEY(comment_id) REFERENCES social_comments(id) ON DELETE CASCADE)',
+        'CREATE TABLE notifications (id BIGINT UNSIGNED PRIMARY KEY,user_id INT UNSIGNED,actor_id INT UNSIGNED NULL,subject_id BIGINT UNSIGNED,payload_json LONGTEXT NULL,type VARCHAR(40),notification_key VARCHAR(190),read_at DATETIME NULL,created_at DATETIME,updated_at DATETIME,UNIQUE(user_id,notification_key))',
         'CREATE TABLE bot_source_posts (content_id BIGINT UNSIGNED PRIMARY KEY,source_id BIGINT UNSIGNED,FOREIGN KEY(content_id) REFERENCES social_posts(id) ON DELETE CASCADE)',
         'CREATE TABLE bot_feed_history (bot_user_id INT UNSIGNED,feed_hash CHAR(64),item_hash CHAR(64),created_at DATETIME)',
     ] as $sql) { $db->exec($sql); }
@@ -59,7 +59,7 @@ $exercise = static function (PDO $db) use ($assert): void {
         [5,5,4,3,null,'content_mention','content_mention:3:0:4',null,'2000-01-01','2000-01-01'],
         [6,3,null,2,null,'report_resolved','report_resolved:2',null,'2000-01-01','2000-01-01'],
         [7,3,5,3,103,'content_comment','content_comment:3:103',null,'2000-01-01','2000-01-01'],
-    ] as $row) { $notify->execute($row); }
+    ] as $row) { $row[3] = in_array($row[5], ['comment_like', 'comment_mention', 'content_comment'], true) ? $row[4] : $row[3]; $row[4] = null; $notify->execute($row); }
     $db->exec('INSERT INTO bot_source_posts VALUES (1,1),(2,999),(3,1)');
     $db->exec("INSERT INTO bot_feed_history VALUES (1,'feed','guid','2000-01-01')");
     // Upgrade the previous local, unreleased table to the promised two-column structure.
@@ -100,7 +100,7 @@ $exercise = static function (PDO $db) use ($assert): void {
         && $db->query('SELECT read_at FROM notifications WHERE id=2')->fetchColumn() === null, 'Notification collisions collapse while preserving unread state.');
     foreach ([3 => 'comment_mention:1:102:5',4 => 'comment_like:103:4',5 => 'content_mention:1:0:4',6 => 'report_resolved:2',7 => 'content_comment:1:103'] as $id => $key) {
         $row = $db->query('SELECT * FROM notifications WHERE id=' . $id)->fetch();
-        $assert((int) $row['content_id'] === 1 && $row['notification_key'] === $key, 'Content-derived keys move; comment and report identities stay unchanged.');
+        $assert((int) $row['subject_id'] === (in_array($id, [3,4,7], true) ? ($id === 3 ? 102 : 103) : 1) && $row['notification_key'] === $key, 'Content-derived keys move; comment and report identities stay unchanged.');
     }
     $assert($db->query('SELECT published_at FROM social_posts WHERE id=1')->fetchColumn() === '2000-02-01 00:00:00', 'The keeper retains its original publication date.');
     $assert((int) $db->query('SELECT COUNT(*) FROM bot_feed_history')->fetchColumn() === 1, 'Cleanup does not change RSS GUID history.');

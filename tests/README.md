@@ -1,7 +1,7 @@
 # Testy TinyCat
 
 Příkazy spouštěj z kořene repozitáře. `composer test` spouští explicitních
-88 skupin přes [hlavní runner](run.php), včetně 38 frontendových scénářů.
+89 skupin přes [hlavní runner](run.php), včetně 38 frontendových scénářů.
 `composer preflight` navíc přidává metadata, dependency audit, styl, lint,
 PHPStan, překlady a repository security.
 
@@ -46,6 +46,14 @@ upgrady, starého načteného poskytovatele, chybu migrace, přerušení a rollb
 binárních hodnot, generovaných sloupců, FK, views a triggerů.
 
 ## Prostředí
+
+Nezávislé cílené testy lze lokálně spouštět současně, nejvýše čtyři procesy
+včetně vnořených workerů. Každý běh musí mít vlastní DB, cache, pracovní
+adresář a report; HTTP workers také nekolidující porty. Nepředávej více
+samostatným běhům společné `TINYCAT_TEST_REPORT` ani `TINYCAT_CACHE_DIRECTORY`.
+Kontroly sdílející zapisované assety, balíčky či instalaci spouštěj postupně.
+Runnery samy nadále zachovávají své pořadí; více úplných preflightů současně
+nespouštěj. Výsledky každého cíleného běhu vyhodnoť samostatně.
 
 Živá instalace pro běžné ruční a browserové ověření je **https://tinycat.test/**
 v `E:/laragon/www/tinycat`, mimo tento checkout, nad existujícím Laragonem.

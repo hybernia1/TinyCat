@@ -28,7 +28,7 @@ $assert = static function (bool $value, string $message) use (&$checks): void {
 try {
     // Only the isolated copy may receive config.php or installation writes.
     mkdir($root, 0775, true);
-    foreach (['App', 'assets', 'tools', 'lang', 'migrations'] as $directory) {
+    foreach (['App', 'assets', 'tools', 'migrations'] as $directory) {
         $source = $workspace . '/' . $directory;
         foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $file) {
             $relative = substr($file->getPathname(), strlen($source) + 1);

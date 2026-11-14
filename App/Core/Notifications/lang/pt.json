@@ -16,15 +16,7 @@
       "other": "Você tem {count} novas notificações."
     },
     "messages": {
-      "follow": "{actor} seguiu você.",
-      "content_like": "{actor} gostou da sua postagem.",
-      "comment_like": "{actor} gostou do seu comentário.",
-      "content_comment": "{actor} comentou sua postagem.",
-      "content_mention": "{actor} mencionou você em uma postagem.",
-      "comment_mention": "{actor} mencionou você em um comentário.",
-      "report_resolved": "Seu relatório foi resolvido.",
-      "report_dismissed": "Seu relatório foi rejeitado.",
-      "generic": "{actor} reagiu à sua postagem.",
+      "generic": "Esta notificação já não está disponível.",
       "read_done": "A notificação foi marcada como lida.",
       "read_all_done": "Todas as notificações foram marcadas como lidas.",
       "deleted": "A notificação foi excluída."

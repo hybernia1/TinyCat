@@ -35,7 +35,7 @@ if ($packagePhase === 'install') {
     }
     // A clean core-only deployment can later receive exactly the same package.
     $coreHost = $workspace . '/core-only'; mkdir($coreHost, 0700);
-    foreach (['App/Core', 'assets', 'lang'] as $path) { $copy($root . '/' . $path, $coreHost . '/' . $path); }
+    foreach (['App/Core', 'assets'] as $path) { $copy($root . '/' . $path, $coreHost . '/' . $path); }
     foreach (['App/autoload.php', 'App/Console.php'] as $path) { $copy($root . '/' . $path, $coreHost . '/' . $path); }
     file_put_contents($coreHost . '/App/modules.php', '<?php return [];');
     file_put_contents($coreHost . '/config.php', '<?php return ' . var_export(['database' => ['dsn' => 'sqlite:' . $coreHost . '/core.sqlite'], 'i18n' => ['locale' => 'en']], true) . ';');

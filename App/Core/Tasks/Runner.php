@@ -17,14 +17,26 @@ final class Runner
      */
     public static function run(string $name, callable $runner, array $context, bool $debug = false): array
     {
+        try { $context = Tasks::context($name, $context); }
+        catch (Throwable $exception) { return Tasks::result('failed', error: $debug ? $exception->getMessage() : $name . ' task failed.'); }
+        return self::runPrepared($name, $runner, $context, $debug);
+    }
+
+    /** Execute a context already validated by Execution::contexts or Tasks::context.
+     * @internal
+     * @param callable(array<string, mixed>): array<string, mixed> $runner
+     * @param array<string, mixed> $context
+     * @return array<string, mixed> */
+    public static function runPrepared(string $name, callable $runner, array $context, bool $debug = false): array
+    {
         $suffix = substr(hash('sha256', Paths::basePath()), 0, 24);
         $lockName = 'tinycat_scheduled_' . $name . '_' . $suffix;
+        if (strlen($lockName) > 64) { $lockName = 'tinycat_scheduled_' . substr(hash('sha256', $lockName), 0, 46); }
         $locked = false;
         $runId = 0;
         $fileLock = null;
         $started = hrtime(true);
         try {
-            $context = Tasks::context($name, $context);
             $sqlite = Connection::driver() === 'sqlite';
             $sqlLock = !$sqlite || Connection::value("SELECT name FROM pragma_function_list WHERE lower(name) = 'get_lock' LIMIT 1") !== null;
             if ($sqlLock) { $lockResult = Connection::value('SELECT GET_LOCK(?, 0)', [$lockName]); }
@@ -53,7 +65,8 @@ final class Runner
         } catch (Throwable $exception) {
             $result = Tasks::result('failed', error: $debug ? $exception->getMessage() : $name . ' task failed.');
             if ($runId > 0) {
-                try { History::finish($runId, $result, (int) ((hrtime(true) - $started) / 1_000_000)); } catch (Throwable) {}
+                try { History::finish($runId, $result, (int) ((hrtime(true) - $started) / 1_000_000)); }
+                catch (Throwable $historyError) { error_log('Scheduler history write failed for run ' . $runId . ': ' . $historyError->getMessage()); }
             }
             return $result;
         } finally {

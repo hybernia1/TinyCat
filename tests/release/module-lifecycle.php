@@ -22,7 +22,7 @@ $http = null;
 try {
     mkdir($workspace, 0700);
     $candidate = $workspace . '/source';
-    foreach (['App', 'assets', 'lang', 'tools', 'migrations'] as $directory) { $copy($source . '/' . $directory, $candidate . '/' . $directory); }
+    foreach (['App', 'assets', 'tools', 'migrations'] as $directory) { $copy($source . '/' . $directory, $candidate . '/' . $directory); }
     foreach (['index.php', 'scheduled-tasks.php', '.htaccess', 'README.md', 'LICENSE'] as $file) { $copy($source . '/' . $file, $candidate . '/' . $file); }
     foreach (['App/Core/Support/compiled', 'assets/build'] as $generated) {
         $path = $candidate . '/' . $generated;
@@ -47,7 +47,7 @@ try {
         file_put_contents($root . '/assets/module.json', json_encode([['routes' => ['public'], 'entries' => [$relative . 'index.js'], 'styles' => [$relative . 'style.css'], 'components' => [], 'translations' => [$table . '.title']]], JSON_THROW_ON_ERROR));
         file_put_contents($root . '/assets/index.js', 'window.lifecycle' . ucfirst($short) . 'Loaded = true;');
         file_put_contents($root . '/assets/style.css', '.lifecycle-' . $short . ' { color: inherit; }');
-        foreach (glob($candidate . '/lang/*.json') ?: [] as $language) { $locale = basename($language); file_put_contents($root . '/lang/' . $locale, json_encode([$table => ['title' => 'Selected ' . $short]], JSON_THROW_ON_ERROR)); }
+        foreach (glob($candidate . '/App/Core/Support/lang/*.json') ?: [] as $language) { $locale = basename($language); file_put_contents($root . '/lang/' . $locale, json_encode([$table => ['title' => 'Selected ' . $short]], JSON_THROW_ON_ERROR)); }
     };
     $makeModule('notes', 1, ['tinycat.accounts']); $makeModule('reports', 1, ['fixture.notes']);
     $selection = require $candidate . '/App/Modules/Blog/selection.php'; $base = array_keys($selection);

@@ -1,4 +1,7 @@
 {
+  "_meta": {
+    "name": "Türkçe"
+  },
   "common": {
     "sort": "Sıralama",
     "refresh": "Yenile",

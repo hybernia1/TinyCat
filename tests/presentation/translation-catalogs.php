@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../App/autoload.php';
 $validate = require __DIR__ . '/../../tools/quality/translation-catalogs.php';
 $checks = 0;
 $directory = sys_get_temp_dir() . '/tinycat-translations-' . bin2hex(random_bytes(8));
-$app = '{"common":{"greeting":"Hello {name}: {count}","empty":""},"other":{"empty":""}}';
+$app = '{"_meta":{"name":"Test"},"common":{"greeting":"Hello {name}: {count}","empty":""},"other":{"empty":""}}';
 $emails = '{"signature":"{site}","templates":{"welcome":{"subject":"{site}","body":"Hello {username}"}}}';
 $reset = static function () use ($directory, $app, $emails): void {
     foreach (['en', 'cs'] as $locale) {
@@ -16,6 +16,9 @@ $reset = static function () use ($directory, $app, $emails): void {
 };
 $reject = static function (string $file, string $source, string $expected) use ($validate, $directory, $reset, &$checks): void {
     $reset();
+    if (str_starts_with($file, 'App/Core/Support/lang/') && str_starts_with($source, '{') && !str_contains($source, '"_meta"')) {
+        $source = '{"_meta":{"name":"Test"},' . substr($source, 1);
+    }
     file_put_contents($directory . '/' . $file, $source);
     try {
         $validate($directory);
@@ -29,16 +32,12 @@ $reject = static function (string $file, string $source, string $expected) use (
     throw new RuntimeException('Invalid catalog accepted: ' . $expected);
 };
 mkdir($directory);
-mkdir($directory . '/lang');
 mkdir($directory . '/App');
 foreach (['Core/Support', 'Modules/Mail', 'Modules/Example'] as $owner) {
     mkdir($directory . '/App/' . $owner . '/lang', 0700, true);
 }
 foreach (['Mail', 'Example'] as $owner) {
     file_put_contents($directory . '/App/Modules/' . $owner . '/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.' . strtolower($owner), 'namespace' => 'Fixture\\' . $owner . '\\', 'translationDomain' => $owner === 'Mail' ? 'emails' : 'app', 'resources' => ['translations' => 'lang']], JSON_THROW_ON_ERROR));
-}
-foreach (['en', 'cs'] as $locale) {
-    file_put_contents($directory . '/lang/' . $locale . '.json', '{"name":"Test"}');
 }
 file_put_contents($directory . '/App/modules.php', '<?php return ["fixture.example" => "App/Modules/Example/module.json", "fixture.mail" => "App/Modules/Mail/module.json"];');
 try {
@@ -106,8 +105,30 @@ try {
         if (!str_contains($error->getMessage(), 'App/Modules/Example/lang/cs.json: missing catalog')) { throw $error; }
         $checks++;
     }
-    $reject('lang/cs.json', '{"name":"Test","name":"Duplicate"}', 'duplicate key name');
-    file_put_contents($directory . '/lang/cs.json', '{"name":"Test"}');
+    $reject('App/Core/Support/lang/cs.json', '{"_meta":{"name":"Test","name":"Duplicate"},"common":{"empty":""}}', 'duplicate key _meta.name');
+    $reject('App/Core/Support/lang/cs.json', '{"_meta":{"name":""},"common":{"empty":""}}', 'invalid locale metadata');
+    $reject('App/Core/Support/lang/cs.json', '{"_meta":{"name":42},"common":{"empty":""}}', 'invalid locale metadata');
+    $reject('App/Modules/Example/lang/cs.json', '{"_meta":{"name":"Module"},"common":{"owned":"Module"}}', 'invalid locale metadata');
+    file_put_contents($directory . '/App/Modules/Example/lang/cs.json', '{"common":{"owned":"Module"}}');
+    $reset();
+    if (isset($validate($directory)['cs']['app']['_meta.name'])) { throw new RuntimeException('Metadata leaked into translations'); }
+    $checks++;
+    if (\TinyCat\Support\TranslationSources::packages($directory) !== ['cs' => 'Test', 'en' => 'Test']) { throw new RuntimeException('Locale discovery requires a root language directory'); }
+    $checks++;
+    $extraCatalog = json_decode($app, true, 512, JSON_THROW_ON_ERROR);
+    unset($extraCatalog['_meta']);
+    $extraCatalog['_meta'] = ['name' => 'Esperanto'];
+    try {
+        file_put_contents($directory . '/App/Core/Support/lang/eo.json', json_encode($extraCatalog, JSON_THROW_ON_ERROR));
+        file_put_contents($directory . '/App/Modules/Mail/lang/eo.json', $emails);
+        file_put_contents($directory . '/App/Modules/Example/lang/eo.json', '{"common":{"owned":"Module"}}');
+        if (\TinyCat\Support\TranslationSources::packages($directory)['eo'] !== 'Esperanto' || !isset($validate($directory)['eo'])) {
+            throw new RuntimeException('New languages must be discovered without PHP changes or metadata key ordering');
+        }
+        $checks++;
+    } finally {
+        foreach (['Core/Support', 'Modules/Mail', 'Modules/Example'] as $owner) { unlink($directory . '/App/' . $owner . '/lang/eo.json'); }
+    }
     $real = $validate(dirname(__DIR__, 2));
     foreach (\TinyCat\Support\ClientAssets::scopes() as $scope) {
         foreach (array_keys($real) as $locale) {
@@ -156,8 +177,6 @@ foreach (['Core/Support', 'Modules/Mail', 'Modules/Example'] as $owner) {
         rmdir($directory . '/App/' . $owner . '/lang');
         rmdir($directory . '/App/' . $owner);
     }
-    foreach (['en', 'cs'] as $locale) { unlink($directory . '/lang/' . $locale . '.json'); }
-    rmdir($directory . '/lang');
     unlink($directory . '/App/modules.php');
     rmdir($directory . '/App/Core'); rmdir($directory . '/App/Modules');
     rmdir($directory . '/App');

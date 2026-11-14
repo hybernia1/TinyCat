@@ -1,5 +1,26 @@
 # Živé lokální prostředí v Laragonu
 
+## Lokální vývojové limity
+
+Na stanici s 64 GB RAM je od 14. listopadu 2026 PHP `memory_limit=2048M`
+(CLI i Apache), MySQL `innodb_buffer_pool_size=4G`, `table_open_cache=2048`
+a `thread_cache_size=64`. Hodnoty jsou v lokálním PHP `php.ini` a MySQL
+`my.ini` pod `E:/laragon/bin/`; nejde o požadavky produkce. Buffer pool je
+sdílený pro celou MySQL službu, PHP limit platí pro každý proces samostatně.
+MySQL změny byly aplikovány i za běhu; bezpečnostní nastavení
+`innodb_flush_log_at_trx_commit=1` a `sync_binlog=1` zůstala zachována.
+CLI OPcache zůstává vypnutý kvůli testům přepisujícím PHP fixture soubory.
+Původní konfigurace jsou v `E:/laragon/backup/tinycat-local-performance-20261114`.
+Pro návrat obnov konkrétní konfigurační soubory ze zálohy a obnov PHP workers
+a MySQL službu přes Laragon; restart MySQL přeruší její aktuální spojení.
+
+Nezávislé cílené kontroly lze spouštět souběžně podle
+[pravidel testovací sady](../../tests/README.md#prostředí). Úplný preflight
+nadále používá existující runner a jeho pořadí. Vyšší limity samy o sobě
+neprokazují zrychlení; při srovnání používej stejné scénáře a jejich reporty.
+
+## Zapojení instalace
+
 Společná testovací instalace **https://tinycat.test/** je oddělená od checkoutu
 v **`E:/laragon/www/tinycat`**. Repozitář v `C:/Users/Nikola/Documents/tinycat`
 obsahuje zdroje a vývojové nástroje, nikoli živá média, cache a stav updateru.

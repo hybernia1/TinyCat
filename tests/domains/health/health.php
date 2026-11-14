@@ -36,7 +36,7 @@ Connection::set($db);
 foreach ([
     'CREATE TABLE users (id INTEGER PRIMARY KEY, role TEXT, status TEXT)',
     "INSERT INTO users VALUES (1, 'admin', 'active'), (2, 'admin', 'active'), (3, 'user', 'active'), (4, 'bot', 'active'), (5, 'admin', 'inactive')",
-    'CREATE TABLE notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, actor_id INTEGER, content_id INTEGER, comment_id INTEGER, type TEXT, notification_key TEXT, read_at TEXT, created_at TEXT, updated_at TEXT, UNIQUE(user_id, notification_key))',
+    'CREATE TABLE notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, actor_id INTEGER, subject_id INTEGER, payload_json TEXT, type TEXT, notification_key TEXT, read_at TEXT, created_at TEXT, updated_at TEXT, UNIQUE(user_id, notification_key))',
     'CREATE TABLE settings (setting_key TEXT PRIMARY KEY, setting_value TEXT, setting_type TEXT, setting_group TEXT, autoload INTEGER)',
     'CREATE TABLE scheduler_runs (id INTEGER PRIMARY KEY AUTOINCREMENT, task TEXT, mode TEXT, actor_id INTEGER, status TEXT, started_at TEXT, finished_at TEXT, duration_ms INTEGER, options_json TEXT, summary_json TEXT, error TEXT)',
     'CREATE TABLE bot_sources (enabled INTEGER)',

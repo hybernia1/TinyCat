@@ -10,7 +10,6 @@ use TinyCat\Core\Modules\Lifecycle;
 
 use TinyCat\Core\Modules\Catalog;
 use TinyCat\Core\Modules\Registries;
-use TinyCat\Core\Runtime\Context;
 use TinyCat\Database\Schema;
 use TinyCat\Http\Api;
 use TinyCat\Http\Router;
@@ -25,6 +24,7 @@ final class Application
 
     public static function start(?Configuration $configuration = null, ?Loader $modules = null): Api
     {
+        if (self::$booted) { throw new \LogicException('The application is already booted.'); }
         if ($configuration !== null) { Config::configure($configuration); }
         else { Config::load(); }
         $modules ??= Loader::load(\TinyCat\Support\Paths::basePath());
@@ -45,9 +45,11 @@ final class Application
         Config::configure($context->configuration);
         \TinyCat\Support\Dates::configure($context->dateOption(...));
         Router::debug((bool) $context->configuration->get('app.debug', false));
-        Resources::configure($catalog);
-        if ($catalog->has('tinycat.ui')) { \TinyCat\Core\Ui\Platform::initialize(); }
-        if ($modules !== null && !self::$initialized) { $modules->initialize(); self::$initialized = true; }
+        if (!self::$initialized) {
+            Resources::configure($catalog);
+            if ($catalog->has('tinycat.ui')) { \TinyCat\Core\Ui\Platform::initialize(); }
+            if ($modules !== null) { $modules->initialize(); self::$initialized = true; }
+        }
         Registrations::bind($modules);
         Registrations::configure($registries);
         Localization::configure($context->locale(...));

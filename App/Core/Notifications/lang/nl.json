@@ -16,15 +16,7 @@
       "other": "Je hebt {count} nieuwe meldingen."
     },
     "messages": {
-      "follow": "{actor} heeft je gevolgd.",
-      "content_like": "{actor} vond je bericht leuk.",
-      "comment_like": "{actor} vond je reactie leuk.",
-      "content_comment": "{actor} heeft gereageerd op je bericht.",
-      "content_mention": "{actor} heeft je genoemd in een bericht.",
-      "comment_mention": "{actor} heeft je genoemd in een reactie.",
-      "report_resolved": "Uw melding is opgelost.",
-      "report_dismissed": "Uw rapport is afgewezen.",
-      "generic": "{actor} heeft op je bericht gereageerd.",
+      "generic": "Deze melding is niet meer beschikbaar.",
       "read_done": "De melding is gemarkeerd als gelezen.",
       "read_all_done": "Alle meldingen zijn gemarkeerd als gelezen.",
       "deleted": "De melding is verwijderd."

@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace TinyCat\Core\Tasks;
 
-use TinyCat\Database\Connection;
-
 final class HealthCheck
 {
     /** @return array{status: string, metrics: array<string, string>, limits: array<string, int>} */
@@ -20,9 +18,11 @@ final class HealthCheck
         }
         ksort($tasks);
         $metrics = []; $limits = []; $status = 'ok';
+        $successful = History::lastSuccessfulFor(array_keys($tasks));
+        $latestRuns = History::latestFor(array_keys($tasks));
         foreach ($tasks as $task => $age) {
-            $last = Connection::value("SELECT MAX(started_at) FROM scheduler_runs WHERE task = ? AND status IN ('completed', 'not_due', 'has_more')", [$task]);
-            $latest = History::latest($task);
+            $last = $successful[$task] ?? null;
+            $latest = $latestRuns[$task] ?? null;
             $reason = in_array($latest['status'] ?? '', ['failed', 'interrupted'], true)
                 ? (string) $latest['status']
                 : (!is_string($last) ? 'missing' : ((strtotime($last) ?: 0) < time() - $age ? 'stale' : 'ok'));

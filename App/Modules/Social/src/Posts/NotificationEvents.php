@@ -40,11 +40,12 @@ final class NotificationEvents
             $key !== '' ? $key : $type . ':' . $contentId . ':' . $commentId . ':' . $actorId,
             190
         );
-        $record = \TinyCat\Database\Transactions::run(static function () use ($userId, $type, $key, $actorId, $contentId, $commentId): array {
-            $record = \TinyCat\Core\Notifications\Delivery::record($userId, $type, $key, $actorId);
-            \TinyCat\Database\Connection::update('notifications', ['content_id' => $contentId > 0 ? $contentId : null, 'comment_id' => $commentId > 0 ? $commentId : null], ['id' => $record['id']]);
-            return $record;
-        });
+        $subjectId = match ($type) {
+            'follow' => null,
+            'content_comment', 'comment_like', 'comment_mention' => $commentId > 0 ? $commentId : null,
+            default => $contentId > 0 ? $contentId : null,
+        };
+        $record = \TinyCat\Core\Notifications\Delivery::record($userId, $type, $key, $actorId, subjectId: $subjectId);
         $created = $record['created'];
 
         if ($created) {

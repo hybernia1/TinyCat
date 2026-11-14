@@ -16,15 +16,7 @@
       "other": "{count} yeni bildiriminiz var."
     },
     "messages": {
-      "follow": "{actor} seni takip etti.",
-      "content_like": "{actor} gönderinizi beğendi.",
-      "comment_like": "{actor} yorumunuzu beğendi.",
-      "content_comment": "{actor} gönderinize yorum yaptı.",
-      "content_mention": "{actor} bir gönderide sizden bahsetti.",
-      "comment_mention": "{actor} bir yorumda sizden bahsetti.",
-      "report_resolved": "Raporunuz çözüldü.",
-      "report_dismissed": "Raporunuz reddedildi.",
-      "generic": "{actor} gönderinize tepki verdi.",
+      "generic": "Bu bildirim artık kullanılamıyor.",
       "read_done": "Bildirim okundu olarak işaretlendi.",
       "read_all_done": "Tüm bildirimler okundu olarak işaretlendi.",
       "deleted": "Bildirim silindi."

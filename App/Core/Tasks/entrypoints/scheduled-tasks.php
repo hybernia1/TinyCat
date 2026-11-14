@@ -20,7 +20,7 @@ for ($index = 0, $count = count($arguments); $index < $count; $index++) {
 
     if ($argument === '--health') {
         $cliOptions['health'] = true;
-    } elseif (preg_match('/^--task=([a-z-]+)$/', $argument, $match) === 1) {
+    } elseif (preg_match('/^--task=(' . \TinyCat\Core\Modules\ScheduledTask::ID_PATTERN . ')$/D', $argument, $match) === 1) {
         $cliOptions['task'] = (string) $match[1];
     } elseif ($argument === '--task' && isset($arguments[$index + 1])) {
         $cliOptions['task'] = trim((string) $arguments[++$index]);

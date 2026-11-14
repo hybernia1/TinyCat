@@ -105,9 +105,12 @@ Resources::withCatalog($withoutBots, static function () use ($assert): void {
     $assert(\TinyCat\Core\Tasks\HealthCheck::run()['metrics'] === ['cleanup' => 'ok'], 'Scheduler diagnostics work without bot tables when Bots is absent');
 });
 $assert(isset(\TinyCat\Core\Tasks\Tasks::definitions()['feeds']), 'Leaving a selection scope restores registrations');
-Resources::withCatalog(new Catalog([]), static function () use ($assert): void {
+$fingerprint = Resources::fingerprint();
+Resources::withCatalog(new Catalog([]), static function () use ($assert, $fingerprint): void {
+    $assert(Resources::fingerprint() !== $fingerprint, 'A scoped selection invalidates the cached fingerprint');
     $assert(\TinyCat\Core\Tasks\Tasks::definitions() === [] && \TinyCat\Social\Presentation\Navigation::administration() === [] && \TinyCat\Core\Health\Checks::definitions() === [] && \TinyCat\Core\Tasks\Cleanup::cron_cleanup_tasks() === [], 'An empty selection has no domain contributions');
 });
+$assert(Resources::fingerprint() === $fingerprint, 'Leaving a scope restores the fingerprint of the original selection');
 
 $temporary = $root . '/storage/registry-provider-' . bin2hex(random_bytes(6));
 mkdir($temporary . '/App/Modules/RegistryFixture/src', 0700, true);

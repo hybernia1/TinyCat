@@ -10,6 +10,8 @@ final class Dashboard
     public static function data(): array
     {
         $stats = [
+            ['icon' => 'link', 'label' => \TinyCat\Support\Localization::t('admin.stats.links'), 'table' => 'social_links'],
+            ['icon' => 'tag', 'label' => \TinyCat\Support\Localization::t('admin.stats.tags'), 'table' => 'social_terms'],
             ['icon' => 'file', 'label' => \TinyCat\Support\Localization::t('admin.stats.content'), 'table' => 'social_posts'],
             ['icon' => 'clock', 'label' => \TinyCat\Support\Localization::t('admin.stats.scheduled_content'), 'table' => 'social_posts', 'count_key' => 'scheduled_content'],
             ['icon' => 'thumb-up', 'label' => \TinyCat\Support\Localization::t('admin.stats.likes'), 'table' => 'social_post_likes'],
@@ -98,14 +100,6 @@ final class Dashboard
     {
         try {
             if (in_array($table, ['social_comments', 'social_post_likes'], true)) { return (int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM " . $table . " i INNER JOIN social_posts c ON c.id = i.content_id WHERE c.kind = 'post'"); }
-            if ($table === 'users') {
-                $managedRoles = \TinyCat\Social\Profiles\Roles::rolesWith('managed_by_core_admin');
-
-                return (int) \TinyCat\Database\Connection::value(
-                    'SELECT COUNT(*) FROM users WHERE role IN (' . implode(', ', array_fill(0, count($managedRoles), '?')) . ')',
-                    $managedRoles
-                );
-            }
 
             return \TinyCat\Database\Connection::count($table);
         } catch (Throwable) {

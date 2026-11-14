@@ -24,5 +24,27 @@ final readonly class Contributions
      * @param list<InformationSection> $information
      * @param list<DashboardWidget> $widgets
      * @param list<EmbedSource> $embeds */
-    public function __construct(public array $tasks = [], public array $navigation = [], public array $health = [], public array $maintenance = [], public array $temporaryDirectories = [], public array $configOverrides = [], public array $notificationTypes = [], public bool $notificationInbox = false, public array $themes = [], public array $homepages = [], public array $dashboards = [], public array $settings = [], public array $features = [], public bool $mailDelivery = false, public array $sitemaps = [], public array $search = [], public array $crawlerHints = [], public array $localizedRoutes = [], public array $information = [], public array $widgets = [], public array $embeds = []) {}
+    public function __construct(
+        public array $tasks = [],
+        public array $navigation = [],
+        public array $health = [],
+        public array $maintenance = [],
+        public array $temporaryDirectories = [],
+        public array $configOverrides = [],
+        public array $notificationTypes = [],
+        public bool $notificationInbox = false,
+        public array $themes = [],
+        public array $homepages = [],
+        public array $dashboards = [],
+        public array $settings = [],
+        public array $features = [],
+        public bool $mailDelivery = false,
+        public array $sitemaps = [],
+        public array $search = [],
+        public array $crawlerHints = [],
+        public array $localizedRoutes = [],
+        public array $information = [],
+        public array $widgets = [],
+        public array $embeds = [],
+    ) {}
 }

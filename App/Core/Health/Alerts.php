@@ -8,7 +8,7 @@ final class Alerts
     /** @return list<\TinyCat\Core\Modules\NotificationType> */
     public static function types(): array
     {
-        return array_map(static fn (string $id): \TinyCat\Core\Modules\NotificationType => new \TinyCat\Core\Modules\NotificationType($id, static fn (array $rows): array => $rows, static fn (array $row): string => '/admin/site-health'), ['site_health_ok', 'site_health_attention']);
+        return array_map(static fn (string $id): \TinyCat\Core\Modules\NotificationType => new \TinyCat\Core\Modules\NotificationType($id, static fn (array $rows): array => $rows, static fn (array $row): string => '/admin/site-health', message: static fn (array $row): string => \TinyCat\Support\Localization::t($id === 'site_health_ok' ? 'health.notification_ok' : 'health.notification_attention'), icon: $id === 'site_health_ok' ? 'check' : 'shield'), ['site_health_ok', 'site_health_attention']);
     }
 
     public static function send(bool $healthy, int $runId): int

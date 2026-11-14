@@ -1,4 +1,7 @@
 {
+  "_meta": {
+    "name": "Português"
+  },
   "common": {
     "sort": "Ordenar",
     "refresh": "Atualizar",

@@ -8,6 +8,21 @@ distributions and independently owned Blog and Social storage. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 6.0.3
+
+Release 6.0.3 supports the normal signed administration update from stable
+5.16.0 and newer, including 5.22.2 and 6.0.2. Use the installation ZIP only for
+a new site. The update migrates notification subjects through explicit core
+and Social schema migrations while preserving IDs, read state, keys and payloads.
+Inactive installed owners retain their data for later activation and migration.
+Language names move into Support catalogs; only the declared old root language
+files are removed. Configuration, uploads and runtime storage remain unmanaged.
+
+```bash
+php tools/release/build-update.php --version=6.0.3 --assembly=platform --both --legacy-upgrade --output=dist/release-6.0.3
+php tools/release/release-update-rehearsal.php --artifact=dist/release-6.0.3/update --baseline-version=5.22.2 --direct-web --cached-autoload
+```
+
 ## Upgrading to 6.0.2 from stable 5.x
 
 Release 6.0.1 can stop before conversion when OPcache executes the old autoloader after file replacement. Keep maintenance enabled after such an interruption and preserve both backup directories. Do not infer database readiness from the displayed application version.
