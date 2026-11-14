@@ -70,6 +70,11 @@ Podrobnosti: [lokální prostředí a hranice izolovaných testů](../docs/devel
 - Další integrační požadavky jako GD/WebP, ZIP/Sodium či Memcached určují
   konkrétní skupiny. SKIP znamená neprovedenou kontrolu, nikoli ověřenou integraci.
 
+Blogový browser scénář lze lokálně spustit ve stejném WebKitu jako CI:
+nastav `TINYCAT_TEST_BLOG_BROWSER=webkit` a `TINYCAT_TEST_PLAYWRIGHT_MODULE`
+na příslušnou instalaci Playwrightu před cíleným během `tests/domains/blog/module.php`.
+Bez této volby zůstává zachován výběr dostupného místního Chromium/Chrome.
+
 ## Hlavní oblasti
 
 | Oblast | Vstup nebo umístění |

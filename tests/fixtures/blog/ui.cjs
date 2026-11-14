@@ -4,7 +4,7 @@ const fs = require("node:fs"), path = require("node:path"), assert = require("no
 const root = path.resolve(__dirname, "../../.."), modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root, "storage/ui-webkit-tools/node_modules/playwright");
 if (!fs.existsSync(modulePath)) { console.log("SKIP Blog browser layout: Playwright unavailable"); process.exit(0); }
 const { chromium, webkit } = require(modulePath);
-const executablePath = [process.env.TINYCAT_TEST_CHROME, "C:/Program Files/Google/Chrome/Application/chrome.exe", "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"].filter(Boolean).find(file => fs.existsSync(file));
+const executablePath = process.env.TINYCAT_TEST_BLOG_BROWSER === 'webkit' ? undefined : [process.env.TINYCAT_TEST_CHROME, "C:/Program Files/Google/Chrome/Application/chrome.exe", "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"].filter(Boolean).find(file => fs.existsSync(file));
 (async () => {
   const browser = await (executablePath ? chromium : webkit).launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
   try {
@@ -88,7 +88,7 @@ const executablePath = [process.env.TINYCAT_TEST_CHROME, "C:/Program Files/Googl
     mutation = page.waitForResponse(r => r.request().method() === 'POST' && new URL(r.url()).pathname.endsWith('/comments/' + commentId + '/likes/me'));
     await comment.locator('[data-comment-like-button]').first().click();
     assert.equal((await mutation).status(), 200);
-    await page.waitForFunction(id => document.querySelector('[data-comment-like-button][data-comment-id="' + id + '"]').getAttribute('aria-pressed') === 'true', commentId);
+    await page.locator('[data-comment-like-button][data-comment-id="' + commentId + '"][aria-pressed="true"]').waitFor();
     assert.equal(await commentForm.locator('[data-status-editor-input]').innerText(), 'Preserved discussion draft', 'Reaction refresh preserves an unrelated draft');
     await comment.locator('[data-modal-url]').click();
     const discussionEditor = page.locator('.modal[data-modal-kind="editor"]');
@@ -98,7 +98,7 @@ const executablePath = [process.env.TINYCAT_TEST_CHROME, "C:/Program Files/Googl
     await discussionEditor.locator('form[data-api-method="PATCH"] button[type="submit"], .modal-footer button[type="submit"]').first().click();
     assert.equal((await mutation).status(), 200);
     await discussionEditor.waitFor({ state: 'detached' });
-    await page.waitForFunction(id => document.querySelector('.status-comment[data-comment-id="' + id + '"] .status-comment-body').textContent.includes('Browser edited discussion'), commentId);
+    await page.locator('.status-comment[data-comment-id="' + commentId + '"] .status-comment-body').filter({ hasText: 'Browser edited discussion' }).waitFor();
     assert.equal(await commentForm.locator('[data-status-editor-input]').innerText(), 'Preserved discussion draft', 'Editing a comment preserves the publication draft');
     await commentForm.locator('[data-status-editor-input]').fill('');
     await page.evaluate(() => TinyCat.forms.markClean(document.querySelector('form.status-comment-form:not(.is-reply)')));
@@ -127,7 +127,9 @@ const executablePath = [process.env.TINYCAT_TEST_CHROME, "C:/Program Files/Googl
         page.waitForResponse(r => r.request().method() === 'GET' && r.url().includes('/api/articles/management')),
         action()
       ]);
-      await page.waitForFunction(element => !element.isConnected, previous);
+      await previous.waitForElementState('hidden');
+      assert.equal(await previous.evaluate(element => element.isConnected), false, 'The previous list is replaced');
+      await previous.dispose();
       return response;
     };
     await page.locator('.admin-search-form input[name="q"]').fill('unlikely-no-article-match');
