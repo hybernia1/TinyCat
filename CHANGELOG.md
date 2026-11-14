@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.0.2 - 2026-11-14
+
+- Fix stable 5.x web updates with OPcache enabled. The signed conversion entry loads the current autoloader through a new runtime path, instead of executing the cached 5.x autoloader again after files were replaced.
+- Run the existing published-updater rehearsal with OPcache and timestamp validation disabled to reproduce the original failure, verify data conversion and test rollback. Allow an indexed snapshot to seed only its isolated temporary database for incident verification.
+
 ## 6.0.1 - 2026-11-14
 
 - Restore the normal signed administration update from stable 5.16.0 and newer, including 5.22.2. Release 6.0.0 incorrectly required development bridge runtimes; its attached bridge bundle was not automatically usable by the stable updater.

@@ -204,7 +204,7 @@ foreach ($both ? [false, true] : [$freshInstall] as $freshInstall) {
         }
         ksort($history, SORT_STRING);
         $compatibilityMigration = 'migrations/20261114_900_legacy_to_' . strtolower((string) preg_replace('/[^a-z0-9_]/i', '_', $version)) . '.php';
-        $callback = "<?php\ndeclare(strict_types=1);\nif (!defined('TINYCAT')) { return null; }\nreturn static function (\\PDO \$pdo): void {\n    \$root = \\TinyCat\\Support\\Paths::basePath();\n    require \$root . '/App/autoload.php';\n    \\TinyCat\\Core\\Updates\\LegacyUpdate::apply(\$pdo, \$root, " . var_export($version, true) . ', ' . var_export($hashes[$targetPath], true) . ', ' . var_export($history, true) . ", \\TinyCat\\Support\\Version::CURRENT, " . var_export(array_keys($owners), true) . ");\n};\n";
+        $callback = "<?php\ndeclare(strict_types=1);\nif (!defined('TINYCAT')) { return null; }\nreturn static function (\\PDO \$pdo): void {\n    \$root = \\TinyCat\\Support\\Paths::basePath();\n    require \$root . '/App/Core/Runtime/autoload.php';\n    \\TinyCat\\Core\\Updates\\LegacyUpdate::apply(\$pdo, \$root, " . var_export($version, true) . ', ' . var_export($hashes[$targetPath], true) . ', ' . var_export($history, true) . ", \\TinyCat\\Support\\Version::CURRENT, " . var_export(array_keys($owners), true) . ");\n};\n";
         $files[$compatibilityMigration] = ''; $normalizedContents[$compatibilityMigration] = $callback; $hashes[$compatibilityMigration] = hash('sha256', $callback);
         $variantMinimum = \TinyCat\Support\Version::MINIMUM_UPDATE;
     }

@@ -71,7 +71,7 @@ add `--legacy-upgrade`. It selects the supported minimum automatically, exports
 a version-specific signed root migration and a final descriptor, and keeps the
 fresh-install variant unchanged. Do not combine it with `--without-migrations`,
 `--minimum-version` or standalone `--fresh-install`. The existing product rehearsal
-uses `--baseline-version=5.22.2 --direct-web` to run the published updater's actual
+uses `--baseline-version=5.22.2 --direct-web --cached-autoload` to run the published updater's actual
 check/install flow; 5.16.0 and 6.0.0 are also supported fixture baselines.
 
 `php tools/release/build-bridge.php --output=dist/compatibility-bridge` builds
@@ -119,3 +119,5 @@ jsou provedené; inventář uchovává původní cesty a doplněné současné u
 Historická Stage 8 sada a dokončený jednorázový úklidový skript byly odstraněny.
 Staré browser experimenty zatím zůstávají k přezkoumání. `tools/data/seed.php` je
 kompatibilní alias importéru.
+
+The release update rehearsal accepts `--snapshot=/path/to/indexed-snapshot` to restore a supplied snapshot into its newly created temporary database instead of synthetic rows. The source snapshot and configured database are never modified. `--cached-autoload` enables CLI OPcache with timestamp validation disabled to exercise cached 5.x code during replacement.

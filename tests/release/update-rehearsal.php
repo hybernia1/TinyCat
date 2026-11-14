@@ -463,7 +463,7 @@ PHP;
         exec($legacyBuild . ' 2>&1', $legacyBuildOutput, $legacyBuildExit);
         if ($legacyBuildExit !== 0) { throw new RuntimeException('Legacy web artifact build failed: ' . implode(' ', $legacyBuildOutput)); }
         $legacyRehearsal = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/release/release-update-rehearsal.php')
-            . ' --legacy-baseline=5.22.2 --direct-web --artifact=' . escapeshellarg($legacyArtifacts) . ' --key=' . escapeshellarg($signingKey);
+            . ' --legacy-baseline=5.22.2 --direct-web --cached-autoload --artifact=' . escapeshellarg($legacyArtifacts) . ' --key=' . escapeshellarg($signingKey);
         passthru($legacyRehearsal, $legacyExit);
         $assert($legacyExit === 0, 'Published 5.22.2 check/installLatest offers, installs and rolls back the signed release without dev hops');
     } else { echo "SKIP legacy web update rehearsal: local MySQL configuration unavailable.\n"; }

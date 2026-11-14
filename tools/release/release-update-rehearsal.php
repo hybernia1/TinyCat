@@ -12,7 +12,8 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
 $baselineVersion = '6.0.0-dev.9.2';
-$options = getopt('', ['artifact::', 'key::', 'legacy-baseline::', 'baseline-version::', 'bridge-bootstrap::', 'bridge-checkpoint::', 'direct-web']);
+$options = getopt('', ['artifact::', 'key::', 'legacy-baseline::', 'baseline-version::', 'bridge-bootstrap::', 'bridge-checkpoint::', 'direct-web', 'cached-autoload', 'snapshot::']);
+$cachedAutoload = array_key_exists('cached-autoload', $options);
 $directWeb = array_key_exists('direct-web', $options);
 $legacyBaseline = $options['baseline-version'] ?? $options['legacy-baseline'] ?? null;
 if ($directWeb && $legacyBaseline === null) { throw new InvalidArgumentException('Direct web rehearsal requires a published baseline version.'); }
@@ -65,13 +66,14 @@ $extractZip = static function (string $archive, string $target): void {
     $zip->extractTo($target, null, true);
     unset($zip);
 };
-$run = static function (string $script) use ($temporaryRoot): array {
+$run = static function (string $script) use ($temporaryRoot, $cachedAutoload): array {
     $runner = $temporaryRoot . '/runner-' . bin2hex(random_bytes(4)) . '.php';
     file_put_contents($runner, "<?php\ndeclare(strict_types=1);\n" . $script, LOCK_EX);
     $output = [];
 
     try {
-        exec(escapeshellarg(PHP_BINARY) . ' -d display_errors=1 -d error_reporting=-1 ' . escapeshellarg($runner) . ' 2>&1', $output, $exitCode);
+        $opcache = $cachedAutoload ? ' -d opcache.enable_cli=1 -d opcache.file_update_protection=0 -d opcache.validate_timestamps=0' : '';
+        exec(escapeshellarg(PHP_BINARY) . $opcache . ' -d display_errors=1 -d error_reporting=-1 ' . escapeshellarg($runner) . ' 2>&1', $output, $exitCode);
         return [$exitCode, $output];
     } finally {
         if (is_file($runner)) {
@@ -264,8 +266,14 @@ PHP;
     }
     $assert(true, 'Supported baseline installer prepares the representative database.');
 
-    (require $root . '/tests/fixtures/releases/seed-shared-social.php')($database, $legacyBaseline === '6.0.0');
-    $assert(true, 'Representative shared-storage users, posts, comments, reactions, tags, links and notifications are seeded.');
+    if (isset($options['snapshot'])) {
+        require_once $root . '/App/Core/Database/Snapshots.php';
+        \TinyCat\Database\Snapshots::restore($database, (string) $options['snapshot']);
+        $assert(true, 'Supplied snapshot is restored only into the isolated rehearsal database.');
+    } else {
+        (require $root . '/tests/fixtures/releases/seed-shared-social.php')($database, $legacyBaseline === '6.0.0');
+        $assert(true, 'Representative shared-storage users, posts, comments, reactions, tags, links and notifications are seeded.');
+    }
 
     if ($legacyBaseline !== null && !$directWeb) {
         $legacyCounts = $databaseFingerprint($database)['counts'];
@@ -349,6 +357,9 @@ PHP;
         $updateRunner = '$GLOBALS[\'signedUpdateFixtures\'] = ' . var_export($network, true) . '; require ' . var_export($root . '/tests/fixtures/releases/github-transport.php', true) . ";\n" . <<<'PHP'
 define('TINYCAT', true);
 require __ROOT__ . '/App/bootstrap.php';
+if (__CACHED_AUTOLOAD__ && (!function_exists('opcache_is_script_cached') || !opcache_is_script_cached((string) realpath(__ROOT__ . '/App/autoload.php')))) {
+    throw new RuntimeException('The cached-autoload scenario requires active OPcache and a cached baseline autoloader.');
+}
 $check = TinyCat\Updates\Manager::check(true);
 if (empty($check['available']) || empty($check['compatible'])) { throw new RuntimeException('The published updater does not offer the stable update.'); }
 $result = TinyCat\Updates\Manager::installLatest();
@@ -359,8 +370,8 @@ echo json_encode(['backup' => $backup, 'pending_migrations' => isset($metadata['
 PHP;
     }
     $updateRunner = str_replace(
-        ['__ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__'],
-        [var_export($installRoot, true), var_export($manifestPath, true), var_export($signaturePath, true), var_export($packagePath, true)],
+        ['__ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__CACHED_AUTOLOAD__'],
+        [var_export($installRoot, true), var_export($manifestPath, true), var_export($signaturePath, true), var_export($packagePath, true), $cachedAutoload ? 'true' : 'false'],
         $updateRunner
     );
     [$updateExit, $updateOutput] = $run($updateRunner);

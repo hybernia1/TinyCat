@@ -3,12 +3,14 @@
 TinyCat updates are curated, signed release packages. The application does not
 download a repository snapshot and does not run `git` on the production server.
 
-TinyCat 6.0.1 provides signed product identities, selective
+TinyCat 6.0.2 provides signed product identities, selective
 distributions and independently owned Blog and Social storage. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
-## Upgrading to 6.0.1 from stable 5.x
+## Upgrading to 6.0.2 from stable 5.x
+
+Release 6.0.1 can stop before conversion when OPcache executes the old autoloader after file replacement. Keep maintenance enabled after such an interruption and preserve both backup directories. Do not infer database readiness from the displayed application version.
 
 Use **Admin → Updates** normally from TinyCat 5.16.0 or newer. In particular,
 5.22.2 does not need a manually installed dev runtime. The same release also
@@ -16,12 +18,12 @@ updates 6.0.0. New installations must use the separate installation ZIP.
 
 Release 6.0.0's main update manifest required dev.9.2, so the stable web updater
 could not offer it as compatible. A manually applied bridge bundle was not an
-equivalent replacement for the ordinary update flow. Use 6.0.1 instead.
+equivalent replacement for the ordinary update flow. Use 6.0.2 instead.
 
 Build the public Social/platform release with:
 
 ```bash
-php tools/release/build-update.php --version=6.0.1 --assembly=platform --both --legacy-upgrade --output=dist/release-6.0.1
+php tools/release/build-update.php --version=6.0.2 --assembly=platform --both --legacy-upgrade --output=dist/release-6.0.2
 ```
 
 The update variant uses a legacy-compatible signed transport descriptor and
@@ -43,7 +45,7 @@ its exact managed-file restoration. Configuration and uploaded media are preserv
 Verify the actual stable update path in an isolated database:
 
 ```bash
-php tools/release/release-update-rehearsal.php --artifact=dist/release-6.0.1/update --baseline-version=5.22.2 --direct-web
+php tools/release/release-update-rehearsal.php --artifact=dist/release-6.0.2/update --baseline-version=5.22.2 --direct-web --cached-autoload
 ```
 
 The same command accepts 5.16.0 and 6.0.0. It runs the published updater's
