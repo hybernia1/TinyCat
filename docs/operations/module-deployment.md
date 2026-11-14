@@ -10,6 +10,13 @@ a samostatné Blog balíčky tento minimum deklarují. Klasická sociální 5.16
 bez modulového deploymentu může použít sociální aktualizaci se zachovanou
 globální historií. Aktualizace nesmí měnit identitu produktu.
 
+Aktuální formát 3 vyžaduje dokončený runtime `6.0.0-dev.9.2`. Ze starší
+instalace nejprve použij souborový bridge dev.9.1, potom normální migrační
+checkpoint dev.9.2 a teprve potom 6.0.0. Oba podepsané kroky sestaví
+`php tools/release/build-bridge.php --assembly=platform --output=dist/bridge`;
+pro Blog použij `--assembly=blog`, pro klasický Social `--assembly=source`.
+Postup a databázové ověření popisují [aktualizace](updates.md#preparing-the-60-modular-update).
+
 ## Správa v administraci
 
 Přihlášený administrátor otevře **Moduly** v navigaci nebo `/admin/modules`.

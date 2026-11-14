@@ -63,7 +63,7 @@ try {
     file_put_contents($initialVersionFile, preg_replace("/CURRENT = '[^']+'/", "CURRENT = '6.0.0-dev.10'", (string) file_get_contents($initialVersionFile)));
     $build('6.0.0-dev.10', $workspace . '/v1');
     $installManifest = json_decode((string) file_get_contents($workspace . '/v1/install/tinycat-blog-install.json'), true, 512, JSON_THROW_ON_ERROR);
-    $assert($installManifest['distribution']['product'] === 'tinycat.blog' && $installManifest['minimum_version'] === '6.0.0-dev.9.1', 'Signed identity prevents old updaters from applying module packages');
+    $assert($installManifest['distribution']['product'] === 'tinycat.blog' && $installManifest['minimum_version'] === '6.0.0-dev.9.2', 'Signed identity prevents old updaters from applying module packages');
     $assert($installManifest['migrations'] === [] && !isset($installManifest['files']['App/Modules/Social/src/Posts/Registration.php']) && isset($installManifest['files']['App/Core/Settings/Store.php']) && isset($installManifest['files']['App/Modules/Notes/src/Module.php']), 'Blog package contains only available product owners, including inactive modules');
     $assert(isset($installManifest['files']['scheduled-tasks.php']) && isset($installManifest['files']['App/Console.php']), 'Blog has a working production CLI instead of a missing social scheduler');
     $root = $workspace . '/installation'; mkdir($root, 0700);

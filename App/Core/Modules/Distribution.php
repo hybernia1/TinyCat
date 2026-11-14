@@ -14,7 +14,7 @@ final class Distribution
     public const string RUNTIME = '6.0.0-dev.1';
     public const string CORE_SCHEMA_RUNTIME = '6.0.0-dev.4';
     public const string FRAMEWORK_RUNTIME = '6.0.0-dev.5.1';
-    public const string DOMAIN_RUNTIME = '6.0.0-dev.9.1';
+    public const string DOMAIN_RUNTIME = '6.0.0-dev.9.2';
 
     /** @param array<string, string> $selection
      * @param list<string>|null $active

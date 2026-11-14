@@ -7,7 +7,7 @@
 - Add signed product distributions and module ZIPs, administration and CLI lifecycle operations, inactive-owner upgrades, shared locking, snapshots, interruption recovery and rollback. Preserve installed inactive owners during account and file-reference cleanup.
 - Share technical text, feed, link, file and UI mechanisms without mandatory publication tables in core. Keep registration lazy, discovery explicit, API authorization and query budgets intact, and Blog and Social usable together or independently.
 - Repair fresh-install schema registration and restartable index repair in modular artifacts, and validate release baselines against the signed descriptor format.
-- Require the signed 6.0.0-dev.9.1 compatibility bridge before the 6.0.0 data conversion. Historical migration files and checksums remain unchanged; configuration, uploads and runtime storage remain outside managed packages.
+- Require the signed 6.0.0-dev.9.1 file bridge followed by the 6.0.0-dev.9.2 migration checkpoint before the 6.0.0 data conversion. Reject the incomplete first hop before applying files. Historical migration files and checksums remain unchanged; configuration, uploads and runtime storage remain outside managed packages.
 - Verify the full 88-group preflight, extracted signed artifact installation and representative MySQL conversion/rollback. Local Memcached integration and the symlink-escape fixture require their unavailable environment capabilities.
 
 ## 5.22.2 - 2026-11-11

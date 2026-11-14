@@ -92,7 +92,9 @@ prázdné tabulky. Neznámé vazby, jiný druh obsahu či nedoložená původní
 konverzi zastaví. Historické globální převzetí vyžaduje ověřený checkpoint.
 
 Runtime dev.9 nový descriptor nepřijímá. Přechod vyžaduje nejprve kompatibilní
-runtime dev.9.1 a potom dev.10; před datovou konverzí updater pořizuje snapshot.
+runtime dev.9.1, následně dev.9.2 s dokončením odložených globálních migrací
+a potom 6.0.0; před datovou konverzí updater pořizuje snapshot. Samotný
+souborový bridge dev.9.1 nedokládá dokončení databázového checkpointu.
 Rollback obnovuje schéma, data, soubory i aktivaci společně. Nepřepisuj descriptor
 nebo schéma ručně na živé instalaci. Stav konkrétního nasazení a výsledky kontrol
 patří do auditu etapy, nikoli do předpokladu, že změna zdrojů aktualizovala web.

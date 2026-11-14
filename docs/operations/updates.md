@@ -11,15 +11,30 @@ activation, migration snapshots and recovery.
 ## Preparing the 6.0 modular update
 
 The current distribution uses descriptor format 3 and requires the compatibility
-runtime **6.0.0-dev.9.1** before applying its data conversion. Do not install the
-new package directly over 5.x or dev.9. The frozen compatibility source used by
+runtime **6.0.0-dev.9.2** before applying its data conversion. Do not install the
+new package directly over 5.x, dev.9 or the file-only dev.9.1 bridge. The frozen compatibility source used by
 the update rehearsal is `tests/fixtures/releases/bridge-6.0.0-dev.9.1-source.zip`;
 it is a build input, not an installation ZIP or a signed release asset.
 
-Prepare and verify the signed bridge separately with its own builder and the
-existing release key. The legacy 5.x bridge uses `--assembly=source` and
-`--without-migrations`; it replaces the updater without applying new data
-migrations. The following normal update must apply all pending migrations.
+Build both signed steps with the existing release key:
+
+```bash
+php tools/release/build-bridge.php --assembly=source --output=dist/compatibility-bridge
+php tools/release/verify-update.php dist/compatibility-bridge/bootstrap
+php tools/release/verify-update.php dist/compatibility-bridge/checkpoint
+```
+
+The legacy 5.x `bootstrap` step is dev.9.1 with `--without-migrations`; it
+replaces the updater without changing the database. The `checkpoint` step is
+dev.9.2 with the normal authenticated migration list. **Apply this second step
+before 6.0.0** so that all historical migrations, including the shared-storage
+provenance checkpoint, are complete. From the bridge installation root, the
+normal production command is `php App/Console.php update MANIFEST SIGNATURE ZIP`,
+using the three checkpoint files. Use the same command for the following 6.0.0
+update. Never mark migrations applied manually or bypass their checksum checks.
+
+`--assembly=platform` and `--assembly=blog` build matching bridges for existing
+modular products; their minimum runtime is selected by the frozen builder.
 Existing modular deployments must retain their product identity and available
 modules in both packages; a Social-only package cannot replace a deployment
 that already contains Blog.
@@ -30,6 +45,16 @@ its owners. It creates the standard database and file snapshot before conversion
 Fresh installation uses the current owner schemas directly. Publish only after
 the full preflight, extracted-artifact installation and representative MySQL
 update/rollback rehearsal pass for the actual signed candidate.
+
+The actual 5.x database path can be checked in an isolated database with:
+
+```bash
+php tools/release/release-update-rehearsal.php --artifact=dist/release-6.0.0/update --legacy-baseline=5.16.0 --bridge-bootstrap=dist/compatibility-bridge/bootstrap --bridge-checkpoint=dist/compatibility-bridge/checkpoint
+```
+
+The same command accepts `--legacy-baseline=5.22.2`. It seeds the published
+schema before either bridge and uses the existing temporary MySQL database
+and normal snapshot/rollback checks, never the live installation.
 
 Updates supporting pre-6 installations retain a generated
 `App/Support/Cache.php` loader so the old updater can finish in its existing

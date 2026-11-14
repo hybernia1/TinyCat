@@ -11,8 +11,12 @@ if (PHP_SAPI !== 'cli') {
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
-$baselineVersion = '6.0.0-dev.9.1';
-$options = getopt('', ['artifact::', 'key::']);
+$baselineVersion = '6.0.0-dev.9.2';
+$options = getopt('', ['artifact::', 'key::', 'legacy-baseline::', 'bridge-bootstrap::', 'bridge-checkpoint::']);
+$legacyBaseline = $options['legacy-baseline'] ?? null;
+if ($legacyBaseline !== null && !in_array($legacyBaseline, ['5.16.0', '5.22.2'], true)) {
+    throw new InvalidArgumentException('Use the supported legacy release baseline.');
+}
 $artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
 $configPath = $root . '/config.php';
 $temporaryRoot = $root . '/storage/release-update-' . bin2hex(random_bytes(6));
@@ -196,9 +200,20 @@ try {
         throw new RuntimeException('Unable to create product rehearsal directory.');
     }
 
-    $baselineArchive = $root . '/tests/fixtures/releases/bridge-6.0.0-dev.9.1-source.zip';
-    if (hash_file('sha256', $baselineArchive) !== '9620cebe0f1fb03d6a49673ebc3daef43a54e53800ffdaedc1bdb660cfeb3df5') { throw new RuntimeException('The frozen compatibility source changed.'); }
+    if ($legacyBaseline !== null) {
+        $baselineVersion = $legacyBaseline;
+        $baselineArchive = $temporaryRoot . '/legacy-source.zip';
+        exec('git -C ' . escapeshellarg($root) . ' archive --format=zip --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion), $archiveOutput, $archiveExit);
+        if ($archiveExit !== 0) { throw new RuntimeException('Cannot extract the published legacy baseline.'); }
+    } else {
+        $baselineArchive = $root . '/tests/fixtures/releases/bridge-6.0.0-dev.9.1-source.zip';
+        if (hash_file('sha256', $baselineArchive) !== '9620cebe0f1fb03d6a49673ebc3daef43a54e53800ffdaedc1bdb660cfeb3df5') { throw new RuntimeException('The frozen compatibility source changed.'); }
+    }
     $extractZip($baselineArchive, $installRoot);
+    if ($legacyBaseline === null) {
+        $versionPath = $installRoot . '/App/Core/Support/Version.php';
+        file_put_contents($versionPath, str_replace("CURRENT = '6.0.0-dev.9.1'", "CURRENT = '6.0.0-dev.9.2'", (string) file_get_contents($versionPath)), LOCK_EX);
+    }
     $installConfig = $baseConfig;
     $installConfig['database'] = [...$databaseConfig, 'name' => $databaseName];
     $installConfig['app'] = [...(array) ($baseConfig['app'] ?? []), 'url' => 'http://localhost'];
@@ -220,8 +235,10 @@ try {
     $installRunner = <<<'PHP'
 define('TINYCAT', true);
 require __ROOT__ . '/App/bootstrap.php';
-$plan = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', require __ROOT__ . '/App/modules.php');
-file_put_contents(__ROOT__ . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
+if (class_exists(TinyCat\Core\Modules\Distribution::class)) {
+    $plan = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', require __ROOT__ . '/App/modules.php');
+    file_put_contents(__ROOT__ . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
+}
 TinyCat\Installation\Installer::create_tables();
 TinyCat\Installation\Installer::create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
 TinyCat\Installation\Installer::default_settings(['locale' => 'en']);
@@ -243,6 +260,51 @@ PHP;
 
     (require $root . '/tests/fixtures/releases/seed-shared-social.php')($database);
     $assert(true, 'Representative shared-storage users, posts, comments, reactions, tags, links and notifications are seeded.');
+
+    if ($legacyBaseline !== null) {
+        $legacyCounts = $databaseFingerprint($database)['counts'];
+        foreach (['bridge-bootstrap', 'bridge-checkpoint'] as $phase) {
+            $directory = realpath((string) ($options[$phase] ?? ''));
+            if ($directory === false || !is_file($directory . '/tinycat-update.json')) { throw new RuntimeException('Provide both signed bridge directories for a legacy rehearsal.'); }
+            $bridgeManifest = json_decode((string) file_get_contents($directory . '/tinycat-update.json'), true, 512, JSON_THROW_ON_ERROR);
+            $bridgeRunner = <<<'PHP'
+define('TINYCAT', true);
+require __ROOT__ . '/App/bootstrap.php';
+if (method_exists(TinyCat\Updates\Manager::class, 'installLocalPackage')) {
+    TinyCat\Updates\Manager::installLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
+} else {
+    // Exercise the published 5.x updater's verified file-only bridge sequence.
+    $invoke = static fn (string $method, mixed ...$arguments): mixed => (new ReflectionMethod(TinyCat\Updates\Manager::class, $method))->invoke(null, ...$arguments);
+    $manifest = TinyCat\Updates\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
+    if ($manifest['migrations'] !== []) { throw new RuntimeException('The initial legacy bridge must be file-only.'); }
+    $invoke('assertCompatibility', $manifest);
+    $stage = __ROOT__ . '/storage/updates/legacy-bridge-stage';
+    $invoke('extractPackage', __PACKAGE__, $stage, $manifest);
+    $invoke('preflightManagedTargets', $manifest);
+    $invoke('createBackup', $manifest, $manifest['version'], false);
+    $invoke('enableMaintenance', $manifest['version']);
+    $invoke('applyFiles', $stage, $manifest);
+    $invoke('deleteLegacyFiles', $manifest);
+    $invoke('clearRuntimeCache');
+    TinyCat\Updates\Manager::disableMaintenance();
+}
+PHP;
+            [$bridgeExit, $bridgeOutput] = $run(str_replace(
+                ['__ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__'],
+                [var_export($installRoot, true), var_export($directory . '/tinycat-update.json', true), var_export($directory . '/tinycat-update.sig', true), var_export($directory . '/' . basename($bridgeManifest['package']), true)],
+                $bridgeRunner
+            ));
+            if ($bridgeExit !== 0) { throw new RuntimeException('Legacy ' . $phase . ' failed: ' . implode(' ', $bridgeOutput)); }
+            $baselineVersion = $bridgeManifest['version'];
+            $assert(true, 'The signed ' . $phase . ' completes against the actual legacy database.');
+        }
+        foreach ($legacyCounts as $table => $count) {
+            if (!in_array($table, ['settings', 'schema_migrations'], true)) {
+                $assert((int) $database->query('SELECT COUNT(*) FROM `' . $table . '`')->fetchColumn() === $count, 'Both bridge steps preserve legacy rows in ' . $table);
+            }
+        }
+        $assert(true, 'Legacy migrations complete before domain-owned storage conversion.');
+    }
 
     $beforeDatabase = $databaseFingerprint($database);
     $appliedBefore = $database->query('SELECT migration FROM schema_migrations')->fetchAll(PDO::FETCH_COLUMN);
@@ -366,4 +428,4 @@ if ($failures !== []) {
     exit(1);
 }
 
-echo "PASS exact dev.9.1 representative MySQL update, data preservation and rollback ({$checks} checks)\n";
+echo "PASS {$baselineVersion} representative MySQL update, data preservation and rollback ({$checks} checks)\n";

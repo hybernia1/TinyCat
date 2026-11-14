@@ -66,6 +66,14 @@ For a release, `php tools/release/build-update.php --version=X.Y.Z --both --outp
 prepares signed update/install variants from one compilation. `release/zip-timestamps.php`
 and `release/publish-artifact.php` are internal build helpers, not standalone commands.
 
+`php tools/release/build-bridge.php --output=dist/compatibility-bridge` builds
+the immutable shared-storage compatibility source into the signed file-only
+dev.9.1 bootstrap and the normal dev.9.2 migration checkpoint. `--key` selects
+an existing signing-key file; `--assembly=source|platform|blog` preserves product
+selection. Apply both steps before the domain-owned 6.0 update. The existing
+product MySQL rehearsal accepts `--legacy-baseline=5.16.0|5.22.2` with both
+`--bridge-bootstrap` and `--bridge-checkpoint` directories to verify this path.
+
 `--assembly=blog` sestaví samostatný produkt; `--product=vendor.product` a
 `--active=id1,id2` určují vlastní identitu a výchozí aktivaci. Distribuce,
 produkční CLI `App/Console.php`, migrace a rescue rollback mají společný

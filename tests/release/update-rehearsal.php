@@ -218,6 +218,14 @@ try {
         . ' --assembly=source --allow-dirty --without-migrations --output=' . escapeshellarg($bridgeArtifacts) . ' --key=' . escapeshellarg($signingKey);
     exec($bridgeBuild . ' 2>&1', $bridgeOutput, $bridgeExit);
     if ($bridgeExit !== 0) { throw new RuntimeException('Compatibility bridge build failed: ' . implode(' ', $bridgeOutput)); }
+    $bridgeVersionPath = $bridgeSource . '/App/Core/Support/Version.php';
+    file_put_contents($bridgeVersionPath, str_replace("CURRENT = '6.0.0-dev.9.1'", "CURRENT = '6.0.0-dev.9.2'", (string) file_get_contents($bridgeVersionPath)));
+    $checkpointArtifacts = $temporaryRoot . '/checkpoint-artifact';
+    $checkpointBuild = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($bridgeSource . '/tools/release/build-update.php')
+        . ' --version=6.0.0-dev.9.2 --minimum-version=6.0.0-dev.9.1'
+        . ' --assembly=source --allow-dirty --output=' . escapeshellarg($checkpointArtifacts) . ' --key=' . escapeshellarg($signingKey);
+    exec($checkpointBuild . ' 2>&1', $checkpointOutput, $checkpointExit);
+    if ($checkpointExit !== 0) { throw new RuntimeException('Compatibility checkpoint build failed: ' . implode(' ', $checkpointOutput)); }
 
     $archiveCommand = 'git -C ' . escapeshellarg($root) . ' archive --format=zip'
         . ' --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion);
@@ -303,7 +311,14 @@ PHP;
     [$bridgeBootExit, $bridgeBootOutput] = $run($bridgeBoot);
     $assert($bridgeBootExit === 0, 'The supported legacy runtime reaches the compatibility bridge: ' . implode(' ', $bridgeBootOutput));
     $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash && file_get_contents($installRoot . '/uploads/rehearsal-sentinel.txt') === 'uploads-preserved', 'The first hop preserves local configuration and uploads');
-    $baselineVersion = '6.0.0-dev.9.1';
+    $checkpointRunner = str_replace(
+        ['__INSTALL_ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__VERSION__'],
+        [var_export($installRoot, true), var_export($checkpointArtifacts . '/tinycat-update.json', true), var_export($checkpointArtifacts . '/tinycat-update.sig', true), var_export($checkpointArtifacts . '/tinycat-6.0.0-dev.9.2.zip', true), "'6.0.0-dev.9.2'"],
+        $runnerTemplate
+    );
+    [$checkpointExit, $checkpointOutput] = $run($checkpointRunner);
+    if ($checkpointExit !== 0) { throw new RuntimeException('Bridge-to-checkpoint file update failed: ' . implode(' ', $checkpointOutput)); }
+    $baselineVersion = '6.0.0-dev.9.2';
     $baselineInventory = $inventory($installRoot);
     $runner = str_replace(
         ['__INSTALL_ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__VERSION__'],
