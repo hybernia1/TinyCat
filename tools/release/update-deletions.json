@@ -1,5 +1,7 @@
 {
   "5.22.2": [
+    "lang/emails-cs.json",
+    "lang/emails-en.json",
     "App/Security/Api.php",
     "App/Users/avatar-options.json",
     "App/Users/lang/cs.json",

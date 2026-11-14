@@ -12,6 +12,14 @@ activation, migration snapshots and recovery.
 
 Release 6.0.1 can stop before conversion when OPcache executes the old autoloader after file replacement. Keep maintenance enabled after such an interruption and preserve both backup directories. Do not infer database readiness from the displayed application version.
 
+An installation upgraded through older releases can retain flat email catalogs
+`lang/emails-cs.json` and `lang/emails-en.json`. If 6.0.2 completes conversion but
+the request fails with "expected locale metadata with a nonempty name" for one
+of these files, archive both outside `lang/` and retry the request. These are old
+translation resources, not database records. Preserve their contents for any local
+customizations. The source deletion manifest includes both paths for subsequent
+release packages; the published 6.0.2 assets are unchanged.
+
 Use **Admin → Updates** normally from TinyCat 5.16.0 or newer. In particular,
 5.22.2 does not need a manually installed dev runtime. The same release also
 updates 6.0.0. New installations must use the separate installation ZIP.
