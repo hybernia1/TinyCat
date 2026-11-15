@@ -172,7 +172,7 @@ $test('Phar ZIP package extraction verifies every file hash', static function ()
     }
 });
 
-$keyFile = \TinyCat\Support\Paths::basePath('storage/update-signing.key');
+$keyFile = \TinyCat\Tools\Workspace::directory('keys') . '/update-signing.key';
 
 if (is_file($keyFile)) {
     $test('release signature accepts authentic data and rejects tampering', static function () use ($invoke, $expectFailure, $keyFile): void {
