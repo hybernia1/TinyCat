@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../tools/support/workspace.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 
 if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
@@ -9,7 +11,7 @@ if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
 }
 
 $root = dirname(__DIR__, 2);
-$temporary = $root . '/storage/api-contract-' . bin2hex(random_bytes(6));
+$temporary = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/api-contract-' . bin2hex(random_bytes(6));
 mkdir($temporary, 0775, true);
 $databasePath = $temporary . '/database.sqlite';
 $database = new PDO('sqlite:' . $databasePath);

@@ -6,7 +6,7 @@ Příkazy spouštěj z kořene repozitáře. `composer test` spouští explicitn
 PHPStan, překlady a repository security.
 
 Runnery měří každou PHP skupinu, JS scénář a preflight krok. Výsledek je
-v `storage/test-runs/<run-id>/report.json`, průběžné události v `events.jsonl`
+v `.work/tests/runs/<run-id>/report.json`, průběžné události v `events.jsonl`
 a výstupy v samostatných logách. Report obsahuje verze prostředí, otisk
 zdrojů, časy, exit kódy, přeskoky i neprovedené položky. Čas rodičovské
 skupiny zahrnuje její potomky; při součtu se nesmí započítat dvakrát.
@@ -175,3 +175,6 @@ izolovaného workspace a ověřuje účtové resources, SVG, cache hlavičky,
 skutečný multipart upload, CSRF, limiter a souborový rollback. HTTP worker
 `tests/fixtures/accounts/avatar-worker.php` používá jen tuto kopii; nespouští
 se samostatně a nevystavuje produkční routy. Vyžaduje GD/WebP a cURL.
+
+Development outputs use ignored `.work/`, separated from application `storage/`.
+See [filesystem storage](../docs/development/storage.md#development-outputs).

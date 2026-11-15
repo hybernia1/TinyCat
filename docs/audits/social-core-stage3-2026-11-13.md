@@ -120,8 +120,8 @@ Frontendových 38 scénářů má dohromady 231,647 s. Další optimalizaci má 
 zaměřit na tyto velké existující skupiny a práci jejich fixture; samotná délka
 není důvod odstranit odlišnou bezpečnostní nebo rollback záruku. Nové nezávislé
 úplné integrační kopie nevznikly. Podrobné časy, rozsahy, pokusy a výsledky
-jsou v `storage/social-core-stage3-20261113/verification.json`, surové reporty
-v `storage/test-runs/`.
+jsou v `.work/archive/storage-20261115/social-core-stage3-20261113/verification.json`, surové reporty
+v `.work/tests/runs/`.
 
 ## Živé ověření
 

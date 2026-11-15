@@ -36,10 +36,10 @@ rekurzivního bootstrapu. Odkazy v SQL, URL a konfiguraci vyžadovaly ruční ko
 
 Lokální podklady, ignorované Gitem:
 
-- [Inventář a odkazy](../../storage/core-module-audit-20261112/inventory.json).
-- [Izolovaná zkouška Social + Blog](../../storage/core-module-audit-20261112/social-blog-probe.json).
-- [Výpis kontrol hranic](../../storage/core-module-audit-20261112/current-boundaries.log).
-- [Měřený report kontrol](../../storage/test-runs/20261112-001417-65b7217e46/report.json).
+- [Inventář a odkazy](../../.work/archive/storage-20261115/core-module-audit-20261112/inventory.json).
+- [Izolovaná zkouška Social + Blog](../../.work/archive/storage-20261115/core-module-audit-20261112/social-blog-probe.json).
+- [Výpis kontrol hranic](../../.work/archive/storage-20261115/core-module-audit-20261112/current-boundaries.log).
+- [Měřený report kontrol](../../.work/tests/runs/20261112-001417-65b7217e46/report.json).
 
 Inventář uvádí otisk 710 souborů `App`:
 `7ac787063adc3796e06f44a6029e24466f379870615526937a82d7315cb48286`.

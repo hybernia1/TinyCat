@@ -76,18 +76,18 @@ Ověření je složené z navazujících běhů, není vydáváno za jeden čist
 
 | Běh | Výsledek | Čas |
 | --- | --- | ---: |
-| [Původní preflight](../../storage/test-runs/20261112-065627-1b1278b3a5/report.json) | Zastaven na prezentační regresi po 43 úspěšných PHP skupinách a frontendové matici. | 440,608 s |
-| [Navazujících 45 skupin](../../storage/test-runs/20261112-070659-b65be7bc5f/report.json) | 44 prošlo, Memcached přeskočen; včetně opraveného renderu, API, instalace, update a rollbacku. | 577,577 s |
-| [Finální statické kontroly](../../storage/test-runs/20261112-071508-0d5c0240a9/report.json) | Styl, lint, PHPStan a security prošly. | 60,941 s |
-| [Finální identita a registry](../../storage/test-runs/20261112-071801-c929a14087/report.json) | Prošly nad posledním autoloaderem, včetně legacy catch a instanceof. | Cílený doplněk |
+| [Původní preflight](../../.work/tests/runs/20261112-065627-1b1278b3a5/report.json) | Zastaven na prezentační regresi po 43 úspěšných PHP skupinách a frontendové matici. | 440,608 s |
+| [Navazujících 45 skupin](../../.work/tests/runs/20261112-070659-b65be7bc5f/report.json) | 44 prošlo, Memcached přeskočen; včetně opraveného renderu, API, instalace, update a rollbacku. | 577,577 s |
+| [Finální statické kontroly](../../.work/tests/runs/20261112-071508-0d5c0240a9/report.json) | Styl, lint, PHPStan a security prošly. | 60,941 s |
+| [Finální identita a registry](../../.work/tests/runs/20261112-071801-c929a14087/report.json) | Prošly nad posledním autoloaderem, včetně legacy catch a instanceof. | Cílený doplněk |
 
 Metadata Composeru, dependency audit a překlady prošly také v
-[statickém běhu](../../storage/test-runs/20261112-071323-47c8aed192/report.json).
+[statickém běhu](../../.work/tests/runs/20261112-071323-47c8aed192/report.json).
 Ten se zastavil na statickém vyhodnocení guardu kompatibilních aliasů;
 finální verze guardu prošla PHPStanem bez potlačování chyb.
 
 Sjednocené pokrytí je **88/88 skupin: 87 prošlo, jedna byla přeskočena**.
-[Strojová mapa pokrytí](../../storage/core-module-audit-20261112/platform-1b-coverage.json)
+[Strojová mapa pokrytí](../../.work/archive/storage-20261115/core-module-audit-20261112/platform-1b-coverage.json)
 uvádí úspěšný report každé skupiny. Memcached server není dostupný; symlink
 escape fixture také nemohla vytvořit symlink, zbytek dané skupiny prošel.
 

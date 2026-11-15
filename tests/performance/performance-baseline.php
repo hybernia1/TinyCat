@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
-$path = $root . '/storage/performance/comparison-2.0.25-vs-2.5.0.json';
+$path = $root . '/docs/performance/results/comparison-2.0.25-vs-2.5.0.json';
 $report = json_decode((string) file_get_contents($path), true);
 
 if (!is_array($report)) {

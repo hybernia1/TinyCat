@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), http = require('node:http');
 const {execFileSync} = require('node:child_process');
 const root = path.resolve(__dirname, '../..');
-const modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root,'storage/ui-webkit-tools/node_modules/playwright');
+const modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root,'.work/tools/ui-webkit-tools/node_modules/playwright');
 if (!fs.existsSync(modulePath)) { console.log('SKIP native link labels: set TINYCAT_TEST_PLAYWRIGHT_MODULE'); process.exit(0); }
 const {webkit} = require(modulePath);
 const axe = fs.readFileSync(require.resolve('axe-core/axe.min.js',{paths:[modulePath]}),'utf8');

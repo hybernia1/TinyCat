@@ -8,6 +8,21 @@ distributions and independently owned Blog and Social storage. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Upgrading to 6.0.4
+
+Release 6.0.4 improves core startup and shared UI asset selection. It adds no
+schema migration over 6.0.3 and preserves the signed administration upgrade
+from stable 5.16.0 and newer, including 5.22.2. Earlier migrations still run when
+upgrading an older installation. Use the installation ZIP only for a new site.
+
+The development workspace change affects source checkouts and tools only.
+Existing application storage, uploads, configuration and backups stay in place.
+
+```bash
+php tools/release/build-update.php --version=6.0.4 --assembly=platform --both --legacy-upgrade --output=dist/release-6.0.4
+php tools/release/release-update-rehearsal.php --artifact=dist/release-6.0.4/update --baseline-version=5.22.2 --direct-web --cached-autoload
+```
+
 ## Upgrading to 6.0.3
 
 Release 6.0.3 supports the normal signed administration update from stable
@@ -326,7 +341,7 @@ php tools/release/update-key.php
 ```
 
 The command writes the private key to the ignored
-`storage/update-signing.key` file and prints the public key. The public key is
+`.work/keys/update-signing.key` file and prints the public key. The public key is
 pinned in `App/Core/Updates/Manager.php`; the private key must never be committed or uploaded
 to a web release.
 

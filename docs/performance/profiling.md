@@ -2,7 +2,7 @@
 
 New and changed list queries follow the [selection and pagination standard](../contracts/query-selection-standard.md).
 Store each run's reports with its commit, dataset and environment below
-`storage/performance/`; historical measurements do not describe current performance.
+`.work/performance/`; historical measurements do not describe current performance.
 
 Use a dedicated database, never reset the development or production installation.
 The preparation tool copies table definitions only and writes a private configuration
@@ -10,8 +10,8 @@ with a random `tinycat_perf_*` database name. Keep that directory outside public
 hosting and source control; its configuration contains database credentials.
 
 ```sh
-php tools/performance/prepare-performance.php --config=config.php --directory=storage/performance/run
-php -d memory_limit=256M tools/data/demo-import.php --config=storage/performance/run/config.php --profile=million --users=10000 --min-posts=8 --max-posts=12 --min-comments=10 --max-comments=18 --batch-size=500 --seed=250 --anchor="2026-10-26 10:00:00" --state=storage/performance/run/state.json --report=storage/performance/run/import.json --jsonl=1
+php tools/performance/prepare-performance.php --config=config.php --directory=.work/performance/run
+php -d memory_limit=256M tools/data/demo-import.php --config=.work/performance/run/config.php --profile=million --users=10000 --min-posts=8 --max-posts=12 --min-comments=10 --max-comments=18 --batch-size=500 --seed=250 --anchor="2026-10-26 10:00:00" --state=.work/performance/run/state.json --report=.work/performance/run/import.json --jsonl=1
 ```
 
 This produces roughly 100,000 posts and several million related rows, including
@@ -22,8 +22,8 @@ the same command with `--reset=0`; the importer resumes from its checkpoint.
 Wait for a complete import before collecting results.
 
 ```sh
-php tools/performance/profile-performance.php --config=storage/performance/run/config.php --root=storage/performance/release-app --output=storage/performance/run/before-public.json --requests=40
-php tools/performance/profile-performance.php --config=storage/performance/run/config.php --root=storage/performance/release-app --output=storage/performance/run/before-admin.json --requests=40 --user=1 --paths=/admin,/admin/users,/admin/moderation/reports,/api/notifications
+php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/release-app --output=.work/performance/run/before-public.json --requests=40
+php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/release-app --output=.work/performance/run/before-admin.json --requests=40 --user=1 --paths=/admin,/admin/users,/admin/moderation/reports,/api/notifications
 ```
 
 `--root` selects an extracted release or a source checkout. Prefer the extracted
@@ -72,8 +72,8 @@ same visibility, permissions, content and pagination behavior.
 ## Concurrent refresh and response validation
 
 ```sh
-php tools/performance/profile-performance.php --config=storage/performance/run/config.php --root=storage/performance/candidate-app --output=storage/performance/run/cold-cache.json --workers=4 --requests=40 --paths=/api/site/sidebar
-php tools/performance/profile-performance.php --config=storage/performance/run/config.php --root=storage/performance/candidate-app --output=storage/performance/run/expired-cache.json --workers=4 --requests=40 --paths=/api/site/sidebar --expire=public_trending_tags_v2_8_7,public_top_authors_ranked_5_7
+php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/candidate-app --output=.work/performance/run/cold-cache.json --workers=4 --requests=40 --paths=/api/site/sidebar
+php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/candidate-app --output=.work/performance/run/expired-cache.json --workers=4 --requests=40 --paths=/api/site/sidebar --expire=public_trending_tags_v2_8_7,public_top_authors_ranked_5_7
 ```
 
 The first command sends a simultaneous cold burst, then warm traffic. `--expire`
@@ -87,12 +87,12 @@ equivalent API runs. HTTP 200 with a warning-corrupted JSON body fails validatio
 ## PHP call costs
 
 ```sh
-php tools/performance/instrument-performance.php --source=storage/performance/candidate-app --directory=storage/performance/profile-candidate
-php tools/performance/profile-performance.php --config=storage/performance/run/config.php --root=storage/performance/profile-candidate --output=storage/performance/run/php-calls.json --requests=10 --paths=/api/statuses?limit=50
+php tools/performance/instrument-performance.php --source=.work/performance/candidate-app --directory=.work/performance/profile-candidate
+php tools/performance/profile-performance.php --config=.work/performance/run/config.php --root=.work/performance/profile-candidate --output=.work/performance/run/php-calls.json --requests=10 --paths=/api/statuses?limit=50
 ```
 
 The first command copies an uninstrumented export into a **new** directory under
-`storage/performance`, outside the source export. It instruments completed named
+`.work/performance`, outside the source export. It instruments completed named
 PHP functions using `try/finally`; closures, reference-returning functions,
 templates and compiled catalogs remain untouched. Raw request traces then include
 call counts, inclusive time and self time. Calls ending with `exit` are not reported

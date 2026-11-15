@@ -134,7 +134,7 @@ ověřovací soubor byl následně přesunut z webu do neveřejného protokolu.
 `/install` vrací 404, tedy instalátor není
 ve stávající instalaci otevřený. Neexistující kořen API `/api` vrací 404
 s JSON odpovědí. Šlo o anonymní read-only smoke, nikoli přihlášené UI,
-instalaci, migraci nebo úplný end-to-end průchod. [Výsledek smoke](../../storage/laragon-environment-check-20261112.json).
+instalaci, migraci nebo úplný end-to-end průchod. [Výsledek smoke](../../.work/archive/storage-20261115/laragon-environment-check-20261112.json).
 
 ## Izolované automatizované testy
 

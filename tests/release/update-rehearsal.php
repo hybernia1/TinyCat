@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../tools/support/workspace.php';
+
 // One file/rollback rehearsal covers both required runtime hops; domain DDL is
 // exercised by the existing module lifecycle and disposable MySQL fixtures.
 
@@ -13,7 +15,7 @@ $baselineVersion = (string) ($options['baseline-version'] ?? \TinyCat\Support\Ve
 if ($baselineVersion !== \TinyCat\Support\Version::MINIMUM_UPDATE) {
     throw new InvalidArgumentException('Use the supported update baseline.');
 }
-$temporaryRoot = $root . '/storage/update-rehearsal-' . bin2hex(random_bytes(6));
+$temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/update-rehearsal-' . bin2hex(random_bytes(6));
 $candidateRoot = $temporaryRoot . '/candidate';
 $baselineArchive = $temporaryRoot . '/tinycat-' . $baselineVersion . '.zip';
 $installRoot = $temporaryRoot . '/install';
@@ -179,6 +181,7 @@ try {
     }
 
     $copyTree($root . '/tools/release/build-update.php', $candidateRoot . '/tools/release/build-update.php');
+    $copyTree($root . '/tools/support/workspace.php', $candidateRoot . '/tools/support/workspace.php');
     $copyTree($root . '/tools/release/zip-timestamps.php', $candidateRoot . '/tools/release/zip-timestamps.php');
     $copyTree($root . '/tools/release/publish-artifact.php', $candidateRoot . '/tools/release/publish-artifact.php');
     $copyTree($root . '/tools/assets/compile-assets.php', $candidateRoot . '/tools/assets/compile-assets.php');

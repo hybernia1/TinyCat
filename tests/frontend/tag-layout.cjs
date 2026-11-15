@@ -2,7 +2,7 @@
 const assert = require("node:assert/strict"), fs = require("node:fs"), path = require("node:path"), http = require("node:http");
 const {execFileSync} = require("node:child_process");
 const root = path.resolve(__dirname, "../..");
-const modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root, "storage/ui-webkit-tools/node_modules/playwright");
+const modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root, ".work/tools/ui-webkit-tools/node_modules/playwright");
 if (!fs.existsSync(modulePath)) { console.log("SKIP native tag layout: set TINYCAT_TEST_PLAYWRIGHT_MODULE"); process.exit(0); }
 const {webkit} = require(modulePath);
 function read(file, ...args) { return JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || "php", [path.join(root, file), ...args], {encoding:"utf8", maxBuffer:8e6})); }

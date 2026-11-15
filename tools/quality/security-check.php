@@ -32,11 +32,19 @@ $patterns = [
     'Google API key' => '/\bAIza[0-9A-Za-z_-]{35}\b/',
 ];
 $textExtensions = ['css', 'htaccess', 'html', 'ini', 'js', 'json', 'md', 'neon', 'php', 'txt', 'xml', 'yaml', 'yml'];
-$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
+$sourceFiles = new RecursiveCallbackFilterIterator(
+    new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
+    static function (SplFileInfo $file) use ($root): bool {
+        $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
+        return !$file->isLink()
+            && preg_match('~^(?:\.git|\.work|dist|storage|uploads|vendor|tests/security)(?:/|$)~', $relative) !== 1;
+    }
+);
+$iterator = new RecursiveIteratorIterator($sourceFiles);
 foreach ($iterator as $file) {
     if (!$file instanceof SplFileInfo || !$file->isFile() || $file->isLink()) continue;
     $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
-    if (preg_match('~^(?:\.git|dist|storage|uploads|vendor|tests/security)(?:/|$)~', $relative) === 1) continue;
+    if (preg_match('~^(?:\.git|\.work|dist|storage|uploads|vendor|tests/security)(?:/|$)~', $relative) === 1) continue;
     if ($relative === 'config.php' || !in_array(strtolower($file->getExtension()), $textExtensions, true)) continue;
     $source = file_get_contents($file->getPathname());
     if (!is_string($source)) continue;
@@ -62,7 +70,7 @@ if (!is_array($deletions)) {
             if ($managedPath($path) !== $path) {
                 $failures[] = "unsafe deletion path in {$version}: {$path}";
             }
-            if (preg_match('~^(?:config\.php|storage|uploads|tests|tools|vendor|\.git)(?:/|$)~', $path) === 1) {
+            if (preg_match('~^(?:config\.php|storage|uploads|tests|tools|vendor|\.git|\.work)(?:/|$)~', $path) === 1) {
                 $failures[] = "protected deletion path in {$version}: {$path}";
             }
         }

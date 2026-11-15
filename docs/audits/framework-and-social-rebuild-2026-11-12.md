@@ -101,6 +101,6 @@ má oba moduly aktivní a vypnutou údržbu. Výpadek služeb Laragonu mezi obě
 aktualizacemi byl vyřešen jejich opětovným zapnutím uživatelkou; nevznikl další stack.
 
 Podrobné časy, výsledky, snímky UI, parity a živé kontroly jsou v ignorovaném
-`storage/core-social-rebuild-20261112/`; měřicí reporty v `storage/test-runs/`.
+`.work/archive/storage-20261115/core-social-rebuild-20261112/`; měřicí reporty v `.work/tests/runs/`.
 Podepsané vývojové balíčky jsou mimo repo v
 `%LOCALAPPDATA%/TinyCat/builds/framework-20261112/`.

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../tools/support/workspace.php';
+
 use TinyCat\Core\Modules\Loader;
 use TinyCat\Core\Modules\Registrations;
 use TinyCat\Core\Modules\Resources;
@@ -112,7 +114,7 @@ Resources::withCatalog(new Catalog([]), static function () use ($assert, $finger
 });
 $assert(Resources::fingerprint() === $fingerprint, 'Leaving a scope restores the fingerprint of the original selection');
 
-$temporary = $root . '/storage/registry-provider-' . bin2hex(random_bytes(6));
+$temporary = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/registry-provider-' . bin2hex(random_bytes(6));
 mkdir($temporary . '/App/Modules/RegistryFixture/src', 0700, true);
 copy($root . '/tests/fixtures/modules/registry-provider.php', $temporary . '/App/Modules/RegistryFixture/src/Module.php');
 file_put_contents($temporary . '/App/Modules/RegistryFixture/module.json', json_encode(['format' => 1, 'coreApi' => 1, 'id' => 'fixture.provider', 'namespace' => 'TinyCat\\RegistryFixture\\', 'providers' => ['routes' => 'TinyCat\\RegistryFixture\\Module', 'contributions' => 'TinyCat\\RegistryFixture\\Module']], JSON_THROW_ON_ERROR));

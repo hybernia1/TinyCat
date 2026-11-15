@@ -12,7 +12,7 @@ if (PHP_SAPI !== 'cli') {
 
 $root = dirname(__DIR__, 2);
 $configPath = $root . '/config.php';
-$outputPath = $root . '/storage/performance/stage-7-scale.json';
+$outputPath = $root . '/.work/performance/stage-7-scale.json';
 foreach (array_slice($argv, 1) as $argument) {
     if (str_starts_with($argument, '--config=')) {
         $configPath = substr($argument, strlen('--config='));

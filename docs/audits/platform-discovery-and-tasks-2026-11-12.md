@@ -118,7 +118,7 @@ záznamů a rate-limit bucketů použitých při ověřování.
 | Obnovení Socialu | `6.0.0-dev.4-to-6.0.0-dev.4-20261112-152947-810d0093` |
 
 Úplný seznam testů a jejich časů obsahuje
-`storage/module-finish-20261112/verification-union.json`; zdrojové reporty jsou
+`.work/archive/storage-20261115/module-finish-20261112/verification-union.json`; zdrojové reporty jsou
 `20261112-150421-aa03592955`, `20261112-151247-de1f902a32`,
 `20261112-151713-ba40ff4ba8`, `20261112-152018-a2d3d42063` a
 `20261112-151759-ccca76fcb2`. Technický preflight zachycují reporty

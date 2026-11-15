@@ -45,9 +45,9 @@ klientského buildu místo kompilace pro každý požadavek.
 
 Reporty mají UTC identifikátory, přestože lokálně již bylo 12. listopadu:
 
-- [Styl a lint](../../storage/test-runs/20261111-230228-86d8262a70/report.json).
-- [Klientské assety](../../storage/test-runs/20261111-230236-2ae9c90e64/report.json).
-- [Oba balíčkové testy](../../storage/test-runs/20261111-230259-8bef0ca368/report.json).
+- [Styl a lint](../../.work/tests/runs/20261111-230228-86d8262a70/report.json).
+- [Klientské assety](../../.work/tests/runs/20261111-230236-2ae9c90e64/report.json).
+- [Oba balíčkové testy](../../.work/tests/runs/20261111-230259-8bef0ca368/report.json).
 
 Všechny tři reporty mají prázdný seznam změn zdrojů během běhu. Celá sada,
 ostatní browserové scénáře ani nový preflight se neopakovaly; aplikace
@@ -62,7 +62,7 @@ ani provozní rollback zálohy.
 - Publikované balíčky 5.22.2 zůstávají v `dist/release-5.22.2`.
   Jejich duplicitní stažení bylo před smazáním porovnáno pomocí SHA-256.
 - Z auditních buildů 5.22.1 zůstává jediná dvojice install/update v
-  `storage/release-archive/5.22.1-audit`. Jde o auditní build, nikoli nově
+  `.work/archive/storage-20261115/release-archive/5.22.1-audit`. Jde o auditní build, nikoli nově
   publikovaný oficiální release. Původní měřicí JSON a logy se zachovaly.
 - Lokální balíček 5.22.0 přítomen nebyl; verze zůstává dostupná přes Git tag.
   Nový balíček nebyl kvůli archivaci vytvářen ani stahován.
@@ -80,11 +80,11 @@ ani provozní rollback zálohy.
 Inventář eviduje přibližně **124,56 MiB odstraněných souborových kopií** po
 odečtení přesunutých zachovaných souborů. Není to měření volného místa celého
 disku: obě strany inventáře vynechávají runtime/cache/backup adresáře,
-symlinky a instalace nástrojů. [Strojový záznam úklidu](../../storage/cleanup-result-20261112.json)
+symlinky a instalace nástrojů. [Strojový záznam úklidu](../../.work/archive/storage-20261115/cleanup-result-20261112.json)
 uvádí konkrétní cesty a výjimky.
 
 Automatická kontrola odmítla odstranění tří zbývajících read-only Git pack
-souborů v `storage/bots-core-source/.git/objects/pack` s důvodem
+souborů v `.work/archive/storage-20261115/bots-core-source/.git/objects/pack` s důvodem
 `blocked by policy`. Zbývá přibližně 68 kB metadat; zdroje klonu jsou pryč
 a jeho úplná historie je zachovaná v bundle. Ostatní aktivní worktrees mimo
 tento repozitář ani dev nástroje se neodstraňovaly.

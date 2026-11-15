@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../tools/support/workspace.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 
 $workspaceRoot = dirname(__DIR__, 2);
@@ -47,7 +49,7 @@ $options = [
 $server = null;
 $database = null;
 $created = false;
-$demoRoot = $workspaceRoot . '/storage/demo-schema-test-' . bin2hex(random_bytes(6));
+$demoRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/demo-schema-test-' . bin2hex(random_bytes(6));
 $failures = [];
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$failures, &$checks): void {
@@ -351,7 +353,7 @@ try {
 } finally {
     if (is_dir($demoRoot)) {
         $resolvedDemo = realpath($demoRoot);
-        $storage = realpath($workspaceRoot . '/storage');
+        $storage = realpath(\TinyCat\Tools\Workspace::directory('tests/tmp'));
         if (is_string($resolvedDemo) && is_string($storage) && str_starts_with($resolvedDemo, $storage . DIRECTORY_SEPARATOR)) {
             foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($resolvedDemo, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $file) { $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname()); }
             rmdir($resolvedDemo);

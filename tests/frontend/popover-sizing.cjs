@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path'), http = require('node:http');
 const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '../..');
-const modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root, 'storage/ui-webkit-tools/node_modules/playwright');
+const modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root, '.work/tools/ui-webkit-tools/node_modules/playwright');
 if (!fs.existsSync(modulePath)) { console.log('SKIP WebKit popover sizing: set TINYCAT_TEST_PLAYWRIGHT_MODULE'); process.exit(0); }
 const { webkit } = require(modulePath);
 const fixture = JSON.parse(execFileSync(process.env.TINYCAT_TEST_PHP || 'php', [path.join(root, 'tests/presentation/fixtures/popover-sizing-fixture.php')], { encoding: 'utf8', maxBuffer: 8e6 }));

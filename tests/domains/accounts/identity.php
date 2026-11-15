@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../../tools/support/workspace.php';
+
 use TinyCat\Core\Identity\Authentication;
 use TinyCat\Core\Identity\Readiness;
 use TinyCat\Core\Identity\Roles;
@@ -17,7 +19,7 @@ catch (\TinyCat\Core\Identity\ValidationException $error) { $assert($error->issu
 $assert(new \TinyCat\Core\Identity\Participant() instanceof \TinyCat\Core\Identity\Participant, 'Legacy participant instanceof remains valid');
 $assert(new \TinyCat\Core\Identity\Deletion() instanceof \TinyCat\Core\Identity\Deletion, 'Legacy deletion instanceof remains valid');
 $assert(interface_exists(\TinyCat\Core\Identity\ProvidesLifecycle::class) && interface_exists(\TinyCat\Core\Identity\ProvidesLifecycle::class, false), 'Legacy lifecycle interface is registered with its canonical contract');
-$directory = $root . '/storage/account-identity-' . bin2hex(random_bytes(8));
+$directory = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/account-identity-' . bin2hex(random_bytes(8));
 mkdir($directory . '/sessions', 0700, true);
 $server = null;
 $pdo = new PDO('sqlite:' . $directory . '/identity.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
@@ -138,7 +140,7 @@ try {
 } finally {
     if (is_resource($server)) { proc_terminate($server); proc_close($server); }
     Connection::set(new PDO('sqlite::memory:')); unset($insert); $pdo = null;
-    $resolved = realpath($directory); $storage = realpath($root . '/storage');
+    $resolved = realpath($directory); $storage = realpath(\TinyCat\Tools\Workspace::directory('tests/tmp'));
     if ($resolved !== false && $storage !== false && str_starts_with($resolved, $storage . DIRECTORY_SEPARATOR . 'account-identity-')) {
         foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($resolved, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $entry) {
             if ($entry->isLink() || $entry->isFile()) { unlink($entry->getPathname()); } else { rmdir($entry->getPathname()); }

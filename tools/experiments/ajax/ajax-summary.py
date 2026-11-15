@@ -5,7 +5,7 @@ import statistics
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[3]
-directory = root / "storage/performance/ajax-final"
+directory = root / ".work/performance/ajax-final"
 summary = {}
 for prefix in ("controlled-", "mobile-controlled-", "releasecheck-", "mobile-releasecheck-", "isolated-", "mobile-isolated-", "safe-", "mobile-safe-"):
     source = directory / (prefix + "long-run-results.json")

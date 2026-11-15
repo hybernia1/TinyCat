@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace TinyCatTests;
 
+require_once __DIR__ . '/../../tools/support/workspace.php';
+
 /** Shared reporting for the existing runners; never loaded by the application. */
 final class Execution
 {
@@ -17,7 +19,7 @@ final class Execution
         $inherited = getenv('TINYCAT_TEST_REPORT');
         if (is_string($inherited) && is_dir($inherited)) { self::$directory = $inherited; return; }
         self::$owner = true;
-        self::$directory = dirname(__DIR__, 2) . '/storage/test-runs/' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(5));
+        self::$directory = \TinyCat\Tools\Workspace::directory('tests/runs') . '/' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(5));
         if (!mkdir(self::$directory, 0700, true)) { throw new \RuntimeException('Cannot create test report directory.'); }
         putenv('TINYCAT_TEST_REPORT=' . self::$directory);
         $root = dirname(__DIR__, 2); $inventoryStart = hrtime(true); $files = self::sourceFiles();
@@ -25,7 +27,7 @@ final class Execution
         $revision = []; exec('git rev-parse HEAD 2>' . (PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null'), $revision);
         $node = []; exec('node --version', $node);
         $browserCandidates = array_values(array_filter([getenv('TINYCAT_TEST_CHROME'), 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'], static fn (mixed $path): bool => is_string($path) && is_file($path)));
-        $playwright = getenv('TINYCAT_TEST_PLAYWRIGHT_MODULE') ?: $root . '/storage/ui-webkit-tools/node_modules/playwright';
+        $playwright = getenv('TINYCAT_TEST_PLAYWRIGHT_MODULE') ?: $root . '/.work/tools/ui-webkit-tools/node_modules/playwright';
         $package = is_file($playwright . '/package.json') ? json_decode((string) file_get_contents($playwright . '/package.json'), true, 512, JSON_THROW_ON_ERROR) : [];
         self::event(['type' => 'run', 'started_at' => gmdate(DATE_ATOM), 'php' => PHP_VERSION, 'node' => $node[0] ?? null, 'os' => PHP_OS_FAMILY,
             'browser_candidates' => $browserCandidates, 'playwright_package' => $package['version'] ?? null,

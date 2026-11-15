@@ -105,5 +105,5 @@ Zachované zálohy:
 Měřené reporty: `20261112-163914-80ced833bb`,
 `20261112-165815-f2af59408d`, `20261112-165915-cc4419a34a`.
 Srovnání, živé kontroly, build log a vizuální podklady jsou v ignorovaném
-`storage/module-ui-20261112/`. Živá instalace zůstává v Laragonu mimo repo;
+`.work/archive/storage-20261115/module-ui-20261112/`. Živá instalace zůstává v Laragonu mimo repo;
 nebyl spouštěn další Apache ani MySQL.

@@ -104,18 +104,18 @@ jako dosavadní kontrola, nikoli odlišná implementace zlib v Pythonu.
 
 Měřené reporty a konsolidovaný přehled:
 
-- `storage/platform-completion-20261112/verification-union.json`
-- `storage/test-runs/20261112-085039-a364112cbb/`
-- `storage/test-runs/20261112-085734-9e7294cd9a/`
-- `storage/test-runs/20261112-090316-dfdda0aea9/`
-- `storage/test-runs/20261112-090419-2ed7724276/`
-- `storage/test-runs/20261112-090847-90ec9a6473/`
-- `storage/test-runs/20261112-091023-90f87b844b/`
-- `storage/test-runs/20261112-085709-b50bb8f36b/`
-- `storage/test-runs/20261112-090316-d6b7890a35/`
-- `storage/test-runs/20261112-092039-53569390e2/`
-- `storage/test-runs/20261112-093040-484bd16ea3/`
-- `storage/test-runs/20261112-094414-dcdd895bfc/`
+- `.work/archive/storage-20261115/platform-completion-20261112/verification-union.json`
+- `.work/tests/runs/20261112-085039-a364112cbb/`
+- `.work/tests/runs/20261112-085734-9e7294cd9a/`
+- `.work/tests/runs/20261112-090316-dfdda0aea9/`
+- `.work/tests/runs/20261112-090419-2ed7724276/`
+- `.work/tests/runs/20261112-090847-90ec9a6473/`
+- `.work/tests/runs/20261112-091023-90f87b844b/`
+- `.work/tests/runs/20261112-085709-b50bb8f36b/`
+- `.work/tests/runs/20261112-090316-d6b7890a35/`
+- `.work/tests/runs/20261112-092039-53569390e2/`
+- `.work/tests/runs/20261112-093040-484bd16ea3/`
+- `.work/tests/runs/20261112-094414-dcdd895bfc/`
 
 ## Živá instalace
 
@@ -156,7 +156,7 @@ starší záloha není automaticky návrat celého pozdějšího řetězce změn
 Výsledné update/install artefakty jsou v privátním adresáři
 `C:/Users/Nikola/AppData/Local/TinyCat/builds/platform-20261112/release3/`.
 Podrobné výsledky a srovnání jsou v ignorovaném
-`storage/platform-completion-20261112/`; neobsahují vypsané přihlašovací údaje.
+`.work/archive/storage-20261115/platform-completion-20261112/`; neobsahují vypsané přihlašovací údaje.
 
 ## Hranice tohoto dokončení (historický stav dev.3)
 

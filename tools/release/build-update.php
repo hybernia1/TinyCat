@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/workspace.php';
+
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "This tool is available only from the command line.\n");
     exit(1);
@@ -18,7 +20,7 @@ $version = trim((string) ($options['version'] ?? ''));
 $minimumVersion = trim((string) ($options['minimum-version'] ?? \TinyCat\Support\Version::MINIMUM_UPDATE));
 $minimumPhp = trim((string) ($options['minimum-php'] ?? '8.4.0'));
 $output = trim((string) ($options['output'] ?? ($root . DIRECTORY_SEPARATOR . 'dist')));
-$keyPath = trim((string) ($options['key'] ?? ($root . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'update-signing.key')));
+$keyPath = trim((string) ($options['key'] ?? (\TinyCat\Tools\Workspace::directory('keys') . '/update-signing.key')));
 $allowDirty = array_key_exists('allow-dirty', $options);
 $freshInstall = array_key_exists('fresh-install', $options);
 $both = array_key_exists('both', $options);

@@ -16,7 +16,7 @@ $reject = static function (callable $action, string $message) use ($assert): voi
     try { $action(); } catch (RuntimeException|InvalidArgumentException $error) { $assert($error->getMessage() !== '', $message); return; }
     throw new RuntimeException($message . ' was accepted');
 };
-$directory = $root . '/storage/module-pilot-' . bin2hex(random_bytes(6));
+$directory = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/module-pilot-' . bin2hex(random_bytes(6));
 $copy = static function (string $from, string $to) use (&$copy): void {
     if (is_file($from)) { if (!copy($from, $to)) { throw new RuntimeException('Fixture copy failed.'); } return; }
     mkdir($to, 0700, true);

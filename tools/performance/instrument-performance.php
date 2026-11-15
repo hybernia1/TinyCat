@@ -1,19 +1,21 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/workspace.php';
+
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 $options = getopt('', ['source:', 'directory:']);
 $source = realpath((string) ($options['source'] ?? ''));
 $directory = (string) ($options['directory'] ?? '');
 $parent = $directory !== '' ? realpath(dirname($directory)) : false;
-$allowed = realpath(__DIR__ . '/../../storage/performance');
+$allowed = realpath(\TinyCat\Tools\Workspace::directory('performance'));
 if (!$source || !is_file($source . '/App/autoload.php') || !$parent || !$allowed || file_exists($directory)) {
-    throw new RuntimeException('Use --source=<export> --directory=<new directory below storage/performance>.');
+    throw new RuntimeException('Use --source=<export> --directory=<new directory below .work/performance>.');
 }
 $root = $parent . DIRECTORY_SEPARATOR . basename($directory);
 $normalize = static fn (string $path): string => strtolower(str_replace('\\', '/', $path));
 if (!str_starts_with($normalize($root), $normalize($allowed) . '/') || str_starts_with($normalize($root), $normalize($source) . '/')) {
-    throw new RuntimeException('The disposable destination must stay below storage/performance, outside the source export.');
+    throw new RuntimeException('The disposable destination must stay below .work/performance, outside the source export.');
 }
 mkdir($root, 0700);
 foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $entry) {

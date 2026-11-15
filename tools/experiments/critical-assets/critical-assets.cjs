@@ -3,7 +3,7 @@
 const fs = require("node:fs"), path = require("node:path"), os = require("node:os"), http = require("node:http"), zlib = require("node:zlib");
 const { spawn, execFileSync } = require("node:child_process"), { createHash } = require("node:crypto");
 const devtoolsPipe = require("../shared/devtools-pipe.cjs");
-const root = path.resolve(__dirname, "../../.."), directory = path.resolve(process.argv.find(x => x.startsWith("--directory="))?.slice(12) || path.join(root, "storage/performance/critical-assets-20261031"));
+const root = path.resolve(__dirname, "../../.."), directory = path.resolve(process.argv.find(x => x.startsWith("--directory="))?.slice(12) || path.join(root, ".work/performance/critical-assets-20261031"));
 const rounds = Number(process.argv.find(x => x.startsWith("--rounds="))?.slice(9) || 3);
 const fixedCritical = process.argv.find(x => x.startsWith("--fixed-critical="))?.slice(17);
 if (!Number.isInteger(rounds) || rounds < 1 || rounds > 10) throw Error("Invalid rounds");

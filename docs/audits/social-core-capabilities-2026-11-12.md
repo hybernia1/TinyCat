@@ -34,7 +34,7 @@ na Core/Publishing, Identity, Security, Discovery, Settings a Ui; také manifest
 šablony, klientská prezentace a kompatibilní názvy. Statický inventář není důkaz,
 že každý nalezený odkaz nastane za běhu.
 
-Podklady v ignorovaném `storage/social-core-audit-20261112/`:
+Podklady v ignorovaném `.work/archive/storage-20261115/social-core-audit-20261112/`:
 `php-inventory.json`, `scope.json`, `probe.php` a `probes.json`.
 Otisk všech 249 souborů Socialu:
 `76bf30be5e2a81f2078a48aa938d523bb4ec329cbd84b9afe9a9da1b25ec7cec`.
@@ -241,7 +241,7 @@ vstupem `Social/src/Module.php`.
 ## Ověření auditu
 
 Prošly současné kontroly hranic modulů a závislostí:
-`storage/test-runs/20261112-201623-a3a77d1f67/report.json`.
+`.work/tests/runs/20261112-201623-a3a77d1f67/report.json`.
 Ty ověřují importy a vlastnictví deklarací, nikoli všechny významové hranice;
 proto nevylučují nálezy tohoto auditu. Prošly uvedené izolované sondy.
 Plný preflight ani browserové regresní sady se pro samotný audit nespouštěly.

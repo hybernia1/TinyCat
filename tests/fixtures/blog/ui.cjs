@@ -1,7 +1,7 @@
 "use strict";
 // Uses the existing Blog fixture server and its test-only bearer identity.
 const fs = require("node:fs"), path = require("node:path"), assert = require("node:assert/strict");
-const root = path.resolve(__dirname, "../../.."), modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root, "storage/ui-webkit-tools/node_modules/playwright");
+const root = path.resolve(__dirname, "../../.."), modulePath = process.env.TINYCAT_TEST_PLAYWRIGHT_MODULE || path.join(root, ".work/tools/ui-webkit-tools/node_modules/playwright");
 if (!fs.existsSync(modulePath)) { console.log("SKIP Blog browser layout: Playwright unavailable"); process.exit(0); }
 const { chromium, webkit } = require(modulePath);
 const executablePath = process.env.TINYCAT_TEST_BLOG_BROWSER === 'webkit' ? undefined : [process.env.TINYCAT_TEST_CHROME, "C:/Program Files/Google/Chrome/Application/chrome.exe", "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"].filter(Boolean).find(file => fs.existsSync(file));

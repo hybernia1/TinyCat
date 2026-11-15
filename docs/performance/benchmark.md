@@ -62,7 +62,7 @@ inspection and `EXPLAIN ANALYZE`, run:
 
 ```bash
 php -d memory_limit=128M tools/performance/scale-benchmark.php \
-  --output=storage/performance/scale-results.json
+  --output=.work/performance/scale-results.json
 ```
 
 Keep the resulting measurements with the tested commit and dataset. Evaluate
@@ -85,7 +85,7 @@ php tools/performance/compare-performance.php \
   --warmup-requests=8 \
   --candidate-label=2.0.26 \
   --order=baseline-first \
-  --output=storage/performance/comparison.json
+  --output=.work/performance/comparison.json
 ```
 
 Before sending load, the runner verifies table counts and representative IDs
@@ -110,3 +110,7 @@ local run as directional rather than a universal capacity claim.
 Use the comparison runner above for new measurements and `composer preflight`
 for development and release checks. Historical Stage 8 orchestration has been
 removed; its implementation remains in Git history.
+
+Default importer checkpoints and reports are stored in `.work/imports/`,
+separated by a hash of the installation path. Explicit `--state` and `--report`
+paths remain supported; use them when resuming a historical checkpoint.

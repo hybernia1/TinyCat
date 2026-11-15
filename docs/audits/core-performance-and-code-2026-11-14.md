@@ -309,13 +309,13 @@ kontrolovat skutečné HTML a resource po aktualizaci, nejen verzi a readiness D
 
 Rutinní podklady jsou v ignorovaném pracovním adresáři:
 
-- [HTTP](../../storage/performance/core-audit-20261114/http-refined.json)
-- [SQL a footprint](../../storage/performance/core-audit-20261114/cli-sql-probes.json)
-- [Volání přihlášení](../../storage/performance/core-audit-20261114/calls-login.json)
-- [Volání dashboardu](../../storage/performance/core-audit-20261114/calls-admin.json)
-- [Assety](../../storage/performance/core-audit-20261114/asset-footprint.json)
-- [Inventář](../../storage/performance/core-audit-20261114/inventory.json)
-- [Shoda zdrojů](../../storage/performance/core-audit-20261114/source-parity.json)
+- [HTTP](../../.work/performance/core-audit-20261114/http-refined.json)
+- [SQL a footprint](../../.work/performance/core-audit-20261114/cli-sql-probes.json)
+- [Volání přihlášení](../../.work/performance/core-audit-20261114/calls-login.json)
+- [Volání dashboardu](../../.work/performance/core-audit-20261114/calls-admin.json)
+- [Assety](../../.work/performance/core-audit-20261114/asset-footprint.json)
+- [Inventář](../../.work/performance/core-audit-20261114/inventory.json)
+- [Shoda zdrojů](../../.work/performance/core-audit-20261114/source-parity.json)
 
 Výsledky platí pro malou lokální instalaci s jedním účtem. Nejsou důkazem
 propustnosti při souběhu, škálování MySQL nebo rychlosti produkčního serveru.
@@ -353,7 +353,7 @@ a PHPStan. Přihlášení, dashboard, správa účtů a účtové API prošly HT
 se zálohou původních souborů. Databáze a konfigurace Apache se neměnily.
 Plný preflight v této etapě neběžel.
 
-[Data porovnání](../../storage/performance/core-easywins-20261114/comparison.json)
+[Data porovnání](../../.work/performance/core-easywins-20261114/comparison.json)
 
 ## A2 — navazující optimalizace 15. 11. 2026
 
@@ -393,11 +393,11 @@ Plný preflight v této průběžné etapě neběžel. Tři runtime soubory jsou
 synchronizované na tinycat.test se zálohou, bez změn DB a serverové konfigurace.
 Změny nejsou součástí již vydaných balíčků 6.0.3.
 
-Podklady: [počty před loginem](../../storage/performance/core-metadata-20261115/before-login.json),
-[počty po loginu](../../storage/performance/core-metadata-20261115/final-login.json),
-[počty před dashboardem](../../storage/performance/core-metadata-20261115/before-admin.json),
-[počty po dashboardu](../../storage/performance/core-metadata-20261115/final-admin.json)
-a [ověřené HTTP porovnání](../../storage/performance/core-metadata-20261115/http-verified-comparison.json).
+Podklady: [počty před loginem](../../.work/performance/core-metadata-20261115/before-login.json),
+[počty po loginu](../../.work/performance/core-metadata-20261115/final-login.json),
+[počty před dashboardem](../../.work/performance/core-metadata-20261115/before-admin.json),
+[počty po dashboardu](../../.work/performance/core-metadata-20261115/final-admin.json)
+a [ověřené HTTP porovnání](../../.work/performance/core-metadata-20261115/http-verified-comparison.json).
 
 ## A3 — klientské závislosti a přenos 15. 11. 2026
 
@@ -432,9 +432,9 @@ obnova sidebaru, řazení a závody při obnově seznamů. Testovací obaly admi
 scénářů nyní výslovně načítají administrační vstup. Plný preflight neběžel.
 Runtime Identity a generované core assety jsou na tinycat.test se zálohou.
 
-Podklady: [původní JS](../../storage/performance/core-assets-20261115/before-js.json),
-[aktuální JS včetně gzip](../../storage/performance/core-assets-20261115/after-js.json)
-a [ověřené hlavičky komprese](../../storage/performance/core-assets-20261115/compression-headers.txt).
+Podklady: [původní JS](../../.work/performance/core-assets-20261115/before-js.json),
+[aktuální JS včetně gzip](../../.work/performance/core-assets-20261115/after-js.json)
+a [ověřené hlavičky komprese](../../.work/performance/core-assets-20261115/compression-headers.txt).
 
 ## A2/A3 — ověření s moduly 15. 11. 2026
 
@@ -479,10 +479,10 @@ prošel pro 14 scope. Nový /blog má stejný rozpočet jako dosavadní veřejn�
 existující limity se nezvyšovaly. Prošly překlady, lint a styl. Plný preflight
 v této průběžné etapě neběžel; modulové změny nejsou vydané.
 
-Podklady: [matice před úpravou deklarací](../../storage/performance/module-assets-20261115/before.json),
-[matice po úpravě](../../storage/performance/module-assets-20261115/after.json),
-[platformový report](../../storage/performance/module-assets-20261115/platform-report.json)
-a [společný startup po optimalizaci](../../storage/performance/module-assets-20261115/start-after-combined.json).
+Podklady: [matice před úpravou deklarací](../../.work/performance/module-assets-20261115/before.json),
+[matice po úpravě](../../.work/performance/module-assets-20261115/after.json),
+[platformový report](../../.work/performance/module-assets-20261115/platform-report.json)
+a [společný startup po optimalizaci](../../.work/performance/module-assets-20261115/start-after-combined.json).
 
 ## Společné UI místo modulových větví — 15. 11. 2026
 

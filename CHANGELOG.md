@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.4 - 2026-11-15
+
+- Reduce repeated core startup work with selection-scoped provider validation and immutable distribution snapshots.
+- Load administration and module assets only where needed, consolidate shared notifications and filter behavior, and open Blog editors through canonical resource links.
+- Separate developer reports, fixtures, measurements, browser tooling and signing keys into a private development workspace. Preserve historical outputs and versioned benchmarks without relocating application storage or uploads.
+- Keep signed administration upgrades from stable 5.16.0 and newer, including 5.22.2; no additional schema migration is introduced by this release.
+
 ## 6.0.3 - 2026-11-14
 
 - Replace domain-specific inbox columns with an indexed subject ID. Registered core and module notification types own subject requirements, lazy batch hydration, text and canonical links.

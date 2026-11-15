@@ -182,7 +182,7 @@ po instalaci dev závislostí; nevytvářej alternativní univerzální runner.
 
 Během ucelené etapy používej cílené kontroly; úplný měřený preflight patří
 na její konec. Současné runnery zaznamenávají časy, výsledky, přeskoky a rozsah
-do `storage/test-runs/`. Počet assertions není měřítkem pokrytí ani důvodem
+do `.work/tests/runs/`. Počet assertions není měřítkem pokrytí ani důvodem
 pro přidání další úplné integrační kopie stejného scénáře.
 
 | Změna | Relevantní kontroly |
@@ -213,3 +213,7 @@ relativních importů a kopírování nástrojů do testovacích fixture. UI inv
 obnovuj přes `python tools/assets/ui-inventory.py`. Výsledky běhů patří do ignorovaného
 storage. Nové nástroje zařaď podle účelu a zdokumentuj jejich vstup. Samotné
 stáří ani chybějící interní volající neprokazují nepotřebnost CLI příkazu.
+
+Developer outputs belong in `.work/`, through `tools/support/workspace.php`,
+not runtime `storage/`. Preserve keys, backups and resumable import state there.
+See `docs/development/storage.md`.

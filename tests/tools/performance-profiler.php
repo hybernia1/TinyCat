@@ -1,8 +1,24 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../tools/support/workspace.php';
+
 require __DIR__ . '/../../tools/performance/lib/ProfileDatabase.php';
 require __DIR__ . '/../../tools/performance/lib/CallProfile.php';
+
+foreach (['../storage', '/absolute', 'C:/outside', 'tests//tmp', 'tests/../tmp', ''] as $invalid) {
+    try {
+        \TinyCat\Tools\Workspace::directory($invalid);
+    } catch (InvalidArgumentException) {
+        continue;
+    }
+    throw new RuntimeException('Development workspace accepted an unsafe category.');
+}
+$workspace = \TinyCat\Tools\Workspace::directory('tests/tmp');
+if (str_replace('\\', '/', $workspace) !== str_replace('\\', '/', dirname(__DIR__, 2)) . '/.work/tests/tmp') {
+    throw new RuntimeException('Development outputs must remain separate from runtime storage.');
+}
+echo "PASS development workspace rejects traversal and isolates outputs\n";
 
 $database = new \TinyCat\Tools\Performance\ProfileDatabase('sqlite::memory:', '', '');
 $database->exec('CREATE TABLE sample (value INTEGER)');
@@ -31,7 +47,7 @@ if ($profile['outer']['calls'] !== 1 || $profile['inner']['calls'] !== 1
 echo "PASS nested call profiling separates inclusive and self time\n";
 
 $root = dirname(__DIR__, 2);
-$temporary = $root . '/storage/performance/profiler-empty-' . bin2hex(random_bytes(6));
+$temporary = \TinyCat\Tools\Workspace::directory('performance') . '/profiler-empty-' . bin2hex(random_bytes(6));
 mkdir($temporary . '/source/App', 0700, true);
 file_put_contents($temporary . '/source/App/autoload.php', "<?php\n");
 copy($root . '/tests/fixtures/performance/profiler-empty.php', $temporary . '/source/App/Fixture.php');

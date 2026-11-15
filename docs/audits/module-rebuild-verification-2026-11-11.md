@@ -31,7 +31,7 @@ jsme opravili její příčinu a pokračovali explicitním výběrem přes stáv
 Nejde o jeden nepřerušený zelený preflight. Původní neúspěšné pokusy i položky
 `not-run` zůstávají v jednotlivých reportech; navazující běh na ně odkazuje.
 
-Reporty v `storage/test-runs/<ID>/` obsahují `report.json`, `events.jsonl`
+Reporty v `.work/tests/runs/<ID>/` obsahují `report.json`, `events.jsonl`
 a log každého příkazu. Zaznamenávají prostředí, revizi, otisk pracovních
 zdrojů, plán, skutečný výběr, stav, monotónní čas, návratový kód a důvody
 přeskočení. Produkční konfigurace, klíče a média se do otisku nečtou.
@@ -137,7 +137,7 @@ Součet časů posledních dokončených položek bez dvojího počítání rodi
 
 Oba poslední balíčkové a statické běhy mají shodný otisk zdrojů a prázdný seznam změn během běhu. Starší dílčí výsledky pocházejí z předchozích opravovaných stromů; matice není předstíraným výsledkem jediného finálního příkazu.
 
-Strojová data: [JSON](../../storage/rebuild-measurements.json), [CSV](../../storage/rebuild-measurements.csv). Souhrn nepřepisuje původní reporty.
+Strojová data: [JSON](../../.work/archive/storage-20261115/rebuild-measurements.json), [CSV](../../.work/archive/storage-20261115/rebuild-measurements.csv). Souhrn nepřepisuje původní reporty.
 
 ### Nejdražší poslední úspěšné položky
 
@@ -160,22 +160,22 @@ Strojová data: [JSON](../../storage/rebuild-measurements.json), [CSV](../../sto
 
 | Report | ID / původní JSON | Celkem s | Neúspěšné jednotlivé kontroly |
 | --- | --- | ---: | ---: |
-| R01 | [20261111-213531-8e03e55264](../../storage/test-runs/20261111-213531-8e03e55264/report.json) | 259.542 | 1 |
-| R02 | [20261111-214414-26faaa4d2b](../../storage/test-runs/20261111-214414-26faaa4d2b/report.json) | 37.685 | 1 |
-| R03 | [20261111-214843-c59931727c](../../storage/test-runs/20261111-214843-c59931727c/report.json) | 1.732 | 1 |
-| R04 | [20261111-215025-e5d92a7030](../../storage/test-runs/20261111-215025-e5d92a7030/report.json) | 360.051 | 0 |
-| R05 | [20261111-215706-5d97c5a1f0](../../storage/test-runs/20261111-215706-5d97c5a1f0/report.json) | 113.317 | 1 |
-| R06 | [20261111-220111-55312eeed8](../../storage/test-runs/20261111-220111-55312eeed8/report.json) | 27.780 | 0 |
-| R07 | [20261111-220312-c6ba0b69d7](../../storage/test-runs/20261111-220312-c6ba0b69d7/report.json) | 262.684 | 1 |
-| R08 | [20261111-221720-5b8be2ca5c](../../storage/test-runs/20261111-221720-5b8be2ca5c/report.json) | 21.287 | 0 |
-| R09 | [20261111-221752-fe38409602](../../storage/test-runs/20261111-221752-fe38409602/report.json) | 25.274 | 1 |
-| R10 | [20261111-221840-7a2136e832](../../storage/test-runs/20261111-221840-7a2136e832/report.json) | 8.894 | 1 |
-| R11 | [20261111-221911-4c2ddeb3ff](../../storage/test-runs/20261111-221911-4c2ddeb3ff/report.json) | 274.529 | 1 |
-| R12 | [20261111-222431-8e9f3b45b8](../../storage/test-runs/20261111-222431-8e9f3b45b8/report.json) | 186.839 | 1 |
-| R13 | [20261111-222943-184641ab88](../../storage/test-runs/20261111-222943-184641ab88/report.json) | 297.770 | 0 |
-| R14 | [20261111-223529-fca61b0c48](../../storage/test-runs/20261111-223529-fca61b0c48/report.json) | 119.291 | 1 |
-| R15 | [20261111-223808-113bc232a7](../../storage/test-runs/20261111-223808-113bc232a7/report.json) | 346.781 | 0 |
-| R16 | [20261111-224439-04e1ad0d60](../../storage/test-runs/20261111-224439-04e1ad0d60/report.json) | 199.455 | 0 |
+| R01 | [20261111-213531-8e03e55264](../../.work/tests/runs/20261111-213531-8e03e55264/report.json) | 259.542 | 1 |
+| R02 | [20261111-214414-26faaa4d2b](../../.work/tests/runs/20261111-214414-26faaa4d2b/report.json) | 37.685 | 1 |
+| R03 | [20261111-214843-c59931727c](../../.work/tests/runs/20261111-214843-c59931727c/report.json) | 1.732 | 1 |
+| R04 | [20261111-215025-e5d92a7030](../../.work/tests/runs/20261111-215025-e5d92a7030/report.json) | 360.051 | 0 |
+| R05 | [20261111-215706-5d97c5a1f0](../../.work/tests/runs/20261111-215706-5d97c5a1f0/report.json) | 113.317 | 1 |
+| R06 | [20261111-220111-55312eeed8](../../.work/tests/runs/20261111-220111-55312eeed8/report.json) | 27.780 | 0 |
+| R07 | [20261111-220312-c6ba0b69d7](../../.work/tests/runs/20261111-220312-c6ba0b69d7/report.json) | 262.684 | 1 |
+| R08 | [20261111-221720-5b8be2ca5c](../../.work/tests/runs/20261111-221720-5b8be2ca5c/report.json) | 21.287 | 0 |
+| R09 | [20261111-221752-fe38409602](../../.work/tests/runs/20261111-221752-fe38409602/report.json) | 25.274 | 1 |
+| R10 | [20261111-221840-7a2136e832](../../.work/tests/runs/20261111-221840-7a2136e832/report.json) | 8.894 | 1 |
+| R11 | [20261111-221911-4c2ddeb3ff](../../.work/tests/runs/20261111-221911-4c2ddeb3ff/report.json) | 274.529 | 1 |
+| R12 | [20261111-222431-8e9f3b45b8](../../.work/tests/runs/20261111-222431-8e9f3b45b8/report.json) | 186.839 | 1 |
+| R13 | [20261111-222943-184641ab88](../../.work/tests/runs/20261111-222943-184641ab88/report.json) | 297.770 | 0 |
+| R14 | [20261111-223529-fca61b0c48](../../.work/tests/runs/20261111-223529-fca61b0c48/report.json) | 119.291 | 1 |
+| R15 | [20261111-223808-113bc232a7](../../.work/tests/runs/20261111-223808-113bc232a7/report.json) | 346.781 | 0 |
+| R16 | [20261111-224439-04e1ad0d60](../../.work/tests/runs/20261111-224439-04e1ad0d60/report.json) | 199.455 | 0 |
 
 ### Statické kroky
 

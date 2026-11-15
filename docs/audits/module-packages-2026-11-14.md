@@ -59,8 +59,8 @@ Součet posledních dokončených běhů bez započtení nadřazených wrapperů
 **986,067 s (16 min 26 s)**. Součet všech dokončených pokusů etapy, včetně
 diagnostiky uploadu a oprav, je **1 784,464 s (29 min 44 s)**. Nejde o dobu
 na hodinách; přerušené nedokončené scénáře nejsou v součtu. Měření je
-v `storage/module-packages-20261114/verification.json` a jednotlivých
-`storage/test-runs/` reportech. Počet hlavních skupin zůstal 88.
+v `.work/archive/storage-20261115/module-packages-20261114/verification.json` a jednotlivých
+`.work/tests/runs/` reportech. Počet hlavních skupin zůstal 88.
 
 Další praktické ověření použilo skutečně sestavený čistý core instalační ZIP
 a samostatný Blog ZIP: 18 tabulek před i po nahrání, 22 po aktivaci, funkční

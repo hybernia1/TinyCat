@@ -37,10 +37,10 @@ final readonly class ComparisonOptions
             $values[str_replace('_', '-', strtolower($key))] = $value;
         }
 
-        $baselineRoot = self::directory($values, 'baseline-root', $workspace . '/storage/performance-2.0.25/app', $workspace);
-        $candidateRoot = self::directory($values, 'candidate-root', $workspace . '/storage/apache-release-stage/app', $workspace);
+        $baselineRoot = self::directory($values, 'baseline-root', $workspace . '/.work/performance/baseline/app', $workspace);
+        $candidateRoot = self::directory($values, 'candidate-root', $workspace . '/.work/performance/candidate/app', $workspace);
         $output = self::absolute(
-            (string) ($values['output'] ?? ($workspace . '/storage/performance/comparison-2.0.25-vs-2.0.29.json')),
+            (string) ($values['output'] ?? ($workspace . '/.work/performance/comparison-2.0.25-vs-2.0.29.json')),
             $workspace,
         );
 

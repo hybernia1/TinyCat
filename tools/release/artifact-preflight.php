@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/workspace.php';
+
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "This tool is available only from the command line.\n");
     exit(1);
@@ -18,7 +20,7 @@ if (!str_starts_with($artifact, DIRECTORY_SEPARATOR) && preg_match('~^[A-Za-z]:[
 
 $manifestPath = $artifact . DIRECTORY_SEPARATOR . 'tinycat-update.json';
 $signaturePath = $artifact . DIRECTORY_SEPARATOR . 'tinycat-update.sig';
-$temporaryRoot = $root . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'artifact-preflight-' . bin2hex(random_bytes(6));
+$temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/artifact-preflight-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . DIRECTORY_SEPARATOR . 'install';
 $failures = [];
 $checks = 0;

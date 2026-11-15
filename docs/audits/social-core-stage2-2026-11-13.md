@@ -82,8 +82,8 @@ OG/JSON-LD, izolované databázové scénáře a nativní UI. Nový univerzáln�
 ani další úplná kopie integrační sady nevznikly.
 
 Podrobné výsledky a časy jsou v ignorovaném
-`storage/social-core-stage2-20261113/verification.json`; jednotlivé reporty zůstávají
-v `storage/test-runs/`.
+`.work/archive/storage-20261115/social-core-stage2-20261113/verification.json`; jednotlivé reporty zůstávají
+v `.work/tests/runs/`.
 
 ## Nasazení na tinycat.test
 

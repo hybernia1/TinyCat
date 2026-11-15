@@ -178,7 +178,7 @@ jejich registrační rozhraní a nové autoload mapy jsou součástí dalších 
   odmítnut jako „blocked by policy“; tato varianta nebyla ověřena.
 - Windows úklid některých dočasných release adresářů vypsal „Directory not
   empty“. Nešlo o selhání kontrol; nejde ani o tvrzení, že nezůstaly žádné
-  dočasné soubory. Log běhu je v ignorovaném `storage/modular-platform-preflight.log`.
+  dočasné soubory. Log běhu je v ignorovaném `.work/archive/storage-20261115/modular-platform-preflight.log`.
 
 Nezměnily se databázové migrace, API adresy, doménové operace ani výběr
 frontendových zdrojů. Legacy moduly stále obsahují původní vazby; zelený
@@ -214,7 +214,7 @@ nevybraného modulu. Samotný přesun globu do nové pomocné třídy tuto etapu
 - Srovnání se stavem před druhou etapou potvrdilo přesnou shodu všech 165
   generovaných souborů, 193 vstupních manifestů a katalogů, devíti scopes
   a dvanácti jazyků.
-  Inventář a hashe jsou v ignorovaném `storage/module-resources-baseline.json`.
+  Inventář a hashe jsou v ignorovaném `.work/archive/storage-20261115/module-resources-baseline.json`.
 - Nová skupina `tests/quality/module-resources.php` prošla 52 cílenými
   kontrolami včetně vlastního JS/CSS, katalogu a komponent, starých kompilovaných
   cache, vyřazení zdrojů Bots, výjimek a návratu k přesně shodnému buildu.
@@ -226,7 +226,7 @@ prošlo 32 lokalizačních, 137 zdrojových a 161 kompilovaných překladových 
 Závěrečný úplný `composer preflight` prošel: 73 skupin včetně 38 frontendových
 scénářů, 5 349 API kontrol, obou podepsaných balíčků (855 update / 827 install
 runtime souborů), aktualizace z 5.16.0, přesného rollbacku a MySQL instalátoru
-(65 kontrol). Log je v ignorovaném `storage/module-resources-preflight-final.log`.
+(65 kontrol). Log je v ignorovaném `.work/archive/storage-20261115/module-resources-preflight-final.log`.
 Memcached se přeskočil kvůli nedostupnému serveru a symlink fixture kvůli
 nemožnosti vytvoření symlinku. Opakovala se známá Windows varování při úklidu
 některých dočasných release adresářů; kontroly prošly.
@@ -274,7 +274,7 @@ Zachovaly se původní identifikátory, pořadí, retenční lhůty a počáteč
 - Úplný `composer preflight` prošel: 74 skupin včetně 38 frontendových
   scénářů, 5 349 API kontrol, obou podepsaných balíčků (870 update / 842 install
   runtime souborů), aktualizace z 5.16.0, přesného rollbacku a MySQL instalátoru
-  (65 kontrol). Log je v ignorovaném `storage/runtime-registries-preflight.log`.
+  (65 kontrol). Log je v ignorovaném `.work/archive/storage-20261115/runtime-registries-preflight.log`.
   Memcached se přeskočil kvůli nedostupnému serveru, symlink fixture kvůli
   nemožnosti vytvořit symlink. Známá Windows varování při úklidu dočasných
   release adresářů nezpůsobila selhání kontrol.
@@ -328,8 +328,8 @@ ale jeho DDL nelze vydávat za transakční rollback.
   podepsaný upgrade z 5.16.0, opakování a obnova po přerušení, přesný rollback,
   instalační API (22 kontrol) a restart-safe MySQL instalátor (65 kontrol).
   Všech 75 skupin je tedy pokryto, nejde o jeden dokončený běh preflightu.
-  Logy: `storage/module-pilot-preflight.log` a
-  `storage/module-pilot-release-final.log`. Po poslední úpravě ochrany balíčků
+  Logy: `.work/archive/storage-20261115/module-pilot-preflight.log` a
+  `.work/archive/storage-20261115/module-pilot-release-final.log`. Po poslední úpravě ochrany balíčků
   byl cílený pilot zopakován: 55 kontrol prošlo.
 - Memcached integrace se přeskočila kvůli nedostupnému serveru a symlink
   fixture kvůli nemožnosti vytvořit symlink na Windows. Známá varování
@@ -405,7 +405,7 @@ frontendových scénářů, 5 349 API kontrol, 55 kontrol manifestového pilotu,
 obou podepsaných balíčků (882 update / 854 install runtime souborů), aktualizace
 z 5.16.0, opakování a obnovy po přerušení, přesného rollbacku, instalačního API
 (22 kontrol) a MySQL instalátoru (65 kontrol). Log je v ignorovaném
-`storage/account-lifecycle-preflight.log`.
+`.work/archive/storage-20261115/account-lifecycle-preflight.log`.
 
 Všech 165 generovaných souborů a 193 zdrojů má stejné hashe jako baseline.
 Publikované migrace ani verze aplikace se nezměnily. Memcached se přeskočil
@@ -443,7 +443,7 @@ Další kontroly ověřují společný stav kompatibilních vstupů.
 a 55 kontrol manifestového pilotu. Prošly oba podepsané balíčky
 (886 update / 858 install runtime souborů), upgrade z 5.16.0, opakování,
 obnova po přerušení a přesný rollback, instalační API (22 kontrol)
-a MySQL instalátor (65 kontrol). Log: `storage/account-identity-preflight.log`.
+a MySQL instalátor (65 kontrol). Log: `.work/archive/storage-20261115/account-identity-preflight.log`.
 Memcached a symlink fixture zůstaly přeskočené kvůli stejným omezením prostředí
 jako v předchozím řezu.
 
@@ -453,7 +453,7 @@ Všech 165 generovaných souborů a 193 vstupů má stejné hashe jako baseline.
 Publikované migrace a verze se nezměnily.
 
 Po prvním neúspěšném testu zůstala izolovaná složka
-`storage/account-identity-323d3f3a3af1726c`. Automatická schvalovací kontrola
+`.work/archive/storage-20261115/account-identity-323d3f3a3af1726c`. Automatická schvalovací kontrola
 odmítla její dodatečné odstranění s důvodem `blocked by policy`.
 Úspěšné běhy vlastní fixture uklidily.
 
@@ -495,7 +495,7 @@ Cíleně prošlo také 47 kontrol identity, 40 kontrol uživatelských jmen,
 39 životní cyklus) a 55 kontrol manifestového pilotu. Prošly oba podepsané
 balíčky (892 update / 864 install runtime souborů), update z 5.16.0,
 opakování a obnova po přerušení, přesný rollback, instalační API (22 kontrol)
-a MySQL instalátor (65 kontrol). Log: `storage/account-onboarding-preflight.log`.
+a MySQL instalátor (65 kontrol). Log: `.work/archive/storage-20261115/account-onboarding-preflight.log`.
 Memcached a symlink fixture se přeskočily kvůli stejným omezením prostředí
 jako v předchozích řezech.
 
@@ -539,7 +539,7 @@ HTTP request/response/session, Users ani sociální služby. Prošly také
 regresí. Prošly oba podepsané balíčky (894 update / 866 install runtime
 souborů), update z 5.16.0, opakování a obnova po přerušení, přesný rollback,
 instalační API (22 kontrol) a MySQL instalátor (65 kontrol).
-Log: `storage/account-profile-preflight.log`. Memcached a symlink fixture
+Log: `.work/archive/storage-20261115/account-profile-preflight.log`. Memcached a symlink fixture
 se přeskočily kvůli stejným omezením prostředí jako v předchozích řezech.
 
 Všech 165 generovaných souborů a 193 vstupů má stejné hashe jako baseline.
@@ -580,7 +580,7 @@ Prošly i předchozí lifecycle kontroly, PHPStan, styl a hranice závislostí.
 5 349 API kontrol a 52 administrativních kontrol. Prošly oba podepsané
 balíčky (895 update / 867 install runtime souborů), update z 5.16.0,
 opakování a obnova po přerušení, přesný rollback, instalační API (22 kontrol)
-a MySQL instalátor (65 kontrol). Log: `storage/account-administration-preflight.log`.
+a MySQL instalátor (65 kontrol). Log: `.work/archive/storage-20261115/account-administration-preflight.log`.
 Memcached a symlink fixture se přeskočily kvůli stejným omezením prostředí
 jako v předchozích řezech.
 
@@ -589,7 +589,7 @@ prošla API sada znovu: 5 356 kontrol. Při prvním opakování se odhalila čas
 chyba testu e-mailového limiteru: test naplnil bucket `10:29`, požadavek už
 spotřeboval nový `10:30`. Fixture nyní naplní pozorované a dvě následující
 okna, takže zachová kontrolu limitu i na hranici minuty. Produkční limiter
-se neměnil. Finální log: `storage/account-administration-api-final.log`.
+se neměnil. Finální log: `.work/archive/storage-20261115/account-administration-api-final.log`.
 PHPStan, styl a dependency gate prošly také po posledních změnách.
 Neúspěšná Windows API fixture zůstala v ignorovaném storage kvůli hlášenému
 SQLite file locku při úklidu; finální běh prošel.
@@ -656,14 +656,14 @@ hashe s baseline.
 První úplný běh odhalil test, který přes reflexi volal soukromé `resizeSquare`
 v původní třídě Users. Odkaz byl aktualizován na skutečného vlastníka Accounts;
 samotné kontroly rasteru a průhlednosti se neměnily a prošly 50 kontrolami.
-Log prvního běhu: `storage/account-avatars-preflight.log`.
+Log prvního běhu: `.work/archive/storage-20261115/account-avatars-preflight.log`.
 
 Následný úplný `composer preflight` prošel v jediném běhu: 81 skupin včetně
 38 frontendových scénářů, 5 356 API kontrol a 44 kontrol samostatných avatarů.
 Prošly podepsané balíčky (900 update / 872 install runtime souborů), update
 z 5.16.0, opakování a obnova po přerušení, přesný rollback, instalační API
 (22 kontrol) a MySQL instalátor (65 kontrol).
-Log: `storage/account-avatars-preflight-final.log`. Memcached a symlink fixture
+Log: `.work/archive/storage-20261115/account-avatars-preflight-final.log`. Memcached a symlink fixture
 zůstaly přeskočené kvůli omezením lokálního prostředí.
 Schema, publikované migrace a verze zůstaly beze změny.
 
@@ -710,12 +710,12 @@ Závěrečné ověření:
 - První preflight zastavil test CSS scopes, který ještě očekával staré cesty
   avatar-upload a user-menu v Users. Očekávání bylo přesunuto na Accounts;
   produkční styly ani kontrakt kontroly se kvůli tomu neoslabovaly.
-  Log: `storage/accounts-module-stage-preflight.log`.
+  Log: `.work/archive/storage-20261115/accounts-module-stage-preflight.log`.
 - Následný `composer preflight` prošel celý: 82 skupin, všech 38 frontendových
   scénářů, 5 356 API kontrol, query budgets, oba podepsané balíčky
   (919 update / 891 install runtime souborů), update z 5.16.0, opakování,
   obnova po přerušení, přesný rollback, instalační API (22) a MySQL instalátor
-  (65). Log: `storage/accounts-module-stage-preflight-final.log`.
+  (65). Log: `.work/archive/storage-20261115/accounts-module-stage-preflight-final.log`.
 - Memcached integrace byla přeskočena kvůli nedostupnému lokálnímu serveru;
   symlink fixture kvůli nemožnosti vytvořit symlink na tomto Windows.
 - Dodatečný build samotného technického UI odhalil zděděné překladové vazby:
@@ -767,7 +767,7 @@ Závěrečné ověření etapy B:
   5 356 API kontrol, query budgets, oba podepsané balíčky (959 update / 931
   install runtime souborů), update z 5.16.0, opakování, obnova po přerušení,
   přesný rollback, instalační API (22) a MySQL instalátor (65).
-  Log: `storage/publishing-stage-preflight.log`.
+  Log: `.work/archive/storage-20261115/publishing-stage-preflight.log`.
 - Factory kompatibilního `Status/PostCreation` zachovává původní typ draftu
   i nový Publishing kontrakt; chrání to nová regrese v 211 write-path kontrolách.
   Po zpřesnění factory znovu prošly PHPStan a cílený lint.
@@ -838,17 +838,17 @@ Závěrečné ověření etapy C:
 - První preflight zastavil starý test očekávající všechny adresáře modulů
   ve výchozím katalogu. Očekávání nyní explicitně vyjmenovává původní sociální
   vlastníky a kontroluje neaktivní Blog. Prošlo 53 kontrol zdrojů včetně parity
-  výstupů po změnách výběru. Log: `storage/blog-stage-preflight-initial.log`.
+  výstupů po změnách výběru. Log: `.work/archive/storage-20261115/blog-stage-preflight-initial.log`.
 - Následující běh prošel browsery, domény, Blog, API a query budgets, ale
   zastavil ho časově citlivý cache test. Ten dovoloval I/O jen sekundové okno.
   Test teď posouvá mtime do stale/expired stavu s rezervou; stále rozlišuje
   čerstvou, povolenou stale a expirovanou hodnotu. Produkční cache se neměnila.
   Samostatně prošlo všech 6 kontrol. Log hlavního běhu:
-  `storage/blog-stage-preflight.log`.
+  `.work/archive/storage-20261115/blog-stage-preflight.log`.
 - Zbývajících 31 skupin bylo spuštěno samostatně bez opakování browserů a API.
   Prošly podepsané artefakty (985 update / 957 install runtime souborů),
   build příprava (28), updater (13), update z 5.16.0, opakování, přerušení,
-  přesný rollback a fresh artifact. Log: `storage/blog-stage-preflight-tail.log`.
+  přesný rollback a fresh artifact. Log: `.work/archive/storage-20261115/blog-stage-preflight-tail.log`.
   Tento pokračovací běh zastavil ještě timeout instalačního API; poslední
   dvě skupiny proto mají samostatné výsledky níže.
 - Instalace opakovaně překročila 30s HTTP limit při tvorbě tabulek. Dočasná
@@ -857,9 +857,9 @@ Závěrečné ověření etapy C:
   schématu nyní čeká 120 s, ostatní requesty zůstaly na 30 s. Produkční kód
   instalátoru ani výkonnostní limity se neměnily. Prošlo 22 instalačních API
   kontrol; naměřená tvorba 24,88 s a opakování 3,68 s. Dočasná diagnostika
-  byla ze zdrojů odstraněná. Log: `storage/blog-stage-installation-api-final.log`.
+  byla ze zdrojů odstraněná. Log: `.work/archive/storage-20261115/blog-stage-installation-api-final.log`.
 - Poslední MySQL instalátor prošel 65 kontrolami včetně deterministického
-  importu a jeho opakování. Log: `storage/blog-stage-mysql-installer.log`.
+  importu a jeho opakování. Log: `.work/archive/storage-20261115/blog-stage-mysql-installer.log`.
 - Memcached integrace byla přeskočená kvůli nedostupnému lokálnímu serveru,
   symlink fixture kvůli nemožnosti vytvořit symlink na tomto Windows.
   `git diff --check` prošel; publikované globální migrace i verze 5.22.2
@@ -933,11 +933,11 @@ Závěrečné ověření:
   `.php.tpl`. Další běh zastavila nová závislost compiled překladů na
   zdrojovém katalogu. Oprava zachovává samostatný compiled runtime a odmítání
   katalogů jiného aktivního výběru; skupina prošla 161 kontrolami v
-  `storage/modules-stage-compiled-translations.log`.
+  `.work/archive/storage-20261115/modules-stage-compiled-translations.log`.
 - Úspěšné browserové/API scénáře se zbytečně neopakovaly. Hlavní průchod je
-  v `storage/modules-stage-preflight.log`; navazujících 61 skupin skončilo
-  úspěšně v `storage/modules-stage-preflight-tail.log`. Samostatná původní
-  distribuční matice je v `storage/modules-stage-lifecycle.log`; finálních
+  v `.work/archive/storage-20261115/modules-stage-preflight.log`; navazujících 61 skupin skončilo
+  úspěšně v `.work/archive/storage-20261115/modules-stage-preflight-tail.log`. Samostatná původní
+  distribuční matice je v `.work/archive/storage-20261115/modules-stage-lifecycle.log`; finálních
   52 kontrol je součástí pokračovacího logu.
 - Přeskočené zůstaly nedostupný lokální Memcached a symlink fixture na tomto
   Windows. `git diff --check` prošel a publikované globální migrace zůstaly

@@ -58,7 +58,7 @@ lokální původ nebyl doložen. Pro první úklid byl vybrán tento konkrétní
 - `storage/backups/` — zálohy úprav příspěvků, YouTube obrázků a souvisejícího
   kódu, přibližně 10,91 MiB.
 - `storage/updates/backups/` — historické rollback zálohy, přibližně 863,21 MiB.
-- `storage/phpstan/` — obnovitelná cache analýzy, přibližně 154,84 MiB.
+- `.work/cache/phpstan/` — obnovitelná cache analýzy, přibližně 154,84 MiB.
 
 **Dokončeno a ověřeno po ručním odstranění uživatelem.** Všechny čtyři
 adresáře již neexistují. Automatické pokusy byly předtím odmítnuty kontrolou
@@ -95,7 +95,7 @@ nikoli z tvrzení, že všechny prokazatelně vznikly na localhostu.
    verzovat přenositelné testy a určit jejich místo v kontrolách; lokální
    konfiguraci a výsledky držet odděleně. Nestačí opravit odkaz v README.
 2. **Historické acceptance nástroje mají staré výchozí cesty.**
-   `prepare-acceptance.php` používá `storage/performance-2.0.25/app`
+   `prepare-acceptance.php` používá `.work/performance-2.0.25/app`
    a `storage/apache-release-stage/app`; `run-acceptance.php`,
    `aggregate-acceptance.php` a `cleanup-acceptance.php` navazují na stage 8.
    Před odstraněním těchto adresářů archivovat celý postup nebo jej převést na
@@ -103,7 +103,7 @@ nikoli z tvrzení, že všechny prokazatelně vznikly na localhostu.
 3. **Závislosti prohlížečových testů mají dva způsoby instalace.** CI instaluje
    Playwright 1.52.0 a axe-core 4.10.3 do dočasného adresáře a nastavuje
    `TINYCAT_TEST_PLAYWRIGHT_MODULE`; více lokálních testů používá fallback
-   `storage/ui-webkit-tools/node_modules/playwright`. Sjednotit instalaci,
+   `.work/tools/ui-webkit-tools/node_modules/playwright`. Sjednotit instalaci,
    rozlišení modulu a dokumentaci. Tento adresář nyní nelze prostě smazat.
 4. **Dokumentace obsahuje konkrétní drift.** README uvádí vedle dvanácti jazyků
    také pouze angličtinu a češtinu, instalaci popisuje jako schéma 2.x a obsahuje
@@ -122,15 +122,15 @@ nikoli z tvrzení, že všechny prokazatelně vznikly na localhostu.
 | `storage/updates/` | 109 | 863,21 | Zachovat; rozlišit rollback zálohy a pracovní data podle updateru a jeho retence. |
 | `storage/db-backups/` | 2 | 331,60 | Zachovat; vyhodnotit zálohovací politiku a dostupnost jiné kopie. |
 | `dist/` | 395 | 256,18 | Kandidát na promazání starých distribucí po porovnání s publikovanými releasy. |
-| `storage/phpstan/` | 1 810 | 154,84 | Obnovitelná cache; kandidát na vyčištění mimo běžící analýzu. |
+| `.work/cache/phpstan/` | 1 810 | 154,84 | Obnovitelná cache; kandidát na vyčištění mimo běžící analýzu. |
 | `storage/cache/` | 1 493 | 116,92 | Provozní cache; použít pravidla aplikace, nikoli plošné mazání storage. |
 | `storage/release-4.6.0-downloaded/` | 1 818 | 104,38 | Historický rozbalený release; kandidát po ověření návazností. |
-| `storage/performance/` | 3 521 | 100,47 | Rozdělit zachovávané baseline/reporty a obnovitelné pracovní instalace. |
+| `.work/performance/` | 3 521 | 100,47 | Rozdělit zachovávané baseline/reporty a obnovitelné pracovní instalace. |
 | `vendor/` | 78 | 83,80 | Aktivní dev závislosti z composer.lock; zachovat. |
 | `uploads/links/` | 8 913 | 35,72 | Média; bez kontroly referencí v databázi nelze označit za odpad. |
-| `storage/ui-webkit-tools/` | 210 | 20,49 | Aktivní fallback testů; nejdřív sjednotit bootstrap. |
+| `.work/tools/ui-webkit-tools/` | 210 | 20,49 | Aktivní fallback testů; nejdřív sjednotit bootstrap. |
 | `storage/update-rehearsal-75da73a72eba/` | 2 317 | 18,48 | Kandidát jako zbytek testu; prověřit dokončení a navázané DB/procesy. |
-| `storage/ui-webkit-legacy-tools/` | 485 | 13,29 | Kandidát po ověření uživatelů a sjednocení browser tooling. |
+| `.work/tools/ui-webkit-legacy-tools/` | 485 | 13,29 | Kandidát po ověření uživatelů a sjednocení browser tooling. |
 | `storage/backups/` | 85 | 10,91 | Nezařazovat do automatického úklidu bez klasifikace obsahu. |
 
 Další kandidáti: adresáře `storage/patch-mysql-*` (jednotlivě přibližně

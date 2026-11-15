@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../tools/support/workspace.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 $workspace = dirname(__DIR__, 2);
 if (!is_file($workspace . '/config.php') || !in_array('mysql', PDO::getAvailableDrivers(), true)) {
@@ -15,7 +17,7 @@ if (($db['driver'] ?? 'mysql') !== 'mysql' || empty($db['host']) || !array_key_e
 }
 $configHash = hash_file('sha256', $workspace . '/config.php');
 $name = 'tinycat_install_api_' . bin2hex(random_bytes(6));
-$root = $workspace . '/storage/install-api-' . bin2hex(random_bytes(6));
+$root = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/install-api-' . bin2hex(random_bytes(6));
 $options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false];
 $serverDb = new PDO('mysql:host=' . $db['host'] . ';port=' . ($db['port'] ?? 3306) . ';charset=utf8mb4', $db['user'], $db['password'], $options);
 $http = null;
@@ -119,7 +121,7 @@ try {
     $pdo = null;
     if ($created) { $serverDb->exec('DROP DATABASE `' . $name . '`'); }
     $resolvedRoot = realpath($root);
-    $resolvedStorage = realpath($workspace . '/storage');
+    $resolvedStorage = realpath(\TinyCat\Tools\Workspace::directory('tests/tmp'));
     if ($resolvedRoot !== false && $resolvedStorage !== false && str_starts_with($resolvedRoot, $resolvedStorage . DIRECTORY_SEPARATOR . 'install-api-')) {
         // Windows scanners can briefly retain a handle after the HTTP worker exits.
         for ($attempt = 0; $attempt < 5 && is_dir($resolvedRoot); $attempt++) {

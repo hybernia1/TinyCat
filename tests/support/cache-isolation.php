@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../tools/support/workspace.php';
+
 // Child HTTP servers inherit this directory. Never share a fixture cache with
 // the developer's running app, even when a fixture replaces raw configuration.
 if (getenv('TINYCAT_CACHE_DIRECTORY') === false || getenv('TINYCAT_CACHE_DIRECTORY') === '') {

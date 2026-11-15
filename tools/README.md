@@ -121,3 +121,6 @@ Staré browser experimenty zatím zůstávají k přezkoumání. `tools/data/see
 kompatibilní alias importéru.
 
 The release update rehearsal accepts `--snapshot=/path/to/indexed-snapshot` to restore a supplied snapshot into its newly created temporary database instead of synthetic rows. The source snapshot and configured database are never modified. `--cached-autoload` enables CLI OPcache with timestamp validation disabled to exercise cached 5.x code during replacement.
+
+Development outputs use ignored `.work/`, separated from application `storage/`.
+See [filesystem storage](../docs/development/storage.md#development-outputs).

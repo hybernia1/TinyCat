@@ -1,13 +1,15 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../tools/support/workspace.php';
+
 require_once __DIR__ . '/../support/cache-isolation.php';
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/bootstrap.php';
 
-$temporaryRoot = $root . '/storage/package-artifact-' . bin2hex(random_bytes(6));
+$temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/package-artifact-' . bin2hex(random_bytes(6));
 $output = $temporaryRoot . '/dist-a';
 $repeatedOutput = $temporaryRoot . '/dist-b';
 $keyPath = $temporaryRoot . '/signing.key';
@@ -193,7 +195,7 @@ try {
             $failures[] = "Unsafe artifact path: {$relative}";
         }
 
-        if (preg_match('~^(?:\.git|\.github|dist|storage|tests|tools|uploads|vendor)(?:/|$)~', $relative) === 1) {
+        if (preg_match('~^(?:\.git|\.github|\.work|dist|storage|tests|tools|uploads|vendor)(?:/|$)~', $relative) === 1) {
             $failures[] = "Development or private path in artifact: {$relative}";
         }
 

@@ -50,7 +50,7 @@ nejde o RSS celého procesu.
 
 Čtyři základní běhy: dva instrumentované updaty, jeden instrumentovaný install
 a jeden kontrolní build původním builderem. Časovače byly vloženy pouze do
-kopií skriptů pod `storage/release-build-audit-20261110/`. Pátý samostatný běh
+kopií skriptů pod `.work/archive/storage-20261115/release-build-audit-20261110/`. Pátý samostatný běh
 načetl auditní kopie AssetGraph, ClientAssets, Components a Minifier přes
 dočasný autoloader, aby spočítal volání a jejich inkluzivní časy.
 

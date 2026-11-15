@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace TinyCat\Tools\DemoImport;
 
+require_once __DIR__ . '/../../support/workspace.php';
+
 use InvalidArgumentException;
 
 final readonly class Options
@@ -77,8 +79,9 @@ final readonly class Options
             throw new InvalidArgumentException('Config file does not exist: ' . $configPath);
         }
         $appRoot = dirname($configPath);
-        $statePath = self::absolute((string) ($raw['state'] ?? ($appRoot . '/storage/demo-import-state.json')), $workspace);
-        $reportPath = self::absolute((string) ($raw['report'] ?? ($appRoot . '/storage/demo-import-report.json')), $workspace);
+        $outputs = \TinyCat\Tools\Workspace::directory('imports/' . substr(hash('sha256', $appRoot), 0, 12));
+        $statePath = self::absolute((string) ($raw['state'] ?? ($outputs . '/state.json')), $workspace);
+        $reportPath = self::absolute((string) ($raw['report'] ?? ($outputs . '/report.json')), $workspace);
         $minPosts = self::integer($raw, 'min-posts', $defaultMinPosts, 1, 50);
         $minComments = self::integer($raw, 'min-comments', $defaultMinComments, 0, 100);
         $minFollows = self::integer($raw, 'min-follows', $defaultMinFollows, 0, 200);

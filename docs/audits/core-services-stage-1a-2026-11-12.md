@@ -28,8 +28,8 @@ Nebyl proveden commit, release ani nasazení do externí instalace `tinycat.test
 ## Ověření
 
 Závěrečný `composer preflight` má
-[měřený report](../../storage/test-runs/20261112-054155-70c61c7322/report.json)
-a [úplný výpis](../../storage/core-module-audit-20261112/platform-preflight.log).
+[měřený report](../../.work/tests/runs/20261112-054155-70c61c7322/report.json)
+a [úplný výpis](../../.work/archive/storage-20261115/core-module-audit-20261112/platform-preflight.log).
 Prošel s exit code 0. Celý preflight trval **771,698 s (12 min 52 s)**,
 z toho testovací sada **758,221 s (12 min 38 s)**. Vybráno bylo všech 88 PHP
 skupin včetně vnořených frontendových a infrastrukturních kontrol.
@@ -59,7 +59,7 @@ provádí skutečné SQL nad allowlisty a navíc ověřuje detail historického 
 bez botích tabulek. Nezavádí se další plná integrační kopie stejné instalace.
 
 Doplněná regrese historie byla ověřena také samostatně:
-[report](../../storage/test-runs/20261112-054336-433b97674f/report.json),
+[report](../../.work/tests/runs/20261112-054336-433b97674f/report.json),
 70 kontrol, 0,336 s. Následný styl i PHP lint prošly. Tento doplněk nemění
 aplikační implementaci ověřovanou souběžným preflightem.
 

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/workspace.php';
+
 // Exercises the authenticated shared-storage bridge and the supplied domain-owned artifact.
 
 if (PHP_SAPI !== 'cli') {
@@ -22,7 +24,7 @@ if ($legacyBaseline !== null && !in_array($legacyBaseline, ['5.16.0', '5.22.2', 
 }
 $artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
 $configPath = $root . '/config.php';
-$temporaryRoot = $root . '/storage/release-update-' . bin2hex(random_bytes(6));
+$temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/release-update-' . bin2hex(random_bytes(6));
 $installRoot = $temporaryRoot . '/install';
 $baselineArchive = $temporaryRoot . '/tinycat-' . $baselineVersion . '.zip';
 $databaseName = 'tinycat_release_update_' . bin2hex(random_bytes(6));
@@ -178,7 +180,7 @@ try {
     $signaturePath = $artifactRoot . '/tinycat-update.sig';
     $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
     $packagePath = $artifactRoot . '/' . basename((string) ($manifest['package'] ?? ''));
-    $keyEncoded = trim((string) file_get_contents((string) ($options['key'] ?? ($root . '/storage/update-signing.key'))));
+    $keyEncoded = trim((string) file_get_contents((string) ($options['key'] ?? (\TinyCat\Tools\Workspace::directory('keys') . '/update-signing.key'))));
     $secretKey = base64_decode($keyEncoded, true);
 
     if (!is_string($secretKey) || strlen($secretKey) !== SODIUM_CRYPTO_SIGN_SECRETKEYBYTES) {

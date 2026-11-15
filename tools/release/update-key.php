@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../support/workspace.php';
+
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "This tool is available only from the command line.\n");
     exit(1);
@@ -14,7 +16,7 @@ if (!function_exists('sodium_crypto_sign_keypair')) {
 $root = dirname(__DIR__, 2);
 $path = isset($argv[1]) && trim((string) $argv[1]) !== ''
     ? (string) $argv[1]
-    : $root . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'update-signing.key';
+    : \TinyCat\Tools\Workspace::directory('keys') . '/update-signing.key';
 
 if (!str_starts_with($path, DIRECTORY_SEPARATOR) && preg_match('~^[A-Za-z]:[\\\\/]~', $path) !== 1) {
     $path = $root . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);

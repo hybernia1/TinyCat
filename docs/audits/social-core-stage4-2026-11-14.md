@@ -94,7 +94,7 @@ zkouška 97,124 s, dotykové popovery 91,956 s, Blog 54,726 s, HTTP API 50,497 s
 Tato etapa nic z jejich pokrytí neodstranila.
 
 Podklady jsou oddělené od živé instalace v ignorovaném
-`storage/social-core-stage4-20261114/`; reporty runnerů v `storage/test-runs/`.
+`.work/archive/storage-20261115/social-core-stage4-20261114/`; reporty runnerů v `.work/tests/runs/`.
 Souhrn je v `verification.json`, každý pokus zachovává svůj report a fingerprint
 zdrojů. PHP kontroly i workers používají **Laragon PHP 8.4.12 NTS**;
 MySQL scénáře používají existující službu a vlastní dočasné databáze.

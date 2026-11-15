@@ -4,7 +4,7 @@ parameters:
         - App
         - index.php
         - scheduled-tasks.php
-    tmpDir: storage/phpstan
+    tmpDir: .work/cache/phpstan
     reportUnmatchedIgnoredErrors: true
     treatPhpDocTypesAsCertain: true
     excludePaths:

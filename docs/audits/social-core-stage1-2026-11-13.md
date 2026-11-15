@@ -56,7 +56,7 @@ V sebraných reportech je součet posledních úspěšných kontrol **1 264,233 
 (26 min 45 s)**. Jde o součty časů kontrol, nikoli čas od zahájení práce;
 část běhů probíhala souběžně. Přímé cílené kontroly mimo měřené runnery tyto
 součty nezahrnují. Původní logy, neúspěšné pokusy, rozsah a odkazy na reporty
-zachovává [souhrn ověření](../../storage/social-core-stage1-20261112/verification.json).
+zachovává [souhrn ověření](../../.work/archive/storage-20261115/social-core-stage1-20261112/verification.json).
 
 | Nejdražší dokončené kontroly | Sekundy |
 | --- | ---: |
@@ -86,7 +86,7 @@ Přihlášené interakce se ověřovaly v izolovaných browser fixtures, nikoli 
 
 Po nasazení i HTTPS smoke zůstaly shodné počty všech 27 tabulek, obsah 11 633 publikací,
 38 účtů, konfigurace a všech 9 141 médií. Kontrolní součty změněného runtime souhlasí,
-maintenance není aktivní. [Protokol nasazení](../../storage/social-core-stage1-20261112/deployment-verification.json).
+maintenance není aktivní. [Protokol nasazení](../../.work/archive/storage-20261115/social-core-stage1-20261112/deployment-verification.json).
 
 ## Zbývající práce
 

@@ -78,7 +78,7 @@ repozitáře, pokud konkrétní návod neurčuje jinak.
 
 Kontrakty aktualizuj spolu s implementací. Generované inventáře obnovuj jejich
 nástrojem; měření ukládej do ignorovaného adresáře konkrétního běhu pod
-`storage/performance/`, nikoli mezi platné návody. Uzavřené reporty starých
+`.work/performance/`, nikoli mezi platné návody. Uzavřené reporty starých
 refaktorů a releasů byly odstraněny; jejich původní obsah zůstává v historii Gitu.
 Historii vydání udržuje [CHANGELOG](../CHANGELOG.md).
 

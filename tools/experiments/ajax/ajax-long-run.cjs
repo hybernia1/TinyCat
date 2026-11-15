@@ -5,7 +5,7 @@ const zlib = require("node:zlib");
 const devtoolsPipe = require("../shared/devtools-pipe.cjs");
 const { createHash } = require("node:crypto");
 const { spawn, execFileSync } = require("node:child_process");
-const root = path.resolve(__dirname, "../../.."), out = path.join(root, "storage/performance/ajax-final");
+const root = path.resolve(__dirname, "../../.."), out = path.join(root, ".work/performance/ajax-final");
 const minutes = Number(process.argv.find(x => x.startsWith("--minutes="))?.split("=")[1] || 10);
 const rounds = Number(process.argv.find(x => x.startsWith("--rounds="))?.split("=")[1] || 3);
 const mobile = process.argv.includes("--mobile"), label = process.argv.find(x => x.startsWith("--label="))?.split("=")[1] || "";

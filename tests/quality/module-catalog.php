@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../../tools/support/workspace.php';
+
 use TinyCat\Core\Modules\Loader;
 use TinyCat\Core\Modules\Catalog;
 use TinyCat\Core\Modules\Definition;
@@ -40,7 +42,7 @@ $reject(static fn () => Loader::fromSelection($root, ['tinycat.notifications' =>
 $inbox = Loader::fromSelection($root, []);
 $assert(!$inbox->catalog->has('tinycat.social') && $inbox->catalog->has('tinycat.accounts') && !$inbox->catalog->has('tinycat.publishing'), 'Framework-only selection has reusable publishing and identity without Social');
 
-$temporary = $root . '/storage/module-catalog-' . bin2hex(random_bytes(6));
+$temporary = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/module-catalog-' . bin2hex(random_bytes(6));
 mkdir($temporary, 0775, true);
 $remove = static function (string $path) use (&$remove, $temporary): void {
     $resolved = realpath($path);

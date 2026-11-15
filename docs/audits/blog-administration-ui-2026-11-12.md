@@ -79,10 +79,10 @@ responzivních layoutů a rozměry řádkových akcí. Počet hlavních skupin z
 
 Měřené reporty jsou v ignorovaném storage:
 
-- `storage/test-runs/20261112-195752-4986eda316/report.json`
-- `storage/test-runs/20261112-200434-ee48c2aff2/report.json`
-- `storage/blog-admin-20261112/verification-summary.json`
-- `storage/blog-admin-20261112/screenshots/`
+- `.work/tests/runs/20261112-195752-4986eda316/report.json`
+- `.work/tests/runs/20261112-200434-ee48c2aff2/report.json`
+- `.work/archive/storage-20261115/blog-admin-20261112/verification-summary.json`
+- `.work/archive/storage-20261115/blog-admin-20261112/screenshots/`
 
 Inventář UI byl obnoven: 103 komponent, bez duplicitních názvů a nevyřešených
 závislostí. Prošlo všech 10 platformních a 9 zdrojových assetových scope.
