@@ -11,15 +11,7 @@ import "../../../../assets/ui/form-requests.js";
     T.content.replaceChildren(target, T.components.render("blog/sources", Object.assign({}, response.data, { pagination: U.pagination(response) })));
   }
   T.modules.register("blog-sources", {
-    result: function (source, response, target) {
-      var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", location.href);
-      if (!url.pathname.startsWith("/api/article-sources")) { return false; }
-      if (target && target.id === "blog-sources") {
-        if (T.lists.isRead(source)) { render(target, response); return [target]; }
-        T.lists.refresh(target);
-      }
-      return [];
-    },
+    result: function (source, response, target) { return T.lists.result("#blog-sources", source, response, target); },
     modal: function (url, response, id) {
       if (!/^\/api\/article-sources\/(?:creation|[1-9][0-9]*\/management)$/.test(url.pathname)) { return null; }
       var item = response.data.item, form = U.form("/api/article-sources" + (item.id ? "/" + item.id : ""), item.id ? "PUT" : "POST");
@@ -53,5 +45,5 @@ import "../../../../assets/ui/form-requests.js";
       });
     }
   });
-  T.lists.register("/admin/article-sources", { target: "#blog-sources", keepQuery: ["sort", "direction"], url: function () { return "/api/article-sources/management" + location.search; }, apply: render });
+  T.lists.register("/admin/article-sources", { target: "#blog-sources", api: "/api/article-sources", keepQuery: ["sort", "direction"], url: function () { return "/api/article-sources/management" + location.search; }, apply: render });
 }());

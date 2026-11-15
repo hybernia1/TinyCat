@@ -17,6 +17,17 @@ import "../core/lifecycle.js";
     isRead: function (source) {
       return String(source.dataset.apiMethod || source.dataset.method || source.getAttribute("method") || (source.getAttribute("href") ? "GET" : "POST")).toUpperCase() === "GET";
     },
+    result: function (selector, source, response, target) {
+      var item = definitions.get(selector);
+      if (!item || !item.api) { return false; }
+      var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.getAttribute("href") || "/", window.location.href);
+      if (url.origin !== window.location.origin || !(url.pathname === item.api || url.pathname.startsWith(item.api + "/"))) { return false; }
+      if (target && document.querySelector(selector) === target) {
+        if (T.lists.isRead(source)) { item.apply(target, response); return [target]; }
+        T.lists.refresh(target);
+      }
+      return [];
+    },
     url: function (url, target) {
       if (!url || !target) { return url; }
       var item = definition(target);

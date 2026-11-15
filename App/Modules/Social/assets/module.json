@@ -23,18 +23,8 @@
       "public.unfollow"
     ],
     "entries": [
-      "App/Modules/Social/assets/users/index.js"
-    ]
-  },
-  {
-    "routes": [
-      "public"
-    ],
-    "entries": [
       "App/Modules/Social/assets/users/public.js"
-    ],
-    "translations": [],
-    "styles": []
+    ]
   },
   {
     "routes": [

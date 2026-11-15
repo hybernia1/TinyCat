@@ -11,6 +11,8 @@ final class Distribution
 {
     /** @var array<string, list<string>> */
     private static array $assetRoots = [];
+    /** An immutable snapshot of the last successful data-only validation. */
+    private static ?string $validated = null;
     public const string RUNTIME = '6.0.0-dev.1';
     public const string CORE_SCHEMA_RUNTIME = '6.0.0-dev.4';
     public const string FRAMEWORK_RUNTIME = '6.0.0-dev.5.1';
@@ -86,6 +88,11 @@ final class Distribution
      * @return array<string, mixed> */
     public static function validate(array $data): array
     {
+        array_walk_recursive($data, static function (mixed $value): void {
+            if (is_object($value) || is_resource($value)) { throw new \RuntimeException('Distribution descriptors contain data only.'); }
+        });
+        $snapshot = serialize($data);
+        if (self::$validated === $snapshot) { return $data; }
         if (array_diff(array_keys($data), ['format', 'product', 'selection', 'active', 'required', 'requires', 'schemas', 'legacy', 'artifact', 'framework', 'schemaOwners']) !== []) { throw new \RuntimeException('Unknown distribution field.'); }
         if (isset($data['artifact']) && (!is_string($data['artifact']) || preg_match('/^[a-z][a-z0-9.-]*$/D', $data['artifact']) !== 1)) { throw new \RuntimeException('Invalid artifact name.'); }
         $modern = in_array($data['format'] ?? null, [2, 3], true);
@@ -147,6 +154,7 @@ final class Distribution
             new ModuleSchema($schema['version'], $tables, static function (\PDO $pdo): void {}, $migrations, $operations['fresh'] ?? null, $operations['legacy'] ?? null);
         }
         if ($modern && array_diff(array_keys($data['schemaOwners']), array_keys($data['schemas'])) !== []) { throw new \RuntimeException('Unknown schema ownership entry.'); }
+        self::$validated = $snapshot;
         return $data;
     }
 

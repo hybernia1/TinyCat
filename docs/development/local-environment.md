@@ -21,6 +21,13 @@ neprokazují zrychlení; při srovnání používej stejné scénáře a jejich 
 
 ## Zapojení instalace
 
+Od 15. listopadu 2026 je v lokálním Apache aktivní již dodaný `mod_deflate`.
+MIME typy pro gzip vybírá stávající `.htaccess`; textové assety vracejí
+`Vary: Accept-Encoding` a zachovávají immutable cache. Původní konfigurace je
+v `E:/laragon/backup/tinycat-assets-20261115/httpd.conf`. Změna platí pro tento
+Laragon, nikoli pro produkční servery. Obnovení konfigurace vyžaduje reload
+Apache přes Laragon a následné ověření HTTP a hlaviček.
+
 Společná testovací instalace **https://tinycat.test/** je oddělená od checkoutu
 v **`E:/laragon/www/tinycat`**. Repozitář v `C:/Users/Nikola/Documents/tinycat`
 obsahuje zdroje a vývojové nástroje, nikoli živá média, cache a stav updateru.

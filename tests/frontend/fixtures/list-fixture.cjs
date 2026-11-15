@@ -27,8 +27,8 @@ module.exports = function setup() {
   const load = file => vm.runInContext(fs.readFileSync(path.resolve(__dirname, "../../..", file), "utf8").replace(/^import .*;\r?\n/gm, ""), context, { filename: file });
   for (const file of ["assets/core/request-lifecycle.js", "assets/core/navigation.js", "assets/core/modules.js", "assets/ui/list-navigation.js", "assets/ui/content-updates.js", "assets/ui/ajax-bindings.js", "App/Core/Identity/assets/controller.js", "App/Modules/Social/assets/users/controller.js", "App/Modules/Social/assets/bots/controller.js", "App/Modules/Social/assets/moderation/controller.js", "App/Core/Tasks/assets/controller.js"]) load(file);
   T.users.avatarUpload = { hydrate() {} };
+  for (const source of ["App/Core/Identity/assets/index.js", "App/Core/Identity/assets/admin.js", "App/Modules/Social/assets/users/index.js", "App/Modules/Social/assets/bots/index.js", "App/Modules/Social/assets/moderation/index.js", "App/Core/Tasks/assets/index.js"]) load(source);
   T.users.list = (target, response) => { rendered.push({ name: "users/list", data: response.data }); T.content.replaceChildren(target, new Node()); };
-  for (const source of ["App/Core/Identity/assets/index.js", "App/Modules/Social/assets/users/index.js", "App/Modules/Social/assets/bots/index.js", "App/Modules/Social/assets/moderation/index.js", "App/Core/Tasks/assets/index.js"]) load(source);
   T.ajax.init();
   function source(url, method = "GET", target = "users-list") {
     return { dataset: { ajaxTarget: "#" + target, apiMethod: method, method }, isConnected: true,

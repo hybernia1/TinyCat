@@ -1,5 +1,12 @@
 # Jednotný kontrakt popoverů
 
+`TinyCat.ui.filterPanel(id, form)` uchovává připravené výchozí hodnoty polí
+pro `form.reset()`, včetně checkboxů, selectů a textarea. Moduly už neopakují
+nastavování `defaultValue`, `defaultChecked` a `defaultSelected`. Samotná
+hydratace výchozí hodnoty nemění. Po explicitní synchronizaci části existujícího
+filtru použij `TinyCat.filters.defaults(form, names)` pouze pro změněná jména;
+nesmí tím být potvrzen rozepsaný vstup v nesouvisejících polích.
+
 Interaktivní ukotvené panely mají jednu implementaci: `assets/ui/popovers.js`
 a společný povrch v `assets/ui/styles/popovers.css`. Platí pro notifikace,
 filtry seznamů, archiv, účet, výběr jazyka, našeptávání i akce příspěvků a komentářů.

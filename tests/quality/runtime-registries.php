@@ -121,6 +121,33 @@ try {
     $selection = new Catalog([$fixture->catalog->get('fixture.provider')]);
     $collected = $fixture->registries($selection);
     $assert($collected->owner('task', 'fixture.task') === 'fixture.provider', 'A selected provider contributes without editing a central list');
+    $ownership = new ReflectionProperty(\TinyCat\Core\Modules\Providers::class, 'ownership');
+    $definition = $selection->get('fixture.provider');
+    \TinyCat\Core\Modules\Providers::duringStartup($selection, static function () use ($selection, $definition, $ownership, $assert, $reject, $root): void {
+        \TinyCat\Core\Modules\Providers::validateAll($selection);
+        $cached = $ownership->getValue();
+        $assert(count($cached) === 1, 'Startup caches successful ownership by definition identity');
+        $reject(static fn () => \TinyCat\Core\Modules\Providers::checked($definition, 'routes', \TinyCat\Core\Modules\StorageModule::class), 'A cached provider still has to implement the requested interface');
+        \TinyCat\Core\Modules\Providers::duringStartup(new Catalog([]), static function () use ($ownership, $cached, $assert): void {
+            $assert($ownership->getValue() !== $cached && count($ownership->getValue()) === 0, 'A different catalog receives a separate startup cache');
+        });
+        $assert($ownership->getValue() === $cached, 'Leaving a nested catalog restores the outer cache');
+        Resources::withCatalog($selection, static function () use ($selection, $ownership, $cached, $assert): void {
+            \TinyCat\Core\Modules\Providers::validateAll($selection);
+            $assert($ownership->getValue() !== $cached, 'A selection revision invalidates successful ownership checks');
+        });
+        $foreign = \TinyCat\Core\Modules\Definition::fromMetadata((object) ['format' => 1, 'coreApi' => 1, 'id' => 'fixture.provider', 'namespace' => 'TinyCat\\RegistryFixture\\', 'providers' => (object) ['routes' => \TinyCat\RegistryFixture\Module::class]], $root . '/App/Core');
+        $reject(static fn () => \TinyCat\Core\Modules\Providers::checked($foreign, 'routes', \TinyCat\Core\Modules\Module::class), 'The same ID with a foreign source root cannot reuse ownership');
+    });
+    $assert($ownership->getValue() === null, 'Startup ownership results do not survive the startup scope');
+    try { \TinyCat\Core\Modules\Providers::duringStartup($selection, static function (): never { throw new RuntimeException('Scope fixture'); }); }
+    catch (RuntimeException) { $assert($ownership->getValue() === null, 'A failed startup discards its validation cache'); }
+    $product = 'fixture.product';
+    $plan = ['format' => 1, 'product' => &$product, 'legacy' => false, 'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => []];
+    \TinyCat\Core\Modules\Distribution::validate($plan);
+    $product = 'INVALID'; $invalid = false;
+    try { \TinyCat\Core\Modules\Distribution::validate($plan); } catch (RuntimeException) { $invalid = true; }
+    $assert($invalid, 'Mutating a referenced descriptor value cannot mutate its successful validation snapshot');
     $consumerSelection = new Catalog([$fixture->catalog->get('fixture.provider'), ...array_values(array_filter($modules->catalog->definitions(), static fn ($definition): bool => in_array($definition->id, ['tinycat.security', 'tinycat.accounts', 'tinycat.notifications', 'tinycat.settings', 'tinycat.scheduler', 'tinycat.health'], true)))]);
     Resources::withCatalog($consumerSelection, static function () use ($collected, $assert, $reject): void {
         Registrations::configure($collected);

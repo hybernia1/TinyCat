@@ -95,6 +95,14 @@
     "scripts": 4,
     "stylesheets": 1
   },
+  "/blog": {
+    "raw_js": 369152,
+    "gzip_js": 78464,
+    "raw_css": 71680,
+    "gzip_css": 13312,
+    "scripts": 4,
+    "stylesheets": 1
+  },
   "/": {
     "raw_js": 369152,
     "gzip_js": 78464,

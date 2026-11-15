@@ -30,9 +30,13 @@ function load(route, locale = "en", compiled = false) {
   return { ...bundle, T: window.TinyCat };
 }
 const publicPage = load("/");
+check(typeof publicPage.T.accounts.list === "undefined" && publicPage.T.accounts.avatarUpload, "Public account controls keep avatar editing without the administrative list adapter");
+const login = load("/login");
+check(typeof login.T.accounts.list === "undefined" && login.T.accounts.modal, "Login keeps resource authentication dialogs without user-list code");
 check(publicPage.T.status && publicPage.T.users && !publicPage.T.bots && !publicPage.T.moderation, "Public pages load their own feature scripts");
 check(!publicPage.definitions.includes("users/admin-fields") && !publicPage.definitions.includes("bots/sources"), "Public bundles exclude administration components");
 const users = load("/admin/users");
+check(typeof users.T.accounts.list === "function", "User administration loads its list adapter");
 check(users.T.users && !users.T.status && !users.T.bots, "User administration boots independently");
 check(users.definitions.includes("users/admin-fields"), "User administration receives its form definitions");
 const bots = load("/admin/bots/accounts");

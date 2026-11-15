@@ -18,9 +18,11 @@ try {
   server = spawn(process.execPath, ['-e', 'const fs=require("node:fs"),http=require("node:http");http.createServer((req,res)=>{res.setHeader("Content-Type","text/html");res.end(fs.readFileSync(process.argv[1]));}).listen(0,"127.0.0.1",function(){process.stdout.write(String(this.address().port)+"\\n");});', file], {stdio:['ignore','pipe','pipe']});
   const port = await new Promise((resolve,reject) => { server.once('error',reject); server.stdout.once('data',data=>resolve(Number(String(data).trim()))); });
   let checks = 0;
-  for (const mode of ['basic','deep','reload','invalid','anchor','legacy','nonmodal','confirm']) {
+  for (const mode of ['basic','deep','reload','invalid','anchor','legacy','nonmodal','confirm','article-create','article-edit']) {
     const url = new URL('http://127.0.0.1:'+port+'/fixture.html'); url.searchParams.set('case',mode);
     if (mode === 'deep') url.hash = 'modal=bots/accounts/7&panel=detail&tab=history';
+    if (mode === 'article-create') url.hash = 'modal=articles/creation';
+    if (mode === 'article-edit') url.hash = 'modal=articles/7/management';
     if (mode === 'invalid') url.hash = 'modal=../../outside';
     if (mode === 'anchor') url.hash = 'section';
     if (mode === 'nonmodal') url.hash = 'modal=opener';

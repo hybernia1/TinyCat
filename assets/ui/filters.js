@@ -61,6 +61,14 @@ import "./form-requests.js";
     summaries();
   }
   T.filters = {
+    defaults: function (form, names) {
+      form.querySelectorAll("input, select, textarea").forEach(function (field) {
+        if (names && !names.includes(field.name)) { return; }
+        if (field.options) { Array.from(field.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
+        else { field.defaultValue = field.value; }
+        if ("checked" in field) { field.defaultChecked = field.checked; }
+      });
+    },
     get: function (id) { return forms.get(id); },
     capture: function (source) {
       var menu = source && source.closest && source.closest("[data-filter-menu]");
@@ -123,6 +131,7 @@ import "./form-requests.js";
   };
   T.ui = T.ui || {};
   T.ui.filterPanel = function (id, form) {
+    T.filters.defaults(form);
     T.filters.remove(id);
     form.id = id;
     form.dataset.filterContent = "";

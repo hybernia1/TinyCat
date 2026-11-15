@@ -23,7 +23,7 @@
     });
   };
   T.modules.register('history-test', {modal(url, response, id) {
-    if (url.pathname === '/api/bots/accounts/7' || url.pathname === '/api/users/7/avatar') return editor(id, false);
+    if (url.pathname === '/api/bots/accounts/7' || url.pathname === '/api/users/7/avatar' || /^\/api\/articles\/(?:creation|7\/management)$/.test(url.pathname)) return editor(id, false);
     return null;
   }});
   if (!history.state && mode !== 'deep') history.replaceState({publicIndex:0, retained:'list-state'}, '');
@@ -46,6 +46,12 @@
     history.back();
     await wait(() => decision === false && !modal(), 'Ordinary Back dismisses and cancels a standalone confirmation');
     check(restores === 1, 'A cancelled standalone confirmation leaves no orphaned action during page restoration');
+  } else if (mode === 'article-create' || mode === 'article-edit') {
+    await wait(() => !!modal(), 'Article links open through the common resource history');
+    check(requests.length === 1 && String(requests[0]).includes(mode === 'article-create' ? '/api/articles/creation' : '/api/articles/7/management'), 'Article links request only the selected authorized resource');
+    history.back(); await wait(() => !modal() && !location.hash, 'Back closes an article resource to the existing list');
+    history.forward(); await wait(() => !!modal(), 'Forward restores an article resource through the common loader');
+    check(restores === 0, 'Article resource traversal does not reload its background list');
   } else if (mode === 'nonmodal') {
     await wait(() => !!document.body.dataset.dialogError, 'A non-modal fragment target is rejected');
     check(!modal() && !location.hash && !document.getElementById('opener').hasAttribute('data-open') && requests.length === 0, 'A crafted fragment cannot turn an arbitrary page element into a dialog');

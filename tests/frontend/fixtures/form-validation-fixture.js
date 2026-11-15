@@ -5,6 +5,19 @@
   async function wait(test, message) { for (let i=0;i<100 && !test();i++) await pause(); check(test(), message); }
   const mode = new URL(location.href).searchParams.get('case');
   if (mode === 'creation') {
+    const defaults = T.dom.element('form');
+    const text = T.dom.element('input', { name: 'name' }), checkbox = T.dom.element('input', { name: 'enabled', type: 'checkbox' });
+    const select = T.dom.element('select', { name: 'choice' }), note = T.dom.element('textarea', { name: 'note' });
+    select.append(new Option('First', 'first'), new Option('Second', 'second'));
+    defaults.append(text, checkbox, select, note);
+    text.value = 'prepared'; checkbox.checked = true; select.value = 'second'; note.value = 'prepared note';
+    T.ui.filterPanel('fixture-filter-defaults', defaults);
+    text.value = 'draft'; checkbox.checked = false; select.value = 'first'; note.value = 'draft note';
+    T.filters.hydrate(); defaults.reset();
+    check(text.value === 'prepared' && checkbox.checked && select.value === 'second' && note.value === 'prepared note', 'Shared filters restore prepared text, checkbox, select and textarea defaults without redefining them on hydration');
+    text.value = 'synced'; checkbox.checked = false; T.filters.defaults(defaults, ['name']); defaults.reset();
+    check(text.value === 'synced' && checkbox.checked, 'Partial filter synchronization preserves unrelated reset defaults');
+    T.filters.remove('fixture-filter-defaults');
     const options = {username_pattern:'[A-Za-z][A-Za-z0-9_]+',password_max_length:1024,roles:['admin','user'],statuses:['active','ban']};
     const listing = {items:[],filters:{},options,roles:['admin','user'],statuses:['active','ban']};
     const reads = {};

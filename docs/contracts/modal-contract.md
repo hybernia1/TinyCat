@@ -3,6 +3,11 @@
 Tento dokument je závazné pravidlo pro všechny modaly v aplikaci.
 Podrobnosti vzhledu určuje společné UI, nikoli jednotlivé moduly.
 
+Samostatné vstupní URL editoru mohou po autorizaci přesměrovat na kanonickou
+stránku a resource fragment, například `/admin/articles#modal=articles/7/management`.
+Počáteční otevření, reload a Back/Forward pak zpracuje společná historie.
+Vlastník nepřidává skrytý marker, který při hydrataci sám načítá a otevírá editor.
+
 ## Druhy a načítání
 
 | Druh | Vstup | Kdy vzniká | Životní cyklus |

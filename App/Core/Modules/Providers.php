@@ -15,6 +15,35 @@ use TinyCat\Core\Modules\Module;
 /** Runtime support is explicit; future provider kinds must not be silently ignored. */
 final class Providers
 {
+    private static ?Catalog $startupCatalog = null;
+    /** @var \WeakMap<Definition, true>|null */
+    private static ?\WeakMap $validated = null;
+    /** @var \WeakMap<Definition, array<string, true>>|null */
+    private static ?\WeakMap $ownership = null;
+    private static int $revision = -1;
+
+    /** Successful checks are reusable only during one startup and selection revision.
+     * @template T
+     * @param callable(): T $action
+     * @return T */
+    public static function duringStartup(Catalog $catalog, callable $action): mixed
+    {
+        if (self::$startupCatalog === $catalog) { return $action(); }
+        $previous = [self::$startupCatalog, self::$validated, self::$ownership, self::$revision];
+        self::$startupCatalog = $catalog;
+        self::$validated = new \WeakMap(); self::$ownership = new \WeakMap();
+        self::$revision = Resources::revision();
+        try { return $action(); }
+        finally { [self::$startupCatalog, self::$validated, self::$ownership, self::$revision] = $previous; }
+    }
+
+    private static function refreshValidation(): void
+    {
+        if (self::$startupCatalog !== null && self::$revision !== Resources::revision()) {
+            self::$validated = new \WeakMap(); self::$ownership = new \WeakMap();
+            self::$revision = Resources::revision();
+        }
+    }
     public static function assertDistributable(Catalog $catalog): void
     {
         foreach ($catalog->definitions() as $definition) {
@@ -88,6 +117,8 @@ final class Providers
 
     private static function validate(Definition $definition): void
     {
+        self::refreshValidation();
+        if (self::$validated !== null && isset(self::$validated[$definition])) { return; }
         if (array_diff(array_keys($definition->providers), ['contributions', 'routes', 'schema', 'services']) !== []) { throw new \InvalidArgumentException('Unsupported runtime provider kind: ' . $definition->id); }
         $namespace = strtolower($definition->namespace);
         foreach (['tinycat\\core\\', 'tinycat\\support\\', 'tinycat\\http\\', 'tinycat\\database\\'] as $reserved) {
@@ -99,6 +130,7 @@ final class Providers
         if ($definition->manifest !== null && $source !== false && !ModuleAutoload::inside($source, $definition->root)) { throw new \InvalidArgumentException('Module source directory escapes its root.'); }
         $interfaces = ['routes' => Module::class, 'schema' => ProvidesSchema::class, 'contributions' => ProvidesContributions::class, 'services' => \TinyCat\Core\Runtime\InitializesModule::class];
         foreach ($definition->providers as $kind => $class) { self::provider($definition, $kind, $kind === 'schema' && is_subclass_of($class, ProvidesSchemas::class) ? ProvidesSchemas::class : $interfaces[$kind]); }
+        if (self::$validated !== null) { self::$validated[$definition] = true; }
     }
 
     /** @template T of object
@@ -108,10 +140,19 @@ final class Providers
     {
         $class = $definition->providers[$kind];
         if (!is_subclass_of($class, $interface)) { throw new \InvalidArgumentException('Invalid ' . $kind . ' provider: ' . $class); }
+        self::refreshValidation();
+        if (self::$ownership !== null && isset(self::$ownership[$definition][$kind])) { return $class; }
+        self::verifyOwnership($definition, $class);
+        if (self::$ownership !== null) { self::$ownership[$definition] = (self::$ownership[$definition] ?? []) + [$kind => true]; }
+        return $class;
+    }
+
+    /** @param class-string $class */
+    private static function verifyOwnership(Definition $definition, string $class): void
+    {
         $file = (new \ReflectionClass($class))->getFileName();
         $root = realpath($definition->root . ($definition->manifest === null ? '' : '/src'));
         if ($file === false || $root === false || !ModuleAutoload::inside($file, $root)) { throw new \InvalidArgumentException('Provider code does not belong to its module.'); }
-        return $class;
     }
 
     /** @template T of object

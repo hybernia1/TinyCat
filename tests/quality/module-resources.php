@@ -46,6 +46,23 @@ $assert(TranslationSources::files() === $expected, 'Every legacy translation sou
 $default = Resources::catalog();
 $assert(!$default->has('tinycat.blog') && !isset(TranslationSources::files()['Blog']), 'An alternate built-in product is not activated by its directory');
 $baseline = $compile();
+foreach (['core' => [], 'social' => ['tinycat.social' => 'App/Modules/Social/module.json'], 'blog' => ['tinycat.blog' => 'App/Modules/Blog/module.json'], 'combined' => require $root . '/App/available-modules.php'] as $assembly => $selection) {
+    $catalog = \TinyCat\Core\Modules\Loader::fromSelection($root, $selection)->catalog;
+    Resources::withCatalog($catalog, static function () use ($assembly, $selection, $assert): void {
+        foreach (['/login', '/privacy', '/social', '/status/1', '/blog', '/articles/1'] as $route) {
+            $scripts = AssetGraph::order(ClientAssets::entries($route));
+            $assert(!in_array('App/Core/Identity/assets/admin.js', $scripts, true), $assembly . ': public pages exclude the account list adapter');
+            $social = array_filter($scripts, static fn (string $file): bool => str_starts_with($file, 'App/Modules/Social/'));
+            $assert(($social !== []) === isset($selection['tinycat.social']), $assembly . ': Social imports follow explicit activation');
+        }
+        foreach (['/admin', '/admin/users', '/admin/bots', '/admin/articles'] as $route) {
+            $assert(in_array('App/Core/Identity/assets/admin.js', AssetGraph::order(ClientAssets::entries($route)), true), $assembly . ': administrative account actions retain the list adapter');
+        }
+        foreach (['/' => true, '/blog' => true, '/articles/1' => true, '/admin/articles' => true, '/admin/article-sources' => true, '/login' => false, '/privacy' => false, '/social' => false, '/admin' => false, '/admin/users' => false] as $route => $needed) {
+            $assert(in_array('App/Modules/Blog/assets/styles/blog.css', ClientAssets::sourceStyles($route), true) === ($needed && isset($selection['tinycat.blog'])), $assembly . ': Blog styles belong only to its page families');
+        }
+    });
+}
 $assert(!isset(Localization::catalog('en')['selection_probe.value']), 'Default translation cache starts without the probe');
 $assert(!isset(Components::templates()['probe/selection']), 'Default component cache starts without the probe');
 ClientAssets::definitions('/selection-probe');

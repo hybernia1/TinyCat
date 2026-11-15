@@ -57,9 +57,9 @@ import "./workspace.js";
     if (!modal) { return; }
     modal.querySelectorAll("input, select").forEach(function (control) {
       if (!Object.prototype.hasOwnProperty.call(filters, control.name)) { return; }
-      control.value = control.name === "bot" && !Number(filters[control.name]) ? "0" : String(filters[control.name]); control.defaultValue = control.value;
-      if (control.options) { Array.from(control.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
+      control.value = control.name === "bot" && !Number(filters[control.name]) ? "0" : String(filters[control.name]);
     });
+    T.filters.defaults(modal, Object.keys(filters));
   }
   function accounts(root, response) {
     var data = response.data, pagination = U.pagination(response);
@@ -125,10 +125,6 @@ import "./workspace.js";
       if (view.dataset.botQueueReady === "true") { return; }
       view.dataset.botQueueReady = "true";
       var form = T.components.render("bots/queue-filter-form", JSON.parse(view.dataset.botQueueState));
-      form.querySelectorAll("input, select").forEach(function (field) {
-        field.defaultValue = field.value;
-        if (field.options) { Array.from(field.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
-      });
       U.filterPanel("bot-queue-filter-modal", form);
     });
     Array.from((root || document).querySelectorAll("[data-bot-posts-view]")).forEach(function (view) {
@@ -139,10 +135,6 @@ import "./workspace.js";
       if (postList) { postList.dataset.botPostsUrl = JSON.parse(view.dataset.botPostsState).url; }
       var filterId = state.filter_modal || "bot-detail-posts-filter-modal";
       var form = T.components.render("bots/post-filter-form", JSON.parse(view.dataset.botPostsState));
-      form.querySelectorAll("input, select").forEach(function (field) {
-        field.defaultValue = field.value;
-        if (field.options) { Array.from(field.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
-      });
       U.filterPanel(filterId, form);
     });
     var list = document.querySelector("#bot-detail-posts-list");

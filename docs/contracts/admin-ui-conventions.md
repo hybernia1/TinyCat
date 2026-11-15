@@ -1,5 +1,13 @@
 # Administration lists and editors
 
+Simple resource lists may declare `api` and `apply` through `TinyCat.lists.register`
+and delegate response handling to `TinyCat.lists.result(selector, source, response, target)`.
+The shared adapter checks the origin and endpoint boundary, renders reads and
+refreshes after writes through the existing request lifecycle. Modules retain
+their endpoints, components, filters and domain-specific behavior. More complex
+workspaces keep their own handlers instead of forcing unrelated workflows into
+this adapter. Prepared filter defaults belong to the shared `ui.filterPanel`.
+
 All dialogs follow the authoritative [modal contract](modal-contract.md).
 This includes new-record forms and read-only release notes. Creation editors
 load `/api/users/creation` or `/api/bots/accounts/creation` on demand; refreshing

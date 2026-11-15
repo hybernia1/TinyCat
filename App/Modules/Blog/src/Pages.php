@@ -23,14 +23,20 @@ final class Pages
         self::render(['title' => $title, 'current' => $path, 'public' => $public, 'meta' => ['rss' => '/blog/feed']], $content);
     }
 
-    public static function administration(int $open = -1): void
+    public static function administration(): void
     {
         \TinyCat\Core\Identity\Access::require_admin();
         $data = Administration::listing(\TinyCat\Http\Request::current()->query());
         $content = \TinyCat\Support\Components::render('blog/articles', $data);
         $content = \TinyCat\Support\AdminViews::listCard(Localization::t('blog.articles'), 'file-text', 'blog-articles', 'blog-article-filter', new \TinyCat\Support\Markup($content), primary: true);
-        if ($open >= 0) { $content .= '<span hidden data-article-open="' . $open . '"></span>'; }
         self::render(['title' => Localization::t('blog.articles'), 'current' => '/admin/articles', 'actions' => \TinyCat\Support\AdminViews::modalAction('modal-articles-creation', Localization::t('blog.editor'), 'plus', '/api/articles/creation')], $content);
+    }
+
+    public static function editor(int $id = 0): never
+    {
+        \TinyCat\Core\Identity\Access::require_admin();
+        $resource = $id > 0 ? 'articles/' . $id . '/management' : 'articles/creation';
+        \TinyCat\Http\Web::redirect('/admin/articles#modal=' . $resource);
     }
 
     public static function detail(int $id): void

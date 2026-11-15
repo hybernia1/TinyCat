@@ -56,7 +56,7 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/blog', Pages::listing(...));
         \TinyCat\Http\Router::route('GET', '/admin/articles', static fn () => Pages::listing(false));
         \TinyCat\Http\Router::route(['GET', 'HEAD'], '/articles/{id:[1-9][0-9]*}', static fn (string $id) => Pages::detail((int) $id));
-        \TinyCat\Http\Router::route('GET', '/admin/articles/new', static fn () => Pages::administration(0));
-        \TinyCat\Http\Router::route('GET', '/admin/articles/{id:[1-9][0-9]*}', static fn (string $id) => Pages::administration((int) $id));
+        \TinyCat\Http\Router::route('GET', '/admin/articles/new', static fn () => Pages::editor());
+        \TinyCat\Http\Router::route('GET', '/admin/articles/{id:[1-9][0-9]*}', static fn (string $id) => Pages::editor((int) $id));
     }
 }

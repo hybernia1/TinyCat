@@ -4,6 +4,16 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
 const response = label => ({ data: { items: [label], tasks: [], filters: {} }, meta: { pagination: { page: 2, per_page: 10 } } });
 (async () => {
   let s = setup(), root = s.targets.get("users-list");
+  const adapter = new s.Node('adapter-list'); s.targets.set('adapter-list', adapter);
+  let applied = 0, refreshed = 0;
+  s.T.lists.register('/admin/adapter', { target: '#adapter-list', api: '/api/adapter', apply: () => { applied++; } });
+  assert.deepEqual(Array.from(s.T.lists.result('#adapter-list', s.source('/api/adapter'), response('read'), adapter)), [adapter]);
+  assert.equal(applied, 1);
+  assert.equal(s.T.lists.result('#adapter-list', s.source('/api/adapter-other'), response('other'), adapter), false);
+  assert.equal(s.T.lists.result('#adapter-list', s.source('https://other.test/api/adapter'), response('other'), adapter), false);
+  const refresh = s.T.lists.refresh; s.T.lists.refresh = target => { assert.equal(target, adapter); refreshed++; };
+  assert.deepEqual(Array.from(s.T.lists.result('#adapter-list', s.source('/api/adapter/7', 'PATCH'), response('write'), adapter)), []);
+  assert.equal(refreshed, 1); s.T.lists.refresh = refresh;
   const url = new URL(s.T.lists.url("/api/users?q=next&page=1", root), s.window.location);
   assert.equal(url.searchParams.get("q"), "next"); assert.equal(url.searchParams.get("page"), "1"); assert.equal(url.searchParams.get("sort"), "username");
   assert.equal(new URL(s.T.lists.url("/api/users?direction=desc", root), s.window.location).searchParams.get("direction"), "desc");

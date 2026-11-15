@@ -62,10 +62,6 @@ import "../../../../assets/ui/component-builders.js";
     },
     filters: function (data) {
       var form = T.components.render("scheduler/filter-form", data);
-      form.querySelectorAll("input, select, textarea").forEach(function (field) {
-        field.defaultValue = field.value;
-        if (field.options) { Array.from(field.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
-      });
       T.ui.filterPanel("scheduler-filter-modal", form);
     },
     hydrate: function (root) {

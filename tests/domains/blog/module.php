@@ -318,8 +318,12 @@ try {
     [$status, $data] = $request('/api/articles/' . $httpId, 'PUT', ['title' => 'HTTP edit', 'body' => 'Edited', 'status' => 'hidden'], 'admin');
     $assert($status === 200 && ($data['data']['status'] ?? '') === 'hidden', 'API edits and hides existing articles');
     [$status] = $request('/articles/' . $httpId); $assert($status === 404, 'Hidden article has no public page');
-    [$status, , $html] = $request('/admin/articles/' . $httpId, actor: 'admin');
-    $assert($status === 200 && !str_contains($html, '<textarea') && str_contains($html, 'data-article-open="' . $httpId . '"'), 'Direct editor opens the common list with an on-demand resource, without pre-rendered fields');
+    [$status, , , $headers] = $request('/admin/articles/' . $httpId, actor: 'admin');
+    $assert($status === 302 && ($headers['location'] ?? '') === '/admin/articles#modal=articles/' . $httpId . '/management', 'Direct editor redirects to the shared resource dialog history');
+    [$status, , , $headers] = $request('/admin/articles/new', actor: 'admin');
+    $assert($status === 302 && ($headers['location'] ?? '') === '/admin/articles#modal=articles/creation', 'Direct creation redirects to the shared resource dialog history');
+    [$status, , $html] = $request('/admin/articles', actor: 'admin');
+    $assert($status === 200 && !str_contains($html, 'data-article-open') && !str_contains($html, '<textarea'), 'The article list contains no hidden editor trigger or eager fields');
     [$status, $data] = $request('/api/articles/' . $httpId . '/management', actor: 'admin');
     $assert($status === 200 && $data['data']['item']['title'] === 'HTTP edit', 'Admin editor loads the current article through an authorized resource');
     foreach (['/api/articles/management', '/api/articles/creation', '/api/articles/' . $httpId . '/management'] as $path) {

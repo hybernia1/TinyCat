@@ -1,8 +1,11 @@
 [
   {
     "routes": [
-      "public",
-      "admin"
+      "/",
+      "/blog",
+      "/articles",
+      "/admin/articles",
+      "/admin/article-sources"
     ],
     "entries": [],
     "components": [],
@@ -13,7 +16,9 @@
   },
   {
     "routes": [
-      "public"
+      "/",
+      "/blog",
+      "/articles"
     ],
     "uses": [
       "publishing.presentation"

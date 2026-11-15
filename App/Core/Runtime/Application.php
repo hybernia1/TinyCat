@@ -28,15 +28,22 @@ final class Application
         if ($configuration !== null) { Config::configure($configuration); }
         else { Config::load(); }
         $modules ??= Loader::load(\TinyCat\Support\Paths::basePath());
-        Resources::configure($modules->catalog);
-        if ($modules->catalog->has('tinycat.ui')) { \TinyCat\Core\Ui\Platform::initialize(); }
-        $modules->initialize(); self::$initialized = true;
-        Startup::$readiness[] = static fn (): bool => Lifecycle::ready($modules, Startup::$legacySchemas);
-        \TinyCat\Support\ClientAssets::configure(static fn (string $key): bool => (bool) Startup::option($key, false));
-        return self::boot(Startup::context(Config::snapshot()), $modules);
+        return \TinyCat\Core\Modules\Providers::duringStartup($modules->catalog, static function () use ($modules): Api {
+            Resources::configure($modules->catalog);
+            if ($modules->catalog->has('tinycat.ui')) { \TinyCat\Core\Ui\Platform::initialize(); }
+            $modules->initialize(); self::$initialized = true;
+            Startup::$readiness[] = static fn (): bool => Lifecycle::ready($modules, Startup::$legacySchemas);
+            \TinyCat\Support\ClientAssets::configure(static fn (string $key): bool => (bool) Startup::option($key, false));
+            return self::boot(Startup::context(Config::snapshot()), $modules);
+        });
     }
 
     public static function boot(Context $context, ?Loader $modules = null): Api
+    {
+        return \TinyCat\Core\Modules\Providers::duringStartup($modules->catalog ?? new Catalog([]), static fn (): Api => self::bootPrepared($context, $modules));
+    }
+
+    private static function bootPrepared(Context $context, ?Loader $modules): Api
     {
         if (self::$booted) { throw new \LogicException('The application is already booted.'); }
         self::$booted = true;

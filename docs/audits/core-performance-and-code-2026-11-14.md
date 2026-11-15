@@ -354,3 +354,172 @@ se zálohou původních souborů. Databáze a konfigurace Apache se neměnily.
 Plný preflight v této etapě neběžel.
 
 [Data porovnání](../../storage/performance/core-easywins-20261114/comparison.json)
+
+## A2 — navazující optimalizace 15. 11. 2026
+
+Pracovní změny po vydání 6.0.3 sdílejí úspěšné kontroly providerů pouze
+po dobu jednoho startu aplikace nad katalogem. Cache používá identitu neměnné
+definice, odděluje vnořené katalogy a zneplatní se při změně revize Resources.
+Po dokončení i výjimce se zahodí; následná instalace nebo aktualizace v témže
+CLI procesu proto znovu ověřuje vlastnictví. Požadované rozhraní se kontroluje
+i při opakovaném použití již ověřeného vlastníka.
+
+Distribution si pamatuje pouze neměnný datový otisk poslední úspěšné validace.
+Změna včetně PHP reference vyžaduje nové ověření; chyby se necachují.
+Čtení descriptoru, aktivací a registru balíčků z disku zůstává čerstvé.
+Nejde o cache souborů, trvalou cache ani přeskočení podpisů nebo kontrol cest.
+
+Porovnání samostatných instrumentovaných kopií stejného core 6.0.3:
+
+| Kontrola při /login i /admin | Před | Po |
+| --- | ---: | ---: |
+| Volání Providers::provider | 215 | 71 |
+| Ověření vlastnictví přes reflexi a zdrojový kořen | 215 | 26 |
+| Konstrukce ModuleSchema při přípravě metadat | 45 | 15 |
+| Registrované routy | 80 | 80 |
+
+SQL zůstalo 1 dotaz na login a 3 na dashboard, velikost HTML 12 876 a 12 402 B.
+Jde o aktuální dvojici průchodů, nikoli změnu původního zahřátého SQL základu.
+HTTP 200 prošlo přes skutečný Apache. Sedm sekvenčních vzorků po dvou zahřátích
+ukázalo medián TTFB login 54,04 → 58,92 ms a privacy 58,27 → 49,67 ms.
+Smíšený výsledek malé série nedokazuje zrychlení HTTP; doložená je odstraněná
+opakovaná práce. Použito ověřené TLS přes systémový curl. Původní pokus přes
+PHP HTTP sampler selhal na důvěře lokálního certifikátu a není měřením latence.
+
+Prošly registry (67 kontrol), minimální start (44), modulový katalog (77,
+symlink fixture nebyla dostupná), modulový pilot (69), izolované core/účty (541),
+výběr zdrojů (57), hranice modulů (1 620), závislosti, lint, styl a PHPStan.
+Plný preflight v této průběžné etapě neběžel. Tři runtime soubory jsou
+synchronizované na tinycat.test se zálohou, bez změn DB a serverové konfigurace.
+Změny nejsou součástí již vydaných balíčků 6.0.3.
+
+Podklady: [počty před loginem](../../storage/performance/core-metadata-20261115/before-login.json),
+[počty po loginu](../../storage/performance/core-metadata-20261115/final-login.json),
+[počty před dashboardem](../../storage/performance/core-metadata-20261115/before-admin.json),
+[počty po dashboardu](../../storage/performance/core-metadata-20261115/final-admin.json)
+a [ověřené HTTP porovnání](../../storage/performance/core-metadata-20261115/http-verified-comparison.json).
+
+## A3 — klientské závislosti a přenos 15. 11. 2026
+
+Pracovní změny oddělují seznam uživatelů, jeho filtry, obnovu a hydrataci
+do existujícího administračního vstupu Identity. Veřejný vstup již tento adaptér
+nenačítá. Účtové resource dialogy a editor avataru zůstávají společné, protože
+je používají i přihlášení uživatelé na veřejných stránkách. Nový loader ani
+duplicitní implementace dialogů nevznikly. Komponenty seznamu zůstávají vybrané
+jen pro správu uživatelů, adaptér je dostupný v administraci i pro navazující akce.
+
+Aktuální živá instalace již před touto etapou používala minifikované varianty.
+Čísla proto nejsou přímo srovnatelná s původním raw základem v tabulce auditu.
+Samotné oddělení adaptéru snížilo čtyři skripty přihlášení ze 187 695 na
+186 148 B. Hlavní zisk je gzip: stejná aktuální sada má na přenosu 46 655 B,
+tedy přibližně o 75 % méně než původní nekomprimovaný přenos. CSS má
+37 925 B bez komprese a 8 021 B při gzip. Nejde o měření browser CPU nebo
+latence celé stránky.
+
+V lokálním Laragon Apache byl po záloze konfigurace a úspěšném `httpd -t`
+zapnut již dostupný mod_deflate. Nativní graceful restart obnovil stávající
+Apache bez vytváření nového stacku; MySQL se nerestartovalo. Stávající
+`.htaccess` určuje komprimované MIME typy. Skutečné odpovědi potvrzují
+`Content-Encoding: gzip`, `Vary: Accept-Encoding`, HTTP 200 a immutable cache
+statických assetů. Všechny čtyři stažené a dekomprimované skripty jsou podle
+SHA-256 shodné s kompilovanými soubory. Tato serverová změna platí jen pro
+lokální Laragon; není součástí distribuční aplikace ani změnou produkce.
+
+Prošly klientské zdroje a kompilované bundly (184 kontrol), UI kontrakty,
+překlady, asset graph a rozpočty včetně platformové sestavy, kompilované
+překlady (173), společné JSON renderery (5 833), nativní validace dialogů (133),
+obnova sidebaru, řazení a závody při obnově seznamů. Testovací obaly administračních
+scénářů nyní výslovně načítají administrační vstup. Plný preflight neběžel.
+Runtime Identity a generované core assety jsou na tinycat.test se zálohou.
+
+Podklady: [původní JS](../../storage/performance/core-assets-20261115/before-js.json),
+[aktuální JS včetně gzip](../../storage/performance/core-assets-20261115/after-js.json)
+a [ověřené hlavičky komprese](../../storage/performance/core-assets-20261115/compression-headers.txt).
+
+## A2/A3 — ověření s moduly 15. 11. 2026
+
+Další etapa porovnala explicitní sestavy core, Social, Blog a Social+Blog.
+Neaktivovala moduly na živém tinycat.test; ten zůstává core-only.
+Startup porovnání používá samostatné instrumentované exporty vydané 6.0.3
+a pracovních změn, skutečný Application::start a čistou technickou konfiguraci.
+Dispatch doménových stránek a dotazy nad provozní DB nejsou součástí tohoto profilu.
+
+| Sestava | Providers::provider před | Po | Routy před i po |
+| --- | ---: | ---: | ---: |
+| Core | 215 | 71 | 80 |
+| Social | 252 | 80 | 163 |
+| Blog | 251 | 83 | 120 |
+| Social + Blog | 288 | 92 | 195 |
+
+Ve všech sestavách zůstala stejná registrovaná ID úloh. Aktuální kontrola
+klientských závislostí navíc potvrzuje, že žádná veřejná trasa nedostává
+administrační adaptér účtového seznamu ani přes importy modulů. Administrace
+ho nadále má pro přímé i navazující účtové akce.
+
+Blog deklaroval CSS na všech veřejných a administračních stránkách a
+publishing.presentation na všech veřejných stránkách. Deklarace nyní odpovídá
+jeho homepage, archivu, článkům a administračním editorům/zdrojům. V Blog-only
+sestavě se /login a /privacy zmenšily o 16 146 B zdrojového JS a 9 937 B CSS;
+to jsou délky agregovaných zdrojů, nikoli minifikované přenosové velikosti.
+Při současně aktivním Socialu jsou prezentační závislosti stále potřeba pro
+jeho rozhraní, takže je výběr správně sdílí a tato JS úspora se nesčítá.
+Blogové CSS už nedostává obecná administrace, přihlášení, soukromí ani /social.
+
+Social měl dva veřejné vstupy, z nichž druhý importoval první. AssetGraph je
+již deduplikoval; deklarace byly sloučeny bez tvrzení o další přenosové úspoře.
+Širší veřejný balík Socialu zůstává otevřený bod: feed, hledání, profily a detail
+stavu sdílejí AJAX navigaci, zatímco veřejný shell nabízí globální dialogy.
+Pro další zmenšení je nutné oddělit skutečné klientské schopnosti a respektovat
+přechody dokumentů; samotné zúžení routes by mohlo rozbít další navigaci nebo editor.
+
+Regresní matice v module-resources má 161 kontrol pro výběr, importy, cache a
+kompilaci. Prošly Blog-only scénáře (601), společný Blog/Social (90), AJAX CRUD,
+koncepty, přepínání modulů a 16 responzivních rozložení. Platformový asset report
+prošel pro 14 scope. Nový /blog má stejný rozpočet jako dosavadní veřejná homepage;
+existující limity se nezvyšovaly. Prošly překlady, lint a styl. Plný preflight
+v této průběžné etapě neběžel; modulové změny nejsou vydané.
+
+Podklady: [matice před úpravou deklarací](../../storage/performance/module-assets-20261115/before.json),
+[matice po úpravě](../../storage/performance/module-assets-20261115/after.json),
+[platformový report](../../storage/performance/module-assets-20261115/platform-report.json)
+a [společný startup po optimalizaci](../../storage/performance/module-assets-20261115/start-after-combined.json).
+
+## Společné UI místo modulových větví — 15. 11. 2026
+
+Mobilní `.toast` a `.toast-stack` se přesunuly ze Social feedback-mobile do
+sdíleného stylesheetu toastů. Social si ponechal své pravidlo pro alert feedu.
+Kontrola zachovala stejnou množinu všech 762 pravidel; schválený cascade baseline
+zaznamenává jejich nové vlastnictví a pořadí. Core a Blog-only nyní dostávají
+stejné mobilní chování toastů bez nutnosti zapnout Social.
+
+`ui.filterPanel` centrálně připravuje reset hodnot textových polí, textarea,
+checkboxů a selectů. Opakované smyčky zmizely z účtů, plánovače, Blogu, botů,
+jejich workspace a moderace. Samotná hydratace výchozí hodnoty nemění.
+Částečná synchronizace existujícího filtru používá výslovný seznam jmen,
+aby nepřevzala nesouvisející rozepsaná pole jako nový výchozí stav.
+
+Staré URL Blog editoru zůstaly dostupné, po autorizaci ale přesměrují na
+kanonický seznam s resource fragmentem. Skrytý data-article-open marker a
+modulová hydratace otevírající editor byly odstraněny. Počáteční otevření,
+reload a Back/Forward tak vlastní stávající dialog-history a resource loader.
+
+Oba jednoduché Blog seznamy deklarují API prefix ve stávajícím T.lists.register
+a delegují společné zpracování read/write odpovědí do T.lists.result. Doménové
+formuláře, komponenty a URL zůstávají v Blogu. Core kontroluje hranici endpointu
+a origin; obnovy dál používají stávající zrušení a ochranu zastaralých odpovědí.
+Složitější workspace byly ponechány vlastníkům. Odstranilo se také zbytečné
+prázdné hydratační volání účtů; stávající asset limity se nezvyšovaly.
+
+Prošly Blog-only scénáře (603), společný Blog/Social (90), AJAX CRUD a 16 layoutů,
+nativní validace dialogů a resetu filtrů (135), historie včetně obou article
+fragmentů (82), popovery (782), mobilní velikosti (85), admin viewport (252 případů),
+JSON renderery (5 833), závody seznamů, toasty, klientské bundly (184), UI kontrakty
+(192), CSS baseline, zdrojové/platformové asset rozpočty, lint, styl a PHPStan.
+Dotyková matice popoverů v prvním souběžném běhu skončila timeoutem při otevření
+notifikačního panelu; její celé samostatné opakování prošlo (21 variant, 198 kontrol).
+Bez dalšího důkazu to není označeno za opravenou chybu ani potlačený test.
+
+Sdílené runtime soubory a core bundly byly se zálohou synchronizovány na
+tinycat.test; HTTP vrací 200 a doména zůstává core-only. Blog a Social se ověřovaly
+v izolovaných fixtures. Plný preflight v této průběžné etapě neběžel a změny
+nejsou součástí publikované 6.0.3.

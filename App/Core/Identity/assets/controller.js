@@ -1,4 +1,3 @@
-import "../../../../assets/ui/list-navigation.js";
 import "../../../../assets/ui/content-updates.js";
 import "../../../../assets/core/dates.js";
 import "../../../../assets/core/component-renderer.js";
@@ -163,31 +162,10 @@ import "../../../../assets/ui/toasts.js";
       return null;
     },
 
-    list: function (target, response) {
-      var data = response.data, pagination = U.pagination(response);
-      var model = Object.assign({}, data, { pagination: pagination });
-      var root = T.components.render("users/list", Object.assign({}, model, { state: model }));
-      T.content.replaceChildren(target, root); root.dataset.usersReady = "true";
-      T.accounts.filters(data, pagination);
-    },
-    filters: function (data, pagination) {
-      var filterForm = T.components.render("users/filter-form", Object.assign({}, data, { pagination: pagination }));
-      filterForm.querySelectorAll("input, select, textarea").forEach(function (control) {
-        control.defaultValue = control.value; control.defaultChecked = control.checked;
-        if (control.options) { Array.from(control.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
-      });
-      U.filterPanel("users-filter-modal", filterForm);
-    },
     result: function (source, response, target) {
       var url = new URL(source.dataset.ajaxAction || source.getAttribute("action") || source.dataset.url || source.getAttribute("href") || "/", window.location.href);
       if (!/^\/api\/users(?:\/|$)/.test(url.pathname)) { return false; }
       var data = response.data;
-      if (url.pathname === "/api/users" && target && T.lists.isRead(source)) { T.accounts.list(target, response); return [target]; }
-      if (target && target.id === "users-list" || source.dataset.adminUserForm) {
-        var list = document.getElementById("users-list");
-        T.lists.refresh(list);
-        return [];
-      }
       if (data.user) {
         if (Object.prototype.hasOwnProperty.call(data.user, "bio")) {
           document.querySelectorAll('[data-author-id="' + Number(data.user.id) + '"][data-author-bio]').forEach(function (node) { node.textContent = data.user.bio || ""; node.classList.add("is-resource-text"); });
@@ -216,12 +194,4 @@ import "../../../../assets/ui/toasts.js";
     }
   };
   T.users = T.accounts; // Compatibility for existing product integrations.
-  T.accounts.hydrate = function (root) {
-    Array.from((root || document).querySelectorAll("[data-users-view]")).forEach(function (view) {
-      if (view.dataset.usersReady === "true") { return; }
-      view.dataset.usersReady = "true";
-      var state = JSON.parse(view.dataset.usersState);
-      T.accounts.filters(state, state.pagination || {});
-    });
-  };
 }());

@@ -70,10 +70,6 @@ import "../../../../../assets/core/dom.js";
         var data = JSON.parse(view.dataset.moderationReportsState || "{}");
         if (!data.filters) { return; }
         var form = T.components.render("moderation/filter-form", data);
-        form.querySelectorAll("input, select").forEach(function (field) {
-          field.defaultValue = field.value;
-          if (field.options) { Array.from(field.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
-        });
         T.ui.filterPanel("moderation-filter-modal", form);
       });
     },

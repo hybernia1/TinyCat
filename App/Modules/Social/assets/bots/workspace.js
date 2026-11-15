@@ -65,10 +65,6 @@ import "../../../../../assets/ui/tabs.js";
     state.history.dataset.loaded = "true";
     pagination(state.history, source);
     var form = T.components.render("bots/run-filter-form", data);
-    form.querySelectorAll("input, select").forEach(function (field) {
-      field.defaultValue = field.value;
-      if (field.options) { Array.from(field.options).forEach(function (option) { option.defaultSelected = option.selected; }); }
-    });
     U.filterPanel(data.filter_modal, form);
   }
   function load(state, name, force) {
