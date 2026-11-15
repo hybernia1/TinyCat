@@ -28,3 +28,4 @@
 *.bak
 Thumbs.db
 .DS_Store
+/assets/modules/selection-probe-*/
