@@ -54,7 +54,7 @@ uvádí zachované cesty a výjimky; builder nic nemaže automaticky.
   `tools/performance/prepare-performance.php`, `tools/performance/profile-performance.php`, `tools/performance/instrument-performance.php`.
 - [Text příspěvků](../docs/contracts/post-text-contract.md): `tools/maintenance/post-text-cleanup.php`.
 - [Odkazy](../docs/operations/link-optimization.md): `tools/maintenance/optimize-links.php`.
-  `tools/maintenance/audit-links.php` samostatně kontroluje normalizační migraci bez aplikace změn.
+  `tools/maintenance/audit-links.php` používá stejný plán optimalizátoru pro aktuální sociální tabulky, vždy bez zápisu.
 - [YouTube náhledy](../docs/operations/youtube-thumbnails.md): `tools/maintenance/youtube-thumbnail-cleanup.php`.
 - [SQL přiřazení RSS zdrojů](maintenance/sql/bot-source-attribution/README.md).
 
