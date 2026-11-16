@@ -50,4 +50,18 @@ return static function (PDO $pdo, callable $assert): void {
     \TinyCat\Database\Migrations::record($pdo, 'global', 'tinycat', 'fixture.new', null, '6.0.5', str_repeat('a', 64));
     $globals = array_column(\TinyCat\Database\Migrations::history($pdo, 'global', 'tinycat'), null, 'migration');
     $assert($globals['fixture.new']['applied_at'] !== null, 'New writes include a real application timestamp');
+    $legacy(); $insert('fixture.writer', 'fixture.writer.initial', str_repeat('b', 64));
+    \TinyCat\Database\Migrations::upgradeWriter($pdo);
+    $assert(!\TinyCat\Database\Migrations::pending($pdo), 'Compatibility view is not mistaken for unconverted storage');
+    $oldWriter = $pdo->prepare('INSERT INTO module_migrations (module_id, migration, version, checksum) VALUES (?, ?, ?, ?)');
+    $oldWriter->execute(['fixture.writer', 'fixture.writer.next', 2, str_repeat('c', 64)]);
+    $written = array_column(\TinyCat\Database\Migrations::history($pdo, 'schema', 'fixture.writer'), null, 'migration');
+    $assert(count($written) === 2 && (int) $written['fixture.writer.next']['sequence'] === 2, 'Already-loaded old writer inserts atomically into the unified physical journal');
+    $beforeViewRead = $pdo->query('SELECT COUNT(*) FROM migrations')->fetchColumn();
+    \TinyCat\Database\Migrations::ensure($pdo);
+    $assert($pdo->query('SELECT COUNT(*) FROM migrations')->fetchColumn() === $beforeViewRead, 'Later new lifecycle does not copy the view or duplicate its history');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS module_migrations (module_id VARCHAR(190) NOT NULL, migration VARCHAR(190) NOT NULL, version INTEGER NOT NULL, checksum CHAR(64) NOT NULL, PRIMARY KEY(module_id, migration))');
+    $oldWriter->execute(['fixture.writer', 'fixture.writer.final', 3, str_repeat('d', 64)]);
+    $assert(count(\TinyCat\Database\Migrations::history($pdo, 'schema', 'fixture.writer')) === 3, 'The cached writer can initialize and record subsequent schema owners through the view');
+    $pdo->exec('DROP VIEW module_migrations');
 };

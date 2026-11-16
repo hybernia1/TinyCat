@@ -28,15 +28,43 @@ final class Migrations
     {
         if (!in_array($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), ['mysql', 'sqlite'], true)) { throw new RuntimeException('Migration journals require MySQL, MariaDB or SQLite.'); }
         $suffix = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' : '';
-        $pdo->exec('CREATE TABLE IF NOT EXISTS migrations (kind VARCHAR(16) NOT NULL, stream VARCHAR(190) NOT NULL, migration VARCHAR(190) NOT NULL, sequence INTEGER NULL, release_version VARCHAR(32) NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NULL, PRIMARY KEY (kind, stream, migration))' . $suffix);
+        $pdo->exec('CREATE TABLE IF NOT EXISTS migrations (kind VARCHAR(16) NOT NULL DEFAULT \'schema\', stream VARCHAR(190) NOT NULL, migration VARCHAR(190) NOT NULL, sequence INTEGER NULL, release_version VARCHAR(32) NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NULL, PRIMARY KEY (kind, stream, migration))' . $suffix);
         (self::inspection())::requireColumns($pdo, 'migrations', ['kind', 'stream', 'migration', 'sequence', 'release_version', 'checksum', 'applied_at']);
         self::shape($pdo, 'migrations', ['kind', 'stream', 'migration', 'checksum'], ['kind', 'stream', 'migration']);
+    }
+
+    /** True only for source tables; the old writer view stores no duplicate history. */
+    public static function pending(PDO $pdo): bool { return self::legacyTables($pdo) !== []; }
+
+    /** Finish conversion even when the 6.0.4 lifecycle and schema writer remain loaded. */
+    public static function upgradeWriter(PDO $pdo): void
+    {
+        if (!in_array('module_migrations', self::legacyTables($pdo), true)) { self::prepare($pdo); return; }
+        self::ensure($pdo);
+        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
+            $pdo->exec("ALTER TABLE migrations ALTER COLUMN kind SET DEFAULT 'schema'");
+            $pdo->exec("CREATE VIEW module_migrations AS SELECT stream AS module_id, migration, sequence AS version, checksum FROM migrations WHERE kind = 'schema' WITH CHECK OPTION");
+        } else {
+            $pdo->exec("CREATE VIEW module_migrations AS SELECT stream AS module_id, migration, sequence AS version, checksum FROM migrations WHERE kind = 'schema'");
+            $pdo->exec("CREATE TRIGGER module_migrations_insert INSTEAD OF INSERT ON module_migrations BEGIN INSERT INTO migrations (kind, stream, migration, sequence, checksum) VALUES ('schema', NEW.module_id, NEW.migration, NEW.version, NEW.checksum); END");
+        }
+    }
+
+    /** @return list<string> */
+    private static function legacyTables(PDO $pdo): array
+    {
+        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
+            return array_values(array_filter(['schema_migrations', 'module_migrations'], static fn (string $table): bool => (self::inspection())::exists($pdo, $table)));
+        }
+        $query = $pdo->query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME IN ('schema_migrations', 'module_migrations') ORDER BY TABLE_NAME");
+        if ($query === false) { throw new RuntimeException('Cannot inspect migration source tables.'); }
+        return array_values($query->fetchAll(PDO::FETCH_COLUMN));
     }
 
     /** Explicit, restartable conversion under the caller's deployment lock. */
     public static function ensure(PDO $pdo): void
     {
-        $legacy = array_values(array_filter(['schema_migrations', 'module_migrations'], static fn (string $table): bool => (self::inspection())::exists($pdo, $table)));
+        $legacy = self::legacyTables($pdo);
         if ($legacy === []) { self::prepare($pdo); return; }
         if ($pdo->inTransaction()) { throw new RuntimeException('Migration journal conversion requires a dedicated connection.'); }
         $mysql = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
@@ -88,7 +116,7 @@ final class Migrations
             foreach ($query->fetchAll(PDO::FETCH_ASSOC) as $row) { $rows[$row['stream'] . ':' . $row['migration']] = $row; }
         }
         $table = $kind === 'global' ? 'schema_migrations' : 'module_migrations';
-        if ((self::inspection())::exists($pdo, $table)) {
+        if (in_array($table, self::legacyTables($pdo), true)) {
             foreach (self::legacy($pdo, $table) as $row) {
                 if ($stream !== null && $row['stream'] !== $stream) { continue; }
                 $key = $row['stream'] . ':' . $row['migration'];

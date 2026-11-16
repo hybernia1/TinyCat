@@ -21,14 +21,15 @@ It preserves each original ID, checksum, schema sequence, release version and
 known application time. Unknown historical schema timestamps remain `NULL`.
 `module_installations` retains the separate current state of each schema.
 
-The signed `tinycat.support` schema step prepares the new journal. The package
-lifecycle finalizes the copy after all steps are recorded, including when the
-running 6.0.4 updater still has its original schema writer loaded. Source rows
-are verified before the old tables are dropped. Interrupted copies can resume;
-conflicts stop the operation and retain the source. Read-only history checks
-do not create tables or convert data. Module schema histories and fresh-install
-baselines remain signed and verified. The existing database snapshot and
-rollback restore both the journal and schema state together.
+The signed `tinycat.support` schema steps prepare and finish the copy even when
+the running 6.0.4 updater retains its original lifecycle and schema writer. A
+compatibility `module_migrations` view directs that writer's remaining inserts
+into the single physical journal; it stores no second copy. Fresh installations
+need no compatibility view. History reads and pending checks ignore this view.
+Source rows are verified before old tables are dropped. Interrupted copies can
+resume; conflicts retain the source. Read-only checks do not create objects or
+convert data. Signed module histories remain verified; the existing database
+snapshot and rollback preserve tables and compatibility views together.
 
 For a new release, use:
 

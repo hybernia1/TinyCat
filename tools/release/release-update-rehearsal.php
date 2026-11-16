@@ -322,7 +322,7 @@ PHP;
     if ($updateExit !== 0 || !is_array($update)) {
         throw new RuntimeException('Signed production update failed: ' . implode(' ', $updateOutput));
     }
-    $journalTables = $database->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
+    $journalTables = $database->query("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")->fetchAll(PDO::FETCH_COLUMN);
     $assert(in_array('migrations', $journalTables, true) && !in_array('module_migrations', $journalTables, true) && !in_array('schema_migrations', $journalTables, true), 'The running 6.0.4 updater finishes with one unified migration journal.');
     $query = $database->prepare("SELECT sequence, checksum, applied_at FROM migrations WHERE kind = 'schema' AND stream = ? AND migration = ?");
     foreach ($beforeSchemaHistory as $row) {

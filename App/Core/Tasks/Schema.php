@@ -15,8 +15,8 @@ final class Schema
     public static function schema(?string $root = null): ModuleSchema
     {
         $directory = ($root ?? \TinyCat\Support\Paths::basePath()) . '/App/Core/Tasks/migrations';
-        $fresh = $directory . '/fresh-v2.php';
-        return new ModuleSchema(2, ['scheduler_runs'], static function (PDO $pdo) use ($fresh): void { (require $fresh)($pdo); }, [new SchemaMigration(1, 'tinycat.core.tasks.history', $directory . '/001-history.php'), new SchemaMigration(2, 'tinycat.core.migrations.unified', $directory . '/002-journal.php')], new SchemaMigration(2, 'tinycat.core.tasks.fresh-v2', $fresh));
+        $fresh = $directory . '/fresh-v3.php';
+        return new ModuleSchema(3, ['scheduler_runs'], static function (PDO $pdo) use ($fresh): void { (require $fresh)($pdo); }, [new SchemaMigration(1, 'tinycat.core.tasks.history', $directory . '/001-history.php'), new SchemaMigration(2, 'tinycat.core.migrations.unified', $directory . '/002-journal.php'), new SchemaMigration(3, 'tinycat.core.migrations.writer', $directory . '/003-writer.php')], new SchemaMigration(3, 'tinycat.core.tasks.fresh-v3', $fresh));
     }
 
     public static function validateLegacyHistory(PDO $pdo): void

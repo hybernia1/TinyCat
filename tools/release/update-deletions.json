@@ -1934,6 +1934,7 @@
     "App/Modules/Social/src/Automation/WordPressFeed.php",
     "App/Modules/Social/src/Presentation/Sitemap.php",
     "App/Modules/Social/src/Presentation/Identity.php",
-    "App/Modules/Social/src/Posts/LegacyInbox.php"
+    "App/Modules/Social/src/Posts/LegacyInbox.php",
+    "App/Core/Tasks/migrations/fresh-v2.php"
   ]
 }

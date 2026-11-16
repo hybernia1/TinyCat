@@ -15,7 +15,7 @@ final class ModuleSchemas
      * @param array<string, ModuleSchema> $schemas */
     public static function pending(PDO $pdo, array $schemas): bool
     {
-        self::validate($schemas); $pending = $schemas !== [] && (Schema::exists($pdo, 'module_migrations') || Schema::exists($pdo, 'schema_migrations'));
+        self::validate($schemas); $pending = $schemas !== [] && Migrations::pending($pdo);
         foreach ($schemas as $id => $schema) {
             $state = self::state($pdo, $id);
             if ($state === null) {
