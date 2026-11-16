@@ -638,27 +638,8 @@ $assert($value('SELECT provider FROM social_links WHERE id = 9002') === 'youtube
 $wpLinkId = \TinyCat\Social\Content\Links::status_link_upsert(['normalized_url' => 'https://wp.example/article', 'url_hash' => hash('sha256', 'wp-taxonomy'), 'provider' => 'wordpress', 'link_type' => 'web', 'title' => 'Article']);
 $assert($value('SELECT provider FROM social_links WHERE id = ' . $wpLinkId) === 'wordpress' && $value('SELECT link_type FROM social_links WHERE id = ' . $wpLinkId) === 'web', 'Recognized WordPress social_links persist their platform separately from social_posts type.');
 
-$migrationDb = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$migrationDb->exec('CREATE TABLE links (id INTEGER PRIMARY KEY, normalized_url TEXT NOT NULL, url_hash TEXT NOT NULL UNIQUE, title TEXT, description TEXT, image_url TEXT, video_id TEXT)');
-$migrationDb->exec('CREATE TABLE content_links (content_id INTEGER, link_id INTEGER, created_at TEXT, PRIMARY KEY (content_id, link_id))');
-$migrationInsert = $migrationDb->prepare('INSERT INTO links VALUES (?, ?, ?, ?, ?, ?, ?)');
-$migrationInsert->execute([1, 'https://twitter.com/account/status/123?s=20', 'old-x', 'Account', '', '', '']);
-$migrationInsert->execute([2, 'https://x.com/account/status/123/photo/1', 'old-photo', '', 'Caption', '/uploads/preview.webp', '']);
-$migrationDb->exec("INSERT INTO content_links VALUES (10, 1, '2026-10-27'), (10, 2, '2026-10-27'), (20, 2, '2026-10-27')");
-$normalizeStored = require $root . '/migrations/20261027_002_link_normalization.php';
-$dryReport = $normalizeStored($migrationDb, false);
-$assert($dryReport['changed'] === 2 && $dryReport['merged'] === 1 && (int) $migrationDb->query('SELECT COUNT(*) FROM links')->fetchColumn() === 2, 'Normalization audit reports duplicates without changing records.');
-$migrationDb->exec("CREATE TRIGGER fail_normalization BEFORE UPDATE ON links BEGIN SELECT RAISE(ABORT, 'forced migration failure'); END");
-try { $normalizeStored($migrationDb); } catch (PDOException) { }
-$assert((int) $migrationDb->query('SELECT COUNT(*) FROM links')->fetchColumn() === 2 && (int) $migrationDb->query('SELECT COUNT(*) FROM content_links')->fetchColumn() === 3, 'Normalization failure restores deleted links and transferred relations.');
-$migrationDb->exec('DROP TRIGGER fail_normalization');
-$normalizeStored($migrationDb);
-$migrated = $migrationDb->query('SELECT * FROM links')->fetch(PDO::FETCH_ASSOC);
-$assert($migrated['normalized_url'] === 'https://x.com/i/web/status/123' && $migrated['url_hash'] === hash('sha256', $migrated['normalized_url']), 'Migration stores one canonical identity.');
-$assert($migrated['title'] === 'Account' && $migrated['description'] === 'Caption' && $migrated['image_url'] === '/uploads/preview.webp', 'Duplicate merge preserves complementary cached metadata.');
-$assert((int) $migrationDb->query('SELECT COUNT(*) FROM content_links WHERE link_id = 1')->fetchColumn() === 2 && (int) $migrationDb->query('SELECT COUNT(*) FROM links')->fetchColumn() === 1, 'Duplicate merge preserves both posts and collapses overlapping relations.');
-$again = $normalizeStored($migrationDb);
-$assert($again['changed'] === 0 && $again['merged'] === 0, 'Normalization migration is repeatable.');
+// Stored-link normalization, merging, dry-run and rollback are covered by
+// tests/tools/link-optimizer.php against the current Social tables on SQLite/MySQL.
 $preparedDuplicates = \TinyCat\Social\Content\Links::prepareLinks([
     ['normalized_url' => 'https://alpha.example?utm_source=one', 'url_hash' => 'stale-one'],
     ['normalized_url' => 'https://alpha.example?utm_source=two', 'url_hash' => 'stale-two'],

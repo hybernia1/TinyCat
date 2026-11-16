@@ -656,8 +656,9 @@ The signed image URL is kept intact. Generic descriptions, marker-free viewport
 images and thumbnails from other origins are ignored. Cards with no
 verified image remain text links, with no map SDK or external iframe on render.
 `php tools/maintenance/audit-links.php` previews existing-record changes without writes.
-The update migration normalizes stored identities and merges duplicate relations
-transactionally, preserving post associations and complementary cached metadata.
+The Social maintenance optimizer normalizes stored identities and merges duplicate
+relations transactionally with an explicit backup, preserving post associations
+and complementary cached metadata. See [link optimization](../operations/link-optimization.md).
 
 Account activation for regular users uses administrator-only `PUT /api/users/{id}/activation` with boolean `enabled`; protected core administrators cannot be deactivated. Source activation uses `PATCH /api/bots/sources/{id}` with boolean `enabled`. All activation writes require CSRF.
 
