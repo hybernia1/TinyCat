@@ -6,3 +6,8 @@
   display: flex;
   width: 100%;
 }
+
+.home-feed-section .status-feed,
+.profile-main .status-feed {
+  max-width: 100%;
+}

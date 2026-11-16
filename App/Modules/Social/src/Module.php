@@ -8,14 +8,8 @@ use TinyCat\Core\Modules\Registries;
 use TinyCat\Http\Api;
 
 /** The complete social application: one activation, one resource owner, one initialization. */
-final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesManagedSchemas, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Runtime\InitializesModule, \TinyCat\Core\Identity\ProvidesLifecycle, \TinyCat\Core\Modules\ProvidesFileReferences, \TinyCat\Core\Modules\ProvidesLegacyUpgrade
+final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core\Modules\ProvidesManagedSchemas, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Runtime\InitializesModule, \TinyCat\Core\Identity\ProvidesLifecycle, \TinyCat\Core\Modules\ProvidesFileReferences
 {
-    public static function prepareLegacyUpgrade(\PDO $pdo, callable $migrate): void
-    {
-        if (\TinyCat\Database\SchemaInspection::exists($pdo, 'content')) { $migrate(); }
-        elseif (!\TinyCat\Database\SchemaInspection::exists($pdo, 'social_posts')) { throw new \RuntimeException('The historical Social storage is missing.'); }
-    }
-
     public static function initialize(): void
     {
         Content\ServiceProvider::initialize();

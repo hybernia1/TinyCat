@@ -10,7 +10,7 @@ class MigrationRegistry
 {
     private const array REQUIRED_COLUMNS = ['migration', 'version', 'checksum', 'applied_at'];
     private const string OUTDATED_SCHEMA_MESSAGE =
-        'The migration registry is outdated. Update TinyCat to 1.0.14 before installing TinyCat 2.x.';
+        'The migration registry is invalid. A completed TinyCat 6.0.4 installation is required.';
 
     private function __construct()
     {

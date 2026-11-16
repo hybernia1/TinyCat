@@ -104,6 +104,53 @@
     }
     typeDraft('Ahoj,@jana'); check(E.activeToken(editorRoot).query === 'jana', 'Autocomplete recognizes the same punctuation boundary as the server');
     E.hideSuggestions(editorRoot); draft.remove();
+    const installation = document.createElement('main');
+    installation.className = 'container-sm stack stack-gap-24';
+    installation.innerHTML = window.installationFixture;
+    document.body.append(installation);
+    for (const theme of ['light', 'dark']) {
+      document.documentElement.dataset.theme = theme;
+      const steps = installation.querySelector('ol');
+      check(steps.children.length === 5 && steps.querySelectorAll('[aria-current="step"]').length === 1, 'Installation exposes five steps and one current step: '+theme);
+      check(steps.children[2].getAttribute('aria-current') === 'step' && steps.children[0].querySelector('svg'), 'Installation distinguishes current and completed steps: '+theme);
+      const choices = installation.querySelectorAll('label.check-card');
+      check(choices.length >= 2 && installation.querySelector('input[value="cs"]').checked, 'Installation retains its selected native language: '+theme);
+      choices[1].click();
+      check(choices[1].querySelector('input').checked && installation.querySelectorAll('input[name="locale"]:checked').length === 1, 'Clicking the shared card selects exactly one language: '+theme);
+      choices[1].querySelector('input').focus();
+      check(choices[1].matches(':focus-within'), 'Native language focus stays inside its shared card: '+theme);
+      for (const node of installation.querySelectorAll('.result-item, .check-card, .btn')) {
+        const bounds = node.getBoundingClientRect();
+        check(bounds.width > 0 && bounds.left >= 0 && bounds.right <= innerWidth + 1, 'Installation control fits the viewport: '+theme);
+      }
+      installation.querySelector('input[value="cs"]').click();
+    }
+    installation.remove();
+    const avatarImage = '/avatar-fixture.svg';
+    for (const state of ['empty', 'uploaded', 'generated']) {
+      const user = { id: 2, username: 'Avatar fixture', avatar_url: state === 'empty' ? null : avatarImage, avatar_custom: state !== 'generated' };
+      const dialog = T.accounts.modal(new URL('/api/users/2/avatar', location.href), { data: { user, appearance_options: window.avatarFixtureOptions } }, 'avatar-layout-'+state);
+      dialog.dataset.open = 'true'; document.body.append(dialog);
+      for (const theme of ['light', 'dark']) {
+        document.documentElement.dataset.theme = theme;
+        const preview = dialog.querySelector('.avatar-upload-preview'), bounds = preview.getBoundingClientRect();
+        check(bounds.width === 96 && bounds.height === 96, 'Avatar preview retains shared XL dimensions: '+state+' '+theme);
+        const image = preview.querySelector('img'), fallback = preview.querySelector('.avatar-fallback');
+        check((getComputedStyle(image).display === 'none') === (state === 'empty') && (getComputedStyle(fallback).display === 'none') === (state !== 'empty'), 'Shared avatar styles show exactly one preview state: '+state+' '+theme);
+        const icon = fallback.querySelector('svg').getBoundingClientRect();
+        if (state === 'empty') { check(Math.abs(icon.left+icon.width/2-bounds.left-bounds.width/2) < 1 && Math.abs(icon.top+icon.height/2-bounds.top-bounds.height/2) < 1, 'Shared avatar fallback stays centered: '+theme); }
+        for (const node of dialog.querySelectorAll('.avatar-editor-preview, .avatar-upload-drop, .modal-footer .btn')) {
+          const rect = node.getBoundingClientRect();
+          check(rect.width > 0 && rect.left >= 0 && rect.right <= innerWidth+1, 'Avatar controls fit the viewport: '+state+' '+theme);
+        }
+      }
+      dialog.remove();
+    }
+    const socialFeed = document.createElement('div'); socialFeed.className = 'container profile-main';
+    const feed = document.createElement('div'); feed.className = 'status-feed'; socialFeed.append(feed); document.body.append(socialFeed);
+    check(Math.abs(feed.getBoundingClientRect().width-socialFeed.getBoundingClientRect().width) < 1, 'Social owns its full-width profile feed layout');
+    socialFeed.remove();
+    delete document.documentElement.dataset.theme;
     document.getElementById('results').textContent = JSON.stringify({ ok: true, checks });
   } catch (error) { document.getElementById('results').textContent = JSON.stringify({ ok: false, error: String(error.stack || error), checks }); }
 }());

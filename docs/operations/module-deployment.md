@@ -4,22 +4,10 @@ Runtime `6.0.1` odděluje povinný framework od funkčních
 modulů. Social je jeden modul; Blog je druhý
 a mohou běžet společně. Core není součástí aktivačního seznamu.
 
-Formát distribuce 2 vyžaduje u dřívějších modulových instalací přechodový
-runtime `6.0.0-dev.5.1`, který umí převést jejich uložená ID. Platformní
-a samostatné Blog balíčky tento minimum deklarují. Klasická sociální 5.16.0
-bez modulového deploymentu může použít sociální aktualizaci se zachovanou
-globální historií. Aktualizace nesmí měnit identitu produktu.
-
-Stabilní 5.x může na 6.0.1 přejít běžným webovým updaterem. Veřejný Social/platform
-balíček sestav s `--legacy-upgrade`; podepsaný kompatibilní transport během
-aktualizace explicitně převede historii a publikuje cílový descriptor formátu 3.
-Viz [stabilní aktualizace](updates.md#upgrading-to-601-from-stable-5x).
-
-Historická modulová vývojová cesta do 6.0.0 používala souborový bridge dev.9.1
-a migrační checkpoint dev.9.2. Oba podepsané kroky stále sestaví
-`php tools/release/build-bridge.php --assembly=platform --output=dist/bridge`;
-pro Blog použij `--assembly=blog`, pro klasický Social `--assembly=source`.
-Postup a databázové ověření popisují [aktualizace](updates.md#preparing-the-60-modular-update).
+Aktuální balíčky vyžadují dokončenou instalaci TinyCat 6.0.4 nebo novější.
+Kompatibilní transport pro starší verze a builder přechodových balíčků byly
+odstraněny. Historie schémat a checksumy zůstávají zachované; aktualizace musí
+zachovat identitu produktu. Viz [podporovaný výchozí stav](updates.md#supported-update-baseline).
 
 ## Správa v administraci
 
@@ -42,7 +30,7 @@ je přehled pouze pro čtení. CLI níže zůstává dostupné i pro obnovu.
 Z kořene zdrojů s připraveným podpisovým klíčem:
 
 ```powershell
-php tools/release/build-update.php --assembly=platform --version=6.0.1 --both --legacy-upgrade --key=C:/private/signing.key --output=storage/releases/platform
+php tools/release/build-update.php --assembly=platform --version=X.Y.Z --both --key=C:/private/signing.key --output=dist/releases/platform
 ```
 
 Výchozí `--assembly=source` používá explicitní `App/modules.php`.

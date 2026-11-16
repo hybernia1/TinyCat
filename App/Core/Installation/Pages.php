@@ -147,20 +147,20 @@ final class Pages
                 <form class="stack" method="post" action="/api/installation/steps/language" data-installation-form>
                     <?= \TinyCat\Core\Security\Csrf::field() ?>
                     <input type="hidden" name="_install_step" value="language">
-                    <div class="choice-list">
+                    <div class="grid gap-2">
                         <?php foreach ($languages as $language): ?>
                             <?php $checked = $language['code'] === $selected; ?>
-                            <label class="choice-card">
+                            <label class="check-card">
                                 <input type="radio" name="locale" value="<?= \TinyCat\Support\Html::e($language['code']) ?>"<?= $checked ? ' checked' : '' ?>>
-                                <span>
+                                <span class="stack stack-gap-4">
                                     <strong><?= \TinyCat\Support\Html::e($language['label']) ?></strong>
-                                    <small><?= \TinyCat\Support\Html::e(strtoupper((string) $language['code'])) ?></small>
+                                    <small class="text-muted"><?= \TinyCat\Support\Html::e(strtoupper((string) $language['code'])) ?></small>
                                 </span>
                             </label>
                         <?php endforeach; ?>
                     </div>
 
-                    <div class="choice-row">
+                    <div class="cluster">
                         <button class="btn btn-primary" type="submit"><?= \TinyCat\Support\Html::icon('check') ?> <span><?= \TinyCat\Support\Html::et('common.continue') ?></span></button>
                     </div>
                 </form>
@@ -208,7 +208,7 @@ final class Pages
                             <input class="input" name="charset" value="<?= \TinyCat\Support\Html::e($database['charset'] ?? 'utf8mb4') ?>" required>
                         </label>
                     </div>
-                    <div class="choice-row">
+                    <div class="cluster">
                         <a class="btn btn-secondary" href="/install?step=language"><?= \TinyCat\Support\Html::icon('arrow-left') ?> <span><?= \TinyCat\Support\Html::et('common.back') ?></span></a>
                         <button class="btn btn-primary" type="submit"><?= \TinyCat\Support\Html::icon('arrow-right') ?> <span><?= \TinyCat\Support\Html::et('install.db_test') ?></span></button>
                     </div>
@@ -270,7 +270,7 @@ final class Pages
                         </tbody>
                     </table>
                 </div>
-                <form method="post" action="/api/installation/steps/tables" data-installation-form class="choice-row">
+                <form method="post" action="/api/installation/steps/tables" data-installation-form class="cluster">
                     <?= \TinyCat\Core\Security\Csrf::field() ?>
                     <input type="hidden" name="_install_step" value="tables">
                     <a class="btn btn-secondary" href="/install?step=db"><?= \TinyCat\Support\Html::icon('arrow-left') ?> <span><?= \TinyCat\Support\Html::et('common.back') ?></span></a>

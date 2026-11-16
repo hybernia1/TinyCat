@@ -13,6 +13,9 @@ if (!defined('TINYCAT')) {
 
 final class Response
 {
+    /** @var array<string, true> */
+    private static array $validatedKeys = [];
+
     /** CLI uses the same resource envelope and explicit process exit codes. */
     public static function cli(mixed $data, string $code = 'ok', int $status = 200, int $exitCode = 0): never
     {
@@ -188,13 +191,17 @@ final class Response
             return;
         }
         foreach ($data as $key => $value) {
-            if (is_string($key) && preg_match('/(?:^|_)html(?:$|_)/i', $key) === 1) {
-                throw new \LogicException('HTML presentation fields are not allowed in module API resources.');
+            if (is_string($key) && !isset(self::$validatedKeys[$key])) {
+                if (preg_match('/(?:^|_)html(?:$|_)/i', $key) === 1) {
+                    throw new \LogicException('HTML presentation fields are not allowed in module API resources.');
+                }
+                if (preg_match('/(?:^|_)(?:label|formatted)$|^(?:ui|components|translations|role_options|status_options|username_hint)$/i', $key) === 1) {
+                    throw new \LogicException('UI presentation fields are not allowed in module API resources: ' . $key);
+                }
+                if (count(self::$validatedKeys) < 256) { self::$validatedKeys[$key] = true; }
             }
-            if (is_string($key) && preg_match('/(?:^|_)(?:label|formatted)$|^(?:ui|components|translations|role_options|status_options|username_hint)$/i', $key) === 1) {
-                throw new \LogicException('UI presentation fields are not allowed in module API resources: ' . $key);
-            }
-            self::assertData($value);
+            if (is_array($value)) { self::assertData($value); }
+            elseif (is_object($value) || is_resource($value)) { throw new \LogicException('API resources must contain JSON data values.'); }
         }
     }
 }

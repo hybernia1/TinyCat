@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../tools/support/workspace.php';
 
-// One file/rollback rehearsal covers both required runtime hops; domain DDL is
+// A direct 6.0.4 file/rollback rehearsal covers the supported baseline; domain DDL is
 // exercised by the existing module lifecycle and disposable MySQL fixtures.
 
 require_once __DIR__ . '/../support/cache-isolation.php';
@@ -23,7 +23,8 @@ $freshRoot = $temporaryRoot . '/fresh';
 $artifactRoot = $temporaryRoot . '/dist';
 $signingKey = $temporaryRoot . '/signing.key';
 require_once $root . '/App/Core/Support/Version.php';
-$candidateVersion = \TinyCat\Support\Version::CURRENT;
+$sourceVersion = \TinyCat\Support\Version::CURRENT;
+$candidateVersion = version_compare($sourceVersion, $baselineVersion, '>') ? $sourceVersion : '6.0.5';
 $failures = [];
 $managedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
 $managedRootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
@@ -190,6 +191,8 @@ try {
     $copyTree($root . '/tools/quality/translation-catalogs.php', $candidateRoot . '/tools/quality/translation-catalogs.php');
     $copyTree($root . '/tools/quality/client-translations.php', $candidateRoot . '/tools/quality/client-translations.php');
     $copyTree($root . '/tools/release/update-deletions.json', $candidateRoot . '/tools/release/update-deletions.json');
+    $versionPath = $candidateRoot . '/App/Core/Support/Version.php';
+    file_put_contents($versionPath, str_replace("CURRENT = '{$sourceVersion}'", "CURRENT = '{$candidateVersion}'", (string) file_get_contents($versionPath)));
     $core = (string) file_get_contents($candidateRoot . '/App/Core/Support/Version.php');
 
     if (!str_contains($core, "public const string CURRENT = '{$candidateVersion}';")) {
@@ -210,25 +213,6 @@ try {
     if ($buildExit !== 0) {
         throw new RuntimeException('Rehearsal package build failed: ' . implode(' ', $buildOutput));
     }
-
-    $bridgeSource = $temporaryRoot . '/bridge-source';
-    $bridgeArchive = $root . '/tests/fixtures/releases/bridge-6.0.0-dev.9.1-source.zip';
-    if (hash_file('sha256', $bridgeArchive) !== '9620cebe0f1fb03d6a49673ebc3daef43a54e53800ffdaedc1bdb660cfeb3df5') { throw new RuntimeException('The frozen compatibility fixture changed.'); }
-    $extractZip($bridgeArchive, $bridgeSource);
-    $bridgeArtifacts = $temporaryRoot . '/bridge-artifact';
-    $bridgeBuild = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($bridgeSource . '/tools/release/build-update.php')
-        . ' --version=6.0.0-dev.9.1 --minimum-version=' . escapeshellarg($baselineVersion)
-        . ' --assembly=source --allow-dirty --without-migrations --output=' . escapeshellarg($bridgeArtifacts) . ' --key=' . escapeshellarg($signingKey);
-    exec($bridgeBuild . ' 2>&1', $bridgeOutput, $bridgeExit);
-    if ($bridgeExit !== 0) { throw new RuntimeException('Compatibility bridge build failed: ' . implode(' ', $bridgeOutput)); }
-    $bridgeVersionPath = $bridgeSource . '/App/Core/Support/Version.php';
-    file_put_contents($bridgeVersionPath, str_replace("CURRENT = '6.0.0-dev.9.1'", "CURRENT = '6.0.0-dev.9.2'", (string) file_get_contents($bridgeVersionPath)));
-    $checkpointArtifacts = $temporaryRoot . '/checkpoint-artifact';
-    $checkpointBuild = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($bridgeSource . '/tools/release/build-update.php')
-        . ' --version=6.0.0-dev.9.2 --minimum-version=6.0.0-dev.9.1'
-        . ' --assembly=source --allow-dirty --output=' . escapeshellarg($checkpointArtifacts) . ' --key=' . escapeshellarg($signingKey);
-    exec($checkpointBuild . ' 2>&1', $checkpointOutput, $checkpointExit);
-    if ($checkpointExit !== 0) { throw new RuntimeException('Compatibility checkpoint build failed: ' . implode(' ', $checkpointOutput)); }
 
     $archiveCommand = 'git -C ' . escapeshellarg($root) . ' archive --format=zip'
         . ' --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion);
@@ -303,26 +287,6 @@ echo json_encode([
     'deletions' => count($manifest['delete']),
 ], JSON_THROW_ON_ERROR);
 PHP;
-    $bridgeRunner = str_replace(
-        ['__INSTALL_ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__VERSION__'],
-        [var_export($installRoot, true), var_export($bridgeArtifacts . '/tinycat-update.json', true), var_export($bridgeArtifacts . '/tinycat-update.sig', true), var_export($bridgeArtifacts . '/tinycat-6.0.0-dev.9.1.zip', true), "'6.0.0-dev.9.1'"],
-        $runnerTemplate
-    );
-    [$bridgeExit, $bridgeOutput] = $run($bridgeRunner);
-    if ($bridgeExit !== 0) { throw new RuntimeException('Legacy-to-bridge file update failed: ' . implode(' ', $bridgeOutput)); }
-    $bridgeBoot = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true) . "; if (TinyCat\\Support\\Version::CURRENT !== '6.0.0-dev.9.1') exit(2);";
-    [$bridgeBootExit, $bridgeBootOutput] = $run($bridgeBoot);
-    $assert($bridgeBootExit === 0, 'The supported legacy runtime reaches the compatibility bridge: ' . implode(' ', $bridgeBootOutput));
-    $assert(hash_file('sha256', $installRoot . '/config.php') === $configHash && file_get_contents($installRoot . '/uploads/rehearsal-sentinel.txt') === 'uploads-preserved', 'The first hop preserves local configuration and uploads');
-    $checkpointRunner = str_replace(
-        ['__INSTALL_ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__VERSION__'],
-        [var_export($installRoot, true), var_export($checkpointArtifacts . '/tinycat-update.json', true), var_export($checkpointArtifacts . '/tinycat-update.sig', true), var_export($checkpointArtifacts . '/tinycat-6.0.0-dev.9.2.zip', true), "'6.0.0-dev.9.2'"],
-        $runnerTemplate
-    );
-    [$checkpointExit, $checkpointOutput] = $run($checkpointRunner);
-    if ($checkpointExit !== 0) { throw new RuntimeException('Bridge-to-checkpoint file update failed: ' . implode(' ', $checkpointOutput)); }
-    $baselineVersion = '6.0.0-dev.9.2';
-    $baselineInventory = $inventory($installRoot);
     $runner = str_replace(
         ['__INSTALL_ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__', '__VERSION__'],
         [
@@ -459,17 +423,11 @@ PHP;
     [$freshExit, $freshOutput] = $run($freshBoot);
     $assert($freshExit === 0, 'Fresh candidate artifact boots: ' . implode(' ', $freshOutput));
     if (is_file($root . '/config.php') && in_array('mysql', PDO::getAvailableDrivers(), true)) {
-        $legacyArtifacts = $temporaryRoot . '/legacy-web-artifact';
-        $legacyBuild = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($candidateRoot . '/tools/release/build-update.php')
-            . ' --version=' . escapeshellarg($candidateVersion) . ' --assembly=platform --legacy-upgrade --allow-dirty'
-            . ' --output=' . escapeshellarg($legacyArtifacts) . ' --key=' . escapeshellarg($signingKey);
-        exec($legacyBuild . ' 2>&1', $legacyBuildOutput, $legacyBuildExit);
-        if ($legacyBuildExit !== 0) { throw new RuntimeException('Legacy web artifact build failed: ' . implode(' ', $legacyBuildOutput)); }
-        $legacyRehearsal = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/release/release-update-rehearsal.php')
-            . ' --legacy-baseline=5.22.2 --direct-web --cached-autoload --artifact=' . escapeshellarg($legacyArtifacts) . ' --key=' . escapeshellarg($signingKey);
-        passthru($legacyRehearsal, $legacyExit);
-        $assert($legacyExit === 0, 'Published 5.22.2 check/installLatest offers, installs and rolls back the signed release without dev hops');
-    } else { echo "SKIP legacy web update rehearsal: local MySQL configuration unavailable.\n"; }
+        $rehearsal = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/release/release-update-rehearsal.php')
+            . ' --baseline-version=6.0.4 --direct-web --cached-autoload --artifact=' . escapeshellarg($artifactRoot) . ' --key=' . escapeshellarg($signingKey);
+        passthru($rehearsal, $rehearsalExit);
+        $assert($rehearsalExit === 0, 'Published 6.0.4 installs and rolls back the signed successor with representative MySQL data.');
+    } else { echo "SKIP 6.0.4 MySQL update rehearsal: local MySQL configuration unavailable.\n"; }
     sodium_memzero($secretKey);
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();

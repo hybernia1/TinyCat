@@ -178,3 +178,11 @@ se samostatně a nevystavuje produkční routy. Vyžaduje GD/WebP a cURL.
 
 Development outputs use ignored `.work/`, separated from application `storage/`.
 See [filesystem storage](../docs/development/storage.md#development-outputs).
+
+## Update baseline
+
+The update rehearsal starts directly at published `v6.0.4`, builds a signed
+successor in an isolated source copy, and checks file updates, repetition,
+interruption recovery and exact rollback. It no longer builds pre-6 bridges.
+The same group also runs the existing MySQL product rehearsal from 6.0.4 when
+local MySQL configuration is available. Older published migrations stay immutable.

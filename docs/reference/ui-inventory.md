@@ -4,7 +4,7 @@ Generováno příkazem `python tools/assets/ui-inventory.py`. Pravidla viz [UI k
 
 Nejde o vizuální audit ani úplné ověření přístupnosti. CSS scanner je lexikální; opakované selektory jsou kandidáty ke kontrole, nikoli prokázané duplicity. Seznam JS metod zachycuje syntaxi `name: function`, ne všechny exporty.
 
-115 definic komponent, 403 CSS tříd, 132 CSS importů, 97 JS souborů, 23 UI služeb, 15 PHP partialů.
+115 definic komponent, 393 CSS tříd, 127 CSS importů, 97 JS souborů, 23 UI služeb, 15 PHP partialů.
 
 ## Deklarativní komponenty
 
@@ -138,14 +138,14 @@ Jde o syntaktický seznam; nezahrnuje všechny exporty a nerozhoduje o veřejnos
 - [assets/ui/dialog-history.js](../../assets/ui/dialog-history.js): `opened`, `closed`, `restore`, `leave`, `init`, `hydrate`
 - [assets/ui/dialogs.js](../../assets/ui/dialogs.js): `create`
 - [assets/ui/document-navigation.js](../../assets/ui/document-navigation.js):
-- [assets/ui/filters.js](../../assets/ui/filters.js): `get`, `capture`, `restore`, `remove`, `init`
+- [assets/ui/filters.js](../../assets/ui/filters.js): `defaults`, `get`, `capture`, `restore`, `remove`, `init`
 - [assets/ui/form-requests.js](../../assets/ui/form-requests.js): `request`, `cancel`, `dispose`, `bind`
 - [assets/ui/form-state.js](../../assets/ui/form-state.js):
 - [assets/ui/global-search.js](../../assets/ui/global-search.js):
 - [assets/ui/image-placeholders.js](../../assets/ui/image-placeholders.js):
 - [assets/ui/image-uploads.js](../../assets/ui/image-uploads.js):
 - [assets/ui/language-suggestion.js](../../assets/ui/language-suggestion.js):
-- [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js): `register`, `isRead`, `url`
+- [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js): `register`, `isRead`, `result`, `url`
 - [assets/ui/popovers.js](../../assets/ui/popovers.js): `restoringFocus`, `capture`, `restore`, `init`, `dispose`
 - [assets/ui/public.js](../../assets/ui/public.js):
 - [assets/ui/settings-presentation.js](../../assets/ui/settings-presentation.js):
@@ -159,11 +159,11 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 
 | Soubor | Přímé importy | Vstupní trasy |
 | --- | --- | --- |
-| [App/Core/Identity/assets/admin.js](../../App/Core/Identity/assets/admin.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js) | /admin/users |
+| [App/Core/Identity/assets/admin.js](../../App/Core/Identity/assets/admin.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js) | admin |
 | [App/Core/Identity/assets/avatar-editor.js](../../App/Core/Identity/assets/avatar-editor.js) | [assets/core/dom.js](../../assets/core/dom.js), [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/image-uploads.js](../../assets/ui/image-uploads.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
-| [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js) | [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
+| [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js) | [assets/ui/content-updates.js](../../assets/ui/content-updates.js), [assets/core/dates.js](../../assets/core/dates.js), [assets/core/component-renderer.js](../../assets/core/component-renderer.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/avatar-rendering.js](../../assets/ui/avatar-rendering.js), [assets/ui/dialogs.js](../../assets/ui/dialogs.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
 | [App/Core/Identity/assets/email-availability.js](../../App/Core/Identity/assets/email-availability.js) | [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-state.js](../../assets/ui/form-state.js) | přes importy / společný runtime |
-| [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js) | [App/Core/Identity/assets/user-menu.js](../../App/Core/Identity/assets/user-menu.js), [assets/core/modules.js](../../assets/core/modules.js), [assets/ui/list-navigation.js](../../assets/ui/list-navigation.js), [App/Core/Identity/assets/avatar-editor.js](../../App/Core/Identity/assets/avatar-editor.js), [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js), [App/Core/Identity/assets/email-availability.js](../../App/Core/Identity/assets/email-availability.js) | admin, public |
+| [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js) | [App/Core/Identity/assets/user-menu.js](../../App/Core/Identity/assets/user-menu.js), [assets/core/modules.js](../../assets/core/modules.js), [App/Core/Identity/assets/avatar-editor.js](../../App/Core/Identity/assets/avatar-editor.js), [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js), [App/Core/Identity/assets/email-availability.js](../../App/Core/Identity/assets/email-availability.js) | admin, public |
 | [App/Core/Identity/assets/public.js](../../App/Core/Identity/assets/public.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js) | public |
 | [App/Core/Identity/assets/settings-presentation.js](../../App/Core/Identity/assets/settings-presentation.js) | [assets/ui/settings-presentation.js](../../assets/ui/settings-presentation.js) | admin |
 | [App/Core/Identity/assets/user-menu.js](../../App/Core/Identity/assets/user-menu.js) | [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/dom.js](../../assets/core/dom.js), [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
@@ -204,7 +204,7 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [App/Modules/Social/assets/status/media-navigation.js](../../App/Modules/Social/assets/status/media-navigation.js) | [assets/ui/content/media.js](../../assets/ui/content/media.js), [App/Modules/Social/assets/status/controller.js](../../App/Modules/Social/assets/status/controller.js) | přes importy / společný runtime |
 | [App/Modules/Social/assets/users/controller.js](../../App/Modules/Social/assets/users/controller.js) | [App/Core/Identity/assets/controller.js](../../App/Core/Identity/assets/controller.js) | přes importy / společný runtime |
 | [App/Modules/Social/assets/users/following.js](../../App/Modules/Social/assets/users/following.js) | [assets/core/dom.js](../../assets/core/dom.js), [assets/core/api-client.js](../../assets/core/api-client.js), [assets/core/i18n.js](../../assets/core/i18n.js), [App/Modules/Social/assets/users/controller.js](../../App/Modules/Social/assets/users/controller.js), [assets/ui/component-builders.js](../../assets/ui/component-builders.js), [assets/ui/form-requests.js](../../assets/ui/form-requests.js), [assets/ui/toasts.js](../../assets/ui/toasts.js) | přes importy / společný runtime |
-| [App/Modules/Social/assets/users/index.js](../../App/Modules/Social/assets/users/index.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js), [App/Modules/Social/assets/users/controller.js](../../App/Modules/Social/assets/users/controller.js) | public |
+| [App/Modules/Social/assets/users/index.js](../../App/Modules/Social/assets/users/index.js) | [App/Core/Identity/assets/index.js](../../App/Core/Identity/assets/index.js), [App/Modules/Social/assets/users/controller.js](../../App/Modules/Social/assets/users/controller.js) | přes importy / společný runtime |
 | [App/Modules/Social/assets/users/public.js](../../App/Modules/Social/assets/users/public.js) | [App/Modules/Social/assets/users/index.js](../../App/Modules/Social/assets/users/index.js), [App/Modules/Social/assets/users/following.js](../../App/Modules/Social/assets/users/following.js) | public |
 | [assets/bootstrap.js](../../assets/bootstrap.js) | [assets/core/lifecycle.js](../../assets/core/lifecycle.js), [assets/core/modules.js](../../assets/core/modules.js), [assets/core/navigation.js](../../assets/core/navigation.js) | přes importy / společný runtime |
 | [assets/core/api-client.js](../../assets/core/api-client.js) | [assets/core/i18n.js](../../assets/core/i18n.js), [assets/core/urls.js](../../assets/core/urls.js) | přes importy / společný runtime |
@@ -413,8 +413,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [App/Modules/Social/assets/status/styles/status-avatars.css](../../App/Modules/Social/assets/status/styles/status-avatars.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | /admin/moderation |
 | [assets/ui/styles/avatar-sizes.css](../../assets/ui/styles/avatar-sizes.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
 | [App/Modules/Social/assets/users/styles/profile-avatar.css](../../App/Modules/Social/assets/users/styles/profile-avatar.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
-| [App/Core/Identity/assets/styles/account-security-page.css](../../App/Core/Identity/assets/styles/account-security-page.css) | [App/Core/Identity/assets/module.json](../../App/Core/Identity/assets/module.json) | public, admin |
-| [App/Core/Identity/assets/styles/account-security-card.css](../../App/Core/Identity/assets/styles/account-security-card.css) | [App/Core/Identity/assets/module.json](../../App/Core/Identity/assets/module.json) | public, admin |
 | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
 | [assets/ui/styles/code-block.css](../../assets/ui/styles/code-block.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
 | [App/Modules/Social/assets/users/styles/profile-details.css](../../App/Modules/Social/assets/users/styles/profile-details.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
@@ -433,8 +431,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [assets/ui/styles/modal-layout.css](../../assets/ui/styles/modal-layout.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
 | [assets/ui/styles/input-icon.css](../../assets/ui/styles/input-icon.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
 | [assets/ui/styles/modal-confirm-buttons.css](../../assets/ui/styles/modal-confirm-buttons.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Core/Installation/assets/styles/install-steps.css](../../App/Core/Installation/assets/styles/install-steps.css) | [App/Core/Installation/assets/module.json](../../App/Core/Installation/assets/module.json) | /install |
-| [App/Core/Installation/assets/styles/install-choices.css](../../App/Core/Installation/assets/styles/install-choices.css) | [App/Core/Installation/assets/module.json](../../App/Core/Installation/assets/module.json) | /install |
 | [assets/ui/styles/result-list.css](../../assets/ui/styles/result-list.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
 | [assets/ui/styles/cookie-consent.css](../../assets/ui/styles/cookie-consent.css) | [assets/ui/module.json](../../assets/ui/module.json) | public |
 | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
@@ -464,7 +460,6 @@ Trasy označují přímé vstupní body manifestů. Další soubory se načítaj
 | [App/Modules/Social/assets/status/styles/feedback-mobile.css](../../App/Modules/Social/assets/status/styles/feedback-mobile.css) | [App/Modules/Social/assets/module.json](../../App/Modules/Social/assets/module.json) | public |
 | [assets/ui/styles/section-desktop.css](../../assets/ui/styles/section-desktop.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
 | [assets/ui/styles/pagination-desktop.css](../../assets/ui/styles/pagination-desktop.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
-| [App/Core/Installation/assets/styles/install-steps-desktop.css](../../App/Core/Installation/assets/styles/install-steps-desktop.css) | [App/Core/Installation/assets/module.json](../../App/Core/Installation/assets/module.json) | /install |
 | [assets/ui/styles/split-desktop.css](../../assets/ui/styles/split-desktop.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
 | [assets/modules/admin/styles/admin-lists-desktop.css](../../assets/modules/admin/styles/admin-lists-desktop.css) | [assets/modules/admin/module.json](../../assets/modules/admin/module.json) | admin |
 | [assets/ui/styles/field-inline-desktop.css](../../assets/ui/styles/field-inline-desktop.css) | [assets/ui/module.json](../../assets/ui/module.json) | * |
@@ -491,8 +486,6 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 
 | Třída | Soubory |
 | --- | --- |
-| `account-security-card` | [App/Core/Identity/assets/styles/account-security-card.css](../../App/Core/Identity/assets/styles/account-security-card.css) |
-| `account-security-page` | [App/Core/Identity/assets/styles/account-security-page.css](../../App/Core/Identity/assets/styles/account-security-page.css) |
 | `admin-backdrop` | [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css), [assets/modules/admin/styles/admin-shell.css](../../assets/modules/admin/styles/admin-shell.css) |
 | `admin-brand` | [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css), [assets/modules/admin/styles/admin-shell.css](../../assets/modules/admin/styles/admin-shell.css) |
 | `admin-content` | [assets/modules/admin/styles/admin-content-mobile.css](../../assets/modules/admin/styles/admin-content-mobile.css), [assets/modules/admin/styles/admin-navigation-and-content.css](../../assets/modules/admin/styles/admin-navigation-and-content.css), [assets/modules/admin/styles/admin-shell-desktop.css](../../assets/modules/admin/styles/admin-shell-desktop.css), [assets/ui/styles/containers-mobile.css](../../assets/ui/styles/containers-mobile.css) |
@@ -533,7 +526,6 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `avatar-editor` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor-appearance` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor-controls` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
-| `avatar-editor-preview` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-editor-remove` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css) |
 | `avatar-fallback` | [assets/ui/styles/avatar.css](../../assets/ui/styles/avatar.css) |
 | `avatar-sm` | [assets/ui/styles/avatar-sizes.css](../../assets/ui/styles/avatar-sizes.css) |
@@ -564,9 +556,6 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `card-header` | [App/Core/Notifications/assets/styles/notifications-page.css](../../App/Core/Notifications/assets/styles/notifications-page.css), [App/Modules/Social/assets/site/styles/public-sidebar.css](../../App/Modules/Social/assets/site/styles/public-sidebar.css), [assets/ui/styles/cards-mobile.css](../../assets/ui/styles/cards-mobile.css), [assets/ui/styles/cards.css](../../assets/ui/styles/cards.css) |
 | `check-card` | [assets/ui/styles/check-card.css](../../assets/ui/styles/check-card.css) |
 | `check-line` | [assets/ui/styles/check-line.css](../../assets/ui/styles/check-line.css) |
-| `choice-card` | [App/Core/Installation/assets/styles/install-choices.css](../../App/Core/Installation/assets/styles/install-choices.css) |
-| `choice-list` | [App/Core/Installation/assets/styles/install-choices.css](../../App/Core/Installation/assets/styles/install-choices.css) |
-| `choice-row` | [App/Core/Installation/assets/styles/install-choices.css](../../App/Core/Installation/assets/styles/install-choices.css) |
 | `cluster` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
 | `code-block` | [assets/ui/styles/code-block.css](../../assets/ui/styles/code-block.css) |
 | `container` | [assets/ui/styles/containers-mobile.css](../../assets/ui/styles/containers-mobile.css), [assets/ui/styles/layout.css](../../assets/ui/styles/layout.css) |
@@ -616,7 +605,7 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `help` | [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css) |
 | `hidden` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
 | `home-feed-app` | [App/Modules/Social/assets/status/styles/home-feed-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-mobile.css), [App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css), [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css) |
-| `home-feed-section` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css), [App/Modules/Social/assets/status/styles/feedback-mobile.css](../../App/Modules/Social/assets/status/styles/feedback-mobile.css) |
+| `home-feed-section` | [App/Modules/Social/assets/status/styles/feedback-mobile.css](../../App/Modules/Social/assets/status/styles/feedback-mobile.css), [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css) |
 | `home-feed-switch` | [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css), [App/Modules/Social/assets/status/styles/home-feed-switch-links.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-links.css), [App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css](../../App/Modules/Social/assets/status/styles/home-feed-switch-mobile.css), [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css) |
 | `home-feed-toolbar` | [App/Modules/Social/assets/site/styles/home-feed-toolbar.css](../../App/Modules/Social/assets/site/styles/home-feed-toolbar.css) |
 | `icon` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css), [App/Core/Identity/assets/styles/user-menu.css](../../App/Core/Identity/assets/styles/user-menu.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css), [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css), [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css), [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css), [assets/ui/styles/disclosure.css](../../assets/ui/styles/disclosure.css), [assets/ui/styles/filter-chips.css](../../assets/ui/styles/filter-chips.css), [assets/ui/styles/global-search-controls.css](../../assets/ui/styles/global-search-controls.css), [assets/ui/styles/input-icon.css](../../assets/ui/styles/input-icon.css), [assets/ui/styles/navbar-mobile.css](../../assets/ui/styles/navbar-mobile.css), [assets/ui/styles/navbar.css](../../assets/ui/styles/navbar.css), [assets/ui/styles/reset.css](../../assets/ui/styles/reset.css), [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
@@ -630,9 +619,8 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `inline-flex` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
 | `input` | [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css), [assets/ui/styles/input-icon.css](../../assets/ui/styles/input-icon.css) |
 | `input-icon` | [assets/modules/admin/styles/admin-lists.css](../../assets/modules/admin/styles/admin-lists.css), [assets/ui/styles/input-icon.css](../../assets/ui/styles/input-icon.css) |
-| `is-active` | [App/Core/Installation/assets/styles/install-steps.css](../../App/Core/Installation/assets/styles/install-steps.css), [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css), [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css), [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css), [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css), [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css), [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) |
+| `is-active` | [App/Modules/Social/assets/site/styles/sidebar-lists.css](../../App/Modules/Social/assets/site/styles/sidebar-lists.css), [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css), [assets/ui/content/styles/discussion-editing.css](../../assets/ui/content/styles/discussion-editing.css), [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css), [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css), [assets/ui/styles/pagination.css](../../assets/ui/styles/pagination.css) |
 | `is-child` | [assets/ui/content/styles/discussion-content.css](../../assets/ui/content/styles/discussion-content.css), [assets/ui/content/styles/discussion-mobile.css](../../assets/ui/content/styles/discussion-mobile.css) |
-| `is-complete` | [App/Core/Installation/assets/styles/install-steps.css](../../App/Core/Installation/assets/styles/install-steps.css) |
 | `is-danger` | [assets/ui/styles/context-menu-actions.css](../../assets/ui/styles/context-menu-actions.css) |
 | `is-image-missing` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
 | `is-image-ready` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
@@ -714,7 +702,7 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `profile-identity` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-identity-main` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-layout` | [App/Modules/Social/assets/users/styles/profile-layout-desktop.css](../../App/Modules/Social/assets/users/styles/profile-layout-desktop.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
-| `profile-main` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css), [App/Modules/Social/assets/users/styles/profile-main-desktop.css](../../App/Modules/Social/assets/users/styles/profile-main-desktop.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
+| `profile-main` | [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css), [App/Modules/Social/assets/users/styles/profile-main-desktop.css](../../App/Modules/Social/assets/users/styles/profile-main-desktop.css), [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-member-since` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-name` | [App/Modules/Social/assets/users/styles/profile.css](../../App/Modules/Social/assets/users/styles/profile.css) |
 | `profile-nav-link` | [App/Modules/Social/assets/users/styles/profile-navigation.css](../../App/Modules/Social/assets/users/styles/profile-navigation.css) |
@@ -796,7 +784,7 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `status-email-notice` | [App/Modules/Social/assets/status/styles/status-email-notice-mobile.css](../../App/Modules/Social/assets/status/styles/status-email-notice-mobile.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css) |
 | `status-email-notice-copy` | [App/Modules/Social/assets/status/styles/status-email-notice-mobile.css](../../App/Modules/Social/assets/status/styles/status-email-notice-mobile.css), [App/Modules/Social/assets/status/styles/status-email-notice.css](../../App/Modules/Social/assets/status/styles/status-email-notice.css) |
 | `status-embed-preview` | [App/Modules/Social/assets/status/styles/embed-preview.css](../../App/Modules/Social/assets/status/styles/embed-preview.css) |
-| `status-feed` | [App/Core/Identity/assets/styles/avatar-upload.css](../../App/Core/Identity/assets/styles/avatar-upload.css), [App/Modules/Social/assets/status/styles/status-feed-mobile.css](../../App/Modules/Social/assets/status/styles/status-feed-mobile.css), [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) |
+| `status-feed` | [App/Modules/Social/assets/status/styles/home-feed.css](../../App/Modules/Social/assets/status/styles/home-feed.css), [App/Modules/Social/assets/status/styles/status-feed-mobile.css](../../App/Modules/Social/assets/status/styles/status-feed-mobile.css), [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) |
 | `status-feed-more` | [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) |
 | `status-feed-spacer` | [App/Modules/Social/assets/status/styles/status-feed.css](../../App/Modules/Social/assets/status/styles/status-feed.css) |
 | `status-field` | [assets/ui/content/styles/status-editing.css](../../assets/ui/content/styles/status-editing.css) |
@@ -848,9 +836,6 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `status-video-provider` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
 | `status-video-source` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
 | `status-video-thumb` | [assets/ui/content/styles/status-content.css](../../assets/ui/content/styles/status-content.css) |
-| `step` | [App/Core/Installation/assets/styles/install-steps.css](../../App/Core/Installation/assets/styles/install-steps.css) |
-| `step-marker` | [App/Core/Installation/assets/styles/install-steps.css](../../App/Core/Installation/assets/styles/install-steps.css) |
-| `steps` | [App/Core/Installation/assets/styles/install-steps-desktop.css](../../App/Core/Installation/assets/styles/install-steps-desktop.css), [App/Core/Installation/assets/styles/install-steps.css](../../App/Core/Installation/assets/styles/install-steps.css) |
 | `tab` | [assets/ui/styles/tabs.css](../../assets/ui/styles/tabs.css) |
 | `table` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css), [assets/ui/styles/tables-mobile.css](../../assets/ui/styles/tables-mobile.css), [assets/ui/styles/tables.css](../../assets/ui/styles/tables.css) |
 | `table-actions` | [assets/ui/styles/table-identity.css](../../assets/ui/styles/table-identity.css) |
@@ -875,13 +860,13 @@ Všechny třídy z importního grafu `assets/styles/index.css`. Počet souborů 
 | `text-primary` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
 | `text-xl` | [assets/ui/styles/buttons.css](../../assets/ui/styles/buttons.css) |
 | `textarea` | [assets/ui/styles/fields.css](../../assets/ui/styles/fields.css) |
-| `toast` | [App/Modules/Social/assets/status/styles/feedback-mobile.css](../../App/Modules/Social/assets/status/styles/feedback-mobile.css), [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
+| `toast` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
 | `toast-body` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
 | `toast-close` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
 | `toast-danger` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
 | `toast-icon` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
 | `toast-info` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
-| `toast-stack` | [App/Modules/Social/assets/status/styles/feedback-mobile.css](../../App/Modules/Social/assets/status/styles/feedback-mobile.css), [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
+| `toast-stack` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
 | `toast-success` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
 | `toast-warning` | [assets/ui/styles/toasts.css](../../assets/ui/styles/toasts.css) |
 | `tooltip` | [assets/ui/styles/tooltip.css](../../assets/ui/styles/tooltip.css) |

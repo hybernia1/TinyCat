@@ -45,8 +45,8 @@ uvádí zachované cesty a výjimky; builder nic nemaže automaticky.
   `tools/release/update-key.php`, `tools/release/verify-update.php`. Ruční kontrolu existujícího balíčku
   zajišťuje `tools/release/artifact-preflight.php`; produktový MySQL update scénář má
   `tools/release/release-update-rehearsal.php`: předaný artefakt zkouší na samostatné
-  MySQL databázi proti zmrazenému runtime dev.9.1, včetně dat a standardního rollbacku.
-  První kompatibilní krok ze starší 5.x řady ověřuje existující `tests/release/update-rehearsal.php`.
+  MySQL database against published 6.0.4, including data and standard rollback.
+  The existing `tests/release/update-rehearsal.php` exercises this supported baseline.
   Nejde o běžné bezparametrové kontroly.
 - [Import a porovnání verzí](../docs/performance/benchmark.md):
   `tools/data/demo-import.php`, `tools/performance/compare-performance.php`, `tools/performance/scale-benchmark.php`.
@@ -66,21 +66,12 @@ For a release, `php tools/release/build-update.php --version=X.Y.Z --both --outp
 prepares signed update/install variants from one compilation. `release/zip-timestamps.php`
 and `release/publish-artifact.php` are internal build helpers, not standalone commands.
 
-For the public Social/platform release supporting the stable 5.x web updater,
-add `--legacy-upgrade`. It selects the supported minimum automatically, exports
-a version-specific signed root migration and a final descriptor, and keeps the
-fresh-install variant unchanged. Do not combine it with `--without-migrations`,
-`--minimum-version` or standalone `--fresh-install`. The existing product rehearsal
-uses `--baseline-version=5.22.2 --direct-web --cached-autoload` to run the published updater's actual
-check/install flow; 5.16.0 and 6.0.0 are also supported fixture baselines.
-
-`php tools/release/build-bridge.php --output=dist/compatibility-bridge` builds
-the immutable shared-storage compatibility source into the signed file-only
-dev.9.1 bootstrap and the normal dev.9.2 migration checkpoint. `--key` selects
-an existing signing-key file; `--assembly=source|platform|blog` preserves product
-selection. Apply both steps before the domain-owned 6.0 update. The existing
-product MySQL rehearsal accepts `--legacy-baseline=5.16.0|5.22.2` with both
-`--bridge-bootstrap` and `--bridge-checkpoint` directories to verify this path.
+New packages require TinyCat 6.0.4 or newer across all assemblies. The builder
+rejects older minimum versions and the retired `--legacy-upgrade` option.
+`release-update-rehearsal.php --baseline-version=6.0.4 --direct-web --cached-autoload`
+checks a supplied successor artifact against the published baseline in a disposable
+MySQL database. Compatibility bridge builds and old 5.x rehearsals are retired.
+Published migrations and local rollback backups remain intact.
 
 `--assembly=blog` sestaví samostatný produkt; `--product=vendor.product` a
 `--active=id1,id2` určují vlastní identitu a výchozí aktivaci. Distribuce,

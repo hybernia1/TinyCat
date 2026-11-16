@@ -15,13 +15,8 @@ final class CompiledAssets
         if (class_exists(\TinyCat\Core\Modules\Resources::class, false) && \TinyCat\Core\Modules\Resources::isScoped()) { return []; }
         $file = Paths::basePath('assets/build/manifest.json');
         self::$manifest ??= is_file($file) ? json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR) : [];
-        if (isset(self::$manifest['selection'])) {
-            if (class_exists(\TinyCat\Core\Modules\Resources::class)) {
-                if (self::$manifest['selection'] !== \TinyCat\Core\Modules\Resources::fingerprint()) { return []; }
-            } elseif (is_file(Paths::basePath('storage/deployment.json'))) { return []; }
-        }
-        if (!isset(self::$manifest['selection']) && is_file(Paths::basePath('storage/deployment.json'))) { return []; }
-        return self::$manifest ?? [];
+        $manifest = self::$manifest ?? [];
+        return CompiledTranslations::matchesSelection($manifest) ? $manifest : [];
     }
 
     public static function asset(string $path, bool $minify): ?string

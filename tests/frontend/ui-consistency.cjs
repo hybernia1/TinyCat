@@ -8,7 +8,9 @@ const root = path.resolve(__dirname, '../..'), php = process.env.TINYCAT_TEST_PH
 const assets = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--all'], { encoding: 'utf8', maxBuffer: 8e6 }));
 const templates = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/component-parity.php'), '--templates'], { encoding: 'utf8', maxBuffer: 8e6 }));
 const labels = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--catalog'], { encoding: 'utf8', maxBuffer: 8e6 }));
-const source = assets.map(asset => asset.source).join('\n') + '\nTinyCat.components.register(' + JSON.stringify(templates).replace(/</g, '\\u003c') + ');TinyCat.i18n.register(\"en\",' + JSON.stringify(labels).replace(/</g, '\\u003c') + ');';
+const installation = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--installation'], { encoding: 'utf8', maxBuffer: 8e6 }));
+const avatarOptions = JSON.parse(fs.readFileSync(path.join(root, 'App/Core/Identity/avatar-options.json'), 'utf8'));
+const source = assets.map(asset => asset.source).join('\n') + '\nTinyCat.components.register(' + JSON.stringify(templates).replace(/</g, '\\u003c') + ');TinyCat.i18n.register(\"en\",' + JSON.stringify(labels).replace(/</g, '\\u003c') + ');window.installationFixture=' + JSON.stringify(installation).replace(/</g, '\\u003c') + ';window.avatarFixtureOptions=' + JSON.stringify(avatarOptions) + ';';
 const css = JSON.parse(execFileSync(php, [path.join(root, 'tests/presentation/fixtures/asset-graph-fixture.php'), '--styles'], { encoding: 'utf8', maxBuffer: 8e6 }));
 const fixture = fs.readFileSync(path.join(__dirname, 'fixtures/ui-consistency-fixture.js'), 'utf8');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'tinycat-ui-consistency-'));
@@ -19,7 +21,7 @@ try {
   fs.writeFileSync(target, `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style></head><body><pre id="results"></pre><script>${source}\n${fixture}</script></body></html>`);
   const wrapper = path.join(temporary, 'wrapper.html');
   fs.writeFileSync(wrapper, '<!doctype html><html><body><pre id="results"></pre><script>const frame=document.createElement("iframe");frame.style.cssText="border:0;width:"+new URL(location.href).searchParams.get("width")+"px;height:600px";frame.src="/inner";document.body.append(frame);const timer=setInterval(()=>{const result=frame.contentDocument&&frame.contentDocument.getElementById("results");if(result&&result.textContent){document.getElementById("results").textContent=result.textContent;clearInterval(timer);}},25);</script></body></html>');
-  server = spawn(process.execPath, ['-e', 'const fs=require("node:fs"),http=require("node:http");http.createServer((req,res)=>{res.setHeader("Content-Type","text/html");res.end(fs.readFileSync(process.argv[req.url==="/inner"?1:2]));}).listen(0,"127.0.0.1",function(){process.stdout.write(String(this.address().port)+"\\n");});', target, wrapper], { stdio: ['ignore', 'pipe', 'pipe'] });
+  server = spawn(process.execPath, ['-e', 'const fs=require("node:fs"),http=require("node:http");http.createServer((req,res)=>{if(req.url==="/avatar-fixture.svg"){res.setHeader("Content-Type","image/svg+xml");res.end(`<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="orange"/></svg>`);return;}res.setHeader("Content-Type","text/html");res.end(fs.readFileSync(process.argv[req.url==="/inner"?1:2]));}).listen(0,"127.0.0.1",function(){process.stdout.write(String(this.address().port)+"\\n");});', target, wrapper], { stdio: ['ignore', 'pipe', 'pipe'] });
   const port = await new Promise((resolve, reject) => { server.once('error', reject); server.stdout.once('data', data => resolve(Number(String(data).trim()))); });
   let checks = 0;
   for (const width of [320, 375, 1024]) {

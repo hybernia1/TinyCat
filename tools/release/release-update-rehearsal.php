@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../support/workspace.php';
 
-// Exercises the authenticated shared-storage bridge and the supplied domain-owned artifact.
+// Exercises a signed update from the published 6.0.4 baseline and exact rollback.
 
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "This tool is available only from the command line.\n");
@@ -13,15 +13,11 @@ if (PHP_SAPI !== 'cli') {
 $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
-$baselineVersion = '6.0.0-dev.9.2';
-$options = getopt('', ['artifact::', 'key::', 'legacy-baseline::', 'baseline-version::', 'bridge-bootstrap::', 'bridge-checkpoint::', 'direct-web', 'cached-autoload', 'snapshot::']);
+$baselineVersion = \TinyCat\Support\Version::MINIMUM_UPDATE;
+$options = getopt('', ['artifact::', 'key::', 'baseline-version::', 'direct-web', 'cached-autoload', 'snapshot::']);
 $cachedAutoload = array_key_exists('cached-autoload', $options);
 $directWeb = array_key_exists('direct-web', $options);
-$legacyBaseline = $options['baseline-version'] ?? $options['legacy-baseline'] ?? null;
-if ($directWeb && $legacyBaseline === null) { throw new InvalidArgumentException('Direct web rehearsal requires a published baseline version.'); }
-if ($legacyBaseline !== null && !in_array($legacyBaseline, ['5.16.0', '5.22.2', '6.0.0'], true)) {
-    throw new InvalidArgumentException('Use the supported legacy release baseline.');
-}
+if (($options['baseline-version'] ?? $baselineVersion) !== $baselineVersion) { throw new InvalidArgumentException('Use the supported 6.0.4 baseline.'); }
 $artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
 $configPath = $root . '/config.php';
 $temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/release-update-' . bin2hex(random_bytes(6));
@@ -116,9 +112,9 @@ $inventory = static function (string $base): array {
     ksort($files, SORT_STRING);
     return $files;
 };
-$databaseFingerprint = static function (PDO $pdo) use ($legacyBaseline): array {
+$databaseFingerprint = static function (PDO $pdo): array {
     $names = ['content' => 'social_posts', 'content_comments' => 'social_comments', 'content_likes' => 'social_post_likes', 'comment_likes' => 'social_comment_likes', 'terms' => 'social_terms', 'content_tags' => 'social_post_tags', 'content_links' => 'social_post_links'];
-    $sql = static fn (string $query): string => $legacyBaseline === '6.0.0' ? (string) preg_replace_callback('/\b(?:' . implode('|', array_keys($names)) . ')\b/', static fn (array $match): string => $names[$match[0]], $query) : $query;
+    $sql = static fn (string $query): string => (string) preg_replace_callback('/\b(?:' . implode('|', array_keys($names)) . ')\b/', static fn (array $match): string => $names[$match[0]], $query);
     $tables = [
         'users', 'content', 'content_comments', 'content_likes', 'comment_likes', 'user_followers',
         'notifications', 'content_tags', 'terms', 'content_links', 'settings', 'schema_migrations',
@@ -179,6 +175,7 @@ try {
     $manifestPath = $artifactRoot . '/tinycat-update.json';
     $signaturePath = $artifactRoot . '/tinycat-update.sig';
     $manifest = json_decode((string) file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
+    $version = (string) $manifest['version'];
     $packagePath = $artifactRoot . '/' . basename((string) ($manifest['package'] ?? ''));
     $keyEncoded = trim((string) file_get_contents((string) ($options['key'] ?? (\TinyCat\Tools\Workspace::directory('keys') . '/update-signing.key'))));
     $secretKey = base64_decode($keyEncoded, true);
@@ -208,20 +205,9 @@ try {
         throw new RuntimeException('Unable to create product rehearsal directory.');
     }
 
-    if ($legacyBaseline !== null) {
-        $baselineVersion = $legacyBaseline;
-        $baselineArchive = $temporaryRoot . '/legacy-source.zip';
-        exec('git -C ' . escapeshellarg($root) . ' archive --format=zip --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion), $archiveOutput, $archiveExit);
-        if ($archiveExit !== 0) { throw new RuntimeException('Cannot extract the published legacy baseline.'); }
-    } else {
-        $baselineArchive = $root . '/tests/fixtures/releases/bridge-6.0.0-dev.9.1-source.zip';
-        if (hash_file('sha256', $baselineArchive) !== '9620cebe0f1fb03d6a49673ebc3daef43a54e53800ffdaedc1bdb660cfeb3df5') { throw new RuntimeException('The frozen compatibility source changed.'); }
-    }
+    exec('git -C ' . escapeshellarg($root) . ' archive --format=zip --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion), $archiveOutput, $archiveExit);
+    if ($archiveExit !== 0) { throw new RuntimeException('Cannot extract the published 6.0.4 baseline.'); }
     $extractZip($baselineArchive, $installRoot);
-    if ($legacyBaseline === null) {
-        $versionPath = $installRoot . '/App/Core/Support/Version.php';
-        file_put_contents($versionPath, str_replace("CURRENT = '6.0.0-dev.9.1'", "CURRENT = '6.0.0-dev.9.2'", (string) file_get_contents($versionPath)), LOCK_EX);
-    }
     $installConfig = $baseConfig;
     $installConfig['database'] = [...$databaseConfig, 'name' => $databaseName];
     $installConfig['app'] = [...(array) ($baseConfig['app'] ?? []), 'url' => 'http://localhost'];
@@ -251,15 +237,6 @@ require __ROOT__ . '/App/bootstrap.php';
 TinyCat\Installation\Installer::create_tables();
 TinyCat\Installation\Installer::create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
 TinyCat\Installation\Installer::default_settings(['locale' => 'en']);
-// The archived installer creates its final schema directly. Model a production
-// baseline whose historical migrations have already completed.
-foreach (version_compare(TinyCat\Support\Version::CURRENT, '6.0.0', '>=') ? [] : (glob(__ROOT__ . '/migrations/*.php') ?: []) as $path) {
-    TinyCat\Updates\MigrationRegistry::ensure();
-    TinyCat\Database\Connection::exec(
-        'INSERT INTO schema_migrations (migration, version, checksum, applied_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
-        [pathinfo($path, PATHINFO_FILENAME), TinyCat\Support\Version::CURRENT, TinyCat\Updates\MigrationRegistry::checksum($path)]
-    );
-}
 if (isset($plan) && !$plan['legacy']) { TinyCat\Core\Modules\Deployment::write(__ROOT__, $plan, $plan['active'], $plan['active'], TinyCat\Support\Version::CURRENT); }
 PHP;
     [$installExit, $installOutput] = $run(str_replace('__ROOT__', var_export($installRoot, true), $installRunner));
@@ -267,64 +244,13 @@ PHP;
         throw new RuntimeException('Baseline installer failed: ' . implode(' ', $installOutput));
     }
     $assert(true, 'Supported baseline installer prepares the representative database.');
-    if ($directWeb && str_starts_with((string) $legacyBaseline, '5.')) {
-        foreach (['cs', 'en'] as $locale) {
-            file_put_contents($installRoot . '/lang/emails-' . $locale . '.json', '{"welcome":{"subject":"Historical email catalog"}}');
-        }
-    }
-
     if (isset($options['snapshot'])) {
         require_once $root . '/App/Core/Database/Snapshots.php';
         \TinyCat\Database\Snapshots::restore($database, (string) $options['snapshot']);
         $assert(true, 'Supplied snapshot is restored only into the isolated rehearsal database.');
     } else {
-        (require $root . '/tests/fixtures/releases/seed-shared-social.php')($database, $legacyBaseline === '6.0.0');
+        (require $root . '/tests/fixtures/releases/seed-shared-social.php')($database, true);
         $assert(true, 'Representative shared-storage users, posts, comments, reactions, tags, links and notifications are seeded.');
-    }
-
-    if ($legacyBaseline !== null && !$directWeb) {
-        $legacyCounts = $databaseFingerprint($database)['counts'];
-        foreach (['bridge-bootstrap', 'bridge-checkpoint'] as $phase) {
-            $directory = realpath((string) ($options[$phase] ?? ''));
-            if ($directory === false || !is_file($directory . '/tinycat-update.json')) { throw new RuntimeException('Provide both signed bridge directories for a legacy rehearsal.'); }
-            $bridgeManifest = json_decode((string) file_get_contents($directory . '/tinycat-update.json'), true, 512, JSON_THROW_ON_ERROR);
-            $bridgeRunner = <<<'PHP'
-define('TINYCAT', true);
-require __ROOT__ . '/App/bootstrap.php';
-if (method_exists(TinyCat\Updates\Manager::class, 'installLocalPackage')) {
-    TinyCat\Updates\Manager::installLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
-} else {
-    // Exercise the published 5.x updater's verified file-only bridge sequence.
-    $invoke = static fn (string $method, mixed ...$arguments): mixed => (new ReflectionMethod(TinyCat\Updates\Manager::class, $method))->invoke(null, ...$arguments);
-    $manifest = TinyCat\Updates\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
-    if ($manifest['migrations'] !== []) { throw new RuntimeException('The initial legacy bridge must be file-only.'); }
-    $invoke('assertCompatibility', $manifest);
-    $stage = __ROOT__ . '/storage/updates/legacy-bridge-stage';
-    $invoke('extractPackage', __PACKAGE__, $stage, $manifest);
-    $invoke('preflightManagedTargets', $manifest);
-    $invoke('createBackup', $manifest, $manifest['version'], false);
-    $invoke('enableMaintenance', $manifest['version']);
-    $invoke('applyFiles', $stage, $manifest);
-    $invoke('deleteLegacyFiles', $manifest);
-    $invoke('clearRuntimeCache');
-    TinyCat\Updates\Manager::disableMaintenance();
-}
-PHP;
-            [$bridgeExit, $bridgeOutput] = $run(str_replace(
-                ['__ROOT__', '__MANIFEST__', '__SIGNATURE__', '__PACKAGE__'],
-                [var_export($installRoot, true), var_export($directory . '/tinycat-update.json', true), var_export($directory . '/tinycat-update.sig', true), var_export($directory . '/' . basename($bridgeManifest['package']), true)],
-                $bridgeRunner
-            ));
-            if ($bridgeExit !== 0) { throw new RuntimeException('Legacy ' . $phase . ' failed: ' . implode(' ', $bridgeOutput)); }
-            $baselineVersion = $bridgeManifest['version'];
-            $assert(true, 'The signed ' . $phase . ' completes against the actual legacy database.');
-        }
-        foreach ($legacyCounts as $table => $count) {
-            if (!in_array($table, ['settings', 'schema_migrations'], true)) {
-                $assert((int) $database->query('SELECT COUNT(*) FROM `' . $table . '`')->fetchColumn() === $count, 'Both bridge steps preserve legacy rows in ' . $table);
-            }
-        }
-        $assert(true, 'Legacy migrations complete before domain-owned storage conversion.');
     }
 
     $beforeDatabase = $databaseFingerprint($database);
@@ -333,6 +259,11 @@ PHP;
         array_map(static fn (string $path): string => pathinfo($path, PATHINFO_FILENAME), (array) ($manifest['migrations'] ?? [])),
         static fn (string $id): bool => !in_array($id, $appliedBefore, true)
     ));
+    $modulePending = false;
+    $schemaStates = array_column($database->query('SELECT module_id, version FROM module_installations')->fetchAll(PDO::FETCH_ASSOC), 'version', 'module_id');
+    foreach (($manifest['distribution']['schemas'] ?? []) as $id => $schema) {
+        if (!isset($schemaStates[$id]) || (int) $schemaStates[$id] < $schema['version']) { $modulePending = true; }
+    }
     $beforeInventory = $inventory($installRoot);
     $protectedHashes = [
         'config' => hash_file('sha256', $installRoot . '/config.php'),
@@ -386,7 +317,7 @@ PHP;
     if ($updateExit !== 0 || !is_array($update)) {
         throw new RuntimeException('Signed production update failed: ' . implode(' ', $updateOutput));
     }
-    $assert(($update['pending_migrations'] ?? null) === ($expectedPending !== [] || ($manifest['distribution']['schemas'] ?? []) !== []), 'Pending migrations match the baseline registry.');
+    $assert(($update['pending_migrations'] ?? null) === ($expectedPending !== [] || $modulePending), 'Pending migrations match the baseline registry.');
     $assert(($update['applied_migrations'] ?? null) === $expectedPending, 'Only migrations absent from the baseline run.');
     foreach (['users'=>'users','content'=>'social_posts','content_comments'=>'social_comments','content_likes'=>'social_post_likes','comment_likes'=>'social_comment_likes','user_followers'=>'user_followers','notifications'=>'notifications','content_tags'=>'social_post_tags','terms'=>'social_terms','content_links'=>'social_post_links'] as $old => $table) {
         $assert((int) $database->query("SELECT COUNT(*) FROM `{$table}`")->fetchColumn() === $beforeDatabase['counts'][$old], 'Update preserves representative records in ' . $table);
@@ -428,9 +359,7 @@ PHP;
     [$rollbackExit, $rollbackOutput] = $run($rollbackRunner);
     $assert($rollbackExit === 0, 'Standard updater restores its recorded database and file snapshot: ' . implode(' ', $rollbackOutput));
     $restoredInventory = $inventory($installRoot);
-    if ($directWeb && $legacyBaseline !== null && str_starts_with($legacyBaseline, '5.')) {
-        $assert(array_intersect_key($restoredInventory, $beforeInventory) === $beforeInventory, 'Legacy rollback restores every original managed file; unrecorded new private files are preserved.');
-    } else { $assert($restoredInventory === $beforeInventory, 'Rollback restores the exact managed bridge tree.'); }
+    $assert($restoredInventory === $beforeInventory, 'Rollback restores the exact managed baseline tree.');
     $assert($databaseFingerprint($database) === $beforeDatabase, 'Rollback restores the exact pre-update database content and schema.');
     $clearOldCache = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; (new ReflectionMethod(TinyCat\\Updates\\Manager::class, 'clearRuntimeCache'))->invoke(null);";

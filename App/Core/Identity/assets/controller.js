@@ -70,8 +70,8 @@ import "../../../../assets/ui/toasts.js";
     form.enctype = "multipart/form-data";
     var upload = e("div", { "class": "avatar-upload", "data-avatar-upload": "" }), preview = e("div", { "class": "avatar avatar-xl avatar-upload-preview", "aria-label": U.text("account.avatar_preview") });
     preview.appendChild(e("img", { src: user.avatar_url || null, alt: user.username, "data-avatar-upload-preview": "", hidden: !user.avatar_url }));
-    var empty = e("span", { "class": "avatar-upload-empty", "data-avatar-upload-empty": "", hidden: Boolean(user.avatar_url) }); empty.appendChild(U.icon("user")); preview.appendChild(empty);
-    var previewGroup = e("div", { "class": "avatar-editor-preview" });
+    var empty = e("span", { "class": "avatar-fallback avatar-upload-empty", "data-avatar-upload-empty": "", hidden: Boolean(user.avatar_url) }); empty.appendChild(U.icon("user")); preview.appendChild(empty);
+    var previewGroup = e("div", { "class": "avatar-editor-preview cluster gap-1" });
     previewGroup.appendChild(preview); upload.appendChild(previewGroup);
     if (user.avatar_custom === false) {
       var creatorToggle = U.button("account.avatar_creator", { "class": "btn btn-icon avatar-creator-toggle", "aria-label": U.text("account.avatar_creator"), title: U.text("account.avatar_creator"), "aria-expanded": "false", "aria-controls": "avatar-appearance-form-" + user.id, "data-avatar-creator-toggle": "" });

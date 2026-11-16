@@ -182,10 +182,9 @@
       "source": "App/Core/Notifications/assets/components.json",
       "dependencies": [],
       "inputs": [
-        "item.actor.username",
         "item.created_at",
         "item.excerpt",
-        "item.type"
+        "item.message"
       ]
     },
     {
@@ -209,8 +208,8 @@
         "item",
         "item.actor",
         "item.actor.username",
+        "item.icon",
         "item.id",
-        "item.type",
         "item.unread",
         "item.url"
       ]
@@ -226,8 +225,8 @@
         "item",
         "item.actor",
         "item.actor.username",
+        "item.icon",
         "item.id",
-        "item.type",
         "item.unread",
         "item.url"
       ]
@@ -2072,8 +2071,6 @@
     "App/Modules/Social/assets/status/styles/status-avatars.css",
     "assets/ui/styles/avatar-sizes.css",
     "App/Modules/Social/assets/users/styles/profile-avatar.css",
-    "App/Core/Identity/assets/styles/account-security-page.css",
-    "App/Core/Identity/assets/styles/account-security-card.css",
     "App/Modules/Social/assets/users/styles/profile.css",
     "assets/ui/styles/code-block.css",
     "App/Modules/Social/assets/users/styles/profile-details.css",
@@ -2091,8 +2088,6 @@
     "assets/ui/styles/modal-layout.css",
     "assets/ui/styles/input-icon.css",
     "assets/ui/styles/modal-confirm-buttons.css",
-    "App/Core/Installation/assets/styles/install-steps.css",
-    "App/Core/Installation/assets/styles/install-choices.css",
     "assets/ui/styles/result-list.css",
     "assets/ui/styles/cookie-consent.css",
     "assets/ui/styles/toasts.css",
@@ -2119,7 +2114,6 @@
     "App/Modules/Social/assets/status/styles/feedback-mobile.css",
     "assets/ui/styles/section-desktop.css",
     "assets/ui/styles/pagination-desktop.css",
-    "App/Core/Installation/assets/styles/install-steps-desktop.css",
     "assets/ui/styles/split-desktop.css",
     "assets/modules/admin/styles/admin-lists-desktop.css",
     "assets/ui/styles/field-inline-desktop.css",
@@ -2141,24 +2135,6 @@
     "assets/ui/styles/load-more.css"
   ],
   "css_classes": {
-    "account-security-card": [
-      {
-        "source": "App/Core/Identity/assets/styles/account-security-card.css",
-        "line": 2,
-        "context": [
-          "@media (min-width: 980px)"
-        ],
-        "selector": ".account-security-card"
-      }
-    ],
-    "account-security-page": [
-      {
-        "source": "App/Core/Identity/assets/styles/account-security-page.css",
-        "line": 1,
-        "context": [],
-        "selector": ".account-security-page"
-      }
-    ],
     "admin-backdrop": [
       {
         "source": "assets/modules/admin/styles/admin-shell.css",
@@ -2792,25 +2768,25 @@
     "avatar-creator-toggle": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 80,
+        "line": 55,
         "context": [],
         "selector": ".avatar-creator-toggle"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 81,
+        "line": 56,
         "context": [],
         "selector": ".avatar-creator-toggle[hidden]"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 82,
+        "line": 57,
         "context": [],
         "selector": ".avatar-creator-toggle .icon"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 83,
+        "line": 58,
         "context": [],
         "selector": ".avatar-creator-toggle[aria-expanded=\"true\"] .icon"
       }
@@ -2818,25 +2794,25 @@
     "avatar-editor": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 65,
+        "line": 41,
         "context": [],
         "selector": ".avatar-editor"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 66,
+        "line": 42,
         "context": [],
         "selector": ".avatar-editor .avatar-upload"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 68,
+        "line": 44,
         "context": [],
         "selector": ".avatar-editor .avatar-upload-drop"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 72,
+        "line": 48,
         "context": [
           "@media (max-width: 380px)"
         ],
@@ -2846,25 +2822,25 @@
     "avatar-editor-appearance": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 76,
+        "line": 52,
         "context": [],
         "selector": ".avatar-editor-appearance[hidden]"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 77,
+        "line": 53,
         "context": [],
         "selector": ".avatar-editor-appearance .field"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 84,
+        "line": 59,
         "context": [],
         "selector": ".avatar-editor-appearance"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 85,
+        "line": 60,
         "context": [
           "@media (max-width: 380px)"
         ],
@@ -2874,37 +2850,29 @@
     "avatar-editor-controls": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 67,
+        "line": 43,
         "context": [],
         "selector": ".avatar-editor-controls"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 73,
+        "line": 49,
         "context": [
           "@media (max-width: 380px)"
         ],
         "selector": ".avatar-editor-controls"
       }
     ],
-    "avatar-editor-preview": [
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 79,
-        "context": [],
-        "selector": ".avatar-editor-preview"
-      }
-    ],
     "avatar-editor-remove": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 69,
+        "line": 45,
         "context": [],
         "selector": ".avatar-editor-remove"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 70,
+        "line": 46,
         "context": [],
         "selector": ".avatar-editor-remove:hover"
       }
@@ -2940,13 +2908,13 @@
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 66,
+        "line": 42,
         "context": [],
         "selector": ".avatar-editor .avatar-upload"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 72,
+        "line": 48,
         "context": [
           "@media (max-width: 380px)"
         ],
@@ -2956,25 +2924,25 @@
     "avatar-upload-drop": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 40,
+        "line": 21,
         "context": [],
         "selector": ".avatar-upload-drop"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 54,
+        "line": 35,
         "context": [],
         "selector": ".avatar-upload-drop:hover"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 54,
+        "line": 35,
         "context": [],
         "selector": ".avatar-upload-drop:focus-within"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 68,
+        "line": 44,
         "context": [],
         "selector": ".avatar-editor .avatar-upload-drop"
       }
@@ -2982,33 +2950,21 @@
     "avatar-upload-empty": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 17,
-        "context": [],
-        "selector": ".avatar-upload-empty"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 24,
+        "line": 6,
         "context": [],
         "selector": ".avatar-upload-empty .icon"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 34,
-        "context": [],
-        "selector": ".avatar-upload-empty[hidden]"
       }
     ],
     "avatar-upload-empty-note": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 29,
+        "line": 11,
         "context": [],
         "selector": ".avatar-upload-empty-note"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 34,
+        "line": 16,
         "context": [],
         "selector": ".avatar-upload-empty-note[hidden]"
       }
@@ -3016,19 +2972,7 @@
     "avatar-upload-preview": [
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 6,
-        "context": [],
-        "selector": ".avatar-upload-preview"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 11,
-        "context": [],
-        "selector": ".avatar-upload-preview img"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 34,
+        "line": 16,
         "context": [],
         "selector": ".avatar-upload-preview img[hidden]"
       }
@@ -3513,66 +3457,6 @@
         "selector": ".check-line input"
       }
     ],
-    "choice-card": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 14,
-        "context": [],
-        "selector": ".choice-card"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 27,
-        "context": [],
-        "selector": ".choice-card:hover"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 27,
-        "context": [],
-        "selector": ".choice-card:focus-within"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 33,
-        "context": [],
-        "selector": ".choice-card:has(input:checked)"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 39,
-        "context": [],
-        "selector": ".choice-card input"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 46,
-        "context": [],
-        "selector": ".choice-card span"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 51,
-        "context": [],
-        "selector": ".choice-card small"
-      }
-    ],
-    "choice-list": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 9,
-        "context": [],
-        "selector": ".choice-list"
-      }
-    ],
-    "choice-row": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-choices.css",
-        "line": 1,
-        "context": [],
-        "selector": ".choice-row"
-      }
-    ],
     "cluster": [
       {
         "source": "assets/ui/styles/buttons.css",
@@ -4018,7 +3902,7 @@
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 77,
+        "line": 53,
         "context": [],
         "selector": ".avatar-editor-appearance .field"
       }
@@ -4361,8 +4245,8 @@
     ],
     "home-feed-section": [
       {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 60,
+        "source": "App/Modules/Social/assets/status/styles/home-feed.css",
+        "line": 10,
         "context": [],
         "selector": ".home-feed-section .status-feed"
       },
@@ -4584,19 +4468,19 @@
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 24,
+        "line": 6,
         "context": [],
         "selector": ".avatar-upload-empty .icon"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 82,
+        "line": 57,
         "context": [],
         "selector": ".avatar-creator-toggle .icon"
       },
       {
         "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 83,
+        "line": 58,
         "context": [],
         "selector": ".avatar-creator-toggle[aria-expanded=\"true\"] .icon"
       },
@@ -4857,18 +4741,6 @@
         "line": 49,
         "context": [],
         "selector": ".pagination-link.is-active"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 36,
-        "context": [],
-        "selector": ".step.is-active"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-active .step-marker"
       }
     ],
     "is-child": [
@@ -4885,20 +4757,6 @@
           "@media (max-width: 759px)"
         ],
         "selector": ".status-comment.is-child"
-      }
-    ],
-    "is-complete": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-complete .step-marker"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 48,
-        "context": [],
-        "selector": ".step.is-complete"
       }
     ],
     "is-danger": [
@@ -6295,16 +6153,16 @@
     ],
     "profile-main": [
       {
+        "source": "App/Modules/Social/assets/status/styles/home-feed.css",
+        "line": 10,
+        "context": [],
+        "selector": ".profile-main .status-feed"
+      },
+      {
         "source": "App/Modules/Social/assets/users/styles/profile.css",
         "line": 12,
         "context": [],
         "selector": ".profile-main"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 60,
-        "context": [],
-        "selector": ".profile-main .status-feed"
       },
       {
         "source": "App/Modules/Social/assets/users/styles/profile-main-desktop.css",
@@ -7627,22 +7485,22 @@
     ],
     "status-feed": [
       {
-        "source": "App/Modules/Social/assets/status/styles/status-feed.css",
-        "line": 1,
-        "context": [],
-        "selector": ".status-feed"
-      },
-      {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 60,
+        "source": "App/Modules/Social/assets/status/styles/home-feed.css",
+        "line": 10,
         "context": [],
         "selector": ".home-feed-section .status-feed"
       },
       {
-        "source": "App/Core/Identity/assets/styles/avatar-upload.css",
-        "line": 60,
+        "source": "App/Modules/Social/assets/status/styles/home-feed.css",
+        "line": 10,
         "context": [],
         "selector": ".profile-main .status-feed"
+      },
+      {
+        "source": "App/Modules/Social/assets/status/styles/status-feed.css",
+        "line": 1,
+        "context": [],
+        "selector": ".status-feed"
       },
       {
         "source": "App/Modules/Social/assets/status/styles/status-feed-mobile.css",
@@ -8689,74 +8547,6 @@
         "selector": ".status-video-thumb + .status-video-play"
       }
     ],
-    "step": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 9,
-        "context": [],
-        "selector": ".step"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 36,
-        "context": [],
-        "selector": ".step.is-active"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-active .step-marker"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-complete .step-marker"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 48,
-        "context": [],
-        "selector": ".step.is-complete"
-      }
-    ],
-    "step-marker": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 23,
-        "context": [],
-        "selector": ".step-marker"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-active .step-marker"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 42,
-        "context": [],
-        "selector": ".step.is-complete .step-marker"
-      }
-    ],
-    "steps": [
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps.css",
-        "line": 1,
-        "context": [],
-        "selector": ".steps"
-      },
-      {
-        "source": "App/Core/Installation/assets/styles/install-steps-desktop.css",
-        "line": 1,
-        "context": [
-          "@media (min-width: 760px)"
-        ],
-        "selector": ".steps"
-      }
-    ],
     "tab": [
       {
         "source": "assets/ui/styles/tabs.css",
@@ -9195,8 +8985,8 @@
         "selector": ".toast"
       },
       {
-        "source": "App/Modules/Social/assets/status/styles/feedback-mobile.css",
-        "line": 13,
+        "source": "assets/ui/styles/toasts.css",
+        "line": 117,
         "context": [
           "@media (max-width: 759px)"
         ],
@@ -9359,8 +9149,8 @@
         "selector": ".toast-stack"
       },
       {
-        "source": "App/Modules/Social/assets/status/styles/feedback-mobile.css",
-        "line": 7,
+        "source": "assets/ui/styles/toasts.css",
+        "line": 111,
         "context": [
           "@media (max-width: 759px)"
         ],
@@ -11239,24 +11029,28 @@
       "source": "assets/ui/filters.js",
       "methods": [
         {
-          "name": "get",
+          "name": "defaults",
           "line": 64
         },
         {
+          "name": "get",
+          "line": 72
+        },
+        {
           "name": "capture",
-          "line": 65
+          "line": 73
         },
         {
           "name": "restore",
-          "line": 76
+          "line": 84
         },
         {
           "name": "remove",
-          "line": 94
+          "line": 102
         },
         {
           "name": "init",
-          "line": 100
+          "line": 108
         }
       ]
     },
@@ -11313,8 +11107,12 @@
           "line": 17
         },
         {
-          "name": "url",
+          "name": "result",
           "line": 20
+        },
+        {
+          "name": "url",
+          "line": 31
         }
       ]
     },
@@ -11555,24 +11353,6 @@
     }
   ],
   "stylesheet_ownership": {
-    "App/Core/Identity/assets/styles/account-security-card.css": [
-      {
-        "manifest": "App/Core/Identity/assets/module.json",
-        "routes": [
-          "public",
-          "admin"
-        ]
-      }
-    ],
-    "App/Core/Identity/assets/styles/account-security-page.css": [
-      {
-        "manifest": "App/Core/Identity/assets/module.json",
-        "routes": [
-          "public",
-          "admin"
-        ]
-      }
-    ],
     "App/Core/Identity/assets/styles/avatar-upload.css": [
       {
         "manifest": "App/Core/Identity/assets/module.json",
@@ -11588,30 +11368,6 @@
         "routes": [
           "public",
           "admin"
-        ]
-      }
-    ],
-    "App/Core/Installation/assets/styles/install-choices.css": [
-      {
-        "manifest": "App/Core/Installation/assets/module.json",
-        "routes": [
-          "/install"
-        ]
-      }
-    ],
-    "App/Core/Installation/assets/styles/install-steps-desktop.css": [
-      {
-        "manifest": "App/Core/Installation/assets/module.json",
-        "routes": [
-          "/install"
-        ]
-      }
-    ],
-    "App/Core/Installation/assets/styles/install-steps.css": [
-      {
-        "manifest": "App/Core/Installation/assets/module.json",
-        "routes": [
-          "/install"
         ]
       }
     ],
@@ -11667,8 +11423,11 @@
       {
         "manifest": "App/Modules/Blog/assets/module.json",
         "routes": [
-          "public",
-          "admin"
+          "/",
+          "/blog",
+          "/articles",
+          "/admin/articles",
+          "/admin/article-sources"
         ]
       }
     ],
@@ -12693,13 +12452,14 @@
     {
       "source": "App/Core/Identity/assets/admin.js",
       "imports": [
-        "App/Core/Identity/assets/index.js"
+        "App/Core/Identity/assets/index.js",
+        "assets/ui/list-navigation.js"
       ],
       "entries": [
         {
           "manifest": "App/Core/Identity/assets/module.json",
           "routes": [
-            "/admin/users"
+            "admin"
           ]
         }
       ],
@@ -12720,7 +12480,6 @@
     {
       "source": "App/Core/Identity/assets/controller.js",
       "imports": [
-        "assets/ui/list-navigation.js",
         "assets/ui/content-updates.js",
         "assets/core/dates.js",
         "assets/core/component-renderer.js",
@@ -12752,7 +12511,6 @@
       "imports": [
         "App/Core/Identity/assets/user-menu.js",
         "assets/core/modules.js",
-        "assets/ui/list-navigation.js",
         "App/Core/Identity/assets/avatar-editor.js",
         "App/Core/Identity/assets/controller.js",
         "App/Core/Identity/assets/email-availability.js"
@@ -13360,14 +13118,7 @@
         "App/Core/Identity/assets/index.js",
         "App/Modules/Social/assets/users/controller.js"
       ],
-      "entries": [
-        {
-          "manifest": "App/Modules/Social/assets/module.json",
-          "routes": [
-            "public"
-          ]
-        }
-      ],
+      "entries": [],
       "standalone": false
     },
     {

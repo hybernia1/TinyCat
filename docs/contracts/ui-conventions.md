@@ -73,7 +73,6 @@ jsou přípustné; jejich ukončení závisí na vstupních datech.
 | `assets/modules/site/styles` | Veřejná navigace, sidebar a layout stránky |
 | `assets/modules/search/styles` | Globální vyhledávání a jeho nabídka |
 | `assets/modules/notifications/styles` | Stránka notifikací a notifikační menu |
-| `assets/modules/installation/styles` | Kroky instalace a volby instalačního průvodce |
 
 Zbývající moduly vlastní své dosavadní styly stejným způsobem.
 Každý styl deklaruje manifest ve svém adresáři. Kontrola
@@ -83,6 +82,10 @@ Sdílený `result-list.css` používá instalace, diagnostika i aktualizace;
 proto zůstává v UI. Metadata autora statusu potřebuje veřejný feed i náhled
 v moderaci. Editor účtu a avatar jsou dosažitelné z veřejné části i administrace;
 jejich styly se nesmějí omezit pouze podle adresy veřejného profilu.
+
+Instalační průvodce používá společné `result-list`, `result-item`, `badge`,
+`check-card` a layout utility. Aktuální krok označuje `aria-current="step"`;
+volby jazyků zachovávají nativní radio tlačítka. Instalace nemá vlastní CSS.
 
 Veřejné moduly ponechávají své veřejné styly na celém veřejném povrchu:
 sdílená navigace a dynamicky otevřené dialogy je mohou potřebovat také mimo

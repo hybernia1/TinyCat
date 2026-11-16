@@ -14,8 +14,6 @@
       "App/Core/Identity/assets/index.js"
     ],
     "styles": [
-      "App/Core/Identity/assets/styles/account-security-page.css",
-      "App/Core/Identity/assets/styles/account-security-card.css",
       "App/Core/Identity/assets/styles/avatar-upload.css",
       "App/Core/Identity/assets/styles/user-menu.css"
     ],

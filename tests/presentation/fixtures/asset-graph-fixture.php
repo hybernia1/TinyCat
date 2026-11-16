@@ -3,6 +3,18 @@ declare(strict_types=1);
 define('TINYCAT', true);
 require __DIR__ . '/../../../App/autoload.php';
 $mode = $argv[1] ?? '--all';
+if ($mode === '--installation') {
+    \TinyCat\Support\Localization::locale('cs');
+    ob_start();
+    $current = 'tables';
+    require __DIR__ . '/../../../App/Core/Installation/templates/parts/install/steps.php';
+    \TinyCat\Core\Installation\Pages::language_view(\TinyCat\Core\Installation\Installer::languages(), ['locale' => 'cs']);
+    \TinyCat\Core\Installation\Pages::database_view(['database' => ['host' => 'localhost', 'name' => 'fixture', 'user' => 'fixture', 'charset' => 'utf8mb4']]);
+    $html = (string) ob_get_clean();
+    session_destroy();
+    echo json_encode($html, JSON_THROW_ON_ERROR);
+    exit;
+}
 if ($mode === '--locale-routes') { echo json_encode(\TinyCat\Http\LocaleRouting::patterns(), JSON_THROW_ON_ERROR); exit; }
 if ($mode === '--localized-urls') {
     \TinyCat\Http\LocaleRouting::prepare('/pl/');

@@ -8,6 +8,35 @@ distributions and independently owned Blog and Social storage. See the
 [module deployment guide](module-deployment.md) for CLI installation,
 activation, migration snapshots and recovery.
 
+## Supported update baseline
+
+New packages require a completed TinyCat **6.0.4** installation or newer, for
+all assemblies. The builder rejects older minimum versions and `--legacy-upgrade`.
+The 5.x compatibility transport, old autoloader shim and bridge builder have
+been retired. Root historical migrations are no longer shipped in new packages.
+
+Published migration files, IDs and checksums remain immutable. Existing
+`schema_migrations`, `module_installations` and `module_migrations` records
+remain intact; they are integrity and recovery data, not activation switches.
+Module schema histories and fresh-install baselines are still signed and
+verified. File/database backups, maintenance, journaling and rollback remain
+part of the normal updater.
+
+For a new release, use:
+
+```sh
+php tools/release/build-update.php --version=X.Y.Z --both --output=dist/release-X.Y.Z
+php tools/release/release-update-rehearsal.php --artifact=dist/release-X.Y.Z/update --baseline-version=6.0.4 --direct-web --cached-autoload
+```
+
+The rehearsal uses the published `v6.0.4` source and a disposable MySQL database.
+It checks representative Social data, the signed update and exact rollback.
+The release version must be newer than 6.0.4. The automated file rehearsal
+uses a synthetic successor in an isolated copy when the source is still 6.0.4.
+
+The release notes below describe historical packages. Their old bridge commands
+and supported version ranges do not apply to the current builder.
+
 ## Upgrading to 6.0.4
 
 Release 6.0.4 improves core startup and shared UI asset selection. It adds no

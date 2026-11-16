@@ -84,11 +84,8 @@ foreach (['/admin', '/install'] as $route) {
     $assertStyle($route, 'assets/ui/styles/global-search.css', false);
     $assertStyle($route, 'App/Modules/Social/assets/site/styles/sidebar-lists.css', false);
 }
-foreach (['/', '/admin'] as $route) { $assertStyle($route, 'App/Core/Installation/assets/styles/install-steps.css', false); }
-$assertStyle('/install', 'App/Core/Installation/assets/styles/install-steps.css', true);
-$assertStyle('/install', 'App/Core/Installation/assets/styles/install-steps-desktop.css', true);
+foreach (['assets/ui/styles/check-card.css', 'assets/ui/styles/badges.css'] as $style) { $assertStyle('/install', $style, true); }
 foreach (['/install', '/admin/site-health', '/admin/updates'] as $route) { $assertStyle($route, 'assets/ui/styles/result-list.css', true); }
-foreach (['/', '/admin'] as $route) { $assertStyle($route, 'App/Core/Installation/assets/styles/install-choices.css', false); }
 $assertStyle('/admin', 'App/Core/Identity/assets/styles/user-menu.css', true);
 $assertStyle('/install', 'App/Core/Identity/assets/styles/user-menu.css', false);
 foreach (['/', '/install'] as $route) { $assertStyle($route, 'assets/ui/styles/navbar.css', true); }

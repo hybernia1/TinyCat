@@ -37,6 +37,9 @@ try {
     $assert($actual['invalid_components'] === true, 'Compiled component paths reject traversal.');
     $assert($actual['legacy_components'] === null, 'Older release manifests retain the source fallback.');
     $assert($actual['changed_packages'] === true, 'An independently changed module package registry invalidates compiled components.');
+    $assert($actual['deployed_without_resources'] === true, 'Both compiled readers reject deployed inventories when resource selection cannot be resolved.');
+    $assert($actual['deployed_legacy_inventory'] === true, 'Both compiled readers reject unbound legacy inventories in an installed deployment.');
+    $assert($actual['undeployed_legacy_inventory'] === true, 'Both compiled readers retain legacy source-free fallback without deployment state.');
     $assert($actual['packages'] === \TinyCat\Support\TranslationSources::packages(), 'Compiled language metadata differs.');
     $assert($actual['unknown_locale'] === \TinyCat\Support\Localization::t('common.close', [], 'en'), 'Unknown locales must fall back without loading source catalogs.');
     $assert($actual['regional_plural'] === \TinyCat\Support\Localization::plural('bots.sources_count', 2, [], 'cs'), 'Regional plural fallback works without source catalogs.');

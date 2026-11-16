@@ -20,7 +20,10 @@ return static function (PDO $pdo, bool $owned = false): void {
     $comment = $pdo->prepare($sql("INSERT INTO content_comments(content_id,parent_id,user_id,body,created_at) VALUES(?,?,?,?,'2000-01-01 12:01:00')"));
     $reaction = $pdo->prepare($sql('INSERT INTO comment_likes(comment_id,user_id) VALUES(?,?)'));
     $follow = $pdo->prepare($sql('INSERT INTO user_followers(user_id,follower_id) VALUES(?,?)'));
-    $notification = $pdo->prepare($sql("INSERT INTO notifications(user_id,actor_id,content_id,comment_id,type,notification_key,created_at,updated_at) VALUES(?,?,?,?,'content_comment',?,'2000-01-01 12:01:00','2000-01-01 12:01:00')"));
+    $opaqueSubjects = in_array('subject_id', $pdo->query('SHOW COLUMNS FROM notifications')->fetchAll(PDO::FETCH_COLUMN), true);
+    $notification = $pdo->prepare($opaqueSubjects
+        ? "INSERT INTO notifications(user_id,actor_id,subject_id,type,notification_key,created_at,updated_at) VALUES(?,?,?,'content_comment',?,'2000-01-01 12:01:00','2000-01-01 12:01:00')"
+        : "INSERT INTO notifications(user_id,actor_id,content_id,comment_id,type,notification_key,created_at,updated_at) VALUES(?,?,?,?,'content_comment',?,'2000-01-01 12:01:00','2000-01-01 12:01:00')");
     $pdo->beginTransaction();
     try {
         foreach ($users as $i => $author) {
@@ -33,7 +36,7 @@ return static function (PDO $pdo, bool $owned = false): void {
                     $comment->execute([$id,$c % 2 === 0 ? null : $parent,$actor,'Retained comment ' . $c]); $commentId = (int) $pdo->lastInsertId();
                     if ($c % 2 === 0) { $parent = $commentId; }
                     $reaction->execute([$commentId,$author]);
-                    $notification->execute([$author,$actor,$id,$commentId,'rehearsal:' . $id . ':' . $commentId]);
+                    $notification->execute($opaqueSubjects ? [$author,$actor,$commentId,'rehearsal:' . $id . ':' . $commentId] : [$author,$actor,$id,$commentId,'rehearsal:' . $id . ':' . $commentId]);
                 }
             }
         }

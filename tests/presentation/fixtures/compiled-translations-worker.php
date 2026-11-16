@@ -19,6 +19,23 @@ $legacyManifest = $compiledManifest; unset($legacyManifest['server_components'])
 $manifest->setValue(null, $legacyManifest);
 $result['legacy_components'] = \TinyCat\Support\CompiledAssets::components();
 $manifest->setValue(null, $compiledManifest);
+$translationManifest = new ReflectionProperty(\TinyCat\Support\CompiledTranslations::class, 'manifest');
+$compiledTranslations = $translationManifest->getValue();
+$legacyAssets = $compiledManifest; unset($legacyAssets['selection']);
+$legacyTranslations = $compiledTranslations; unset($legacyTranslations['selection']);
+$deployment = $argv[1] . '/storage/deployment.json';
+mkdir(dirname($deployment)); file_put_contents($deployment, '{}');
+try {
+    $result['deployed_without_resources'] = \TinyCat\Support\CompiledAssets::asset('icons.svg', false) === null && \TinyCat\Support\CompiledTranslations::packages() === null;
+    $manifest->setValue(null, $legacyAssets); $translationManifest->setValue(null, $legacyTranslations);
+    $result['deployed_legacy_inventory'] = \TinyCat\Support\CompiledAssets::asset('icons.svg', false) === null && \TinyCat\Support\CompiledTranslations::packages() === null;
+    unlink($deployment);
+    $result['undeployed_legacy_inventory'] = \TinyCat\Support\CompiledAssets::asset('icons.svg', false) !== null && \TinyCat\Support\CompiledTranslations::packages() !== null;
+} finally {
+    if (is_file($deployment)) { unlink($deployment); }
+    rmdir(dirname($deployment));
+    $manifest->setValue(null, $compiledManifest); $translationManifest->setValue(null, $compiledTranslations);
+}
 $result['unknown_locale'] = \TinyCat\Support\Localization::t('common.close', [], 'xx');
 $result['regional_plural'] = \TinyCat\Support\Localization::plural('bots.sources_count', 2, [], 'cs_CZ');
 foreach (array_keys($result['packages']) as $locale) {

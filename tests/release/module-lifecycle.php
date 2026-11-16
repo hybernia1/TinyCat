@@ -60,10 +60,10 @@ try {
         $assert($exit === 0, 'Signed Blog build: ' . $text . $error);
     };
     $initialVersionFile = $candidate . '/App/Core/Support/Version.php';
-    file_put_contents($initialVersionFile, preg_replace("/CURRENT = '[^']+'/", "CURRENT = '6.0.0-dev.10'", (string) file_get_contents($initialVersionFile)));
-    $build('6.0.0-dev.10', $workspace . '/v1');
+    file_put_contents($initialVersionFile, preg_replace("/CURRENT = '[^']+'/", "CURRENT = '6.0.4'", (string) file_get_contents($initialVersionFile)));
+    $build('6.0.4', $workspace . '/v1');
     $installManifest = json_decode((string) file_get_contents($workspace . '/v1/install/tinycat-blog-install.json'), true, 512, JSON_THROW_ON_ERROR);
-    $assert($installManifest['distribution']['product'] === 'tinycat.blog' && $installManifest['minimum_version'] === '6.0.0-dev.9.2', 'Signed identity prevents old updaters from applying module packages');
+    $assert($installManifest['distribution']['product'] === 'tinycat.blog' && $installManifest['minimum_version'] === '6.0.4', 'Signed identity prevents old updaters from applying module packages');
     $assert($installManifest['migrations'] === [] && !isset($installManifest['files']['App/Modules/Social/src/Posts/Registration.php']) && isset($installManifest['files']['App/Core/Settings/Store.php']) && isset($installManifest['files']['App/Modules/Notes/src/Module.php']), 'Blog package contains only available product owners, including inactive modules');
     $assert(isset($installManifest['files']['scheduled-tasks.php']) && isset($installManifest['files']['App/Console.php']), 'Blog has a working production CLI instead of a missing social scheduler');
     $root = $workspace . '/installation'; mkdir($root, 0700);
@@ -124,8 +124,8 @@ try {
     // Update inactive data, then activate and update again with the old provider already cached in PHP.
     $makeModule('notes', 2, ['tinycat.accounts']);
     $versionFile = $candidate . '/App/Core/Support/Version.php'; $versionSource = (string) file_get_contents($versionFile);
-    file_put_contents($versionFile, str_replace("CURRENT = '6.0.0-dev.10'", "CURRENT = '6.0.0-dev.11'", $versionSource));
-    $build('6.0.0-dev.11', $workspace . '/v2');
+    file_put_contents($versionFile, str_replace("CURRENT = '6.0.4'", "CURRENT = '6.0.5'", $versionSource));
+    $build('6.0.5', $workspace . '/v2');
     $update = static function (string $directory) use ($console): array {
         $manifest = json_decode((string) file_get_contents($directory . '/tinycat-blog-update.json'), true, 512, JSON_THROW_ON_ERROR);
         return $console(['update', $directory . '/tinycat-blog-update.json', $directory . '/tinycat-blog-update.sig', $directory . '/' . $manifest['package']]);
@@ -135,8 +135,8 @@ try {
     $assert((int) $pdo->query("SELECT version FROM module_installations WHERE module_id = 'fixture.notes'")->fetchColumn() === 2 && $pdo->query('SELECT body FROM lifecycle_notes')->fetchColumn() === $body, 'Inactive module migrates without losing data');
     [$exit, $text, $error] = $console(['activate', 'fixture.notes']); $assert($exit === 0, 'Updated inactive module can be activated: ' . $text . $error);
     $makeModule('notes', 3, ['tinycat.accounts']);
-    file_put_contents($versionFile, str_replace("CURRENT = '6.0.0-dev.10'", "CURRENT = '6.0.0-dev.12'", $versionSource));
-    $build('6.0.0-dev.12', $workspace . '/v3');
+    file_put_contents($versionFile, str_replace("CURRENT = '6.0.4'", "CURRENT = '6.0.6'", $versionSource));
+    $build('6.0.6', $workspace . '/v3');
     $manifest = json_decode((string) file_get_contents($workspace . '/v3/update/tinycat-blog-update.json'), true, 512, JSON_THROW_ON_ERROR);
     [$exit, $text, $error] = $run([PHP_BINARY, $fixture . '/update-worker.php', $root, $workspace . '/v3/update/tinycat-blog-update.json', $workspace . '/v3/update/tinycat-blog-update.sig', $workspace . '/v3/update/' . $manifest['package']], $root);
     $assert($exit === 0 && (json_decode($text, true)['cached_provider_version'] ?? null) === 2, 'Update uses signed migrations while the old PHP provider is cached: ' . $text . $error);
@@ -151,8 +151,8 @@ try {
     $stateBytes = file_get_contents($root . '/storage/deployment.json');
     $makeModule('notes', 4, ['tinycat.accounts']);
     file_put_contents($candidate . '/App/Console.php', "\n// New managed CLI entry for recovery regression.\n", FILE_APPEND);
-    file_put_contents($versionFile, str_replace("CURRENT = '6.0.0-dev.10'", "CURRENT = '6.0.0-dev.13'", $versionSource));
-    $build('6.0.0-dev.13', $workspace . '/v4');
+    file_put_contents($versionFile, str_replace("CURRENT = '6.0.4'", "CURRENT = '6.0.7'", $versionSource));
+    $build('6.0.7', $workspace . '/v4');
     if (PHP_OS_FAMILY === 'Windows') {
         $replacement = json_decode((string) file_get_contents($workspace . '/v4/update/tinycat-blog-update.json'), true, 512, JSON_THROW_ON_ERROR);
         [$exit, $text, $error] = $run([PHP_BINARY, $root . '/App/Console.php', 'update', $workspace . '/v4/update/tinycat-blog-update.json', $workspace . '/v4/update/tinycat-blog-update.sig', $workspace . '/v4/update/' . $replacement['package']], $root);

@@ -204,10 +204,7 @@ final class ModuleSchemas
 
     private static function tableExists(PDO $pdo, string $table): bool
     {
-        $mysql = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
-        $query = $pdo->prepare($mysql ? 'SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?' : "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?");
-        $query->execute([$table]);
-        return $query->fetchColumn() !== false;
+        return SchemaInspection::exists($pdo, $table);
     }
 
     private static function writeState(PDO $pdo, string $id, int $version, string $status): void

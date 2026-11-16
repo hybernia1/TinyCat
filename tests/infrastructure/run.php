@@ -25,6 +25,26 @@ $throws = static function (callable $operation, string $class) use ($assert): vo
     }
     throw new RuntimeException('Expected exception: ' . $class);
 };
+
+$validateResource = new ReflectionMethod(\TinyCat\Http\Response::class, 'assertData');
+$resource = ['items' => [['id' => 1, 'body' => '<b>plain data</b>', 'active' => true, 'value' => null]], 'labels' => [], 'formatted_at' => 'now'];
+$beforeResource = json_encode($resource, JSON_THROW_ON_ERROR);
+$validateResource->invoke(null, $resource);
+$assert(json_encode($resource, JSON_THROW_ON_ERROR) === $beforeResource, 'Resource validation preserves canonical data and literal text.');
+foreach (['html', 'body_HTML', 'Label', 'value_formatted', 'ui', 'components', 'translations', 'role_options', 'status_options', 'username_hint'] as $key) {
+    $throws(static fn () => $validateResource->invoke(null, ['nested' => [[$key => null]]]), LogicException::class);
+}
+$throws(static fn () => $validateResource->invoke(null, ['items' => [['body' => new stdClass()]]]), LogicException::class);
+$resourceStream = fopen('php://memory', 'w+');
+try { $throws(static fn () => $validateResource->invoke(null, ['items' => [$resourceStream]]), LogicException::class); }
+finally { fclose($resourceStream); }
+$manyFields = [];
+for ($index = 0; $index < 300; $index++) { $manyFields['field_' . $index] = $index; }
+$validateResource->invoke(null, $manyFields);
+$assert(count((new ReflectionProperty(\TinyCat\Http\Response::class, 'validatedKeys'))->getValue()) <= 256, 'Arbitrary resource field names cannot grow the validation cache without bound.');
+$throws(static fn () => $validateResource->invoke(null, ['nested' => ['body_html' => '']]), LogicException::class);
+$throws(static fn () => $validateResource->invoke(null, ['id' => new stdClass()]), LogicException::class);
+
 foreach ([
     ['benchmark', '-', 'benchmark'], ['mobile-first', '-', 'mobile-first'],
     ['123', '-', '123'], ['  cache-hit  ', '-', 'cache-hit'],

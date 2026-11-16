@@ -73,16 +73,7 @@ try {
     $assert(($manifest['version'] ?? null) === $version, 'Manifest targets the current version.');
     define('TINYCAT', true);
     require_once $root . '/App/autoload.php';
-    $distribution = $manifest['distribution'] ?? null;
-    $minimum = is_array($distribution) && \TinyCat\Core\Modules\Distribution::modular($distribution)
-        ? match ($distribution['format'] ?? 1) {
-            3 => \TinyCat\Core\Modules\Distribution::DOMAIN_RUNTIME,
-            2 => \TinyCat\Core\Modules\Distribution::FRAMEWORK_RUNTIME,
-            default => isset($distribution['schemas']['tinycat.support'])
-                ? \TinyCat\Core\Modules\Distribution::CORE_SCHEMA_RUNTIME
-                : \TinyCat\Core\Modules\Distribution::RUNTIME,
-        }
-        : \TinyCat\Support\Version::MINIMUM_UPDATE;
+    $minimum = \TinyCat\Support\Version::MINIMUM_UPDATE;
     $assert(($manifest['minimum_version'] ?? null) === $minimum, 'Manifest uses its supported runtime baseline.');
     $assert(($manifest['minimum_php'] ?? null) === '8.4.0', 'Manifest retains the PHP 8.4 runtime floor.');
     foreach ((array) ($manifest['migrations'] ?? []) as $migration) {

@@ -1916,5 +1916,14 @@
     "lang/ru.json",
     "lang/tr.json",
     "lang/uk.json"
+  ],
+  "6.0.5": [
+    "App/Core/Modules/ProvidesLegacyUpgrade.php",
+    "App/Core/Updates/LegacyUpdate.php",
+    "App/Core/Installation/assets/styles/install-steps.css",
+    "App/Core/Installation/assets/styles/install-choices.css",
+    "App/Core/Installation/assets/styles/install-steps-desktop.css",
+    "App/Core/Identity/assets/styles/account-security-page.css",
+    "App/Core/Identity/assets/styles/account-security-card.css"
   ]
 }

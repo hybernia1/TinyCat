@@ -349,3 +349,150 @@ is core-only, so this is transport smoke coverage rather than a Social latency
 measurement. Configuration, accounts, uploads and module activation were not
 changed; production was not deployed. Backups and smoke results are in
 `.work/performance/ttfb-20261115/startup-live-backup-20261116-000022/`.
+
+### Extreme core file-count experiment (2026-11-16)
+
+A user-reported regression after an older Core.php split motivated a controlled
+physical file-count test at checkpoint `61b0677b`. The application source tree
+and live Laragon installation were not modified. All generated PHP, private
+configuration, caches and logs stayed under the existing isolated performance
+workspace and its disposable MySQL databases.
+
+A private token-based compiler packs 274 runtime PHP source files while keeping
+class names, interfaces, imports, strict typing, original directory constants
+and lazy class declarations. It rewrites the export's autoloader to call the
+corresponding declaration closure from an already loaded bundle. The packed
+originals are removed only from the disposable export. Templates, translations,
+migrations, compiled catalogs and the bootstrap autoloader are not concatenated.
+Provider ownership and resource validation remain unchanged.
+
+Two builds were tested: 20 bundles by core area, and an extreme 10-bundle build
+with nine provider-owner bundles plus one shared bundle. Keeping provider code
+inside its existing owner root preserves Reflection-based ownership checks.
+This tests file loading and autoloader filesystem work without deleting feature
+logic or eagerly declaring unused classes. It does not isolate file-open cost
+from the rest of the optimized autoloader.
+
+The primary head-to-head comparison comprises two clean interleaved runs,
+10 warmup waves and 30 retained requests per endpoint/variant/run: 60 samples
+per endpoint and variant, with OPcache enabled. At most three loopback workers
+and one controller were active, with no concurrent quality suite.
+
+| Route | Existing TTFB ms | 20 bundles ms | 10 bundles ms | Included files: existing / 20 / 10 |
+| --- | ---: | ---: | ---: | --- |
+| / | 69.3 | 56.5 | 59.3 | 238 / 94 / 85 |
+| /login | 51.9 | 44.7 | 48.3 | 212 / 79 / 71 |
+| /privacy | 52.5 | 47.4 | 48.4 | 208 / 81 / 73 |
+| /api/statuses | 62.6 | 57.0 | 52.9 | 212 / 81 / 72 |
+| /api/site/sidebar | 46.3 | 36.4 | 39.1 | 190 / 73 / 65 |
+
+Homepage startup medians were 29.457 / 19.263 / 19.049 ms. The homepage paired
+median saving was 11.548 ms for 20 bundles (47/60 faster pairs) and 10.936 ms
+for 10 bundles (44/60 faster pairs). Its warm SQL count remained three, with
+SQL medians 2.420 / 2.623 / 2.636 ms. This supports a meaningful loading/startup
+saving in this environment. Ten bundles did not consistently beat twenty.
+PHP allocator peak with warm OPcache was 2 MiB in all three variants; this does
+not measure OPcache shared-memory consumption.
+
+Two earlier clean runs included v5.22.2 as a concurrent reference. One yielded
+homepage medians 55.544 ms (5.x), 76.533 ms (checkpoint) and 56.009 ms (20
+bundles); the other was 56.908 / 86.356 / 69.508 ms. Absolute times varied
+considerably, so these are supporting runs rather than a production guarantee.
+The initial pilot also wrote include/class audits and is excluded from the
+primary timing evidence.
+
+OPcache-disabled secondary runs used new workers and 30 samples per endpoint.
+The 20-bundle homepage was 230.648 -> 199.170 ms. In a separate run, the
+10-bundle homepage was 194.377 -> 191.804 ms, while its status API regressed
+138.825 -> 145.635 ms. These separate runs must not be compared as a direct
+20-versus-10 ranking. Parsing larger bundles without OPcache can offset the
+I/O saving: PHP allocator peak rose from 12 MiB to 14 MiB (20 bundles) or
+16 MiB (10 bundles). This is not evidence that the smallest possible bundle
+count is the best production configuration.
+
+Verification: every generated bundle passed PHP lint; both framework-only and
+Social registration passed in all three variants without opening a session or
+database. Loaded TinyCat class/interface/trait sets match on all five measured
+endpoints. Separate content comparisons passed for homepage, login, privacy,
+status API, sidebar API, robots, sitemap and global search. API/XML/text bodies
+match exactly after normalizing the benchmark host; HTML also normalizes its
+per-request CSRF token and CSP nonce. The old/current data projections still
+match (61 users, 240 posts, 2,400 comments and their relationships).
+
+These are experimental generated exports with target-specific paths, not
+release packages. Full update/rollback and preflight coverage was not rerun
+against the packed exports. Only the experiment documentation changes in the
+repository; production and the live test installation remain untouched. A
+release implementation would need relocatable bundles, canonical build and
+updater integration, source mapping and the full existing regression suite.
+
+Summary report: `.work/performance/ttfb-20261115/social-comparison/core-bundling-report.json`.
+Primary raw runs: `interleaved-170351/`, `interleaved-170459/`. Supporting runs:
+`interleaved-165540/`, `interleaved-165717/`. OPcache-off runs:
+`interleaved-165851/`, `interleaved-170702/`. Content/class parity artifacts:
+`bundle-parity-170015/` and `bundle-parity-170846/`. All profiling workers were
+stopped after measurement.
+
+### Core validation work and duplicated mechanisms (2026-11-16)
+
+A fresh instrumented checkpoint profile still attributes substantial homepage
+work to component evaluation (3,434 value calls, 873 node calls). The status
+API makes 2,382 recursive Response::assertData calls. These are attribution
+counts and instrumented times, not uninstrumented latency savings.
+
+Implemented in this stage:
+
+- Response validation checks each distinct accepted string key once per request
+  in a cache capped at 256 entries. It recurses only into nested arrays, still
+  rejecting objects/resources at every depth and preserving the existing
+  case-insensitive HTML/UI-field policy and exception messages.
+- Compiled asset and translation readers share their selection/deployment
+  identity check in CompiledTranslations, which API requests already load.
+  Scoped readers still opt out before reading files; source-free and legacy
+  inventory fallback behavior remains covered. Catalog lookup reuses its
+  already validated manifest rather than requesting it twice.
+- ModuleSchemas delegates table existence to the existing explicit-PDO
+  SchemaInspection helper. This removes duplicate SQL implementation without
+  caching schema state or changing published migration files/checksums.
+
+The validator microbenchmark uses the real isolated status API payload. Each
+iteration clears the accepted-key cache before timing the data/meta/params
+checks, simulating a fresh request. Four separate PHP processes ran in ABBA
+order, with 100 warmup and 900 retained samples each. Baseline medians were
+0.7980 / 0.7964 ms and candidate medians 0.5111 / 0.5111 ms: approximately
+0.286 ms (36%) less validation work. This is not a 36% whole-request speedup.
+Negative tests preserve nested forbidden fields, mixed-case names, objects,
+open resources and validation after the key-cache capacity is reached.
+
+Two interleaved HTTP comparisons retained 30 samples per endpoint/variant,
+with OPcache enabled. Results varied by route and run, so no stable overall
+TTFB gain is claimed. File and SQL counts stayed unchanged; the status and
+sidebar API response hashes match the checkpoint. Raw runs are
+`interleaved-173508/` and `interleaved-173755/` in the established Social
+comparison workspace. The second run used a fresh reference export of a
+similarly named directory.
+
+The duplicate scan also found upload-validation boilerplate and owner-specific
+schema factories. Their differing MIME/size policies and ownership boundaries
+are intentional; existing shared image decoding/writing remains in use.
+LegacyNames and compatibility aliases are mappings, not parallel implementations.
+Application::start and direct context boot have different preparation order;
+that is a separate follow-up requiring preservation of injected-context behavior.
+The component interpreter remains a profiling candidate and was not rewritten.
+
+Final `composer preflight` passed all 89 groups, including 5,392 API checks,
+signed module lifecycle, 5.22.2 MySQL upgrade/data preservation/rollback and
+installation rehearsals. Memcached integration and the symlink escape fixture
+were unavailable. Report:
+`.work/tests/runs/20261116-173854-e9bf360ada/report.json`.
+
+Only the four changed runtime files were backed up and synchronized to the
+existing Laragon installation after verifying their original source hashes.
+Apache returned 200 for `/`, `/login`, `/privacy`, `/api/users/authentication`
+and HEAD `/login`; the authentication resource returned `ok=true`. Configuration,
+accounts, uploads and module activation were not changed. Backups and smoke
+results: `.work/performance/ttfb-20261115/core-validation-live-20261116-180137/`.
+The bundling prototypes remain separate; production was not deployed.
+
+Audit/microbenchmark summary:
+`.work/performance/ttfb-20261115/social-comparison/core-validation-audit-report.json`.

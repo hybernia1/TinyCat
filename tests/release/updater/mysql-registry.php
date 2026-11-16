@@ -262,8 +262,8 @@ try {
     try {
         MigrationRegistry::ensure();
     } catch (RuntimeException $exception) {
-        if (str_contains($exception->getMessage(), 'Update TinyCat to 1.0.14')) {
-            echo "PASS MySQL outdated migration registry rejected by 2.x baseline.\n";
+        if (str_contains($exception->getMessage(), 'A completed TinyCat 6.0.4 installation is required.')) {
+            echo "PASS MySQL outdated migration registry rejected by 6.0.4 baseline.\n";
             return;
         }
         throw $exception;

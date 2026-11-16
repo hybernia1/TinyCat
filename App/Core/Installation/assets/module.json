@@ -7,11 +7,7 @@
       "App/Core/Installation/assets/index.js"
     ],
     "components": [],
-    "styles": [
-      "App/Core/Installation/assets/styles/install-steps.css",
-      "App/Core/Installation/assets/styles/install-choices.css",
-      "App/Core/Installation/assets/styles/install-steps-desktop.css"
-    ],
+    "styles": [],
     "translations": [
       "common.request_failed"
     ],

@@ -73,9 +73,13 @@ try {
     }
 
     $unsupportedOutput = [];
-    exec($command . ' --minimum-version=5.15.0 2>&1', $unsupportedOutput, $unsupportedExit);
+    exec($command . ' --minimum-version=6.0.3 2>&1', $unsupportedOutput, $unsupportedExit);
     if ($unsupportedExit === 0 || !str_contains(implode(' ', $unsupportedOutput), 'Minimum update version must be between')) {
         throw new RuntimeException('Package builder must reject unsupported update baselines.');
+    }
+    exec($command . ' --legacy-upgrade 2>&1', $legacyOutput, $legacyExit);
+    if ($legacyExit === 0 || !str_contains(implode(' ', $legacyOutput), 'Legacy upgrades are no longer supported')) {
+        throw new RuntimeException('Package builder must reject the retired compatibility transport.');
     }
 
     $freshInstall = in_array('--fresh-install', $argv, true);
@@ -136,9 +140,14 @@ try {
     }
     $manifestJson = (string) file_get_contents($manifestPath);
     $manifest = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
-    $expectedMinimum = \TinyCat\Core\Modules\Distribution::DOMAIN_RUNTIME;
+    $expectedMinimum = \TinyCat\Support\Version::MINIMUM_UPDATE;
     if (($manifest['minimum_version'] ?? null) !== $expectedMinimum) {
         throw new RuntimeException('Package builder must default to the supported update baseline.');
+    }
+    foreach (array_keys($manifest['files']) as $path) {
+        if (str_starts_with($path, 'migrations/') || in_array($path, ['App/Core/Updates/LegacyUpdate.php', 'App/Core/Modules/ProvidesLegacyUpgrade.php', 'App/Support/Cache.php'], true)) {
+            throw new RuntimeException('Retired pre-6.0.4 migration transport must not be packaged: ' . $path);
+        }
     }
     $signature = base64_decode(trim((string) file_get_contents($signaturePath)), true);
 
