@@ -53,6 +53,7 @@
     "image_remove": "Afbeelding verwijderen"
   },
   "install": {
+    "purpose_migrations": "Migratiegeschiedenis, volgorde en controlesommen.",
     "language_label": "Nederlands",
     "title": "Installeer TinyCat CMS",
     "step_language": "Taal",

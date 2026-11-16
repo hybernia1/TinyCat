@@ -8,36 +8,13 @@ use RuntimeException;
 
 class MigrationRegistry
 {
-    private const array REQUIRED_COLUMNS = ['migration', 'version', 'checksum', 'applied_at'];
-    private const string OUTDATED_SCHEMA_MESSAGE =
-        'The migration registry is invalid. A completed TinyCat 6.0.4 installation is required.';
-
     private function __construct()
     {
     }
 
     public static function ensure(): void
     {
-        $driver = \TinyCat\Database\Connection::driver();
-        $suffix = $driver === 'mysql'
-            ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
-            : '';
-
-        if (!in_array($driver, ['mysql', 'sqlite'], true)) {
-            throw new RuntimeException('The migration registry requires MySQL, MariaDB or SQLite.');
-        }
-
-        \TinyCat\Database\Connection::exec(
-            'CREATE TABLE IF NOT EXISTS schema_migrations (
-                migration VARCHAR(190) NOT NULL,
-                version VARCHAR(32) NOT NULL,
-                checksum CHAR(64) NOT NULL,
-                applied_at DATETIME NOT NULL,
-                PRIMARY KEY (migration)
-            )' . $suffix
-        );
-
-        self::assertCurrentSchema($driver);
+        \TinyCat\Database\Migrations::ensure(\TinyCat\Database\Connection::get());
     }
 
     /**
@@ -45,12 +22,8 @@ class MigrationRegistry
      */
     public static function history(?string $prefix = null): array
     {
-        self::ensure();
-        $rows = \TinyCat\Database\Connection::all(
-            'SELECT migration, version, checksum, applied_at
-             FROM schema_migrations
-             ORDER BY applied_at DESC, migration DESC'
-        );
+        $rows = array_map(static fn (array $row): array => ['migration' => $row['migration'], 'version' => $row['release_version'], 'checksum' => $row['checksum'], 'applied_at' => $row['applied_at']], \TinyCat\Database\Migrations::history(\TinyCat\Database\Connection::get(), 'global', 'tinycat'));
+        usort($rows, static fn (array $left, array $right): int => [$right['applied_at'], $right['migration']] <=> [$left['applied_at'], $left['migration']]);
 
         if ($prefix === null || $prefix === '') {
             return $rows;
@@ -64,23 +37,14 @@ class MigrationRegistry
 
     public static function checksum(string $path): string
     {
-        if (!is_file($path)) {
-            throw new RuntimeException('Migration file was not found: ' . $path);
-        }
-
-        $content = file_get_contents($path);
-        if ($content === false) {
-            throw new RuntimeException('Migration file could not be read: ' . $path);
-        }
-
-        return hash('sha256', str_replace(["\r\n", "\r"], "\n", $content));
+        return \TinyCat\Database\Migrations::checksum($path);
     }
 
     public static function applied(string $migration, string $checksum): bool
     {
         self::assertMigration($migration, $checksum);
-        self::ensure();
-        $existing = \TinyCat\Database\Connection::one('SELECT checksum FROM schema_migrations WHERE migration = ? LIMIT 1', [$migration]);
+        $existing = null;
+        foreach (\TinyCat\Database\Migrations::history(\TinyCat\Database\Connection::get(), 'global', 'tinycat') as $row) { if ($row['migration'] === $migration) { $existing = $row; break; } }
 
         if ($existing === null) {
             return false;
@@ -108,21 +72,7 @@ class MigrationRegistry
             self::assertMigration((string) $migration, (string) $checksum);
         }
 
-        $driver = \TinyCat\Database\Connection::driver();
-
-        if (!in_array($driver, ['mysql', 'sqlite'], true)) {
-            throw new RuntimeException('The migration registry requires MySQL, MariaDB or SQLite.');
-        }
-
-        $exists = $driver === 'mysql'
-            ? \TinyCat\Database\Connection::one("SHOW TABLES LIKE 'schema_migrations'") !== null
-            : \TinyCat\Database\Connection::one("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'schema_migrations' LIMIT 1") !== null;
-
-        if (!$exists) {
-            return true;
-        }
-
-        $applied = array_column(\TinyCat\Database\Connection::all('SELECT migration, checksum FROM schema_migrations'), 'checksum', 'migration');
+        $applied = array_column(\TinyCat\Database\Migrations::history(\TinyCat\Database\Connection::get(), 'global', 'tinycat'), 'checksum', 'migration');
 
         foreach ($migrations as $migration => $checksum) {
             if (!isset($applied[$migration]) || !hash_equals((string) $applied[$migration], (string) $checksum)) {
@@ -149,6 +99,7 @@ class MigrationRegistry
         if (!hash_equals($checksum, self::checksum($path))) {
             throw new RuntimeException('Migration file checksum mismatch: ' . $migration);
         }
+        self::ensure();
         if (self::applied($migration, $checksum)) {
             return false;
         }
@@ -159,65 +110,9 @@ class MigrationRegistry
         }
 
         $callback(\TinyCat\Database\Connection::get());
-        \TinyCat\Database\Connection::insert('schema_migrations', [
-            'migration' => $migration,
-            'version' => $version,
-            'checksum' => $checksum,
-            'applied_at' => \TinyCat\Support\Dates::dateDb(),
-        ]);
+        \TinyCat\Database\Migrations::record(\TinyCat\Database\Connection::get(), 'global', 'tinycat', $migration, null, $version, $checksum);
 
         return true;
-    }
-
-    private static function assertCurrentSchema(string $driver): void
-    {
-        if ($driver === 'mysql') {
-            $columns = array_column(\TinyCat\Database\Connection::all('SHOW COLUMNS FROM schema_migrations'), null, 'Field');
-            $primary = [];
-
-            foreach ($columns as $name => $column) {
-                if (strtoupper((string) ($column['Key'] ?? '')) === 'PRI') {
-                    $primary[] = (string) $name;
-                }
-            }
-
-            self::assertRequiredColumns($columns, 'Null', $primary);
-            return;
-        }
-
-        $columns = array_column(\TinyCat\Database\Connection::all('PRAGMA table_info(schema_migrations)'), null, 'name');
-        $primary = [];
-
-        foreach ($columns as $name => $column) {
-            $position = (int) ($column['pk'] ?? 0);
-            if ($position > 0) {
-                $primary[$position] = (string) $name;
-            }
-        }
-
-        ksort($primary);
-        self::assertRequiredColumns($columns, 'notnull', array_values($primary));
-    }
-
-    /**
-     * @param array<mixed> $columns
-     * @param array<mixed> $primary
-     */
-    private static function assertRequiredColumns(array $columns, string $nullableKey, array $primary): void
-    {
-        $current = $primary === ['migration'];
-
-        foreach (self::REQUIRED_COLUMNS as $column) {
-            $current = $current
-                && isset($columns[$column])
-                && ($nullableKey === 'Null'
-                    ? strtoupper((string) ($columns[$column][$nullableKey] ?? 'YES')) === 'NO'
-                    : (int) ($columns[$column][$nullableKey] ?? 0) === 1);
-        }
-
-        if (!$current) {
-            throw new RuntimeException(self::OUTDATED_SCHEMA_MESSAGE);
-        }
     }
 
     private static function assertMigration(string $migration, string $checksum): void

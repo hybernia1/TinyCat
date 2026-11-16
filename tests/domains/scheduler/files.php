@@ -100,6 +100,11 @@ $assert($database->prepared - $queriesBefore === 3, 'Task listing uses count, pa
 $assert(count($model['items']) === 3 && $model['pagination']['total'] === 4, 'The normalized list includes registered tasks and durable run history.');
 $html = \TinyCat\Support\Components::render('scheduler/list', $model);
 $assert(str_contains($html, 'data-ajax-target="#scheduler-list"') && str_contains($html, '/api/scheduler/tasks/cleanup/runs'), 'The shared server component exposes run actions and the standard AJAX target.');
+$extended = $model;
+$extended['items'][] = ['name' => 'article_feeds', 'options' => ['source_limit' => 20], 'latest' => null, 'run_url' => '/api/scheduler/tasks/article_feeds/runs'];
+$extended['runs'][0]['task'] = 'future.task';
+$extendedHtml = \TinyCat\Support\Components::render('scheduler/list', $extended);
+$assert(str_contains($extendedHtml, 'article_feeds') && str_contains($extendedHtml, 'future.task'), 'Task cards and historical runs render identifiers for additional module tasks without requiring a core icon or label mapping.');
 $_GET = ['task' => 'cleanup', 'status' => 'failed'];
 \TinyCat\Http\Request::reset();
 $filtered = \TinyCat\Core\Tasks\Administration::payload();
@@ -274,5 +279,32 @@ foreach (['all', str_repeat('a', 41)] as $invalidTask) {
     catch (InvalidArgumentException) { $rejected = true; }
     $assert($rejected, 'Registration rejects reserved and oversized task IDs.');
 }
+
+$originalRegistrations = \TinyCat\Core\Modules\Registrations::current();
+$callbackCalls = 0;
+$never = static function () use (&$callbackCalls): array { $callbackCalls++; throw new RuntimeException('Runtime callback evaluated while building presentation.'); };
+$neverHealth = static function () use (&$callbackCalls): ?int { $callbackCalls++; throw new RuntimeException('Health callback evaluated while building presentation.'); };
+$custom = new \TinyCat\Core\Modules\ScheduledTask('fixture.import', $never, ['batch' => 7], ['icon' => 'rss', 'title' => 'cron.task', 'schedule' => 'health.schedule_short'], normalize: $never, healthAge: $neverHealth, detail: $never, optionLabels: ['batch' => 'cron.options.bot_limit']);
+$lookups = \TinyCat\Core\Tasks\ServiceProvider::contributions()->componentLookups;
+try {
+    $bundle = new \TinyCat\Core\Modules\Contributions(tasks: [$custom], componentLookups: $lookups);
+    $registrations = new \TinyCat\Core\Modules\Registries(['fixture.owner' => $bundle]);
+    $assert($callbackCalls === 0 && $registrations->owner('component-lookup', 'scheduler.tasks') === 'fixture.owner', 'Task presentation catalogs register lazily with explicit ownership.');
+    \TinyCat\Core\Modules\Registrations::configure($registrations);
+    $presentationQueries = $database->prepared;
+    $presentation = \TinyCat\Core\Tasks\Presentation::tasks();
+    $assert(array_keys($presentation) === ['fixture.import'] && $presentation['fixture.import']['icon'] === 'rss' && $presentation['fixture.import']['title'] === ['t' => 'cron.task'], 'Presentation follows an arbitrary registered task instead of a fixed task list.');
+    $assert(\TinyCat\Core\Tasks\Presentation::options()['fixture.import:batch']['label'] === ['t' => 'cron.options.bot_limit'], 'Parameter labels are scoped to the task that registered them.');
+    $customHtml = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-card', ['task' => ['name' => 'fixture.import', 'options' => ['batch' => 7], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
+    $assert(str_contains($customHtml, '#rss') && str_contains($customHtml, \TinyCat\Support\Localization::t('cron.task')), 'Initial HTML uses the registered icon and translated title.');
+    $clientDefinitions = \TinyCat\Support\ClientAssets::withBuildCache(static fn (): array => \TinyCat\Support\ClientAssets::definitions('/admin/cron/list'));
+    $encoded = json_encode($clientDefinitions, JSON_THROW_ON_ERROR);
+    $assert(str_contains($encoded, 'fixture.import') && !str_contains($encoded, '"catalog":"scheduler.tasks"'), 'Client components receive the resolved registration data rather than a second lookup mechanism.');
+    $assert($callbackCalls === 0 && $database->prepared === $presentationQueries, 'Building task presentation performs no SQL and invokes no runner, normalizer or detail callback.');
+    \TinyCat\Core\Modules\Registrations::configure(new \TinyCat\Core\Modules\Registries(['fixture.owner' => new \TinyCat\Core\Modules\Contributions(componentLookups: $lookups)]));
+    $assert(\TinyCat\Core\Tasks\Presentation::tasks() === [], 'Removing a task registration removes its presentation metadata.');
+    $historical = \TinyCat\Support\Components::withFreshTemplates(static fn (): string => \TinyCat\Support\Components::render('scheduler/task-card', ['task' => ['name' => 'fixture.import', 'options' => [], 'latest' => null, 'run_url' => '/api/scheduler/tasks/fixture.import/runs']]));
+    $assert(str_contains($historical, '#clock') && str_contains($historical, 'fixture.import'), 'Unknown historical tasks retain a safe generic icon and literal identifier.');
+} finally { \TinyCat\Core\Modules\Registrations::configure($originalRegistrations); }
 
 echo "PASS scheduled cache and preview file cleanup ({$checks} checks)\n";

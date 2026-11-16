@@ -53,6 +53,7 @@
     "image_remove": "Resmi kaldır"
   },
   "install": {
+    "purpose_migrations": "Geçiş geçmişi, sıralama ve sağlama toplamları.",
     "language_label": "Türkçe",
     "title": "TinyCat CMS'yi yükleyin",
     "step_language": "Dil",

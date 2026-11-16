@@ -137,7 +137,7 @@ final class Queries
 
         $users = [];
 
-        foreach (\TinyCat\Database\Queries::db_select(
+        foreach (\TinyCat\Database\Query::select(
             'SELECT u.id, u.username, u.username AS name, u.avatar_exists, u.avatar_appearance, u.updated_at, u.bio
                 FROM users u'
         )

@@ -244,6 +244,8 @@ PHP;
         throw new RuntimeException('Baseline installer failed: ' . implode(' ', $installOutput));
     }
     $assert(true, 'Supported baseline installer prepares the representative database.');
+    $historySeed = $database->prepare('INSERT INTO schema_migrations (migration, version, checksum, applied_at) VALUES (?, ?, ?, ?)');
+    $historySeed->execute(['fixture.baseline', $baselineVersion, str_repeat('a', 64), '2026-01-02 03:04:05']);
     if (isset($options['snapshot'])) {
         require_once $root . '/App/Core/Database/Snapshots.php';
         \TinyCat\Database\Snapshots::restore($database, (string) $options['snapshot']);
@@ -254,6 +256,8 @@ PHP;
     }
 
     $beforeDatabase = $databaseFingerprint($database);
+    $beforeSchemaHistory = $database->query('SELECT module_id, migration, version, checksum FROM module_migrations ORDER BY module_id, version')->fetchAll(PDO::FETCH_ASSOC);
+    $beforeGlobalHistory = $database->query('SELECT migration, version, checksum, applied_at FROM schema_migrations ORDER BY migration')->fetchAll(PDO::FETCH_ASSOC);
     $appliedBefore = $database->query('SELECT migration FROM schema_migrations')->fetchAll(PDO::FETCH_COLUMN);
     $expectedPending = array_values(array_filter(
         array_map(static fn (string $path): string => pathinfo($path, PATHINFO_FILENAME), (array) ($manifest['migrations'] ?? [])),
@@ -298,6 +302,7 @@ require __ROOT__ . '/App/bootstrap.php';
 if (__CACHED_AUTOLOAD__ && (!function_exists('opcache_is_script_cached') || !opcache_is_script_cached((string) realpath(__ROOT__ . '/App/autoload.php')))) {
     throw new RuntimeException('The cached-autoload scenario requires active OPcache and a cached baseline autoloader.');
 }
+if (!TinyCat\Database\Schema::app_db_ready()) { throw new RuntimeException('Baseline schema must be ready before the web update.'); }
 $check = TinyCat\Updates\Manager::check(true);
 if (empty($check['available']) || empty($check['compatible'])) { throw new RuntimeException('The published updater does not offer the stable update.'); }
 $result = TinyCat\Updates\Manager::installLatest();
@@ -317,6 +322,15 @@ PHP;
     if ($updateExit !== 0 || !is_array($update)) {
         throw new RuntimeException('Signed production update failed: ' . implode(' ', $updateOutput));
     }
+    $journalTables = $database->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
+    $assert(in_array('migrations', $journalTables, true) && !in_array('module_migrations', $journalTables, true) && !in_array('schema_migrations', $journalTables, true), 'The running 6.0.4 updater finishes with one unified migration journal.');
+    $query = $database->prepare("SELECT sequence, checksum, applied_at FROM migrations WHERE kind = 'schema' AND stream = ? AND migration = ?");
+    foreach ($beforeSchemaHistory as $row) {
+        $query->execute([$row['module_id'], $row['migration']]); $stored = $query->fetch(PDO::FETCH_ASSOC);
+        $assert(is_array($stored) && (int) $stored['sequence'] === (int) $row['version'] && $stored['checksum'] === $row['checksum'] && $stored['applied_at'] === null, 'Published schema history survives conversion: ' . $row['migration']);
+    }
+    $convertedGlobal = $database->query("SELECT migration, release_version AS version, checksum, applied_at FROM migrations WHERE kind = 'global' AND stream = 'tinycat' ORDER BY migration")->fetchAll(PDO::FETCH_ASSOC);
+    $assert($convertedGlobal === $beforeGlobalHistory, 'Global migration versions, checksums and timestamps survive conversion.');
     $assert(($update['pending_migrations'] ?? null) === ($expectedPending !== [] || $modulePending), 'Pending migrations match the baseline registry.');
     $assert(($update['applied_migrations'] ?? null) === $expectedPending, 'Only migrations absent from the baseline run.');
     foreach (['users'=>'users','content'=>'social_posts','content_comments'=>'social_comments','content_likes'=>'social_post_likes','comment_likes'=>'social_comment_likes','user_followers'=>'user_followers','notifications'=>'notifications','content_tags'=>'social_post_tags','terms'=>'social_terms','content_links'=>'social_post_links'] as $old => $table) {
@@ -340,7 +354,7 @@ PHP;
     }
 
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($version, true) . " || !class_exists('TinyCat\\\\Bots\\\\Importer') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
+        . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($version, true) . " || !class_exists('TinyCat\\\\Social\\\\Automation\\\\Importer') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
     $newBootRunner .= "; if (!TinyCat\\Database\\Schema::app_db_ready() || (TinyCat\\Core\\Modules\\Distribution::read(" . var_export($installRoot, true) . ")[\"format\"] ?? null) !== 3) exit(3);";
     $newBootRunner .= "; if (TinyCat\\Support\\Languages::language_packages() === []) exit(4);";
     $newBootRunner = str_replace('; if (TinyCat', '; echo json_encode(["status" => TinyCat\\Database\\Schema::app_db_status(), "activation" => TinyCat\\Core\\Modules\\Deployment::read(' . var_export($installRoot, true) . '), "states" => TinyCat\\Database\\Connection::all("SELECT * FROM module_installations")]); if (TinyCat', $newBootRunner);

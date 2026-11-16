@@ -14,7 +14,7 @@ final class Comments
 
     public static function status_comments_query(string $kind = 'post'): \TinyCat\Database\Query
     {
-        return \TinyCat\Database\Queries::db_select(
+        return \TinyCat\Database\Query::select(
             'SELECT cc.id,
                     cc.content_id,
                     cc.parent_id,
@@ -96,7 +96,7 @@ final class Comments
             return null;
         }
 
-        return \TinyCat\Database\Queries::db_select('SELECT * FROM social_comments')
+        return \TinyCat\Database\Query::select('SELECT * FROM social_comments')
             ->where('id = ?', $id)
             ->limit(1)
             ->one();
@@ -208,7 +208,7 @@ final class Comments
             $cache[$userId][$commentId] = false;
         }
 
-        foreach (\TinyCat\Database\Queries::db_select('SELECT comment_id FROM social_comment_likes')
+        foreach (\TinyCat\Database\Query::select('SELECT comment_id FROM social_comment_likes')
             ->where('user_id = ?', $userId)
             ->whereIn('comment_id', $missing)
             ->all() as $row) {
@@ -268,7 +268,7 @@ final class Comments
         }
 
         \TinyCat\Database\Transactions::run(static function () use ($commentId): void {
-            foreach (\TinyCat\Database\Queries::db_select('SELECT id FROM social_comments')->where('parent_id = ?', $commentId)->all() as $child) {
+            foreach (\TinyCat\Database\Query::select('SELECT id FROM social_comments')->where('parent_id = ?', $commentId)->all() as $child) {
                 $childId = (int) ($child['id'] ?? 0);
                 \TinyCat\Database\Connection::delete('social_comment_likes', ['comment_id' => $childId]);
                 Interactions::removedComment($childId);

@@ -169,7 +169,7 @@ try {
     $expected = [];
     foreach ($legacy->providers(TinyCat\Core\Modules\StorageModule::class) as $class) { $expected = [...$expected, ...$class::tables()]; }
     foreach ($legacy->schemas() as $schema) { $expected = [...$expected, ...$schema->tables]; }
-    $expected = [...array_values(array_unique($expected)), 'module_migrations', 'module_installations'];
+    $expected = [...array_values(array_unique($expected)), 'migrations', 'module_installations'];
     $expected = array_values(array_unique($expected));
     $assert($legacy->register(new TinyCat\Http\Api()) === $expected, 'All current table declarations are preserved');
 

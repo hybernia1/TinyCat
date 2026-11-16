@@ -111,7 +111,7 @@ try {
     TinyCat\Database\Connection::delete('users', ['id' => 1]);
     $assert((int) TinyCat\Database\Connection::value('SELECT COUNT(*) FROM blog_articles') === 0, 'MySQL account deletion cascades through Publishing to Blog');
     foreach (['blog_source_articles', 'blog_feed_history', 'blog_sources', 'blog_comment_likes', 'blog_comments', 'blog_article_likes', 'blog_article_links', 'blog_links', 'blog_article_tags', 'blog_terms', 'blog_article_images', 'blog_article_redirects', 'blog_articles'] as $table) { $pdo->exec('DROP TABLE ' . $table); }
-    $pdo->exec("DELETE FROM module_migrations WHERE module_id = 'tinycat.blog'");
+    $pdo->exec("DELETE FROM migrations WHERE stream = 'tinycat.blog'");
     $pdo->exec("DELETE FROM module_installations WHERE module_id = 'tinycat.blog'");
     $schema = TinyCat\Blog\Module::schema();
     $interrupted = new TinyCat\Core\Modules\ModuleSchema($schema->version, $schema->tables, static function (PDO $pdo): void { throw new RuntimeException('Interrupted before DDL'); }, $schema->migrations);

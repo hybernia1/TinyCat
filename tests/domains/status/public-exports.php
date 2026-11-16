@@ -5,7 +5,7 @@ define('TINYCAT', true);
 require_once __DIR__ . '/../../../App/autoload.php';
 
 use TinyCat\Database\Connection;
-use TinyCat\Social\Presentation\Sitemap;
+use TinyCat\Core\Discovery\Sitemap;
 use TinyCat\Social\Posts\Export;
 use TinyCat\Support\Config;
 use TinyCat\Support\Xml;

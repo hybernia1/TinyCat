@@ -77,7 +77,7 @@ $test('managed update paths reject protected and traversal targets', static func
 
 $test('manifest rejects case collisions and write-delete overlap', static function () use ($invoke, $expectFailure): void {
     $base = [
-        'version' => '1.0.5',
+        'release_version' => '1.0.5',
         'minimum_version' => '1.0.4',
         'minimum_php' => '8.4.0',
         'package' => 'tinycat-1.0.5.zip',
@@ -205,9 +205,10 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $expect(\TinyCat\Core\Updates\MigrationRegistry::hasPending(['test_001' => $checksum]));
 
         \TinyCat\Core\Updates\MigrationRegistry::ensure();
-        \TinyCat\Database\Connection::insert('schema_migrations', [
+        \TinyCat\Database\Connection::insert('migrations', [
+            'kind' => 'global', 'stream' => 'tinycat',
             'migration' => 'test_001',
-            'version' => '1.0.5',
+            'release_version' => '1.0.5',
             'checksum' => $checksum,
             'applied_at' => \TinyCat\Support\Dates::dateDb(),
         ]);
@@ -221,13 +222,14 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
         $database->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
         \TinyCat\Core\Updates\MigrationRegistry::ensure();
-        \TinyCat\Database\Connection::insert('schema_migrations', [
+        \TinyCat\Database\Connection::insert('migrations', [
+            'kind' => 'global', 'stream' => 'tinycat',
             'migration' => 'test_001',
-            'version' => '1.0.5',
+            'release_version' => '1.0.5',
             'checksum' => str_repeat('a', 64),
             'applied_at' => \TinyCat\Support\Dates::dateDb(),
         ]);
-        $expect((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM schema_migrations') === 1);
+        $expect((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM migrations') === 1);
     });
 
     $test('outdated migration registry is rejected by the major baseline', static function () use ($expectFailure): void {

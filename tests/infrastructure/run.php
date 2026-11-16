@@ -94,7 +94,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     Connection::exec('CREATE TABLE records (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL)');
     $id = Connection::insert('records', ['name' => 'first']);
     $assert(\TinyCat\Database\Connection::find('records', ['id' => $id])['name'] === 'first', 'Legacy reads observe module writes.');
-    $assert((new Query('SELECT name FROM records'))->whereIn('id', [$id])->value() === 'first', 'The namespaced query builder executes against the shared connection.');
+    $assert(Query::select('SELECT name FROM records')->whereIn('id', [$id])->value() === 'first', 'The namespaced query builder executes against the shared connection.');
     $assert(\TinyCat\Database\Transactions::run(static function (): int {
         Connection::insert('records', ['name' => 'outer']);
         Transactions::run(static fn (): string => Connection::insert('records', ['name' => 'inner']));

@@ -19,7 +19,7 @@ final class FeedSources
                 $options['source_limit'] = max(1, min(100, (int) $options['source_limit']));
                 if (isset($options['source_id']) && $options['source_id'] < 1) { throw new \InvalidArgumentException('Invalid feed source ID.'); }
                 return $options;
-            }, batchOption: 'source_limit');
+            }, batchOption: 'source_limit', optionLabels: ['source_limit' => 'cron.options.bot_limit', 'source_id' => 'cron.options.source_id']);
     }
 
     /** @param array<string, mixed> $context

@@ -101,7 +101,7 @@ final readonly class Loader
             $owner = $schemaOwners[$id] ?? $id;
             foreach ($schema->tables as $table) { if (isset($owners[$table]) && $owners[$table] !== $owner) { throw new \InvalidArgumentException('Duplicate table owner: ' . $table); } $owners[$table] = $owner; }
         }
-        if ($schemas !== []) { $owners['module_installations'] = $owners['module_migrations'] = 'tinycat.core'; }
+        if ($schemas !== []) { $owners['module_installations'] = $owners['migrations'] = 'tinycat.core'; }
         Providers::routes($this->catalog, $api);
         return array_keys($owners);
     }

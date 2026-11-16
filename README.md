@@ -10,7 +10,7 @@ in the platform assembly, with a shared identity and [module lifecycle](docs/ope
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **6.0.4**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`. New update packages support completed TinyCat 6.0.4 installations and newer. Older installations must first reach 6.0.4 using its published signed release. See the [update procedure](docs/operations/updates.md#upgrading-to-604).
+Current release: **6.0.5**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`. New update packages support completed TinyCat 6.0.4 installations and newer. Older installations must first reach 6.0.4 using its published signed release. See the [update procedure](docs/operations/updates.md#upgrading-to-604).
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 
@@ -119,7 +119,7 @@ Administrators can check and install signed stable releases under **Admin → Up
 
 Before applying files, TinyCat enables maintenance mode and creates a rollback snapshot below `storage/updates/backups/`. It contains only application files that will change or be removed; a database backup is created only when the release has migrations that still need to be applied. Updates never overwrite `config.php`, `storage/`, or `uploads/`. The web-server user needs write access to managed application files while an update is installed; deployments that keep source code read-only can continue to deploy release assets manually.
 
-Database changes are versioned PHP migrations recorded in `schema_migrations`. Fresh installations always receive the current schema directly; migrations exist only to move already running installations forward. See [`docs/operations/updates.md`](docs/operations/updates.md) for package creation, signing, publishing, recovery, and migration rules.
+Database changes are versioned PHP migrations recorded in the shared `migrations` journal. Its `kind` and `stream` distinguish global release history from independently owned schema histories. Fresh installations receive the current schema directly and retain the published migration identities and checksums. See [`docs/operations/updates.md`](docs/operations/updates.md) for package creation, signing, publishing, recovery, and migration rules.
 
 ## Bots
 

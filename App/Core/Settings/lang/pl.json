@@ -53,6 +53,7 @@
     "image_remove": "Usuń obraz"
   },
   "install": {
+    "purpose_migrations": "Historia migracji, kolejność i sumy kontrolne.",
     "language_label": "Polski",
     "title": "Zainstaluj TinyCat CMS",
     "step_language": "Język",

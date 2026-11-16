@@ -23,7 +23,8 @@ final readonly class Contributions
      * @param list<LocalizedRoute> $localizedRoutes
      * @param list<InformationSection> $information
      * @param list<DashboardWidget> $widgets
-     * @param list<EmbedSource> $embeds */
+     * @param list<EmbedSource> $embeds
+     * @param list<ComponentLookup> $componentLookups */
     public function __construct(
         public array $tasks = [],
         public array $navigation = [],
@@ -46,5 +47,6 @@ final readonly class Contributions
         public array $information = [],
         public array $widgets = [],
         public array $embeds = [],
+        public array $componentLookups = [],
     ) {}
 }

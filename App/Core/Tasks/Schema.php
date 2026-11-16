@@ -14,8 +14,9 @@ final class Schema
 
     public static function schema(?string $root = null): ModuleSchema
     {
-        $file = ($root ?? \TinyCat\Support\Paths::basePath()) . '/App/Core/Tasks/migrations/001-history.php';
-        return new ModuleSchema(1, ['scheduler_runs'], static function (PDO $pdo) use ($file): void { (require $file)($pdo); }, [new SchemaMigration(1, 'tinycat.core.tasks.history', $file)]);
+        $directory = ($root ?? \TinyCat\Support\Paths::basePath()) . '/App/Core/Tasks/migrations';
+        $fresh = $directory . '/fresh-v2.php';
+        return new ModuleSchema(2, ['scheduler_runs'], static function (PDO $pdo) use ($fresh): void { (require $fresh)($pdo); }, [new SchemaMigration(1, 'tinycat.core.tasks.history', $directory . '/001-history.php'), new SchemaMigration(2, 'tinycat.core.migrations.unified', $directory . '/002-journal.php')], new SchemaMigration(2, 'tinycat.core.tasks.fresh-v2', $fresh));
     }
 
     public static function validateLegacyHistory(PDO $pdo): void
@@ -23,9 +24,8 @@ final class Schema
         $state = ModuleSchemas::state($pdo, 'tinycat.scheduler');
         if ($state === null) { return; }
         if ((int) $state['version'] !== 1 || $state['status'] !== 'ready') { throw new \RuntimeException('Recover the legacy Scheduler migration before upgrading core history.'); }
-        $query = $pdo->prepare('SELECT migration, version, checksum FROM module_migrations WHERE module_id = ? ORDER BY version');
-        $query->execute(['tinycat.scheduler']); $rows = $query->fetchAll(PDO::FETCH_ASSOC);
-        if (count($rows) !== 1 || $rows[0]['migration'] !== 'tinycat.scheduler.initial' || (int) $rows[0]['version'] !== 1 || !hash_equals(self::LEGACY_CHECKSUM, $rows[0]['checksum'])) { throw new \RuntimeException('Legacy Scheduler migration integrity mismatch.'); }
+        $rows = \TinyCat\Database\Migrations::history($pdo, 'schema', 'tinycat.scheduler');
+        if (count($rows) !== 1 || $rows[0]['migration'] !== 'tinycat.scheduler.initial' || (int) $rows[0]['sequence'] !== 1 || !hash_equals(self::LEGACY_CHECKSUM, $rows[0]['checksum'])) { throw new \RuntimeException('Legacy Scheduler migration integrity mismatch.'); }
     }
 
     /** Only the known infrastructure table can cross this ownership boundary. */

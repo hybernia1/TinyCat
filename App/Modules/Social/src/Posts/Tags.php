@@ -48,7 +48,7 @@ final class Tags extends \TinyCat\Social\Content\Tags
             $feedIndex = \TinyCat\Database\Connection::driver() === 'mysql'
                 ? ' FORCE INDEX (content_sidebar_index)'
                 : '';
-            $rows = \TinyCat\Database\Queries::db_select(
+            $rows = \TinyCat\Database\Query::select(
                 'SELECT t.id,
                         t.name,
                         COUNT(*) AS posts_count,

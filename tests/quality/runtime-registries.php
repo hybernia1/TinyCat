@@ -44,6 +44,11 @@ $assert($registries->initialMaintenance() === 'update_files', 'The existing init
 $assert($registries->owner('task', 'feeds') === 'tinycat.social' && $registries->owner('maintenance', 'old_password_reset_tokens') === 'tinycat.accounts', 'Tasks and retention have explicit owners');
 $assert($registries->task('feeds')->options === ['bot_limit' => 20], 'Feed defaults remain stable');
 $bundle = new Contributions(tasks: [$registries->task('feeds')]);
+$lookupCalls = 0;
+$lookup = new \TinyCat\Core\Modules\ComponentLookup('fixture.lookup', static function () use (&$lookupCalls): array { $lookupCalls++; return []; });
+$lookupBundle = new Contributions(componentLookups: [$lookup]);
+$reject(static fn () => new Registries(['fixture.one' => $lookupBundle, 'fixture.two' => $lookupBundle]), 'Duplicate component lookup IDs across owners');
+$assert($lookupCalls === 0, 'Component lookup registrations do not evaluate presentation builders');
 $reject(static fn () => new Registries(['fixture.one' => $bundle, 'fixture.two' => $bundle]), 'Duplicate task IDs across owners');
 foreach (['navigation', 'health', 'maintenance', 'localizedRoutes', 'information', 'widgets', 'embeds'] as $kind) {
     $entries = $registries->entries->$kind;

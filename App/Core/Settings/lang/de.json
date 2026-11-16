@@ -53,6 +53,7 @@
     "image_remove": "Bild entfernen"
   },
   "install": {
+    "purpose_migrations": "Migrationsverlauf, Reihenfolge und Prüfsummen.",
     "language_label": "Deutsch",
     "title": "Installieren Sie TinyCat CMS",
     "step_language": "Sprache",

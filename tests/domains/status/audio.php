@@ -10,7 +10,7 @@ use TinyCat\Social\Content\Links;
 use TinyCat\Core\Text\LinkParser;
 use TinyCat\Core\Links\Metadata;
 use TinyCat\Core\Links\Providers;
-use TinyCat\Social\Automation\FeedParser;
+use TinyCat\Core\Feeds\FeedParser;
 
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {

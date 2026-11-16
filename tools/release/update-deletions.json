@@ -1924,6 +1924,16 @@
     "App/Core/Installation/assets/styles/install-choices.css",
     "App/Core/Installation/assets/styles/install-steps-desktop.css",
     "App/Core/Identity/assets/styles/account-security-page.css",
-    "App/Core/Identity/assets/styles/account-security-card.css"
+    "App/Core/Identity/assets/styles/account-security-card.css",
+    "App/Core/Database/Queries.php",
+    "App/Core/Runtime/LegacyNames.php",
+    "App/Core/Identity/LegacyReadModel.php",
+    "App/Core/Tasks/LegacySchema.php",
+    "App/Core/Support/TaskContext.php",
+    "App/Modules/Social/src/Automation/FeedParser.php",
+    "App/Modules/Social/src/Automation/WordPressFeed.php",
+    "App/Modules/Social/src/Presentation/Sitemap.php",
+    "App/Modules/Social/src/Presentation/Identity.php",
+    "App/Modules/Social/src/Posts/LegacyInbox.php"
   ]
 }

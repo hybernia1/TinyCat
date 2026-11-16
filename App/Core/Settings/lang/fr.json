@@ -53,6 +53,7 @@
     "image_remove": "Supprimer l'image"
   },
   "install": {
+    "purpose_migrations": "Historique des migrations, ordre et sommes de contrôle.",
     "language_label": "Français",
     "title": "Installer le système de gestion de contenu TinyCat",
     "step_language": "Langue",

@@ -19,6 +19,11 @@ final class Query
     private ?int $limitValue = null;
     private int $offsetValue = 0;
 
+    public static function select(string $sql): self
+    {
+        return new self($sql);
+    }
+
     /** @param array<string|int, mixed> $params */
     public function __construct(string $sql, array $params = [])
     {

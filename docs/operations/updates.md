@@ -15,12 +15,20 @@ all assemblies. The builder rejects older minimum versions and `--legacy-upgrade
 The 5.x compatibility transport, old autoloader shim and bridge builder have
 been retired. Root historical migrations are no longer shipped in new packages.
 
-Published migration files, IDs and checksums remain immutable. Existing
-`schema_migrations`, `module_installations` and `module_migrations` records
-remain intact; they are integrity and recovery data, not activation switches.
-Module schema histories and fresh-install baselines are still signed and
-verified. File/database backups, maintenance, journaling and rollback remain
-part of the normal updater.
+Published migration files, IDs and checksums remain immutable. The shared
+`migrations` journal replaces `schema_migrations` and `module_migrations`.
+It preserves each original ID, checksum, schema sequence, release version and
+known application time. Unknown historical schema timestamps remain `NULL`.
+`module_installations` retains the separate current state of each schema.
+
+The signed `tinycat.support` schema step prepares the new journal. The package
+lifecycle finalizes the copy after all steps are recorded, including when the
+running 6.0.4 updater still has its original schema writer loaded. Source rows
+are verified before the old tables are dropped. Interrupted copies can resume;
+conflicts stop the operation and retain the source. Read-only history checks
+do not create tables or convert data. Module schema histories and fresh-install
+baselines remain signed and verified. The existing database snapshot and
+rollback restore both the journal and schema state together.
 
 For a new release, use:
 
@@ -36,6 +44,20 @@ uses a synthetic successor in an isolated copy when the source is still 6.0.4.
 
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
+
+## Upgrading to 6.0.5
+
+Use the signed update package from a completed 6.0.4 installation. This release
+reduces startup work, compiles server component catalogs, unifies migration
+journals and derives scheduler presentation from registered tasks. Configuration,
+uploads and runtime storage stay in place. The updater snapshots the database
+before journal conversion and supports restoring the original 6.0.4 installation.
+
+Runtime callers use canonical class names. Schema inspection belongs to
+`TinyCat\Database\Schema`; the `SchemaInspection` adapter remains for
+immutable published migrations and a running 6.0.4 updater that already loaded its
+original schema class. Their source and checksums are unchanged.
+Older installations must first install the published signed 6.0.4 release.
 
 ## Upgrading to 6.0.4
 
@@ -658,7 +680,7 @@ return static function (PDO $database): void {
 ```
 
 Every migration is authenticated by the release manifest and recorded with its
-checksum in `schema_migrations`. A previously applied migration whose checksum
+checksum in the global stream of `migrations`. A previously applied migration whose checksum
 changes is rejected. Never edit a published migration; create a new one.
 The package builder normalizes migration files to LF before hashing and archiving
 them so the checksum stays stable across Windows and Linux release worktrees.

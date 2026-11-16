@@ -11,6 +11,10 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
     public static function contributions(): \TinyCat\Core\Modules\Contributions
     {
         return new \TinyCat\Core\Modules\Contributions(
+            componentLookups: [
+                new \TinyCat\Core\Modules\ComponentLookup('scheduler.tasks', static fn (): array => Presentation::tasks()),
+                new \TinyCat\Core\Modules\ComponentLookup('scheduler.options', static fn (): array => Presentation::options()),
+            ],
             tasks: [Cleanup::scheduledTask()],
             navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.scheduler.admin', static fn (): array => self::adminNavigation(), 50)],
             health: [new \TinyCat\Core\Modules\HealthProbe('scheduler', static fn (): array => HealthCheck::run(), 70)],

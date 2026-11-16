@@ -259,6 +259,8 @@
       "name": "scheduler/list",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [
+        "scheduler/icon",
+        "scheduler/name",
         "scheduler/status",
         "scheduler/task-card",
         "ui/empty-state",
@@ -316,6 +318,8 @@
       "name": "scheduler/run-detail",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [
+        "scheduler/name",
+        "scheduler/option",
         "scheduler/status"
       ],
       "inputs": [
@@ -342,6 +346,9 @@
       "name": "scheduler/task-card",
       "source": "App/Core/Tasks/assets/components.json",
       "dependencies": [
+        "scheduler/icon",
+        "scheduler/name",
+        "scheduler/option",
         "scheduler/status",
         "ui/api-action"
       ],
@@ -355,6 +362,31 @@
         "task.name",
         "task.options",
         "task.run_url"
+      ]
+    },
+    {
+      "name": "scheduler/name",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "name"
+      ]
+    },
+    {
+      "name": "scheduler/icon",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "name"
+      ]
+    },
+    {
+      "name": "scheduler/option",
+      "source": "App/Core/Tasks/assets/components.json",
+      "dependencies": [],
+      "inputs": [
+        "key",
+        "name"
       ]
     },
     {

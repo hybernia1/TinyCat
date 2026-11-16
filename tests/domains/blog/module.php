@@ -105,9 +105,9 @@ $state = ModuleSchemas::state($pdo, 'tinycat.blog');
 Installation::upgrade($pdo); Installation::upgrade($pdo);
 $assert(ModuleSchemas::state($pdo, 'tinycat.blog') === $state && Articles::find($id)['title'] === 'Changed', 'Repeated upgrade verifies history and preserves existing articles');
 try { Installation::install($pdo); $assert(false, 'Fresh installer adopted existing data'); } catch (RuntimeException) { $assert(Articles::find($id) !== null, 'Fresh install refuses an existing database'); }
-$pdo->exec("UPDATE module_migrations SET checksum = 'tampered' WHERE module_id = 'tinycat.blog' AND version = 1");
+$pdo->exec("UPDATE migrations SET checksum = 'tampered' WHERE stream = 'tinycat.blog' AND sequence = 1");
 try { Installation::upgrade($pdo); $assert(false, 'Checksum mismatch accepted'); } catch (RuntimeException) { $assert(true, 'Upgrade rejects modified history'); }
-$pdo->exec("UPDATE module_migrations SET checksum = '" . ModuleSchemas::checksum($workspace . '/App/Modules/Blog/migrations/001-articles.php') . "' WHERE module_id = 'tinycat.blog' AND version = 1");
+$pdo->exec("UPDATE migrations SET checksum = '" . ModuleSchemas::checksum($workspace . '/App/Modules/Blog/migrations/001-articles.php') . "' WHERE stream = 'tinycat.blog' AND sequence = 1");
 Articles::delete($hidden, $admin);
 $assert(Connection::find('blog_articles', ['id' => $hidden]) === null && Connection::find('blog_articles', ['id' => $hidden]) === null, 'Publication deletion cascades article data');
 TinyCat\Core\Modules\Providers::assertDistributable(Installation::modules()->catalog);
@@ -129,13 +129,16 @@ $oldHistory = $workspace . '/App/Core/Tasks/migrations/001-initial.php';
 $oldSchema = new TinyCat\Core\Modules\ModuleSchema(1, ['scheduler_runs'], static function (PDO $db) use ($oldHistory): void { (require $oldHistory)($db); }, [new TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.scheduler.initial', $oldHistory)]);
 ModuleSchemas::install($historyDb, ['tinycat.scheduler' => $oldSchema]);
 $historyDb->exec("INSERT INTO scheduler_runs(id, task, mode, status, started_at, options_json) VALUES (42, 'retained', 'cli', 'completed', '2026-01-01 00:00:00', '{}')");
+$historyDb->exec('CREATE TABLE module_migrations (module_id VARCHAR(190) NOT NULL, migration VARCHAR(190) NOT NULL, version INTEGER NOT NULL, checksum CHAR(64) NOT NULL, PRIMARY KEY(module_id, migration))');
+$historyDb->exec("INSERT INTO module_migrations SELECT stream, migration, sequence, checksum FROM migrations WHERE kind = 'schema' AND stream = 'tinycat.scheduler'");
+(require $sourceRoot . '/migrations/20261112_003_core_task_history.php')($historyDb);
+TinyCat\Database\Migrations::ensure($historyDb);
 $coreHistory = ['tinycat.support' => TinyCat\Core\Tasks\Schema::schema($workspace)];
 ModuleSchemas::synchronize($historyDb, $coreHistory);
 $assert(ModuleSchemas::ready($historyDb, $coreHistory) && (int) $historyDb->query('SELECT id FROM scheduler_runs')->fetchColumn() === 42, 'Core adoption preserves existing execution IDs and published Scheduler history');
-$historyDb->exec("UPDATE module_migrations SET checksum = 'tampered' WHERE module_id = 'tinycat.scheduler'");
+$historyDb->exec("UPDATE migrations SET checksum = 'tampered' WHERE stream = 'tinycat.scheduler'");
 try { ModuleSchemas::pending($historyDb, $coreHistory); $assert(false, 'Corrupt legacy migration accepted'); } catch (RuntimeException) { $assert(true, 'Core deployment rejects corrupt legacy history after adapter removal'); }
-$historyDb->exec("UPDATE module_migrations SET checksum = '" . TinyCat\Core\Tasks\Schema::LEGACY_CHECKSUM . "' WHERE module_id = 'tinycat.scheduler'");
-(require $sourceRoot . '/migrations/20261112_003_core_task_history.php')($historyDb);
+$historyDb->exec("UPDATE migrations SET checksum = '" . TinyCat\Core\Tasks\Schema::LEGACY_CHECKSUM . "' WHERE stream = 'tinycat.scheduler'");
 $assert((int) $historyDb->query('SELECT id FROM scheduler_runs')->fetchColumn() === 42 && ModuleSchemas::ready($historyDb, $coreHistory), 'Legacy global upgrade and standalone synchronization share the same immutable history baseline');
 $compile = require $workspace . '/tools/assets/compile-assets.php'; $files = $compile();
 $assert(count(TinyCat\Support\TranslationSources::packages()) === 12, 'Blog selection builds all twelve locales');

@@ -53,7 +53,7 @@ $cases = [
     'search-absent' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('zzunmatchedprobe', 50),
     'search-links' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('https', 50),
     'search-literal' => static fn () => \TinyCat\Social\Search\Queries::public_search_content_rows('10%', 50),
-    'notifications' => static fn () => \TinyCat\Social\Posts\LegacyInbox::items(2, 50),
+    'notifications' => static fn () => \TinyCat\Core\Notifications\Inbox::items(2, 50),
     'admin-users' => static fn () => \TinyCat\Social\Profiles\Actions::tc_admin_users_page(\TinyCat\Social\Profiles\Actions::tc_admin_users_filters()),
     'admin-reports' => static fn () => \TinyCat\Social\Moderation\Reports::tc_admin_moderation_reports_payload(),
 ];

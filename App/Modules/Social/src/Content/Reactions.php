@@ -45,7 +45,7 @@ final class Reactions
             $cache[$userId][$contentId] = false;
         }
 
-        foreach (\TinyCat\Database\Queries::db_select('SELECT content_id FROM social_post_likes')
+        foreach (\TinyCat\Database\Query::select('SELECT content_id FROM social_post_likes')
             ->where('user_id = ?', $userId)
             ->whereIn('content_id', $missing)
             ->all() as $row) {

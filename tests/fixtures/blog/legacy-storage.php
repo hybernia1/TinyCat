@@ -5,7 +5,7 @@ declare(strict_types=1);
 // rather than requiring a second installed application or another test matrix.
 $dropBlog = static function () use ($pdo): void {
     foreach (['blog_source_articles', 'blog_feed_history', 'blog_sources', 'blog_comment_likes', 'blog_comments', 'blog_article_likes', 'blog_article_links', 'blog_links', 'blog_article_tags', 'blog_terms', 'blog_article_images', 'blog_article_redirects', 'blog_articles'] as $table) { $pdo->exec('DROP TABLE ' . $table); }
-    $pdo->exec("DELETE FROM module_migrations WHERE module_id = 'tinycat.blog'");
+    $pdo->exec("DELETE FROM migrations WHERE stream = 'tinycat.blog'");
     $pdo->exec("DELETE FROM module_installations WHERE module_id = 'tinycat.blog'");
 };
 $historical = static function () use ($pdo, $root): void {
@@ -46,11 +46,11 @@ $historical = static function () use ($pdo, $root): void {
 $combined = \TinyCat\Core\Modules\Loader::fromSelection($root, require $root . '/App/available-modules.php');
 \TinyCat\Core\Modules\Resources::configure($combined->catalog);
 $dropBlog(); $historical();
-$oldHistory = $pdo->query("SELECT module_id, version, migration, checksum FROM module_migrations WHERE module_id IN ('tinycat.publishing','tinycat.status','tinycat.blog') ORDER BY module_id, version")->fetchAll(PDO::FETCH_ASSOC);
-$pdo->exec("DELETE FROM module_migrations WHERE module_id IN ('tinycat.accounts','tinycat.security','tinycat.settings','tinycat.notifications')");
+$oldHistory = $pdo->query("SELECT stream AS module_id, sequence AS version, migration, checksum FROM migrations WHERE stream IN ('tinycat.publishing','tinycat.status','tinycat.blog') ORDER BY stream, sequence")->fetchAll(PDO::FETCH_ASSOC);
+$pdo->exec("DELETE FROM migrations WHERE stream IN ('tinycat.accounts','tinycat.security','tinycat.settings','tinycat.notifications')");
 $pdo->exec("DELETE FROM module_installations WHERE module_id IN ('tinycat.accounts','tinycat.security','tinycat.settings','tinycat.notifications')");
-$pdo->exec('CREATE TABLE schema_migrations(migration VARCHAR(190) PRIMARY KEY, checksum CHAR(64))');
-$pdo->exec("INSERT INTO schema_migrations VALUES('20261113_001_shared_interactions','083cee738cc4821c8e4d84365e2059e3e1f291e4943385def6a3213bd58228c3')");
+$pdo->exec('CREATE TABLE schema_migrations(migration VARCHAR(190) NOT NULL PRIMARY KEY, version VARCHAR(32) NOT NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NOT NULL)');
+$pdo->exec("INSERT INTO schema_migrations VALUES('20261113_001_shared_interactions','6.0.4','083cee738cc4821c8e4d84365e2059e3e1f291e4943385def6a3213bd58228c3','2026-11-01 00:00:00')");
 $referenceType = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? 'BIGINT UNSIGNED' : 'INTEGER';
 $pdo->exec('ALTER TABLE notifications ADD COLUMN content_id ' . $referenceType);
 $pdo->exec('ALTER TABLE notifications ADD COLUMN comment_id ' . $referenceType);
@@ -71,7 +71,7 @@ foreach (['blog_comments' => 2, 'blog_comment_likes' => 1, 'blog_article_likes' 
     $assert((int) $pdo->query('SELECT COUNT(*) FROM ' . $table)->fetchColumn() === $count, 'Conversion preserves owner data: ' . $table);
 }
 foreach ($oldHistory as $record) {
-    $query = $pdo->prepare('SELECT migration, checksum FROM module_migrations WHERE module_id = ? AND version = ?'); $query->execute([$record['module_id'], $record['version']]);
+    $query = $pdo->prepare('SELECT migration, checksum FROM migrations WHERE stream = ? AND sequence = ?'); $query->execute([$record['module_id'], $record['version']]);
     $assert($query->fetch(PDO::FETCH_ASSOC) === ['migration' => $record['migration'], 'checksum' => $record['checksum']], 'Published migration identity and checksum are unchanged');
 }
 \TinyCat\Database\ModuleSchemas::synchronize($pdo, $schemas);
@@ -82,14 +82,14 @@ $assert((int) $pdo->query("SELECT COUNT(*) FROM notifications WHERE notification
 // subsequently install its own tables without replaying obsolete DDL.
 $dropBlog();
 foreach (['bot_source_posts', 'bot_source_runs', 'bot_feed_history', 'bot_sources', 'content_reports', 'user_followers', 'social_comment_likes', 'social_comments', 'social_post_likes', 'social_post_links', 'social_links', 'social_post_tags', 'social_terms', 'social_post_images', 'social_post_redirects', 'social_posts'] as $table) { $pdo->exec('DROP TABLE ' . $table); }
-$pdo->exec("DELETE FROM module_migrations WHERE module_id IN ('tinycat.publishing','tinycat.status','tinycat.users','tinycat.moderation','tinycat.bots')");
+$pdo->exec("DELETE FROM migrations WHERE stream IN ('tinycat.publishing','tinycat.status','tinycat.users','tinycat.moderation','tinycat.bots')");
 $pdo->exec("DELETE FROM module_installations WHERE module_id IN ('tinycat.publishing','tinycat.status','tinycat.users','tinycat.moderation','tinycat.bots')");
 $historical();
 $pdo->exec('DELETE FROM content WHERE id = 101');
 $blogOnly = \TinyCat\Core\Modules\Loader::fromSelection($root, require $root . '/App/Modules/Blog/selection.php');
 \TinyCat\Core\Modules\Resources::configure($blogOnly->catalog);
 \TinyCat\Database\ModuleSchemas::synchronize($pdo, \TinyCat\Core\Modules\Distribution::definitions($blogOnly, false));
-$assert(!\TinyCat\Database\SchemaInspection::exists($pdo, 'content') && !\TinyCat\Database\SchemaInspection::exists($pdo, 'social_posts'), 'Blog-only legacy conversion removes empty shared storage without installing Social');
+$assert(!\TinyCat\Database\Schema::exists($pdo, 'content') && !\TinyCat\Database\Schema::exists($pdo, 'social_posts'), 'Blog-only legacy conversion removes empty shared storage without installing Social');
 $assert(\TinyCat\Database\ModuleSchemas::state($pdo, 'tinycat.publishing')['status'] === 'retired' && \TinyCat\Database\ModuleSchemas::state($pdo, 'tinycat.status')['status'] === 'retired', 'Retired histories remain auditable instead of being deleted');
 \TinyCat\Core\Modules\Resources::configure($combined->catalog);
 \TinyCat\Database\ModuleSchemas::pending($pdo, $schemas);

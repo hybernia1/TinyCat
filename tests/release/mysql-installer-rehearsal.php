@@ -292,12 +292,14 @@ try {
 
     \TinyCat\Core\Settings\Store::setSetting('extensions.states', ['bots' => true], 'json', 'extensions');
     \TinyCat\Core\Settings\Store::setSetting('extensions.installed_versions', ['bots' => '1.4.3'], 'json', 'extensions');
+    \TinyCat\Database\Connection::exec('CREATE TABLE schema_migrations (migration VARCHAR(190) NOT NULL PRIMARY KEY, version VARCHAR(32) NOT NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NOT NULL)');
     \TinyCat\Database\Connection::insert('schema_migrations', ['migration' => 'extension:bots:fixture', 'version' => '1.4.3', 'checksum' => str_repeat('a', 64), 'applied_at' => \TinyCat\Support\Dates::dateDb()]);
     $removeExtensionMetadata = require $migrationRoot . '/migrations/20261025_002_remove_extension_metadata.php';
     $removeExtensionMetadata(\TinyCat\Database\Connection::get());
     $removeExtensionMetadata(\TinyCat\Database\Connection::get());
     $assert((int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM settings WHERE setting_key LIKE 'extensions.%'") === 0, 'Retired extension configuration is removed idempotently.');
     $assert((int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM schema_migrations WHERE migration LIKE 'extension:%'") === 0, 'Retired extension migration metadata is removed.');
+    \TinyCat\Database\Migrations::ensure(\TinyCat\Database\Connection::get());
     $assert((int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_feed_history WHERE bot_user_id = ?', [$botId]) === 2, 'Metadata cleanup preserves built-in bot import history.');
     $assert((string) \TinyCat\Database\Connection::value("SELECT setting_value FROM settings WHERE setting_key = 'i18n.locale'") === 'cs', 'Metadata cleanup preserves application settings.');
     $assert(is_string($configHash) && hash_file('sha256', $configPath) === $configHash, 'Schema rehearsal does not replace application configuration.');

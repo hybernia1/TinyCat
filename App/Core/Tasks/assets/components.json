@@ -295,16 +295,11 @@
                                             },
                                             "children": [
                                               {
-                                                "icon": {
-                                                  "lookup": {
+                                                "component": "scheduler/icon",
+                                                "data": {
+                                                  "name": {
                                                     "get": "run.task"
-                                                  },
-                                                  "cases": {
-                                                    "feeds": "rss",
-                                                    "cleanup": "database",
-                                                    "site-health": "shield"
-                                                  },
-                                                  "default": ""
+                                                  }
                                                 }
                                               },
                                               {
@@ -317,42 +312,16 @@
                                                     "tag": "span",
                                                     "children": [
                                                       {
-                                                        "lookup": {
-                                                          "get": "run.task"
-                                                        },
-                                                        "cases": {
-                                                          "feeds": {
-                                                            "t": "cron.tasks.feeds"
-                                                          },
-                                                          "cleanup": {
-                                                            "t": "cron.tasks.cleanup"
-                                                          },
-                                                          "site-health": {
-                                                            "t": "health.title"
+                                                        "component": "scheduler/name",
+                                                        "data": {
+                                                          "name": {
+                                                            "get": "run.task"
                                                           }
-                                                        },
-                                                        "default": ""
+                                                        }
                                                       }
                                                     ],
                                                     "attrs": {
-                                                      "class": "table-primary",
-                                                      "title": {
-                                                        "lookup": {
-                                                          "get": "run.task"
-                                                        },
-                                                        "cases": {
-                                                          "feeds": {
-                                                            "t": "cron.tasks.feeds"
-                                                          },
-                                                          "cleanup": {
-                                                            "t": "cron.tasks.cleanup"
-                                                          },
-                                                          "site-health": {
-                                                            "t": "health.title"
-                                                          }
-                                                        },
-                                                        "default": ""
-                                                      }
+                                                      "class": "table-primary"
                                                     }
                                                   }
                                                 ]
@@ -643,18 +612,9 @@
             "options": {
               "get": "task_choices"
             },
-            "cases": {
-              "feeds": {
-                "t": "cron.tasks.feeds"
-              },
-              "cleanup": {
-                "t": "cron.tasks.cleanup"
-              },
-              "site-health": {
-                "t": "health.title"
-              }
-            },
-            "all": true
+            "all": true,
+            "catalog": "scheduler.tasks",
+            "field": "title"
           },
           "value": {
             "get": "filters.task"
@@ -733,21 +693,12 @@
                 },
                 "children": [
                   {
-                    "lookup": {
-                      "get": "item.task"
-                    },
-                    "cases": {
-                      "feeds": {
-                        "t": "cron.tasks.feeds"
-                      },
-                      "cleanup": {
-                        "t": "cron.tasks.cleanup"
-                      },
-                      "site-health": {
-                        "t": "health.title"
+                    "component": "scheduler/name",
+                    "data": {
+                      "name": {
+                        "get": "item.task"
                       }
-                    },
-                    "default": ""
+                    }
                   }
                 ]
               },
@@ -1093,21 +1044,23 @@
                             },
                             "children": [
                               {
-                                "lookup": {
-                                  "get": "_key"
-                                },
-                                "cases": {
-                                  "bot_limit": {
-                                    "t": "cron.options.bot_limit"
+                                "component": "scheduler/option",
+                                "data": {
+                                  "key": {
+                                    "concat": [
+                                      {
+                                        "get": "item.task"
+                                      },
+                                      ":",
+                                      {
+                                        "get": "_key"
+                                      }
+                                    ]
                                   },
-                                  "cleanup_batch": {
-                                    "t": "cron.options.cleanup_batch"
-                                  },
-                                  "source_id": {
-                                    "t": "cron.options.source_id"
+                                  "name": {
+                                    "get": "_key"
                                   }
-                                },
-                                "default": ""
+                                }
                               }
                             ]
                           },
@@ -1292,34 +1245,20 @@
             },
             "children": [
               {
-                "icon": {
-                  "lookup": {
+                "component": "scheduler/icon",
+                "data": {
+                  "name": {
                     "get": "task.name"
-                  },
-                  "cases": {
-                    "feeds": "rss",
-                    "cleanup": "database",
-                    "site-health": "shield"
-                  },
-                  "default": ""
+                  }
                 }
               },
               {
-                "lookup": {
-                  "get": "task.name"
-                },
-                "cases": {
-                  "feeds": {
-                    "t": "cron.tasks.feeds"
-                  },
-                  "cleanup": {
-                    "t": "cron.tasks.cleanup"
-                  },
-                  "site-health": {
-                    "t": "health.title"
+                "component": "scheduler/name",
+                "data": {
+                  "name": {
+                    "get": "task.name"
                   }
-                },
-                "default": ""
+                }
               }
             ]
           }
@@ -1414,7 +1353,7 @@
                   "class": "cluster gap-2 text-muted"
                 },
                 "children": [
-                  "—"
+                  "â€”"
                 ],
                 "when": {
                   "not": {
@@ -1437,18 +1376,9 @@
                     "lookup": {
                       "get": "task.name"
                     },
-                    "cases": {
-                      "feeds": {
-                        "t": "cron.cadence.feeds"
-                      },
-                      "cleanup": {
-                        "t": "cron.cadence.cleanup"
-                      },
-                      "site-health": {
-                        "t": "health.schedule_short"
-                      }
-                    },
-                    "default": ""
+                    "default": "",
+                    "catalog": "scheduler.tasks",
+                    "field": "schedule"
                   }
                 ]
               },
@@ -1465,21 +1395,23 @@
                     },
                     "children": [
                       {
-                        "lookup": {
-                          "get": "_key"
-                        },
-                        "cases": {
-                          "bot_limit": {
-                            "t": "cron.options.bot_limit"
+                        "component": "scheduler/option",
+                        "data": {
+                          "key": {
+                            "concat": [
+                              {
+                                "get": "task.name"
+                              },
+                              ":",
+                              {
+                                "get": "_key"
+                              }
+                            ]
                           },
-                          "cleanup_batch": {
-                            "t": "cron.options.cleanup_batch"
-                          },
-                          "source_id": {
-                            "t": "cron.options.source_id"
+                          "name": {
+                            "get": "_key"
                           }
-                        },
-                        "default": ""
+                        }
                       },
                       ": ",
                       {
@@ -1517,5 +1449,35 @@
         ]
       }
     ]
+  },
+  "scheduler/name": {
+    "lookup": {
+      "get": "name"
+    },
+    "default": {
+      "get": "name"
+    },
+    "catalog": "scheduler.tasks",
+    "field": "title"
+  },
+  "scheduler/icon": {
+    "icon": {
+      "lookup": {
+        "get": "name"
+      },
+      "default": "clock",
+      "catalog": "scheduler.tasks",
+      "field": "icon"
+    }
+  },
+  "scheduler/option": {
+    "lookup": {
+      "get": "key"
+    },
+    "default": {
+      "get": "name"
+    },
+    "catalog": "scheduler.options",
+    "field": "label"
   }
 }

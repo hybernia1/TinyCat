@@ -82,6 +82,7 @@ final class Lifecycle
         $installed = array_values(array_unique([...Upgrade::ids($plan, $state['installed'] ?? $plan['active']), ...$active]));
         $schemas = Distribution::schemas($plan, $stageRoot, $installed, $root);
         if ($schemas !== []) { ModuleSchemas::synchronize(Connection::get(), $schemas); }
+        \TinyCat\Database\Migrations::ensure(Connection::get());
         Deployment::write($root, $plan, $active, $installed, $version);
     }
 

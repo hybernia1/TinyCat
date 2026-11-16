@@ -18,7 +18,7 @@ final readonly class ModuleSchema
     {
         if ($version < 1 || $tables === [] || count($tables) !== count(array_unique($tables))) { throw new \InvalidArgumentException('Invalid module schema version or tables.'); }
         foreach ($tables as $table) {
-            if (preg_match('/^[a-z][a-z0-9_]*$/D', $table) !== 1 || in_array($table, ['schema_migrations', 'module_installations', 'module_migrations'], true)) { throw new \InvalidArgumentException('Invalid or reserved module table: ' . $table); }
+            if (preg_match('/^[a-z][a-z0-9_]*$/D', $table) !== 1 || in_array($table, ['migrations', 'schema_migrations', 'module_installations', 'module_migrations'], true)) { throw new \InvalidArgumentException('Invalid or reserved module table: ' . $table); }
         }
         foreach ($migrations as $index => $migration) {
             if ($migration->version !== $index + 1 || preg_match('/^[a-z][a-z0-9_.-]+$/D', $migration->id) !== 1) { throw new \InvalidArgumentException('Module migrations must have stable IDs and contiguous versions.'); }

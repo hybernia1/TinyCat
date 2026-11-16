@@ -53,6 +53,12 @@ try {
         $options
     );
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
+    $journalChecks = 0;
+    (require __DIR__ . '/../../fixtures/modules/migration-journal.php')($database, static function (bool $condition, string $message) use (&$journalChecks): void {
+        $journalChecks++;
+        if (!$condition) { throw new RuntimeException($message); }
+    });
+    echo "PASS MySQL unified journal conversion and recovery ({$journalChecks} checks).\n";
     $database->exec('CREATE TABLE user_profile_links (id INT UNSIGNED NOT NULL PRIMARY KEY) ENGINE=InnoDB');
     $removeProfileLinks = require __DIR__ . '/../../../migrations/20260809_001_remove_user_profile_links.php';
 
@@ -262,7 +268,7 @@ try {
     try {
         MigrationRegistry::ensure();
     } catch (RuntimeException $exception) {
-        if (str_contains($exception->getMessage(), 'A completed TinyCat 6.0.4 installation is required.')) {
+        if (str_contains($exception->getMessage(), 'Historical schema is incompatible: schema_migrations')) {
             echo "PASS MySQL outdated migration registry rejected by 6.0.4 baseline.\n";
             return;
         }

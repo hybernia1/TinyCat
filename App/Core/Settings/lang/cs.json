@@ -53,6 +53,7 @@
     "image_remove": "Odebrat obrázek"
   },
   "install": {
+    "purpose_migrations": "Historie migrací, jejich pořadí a kontrolní součty.",
     "language_label": "Čeština",
     "title": "Instalace TinyCat CMS",
     "step_language": "Jazyk",

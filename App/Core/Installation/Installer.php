@@ -109,9 +109,7 @@ final class Installer
             // Managed owners also repair restartable DDL, such as missing indexes.
             if (!isset($legacyModuleSchemas[$id])) { ($schema->install)($pdo); }
         }
-        $pdo->exec($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
-            ? 'CREATE TABLE IF NOT EXISTS schema_migrations (migration VARCHAR(190) NOT NULL PRIMARY KEY, version VARCHAR(32) NOT NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NOT NULL)'
-            : 'CREATE TABLE IF NOT EXISTS schema_migrations (migration VARCHAR(190) NOT NULL PRIMARY KEY, version VARCHAR(32) NOT NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+        \TinyCat\Database\Migrations::ensure($pdo);
     }
 
     /** @param array<mixed> $state */

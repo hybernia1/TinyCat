@@ -38,7 +38,7 @@ final class Html
         return htmlspecialchars(\TinyCat\Support\Values::string($value), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
-    private static function assertIconName(string $name): void
+    public static function assertIconName(string $name): void
     {
         if (!preg_match('/^[A-Za-z0-9_-]+$/', $name)) {
             throw new InvalidArgumentException('Invalid icon name: ' . $name);

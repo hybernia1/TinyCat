@@ -264,6 +264,8 @@ followForm.elements = { namedItem: () => followAction };
   check(followAction.value === (following ? "unfollow" : "follow") && followButton.querySelector("span").textContent === T.ui.text(following ? "public.unfollow" : "public.follow"), "Follow label and next action stay synchronized.");
 });
 const schedulerModel = { items: [{ name: "cleanup", options: { cleanup_batch: 500 }, latest: null, run_url: "/api/scheduler/tasks/cleanup/runs" }], runs: [{ id: 1, detail_url: "/api/scheduler/runs/1", task: "cleanup", started_at: "2026-10-26T12:00:00Z", status: "failed", mode: "admin", duration_ms: 25, summary: { changed: 0 }, options: { cleanup_batch: 500 }, error: "<img src=x onerror=bad>" }], task_choices: ["feeds", "cleanup"], status_choices: ["failed"], page_choices: { 25: 25 }, filters: { task: "", status: "" }, navigation: { visible: false } };
+const additionalTasks = T.components.render('scheduler/list', Object.assign({}, schedulerModel, { items: [{ name: 'article_feeds', options: { source_limit: 20 }, latest: null, run_url: '/api/scheduler/tasks/article_feeds/runs' }], runs: [Object.assign({}, schedulerModel.runs[0], { task: 'future.task' })] }));
+check(additionalTasks.textContent.includes('article_feeds') && additionalTasks.textContent.includes('future.task'), 'Additional module tasks retain readable identifiers in AJAX cards and history without core presentation mappings.');
 const schedulerRoot = new Node("div"), schedulerSource = new Node("form");
 schedulerSource.setAttribute("action", "/api/scheduler/tasks/cleanup/runs");
 check(T.scheduler.result(schedulerSource, { data: schedulerModel, meta: { pagination: { page: 1, per_page: 50 } } }, schedulerRoot), "Scheduler actions refresh the normalized list through the registered client module.");

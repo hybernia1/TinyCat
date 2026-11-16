@@ -44,7 +44,7 @@ class Links extends \TinyCat\Core\Links\Presentation
         $cached = [];
 
         try {
-            foreach (\TinyCat\Database\Queries::db_select('SELECT * FROM social_links')
+            foreach (\TinyCat\Database\Query::select('SELECT * FROM social_links')
                 ->whereIn('url_hash', array_values($hashes))
                 ->order('updated_at DESC, id DESC')
                 ->all() as $row) {
@@ -99,7 +99,7 @@ class Links extends \TinyCat\Core\Links\Presentation
             return null;
         }
 
-        return \TinyCat\Database\Queries::db_select('SELECT * FROM social_links')
+        return \TinyCat\Database\Query::select('SELECT * FROM social_links')
             ->where('url_hash = ?', $hash)
             ->limit(1)
             ->one();
@@ -415,7 +415,7 @@ class Links extends \TinyCat\Core\Links\Presentation
         }
 
         if ($missing !== []) {
-            foreach (\TinyCat\Database\Queries::db_select(
+            foreach (\TinyCat\Database\Query::select(
                 'SELECT cl.content_id,
                         l.id AS link_id,
                         l.normalized_url,

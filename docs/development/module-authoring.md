@@ -292,6 +292,7 @@ callbacky se při registraci neprovádějí.
 | `homepages`, `dashboards` | `EntryPage`: kandidáti pro `/` a `/admin`. |
 | `themes`, `widgets`, `localizedRoutes` | `PageTheme`, `DashboardWidget`, `LocalizedRoute`: rozložení, dashboard a jazyky URL. |
 | `tasks`, `maintenance` | `ScheduledTask`, `MaintenanceTask`: úlohy a údržba. |
+| `componentLookups` | `ComponentLookup`: lazy prezentační metadata pro sdílené komponenty. |
 | `settings`, `configOverrides` | `SettingsSection` a provozní nastavení vlastníka. |
 | `notificationTypes` | `NotificationType`: typy oznámení, hydratace a odkazy. |
 | `search`, `sitemaps`, `embeds` | `SearchSource`, `SitemapSection`, `EmbedSource`: hledání, sitemap a oEmbed. |

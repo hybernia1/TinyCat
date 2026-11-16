@@ -15,7 +15,7 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
             new \TinyCat\Core\Modules\TemporaryDirectory('health-storage', static fn (): string => \TinyCat\Support\Paths::basePath('storage/health-probes'), 60),
         ],
             tasks: [new \TinyCat\Core\Modules\ScheduledTask('site-health', static fn (array $context): array => Service::run($context),
-                admin: ['icon' => 'shield', 'title' => 'health.title', 'help' => 'health.intro', 'schedule' => 'health.schedule'], order: 30)],
+                admin: ['icon' => 'shield', 'title' => 'health.title', 'help' => 'health.intro', 'schedule' => 'health.schedule', 'cadence' => 'health.schedule_short'], order: 30)],
             navigation: [new \TinyCat\Core\Modules\NavigationItem('tinycat.health.admin', static fn (): array => self::adminNavigation(), 60)],
             health: $probes,
             notificationTypes: \TinyCat\Core\Health\Alerts::types(),

@@ -316,7 +316,7 @@ PHP;
     [$newBootExit, $newBootOutput] = $run($bootNew);
     $assert($newBootExit === 0, 'Updated candidate runtime boots: ' . implode(' ', $newBootOutput));
     $retiredProbe = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (class_exists('TinyCat\\\\Extension\\\\Loader') || !class_exists('TinyCat\\\\Bots\\\\Importer')) exit(2);";
+        . "; if (class_exists('TinyCat\\\\Extension\\\\Loader') || !class_exists('TinyCat\\\\Social\\\\Automation\\\\Importer')) exit(2);";
     [$retiredExit, $retiredOutput] = $run($retiredProbe);
     $assert($retiredExit === 0, 'Updated runtime provides Bots without an extension loader: ' . implode(' ', $retiredOutput));
 
@@ -331,16 +331,16 @@ define('TINYCAT', true);
 $root = __INSTALL_ROOT__;
 require $root . '/App/bootstrap.php';
 $invoke = static function (string $method, mixed ...$arguments): mixed {
-    return (new ReflectionMethod(TinyCat\Updates\Manager::class, $method))->invoke(null, ...$arguments);
+    return (new ReflectionMethod(TinyCat\Core\Updates\Manager::class, $method))->invoke(null, ...$arguments);
 };
-$manifest = TinyCat\Updates\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
+$manifest = TinyCat\Core\Updates\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
 $stage = $root . '/storage/updates/rehearsal-repeat-stage';
 $invoke('extractPackage', __PACKAGE__, $stage, $manifest);
 $backup = $invoke('createBackup', $manifest, __VERSION__, false);
 $invoke('enableMaintenance', __VERSION__);
 $invoke('applyFiles', $stage, $manifest);
 $invoke('deleteLegacyFiles', $manifest);
-TinyCat\Updates\Manager::disableMaintenance();
+TinyCat\Core\Updates\Manager::disableMaintenance();
 $invoke('clearRuntimeCache');
 echo json_encode(['backup' => $backup], JSON_THROW_ON_ERROR);
 PHP;
@@ -366,12 +366,12 @@ PHP;
     $assert(is_array($repeatMetadata) && ($repeatMetadata['files'] ?? null) === [], 'Repeated signed update does not back up unchanged files.');
 
     $interruptRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; (new ReflectionMethod(TinyCat\\Updates\\Manager::class, 'enableMaintenance'))->invoke(null, "
+        . "; (new ReflectionMethod(TinyCat\\Core\\Updates\\Manager::class, 'enableMaintenance'))->invoke(null, "
         . var_export($candidateVersion, true) . "); exit(23);";
     [$interruptExit] = $run($interruptRunner);
     $assert($interruptExit === 23, 'Synthetic update interruption occurs after maintenance is persisted.');
     $recoverRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; if (!TinyCat\\Updates\\Manager::maintenanceActive()) exit(2); TinyCat\\Updates\\Manager::disableMaintenance();";
+        . "; if (!TinyCat\\Core\\Updates\\Manager::maintenanceActive()) exit(2); TinyCat\\Core\\Updates\\Manager::disableMaintenance();";
     [$recoverExit, $recoverOutput] = $run($recoverRunner);
     $assert($recoverExit === 0, 'Interrupted update is detected and maintenance can be recovered: ' . implode(' ', $recoverOutput));
 

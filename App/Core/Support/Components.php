@@ -52,8 +52,24 @@ final class Components
         }
         // Resolve selected owners once, before PHP rendering or browser delivery.
         // API responses never choose component names or ship definitions.
-        $resolve = static function (mixed $node) use (&$resolve, $extensions): mixed {
+        $lookups = [];
+        $resolve = static function (mixed $node) use (&$resolve, $extensions, &$lookups): mixed {
             if (!is_array($node)) { return $node; }
+            if (isset($node['catalog'])) {
+                if (!is_string($node['catalog']) || !is_string($node['field'] ?? null) || (!isset($node['lookup']) && !isset($node['options']))) { throw new InvalidArgumentException('Invalid component lookup catalog.'); }
+                $id = $node['catalog'];
+                if (!array_key_exists($id, $lookups)) {
+                    $lookups[$id] = [];
+                    foreach (\TinyCat\Core\Modules\Registrations::current()->entries->componentLookups as $catalog) {
+                        if ($catalog->id === $id) { $lookups[$id] = ($catalog->entries)(); break; }
+                    }
+                }
+                $node['cases'] = [];
+                foreach ($lookups[$id] as $key => $entry) {
+                    if (array_key_exists($node['field'], $entry)) { $node['cases'][(string) $key] = $entry[$node['field']]; }
+                }
+                unset($node['catalog'], $node['field']);
+            }
             if (isset($node['extensions'])) {
                 if (!is_string($node['extensions']) || count($node) !== 1) { throw new InvalidArgumentException('Invalid component extension point.'); }
                 return $extensions[$node['extensions']] ?? [];

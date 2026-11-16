@@ -10,7 +10,7 @@ Samotné core má osm tabulek:
 
 ```text
 users, password_reset_tokens, ip_action_limits, settings,
-notifications, scheduler_runs, module_installations, module_migrations
+notifications, scheduler_runs, module_installations, migrations
 ```
 
 Social přidává šestnáct tabulek:
@@ -32,9 +32,14 @@ blog_comments, blog_article_likes, blog_comment_likes,
 blog_sources, blog_feed_history, blog_source_articles
 ```
 
-Core s Blogem má 21 tabulek, se Socialem 24 a s oběma moduly 37. Historická
-instalace může navíc zachovat globální `schema_migrations` a nepoužívané staré
-tabulky; nejde o požadavky čerstvého core ani souhlas k odstranění jejich dat.
+Core s Blogem má 21 tabulek, se Socialem 24 a s oběma moduly 37.
+Společný journal `migrations` rozlišuje `kind = global` a `kind = schema`;
+`stream` zachovává původní ID migračního streamu. Globální verze vydání je
+v `release_version`, číselné pořadí schématu v `sequence`. Při ověřeném převodu
+z v6.0.4 nahrazuje `schema_migrations` a `module_migrations` bez opětovného
+spuštění jejich migrací. Staré modulové záznamy mají neznámý `applied_at`;
+nové zápisy obsahují skutečný čas. Stav schémat zůstává v `module_installations`.
+Jiné historické tabulky nejsou automaticky určené k odstranění.
 
 `blog_articles` obsahuje celého autora, název, text, náhled, stav a časové údaje.
 Neobsahuje `content_id` ani `kind`. `blog_source_articles.article_id` i ostatní

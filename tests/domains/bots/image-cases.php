@@ -14,7 +14,7 @@ $pathsBefore = glob($root . '/uploads/status-images/' . date('Y/m') . '/*.webp')
 try {
     $rssUrl = 'http://93.184.216.34/image-source.rss';
     $GLOBALS['sourceImageFixtures'][$rssUrl] = '<rss><channel><item><guid>adapter</guid><enclosure type="image/png" url="' . $imageUrl . '"/></item></channel></rss>';
-    $adapterItems = \TinyCat\Social\Automation\FeedParser::fetch($rssUrl);
+    $adapterItems = \TinyCat\Core\Feeds\FeedParser::fetch($rssUrl);
     $assert(count($adapterItems) === 1 && $adapterItems[0]['image_url'] === $imageUrl, 'The Unified feed parser downloads and normalizes image-only entries through the shared client.');
     $imageResult = $importItems->import($imageSource, [$imageItem], 1);
     $imageId = (int) ($imageResult['content_id'] ?? 0);

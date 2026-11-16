@@ -65,7 +65,7 @@ final class NotificationHistory
             return;
         }
 
-        $query = \TinyCat\Database\Queries::db_select('SELECT DISTINCT reporter_id FROM content_reports')
+        $query = \TinyCat\Database\Query::select('SELECT DISTINCT reporter_id FROM content_reports')
             ->where('content_id = ?', $contentId);
 
         if ($reportStatus !== '') {

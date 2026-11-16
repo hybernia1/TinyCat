@@ -15,7 +15,7 @@ final class ModuleSchemas
      * @param array<string, ModuleSchema> $schemas */
     public static function pending(PDO $pdo, array $schemas): bool
     {
-        self::validate($schemas); $pending = false;
+        self::validate($schemas); $pending = $schemas !== [] && (Schema::exists($pdo, 'module_migrations') || Schema::exists($pdo, 'schema_migrations'));
         foreach ($schemas as $id => $schema) {
             $state = self::state($pdo, $id);
             if ($state === null) {
@@ -157,9 +157,7 @@ final class ModuleSchemas
 
     public static function checksum(string $file): string
     {
-        $source = file_get_contents($file);
-        if ($source === false) { throw new RuntimeException('Unreadable module migration.'); }
-        return hash('sha256', str_replace(["\r\n", "\r"], "\n", $source));
+        return Migrations::checksum($file);
     }
 
     /** @return array<string, mixed>|null */
@@ -194,7 +192,7 @@ final class ModuleSchemas
     private static function systemTables(PDO $pdo): void
     {
         $pdo->exec('CREATE TABLE IF NOT EXISTS module_installations (module_id VARCHAR(190) PRIMARY KEY, version INTEGER NOT NULL, status VARCHAR(20) NOT NULL)');
-        $pdo->exec('CREATE TABLE IF NOT EXISTS module_migrations (module_id VARCHAR(190) NOT NULL, migration VARCHAR(190) NOT NULL, version INTEGER NOT NULL, checksum CHAR(64) NOT NULL, PRIMARY KEY (module_id, migration))');
+        Migrations::ensure($pdo);
     }
 
     private static function connection(PDO $pdo): void
@@ -204,7 +202,7 @@ final class ModuleSchemas
 
     private static function tableExists(PDO $pdo, string $table): bool
     {
-        return SchemaInspection::exists($pdo, $table);
+        return Schema::exists($pdo, $table);
     }
 
     private static function writeState(PDO $pdo, string $id, int $version, string $status): void
@@ -218,20 +216,18 @@ final class ModuleSchemas
 
     private static function record(PDO $pdo, string $id, SchemaMigration $migration): void
     {
-        $query = $pdo->prepare('INSERT INTO module_migrations (module_id, migration, version, checksum) VALUES (?, ?, ?, ?)');
-        $query->execute([$id, $migration->id, $migration->version, self::checksum($migration->file)]);
+        Migrations::record($pdo, 'schema', $id, $migration->id, $migration->version, null, self::checksum($migration->file));
     }
 
     private static function verifyHistory(PDO $pdo, string $id, ModuleSchema $schema, int $version): void
     {
         if ($id === \TinyCat\Core\Tasks\Schema::OWNER) { \TinyCat\Core\Tasks\Schema::validateLegacyHistory($pdo); }
-        $query = $pdo->prepare('SELECT migration, version, checksum FROM module_migrations WHERE module_id = ? ORDER BY version');
-        $query->execute([$id]);
-        $rows = $query->fetchAll(PDO::FETCH_ASSOC);
+        $rows = Migrations::history($pdo, 'schema', $id);
+        usort($rows, static fn (array $left, array $right): int => (int) $left['sequence'] <=> (int) $right['sequence']);
         if (count($rows) !== $version) { throw new RuntimeException('Module migration history is incomplete.'); }
         foreach ($rows as $index => $row) {
             $migration = $schema->migrations[$index];
-            if ($row['migration'] !== $migration->id || (int) $row['version'] !== $migration->version || !hash_equals((string) $row['checksum'], self::checksum($migration->file))) { throw new RuntimeException('Applied module migration checksum or ID mismatch.'); }
+            if ($row['migration'] !== $migration->id || (int) $row['sequence'] !== $migration->version || !hash_equals((string) $row['checksum'], self::checksum($migration->file))) { throw new RuntimeException('Applied module migration checksum or ID mismatch.'); }
         }
     }
 

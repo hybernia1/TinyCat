@@ -25,7 +25,7 @@ final class Mentions
                 $users[$id] = null;
             }
 
-            foreach (\TinyCat\Database\Queries::db_select('SELECT id, username FROM users')
+            foreach (\TinyCat\Database\Query::select('SELECT id, username FROM users')
                 ->where('status = ?', 'active')
                 ->whereIn('id', $missing)
                 ->all() as $user) {
@@ -114,7 +114,7 @@ final class Mentions
         $map = [];
 
         if ($handles !== []) {
-            foreach (\TinyCat\Database\Queries::db_select('SELECT id, username FROM users')
+            foreach (\TinyCat\Database\Query::select('SELECT id, username FROM users')
                 ->where('status = ?', 'active')
                 ->whereIn('username', array_values($handles))
                 ->all() as $user) {

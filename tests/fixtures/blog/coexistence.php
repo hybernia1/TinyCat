@@ -27,7 +27,7 @@ $modules = Loader::load($workspace); Resources::configure($modules->catalog);
 $assert(ModuleSchemas::ready($pdo, Distribution::definitions($modules, false)), 'All selected owners have standalone schema histories');
 $administrator = Connection::find('users', ['id' => 1]);
 $article = TinyCat\Blog\Articles::save(['title' => 'Combined article', 'body' => 'Coexistence marker #combined'], $administrator);
-TinyCat\Database\SchemaInspection::reserveIds($pdo, 'social_posts', $article);
+TinyCat\Database\Schema::reserveIds($pdo, 'social_posts', $article);
 $post = TinyCat\Social\Content\PostCreation::create(1, TinyCat\Social\Content\PostCreation::fromText('Coexistence status #combined'), []);
 $assert($post === $article && TinyCat\Social\Posts\Posts::status_find($post)['body'] !== TinyCat\Blog\Articles::find($article)['body'], 'Equal numeric IDs resolve independently through owner repositories');
 $assert(array_column(TinyCat\Social\Posts\Feed::public_status_items_cursor(30), 'id') === [$post], 'Social feed excludes existing and new articles');
@@ -37,7 +37,7 @@ $searchGroups = array_column($combinedSearch['collections'], null, 'id');
 $assert(array_column($searchGroups['content']['items'], 'id') === [$post] && array_column($searchGroups['articles']['items'], 'id') === [$article], 'Generic search combines active owners with separate canonical resources');
 $assert(TinyCat\Http\LocaleRouting::url('/search/all?q=Coexistence', 'cs') === '/cs/search/all?q=Coexistence' && TinyCat\Http\LocaleRouting::split('/cs/search/all')['path'] === '/search/all', 'Generic search preserves explicit interface languages without the social AJAX route');
 $assert(TinyCat\Core\Discovery\Sitemap::count('articles') > 1 && TinyCat\Core\Discovery\Sitemap::hasSection('status'), 'Combined sitemap retains both article and status sources');
-$assert(TinyCat\Social\Presentation\Sitemap::count('status') === 1 && TinyCat\Social\Posts\AuthorStatistics::author_activity_stats(1)['posts'] === 1, 'Sitemap and social statistics exclude articles');
+$assert(TinyCat\Core\Discovery\Sitemap::count('status') === 1 && TinyCat\Social\Posts\AuthorStatistics::author_activity_stats(1)['posts'] === 1, 'Sitemap and social statistics exclude articles');
 $text = 'Shared @Editor #combined';
 $beforeSocial = TinyCat\Social\Content\PostCreation::fromText($text, 'article')->body;
 TinyCat\Social\Posts\Registration::initialize();
@@ -127,7 +127,7 @@ try {
     $assert($status === 200 && (json_decode($json, true)['title'] ?? '') === 'Combined article', 'Combined oEmbed chooses Blog by canonical path');
     [$status, $json] = $request('/oembed?url=' . rawurlencode('http://' . $address . '/status/' . $post));
     $assert($status === 200 && str_contains(json_decode($json, true)['html'] ?? '', '/status/' . $post . '/embed'), 'Combined oEmbed retains the Social provider');
-    foreach (['/admin', '/admin/modules', '/admin/articles', '/admin/cron', '/admin/users'] as $path) { [$status] = $request($path, true); $assert($status === 200, 'Combined administration route: ' . $path); }
+    foreach (['/admin', '/admin/modules', '/admin/articles', '/admin/cron', '/admin/cron/list', '/admin/users'] as $path) { [$status] = $request($path, true); $assert($status === 200, 'Combined administration route: ' . $path); }
     [$status] = $request('/api/modules'); $assert($status === 401, 'Module inventory is private');
     [$status, $moduleHtml] = $request('/admin/modules', true);
     $assert($status === 200 && str_contains($moduleHtml, '/api/modules/activation') && str_contains($moduleHtml, 'tinycat.blog'), 'Module administration is in the common navigation and renders controls');
@@ -160,7 +160,7 @@ try {
     [$status, $xml] = $request('/sitemap.xml');
     $assert($status === 200 && str_contains($xml, 'sitemap-articles') && !str_contains($xml, 'sitemap-status'), 'Social deactivation changes the sitemap directory immediately');
     foreach (['/', '/blog', '/articles/' . $article, '/login'] as $path) { [$status] = $request($path); $assert($status === 200, 'Platform route without Social: ' . $path); }
-    foreach (['/admin', '/admin/modules', '/admin/articles', '/admin/cron', '/admin/users'] as $path) { [$status] = $request($path, true); $assert($status === 200, 'Administration without Social: ' . $path); }
+    foreach (['/admin', '/admin/modules', '/admin/articles', '/admin/cron', '/admin/cron/list', '/admin/users'] as $path) { [$status] = $request($path, true); $assert($status === 200, 'Administration without Social: ' . $path); }
     [$status] = $request('/api/articles/' . $article . '/discussion'); $assert($status === 200, 'Article discussion remains available without Social');
     foreach (['/social', '/api/statuses/' . $post, '/api/statuses/' . $post . '/comments'] as $path) { [$status] = $request($path); $assert($status === 404, 'Disabled Social exposes no route: ' . $path); }
     Resources::configure(Loader::load($workspace)->catalog);

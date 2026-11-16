@@ -35,7 +35,7 @@ foreach ($cases as $before => $after) {
 }
 $assert(PostText::isReadMore('READ MORE »'));
 $assert(!PostText::isReadMore('Read more about my work'));
-$description = TinyCat\Social\Automation\FeedParser::descriptionText('<p>First</p><p>Second […] <a href="https://example.com/">Read <b>more</b> »</a></p>', 1200);
+$description = TinyCat\Core\Feeds\FeedParser::descriptionText('<p>First</p><p>Second […] <a href="https://example.com/">Read <b>more</b> »</a></p>', 1200);
 $assert($description === 'First Second …');
 $assert(!PostTextCleanup::safe('Read more', ''));
 $assert(!PostTextCleanup::safe('#foo bar', '#foobar'));

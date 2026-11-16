@@ -24,7 +24,7 @@ foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/
 foreach ($graph as $owner => $targets) {
     foreach (array_keys($targets) as $target) {
         $checks++;
-        if (str_starts_with($owner, 'Core\\') && str_starts_with($target, 'Social\\') && $owner !== 'Core\\Runtime\\LegacyNames') {
+        if (str_starts_with($owner, 'Core\\') && str_starts_with($target, 'Social\\')) {
             $failures[] = "Core imports Social: {$owner} -> {$target}";
         }
         if (str_starts_with($owner, 'Core\\') && str_starts_with($target, 'Blog\\')) {

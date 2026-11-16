@@ -1,7 +1,7 @@
 # Testy TinyCat
 
 Příkazy spouštěj z kořene repozitáře. `composer test` spouští explicitních
-89 skupin přes [hlavní runner](run.php), včetně 38 frontendových scénářů.
+90 skupin přes [hlavní runner](run.php), včetně 38 frontendových scénářů.
 `composer preflight` navíc přidává metadata, dependency audit, styl, lint,
 PHPStan, překlady a repository security.
 
@@ -186,3 +186,8 @@ successor in an isolated source copy, and checks file updates, repetition,
 interruption recovery and exact rollback. It no longer builds pre-6 bridges.
 The same group also runs the existing MySQL product rehearsal from 6.0.4 when
 local MySQL configuration is available. Older published migrations stay immutable.
+
+The unified migration journal has SQLite preservation, conflicting-history and
+interruption tests in `tests/infrastructure/migrations.php`; the existing MySQL
+registry group runs the same disposable fixture. The signed 6.0.4 rehearsal
+also verifies conversion from the original journals and full rollback.

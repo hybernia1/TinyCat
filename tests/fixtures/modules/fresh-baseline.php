@@ -18,14 +18,14 @@ $schemas = \TinyCat\Core\Modules\Distribution::schemas($plan, $base, ['fixture.f
 $newDb = new PDO('sqlite::memory:');
 ModuleSchemas::synchronize($newDb, $schemas);
 $assert(ModuleSchemas::ready($newDb, $schemas) && !is_file($base . '/' . $relative . 'historical-ran'), 'Signed fresh schema installs directly without replaying obsolete domain tables');
-$assert((int) $newDb->query('SELECT COUNT(*) FROM module_migrations')->fetchColumn() === 2, 'Fresh schema records the unchanged historical migration prefix');
+$assert((int) $newDb->query('SELECT COUNT(*) FROM migrations')->fetchColumn() === 2, 'Fresh schema records the unchanged historical migration prefix');
 $oldDb = new PDO('sqlite::memory:');
 $first = new ModuleSchema(1, ['legacy_items'], require $base . '/' . $relative . '001.php', [new \TinyCat\Core\Modules\SchemaMigration(1, 'fixture.first', $base . '/' . $relative . '001.php')]);
 ModuleSchemas::install($oldDb, ['fixture.fresh' => $first]);
 $oldDb->exec("INSERT INTO legacy_items VALUES (7, 'Retained legacy data')");
 ModuleSchemas::synchronize($oldDb, $schemas);
 $assert(ModuleSchemas::ready($oldDb, $schemas) && $oldDb->query('SELECT body FROM owned_items WHERE id=7')->fetchColumn() === 'Retained legacy data', 'Existing installation runs historical upgrades and preserves data instead of using the fresh baseline');
-$assert($oldDb->query('SELECT * FROM module_migrations ORDER BY version')->fetchAll(PDO::FETCH_ASSOC) === $newDb->query('SELECT * FROM module_migrations ORDER BY version')->fetchAll(PDO::FETCH_ASSOC), 'Fresh and upgrade preserve the same historical migration identities and checksums');
+$assert($oldDb->query('SELECT kind, stream, migration, sequence, release_version, checksum FROM migrations ORDER BY sequence')->fetchAll(PDO::FETCH_ASSOC) === $newDb->query('SELECT kind, stream, migration, sequence, release_version, checksum FROM migrations ORDER BY sequence')->fetchAll(PDO::FETCH_ASSOC), 'Fresh and upgrade preserve the same historical migration identities and checksums');
 $invalid = $plan; $invalid['schemas']['fixture.fresh']['fresh']['checksum'] = str_repeat('0', 64);
 $reject(static fn () => \TinyCat\Core\Modules\Distribution::schemas($invalid, $base, ['fixture.fresh']), 'Fresh baseline checksum mismatch');
 $invalid = $plan; $invalid['schemas']['fixture.fresh']['fresh']['file'] = 'App/Modules/Other/migrations/fresh.php';

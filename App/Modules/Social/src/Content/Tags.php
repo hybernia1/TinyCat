@@ -25,7 +25,7 @@ class Tags
             return 0;
         }
 
-        $term = \TinyCat\Database\Queries::db_select('SELECT id, name FROM social_terms')
+        $term = \TinyCat\Database\Query::select('SELECT id, name FROM social_terms')
             ->where('name = ?', $tag)
             ->limit(1)
             ->one();
@@ -46,7 +46,7 @@ class Tags
                 throw $exception;
             }
 
-            $term = \TinyCat\Database\Queries::db_select('SELECT id, name FROM social_terms')
+            $term = \TinyCat\Database\Query::select('SELECT id, name FROM social_terms')
                 ->where('name = ?', $tag)
                 ->limit(1)
                 ->one();
@@ -68,7 +68,7 @@ class Tags
             return 0;
         }
 
-        foreach (\TinyCat\Database\Queries::db_select('SELECT id, name FROM social_terms')->where('name = ?', $tag)->all() as $term) {
+        foreach (\TinyCat\Database\Query::select('SELECT id, name FROM social_terms')->where('name = ?', $tag)->all() as $term) {
             if ((string) ($term['name'] ?? '') === $tag) {
                 return (int) ($term['id'] ?? 0);
             }

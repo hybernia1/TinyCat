@@ -38,11 +38,12 @@ final class Importer
                     'title' => 'cron.tasks.feeds',
                     'help' => 'cron.tasks.feeds_help',
                     'schedule' => 'cron.tasks.feeds_schedule',
+                    'cadence' => 'cron.cadence.feeds',
             ], order: 10, modeOptions: ['admin' => ['source_id']],
             normalize: self::normalizeTaskOptions(...),
             healthAge: static fn (): ?int => (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_sources WHERE enabled = 1') > 0 ? 1800 : null,
             detail: static fn (array $run): array => RunDetails::present($run),
-            batchOption: 'bot_limit',
+            batchOption: 'bot_limit', optionLabels: ['bot_limit' => 'cron.options.bot_limit', 'source_id' => 'cron.options.source_id'],
         );
     }
 

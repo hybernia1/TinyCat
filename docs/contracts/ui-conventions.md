@@ -63,6 +63,24 @@ nebo `use`. U shodné struktury použít existující komponentu nebo wrapper,
 který ji skládá s vlastními vstupy. Rekurzivní struktury jako strom komentářů
 jsou přípustné; jejich ukončení závisí na vstupních datech.
 
+## Registrovaná prezentační metadata
+
+Pojmenovaný `ComponentLookup` v `Contributions.componentLookups` dodává lazy
+mapu z identifikátorů na prezentační pole. Definice komponenty použije
+`catalog` a `field` spolu s `lookup` nebo `options`; společný loader tyto
+odkazy rozvine do běžných `cases` před PHP vykreslením i doručením klientovi.
+Překladové uzly z katalogu tím vstupují také do klientských překladových závislostí.
+Katalog vzniká jen z aktuálně vybraných registrací. Neznámé historické ID
+používá deklarovaný `default`.
+
+Plánovač odvozuje ikonu, název a plán ze `ScheduledTask.admin`; volitelný
+`cadence` je krátký popis plánu a `optionLabels` vlastní překladové klíče
+parametrů. V core komponentách nesmí být seznam konkrétních modulových úloh
+ani jejich parametrů. Přidání nebo odebrání modulu mění registrace, nikoli
+šablonu plánovače. Sestavení metadat nesmí spouštět SQL, runner, normalizaci,
+health callback ani hydrataci detailu úlohy. Doménové API nadále vrací pouze
+kanonická data bez ikon, komponent a překladových identifikátorů.
+
 ## Vlastnictví CSS
 
 | Vlastník | Obsah |

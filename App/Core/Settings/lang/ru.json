@@ -53,6 +53,7 @@
     "image_remove": "Удалить изображение"
   },
   "install": {
+    "purpose_migrations": "История миграций, порядок и контрольные суммы.",
     "language_label": "Русский",
     "title": "Установка TinyCat CMS",
     "step_language": "Язык",
