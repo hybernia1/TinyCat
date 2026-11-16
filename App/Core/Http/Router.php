@@ -16,6 +16,8 @@ final class Router
 {
     /** @var list<array{methods: array<string>, path: string, handler: callable, contentType: string}> */
     private static array $routes = [];
+    /** @var array<string, true> */
+    private static array $routeKeys = [];
     private static bool $debug = false;
 
     /** Validate one provider before exposing its routes; preserve legacy aliases.
@@ -23,19 +25,20 @@ final class Router
     public static function registerModule(callable $register): void
     {
         $before = self::$routes;
+        $beforeKeys = self::$routeKeys;
         try {
             $register();
-            $seen = [];
-            foreach (self::$routes as $index => $route) {
+            $seen = $beforeKeys;
+            foreach (array_slice(self::$routes, count($before)) as $route) {
                 $methods = $route['methods'];
                 if (in_array('GET', $methods, true)) { $methods[] = 'HEAD'; }
                 foreach (array_unique($methods) as $method) {
                     $key = $method . ':' . $route['path'];
-                    if ($index >= count($before) && isset($seen[$key])) { throw new InvalidArgumentException('Duplicate module route: ' . $key); }
+                    if (isset($seen[$key])) { throw new InvalidArgumentException('Duplicate module route: ' . $key); }
                     $seen[$key] = true;
                 }
             }
-        } catch (Throwable $error) { self::$routes = $before; throw $error; }
+        } catch (Throwable $error) { self::$routes = $before; self::$routeKeys = $beforeKeys; throw $error; }
     }
 
     /**
@@ -43,12 +46,16 @@ final class Router
      */
     public static function route(array|string $methods, string $path, callable $handler, string $contentType = 'text/html'): void
     {
+        $methods = self::normalizeMethods($methods);
+        $path = Request::current()->path($path);
         self::$routes[] = [
-            'methods' => self::normalizeMethods($methods),
-            'path' => Request::current()->path($path),
+            'methods' => $methods,
+            'path' => $path,
             'handler' => $handler,
             'contentType' => $contentType,
         ];
+        if (in_array('GET', $methods, true)) { $methods[] = 'HEAD'; }
+        foreach ($methods as $method) { self::$routeKeys[$method . ':' . $path] = true; }
     }
 
     public static function responseType(string $path): string
@@ -157,6 +164,8 @@ final class Router
         if ($routePath === $path) {
             return [];
         }
+
+        if (!str_contains($routePath, '{') && !str_contains($routePath, '%')) { return null; }
 
         if (!preg_match(self::routeRegex($routePath), $path, $matches)) {
             return null;

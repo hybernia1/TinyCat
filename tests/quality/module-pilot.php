@@ -119,6 +119,33 @@ PHP;
     }), 'A module route shadowing an existing GET/HEAD route');
     $assert((new ReflectionProperty(\TinyCat\Http\Router::class, 'routes'))->getValue() === $before, 'Rejected route providers leave no partial routes');
 
+    \TinyCat\Http\Router::registerModule(static function (): void {
+        \TinyCat\Http\Router::route('GET', '/_pilot-new', static fn (): null => null);
+    });
+    $assert(true, 'A rejected provider leaves its new route available for a later registration');
+    $reject(static fn () => \TinyCat\Http\Router::registerModule(static function (): void {
+        \TinyCat\Http\Router::route('GET', '/_pilot-internal', static fn (): null => null);
+        \TinyCat\Http\Router::route('HEAD', '/_pilot-internal', static fn (): null => null);
+    }), 'Duplicate GET/HEAD routes within one provider');
+    $reject(static fn () => \TinyCat\Http\Router::registerModule(static function (): void {
+        \TinyCat\Http\Router::route('POST', '/_pilot-nested-outer', static fn (): null => null);
+        \TinyCat\Http\Router::registerModule(static function (): void {
+            \TinyCat\Http\Router::route('POST', '/_pilot-nested-inner', static fn (): null => null);
+        });
+        throw new InvalidArgumentException('Fixture registration failure.');
+    }), 'An outer provider failure after a nested registration');
+    \TinyCat\Http\Router::registerModule(static function (): void {
+        \TinyCat\Http\Router::route('GET', '/_pilot-internal', static fn (): null => null);
+        \TinyCat\Http\Router::route('POST', '/_pilot-nested-inner', static fn (): null => null);
+        \TinyCat\Http\Router::route('POST', '/_pilot-nested-outer', static fn (): null => null);
+    });
+    $assert(true, 'Internal collisions and nested failures restore the route index as well as routes');
+
+    $literalCalls = 0;
+    \TinyCat\Http\Router::route('GET', '/_pilot-literal.v1', static function () use (&$literalCalls): void { $literalCalls++; });
+    $assert(!\TinyCat\Http\Router::dispatch('/_pilot-literalXv1', 'GET') && $literalCalls === 0, 'Static route punctuation remains literal');
+    $assert(\TinyCat\Http\Router::dispatch('/_pilot-literal.v1', 'HEAD') && $literalCalls === 1, 'Static routes retain exact matching and implicit HEAD');
+
     $schema = $schemas['demo.notes'];
     $options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC];
     $sqliteConfig = ['dsn' => 'sqlite:' . $directory . '/http.sqlite'];

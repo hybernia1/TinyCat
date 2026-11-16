@@ -102,7 +102,7 @@ try {
 
     // Seed old deployment caches: a different build selection must not reuse them.
     foreach ([
-        [TinyCat\Support\CompiledAssets::class, 'manifest', ['clients' => ['/' => [
+        [TinyCat\Support\CompiledAssets::class, 'manifest', ['server_components' => 'components.000000000000000000000000.php', 'clients' => ['/' => [
             'runtime' => ['raw' => '/stale-runtime'], 'components' => '/stale-components', 'catalogs' => ['en' => '/stale-i18n'],
             'app' => ['raw' => '/stale-app'], 'styles' => ['raw' => '/stale-style'],
         ]]]],
@@ -117,6 +117,7 @@ try {
         $assert(Localization::catalog('en')['selection_probe.value'] === 'Selected', 'Selection invalidates server translation caches and ignores stale compiled catalogs');
         $assert(TinyCat\Support\CompiledTranslations::packages() === null, 'A custom selection cannot reuse another deployment language manifest');
         $assert(TinyCat\Support\CompiledAssets::client('/', 'en') === null, 'A custom selection cannot reuse another deployment client bundles');
+        $assert(TinyCat\Support\CompiledAssets::components() === null, 'A custom selection cannot reuse another deployment server components');
         $assert(TinyCat\Core\Mail\Templates::email_catalog('en') === $baselineEmails, 'Mail invalidates its cache and ignores stale compiled email data');
         $withoutMail = new Catalog(array_values(array_filter($default->definitions(), static fn (Definition $definition): bool => $definition->id !== 'tinycat.mail')));
         Resources::withCatalog($withoutMail, static function () use ($assert): void { $catalog = TinyCat\Core\Mail\Templates::email_catalog('en'); $assert(isset($catalog['templates']['welcome']) && !isset($catalog['signature']), 'Domain templates remain owned by Accounts when the delivery bundle is excluded'); });
@@ -125,6 +126,7 @@ try {
         $assert(isset(ClientAssets::definitions('/selection-probe')['probe/selection']), 'Selected route definitions invalidate old path caches');
         $files = $compile();
         $manifest = json_decode($files['assets/build/manifest.json'], true, 512, JSON_THROW_ON_ERROR);
+        $assert(str_contains($files['App/Core/Support/compiled/' . $manifest['server_components']], "'probe/selection'"), 'Server components are compiled from the current selection');
         $assert(isset($manifest['clients']['/selection-probe']), 'The selected module contributes a compiled scope');
         $scope = $manifest['clients']['/selection-probe'];
         $assert(str_contains($files[ltrim($scope['styles']['raw'], '/')], '.module-selection-probe'), 'New module styles compile without editing the central legacy cascade');

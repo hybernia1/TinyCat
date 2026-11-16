@@ -20,17 +20,23 @@ $write = static function (string $relative, string $source) use ($directory, &$c
     $created[] = $path;
 };
 try {
-    foreach (['autoload.php', 'Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
+    foreach (['autoload.php', 'Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/CompiledAssets.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
         $write('App/' . $relative, (string) file_get_contents($root . '/App/' . $relative));
     }
     foreach ($files as $relative => $source) {
         if (str_starts_with($relative, 'App/Core/Support/compiled/')) { $write($relative, $source); }
     }
+    $write('assets/build/manifest.json', $files['assets/build/manifest.json']);
     // No source files, source loader, configuration or database in this runtime.
     $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/fixtures/compiled-translations-worker.php') . ' ' . escapeshellarg($directory);
     exec($command, $output, $exitCode);
     $assert($exitCode === 0, 'Compiled catalogs must work without translation sources or database.');
     $actual = json_decode(implode("\n", $output), true, 512, JSON_THROW_ON_ERROR);
+    $sourceComponents = \TinyCat\Support\Components::withFreshTemplates(static fn (): array => \TinyCat\Support\Components::templates());
+    $assert($actual['components'] === json_decode(json_encode($sourceComponents, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR), 'Compiled components work without source definitions or a database.');
+    $assert($actual['invalid_components'] === true, 'Compiled component paths reject traversal.');
+    $assert($actual['legacy_components'] === null, 'Older release manifests retain the source fallback.');
+    $assert($actual['changed_packages'] === true, 'An independently changed module package registry invalidates compiled components.');
     $assert($actual['packages'] === \TinyCat\Support\TranslationSources::packages(), 'Compiled language metadata differs.');
     $assert($actual['unknown_locale'] === \TinyCat\Support\Localization::t('common.close', [], 'en'), 'Unknown locales must fall back without loading source catalogs.');
     $assert($actual['regional_plural'] === \TinyCat\Support\Localization::plural('bots.sources_count', 2, [], 'cs'), 'Regional plural fallback works without source catalogs.');
@@ -44,7 +50,10 @@ try {
     // A source build must ignore catalogs that happen to be loaded in its process.
     (new ReflectionProperty(\TinyCat\Support\Localization::class, 'translations'))->setValue(null, ['en' => ['common.close' => 'STALE']]);
     (new ReflectionProperty(\TinyCat\Support\Localization::class, 'catalogs'))->setValue(null, []);
-    $assert($compile() === $files, 'Build depends on runtime translation cache instead of validated sources.');
+    $templates = new ReflectionProperty(\TinyCat\Support\Components::class, 'templates');
+    $previousTemplates = $templates->getValue(); $templates->setValue(null, ['STALE' => []]);
+    try { $assert($compile() === $files, 'Build must ignore stale runtime translations and component definitions.'); }
+    finally { $templates->setValue(null, $previousTemplates); }
     $manifest = json_decode($files['assets/build/manifest.json'], true, 512, JSON_THROW_ON_ERROR);
     foreach ($manifest['clients'] as $scope => $client) {
         foreach ($client['catalogs'] as $locale => $url) {
@@ -53,7 +62,7 @@ try {
     }
 } finally {
     foreach (array_reverse($created) as $file) { unlink($file); }
-    foreach (['App/Core/Support/compiled', 'App/Core/Mail', 'App/Core/Support', 'App/Core/Runtime', 'App/Core', 'App/Core/Mail/src', 'App/Modules/Mail', 'App/Modules', 'App', ''] as $relative) {
+    foreach (['assets/build', 'assets', 'App/Core/Support/compiled', 'App/Core/Mail', 'App/Core/Support', 'App/Core/Runtime', 'App/Core', 'App/Core/Mail/src', 'App/Modules/Mail', 'App/Modules', 'App', ''] as $relative) {
         $path = $directory . ($relative !== '' ? '/' . $relative : '');
         if (is_dir($path)) { rmdir($path); }
     }

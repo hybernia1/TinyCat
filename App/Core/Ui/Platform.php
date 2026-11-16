@@ -11,8 +11,8 @@ final class Platform
 {
     public static function initialize(): void
     {
-        \TinyCat\Support\LocalUrls::configure(LocaleRouting::url(...));
-        Startup::$exception = Errors::exception(...);
+        \TinyCat\Support\LocalUrls::configure(static fn (string $url, ?string $locale = null): string => LocaleRouting::url($url, $locale));
+        Startup::$exception = static function (\Throwable $error): void { Errors::exception($error); };
         Startup::provideHttp('tinycat.core', new HttpPolicy(
             prepare: static function (string $path): ?string {
                 $path = LocaleRouting::prepare($path);
@@ -22,7 +22,7 @@ final class Platform
                 }
                 if (self::installation($path) && \TinyCat\Core\Installation\Installer::isComplete()) { Errors::respond(404); return null; }
                 return $path;
-            }, maintenanceExempt: Branding::handles(...),
+            }, maintenanceExempt: static fn (string $path): bool => Branding::handles($path),
             databaseExempt: static fn (string $path): bool => self::installation($path) || Branding::handles($path) || (bool) Startup::option('install.complete', false),
             databaseUnavailable: static function (string $path): void {
                 if (Router::isApiPath($path) || Request::current()->wantsJson()) { Response::error(\TinyCat\Support\Localization::t('install.messages.db_not_ready'), 503, 'database_not_ready', ['redirect' => '/install']); }
@@ -34,7 +34,7 @@ final class Platform
                 }
             }, notFound: static function (): void { Errors::respond(404); },
         ));
-        \TinyCat\Core\Updates\Manager::configure(Startup::option(...), Errors::respond(...));
+        \TinyCat\Core\Updates\Manager::configure(Startup::option(...), static function (int $status): void { Errors::respond($status); });
     }
 
     private static function installation(string $path): bool
@@ -52,7 +52,7 @@ final class Platform
             new LocalizedRoute('core.privacy', '^/privacy$', translatedDocument: true),
             new LocalizedRoute('core.search', '^/search/all$', ['q', 'collection']),
         ], navigation: [new NavigationItem('tinycat.core.dashboard', static fn (): array => ['href' => '/admin', 'icon' => 'dashboard', 'label' => \TinyCat\Support\Localization::t('common.dashboard')], 0)],
-            widgets: [new DashboardWidget('core.diagnostics', Admin\Diagnostics::render(...), 100)]);
+            widgets: [new DashboardWidget('core.diagnostics', static fn (): string => Admin\Diagnostics::render(), 100)]);
     }
 
     public static function register(\TinyCat\Http\Api $api): void

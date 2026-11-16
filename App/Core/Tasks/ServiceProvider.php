@@ -39,10 +39,10 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
 
     public static function register(\TinyCat\Http\Api $api): void
     {
-        \TinyCat\Http\Middleware::register('scheduler', Tokens::requireBearer(...));
-        \TinyCat\Http\Middleware::register('scheduler_trigger', Tokens::requireBasic(...));
+        \TinyCat\Http\Middleware::register('scheduler', static function (): void { Tokens::requireBearer(); });
+        \TinyCat\Http\Middleware::register('scheduler_trigger', static function (): void { Tokens::requireBasic(); });
         Api::register($api);
-        \TinyCat\Http\Router::route('GET', '/admin/cron/list', Pages::listing(...));
-        \TinyCat\Http\Router::route('GET', '/admin/cron', Pages::administration(...));
+        \TinyCat\Http\Router::route('GET', '/admin/cron/list', static function (): void { Pages::listing(); });
+        \TinyCat\Http\Router::route('GET', '/admin/cron', static function (): void { Pages::administration(); });
     }
 }

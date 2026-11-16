@@ -21,14 +21,14 @@ final class Deployment
         return $state;
     }
 
-    /** @param array<string, string> $source
+    /** @param array<string, string>|(\Closure(): array<string, string>) $source
      * @return array<string, string> */
-    public static function selection(string $root, array $source): array
+    public static function selection(string $root, array|\Closure $source): array
     {
         $plan = Distribution::read($root); $state = self::read($root);
         if ($plan === null) {
             if ($state !== null) { throw new \RuntimeException('Deployment state requires its product descriptor.'); }
-            return $source;
+            return $source instanceof \Closure ? $source() : $source;
         }
         if ($state !== null && ($state['product'] !== $plan['product'] || array_diff($state['installed'], array_keys($plan['selection'])) !== [])) { throw new \RuntimeException('Installed product does not match its available modules.'); }
         return Distribution::selection($plan, $state['active'] ?? $plan['active']);

@@ -167,4 +167,15 @@ exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../fixtures/m
 if ($exitCode !== 0) { throw new RuntimeException('Minimal runtime failed: ' . implode("\n", $output)); }
 echo implode("\n", $output) . "\n";
 $assert($exitCode === 0, 'The minimal runtime works in its own clean process');
+
+$output = [];
+exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../fixtures/modules/minimal-boot.php') . ' --framework 2>&1', $output, $exitCode);
+if ($exitCode !== 0) { throw new RuntimeException('Framework startup failed: ' . implode("\n", $output)); }
+echo implode("\n", $output) . "\n";
+$assert($exitCode === 0, 'Framework registration keeps operational callbacks lazy');
 echo 'PASS offline registries, ownership, selection and technical startup (' . $checks . " checks)\n";
+
+$output = []; $exitCode = 0;
+exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg(__DIR__ . '/../fixtures/modules/minimal-boot.php') . ' --social 2>&1', $output, $exitCode);
+$assert($exitCode === 0, 'Social registration stays lazy: ' . implode("\n", $output));
+echo implode("\n", $output) . "\n";

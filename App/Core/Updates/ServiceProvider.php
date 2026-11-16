@@ -18,6 +18,6 @@ final class ServiceProvider implements \TinyCat\Core\Modules\Module, \TinyCat\Co
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
-        \TinyCat\Http\Router::route('GET', '/admin/updates', Pages::administration(...));
+        \TinyCat\Http\Router::route('GET', '/admin/updates', static function (): void { Pages::administration(); });
     }
 }

@@ -11,6 +11,7 @@ final class Components
     private static int $selection = -1;
     /** @var array<string, mixed>|null */
     private static ?array $templates = null;
+    private static bool $fresh = false;
 
     /**
      * @template T
@@ -19,10 +20,10 @@ final class Components
      */
     public static function withFreshTemplates(callable $build): mixed
     {
-        $templates = self::$templates; $selection = self::$selection;
-        self::$templates = null;
+        $templates = self::$templates; $selection = self::$selection; $fresh = self::$fresh;
+        self::$templates = null; self::$fresh = true;
         try { return $build(); }
-        finally { self::$templates = $templates; self::$selection = $selection; }
+        finally { self::$templates = $templates; self::$selection = $selection; self::$fresh = $fresh; }
     }
 
     /** @return array<string, mixed> */
@@ -31,6 +32,7 @@ final class Components
         $revision = \TinyCat\Core\Modules\Resources::revision();
         if (self::$selection !== $revision) { self::$templates = null; self::$selection = $revision; }
         if (self::$templates !== null) { return self::$templates; }
+        if (!self::$fresh && ($compiled = CompiledAssets::components()) !== null) { return self::$templates = $compiled; }
         $templates = [];
         foreach (\TinyCat\Core\Modules\Resources::files('components') as $file) {
             $definitions = json_decode((string) file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);

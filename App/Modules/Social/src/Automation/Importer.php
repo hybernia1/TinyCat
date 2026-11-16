@@ -41,7 +41,7 @@ final class Importer
             ], order: 10, modeOptions: ['admin' => ['source_id']],
             normalize: self::normalizeTaskOptions(...),
             healthAge: static fn (): ?int => (int) \TinyCat\Database\Connection::value('SELECT COUNT(*) FROM bot_sources WHERE enabled = 1') > 0 ? 1800 : null,
-            detail: RunDetails::present(...),
+            detail: static fn (array $run): array => RunDetails::present($run),
             batchOption: 'bot_limit',
         );
     }

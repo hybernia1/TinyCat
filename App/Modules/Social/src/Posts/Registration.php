@@ -7,7 +7,7 @@ final class Registration implements \TinyCat\Core\Modules\StorageModule, \TinyCa
 
     public static function contributions(): \TinyCat\Core\Modules\Contributions
     {
-        return new \TinyCat\Core\Modules\Contributions(embeds: [new \TinyCat\Core\Modules\EmbedSource('social.posts', Embed::data(...))], sitemaps: [new \TinyCat\Core\Modules\SitemapSection('status', static fn (): int => SitemapData::count('status'), static fn (int $limit, int $offset): array => SitemapData::entries('status', $limit, $offset), 30), new \TinyCat\Core\Modules\SitemapSection('tags', static fn (): int => SitemapData::count('tags'), static fn (int $limit, int $offset): array => SitemapData::entries('tags', $limit, $offset), 40)], homepages: [new \TinyCat\Core\Modules\EntryPage('tinycat.status.home', '/social', Pages::home(...), 10, static fn (): string => \TinyCat\Support\Localization::t('public.feed_title'), 'message-circle')], notificationTypes: NotificationPresentation::types());
+        return new \TinyCat\Core\Modules\Contributions(embeds: [new \TinyCat\Core\Modules\EmbedSource('social.posts', static fn (string $path, int $width, int $height): ?array => Embed::data($path, $width, $height))], sitemaps: [new \TinyCat\Core\Modules\SitemapSection('status', static fn (): int => SitemapData::count('status'), static fn (int $limit, int $offset): array => SitemapData::entries('status', $limit, $offset), 30), new \TinyCat\Core\Modules\SitemapSection('tags', static fn (): int => SitemapData::count('tags'), static fn (int $limit, int $offset): array => SitemapData::entries('tags', $limit, $offset), 40)], homepages: [new \TinyCat\Core\Modules\EntryPage('tinycat.status.home', '/social', static function (): void { Pages::home(); }, 10, static fn (): string => \TinyCat\Support\Localization::t('public.feed_title'), 'message-circle')], notificationTypes: NotificationPresentation::types());
     }
 
     public static function initialize(): void
@@ -51,9 +51,9 @@ final class Registration implements \TinyCat\Core\Modules\StorageModule, \TinyCa
         });
 
         foreach ([
-            ['GET', '/social', Pages::home(...)],
-            ['GET', '/status', Pages::detail(...)],
-            ['GET', '/tag', Pages::tag(...)],
+            ['GET', '/social', static function (): void { Pages::home(); }],
+            ['GET', '/status', static function (?int $statusId = null): void { Pages::detail($statusId); }],
+            ['GET', '/tag', static function (?string $tag = null): void { Pages::tag($tag); }],
         ] as [$methods, $path, $handler]) {
             \TinyCat\Http\Router::route($methods, $path, $handler);
         }

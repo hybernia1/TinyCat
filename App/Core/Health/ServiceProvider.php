@@ -34,6 +34,6 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
     public static function register(\TinyCat\Http\Api $api): void
     {
         Api::register($api);
-        \TinyCat\Http\Router::route('GET', '/admin/site-health', Pages::show(...));
+        \TinyCat\Http\Router::route('GET', '/admin/site-health', static function (): void { Pages::show(); });
     }
 }

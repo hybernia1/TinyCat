@@ -12,9 +12,11 @@ final readonly class Loader
     public static function fromCatalog(Catalog $catalog): self { return new self($catalog); }
     public static function load(string $root): self
     {
-        $selection = Distribution::read($root)['selection'] ?? require $root . '/App/modules.php';
-        if (!is_array($selection)) { throw new \InvalidArgumentException('Module selection must be a map.'); }
-        return self::fromSelection($root, Deployment::selection($root, $selection));
+        return self::fromSelection($root, Deployment::selection($root, static function () use ($root): array {
+            $selection = require $root . '/App/modules.php';
+            if (!is_array($selection)) { throw new \InvalidArgumentException('Module selection must be a map.'); }
+            return $selection;
+        }));
     }
 
     /** @param array<array-key, mixed> $selection */

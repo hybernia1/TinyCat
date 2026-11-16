@@ -24,8 +24,8 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
     {
         Integration::configure([]);
         Participants::configure(\TinyCat\Core\Modules\Loader::fromCatalog(\TinyCat\Core\Modules\Resources::catalog()));
-        \TinyCat\Core\Runtime\Startup::$identity = Authentication::auth(...);
-        \TinyCat\Core\Runtime\Startup::$readiness[] = Readiness::ready(...);
+        \TinyCat\Core\Runtime\Startup::$identity = static fn (): ?array => Authentication::auth();
+        \TinyCat\Core\Runtime\Startup::$readiness[] = static fn (): bool => Readiness::ready();
     }
 
     public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
@@ -64,12 +64,12 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
             \TinyCat\Core\Identity\AvatarHttp::respond($username, static function (): void { Integration::notFound(); });
         });
 
-        \TinyCat\Http\Router::route('GET', '/admin/users', Pages::administration(...));
+        \TinyCat\Http\Router::route('GET', '/admin/users', static function (): void { Pages::administration(); });
         foreach ([
-            ['GET', '/login', Pages::login(...)],
-            ['GET', '/logout', Pages::logout(...)],
-            ['GET', '/register', Pages::register(...)],
-            ['GET', '/recovery', Pages::recovery(...)],
+            ['GET', '/login', static function (): void { Pages::login(); }],
+            ['GET', '/logout', static function (): void { Pages::logout(); }],
+            ['GET', '/register', static function (): void { Pages::register(); }],
+            ['GET', '/recovery', static function (): void { Pages::recovery(); }],
         ] as [$methods, $path, $handler]) {
             \TinyCat\Http\Router::route($methods, $path, $handler);
         }

@@ -5,6 +5,20 @@ define('TINYCAT', true);
 require $argv[1] . '/App/autoload.php';
 require $argv[1] . '/App/Core/Mail/Templates.php';
 $result = ['packages' => \TinyCat\Support\Languages::language_packages()];
+$result['components'] = \TinyCat\Support\CompiledAssets::components();
+$packages = $argv[1] . '/App/module-packages.json';
+file_put_contents($packages, '{}');
+try { $result['changed_packages'] = \TinyCat\Support\CompiledAssets::components() === null; }
+finally { unlink($packages); }
+$manifest = new ReflectionProperty(\TinyCat\Support\CompiledAssets::class, 'manifest');
+$compiledManifest = $manifest->getValue();
+$manifest->setValue(null, array_replace($compiledManifest, ['server_components' => '../outside.php']));
+try { \TinyCat\Support\CompiledAssets::components(); $result['invalid_components'] = false; }
+catch (RuntimeException) { $result['invalid_components'] = true; }
+$legacyManifest = $compiledManifest; unset($legacyManifest['server_components']);
+$manifest->setValue(null, $legacyManifest);
+$result['legacy_components'] = \TinyCat\Support\CompiledAssets::components();
+$manifest->setValue(null, $compiledManifest);
 $result['unknown_locale'] = \TinyCat\Support\Localization::t('common.close', [], 'xx');
 $result['regional_plural'] = \TinyCat\Support\Localization::plural('bots.sources_count', 2, [], 'cs_CZ');
 foreach (array_keys($result['packages']) as $locale) {

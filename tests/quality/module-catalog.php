@@ -173,6 +173,19 @@ try {
     $expected = array_values(array_unique($expected));
     $assert($legacy->register(new TinyCat\Http\Api()) === $expected, 'All current table declarations are preserved');
 
+    $lazyRoot = $temporary . '/lazy-selection';
+    mkdir($lazyRoot . '/App', 0700, true);
+    $emptyPlan = ['format' => 1, 'product' => 'fixture.runtime', 'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => [], 'legacy' => true];
+    file_put_contents($lazyRoot . '/App/distribution.json', json_encode($emptyPlan, JSON_THROW_ON_ERROR));
+    file_put_contents($lazyRoot . '/App/modules.php', '<?php throw new RuntimeException("Source selection must remain lazy.");');
+    $assert(Loader::load($lazyRoot)->catalog->has('tinycat.ui'), 'A distribution loads without evaluating source module selection');
+    unlink($lazyRoot . '/App/distribution.json');
+    file_put_contents($lazyRoot . '/App/modules.php', '<?php return "invalid";');
+    $reject(static fn () => Loader::load($lazyRoot), 'Non-array source selection');
+    $sourceCalls = 0;
+    $sourceSelection = TinyCat\Core\Modules\Deployment::selection($lazyRoot, static function () use (&$sourceCalls): array { $sourceCalls++; return []; });
+    $assert($sourceSelection === [] && $sourceCalls === 1, 'Source selection is evaluated once when no distribution exists');
+
     // Upgrade activation IDs without touching retained schema streams or enabling Social.
     $plan = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.social', require $root . '/App/available-modules.php');
     $assert($plan['format'] === 3 && $plan['required'] === [] && array_keys($plan['selection']) === ['tinycat.social', 'tinycat.blog'], 'Signed selection contains only optional functional modules');

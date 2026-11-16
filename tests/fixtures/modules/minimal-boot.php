@@ -3,6 +3,26 @@ declare(strict_types=1);
 
 define('TINYCAT', true);
 require dirname(__DIR__, 3) . '/App/autoload.php';
+if (($argv[1] ?? '') === '--framework') {
+    $loader = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []);
+    \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['dsn' => 'sqlite::memory:']]), $loader);
+    foreach ([\TinyCat\Core\Identity\Pages::class, \TinyCat\Core\Identity\Authentication::class, \TinyCat\Core\Identity\Readiness::class, \TinyCat\Core\Tasks\Pages::class, \TinyCat\Core\Tasks\Tokens::class, \TinyCat\Core\Health\Pages::class, \TinyCat\Core\Installation\Pages::class, \TinyCat\Core\Updates\Pages::class, \TinyCat\Core\Ui\Admin\Diagnostics::class, \TinyCat\Core\Runtime\Errors::class] as $class) {
+        if (class_exists($class, false)) { throw new RuntimeException('Framework registration eagerly loaded ' . $class); }
+    }
+    if (session_status() !== PHP_SESSION_NONE || class_exists(\TinyCat\Database\Connection::class, false)) { throw new RuntimeException('Framework registration opened runtime state.'); }
+    echo "PASS framework callbacks defer page handlers, identity, diagnostics and scheduler authorization\n";
+    exit;
+}
+if (($argv[1] ?? '') === '--social') {
+    $loader = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), ['tinycat.social' => 'App/Modules/Social/module.json']);
+    \TinyCat\Core\Runtime\Application::start(new \TinyCat\Core\Runtime\Configuration(['database' => ['dsn' => 'sqlite::memory:']]), $loader);
+    foreach ([\TinyCat\Social\Automation\Pages::class, \TinyCat\Social\Automation\RunDetails::class, \TinyCat\Social\Profiles\Pages::class, \TinyCat\Social\Profiles\SitemapData::class, \TinyCat\Social\Posts\Pages::class, \TinyCat\Social\Posts\Embed::class, \TinyCat\Social\Presentation\Pages::class, \TinyCat\Social\Presentation\Layout::class, \TinyCat\Social\Presentation\Discovery::class] as $class) {
+        if (class_exists($class, false)) { throw new RuntimeException('Social registration eagerly loaded ' . $class); }
+    }
+    if (session_status() !== PHP_SESSION_NONE || class_exists(\TinyCat\Database\Connection::class, false)) { throw new RuntimeException('Social registration opened runtime state.'); }
+    echo "PASS Social registration defers pages, discovery and task details\n";
+    exit;
+}
 $identityCalls = 0; $readyCalls = 0;
 $context = new \TinyCat\Core\Runtime\Context(new \TinyCat\Core\Runtime\Configuration([
     'database' => ['dsn' => 'sqlite::memory:'], 'i18n' => ['locale' => 'cs'], 'cache' => ['driver' => 'filesystem'],
