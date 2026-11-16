@@ -246,6 +246,11 @@ PHP;
     $assert(true, 'Supported baseline installer prepares the representative database.');
     $historySeed = $database->prepare('INSERT INTO schema_migrations (migration, version, checksum, applied_at) VALUES (?, ?, ?, ?)');
     $historySeed->execute(['fixture.baseline', $baselineVersion, str_repeat('a', 64), '2026-01-02 03:04:05']);
+    // Long-running sites retain opaque version labels in their historical schema.
+    $database->exec('ALTER TABLE schema_migrations MODIFY COLUMN version VARCHAR(190) NOT NULL');
+    foreach (['20260731_email_analytics_ip_limits', '20260801_performance_minification', '20260801_profile_links_and_legacy_cleanup'] as $historicalVersion) {
+        $historySeed->execute([$historicalVersion, $historicalVersion, hash('sha256', $historicalVersion), '2026-08-01 03:04:05']);
+    }
     if (isset($options['snapshot'])) {
         require_once $root . '/App/Core/Database/Snapshots.php';
         \TinyCat\Database\Snapshots::restore($database, (string) $options['snapshot']);

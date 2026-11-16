@@ -10,7 +10,7 @@ in the platform assembly, with a shared identity and [module lifecycle](docs/ope
 
 The application runs without Composer packages, a JavaScript package manager, or a frontend build step. PHP, MySQL-compatible storage, and the files in this repository are the complete runtime.
 
-Current release: **6.0.5**. TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`. New update packages support completed TinyCat 6.0.4 installations and newer. Older installations must first reach 6.0.4 using its published signed release. See the [update procedure](docs/operations/updates.md#upgrading-to-604).
+Current release: **6.0.6**. This release corrects the historical migration-journal conversion failure in the [withdrawn 6.0.5 release](docs/operations/updates.md#upgrading-to-605). TinyCat uses [Semantic Versioning](https://semver.org/); the runtime version is defined by `TinyCat\Support\Version::CURRENT`. New update packages support completed TinyCat 6.0.4 installations and newer. Older installations must first reach 6.0.4 using its published signed release. See the [update procedure](docs/operations/updates.md#upgrading-to-604).
 
 Usernames support 2–32 letters (including accents), numbers, dots, hyphens and underscores, preserving the entered case. They start with a letter or number and cannot end with a dot or hyphen. Numeric-only names are reserved for internal mention IDs. Login and username uniqueness remain case insensitive.
 

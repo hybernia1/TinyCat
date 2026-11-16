@@ -20,6 +20,9 @@ Published migration files, IDs and checksums remain immutable. The shared
 It preserves each original ID, checksum, schema sequence, release version and
 known application time. Unknown historical schema timestamps remain `NULL`.
 `module_installations` retains the separate current state of each schema.
+Historical version values are opaque labels, sometimes the original migration
+name rather than a semantic release number. The corrected journal accepts up to
+190 characters and widens existing 6.0.5 storage during explicit migration.
 
 The signed `tinycat.support` schema steps prepare and finish the copy even when
 the running 6.0.4 updater retains its original lifecycle and schema writer. A
@@ -39,16 +42,35 @@ php tools/release/release-update-rehearsal.php --artifact=dist/release-X.Y.Z/upd
 ```
 
 The rehearsal uses the published `v6.0.4` source and a disposable MySQL database.
-It checks representative Social data, the signed update and exact rollback.
+It checks representative Social data, retained long historical version labels,
+the signed update and exact rollback.
 The release version must be newer than 6.0.4. The automated file rehearsal
 uses a synthetic successor in an isolated copy when the source is still 6.0.4.
 
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.0.6
+
+Use the signed 6.0.6 update from a completed 6.0.4 or 6.0.5 installation.
+Historical version labels up to 190 characters are preserved without changing
+their values, checksums or application times. A new schema step widens journals
+created by 6.0.5, including when the running updater retains its old PHP classes.
+Published migrations remain unchanged. If 6.0.5 is in a failed maintenance state,
+first verify its backup and perform the normal rollback, then apply 6.0.6.
+
 ## Upgrading to 6.0.5
 
-Use the signed update package from a completed 6.0.4 installation. This release
+**Withdrawn from stable updates.** Do not apply 6.0.5: its journal conversion
+rejects historical version labels longer than 32 characters. A completed 6.0.4
+installation can retain those labels from earlier upgrades. If this failure
+leaves a site in maintenance mode, verify its original database/file snapshot
+and use the normal update rollback before reopening it. Do not clear the
+maintenance marker or rewrite historical migration records to bypass the error.
+The original signed 6.0.5 assets remain available unchanged for recovery.
+The corrected signed successor is 6.0.6.
+
+This release
 reduces startup work, compiles server component catalogs, unifies migration
 journals and derives scheduler presentation from registered tasks. Configuration,
 uploads and runtime storage stay in place. The updater snapshots the database

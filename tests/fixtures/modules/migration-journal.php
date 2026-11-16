@@ -13,19 +13,28 @@ return static function (PDO $pdo, callable $assert): void {
         $assert(false, 'Invalid conversion unexpectedly succeeded');
     };
     $legacy();
-    $pdo->exec('CREATE TABLE schema_migrations (migration VARCHAR(190) NOT NULL PRIMARY KEY, version VARCHAR(32) NOT NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NOT NULL)');
+    $pdo->exec('CREATE TABLE schema_migrations (migration VARCHAR(190) NOT NULL PRIMARY KEY, version VARCHAR(190) NOT NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NOT NULL)');
     $query = $pdo->prepare('INSERT INTO schema_migrations VALUES (?, ?, ?, ?)');
-    $query->execute(['fixture.initial', '6.0.4', str_repeat('a', 64), '2026-01-02 03:04:05']);
+    $historicalVersion = '20260801_profile_links_and_legacy_cleanup';
+    $query->execute(['fixture.initial', $historicalVersion, str_repeat('a', 64), '2026-01-02 03:04:05']);
     $insert('fixture.one', 'fixture.initial', str_repeat('b', 64));
     $insert('fixture.two', 'fixture.initial', str_repeat('c', 64));
     $assert(count(\TinyCat\Database\Migrations::history($pdo, 'schema')) === 2 && !\TinyCat\Database\Schema::exists($pdo, 'migrations'), 'Reading legacy history has no DDL side effects');
+    // Reproduce the empty, narrow journal left by the interrupted 6.0.5 conversion.
+    $pdo->exec('CREATE TABLE migrations (kind VARCHAR(16) NOT NULL DEFAULT \'schema\', stream VARCHAR(190) NOT NULL, migration VARCHAR(190) NOT NULL, sequence INTEGER NULL, release_version VARCHAR(32) NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NULL, PRIMARY KEY (kind, stream, migration))');
+    $widen = require __DIR__ . '/../../../App/Core/Tasks/migrations/004-release-labels.php';
+    $widen($pdo); $widen($pdo);
+    if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
+        $assert((int) $pdo->query("SELECT CHARACTER_MAXIMUM_LENGTH FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'migrations' AND COLUMN_NAME = 'release_version'")->fetchColumn() === 190, 'Standalone migration widens a 6.0.5 journal without relying on new runtime methods and can repeat safely');
+        $pdo->exec('ALTER TABLE migrations MODIFY COLUMN release_version VARCHAR(32) NULL');
+    }
     \TinyCat\Database\Migrations::prepare($pdo);
     $assert((int) $pdo->query('SELECT COUNT(*) FROM migrations')->fetchColumn() === 0 && \TinyCat\Database\Schema::exists($pdo, 'module_migrations'), 'Staged transition keeps the running old updater journal intact');
     \TinyCat\Database\Migrations::ensure($pdo);
     $assert(!\TinyCat\Database\Schema::exists($pdo, 'module_migrations') && !\TinyCat\Database\Schema::exists($pdo, 'schema_migrations'), 'Verified conversion retires both old tables');
     $assert((int) $pdo->query('SELECT COUNT(*) FROM migrations')->fetchColumn() === 3, 'Kinds and streams preserve independently scoped identical migration IDs');
     $global = \TinyCat\Database\Migrations::history($pdo, 'global', 'tinycat')[0];
-    $assert($global['release_version'] === '6.0.4' && $global['applied_at'] === '2026-01-02 03:04:05' && $global['sequence'] === null && $global['checksum'] === str_repeat('a', 64), 'Global release, checksum and known application time are preserved');
+    $assert($global['release_version'] === $historicalVersion && $global['applied_at'] === '2026-01-02 03:04:05' && $global['sequence'] === null && $global['checksum'] === str_repeat('a', 64), 'Opaque historical versions longer than 32 characters, checksums and application times are preserved');
     $schema = \TinyCat\Database\Migrations::history($pdo, 'schema', 'fixture.one')[0];
     $assert((int) $schema['sequence'] === 1 && $schema['applied_at'] === null && $schema['release_version'] === null && $schema['checksum'] === str_repeat('b', 64), 'Schema history preserves its order without inventing timestamps or release versions');
     \TinyCat\Database\Migrations::ensure($pdo);

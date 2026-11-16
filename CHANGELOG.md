@@ -1,5 +1,15 @@
 # Changelog
 
+## 6.0.6 - 2026-11-17
+
+- Preserve opaque historical migration version labels up to 190 characters when converting the unified journal. Widen existing 6.0.5 storage through a new schema step without changing published migration checksums.
+- Reproduce the retained pre-6.0.4 labels in the SQLite/MySQL journal tests and the signed 6.0.4 update and rollback rehearsal.
+- Include the startup, scheduler-registration, shared styling and unified-journal changes from 6.0.5, whose signed assets remain unchanged and withdrawn from the stable channel.
+
+## 6.0.5 - withdrawn from stable updates
+
+- This release's unified-journal conversion rejects historical version labels longer than 32 characters. Sites upgraded from older releases can retain these labels even after a completed 6.0.4 update. The published signed assets remain unchanged; use the corrected 6.0.6 successor.
+
 ## 6.0.4 - 2026-11-15
 
 - Reduce repeated core startup work with selection-scoped provider validation and immutable distribution snapshots.

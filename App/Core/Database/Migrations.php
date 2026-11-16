@@ -28,9 +28,16 @@ final class Migrations
     {
         if (!in_array($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), ['mysql', 'sqlite'], true)) { throw new RuntimeException('Migration journals require MySQL, MariaDB or SQLite.'); }
         $suffix = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' : '';
-        $pdo->exec('CREATE TABLE IF NOT EXISTS migrations (kind VARCHAR(16) NOT NULL DEFAULT \'schema\', stream VARCHAR(190) NOT NULL, migration VARCHAR(190) NOT NULL, sequence INTEGER NULL, release_version VARCHAR(32) NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NULL, PRIMARY KEY (kind, stream, migration))' . $suffix);
+        $pdo->exec('CREATE TABLE IF NOT EXISTS migrations (kind VARCHAR(16) NOT NULL DEFAULT \'schema\', stream VARCHAR(190) NOT NULL, migration VARCHAR(190) NOT NULL, sequence INTEGER NULL, release_version VARCHAR(190) NULL, checksum CHAR(64) NOT NULL, applied_at DATETIME NULL, PRIMARY KEY (kind, stream, migration))' . $suffix);
         (self::inspection())::requireColumns($pdo, 'migrations', ['kind', 'stream', 'migration', 'sequence', 'release_version', 'checksum', 'applied_at']);
         self::shape($pdo, 'migrations', ['kind', 'stream', 'migration', 'checksum'], ['kind', 'stream', 'migration']);
+        // Historical versions can be opaque migration labels, not only SemVer.
+        if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
+            $width = $pdo->query("SELECT CHARACTER_MAXIMUM_LENGTH FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'migrations' AND COLUMN_NAME = 'release_version'");
+            if ($width === false) { throw new RuntimeException('Cannot inspect migration version storage.'); }
+            $length = (int) $width->fetchColumn();
+            if ($length > 0 && $length < 190) { $pdo->exec('ALTER TABLE migrations MODIFY COLUMN release_version VARCHAR(190) NULL'); }
+        }
     }
 
     /** True only for source tables; the old writer view stores no duplicate history. */
@@ -187,6 +194,6 @@ final class Migrations
     /** @param array<string, mixed> $record */
     private static function validate(array $record): void
     {
-        if (!in_array($record['kind'], ['global', 'schema'], true) || preg_match('/^[a-z][a-z0-9.-]{0,189}$/D', (string) $record['stream']) !== 1 || preg_match('/^[a-z0-9][a-z0-9._:-]{0,189}$/D', (string) $record['migration']) !== 1 || preg_match('/^[a-f0-9]{64}$/D', (string) $record['checksum']) !== 1 || ($record['kind'] === 'schema' ? !is_int($record['sequence']) || $record['sequence'] < 1 || $record['release_version'] !== null : $record['sequence'] !== null || !is_string($record['release_version']) || $record['release_version'] === '' || strlen($record['release_version']) > 32)) { throw new RuntimeException('Invalid migration journal record.'); }
+        if (!in_array($record['kind'], ['global', 'schema'], true) || preg_match('/^[a-z][a-z0-9.-]{0,189}$/D', (string) $record['stream']) !== 1 || preg_match('/^[a-z0-9][a-z0-9._:-]{0,189}$/D', (string) $record['migration']) !== 1 || preg_match('/^[a-f0-9]{64}$/D', (string) $record['checksum']) !== 1 || ($record['kind'] === 'schema' ? !is_int($record['sequence']) || $record['sequence'] < 1 || $record['release_version'] !== null : $record['sequence'] !== null || !is_string($record['release_version']) || $record['release_version'] === '' || strlen($record['release_version']) > 190)) { throw new RuntimeException('Invalid migration journal record.'); }
     }
 }

@@ -138,6 +138,12 @@ a odpovídajícím aktuálním instalačním schématem. Zachovej podporované a
 podpisy, manifesty, zálohy a rollback podle [návodu](docs/operations/updates.md).
 Staré položky mazacího manifestu mohou být nutné pro update podporované verze.
 
+Dokončená podporovaná verze může stále obsahovat migrační historii starších
+vydání. Historické pole verze může být celý název migrace, například
+`20260801_profile_links_and_legacy_cleanup`, nikoli SemVer do 32 znaků.
+Update testuj i s touto historií a původními PHP třídami již načtenými v updateru;
+čerstvá instalace stejné verze není náhradou tohoto scénáře.
+
 ## Lokální prostředí
 
 Živá testovací instalace je **https://tinycat.test/** v samostatném adresáři
