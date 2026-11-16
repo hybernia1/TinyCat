@@ -2,11 +2,11 @@
 declare(strict_types=1);
 namespace TinyCat\Modules\@@NAMESPACE@@;
 
-final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesSchema, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Accounts\ProvidesLifecycle
+final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Modules\ProvidesSchema, \TinyCat\Core\Modules\ProvidesContributions, \TinyCat\Core\Identity\ProvidesLifecycle
 {
-    public static function accountLifecycle(): \TinyCat\Accounts\Participant
+    public static function accountLifecycle(): \TinyCat\Core\Identity\Participant
     {
-        return new \TinyCat\Accounts\Participant(prepareDelete: static fn (array $user): \TinyCat\Accounts\Deletion => new \TinyCat\Accounts\Deletion(
+        return new \TinyCat\Core\Identity\Participant(prepareDelete: static fn (array $user): \TinyCat\Core\Identity\Deletion => new \TinyCat\Core\Identity\Deletion(
             afterCommit: static function () use ($user): void { \TinyCat\Support\Storage::write(\TinyCat\Support\Storage::path('@@SHORT@@-deleted-' . (int) $user['id'] . '.txt'), 'owned data cleanup'); },
         ));
     }
@@ -24,7 +24,7 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
     {
         return new \TinyCat\Core\Modules\Contributions(tasks: [new \TinyCat\Core\Modules\ScheduledTask('@@ID@@.tick', static function (array $context): array {
             $count = \TinyCat\Database\Connection::exec('UPDATE @@TABLE@@ SET ticks = ticks + 1');
-            return \TinyCat\Support\TaskContext::result('completed', $count, $count);
+            return \TinyCat\Core\Tasks\Tasks::result('completed', $count, $count);
         })]);
     }
 
