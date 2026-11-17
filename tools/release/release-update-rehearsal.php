@@ -405,7 +405,7 @@ PHP;
     $rollbackRunner = '$argv = ["console.php", "rollback", ' . var_export(basename($backup), true) . ']; require ' . var_export($rescue['file'], true) . ';';
     [$rollbackExit, $rollbackOutput] = $run($rollbackRunner);
     $assert($rollbackExit === 0, 'Standard updater restores its recorded database and file snapshot: ' . implode(' ', $rollbackOutput));
-    $assert(is_file($installRoot . '/App/autoload.php'), 'Rollback restores the removed baseline autoload facade.');
+    $assert(is_file($installRoot . '/App/autoload.php') === isset($beforeInventory['App/autoload.php']), 'Rollback preserves the baseline autoload facade presence.');
     [$rescueExit, $rescueOutput] = $run('$argv = ["console.php", "help"]; require ' . var_export($rescue['file'], true) . ';');
     $assert($rescueExit === 0 && hash_file('sha256', $rescue['file']) === $rescue['hash'], 'The same rescue launcher runs after restoring the baseline: ' . implode(' ', $rescueOutput));
     $restoredInventory = $inventory($installRoot);
