@@ -11,7 +11,7 @@ use TinyCat\Database\Connection;
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 3);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
 try { throw new \TinyCat\Core\Identity\ValidationException(['email' => ['invalid']]); }

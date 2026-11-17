@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 define('TINYCAT', true);
-require_once __DIR__ . '/../../App/autoload.php';
+require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
 
 use TinyCat\Support\Storage;
 

@@ -146,9 +146,13 @@ vydání. Historické pole verze může být celý název migrace, například
 Update testuj i s touto historií a původními PHP třídami již načtenými v updateru;
 čerstvá instalace stejné verze není náhradou tohoto scénáře.
 
-Současné zdroje přijímají pouze dokončenou 6.0.8 a novější. Starší podporované
-weby nejprve převádí neměnný podepsaný release 6.0.8, případně přes jeho
-podporované předchůdce. Archivní aplikované SQL
+Současné zdroje přijímají pouze dokončenou 6.0.10 a novější. Starší podporované
+weby nejprve převádí neměnný podepsaný release 6.0.10, případně přes jeho
+podporované předchůdce. Před updatem z 6.0.10 obnov privátní rescue launcher
+příkazem `php App/Console.php rescue` a ověř jeho `help`; starší launchery ve
+storage mohou stále načítat odstraněné `App/autoload.php`. Publikovaný updater
+tuto podmínku nevynucuje. Externí skripty načítají přímo core runtime loader.
+Archivní aplikované SQL
 slouží ověření historie; nevracej kvůli němu odstraněné runtime adaptéry.
 Archivní migrační prefix může ve formátu 4 nést původní ID, pořadí a checksum
 s explicitním `file: null`. Vyžaduje samostatnou spustitelnou fresh baseline;

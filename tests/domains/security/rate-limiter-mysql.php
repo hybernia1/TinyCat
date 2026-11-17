@@ -7,7 +7,7 @@ if (!is_file(__DIR__ . '/../../../config.php') || !in_array('mysql', PDO::getAva
     exit(0);
 }
 define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/autoload.php';
+require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 $config = require __DIR__ . '/../../../config.php';
 $db = $config['database'];
 if (($db['driver'] ?? 'mysql') !== 'mysql') {

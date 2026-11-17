@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 3);
-require $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
+require $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 (new ReflectionProperty(TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 TinyCat\Core\Identity\Authentication::reset(null, true);
 $filters = ['q' => '', 'bot' => '3'];

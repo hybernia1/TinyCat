@@ -12,7 +12,7 @@ use TinyCat\Support\TranslationSources;
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $compile = require $root . '/tools/assets/compile-assets.php';
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
@@ -46,7 +46,7 @@ $assert(TranslationSources::files() === $expected, 'Every legacy translation sou
 $default = Resources::catalog();
 $assert(!$default->has('tinycat.blog') && !isset(TranslationSources::files()['Blog']), 'An alternate built-in product is not activated by its directory');
 $baseline = $compile();
-foreach (['core' => [], 'social' => ['tinycat.social' => 'App/Modules/Social/module.json'], 'blog' => ['tinycat.blog' => 'App/Modules/Blog/module.json'], 'combined' => require $root . '/App/available-modules.php'] as $assembly => $selection) {
+foreach (['core' => [], 'social' => ['tinycat.social' => 'App/Modules/Social/module.json'], 'blog' => ['tinycat.blog' => 'App/Modules/Blog/module.json'], 'combined' => \TinyCat\Core\Modules\SourceModules::selection($root)] as $assembly => $selection) {
     $catalog = \TinyCat\Core\Modules\Loader::fromSelection($root, $selection)->catalog;
     Resources::withCatalog($catalog, static function () use ($assembly, $selection, $assert): void {
         $socialSelected = isset($selection['tinycat.social']);

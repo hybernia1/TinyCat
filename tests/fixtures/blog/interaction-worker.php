@@ -7,7 +7,7 @@ $name = getenv('TINYCAT_BLOG_TEST_DATABASE');
 if (!is_string($name) || preg_match('/^tinycat_blog_test_[a-f0-9]{12}$/D', $name) !== 1) { throw new RuntimeException('Missing isolated Blog database.'); }
 $config = require $root . '/config.php'; $db = $config['database'];
 $dsn = 'mysql:host=' . ($db['host'] ?? '127.0.0.1') . ';port=' . ($db['port'] ?? 3306) . ';dbname=' . $name . ';charset=utf8mb4';
-define('TINYCAT', true); require $root . '/App/autoload.php';
+define('TINYCAT', true); require $root . '/App/Core/Runtime/autoload.php';
 $pdo = new PDO($dsn, $db['user'], $db['password'] ?? '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $pdo->exec('SET SESSION innodb_lock_wait_timeout = 10');
 TinyCat\Database\Connection::set($pdo);

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 return static function (): array {
     if (!defined('TINYCAT')) { define('TINYCAT', true); }
-    require_once __DIR__ . '/../../App/autoload.php';
+    require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
     return \TinyCat\Support\AssetGraph::withSnapshot(static fn (): array => \TinyCat\Support\ClientAssets::withBuildCache(static function (): array {
         $validateModals = require __DIR__ . '/../quality/modal-contracts.php';
         $validateModals();

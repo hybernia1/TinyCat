@@ -13,7 +13,7 @@ use TinyCat\Core\Runtime\Configuration;
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void { $checks++; if (!$condition) { throw new RuntimeException($message); } };
 $reject = static function (callable $action, string $message) use ($assert): void {

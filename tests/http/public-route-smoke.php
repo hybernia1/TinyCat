@@ -92,7 +92,7 @@ foreach ([
     }
 }
 
-$bootstrap = var_export($root . DIRECTORY_SEPARATOR . 'App' . DIRECTORY_SEPARATOR . 'autoload.php', true);
+$bootstrap = var_export($root . '/App/Core/Runtime/autoload.php', true);
 $adminScript = <<<'PHP'
 define('TINYCAT', true);
 $uri = (string) getenv('TINYCAT_SMOKE_URI');

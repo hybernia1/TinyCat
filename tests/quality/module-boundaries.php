@@ -2,6 +2,9 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__, 2);
+define('TINYCAT', true);
+require $root . '/App/Core/Runtime/autoload.php';
+if (is_file($root . '/App/autoload.php') || is_file($root . '/App/bootstrap.php')) { throw new RuntimeException('Runtime entry points must use the core loader directly.'); }
 $checks = 0;
 $failures = [];
 $assert = static function (bool $condition, string $message) use (&$checks, &$failures): void {
@@ -32,8 +35,8 @@ foreach (glob($root . '/App/Modules/*/src/Api.php') ?: [] as $path) {
 }
 
 $assert((require $root . '/App/modules.php') === ['tinycat.social' => 'App/Modules/Social/module.json'], 'Source selects one Social module');
-$available = require $root . '/App/available-modules.php';
-$assert(array_keys($available) === ['tinycat.social', 'tinycat.blog'], 'Only functional modules are available for activation');
+$available = \TinyCat\Core\Modules\SourceModules::selection($root);
+$assert(array_keys($available) === ['tinycat.blog', 'tinycat.social'], 'Only functional modules are available for activation');
 $framework = json_decode((string) file_get_contents($root . '/App/Core/services.json'), true, 512, JSON_THROW_ON_ERROR);
 foreach ($framework as $entry) {
     $assert(!isset($available[$entry['metadata']['id']]), 'Framework capability is not a selectable module');

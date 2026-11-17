@@ -33,7 +33,7 @@ namespace {
     }
     if (!extension_loaded('curl')) { echo "SKIP HTTP connection reuse: cURL unavailable.\n"; exit(0); }
     define('TINYCAT', true);
-    require __DIR__ . '/../../../App/autoload.php';
+    require __DIR__ . '/../../../App/Core/Runtime/autoload.php';
     $socket = stream_socket_server('tcp://127.0.0.1:0');
     $address = stream_socket_get_name($socket, false);
     fclose($socket);

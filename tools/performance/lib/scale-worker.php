@@ -103,7 +103,7 @@ try {
 
     $root = dirname(__DIR__, 3);
     define('TINYCAT', true);
-    require_once $root . '/App/autoload.php';
+    require_once $root . '/App/Core/Runtime/autoload.php';
 
     (new ReflectionProperty(\TinyCat\Support\Config::class, 'booted'))->setValue(null, true);
     (new ReflectionProperty(\TinyCat\Support\Config::class, 'config'))->setValue(null, [

@@ -10,7 +10,7 @@ use TinyCat\ModuleFixture\Calls;
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $failures = [];
 $assert = static function (bool $condition, string $message) use (&$checks, &$failures): void {
@@ -66,6 +66,26 @@ $metadata = static fn (string $id, array $requires = []): stdClass => (object) [
 $definition = static fn (string $id, array $requires = []): Definition => Definition::fromMetadata($metadata($id, $requires), $temporary);
 
 try {
+    $sourceRoot = $temporary . '/source';
+    mkdir($sourceRoot . '/App/Modules/Notes', 0775, true);
+    mkdir($sourceRoot . '/App/Modules/Extra', 0775, true);
+    mkdir($sourceRoot . '/App/Modules/NoManifest', 0775, true);
+    $notes = ['format' => 1, 'coreApi' => 1, 'id' => 'fixture.notes', 'namespace' => 'Fixture\\Notes\\', 'requires' => ['fixture.extra']];
+    $extra = ['format' => 1, 'coreApi' => 1, 'id' => 'fixture.extra', 'namespace' => 'Fixture\\Extra\\'];
+    file_put_contents($sourceRoot . '/App/Modules/Notes/module.json', json_encode($notes, JSON_THROW_ON_ERROR));
+    file_put_contents($sourceRoot . '/App/Modules/Extra/module.json', json_encode($extra, JSON_THROW_ON_ERROR));
+    file_put_contents($sourceRoot . '/App/Modules/Notes/Module.php', '<?php throw new RuntimeException("Module PHP must not execute");');
+    $sources = TinyCat\Core\Modules\SourceModules::selection($sourceRoot);
+    $assert(array_keys($sources) === ['fixture.extra', 'fixture.notes'], 'Source inventory reads new module IDs from JSON without a central list or PHP execution');
+    $assert(TinyCat\Core\Modules\SourceModules::selection($sourceRoot, 'fixture.notes') === $sources, 'Standalone source selection includes transitive dependencies');
+    $assert(array_keys(TinyCat\Core\Modules\SourceModules::selection($sourceRoot, 'fixture.extra')) === ['fixture.extra'], 'Standalone source selection excludes unrelated modules');
+    $reject(static fn () => TinyCat\Core\Modules\SourceModules::selection($sourceRoot, 'fixture.missing'), 'Unknown source module');
+    $notes['requires'] = ['fixture.missing'];
+    file_put_contents($sourceRoot . '/App/Modules/Notes/module.json', json_encode($notes, JSON_THROW_ON_ERROR));
+    $reject(static fn () => TinyCat\Core\Modules\SourceModules::selection($sourceRoot, 'fixture.notes'), 'Missing source dependency');
+    $extra['id'] = 'fixture.notes';
+    file_put_contents($sourceRoot . '/App/Modules/Extra/module.json', json_encode($extra, JSON_THROW_ON_ERROR));
+    $reject(static fn () => TinyCat\Core\Modules\SourceModules::selection($sourceRoot), 'Duplicate discovered module ID');
     $alpha = $definition('alpha');
     $beta = $definition('beta', ['fixture.alpha']);
     $gamma = $definition('gamma');
@@ -187,9 +207,9 @@ try {
     $assert($sourceSelection === [] && $sourceCalls === 1, 'Source selection is evaluated once when no distribution exists');
 
     // Current activation IDs preserve installed owners without historical remapping.
-    $plan = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.social', require $root . '/App/available-modules.php');
-    $assert($plan['format'] === 4 && $plan['required'] === [] && array_keys($plan['selection']) === ['tinycat.social', 'tinycat.blog'], 'Signed selection archives history and contains only optional functional modules');
-    $standalone = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.blog', require $root . '/App/available-modules.php');
+    $plan = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.social', \TinyCat\Core\Modules\SourceModules::selection($root));
+    $assert($plan['format'] === 4 && $plan['required'] === [] && array_keys($plan['selection']) === ['tinycat.blog', 'tinycat.social'], 'Signed selection archives history and contains only optional functional modules');
+    $standalone = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.blog', \TinyCat\Core\Modules\SourceModules::selection($root));
     foreach (['tinycat.users', 'tinycat.moderation', 'tinycat.bots'] as $stream) {
         $assert($standalone['schemaOwners'][$stream] === 'tinycat.social', 'Social owns the unchanged historical stream: ' . $stream);
     }
@@ -207,7 +227,7 @@ try {
     TinyCat\Core\Modules\Deployment::write($transitionRoot, $oldPlan, $oldPlan['active'], array_keys($oldPlan['selection']), '6.0.6');
     $before = file_get_contents($transitionRoot . '/storage/deployment.json');
     $transition = TinyCat\Core\Modules\Deployment::transition($transitionRoot, $plan);
-    $assert($transition === ['active' => ['tinycat.blog'], 'installed' => ['tinycat.social', 'tinycat.blog']], 'A completed current deployment retains disabled installed data owners without enabling them');
+    $assert($transition === ['active' => ['tinycat.blog'], 'installed' => ['tinycat.blog', 'tinycat.social']], 'A completed current deployment retains disabled installed data owners without enabling them');
     $assert(file_get_contents($transitionRoot . '/storage/deployment.json') === $before, 'Upgrade discovery does not mutate deployment state');
     $withoutSocial = $plan; unset($withoutSocial['selection']['tinycat.social'], $withoutSocial['requires']['tinycat.social']); $withoutSocial['active'] = ['tinycat.blog'];
     try { TinyCat\Core\Modules\Deployment::transition($transitionRoot, $withoutSocial); $assert(false, 'Removing installed Social must fail'); }

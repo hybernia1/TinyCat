@@ -12,7 +12,7 @@ use TinyCat\Database\Connection;
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 3);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $context = new TinyCat\Core\Runtime\Context(
     new TinyCat\Core\Runtime\Configuration([]), locale: static fn (): string => 'en',
 );

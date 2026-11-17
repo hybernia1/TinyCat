@@ -3,7 +3,7 @@ declare(strict_types=1);
 require __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 3);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 
 use TinyCat\Core\Modules\{Contributions, Loader, NotificationType, Registrations, Registries, Resources};
 use TinyCat\Core\Notifications\{Delivery, Inbox, Resource, Schema, Types};

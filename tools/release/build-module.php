@@ -4,14 +4,13 @@ declare(strict_types=1);
 /** Build a standalone module ZIP; installed hosts need neither Composer nor these tools. */
 if (PHP_SAPI !== 'cli') { http_response_code(403); exit(1); }
 $root = dirname(__DIR__, 2);
-define('TINYCAT', true); require $root . '/App/autoload.php';
+define('TINYCAT', true); require $root . '/App/Core/Runtime/autoload.php';
 $options = getopt('', ['module:', 'version:', 'output:', 'minimum-core:', 'minimum-php:']);
 $module = realpath($root . '/' . (string) ($options['module'] ?? ''));
 $base = realpath($root . '/App/Modules');
 if ($module === false || $base === false || dirname($module) !== $base || is_link($module)) { throw new InvalidArgumentException('Use --module=App/Modules/Name --version=X.Y.Z [--output=directory].'); }
 $definition = \TinyCat\Core\Modules\Definition::fromManifest($module . '/module.json');
-$selection = require $root . '/App/available-modules.php';
-$selection[$definition->id] = 'App/Modules/' . basename($module) . '/module.json';
+$selection = \TinyCat\Core\Modules\SourceModules::selection($root, $definition->id);
 $loader = \TinyCat\Core\Modules\Loader::fromSelection($root, $selection);
 \TinyCat\Core\Modules\Providers::validateAll($loader->catalog);
 $loader->registries();

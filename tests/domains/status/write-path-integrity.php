@@ -18,7 +18,7 @@ if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
 
 $root = dirname(__DIR__, 3);
 define('TINYCAT', true);
-require_once $root . '/App/autoload.php';
+require_once $root . '/App/Core/Runtime/autoload.php';
 require_once $root . '/App/Modules/Social/src/Profiles/Avatar.php';
 require_once $root . '/App/Modules/Social/src/Content/ImageStorage.php';
 require_once $root . '/App/Core/Text/LinkParser.php';

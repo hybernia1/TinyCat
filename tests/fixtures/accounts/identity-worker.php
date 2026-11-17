@@ -14,7 +14,7 @@ use TinyCat\Http\Router;
 $directory = getenv('TINYCAT_IDENTITY_DIRECTORY');
 if (!is_string($directory) || !is_file($directory . '/identity.sqlite')) { throw new RuntimeException('Missing identity fixture.'); }
 define('TINYCAT', true);
-require dirname(__DIR__, 3) . '/App/autoload.php';
+require dirname(__DIR__, 3) . '/App/Core/Runtime/autoload.php';
 TinyCat\Database\Connection::set(new PDO('sqlite:' . $directory . '/identity.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]));
 $modules = TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []);
 $api = Application::boot(new Context(

@@ -31,7 +31,7 @@ if (($argv[1] ?? '') !== '--isolated') {
 
 define('TINYCAT', true);
 $workspace = $argv[2];
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 foreach (['Users', 'Status', 'Bots'] as $domain) { $assert(!is_dir($workspace . '/App/Modules/' . $domain) && !is_dir($workspace . '/App/Modules/' . $domain . '/assets'), 'Excluded physical domain: ' . $domain); }

@@ -15,7 +15,7 @@ if (in_array($assetPath, ['/assets/fallback/image.svg', '/assets/fallback/avatar
 // This router is used only by the isolated HTTP contract test, never by production.
 define('TINYCAT', true);
 ini_set('error_log', 'php://stderr');
-require_once __DIR__ . '/../../../App/autoload.php';
+require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 
 
 $database = new PDO('sqlite:' . (string) getenv('TINYCAT_API_TEST_DATABASE'));

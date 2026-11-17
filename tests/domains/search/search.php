@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
-require_once __DIR__ . '/../../../App/autoload.php';
+require_once __DIR__ . '/../../../App/Core/Runtime/autoload.php';
 
 use TinyCat\Database\Connection;
 use TinyCat\Social\Search\Queries;

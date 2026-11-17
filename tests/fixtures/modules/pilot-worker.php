@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 3);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $directory = (string) getenv('TINYCAT_PILOT_DIRECTORY');
 $database = json_decode((string) file_get_contents($directory . '/database.json'), true, 512, JSON_THROW_ON_ERROR);
 $selection = require $root . '/App/modules.php';

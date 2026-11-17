@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 define('TINYCAT', true);
-require __DIR__ . '/../../App/autoload.php';
+require __DIR__ . '/../../App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $condition, string $message) use (&$checks): void {
     $checks++;

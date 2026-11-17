@@ -24,7 +24,7 @@ if (($argv[1] ?? '') !== '--isolated') {
 
 define('TINYCAT', true);
 $root = $argv[2];
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 use TinyCat\Support\Paths;
 use TinyCat\Support\Config;
 use TinyCat\Support\FileSweep;

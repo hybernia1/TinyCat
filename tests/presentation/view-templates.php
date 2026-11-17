@@ -5,7 +5,7 @@ require_once __DIR__ . '/../support/cache-isolation.php';
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require_once $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
+require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 // Rendering fixtures must not depend on an installed workspace/CI database.
 $database = new PDO('sqlite::memory:');

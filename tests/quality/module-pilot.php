@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 use TinyCat\Core\Modules\Loader;
 use TinyCat\Core\Modules\Resources;
 use TinyCat\Core\Modules\ModuleSchema;

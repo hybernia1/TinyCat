@@ -6,7 +6,7 @@ if (!is_string($workspace) || !is_file($workspace . '/accounts.sqlite')) { throw
 $path = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if (preg_match('~^/assets/build/[a-z0-9.-]+\.(?:js|css|svg)$~D', $path) && is_file($workspace . $path)) { return false; }
 define('TINYCAT', true);
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 register_shutdown_function(static function () use ($workspace): void {
     foreach (get_declared_classes() as $class) {
         if (preg_match('/^TinyCat\\\\(?:Users|Status|Bots|Settings|Site|Moderation|Notifications)\\\\/', $class)) { file_put_contents($workspace . '/product-loads.log', $class . "\n", FILE_APPEND); }

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 use TinyCat\Support\AssetGraph;
 use TinyCat\Support\ClientAssets;
 

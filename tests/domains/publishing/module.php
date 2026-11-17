@@ -38,7 +38,7 @@ use TinyCat\Social\Content\Queries;
 
 define('TINYCAT', true);
 $workspace = $argv[2];
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 $core = TinyCat\Core\Modules\Loader::fromSelection($workspace, []);

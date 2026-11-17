@@ -35,7 +35,7 @@ if (!in_array($argv[1] ?? '', ['--isolated', '--combined'], true)) {
 }
 $workspace = $argv[2];
 define('TINYCAT', true);
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 if (($argv[1] ?? '') === '--combined') { require $sourceRoot . '/tests/fixtures/blog/coexistence.php'; exit(0); }
 use TinyCat\Blog\Articles;
 use TinyCat\Blog\Installation;

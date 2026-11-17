@@ -19,7 +19,7 @@ try {
     try { $server->exec('CREATE DATABASE `' . $name . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'); $created = true; }
     catch (PDOException) { echo "SKIP Blog MySQL: cannot create isolated database.\n"; exit(0); }
     $pdo = new PDO($dsn . ';dbname=' . $name, $db['user'], $db['password'] ?? '', $options);
-    define('TINYCAT', true); require $root . '/App/autoload.php';
+    define('TINYCAT', true); require $root . '/App/Core/Runtime/autoload.php';
     TinyCat\Support\Config::configure(new TinyCat\Core\Runtime\Configuration(['cache' => ['driver' => 'filesystem']]));
     TinyCat\Database\Connection::set($pdo);
     TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection($root, require $root . '/App/Modules/Blog/selection.php')->catalog);

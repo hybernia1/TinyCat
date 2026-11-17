@@ -72,7 +72,7 @@ try {
     $assert($packageName === 'tinycat-' . $version . '.zip' && is_file($packagePath), 'The versioned package is present.');
     $assert(($manifest['version'] ?? null) === $version, 'Manifest targets the current version.');
     define('TINYCAT', true);
-    require_once $root . '/App/autoload.php';
+    require_once $root . '/App/Core/Runtime/autoload.php';
     $minimum = \TinyCat\Support\Version::MINIMUM_UPDATE;
     $assert(($manifest['minimum_version'] ?? null) === $minimum, 'Manifest uses its supported runtime baseline.');
     $assert(($manifest['minimum_php'] ?? null) === '8.4.0', 'Manifest retains the PHP 8.4 runtime floor.');

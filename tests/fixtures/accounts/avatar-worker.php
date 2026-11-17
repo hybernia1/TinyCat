@@ -13,7 +13,7 @@ if (!is_string($workspace) || !is_file($workspace . '/avatar.sqlite')) { throw n
 $path = (string) parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 if (preg_match('~^/uploads/avatars/[1-9][0-9]*[.]webp$~D', $path) && is_file($workspace . $path)) { return false; }
 define('TINYCAT', true);
-require $workspace . '/App/autoload.php';
+require $workspace . '/App/Core/Runtime/autoload.php';
 TinyCat\Core\Modules\Resources::configure(TinyCat\Core\Modules\Loader::fromSelection($workspace, [
 ])->catalog);
 $pdo = new PDO('sqlite:' . $workspace . '/avatar.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);

@@ -9,7 +9,7 @@ $source = realpath((string) ($options['source'] ?? ''));
 $directory = (string) ($options['directory'] ?? '');
 $parent = $directory !== '' ? realpath(dirname($directory)) : false;
 $allowed = realpath(\TinyCat\Tools\Workspace::directory('performance'));
-if (!$source || !is_file($source . '/App/autoload.php') || !$parent || !$allowed || file_exists($directory)) {
+if (!$source || !is_file($source . '/App/Core/Runtime/autoload.php') || !$parent || !$allowed || file_exists($directory)) {
     throw new RuntimeException('Use --source=<export> --directory=<new directory below .work/performance>.');
 }
 $root = $parent . DIRECTORY_SEPARATOR . basename($directory);

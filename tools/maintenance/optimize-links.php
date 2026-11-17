@@ -121,12 +121,12 @@ if (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) !== __FILE__) { retur
 if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 $options = getopt('', ['root:', 'apply', 'backup:']);
 $root = realpath((string) ($options['root'] ?? ''));
-if (!is_string($root) || !is_file($root . '/App/autoload.php') || !is_file($root . '/config.php')) {
+if (!is_string($root) || !is_file($root . '/App/Core/Runtime/autoload.php') || !is_file($root . '/config.php')) {
     fwrite(STDERR, "Usage: php optimize-links.php --root=/path/to/tinycat [--apply --backup=/private/new-backup.json]\n");
     exit(1);
 }
 define('TINYCAT', true);
-require_once $root . '/App/autoload.php';
+require_once $root . '/App/Core/Runtime/autoload.php';
 try {
     if (version_compare(\TinyCat\Support\Version::CURRENT, '4.8.0', '<')) { throw new RuntimeException('TinyCat 4.8.0 or newer is required.'); }
     $backup = isset($options['backup']) ? (string) $options['backup'] : null;

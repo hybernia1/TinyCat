@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $compile = require $root . '/tools/assets/compile-assets.php';
 $files = $compile();
 $directory = sys_get_temp_dir() . '/tinycat-compiled-translations-' . bin2hex(random_bytes(8));
@@ -20,7 +20,7 @@ $write = static function (string $relative, string $source) use ($directory, &$c
     $created[] = $path;
 };
 try {
-    foreach (['autoload.php', 'Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/CompiledAssets.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
+    foreach (['Core/Runtime/autoload.php', 'Core/Support/Paths.php', 'Core/Support/CompiledTranslations.php', 'Core/Support/CompiledAssets.php', 'Core/Support/Localization.php', 'Core/Support/Values.php', 'Core/Support/Languages.php', 'Core/Mail/Templates.php'] as $relative) {
         $write('App/' . $relative, (string) file_get_contents($root . '/App/' . $relative));
     }
     foreach ($files as $relative => $source) {

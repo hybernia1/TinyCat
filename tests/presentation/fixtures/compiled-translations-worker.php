@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 define('TINYCAT', true);
-require $argv[1] . '/App/autoload.php';
+require $argv[1] . '/App/Core/Runtime/autoload.php';
 require $argv[1] . '/App/Core/Mail/Templates.php';
 $result = ['packages' => \TinyCat\Support\Languages::language_packages()];
 $result['components'] = \TinyCat\Support\CompiledAssets::components();

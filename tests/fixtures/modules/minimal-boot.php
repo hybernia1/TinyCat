@@ -4,8 +4,8 @@ declare(strict_types=1);
 define('TINYCAT', true);
 require dirname(__DIR__, 3) . '/App/Core/Runtime/autoload.php';
 $autoloaders = count(spl_autoload_functions());
-require dirname(__DIR__, 3) . '/App/autoload.php';
-require dirname(__DIR__, 3) . '/App/autoload.php';
+require_once dirname(__DIR__, 3) . '/App/Core/Runtime/autoload.php';
+require_once dirname(__DIR__, 3) . '/App/Core/Runtime/autoload.php';
 if (count(spl_autoload_functions()) !== $autoloaders || class_exists(\TinyCat\Core\Runtime\Application::class, false) || session_status() !== PHP_SESSION_NONE) { throw new RuntimeException('Autoload entrypoints must be idempotent and must not start the application.'); }
 if (($argv[1] ?? '') === '--framework') {
     $loader = \TinyCat\Core\Modules\Loader::fromSelection(dirname(__DIR__, 3), []);

@@ -14,10 +14,8 @@ Výsledek přestavby, kompatibilitu a měřené ověření zachycuje
 
 ```text
 App/
-  autoload.php
   Console.php
   modules.php                    # Výchozí výběr Socialu
-  available-modules.php          # Social a Blog
   Core/
     services.json                # Povinné registrace frameworku, ne modulové manifesty
     Runtime/                     # HTTP/CLI start a načtení frameworku
@@ -79,10 +77,12 @@ HTTP vstup načítá přímo `Core/Runtime/autoload.php`, explicitně volá
 bootstrapová obálka není potřeba. Stejný loader používají produkční CLI vstupy;
 kontrola minimální verze PHP probíhá před autoloadováním tříd.
 
-`App/autoload.php` je stabilní veřejná fasáda pro externí skripty a již vydané
-privátní rescue launchery. Pouze jednou načte stejný core loader, nezahajuje
-aplikaci, SQL ani session. Nástroj, který potřebuje celý runtime, po načtení
-loaderu explicitně volá `Application::start()`.
+Externí skripty a nástroje načítají `App/Core/Runtime/autoload.php` pomocí
+`require_once`; loader nezahajuje aplikaci, SQL ani session. Nástroj, který
+potřebuje celý runtime, pak explicitně volá `Application::start()`.
+Obálka `App/autoload.php` je odstraněná. Před aktualizací z dokončené 6.0.10
+obnov privátní rescue launcher příkazem `php App/Console.php rescue` podle
+[aktualizačního návodu](../operations/updates.md#retiring-the-autoload-facade).
 
 `Core/Runtime/Framework` nejprve načte čistá metadata povinných služeb
 z `Core/services.json`. `Core/Modules/Loader` k nim přidá explicitně vybrané

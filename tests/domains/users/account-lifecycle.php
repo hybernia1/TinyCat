@@ -37,7 +37,7 @@ use TinyCat\Database\Connection;
 
 define('TINYCAT', true);
 $root = $argv[2];
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 $modules = Loader::load($root);

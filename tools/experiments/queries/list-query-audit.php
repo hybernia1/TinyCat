@@ -6,8 +6,8 @@ $options = getopt('', ['config:', 'output:', 'root:']);
 require_once __DIR__ . '/../../../tests/support/cache-isolation.php';
 define('TINYCAT', true);
 $root = realpath((string) ($options['root'] ?? dirname(__DIR__, 3)));
-if (!$root || !is_file($root . '/App/autoload.php')) { throw new RuntimeException('Expected application root.'); }
-require_once $root . '/App/autoload.php';
+if (!$root || !is_file($root . '/App/Core/Runtime/autoload.php')) { throw new RuntimeException('Expected application root.'); }
+require_once $root . '/App/Core/Runtime/autoload.php';
 $config = require (string) ($options['config'] ?? '');
 $settings = $config['database'];
 if (preg_match('/^tinycat_perf_[a-z0-9_]+$/D', $settings['name']) !== 1) { throw new RuntimeException('Isolated performance database required.'); }

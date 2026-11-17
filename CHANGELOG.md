@@ -1,5 +1,10 @@
 # Changelog
 
+## 6.0.11 - 2026-11-17
+
+- Remove the public autoload facade and point developer tools, tests and external-script examples directly at the core runtime loader. Require completed 6.0.10 and refresh inherited private rescue launchers with its existing CLI before updating; exercise signed web update and exact rollback through the refreshed launcher.
+- Discover available source modules from their manifests during platform builds and development checks, without a manually maintained central list or executing module PHP. Standalone module builds include transitive dependencies; installed runtime selection and activation remain explicit.
+
 ## 6.0.10 - 2026-11-17
 
 - Remove the redundant bootstrap wrapper and start HTTP/CLI explicitly through the runtime. Keep autoloading independent of startup and preserve the public autoload facade used by published private rescue launchers, including update and rollback.

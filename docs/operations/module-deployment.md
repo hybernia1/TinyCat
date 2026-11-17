@@ -35,8 +35,9 @@ php tools/release/build-update.php --assembly=platform --version=X.Y.Z --both --
 
 Výchozí `--assembly=source` používá explicitní `App/modules.php`.
 `--assembly=core` vytvoří framework bez volitelných modulů.
-`--assembly=platform` používá `App/available-modules.php`: stejný sociální
-výběr doplněný Blogem. `--assembly=blog` je preset Blogu nad stejným povinným frameworkem. Presety jsou seznamy manifestů, nikoli další runtime.
+`--assembly=platform` načte všechny zdrojové manifesty `App/Modules/*/module.json`
+přes `SourceModules::selection()`. Nový modul nevyžaduje zápis do centrálního seznamu.
+`--assembly=blog` je preset Blogu nad stejným povinným frameworkem. Presety jsou seznamy manifestů, nikoli další runtime.
 `--product=vendor.product` určuje identitu vlastní sestavy a `--active=id1,id2`
 její výchozí aktivní moduly; bez této volby jsou aktivní všechny dostupné.
 Funkční moduly jsou volitelné; jejich funkční závislosti musí být aktivní. Core je vždy přítomný. Manifestový modul musí ležet

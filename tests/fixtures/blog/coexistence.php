@@ -11,7 +11,7 @@ register_shutdown_function(static function () use (&$completed): void { if (!$co
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
 $pdo = new PDO('sqlite:' . $workspace . '/blog.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $pdo->exec('PRAGMA foreign_keys = ON'); Connection::set($pdo);
-$selection = require $workspace . '/App/available-modules.php'; unset($selection['tinycat.installation']);
+$selection = \TinyCat\Core\Modules\SourceModules::selection($workspace); unset($selection['tinycat.installation']);
 $base = array_keys(require $workspace . '/App/Modules/Blog/selection.php');
 $plan = Distribution::describe($workspace, 'fixture.platform', $selection, $base);
 file_put_contents($workspace . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
@@ -134,7 +134,8 @@ try {
     [$status] = $request('/api/modules/activation', true, ['id' => 'tinycat.blog', 'enabled' => false, 'revision' => 'stale'], false); $assert($status === 403, 'Module changes require CSRF');
     [$status] = $request('/api/modules/activation', true, ['id' => 'tinycat.blog', 'enabled' => false, 'revision' => 'stale']); $assert($status === 409, 'Stale selections cannot overwrite newer activation state');
     [, $json] = $request('/api/modules', true); $moduleState = json_decode($json, true)['data'];
-    $assert(array_column($moduleState['items'], 'id') === ['tinycat.social', 'tinycat.blog'] && $moduleState['groups'] === [], 'Manager exposes two real modules without framework entries or virtual Social groups');
+    $moduleIds = array_column($moduleState['items'], 'id'); sort($moduleIds, SORT_STRING);
+    $assert($moduleIds === ['tinycat.blog', 'tinycat.social'] && $moduleState['groups'] === [], 'Manager exposes two real modules without framework entries or virtual Social groups');
     $assert(array_merge(...array_column($moduleState['items'], 'requires')) === [], 'Mandatory framework capabilities are not presented as selectable module dependencies');
     [$status] = $request('/api/modules/activation', true, ['id' => 'tinycat.accounts', 'enabled' => false, 'revision' => $moduleState['revision']]); $assert($status === 422, 'Core is not an activatable module');
     [$status] = $request('/api/modules/activation', true, ['id' => 'tinycat.site', 'enabled' => false, 'revision' => $moduleState['revision']]); $assert($status === 422, 'An internal Social fragment has no separate activation');

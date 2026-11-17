@@ -79,12 +79,12 @@ if (!is_string($secretKey) || strlen($secretKey) !== SODIUM_CRYPTO_SIGN_SECRETKE
 
 $allowedRoots = ['App', 'Public', 'assets', 'docs', 'lang'];
 if (!defined('TINYCAT')) { define('TINYCAT', true); }
-require_once $root . '/App/autoload.php';
+require_once $root . '/App/Core/Runtime/autoload.php';
 $assembly = (string) ($options['assembly'] ?? 'source');
 $selection = match ($assembly) {
     'core' => [],
     'source' => require $root . '/App/modules.php',
-    'platform' => require $root . '/App/available-modules.php',
+    'platform' => \TinyCat\Core\Modules\SourceModules::selection($root),
     'blog' => require $root . '/App/Modules/Blog/selection.php',
     default => throw new InvalidArgumentException('Unknown assembly; use source, platform, blog or core.'),
 };
@@ -146,8 +146,6 @@ foreach ($allowedRoots as $directory) {
 }
 
 ksort($files, SORT_STRING);
-if (!defined('TINYCAT')) { define('TINYCAT', true); }
-require_once $root . '/App/autoload.php';
 $hashes = [];
 $normalizedContents = [];
 $moduleMigrationFiles = [];

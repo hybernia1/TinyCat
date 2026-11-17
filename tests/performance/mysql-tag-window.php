@@ -6,7 +6,7 @@ $options = getopt('', ['config:', 'report:']);
 if (!isset($options['config'])) { echo "SKIP MySQL tag window: supply --config for an isolated performance database.\n"; exit; }
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
-require_once __DIR__ . '/../../App/autoload.php';
+require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
 require_once __DIR__ . '/../../tools/performance/lib/ProfileDatabase.php';
 $config = require (string) $options['config'];
 $settings = $config['database'];

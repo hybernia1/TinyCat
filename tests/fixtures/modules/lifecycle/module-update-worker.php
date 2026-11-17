@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 $root = $argv[1];
-define('TINYCAT', true); require $root . '/App/autoload.php';
+define('TINYCAT', true); require $root . '/App/Core/Runtime/autoload.php';
 \TinyCat\Support\Config::load();
 $plan = \TinyCat\Core\Modules\Distribution::read($root);
 $state = \TinyCat\Core\Modules\Deployment::read($root);

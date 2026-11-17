@@ -14,7 +14,7 @@ $root = realpath($requestedRoot);
 $configPath = $workspaceRoot . '/config.php';
 
 if (!is_string($root)
-    || !is_file($root . '/App/autoload.php')
+    || !is_file($root . '/App/Core/Runtime/autoload.php')
     || !is_file($root . '/App/Core/Installation/Installer.php')
 ) {
     fwrite(STDERR, "MySQL installer rehearsal root is invalid.\n");
@@ -92,7 +92,7 @@ try {
         $options
     );
     define('TINYCAT', true);
-    require_once $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
+    require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
     \TinyCat\Core\Settings\Store::reset(); \TinyCat\Support\Localization::reset(); \TinyCat\Core\Identity\Authentication::reset(); \TinyCat\Database\Connection::set($database);
     \TinyCat\Core\Installation\Installer::create_tables();

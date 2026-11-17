@@ -4,7 +4,7 @@ declare(strict_types=1);
 // The surrounding lifecycle fixture owns every path, database and rollback here.
 $addon = $candidate . '/App/Modules/Addon';
 $oldSource = (string) file_get_contents($addon . '/migrations/1.php');
-[$exit, $text, $error] = $run([PHP_BINARY, '-r', 'define("TINYCAT", true); require "App/autoload.php"; echo TinyCat\\Database\\ModuleSchemas::checksum("App/Modules/Addon/migrations/1.php");'], $candidate);
+[$exit, $text, $error] = $run([PHP_BINARY, '-r', 'define("TINYCAT", true); require "App/Core/Runtime/autoload.php"; echo TinyCat\\Database\\ModuleSchemas::checksum("App/Modules/Addon/migrations/1.php");'], $candidate);
 $assert($exit === 0 && preg_match('/^[a-f0-9]{64}$/D', trim($text)) === 1, 'Read the published checksum through the candidate migration mechanism: ' . $error);
 $oldChecksum = trim($text);
 $source = (string) file_get_contents($addon . '/src/Module.php');

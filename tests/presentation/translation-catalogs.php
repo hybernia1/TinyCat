@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 define('TINYCAT', true);
-require_once __DIR__ . '/../../App/autoload.php';
+require_once __DIR__ . '/../../App/Core/Runtime/autoload.php';
 $validate = require __DIR__ . '/../../tools/quality/translation-catalogs.php';
 $checks = 0;
 $directory = sys_get_temp_dir() . '/tinycat-translations-' . bin2hex(random_bytes(8));

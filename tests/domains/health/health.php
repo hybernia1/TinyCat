@@ -22,7 +22,7 @@ if (($argv[1] ?? '') !== '--isolated') {
 }
 define('TINYCAT', true);
 $root = $argv[2];
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 use TinyCat\Core\Health\Service;
 use TinyCat\Core\Tasks\Execution;
 use TinyCat\Support\Config;

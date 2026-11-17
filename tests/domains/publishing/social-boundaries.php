@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 3);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 use TinyCat\Database\Connection;
 use TinyCat\Social\Content\PostCreation;
 

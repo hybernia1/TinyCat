@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/../../support/cache-isolation.php';
 define('TINYCAT', true);
-require __DIR__ . '/../../../App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
+require __DIR__ . '/../../../App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 (new ReflectionProperty(\TinyCat\Core\Settings\Store::class, 'settings'))->setValue(null, []);
 \TinyCat\Support\Localization::locale('cs');
 $account = \TinyCat\Support\View::part('Identity/user-menu', [

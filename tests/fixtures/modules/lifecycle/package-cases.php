@@ -36,10 +36,10 @@ if ($packagePhase === 'install') {
     // A clean core-only deployment can later receive exactly the same package.
     $coreHost = $workspace . '/core-only'; mkdir($coreHost, 0700);
     foreach (['App/Core', 'assets'] as $path) { $copy($root . '/' . $path, $coreHost . '/' . $path); }
-    foreach (['App/autoload.php', 'App/Console.php'] as $path) { $copy($root . '/' . $path, $coreHost . '/' . $path); }
+    $copy($root . '/App/Console.php', $coreHost . '/App/Console.php');
     file_put_contents($coreHost . '/App/modules.php', '<?php return [];');
     file_put_contents($coreHost . '/config.php', '<?php return ' . var_export(['database' => ['dsn' => 'sqlite:' . $coreHost . '/core.sqlite'], 'i18n' => ['locale' => 'en']], true) . ';');
-    $prepare = 'define("TINYCAT", true); require "App/autoload.php"; $p=TinyCat\\Core\\Modules\\Distribution::describe(getcwd(), "fixture.core", []); file_put_contents("App/distribution.json", json_encode($p));';
+    $prepare = 'define("TINYCAT", true); require "App/Core/Runtime/autoload.php"; $p=TinyCat\\Core\\Modules\\Distribution::describe(getcwd(), "fixture.core", []); file_put_contents("App/distribution.json", json_encode($p));';
     [$exit, $text, $error] = $run([PHP_BINARY, '-r', $prepare], $coreHost); $assert($exit === 0, 'Create core-only descriptor: ' . $text . $error);
     [$exit, $text, $error] = $run([PHP_BINARY, $coreHost . '/App/Console.php', 'install'], $coreHost, $administrator); $assert($exit === 0, 'Core-only CLI install creates its administrator: ' . $text . $error);
     $coreDb = new PDO('sqlite:' . $coreHost . '/core.sqlite');

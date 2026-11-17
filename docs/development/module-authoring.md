@@ -395,3 +395,11 @@ kolizi jejich souborů. Modul dodávaný přímo distribucí se v této etapě
 aktualizuje distribučním updaterem, nikoli samostatným ZIPem. Pro čisté core
 lze sestavit `build-update.php --assembly=core`; `--active=` ponechá všechny
 dostupné volitelné moduly vypnuté.
+
+## Zdrojový inventář pro build
+
+Build celé platformy a vývojové kontroly načítají manifesty přímo z
+`App/Modules/*/module.json`; další centrální seznam se neupravuje. Samostatný
+build modulu vybere jeho manifest a tranzitivní závislosti. Inventář pouze čte
+JSON, nespouští PHP modulů a neřídí runtime aktivaci. Ta zůstává explicitní
+v `App/modules.php`, distribučním plánu a registru instalovaných balíčků.

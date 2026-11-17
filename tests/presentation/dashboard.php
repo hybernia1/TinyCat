@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../support/cache-isolation.php';
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require_once $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
+require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 use TinyCat\Social\Presentation\Dashboard;
 use TinyCat\Social\Presentation\DashboardViewData;

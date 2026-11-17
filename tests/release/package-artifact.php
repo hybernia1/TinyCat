@@ -7,7 +7,7 @@ require_once __DIR__ . '/../support/cache-isolation.php';
 
 define('TINYCAT', true);
 $root = dirname(__DIR__, 2);
-require_once $root . '/App/autoload.php'; \TinyCat\Core\Runtime\Application::start();
+require_once $root . '/App/Core/Runtime/autoload.php'; \TinyCat\Core\Runtime\Application::start();
 
 $temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/package-artifact-' . bin2hex(random_bytes(6));
 $output = $temporaryRoot . '/dist-a';

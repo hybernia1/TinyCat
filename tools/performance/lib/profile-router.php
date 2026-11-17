@@ -14,7 +14,7 @@ if (!$configPath || !is_file($configPath) || !$outputPath) {
 $started = hrtime(true);
 define('TINYCAT', true);
 $root = getenv('TINYCAT_PROFILE_ROOT') ?: dirname(__DIR__, 3);
-require $root . '/App/autoload.php';
+require $root . '/App/Core/Runtime/autoload.php';
 require __DIR__ . '/ProfileDatabase.php';
 require __DIR__ . '/CallProfile.php';
 $config = require $configPath;
