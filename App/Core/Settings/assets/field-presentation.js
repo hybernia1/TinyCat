@@ -78,10 +78,6 @@ Object.assign(window.TinyCat.settingsPresentation.sections, {
     "label": "settings.sections.performance",
     "icon": "settings"
   },
-  "content_images": {
-    "label": "settings.sections.content_images",
-    "icon": "image"
-  },
   "localization": {
     "label": "settings.sections.localization",
     "icon": "globe"

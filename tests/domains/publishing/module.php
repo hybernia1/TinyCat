@@ -44,7 +44,7 @@ $assert = static function (bool $value, string $message) use (&$checks): void { 
 $core = TinyCat\Core\Modules\Loader::fromSelection($workspace, []);
 TinyCat\Core\Modules\Resources::configure($core->catalog);
 $coreDb = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-TinyCat\Database\ModuleSchemas::install($coreDb, TinyCat\Core\Modules\Distribution::definitions($core, false));
+TinyCat\Database\ModuleSchemas::install($coreDb, TinyCat\Core\Modules\Distribution::definitions($core));
 $coreTables = $coreDb->query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
 $assert($coreTables === ['ip_action_limits', 'migrations', 'module_installations', 'notifications', 'password_reset_tokens', 'scheduler_runs', 'settings', 'users'], 'Core creates exactly eight framework tables without a domain module');
 $assert(!$core->catalog->has('tinycat.publishing') && !$core->catalog->has('tinycat.social') && !$core->catalog->has('tinycat.blog'), 'Core has no implicit publication capability or domain owner');

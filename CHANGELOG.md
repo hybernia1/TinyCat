@@ -1,5 +1,15 @@
 # Changelog
 
+## 6.0.7 - 2026-11-17
+
+- Remove historical activation remapping and distribution formats 1/2; completed 6.0.6 deployments retain canonical active and installed owner IDs.
+- Move Social image-setting presentation and table-purpose translations into Social, and make installation text independent of selected functional modules in all twelve locales.
+- Require explicit text rendering kinds so shared renderers never select the Social policy by default.
+- Require a completed 6.0.6 baseline and remove the runtime SchemaInspection adapter, dual-journal copying and compatibility writer.
+- Retire the module_migrations view through a new signed schema step while preserving all physical journal records and normal rollback.
+- Remove pre-baseline global-table adoption entries from core, Social and Blog and use one current installation/readiness path. Applied migration snapshots and checksums remain unchanged.
+- Exercise the published 6.0.6 updater with its original schema, journal and lifecycle classes already loaded, retained opaque version labels and a compatibility view.
+
 ## 6.0.6 - 2026-11-17
 
 - Preserve opaque historical migration version labels up to 190 characters when converting the unified journal. Widen existing 6.0.5 storage through a new schema step without changing published migration checksums.

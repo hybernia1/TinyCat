@@ -10,3 +10,7 @@ parameters:
     excludePaths:
         analyse:
             - config.php (?)
+            # Immutable snapshots already applied by the supported 6.0.6 baseline.
+            - App/Core/Notifications/migrations/002-subjects.php
+            - App/Core/Tasks/migrations/003-writer.php
+            - App/Modules/Social/migrations/publishing/interactions/003-notification-subjects.php

@@ -24,7 +24,7 @@ $run = static function (array $arguments) use ($workspace): void {
 };
 $run(['activate', 'tinycat.social']);
 $modules = Loader::load($workspace); Resources::configure($modules->catalog);
-$assert(ModuleSchemas::ready($pdo, Distribution::definitions($modules, false)), 'All selected owners have standalone schema histories');
+$assert(ModuleSchemas::ready($pdo, Distribution::definitions($modules)), 'All selected owners have standalone schema histories');
 $administrator = Connection::find('users', ['id' => 1]);
 $article = TinyCat\Blog\Articles::save(['title' => 'Combined article', 'body' => 'Coexistence marker #combined'], $administrator);
 TinyCat\Database\Schema::reserveIds($pdo, 'social_posts', $article);

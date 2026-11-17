@@ -507,6 +507,7 @@
     "components": [],
     "styles": [],
     "translations": [
+      "settings.sections.content_images",
       "settings.fields.content_images_enabled",
       "settings.fields.content_images_enabled_help",
       "settings.fields.content_images_max_upload_kb",

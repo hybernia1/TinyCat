@@ -386,6 +386,9 @@
       "content_images_max_upload_kb": "Максимальный размер изображения (КБ)",
       "content_images_enabled_help": "Существующие изображения остаются видимыми, даже если загрузка отключена.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
+    },
+    "sections": {
+      "content_images": "Опубликовать изображения"
     }
   },
   "notifications": {
@@ -399,5 +402,21 @@
       "report_resolved": "Ваш отчет решен.",
       "report_dismissed": "Ваше сообщение отклонено."
     }
+  },
+  "install": {
+    "purpose_social_posts": "Публичные сообщения пользователей.",
+    "purpose_social_post_images": "Сжатые изображения, прикрепленные к сообщениям.",
+    "purpose_social_terms": "Условия для тегов.",
+    "purpose_social_post_tags": "Связь между должностями и терминами.",
+    "purpose_social_links": "Уникальные сохраненные метаданные ссылки.",
+    "purpose_social_post_links": "Отношения между сообщениями и ссылками.",
+    "purpose_social_post_likes": "Ставит лайки постам.",
+    "purpose_social_comments": "Вложенные комментарии к сообщениям.",
+    "purpose_social_comment_likes": "Лайки на комментарии.",
+    "purpose_user_followers": "Профиль следует между пользователями.",
+    "purpose_content_reports": "Пользователь сообщает на модерацию.",
+    "purpose_bot_sources": "RSS и правила публикации Atom для учетных записей ботов.",
+    "purpose_bot_feed_history": "Последние хэши элементов ленты, используемые для предотвращения дублирования сообщений ботов.",
+    "purpose_bot_source_runs": "Компактная диагностическая история проверок и импорта исходных кодов ботов."
   }
 }

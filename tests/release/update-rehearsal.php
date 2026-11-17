@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../tools/support/workspace.php';
 
-// A direct 6.0.4 file/rollback rehearsal covers the supported baseline; domain DDL is
+// A direct supported-baseline file/rollback rehearsal covers the supported baseline; domain DDL is
 // exercised by the existing module lifecycle and disposable MySQL fixtures.
 
 require_once __DIR__ . '/../support/cache-isolation.php';
@@ -24,7 +24,7 @@ $artifactRoot = $temporaryRoot . '/dist';
 $signingKey = $temporaryRoot . '/signing.key';
 require_once $root . '/App/Core/Support/Version.php';
 $sourceVersion = \TinyCat\Support\Version::CURRENT;
-$candidateVersion = version_compare($sourceVersion, $baselineVersion, '>') ? $sourceVersion : '6.0.5';
+$candidateVersion = version_compare($sourceVersion, $baselineVersion, '>') ? $sourceVersion : implode('.', [(int) explode('.', $baselineVersion)[0], (int) explode('.', $baselineVersion)[1], (int) explode('.', $baselineVersion)[2] + 1]);
 $failures = [];
 $managedRoots = ['App', 'Extensions', 'Public', 'assets', 'docs', 'lang', 'migrations'];
 $managedRootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
@@ -265,24 +265,24 @@ define('TINYCAT', true);
 $root = __INSTALL_ROOT__;
 require $root . '/App/bootstrap.php';
 $invoke = static function (string $method, mixed ...$arguments): mixed {
-    return (new ReflectionMethod(TinyCat\Updates\Manager::class, $method))->invoke(null, ...$arguments);
+    return (new ReflectionMethod(TinyCat\Core\Updates\Manager::class, $method))->invoke(null, ...$arguments);
 };
-$manifest = TinyCat\Updates\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
+$manifest = TinyCat\Core\Updates\Manager::verifyLocalPackage(__MANIFEST__, __SIGNATURE__, __PACKAGE__);
 $invoke('assertCompatibility', $manifest);
 $stage = $root . '/storage/updates/rehearsal-stage';
 $invoke('extractPackage', __PACKAGE__, $stage, $manifest);
 $invoke('preflightManagedTargets', $manifest);
 $backup = $invoke('createBackup', $manifest, __VERSION__, false);
 $invoke('enableMaintenance', __VERSION__);
-$maintenance = TinyCat\Updates\Manager::maintenanceActive();
+$maintenance = TinyCat\Core\Updates\Manager::maintenanceActive();
 $invoke('applyFiles', $stage, $manifest);
 $invoke('deleteLegacyFiles', $manifest);
 $invoke('clearRuntimeCache');
-TinyCat\Updates\Manager::disableMaintenance();
+TinyCat\Core\Updates\Manager::disableMaintenance();
 echo json_encode([
     'backup' => $backup,
     'maintenance_during' => $maintenance,
-    'maintenance_after' => TinyCat\Updates\Manager::maintenanceActive(),
+    'maintenance_after' => TinyCat\Core\Updates\Manager::maintenanceActive(),
     'files' => count($manifest['files']),
     'deletions' => count($manifest['delete']),
 ], JSON_THROW_ON_ERROR);
@@ -424,10 +424,10 @@ PHP;
     $assert($freshExit === 0, 'Fresh candidate artifact boots: ' . implode(' ', $freshOutput));
     if (is_file($root . '/config.php') && in_array('mysql', PDO::getAvailableDrivers(), true)) {
         $rehearsal = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/tools/release/release-update-rehearsal.php')
-            . ' --baseline-version=6.0.4 --direct-web --cached-autoload --artifact=' . escapeshellarg($artifactRoot) . ' --key=' . escapeshellarg($signingKey);
+            . ' --baseline-version=' . escapeshellarg($baselineVersion) . ' --direct-web --cached-autoload --artifact=' . escapeshellarg($artifactRoot) . ' --key=' . escapeshellarg($signingKey);
         passthru($rehearsal, $rehearsalExit);
-        $assert($rehearsalExit === 0, 'Published 6.0.4 installs and rolls back the signed successor with representative MySQL data.');
-    } else { echo "SKIP 6.0.4 MySQL update rehearsal: local MySQL configuration unavailable.\n"; }
+        $assert($rehearsalExit === 0, 'Published baseline installs and rolls back the signed successor with representative MySQL data.');
+    } else { echo "SKIP supported-baseline MySQL update rehearsal: local MySQL configuration unavailable.\n"; }
     sodium_memzero($secretKey);
 } catch (Throwable $exception) {
     $failures[] = $exception->getMessage();

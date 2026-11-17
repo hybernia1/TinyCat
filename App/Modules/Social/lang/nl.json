@@ -386,6 +386,9 @@
       "content_images_max_upload_kb": "Maximale beeldgrootte (KB)",
       "content_images_enabled_help": "Bestaande afbeeldingen blijven zichtbaar als uploads zijn uitgeschakeld.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
+    },
+    "sections": {
+      "content_images": "Afbeeldingen plaatsen"
     }
   },
   "notifications": {
@@ -399,5 +402,21 @@
       "report_resolved": "Uw melding is opgelost.",
       "report_dismissed": "Uw rapport is afgewezen."
     }
+  },
+  "install": {
+    "purpose_social_posts": "Openbare gebruikersposts.",
+    "purpose_social_post_images": "Gecomprimeerde afbeeldingen bij berichten.",
+    "purpose_social_terms": "Termen voor tags.",
+    "purpose_social_post_tags": "Relaties tussen berichten en voorwaarden.",
+    "purpose_social_links": "Unieke opgeslagen linkmetagegevens.",
+    "purpose_social_post_links": "Relaties tussen berichten en links.",
+    "purpose_social_post_likes": "Vind-ik-leuks voor berichten.",
+    "purpose_social_comments": "Geneste reacties op berichten.",
+    "purpose_social_comment_likes": "Vind-ik-leuks bij reacties.",
+    "purpose_user_followers": "Profiel volgt tussen gebruikers.",
+    "purpose_content_reports": "Gebruikersrapporten voor moderatie.",
+    "purpose_bot_sources": "RSS en Atom-publicatieregels voor botaccounts.",
+    "purpose_bot_feed_history": "Recente feeditem-hashes gebruikt om dubbele botposts te voorkomen.",
+    "purpose_bot_source_runs": "Compacte diagnostische geschiedenis van botbroncontroles en -importen."
   }
 }

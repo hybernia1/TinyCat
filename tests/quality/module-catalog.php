@@ -31,7 +31,7 @@ foreach ($legacy->catalog->definitions() as $definition) {
 }
 $assert($frameworkFirst, 'Mandatory framework initializes before functional modules without redundant activation dependencies');
 $selection = require $root . '/App/modules.php';
-$assert(count($legacy->catalog->definitions()) === count($selection) + count(TinyCat\Core\Modules\Upgrade::FRAMEWORK), 'Every functional module and mandatory framework capability has offline metadata');
+$assert(count($legacy->catalog->definitions()) === count($selection) + count(TinyCat\Core\Runtime\Framework::CAPABILITIES), 'Every functional module and mandatory framework capability has offline metadata');
 foreach (['TinyCat\\Support\\Config', 'TinyCat\\Core\\Settings\\Store', 'TinyCat\\Database\\Connection', 'TinyCat\\Http\\Router', ...array_values($selection)] as $class) {
     $assert(!class_exists($class, false), 'Offline selection did not load ' . $class);
 }
@@ -175,7 +175,7 @@ try {
 
     $lazyRoot = $temporary . '/lazy-selection';
     mkdir($lazyRoot . '/App', 0700, true);
-    $emptyPlan = ['format' => 1, 'product' => 'fixture.runtime', 'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => [], 'legacy' => true];
+    $emptyPlan = ['format' => 3, 'framework' => TinyCat\Core\Runtime\Framework::CAPABILITIES, 'schemaOwners' => [], 'product' => 'fixture.runtime', 'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => [], 'legacy' => false];
     file_put_contents($lazyRoot . '/App/distribution.json', json_encode($emptyPlan, JSON_THROW_ON_ERROR));
     file_put_contents($lazyRoot . '/App/modules.php', '<?php throw new RuntimeException("Source selection must remain lazy.");');
     $assert(Loader::load($lazyRoot)->catalog->has('tinycat.ui'), 'A distribution loads without evaluating source module selection');
@@ -186,7 +186,7 @@ try {
     $sourceSelection = TinyCat\Core\Modules\Deployment::selection($lazyRoot, static function () use (&$sourceCalls): array { $sourceCalls++; return []; });
     $assert($sourceSelection === [] && $sourceCalls === 1, 'Source selection is evaluated once when no distribution exists');
 
-    // Upgrade activation IDs without touching retained schema streams or enabling Social.
+    // Current activation IDs preserve installed owners without historical remapping.
     $plan = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.social', require $root . '/App/available-modules.php');
     $assert($plan['format'] === 3 && $plan['required'] === [] && array_keys($plan['selection']) === ['tinycat.social', 'tinycat.blog'], 'Signed selection contains only optional functional modules');
     $standalone = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.blog', require $root . '/App/available-modules.php');
@@ -197,20 +197,31 @@ try {
     $assert(file_get_contents($root . '/App/Modules/Social/migrations/status/001-initial.php') === file_get_contents($root . '/App/Modules/Social/migrations/publishing/interactions/001-initial.php'), 'The transferred migration retains the exact published bytes');
     $transitionRoot = $temporary . '/transition';
     mkdir($transitionRoot . '/App', 0700, true); mkdir($transitionRoot . '/storage', 0700);
-    $coreIds = array_values(array_diff(TinyCat\Core\Modules\Upgrade::FRAMEWORK, ['tinycat.support', 'tinycat.ui', 'tinycat.admin']));
-    $oldIds = [...$coreIds, ...TinyCat\Core\Modules\Upgrade::SOCIAL, 'tinycat.blog'];
-    $oldSelection = [];
-    foreach ($oldIds as $index => $id) { $oldSelection[$id] = 'App/Modules/Legacy' . $index . '/module.json'; }
-    $oldPlan = ['format' => 1, 'product' => 'tinycat.social', 'selection' => $oldSelection, 'active' => [...$coreIds, 'tinycat.blog'], 'required' => [], 'requires' => array_fill_keys($oldIds, []), 'schemas' => [], 'legacy' => true];
+    $oldPlan = $plan; $oldPlan['active'] = ['tinycat.blog'];
     file_put_contents($transitionRoot . '/App/distribution.json', json_encode($oldPlan, JSON_THROW_ON_ERROR));
-    TinyCat\Core\Modules\Deployment::write($transitionRoot, $oldPlan, $oldPlan['active'], $oldIds, '6.0.0-dev.5');
+    TinyCat\Core\Modules\Deployment::write($transitionRoot, $oldPlan, $oldPlan['active'], array_keys($oldPlan['selection']), '6.0.6');
     $before = file_get_contents($transitionRoot . '/storage/deployment.json');
     $transition = TinyCat\Core\Modules\Deployment::transition($transitionRoot, $plan);
-    $assert($transition === ['active' => ['tinycat.blog'], 'installed' => ['tinycat.social', 'tinycat.blog']], 'Disabled Social stays disabled while its installed data owner is retained');
+    $assert($transition === ['active' => ['tinycat.blog'], 'installed' => ['tinycat.social', 'tinycat.blog']], 'A completed current deployment retains disabled installed data owners without enabling them');
     $assert(file_get_contents($transitionRoot . '/storage/deployment.json') === $before, 'Upgrade discovery does not mutate deployment state');
     $withoutSocial = $plan; unset($withoutSocial['selection']['tinycat.social'], $withoutSocial['requires']['tinycat.social']); $withoutSocial['active'] = ['tinycat.blog'];
     try { TinyCat\Core\Modules\Deployment::transition($transitionRoot, $withoutSocial); $assert(false, 'Removing installed Social must fail'); }
     catch (RuntimeException) { $assert(true, 'A new artifact cannot discard retained Social sources or data'); }
+    foreach ([1, 2] as $format) {
+        $invalid = $plan; $invalid['format'] = $format;
+        try { TinyCat\Core\Modules\Distribution::validate($invalid); $assert(false, 'Historical distribution format was accepted'); }
+        catch (RuntimeException) { $assert(true, 'Historical distribution requires the unchanged 6.0.6 bridge'); }
+    }
+    $invalid = $plan; $invalid['selection']['fixture.extra'] = 'App/Modules/Extra/module.json'; $invalid['requires']['fixture.extra'] = [];
+    $assert(isset(TinyCat\Core\Modules\Distribution::validate($invalid)['selection']['fixture.extra']), 'Additional functional owners use the same registration contract without a core allowlist');
+    $invalid = $plan; $invalid['selection']['tinycat.settings'] = 'App/Modules/Extra/module.json'; $invalid['requires']['tinycat.settings'] = [];
+    try { TinyCat\Core\Modules\Distribution::validate($invalid); $assert(false, 'Framework capability was accepted as a functional module'); }
+    catch (RuntimeException) { $assert(true, 'Mandatory framework ownership cannot be overridden by a functional module'); }
+    $invalidState = json_decode($before, true, 512, JSON_THROW_ON_ERROR); $invalidState['installed'][] = 'fixture.removed';
+    file_put_contents($transitionRoot . '/storage/deployment.json', json_encode($invalidState, JSON_THROW_ON_ERROR));
+    try { TinyCat\Core\Modules\Deployment::transition($transitionRoot, $plan); $assert(false, 'An unknown installed owner was silently discarded'); }
+    catch (RuntimeException) { $assert(true, 'Unrecognized installed IDs are rejected without silently rewriting ownership'); }
+    file_put_contents($transitionRoot . '/storage/deployment.json', $before);
     $invalid = $plan; $invalid['framework'] = [];
     try { TinyCat\Core\Modules\Distribution::validate($invalid); $assert(false, 'Incomplete core must fail'); }
     catch (RuntimeException) { $assert(true, 'A signed plan cannot deactivate mandatory framework capabilities'); }

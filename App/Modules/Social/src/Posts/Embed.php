@@ -161,7 +161,7 @@ final class Embed
             $parsed = LinkParser::fromRaw((string) $link['url']);
             if ($parsed !== null) { $hiddenHashes[] = (string) $parsed['url_hash']; }
         }
-        $segments = \TinyCat\Core\Text\Segments::text((string) $item['body'], $hiddenHashes, (int) $item['id']);
+        $segments = \TinyCat\Core\Text\Segments::text((string) $item['body'], 'post', $hiddenHashes, (int) $item['id']);
         foreach ($segments as &$segment) {
             if (isset($segment['url'])) { $segment['url'] = Presentation::absolute_url($segment['outbound_url'] ?? $segment['url']); }
         }

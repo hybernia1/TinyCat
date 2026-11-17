@@ -1936,5 +1936,24 @@
     "App/Modules/Social/src/Presentation/Identity.php",
     "App/Modules/Social/src/Posts/LegacyInbox.php",
     "App/Core/Tasks/migrations/fresh-v2.php"
+  ],
+  "6.0.7": [
+    "App/Core/Database/SchemaInspection.php",
+    "App/Core/Identity/migrations/legacy-v1.php",
+    "App/Core/Notifications/migrations/legacy-v1.php",
+    "App/Core/Notifications/migrations/legacy-v2.php",
+    "App/Core/Security/migrations/legacy-v1.php",
+    "App/Core/Settings/migrations/legacy-v1.php",
+    "App/Core/Tasks/migrations/fresh-v3.php",
+    "App/Core/Tasks/migrations/fresh-v4.php",
+    "App/Modules/Blog/migrations/legacy-v4.php",
+    "App/Modules/Social/migrations/bots/legacy-v1.php",
+    "App/Modules/Social/migrations/moderation/legacy-v1.php",
+    "App/Modules/Social/migrations/publishing/interactions/fresh-v3.php",
+    "App/Modules/Social/migrations/publishing/interactions/legacy-v2.php",
+    "App/Modules/Social/migrations/publishing/interactions/legacy-v3.php",
+    "App/Modules/Social/migrations/publishing/legacy-v4.php",
+    "App/Modules/Social/migrations/users/legacy-v1.php",
+    "App/Core/Modules/Upgrade.php"
   ]
 }

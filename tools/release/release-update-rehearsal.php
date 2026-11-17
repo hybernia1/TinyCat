@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../support/workspace.php';
 
-// Exercises a signed update from the published 6.0.4 baseline and exact rollback.
+// Exercises a signed update from the published supported baseline and exact rollback.
 
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "This tool is available only from the command line.\n");
@@ -17,7 +17,7 @@ $baselineVersion = \TinyCat\Support\Version::MINIMUM_UPDATE;
 $options = getopt('', ['artifact::', 'key::', 'baseline-version::', 'direct-web', 'cached-autoload', 'snapshot::']);
 $cachedAutoload = array_key_exists('cached-autoload', $options);
 $directWeb = array_key_exists('direct-web', $options);
-if (($options['baseline-version'] ?? $baselineVersion) !== $baselineVersion) { throw new InvalidArgumentException('Use the supported 6.0.4 baseline.'); }
+if (($options['baseline-version'] ?? $baselineVersion) !== $baselineVersion) { throw new InvalidArgumentException('Use the supported baseline: ' . $baselineVersion); }
 $artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
 $configPath = $root . '/config.php';
 $temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/release-update-' . bin2hex(random_bytes(6));
@@ -117,7 +117,7 @@ $databaseFingerprint = static function (PDO $pdo): array {
     $sql = static fn (string $query): string => (string) preg_replace_callback('/\b(?:' . implode('|', array_keys($names)) . ')\b/', static fn (array $match): string => $names[$match[0]], $query);
     $tables = [
         'users', 'content', 'content_comments', 'content_likes', 'comment_likes', 'user_followers',
-        'notifications', 'content_tags', 'terms', 'content_links', 'settings', 'schema_migrations',
+        'notifications', 'content_tags', 'terms', 'content_links', 'settings', 'migrations',
     ];
     $counts = [];
 
@@ -132,7 +132,7 @@ $databaseFingerprint = static function (PDO $pdo): array {
         'SELECT id, author_id, body, published_at FROM content ORDER BY id',
         'SELECT id, content_id, user_id, parent_id, body FROM content_comments ORDER BY id',
         'SELECT setting_key, setting_value, setting_type FROM settings ORDER BY setting_key',
-        'SELECT migration, version, checksum FROM schema_migrations ORDER BY migration',
+        'SELECT kind, stream, migration, sequence, release_version, checksum, applied_at FROM migrations ORDER BY kind, stream, migration',
     ] as $query) {
         $samples[] = $pdo->query($sql($query))->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -206,7 +206,7 @@ try {
     }
 
     exec('git -C ' . escapeshellarg($root) . ' archive --format=zip --output=' . escapeshellarg($baselineArchive) . ' ' . escapeshellarg('v' . $baselineVersion), $archiveOutput, $archiveExit);
-    if ($archiveExit !== 0) { throw new RuntimeException('Cannot extract the published 6.0.4 baseline.'); }
+    if ($archiveExit !== 0) { throw new RuntimeException('Cannot extract the published supported baseline.'); }
     $extractZip($baselineArchive, $installRoot);
     $installConfig = $baseConfig;
     $installConfig['database'] = [...$databaseConfig, 'name' => $databaseName];
@@ -234,9 +234,9 @@ if (class_exists(TinyCat\Core\Modules\Distribution::class)) {
     file_put_contents(__ROOT__ . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
 }
 require __ROOT__ . '/App/bootstrap.php';
-TinyCat\Installation\Installer::create_tables();
-TinyCat\Installation\Installer::create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
-TinyCat\Installation\Installer::default_settings(['locale' => 'en']);
+TinyCat\Core\Installation\Installer::create_tables();
+TinyCat\Core\Installation\Installer::create_admin_account('release_admin', 'Release-Rehearsal-2026', 'en');
+TinyCat\Core\Installation\Installer::default_settings(['locale' => 'en']);
 if (isset($plan) && !$plan['legacy']) { TinyCat\Core\Modules\Deployment::write(__ROOT__, $plan, $plan['active'], $plan['active'], TinyCat\Support\Version::CURRENT); }
 PHP;
     [$installExit, $installOutput] = $run(str_replace('__ROOT__', var_export($installRoot, true), $installRunner));
@@ -244,13 +244,13 @@ PHP;
         throw new RuntimeException('Baseline installer failed: ' . implode(' ', $installOutput));
     }
     $assert(true, 'Supported baseline installer prepares the representative database.');
-    $historySeed = $database->prepare('INSERT INTO schema_migrations (migration, version, checksum, applied_at) VALUES (?, ?, ?, ?)');
+    $historySeed = $database->prepare("INSERT INTO migrations (kind, stream, migration, release_version, checksum, applied_at) VALUES ('global', 'tinycat', ?, ?, ?, ?)");
     $historySeed->execute(['fixture.baseline', $baselineVersion, str_repeat('a', 64), '2026-01-02 03:04:05']);
     // Long-running sites retain opaque version labels in their historical schema.
-    $database->exec('ALTER TABLE schema_migrations MODIFY COLUMN version VARCHAR(190) NOT NULL');
     foreach (['20260731_email_analytics_ip_limits', '20260801_performance_minification', '20260801_profile_links_and_legacy_cleanup'] as $historicalVersion) {
         $historySeed->execute([$historicalVersion, $historicalVersion, hash('sha256', $historicalVersion), '2026-08-01 03:04:05']);
     }
+    $database->exec("CREATE VIEW module_migrations AS SELECT stream AS module_id, migration, sequence AS version, checksum FROM migrations WHERE kind = 'schema' WITH CHECK OPTION");
     if (isset($options['snapshot'])) {
         require_once $root . '/App/Core/Database/Snapshots.php';
         \TinyCat\Database\Snapshots::restore($database, (string) $options['snapshot']);
@@ -261,9 +261,9 @@ PHP;
     }
 
     $beforeDatabase = $databaseFingerprint($database);
-    $beforeSchemaHistory = $database->query('SELECT module_id, migration, version, checksum FROM module_migrations ORDER BY module_id, version')->fetchAll(PDO::FETCH_ASSOC);
-    $beforeGlobalHistory = $database->query('SELECT migration, version, checksum, applied_at FROM schema_migrations ORDER BY migration')->fetchAll(PDO::FETCH_ASSOC);
-    $appliedBefore = $database->query('SELECT migration FROM schema_migrations')->fetchAll(PDO::FETCH_COLUMN);
+    $beforeSchemaHistory = $database->query("SELECT stream AS module_id, migration, sequence AS version, checksum, applied_at FROM migrations WHERE kind = 'schema' ORDER BY stream, sequence")->fetchAll(PDO::FETCH_ASSOC);
+    $beforeGlobalHistory = $database->query("SELECT migration, release_version AS version, checksum, applied_at FROM migrations WHERE kind = 'global' AND stream = 'tinycat' ORDER BY migration")->fetchAll(PDO::FETCH_ASSOC);
+    $appliedBefore = $database->query("SELECT migration FROM migrations WHERE kind = 'global'")->fetchAll(PDO::FETCH_COLUMN);
     $expectedPending = array_values(array_filter(
         array_map(static fn (string $path): string => pathinfo($path, PATHINFO_FILENAME), (array) ($manifest['migrations'] ?? [])),
         static fn (string $id): bool => !in_array($id, $appliedBefore, true)
@@ -308,9 +308,10 @@ if (__CACHED_AUTOLOAD__ && (!function_exists('opcache_is_script_cached') || !opc
     throw new RuntimeException('The cached-autoload scenario requires active OPcache and a cached baseline autoloader.');
 }
 if (!TinyCat\Database\Schema::app_db_ready()) { throw new RuntimeException('Baseline schema must be ready before the web update.'); }
-$check = TinyCat\Updates\Manager::check(true);
+foreach ([TinyCat\Database\Migrations::class, TinyCat\Database\ModuleSchemas::class, TinyCat\Core\Tasks\Schema::class, TinyCat\Core\Modules\Lifecycle::class] as $class) { if (!class_exists($class)) { throw new RuntimeException('Missing baseline class.'); } }
+$check = TinyCat\Core\Updates\Manager::check(true);
 if (empty($check['available']) || empty($check['compatible'])) { throw new RuntimeException('The published updater does not offer the stable update.'); }
-$result = TinyCat\Updates\Manager::installLatest();
+$result = TinyCat\Core\Updates\Manager::installLatest();
 $operation = json_decode((string) file_get_contents(__ROOT__ . '/storage/updates/operation.json'), true, 512, JSON_THROW_ON_ERROR);
 $backup = __ROOT__ . '/storage/updates/backups/' . $operation['backup'];
 $metadata = json_decode((string) file_get_contents($backup . '/backup.json'), true, 512, JSON_THROW_ON_ERROR);
@@ -328,11 +329,12 @@ PHP;
         throw new RuntimeException('Signed production update failed: ' . implode(' ', $updateOutput));
     }
     $journalTables = $database->query("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")->fetchAll(PDO::FETCH_COLUMN);
-    $assert(in_array('migrations', $journalTables, true) && !in_array('module_migrations', $journalTables, true) && !in_array('schema_migrations', $journalTables, true), 'The running 6.0.4 updater finishes with one unified migration journal.');
+    $assert(in_array('migrations', $journalTables, true) && !in_array('module_migrations', $journalTables, true) && !in_array('schema_migrations', $journalTables, true), 'The running baseline updater preserves one unified migration journal.');
+    $assert((int) $database->query("SELECT COUNT(*) FROM information_schema.VIEWS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'module_migrations'")->fetchColumn() === 0, 'The retired writer view is removed after the supported baseline update.');
     $query = $database->prepare("SELECT sequence, checksum, applied_at FROM migrations WHERE kind = 'schema' AND stream = ? AND migration = ?");
     foreach ($beforeSchemaHistory as $row) {
         $query->execute([$row['module_id'], $row['migration']]); $stored = $query->fetch(PDO::FETCH_ASSOC);
-        $assert(is_array($stored) && (int) $stored['sequence'] === (int) $row['version'] && $stored['checksum'] === $row['checksum'] && $stored['applied_at'] === null, 'Published schema history survives conversion: ' . $row['migration']);
+        $assert(is_array($stored) && (int) $stored['sequence'] === (int) $row['version'] && $stored['checksum'] === $row['checksum'] && $stored['applied_at'] === $row['applied_at'], 'Published schema history survives conversion: ' . $row['migration']);
     }
     $convertedGlobal = $database->query("SELECT migration, release_version AS version, checksum, applied_at FROM migrations WHERE kind = 'global' AND stream = 'tinycat' ORDER BY migration")->fetchAll(PDO::FETCH_ASSOC);
     $assert($convertedGlobal === $beforeGlobalHistory, 'Global migration versions, checksums and timestamps survive conversion.');
@@ -343,7 +345,7 @@ PHP;
     }
     foreach ((array) ($manifest['migrations'] ?? []) as $path) {
         $id = pathinfo((string) $path, PATHINFO_FILENAME);
-        $statement = $database->prepare('SELECT checksum FROM schema_migrations WHERE migration = ?');
+        $statement = $database->prepare("SELECT checksum FROM migrations WHERE kind = 'global' AND migration = ?");
         $statement->execute([$id]);
         $assert($statement->fetchColumn() === ($manifest['files'][$path] ?? null), 'Updated database records the signed migration: ' . $id);
     }
@@ -381,7 +383,7 @@ PHP;
     $assert($restoredInventory === $beforeInventory, 'Rollback restores the exact managed baseline tree.');
     $assert($databaseFingerprint($database) === $beforeDatabase, 'Rollback restores the exact pre-update database content and schema.');
     $clearOldCache = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
-        . "; (new ReflectionMethod(TinyCat\\Updates\\Manager::class, 'clearRuntimeCache'))->invoke(null);";
+        . "; (new ReflectionMethod(TinyCat\\Core\\Updates\\Manager::class, 'clearRuntimeCache'))->invoke(null);";
     [$clearCacheExit, $clearCacheOutput] = $run($clearOldCache);
     $assert($clearCacheExit === 0, 'Rollback invalidates settings cached by the updated runtime: ' . implode(' ', $clearCacheOutput));
     [$oldBootExit, $oldBootOutput] = $run($probeRunner);

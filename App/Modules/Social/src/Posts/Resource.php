@@ -84,7 +84,7 @@ final class Resource
         return ['id' => $id, 'content_id' => (int) ($comment['content_id'] ?? 0), 'parent_id' => (int) ($comment['parent_id'] ?? 0),
             'author' => self::author($comment), 'body' => (string) ($comment['body'] ?? ''),
             'editable_body' => Mentions::mentions_for_editing((string) ($comment['body'] ?? '')),
-            'segments' => \TinyCat\Core\Text\Segments::compactTags(\TinyCat\Core\Text\Segments::text((string) ($comment['body'] ?? ''), [], (int) ($comment['content_id'] ?? 0), $id)),
+            'segments' => \TinyCat\Core\Text\Segments::compactTags(\TinyCat\Core\Text\Segments::text((string) ($comment['body'] ?? ''), 'post', [], (int) ($comment['content_id'] ?? 0), $id)),
             'created_at' => $at !== '' ? \TinyCat\Support\Dates::dateIso($at) : '',
             'likes_count' => (int) ($comment['likes_count'] ?? 0),
             'liked' => $user !== null && Comments::status_comment_user_liked($id, (int) $user['id']),

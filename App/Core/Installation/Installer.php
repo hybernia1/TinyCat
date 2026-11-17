@@ -98,18 +98,13 @@ final class Installer
     {
         $pdo = \TinyCat\Database\Connection::get();
         $catalog = \TinyCat\Core\Modules\Resources::catalog();
-        // Legacy installations retain their published global history. Fresh DDL
-        // is nevertheless supplied only by selected table owners.
-        $legacyModuleSchemas = \TinyCat\Core\Modules\Providers::schemas($catalog);
-        $moduleSchemas = \TinyCat\Core\Runtime\Startup::$legacySchemas
-            ? $legacyModuleSchemas
-            : \TinyCat\Core\Modules\Providers::schemas($catalog, true);
+        $standaloneSchemas = \TinyCat\Core\Modules\Providers::schemas($catalog);
         foreach (\TinyCat\Core\Modules\Providers::schemas($catalog, true) as $id => $schema) {
-            if (isset($moduleSchemas[$id])) { \TinyCat\Database\ModuleSchemas::synchronize($pdo, [$id => $schema]); }
+            \TinyCat\Database\ModuleSchemas::synchronize($pdo, [$id => $schema]);
             // Managed owners also repair restartable DDL, such as missing indexes.
-            if (!isset($legacyModuleSchemas[$id])) { ($schema->install)($pdo); }
+            if (!isset($standaloneSchemas[$id])) { ($schema->install)($pdo); }
         }
-        \TinyCat\Database\Migrations::ensure($pdo);
+        \TinyCat\Database\Migrations::prepare($pdo);
     }
 
     /** @param array<mixed> $state */

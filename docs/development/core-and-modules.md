@@ -128,15 +128,21 @@ bajty a checksumy se nemění. Explicitní podepsané `fresh` a `legacy` operace
 umožňují čistou instalaci bez starého společného DDL a doložený převod dat.
 Aktualizační cesta a retirement historie jsou v [datovém kontraktu](domain-storage.md).
 
-`Core/Modules/Upgrade` převádí pouze aktivační ID: technická ID odstraní
-z aktivačního seznamu a staré sociální části sjednotí na `tinycat.social`.
-Nainstalovaný vypnutý Social zůstane vypnutý a zachová vlastnictví dat.
-Částečně aktivovaný starý Social se při převodu stane jedním aktivním modulem.
-Neznámý nainstalovaný modul nelze přechodem zahodit.
+Současné zdroje přijímají pouze descriptor formátu 3 z dokončené 6.0.6
+nebo novější instalace. Starší aktivační ID převádí nezměněný podepsaný release
+6.0.6; současný core nemá seznam částí Socialu ani převodní adaptér. Povinné
+technické schopnosti deklaruje `Core/Runtime/Framework::CAPABILITIES`.
+Nainstalovaný vypnutý vlastník zůstane vypnutý a zachová vlastnictví dat.
+Neznámý nainstalovaný modul nelze přechodem zahodit ani přejmenovat.
 
-`Core/Runtime/LegacyNames` zachovává bývalá jména tříd pro publikované
-migrace a kompatibilitu. Nový kód používá kanonické namespace v Core nebo
-Social; aliasy nesmějí vytvářet další implementace ani aktivovat modul.
+Popisky tabulek pro instalátor a klientskou prezentaci vlastních nastavení
+dodává vlastník ve svých překladech a assetech. Core vybírá tabulky z registrací;
+instalační text nepředpokládá přítomnost konkrétního funkčního modulu.
+
+Textové renderery `Core/Text/Segments` a `Core/Ui/RichTextResource` vyžadují
+explicitní druh textu. Registr `Core/Text/Policies` použije příspěvek vlastníka
+pro tento druh, nebo neutrální chování, pokud příspěvek neexistuje. Aktivní
+Social nemění renderování textu jiného vlastníka.
 
 Postup instalace, aktivace a aktualizace popisuje
 [provozní návod](../operations/module-deployment.md). Závazné transportní

@@ -6,7 +6,7 @@ final class Schema
 {
     public static function schema(): \TinyCat\Core\Modules\ModuleSchema
     {
-        return new \TinyCat\Core\Modules\ModuleSchema(1, ['user_followers'], self::install(...), [new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.users.initial', dirname(__DIR__, 2) . '/migrations/users/001-initial.php')], null, new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.users.legacy-v1', dirname(__DIR__, 2) . '/migrations/users/legacy-v1.php'));
+        return new \TinyCat\Core\Modules\ModuleSchema(1, ['user_followers'], self::install(...), [new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.users.initial', dirname(__DIR__, 2) . '/migrations/users/001-initial.php')], null);
     }
 
     public static function install(\PDO $pdo): void

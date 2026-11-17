@@ -34,7 +34,7 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
             new \TinyCat\Core\Modules\SchemaMigration(2, 'tinycat.blog.kinds', dirname(__DIR__) . '/migrations/002-kinds.php'),
             new \TinyCat\Core\Modules\SchemaMigration(3, 'tinycat.blog.feeds', dirname(__DIR__) . '/migrations/003-feed-sources.php'),
             new \TinyCat\Core\Modules\SchemaMigration(4, 'tinycat.blog.owned-storage', dirname(__DIR__) . '/migrations/004-owned-storage.php'),
-        ], new \TinyCat\Core\Modules\SchemaMigration(4, 'tinycat.blog.fresh-v4', dirname(__DIR__) . '/migrations/fresh-v4.php'), new \TinyCat\Core\Modules\SchemaMigration(4, 'tinycat.blog.legacy-v4', dirname(__DIR__) . '/migrations/legacy-v4.php'));
+        ], new \TinyCat\Core\Modules\SchemaMigration(4, 'tinycat.blog.fresh-v4', dirname(__DIR__) . '/migrations/fresh-v4.php'));
     }
 
     public static function accountLifecycle(): \TinyCat\Core\Identity\Participant { return new \TinyCat\Core\Identity\Participant(prepareDelete: AccountLifecycle::prepareDelete(...)); }

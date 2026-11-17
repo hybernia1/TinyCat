@@ -38,6 +38,7 @@ $assert(\TinyCat\Support\Localization::locale() === 'cs', 'Locale uses the suppl
 $assert((new ReflectionMethod(\TinyCat\Support\Cache::class, 'driver'))->invoke(null) === 'filesystem', 'Cache uses supplied technical configuration.');
 $assert(\TinyCat\Database\Schema::app_db_ready() && $readyCalls === 1, 'Readiness uses the supplied callback and in-memory DSN.');
 $assert((int) \TinyCat\Database\Connection::value("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'") === 0, 'The configured database contains no social or account tables.');
+$assert(\TinyCat\Core\Text\Segments::text('#tag @user', 'fixture.text') === [['type' => 'text', 'text' => '#tag @user']], 'Core renders an explicit neutral text kind without any functional owner or domain tables.');
 \TinyCat\Http\Router::route('GET', '/_kernel-probe', static function (): void { echo 'kernel'; });
 ob_start();
 $matched = \TinyCat\Http\Router::dispatch('/_kernel-probe', 'GET');

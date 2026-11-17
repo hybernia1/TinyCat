@@ -32,7 +32,7 @@ final class DiscussionResource
         return ['id' => $id, 'content_id' => $target->id, 'parent_id' => (int) ($row['parent_id'] ?? 0),
             'author' => ['id' => $authorId, 'username' => (string) ($row['author_name'] ?? ''), 'avatar_url' => \TinyCat\Core\Identity\Avatars::user_avatar_url($row)],
             'body' => (string) $row['body'], 'editable_body' => (string) $row['body'],
-            'segments' => Segments::compactTags(Segments::text((string) $row['body'], [], $target->id, $id, $target->kind)),
+            'segments' => Segments::compactTags(Segments::text((string) $row['body'], $target->kind, [], $target->id, $id)),
             'created_at' => \TinyCat\Support\Dates::dateIso((string) $row['created_at']),
             'likes_count' => (int) ($row['likes_count'] ?? 0), 'liked' => $actor !== null && (bool) ($row['liked'] ?? false),
             'capabilities' => ['edit' => $own || $admin, 'delete' => $own || $admin || $target->manage, 'interact' => $target->interact],

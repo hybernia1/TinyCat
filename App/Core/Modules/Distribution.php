@@ -13,10 +13,6 @@ final class Distribution
     private static array $assetRoots = [];
     /** An immutable snapshot of the last successful data-only validation. */
     private static ?string $validated = null;
-    public const string RUNTIME = '6.0.0-dev.1';
-    public const string CORE_SCHEMA_RUNTIME = '6.0.0-dev.4';
-    public const string FRAMEWORK_RUNTIME = '6.0.0-dev.5.1';
-    public const string DOMAIN_RUNTIME = '6.0.0-dev.9.2';
 
     /** @param array<string, string> $selection
      * @param list<string>|null $active
@@ -27,13 +23,13 @@ final class Distribution
         $active ??= array_keys($selection);
         $profiles = self::profiles($available);
         $required = $profiles[$product]['required'] ?? [];
-        $legacy = (bool) ($profiles[$product]['legacy'] ?? false);
-        $schemas = self::definitions($available, $legacy);
+        if (($profiles[$product]['legacy'] ?? false) !== false) { throw new \RuntimeException('Distribution profiles require current owner schemas.'); }
+        $schemas = self::definitions($available);
         $schemaOwners = Providers::schemaOwners($available->catalog);
         $records = []; $owners = [];
         foreach ($available->providers(\TinyCat\Core\Modules\StorageModule::class) as $id => $provider) {
             foreach ($provider::tables() as $table) { if (isset($owners[$table])) { throw new \RuntimeException('Duplicate module table owner: ' . $table); } $owners[$table] = $id; }
-            if (!$legacy && $provider::tables() !== [] && !in_array($id, $schemaOwners, true)) { throw new \RuntimeException('This domain has no standalone module schema: ' . $id); }
+            if ($provider::tables() !== [] && !in_array($id, $schemaOwners, true)) { throw new \RuntimeException('This domain has no standalone module schema: ' . $id); }
         }
         foreach ($schemas as $id => $schema) {
             $migrations = [];
@@ -68,20 +64,14 @@ final class Distribution
             $requires[$id] = $available->catalog->get($id)->requires;
             if (str_ends_with($binding, '.json') && !str_starts_with(str_replace('\\', '/', $binding), 'App/Modules/')) { throw new \RuntimeException('Distributed manifest modules belong under App/Modules/.'); }
         }
-        $plan = ['format' => 1, 'product' => $product, 'selection' => $selection, 'active' => $active, 'required' => $required, 'requires' => $requires, 'schemas' => $records, 'legacy' => $legacy, 'artifact' => $profiles[$product]['artifact'] ?? $product];
-        if (is_file($root . '/App/Core/services.json')) {
-            $format = $available->catalog->has('tinycat.publishing') ? 2 : 3;
-            $plan = array_replace($plan, ['format' => $format, 'schemaOwners' => array_intersect_key($schemaOwners, $records), 'framework' => $format === 3 ? Upgrade::FRAMEWORK : Upgrade::LEGACY_FRAMEWORK]);
-        }
+        $plan = ['format' => 3, 'product' => $product, 'selection' => $selection, 'active' => $active, 'required' => $required, 'requires' => $requires, 'schemas' => $records, 'legacy' => false, 'artifact' => $profiles[$product]['artifact'] ?? $product, 'schemaOwners' => array_intersect_key($schemaOwners, $records), 'framework' => \TinyCat\Core\Runtime\Framework::CAPABILITIES];
         return self::validate($plan);
     }
 
     /** @return array<string, ModuleSchema> */
-    public static function definitions(Loader $modules, bool $legacy): array
+    public static function definitions(Loader $modules): array
     {
-        $schemas = $modules->schemas(!$legacy);
-        if ($legacy) { unset($schemas['tinycat.support']); }
-        return $schemas;
+        return $modules->schemas(true);
     }
 
     /** @param array<mixed> $data
@@ -95,19 +85,14 @@ final class Distribution
         if (self::$validated === $snapshot) { return $data; }
         if (array_diff(array_keys($data), ['format', 'product', 'selection', 'active', 'required', 'requires', 'schemas', 'legacy', 'artifact', 'framework', 'schemaOwners']) !== []) { throw new \RuntimeException('Unknown distribution field.'); }
         if (isset($data['artifact']) && (!is_string($data['artifact']) || preg_match('/^[a-z][a-z0-9.-]*$/D', $data['artifact']) !== 1)) { throw new \RuntimeException('Invalid artifact name.'); }
-        $modern = in_array($data['format'] ?? null, [2, 3], true);
-        $technical = $modern ? (($data['format'] ?? null) === 3 ? Upgrade::FRAMEWORK : Upgrade::LEGACY_FRAMEWORK) : ['tinycat.support', 'tinycat.ui', 'tinycat.admin'];
-        if (!in_array($data['format'] ?? null, [1, 2, 3], true) || !is_string($data['product'] ?? null) || preg_match('/^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/D', $data['product']) !== 1 || !is_bool($data['legacy'] ?? null)) { throw new \RuntimeException('Invalid distribution identity.'); }
-        if ($modern) {
-            if (($data['framework'] ?? null) !== $technical || !is_array($data['schemaOwners'] ?? null)) { throw new \RuntimeException('Invalid mandatory framework declaration.'); }
-            if (($data['required'] ?? null) !== []) { throw new \RuntimeException('Functional modules must remain optional.'); }
-        } elseif (isset($data['framework']) || isset($data['schemaOwners'])) { throw new \RuntimeException('Framework ownership requires distribution format 2.'); }
+        $technical = \TinyCat\Core\Runtime\Framework::CAPABILITIES;
+        if (($data['format'] ?? null) !== 3 || !is_string($data['product'] ?? null) || preg_match('/^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/D', $data['product']) !== 1 || ($data['legacy'] ?? null) !== false) { throw new \RuntimeException('Invalid distribution identity; use a completed current framework installation.'); }
+        if (($data['framework'] ?? null) !== $technical || !is_array($data['schemaOwners'] ?? null)) { throw new \RuntimeException('Invalid mandatory framework declaration.'); }
+        if (($data['required'] ?? null) !== []) { throw new \RuntimeException('Functional modules must remain optional.'); }
         foreach (['selection', 'active', 'required', 'requires', 'schemas'] as $key) { if (!is_array($data[$key] ?? null)) { throw new \RuntimeException('Invalid distribution field: ' . $key); } }
         $selection = $data['selection'];
         foreach ($selection as $id => $binding) {
             if (!is_string($id) || in_array($id, $technical, true) || preg_match('/^[a-z][a-z0-9.-]+$/D', $id) !== 1 || !is_string($binding) || $binding === '') { throw new \RuntimeException('Invalid distribution module binding.'); }
-            if ($modern && in_array($id, Upgrade::SOCIAL, true)) { throw new \RuntimeException('Retired Social fragments cannot be activated independently.'); }
-            if ($data['format'] === 3 && in_array($id, Upgrade::LEGACY_FRAMEWORK, true)) { throw new \RuntimeException('A retired framework capability cannot become a functional module.'); }
             if (preg_match('/^TinyCat\\\\[A-Za-z][A-Za-z0-9]*\\\\Module$/D', $binding) !== 1 && preg_match('~^App/Modules/(?:[A-Za-z0-9_-]+/)+[A-Za-z0-9_.-]+\.json$~D', $binding) !== 1) { throw new \RuntimeException('Invalid packaged module location.'); }
             if (!is_array($data['requires'][$id] ?? null)) { throw new \RuntimeException('Missing module dependencies.'); }
             foreach ($data['requires'][$id] as $dependency) { if (!is_string($dependency) || (!isset($selection[$dependency]) && !in_array($dependency, $technical, true))) { throw new \RuntimeException('Unknown module dependency.'); } }
@@ -128,15 +113,15 @@ final class Distribution
             $resolved[] = $ready; unset($remaining[$ready]);
         }
         foreach ($data['schemas'] as $id => $schema) {
-            $owner = $modern ? ($data['schemaOwners'][$id] ?? null) : $id;
-            if (!is_string($id) || preg_match('/^[a-z][a-z0-9.-]+$/D', $id) !== 1 || !is_string($owner) || (!isset($selection[$owner]) && !in_array($owner, $modern ? $technical : ['tinycat.support'], true)) || !is_array($schema) || !is_int($schema['version'] ?? null) || !is_array($schema['tables'] ?? null) || !is_array($schema['migrations'] ?? null)) { throw new \RuntimeException('Invalid module schema plan.'); }
+            $owner = $data['schemaOwners'][$id] ?? null;
+            if (!is_string($id) || preg_match('/^[a-z][a-z0-9.-]+$/D', $id) !== 1 || !is_string($owner) || (!isset($selection[$owner]) && !in_array($owner, $technical, true)) || !is_array($schema) || !is_int($schema['version'] ?? null) || !is_array($schema['tables'] ?? null) || !is_array($schema['migrations'] ?? null)) { throw new \RuntimeException('Invalid module schema plan.'); }
             $migrations = [];
             foreach ($schema['migrations'] as $migration) {
                 if (!is_array($migration) || !is_int($migration['version'] ?? null) || !is_string($migration['id'] ?? null) || !is_string($migration['file'] ?? null) || !is_string($migration['checksum'] ?? null)
                     || preg_match('~^App/[A-Za-z0-9_./-]+\.php$~D', $migration['file']) !== 1 || array_intersect(explode('/', $migration['file']), ['.', '..']) !== [] || preg_match('/^[a-f0-9]{64}$/D', $migration['checksum']) !== 1) { throw new \RuntimeException('Invalid module migration plan.'); }
                 $migrations[] = new SchemaMigration($migration['version'], $migration['id'], $migration['file']);
                 $binding = $selection[$owner] ?? '';
-                $prefix = $modern && in_array($owner, $technical, true) ? 'App/Core/' : ($id === 'tinycat.support' ? 'App/Core/Tasks/migrations/' : (str_ends_with($binding, '.json') ? dirname($binding) . '/' : 'App/' . explode('\\', $binding)[1] . '/'));
+                $prefix = in_array($owner, $technical, true) ? 'App/Core/' : (str_ends_with($binding, '.json') ? dirname($binding) . '/' : 'App/Modules/' . explode('\\', $binding)[1] . '/');
                 if (!str_starts_with($migration['file'], $prefix)) { throw new \RuntimeException('Migration belongs to another module.'); }
             }
             $tables = self::strings($schema['tables']);
@@ -144,7 +129,7 @@ final class Distribution
             foreach (['fresh', 'legacy'] as $operation) {
                 if (!isset($schema[$operation])) { continue; }
                 $fresh = $schema[$operation];
-                if ($data['format'] !== 3 || !is_array($fresh) || !is_int($fresh['version'] ?? null) || !is_string($fresh['id'] ?? null) || !is_string($fresh['file'] ?? null) || !is_string($fresh['checksum'] ?? null)
+                if (!is_array($fresh) || !is_int($fresh['version'] ?? null) || !is_string($fresh['id'] ?? null) || !is_string($fresh['file'] ?? null) || !is_string($fresh['checksum'] ?? null)
                     || preg_match('~^App/[A-Za-z0-9_./-]+\.php$~D', $fresh['file']) !== 1 || array_intersect(explode('/', $fresh['file']), ['.', '..']) !== [] || preg_match('/^[a-f0-9]{64}$/D', $fresh['checksum']) !== 1 || preg_match('/^[a-z][a-z0-9_.-]+$/D', $fresh['id']) !== 1) { throw new \RuntimeException('Invalid fresh schema plan.'); }
                 $binding = $selection[$owner] ?? '';
                 $prefix = in_array($owner, $technical, true) ? 'App/Core/' : dirname($binding) . '/';
@@ -153,7 +138,7 @@ final class Distribution
             }
             new ModuleSchema($schema['version'], $tables, static function (\PDO $pdo): void {}, $migrations, $operations['fresh'] ?? null, $operations['legacy'] ?? null);
         }
-        if ($modern && array_diff(array_keys($data['schemaOwners']), array_keys($data['schemas'])) !== []) { throw new \RuntimeException('Unknown schema ownership entry.'); }
+        if (array_diff(array_keys($data['schemaOwners']), array_keys($data['schemas'])) !== []) { throw new \RuntimeException('Unknown schema ownership entry.'); }
         self::$validated = $snapshot;
         return $data;
     }
@@ -184,16 +169,14 @@ final class Distribution
         $plan = self::validate($plan);
         if (self::read($root) !== $plan) { throw new \RuntimeException('Signed distribution and packaged descriptor differ.'); }
         $modules = Loader::fromSelection($root, $plan['selection']);
-        if ($plan['format'] >= 2) {
-            $framework = array_map(static fn (Definition $definition): string => $definition->id, array_values(array_filter($modules->catalog->definitions(), static fn (Definition $definition): bool => $definition->manifest === null)));
-            if (array_diff($framework, $plan['framework']) !== [] || array_diff($plan['framework'], $framework) !== []) { throw new \RuntimeException('Packaged framework metadata is incomplete.'); }
-            foreach ($plan['schemas'] as $id => $schema) {
-                $definition = $modules->catalog->get($plan['schemaOwners'][$id]);
-                foreach ([...$schema['migrations'], ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) {
-                    $file = realpath($root . '/' . $migration['file']);
-                    $directory = $definition->resources['migrations'] ?? null;
-                    if ($file === false || $directory === null || !ModuleAutoload::inside($file, $directory)) { throw new \RuntimeException('Packaged schema escapes its declared owner.'); }
-                }
+        $framework = array_map(static fn (Definition $definition): string => $definition->id, array_values(array_filter($modules->catalog->definitions(), static fn (Definition $definition): bool => $definition->manifest === null)));
+        if (array_diff($framework, $plan['framework']) !== [] || array_diff($plan['framework'], $framework) !== []) { throw new \RuntimeException('Packaged framework metadata is incomplete.'); }
+        foreach ($plan['schemas'] as $id => $schema) {
+            $definition = $modules->catalog->get($plan['schemaOwners'][$id]);
+            foreach ([...$schema['migrations'], ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) {
+                $file = realpath($root . '/' . $migration['file']);
+                $directory = $definition->resources['migrations'] ?? null;
+                if ($file === false || $directory === null || !ModuleAutoload::inside($file, $directory)) { throw new \RuntimeException('Packaged schema escapes its declared owner.'); }
             }
         }
         foreach ($plan['selection'] as $id => $binding) { if ($modules->catalog->get($id)->requires !== $plan['requires'][$id]) { throw new \RuntimeException('Packaged dependency metadata differs from its module.'); } }
@@ -216,8 +199,8 @@ final class Distribution
     {
         self::validate($plan); $schemas = [];
         foreach ($plan['schemas'] as $id => $record) {
-            $owner = $plan['schemaOwners'][$id] ?? $id;
-            $framework = ($plan['format'] ?? 1) >= 2 ? $plan['framework'] : ['tinycat.support'];
+            $owner = $plan['schemaOwners'][$id];
+            $framework = $plan['framework'];
             if (!in_array($owner, $framework, true) && !in_array($owner, $ids, true)) { continue; }
             $migrations = [];
             foreach ($record['migrations'] as $item) {
@@ -238,9 +221,6 @@ final class Distribution
         }
         return $schemas;
     }
-
-    /** @param array<string, mixed> $plan */
-    public static function modular(array $plan): bool { return !$plan['legacy'] || $plan['schemas'] !== []; }
 
     /** @param array<string, mixed> $plan */
     public static function includes(string $relative, array $plan): bool
@@ -267,7 +247,7 @@ final class Distribution
             $catalog = Loader::fromSelection(\TinyCat\Support\Paths::basePath(), $plan['selection'])->catalog;
             return array_any($catalog->resources('entrypoints'), static fn (string $directory): bool => is_file($directory . '/' . $relative));
         }
-        if (str_starts_with($relative, 'migrations/')) { return $plan['legacy']; }
+        if (str_starts_with($relative, 'migrations/')) { return false; }
         return true;
     }
 

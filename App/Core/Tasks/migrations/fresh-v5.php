@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 return static function (\PDO $pdo): void {
-    \TinyCat\Core\Tasks\Schema::validateLegacyHistory($pdo);
     $suffix = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql' ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' : '';
     $id = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'mysql' ? 'BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY' : 'INTEGER NOT NULL PRIMARY KEY';
     $pdo->exec('CREATE TABLE IF NOT EXISTS scheduler_runs (id ' . $id . ', task VARCHAR(40) NOT NULL, mode VARCHAR(16) NOT NULL, actor_id BIGINT NULL, status VARCHAR(24) NOT NULL, started_at DATETIME NOT NULL, finished_at DATETIME NULL, duration_ms BIGINT NULL, options_json TEXT NOT NULL, summary_json TEXT NULL, error TEXT NULL)' . $suffix);

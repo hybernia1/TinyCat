@@ -386,6 +386,9 @@
       "content_images_max_upload_kb": "Maximální velikost obrázku (KB)",
       "content_images_enabled_help": "Existující obrázky zůstanou viditelné i po vypnutí uploadů.",
       "utm_source_help": "Prázdná hodnota použije doménu z adresy webu. Existující UTM parametry odkazu se zachovají."
+    },
+    "sections": {
+      "content_images": "Obrázky příspěvků"
     }
   },
   "notifications": {
@@ -399,5 +402,21 @@
       "report_resolved": "Tvoje nahlášení bylo vyřešeno.",
       "report_dismissed": "Tvoje nahlášení bylo zamítnuto."
     }
+  },
+  "install": {
+    "purpose_social_posts": "Veřejné příspěvky uživatelů.",
+    "purpose_social_post_images": "Komprimované obrázky připojené k příspěvkům.",
+    "purpose_social_terms": "Termy pro štítky.",
+    "purpose_social_post_tags": "Vazby mezi příspěvky a termy.",
+    "purpose_social_links": "Unikátní metadata uložených odkazů.",
+    "purpose_social_post_links": "Vazby mezi příspěvky a odkazy.",
+    "purpose_social_post_likes": "Lajky u příspěvků.",
+    "purpose_social_comments": "Vnořené komentáře k příspěvkům.",
+    "purpose_social_comment_likes": "Lajky u komentářů.",
+    "purpose_user_followers": "Sledování profilů uživateli.",
+    "purpose_content_reports": "Uživatelská nahlášení pro moderaci.",
+    "purpose_bot_sources": "Pravidla publikování RSS a Atom zdrojů pro bot účty.",
+    "purpose_bot_feed_history": "Poslední hashe položek feedu zabraňující duplicitním příspěvkům botů.",
+    "purpose_bot_source_runs": "Úsporná diagnostická historie kontrol a importů botích zdrojů."
   }
 }

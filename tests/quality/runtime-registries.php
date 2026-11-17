@@ -150,7 +150,7 @@ try {
     try { \TinyCat\Core\Modules\Providers::duringStartup($selection, static function (): never { throw new RuntimeException('Scope fixture'); }); }
     catch (RuntimeException) { $assert($ownership->getValue() === null, 'A failed startup discards its validation cache'); }
     $product = 'fixture.product';
-    $plan = ['format' => 1, 'product' => &$product, 'legacy' => false, 'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => []];
+    $plan = ['format' => 3, 'framework' => \TinyCat\Core\Runtime\Framework::CAPABILITIES, 'schemaOwners' => [], 'product' => &$product, 'legacy' => false, 'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => []];
     \TinyCat\Core\Modules\Distribution::validate($plan);
     $product = 'INVALID'; $invalid = false;
     try { \TinyCat\Core\Modules\Distribution::validate($plan); } catch (RuntimeException) { $invalid = true; }

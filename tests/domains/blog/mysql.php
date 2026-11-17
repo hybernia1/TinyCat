@@ -119,7 +119,7 @@ try {
     catch (RuntimeException) { $assert(TinyCat\Database\ModuleSchemas::state($pdo, 'tinycat.blog')['status'] === 'failed', 'MySQL retains the interrupted installation state'); }
     TinyCat\Blog\Installation::upgrade($pdo);
     $assert(TinyCat\Database\ModuleSchemas::ready($pdo, ['tinycat.blog' => $schema]), 'Real MySQL Blog migration recovers version zero');
-    require $root . '/tests/fixtures/blog/legacy-storage.php';
+    require $root . '/tests/fixtures/blog/current-storage.php';
     echo "PASS isolated MySQL Blog installation, article storage, rollback, upgrade and foreign keys ({$checks} checks)\n";
 } finally {
     $pdo = null;

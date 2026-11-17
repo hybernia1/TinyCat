@@ -13,7 +13,7 @@ final class Web
         exit;
     }
 
-    /** @param (callable(string, mixed): mixed)|null $option Product policy; defaults preserve the social assembly.
+    /** @param (callable(string, mixed): mixed)|null $option Runtime settings resolver.
      * @param list<string>|null $playerOrigins */
     public static function securityHeaders(?callable $option = null, ?array $playerOrigins = null): void
     {

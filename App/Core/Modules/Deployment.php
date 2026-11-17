@@ -60,9 +60,9 @@ final class Deployment
         } else { $product = $current['product']; }
         if ($product !== $candidate['product']) { throw new \RuntimeException('An update cannot change the installed product.'); }
         $state = self::read($root);
-        $installed = Upgrade::ids($candidate, $state['installed'] ?? array_keys($current['selection'] ?? require $root . '/App/modules.php'));
+        $installed = $state['installed'] ?? array_keys($current['selection'] ?? require $root . '/App/modules.php');
         if (array_diff($installed, array_keys($candidate['selection'])) !== []) { throw new \RuntimeException('An update cannot remove installed module sources or data.'); }
-        $active = Upgrade::ids($candidate, $state['active'] ?? $current['active'] ?? $installed);
+        $active = $state['active'] ?? $current['active'] ?? $installed;
         $active = array_values(array_unique([...$active, ...$candidate['required']]));
         Distribution::selection($candidate, $active);
         return ['active' => $active, 'installed' => array_values(array_unique([...$installed, ...$active]))];

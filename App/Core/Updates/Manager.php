@@ -555,9 +555,7 @@ class Manager extends Package
             if (!is_array($manifest['distribution'])) { throw new RuntimeException('Invalid signed product descriptor.'); }
             $plan = \TinyCat\Core\Modules\Distribution::validate($manifest['distribution']);
             if (!isset($normalizedFiles['App/distribution.json'])) { throw new RuntimeException('A product package must contain its descriptor.'); }
-            if (\TinyCat\Core\Modules\Distribution::modular($plan) && version_compare($minimumVersion, \TinyCat\Core\Modules\Distribution::RUNTIME, '<')) { throw new RuntimeException('Module-aware packages must require a module-aware runtime.'); }
-            if ($plan['format'] === 2 && \TinyCat\Core\Modules\Distribution::modular($plan) && version_compare($minimumVersion, \TinyCat\Core\Modules\Distribution::FRAMEWORK_RUNTIME, '<')) { throw new RuntimeException('Framework packages require the activation transition runtime.'); }
-            if ($plan['format'] === 3 && version_compare($minimumVersion, \TinyCat\Core\Modules\Distribution::DOMAIN_RUNTIME, '<')) { throw new RuntimeException('Domain-owned schema packages require the domain transition runtime.'); }
+            if (version_compare($minimumVersion, \TinyCat\Support\Version::MINIMUM_UPDATE, '<')) { throw new RuntimeException('Product packages must require the supported runtime baseline.'); }
             foreach ($plan['schemas'] as $schema) {
                 foreach ($schema['migrations'] as $migration) { if (($normalizedFiles[$migration['file']] ?? '') !== $migration['checksum']) { throw new RuntimeException('Signed module migration is missing or inconsistent.'); } }
             }
@@ -600,7 +598,7 @@ class Manager extends Package
         if (is_array($plan)) { \TinyCat\Core\Modules\Deployment::transition(\TinyCat\Support\Paths::basePath(), $plan); }
         else {
             $current = \TinyCat\Core\Modules\Distribution::read(\TinyCat\Support\Paths::basePath());
-            if ($current !== null && \TinyCat\Core\Modules\Distribution::modular($current)) { throw new RuntimeException('This product requires a module-aware update package.'); }
+            if ($current !== null) { throw new RuntimeException('This product requires a module-aware update package.'); }
         }
         $version = (string) ($manifest['version'] ?? '');
         $minimumVersion = (string) ($manifest['minimum_version'] ?? '');

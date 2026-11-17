@@ -10,45 +10,65 @@ activation, migration snapshots and recovery.
 
 ## Supported update baseline
 
-New packages require a completed TinyCat **6.0.4** installation or newer, for
-all assemblies. The builder rejects older minimum versions and `--legacy-upgrade`.
-The 5.x compatibility transport, old autoloader shim and bridge builder have
-been retired. Root historical migrations are no longer shipped in new packages.
+New source packages require a completed TinyCat **6.0.6** installation or newer,
+for all assemblies. Older supported sites must first apply the published signed
+6.0.6 release, which retains its original 6.0.4 minimum and recovery behavior.
+The builder rejects older minimum versions and `--legacy-upgrade`.
 
-Published migration files, IDs and checksums remain immutable. The shared
-`migrations` journal replaces `schema_migrations` and `module_migrations`.
-It preserves each original ID, checksum, schema sequence, release version and
-known application time. Unknown historical schema timestamps remain `NULL`.
-`module_installations` retains the separate current state of each schema.
-Historical version values are opaque labels, sometimes the original migration
-name rather than a semantic release number. The corrected journal accepts up to
-190 characters and widens existing 6.0.5 storage during explicit migration.
+The only physical journal is `migrations`. Existing IDs, stream names, checksums,
+sequences, opaque version labels and application times are preserved. Historical
+version values may be migration names up to 190 characters rather than SemVer.
+`module_installations` retains current schema state separately.
 
-The signed `tinycat.support` schema steps prepare and finish the copy even when
-the running 6.0.4 updater retains its original lifecycle and schema writer. A
-compatibility `module_migrations` view directs that writer's remaining inserts
-into the single physical journal; it stores no second copy. Fresh installations
-need no compatibility view. History reads and pending checks ignore this view.
-Source rows are verified before old tables are dropped. Interrupted copies can
-resume; conflicts retain the source. Read-only checks do not create objects or
-convert data. Signed module histories remain verified; the existing database
-snapshot and rollback preserve tables and compatibility views together.
+The 6.0.7 core task schema step 5 removes the `module_migrations` compatibility
+view and its SQLite trigger. This view served an already-loaded pre-6.0.6 writer;
+completed 6.0.6 engines write the unified journal directly. Removing the view
+changes no journal rows. Standard snapshot and rollback restore it when present
+in the baseline. The current journal never reads, copies or adopts the retired
+physical journal tables; an incomplete pre-baseline database is rejected.
+
+Current installation and readiness use one owner schema path. Global-table
+adoption callbacks and `SchemaInspection` are retired; normal inspection belongs
+to `TinyCat\Database\Schema`. Applied SQL snapshots remain byte-identical in the
+signed plan for checksum validation. They are never replayed when updating a
+completed 6.0.6 site, and fresh installations use the current signed baseline.
+Published release tags and assets remain unchanged.
+
+Current descriptors use format 3 exclusively. Completed 6.0.6 deployment state
+already contains canonical functional module IDs; updates preserve those IDs,
+including installed inactive owners. Historical activation remapping and the
+format 1/2 registration branches are removed from current sources. Unknown
+installed owners still prevent an update that would discard their sources or data.
+
 
 For a new release, use:
 
 ```sh
 php tools/release/build-update.php --version=X.Y.Z --both --output=dist/release-X.Y.Z
-php tools/release/release-update-rehearsal.php --artifact=dist/release-X.Y.Z/update --baseline-version=6.0.4 --direct-web --cached-autoload
+php tools/release/release-update-rehearsal.php --artifact=dist/release-X.Y.Z/update --baseline-version=6.0.6 --direct-web --cached-autoload
 ```
 
-The rehearsal uses the published `v6.0.4` source and a disposable MySQL database.
+The rehearsal uses the published `v6.0.6` source and a disposable MySQL database.
 It checks representative Social data, retained long historical version labels,
-the signed update and exact rollback.
-The release version must be newer than 6.0.4. The automated file rehearsal
-uses a synthetic successor in an isolated copy when the source is still 6.0.4.
+compatibility-view retirement, the signed update and exact rollback, including
+with the baseline schema, journal and lifecycle classes already loaded.
+The release version must be newer than 6.0.6. The automated file rehearsal
+uses a synthetic successor in an isolated copy when the source is still 6.0.6.
 
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
+
+## Upgrading to 6.0.7
+
+Requires a completed **6.0.6 or newer** installation and PHP 8.4. Apply the signed
+update through **Admin > Updates**. Older supported installations first use the
+unchanged published 6.0.6 bridge. The 6.0.7 package retains both Social and Blog
+sources; installed and active module selections remain installation-owned.
+
+Task-schema step 5 retires the journal writer view while preserving all physical
+migration history. Published applied migration bytes, IDs and checksums remain
+unchanged. The standard update snapshot and rollback preserve configuration,
+media, deployment state and database contents.
 
 ## Upgrading to 6.0.6
 
@@ -76,10 +96,10 @@ journals and derives scheduler presentation from registered tasks. Configuration
 uploads and runtime storage stay in place. The updater snapshots the database
 before journal conversion and supports restoring the original 6.0.4 installation.
 
-Runtime callers use canonical class names. Schema inspection belongs to
-`TinyCat\Database\Schema`; the `SchemaInspection` adapter remains for
-immutable published migrations and a running 6.0.4 updater that already loaded its
-original schema class. Their source and checksums are unchanged.
+The published 6.0.5 and 6.0.6 packages retained `SchemaInspection` for immutable
+migrations and a running 6.0.4 updater with its original schema class loaded.
+Current sources use `TinyCat\Database\Schema` and require completed 6.0.6;
+the runtime adapter is removed. Applied SQL sources and checksums are unchanged.
 Older installations must first install the published signed 6.0.4 release.
 
 ## Upgrading to 6.0.4

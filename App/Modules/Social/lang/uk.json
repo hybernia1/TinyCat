@@ -386,6 +386,9 @@
       "content_images_max_upload_kb": "Максимальний розмір зображення (КБ)",
       "content_images_enabled_help": "Існуючі зображення залишаються видимими, коли завантаження вимкнено.",
       "utm_source_help": "Leave empty to use the configured website domain. Existing UTM parameters on each link are preserved."
+    },
+    "sections": {
+      "content_images": "Опублікуйте зображення"
     }
   },
   "notifications": {
@@ -399,5 +402,21 @@
       "report_resolved": "Ваше повідомлення було вирішено.",
       "report_dismissed": "Ваш звіт відхилено."
     }
+  },
+  "install": {
+    "purpose_social_posts": "Публічні повідомлення користувачів.",
+    "purpose_social_post_images": "Стислі зображення, прикріплені до публікацій.",
+    "purpose_social_terms": "Терміни для тегів.",
+    "purpose_social_post_tags": "Зв'язки між повідомленнями та термінами.",
+    "purpose_social_links": "Унікальні збережені метадані посилання.",
+    "purpose_social_post_links": "Зв’язки між публікаціями та посиланнями.",
+    "purpose_social_post_likes": "Лайки на дописах.",
+    "purpose_social_comments": "Вкладені коментарі до публікацій.",
+    "purpose_social_comment_likes": "Лайки в коментарях.",
+    "purpose_user_followers": "Профіль переходить між користувачами.",
+    "purpose_content_reports": "Звіт користувачів для модерації.",
+    "purpose_bot_sources": "RSS і правила публікації Atom для облікових записів ботів.",
+    "purpose_bot_feed_history": "Недавні хеші елементів каналу, які використовуються для запобігання повторюваним публікаціям ботів.",
+    "purpose_bot_source_runs": "Компактна діагностична історія перевірок джерела та імпорту ботів."
   }
 }

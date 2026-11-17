@@ -58,7 +58,7 @@ try {
         $journalChecks++;
         if (!$condition) { throw new RuntimeException($message); }
     });
-    echo "PASS MySQL unified journal conversion and recovery ({$journalChecks} checks).\n";
+    echo "PASS MySQL current journal preservation and retirement ({$journalChecks} checks).\n";
     $database->exec('CREATE TABLE user_profile_links (id INT UNSIGNED NOT NULL PRIMARY KEY) ENGINE=InnoDB');
     $removeProfileLinks = require __DIR__ . '/../../../migrations/20260809_001_remove_user_profile_links.php';
 
@@ -256,8 +256,8 @@ try {
     try {
         MigrationRegistry::ensure();
     } catch (RuntimeException $exception) {
-        if (str_contains($exception->getMessage(), 'Historical schema is incompatible: schema_migrations')) {
-            echo "PASS MySQL outdated migration registry rejected by 6.0.4 baseline.\n";
+        if (str_contains($exception->getMessage(), 'A completed TinyCat 6.0.6 migration journal is required.')) {
+            echo "PASS MySQL outdated migration registry rejected by 6.0.6 baseline.\n";
             return;
         }
         throw $exception;

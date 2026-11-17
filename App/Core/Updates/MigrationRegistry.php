@@ -14,7 +14,7 @@ class MigrationRegistry
 
     public static function ensure(): void
     {
-        \TinyCat\Database\Migrations::ensure(\TinyCat\Database\Connection::get());
+        \TinyCat\Database\Migrations::prepare(\TinyCat\Database\Connection::get());
     }
 
     /**

@@ -7,6 +7,8 @@ use TinyCat\Core\Modules\Definition;
 /** Mandatory framework registrations. These are never part of module activation state. */
 final class Framework
 {
+    public const array CAPABILITIES = ['tinycat.support', 'tinycat.ui', 'tinycat.admin', 'tinycat.accounts', 'tinycat.security', 'tinycat.settings', 'tinycat.installation', 'tinycat.mail', 'tinycat.notifications', 'tinycat.scheduler', 'tinycat.health', 'tinycat.updates'];
+
     /** @return list<Definition> */
     public static function definitions(string $root): array
     {
@@ -20,8 +22,7 @@ final class Framework
             $definitions[] = Definition::fromMetadata($entry->metadata, $root . '/App/Core/' . $entry->directory);
         }
         $ids = array_map(static fn (Definition $definition): string => $definition->id, $definitions);
-        $capabilities = in_array('tinycat.publishing', $ids, true) ? \TinyCat\Core\Modules\Upgrade::LEGACY_FRAMEWORK : \TinyCat\Core\Modules\Upgrade::FRAMEWORK;
-        $required = array_values(array_diff($capabilities, ['tinycat.support', 'tinycat.ui', 'tinycat.admin']));
+        $required = array_values(array_diff(self::CAPABILITIES, ['tinycat.support', 'tinycat.ui', 'tinycat.admin']));
         if (count($ids) !== count($required) || array_diff($ids, $required) !== [] || array_diff($required, $ids) !== []) { throw new \RuntimeException('The framework registry must contain every mandatory capability exactly once.'); }
         return $definitions;
     }

@@ -8,7 +8,6 @@
       "security": "Sicherheit",
       "site": "Website",
       "performance": "Leistung",
-      "content_images": "Posten Sie Bilder",
       "email": "E-Mail",
       "analytics": "Analytik"
     },
@@ -71,7 +70,7 @@
     "db_charset": "Zeichensatz",
     "db_test": "Testen und fortfahren",
     "tables_title": "Tabellen erstellen",
-    "tables_intro": "TinyCat erstellt Kerntabellen für Konten, Inhalte, Benachrichtigungen, Moderation, Ratenbeschränkungen, Passwortwiederherstellung und Einstellungen.",
+    "tables_intro": "TinyCat erstellt Tabellen für den Core und die ausgewählten Module.",
     "create_tables": "Tabellen erstellen",
     "table_name": "Tabelle",
     "table_purpose": "Zweck",
@@ -80,18 +79,7 @@
     "state_missing": "Fehlen",
     "state_exists": "Existiert",
     "purpose_users": "Administratorkonten und Benutzer.",
-    "purpose_content": "Öffentliche Benutzerbeiträge.",
-    "purpose_content_images": "Komprimierte Bilder, die an Beiträge angehängt sind.",
-    "purpose_terms": "Begriffe für Tags.",
-    "purpose_content_tags": "Beziehungen zwischen Beiträgen und Begriffen.",
-    "purpose_links": "Eindeutige gespeicherte Link-Metadaten.",
-    "purpose_content_links": "Beziehungen zwischen Beiträgen und Links.",
-    "purpose_content_likes": "Likes für Beiträge.",
-    "purpose_content_comments": "Verschachtelte Kommentare zu Beiträgen.",
-    "purpose_comment_likes": "Likes für Kommentare.",
-    "purpose_user_followers": "Profil folgt zwischen Benutzern.",
-    "purpose_notifications": "Benachrichtigungen für Likes, Kommentare, Erwähnungen und Follower.",
-    "purpose_content_reports": "Benutzerberichte zur Moderation.",
+    "purpose_notifications": "Kontobenachrichtigungen mit Betreffobjekten, die von ihren Eigentümern verwaltet werden.",
     "purpose_ip_action_limits": "Konto- oder IP-basierte Rate-Limit-Buckets für ausgewählte Aktionen.",
     "purpose_password_reset_tokens": "Kurzlebige Token zum Zurücksetzen des Passworts, die per E-Mail gesendet werden.",
     "purpose_settings": "Datenbankgestützte Anwendungseinstellungen.",
@@ -117,9 +105,6 @@
       "password_mismatch": "Die Passwörter stimmen nicht überein.",
       "config_write_failed": "config.php konnte nicht geschrieben werden.",
       "db_failed": "Datenbankverbindung fehlgeschlagen: {message}"
-    },
-    "purpose_bot_sources": "RSS- und Atom-Veröffentlichungsregeln für Bot-Konten.",
-    "purpose_bot_feed_history": "Aktuelle Feed-Element-Hashes werden verwendet, um doppelte Bot-Beiträge zu verhindern.",
-    "purpose_bot_source_runs": "Kompakter Diagnoseverlauf von Bot-Quellenprüfungen und -Importen."
+    }
   }
 }

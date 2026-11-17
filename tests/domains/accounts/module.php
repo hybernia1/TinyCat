@@ -51,7 +51,7 @@ $assert($tables === ['ip_action_limits', 'password_reset_tokens', 'users'], 'Fre
 $pdo = new PDO('sqlite:' . $workspace . '/accounts.sqlite', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $pdo->exec('PRAGMA foreign_keys = ON');
 TinyCat\Database\Connection::set($pdo);
-TinyCat\Database\ModuleSchemas::install($pdo, TinyCat\Core\Modules\Distribution::definitions($modules, false));
+TinyCat\Database\ModuleSchemas::install($pdo, TinyCat\Core\Modules\Distribution::definitions($modules));
 $insert = $pdo->prepare('INSERT INTO users(username, email, password, role, locale) VALUES (?, ?, ?, ?, ?)');
 foreach ([['Admin', 'admin@example.test', 'admin'], ['Member', 'member@example.test', 'user']] as [$name, $email, $role]) { $insert->execute([$name, $email, password_hash('Secret-123456', PASSWORD_DEFAULT), $role, 'en']); }
 $insert = null;

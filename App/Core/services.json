@@ -80,8 +80,7 @@
         "tinycat.settings"
       ],
       "providers": {
-        "routes": "TinyCat\\Core\\Installation\\ServiceProvider",
-        "services": "TinyCat\\Core\\Installation\\ServiceProvider"
+        "routes": "TinyCat\\Core\\Installation\\ServiceProvider"
       },
       "resources": {
         "assets": "assets/module.json",

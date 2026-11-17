@@ -15,11 +15,11 @@ final class ModuleSchemas
      * @param array<string, ModuleSchema> $schemas */
     public static function pending(PDO $pdo, array $schemas): bool
     {
-        self::validate($schemas); $pending = $schemas !== [] && Migrations::pending($pdo);
+        self::validate($schemas); $pending = false;
         foreach ($schemas as $id => $schema) {
             $state = self::state($pdo, $id);
             if ($state === null) {
-                foreach ($schema->tables as $table) { if ($schema->legacy === null && self::tableExists($pdo, $table) && !\TinyCat\Core\Tasks\Schema::mayAdopt($pdo, $id, $schema)) { throw new RuntimeException('Refusing to adopt an unmanaged table: ' . $table); } }
+                foreach ($schema->tables as $table) { if ($schema->legacy === null && self::tableExists($pdo, $table)) { throw new RuntimeException('Refusing to adopt an unmanaged table: ' . $table); } }
                 $pending = true; continue;
             }
             $version = (int) $state['version'];
@@ -100,7 +100,7 @@ final class ModuleSchemas
                     throw new RuntimeException('Module is already installed; use upgrade or recover its backup: ' . $id);
                 }
                 foreach ($schema->tables as $table) {
-                    if (self::tableExists($pdo, $table) && !\TinyCat\Core\Tasks\Schema::mayAdopt($pdo, $id, $schema)) { throw new RuntimeException('Refusing to adopt an unmanaged table: ' . $table); }
+                    if (self::tableExists($pdo, $table)) { throw new RuntimeException('Refusing to adopt an unmanaged table: ' . $table); }
                 }
                 self::writeState($pdo, $id, 0, 'installing');
                 try {
@@ -192,7 +192,7 @@ final class ModuleSchemas
     private static function systemTables(PDO $pdo): void
     {
         $pdo->exec('CREATE TABLE IF NOT EXISTS module_installations (module_id VARCHAR(190) PRIMARY KEY, version INTEGER NOT NULL, status VARCHAR(20) NOT NULL)');
-        Migrations::ensure($pdo);
+        Migrations::prepare($pdo);
     }
 
     private static function connection(PDO $pdo): void
@@ -221,7 +221,6 @@ final class ModuleSchemas
 
     private static function verifyHistory(PDO $pdo, string $id, ModuleSchema $schema, int $version): void
     {
-        if ($id === \TinyCat\Core\Tasks\Schema::OWNER) { \TinyCat\Core\Tasks\Schema::validateLegacyHistory($pdo); }
         $rows = Migrations::history($pdo, 'schema', $id);
         usort($rows, static fn (array $left, array $right): int => (int) $left['sequence'] <=> (int) $right['sequence']);
         if (count($rows) !== $version) { throw new RuntimeException('Module migration history is incomplete.'); }

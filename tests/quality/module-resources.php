@@ -49,6 +49,12 @@ $baseline = $compile();
 foreach (['core' => [], 'social' => ['tinycat.social' => 'App/Modules/Social/module.json'], 'blog' => ['tinycat.blog' => 'App/Modules/Blog/module.json'], 'combined' => require $root . '/App/available-modules.php'] as $assembly => $selection) {
     $catalog = \TinyCat\Core\Modules\Loader::fromSelection($root, $selection)->catalog;
     Resources::withCatalog($catalog, static function () use ($assembly, $selection, $assert): void {
+        $socialSelected = isset($selection['tinycat.social']);
+        $messages = Localization::catalog('en');
+        $assert(isset($messages['settings.sections.content_images']) === $socialSelected, $assembly . ': Social owns its image-settings section label');
+        $assert(isset($messages['install.purpose_social_posts']) === $socialSelected && isset($messages['install.purpose_user_followers']) === $socialSelected, $assembly . ': Social table descriptions follow the selected data owner');
+        $assert(!isset($messages['install.purpose_content']), $assembly . ': Retired global content descriptions are not shipped');
+        $assert(str_contains($messages['install.tables_intro'], 'selected modules'), $assembly . ': Installation text describes the selected owners');
         foreach (['/login', '/privacy', '/social', '/status/1', '/blog', '/articles/1'] as $route) {
             $scripts = AssetGraph::order(ClientAssets::entries($route));
             $assert(!in_array('App/Core/Identity/assets/admin.js', $scripts, true), $assembly . ': public pages exclude the account list adapter');

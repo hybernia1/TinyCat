@@ -24,7 +24,7 @@ $keyPath = trim((string) ($options['key'] ?? (\TinyCat\Tools\Workspace::director
 $allowDirty = array_key_exists('allow-dirty', $options);
 $freshInstall = array_key_exists('fresh-install', $options);
 $both = array_key_exists('both', $options);
-if (array_key_exists('legacy-upgrade', $options)) { throw new InvalidArgumentException('Legacy upgrades are no longer supported. Update the installation to TinyCat 6.0.4 first.'); }
+if (array_key_exists('legacy-upgrade', $options)) { throw new InvalidArgumentException('Legacy upgrades are no longer supported. Update the installation to TinyCat ' . \TinyCat\Support\Version::MINIMUM_UPDATE . ' first.'); }
 if ($both && $freshInstall) { throw new InvalidArgumentException('Use --both or --fresh-install, not both.'); }
 $withoutMigrations = $freshInstall || array_key_exists('without-migrations', $options);
 
@@ -91,11 +91,6 @@ $selection = match ($assembly) {
 $product = (string) ($options['product'] ?? match ($assembly) { 'core' => 'tinycat.core', 'blog' => 'tinycat.blog', default => 'tinycat.social' });
 $active = isset($options['active']) ? ((string) $options['active'] === '' ? [] : explode(',', (string) $options['active'])) : null;
 $distribution = \TinyCat\Core\Modules\Distribution::describe($root, $product, $selection, $active);
-if (\TinyCat\Core\Modules\Distribution::modular($distribution)) {
-    $moduleBaseline = $distribution['format'] === 3 ? \TinyCat\Core\Modules\Distribution::DOMAIN_RUNTIME : ($distribution['format'] === 2 ? \TinyCat\Core\Modules\Distribution::FRAMEWORK_RUNTIME : (isset($distribution['schemas']['tinycat.support']) ? \TinyCat\Core\Modules\Distribution::CORE_SCHEMA_RUNTIME : \TinyCat\Core\Modules\Distribution::RUNTIME));
-    if (!array_key_exists('minimum-version', $options)) { $minimumVersion = version_compare($moduleBaseline, \TinyCat\Support\Version::MINIMUM_UPDATE, '>') ? $moduleBaseline : \TinyCat\Support\Version::MINIMUM_UPDATE; }
-    if (version_compare($minimumVersion, $moduleBaseline, '<') || version_compare($version, $minimumVersion, '<')) { throw new InvalidArgumentException('Modular packages require the module-aware runtime baseline.'); }
-}
 \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection($root, \TinyCat\Core\Modules\Distribution::selection($distribution, $distribution['active']))->catalog);
 $rootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
 $includedDocumentation = ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md'];
@@ -195,7 +190,7 @@ foreach ($both ? [false, true] : [$freshInstall] as $freshInstall) {
     $deletionsFile = __DIR__ . '/update-deletions.json';
     $deletions = [];
 
-    if (!$freshInstall && ($distribution['legacy'] || $distribution['format'] === 3) && is_file($deletionsFile)) {
+    if (!$freshInstall && is_file($deletionsFile)) {
         try {
             $allDeletions = json_decode((string) file_get_contents($deletionsFile), true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
@@ -325,7 +320,7 @@ foreach ($both ? [false, true] : [$freshInstall] as $freshInstall) {
         'kind' => $freshInstall ? 'install' : 'update',
         'distribution' => $variantDistribution,
         'version' => $version,
-        'minimum_version' => $freshInstall && version_compare($variantMinimum, \TinyCat\Core\Modules\Distribution::RUNTIME, '<') ? \TinyCat\Core\Modules\Distribution::RUNTIME : $variantMinimum,
+        'minimum_version' => $variantMinimum,
         'minimum_php' => $minimumPhp,
         'package' => $packageName,
         'sha256' => $packageHash,

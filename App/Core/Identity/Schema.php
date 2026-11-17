@@ -15,6 +15,6 @@ final class Schema
     {
         return new \TinyCat\Core\Modules\ModuleSchema(1, ServiceProvider::tables(), self::install(...), [
             new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.accounts.initial', __DIR__ . '/migrations/001-initial.php'),
-        ], null, new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.accounts.legacy-v1', __DIR__ . '/migrations/legacy-v1.php'));
+        ], null);
     }
 }

@@ -23,22 +23,17 @@ if (($argv[1] ?? '') === '--mysql') {
 }
 $db->exec('CREATE TABLE users (id INT UNSIGNED PRIMARY KEY, username VARCHAR(40), status VARCHAR(20), role VARCHAR(20))');
 $db->exec("INSERT INTO users VALUES (1,'recipient','active','admin'),(2,'actor','active','user')");
-$initial = require $root . '/App/Core/Notifications/migrations/001-initial.php'; $initial($db);
-$db->exec("INSERT INTO notifications(id,user_id,actor_id,content_id,comment_id,type,notification_key,payload_json,read_at,created_at,updated_at) VALUES
-(1,1,2,10,20,'comment_like','comment:20','{\"context\":\"keep\"}','2026-01-02','2026-01-01','2026-01-03'),
-(2,1,2,10,NULL,'content_like','post:10',NULL,NULL,'2026-01-01','2026-01-03'),
-(3,1,NULL,NULL,NULL,'site_health_attention','site_health:1',NULL,'2026-01-02','2026-01-01','2026-01-03'),
-(4,1,NULL,99,NULL,'vendor.unknown','unknown:99',NULL,NULL,'2026-01-01','2026-01-03')");
-$before = $db->query('SELECT id,notification_key,read_at,created_at,updated_at FROM notifications ORDER BY id')->fetchAll();
-$upgrade = require $root . '/App/Core/Notifications/migrations/002-subjects.php'; $upgrade($db); $upgrade($db);
-$convert = require $root . '/App/Modules/Social/migrations/publishing/interactions/003-notification-subjects.php'; $convert($db); $convert($db);
+Schema::install($db);
+$db->exec("INSERT INTO notifications(id,user_id,actor_id,subject_id,type,notification_key,payload_json,read_at,created_at,updated_at) VALUES
+(1,1,2,20,'comment_like','comment:20','{\"context\":\"keep\"}','2026-01-02','2026-01-01','2026-01-03'),
+(2,1,2,10,'content_like','post:10',NULL,NULL,'2026-01-01','2026-01-03'),
+(3,1,NULL,NULL,'site_health_attention','site_health:1',NULL,'2026-01-02','2026-01-01','2026-01-03'),
+(4,1,NULL,NULL,'vendor.unknown','unknown:99','{\"_tinycat_legacy_subject\":{\"content_id\":99}}',NULL,'2026-01-01','2026-01-03')");
 $checks = 0;
 $assert = static function (bool $ok, string $message) use (&$checks): void { $checks++; if (!$ok) { throw new RuntimeException($message); } };
 $reject = static function (callable $action) use ($assert): void { try { $action(); } catch (InvalidArgumentException) { $assert(true, 'Invalid definition or delivery rejected'); return; } throw new RuntimeException('Invalid notification was accepted'); };
 $columns = array_column($db->query($db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? 'PRAGMA table_info(notifications)' : "SELECT COLUMN_NAME AS name FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='notifications'")->fetchAll(), 'name');
 $assert(!in_array('content_id', $columns, true) && !in_array('comment_id', $columns, true) && in_array('subject_id', $columns, true), 'Core schema contains only an opaque subject');
-$assert($db->query('SELECT id,notification_key,read_at,created_at,updated_at FROM notifications ORDER BY id')->fetchAll() === $before, 'Migration preserves identities, keys, read state and timestamps');
-$assert((int) $db->query('SELECT subject_id FROM notifications WHERE id=1')->fetchColumn() === 20 && (int) $db->query('SELECT subject_id FROM notifications WHERE id=2')->fetchColumn() === 10, 'Only Social interprets comment and post subjects');
 $assert(json_decode($db->query('SELECT payload_json FROM notifications WHERE id=1')->fetchColumn(), true) === ['context' => 'keep'], 'Original producer payload is retained');
 $unknown = json_decode($db->query('SELECT payload_json FROM notifications WHERE id=4')->fetchColumn(), true);
 $assert($unknown['_tinycat_legacy_subject']['content_id'] === 99, 'References of an unavailable historical producer are not discarded');
@@ -84,4 +79,4 @@ $assert((int) $db->query("SELECT COUNT(*) FROM notifications WHERE type='fixture
 Registrations::configure(new Registries());
 $assert(Inbox::open($notice['id'], 1) === '/notifications' && Resource::item($hydrated[0])['type'] === 'generic', 'Inactive owners retain rows and use a safe generic presentation');
 $reject(static fn () => Delivery::record(1, 'fixture.order', 'inactive', subjectId: 10));
-echo "PASS registered notification subjects, migration, ownership, visibility and fallback ({$checks} checks)\n";
+echo "PASS registered notification subjects, ownership, visibility and fallback ({$checks} checks)\n";

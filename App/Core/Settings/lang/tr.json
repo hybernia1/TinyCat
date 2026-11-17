@@ -8,7 +8,6 @@
       "security": "Güvenlik",
       "site": "Sitesi",
       "performance": "Performansı",
-      "content_images": "Gönderi resimleri",
       "email": "E-posta",
       "analytics": "Analizi"
     },
@@ -71,7 +70,7 @@
     "db_charset": "Karakter Seti",
     "db_test": "Test edin ve devam edin",
     "tables_title": "Tablo oluştur",
-    "tables_intro": "TinyCat hesaplar, içerik, bildirimler, denetim, hız sınırları, şifre kurtarma ve ayarlar için temel tablolar oluşturacaktır.",
+    "tables_intro": "TinyCat, çekirdek ve seçili modüller için tablolar oluşturacak.",
     "create_tables": "Tablo oluştur",
     "table_name": "Tablo",
     "table_purpose": "Amaç",
@@ -80,18 +79,7 @@
     "state_missing": "Eksik",
     "state_exists": "Mevcut",
     "purpose_users": "Yönetici hesapları ve kullanıcılar.",
-    "purpose_content": "Genel kullanıcı gönderileri.",
-    "purpose_content_images": "Gönderilere eklenen sıkıştırılmış resimler.",
-    "purpose_terms": "Etiketlere ilişkin terimler.",
-    "purpose_content_tags": "Mesajlar ve terimler arasındaki ilişkiler.",
-    "purpose_links": "Benzersiz depolanan bağlantı meta verileri.",
-    "purpose_content_links": "Gönderiler ve bağlantılar arasındaki ilişkiler.",
-    "purpose_content_likes": "Gönderilerdeki beğeniler.",
-    "purpose_content_comments": "Gönderilerde iç içe geçmiş yorumlar.",
-    "purpose_comment_likes": "Yorumları beğeniyorum.",
-    "purpose_user_followers": "Profili kullanıcılar arasında takip eder.",
-    "purpose_notifications": "Beğeniler, yorumlar, bahsedilmeler ve takipler için uyarılar.",
-    "purpose_content_reports": "Denetleme için kullanıcı raporları.",
+    "purpose_notifications": "Konuları kendi sahipleri tarafından yönetilen hesap bildirimleri.",
     "purpose_ip_action_limits": "Seçilen işlemler için hesap veya IP adresine göre sınır sayaçları.",
     "purpose_password_reset_tokens": "E-postayla gönderilen kısa ömürlü şifre sıfırlama belirteçleri.",
     "purpose_settings": "Veritabanı destekli uygulama ayarları.",
@@ -117,9 +105,6 @@
       "password_mismatch": "Şifreler eşleşmiyor.",
       "config_write_failed": "Config.php yazılamadı.",
       "db_failed": "Veritabanı bağlantısı başarısız oldu: {message}"
-    },
-    "purpose_bot_sources": "Bot hesapları için RSS ve Atom yayınlama kuralları.",
-    "purpose_bot_feed_history": "Yinelenen bot gönderilerini önlemek için kullanılan son yayın öğesi karmaları.",
-    "purpose_bot_source_runs": "Bot kaynak kontrolleri ve içe aktarmalarının kompakt tanılama geçmişi."
+    }
   }
 }

@@ -20,7 +20,7 @@ final class Lifecycle
         Distribution::validate($plan);
         if (Deployment::read($root) !== null) { throw new \RuntimeException('An installed deployment cannot be replaced by fresh installation.'); }
         $schemas = Distribution::schemas($plan, $root, $plan['active']);
-        $pdo = $plan['legacy'] || $schemas !== [] ? Connection::get() : null;
+        $pdo = $schemas !== [] ? Connection::get() : null;
         if ($pdo !== null) {
             $query = $pdo->query($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite'
                 ? "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'" : 'SHOW TABLES');
@@ -29,9 +29,6 @@ final class Lifecycle
         self::validateResources($root, $plan, $plan['active']);
         return Manager::runLifecycle(static function () use ($root, $plan, $pdo, $schemas, $setup): array {
             $modules = Loader::fromSelection($root, Distribution::selection($plan, $plan['active']));
-            if ($plan['legacy']) {
-                foreach ($modules->providers(ProvidesInstallation::class) as $provider) { $provider::install((string) \TinyCat\Support\Config::get('i18n.locale', 'en')); }
-            }
             if ($pdo !== null) { ModuleSchemas::synchronize($pdo, $schemas); }
             foreach ($modules->providers(ProvidesSetup::class) as $id => $provider) { if (isset($setup[$id])) { $provider::completeSetup($setup[$id]); } }
             Deployment::write($root, $plan, $plan['active'], $plan['active'], \TinyCat\Support\Version::CURRENT);
@@ -55,7 +52,7 @@ final class Lifecycle
         Deployment::selection($root, $plan['selection']);
         $state = Deployment::read($root);
         if ($state !== $expectedState) { throw new \RuntimeException('Deployment changed during activation; retry.'); }
-        if ($state === null && !$plan['legacy']) { throw new \RuntimeException('Install the product before activating modules.'); }
+        if ($state === null) { throw new \RuntimeException('Install the product before activating modules.'); }
         Distribution::selection($plan, $active);
         self::validateResources($root, $plan, $active);
         $installed = array_values(array_unique([...($state['installed'] ?? $plan['active']), ...$active]));
@@ -78,17 +75,19 @@ final class Lifecycle
         $plan = PackageRegistry::extend($root, $plan);
         // The transition was checked against the old descriptor before files changed.
         $state = Deployment::read($root);
-        $active = array_values(array_unique([...Upgrade::ids($plan, $state['active'] ?? $plan['active']), ...$plan['required']]));
-        $installed = array_values(array_unique([...Upgrade::ids($plan, $state['installed'] ?? $plan['active']), ...$active]));
+        $active = $state['active'] ?? $plan['active'];
+        $installed = array_values(array_unique([...($state['installed'] ?? $plan['active']), ...$active]));
+        Distribution::selection($plan, $active);
+        if (array_diff($installed, array_keys($plan['selection'])) !== []) { throw new \RuntimeException('An update cannot remove installed module sources or data.'); }
         $schemas = Distribution::schemas($plan, $stageRoot, $installed, $root);
         if ($schemas !== []) { ModuleSchemas::synchronize(Connection::get(), $schemas); }
-        \TinyCat\Database\Migrations::ensure(Connection::get());
+        \TinyCat\Database\Migrations::prepare(Connection::get());
         Deployment::write($root, $plan, $active, $installed, $version);
     }
 
-    public static function ready(Loader $modules, bool $legacy = false): bool
+    public static function ready(Loader $modules): bool
     {
-        $schemas = Distribution::definitions($modules, $legacy);
+        $schemas = Distribution::definitions($modules);
         return $schemas === [] || ModuleSchemas::ready(Connection::get(), $schemas);
     }
 

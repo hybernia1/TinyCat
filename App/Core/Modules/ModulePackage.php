@@ -105,7 +105,7 @@ final class ModulePackage extends \TinyCat\Core\Updates\Package
         if (!is_file($baseFile)) { throw new \RuntimeException('Module installation requires an installed distribution.'); }
         $base = Distribution::validate(self::decodeJson((string) file_get_contents($baseFile), 'distribution'));
         $state = Deployment::read($root);
-        if (!in_array($base['format'] ?? 0, [2, 3], true) || $state === null) { throw new \RuntimeException('Install the current framework before adding module packages.'); }
+        if (($base['format'] ?? null) !== 3 || $state === null) { throw new \RuntimeException('Install the current framework before adding module packages.'); }
         $prepared = self::prepare($archive); $package = $prepared['package']; $stage = $prepared['stage'];
         try {
             $id = $package['id']; $prefix = 'App/Modules/' . $package['directory'] . '/';

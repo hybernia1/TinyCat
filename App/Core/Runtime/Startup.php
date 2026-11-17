@@ -5,7 +5,6 @@ namespace TinyCat\Core\Runtime;
 /** Technical runtime inputs supplied by selected owners, never product-ID switches. */
 final class Startup
 {
-    public static bool $legacySchemas = false;
     /** @var \Closure(): (array<string, mixed>|null)|null */
     public static ?\Closure $identity = null;
     /** @var list<\Closure(): bool> */

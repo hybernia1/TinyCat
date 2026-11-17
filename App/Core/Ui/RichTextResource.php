@@ -13,7 +13,7 @@ final class RichTextResource
 {
     /** @param list<array<mixed>> $attachments
      * @return array<string, mixed> */
-    public static function content(int $id, string $body, string $kind = 'post', array $attachments = []): array
+    public static function content(int $id, string $body, string $kind, array $attachments = []): array
     {
         $links = array_values(array_filter($attachments, static fn (array $link): bool => !Links::status_link_is_internal($link)));
         foreach ($links as &$storedLink) {
@@ -47,12 +47,12 @@ final class RichTextResource
                 }
             }
         }
-        $segments = Segments::compactTags(Segments::text($body, array_column($cards, 'url_hash'), $id, kind: $kind));
-        return ['segments' => $segments, ...Segments::splitTags($segments), 'links' => array_map(static fn (array $link): array => self::link($link, $id, $kind), $cards)];
+        $segments = Segments::compactTags(Segments::text($body, $kind, array_column($cards, 'url_hash'), $id));
+        return ['segments' => $segments, ...Segments::splitTags($segments), 'links' => array_map(static fn (array $link): array => self::link($link, $kind, $id), $cards)];
     }
     /** @param array<mixed> $link
      * @return array<string, mixed> */
-    public static function link(array $link, int $contentId = 0, string $kind = 'post'): array
+    public static function link(array $link, string $kind, int $contentId = 0): array
     {
         $map = Providers::googleMap((string) ($link['normalized_url'] ?? ''));
         if ($map !== null) { $link = array_replace($link, $map); }

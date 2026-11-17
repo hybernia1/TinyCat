@@ -107,7 +107,7 @@ final class LegacyData
     {
         $root = \TinyCat\Support\Paths::basePath(); $plan = \TinyCat\Core\Modules\Distribution::read($root); $state = \TinyCat\Core\Modules\Deployment::read($root);
         $social = $plan !== null && $state !== null
-            ? in_array('tinycat.social', \TinyCat\Core\Modules\Upgrade::ids($plan, $state['installed']), true)
+            ? in_array('tinycat.social', $state['installed'], true)
             : \TinyCat\Core\Modules\Resources::catalog()->has('tinycat.social');
         if ($social) { return; }
         if ((int) \TinyCat\Core\Database\Statements::query($pdo, 'SELECT COUNT(*) FROM content')->fetchColumn() !== 0) { throw new \RuntimeException('Unregistered historical content still has an owner.'); }

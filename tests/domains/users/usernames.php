@@ -47,7 +47,7 @@ if (in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     $assert(\TinyCat\Social\Posts\Mentions::normalize_mentions_for_storage('mail@Jan-Novak.test @@2Pac') === 'mail@Jan-Novak.test @@2Pac', 'Email-like text and doubled @ signs must remain text.');
     $assert(\TinyCat\Social\Posts\NotificationEvents::mentionedUserIds('@7Unknown @7.Unknown @7.') === [7], 'Unresolved digit-prefixed names must not notify a matching numeric-ID prefix.');
     $assert(\TinyCat\Social\Posts\Mentions::mentions_for_editing('@7.Unknown @7') === '@7.Unknown @2Pac', 'Mention editing must leave unresolved dotted names intact.');
-    $assert(\TinyCat\Core\Text\Segments::text('@7.Unknown') === [['type' => 'text', 'text' => '@7.Unknown']], 'Unresolved dotted names must not link a numeric-ID prefix.');
+    $assert(\TinyCat\Core\Text\Segments::text('@7.Unknown', 'post') === [['type' => 'text', 'text' => '@7.Unknown']], 'Unresolved dotted names must not link a numeric-ID prefix.');
 }
 
 foreach ([

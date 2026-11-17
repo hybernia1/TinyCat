@@ -1,4 +1,8 @@
 import "../../../../../assets/ui/settings-presentation.js";
+window.TinyCat.settingsPresentation.sections.content_images = {
+  "label": "settings.sections.content_images",
+  "icon": "image"
+};
 Object.assign(window.TinyCat.settingsPresentation.fields, {
   "content_images.enabled": {
     "label": "settings.fields.content_images_enabled",

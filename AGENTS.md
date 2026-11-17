@@ -65,6 +65,7 @@ nikoli PHP adaptéry propojující domény.
   Náhled neclaimuje GUID ani nemění plánování. Zápis publikace a úspěšného GUID
   je atomický; ruční import používá Core/Tasks.
 - Textové renderování rozšiřuj pojmenovanými `Core/Text/Policies` a `TextPolicy`.
+  Volající předává druh textu explicitně; core nevolí politiku Socialu jako výchozí.
   Pravidla URL a UTM vlastní každý modul; core poskytuje parser a aplikaci pravidel.
   Sdílené assety v `assets/ui/content` a ID `publishing.*` jsou UI kompatibilita,
   nikoli modul nebo povinná doménová služba. RSS poskytuje Core/Feeds,
@@ -80,7 +81,8 @@ nikoli PHP adaptéry propojující domény.
   Settings; Core/Settings přispívá vlastní provozní politiky.
 - Sdílené HTTP, DB a technické služby patří do Core; nevytvářej jejich druhé
   implementace. Zachovej ID úloh a migračních streamů a podporované aktualizace a rollback.
-  Historická ID aktivací převádí výhradně `Core/Modules/Upgrade`; nejsou novými moduly.
+  Aktivační ID jsou od dokončené 6.0.6 kanonická. Starší převody provádí pouze
+  nezměněný release 6.0.6; core neobsahuje seznam částí Socialu ani Blogu.
 - Runner, historie, kontext a údržba jsou v `Core/Tasks`, store v
   `Core/Settings` a SMTP v `Core/Mail`. Používej jejich kanonické názvy;
   staré modulové názvy jsou kompatibilní aliasy, nikoli další implementace.
@@ -143,6 +145,12 @@ vydání. Historické pole verze může být celý název migrace, například
 `20260801_profile_links_and_legacy_cleanup`, nikoli SemVer do 32 znaků.
 Update testuj i s touto historií a původními PHP třídami již načtenými v updateru;
 čerstvá instalace stejné verze není náhradou tohoto scénáře.
+
+Současné zdroje přijímají pouze dokončenou 6.0.6 a novější. Starší podporované
+weby nejprve převádí neměnný podepsaný release 6.0.6. Archivní aplikované SQL
+slouží ověření historie; nevracej kvůli němu odstraněné runtime adaptéry.
+Aktuální fresh baseline neřetěz s historickými datovými převody. Při odstranění
+adaptéru prověř také nepřímá `require` z instalačních snapshotů.
 
 ## Lokální prostředí
 
