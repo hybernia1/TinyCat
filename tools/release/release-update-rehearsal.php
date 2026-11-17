@@ -15,10 +15,11 @@ $root = dirname(__DIR__, 2);
 require_once $root . '/App/Core/Support/Version.php';
 $version = \TinyCat\Support\Version::CURRENT;
 $baselineVersion = \TinyCat\Support\Version::MINIMUM_UPDATE;
-$options = getopt('', ['artifact::', 'key::', 'baseline-version::', 'direct-web', 'cached-autoload', 'snapshot::']);
+$options = getopt('', ['artifact::', 'key::', 'baseline-version::', 'direct-web', 'cached-autoload', 'snapshot::', 'platform-baseline']);
 $cachedAutoload = array_key_exists('cached-autoload', $options);
 $directWeb = array_key_exists('direct-web', $options);
-if (($options['baseline-version'] ?? $baselineVersion) !== $baselineVersion) { throw new InvalidArgumentException('Use the supported baseline: ' . $baselineVersion); }
+$baselineVersion = (string) ($options['baseline-version'] ?? $baselineVersion);
+if (preg_match('/^[0-9]+\.[0-9]+\.[0-9]+$/D', $baselineVersion) !== 1 || version_compare($baselineVersion, \TinyCat\Support\Version::MINIMUM_UPDATE, '<') || version_compare($baselineVersion, $version, '>=')) { throw new InvalidArgumentException('Use a completed supported release older than the candidate.'); }
 $artifactRoot = trim((string) ($options['artifact'] ?? ($root . '/dist/release-' . $version)));
 $configPath = $root . '/config.php';
 $temporaryRoot = \TinyCat\Tools\Workspace::directory('tests/tmp') . '/release-update-' . bin2hex(random_bytes(6));
@@ -231,10 +232,10 @@ try {
 define('TINYCAT', true);
 require_once __ROOT__ . '/App/Core/Runtime/autoload.php';
 if (class_exists(TinyCat\Core\Modules\Distribution::class)) {
-    $sourceSelection = require __ROOT__ . '/App/available-modules.php';
+    $sourceSelection = is_file(__ROOT__ . '/App/available-modules.php') ? require __ROOT__ . '/App/available-modules.php' : TinyCat\Core\Modules\SourceModules::selection(__ROOT__);
     $available = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', $sourceSelection);
     file_put_contents(__ROOT__ . '/storage/baseline-schemas.json', json_encode($available['schemas'], JSON_THROW_ON_ERROR));
-    $plan = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', require __ROOT__ . '/App/modules.php');
+    $plan = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', __PLATFORM_BASELINE__ ? $sourceSelection : require __ROOT__ . '/App/modules.php');
     file_put_contents(__ROOT__ . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
 }
 \TinyCat\Core\Runtime\Application::start();
@@ -243,7 +244,7 @@ TinyCat\Core\Installation\Installer::create_admin_account('release_admin', 'Rele
 TinyCat\Core\Installation\Installer::default_settings(['locale' => 'en']);
 if (isset($plan) && !$plan['legacy']) { TinyCat\Core\Modules\Deployment::write(__ROOT__, $plan, $plan['active'], $plan['active'], TinyCat\Support\Version::CURRENT); }
 PHP;
-    [$installExit, $installOutput] = $run(str_replace('__ROOT__', var_export($installRoot, true), $installRunner));
+    [$installExit, $installOutput] = $run(str_replace(['__ROOT__', '__PLATFORM_BASELINE__'], [var_export($installRoot, true), array_key_exists('platform-baseline', $options) ? 'true' : 'false'], $installRunner));
     if ($installExit !== 0) {
         throw new RuntimeException('Baseline installer failed: ' . implode(' ', $installOutput));
     }

@@ -11,6 +11,25 @@ zachovat identitu produktu. Viz [podporovaný výchozí stav](updates.md#support
 
 ## Správa v administraci
 
+Dostupnost určuje přítomnost platného `App/Modules/<Name>/module.json`, nikoli
+seznam v distribučním descriptoru. Složku lze přidat ručně: správce ji nabídne
+vypnutou bez spuštění PHP. Výslovná aktivace ověří závislosti a zdroje, uloží
+snapshot vlastnictví a migrační metadata do existujícího registru balíčků a
+provede instalaci přes společný lifecycle, zámek a zálohu. Ručně přidané moduly
+bez verze balíčku dostávají interní verzi snapshotu `0.0.0`.
+
+Odstranění nikdy neaktivovaného modulu jej odebere z nabídky. Instalovaný modul
+s chybějícími zdroji zůstane v evidenci a správce zobrazí problém. Runtime jej
+ani jeho závislé moduly nespustí; jejich uložená aktivace ani data se automaticky
+nemění. Chybějící modul lze výslovně vypnout. Vrácení souborů není nová aktivace:
+respektuje uložený stav. Neplatný neaktivní manifest neblokuje správce.
+
+Blog je vývojový a testovací modul (`development: true` v manifestu).
+Produkční `--assembly=platform` jej nezahrnuje; úplný inventář pro testovací
+sestavy vybírá `--assembly=development`, samostatný Blog `--assembly=blog`.
+Instalace, která Blog skutečně používala, musí dál dostávat odpovídající sestavu;
+updater nadále odmítá odstranit instalovaného vlastníka dat.
+
 Přihlášený administrátor otevře **Moduly** v navigaci nebo `/admin/modules`.
 Stránka ukazuje dostupné moduly, jejich stav, povinné závislosti a aktivní
 moduly, které je potřebují. Zapnutí doplní potřebné závislosti; vypnutí
@@ -35,8 +54,9 @@ php tools/release/build-update.php --assembly=platform --version=X.Y.Z --both --
 
 Výchozí `--assembly=source` používá explicitní `App/modules.php`.
 `--assembly=core` vytvoří framework bez volitelných modulů.
-`--assembly=platform` načte všechny zdrojové manifesty `App/Modules/*/module.json`
-přes `SourceModules::selection()`. Nový modul nevyžaduje zápis do centrálního seznamu.
+`--assembly=platform` načte produkční manifesty `App/Modules/*/module.json`
+přes `SourceModules::production()`, bez modulů s `development: true`.
+`--assembly=development` zahrne i vývojové moduly. Nový modul nevyžaduje zápis do centrálního seznamu.
 `--assembly=blog` je preset Blogu nad stejným povinným frameworkem. Presety jsou seznamy manifestů, nikoli další runtime.
 `--product=vendor.product` určuje identitu vlastní sestavy a `--active=id1,id2`
 její výchozí aktivní moduly; bez této volby jsou aktivní všechny dostupné.

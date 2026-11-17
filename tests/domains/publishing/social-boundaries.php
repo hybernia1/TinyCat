@@ -5,7 +5,7 @@ define('TINYCAT', true);
 $root = dirname(__DIR__, 3);
 require $root . '/App/Core/Runtime/autoload.php';
 use TinyCat\Database\Connection;
-use TinyCat\Social\Content\PostCreation;
+use TinyCat\Social\Posts\PostCreation;
 
 $checks = 0;
 $assert = static function (bool $value, string $message) use (&$checks): void { $checks++; if (!$value) { throw new RuntimeException($message); } };
@@ -25,28 +25,32 @@ TinyCat\Social\Profiles\Following::author_follow(1, 2);
 $assert(TinyCat\Social\Profiles\Following::author_is_followed(1, 2), 'Following commits without Notifications installed');
 $following = TinyCat\Social\Posts\Feed::public_status_items_for_user_cursor(1, 10);
 $assert(array_column($following, 'id') === [$post, $own], 'Following feed uses relationships and publishing visibility');
-$assert(TinyCat\Social\Profiles\Pages::authorData(2) === null && TinyCat\Social\Profiles\Repository::author_activity_stats(2)['posts'] === 0, 'Author product composition is optional rather than selecting Status implicitly');
 $modules->initialize();
 $assert(TinyCat\Social\Profiles\Repository::author_activity_stats(2)['posts'] === 1, 'Selected social composition supplies author activity without loading absent providers');
 $assert(PostCreation::fromText('https://outside.example/story')->rejection === null, 'Selected mention policy does not import absent Site or Moderation');
-$events = [];
-TinyCat\Social\Profiles\Integration::configure(['followed' => static function (int $id, array $actor) use (&$events): void { $events[] = [$id, $actor['id']]; }]);
 TinyCat\Social\Profiles\Following::author_follow(3, 2); TinyCat\Social\Profiles\Following::author_follow(3, 2);
-$assert($events === [[2, 3]], 'Explicit followed callback receives one event for the idempotent relation');
+$assert((int) Connection::value('SELECT COUNT(*) FROM user_followers WHERE user_id = 2 AND follower_id = 3') === 1, 'Following remains idempotent without notification tables');
 $pdo->exec('INSERT INTO social_post_likes(content_id, user_id) VALUES (' . $post . ', 1)');
 $comment = (int) Connection::insert('social_comments', ['content_id' => $post, 'user_id' => 1, 'body' => 'Comment']);
 $reply = (int) Connection::insert('social_comments', ['content_id' => $post, 'user_id' => 2, 'parent_id' => $comment, 'body' => 'Reply']);
 $pdo->exec('INSERT INTO social_comment_likes(comment_id, user_id) VALUES (' . $reply . ', 1)');
 $summary = TinyCat\Social\Posts\Posts::status_json_summary($post, ['id' => 1]);
 $assert($summary['likes_count'] === 1 && $summary['comments_count'] === 2 && $summary['liked'], 'Reaction and comment projections remain owned by Status');
-TinyCat\Social\Posts\NotificationHooks::configure(['removeForContent' => static function (int $id): void { throw new RuntimeException('notification transaction failure'); }]);
-try { TinyCat\Social\Posts\Posts::status_delete_content($post, deleteReports: false); $assert(false, 'Related failure must stop deletion'); }
-catch (RuntimeException) { $assert(TinyCat\Social\Content\Posts::find($post) !== null && (int) Connection::value('SELECT COUNT(*) FROM social_post_likes') === 1, 'Notification cleanup failure rolls back social and publishing data together'); }
-TinyCat\Social\Posts\NotificationHooks::configure([]);
+TinyCat\Core\Notifications\Schema::install($pdo);
+TinyCat\Core\Modules\Registrations::configure(new TinyCat\Core\Modules\Registries([
+    'fixture' => new TinyCat\Core\Modules\Contributions(notificationInbox: true),
+]));
+Connection::insert('notifications', ['user_id' => 1, 'actor_id' => 2, 'type' => 'content_like', 'subject_id' => $post, 'notification_key' => 'content_like:' . $post, 'created_at' => '2000-01-01', 'updated_at' => '2000-01-01']);
+$pdo->exec("CREATE TRIGGER reject_notification_delete BEFORE DELETE ON notifications BEGIN SELECT RAISE(ABORT, 'notification cleanup failure'); END");
+try { TinyCat\Social\Posts\Posts::status_delete_content($post, deleteReports: false); $assert(false, 'Database failure must stop deletion'); }
+catch (PDOException) { $assert(TinyCat\Social\Content\Posts::find($post) !== null && (int) Connection::value('SELECT COUNT(*) FROM social_post_likes') === 1, 'Notification cleanup failure preserves the post and its reactions'); }
+$assert((int) Connection::value('SELECT COUNT(*) FROM notifications') === 1, 'Failed cleanup retains the notification');
+$pdo->exec('DROP TRIGGER reject_notification_delete');
 TinyCat\Social\Content\Comments::status_delete_comment_rows($comment);
-$assert((int) Connection::value('SELECT COUNT(*) FROM social_comments') === 0 && (int) Connection::value('SELECT COUNT(*) FROM social_comment_likes') === 0, 'Comment tree cleanup works without notification tables');
+$assert((int) Connection::value('SELECT COUNT(*) FROM social_comments') === 0 && (int) Connection::value('SELECT COUNT(*) FROM social_comment_likes') === 0, 'Comment tree cleanup removes replies and reactions');
 TinyCat\Social\Posts\Posts::status_delete_content($post, deleteReports: false);
 $assert(TinyCat\Social\Content\Posts::find($post) === null && (int) Connection::value('SELECT COUNT(*) FROM social_post_likes') === 0, 'Social cleanup delegates content deletion to Publishing');
+$assert((int) Connection::value('SELECT COUNT(*) FROM notifications') === 0, 'Successful post deletion removes its notifications');
 $owners = [];
 foreach ($modules->catalog->definitions() as $definition) { $owners[] = $definition->id; }
 $assert(in_array('tinycat.notifications', $owners, true) && in_array('tinycat.social', $owners, true) && !in_array('tinycat.bots', $owners, true), 'Selected graph does not silently activate optional modules');

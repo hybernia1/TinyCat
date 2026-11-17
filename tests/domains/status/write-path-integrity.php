@@ -215,7 +215,7 @@ $assert((int) $value('SELECT COUNT(*) FROM social_post_links WHERE content_id = 
 
 
 $draft = \TinyCat\Social\Posts\PostCreation::fromText("  <b>Hello</b> @actor #Mixed_CASE\r\nhttps://alpha.example  ");
-$assert($draft instanceof \TinyCat\Social\Posts\PostCreation && $draft instanceof \TinyCat\Social\Content\PostCreation, 'The compatibility factory preserves the legacy draft type and the canonical publishing contract.');
+$assert($draft instanceof \TinyCat\Social\Posts\PostCreation, 'The canonical draft factory returns the social post draft.');
 $assert($draft->body === "Hello @2 #mixed-case\nhttps://alpha.example", 'The shared draft cleans markup, line endings, mentions and tags.');
 $assert($draft->tags === ['mixed-case'] && count($draft->links) === 1, 'Draft relations are extracted from the normalized stored text.');
 $cleanDraft = \TinyCat\Social\Posts\PostCreation::fromText("  Manual  post […]\n\n\nRead more → https://alpha.example #Mixed_CASE");
@@ -502,7 +502,7 @@ $botPublicationId = (int) $botPublication['content_id'];
 $assert((string) $value('SELECT published_at FROM social_posts WHERE id = ' . $botPublicationId) <= \TinyCat\Support\Dates::dateDb(), 'Bot imports publish immediately through the shared writer.');
 \TinyCat\Social\Posts\NotificationEvents::notifyMentions('@1', ['id' => 3, 'role' => 'bot'], $botPublicationId);
 $assert((int) $value('SELECT COUNT(*) FROM notifications WHERE subject_id = ' . $botPublicationId) === 0, 'Bot imports and direct bot mention delivery do not send notifications.');
-$assert(\TinyCat\Social\Posts\PostCreation::sendsMentionNotifications('admin') && !\TinyCat\Social\Posts\PostCreation::sendsMentionNotifications('bot'), 'Mention sender policy distinguishes human accounts from bots.');
+$assert(\TinyCat\Social\Profiles\Roles::receivesNotifications('admin') && !\TinyCat\Social\Profiles\Roles::receivesNotifications('bot'), 'Mention sender policy distinguishes human accounts from bots.');
 $_POST = ['body' => 'Admin edited bot post @actor'];
 \TinyCat\Http\Request::reset();
 \TinyCat\Social\Posts\Actions::status_json_update($botPublicationId, ['id' => 1, 'username' => 'owner', 'role' => 'admin']);

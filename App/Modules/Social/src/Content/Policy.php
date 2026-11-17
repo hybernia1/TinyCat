@@ -10,7 +10,7 @@ final class Policy
     /** @return array{items: list<string>, value: string} */
     public static function resource(): array
     {
-        $rules = \TinyCat\Core\Security\UrlRules::rules((string) Integration::option('moderation.blocked_urls', ''));
+        $rules = \TinyCat\Core\Security\UrlRules::rules((string) \TinyCat\Core\Runtime\Startup::option('moderation.blocked_urls', ''));
         return ['items' => $rules, 'value' => implode(', ', $rules)];
     }
 
@@ -24,7 +24,7 @@ final class Policy
 
     public static function blockedHost(string $text): string
     {
-        return \TinyCat\Core\Security\UrlRules::match($text, \TinyCat\Core\Security\UrlRules::rules((string) Integration::option('moderation.blocked_urls', '')), LinkParser::pattern());
+        return \TinyCat\Core\Security\UrlRules::match($text, \TinyCat\Core\Security\UrlRules::rules((string) \TinyCat\Core\Runtime\Startup::option('moderation.blocked_urls', '')), LinkParser::pattern());
     }
 
     public static function requireAllowedUrls(string $text): void

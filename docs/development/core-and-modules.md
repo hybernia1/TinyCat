@@ -70,6 +70,20 @@ Vrstva `Composition` ani produktové bootstrapy neexistují. Vnitřní složky
 Socialu nemají manifesty, aktivační stav ani samostatné položky ve správci.
 Jejich pomocné registrace volá výhradně `Social/Module.php`.
 
+Uvnitř Socialu profily volají přímo jeho autorské stránky, statistiky a
+notifikační události. Příspěvky používají přímo vlastní notifikační služby;
+tyto pevné vazby nepotřebují další callbackový registr. Lazy příspěvky do core
+a veřejné kontrakty mezi modulem a frameworkem zůstávají zachované.
+
+`Social/Posts/PostCreation` je jediná příprava a vytvoření sociálního příspěvku,
+společná pro ruční zápis i feed import. `Social/Posts/Tags` vlastní normalizaci,
+vazby tagů a jejich veřejné výpisy bez dědičné mezivrstvy. `Posts/Resource`
+předává vlastní odkazy přímo společnému `Core/Ui/RichTextResource`.
+Transakční aktualizaci a mazání uložených dat nadále poskytuje `Content/Posts`.
+Diskuse a reakce volají přímo `Posts/InteractionPolicy`; vlastní interní registr
+vlastníků nemají. Nastavení a lokalizaci URL čtou z core a blokování odkazů
+z vlastní `Content/Policy`. Textové politiky registrují přímo do `Core/Text/Policies`.
+
 ## Načtení a vlastnictví
 
 HTTP vstup načítá přímo `Core/Runtime/autoload.php`, explicitně volá
@@ -86,8 +100,9 @@ obnov privátní rescue launcher příkazem `php App/Console.php rescue` podle
 
 `Core/Runtime/Framework` nejprve načte čistá metadata povinných služeb
 z `Core/services.json`. `Core/Modules/Loader` k nim přidá explicitně vybrané
-funkční manifesty, ověří namespace a závislosti a vytvoří společný katalog.
-Nepoužívá filesystem discovery. Například:
+aktivované funkční manifesty, ověří namespace a závislosti a vytvoří společný katalog.
+Dostupnost určuje metadata-only inventář `App/Modules/*/module.json`; neaktivní
+modul se při inventarizaci nenačítá jako PHP. Výchozí aktivace zdrojů například:
 
 ```php
 return [

@@ -46,7 +46,7 @@ final class Repository
      */
     public static function author_activity_stats(int $authorId): array
     {
-        return Integration::activity($authorId);
+        return \TinyCat\Social\Posts\AuthorStatistics::author_activity_stats($authorId);
     }
 
     /**

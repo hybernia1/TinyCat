@@ -13,7 +13,6 @@ final class Module implements \TinyCat\Core\Modules\StorageModule, \TinyCat\Core
     public static function initialize(): void
     {
         Content\ServiceProvider::initialize();
-        Profiles\Registration::initialize();
         Posts\Registration::initialize();
         Moderation\ActionPolicy::register();
         Presentation\Registration::initialize();

@@ -28,7 +28,7 @@ $assert(ModuleSchemas::ready($pdo, Distribution::definitions($modules)), 'All se
 $administrator = Connection::find('users', ['id' => 1]);
 $article = TinyCat\Blog\Articles::save(['title' => 'Combined article', 'body' => 'Coexistence marker #combined'], $administrator);
 TinyCat\Database\Schema::reserveIds($pdo, 'social_posts', $article);
-$post = TinyCat\Social\Content\PostCreation::create(1, TinyCat\Social\Content\PostCreation::fromText('Coexistence status #combined'), []);
+$post = TinyCat\Social\Posts\PostCreation::create(1, TinyCat\Social\Posts\PostCreation::fromText('Coexistence status #combined'), []);
 $assert($post === $article && TinyCat\Social\Posts\Posts::status_find($post)['body'] !== TinyCat\Blog\Articles::find($article)['body'], 'Equal numeric IDs resolve independently through owner repositories');
 $assert(array_column(TinyCat\Social\Posts\Feed::public_status_items_cursor(30), 'id') === [$post], 'Social feed excludes existing and new articles');
 $assert(array_column(TinyCat\Social\Search\Queries::public_search_content_rows('Coexistence', 20), 'id') === [$post], 'Social search keeps canonical status ownership');
@@ -39,9 +39,9 @@ $assert(TinyCat\Http\LocaleRouting::url('/search/all?q=Coexistence', 'cs') === '
 $assert(TinyCat\Core\Discovery\Sitemap::count('articles') > 1 && TinyCat\Core\Discovery\Sitemap::hasSection('status'), 'Combined sitemap retains both article and status sources');
 $assert(TinyCat\Core\Discovery\Sitemap::count('status') === 1 && TinyCat\Social\Posts\AuthorStatistics::author_activity_stats(1)['posts'] === 1, 'Sitemap and social statistics exclude articles');
 $text = 'Shared @Editor #combined';
-$beforeSocial = TinyCat\Social\Content\PostCreation::fromText($text, 'article')->body;
+$beforeSocial = TinyCat\Social\Posts\PostCreation::fromText($text, 'article')->body;
 TinyCat\Social\Posts\Registration::initialize();
-$assert(TinyCat\Social\Content\PostCreation::fromText($text, 'article')->body === $beforeSocial, 'Loading Social cannot alter article mention preparation');
+$assert(TinyCat\Social\Posts\PostCreation::fromText($text, 'article')->body === $beforeSocial, 'Loading Social cannot alter article mention preparation');
 $assert(TinyCat\Social\Moderation\Restrictions::moderation_user_post_count(1) === 1 && TinyCat\Social\Moderation\Restrictions::moderation_user_reputation(['id' => 1, 'role' => 'user', 'created_at' => date('Y-m-d H:i:s', time() - 8 * 86400)]) === 'normal', 'Articles do not increase social publication counts or reputation');
 TinyCat\Blog\Module::initialize();
 $socialTables = TinyCat\Social\Module::tables();

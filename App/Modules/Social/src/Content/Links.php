@@ -207,7 +207,7 @@ class Links extends \TinyCat\Core\Links\Presentation
 
     public static function status_link_image_cache(string $imageUrl, string $variant = 'card'): string
     {
-        return Integration::blockedHost($imageUrl) === '' ? \TinyCat\Core\Files\RemoteImageCache::store($imageUrl, $variant) : '';
+        return Policy::blockedHost($imageUrl) === '' ? \TinyCat\Core\Files\RemoteImageCache::store($imageUrl, $variant) : '';
     }
 
     /** @return array{changed: int, has_more: bool} */

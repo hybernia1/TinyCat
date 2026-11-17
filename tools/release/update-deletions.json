@@ -2001,5 +2001,15 @@
   "6.0.11": [
     "App/autoload.php",
     "App/available-modules.php"
+  ],
+  "6.0.12": [
+    "App/Modules/Social/src/Profiles/Access.php",
+    "App/Modules/Social/src/Profiles/Integration.php",
+    "App/Modules/Social/src/Posts/NotificationHooks.php",
+    "App/Modules/Social/src/Content/PostCreation.php",
+    "App/Modules/Social/src/Content/Tags.php",
+    "App/Modules/Social/src/Content/Resource.php",
+    "App/Modules/Social/src/Content/Integration.php",
+    "App/Modules/Social/src/Content/InteractionPolicy.php"
   ]
 }

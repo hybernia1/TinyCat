@@ -32,10 +32,6 @@ final class PackageRegistry
         $tables = [];
         $frameworkSchemas = Loader::fromSelection($root, [])->schemas(true);
         foreach ($frameworkSchemas as $schema) { foreach ($schema->tables as $table) { $tables[$table] = true; } }
-        $bundled = Loader::fromSelection($root, $plan['selection']);
-        ModuleAutoload::withCatalog($bundled->catalog, static function () use ($bundled, &$tables): void {
-            foreach ($bundled->providers(StorageModule::class) as $provider) { foreach ($provider::tables() as $table) { $tables[$table] = true; } }
-        });
         foreach ($plan['schemas'] as $schema) { foreach ($schema['tables'] as $table) { $tables[$table] = true; } }
         foreach ($packages as $id => $package) {
             if ($package['format'] === 2) { $plan['format'] = 4; }
@@ -54,14 +50,40 @@ final class PackageRegistry
         return Distribution::validate($plan);
     }
 
+    /** Snapshot a manually copied module only during explicit activation.
+     * @param array<string, string> $selection
+     * @return array<string, mixed> */
+    public static function capture(string $root, string $id, array $selection, string $version = '0.0.0', ?string $minimumCore = null, string $minimumPhp = '8.4.0'): array
+    {
+        $definition = Definition::fromManifest($root . '/' . $selection[$id]);
+        $plan = Distribution::describe($root, 'tinycat.package', $selection, []);
+        $schemas = array_filter($plan['schemas'], static fn (string $stream): bool => $plan['schemaOwners'][$stream] === $id, ARRAY_FILTER_USE_KEY);
+        $files = [];
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($definition->root, \FilesystemIterator::SKIP_DOTS)) as $file) {
+            if ($file->isLink()) { throw new \RuntimeException('Local modules cannot contain symbolic links.'); }
+            if (!$file->isFile()) { continue; }
+            $path = str_replace('\\', '/', substr($file->getPathname(), strlen($definition->root) + 1));
+            if ($path === 'package.json') { continue; }
+            ModulePackage::path($path);
+            $files[$path] = hash_file('sha256', $file->getPathname());
+        }
+        ksort($files);
+        return ModulePackage::validate([
+            'format' => array_any($schemas, static fn (array $schema): bool => array_any($schema['migrations'], static fn (array $migration): bool => $migration['file'] === null)) ? 2 : 1, 'kind' => 'tinycat-module', 'id' => $id,
+            'directory' => basename($definition->root), 'version' => $version,
+            'minimum_core' => $minimumCore ?? \TinyCat\Support\Version::CURRENT, 'minimum_php' => $minimumPhp,
+            'manifest' => json_decode((string) file_get_contents($root . '/' . $selection[$id]), true, 64, JSON_THROW_ON_ERROR),
+            'schemas' => $schemas, 'files' => $files,
+        ]);
+    }
+
     /** Inactive uploaded PHP is not needed to display the module manager.
      * @param array<string, string> $selection
      * @param list<string> $active
      * @return array<string, string> */
     public static function featureSelection(string $root, array $selection, array $active): array
     {
-        $packages = self::read($root);
-        return array_filter($selection, static fn (string $id): bool => !isset($packages[$id]) || in_array($id, $active, true), ARRAY_FILTER_USE_KEY);
+        return Loader::availableSelection($root, array_intersect_key($selection, array_flip($active)));
     }
 
     /** Core updates cannot replace independently owned module files.

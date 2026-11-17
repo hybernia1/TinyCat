@@ -28,6 +28,7 @@ final readonly class Definition
         public ?string $manifest = null,
         public string $translationDomain = 'app',
         public ?array $distribution = null,
+        public bool $development = false,
     ) {}
 
     public static function fromManifest(string $file): self
@@ -52,13 +53,14 @@ final readonly class Definition
 
     private static function parse(stdClass $data, string $root, ?string $manifest): self
     {
-        $allowed = ['format', 'id', 'coreApi', 'namespace', 'requires', 'exports', 'providers', 'resources', 'translationDomain', 'distribution'];
+        $allowed = ['format', 'id', 'coreApi', 'namespace', 'requires', 'exports', 'providers', 'resources', 'translationDomain', 'distribution', 'development'];
         if (array_diff(array_keys(get_object_vars($data)), $allowed) !== []) {
             throw new InvalidArgumentException('Unknown module metadata field.');
         }
         if (($data->format ?? null) !== 1 || ($data->coreApi ?? null) !== 1) {
             throw new InvalidArgumentException('Unsupported module format or core API.');
         }
+        if (isset($data->development) && !is_bool($data->development)) { throw new InvalidArgumentException('Invalid development module flag.'); }
         $id = self::id($data->id ?? null);
         $namespace = $data->namespace ?? null;
         if (!is_string($namespace) || preg_match('/^(?:[A-Za-z][A-Za-z0-9]*\\\\)+$/D', $namespace) !== 1) {
@@ -110,7 +112,7 @@ final readonly class Definition
             foreach ($required as $requiredId) { self::id($requiredId); }
             $distribution = ['product' => $profile->product, 'legacy' => $profile->legacy, 'required' => $required, 'artifact' => $profile->artifact];
         }
-        return new self($id, $namespace, $resolvedRoot, $requires, $exports, $providers, $resources, $manifest, $translationDomain, $distribution);
+        return new self($id, $namespace, $resolvedRoot, $requires, $exports, $providers, $resources, $manifest, $translationDomain, $distribution, $data->development ?? false);
     }
 
     private static function id(mixed $id): string

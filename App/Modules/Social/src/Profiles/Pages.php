@@ -13,13 +13,13 @@ final class Pages
 
     public static function author(?int $requestedId = null): void
     {
-        Integration::author($requestedId);
+        \TinyCat\Social\Posts\AuthorPages::author($requestedId);
     }
 
     /** @return array<string, mixed>|null */
     public static function authorData(?int $requestedId = null): ?array
     {
-        return Integration::authorData($requestedId);
+        return \TinyCat\Social\Posts\AuthorPages::authorData($requestedId);
     }
 
     public static function login(): void

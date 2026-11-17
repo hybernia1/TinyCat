@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace TinyCat\Social\Posts;
 
-use TinyCat\Social\Content\PostCreation;
+use TinyCat\Social\Posts\PostCreation;
 
 use LengthException;
 use Throwable;
@@ -167,7 +167,7 @@ final class Actions
         }
 
         \TinyCat\Social\Moderation\Restrictions::moderation_record_action($user, 'post');
-        NotificationHooks::notifyMentions($body, $user, $contentId);
+        NotificationEvents::notifyMentions($body, $user, $contentId);
 
         $data = [
             'action' => 'create',
@@ -301,7 +301,7 @@ final class Actions
             ? $user
             : \TinyCat\Database\Connection::find('users', ['id' => (int) ($item['author_id'] ?? 0)]);
         \TinyCat\Social\Posts\Actions::status_json_require_unique_body($author ?: $user, $body, $contentId);
-        $oldMentionIds = NotificationHooks::mentionedUserIds((string) ($item['body'] ?? ''));
+        $oldMentionIds = NotificationEvents::mentionedUserIds((string) ($item['body'] ?? ''));
         $newImage = null;
         $oldPath = '';
 
@@ -329,7 +329,7 @@ final class Actions
             \TinyCat\Social\Content\ImageStorage::delete($oldPath);
         }
         if (\TinyCat\Social\Posts\Posts::status_can_view(\TinyCat\Social\Posts\Posts::status_find($contentId)) && \TinyCat\Social\Profiles\Roles::receivesNotifications((string) ($author['role'] ?? ''))) {
-            NotificationHooks::notifyMentions($body, $user, $contentId, 0, $oldMentionIds);
+            NotificationEvents::notifyMentions($body, $user, $contentId, 0, $oldMentionIds);
         }
 
         $data = [

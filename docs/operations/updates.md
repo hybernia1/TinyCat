@@ -75,6 +75,39 @@ uses a synthetic successor in an isolated copy when the source matches the basel
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
 
+## Upgrading to 6.0.12
+
+Requires a completed **6.0.10 or newer** installation and PHP 8.4. From 6.0.10,
+refresh and verify the private rescue launcher as documented below before updating.
+There are no new database migrations or changes to published migration checksums.
+
+The module manager discovers manifest files without executing inactive module PHP.
+Removing a never-activated module no longer breaks administration. Missing active
+modules and their dependents are suspended while their stored state and data remain
+intact. Manually copied modules appear inactive and use the existing lifecycle on
+explicit activation. Social's internal callback registries and compatibility wrappers
+are simplified; eight retired Social files are deleted by the signed update plan.
+
+New production installations omit the development Blog module. Public 6.0.11
+packages included and enabled Blog by default, so the compatibility update retains
+its files and metadata for existing installed owners. It does not remove retained
+Blog data or silently change activation. Build the release variants separately:
+The build-only `development` hint is omitted from packaged runtime manifests so
+already-loaded supported updater classes can read them.
+
+```sh
+php tools/release/build-update.php --version=6.0.12 --assembly=development --active=tinycat.social --output=.work/releases/release-6-0-12/update
+php tools/release/build-update.php --version=6.0.12 --assembly=platform --fresh-install --output=.work/releases/release-6-0-12/install
+```
+
+Verify updates against both the minimum supported baseline and the last public
+platform release, with the original updater classes cached:
+
+```sh
+php tools/release/release-update-rehearsal.php --artifact=.work/releases/release-6-0-12/update --baseline-version=6.0.10 --platform-baseline --direct-web --cached-autoload
+php tools/release/release-update-rehearsal.php --artifact=.work/releases/release-6-0-12/update --baseline-version=6.0.11 --platform-baseline --direct-web --cached-autoload
+```
+
 ## Upgrading to 6.0.11
 
 Requires a completed **6.0.10 or newer** installation and PHP 8.4. Before updating

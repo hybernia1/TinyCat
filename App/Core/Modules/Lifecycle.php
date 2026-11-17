@@ -53,18 +53,54 @@ final class Lifecycle
         $state = Deployment::read($root);
         if ($state !== $expectedState) { throw new \RuntimeException('Deployment changed during activation; retry.'); }
         if ($state === null) { throw new \RuntimeException('Install the product before activating modules.'); }
+        $originalPlan = $plan;
+        $packages = PackageRegistry::read($root); $originalPackages = $packages;
+        $discovered = Distribution::withDiscovered($root, $plan, $active);
+        $newIds = array_diff($active, array_keys($plan['selection']));
+        $ordered = Loader::fromSelection($root, Loader::availableSelection($root, array_intersect_key($discovered['selection'], array_flip($active))))->catalog->definitions();
+        foreach (array_intersect(array_map(static fn (Definition $definition): string => $definition->id, $ordered), $newIds) as $id) {
+            $selection = array_intersect_key($discovered['selection'], array_flip($active));
+            $package = PackageRegistry::capture($root, $id, $selection);
+            $plan = PackageRegistry::extend($root, $plan, [$id => $package]);
+            $packages[$id] = $package;
+        }
         Distribution::selection($plan, $active);
-        self::validateResources($root, $plan, $active);
-        $installed = array_values(array_unique([...($state['installed'] ?? $plan['active']), ...$active]));
-        $schemas = Distribution::schemas($plan, $root, $installed);
+        $running = array_keys(Loader::availableSelection($root, array_intersect_key($plan['selection'], array_flip($active))));
+        if (array_diff(array_diff($active, $state['active']), $running) !== []) { throw new \RuntimeException('Cannot activate unavailable modules or dependencies.'); }
+        self::validateResources($root, $plan, $running);
+        $installed = array_values(array_unique([...$state['installed'], ...$active]));
+        $presentInstalled = array_keys(Loader::availableSelection($root, array_intersect_key($plan['selection'], array_flip($installed))));
+        $schemas = Distribution::schemas($plan, $root, $presentInstalled);
         $pending = $schemas !== [] && ModuleSchemas::pending(Connection::get(), $schemas);
-        return Manager::runLifecycle(static function () use ($root, $plan, $active, $installed, $schemas, $pending): array {
-            if ($pending) { ModuleSchemas::synchronize(Connection::get(), $schemas); }
-            Deployment::write($root, $plan, $active, $installed, \TinyCat\Support\Version::CURRENT);
-            return ['installed' => $installed, 'active' => $active];
-        }, $pending, static function () use ($root, $state): void {
-            if (Deployment::read($root) !== $state) { throw new \RuntimeException('Deployment changed during activation; retry.'); }
-        });
+        $stage = null; $changes = null;
+        try {
+            if ($packages !== $originalPackages) {
+                $stage = Paths::basePath('storage/modules/staging/activation-' . bin2hex(random_bytes(12)));
+                if (!mkdir($stage . '/App', 0700, true)) { throw new \RuntimeException('Cannot stage module registration.'); }
+                $record = json_encode(['format' => 1, 'packages' => $packages], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
+                if (strlen($record) > 4194304 || file_put_contents($stage . '/' . PackageRegistry::FILE, $record) === false) { throw new \RuntimeException('Cannot stage module registration.'); }
+                $changes = ['stage' => $stage, 'files' => [PackageRegistry::FILE => hash('sha256', $record)], 'delete' => []];
+            }
+            return Manager::runLifecycle(static function () use ($root, $plan, $active, $installed, $schemas, $pending): array {
+                if ($pending) { ModuleSchemas::synchronize(Connection::get(), $schemas); }
+                Deployment::write($root, $plan, $active, $installed, \TinyCat\Support\Version::CURRENT);
+                return ['installed' => $installed, 'active' => $active];
+            }, $pending, static function () use ($root, $state, $originalPackages, $originalPlan, $packages): void {
+                foreach (array_diff_key($packages, $originalPackages) as $package) {
+                    foreach ($package['files'] as $path => $hash) {
+                        $file = $root . '/App/Modules/' . $package['directory'] . '/' . $path;
+                        if (!is_file($file) || is_link($file) || !hash_equals($hash, (string) hash_file('sha256', $file))) { throw new \RuntimeException('Module files changed during activation; retry.'); }
+                    }
+                }
+                if (Distribution::read($root) !== $originalPlan || PackageRegistry::read($root) !== $originalPackages || Deployment::read($root) !== $state) { throw new \RuntimeException('Module catalog changed during activation; retry.'); }
+            }, $changes);
+        } finally {
+            if ($stage !== null) {
+                if (is_file($stage . '/' . PackageRegistry::FILE)) { unlink($stage . '/' . PackageRegistry::FILE); }
+                if (is_dir($stage . '/App')) { rmdir($stage . '/App'); }
+                if (is_dir($stage)) { rmdir($stage); }
+            }
+        }
     }
 
     /** Called after verified files are applied; migration definitions come from the signed staged plan.

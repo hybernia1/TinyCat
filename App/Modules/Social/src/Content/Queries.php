@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Content;
 
+use TinyCat\Social\Posts\Tags;
+
 /** Public content projections without follower, reaction or comment tables. */
 final class Queries
 {

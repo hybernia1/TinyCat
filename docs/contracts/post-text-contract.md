@@ -1,6 +1,6 @@
 # Jednotná pravidla textu příspěvků
 
-Tělo nového i upravovaného sociálního příspěvku připravuje `Social/Content/PostCreation::fromText()`.
+Tělo nového i upravovaného sociálního příspěvku připravuje `Social/Posts/PostCreation::fromText()`.
 Ruční zadání, API, náhled bota a import používají stejný `Core/Text/PostText` před
 omezením délky a rozpoznáním odkazů, zmínek a hashtagů. Pravidla se nevztahují
 na komentáře, životopisy ani jiná textová pole.

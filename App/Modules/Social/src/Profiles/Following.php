@@ -36,7 +36,7 @@ final class Following
             if (!\TinyCat\Database\Connection::uniqueViolation($exception)) { throw $exception; }
             return;
         }
-        Integration::followed($authorId, ['id' => $followerId]);
+        \TinyCat\Social\Posts\NotificationEvents::notifyFollowedUser($authorId, ['id' => $followerId]);
     }
 
     /**

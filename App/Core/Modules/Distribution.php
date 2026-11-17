@@ -172,6 +172,26 @@ final class Distribution
         return PackageRegistry::extend($root, self::validate($data));
     }
 
+    /** Add metadata for present modules without loading their PHP or installing schemas.
+     * @param array<string, mixed> $plan
+     * @param list<string> $ids
+     * @return array<string, mixed> */
+    public static function withDiscovered(string $root, array $plan, array $ids): array
+    {
+        $inventory = SourceModules::inventory($root);
+        $selected = [];
+        foreach ($ids as $id) { if (!isset($plan['selection'][$id]) && isset($inventory['selection'][$id])) { $selected += SourceModules::selection($root, $id); } }
+        foreach ($selected as $id => $binding) {
+            if (isset($plan['selection'][$id])) {
+                if ($plan['selection'][$id] !== $binding) { throw new \RuntimeException('Module location differs from its recorded owner: ' . $id); }
+                continue;
+            }
+            $plan['selection'][$id] = $binding;
+            $plan['requires'][$id] = $inventory['definitions'][$id]->requires;
+        }
+        return self::validate($plan);
+    }
+
     /** Validate verified staged metadata without loading any staged provider PHP.
      * @param array<string, mixed> $plan */
     public static function verifyArtifact(string $root, array $plan): void

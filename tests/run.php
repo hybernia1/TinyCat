@@ -12,6 +12,7 @@ $root = dirname(__DIR__);
 require_once __DIR__ . '/support/execution.php';
 $tests = [
     'Module catalog and legacy composition' => 'tests/quality/module-catalog.php',
+    'File-based module availability and activation' => 'tests/quality/module-availability.php',
     'Unified module resources and selection' => 'tests/quality/module-resources.php',
     'Offline registries and technical startup' => 'tests/quality/runtime-registries.php',
     'Manifest module vertical pilot' => 'tests/quality/module-pilot.php',

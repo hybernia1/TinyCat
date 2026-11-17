@@ -96,8 +96,8 @@ return [
 ```
 
 Pokud zachováváš Social či Blog, ponech i jejich manifesty. Samotný adresář
-modul neaktivuje. V sestavené instalaci dostupnost určuje distribuční descriptor
-a aktivaci spravuje lifecycle. Vlastní distribuční profil je potřeba jen pro
+modul neaktivuje. Dostupnost určuje manifest ve složce modulu, aktivaci spravuje
+explicitní stav a lifecycle. Vlastní distribuční profil je potřeba jen pro
 samostatnou instalační sestavu, ne pro každý modul.
 
 ## 2. Registrace stránek a menu
@@ -353,8 +353,9 @@ Hranice hlídají `tests/quality/module-boundaries.php` a `dependencies.php`,
 metadata a zdroje `module-catalog.php`, `module-resources.php` a `runtime-registries.php`.
 Inventář obnovuj přes `python tools/assets/ui-inventory.py`.
 
-Modul může být součástí distribuce nebo samostatným ZIPem. Zkopírování adresáře
-do sestaveného webu nestačí; instalaci a aktivaci provádí správce modulů.
+Modul může být součástí distribuce, samostatným ZIPem nebo ručně přidanou složkou.
+Zkopírování adresáře jej zpřístupní ve správci jako vypnutý, bez spuštění PHP;
+instalaci schématu a aktivaci provádí až výslovná operace správce modulů.
 CLI a podepsané balíčky popisuje [provozní návod](../operations/module-deployment.md).
 Místní živé ověření používá [Laragon prostředí](local-environment.md);
 destruktivní scénáře patří do izolovaných fixtures.
@@ -396,10 +397,11 @@ aktualizuje distribučním updaterem, nikoli samostatným ZIPem. Pro čisté cor
 lze sestavit `build-update.php --assembly=core`; `--active=` ponechá všechny
 dostupné volitelné moduly vypnuté.
 
-## Zdrojový inventář pro build
+## Společný inventář dostupných modulů
 
 Build celé platformy a vývojové kontroly načítají manifesty přímo z
 `App/Modules/*/module.json`; další centrální seznam se neupravuje. Samostatný
 build modulu vybere jeho manifest a tranzitivní závislosti. Inventář pouze čte
-JSON, nespouští PHP modulů a neřídí runtime aktivaci. Ta zůstává explicitní
+JSON a nespouští PHP modulů. Stejný inventář určuje dostupnost ve správci;
+samotné nalezení modulu jej neaktivuje. Aktivace zůstává explicitní
 v `App/modules.php`, distribučním plánu a registru instalovaných balíčků.

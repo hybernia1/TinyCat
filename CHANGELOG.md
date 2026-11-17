@@ -1,5 +1,13 @@
 # Changelog
 
+## 6.0.12 - 2026-11-17
+
+- Discover available modules from manifests on disk without executing inactive PHP. Missing inactive modules no longer break the module manager; missing active owners and their dependents are suspended without erasing activation state or data.
+- Support explicit activation of manually copied module directories through the existing package registry, dependency checks, updater lock, backups and migration lifecycle. Report invalid inactive manifests in administration.
+- Mark Blog as a development module and omit it from new production installations. The compatibility update retains the previously bundled Blog for installed owners from earlier public releases; fresh installations contain Social only.
+- Simplify Social by removing internal callback registries and redundant identity adapters. Consolidate post preparation and tags, and retain transactional writes, file cleanup and notification ownership.
+- Remove eight retired Social PHP files through the 6.0.12 deletion plan. Preserve published migration history and introduce no new database migrations.
+
 ## 6.0.11 - 2026-11-17
 
 - Remove the public autoload facade and point developer tools, tests and external-script examples directly at the core runtime loader. Require completed 6.0.10 and refresh inherited private rescue launchers with its existing CLI before updating; exercise signed web update and exact rollback through the refreshed launcher.

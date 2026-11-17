@@ -12,19 +12,7 @@ final class Registration implements \TinyCat\Core\Modules\StorageModule, \TinyCa
 
     public static function initialize(): void
     {
-        InteractionPolicy::register();
-        \TinyCat\Social\Profiles\Integration::extend(['followed' => NotificationEvents::notifyFollowedUser(...)]);
-        NotificationHooks::configure([
-            'mentionedUserIds' => NotificationEvents::mentionedUserIds(...), 'notifyMentions' => NotificationEvents::notifyMentions(...),
-            'notifyContentOwner' => NotificationEvents::notifyContentOwner(...), 'notifyCommentOwner' => NotificationEvents::notifyCommentOwner(...),
-            'removeForContent' => NotificationHistory::removeForContent(...), 'removeForComment' => NotificationHistory::removeForComment(...),
-        ]);
-        \TinyCat\Social\Content\Integration::provide('tinycat.social', 'post', new \TinyCat\Core\Text\TextPolicy(Mentions::normalize_mentions_for_storage(...), InlinePresentation::segments(...), ContentLinks::navigation(...)));
-        \TinyCat\Social\Profiles\Integration::extend([
-            'author' => static function (?int $id): void { AuthorPages::author($id); },
-            'author_data' => AuthorPages::authorData(...), 'activity' => AuthorStatistics::author_activity_stats(...),
-            'feed' => static function (int $id): void { Syndication::respond('author', '', $id); },
-        ]);
+        \TinyCat\Core\Text\Policies::provide('tinycat.social', 'post', new \TinyCat\Core\Text\TextPolicy(Mentions::normalize_mentions_for_storage(...), InlinePresentation::segments(...), ContentLinks::navigation(...)));
     }
 
     /** @return list<string> */

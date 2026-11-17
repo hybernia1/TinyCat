@@ -72,7 +72,7 @@ final class Actions
             \TinyCat\Http\Response::error(\TinyCat\Support\Localization::t('bots.messages.account_not_found'), 404, 'bot_account_not_found');
         }
 
-        \TinyCat\Social\Profiles\Accounts::user_delete_account($id);
+        \TinyCat\Core\Identity\Lifecycle::delete($id, \TinyCat\Core\Identity\Participants::current(true));
         return \TinyCat\Social\Automation\Administration::accountsPayload() + ['message' => \TinyCat\Support\Localization::t('bots.messages.account_deleted'), 'code' => 'bot_account_deleted'];
     }
 

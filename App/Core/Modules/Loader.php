@@ -12,11 +12,28 @@ final readonly class Loader
     public static function fromCatalog(Catalog $catalog): self { return new self($catalog); }
     public static function load(string $root): self
     {
-        return self::fromSelection($root, Deployment::selection($root, static function () use ($root): array {
+        $selected = Deployment::selection($root, static function () use ($root): array {
             $selection = require $root . '/App/modules.php';
             if (!is_array($selection)) { throw new \InvalidArgumentException('Module selection must be a map.'); }
             return $selection;
-        }));
+        });
+        return self::fromSelection($root, self::availableSelection($root, $selected));
+    }
+
+    /** Suspend unavailable modules and their dependents without changing saved activation.
+     * @param array<string, string> $selection
+     * @return array<string, string> */
+    public static function availableSelection(string $root, array $selection): array
+    {
+        $inventory = SourceModules::inventory($root);
+        $selection = array_intersect_assoc($selection, $inventory['selection']);
+        do {
+            $previous = $selection;
+            foreach ($selection as $id => $binding) {
+                if (array_diff($inventory['definitions'][$id]->requires, [...array_keys($selection), ...\TinyCat\Core\Runtime\Framework::CAPABILITIES]) !== []) { unset($selection[$id]); }
+            }
+        } while ($selection !== $previous);
+        return $selection;
     }
 
     /** @param array<array-key, mixed> $selection */

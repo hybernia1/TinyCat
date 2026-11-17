@@ -12,8 +12,9 @@ final class ServiceProvider implements \TinyCat\Core\Modules\StorageModule, \Tin
 
     public static function initialize(): void
     {
-        Integration::configure();
-        Interactions::reset();
+        \TinyCat\Core\Text\Policies::forget('post');
+        \TinyCat\Core\Links\Urls::configure(null);
+        Interactions::invalidate();
         \TinyCat\Core\Runtime\Startup::$frameOrigins = Providers::playerOrigins();
     }
 

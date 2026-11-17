@@ -16,11 +16,11 @@ final class Outbound
 
     public static function tagged(string $url): string
     {
-        if (!(bool) Integration::option('content_links.utm.enabled', true)) { return $url; }
-        $source = trim((string) Integration::option('content_links.utm.source', ''));
-        if ($source === '') { $source = (string) parse_url((string) Integration::option('app.url', ''), PHP_URL_HOST); }
+        if (!(bool) \TinyCat\Core\Runtime\Startup::option('content_links.utm.enabled', true)) { return $url; }
+        $source = trim((string) \TinyCat\Core\Runtime\Startup::option('content_links.utm.source', ''));
+        if ($source === '') { $source = (string) parse_url((string) \TinyCat\Core\Runtime\Startup::option('app.url', ''), PHP_URL_HOST); }
         if ($source === '') { return $url; }
-        $values = ['utm_source' => $source, 'utm_medium' => (string) Integration::option('content_links.utm.medium', 'referral'), 'utm_campaign' => (string) Integration::option('content_links.utm.campaign', '')];
+        $values = ['utm_source' => $source, 'utm_medium' => (string) \TinyCat\Core\Runtime\Startup::option('content_links.utm.medium', 'referral'), 'utm_campaign' => (string) \TinyCat\Core\Runtime\Startup::option('content_links.utm.campaign', '')];
         return \TinyCat\Core\Links\Tracking::append($url, $values);
     }
 }

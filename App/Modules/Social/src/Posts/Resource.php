@@ -18,7 +18,7 @@ final class Resource
     {
         $id = (int) ($item['id'] ?? 0);
         $body = (string) ($item['body'] ?? '');
-        $presentation = \TinyCat\Social\Content\Resource::content($id, $body, 'post');
+        $presentation = \TinyCat\Core\Ui\RichTextResource::content($id, $body, 'post', Links::status_links_for_content($id));
         $segments = $presentation['segments'];
         $at = (string) ($item['published_at'] ?? '');
         return [
@@ -69,7 +69,7 @@ final class Resource
      */
     public static function link(array $link, int $contentId = 0): array
     {
-        return \TinyCat\Social\Content\Resource::link($link, $contentId, 'post');
+        return \TinyCat\Core\Ui\RichTextResource::link($link, 'post', $contentId);
     }
 
     /**

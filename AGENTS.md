@@ -20,12 +20,16 @@ nikoli PHP adaptéry propojující domény.
 - `Modules/Social` je jeden modul, nikoli skupina zapínatelných částí. Jeho jediný
   manifest a `src/Module.php` vlastní registraci profilů, statusů, moderace,
   hledání, automatizace a veřejné prezentace. Blog má vlastní samostatnou registraci.
-- `App/modules.php` vybírá manifesty explicitně. `Core/Modules/Loader` ověřuje
-  metadata, pořadí závislostí a vlastnictví poskytovatelů. Neodvozuj aktivaci
-  z adresářů a nepřidávej produktové větvení do core.
-- Instalované ZIPy doplňuje explicitní `App/module-packages.json`, nikoli glob
-  adresářů. Instalace a aktualizace modulu používají společný updater, zámek,
+- Dostupnost modulů určuje metadata-only inventář `App/Modules/*/module.json`,
+  společný pro runtime a build. `App/modules.php` vybírá výchozí aktivaci zdrojů;
+  instalace má explicitní aktivační stav. Nalezení složky modul nikdy nezapíná
+  ani nespouští jeho PHP. Loader ověřuje metadata, závislosti a vlastnictví.
+- ZIPy a výslovně aktivované lokální složky eviduje `App/module-packages.json`.
+  Chybějící zdroje nemažou data ani evidenci; runtime pozastaví chybějící moduly
+  a jejich závislé části, správce zůstává použitelný. Instalace a aktualizace používají společný updater, zámek,
   journal a zálohu; první nahrání modul nezapíná ani nespouští jeho PHP.
+- Blog je vývojový/testovací modul (`development: true`), běžná produkční
+  distribuce jej neobsahuje. Pro úplnou testovací sestavu je `--assembly=development`.
 - Každý funkční modul má `src/`, `templates/`, `lang/`, `assets/`, migrace
   a registrační vstup v jednom `App/Modules/<Name>/`. Kontrakty jsou
   v `Core/Modules`, technický start v `Core/Runtime`.

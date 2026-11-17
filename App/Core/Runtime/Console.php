@@ -77,6 +77,7 @@ final class Console
                 } elseif (in_array($command, ['activate', 'deactivate', 'upgrade'], true)) {
                     $state = Deployment::read($root);
                     $active = $state['active'] ?? $plan['active'];
+                    $plan = Distribution::withDiscovered($root, $plan, array_slice($arguments, 2));
                     $ids = \TinyCat\Core\Modules\FeatureSelection::expand($plan, array_slice($arguments, 2), $command === 'activate');
                     foreach ($ids as $id) { if (!isset($plan['selection'][$id])) { throw new \InvalidArgumentException('Module is not available in this distribution.'); } }
                     if ($command !== 'upgrade' && $ids === []) { throw new \InvalidArgumentException('Specify at least one module ID.'); }

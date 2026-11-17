@@ -40,7 +40,7 @@ final class FeedImport
         $tags = [];
 
         foreach ($categories as $category) {
-            $tag = \TinyCat\Social\Content\Tags::status_tag_normalize((string) $category);
+            $tag = \TinyCat\Social\Posts\Tags::status_tag_normalize((string) $category);
             if ($tag !== '') {
                 $tags[$tag] = '#' . $tag;
             }

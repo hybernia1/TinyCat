@@ -84,9 +84,10 @@ $assembly = (string) ($options['assembly'] ?? 'source');
 $selection = match ($assembly) {
     'core' => [],
     'source' => require $root . '/App/modules.php',
-    'platform' => \TinyCat\Core\Modules\SourceModules::selection($root),
+    'platform' => \TinyCat\Core\Modules\SourceModules::production($root),
+    'development' => \TinyCat\Core\Modules\SourceModules::selection($root),
     'blog' => require $root . '/App/Modules/Blog/selection.php',
-    default => throw new InvalidArgumentException('Unknown assembly; use source, platform, blog or core.'),
+    default => throw new InvalidArgumentException('Unknown assembly; use source, platform, development, blog or core.'),
 };
 $product = (string) ($options['product'] ?? match ($assembly) { 'core' => 'tinycat.core', 'blog' => 'tinycat.blog', default => 'tinycat.social' });
 $active = isset($options['active']) ? ((string) $options['active'] === '' ? [] : explode(',', (string) $options['active'])) : null;
@@ -156,6 +157,14 @@ foreach ($distribution['schemas'] as $schema) {
 foreach ($files as $relative => $path) {
     $content = file_get_contents($path);
     if (!is_string($content)) { throw new RuntimeException('Unable to read ' . $relative); }
+    // Build-only hints must remain readable by an already-loaded supported updater.
+    if (preg_match('~^App/Modules/[^/]+/module\.json$~D', $relative) === 1) {
+        $metadata = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+        if (is_array($metadata) && array_key_exists('development', $metadata)) {
+            unset($metadata['development']);
+            $content = json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
+        }
+    }
     if ((str_starts_with($relative, 'migrations/') && str_ends_with($relative, '.php')) || isset($moduleMigrationFiles[$relative])) {
         $content = str_replace(["\r\n", "\r"], "\n", $content);
     }

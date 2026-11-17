@@ -56,7 +56,7 @@ final class Mentions
     public static function status_author_url_mention(string $url): string
     {
         $path = \TinyCat\Social\Content\Links::status_internal_url_path($url);
-        $path = \TinyCat\Social\Content\Integration::unlocalizedPath($path);
+        $path = \TinyCat\Http\LocaleRouting::split($path)['path'];
 
         if ($path === '' || preg_match('~^/author/([0-9]+)/?$~', $path, $match) !== 1) {
             return '';

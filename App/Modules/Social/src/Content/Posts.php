@@ -2,6 +2,8 @@
 declare(strict_types=1);
 namespace TinyCat\Social\Content;
 
+use TinyCat\Social\Posts\{Tags, PostCreation};
+
 use TinyCat\Database\Connection;
 use TinyCat\Database\Transactions;
 
