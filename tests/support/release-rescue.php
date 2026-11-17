@@ -10,7 +10,8 @@ function prepareReleaseRescue(string $root, \Closure $run): array
 {
     $file = $root . '/storage/updates/console.php';
     if (!is_dir(dirname($file)) && !mkdir(dirname($file), 0775, true) && !is_dir(dirname($file))) { throw new \RuntimeException('Cannot prepare inherited rescue fixture.'); }
-    $legacy = "<?php\ndeclare(strict_types=1);\nif (PHP_SAPI !== 'cli') { http_response_code(403); exit; }\ndefine('TINYCAT', true);\nrequire " . var_export($root . '/App/autoload.php', true) . ";\nexit(\\TinyCat\\Core\\Runtime\\Console::run(\$argv));\n";
+    $autoload = is_file($root . '/App/autoload.php') ? $root . '/App/autoload.php' : $root . '/App/Core/Runtime/autoload.php';
+    $legacy = "<?php\ndeclare(strict_types=1);\nif (PHP_SAPI !== 'cli') { http_response_code(403); exit; }\ndefine('TINYCAT', true);\nrequire " . var_export($autoload, true) . ";\nexit(\\TinyCat\\Core\\Runtime\\Console::run(\$argv));\n";
     file_put_contents($file, $legacy, LOCK_EX);
     [$exit, $output] = $run('$argv = ["console.php", "help"]; require ' . var_export($file, true) . ';');
     if ($exit !== 0) { throw new \RuntimeException('Inherited rescue launcher cannot boot the baseline: ' . implode(' ', $output)); }
