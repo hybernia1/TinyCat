@@ -107,17 +107,15 @@ $assert(ModuleSchemas::state($pdo, 'tinycat.blog') === $state && Articles::find(
 try { Installation::install($pdo); $assert(false, 'Fresh installer adopted existing data'); } catch (RuntimeException) { $assert(Articles::find($id) !== null, 'Fresh install refuses an existing database'); }
 $pdo->exec("UPDATE migrations SET checksum = 'tampered' WHERE stream = 'tinycat.blog' AND sequence = 1");
 try { Installation::upgrade($pdo); $assert(false, 'Checksum mismatch accepted'); } catch (RuntimeException) { $assert(true, 'Upgrade rejects modified history'); }
-$pdo->exec("UPDATE migrations SET checksum = '" . ModuleSchemas::checksum($workspace . '/App/Modules/Blog/migrations/001-articles.php') . "' WHERE stream = 'tinycat.blog' AND sequence = 1");
+$pdo->exec("UPDATE migrations SET checksum = '" . ModuleSchemas::migrationChecksum(TinyCat\Blog\Module::schema()->migrations[0]) . "' WHERE stream = 'tinycat.blog' AND sequence = 1");
 Articles::delete($hidden, $admin);
 $assert(Connection::find('blog_articles', ['id' => $hidden]) === null && Connection::find('blog_articles', ['id' => $hidden]) === null, 'Publication deletion cascades article data');
 TinyCat\Core\Modules\Providers::assertDistributable(Installation::modules()->catalog);
-$assert(TinyCat\Core\Modules\Distribution::describe($workspace, 'tinycat.blog', require $workspace . '/App/Modules/Blog/selection.php')['format'] === 3, 'Blog distribution declares its own managed schema history');
+$assert(TinyCat\Core\Modules\Distribution::describe($workspace, 'tinycat.blog', require $workspace . '/App/Modules/Blog/selection.php')['format'] === 4, 'Blog distribution declares its archived schema history');
 $recovery = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 $recovery->exec('PRAGMA foreign_keys = ON'); TinyCat\Core\Identity\Schema::install($recovery);
-foreach (['001-initial.php', '002-kinds.php'] as $migration) { (require $sourceRoot . '/App/Modules/Social/migrations/publishing/' . $migration)($recovery); }
-(require $sourceRoot . '/App/Modules/Social/migrations/publishing/interactions/001-initial.php')($recovery);
 $schema = TinyCat\Blog\Module::schema();
-$interrupted = new TinyCat\Core\Modules\ModuleSchema($schema->version, $schema->tables, static function (PDO $pdo): void { throw new RuntimeException('Interrupted before DDL'); }, $schema->migrations);
+$interrupted = new TinyCat\Core\Modules\ModuleSchema($schema->version, $schema->tables, static function (PDO $pdo): void { throw new RuntimeException('Interrupted before DDL'); }, $schema->migrations, $schema->baseline);
 try { ModuleSchemas::install($recovery, ['tinycat.blog' => $interrupted]); $assert(false, 'Injected installation should fail'); } catch (RuntimeException) { $assert(ModuleSchemas::state($recovery, 'tinycat.blog') === null, 'SQLite failed DDL transaction rolls back its state'); }
 // MySQL can retain this interrupted state after implicit DDL commits; exercise its recovery migration on SQLite too.
 $recovery->exec("INSERT INTO module_installations(module_id, version, status) VALUES ('tinycat.blog', 0, 'failed')");

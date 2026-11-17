@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// Immutable module version-one schema.
+// Standalone current fresh-install schema.
 return static function (\PDO $pdo): void {
         if ($pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
             $pdo->exec("CREATE TABLE IF NOT EXISTS users (

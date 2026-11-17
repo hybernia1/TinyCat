@@ -30,10 +30,10 @@ final class Module implements \TinyCat\Core\Modules\Module, \TinyCat\Core\Module
     public static function schema(): \TinyCat\Core\Modules\ModuleSchema
     {
         return new \TinyCat\Core\Modules\ModuleSchema(4, Schema::tables(), Schema::install(...), [
-            new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.blog.articles', dirname(__DIR__) . '/migrations/001-articles.php'),
-            new \TinyCat\Core\Modules\SchemaMigration(2, 'tinycat.blog.kinds', dirname(__DIR__) . '/migrations/002-kinds.php'),
-            new \TinyCat\Core\Modules\SchemaMigration(3, 'tinycat.blog.feeds', dirname(__DIR__) . '/migrations/003-feed-sources.php'),
-            new \TinyCat\Core\Modules\SchemaMigration(4, 'tinycat.blog.owned-storage', dirname(__DIR__) . '/migrations/004-owned-storage.php'),
+            new \TinyCat\Core\Modules\SchemaMigration(1, 'tinycat.blog.articles', null, '3815c3a3e231e49457a71c91504ff3c3b926c7f303f409d078d5b3bac39050f8'),
+            new \TinyCat\Core\Modules\SchemaMigration(2, 'tinycat.blog.kinds', null, '8f85cc751693f0266400bde205b641a6dc3034a8ea23f2fdc7211379b2e8f8af'),
+            new \TinyCat\Core\Modules\SchemaMigration(3, 'tinycat.blog.feeds', null, '43dd596c5b286dc2e94c646759942dd24349150080c8981c3a386a6d5850fac0'),
+            new \TinyCat\Core\Modules\SchemaMigration(4, 'tinycat.blog.owned-storage', null, '22b3e5ab73f0f26f2661d50ec7df7c6f59f85e8f5f19dae074b1a6056d19946b'),
         ], new \TinyCat\Core\Modules\SchemaMigration(4, 'tinycat.blog.fresh-v4', dirname(__DIR__) . '/migrations/fresh-v4.php'));
     }
 

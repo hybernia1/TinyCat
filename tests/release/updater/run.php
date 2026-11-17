@@ -103,6 +103,21 @@ $test('manifest rejects case collisions and write-delete overlap', static functi
     $expectFailure(static fn (): mixed => $invoke('validateManifest', $deleteCollision));
 });
 
+$test('published releases remain readable after raising the update floor', static function () use ($invoke, $expect, $expectFailure): void {
+    $manifest = [
+        'version' => '6.0.8', 'minimum_version' => '6.0.7', 'minimum_php' => '8.4.0',
+        'kind' => 'update', 'package' => 'tinycat-6.0.8.zip', 'sha256' => str_repeat('a', 64), 'size' => 1024,
+        'files' => ['App/distribution.json' => str_repeat('b', 64)], 'delete' => [], 'migrations' => [],
+        'distribution' => ['format' => 3, 'product' => 'fixture.runtime', 'framework' => \TinyCat\Core\Runtime\Framework::CAPABILITIES,
+            'selection' => [], 'active' => [], 'required' => [], 'requires' => [], 'schemas' => [], 'schemaOwners' => [], 'legacy' => false],
+    ];
+    $expect($invoke('validateManifest', $manifest)['version'] === '6.0.8', 'The signed reader bridge is readable from its successor.');
+    $future = $manifest; $future['version'] = '999.0.0'; $future['package'] = 'tinycat-999.0.0.zip';
+    $expectFailure(static fn (): mixed => $invoke('validateManifest', $future));
+    $archived = $manifest; $archived['distribution']['format'] = 4;
+    $expectFailure(static fn (): mixed => $invoke('validateManifest', $archived));
+});
+
 $test('file backups exclude unchanged files from a complete release package', static function () use ($invoke, $expect): void {
     $source = \TinyCat\Support\Paths::basePath('App/Core/Support/Version.php');
     $sourceHash = hash_file('sha256', $source);

@@ -230,6 +230,8 @@ try {
 define('TINYCAT', true);
 require __ROOT__ . '/App/autoload.php';
 if (class_exists(TinyCat\Core\Modules\Distribution::class)) {
+    $available = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', require __ROOT__ . '/App/available-modules.php');
+    file_put_contents(__ROOT__ . '/storage/baseline-schemas.json', json_encode($available['schemas'], JSON_THROW_ON_ERROR));
     $plan = TinyCat\Core\Modules\Distribution::describe(__ROOT__, 'tinycat.social', require __ROOT__ . '/App/modules.php');
     file_put_contents(__ROOT__ . '/App/distribution.json', json_encode($plan, JSON_THROW_ON_ERROR));
 }
@@ -244,6 +246,18 @@ PHP;
         throw new RuntimeException('Baseline installer failed: ' . implode(' ', $installOutput));
     }
     $assert(true, 'Supported baseline installer prepares the representative database.');
+    $baselineSchemas = json_decode((string) file_get_contents($installRoot . '/storage/baseline-schemas.json'), true, 512, JSON_THROW_ON_ERROR);
+    $retiredFiles = [];
+    foreach ($manifest['distribution']['schemas'] as $id => $schema) {
+        foreach ($schema['migrations'] as $index => $migration) {
+            if ($migration['file'] !== null) { continue; }
+            $original = $baselineSchemas[$id]['migrations'][$index] ?? null;
+            $assert(is_array($original) && $migration['version'] === $original['version'] && $migration['id'] === $original['id'] && $migration['checksum'] === $original['checksum'], 'Archived metadata matches the published baseline: ' . $migration['id']);
+            if (!is_array($original) || !is_string($original['file'])) { continue; }
+            $retiredFiles[] = $original['file'];
+            $assert(!isset($manifest['files'][$original['file']]) && in_array($original['file'], $manifest['delete'], true), 'Retired source is absent from the signed inventory and explicitly deleted: ' . $original['file']);
+        }
+    }
     $historySeed = $database->prepare("INSERT INTO migrations (kind, stream, migration, release_version, checksum, applied_at) VALUES ('global', 'tinycat', ?, ?, ?, ?)");
     $historySeed->execute(['fixture.baseline', $baselineVersion, str_repeat('a', 64), '2026-01-02 03:04:05']);
     // Long-running sites retain opaque version labels in their historical schema.
@@ -331,6 +345,7 @@ PHP;
     if ($updateExit !== 0 || !is_array($update)) {
         throw new RuntimeException('Signed production update failed: ' . implode(' ', $updateOutput));
     }
+    foreach ($retiredFiles as $file) { $assert(!is_file($installRoot . '/' . $file), 'Supported update removes the archived PHP: ' . $file); }
     $journalTables = $database->query("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'")->fetchAll(PDO::FETCH_COLUMN);
     $assert(in_array('migrations', $journalTables, true) && !in_array('module_migrations', $journalTables, true) && !in_array('schema_migrations', $journalTables, true), 'The running baseline updater preserves one unified migration journal.');
     $assert((int) $database->query("SELECT COUNT(*) FROM information_schema.VIEWS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'module_migrations'")->fetchColumn() === 0, 'The retired writer view is removed after the supported baseline update.');
@@ -367,7 +382,7 @@ PHP;
 
     $newBootRunner = "define('TINYCAT', true); require " . var_export($installRoot . '/App/bootstrap.php', true)
         . "; if (TinyCat\\Support\\Version::CURRENT !== " . var_export($version, true) . " || !class_exists('TinyCat\\\\Social\\\\Automation\\\\Importer') || class_exists('TinyCat\\\\Extension\\\\Loader')) exit(2);";
-    $newBootRunner .= "; if (!TinyCat\\Database\\Schema::app_db_ready() || (TinyCat\\Core\\Modules\\Distribution::read(" . var_export($installRoot, true) . ")[\"format\"] ?? null) !== 3) exit(3);";
+    $newBootRunner .= "; if (!TinyCat\\Database\\Schema::app_db_ready() || (TinyCat\\Core\\Modules\\Distribution::read(" . var_export($installRoot, true) . ")[\"format\"] ?? null) !== " . (int) $manifest['distribution']['format'] . ") exit(3);";
     $newBootRunner .= "; if (TinyCat\\Support\\Languages::language_packages() === []) exit(4);";
     $newBootRunner = str_replace('; if (TinyCat', '; echo json_encode(["status" => TinyCat\\Database\\Schema::app_db_status(), "activation" => TinyCat\\Core\\Modules\\Deployment::read(' . var_export($installRoot, true) . '), "states" => TinyCat\\Database\\Connection::all("SELECT * FROM module_installations")]); if (TinyCat', $newBootRunner);
     [$newBootExit, $newBootOutput] = $run($newBootRunner);

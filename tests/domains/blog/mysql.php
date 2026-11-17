@@ -114,7 +114,7 @@ try {
     $pdo->exec("DELETE FROM migrations WHERE stream = 'tinycat.blog'");
     $pdo->exec("DELETE FROM module_installations WHERE module_id = 'tinycat.blog'");
     $schema = TinyCat\Blog\Module::schema();
-    $interrupted = new TinyCat\Core\Modules\ModuleSchema($schema->version, $schema->tables, static function (PDO $pdo): void { throw new RuntimeException('Interrupted before DDL'); }, $schema->migrations);
+    $interrupted = new TinyCat\Core\Modules\ModuleSchema($schema->version, $schema->tables, static function (PDO $pdo): void { throw new RuntimeException('Interrupted before DDL'); }, $schema->migrations, $schema->baseline);
     try { TinyCat\Database\ModuleSchemas::install($pdo, ['tinycat.blog' => $interrupted]); $assert(false, 'Expected interrupted installation'); }
     catch (RuntimeException) { $assert(TinyCat\Database\ModuleSchemas::state($pdo, 'tinycat.blog')['status'] === 'failed', 'MySQL retains the interrupted installation state'); }
     TinyCat\Blog\Installation::upgrade($pdo);

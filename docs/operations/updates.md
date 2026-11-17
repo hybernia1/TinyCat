@@ -10,17 +10,19 @@ activation, migration snapshots and recovery.
 
 ## Supported update baseline
 
-New source packages require a completed TinyCat **6.0.7** installation or newer,
+New source packages require a completed TinyCat **6.0.8** installation or newer,
 for all assemblies. Older supported sites first apply the unchanged signed
-6.0.7 release, using its documented predecessor hops when needed. The published
-6.0.7 still accepts completed 6.0.6 installations. The builder rejects older
+6.0.8 release, using its documented predecessor hops when needed. The published
+6.0.8 accepts completed 6.0.7 installations. The builder rejects older
 minimum versions and `--legacy-upgrade`.
 
 The 6.0.8 reader supports metadata-only archival prefixes in
-distribution format 4. Its built-in bridge remains format 3 and retains all
-published migration PHP so the 6.0.7 updater can install it. Pruning built-in
-history is a subsequent release: format-4 packages must require at least
-6.0.8 and an installed module schema at or beyond their archived prefix.
+distribution format 4. Its published bridge remains format 3 and retains all
+published migration PHP so the 6.0.7 updater can install it. Current sources
+use format 4 and archive all 24 existing built-in migration records. They require
+6.0.8 and an installed module schema at or beyond each archived prefix. Historical
+PHP is explicitly deleted during update; each owner retains an executable current
+fresh baseline. Later schema changes append new executable migrations.
 Independent module ZIPs use format 2 for this contract. Neither core nor module
 updates bypass integrity checks, adopt unrelated tables or discard journal rows.
 See [the archival contract](../development/domain-storage.md#archivace-migrační-historie).
@@ -39,9 +41,10 @@ physical journal tables; an incomplete pre-baseline database is rejected.
 
 Current installation and readiness use one owner schema path. Global-table
 adoption callbacks and `SchemaInspection` are retired; normal inspection belongs
-to `TinyCat\Database\Schema`. Applied SQL snapshots remain byte-identical in the
-signed plan for checksum validation. They are never replayed when updating a
-completed 6.0.6 site, and fresh installations use the current signed baseline.
+to `TinyCat\Database\Schema`. Archived IDs, sequences and checksums match the
+immutable published SQL; no historical PHP is needed for validation. They are
+never replayed when updating a completed 6.0.8 site, and fresh installations use
+the current signed baseline.
 Published release tags and assets remain unchanged.
 
 Format-3 bridge descriptors retain executable history. Format 4 also supports
@@ -56,18 +59,37 @@ For a new release, use:
 
 ```sh
 php tools/release/build-update.php --version=X.Y.Z --both --output=dist/release-X.Y.Z
-php tools/release/release-update-rehearsal.php --artifact=dist/release-X.Y.Z/update --baseline-version=6.0.7 --direct-web --cached-autoload
+php tools/release/release-update-rehearsal.php --artifact=dist/release-X.Y.Z/update --baseline-version=6.0.8 --direct-web --cached-autoload
 ```
 
-The rehearsal uses the published `v6.0.7` source and a disposable MySQL database.
+The rehearsal uses the published `v6.0.8` source and a disposable MySQL database.
 It checks representative Social data, retained long historical version labels,
 the signed update and exact rollback, including
 with the baseline schema, journal and lifecycle classes already loaded.
-The release version must be newer than 6.0.7. The automated file rehearsal
+The release version must be newer than 6.0.8. The automated file rehearsal
 uses a synthetic successor in an isolated copy when the source matches the baseline.
 
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
+
+## Upgrading to 6.0.9
+
+Requires a completed **6.0.8 or newer** installation and PHP 8.4. Older supported
+sites must first apply the unchanged signed 6.0.8 reader bridge. Update through
+**Admin > Updates** using the normal signed package.
+
+The distribution uses format 4 and archives all 24 existing built-in migrations
+with their original IDs, sequences and checksums. The updater removes 32 obsolete
+PHP files, including historical DDL helpers and data converters. All eleven
+schema owners retain independent current fresh baselines; fresh installation
+does not replay archived migrations. No new schema migration runs on a completed
+6.0.8 installation, and existing journal rows and timestamps remain unchanged.
+
+Standard snapshots and rollback restore deleted PHP and exact database state.
+Configuration, uploads, runtime storage and module activation are preserved.
+Checking the last published signed release also remains possible after the
+source update floor advances; incoming updates still enforce their required
+runtime baseline and archival reader.
 
 ## Upgrading to 6.0.8
 
@@ -644,7 +666,7 @@ not backfilled and old episodes are not imported again.
 Set `TinyCat\Support\Version::CURRENT`, commit the release, and build from a clean worktree:
 
 ```bash
-php tools/release/build-update.php --version=5.22.2
+php tools/release/build-update.php --version=6.0.9 --assembly=platform
 php tools/release/verify-update.php dist
 ```
 
@@ -658,12 +680,12 @@ Source checkouts without the inventory retain an on-demand development fallback.
 The builder creates:
 
 ```text
-dist/tinycat-5.22.2.zip
+dist/tinycat-6.0.9.zip
 dist/tinycat-update.json
 dist/tinycat-update.sig
 ```
 
-Create a GitHub release for the matching `v5.22.2` tag and upload all three files
+Create a GitHub release for the matching `v6.0.9` tag and upload all three files
 as release assets. Asset names `tinycat-update.json` and `tinycat-update.sig` are
 fixed within each release; the package name is declared by the manifest.
 
@@ -674,9 +696,9 @@ new top-level managed file requires a prior updater bridge release. Removed runt
 listed by target version in `tools/release/update-deletions.json`; this prevents legacy
 PHP files from surviving an overlay update.
 
-Release tools use **5.16.0** as the minimum supported update source, defined by
+Release tools use **6.0.8** as the minimum supported update source, defined by
 `TinyCat\Support\Version::MINIMUM_UPDATE`. Production update rehearsals start
-from the exact `v5.16.0` tag and verify signed installation, protected files,
+from the exact `v6.0.8` tag and verify signed installation, protected files,
 migration checksums and rollback. Older releases and upgrade instructions remain
 available in Git history. Historical performance comparisons against 2.0.25 are
 benchmark references, not supported upgrade paths.
@@ -684,10 +706,10 @@ benchmark references, not supported upgrade paths.
 For a fresh installation, build into a separate output directory:
 
 ```bash
-php tools/release/build-update.php --version=5.22.2 --fresh-install --output=dist/fresh
+php tools/release/build-update.php --version=6.0.9 --assembly=platform --fresh-install --output=dist/fresh
 ```
 
-The fresh-install outputs are `tinycat-5.22.2-install.zip`, `tinycat-install.json`
+The fresh-install outputs are `tinycat-6.0.9-install.zip`, `tinycat-install.json`
 and `tinycat-install.sig`; they cannot overwrite or be mistaken for updater assets.
 Verify them with `php tools/release/verify-update.php dist/fresh --fresh-install`.
 This package excludes `migrations/` and update deletions. The installer creates
@@ -699,9 +721,9 @@ The shipped operational documentation includes `docs/reference/api.md`,
 To prepare both variants with a single validated compilation:
 
 ```bash
-php tools/release/build-update.php --version=5.22.2 --both --output=dist/release-5.22.2
-php tools/release/verify-update.php dist/release-5.22.2/update
-php tools/release/verify-update.php dist/release-5.22.2/install --fresh-install
+php tools/release/build-update.php --version=6.0.9 --assembly=platform --both --output=dist/release-6.0.9
+php tools/release/verify-update.php dist/release-6.0.9/update
+php tools/release/verify-update.php dist/release-6.0.9/install --fresh-install
 ```
 
 The update and install subdirectories each contain their ZIP, manifest and

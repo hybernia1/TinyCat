@@ -25,11 +25,4 @@ return static function (PDO $pdo, callable $assert): void {
     $assert(count(\TinyCat\Database\Migrations::history($pdo, 'schema', 'fixture.one')) === 1, 'Journal writes participate in the caller transaction');
     try { \TinyCat\Database\Migrations::record($pdo, 'schema', 'fixture.one', 'fixture.initial', 1, null, str_repeat('f', 64)); throw new LogicException('Conflicting history was accepted'); }
     catch (PDOException) { $assert(\TinyCat\Database\Migrations::history($pdo, 'schema', 'fixture.one')[0]['checksum'] === str_repeat('b', 64), 'A conflicting duplicate cannot overwrite history'); }
-    $pdo->exec("CREATE VIEW module_migrations AS SELECT stream AS module_id, migration, sequence AS version, checksum FROM migrations WHERE kind = 'schema'");
-    \TinyCat\Database\Migrations::prepare($pdo);
-    $retire = require __DIR__ . '/../../../App/Core/Tasks/migrations/005-current-journal.php';
-    $retire($pdo); $retire($pdo);
-    $assert($before === $pdo->query('SELECT * FROM migrations ORDER BY kind, stream, migration')->fetchAll(PDO::FETCH_ASSOC), 'Retiring the 6.0.6 compatibility view preserves every physical journal record and can repeat');
-    $view = $pdo->query($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql' ? "SELECT TABLE_NAME FROM information_schema.VIEWS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='module_migrations'" : "SELECT name FROM sqlite_master WHERE type='view' AND name='module_migrations'");
-    $assert($view->fetchColumn() === false, 'The compatibility view is removed');
 };

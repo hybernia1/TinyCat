@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.9 - 2026-11-17
+
+- Require completed 6.0.8 installations and switch built-in distributions to archival format 4. Preserve all 24 original migration IDs, sequences and checksums without rewriting database journal rows.
+- Remove 32 historical migration, auxiliary DDL and legacy conversion PHP files through the signed deletion plan; keep independent current fresh baselines for all eleven schema owners.
+- Verify archival metadata against the published baseline and test the signed update with its original updater classes already loaded, including exact rollback restoration of deleted PHP.
+- Keep checks of the last published release readable after raising the source update floor; retain the required minimum for incoming updates and archival packages.
+
 ## 6.0.8 - 2026-11-17
 
 - Require completed 6.0.7 installations and prepare a checkpoint-aware updater while retaining the format-3 bridge and every published built-in migration file.

@@ -188,13 +188,18 @@ try {
 
     // Current activation IDs preserve installed owners without historical remapping.
     $plan = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.social', require $root . '/App/available-modules.php');
-    $assert($plan['format'] === 3 && $plan['required'] === [] && array_keys($plan['selection']) === ['tinycat.social', 'tinycat.blog'], 'Signed selection contains only optional functional modules');
+    $assert($plan['format'] === 4 && $plan['required'] === [] && array_keys($plan['selection']) === ['tinycat.social', 'tinycat.blog'], 'Signed selection archives history and contains only optional functional modules');
     $standalone = TinyCat\Core\Modules\Distribution::describe($root, 'tinycat.blog', require $root . '/App/available-modules.php');
     foreach (['tinycat.users', 'tinycat.moderation', 'tinycat.bots'] as $stream) {
         $assert($standalone['schemaOwners'][$stream] === 'tinycat.social', 'Social owns the unchanged historical stream: ' . $stream);
     }
     $assert($standalone['schemaOwners']['tinycat.status'] === 'tinycat.social', 'Publishing owns shared interactions under the unchanged historical stream');
-    $assert(file_get_contents($root . '/App/Modules/Social/migrations/status/001-initial.php') === file_get_contents($root . '/App/Modules/Social/migrations/publishing/interactions/001-initial.php'), 'The transferred migration retains the exact published bytes');
+    foreach ($plan['schemas'] as $stream => $schema) {
+        $assert(isset($schema['fresh']) && is_file($root . '/' . $schema['fresh']['file']) && !isset($schema['legacy']), 'Each archived built-in owner has an independent fresh baseline: ' . $stream);
+        foreach ($schema['migrations'] as $migration) {
+            $assert($migration['file'] === null && preg_match('/^[a-f0-9]{64}$/D', $migration['checksum']) === 1, 'Built-in history keeps its immutable ID, sequence and checksum without executable PHP: ' . $migration['id']);
+        }
+    }
     $transitionRoot = $temporary . '/transition';
     mkdir($transitionRoot . '/App', 0700, true); mkdir($transitionRoot . '/storage', 0700);
     $oldPlan = $plan; $oldPlan['active'] = ['tinycat.blog'];

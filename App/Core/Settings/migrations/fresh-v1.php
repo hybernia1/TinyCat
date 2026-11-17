@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// Immutable standalone baseline.
+// Standalone current fresh-install schema.
 return static function (\PDO $pdo): void {
     $statements = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite' ? [
 'CREATE TABLE IF NOT EXISTS settings (

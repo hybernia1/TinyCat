@@ -146,15 +146,15 @@ vydání. Historické pole verze může být celý název migrace, například
 Update testuj i s touto historií a původními PHP třídami již načtenými v updateru;
 čerstvá instalace stejné verze není náhradou tohoto scénáře.
 
-Současné zdroje přijímají pouze dokončenou 6.0.7 a novější. Starší podporované
-weby nejprve převádí neměnný podepsaný release 6.0.7, případně přes jeho
+Současné zdroje přijímají pouze dokončenou 6.0.8 a novější. Starší podporované
+weby nejprve převádí neměnný podepsaný release 6.0.8, případně přes jeho
 podporované předchůdce. Archivní aplikované SQL
 slouží ověření historie; nevracej kvůli němu odstraněné runtime adaptéry.
 Archivní migrační prefix může ve formátu 4 nést původní ID, pořadí a checksum
 s explicitním `file: null`. Vyžaduje samostatnou spustitelnou fresh baseline;
 stav pod archivovaným prefixem se odmítá před změnou dat či souborů. Podporu
-nového čtení nejprve vydej ve formátu 3 s původními soubory; až další release
-může archivovat vestavěné streamy a vyžadovat checkpoint-aware updater.
+nového čtení nejprve vydej ve formátu 3 s původními soubory; navazující zdroje
+archivují vestavěné streamy ve formátu 4 a vyžadují checkpoint-aware updater 6.0.8.
 Neměň publikované migrace ani journalové záznamy. Aktuální fresh baseline neřetěz s historickými datovými převody. Při odstranění
 adaptéru prověř také nepřímá `require` z instalačních snapshotů.
 

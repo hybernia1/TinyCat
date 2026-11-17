@@ -225,9 +225,13 @@ try {
     ) {
         $failures[] = 'Updater bridge must retain authenticated migration files.';
     }
-    if ($manifest['distribution']['format'] === 3) {
+    if (in_array($manifest['distribution']['format'], [3, 4], true)) {
         foreach ($manifest['distribution']['schemas'] as $schema) {
             foreach ([...$schema['migrations'], ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) {
+                if ($migration['file'] === null) {
+                    if ($manifest['distribution']['format'] !== 4 || preg_match('/^[a-f0-9]{64}$/D', $migration['checksum']) !== 1) { $failures[] = 'Archived history requires format 4 and its original checksum.'; }
+                    continue;
+                }
                 if (!in_array($migration['file'], $names, true) || ($manifest['files'][$migration['file']] ?? '') !== $migration['checksum']) { $failures[] = 'Owner migration or schema operation is missing from the signed artifact: ' . $migration['file']; }
             }
         }

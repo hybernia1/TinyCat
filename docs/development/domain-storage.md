@@ -77,9 +77,12 @@ nevyvolává. Smazání účtu zapojuje i nainstalované vypnuté vlastníky.
 
 ## Archivace migrační historie
 
-Současný zdrojový baseline vyžaduje dokončenou 6.0.7. Release 6.0.8
-zavádí čtení archivní historie; vestavěné moduly zatím ponechávají všechny
-publikované soubory, aby jejich přechodový balíček přečetl updater 6.0.7.
+Současný zdrojový baseline vyžaduje dokončenou 6.0.8. Neměnný release 6.0.8
+zavedl čtení archivní historie a ponechal publikované soubory pro updater 6.0.7.
+Navazující zdroje archivují všech 24 dosavadních vestavěných migrací ve formátu 4;
+každý vlastník má samostatný aktuální fresh snapshot. Původní migrační PHP,
+vedlejší historické DDL a datové převodníky již nejsou v runtime ani balíčku.
+Další změna schématu přidá novou spustitelnou migraci za archivní prefix.
 
 `SchemaMigration` rozlišuje spustitelný soubor a archivní záznam s původním
 checksumem. Archiv tvoří souvislý prefix od verze 1; za ním zůstávají pouze

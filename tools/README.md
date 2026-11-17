@@ -45,7 +45,7 @@ uvádí zachované cesty a výjimky; builder nic nemaže automaticky.
   `tools/release/update-key.php`, `tools/release/verify-update.php`. Ruční kontrolu existujícího balíčku
   zajišťuje `tools/release/artifact-preflight.php`; produktový MySQL update scénář má
   `tools/release/release-update-rehearsal.php`: předaný artefakt zkouší na samostatné
-  MySQL database against published 6.0.7, including data and standard rollback.
+  MySQL database against published 6.0.8, including data and standard rollback.
   The existing `tests/release/update-rehearsal.php` exercises this supported baseline.
   Nejde o běžné bezparametrové kontroly.
 - [Import a porovnání verzí](../docs/performance/benchmark.md):
@@ -66,10 +66,10 @@ For a release, `php tools/release/build-update.php --version=X.Y.Z --both --outp
 prepares signed update/install variants from one compilation. `release/zip-timestamps.php`
 and `release/publish-artifact.php` are internal build helpers, not standalone commands.
 
-New packages require TinyCat 6.0.7 or newer across all assemblies. The builder
+New packages require TinyCat 6.0.8 or newer across all assemblies. The builder
 rejects older minimum versions and the retired `--legacy-upgrade` option.
-`release-update-rehearsal.php --baseline-version=6.0.7 --direct-web --cached-autoload`
-checks a supplied successor artifact against the published 6.0.7 baseline in a disposable
+`release-update-rehearsal.php --baseline-version=6.0.8 --direct-web --cached-autoload`
+checks a supplied successor artifact against the published 6.0.8 baseline in a disposable
 MySQL database. Compatibility bridge builds and old 5.x rehearsals are retired.
 Published migrations and local rollback backups remain intact.
 

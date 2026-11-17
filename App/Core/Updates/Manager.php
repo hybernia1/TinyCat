@@ -555,7 +555,8 @@ class Manager extends Package
             if (!is_array($manifest['distribution'])) { throw new RuntimeException('Invalid signed product descriptor.'); }
             $plan = \TinyCat\Core\Modules\Distribution::validate($manifest['distribution']);
             if (!isset($normalizedFiles['App/distribution.json'])) { throw new RuntimeException('A product package must contain its descriptor.'); }
-            if (version_compare($minimumVersion, \TinyCat\Support\Version::MINIMUM_UPDATE, '<')) { throw new RuntimeException('Product packages must require the supported runtime baseline.'); }
+            // A newer installation may still inspect the last published signed release.
+            if (version_compare($version, \TinyCat\Support\Version::CURRENT, '>') && version_compare($minimumVersion, \TinyCat\Support\Version::MINIMUM_UPDATE, '<')) { throw new RuntimeException('Product packages must require the supported runtime baseline.'); }
             if ($plan['format'] === 4 && version_compare($minimumVersion, \TinyCat\Core\Modules\SchemaMigration::ARCHIVE_RUNTIME, '<')) { throw new RuntimeException('Archived migration packages require the checkpoint-aware updater.'); }
             foreach ($plan['schemas'] as $schema) {
                 foreach ($schema['migrations'] as $migration) { if ($migration['file'] !== null && ($normalizedFiles[$migration['file']] ?? '') !== $migration['checksum']) { throw new RuntimeException('Signed module migration is missing or inconsistent.'); } }
