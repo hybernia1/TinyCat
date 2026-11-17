@@ -1,5 +1,12 @@
 # Changelog
 
+## 6.0.8 - 2026-11-17
+
+- Require completed 6.0.7 installations and prepare a checkpoint-aware updater while retaining the format-3 bridge and every published built-in migration file.
+- Support an archived immutable migration prefix with checksums and no PHP source, signed distribution format 4 and independent module ZIP format 2. Reject older module schema states before changing live files or data.
+- Verify archived history without reading retired PHP, execute only remaining deltas, and install directly from the current fresh schema while preserving journal identities.
+- Test archival in SQLite/MySQL and through independent module ZIP updates, inactive owners, cached providers, integrity failures and standard rollback restoring retired files.
+
 ## 6.0.7 - 2026-11-17
 
 - Remove historical activation remapping and distribution formats 1/2; completed 6.0.6 deployments retain canonical active and installed owner IDs.

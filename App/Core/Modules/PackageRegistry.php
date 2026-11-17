@@ -38,6 +38,7 @@ final class PackageRegistry
         });
         foreach ($plan['schemas'] as $schema) { foreach ($schema['tables'] as $table) { $tables[$table] = true; } }
         foreach ($packages as $id => $package) {
+            if ($package['format'] === 2) { $plan['format'] = 4; }
             if (isset($plan['selection'][$id])) { throw new \RuntimeException('An independently installed module conflicts with the distribution: ' . $id); }
             $binding = 'App/Modules/' . $package['directory'] . '/module.json';
             if (in_array($binding, $plan['selection'], true)) { throw new \RuntimeException('Module directory is already owned.'); }

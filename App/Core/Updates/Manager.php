@@ -556,8 +556,9 @@ class Manager extends Package
             $plan = \TinyCat\Core\Modules\Distribution::validate($manifest['distribution']);
             if (!isset($normalizedFiles['App/distribution.json'])) { throw new RuntimeException('A product package must contain its descriptor.'); }
             if (version_compare($minimumVersion, \TinyCat\Support\Version::MINIMUM_UPDATE, '<')) { throw new RuntimeException('Product packages must require the supported runtime baseline.'); }
+            if ($plan['format'] === 4 && version_compare($minimumVersion, \TinyCat\Core\Modules\SchemaMigration::ARCHIVE_RUNTIME, '<')) { throw new RuntimeException('Archived migration packages require the checkpoint-aware updater.'); }
             foreach ($plan['schemas'] as $schema) {
-                foreach ($schema['migrations'] as $migration) { if (($normalizedFiles[$migration['file']] ?? '') !== $migration['checksum']) { throw new RuntimeException('Signed module migration is missing or inconsistent.'); } }
+                foreach ($schema['migrations'] as $migration) { if ($migration['file'] !== null && ($normalizedFiles[$migration['file']] ?? '') !== $migration['checksum']) { throw new RuntimeException('Signed module migration is missing or inconsistent.'); } }
             }
             $manifest['distribution'] = $plan;
         } elseif (isset($normalizedFiles['App/distribution.json'])) { throw new RuntimeException('Unsigned product identity is not allowed.'); }

@@ -91,6 +91,11 @@ $selection = match ($assembly) {
 $product = (string) ($options['product'] ?? match ($assembly) { 'core' => 'tinycat.core', 'blog' => 'tinycat.blog', default => 'tinycat.social' });
 $active = isset($options['active']) ? ((string) $options['active'] === '' ? [] : explode(',', (string) $options['active'])) : null;
 $distribution = \TinyCat\Core\Modules\Distribution::describe($root, $product, $selection, $active);
+if ($distribution['format'] === 4) {
+    $checkpointRuntime = \TinyCat\Core\Modules\SchemaMigration::ARCHIVE_RUNTIME;
+    if (!array_key_exists('minimum-version', $options) && version_compare($minimumVersion, $checkpointRuntime, '<')) { $minimumVersion = $checkpointRuntime; }
+    if (version_compare($minimumVersion, $checkpointRuntime, '<') || version_compare($version, $minimumVersion, '<')) { throw new InvalidArgumentException('Archived migration packages require the checkpoint-aware updater.'); }
+}
 \TinyCat\Core\Modules\Resources::configure(\TinyCat\Core\Modules\Loader::fromSelection($root, \TinyCat\Core\Modules\Distribution::selection($distribution, $distribution['active']))->catalog);
 $rootFiles = ['index.php', 'scheduled-tasks.php', '.htaccess', 'LICENSE', 'README.md'];
 $includedDocumentation = ['docs/reference/api.md', 'docs/operations/updates.md', 'docs/operations/module-deployment.md'];
@@ -147,7 +152,7 @@ $hashes = [];
 $normalizedContents = [];
 $moduleMigrationFiles = [];
 foreach ($distribution['schemas'] as $schema) {
-    foreach ([...$schema['migrations'], ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) { $moduleMigrationFiles[$migration['file']] = true; }
+    foreach ([...$schema['migrations'], ...(isset($schema['fresh']) ? [$schema['fresh']] : []), ...(isset($schema['legacy']) ? [$schema['legacy']] : [])] as $migration) { if ($migration['file'] !== null) { $moduleMigrationFiles[$migration['file']] = true; } }
 }
 
 foreach ($files as $relative => $path) {

@@ -61,6 +61,7 @@ if ($packagePhase === 'after-core-update') {
     [$exit, $text, $error] = $console(['rollback', $operation['backup']]);
     $assert($exit === 0 && file_get_contents($root . '/App/module-packages.json') === $registryBytes && hash_file('sha256', $root . '/App/Modules/Addon/src/Module.php') === $addonHash, 'Shared rollback restores exact module files and catalog bytes: ' . $text . $error);
     $assert((int) $pdo->query("SELECT version FROM module_installations WHERE module_id='fixture.addon'")->fetchColumn() === 1 && $pdo->query('SELECT body FROM lifecycle_addon')->fetchColumn() === 'Retained addon data', 'Module rollback restores DB schema, history and retained data');
+    require $fixture . '/archive-cases.php';
     $makeModule('addon', 4, ['tinycat.accounts']);
     [$exit, $text, $error] = $run([PHP_BINARY, $candidate . '/tools/release/build-module.php', '--module=App/Modules/Addon', '--version=4.0.0', '--minimum-core=' . $versions[0], '--output=' . $workspace . '/module-v4'], $candidate); $assert($exit === 0, 'Build a module with a reproducible failing migration: ' . $text . $error);
     [$exit] = $console(['module-install', $workspace . '/module-v4/fixture.addon-4.0.0.zip']);

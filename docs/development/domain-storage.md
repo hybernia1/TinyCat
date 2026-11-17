@@ -75,6 +75,39 @@ Core Notifications nečte žádnou publikační tabulku. Historická pole
 Social vlastní jejich význam, hydrataci i úklid. Blog diskuse jeho události
 nevyvolává. Smazání účtu zapojuje i nainstalované vypnuté vlastníky.
 
+## Archivace migrační historie
+
+Současný zdrojový baseline vyžaduje dokončenou 6.0.7. Release 6.0.8
+zavádí čtení archivní historie; vestavěné moduly zatím ponechávají všechny
+publikované soubory, aby jejich přechodový balíček přečetl updater 6.0.7.
+
+`SchemaMigration` rozlišuje spustitelný soubor a archivní záznam s původním
+checksumem. Archiv tvoří souvislý prefix od verze 1; za ním zůstávají pouze
+spustitelné změny. Prefix určuje minimální podporované **schéma vlastníka**,
+nezávisle na verzi core nebo zapnutí modulu. Schéma s archivním prefixem musí
+mít samostatnou spustitelnou aktuální `fresh` baseline a nesmí používat staré
+přebírání nepřiřazených tabulek. Nová instalace nadále zaznamená pokrytí
+původní historie fresh schématem; nepředstírá spuštění chybějících souborů.
+
+Podepsaný descriptor formátu 4 používá pro archivní položku explicitní
+`file: null` spolu s původním `version`, `id` a `checksum`. Archivní soubor
+není ve file inventory a nikdy se nespouští. Instalovaná historie se porovná
+s těmito metadaty; původní záznamy a časy se nepřepisují. Formát 3 archivní
+položky odmítá. Zbývající PHP a fresh baseline stále podléhají kontrolám
+checksumů a vlastnictví. ZIP nezávislého modulu používá pro stejný kontrakt
+formát 2 a vyžaduje minimálně checkpoint-aware runtime 6.0.8.
+
+V prvním vydání se publikuje nový čtenář s původními soubory ve formátu 3.
+Následující vydání smí odstranit PHP pouze pro ověřený prefix, zvýší minimum
+na checkpoint-aware runtime a použije formát 4. Původní podepsané releasy
+zůstávají neměnné. Podporované mezikroky jsou výslovné; chybějící převod se
+nepřeskočí ani nepřevezme pouze podle existence tabulek. Stejné pravidlo
+platí pro nainstalované vypnuté vlastníky a nezávislé modulové ZIPy.
+
+Rollback nadále obnovuje standardní snapshot databáze, zdrojů a aktivace,
+včetně PHP souborů odstraněných při archivaci. Nevyžaduje jejich opětovné
+spuštění ani změnu původních checksumů.
+
 ## Převod historické instalace
 
 Descriptor formátu 3 zachovává seznam povinného frameworku bez Publishingu.
@@ -96,9 +129,9 @@ historie označí jako `retired`, nemaže ji; později přidaný Social vytvoř�
 prázdné tabulky. Neznámé vazby, jiný druh obsahu či nedoložená původní instalace
 konverzi zastaví. Historické globální převzetí vyžaduje ověřený checkpoint.
 
-Historický převod používal bridge dev.9.1 a checkpoint dev.9.2. Nové balíčky
-podporují dokončenou instalaci TinyCat 6.0.4 a novější; kompatibilní transport
-pro starší verze byl odstraněn. Publikované migrace a jejich checksumy
+Historický převod používal bridge dev.9.1 a checkpoint dev.9.2. Tehdejší balíčky
+podporovaly dokončenou instalaci TinyCat 6.0.4 a novější; současnou podporu
+určuje výše uvedený baseline a provozní návod. Publikované migrace a jejich checksumy
 zůstávají neměnné.
 
 Rollback obnovuje schéma, data, soubory i aktivaci společně. Nepřepisuj descriptor

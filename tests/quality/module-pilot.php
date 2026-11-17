@@ -158,7 +158,8 @@ PHP;
         }
         return ['columns' => $connection->query('PRAGMA table_info(pilot_notes)')->fetchAll(PDO::FETCH_ASSOC), 'indexes' => $connection->query('PRAGMA index_list(pilot_notes)')->fetchAll(PDO::FETCH_ASSOC), 'foreign_keys' => $connection->query('PRAGMA foreign_key_list(pilot_notes)')->fetchAll(PDO::FETCH_ASSOC)];
     };
-    $matrix = static function (PDO $fresh, PDO $upgrade) use ($schema, $assert, $reject, $structure): void {
+    $checkpointMatrix = require $root . '/tests/fixtures/modules/archived-history.php';
+    $matrix = static function (PDO $fresh, PDO $upgrade) use ($schema, $assert, $reject, $structure, $checkpointMatrix): void {
         ModuleSchemas::install($fresh, ['demo.notes' => $schema]);
         ModuleSchemas::install($fresh, ['demo.notes' => $schema]);
         $assert(ModuleSchemas::ready($fresh, ['demo.notes' => $schema]), 'Fresh install is ready and repeat-safe');
@@ -177,6 +178,7 @@ PHP;
         $restore = $upgrade->prepare('UPDATE migrations SET checksum = ? WHERE sequence = 1'); $restore->execute([ModuleSchemas::checksum($schema->migrations[0]->file)]);
         $reject(static fn () => ModuleSchemas::upgrade($upgrade, ['demo.notes' => $initial]), 'Schema downgrade');
         $reject(static fn () => ModuleSchemas::install($fresh, ['demo.one' => $schema, 'demo.two' => $schema]), 'Duplicate schema table owners');
+        $checkpointMatrix($fresh, $upgrade);
     };
     $matrix($pdo, $old);
     $failure = new PDO('sqlite::memory:', null, null, $options);

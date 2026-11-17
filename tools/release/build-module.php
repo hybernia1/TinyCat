@@ -31,7 +31,7 @@ foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($module, F
 }
 ksort($sources); ksort($hashes);
 $package = \TinyCat\Core\Modules\ModulePackage::validate([
-    'format' => 1, 'kind' => 'tinycat-module', 'id' => $definition->id, 'directory' => basename($module),
+    'format' => array_any($schemas, static fn (array $schema): bool => array_any($schema['migrations'], static fn (array $migration): bool => $migration['file'] === null)) ? 2 : 1, 'kind' => 'tinycat-module', 'id' => $definition->id, 'directory' => basename($module),
     'version' => (string) ($options['version'] ?? ''), 'minimum_core' => (string) ($options['minimum-core'] ?? \TinyCat\Support\Version::CURRENT),
     'minimum_php' => (string) ($options['minimum-php'] ?? '8.4.0'),
     'manifest' => json_decode($sources['module.json'], true, 64, JSON_THROW_ON_ERROR), 'schemas' => $schemas, 'files' => $hashes,

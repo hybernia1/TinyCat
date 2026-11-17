@@ -250,7 +250,6 @@ PHP;
     foreach (['20260731_email_analytics_ip_limits', '20260801_performance_minification', '20260801_profile_links_and_legacy_cleanup'] as $historicalVersion) {
         $historySeed->execute([$historicalVersion, $historicalVersion, hash('sha256', $historicalVersion), '2026-08-01 03:04:05']);
     }
-    $database->exec("CREATE VIEW module_migrations AS SELECT stream AS module_id, migration, sequence AS version, checksum FROM migrations WHERE kind = 'schema' WITH CHECK OPTION");
     if (isset($options['snapshot'])) {
         require_once $root . '/App/Core/Database/Snapshots.php';
         \TinyCat\Database\Snapshots::restore($database, (string) $options['snapshot']);
@@ -308,7 +307,7 @@ if (__CACHED_AUTOLOAD__ && (!function_exists('opcache_is_script_cached') || !opc
     throw new RuntimeException('The cached-autoload scenario requires active OPcache and a cached baseline autoloader.');
 }
 if (!TinyCat\Database\Schema::app_db_ready()) { throw new RuntimeException('Baseline schema must be ready before the web update.'); }
-foreach ([TinyCat\Database\Migrations::class, TinyCat\Database\ModuleSchemas::class, TinyCat\Core\Tasks\Schema::class, TinyCat\Core\Modules\Lifecycle::class] as $class) { if (!class_exists($class)) { throw new RuntimeException('Missing baseline class.'); } }
+foreach ([TinyCat\Database\Migrations::class, TinyCat\Database\ModuleSchemas::class, TinyCat\Core\Modules\ModuleSchema::class, TinyCat\Core\Modules\SchemaMigration::class, TinyCat\Core\Tasks\Schema::class, TinyCat\Core\Modules\Lifecycle::class] as $class) { if (!class_exists($class)) { throw new RuntimeException('Missing baseline class.'); } }
 $check = TinyCat\Core\Updates\Manager::check(true);
 if (empty($check['available']) || empty($check['compatible'])) { throw new RuntimeException('The published updater does not offer the stable update.'); }
 $result = TinyCat\Core\Updates\Manager::installLatest();

@@ -10,10 +10,20 @@ activation, migration snapshots and recovery.
 
 ## Supported update baseline
 
-New source packages require a completed TinyCat **6.0.6** installation or newer,
-for all assemblies. Older supported sites must first apply the published signed
-6.0.6 release, which retains its original 6.0.4 minimum and recovery behavior.
-The builder rejects older minimum versions and `--legacy-upgrade`.
+New source packages require a completed TinyCat **6.0.7** installation or newer,
+for all assemblies. Older supported sites first apply the unchanged signed
+6.0.7 release, using its documented predecessor hops when needed. The published
+6.0.7 still accepts completed 6.0.6 installations. The builder rejects older
+minimum versions and `--legacy-upgrade`.
+
+The 6.0.8 reader supports metadata-only archival prefixes in
+distribution format 4. Its built-in bridge remains format 3 and retains all
+published migration PHP so the 6.0.7 updater can install it. Pruning built-in
+history is a subsequent release: format-4 packages must require at least
+6.0.8 and an installed module schema at or beyond their archived prefix.
+Independent module ZIPs use format 2 for this contract. Neither core nor module
+updates bypass integrity checks, adopt unrelated tables or discard journal rows.
+See [the archival contract](../development/domain-storage.md#archivace-migrační-historie).
 
 The only physical journal is `migrations`. Existing IDs, stream names, checksums,
 sequences, opaque version labels and application times are preserved. Historical
@@ -34,7 +44,8 @@ signed plan for checksum validation. They are never replayed when updating a
 completed 6.0.6 site, and fresh installations use the current signed baseline.
 Published release tags and assets remain unchanged.
 
-Current descriptors use format 3 exclusively. Completed 6.0.6 deployment state
+Format-3 bridge descriptors retain executable history. Format 4 also supports
+archived history records without executable files. Completed 6.0.6 deployment state
 already contains canonical functional module IDs; updates preserve those IDs,
 including installed inactive owners. Historical activation remapping and the
 format 1/2 registration branches are removed from current sources. Unknown
@@ -45,18 +56,30 @@ For a new release, use:
 
 ```sh
 php tools/release/build-update.php --version=X.Y.Z --both --output=dist/release-X.Y.Z
-php tools/release/release-update-rehearsal.php --artifact=dist/release-X.Y.Z/update --baseline-version=6.0.6 --direct-web --cached-autoload
+php tools/release/release-update-rehearsal.php --artifact=dist/release-X.Y.Z/update --baseline-version=6.0.7 --direct-web --cached-autoload
 ```
 
-The rehearsal uses the published `v6.0.6` source and a disposable MySQL database.
+The rehearsal uses the published `v6.0.7` source and a disposable MySQL database.
 It checks representative Social data, retained long historical version labels,
-compatibility-view retirement, the signed update and exact rollback, including
+the signed update and exact rollback, including
 with the baseline schema, journal and lifecycle classes already loaded.
-The release version must be newer than 6.0.6. The automated file rehearsal
-uses a synthetic successor in an isolated copy when the source is still 6.0.6.
+The release version must be newer than 6.0.7. The automated file rehearsal
+uses a synthetic successor in an isolated copy when the source matches the baseline.
 
 The release notes below describe historical packages. Their old bridge commands
 and supported version ranges do not apply to the current builder.
+
+## Upgrading to 6.0.8
+
+Requires a completed **6.0.7 or newer** installation and PHP 8.4. Apply the signed
+update through **Admin > Updates**. This is the reader bridge: it retains
+format 3, every published built-in migration PHP file, and the current database
+journal. It introduces support for archival format 4 and independent module
+ZIP format 2, which both require at least the 6.0.8 reader.
+
+No built-in schema migration or deletion is introduced. Existing migration IDs,
+checksums, timestamps, domain data, configuration and activation are preserved.
+Physical retirement of built-in historical PHP belongs to a later release.
 
 ## Upgrading to 6.0.7
 
